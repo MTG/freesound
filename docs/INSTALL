@@ -1,0 +1,9 @@
+Installation manual for Nightingale/Freesound
+---------------------------------------------
+
+prerequisites for local debugging/development:
+
+* python >= 2.5
+* postgresql up and running
+* django from trunk http://www.djangoproject.com/documentation/install/#installing-the-development-version
+* psycopg2 http://www.initd.org/tracker/psycopg/wiki/PsycopgTwo

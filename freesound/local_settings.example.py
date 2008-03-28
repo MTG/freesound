@@ -6,8 +6,6 @@ ADMINS = (
     ('Your Name', 'Your Email'),
 )
 
-MANAGERS = ADMINS
-
 DATABASE_PASSWORD = 'password'
 
 # Absolute path to the directory that holds media.
@@ -34,7 +32,7 @@ TEMPLATE_DIRS = (
     '/absolute/path/to/nightingale/trunk/freesound/templates'
 )
 
-EMAIL_HOST_USER = '' # your iua username
-EMAIL_HOST_PASSWORD = '' # your iua password
+EMAIL_HOST_USER = '' # in live this should be the address of a mailbox on iua-mail
+EMAIL_HOST_PASSWORD = ''
 
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing

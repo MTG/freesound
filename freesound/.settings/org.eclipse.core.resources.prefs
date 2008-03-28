@@ -1,5 +1,7 @@
-#Fri Mar 28 14:07:25 CET 2008
+#Fri Mar 28 15:35:56 CET 2008
 eclipse.preferences.version=1
+encoding//sounds/models.py=UTF-8
+encoding//users/models.py=UTF-8
 encoding/local_settings.example.py=UTF-8
 encoding/local_settings.py=UTF-8
 encoding/manage.py=UTF-8

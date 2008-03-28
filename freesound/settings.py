@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# Django settings for freesound_web project.
+# Django settings for freesound project.
 
 DEBUG = False
-TEMPLATE_DEBUG = DEBUG
+
+# Email that error messages come from
+SERVER_EMAIL = 'devnull@iua.upf.edu'
 
 DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'freesound'             # Or path to database file if using sqlite3.
@@ -19,7 +21,13 @@ SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
-USE_I18N = True
+USE_I18N = False
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.core.context_processors.auth',
+    'django.core.context_processors.debug',
+    # 'django.core.context_processors.i18n',
+)
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -32,16 +40,48 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    #'django.middleware.cache.CacheMiddleware',
+    #'django.middleware.locale.LocaleMiddleware',
     'django.middleware.doc.XViewMiddleware',
+    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 )
 
+#CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
+#CACHE_MIDDLEWARE_SECONDS = 300
+#CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
+
 ROOT_URLCONF = 'freesound.urls'
+
+AUTH_PROFILE_MODULE = 'users.Profile'
+LOGIN_URL = '/login/'
 
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.admin',
+    'django.contrib.flatpages',
 )
 
+DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'
+EMAIL_HOST = 'iua-mail.upf.edu'
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_SUBJECT_PREFIX = 'Freesound. '
+
+SEND_BROKEN_LINK_EMAILS = False
+# A tuple of strings that specify beginnings/ends of URLs that should be ignored by the 404 e-mailer.
+IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf')
+IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', 'favicon.ico', '.php')
+
+# A tuple of IP addresses, as strings, that:
+# See debug comments, when DEBUG is True
+INTERNAL_IPS = ['localhost', '127.0.0.1']
+
 from local_settings import *
+
+TEMPLATE_DEBUG = DEBUG
+
+if TEMPLATE_DEBUG:
+    TEMPLATE_STRING_IF_INVALID = 'MISSING VAR %s'

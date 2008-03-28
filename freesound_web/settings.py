@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Django settings for freesound_web project.
 
 DEBUG = True

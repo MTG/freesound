@@ -6,7 +6,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 
 class License(models.Model):
-    """A creative commons license"""
+    """A creative commons license model"""
     name = models.CharField(max_length=512)
     abbreviation = models.CharField(max_length=5)
     summary = models.TextField()
@@ -68,7 +68,7 @@ class Sound(models.Model):
 
 
 class SoundPack(models.Model):
-    user = models.ForeignKey(User=True)
+    user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
     name_slug = models.SlugField(max_length=255)
     created = models.DateTimeField()

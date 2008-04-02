@@ -1,61 +1,64 @@
-{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf440
-{\fonttbl\f0\fswiss\fcharset77 Helvetica-Bold;\f1\fswiss\fcharset77 Helvetica;}
-{\colortbl;\red255\green255\blue255;\red178\green51\blue21;}
-{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid1}
-{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{hyphen\}}{\leveltext\leveltemplateid1\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid2}}
-{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}}
-\paperw11900\paperh16840\margl1440\margr1440\vieww15700\viewh16660\viewkind0
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-
-\f0\b\fs24 \cf0 Installation manual for Nightingale/Freesound\
-
-\f1\b0 \
-prerequisites for local debugging/development:\
-\
-\pard\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
-\ls1\ilvl0\cf0 {\listtext	\'a5	}python >= 2.5\
-{\listtext	\'a5	}postgresql up and running\
-{\listtext	\'a5	}django from trunk http://www.djangoproject.com/documentation/install/#installing-the-development-version\
-{\listtext	\'a5	}psycopg2 http://www.initd.org/tracker/psycopg/wiki/PsycopgTwo\
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 \
-\
-
-\f0\b Steps to install pydev and eclipse
-\f1\b0 \
-\
-\pard\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
-\ls2\ilvl0\cf0 {\listtext	\'a5	}download the Platform Runtime Binary for eclipse. this is the most minimal configuration.\
-{\listtext	\'a5	}from within eclipse using software updates > install :\
-\pard\tx940\tx1440\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li1440\fi-1440\ql\qnatural\pardirnatural
-\ls2\ilvl1\cf0 {\listtext	\uc0\u8259 	}install pydev and then configure the python interpreter (prefs > pydev > interpreter )\
-{\listtext	\uc0\u8259 	}install Eclipse Java Development Tools (JDT)\
-\pard\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
-\ls2\ilvl0\cf0 {\listtext	\'a5	}download and install http://www.eclipse.org/gef/\
-{\listtext	\'a5	}download and install Amateras Eclipse HTML Editor Plugin\
-{\listtext	\'a5	}import the freesound project (import existing poject into workspace)\
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 \
-
-\f0\b Database for freesound\
-
-\f1\b0 \
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 # create the freesound user\
-\
-\cf2 /usr/local/bin/createuser -P -e freesound\
-	Enter password for new role:\
-	Enter it again:\
-	Shall the new role be a superuser? (y/n) n\
-	Shall the new role be allowed to create databases? (y/n) n\
-	Shall the new role be allowed to create more new roles? (y/n) n\
-\cf0 \
-# create a database\
-\
-\cf2 /usr/local/bin/createdb --owner freesound --encoding=UTF-8 freesound\cf0 \
-\
-
-\f0\b Create your local settings
-\f1\b0 \
-\
-Copy the local_settings.example.py file to a local_settings.py file and edit to suit your needs.}
+{\rtf1\ansi\deff1\adeflang1025
+{\fonttbl{\f0\froman\fprq2\fcharset0 Nimbus Roman No9 L{\*\falt Times New Roman};}{\f1\fswiss\fprq0\fcharset77 Helvetica-Bold;}{\f2\fnil\fprq0\fcharset0 Times{\*\falt Times New Roman};}{\f3\fnil\fprq0\fcharset0 Helvetica;}{\f4\fswiss\fprq0\fcharset77 Helvetica-Bold;}{\f5\fswiss\fprq0\fcharset77 Helvetica;}{\f6\fnil\fprq2\fcharset0 AR PL ShanHeiSun Uni;}{\f7\fnil\fprq2\fcharset0 Lucidasans;}{\f8\fnil\fprq0\fcharset0 Lucidasans;}}
+{\colortbl;\red0\green0\blue0;\red0\green0\blue128;\red178\green51\blue21;\red128\green128\blue128;}
+{\stylesheet{\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033\snext1 Normal;}
+{\s2\sb240\sa120\keepn\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af7\afs28\lang255\ltrch\dbch\af6\langfe255\hich\f3\fs28\lang1033\loch\f3\fs28\lang1033\sbasedon1\snext3 Heading;}
+{\s3\sa120\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033\sbasedon1\snext3 Body Text;}
+{\s4\sa120\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af8\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f2\fs24\lang1033\loch\f2\fs24\lang1033\sbasedon3\snext4 List;}
+{\s5\sb120\sa120\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af8\afs24\lang255\ai\ltrch\dbch\af1\langfe255\hich\f2\fs24\lang1033\i\loch\f2\fs24\lang1033\i\sbasedon1\snext5 caption;}
+{\s6\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af8\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f2\fs24\lang1033\loch\f2\fs24\lang1033\sbasedon1\snext6 Index;}
+{\*\cs8\cf2\ul\ulc0\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 Internet link;}
+}
+{\info{\creatim\yr0\mo0\dy0\hr0\min0}{\revtim\yr0\mo0\dy0\hr0\min0}{\printim\yr0\mo0\dy0\hr0\min0}{\comment StarWriter}{\vern6800}}\deftab720
+{\*\pgdsctbl
+{\pgdsc0\pgdscuse195\pgwsxn11900\pghsxn16840\marglsxn1440\margrsxn1440\margtsxn1440\margbsxn1440\pgdscnxt0 Standard;}}
+{\*\pgdscno0}\paperh16840\paperw11900\margl1440\margr1440\margt1440\margb1440\sectd\sbknone\pgwsxn11900\pghsxn16840\marglsxn1440\margrsxn1440\margtsxn1440\margbsxn1440\ftnbj\ftnstart1\ftnrstcont\ftnnar\aenddoc\aftnrstcont\aftnstart1\aftnnrlc
+\pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ab\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\b\loch\f1\fs24\lang1033\b {\rtlch \ltrch\loch\f1\fs24\lang1033\i0\b Installation manual for Nightingale/Freesound}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 prerequisites for local debugging/development:}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\li720\ri0\lin720\rin0\fi-720\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 python >= 2.5}
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 postgresql up and running}
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 django from trunk http://www.djangoproject.com/documentation/install/#installing-the-development-version}
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 psycopg2 {\field{\*\fldinst HYPERLINK "http://www.initd.org/tracker/psycopg/wiki/PsycopgTwo" }{\fldrslt \*\cs8\cf2\ul\ulc0\rtlch\ltrch\dbch\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 http://www.initd.org/tracker/psycopg/wiki/PsycopgTwo}}}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 (on linux distros you may find a ready made package for psycopg2)}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ab\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\b\loch\f1\fs24\lang1033\b {\rtlch \ltrch\loch\f1\fs24\lang1033\i0\b Steps to install pydev and eclipse}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\li720\ri0\lin720\rin0\fi-720\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 download the Platform Runtime Binary for eclipse. this is the most minimal configuration.}
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 from within eclipse using software updates > install :}
+\par \pard\plain \ltrpar\s1\cf0\tx940\tx1440\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\li1440\ri0\lin1440\rin0\fi-1440\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 install pydev and then configure the python interpreter (prefs > pydev > interpreter )}
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 install Eclipse Java Development Tools (JDT)}
+\par \pard\plain \ltrpar\s1\cf0\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\li720\ri0\lin720\rin0\fi-720\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 download and install http://www.eclipse.org/gef/}
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 download and install Amateras Eclipse HTML Editor Plugin}
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 import the freesound project (import existing poject into workspace)}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ab\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\b\loch\f1\fs24\lang1033\b {\rtlch \ltrch\loch\f1\fs24\lang1033\i0\b Database for freesound}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 # create the freesound user}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch  }{\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 % sudo -u postgres createuser -P -e freesound}
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 \tab Enter password for new role:}
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 \tab Enter it again:}
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 \tab Shall the new role be a superuser? (y/n) n}
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 \tab Shall the new role be allowed to create databases? (y/n) n}
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 \tab Shall the new role be allowed to create more new roles? (y/n) n}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 # create a database}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 % /usr/local/bin/createdb --owner freesound --encoding=UTF-8 freesound}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af1\afs24\lang255\ab\ltrch\dbch\af1\langfe255\hich\f1\fs24\lang1033\b\loch\f1\fs24\lang1033\b {\rtlch \ltrch\loch\f1\fs24\lang1033\i0\b Create your local settings}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 Copy the local_settings.example.py file to a local_settings.py file and edit to suit your needs.}
+\par \pard\plain \ltrpar\s1\cf0{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ab\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\b\loch\f5\fs24\lang1033\b {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b Try it!}
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 cd to your nightingale directory and run: }
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 %  python manage.py runserver}
+\par \pard\plain \ltrpar\s1\cf3\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 
+\par \pard\plain \ltrpar\s1\cf0\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\rtlch\af5\afs24\lang255\ltrch\dbch\af5\langfe255\hich\f5\fs24\lang1033\loch\f5\fs24\lang1033 {\rtlch \ltrch\loch\f5\fs24\lang1033\i0\b0 Open {\field{\*\fldinst HYPERLINK "http://127.0.0.1:8000/" }{\fldrslt \*\cs8\cf2\ul\ulc0\rtlch\ltrch\dbch\hich\f1\fs24\lang1033\loch\f1\fs24\lang1033 http://127.0.0.1:8000/}} on your browser}
+\par }

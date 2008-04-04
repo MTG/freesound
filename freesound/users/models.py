@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils.translation import ugettext as _
 
 class Profile(models.Model):
-    pass
+    user = models.ForeignKey(User)
+    # add many many more things here :)
+    
+    whitelisted = models.BooleanField(default=False)
+    newsletter = models.BooleanField(default=True)

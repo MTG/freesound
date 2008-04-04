@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # PayPal python NVP API wrapper class.
 # This is a sample to help others get started on working
 # with the PayPal NVP API in Python. 

@@ -22,7 +22,7 @@ class Sound(models.Model):
     sources =  models.ManyToManyField('self', symmetrical=False, related_name='remixes')
 
     filename_base = models.CharField(max_length=512) # original filename without extension
-    filename_slug = models.CharField(max_length=512)
+    filename_slug = models.CharField(max_length=512, db_index=True)
     description = models.TextField()
     
     # --- file properties ----------------------------------------
@@ -34,34 +34,35 @@ class Sound(models.Model):
                           ('flac', 'Flac')
                          )
     type = models.CharField(db_index=True, max_length=4, choices=SOUND_TYPE_CHOICES)
+
     duration = models.FloatField(default=0)
     bitrate = models.IntegerField(default=0)
     bitdepth = models.IntegerField(null=True, blank=True, default=None)
-    samplerate = models.FloatField()
-    filesize = models.IntegerField()
-    channels = models.IntegerField()
+    samplerate = models.FloatField(default=0)
+    filesize = models.IntegerField(default=0)
+    channels = models.IntegerField(default=0)
     
     # --- moderation ----------------------------------------
     MODERATION_STATE_CHOICES = (
                                 ("PE",_('Pending')),
-                                ("OK",_('Done')),
+                                ("OK",_('OK')),
                                 ("DE",_('Deferred')),
                                 )
     
-    moderation_state = models.CharField(db_index=True, max_length=3, choices=MODERATION_STATE_CHOICES)
-    moderation_date = models.DateTimeField(null=True, blank=True)
+    moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="PE")
+    moderation_date = models.DateTimeField(null=True, blank=True, default=None)
     moderation_bad_description = models.BooleanField(default=False)
     
     # --- processing ----------------------------------------
     PROCESSING_STATE_CHOICES = (
-                                ("PEN",_('Pending')),
+                                ("PE",_('Pending')),
                                 ("OK",_('OK')),
-                                ("FAI",_('Failed')),
+                                ("FA",_('Failed')),
                                 )
     
-    processing_state = models.CharField(db_index=True, max_length=3, choices=MODERATION_STATE_CHOICES)
-    processing_date = models.DateTimeField()
-    processing_log = models.TextField()
+    processing_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="PE")
+    processing_date = models.DateTimeField(null=True, blank=True, default=None)
+    processing_log = models.TextField(null=True, blank=True, default=None)
     
     created = models.DateTimeField()
     modified = models.DateTimeField()
@@ -70,6 +71,16 @@ class Sound(models.Model):
 class SoundPack(models.Model):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
-    name_slug = models.SlugField(max_length=255)
+    name_slug = models.SlugField(max_length=255, db_index=True)
+    
+    description = models.TextField()
+
     created = models.DateTimeField()
     modified = models.DateTimeField()
+    
+
+class SoundReport(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, default=None)
+    email = models.EmailField(null=True, blank=True)
+    reason = models.TextField()
+    created = models.DateTimeField()

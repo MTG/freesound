@@ -5,26 +5,34 @@
 # what this class is doing before you try it on production servers!
 # ...use at your own peril.
 
-## see https://www.paypal.com/IntegrationCenter/ic_nvp.html
-## and
-## https://www.paypal.com/en_US/ebook/PP_NVPAPI_DeveloperGuide/index.html
-## for more information.
+# see https://www.paypal.com/IntegrationCenter/ic_nvp.html
+# and
+# https://www.paypal.com/en_US/ebook/PP_NVPAPI_DeveloperGuide/index.html
+# for more information.
 
 # by Mike Atlas / LowSingle.com / MassWrestling.com, September 2007
 # No License Expressed. Feel free to distribute, modify, 
-#  and use in any open or closed source project without credit to the author
+# and use in any open or closed source project without credit to the author
 
 # lot's of changed by Bram de Jong, but no fundamental changes to how the
 # paypal API works, just cleanups. Also removed the DoDirectPayment method as
 # it is not needed for Freesound
 
-# Example usage: ===============
-#    paypal = Paypal()
-#    pp_token = paypal.set_express_checkout(100)
-#    express_token = paypal.get_express_checkout_details(pp_token['token'])
-#    url= paypal.get_paypal_forward_url(express_token['token'])
-#    HttpResponseRedirect(url) ## django specific http redirect call for payment
-
+# Example usage:
+# 1.
+#   paypal = Paypal()
+#   response = paypal.set_express_checkout(100)
+#   url = paypal.get_paypal_forward_url(response['token'])
+#   HttpResponseRedirect(url)
+#
+# 2.
+#   paypal = Paypal()
+#   # customer details are in:
+#   response = paypal.get_express_checkout_details(request.GET["TOKEN"])
+#   # the actual payment
+#   response = paypal.do_express_checkout_payment(request.GET["TOKEN"], request.GET["PayerID"], 100)
+#   # if you want to get all info:
+#   paypal.get_transaction_details(response['transactionid'])
 
 import urllib, cgi
 

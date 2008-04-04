@@ -33,9 +33,9 @@ class Paypal:
     def __init__(self, debug=True):
         # fill these in with the API values
         self.signature = dict(
-            user='bram.d_1207238417_biz_api1.gmail.com',
-            pwd='1207238426',
-            signature='AQJ29zivYyfU5elMDzHjZFrUPlQeAI8APPQNZpJ9VsW1WHADtltnY3zj',
+            user='sdk-three_api1.sdk.com',
+            pwd='QFZCWN5HZM8VBG7Q',
+            signature='A-IzJhZZjhg29XQ2qnhapuwxIDzyAZQ92FRP5dqBzVesOkzbdUONzmOU',
             version='3.0',
         ) 
 

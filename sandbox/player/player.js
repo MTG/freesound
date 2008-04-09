@@ -40,6 +40,8 @@ function initPlayer(element)
     var loop = element.down("div.loop");
     var timeDisplay = element.down("div.time-display");
 
+    var updateTimeDisplay;
+
     if (timeDisplay)
         updateTimeDisplay = function (ms) { timeDisplay.update(msToTime(ms)) };
     else

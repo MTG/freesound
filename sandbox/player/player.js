@@ -1,15 +1,7 @@
-
 soundManager.debugMode = false;
-
-Event.observe(window, 'load', function() {
-    console.time("onload");
-});
   
 soundManager.onload = function() {
-    console.timeEnd("onload");
-    console.time("parsing");
     $$('div.preview').each(initPlayer);
-    console.timeEnd("parsing");
 };
 
 // when soundmanager fails to insert the flash player, just show the preview links

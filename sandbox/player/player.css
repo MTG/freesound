@@ -1,0 +1,71 @@
+div.preview
+{
+    margin-bottom: 10px;
+}
+
+div.button
+{
+    height: 10px;
+    width: 10px;
+    font-size: 0.1em;
+    left: 0px;
+    bottom: 0px;
+    float: left;
+}
+
+div.loop {
+    background-image: url("loop.png");
+}
+
+div.play {
+    background-image: url("play.png");
+}
+
+div.on {
+    background-position: 0px -10px;
+}
+
+div.play-controls
+{
+    overflow: hidden;
+    width: 84px;
+    height: 10px;
+}
+
+div.progress-container
+{
+    width: 64px;
+    background-color: #ddd;
+    float: left;
+    height: 10px;
+    position: relative;
+}
+
+div.large div.play-controls
+{
+    width: 358px;
+}
+
+div.large div.play-controls div.progress-container
+{
+    width: 298px;
+}
+
+div.time-display
+{
+    width: 40px;
+    float: left;
+    font-size: 10px; 
+    height: 10px;
+    background-color: black;
+    overflow: hidden;
+    color: white;
+    text-align: center;
+}
+
+div.progress
+{
+    width: 0;
+    height: 10px;
+    border-right: 1px solid black;
+}

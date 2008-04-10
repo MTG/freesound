@@ -102,7 +102,7 @@ div.on {
 
 div.time-display
 {
-    font-family: arial; 
+    font-family: "Courier New", Courier, monospace; 
     float: right;
     font-size: 9px; 
     height: 11px;

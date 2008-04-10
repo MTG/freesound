@@ -1,12 +1,61 @@
+body
+{
+    margin: 5px;
+}
+
+img
+{
+    display: block;
+}
+
 div.preview
 {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    background-color:green;
+    width: 82px; 
+}
+
+div.progress-container
+{
+    width: 82px;
+    background-color: white;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+}
+
+div.progress
+{
+    width: 0;
+    height: 8px;
+}
+
+div.loaded
+{
+    width: 0;
+    z-index: 5;
+    background-color:#ddd;
+}
+
+div.position
+{
+    width: 0;
+    z-index: 10;
+    background-color: #bbb;
+    margin-top: -8px;
+}
+
+div.play-controls
+{
+    width: 84px;
+    height: 11px;
+    background-color: black;
+    overflow: hidden;
 }
 
 div.button
 {
-    height: 10px;
-    width: 10px;
+    height: 11px;
+    width: 11px;
     font-size: 0.1em;
     left: 0px;
     bottom: 0px;
@@ -14,58 +63,38 @@ div.button
 }
 
 div.loop {
-    background-image: url("loop.png");
+    background-image: url("loop.gif");
 }
 
 div.play {
-    background-image: url("play.png");
+    background-image: url("play.gif");
+}
+
+div.rewind {
+    background-image: url("rewind.gif")
 }
 
 div.on {
-    background-position: 0px -10px;
-}
-
-div.play-controls
-{
-    overflow: hidden;
-    width: 84px;
-    height: 10px;
-}
-
-div.progress-container
-{
-    width: 64px;
-    background-color: #ddd;
-    float: left;
-    height: 10px;
-    position: relative;
-}
-
-div.large div.play-controls
-{
-    width: 358px;
-}
-
-div.large div.play-controls div.progress-container
-{
-    width: 298px;
+    background-position: 0px -11px;
 }
 
 div.time-display
 {
-    width: 40px;
-    float: left;
-    font-size: 10px; 
-    height: 10px;
+    float: right;
+    font-size: 9px; 
+    height: 11px;
     background-color: black;
-    overflow: hidden;
     color: white;
-    text-align: center;
 }
 
-div.progress
-{
-    width: 0;
-    height: 10px;
-    border-right: 1px solid black;
+div.large {
+    width: 356px;
+}
+
+div.large div.progress-container {
+    width: 356px;
+}
+
+div.large div.play-controls {
+    width: 358px;
 }

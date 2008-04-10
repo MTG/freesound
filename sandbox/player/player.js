@@ -35,17 +35,18 @@ function initPlayer(element)
 {
     var url = element.down("a.preview-mp3").href;
     var progressContainer = element.down("div.progress-container");
-    var progress = element.down("div.progress");
+    var position = element.down("div.position");
+    var loaded = element.down("div.loaded");
+    var rewind = element.down("div.rewind");
     var play = element.down("div.play");
     var loop = element.down("div.loop");
     var timeDisplay = element.down("div.time-display");
 
-    var updateTimeDisplay;
-
-    if (timeDisplay)
-        updateTimeDisplay = function (ms) { timeDisplay.update(msToTime(ms)) };
-    else
-        updateTImeDisplay = function (ms) {};
+    var updateTimeDisplay = function (ms) {
+        var newTime = msToTime(ms);
+        if (timeDisplay.innerHTML != newTime)
+            timeDisplay.update(newTime);
+    };
 
     var sound = soundManager.createSound({id: 'snd' + (sndCounter++), url: url, onfinish: function () {
         if (loop.hasClassName("on"))
@@ -54,11 +55,13 @@ function initPlayer(element)
         {
             play.removeClassName("on");
             updateTimeDisplay(0);
-            progress.style.width = 0;
+            position.style.width = 0;
         }
     }, whileplaying : function () {
-        progress.style.width = ((100.0*sound.position)/sound.durationEstimate) + "%";
+        position.style.width = parseInt(((100.0*sound.position)/sound.durationEstimate)) + "%";
         updateTimeDisplay(sound.position);
+    }, whileloading : function () {
+        loaded.style.width = parseInt(((100.0*sound.bytesLoaded)/sound.bytesTotal)) + "%";
     }});
     
     progressContainer.observe('click', function (event) {
@@ -66,45 +69,31 @@ function initPlayer(element)
         {
             play.addClassName("on");
             sound.play();
-        } 
-        
-        var click = event.layerX;
-        if (click == "undefined")
-            click = event.offsetX;
-        
+        }
+
+        var click = (event.pointerX() - progressContainer.cumulativeOffset()[0])
         var time = (click * sound.durationEstimate) / progressContainer.getWidth();
         
         if (time > sound.duration)
             time = sound.duration * 0.95;
         
         sound.setPosition(time);
-        event.stop();
     });
 
-    loop.observe('click', function (event)
+    rewind.observe('click', function (event)
     {
-        if (loop.hasClassName("on"))
-            loop.removeClassName("on");
-        else
-            loop.addClassName("on");
-
-        event.stop();
+        sound.setPosition(0);
+        updateTimeDisplay(0);
+        position.style.width = 0;
     });
+    rewind.observe('mousedown', function (event) { rewind.addClassName('on'); });
+    rewind.observe('mouseup', function (event) { rewind.removeClassName('on'); });
     
     play.observe('click', function (event)
     {
-        if (play.hasClassName("on"))
-        {
-            play.removeClassName("on");
-            progress.style.width = 0;
-            sound.stop();
-            updateTimeDisplay(0);
-        }
-        else
-        {
-            play.addClassName("on");
-            sound.play();
-        }
-        event.stop();
+        sound.togglePause();
+        play.toggleClassName("on");
     });
+    
+    loop.observe('click', function (event) { loop.toggleClassName('on'); });
 }

@@ -9,13 +9,11 @@ div.preview
     background-color: black;
     width: 84px;
     height: 64px;
-    overflow: hidden;
 }
 
 div.large {
     width: 358px;
     height: 188px;
-    overflow: hidden;
 }
 
 div.preview img
@@ -33,8 +31,9 @@ div.large img
 
 div.progress-container
 {
+    font-size: 0.1em;
     width: 82px;
-    background-color: white;
+    background-color: black;
     border-left: 1px solid black;
     border-right: 1px solid black;
 }
@@ -53,14 +52,14 @@ div.loaded
 {
     width: 0;
     z-index: 5;
-    background-color:#ddd;
+    background-color:#222;
 }
 
 div.position
 {
     width: 0;
     z-index: 10;
-    background-color: #bbb;
+    background-color: white;
     margin-top: -8px;
 }
 
@@ -69,7 +68,6 @@ div.play-controls
     width: 84px;
     height: 11px;
     background-color: black;
-    overflow: hidden;
 }
 
 div.large div.play-controls {

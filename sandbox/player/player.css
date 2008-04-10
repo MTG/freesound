@@ -3,16 +3,32 @@ body
     margin: 5px;
 }
 
-img
-{
-    display: block;
-}
-
 div.preview
 {
     margin-bottom: 15px;
-    background-color:green;
-    width: 82px; 
+    background-color: black;
+    width: 84px;
+    height: 64px;
+    overflow: hidden;
+}
+
+div.large {
+    width: 358px;
+    height: 188px;
+    overflow: hidden;
+}
+
+div.preview img
+{
+    display: block;
+    width: 84px;
+    height: 45px;
+}
+
+div.large img
+{
+    width: 358px;
+    height: 169px;
 }
 
 div.progress-container
@@ -21,6 +37,10 @@ div.progress-container
     background-color: white;
     border-left: 1px solid black;
     border-right: 1px solid black;
+}
+
+div.large div.progress-container {
+    width: 356px;
 }
 
 div.progress
@@ -50,6 +70,10 @@ div.play-controls
     height: 11px;
     background-color: black;
     overflow: hidden;
+}
+
+div.large div.play-controls {
+    width: 358px;
 }
 
 div.button
@@ -85,16 +109,4 @@ div.time-display
     height: 11px;
     background-color: black;
     color: white;
-}
-
-div.large {
-    width: 356px;
-}
-
-div.large div.progress-container {
-    width: 356px;
-}
-
-div.large div.play-controls {
-    width: 358px;
 }

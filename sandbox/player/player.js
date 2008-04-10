@@ -65,12 +65,6 @@ function initPlayer(element)
     }});
     
     progressContainer.observe('click', function (event) {
-        if (!play.hasClassName("on"))
-        {
-            play.addClassName("on");
-            sound.play();
-        }
-
         var click = (event.pointerX() - progressContainer.cumulativeOffset()[0])
         var time = (click * sound.durationEstimate) / progressContainer.getWidth();
         

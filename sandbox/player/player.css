@@ -102,9 +102,11 @@ div.on {
 
 div.time-display
 {
+    font-family: monospace; 
     float: right;
     font-size: 9px; 
     height: 11px;
     background-color: black;
     color: white;
+    padding-right: 2px;
 }

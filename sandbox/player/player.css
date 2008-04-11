@@ -103,7 +103,7 @@ div.on {
 
 div.time-display
 {
-    font-family: ; "Arial", arial, sans-serif;
+    font-family: arial, "Arial", sans-serif;
     float: right;
     font-size: 9px; 
     height: 11px;
@@ -114,7 +114,7 @@ div.time-display
 
 a.preview-mp3
 {
-    font: arial;   
+    font-family: arial;   
     color: white;
     font-size: 10px;
     padding-left: 2px;

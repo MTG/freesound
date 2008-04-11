@@ -111,3 +111,12 @@ div.time-display
     color: white;
     padding-right: 2px;
 }
+
+a.preview-mp3
+{
+    font: arial;   
+    color: white;
+    font-size: 10px;
+    padding-left: 2px;
+    text-decoration: none;
+}

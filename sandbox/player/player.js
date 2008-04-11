@@ -48,21 +48,29 @@ function initPlayer(element)
             timeDisplay.update(newTime);
     };
 
-    var sound = soundManager.createSound({id: 'snd' + (sndCounter++), url: url, onfinish: function () {
-        if (loop.hasClassName("on"))
-            sound.play();
-        else
-        {
-            play.removeClassName("on");
-            updateTimeDisplay(0);
-            position.style.width = 0;
-        }
-    }, whileplaying : function () {
-        position.style.width = parseInt(((100.0*sound.position)/sound.durationEstimate)) + "%";
-        updateTimeDisplay(sound.position);
-    }, whileloading : function () {
-        loaded.style.width = parseInt(((100.0*sound.bytesLoaded)/sound.bytesTotal)) + "%";
-    }});
+    var sound = soundManager.createSound({
+        id: 'snd' + (sndCounter++),
+        url: url,
+        onfinish: function () {
+            if (loop.hasClassName("on"))
+            {
+                sound.play();
+            }
+            else
+            {
+                play.removeClassName("on");
+                updateTimeDisplay(0);
+                position.style.width = 0;
+            }
+        },
+        whileplaying: function () {
+            position.style.width = parseInt(((100.0*sound.position)/sound.durationEstimate)) + "%";
+            updateTimeDisplay(sound.position);
+        },
+        whileloading: function () {
+            loaded.style.width = parseInt(((100.0*sound.bytesLoaded)/sound.bytesTotal)) + "%";
+        },
+    });
     
     progressContainer.observe('click', function (event) {
         var click = (event.pointerX() - progressContainer.cumulativeOffset()[0])

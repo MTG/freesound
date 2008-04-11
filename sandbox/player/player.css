@@ -85,7 +85,7 @@ div.button
 }
 
 div.loop {
-    background-image: url("loop4.gif");
+    background-image: url("loop.gif");
     width: 13px;
 }
 
@@ -94,7 +94,7 @@ div.play {
 }
 
 div.rewind {
-    background-image: url("rewind2.gif")
+    background-image: url("rewind.gif")
 }
 
 div.on {

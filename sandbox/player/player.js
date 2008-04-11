@@ -1,9 +1,7 @@
 soundManager.debugMode = false;
   
 soundManager.onload = function() {
-    console.profile()
     $$('div.preview').each(initPlayer);
-    console.profileEnd();
 };
 
 // when soundmanager fails to insert the flash player, just show the preview links
@@ -39,6 +37,7 @@ var sndCounter = 0;
 
 function initPlayer(element)
 {
+    // this is rather ugly, but... about twice as fast as the code below it
     var children = element.childNodes;
     var progressContainer = children[3];
         var pcChildren = progressContainer.childNodes;

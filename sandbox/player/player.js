@@ -38,6 +38,7 @@ var sndCounter = 0;
 function initPlayer(element)
 {
     // this is rather ugly, but... about twice as fast as the code below it
+    /*
     var children = element.childNodes;
     var progressContainer = children[3];
         var pcChildren = progressContainer.childNodes;
@@ -50,8 +51,8 @@ function initPlayer(element)
         var loop = cChildren[5];
         var timeDisplay = cChildren[7];
     var url = children[7];
-
-    /*
+    */
+    
     var url = element.down("a.preview-mp3");
     var progressContainer = element.down("div.progress-container");
     var position = element.down("div.position");
@@ -60,7 +61,6 @@ function initPlayer(element)
     var play = element.down("div.play");
     var loop = element.down("div.loop");
     var timeDisplay = element.down("div.time-display");
-    */
 
     url = url.href;
 

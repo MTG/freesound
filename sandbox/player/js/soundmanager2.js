@@ -7,12 +7,12 @@
    Code licensed under the BSD License:
    http://www.schillmania.com/projects/soundmanager2/license.txt
 
-   V2.1.20080331
+   V2.2.20080420
 */
 
 function SoundManager(smURL,smID) {
   var self = this;
-  this.version = 'V2.1.20080331';
+  this.version = 'V2.2.20080420';
   this.url = (smURL||'soundmanager2.swf');
 
   this.debugMode = true;           // enable debugging output (div#soundmanager-debug, OR console if available + configured)
@@ -318,6 +318,7 @@ function SoundManager(smURL,smID) {
       var o = document.getElementById(sDID);
       if (!o) return false;
       var p = document.createElement('div');
+	  sText = sText.replace(/\n/g,'<br />');
       p.innerHTML = sText;
       // o.appendChild(p); // top-to-bottom
       o.insertBefore(p,o.firstChild); // bottom-to-top
@@ -403,7 +404,7 @@ function SoundManager(smURL,smID) {
     } catch(e) {
       // something broke (likely JS error in user function)
       self._writeDebug('soundManager.onload() threw an exception: '+e.message,2);
-      throw e; // (so browser/console gets message)
+      throw e; // (so browser/console gets message) - TODO: Doesn't seem to cascade down, probably due to nested try..catch blocks.
     }
     self._writeDebug('soundManager.onload() complete',1);
   }
@@ -423,7 +424,7 @@ function SoundManager(smURL,smID) {
       if (!self.allowPolling) self._writeDebug('Polling (whileloading/whileplaying support) is disabled.',1);
       self.setPolling(true);
       self.enabled = true;
-    }  catch(e) {
+    } catch(e) {
       self._failSafely();
       self.initComplete();
       return false;
@@ -442,6 +443,7 @@ function SoundManager(smURL,smID) {
   }
 
   this.destruct = function() {
+    self._writeDebug('soundManager.destruct()');
     if (self.isSafari) {
       /* --
         Safari 1.3.2 (v312.6)/OSX 10.3.9 and perhaps newer will crash if a sound is actively loading when user exits/refreshes/leaves page
@@ -465,6 +467,27 @@ function SoundManager(smURL,smID) {
   this.sID = oOptions.id;
   this.url = oOptions.url;
   this.options = sm._mergeObjects(oOptions);
+  if (sm.debugMode) {
+    var stuff = null;
+    var msg = [];
+	var sF = null;
+	var sfBracket = null;
+	var maxLength = 64; // # of characters of function code to show before truncating
+    for (stuff in this.options) {
+	  if (this.options[stuff] != null) {
+	    if (this.options[stuff] instanceof Function) {
+		  // handle functions specially
+		  sF = this.options[stuff].toString();
+		  sF = sF.replace(/\s\s+/g,' '); // normalize spaces
+		  sfBracket = sF.indexOf('{');
+		  msg[msg.length] = ' '+stuff+': {'+sF.substr(sfBracket+1,(Math.min(Math.max(sF.indexOf('\n')-1,maxLength),maxLength))).replace(/\n/g,'')+'... }';
+		} else {
+		  msg[msg.length] = ' '+stuff+': '+this.options[stuff];
+		}
+	  }
+	}
+    sm._writeDebug('SMSound() merged options: {\n'+msg.join(', \n')+'\n}');
+  }
   this.id3 = {
    /* 
     Name/value pairs set via Flash when available - see reference for names:
@@ -577,7 +600,8 @@ function SoundManager(smURL,smID) {
     if (self.playState == 1) {
       self.playState = 0;
       self.paused = false;
-      if (sm.defaultOptions.onstop) sm.defaultOptions.onstop.apply(self);
+      // if (sm.defaultOptions.onstop) sm.defaultOptions.onstop.apply(self);
+	  if (self.options.onstop) self.options.onstop.apply(self);
       sm.o._stop(self.sID);
     }
   }

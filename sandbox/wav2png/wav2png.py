@@ -155,8 +155,6 @@ class WaveformImage(object):
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
 
-        # draw a zer "zero" line
-        self.draw.line([0, self.image_height/2, self.image_width, self.image_height/2], ImageColor.getrgb("#ff0000") )
         
         colors = [  (58/4,68/4,65/4),
                     (80/2,100/2,153/2),
@@ -227,6 +225,14 @@ class WaveformImage(object):
             
             
     def save(self, filename):
+        # draw a zer "zero" line
+        for x in range(self.image_width):
+            rgb = self.pix[x, self.image_height/2]
+            if rgb == (0,0,0):
+                rgb = (20,20,20)
+            self.pix[x, self.image_height/2] = (rgb[0]*3, rgb[1]*3, rgb[2]*3)
+
+        #self.draw.line([0, self.image_height/2, self.image_width, self.image_height/2], (255,255,255) )
         self.image.save(filename)
         
         

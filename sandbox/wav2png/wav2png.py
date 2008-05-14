@@ -158,8 +158,17 @@ class WaveformImage(object):
         # draw a zer "zero" line
         self.draw.line([0, self.image_height/2, self.image_width, self.image_height/2], ImageColor.getrgb("#ff0000") )
         
-        self.color_lookup = interpolate_colors( [self.color_from_value(value/29.0) for value in range(0,30)])
+        colors = [  (58/4,68/4,65/4),
+                    (80/2,100/2,153/2),
+                    (90,180,100),
+                    (224,224,44),
+                    (255,60,30),
+                    (255,255,255) ]
         
+        # this line gets the old "screaming" colors back...
+        # colors = [self.color_from_value(value/29.0) for value in range(0,30)]
+        
+        self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()
         
 
@@ -238,7 +247,6 @@ class SpectrogramImage(object):
                     (255,255,255) ]
         
         self.image.putpalette(interpolate_colors(colors, True))
-        #self.pix = self.image.load()
 
         # generate the lookup which translates y-coordinate to fft-bin
         self.y_to_bin = []
@@ -274,8 +282,8 @@ def create_png():
     
     fft_size = 2048
     
-    image_width = 2400
-    image_height = 400
+    image_width = 500
+    image_height = 170
     
     audio_file = audiolab.sndfile(filename, 'read')
     samples_per_pixel = audio_file.get_nframes() / float(image_width)

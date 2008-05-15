@@ -2,6 +2,34 @@ import numpy, math, sys
 import scikits.audiolab as audiolab
 import Image, ImageDraw, ImageColor
 
+class TestAudioFile(object):
+    def __init__(self, num_frames, has_broken_header=False):
+        self.seekpoint = 0
+        self.num_frames = num_frames
+        self.has_broken_header = has_broken_header
+
+    def seek(self, seekpoint):
+        self.seekpoint = seekpoint
+
+    def get_nframes(self):
+        return self.num_frames
+
+    def get_samplerate(self):
+        return 44100
+
+    def get_channels(self):
+        return 1
+
+    def read_frames(self, frames_to_read):
+        if self.has_broken_header and self.seekpoint + frames_to_read > self.num_frames / 2:
+            raise IOError()
+
+        num_frames_left = self.num_frames - self.seekpoint
+        will_read = num_frames_left if num_frames_left < frames_to_read else frames_to_read
+        self.seekpoint += will_read
+        return numpy.random.random(will_read)*2 - 1 
+
+
 class AudioProcessor(object):
     def __init__(self, audio_file, fft_size, window_function=numpy.ones):
         self.fft_size = fft_size
@@ -17,21 +45,47 @@ class AudioProcessor(object):
         """ read size samples starting at start, if resize_if_less is True and less than size
         samples are read, resize the array to size and fill with zeros """
         
-        self.audio_file.seek(start)
+        add_to_start = 0
+        add_to_end = 0
         
-        to_read = size if start + size <= self.frames else self.frames - start
+        if start < 0:
+            if size + start <= 0:
+                return numpy.zeros(size) if resize_if_less else numpy.array([])
+            else:
+                self.audio_file.seek(0)
+
+                add_to_start = -start # remember: start is negative!
+                to_read = size + start
+
+                if to_read > self.frames:
+                    add_to_end = to_read - self.frames
+                    to_read = self.frames
+        else:
+            self.audio_file.seek(start)
+        
+            to_read = size
+            if start + to_read >= self.frames:
+                to_read = self.frames - start
+                add_to_end = size - to_read
         
         try:
             samples = self.audio_file.read_frames(to_read)
         except IOError:
-            return numpy.zeroes(size) if resize_if_less else numpy.array([])
+            return numpy.zeros(size) if resize_if_less else numpy.zeros(2)
 
         if self.channels > 1:
             samples = samples[:,0]
 
-        if resize_if_less and samples.shape[0] < size:
-            samples = numpy.resize(samples, size)
-            samples[to_read:] = 0
+        if resize_if_less and (add_to_start > 0 or add_to_end > 0):
+            if add_to_start > 0:
+                samples = numpy.concatenate((numpy.zeros(add_to_start), samples), axis=1)
+            
+            if add_to_end > 0:
+                samples = numpy.resize(samples, size)
+                samples[size - add_to_end:] = 0
+        
+        if resize_if_less:
+            assert samples.shape[0] == size
             
         return samples        
 
@@ -39,7 +93,9 @@ class AudioProcessor(object):
     def spectral_centroid(self, seek_point, spec_range=120.0):
         """ starting at seek_point read fft_size samples, and calculate the spectral centroid """
         
-        samples = self.read(seek_point, self.fft_size, True)
+        samples = self.read(seek_point - self.fft_size/2, self.fft_size, True)
+
+        print seek_point - self.fft_size/2, self.fft_size
 
         samples *= self.window
         fft = numpy.fft.fft(samples)
@@ -50,6 +106,7 @@ class AudioProcessor(object):
             self.spectrum_range = numpy.arange(length)
         
         energy = spectrum.sum()
+        print energy
         
         db_spectrum = ((20*(numpy.log10(spectrum + 1e-30))).clip(-spec_range, 0.0) + spec_range)/spec_range
         
@@ -92,7 +149,7 @@ class AudioProcessor(object):
             samples = self.read(start_seek, 1)
             return samples[0], samples[0]
         elif block_size == 2:
-            samples = self.read(start_seek, 2)
+            samples = self.read(start_seek, True)
             return samples[0], samples[1]
         
         for i in range(start_seek, end_seek, block_size):
@@ -154,14 +211,12 @@ class WaveformImage(object):
         
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
-
         
-        colors = [  (58/4,68/4,65/4),
-                    (80/2,100/2,153/2),
-                    (90,180,100),
-                    (224,224,44),
-                    (255,60,30),
-                    (255,255,255) ]
+        colors = [  
+                    (50,0,200),
+                    (0,220,80),
+                    (255,224,0),
+                 ]
         
         # this line gets the old "screaming" colors back...
         # colors = [self.color_from_value(value/29.0) for value in range(0,30)]
@@ -292,6 +347,8 @@ def create_png():
     image_height = 170
     
     audio_file = audiolab.sndfile(filename, 'read')
+    #audio_file = TestAudioFile(44100, False)
+
     samples_per_pixel = audio_file.get_nframes() / float(image_width)
     processor = AudioProcessor(audio_file, fft_size, numpy.hanning)
     
@@ -317,9 +374,11 @@ if __name__ == '__main__':
     if len(sys.argv) == 3 and sys.argv[2] == "profile":
         import hotshot
         from hotshot import stats
-                prof = hotshot.Profile("stats")        prof.runcall(create_png)
+        prof = hotshot.Profile("stats")
+        prof.runcall(create_png)
         prof.close()
         
         s = stats.load("stats")
-        s.sort_stats("time").print_stats()    else:
+        s.sort_stats("time").print_stats()
+    else:
         create_png()

@@ -243,7 +243,7 @@ class WaveformImage(object):
     
         self.previous_x, self.previous_y = x, y2
         
-        #self.draw_anti_aliased_pixels(x, y1, y2, line_color)
+        self.draw_anti_aliased_pixels(x, y1, y2, line_color)
     
     
     def draw_anti_aliased_pixels(self, x, y1, y2, color):

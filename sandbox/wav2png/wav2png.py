@@ -231,8 +231,8 @@ class WaveformImage(object):
     def draw_peaks(self, x, peaks, spectral_centroid):
         """ draw 2 peaks at x using the spectral_centroid for color """
 
-        y1 = self.image_height * 0.5 - peaks[0] * self.image_height * 0.5
-        y2 = self.image_height * 0.5 - peaks[1] * self.image_height * 0.5
+        y1 = self.image_height * 0.5 - peaks[0] * (self.image_height - 4) * 0.5
+        y2 = self.image_height * 0.5 - peaks[1] * (self.image_height - 4) * 0.5
         
         line_color = self.color_lookup[int(spectral_centroid*255.0)]
         

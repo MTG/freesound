@@ -95,8 +95,6 @@ class AudioProcessor(object):
         
         samples = self.read(seek_point - self.fft_size/2, self.fft_size, True)
 
-        print seek_point - self.fft_size/2, self.fft_size
-
         samples *= self.window
         fft = numpy.fft.fft(samples)
         spectrum = numpy.abs(fft[:fft.shape[0] / 2 + 1]) / float(self.fft_size)
@@ -106,7 +104,6 @@ class AudioProcessor(object):
             self.spectrum_range = numpy.arange(length)
         
         energy = spectrum.sum()
-        print energy
         
         db_spectrum = ((20*(numpy.log10(spectrum + 1e-30))).clip(-spec_range, 0.0) + spec_range)/spec_range
         
@@ -246,7 +243,7 @@ class WaveformImage(object):
     
         self.previous_x, self.previous_y = x, y2
         
-        self.draw_anti_aliased_pixels(x, y1, y2, line_color)
+        #self.draw_anti_aliased_pixels(x, y1, y2, line_color)
     
     
     def draw_anti_aliased_pixels(self, x, y1, y2, color):

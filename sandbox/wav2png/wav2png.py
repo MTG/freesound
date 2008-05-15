@@ -1,8 +1,12 @@
-import numpy, math, sys
+import optparse, math
 import scikits.audiolab as audiolab
 import Image, ImageDraw, ImageColor
+import numpy
 
 class TestAudioFile(object):
+    """A class that mimics audiolab.sndfile but generates noise instead of reading
+    a wave file. Additionally it can be told to have a "broken" header and thus crashing
+    in the middle of the file. Also useful for testing ultra-short files of 20 samples."""
     def __init__(self, num_frames, has_broken_header=False):
         self.seekpoint = 0
         self.num_frames = num_frames
@@ -39,7 +43,6 @@ class AudioProcessor(object):
         self.samplerate = audio_file.get_samplerate()
         self.channels = audio_file.get_channels()
         self.spectrum_range = None
-    
 
     def read(self, start, size, resize_if_less=False):
         """ read size samples starting at start, if resize_if_less is True and less than size
@@ -84,10 +87,7 @@ class AudioProcessor(object):
                 samples = numpy.resize(samples, size)
                 samples[size - add_to_end:] = 0
         
-        if resize_if_less:
-            assert samples.shape[0] == size
-            
-        return samples        
+        return samples
 
 
     def spectral_centroid(self, seek_point, spec_range=120.0):
@@ -167,8 +167,8 @@ class AudioProcessor(object):
                 min_index = local_min_index
     
         return (min_value, max_value) if min_index < max_index else (max_value, min_value)
-    	
-    
+
+
 def interpolate_colors(colors, flat=False, num_colors=256):
     """ given a list of colors, create a larger list of colors interpolating
     the first one. If flatten is True a list of numers will be returned. If
@@ -209,7 +209,7 @@ class WaveformImage(object):
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
         
-        colors = [  
+        colors = [
                     (50,0,200),
                     (0,220,80),
                     (255,224,0),
@@ -220,13 +220,11 @@ class WaveformImage(object):
         
         self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()
-        
 
     def color_from_value(self, value):
         """ given a value between 0 and 1, return an (r,g,b) tuple """
 
         return ImageColor.getrgb("hsl(%d,%d%%,%d%%)" % (int( (1.0 - value) * 360 ), 80, 50))
-        
         
     def draw_peaks(self, x, peaks, spectral_centroid):
         """ draw 2 peaks at x using the spectral_centroid for color """
@@ -244,7 +242,6 @@ class WaveformImage(object):
         self.previous_x, self.previous_y = x, y2
         
         self.draw_anti_aliased_pixels(x, y1, y2, line_color)
-    
     
     def draw_anti_aliased_pixels(self, x, y1, y2, color):
         """ vertical anti-aliasing at y1 and y2 """
@@ -274,7 +271,6 @@ class WaveformImage(object):
             b = int((1-alpha)*current_pix[2] + alpha*color[2])
             
             self.pix[x, y_min_int - 1] = (r,g,b)
-            
             
     def save(self, filename):
         # draw a zer "zero" line
@@ -335,16 +331,8 @@ class SpectrogramImage(object):
         self.image.transpose(Image.ROTATE_90).save(filename)
 
 
-def create_png():
-    filename = sys.argv[1]
-    
-    fft_size = 2048
-    
-    image_width = 500
-    image_height = 170
-    
-    audio_file = audiolab.sndfile(filename, 'read')
-    #audio_file = TestAudioFile(44100, False)
+def create_png(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size):
+    audio_file = audiolab.sndfile(input_filename, 'read')
 
     samples_per_pixel = audio_file.get_nframes() / float(image_width)
     processor = AudioProcessor(audio_file, fft_size, numpy.hanning)
@@ -363,19 +351,32 @@ def create_png():
         spectrogram.draw_spectrum(x, db_spectrum)
         
     
-    waveform.save(filename + '_w.png')
-    spectrogram.save(filename + '_s.png')
+    waveform.save(output_filename_w)
+    spectrogram.save(output_filename_s)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 3 and sys.argv[2] == "profile":
+    parser = optparse.OptionParser("usage: %prog [options] input-filename output-filename-wave output-filename-spectrogram", conflict_handler="resolve")
+    parser.add_option("-w", "--width", action="store", dest="image_width", type="int", help="image width in pixels (default %default)")
+    parser.add_option("-h", "--height", action="store", dest="image_height", type="int", help="image height in pixels (default %default)")
+    parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int", help="fft size, power of 2 for increased performance (default %default)")
+    parser.add_option("-p", "--profile", action="store_true", dest="profile", help="run profiler and output profiling information")
+
+    parser.set_defaults(image_width=500, image_height=170, fft_size=2048)
+
+    (options, args) = parser.parse_args()
+
+    if len(args) != 3:
+        parser.error("incorrect number of arguments")
+
+    if not options.profile:
+        create_png(args[0], args[1], args[2], options.image_width, options.image_height, options.fft_size)
+    else:
         import hotshot
         from hotshot import stats
         prof = hotshot.Profile("stats")
-        prof.runcall(create_png)
+        prof.runcall(create_png, args[0], args[1], args[2], options.image_width, options.image_height, options.fft_size)
         prof.close()
         
         s = stats.load("stats")
         s.sort_stats("time").print_stats()
-    else:
-        create_png()

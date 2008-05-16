@@ -407,25 +407,22 @@ if __name__ == '__main__':
     parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int", help="fft size, power of 2 for increased performance (default %default)")
     parser.add_option("-p", "--profile", action="store_true", dest="profile", help="run profiler and output profiling information")
     
-    parser.set_defaults(image_width=500, image_height=170, fft_size=2048)
+    parser.set_defaults(output_filename_w=None, output_filename_s=None, image_width=500, image_height=170, fft_size=2048)
 
     (options, args) = parser.parse_args()
 
     if len(args) == 0:
         parser.print_help()
         parser.error("not enough arguments")
-    
+   
+    if len(args) > 1 and (options.output_filename_w != None or options.output_filename_s != None):
+        parser.error("when processing multiple files you can't define the output filename!")
+   
     # process all files so the user can use wildcards like *.wav
     for input_file in args:
-        try:
-            output_file_w = options.output_file_w
-        except AttributeError:
-            output_file_w = input_file + "_w.png"
-            
-        try:
-            output_file_s = options.output_file_w
-        except AttributeError:
-            output_file_s = input_file + "_s.png"
+        
+        output_file_w = options.output_filename_w or input_file + "_w.png"
+        output_file_s = options.output_filename_s or input_file + "_s.png"
         
         args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size)
 

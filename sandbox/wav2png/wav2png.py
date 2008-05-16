@@ -435,5 +435,8 @@ if __name__ == '__main__':
             prof.runcall(create_png, *args)
             prof.close()
             
+            print "\n---------- profiling information ----------\n"
             s = stats.load("stats")
-            s.sort_stats("time").print_stats()
+            s.strip_dirs()
+            s.sort_stats("time")
+            s.print_stats(30)

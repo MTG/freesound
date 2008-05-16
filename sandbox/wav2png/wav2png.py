@@ -20,8 +20,6 @@
 # Authors:
 #   Bram de Jong <bram.dejong at domain.com where domain in gmail>
 
-__author__ = "Bram de Jong <bram.dejong@domain.com where domain is gmail >"
-
 import optparse, math, sys
 import scikits.audiolab as audiolab
 import Image, ImageDraw, ImageColor

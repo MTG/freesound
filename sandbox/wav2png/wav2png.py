@@ -65,15 +65,22 @@ class AudioProcessor(object):
         self.samplerate = audio_file.get_samplerate()
         self.channels = audio_file.get_channels()
         self.spectrum_range = None
+        self.lower = 100
+        self.higher = 22050
+        self.lower_log = math.log10(self.lower)
+        self.higher_log = math.log10(self.higher)
+        self.clip = lambda val, low, high: min(high, max(low, val))
 
     def read(self, start, size, resize_if_less=False):
         """ read size samples starting at start, if resize_if_less is True and less than size
         samples are read, resize the array to size and fill with zeros """
         
+        # number of zeros to add to start and end of the buffer
         add_to_start = 0
         add_to_end = 0
         
         if start < 0:
+            # the first FFT window starts centered around zero
             if size + start <= 0:
                 return numpy.zeros(size) if resize_if_less else numpy.array([])
             else:
@@ -96,8 +103,10 @@ class AudioProcessor(object):
         try:
             samples = self.audio_file.read_frames(to_read)
         except IOError:
+            # this can happen for wave files with broken headers...
             return numpy.zeros(size) if resize_if_less else numpy.zeros(2)
 
+        # convert to mono by selecting left channel only
         if self.channels > 1:
             samples = samples[:,0]
 
@@ -119,29 +128,27 @@ class AudioProcessor(object):
 
         samples *= self.window
         fft = numpy.fft.fft(samples)
-        spectrum = numpy.abs(fft[:fft.shape[0] / 2 + 1]) / float(self.fft_size)
+        spectrum = numpy.abs(fft[:fft.shape[0] / 2 + 1]) / float(self.fft_size) # normalized abs(FFT) between 0 and 1
         length = numpy.float64(spectrum.shape[0])
         
-        if self.spectrum_range == None:
-            self.spectrum_range = numpy.arange(length)
-        
-        energy = spectrum.sum()
-        
+        # scale the db spectrum from [- spec_range db ... 0 db] > [0..1]
         db_spectrum = ((20*(numpy.log10(spectrum + 1e-30))).clip(-spec_range, 0.0) + spec_range)/spec_range
         
-        if energy < 1e-20:
-            return (0, db_spectrum)
-        else:
-            sc = (spectrum * self.spectrum_range).sum() / (energy * (length - 1)) * self.samplerate*0.5
+        energy = spectrum.sum()
+        spectral_centroid = 0
+        
+        if energy > 1e-20:
+            # calculate the spectral centroid
             
-            if sc < 100:
-                sc = 100
-                
-            if sc > 22050:
-                sc = 22050
+            if self.spectrum_range == None:
+                self.spectrum_range = numpy.arange(length)
+        
+            spectral_centroid = (spectrum * self.spectrum_range).sum() / (energy * (length - 1)) * self.samplerate * 0.5
             
-            # arbitrary scaling to look the colors look good :)
-            return (math.log(sc) - math.log(100)) / (math.log(22050) - math.log(100)), db_spectrum
+            # clip > log10 > scale between 0 and 1
+            spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (self.higher_log - self.lower_log)
+        
+        return (spectral_centroid, db_spectrum)
 
 
     def peaks(self, start_seek, end_seek):
@@ -295,12 +302,13 @@ class WaveformImage(object):
             self.pix[x, y_min_int - 1] = (r,g,b)
             
     def save(self, filename):
-        # draw a zer "zero" line
+        # draw a zero "zero" line
         for x in range(self.image_width):
             rgb = self.pix[x, self.image_height/2]
             if rgb == (0,0,0):
-                rgb = (20,20,20)
-            self.pix[x, self.image_height/2] = (rgb[0]*3, rgb[1]*3, rgb[2]*3)
+                rgb = (60,60,60)
+            else:
+                self.pix[x, self.image_height/2] = (rgb[0]*3, rgb[1]*3, rgb[2]*3)
 
         #self.draw.line([0, self.image_height/2, self.image_width, self.image_height/2], (255,255,255) )
         self.image.save(filename)
@@ -314,13 +322,15 @@ class SpectrogramImage(object):
         self.image_height = image_height
         self.fft_size = fft_size
         
-        colors = [  (0, 0, 0),
+        colors = [
+                    (0, 0, 0),
                     (58/4,68/4,65/4),
                     (80/2,100/2,153/2),
                     (90,180,100),
                     (224,224,44),
                     (255,60,30),
-                    (255,255,255) ]
+                    (255,255,255)
+                 ]
         
         self.image.putpalette(interpolate_colors(colors, True))
 
@@ -328,8 +338,8 @@ class SpectrogramImage(object):
         self.y_to_bin = []
         f_min = 100.0
         f_max = 22050.0
-        y_min = math.log(f_min)/math.log(10.0)
-        y_max = math.log(f_max)/math.log(10.0)
+        y_min = math.log10(f_min)
+        y_max = math.log10(f_max)
         for y in range(self.image_height):
             freq = math.pow(10.0, y_min + y / (image_height - 1.0) *(y_max - y_min))
             bin = freq / 22050.0 * (self.fft_size/2 + 1)
@@ -339,6 +349,9 @@ class SpectrogramImage(object):
                 
                 self.y_to_bin.append((int(bin), alpha * 255))
            
+        # this is a bit strange, but using image.load()[x,y] = ... is
+        # a lot slower than using image.putadata and then rotating the image
+        # so we store all the pixels in an array and then create the image when saving
         self.pixels = []
             
     def draw_spectrum(self, x, spectrum):
@@ -354,6 +367,8 @@ class SpectrogramImage(object):
 
 
 def create_png(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size):
+    print "processing file %s:\n\t" % input_file,
+    
     audio_file = audiolab.sndfile(input_filename, 'read')
 
     samples_per_pixel = audio_file.get_nframes() / float(image_width)
@@ -362,8 +377,6 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
     waveform = WaveformImage(image_width, image_height)
     spectrogram = SpectrogramImage(image_width, image_height, fft_size)
     
-    print "  ",
-    
     for x in range(image_width):
         
         if x % (image_width/10) == 0:
@@ -371,7 +384,7 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
             sys.stdout.flush()
             
         seek_point = int(x * samples_per_pixel)
-        next_seek_point = int( (x + 1) * samples_per_pixel)
+        next_seek_point = int((x + 1) * samples_per_pixel)
         
         (spectral_centroid, db_spectrum) = processor.spectral_centroid(seek_point)
         peaks = processor.peaks(seek_point, next_seek_point)
@@ -379,10 +392,10 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
         waveform.draw_peaks(x, peaks, spectral_centroid)
         spectrogram.draw_spectrum(x, db_spectrum)
     
-    print " done"
-   
     waveform.save(output_filename_w)
     spectrogram.save(output_filename_s)
+    
+    print " done"
 
 
 if __name__ == '__main__':
@@ -401,10 +414,9 @@ if __name__ == '__main__':
     if len(args) == 0:
         parser.print_help()
         parser.error("not enough arguments")
-   
+    
+    # process all files so the user can use wildcards like *.wav
     for input_file in args:
-        print "processing file %s:" % input_file
-        
         try:
             output_file_w = options.output_file_w
         except AttributeError:

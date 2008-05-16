@@ -1,4 +1,28 @@
-import optparse, math
+#!/usr/bin/env python
+
+# wav2png.py -- converts wave files to wave file and spectrogram images
+# Copyright (C) 2008 MUSIC TECHNOLOGY GROUP (MTG)
+#                    UNIVERSITAT POMPEU FABRA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#   Bram de Jong <bram.dejong at domain.com where domain in gmail>
+
+__author__ = "Bram de Jong <bram.dejong@domain.com where domain is gmail >"
+
+import optparse, math, sys
 import scikits.audiolab as audiolab
 import Image, ImageDraw, ImageColor
 import numpy
@@ -340,7 +364,14 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
     waveform = WaveformImage(image_width, image_height)
     spectrogram = SpectrogramImage(image_width, image_height, fft_size)
     
+    print "  ",
+    
     for x in range(image_width):
+        
+        if x % (image_width/10) == 0:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            
         seek_point = int(x * samples_per_pixel)
         next_seek_point = int( (x + 1) * samples_per_pixel)
         
@@ -349,34 +380,53 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
         
         waveform.draw_peaks(x, peaks, spectral_centroid)
         spectrogram.draw_spectrum(x, db_spectrum)
-        
     
+    print " done"
+   
     waveform.save(output_filename_w)
     spectrogram.save(output_filename_s)
 
 
 if __name__ == '__main__':
-    parser = optparse.OptionParser("usage: %prog [options] input-filename output-filename-wave output-filename-spectrogram", conflict_handler="resolve")
+    parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")
+    parser.add_option("-a", "--waveout", action="store", dest="output_filename_w", type="string", help="output waveform image (default input filename + _w.png)")
+    parser.add_option("-s", "--specout", action="store", dest="output_filename_s", type="string", help="output spectrogram image (default input filename + _s.png)")
     parser.add_option("-w", "--width", action="store", dest="image_width", type="int", help="image width in pixels (default %default)")
     parser.add_option("-h", "--height", action="store", dest="image_height", type="int", help="image height in pixels (default %default)")
     parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int", help="fft size, power of 2 for increased performance (default %default)")
     parser.add_option("-p", "--profile", action="store_true", dest="profile", help="run profiler and output profiling information")
-
+    
     parser.set_defaults(image_width=500, image_height=170, fft_size=2048)
 
     (options, args) = parser.parse_args()
 
-    if len(args) != 3:
-        parser.error("incorrect number of arguments")
-
-    if not options.profile:
-        create_png(args[0], args[1], args[2], options.image_width, options.image_height, options.fft_size)
-    else:
-        import hotshot
-        from hotshot import stats
-        prof = hotshot.Profile("stats")
-        prof.runcall(create_png, args[0], args[1], args[2], options.image_width, options.image_height, options.fft_size)
-        prof.close()
+    if len(args) == 0:
+        parser.print_help()
+        parser.error("not enough arguments")
+   
+    for input_file in args:
+        print "processing file %s:" % input_file
         
-        s = stats.load("stats")
-        s.sort_stats("time").print_stats()
+        try:
+            output_file_w = options.output_file_w
+        except AttributeError:
+            output_file_w = input_file + "_w.png"
+            
+        try:
+            output_file_s = options.output_file_w
+        except AttributeError:
+            output_file_s = input_file + "_s.png"
+        
+        args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size)
+
+        if not options.profile:
+            create_png(*args)
+        else:
+            import hotshot
+            from hotshot import stats
+            prof = hotshot.Profile("stats")
+            prof.runcall(create_png, *args)
+            prof.close()
+            
+            s = stats.load("stats")
+            s.sort_stats("time").print_stats()

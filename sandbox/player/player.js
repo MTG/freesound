@@ -37,9 +37,16 @@ soundManager.onerror = function () {
     $$('div.progress-container').each( Element.hide );
 };
 
-function msToTime(ms)
+function msToTime(ms, durationEstimate, displayRemainingTime)
 {
+    if (displayRemainingTime)
+        ms = durationEstimate - ms
+    
     var s = parseInt(ms / 1000);
+    
+    if (s > 99*60 + 59)
+        s = 99*60 + 59;
+    
     var seconds = s % 60;
     var minutes = parseInt(s / 60);
     if (seconds < 10)
@@ -52,7 +59,7 @@ function msToTime(ms)
     else
         minutes = '' + minutes;
 
-    return minutes + ':' + seconds;
+    return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds;
 }
 
 var sndCounter = 0;
@@ -69,11 +76,26 @@ function initPlayer(element)
     var play = element.down("div.play");
     var loop = element.down("div.loop");
     var timeDisplay = element.down("div.time-display");
+    var img = element.down("img");
+    
+    var displayRemainingTime = true;
+    var currentTimeDisplay = "";
 
-    var updateTimeDisplay = function (ms) {
-        var newTime = msToTime(ms);
-        if (timeDisplay.innerHTML != newTime)
-            timeDisplay.update(newTime);
+    var updateTimeDisplay = function (ms, durationEstimate, displayRemainingTime) {
+        var newTimeDisplay = msToTime(ms, durationEstimate, displayRemainingTime);
+        
+        if (currentTimeDisplay != newTimeDisplay)
+        {
+            var timeElements = timeDisplay.childElements();
+    
+            timeElements[0].style.backgroundPosition = "-" + (newTimeDisplay.charAt(0) == "-" ? 90 : 200) + "px 0px";
+            timeElements[1].style.backgroundPosition = "-" + ((newTimeDisplay.charCodeAt(1) - "0".charCodeAt(0))*9+1) + "px 0px";
+            timeElements[2].style.backgroundPosition = "-" + ((newTimeDisplay.charCodeAt(2) - "0".charCodeAt(0))*9+1) + "px 0px";
+            timeElements[4].style.backgroundPosition = "-" + ((newTimeDisplay.charCodeAt(4) - "0".charCodeAt(0))*9+1) + "px 0px";
+            timeElements[5].style.backgroundPosition = "-" + ((newTimeDisplay.charCodeAt(5) - "0".charCodeAt(0))*9+1) + "px 0px";
+            
+            currentTimeDisplay = newTimeDisplay;
+        }
     };
 
     var sound = soundManager.createSound({
@@ -93,7 +115,7 @@ function initPlayer(element)
         },
         whileplaying: function () {
             position.style.width = parseInt(((100.0*sound.position)/sound.durationEstimate)) + "%";
-            updateTimeDisplay(sound.position);
+            updateTimeDisplay(sound.position, sound.durationEstimate, displayRemainingTime);
         },
         whileloading: function () {
             loaded.style.width = parseInt(((100.0*sound.bytesLoaded)/sound.bytesTotal)) + "%";
@@ -113,7 +135,7 @@ function initPlayer(element)
     rewind.observe('click', function (event)
     {
         sound.setPosition(0);
-        updateTimeDisplay(0);
+        updateTimeDisplay(0, sound.durationEstimate, displayRemainingTime);
         position.style.width = 0;
     });
     rewind.observe('mousedown', function (event) { rewind.addClassName('on'); });
@@ -123,6 +145,20 @@ function initPlayer(element)
     {
         sound.togglePause();
         play.toggleClassName("on");
+    });
+    
+    timeDisplay.observe('click', function (event)
+    {
+        displayRemainingTime = !displayRemainingTime;
+    });
+    
+    img.observe('mouseover', function (event)
+    {
+        img.src = String.replace(img.src, "_w.png", "_s.png")
+    });
+    img.observe('mouseout', function (event)
+    {
+        img.src = String.replace(img.src, "_s.png", "_w.png")
     });
     
     loop.observe('click', function (event) { loop.toggleClassName('on'); });

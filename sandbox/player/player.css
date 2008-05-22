@@ -7,39 +7,54 @@ div.preview
 {
     margin-bottom: 15px;
     background-color: black;
-    width: 84px;
-    height: 64px;
+    width: 120px; //84px;
+    height: 69px; //64px;
+}
+
+div.preview a
+{
+    border: 0;
+}
+
+div.preview img
+{
+    border: 0;
 }
 
 div.large {
-    width: 358px;
-    height: 188px;
+    width: 500px; //358px;
+    height: 189px; //188px;
 }
 
 div.preview img
 {
     display: block;
-    width: 84px;
-    height: 45px;
+    width: 120px; //84px;
+    height: 50px; //45px;
 }
 
 div.large img
 {
-    width: 358px;
-    height: 169px;
+    width: 500px; //358px;
+    height: 170px; //169px;
 }
 
 div.progress-container
 {
     font-size: 0.1em;
-    width: 82px;
+    width: 118px; //82px;
     background-color: black;
     border-left: 1px solid black;
     border-right: 1px solid black;
 }
 
+div.progress-container:hover
+{
+    cursor: pointer;
+}
+
 div.large div.progress-container {
-    width: 356px;
+    width: 498px; //356px;
 }
 
 div.progress
@@ -48,11 +63,21 @@ div.progress
     height: 8px;
 }
 
+div.progress:hover
+{
+    cursor: pointer;
+}
+
 div.loaded
 {
     width: 0;
     z-index: 5;
     background-color:#222;
+}
+
+div.loaded:hover
+{
+    cursor: pointer;
 }
 
 div.position
@@ -63,15 +88,20 @@ div.position
     margin-top: -8px;
 }
 
+div.position:hover
+{
+    cursor: pointer;
+}
+
 div.play-controls
 {
-    width: 84px;
+    width: 120px; //84px;
     height: 11px;
     background-color: black;
 }
 
 div.large div.play-controls {
-    width: 358px;
+    width: 500px; //358px;
 }
 
 div.button
@@ -84,6 +114,12 @@ div.button
     float: left;
 }
 
+div.button:hover
+{
+    cursor: pointer;
+}
+
+
 div.loop {
     background-image: url("loop.gif");
     width: 13px;
@@ -94,13 +130,14 @@ div.play {
 }
 
 div.rewind {
-    background-image: url("rewind.gif")
+    background-image: url("rewind.gif");
 }
 
 div.on {
     background-position: 0px -11px;
 }
 
+/*
 div.time-display
 {
     font-family: serif;
@@ -112,6 +149,12 @@ div.time-display
     padding-right: 2px;
 }
 
+div.time-display:hover
+{
+    cursor: pointer;
+}
+*/
+
 a.preview-mp3
 {
     font-family: sans-serif;   
@@ -119,4 +162,39 @@ a.preview-mp3
     font-size: 10px;
     padding-left: 2px;
     text-decoration: none;
+}
+
+div.time-display
+{
+    background-color: black;
+    float: right;
+}
+
+div.time-display:hover
+{
+    cursor: pointer;
+}
+
+div.time-display div
+{
+    background: black url("numb.png") no-repeat;
+    height: 11px;
+    width: 7px;
+    float: left;
+}
+
+div.time-display div.n
+{
+    background-position: -1px 0px;
+}
+
+div.time-display div.m
+{
+    background-position: -200px 0px; // 90
+}
+
+div.time-display div.c
+{
+    background-position: -100px 0px;
+    width: 3px;
 }

@@ -22,7 +22,7 @@
 
 import optparse, math, sys
 import scikits.audiolab as audiolab
-import Image, ImageDraw, ImageColor
+import ImageFilter, ImageChops, Image, ImageDraw, ImageColor
 import numpy
 
 class TestAudioFile(object):
@@ -303,14 +303,10 @@ class WaveformImage(object):
             
     def save(self, filename):
         # draw a zero "zero" line
+        a = 25
         for x in range(self.image_width):
-            rgb = self.pix[x, self.image_height/2]
-            if rgb == (0,0,0):
-                rgb = (60,60,60)
-            else:
-                self.pix[x, self.image_height/2] = (rgb[0]*3, rgb[1]*3, rgb[2]*3)
-
-        #self.draw.line([0, self.image_height/2, self.image_width, self.image_height/2], (255,255,255) )
+            self.pix[x, self.image_height/2] = tuple(map(lambda p: p+a, self.pix[x, self.image_height/2]))
+        
         self.image.save(filename)
         
         

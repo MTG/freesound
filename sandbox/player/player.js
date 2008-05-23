@@ -156,9 +156,9 @@ function initPlayer(element)
     spectral.observe('click', function (event)
     {
         if (spectral.hasClassName("on"))
-            img.src = String.replace(img.src, "_s.png", "_w.png")
+            img.src = img.src.replace("_s.png", "_w.png")
         else
-            img.src = String.replace(img.src, "_w.png", "_s.png")
+            img.src = img.src.replace("_w.png", "_s.png")
 
         spectral.toggleClassName("on");
     });

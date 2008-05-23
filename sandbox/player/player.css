@@ -50,7 +50,7 @@ div.progress-container
 
 div.progress-container:hover
 {
-    cursor: pointer;
+    cursor: e-resize;
 }
 
 div.large div.progress-container {
@@ -63,21 +63,11 @@ div.progress
     height: 8px;
 }
 
-div.progress:hover
-{
-    cursor: pointer;
-}
-
 div.loaded
 {
     width: 0;
     z-index: 5;
     background-color:#222;
-}
-
-div.loaded:hover
-{
-    cursor: pointer;
 }
 
 div.position
@@ -90,7 +80,7 @@ div.position
 
 div.position:hover
 {
-    cursor: pointer;
+    cursor: w-resize;
 }
 
 div.play-controls
@@ -133,27 +123,13 @@ div.rewind {
     background-image: url("rewind.gif");
 }
 
+div.spectral {
+    background-image: url("spectral.gif");
+}
+
 div.on {
     background-position: 0px -11px;
 }
-
-/*
-div.time-display
-{
-    font-family: serif;
-    float: right;
-    font-size: 9px; 
-    height: 11px;
-    background-color: black;
-    color: white;
-    padding-right: 2px;
-}
-
-div.time-display:hover
-{
-    cursor: pointer;
-}
-*/
 
 a.preview-mp3
 {

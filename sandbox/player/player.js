@@ -77,6 +77,7 @@ function initPlayer(element)
     var loop = element.down("div.loop");
     var timeDisplay = element.down("div.time-display");
     var img = element.down("img");
+    var spectral = element.down("div.spectral");
     
     var displayRemainingTime = true;
     var currentTimeDisplay = "";
@@ -152,14 +153,15 @@ function initPlayer(element)
         displayRemainingTime = !displayRemainingTime;
     });
     
-    img.observe('mouseover', function (event)
+    spectral.observe('click', function (event)
     {
-        img.src = String.replace(img.src, "_w.png", "_s.png")
+        if (spectral.hasClassName("on"))
+            img.src = String.replace(img.src, "_s.png", "_w.png")
+        else
+            img.src = String.replace(img.src, "_w.png", "_s.png")
+
+        spectral.toggleClassName("on");
     });
-    img.observe('mouseout', function (event)
-    {
-        img.src = String.replace(img.src, "_s.png", "_w.png")
-    });
-    
+
     loop.observe('click', function (event) { loop.toggleClassName('on'); });
 }

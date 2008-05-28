@@ -7,17 +7,18 @@
    Code licensed under the BSD License:
    http://schillmania.com/projects/soundmanager2/license.txt
 
-   V2.5b.20080505
+   V2.5b.20080525
 */
 
 function SoundManager(smURL,smID) {
   var self = this;
-  this.version = 'V2.5b.20080505';
+  this.version = 'V2.5b.20080525';
   this.url = (smURL||'soundmanager2.swf');
 
   this.debugMode = true;           // enable debugging output (div#soundmanager-debug, OR console if available + configured)
   this.useConsole = true;          // use firebug/safari console.log()-type debug console if available
   this.consoleOnly = false;        // if console is being used, do not create/write to #soundmanager-debug
+  this.waitForWindowLoad = false;  // force SM2 to wait for window.onload() before trying to call soundManager.onload()
   this.nullURL = 'data/null.mp3';  // path to "null" (empty) MP3 file, used to unload sounds
 
   this.defaultOptions = {
@@ -28,6 +29,8 @@ function SoundManager(smURL,smID) {
     'onload': null,                // callback function for "load finished"
     'whileloading': null,          // callback function for "download progress update" (X of Y bytes received)
     'onplay': null,                // callback for "play" start
+    'onpause': null,               // callback for "pause"
+    'onresume': null,              // callback for "resume" (pause toggle)
     'whileplaying': null,          // callback during play (position update)
     'onstop': null,                // callback for "user stop"
     'onfinish': null,              // callback function for "sound finished playing"
@@ -58,6 +61,7 @@ function SoundManager(smURL,smID) {
   this._appendSuccess = false;
   this._didInit = false;
   this._disabled = false;
+  this._windowLoaded = false;
   this._hasConsole = (typeof console != 'undefined' && typeof console.log != 'undefined');
   this._debugLevels = ['log','info','warn','error'];
   this.sandbox = {
@@ -87,8 +91,7 @@ function SoundManager(smURL,smID) {
   };
 
   this.getMovie = function(smID) {
-    // return self.isIE?window[smID]:document[smID];
-    return self.isIE?window[smID]:(self.isSafari?document[smID+'-embed']:document.getElementById(smID+'-embed'));
+    return self.isIE?window[smID]:(self.isSafari?document.getElementById(smID+'-embed')||document[smID+'-embed']:document.getElementById(smID+'-embed'));
   };
 
   this.loadFromXML = function(sXmlUrl) {
@@ -206,6 +209,34 @@ function SoundManager(smURL,smID) {
   this.setVolume = function(sID,nVol) {
     if (!self._idCheck(sID)) return false;
     self.sounds[sID].setVolume(nVol);
+  };
+
+  this.mute = function(sID) {
+    if (!sID) {
+      var o = null;
+      self._writeDebug('soundManager.mute(): Muting all sounds');
+      for (o in self.sounds) {
+        self.sounds[o].mute();
+      }
+    } else {
+      if (!self._idCheck(sID)) return false;
+      self._writeDebug('soundManager.mute(): Muting "'+sID+'"');
+      self.sounds[sID].mute();
+    }
+  };
+
+  this.unmute = function(sID) {
+    if (!sID) {
+      var o = null;
+      self._writeDebug('soundManager.unmute(): Unmuting all sounds');
+      for (o in self.sounds) {
+        self.sounds[o].unmute();
+      }
+    } else {
+      if (!self._idCheck(sID)) return false;
+      self._writeDebug('soundManager.unmute(): Unmuting "'+sID+'"');
+      self.sounds[sID].unmute();
+    }
   };
 
   this.setPolling = function(bPolling) {
@@ -434,7 +465,7 @@ function SoundManager(smURL,smID) {
       };
       // if still not initialized and no other options, give up
       if (!self._didInit && self._okToDisable) self._failSafely();
-    },500);
+    },750);
   };
 
   this.handleFocus = function() {
@@ -466,6 +497,23 @@ function SoundManager(smURL,smID) {
       self.onerror.apply(window);
       return false;
     };
+    if (self.waitForWindowLoad && !self._windowLoaded) {
+      self._writeDebug('soundManager: Waiting for window.onload()');
+      if (window.addEventListener) {
+        window.addEventListener('load',self.initUserOnload,false);
+      } else if (window.attachEvent) {
+        window.attachEvent('onload',self.initUserOnload);
+      };
+      return false;
+    } else {
+      if (self.waitForWindowLoad && self._windowLoaded) {
+        self._writeDebug('soundManager: Document already loaded');
+      };
+      self.initUserOnload();
+    };
+  };
+
+  this.initUserOnload = function() {
     self._writeDebug('soundManager.initComplete(): calling soundManager.onload()',1);
     try {
       // call user-defined "onload", scoped to window
@@ -474,7 +522,7 @@ function SoundManager(smURL,smID) {
       // something broke (likely JS error in user function)
       self._writeDebug('soundManager.onload() threw an exception: '+e.message,2);
       throw e; // (so browser/console gets message) - TODO: Doesn't seem to cascade down, probably due to nested try..catch blocks.
-   };
+    };
     self._writeDebug('soundManager.onload() complete',1);
   };
 
@@ -509,6 +557,7 @@ function SoundManager(smURL,smID) {
 
   this.beginDelayedInit = function() {
     self._writeDebug('soundManager.beginDelayedInit(): Document loaded');
+    self._windowLoaded = true;
     setTimeout(self.waitForExternalInterface,500);
     setTimeout(self.beginInit,20);
   };
@@ -525,7 +574,7 @@ function SoundManager(smURL,smID) {
     self._writeDebug('soundManager.domContentLoaded()');
     if (document.removeEventListener) document.removeEventListener('DOMContentLoaded',self.domContentLoaded,false);
     self.go();
-  }
+  };
 
   this._externalInterfaceOK = function() {
     // callback from flash for confirming that movie loaded, EI is working etc.
@@ -535,7 +584,7 @@ function SoundManager(smURL,smID) {
     self._tryInitOnFocus = false;
     if (self.isIE) {
       // IE needs a timeout OR delay until window.onload - may need TODO: investigating
-	  setTimeout(self.init,100);
+      setTimeout(self.init,100);
     } else {
       self.init();
     };
@@ -639,7 +688,7 @@ function SoundManager(smURL,smID) {
     var thisOptions = sm._mergeObjects(oOptions);
     if (typeof thisOptions.url == 'undefined') thisOptions.url = self.url;
     try {
-      sm._writeDebug('loading '+thisOptions.url,1);
+      sm._writeDebug('soundManager.load(): '+thisOptions.url,1);
       sm.o._load(self.sID,thisOptions.url,thisOptions.stream,thisOptions.autoPlay,(thisOptions.whileloading?1:0));
     } catch(e) {
       sm._writeDebug('SMSound().load(): JS-Flash communication failed.',2);
@@ -672,7 +721,7 @@ function SoundManager(smURL,smID) {
     };
     if (!self.loaded) {
       if (self.readyState == 0) {
-        sm._writeDebug('SMSound.play(): .play() before load request. Attempting to load "'+self.sID+'"',1);
+        sm._writeDebug('SMSound.play(): Attempting to load "'+self.sID+'"',1);
         // try to get this sound playing ASAP
         thisOptions.stream = true;
         thisOptions.autoPlay = true;
@@ -726,6 +775,7 @@ function SoundManager(smURL,smID) {
     sm._writeDebug('SMSound.pause()');
     self.paused = true;
     sm.o._pause(self.sID);
+    if (self.options.onpause) self.options.onpause.apply(self);
   };
 
   this.resume = function() {
@@ -733,6 +783,7 @@ function SoundManager(smURL,smID) {
     sm._writeDebug('SMSound.resume()');
     self.paused = false;
     sm.o._pause(self.sID); // flash method is toggle-based (pause/resume)
+    if (self.options.onresume) self.options.onresume.apply(self);
   };
 
   this.togglePause = function() {
@@ -742,10 +793,8 @@ function SoundManager(smURL,smID) {
       return false;
     };
     if (self.paused) {
-      sm._writeDebug('SMSound.togglePause(): resuming..');
       self.resume();
     } else {
-      sm._writeDebug('SMSound.togglePause(): pausing..');
       self.pause();
     };
   };
@@ -760,6 +809,14 @@ function SoundManager(smURL,smID) {
     if (typeof nVol == 'undefined') nVol = 100;
     sm.o._setVolume(self.sID,nVol);
     self.options.volume = nVol;
+  };
+
+  this.mute = function() {
+    sm.o._setVolume(self.sID,0);
+  };
+
+  this.unmute = function() {
+    sm.o._setVolume(self.sID,self.options.volume);
   };
 
   // --- "private" methods called by Flash ---
@@ -806,13 +863,15 @@ function SoundManager(smURL,smID) {
         sm._writeDebug('SMSound._onload(): Reminder: Flash security is denying network/internet access',1);
       };
       if (sm.sandbox.noLocal == true) {
-        sm._writeDebug('SMSound._onload() Reminder: Flash security is denying local access',1);
+        sm._writeDebug('SMSound._onload(): Reminder: Flash security is denying local access',1);
       };
     };
     self.loaded = bSuccess;
     self.loadSuccess = bSuccess;
     self.readyState = bSuccess?3:2;
-    if (self.options.onload) self.options.onload.apply(self);
+    if (self.options.onload) {
+      self.options.onload.apply(self);
+    };
   };
 
   this._onbeforefinish = function() {

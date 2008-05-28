@@ -23,6 +23,7 @@ class Multidict(dict):
 
             yield (key, value)
 
+
 class SolrQueryException(Exception):
     def __init__(self, value):
         self.value = value
@@ -44,7 +45,7 @@ class SolrQuery(object):
         # some default parameters
         self.params = {
             'qt': query_type,
-            'wt': writer_type
+            'wt': writer_type,
             'indent': indent
         }
     
@@ -98,7 +99,7 @@ class SolrQuery(object):
         self.params['facet.sort'] = sort
         self.params['facet.mincount'] = mincount
         self.params['facet.missing'] = count_missing
-        self.params['facet.enum.cache.minDf'] = enum_cache_mindf 
+        self.params['facet.enum.cache.minDf'] = enum_cache_mindf
     
     # set faceting options for one particular field
     def set_facet_options(self, field, prefix=None, sort=None, limit=None, offset=None, mincount=None, count_missing=None):
@@ -178,7 +179,7 @@ class SolrQuery(object):
             regex_max_analyzed_chars: only analyze this many characters from a field when using the regex fragmenter
         """
         self.params['hl'] = True
-        self.params['hl.fl'] = ","join(field_list) if field_list else field_list
+        self.params['hl.fl'] = ",".join(field_list) if field_list else field_list
         self.params['hl.fl.snippets'] = snippets
         self.params['hl.fragsize'] = fragment_size
         self.params['hl.mergeContiguous'] = merge_contiguous
@@ -227,6 +228,8 @@ class SolrQuery(object):
         except URLError:
             print e.reason
     
+        # datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+        
         if self.params["wt"] == "json":
             return simplejson.load(response)
         else:

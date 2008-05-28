@@ -33,12 +33,13 @@ class SolrQueryException(Exception):
 
 
 class SolrQuery(object):
-    def __init__ (self, url="http://localhost:8983/solr/", query_type=None, writer_type="json", indent=None):
+    def __init__ (self, url="http://localhost:8983/solr/select/", query_type=None, writer_type="json", indent=None, debug_query=None):
         """
             url: query URL entry point
-            query_type: Which handler to use when replying, default: default
+            query_type: Which handler to use when replying, default: default, dismax
             writer_type: Available types are: SolJSON, SolPHP, SolPython, SolRuby, XMLResponseFormat, XsltResponseWriter
             indent: format output with indentation or not
+            debug_query: if 1 output debug infomation
         """
         self.url = url
         
@@ -46,12 +47,41 @@ class SolrQuery(object):
         self.params = {
             'qt': query_type,
             'wt': writer_type,
-            'indent': indent
+            'indent': indent,
+            'debugQuery': debug_query
         }
     
     def set_query(self, query):
         self.params['q'] = query
 
+    def set_dismax_query(self, query, query_fields=None, minimum_match=None, phrase_fields=None, phrase_slop=None, query_phrase_slop=None, tie_breaker=None, boost_query=None, boost_functions=None):
+        """
+            http://wiki.apache.org/solr/DisMaxRequestHandler
+            The DisMaxRequestHandler is designed to process simple user entered phrases (without heavy syntax) and search for the individual words
+            across several fields using different weighting (boosts) based on the significance of each field. Additional options let you influence
+            the score based on rules specific to each use case (independent of user input)
+            
+            query_fields: List of fields and the "boosts" to associate with each of them when building DisjunctionMaxQueries from the user's query.
+                            should be a list of fields with boosts: [("tag", 2), ("description",), (username, 3)]
+            minimum_match: see docs...
+            phrase_fields: after the query, find (in these fields) fields that have all terms close together and boost them
+            phrase_slop: amount of slop on phrase queries built for "pf" fields (affects boosting).
+            query_phrase_slop: Amount of slop on phrase queries explicitly included in the user's query string (in qf fields; affects matching).
+            tie_breaker: see docs... 
+            boost_query: see docs...
+            boost_functions: see docs...
+        """
+        self.params['qt'] = "dismax" 
+        self.params['q'] = query
+        self.params['qf'] = " ".join(["^".join(map(str,t)) for t in query_fields]) if query_fields else query_fields
+        self.params['mm'] = minimum_match
+        self.params['pf'] = " ".join(phrase_fields) if phrase_fields else phrase_fields
+        self.params['ps'] = phrase_slop
+        self.params['qs'] = query_phrase_slop
+        self.params['tie'] = tie_breaker
+        self.params['bq'] = boost_query
+        self.params['bf'] = boost_functions
+        
     def set_query_options(self, start=None, rows=None, sort=None, filter_query=None, field_list=None):
         """
             start: row where to start
@@ -66,15 +96,15 @@ class SolrQuery(object):
         self.params['fq'] = filter_query
         self.params['fl'] = ",".join(field_list) if field_list else field_list
 
-    def add_facet_field(self, field):
+    def add_facet_fields(self, *args):
         """
             add facet field
         """
         self.params['facet'] = True
         try:
-            self.params['facet.field'].append(field)
+            self.params['facet.field'].extend(args)
         except KeyError:
-            self.params['facet.field'] = [field]
+            self.params['facet.field'] = args
         
     def set_facet_query(self, query):
         """
@@ -83,7 +113,7 @@ class SolrQuery(object):
         self.params['facet.query'] = query
     
     # set global faceting options for regular fields
-    def set_global_facet_options(self, limit=None, offset=None, prefix=None, sort=None, mincount=None, count_missing=None, enum_cache_mindf=None):
+    def set_facet_options_global(self, limit=None, offset=None, prefix=None, sort=None, mincount=None, count_missing=None, enum_cache_mindf=None):
         """
             prefix: retun only facets with this prefix
             sort: sort facets, True or False
@@ -119,17 +149,17 @@ class SolrQuery(object):
         self.params['f.%s.facet.mincount' % field] = mincount
         self.params['f.%s.facet.missing' % field] = count_missing
 
-    def add_date_facet(self, field):
+    def add_date_facet_fields(self, *args):
         """
             add date facet field
         """
         self.params['facet'] = True
         try:
-            self.params['facet.date'].append(field)
+            self.params['facet.date'].extend(args)
         except KeyError:
-            self.params['facet.date'] = [field]
+            self.params['facet.date'] = args
     
-    def set_global_date_facet_options(self, start=None, end=None, gap=None, hardened=None, count_other=None):
+    def set_date_facet_options_global(self, start=None, end=None, gap=None, hardened=None, count_other=None):
         """
             start: date start in DateMathParser syntax
             end: date end in DateMathParser syntax
@@ -160,7 +190,7 @@ class SolrQuery(object):
         self.params['f.%s.date.hardend' % field] = hardened
         self.params['f.%s.date.other' % field] = count_other
         
-    def set_global_highlighting_options(self, field_list=None, snippets=None, fragment_size=None, merge_contiguous=None, require_field_match=None, max_analyzed_chars=None, alternate_field=None, max_alternate_field_length=None, pre=None, post=None, fragmenter=None, use_phrase_highlighter=None, regex_slop=None, regex_pattern=None, regex_max_analyzed_chars=None):
+    def set_highlighting_options_global(self, field_list=None, snippets=None, fragment_size=None, merge_contiguous=None, require_field_match=None, max_analyzed_chars=None, alternate_field=None, max_alternate_field_length=None, pre=None, post=None, fragmenter=None, use_phrase_highlighter=None, regex_slop=None, regex_pattern=None, regex_max_analyzed_chars=None):
         """
             field_list: list of fields to highlight space separated
             snippets: number of snippets to generate
@@ -217,32 +247,36 @@ class SolrQuery(object):
     def get_query_string(self):
         return urllib.urlencode(Multidict(self.params))
         
-    def do_query(self):
+    def do_query(self, return_non_parsed=False):
         headers = {
             #'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
         }
+        query_string = self.get_query_string()
+        print self.url + '?' + query_string
         req = urllib2.Request(self.url, self.get_query_string(), headers)
         
         try:
             response = urllib2.urlopen(req)
-        except URLError:
-            print e.reason
+        except urllib2.URLError, e:
+            print e
+            return {}
     
         # datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
         
-        if self.params["wt"] == "json":
-            return simplejson.load(response)
+        if self.params["wt"] != "json" or return_non_parsed:
+            return response.read()
         else:
-            return response
+            return simplejson.load(response)
+            
 
 if __name__ == "__main__":
-    q = SolrQuery()
-    q.set_query("tag:bass")
-    q.set_query_options(start=0, rows=10, sort=["date desc"], field_list=["id", "tag", "description"])
-    q.add_facet_field("author")
-    q.add_facet_field("tag")
-    q.set_global_facet_options(limit=20, count_missing=True)
-    q.set_facet_options("tag", mincount=5)
-    q.add_date_facet("date_written")
-    q.set_global_date_facet_options(start="-2YEARS", end="-1YEARS", gap="+1MONTH", count_other=["before", "after"])
-    print q.get_query_string()
+    q = SolrQuery(indent=True)
+    q.set_dismax_query("bird rain", query_fields=[("tag", 3), ("description", 2), ("username", 1)])
+    q.set_query_options(start=0, rows=10)
+    q.add_facet_fields("tag", "samplerate", "pack_original", "username")
+    q.set_facet_options_global(limit=5, sort=True, mincount=1)
+    q.set_facet_options("tag", limit=30)
+    q.set_facet_options("username", limit=30)
+    q.set_highlighting_options_global(["description"], pre="<strong>", post="</strong>")
+
+    print q.do_query(True)

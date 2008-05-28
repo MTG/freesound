@@ -54,18 +54,3 @@ boolean operators:
 
 grouping:
     title:(+return +"pink panther") (contains both the word "return" and the phrase "pink panther")
-
-
-
-Proposal:
-
-    Field(name="tag", term="thing", boost=2) => tag:thing^2
-    Field(name="description", phrase="vim versus emacs") => description:"vim versus emacs"
-    Field(name="date", start="*" end="NOW-1YEAR", boost=2, include_bounds=True) => date=[* TO NOW-1YEAR]^2
-    
-    Field(name="tag", term="thing", boost=2).include() => +tag:thing^2
-    Field(name="tag", term="thing", boost=2).exclude() => -tag:thing^2
-    
-    Field(name="tag", term="bass") && Field(name="tag", term="drum") > tag:(bass AND drum)
-    
-    Field(name="description", term="bass") && Field(name="tag", term="drum") > description:bass && tag:drum

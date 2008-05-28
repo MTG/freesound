@@ -1,6 +1,6 @@
-import urllib, urllib2
-import simplejson
 import itertools
+import simplejson
+import urllib, urllib2
 
 class Multidict(dict):
     def items(self):
@@ -140,7 +140,7 @@ class SolrQuery(object):
         self.params['facet.date.start'] = start
         self.params['facet.date.end'] = start
         self.params['facet.date.gap'] = gap
-        self.params['facet.date.hardend'] = hardend
+        self.params['facet.date.hardend'] = hardened
         self.params['facet.date.other'] = count_other
 
     def set_date_facet_options(self, field, start=None, end=None, gap=None, hardened=None, count_other=None):
@@ -157,7 +157,7 @@ class SolrQuery(object):
         self.params['f.%s.date.start' % field] = start
         self.params['f.%s.date.end' % field] = start
         self.params['f.%s.date.gap' % field] = gap
-        self.params['f.%s.date.hardend' % field] = hardend
+        self.params['f.%s.date.hardend' % field] = hardened
         self.params['f.%s.date.other' % field] = count_other
         
     def set_global_highlighting_options(self, field_list=None, snippets=None, fragment_size=None, merge_contiguous=None, require_field_match=None, max_analyzed_chars=None, alternate_field=None, max_alternate_field_length=None, pre=None, post=None, fragmenter=None, use_phrase_highlighter=None, regex_slop=None, regex_pattern=None, regex_max_analyzed_chars=None):
@@ -234,3 +234,15 @@ class SolrQuery(object):
             return simplejson.load(response)
         else:
             return response
+
+if __name__ == "__main__":
+    q = SolrQuery()
+    q.set_query("tag:bass")
+    q.set_query_options(start=0, rows=10, sort=["date desc"], field_list=["id", "tag", "description"])
+    q.add_facet_field("author")
+    q.add_facet_field("tag")
+    q.set_global_facet_options(limit=20, count_missing=True)
+    q.set_facet_options("tag", mincount=5)
+    q.add_date_facet("date_written")
+    q.set_global_date_facet_options(start="-2YEARS", end="-1YEARS", gap="+1MONTH", count_other=["before", "after"])
+    print q.get_query_string()

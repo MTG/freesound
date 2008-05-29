@@ -359,22 +359,6 @@ class Solr(object):
         
     def optimize(self):
         self._request('update', '<optimize />')
-
-
-def pprint(d, indent=0):
-    if isinstance(d, dict):
-        print "\t"*indent, "{"
-        for key, value in d.items():
-            print "\t"*indent, str(key), ":"
-            pprint(value, indent+1)
-        print "\t"*indent, "}"
-    elif isinstance(d, list):
-        print "\t"*indent, "["
-        for index, value in enumerate(d):
-            pprint(value, indent+1)
-        print "\t"*indent, "]"
-    else:
-        print "\t"*indent, d
     
 
 if __name__ == "__main__":
@@ -389,4 +373,4 @@ if __name__ == "__main__":
     query.set_facet_options("username", limit=30)
     query.set_highlighting_options_global(["description", "tag"], pre="<strong>", post="</strong>")
 
-    pprint(solr.select(query))
+    print solr.select(query)

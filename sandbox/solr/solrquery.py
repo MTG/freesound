@@ -1,8 +1,14 @@
 import itertools
 import simplejson
 import urllib, urllib2
+import re
+from datetime import datetime, date
+from time import strptime
+from xml.etree import cElementTree as ET
+
 
 class Multidict(dict):
+    """ {"a": 1, "b": (2,3,4), "c":None, "d":False} >> [("a", 1,), ("b", 1), ("b", 2), ("b", 3), ("c", "false")]""" 
     def items(self):
         # generator that retuns all items
         def all_items():
@@ -12,37 +18,26 @@ class Multidict(dict):
                         yield key, v
                 else:
                     yield key, value
-        
+
         # generator that filters all items: drop (key, value) pairs with value=None and convert bools to lower case strings
         for (key, value) in itertools.ifilter(lambda (key,value): value != None, all_items()):
             if isinstance(value, bool):
                 value = str(value).lower()
-
+        
             if isinstance(value, str):
                 value = value.encode('utf-8')
-
+            
             yield (key, value)
 
 
-class SolrQueryException(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
 class SolrQuery(object):
-    def __init__ (self, url="http://localhost:8983/solr/select/", query_type=None, writer_type="json", indent=None, debug_query=None):
+    def __init__ (self, query_type=None, writer_type="json", indent=None, debug_query=None):
         """
-            url: query URL entry point
             query_type: Which handler to use when replying, default: default, dismax
             writer_type: Available types are: SolJSON, SolPHP, SolPython, SolRuby, XMLResponseFormat, XsltResponseWriter
             indent: format output with indentation or not
             debug_query: if 1 output debug infomation
         """
-        self.url = url
-        
         # some default parameters
         self.params = {
             'qt': query_type,
@@ -50,7 +45,7 @@ class SolrQuery(object):
             'indent': indent,
             'debugQuery': debug_query
         }
-    
+ 
     def set_query(self, query):
         self.params['q'] = query
 
@@ -244,39 +239,154 @@ class SolrQuery(object):
         self.params['f.%s.hl.simple.pre' % field] = pre
         self.params['f.%s.hl.simple.post' % field] = post
         
-    def get_query_string(self):
+    def __unicode__(self):
         return urllib.urlencode(Multidict(self.params))
-        
-    def do_query(self, return_non_parsed=False):
-        headers = {
-            #'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-        }
-        query_string = self.get_query_string()
-        print self.url + '?' + query_string
-        req = urllib2.Request(self.url, self.get_query_string(), headers)
-        
-        try:
-            response = urllib2.urlopen(req)
-        except urllib2.URLError, e:
-            print e
-            return {}
+
+
+class SolrAddEncoder(object):
+    def __init__(self):
+        pass
     
-        # datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
-        
-        if self.params["wt"] != "json" or return_non_parsed:
-            return response.read()
+    def _encode_basic_type(self):
+        """
+        Converts python values to a form suitable for insertion into the xml
+        we send to solr.
+        """
+        if isinstance(value, datetime):
+            value = value.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        elif isinstance(value, date):
+            value = value.strftime('%Y-%m-%dT00:00:00.000Z')
+        elif isinstance(value, bool):
+            if value:
+                value = 'true'
+            else:
+                value = 'false'
         else:
-            return simplejson.load(response)
+            value = unicode(value)
+        return value
+
+    def encode(docs):
+        message = ET.Element('add')
+        
+        for doc in docs:
+            d = ET.Element('doc')
+            for key, value in doc.items():
+                # handle lists, tuples, and other iterabes
+                if isinstance(vale, (list, tuple)):
+                    for v in value:
+                        f = ET.Element('field', name=key)
+                        f.text = self._encode_basic_type(v)
+                        d.append(f)
+                # handle strings and unicode
+                else:
+                    f = ET.Element('field', name=key)
+                    f.text = self._encode_basic_type(value)
+                    d.append(f)
+            message.append(d)
+
+        return ET.tostring(message)
+
+        
+
+class SolrJsonDecoderException(Exception):
+    pass
+
+
+class SolrJsonDecoder(object):
+    def __init__(self):
+        # matches returned dates in JSON strings
+        self.date_match = re.compile("-?\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.?\d*[a-zA-Z]*")
+        
+    def decode(self, response_object):
+        if not response_object.code == 200:
+            raise SolrJsonDecoderException, "response object does not have OK code"
+        return self._decode_dates(simplejson.load(response_object))
+        
+    def _decode_dates(self, d):
+        if isinstance(d, dict):
+            for key, value in d.items():
+                d[key] = self._decode_dates(value)
+        elif isinstance(d, list):
+            for index, value in enumerate(d):
+                d[index] = self._decode_dates(value)
+        elif isinstance(d, basestring):
+            if self.date_match.match(d):
+                try:
+                    d = datetime(*strptime(d[0:19], "%Y-%m-%dT%H:%M:%S")[0:6])
+                except:
+                    raise SolrJsonDecoderException, "response object does not have OK code"
+        return d
+
+
+class SolrException(Exception):
+    pass
+
+
+class Solr(object):
+    def __init__(self, url="http://localhost:8983/solr", auto_commit=True, encoder=SolrAddEncoder(), decoder=SolrJsonDecoder()):
+        self.url = url.rstrip('/')
+        self.decoder = decoder
+        self.encoder = encoder
+        
+    def _request(self, query_string, method="select"):
+        url = "%s/%s" % (self.url, method)
+        req = urllib2.Request(url, unicode(query_string))
+        try:
+            return urllib2.urlopen(req)
+        except urllib2.URLError, e:
+            raise SolrException, e.reason
+    
+    def select(self, query_string):
+        return self.decoder.decode(self._request(query_string, "select"))
+    
+    def insert(self, docs):
+        self._request('update', self.encoder.encode(docs))
+        if self.auto_commit:
+            self.commit()
             
+    def delete_by_id(self, id):
+        self._request('update', u'<delete><id>%s</id></delete>' % unicode(id))
+        if self.auto_commit:
+            self.commit()
+
+    def delete_by_query(self, query):
+        self._request('update', u'<delete><query>%s</query></delete>' % unicode(query))
+        if self.auto_commit:
+            self.commit()
+
+    def commit(self):
+        self._request('update', '<commit />')
+        
+    def optimize(self):
+        self._request('update', '<optimize />')
+
+
+def pprint(d, indent=0):
+    if isinstance(d, dict):
+        print "\t"*indent, "{"
+        for key, value in d.items():
+            print "\t"*indent, str(key), ":"
+            pprint(value, indent+1)
+        print "\t"*indent, "}"
+    elif isinstance(d, list):
+        print "\t"*indent, "["
+        for index, value in enumerate(d):
+            pprint(value, indent+1)
+        print "\t"*indent, "]"
+    else:
+        print "\t"*indent, d
+    
 
 if __name__ == "__main__":
-    q = SolrQuery(indent=True)
-    q.set_dismax_query("bird rain", query_fields=[("tag", 3), ("description", 2), ("username", 1)])
-    q.set_query_options(start=0, rows=10)
-    q.add_facet_fields("tag", "samplerate", "pack_original", "username")
-    q.set_facet_options_global(limit=5, sort=True, mincount=1)
-    q.set_facet_options("tag", limit=30)
-    q.set_facet_options("username", limit=30)
-    q.set_highlighting_options_global(["description"], pre="<strong>", post="</strong>")
+    solr = Solr("http://localhost:8983/solr/")
+    
+    query = SolrQuery(indent=True)
+    query.set_dismax_query("bird rain", query_fields=[("tag", 3), ("description", 2), ("username", 1)])
+    query.set_query_options(start=0, rows=10)
+    query.add_facet_fields("tag", "samplerate", "pack_original", "username")
+    query.set_facet_options_global(limit=5, sort=True, mincount=1)
+    query.set_facet_options("tag", limit=30)
+    query.set_facet_options("username", limit=30)
+    query.set_highlighting_options_global(["description", "tag"], pre="<strong>", post="</strong>")
 
-    print q.do_query(True)
+    pprint(solr.select(query))

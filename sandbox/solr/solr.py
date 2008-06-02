@@ -25,7 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Author: bram de Jong <bram.dejong@domain.com> where domain in gmail 
+# Author: bram de Jong <bram.dejong@domain.com> where domain is gmail 
  
 from datetime import datetime, date
 from time import strptime

@@ -27,6 +27,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.auth',
     'django.core.context_processors.debug',
     # 'django.core.context_processors.i18n',
+    'context_processor.context_extra',
 )
 
 # List of callables that know how to import templates from various sources.
@@ -50,7 +51,7 @@ MIDDLEWARE_CLASSES = (
 #CACHE_MIDDLEWARE_SECONDS = 300
 #CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
 
-ROOT_URLCONF = 'freesound.urls'
+ROOT_URLCONF = 'urls'
 
 AUTH_PROFILE_MODULE = 'users.Profile'
 LOGIN_URL = '/login/'
@@ -62,8 +63,16 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.flatpages',
-    'freesound.sounds',
-    'freesound.images'
+    'accounts',
+    'comments',
+    'favorites',
+    'geotags',
+    'images',
+    'messages',
+    'ratings',
+    'sounds',
+    'support',
+    'tags',
 )
 
 DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'

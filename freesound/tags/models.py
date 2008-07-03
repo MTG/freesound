@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.utils.encoding import smart_unicode
 
 class Tag(models.Model):
     name = models.SlugField(unique=True, db_index=True, max_length=100)
@@ -12,6 +13,7 @@ class Tag(models.Model):
         return self.name
 
 admin.site.register(Tag)
+
 
 class TaggedItem(models.Model):
     user = models.ForeignKey(User)
@@ -30,6 +32,9 @@ class TaggedItem(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('tag', (smart_unicode(self.tag.id),))
+
+    class Meta:
+        unique_together = ('tag', 'content_type', 'object_id')
 
 class TaggedItemAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', )

@@ -16,10 +16,12 @@ class Favorite(models.Model):
     
     def __unicode__(self):
         return u"%s favorites %s - %s" % (self.user, self.content_type, self.content_type)
+    
+    class Meta:
+        unique_together = ('user', 'content_type', 'object_id')
 
 
 class FavoriteAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',) 
     list_display = ('user', 'content_object', 'created')
-
 admin.site.register(Favorite, FavoriteAdmin)

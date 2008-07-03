@@ -10,6 +10,8 @@ class Message(models.Model):
     message = models.TextField()
     subject = models.CharField(max_length=128)
     
+    parent = models.ForeignKey('self', blank=True, null=True, default=None, related_name='replies')
+        
     read = models.BooleanField(default=False, db_index=True)
     deleted = models.BooleanField(default=False, db_index=True)
     
@@ -22,5 +24,4 @@ class Message(models.Model):
 class MessageAdmin(admin.ModelAdmin):
     raw_id_fields = ('user_from', 'user_to')
     list_display = ('user_from', 'user_to', 'subject', 'read', 'deleted', 'created')
-
 admin.site.register(Message, MessageAdmin)

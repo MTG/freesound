@@ -41,6 +41,9 @@ class StandardReply(models.Model):
     def __unicode__(self):
         return u"%s %s" % (self.type, self.summary)
 
+    class Meta:
+        unique_together = ('type', 'summary')
+
 class StandardReplyAdmin(admin.ModelAdmin):
     list_display = ('type', 'summary')
 admin.site.register(StandardReply, StandardReplyAdmin)

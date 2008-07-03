@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
 from datetime import datetime
+from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.db import models
+from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
 from general.models import SocialModel
 from geotags.models import GeoTag
@@ -21,7 +22,6 @@ class License(models.Model):
 
 class LicenseAdmin(admin.ModelAdmin):
     list_display = ('name', 'deed_url', 'legal_code_url')
-
 admin.site.register(License, LicenseAdmin)
 
 
@@ -39,7 +39,7 @@ class Sound(SocialModel):
     license = models.ForeignKey(License)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
     original_filename = models.CharField(max_length=512) # name of the file the user uploaded
-    sources =  models.ManyToManyField('self', symmetrical=False, related_name='remixes')
+    sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None)
     
     # file properties
@@ -57,6 +57,7 @@ class Sound(SocialModel):
     samplerate = models.FloatField(default=0)
     filesize = models.IntegerField(default=0)
     channels = models.IntegerField(default=0)
+    md5 = models.CharField(max_length=32, unique=True, db_index=True)
     
     # moderation
     MODERATION_STATE_CHOICES = (
@@ -79,7 +80,7 @@ class Sound(SocialModel):
     processing_log = models.TextField(null=True, blank=True, default=None)
     
     def __unicode__(self):
-        return u"%s by %s" % (self.filename_slug, self.user)
+        return u"%s by %s" % (self.base_filename_slug, self.user)
 
     @models.permalink
     def get_absolute_url(self):
@@ -88,17 +89,16 @@ class Sound(SocialModel):
 
 class SoundAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'pack', 'sources', 'geotag')
-    list_display = ('user_from', 'user_to', 'subject', 'read', 'deleted', 'created')
+    list_display = ('id', 'user', 'original_filename', 'license')
     list_filter = ('processing_state', 'moderation_state', 'license')
     fieldsets = (
-         (None, {'Fields': ('user', 'created', 'modified')}),
+         (None, {'fields': ('user', 'created', 'modified')}),
          ('Filenames', {'fields': ('original_path', 'base_filename_slug')}),
-         ('User defined fields', {'fields': ('description', 'license', 'geotag', 'original_filename', 'sources', 'sources', 'pack')}),
-         ('File properties', {'fields': ('type', 'duration', 'bitrate', 'bitdepth', 'samplerate', 'filesize', 'channels')}),
+         ('User defined fields', {'fields': ('description', 'license', 'geotag', 'original_filename', 'sources', 'pack')}),
+         ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate', 'filesize', 'channels')}),
          ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'moderation_bad_description')}),
          ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_log')}),
      )
-
 admin.site.register(Sound, SoundAdmin)
 
 
@@ -118,12 +118,14 @@ class Pack(SocialModel):
     @models.permalink
     def get_absolute_url(self):
         return ('pack', (smart_unicode(self.id),))    
+    
+    class Meta:
+        unique_together = ('user', 'name')
 
 
 class PackAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'name', 'created')
-
 admin.site.register(Pack, PackAdmin)
 
 
@@ -147,5 +149,4 @@ class Report(models.Model):
 class ReportAdmin(admin.ModelAdmin):
     raw_id_fields = ('reporting_user', 'sound')
     list_display = ('reporting_user', 'email', 'reason_type')
-
 admin.site.register(Report, ReportAdmin)

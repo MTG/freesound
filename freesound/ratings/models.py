@@ -19,6 +19,9 @@ class Rating(models.Model):
     def __unicode__(self):
         return u"%s rated %s - %s: %d" % (self.user, self.content_type, self.content_type, self.rating)
 
+    class Meta:
+        unique_together = ('user', 'content_type', 'object_id')
+
 
 class RatingAdmin(admin.ModelAdmin):
     raw_id_fields = ('user')

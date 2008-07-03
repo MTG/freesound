@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.utils.encoding import smart_unicode
 
 class GeoTag(models.Model):
     user = models.ForeignKey(User)
@@ -25,5 +26,4 @@ class GeoTag(models.Model):
 class GeoTagAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',) 
     list_display = ('user', 'lat', 'lon', 'created')
-
 admin.site.register(GeoTag, GeoTagAdmin)

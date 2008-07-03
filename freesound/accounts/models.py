@@ -2,10 +2,11 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.encoding import smart_unicode
 from general.models import SocialModel
 
 class Profile(SocialModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, unique=True)
     # add many many more things here :)
     
     home_page = models.URLField(null=True, blank=True, default=None)
@@ -25,6 +26,5 @@ class Profile(SocialModel):
 class ProfileAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',) 
     list_display = ('user', 'home_page', 'whitelisted')
-    ordering = ('user__unsername',)
-
+    ordering = ('user__username',)
 admin.site.register(Profile, ProfileAdmin)

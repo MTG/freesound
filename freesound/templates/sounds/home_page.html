@@ -1,1 +1,13 @@
-hello world
+{% load cache %}
+
+{% cache 500 rss %}
+{% for entry in rss.entries %}
+	<h1>{{entry.title}}</h1>
+	<p>
+		{{entry.summary|safe}}
+	</p>
+	<p>
+		<a href="{{entry.link}}">read more...</a>
+	</p>
+{% endfor %}
+{% endcache %}

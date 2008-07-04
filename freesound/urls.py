@@ -14,37 +14,39 @@ urlpatterns = patterns('',
     url(r'^account/describe/$', 'accounts.views.describe', name="accounts-describe"),
     url(r'^account/attribution/$', 'accounts.views.attribution', name="accounts-attribution"),
 
-    url(r'^account/messages/$', 'messages.views.index', name='messages'),
-    url(r'^account/messages/(?P<message_id>\d+)/$', 'messages.views.single', name='message'),
+    url(r'^account/messages/$', 'messages.views.messages', name='messages'),
+    url(r'^account/messages/(?P<message_id>\d+)/$', 'messages.views.message', name='message'),
     url(r'^account/messages/sent/$', 'messages.views.sent', name='messages-sent'),
     
     url(r'^search/$', 'sounds.views.search', name='sounds-search'),
     
-    url(r'^people/$', 'accounts.views.index', name="accounts"),
-    url(r'^people/(?P<username>[^//]+)/$', 'accounts.views.single', name="account"),
+    url(r'^people/$', 'accounts.views.accounts', name="accounts"),
+    url(r'^people/(?P<username>[^//]+)/$', 'accounts.views.account', name="account"),
     url(r'^people/(?P<username>[^//]+)/sounds/$', 'sounds.views.for_user', name="sounds-for-user"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/$', 'sounds.views.single', name="sound"),
+    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/$', 'sounds.views.sound', name="sound"),
 
     url(r'^people/(?P<username>[^//]+)/packs/$', 'sounds.views.packs_for_user', name="packs-for-user"),
-    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', 'sounds.views.single_pack', name="pack"),
+    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', 'sounds.views.pack', name="pack"),
 
-    url(r'^browse/$', 'sounds.views.index', name="sounds"),
+    url(r'^browse/$', 'sounds.views.sounds', name="sounds"),
 
-    url(r'^browse/tags/(?P<tags>[\w//-]*)$', 'tags.views.index', name="tags"),
+    url(r'^browse/tags/(?P<multiple_tags>[\w//-]*)$', 'tags.views.tags', name="tags"),
     
     url(r'^browse/packs/$', 'sounds.views.packs', name="packs"),
     
     url(r'^browse/random/$', 'sounds.views.random', "sounds-random"),
     url(r'^browse/remixed/$', 'sounds.views.remixed', "sounds-remixed"),
     
-    url(r'^browse/geotagged/$', 'geotags.views.index', "geotags"),
-    url(r'^browse/geotagged/(?P<sound_id>\d+)/$', 'geotags.views.single', "geotag"),
+    url(r'^browse/geotagged/$', 'geotags.views.geotags', "geotags"),
+    url(r'^browse/geotagged/(?P<sound_id>\d+)/$', 'geotags.views.geotag', "geotag"),
     
     url(r'^contact/$', 'support.views.contact', "contact"),
     
     url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
     
     url(r'^help/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://help.freesound.org/"}, name="blog"),
+    
+     (r'^forum/', include('forum.urls')),
     
     (r"^admin/(.*)", admin.site.root),
 )

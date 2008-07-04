@@ -1,8 +1,9 @@
-#Wed Jul 02 18:40:11 CEST 2008
+#Fri Jul 04 19:50:31 CEST 2008
 eclipse.preferences.version=1
 encoding//accounts/models.py=UTF-8
 encoding//comments/models.py=UTF-8
 encoding//favorites/models.py=UTF-8
+encoding//forum/urls.py=UTF-8
 encoding//general/models.py=UTF-8
 encoding//geotags/models.py=UTF-8
 encoding//images/models.py=UTF-8

@@ -52,7 +52,7 @@ CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
 
 ROOT_URLCONF = 'urls'
 
-AUTH_PROFILE_MODULE = 'users.Profile'
+AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/login/'
 
 INSTALLED_APPS = (
@@ -62,6 +62,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.flatpages',
+    'django.contrib.markup',
     'accounts',
     'comments',
     'favorites',
@@ -73,6 +74,7 @@ INSTALLED_APPS = (
     'sounds',
     'support',
     'tags',
+    'forum',
 )
 
 DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'
@@ -95,6 +97,7 @@ from local_settings import *
 TEMPLATE_DEBUG = DEBUG
 
 FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
+FORUM_POSTS_PER_PAGE = 20
 
 if TEMPLATE_DEBUG:
     TEMPLATE_STRING_IF_INVALID = 'MISSING VAR %s'

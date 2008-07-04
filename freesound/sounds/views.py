@@ -6,5 +6,32 @@ from sounds.models import Sound
 def front_page(request):
     return render_to_response('sounds/home_page.html', {
         "rss_url": settings.FREESOUND_RSS
-    }, context_instance=RequestContext(request))
+    }, context_instance=RequestContext(request)) 
  
+def sounds(request):
+    pass
+
+def sound(request, username, sound_id):
+    pass
+
+def pack(request, pack_id):
+    pass
+
+def remixed(request):
+     pass
+ 
+def random(request):
+     pass
+
+def packs(request):
+    pass
+
+def packs_for_user(request, username):
+    pass
+
+def search(request):
+    pass
+
+def for_user(request, username):
+    pass
+

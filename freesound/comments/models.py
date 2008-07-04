@@ -24,5 +24,5 @@ class Comment(models.Model):
 
 class CommentAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',) 
-    list_display = ('user', 'content_object', 'created')
+    list_display = ('user', 'content_type', 'object_id', 'created')
 admin.site.register(Comment, CommentAdmin)

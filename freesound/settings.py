@@ -66,6 +66,7 @@ INSTALLED_APPS = (
     'comments',
     'favorites',
     'geotags',
+    'general',
     'images',
     'messages',
     'ratings',
@@ -92,6 +93,8 @@ INTERNAL_IPS = ['localhost', '127.0.0.1']
 from local_settings import *
 
 TEMPLATE_DEBUG = DEBUG
+
+FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
 
 if TEMPLATE_DEBUG:
     TEMPLATE_STRING_IF_INVALID = 'MISSING VAR %s'

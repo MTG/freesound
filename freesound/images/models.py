@@ -36,5 +36,5 @@ class Image(models.Model):
 
 class ImageAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',) 
-    list_display = ('user', 'title', 'base_filename_slug', 'content_object', 'created')
+    list_display = ('user', 'title', 'base_filename_slug', 'content_type', 'object_id', 'created')
 admin.site.register(Image, ImageAdmin)

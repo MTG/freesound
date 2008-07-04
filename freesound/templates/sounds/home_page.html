@@ -1,13 +1,19 @@
 {% load cache %}
+{% load rss %}
 
-{% cache 500 rss %}
-{% for entry in rss.entries %}
-	<h1>{{entry.title}}</h1>
+{% cache 1 rss %}
+	{% get_rss rss_url as rss %}
+	<h1>News</h1>
+	{% for entry in rss.entries|slice:":5" %}
+		<h2><a href="{{entry.link}}">{{entry.title}}</a></h2>
+		<p>
+			{{entry.summary|safe}}
+		</p>
+		<p>
+			<a href="{{entry.link}}">read more...</a>
+		</p>
+	{% endfor %}
 	<p>
-		{{entry.summary|safe}}
+		<a href="{{rss.feed.link}}">More news...</a>
 	</p>
-	<p>
-		<a href="{{entry.link}}">read more...</a>
-	</p>
-{% endfor %}
 {% endcache %}

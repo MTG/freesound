@@ -11,6 +11,8 @@ urlpatterns = patterns('',
     url(r'^account/edit/$', 'accounts.views.edit', name="accounts-edit"),
 
     url(r'^account/upload/$', 'accounts.views.upload', name="accounts-upload"),
+    url(r'^account/upload/(?P<unique_id>\d{10})/$', 'accounts.views.upload', name="accounts-upload-unique"),
+    url(r'^account/upload/progress/(?P<unique_id>\d{10})/$', 'accounts.views.upload_progress', name="accounts-upload-progress"),
     url(r'^account/describe/$', 'accounts.views.describe', name="accounts-describe"),
     url(r'^account/attribution/$', 'accounts.views.attribution', name="accounts-attribution"),
 

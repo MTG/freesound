@@ -92,12 +92,17 @@ IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cg
 # See debug comments, when DEBUG is True
 INTERNAL_IPS = ['localhost', '127.0.0.1']
 
+FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
+FORUM_POSTS_PER_PAGE = 20
+
+FILES_UPLOAD_DIRECTORY = "/freesound/uploads/"
+FILES_UPLOAD_OK_DIRECTORY = "/freesound/uploads_ok/"
+
+
+# leave at bottom starting here!
 from local_settings import *
 
 TEMPLATE_DEBUG = DEBUG
-
-FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
-FORUM_POSTS_PER_PAGE = 20
 
 if TEMPLATE_DEBUG:
     TEMPLATE_STRING_IF_INVALID = 'MISSING VAR %s'

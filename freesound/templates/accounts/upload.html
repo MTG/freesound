@@ -1,4 +1,31 @@
-<form enctype="multipart/form-data" method="post" action="{% url accounts-upload-unique unique_id %}">
-{{ upload_form }}
-<input type="submit" value="upload" />
+{% extends "base.html" %}
+
+{% block page_title %}Upload{% endblock %}
+{% block body %}
+<script type="text/javascript">
+	function onSubmit()
+	{
+		var pe = new Ajax.PeriodicalUpdater('progress', '{% url accounts-upload-progress unique_id %}',
+		{
+		  method: 'get',
+		  frequency: 3,
+		  decay: 2
+		});
+
+		$('upload-form').request({
+  			onComplete: function()
+  			{
+  				alert('Form data saved!');
+  				pe.stop();
+  			}
+		});
+		
+		return false;
+	}
+</script>
+<form id="upload-form" enctype="multipart/form-data" method="post" action="{% url accounts-upload-unique unique_id %}" onsubmit="onSubmit()">
+	{{ upload_form }}
+	<input type="submit" value="upload" />
 </form>
+<div id="progress"></div>
+{% endblock %}

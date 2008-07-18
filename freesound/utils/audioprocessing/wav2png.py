@@ -363,8 +363,6 @@ class SpectrogramImage(object):
 
 
 def create_png(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size):
-    print "processing file %s:\n\t" % input_file,
-    
     audio_file = audiolab.sndfile(input_filename, 'read')
 
     samples_per_pixel = audio_file.get_nframes() / float(image_width)
@@ -390,8 +388,6 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
     
     waveform.save(output_filename_w)
     spectrogram.save(output_filename_s)
-    
-    print " done"
 
 
 if __name__ == '__main__':
@@ -422,6 +418,8 @@ if __name__ == '__main__':
         
         args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size)
 
+        print "processing file %s:\n\t" % input_file
+    
         if not options.profile:
             create_png(*args)
         else:
@@ -436,3 +434,5 @@ if __name__ == '__main__':
             s.strip_dirs()
             s.sort_stats("time")
             s.print_stats(30)
+        
+        print " done"

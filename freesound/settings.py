@@ -75,6 +75,7 @@ INSTALLED_APPS = (
     'support',
     'tags',
     'forum',
+    'django_docs',
 )
 
 DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'

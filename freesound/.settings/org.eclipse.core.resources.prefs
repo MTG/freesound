@@ -1,4 +1,4 @@
-#Fri Jul 04 19:50:31 CEST 2008
+#Fri Jul 18 13:05:01 CEST 2008
 eclipse.preferences.version=1
 encoding//accounts/models.py=UTF-8
 encoding//comments/models.py=UTF-8
@@ -12,7 +12,6 @@ encoding//ratings/models.py=UTF-8
 encoding//sounds/models.py=UTF-8
 encoding//support/models.py=UTF-8
 encoding//tags/models.py=UTF-8
-encoding//utils/paypalwrapper.py=UTF-8
 encoding/local_settings.example.py=UTF-8
 encoding/local_settings.py=UTF-8
 encoding/manage.py=UTF-8

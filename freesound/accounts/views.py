@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forms import UploadFileForm
 from uploadhandler import ProgressUploadHandler
-import hashlib
 import os
 import random
 
@@ -19,7 +20,9 @@ def edit(request):
 
 @login_required
 def describe(request):
-    pass
+    directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id))
+    
+    return render_to_response('accounts/describe.html', { }, context_instance=RequestContext(request))
 
 @login_required
 def attribution(request):
@@ -49,15 +52,15 @@ def handle_uploaded_file(request, f):
     for chunk in f.chunks():
         destination.write(chunk)
         
-    file(os.path.join(directory_ok, f.name), "w").write("")
+    file(os.path.join(directory_ok, f.name), "w").write(" ")
 
 
-@login_required
+#@login_required
 def upload(request, unique_id=None):
-    
+
     if unique_id == None:
         unique_id = "".join(random.sample("0123456789", 10))
-
+        
     request.upload_handlers.insert(0, ProgressUploadHandler(unique_id))
     
     if request.method == 'POST':
@@ -76,11 +79,4 @@ def upload(request, unique_id=None):
 
 @login_required
 def upload_progress(request, unique_id):
-    progress = cache.get(unique_id)
-    
-    # TODO: encode to JSON before sending + set JSON headers!!
-
-    if progress:
-        return HttpResponse(progress)
-    else:
-        return HttpProgress("0")
+    return render_to_response('accounts/upload-progress.html', { "progress": cache.get(unique_id) }, context_instance=RequestContext(request))

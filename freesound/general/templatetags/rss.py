@@ -10,7 +10,6 @@ class RssParserNode(template.Node):
         self.var_name = var_name
     def render(self, context):
         if self.url:
-            print 
             context[self.var_name] = feedparser.parse(self.url)
         else:
             context[self.var_name] = feedparser.parse(context[self.url_var_name])

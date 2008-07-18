@@ -91,7 +91,7 @@ class SoundAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'pack', 'sources', 'geotag')
     list_display = ('id', 'user', 'original_filename', 'license')
     list_filter = ('processing_state', 'moderation_state', 'license')
-    fieldsets = (
+    afieldsets = (
          (None, {'fields': ('user', 'created', 'modified')}),
          ('Filenames', {'fields': ('original_path', 'base_filename_slug')}),
          ('User defined fields', {'fields': ('description', 'license', 'geotag', 'original_filename', 'sources', 'pack')}),

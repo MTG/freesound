@@ -14,11 +14,23 @@ div.preview
 div.preview a
 {
     border: 0;
+    outline: none;
+}
+
+div.preview a:active
+{
+    border: 0;
+    outline: none;
 }
 
 div.preview img
 {
     border: 0;
+}
+
+div.preview a span
+{
+    display: none;
 }
 
 div.large {
@@ -94,7 +106,7 @@ div.large div.play-controls {
     width: 500px; //358px;
 }
 
-div.button
+.button
 {
     height: 11px;
     width: 11px;
@@ -104,30 +116,33 @@ div.button
     float: left;
 }
 
-div.button:hover
+.button:hover
 {
     cursor: pointer;
 }
 
 
-div.loop {
+a.loop {
     background-image: url("loop.gif");
     width: 13px;
+    display: block;
 }
 
-div.play {
+a.play {
     background-image: url("play.gif");
+    display: block;
 }
 
-div.rewind {
+a.rewind {
     background-image: url("rewind.gif");
+    display:block;
 }
 
 div.spectral {
     background-image: url("spectral.gif");
 }
 
-div.on {
+.on {
     background-position: 0px -11px;
 }
 

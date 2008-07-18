@@ -72,9 +72,9 @@ function initPlayer(element)
     var progressContainer = element.down("div.progress-container");
     var position = element.down("div.position");
     var loaded = element.down("div.loaded");
-    var rewind = element.down("div.rewind");
-    var play = element.down("div.play");
-    var loop = element.down("div.loop");
+    var rewind = element.down("a.rewind");
+    var play = element.down("a.play");
+    var loop = element.down("a.loop");
     var timeDisplay = element.down("div.time-display");
     var img = element.down("img");
     var spectral = element.down("div.spectral");

@@ -24,8 +24,9 @@ def convert_to_mp3(input_filename, output_filename, quality):
 
 
 if __name__ == "__main__":
+    import sys
     try:
-        print convert_to_wav("/Users/bram/Desktop/flacfile.aif", "/Users/bram/Desktop/a b.wav")
+        print convert_to_wav(sys.argv[1], sys.argv[1] + ".wav")
     except AudioProcessingException, e:
         print "ERROR ERROR\n", e
         

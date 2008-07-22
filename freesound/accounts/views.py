@@ -5,8 +5,8 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from forms import UploadFileForm
-from uploadhandler import ProgressUploadHandler
+from forms import UploadFileForm, FileChoiceForm
+from utils.filesystem import generate_tree
 import os
 import random
 
@@ -20,9 +20,22 @@ def edit(request):
 
 @login_required
 def describe(request):
-    directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id))
     
-    return render_to_response('accounts/describe.html', { }, context_instance=RequestContext(request))
+    file_structure, files = generate_tree(os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id)))
+    file_structure.name = "Your uploaded files"
+    
+    if request.method == 'POST':
+        form = FileChoiceForm(files.items(), request.POST)
+        
+        if form.is_valid():
+            return HttpResponse(str(form.cleaned_data["files"]))
+        else:
+            return HttpResponse("not valid")
+            return HttpResponseRedirect(reverse("accounts-describe"))
+    else:
+        form = FileChoiceForm(files.items())
+
+    return render_to_response('accounts/describe.html', { "file_structure": file_structure, "form": form }, context_instance=RequestContext(request))
 
 @login_required
 def attribution(request):
@@ -55,14 +68,9 @@ def handle_uploaded_file(request, f):
     file(os.path.join(directory_ok, f.name), "w").write(" ")
 
 
-#@login_required
-def upload(request, unique_id=None):
-
-    if unique_id == None:
-        unique_id = "".join(random.sample("0123456789", 10))
+@login_required
+def upload(request):
         
-    request.upload_handlers.insert(0, ProgressUploadHandler(unique_id))
-    
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
 
@@ -71,10 +79,9 @@ def upload(request, unique_id=None):
             
             return HttpResponseRedirect(reverse("accounts-describe"))
     else:
-        
-        form = UploadFileForm(initial={'unique_id' : unique_id})
+        form = UploadFileForm()
     
-    return render_to_response('accounts/upload.html', { "unique_id": unique_id, "upload_form" : form }, context_instance=RequestContext(request))
+    return render_to_response('accounts/upload.html', { "upload_form" : form }, context_instance=RequestContext(request))
 
 
 @login_required

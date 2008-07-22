@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -19,9 +18,3 @@ class Message(models.Model):
 
     def __unicode__(self):
         return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)
-
-
-class MessageAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user_from', 'user_to')
-    list_display = ('user_from', 'user_to', 'subject', 'read', 'deleted', 'created')
-admin.site.register(Message, MessageAdmin)

@@ -1,16 +1,28 @@
-#Fri Jul 18 13:05:01 CEST 2008
+#Tue Jul 22 11:24:48 CEST 2008
 eclipse.preferences.version=1
+encoding//accounts/admin.py=UTF-8
 encoding//accounts/models.py=UTF-8
+encoding//comments/admin.py=UTF-8
 encoding//comments/models.py=UTF-8
+encoding//favorites/admin.py=UTF-8
 encoding//favorites/models.py=UTF-8
+encoding//forum/admin.py=UTF-8
+encoding//forum/models.py=UTF-8
 encoding//forum/urls.py=UTF-8
 encoding//general/models.py=UTF-8
+encoding//geotags/admin.py=UTF-8
 encoding//geotags/models.py=UTF-8
+encoding//images/admin.py=UTF-8
 encoding//images/models.py=UTF-8
+encoding//messages/admin.py=UTF-8
 encoding//messages/models.py=UTF-8
+encoding//ratings/admin.py=UTF-8
 encoding//ratings/models.py=UTF-8
+encoding//sounds/admin.py=UTF-8
 encoding//sounds/models.py=UTF-8
+encoding//support/admin.py=UTF-8
 encoding//support/models.py=UTF-8
+encoding//tags/admin.py=UTF-8
 encoding//tags/models.py=UTF-8
 encoding/local_settings.example.py=UTF-8
 encoding/local_settings.py=UTF-8

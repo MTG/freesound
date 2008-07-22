@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_unicode
@@ -21,10 +20,3 @@ class Profile(SocialModel):
     @models.permalink
     def get_absolute_url(self):
         return ('account', (smart_unicode(self.user.username),))
-
-
-class ProfileAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',) 
-    list_display = ('user', 'home_page', 'whitelisted')
-    ordering = ('user__username',)
-admin.site.register(Profile, ProfileAdmin)

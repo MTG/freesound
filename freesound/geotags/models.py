@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
@@ -21,9 +20,3 @@ class GeoTag(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('geotag', (smart_unicode(self.id),))
-
-
-class GeoTagAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',) 
-    list_display = ('user', 'lat', 'lon', 'created')
-admin.site.register(GeoTag, GeoTagAdmin)

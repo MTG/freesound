@@ -1,0 +1,19 @@
+{% load filefunctions %}
+{% if file.is_dir %}
+<li class="dirnode">
+	<span class="dirname">
+		<div onclick="toggle_ul(this)" class="plusminus"></div> {{file.name}} (<a href="#" onclick="select_ul(this)">toggle selection</a>)
+	</span>
+	<ul>
+	{% for child in file.children %}
+		{% show_file child %}
+	{% endfor %}
+	</ul>
+</li>
+{% else %}
+<li class="filenode">
+	<span class="filename">
+		<input class="filecheckbox" type="checkbox" name="{{file.id}}" onchange="checkboxChange(this);"><strong>{{file.name}}</strong></a>
+	</span>
+</li>
+{% endif %}

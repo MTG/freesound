@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
@@ -21,9 +20,3 @@ class Rating(models.Model):
 
     class Meta:
         unique_together = ('user', 'content_type', 'object_id')
-
-
-class RatingAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',)
-    list_display = ('user', 'content_type', 'object_id', 'rating', 'created')
-admin.site.register(Rating, RatingAdmin)

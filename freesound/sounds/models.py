@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.db import models
@@ -19,10 +18,6 @@ class License(models.Model):
 
     def __unicode__(self):
         return self.name
-
-class LicenseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'deed_url', 'legal_code_url')
-admin.site.register(License, LicenseAdmin)
 
 
 class Sound(SocialModel):
@@ -87,21 +82,6 @@ class Sound(SocialModel):
         return ('sound', (smart_unicode(self.id),))
 
 
-class SoundAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user', 'pack', 'sources', 'geotag')
-    list_display = ('id', 'user', 'original_filename', 'license')
-    list_filter = ('processing_state', 'moderation_state', 'license')
-    afieldsets = (
-         (None, {'fields': ('user', 'created', 'modified')}),
-         ('Filenames', {'fields': ('original_path', 'base_filename_slug')}),
-         ('User defined fields', {'fields': ('description', 'license', 'geotag', 'original_filename', 'sources', 'pack')}),
-         ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate', 'filesize', 'channels')}),
-         ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'moderation_bad_description')}),
-         ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_log')}),
-     )
-admin.site.register(Sound, SoundAdmin)
-
-
 class Pack(SocialModel):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
@@ -123,12 +103,6 @@ class Pack(SocialModel):
         unique_together = ('user', 'name')
 
 
-class PackAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',)
-    list_display = ('user', 'name', 'created')
-admin.site.register(Pack, PackAdmin)
-
-
 class Report(models.Model):
     sound = models.ForeignKey(Sound)
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
@@ -144,9 +118,3 @@ class Report(models.Model):
     
     def __unicode__(self):
         return u"%s: %s" % (self.reason_type, self.reason[:100])
-
-
-class ReportAdmin(admin.ModelAdmin):
-    raw_id_fields = ('reporting_user', 'sound')
-    list_display = ('reporting_user', 'email', 'reason_type')
-admin.site.register(Report, ReportAdmin)

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load filefunctions %}
+
+{% block page_title %}Describe{% endblock %}
+{% block body %}
+
+<script type="text/javascript">
+	function toggle_ul(element)
+	{
+		if (element.hasClassName("minus"))
+			element.removeClassName("minus");
+		else
+			element.addClassName("minus");
+		
+		element.parentNode.parentNode.down("ul").toggle();
+	}
+
+	function select_ul(element)
+	{
+		var parent = element.parentNode.parentNode;
+		parent.select("ul").each( Element.show );
+
+		parent.select("input").each(function (input)
+		{
+			if (input.checked)
+				input.checked = false;
+			else
+				input.checked = true;
+			
+			checkboxChange(input);
+		});
+	}
+	
+	function checkboxChange(checkbox)
+	{
+		var option = $("fileform").down("option[value=" + checkbox.name + "]");
+		
+		if (checkbox.checked)
+			option.selected = true;
+		else
+			option.selected = false;
+	}
+</script>
+
+<ul id="root_file" class="upload">
+	{% show_file file_structure %}
+</ul>
+
+<form action="." method="post" id="fileform">
+	<div style="display:none">
+	{{form}}
+	</div>
+	<input type="submit" value="submit" name="submit">
+</form>
+
+<script type="text/javascript">
+	$("root_file").select("ul").each( Element.hide );
+	$("root_file").select("input").each(checkboxChange);
+</script>
+{% endblock %}

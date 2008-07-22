@@ -1,0 +1,31 @@
+body {
+	font-family: arial;
+}
+
+a {
+	outline: none;
+	text-decoration: none;
+	color: #a00;
+}
+
+a:hover {
+	text-decoration: underline;
+	color: #a00;
+}
+
+ul.upload * {
+	list-style: none;
+}
+
+div.plusminus {
+	background: url("/media/img/plusminus.png");
+	width: 11px;
+	height: 11px;
+	float: left;
+	margin-top: 3px;
+	margin-right: 5px;
+}
+
+div.minus {
+	background-position: 0px 11px;
+}

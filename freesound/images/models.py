@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
 from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
@@ -32,9 +31,3 @@ class Image(models.Model):
 
     def __unicode__(self):
         return u"%s from %s" % (self.title, self.user)
-
-
-class ImageAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',) 
-    list_display = ('user', 'title', 'base_filename_slug', 'content_type', 'object_id', 'created')
-admin.site.register(Image, ImageAdmin)

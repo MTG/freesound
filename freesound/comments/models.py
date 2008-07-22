@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
@@ -20,9 +19,3 @@ class Comment(models.Model):
     
     def __unicode__(self):
         return u"%s comment on %s - %s" % (self.user, self.content_type, self.content_type)
-
-
-class CommentAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user',) 
-    list_display = ('user', 'content_type', 'object_id', 'created')
-admin.site.register(Comment, CommentAdmin)

@@ -48,11 +48,10 @@ urlpatterns = patterns('',
     
     url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
     
-    url(r'^help/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://help.freesound.org/"}, name="blog"),
+    (r'^help/', include('viki.urls')),
     
     (r'^forum/', include('forum.urls')),
 
-    (r'^admin/', include('django_docs.urls')),
     (r'^admin/doc/', include('django.contrib.admindocs.urls')),
     (r'^admin/(.*)', admin.site.root),
 )

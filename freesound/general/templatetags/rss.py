@@ -8,11 +8,15 @@ class RssParserNode(template.Node):
         self.url = url
         self.url_var_name = url_var_name
         self.var_name = var_name
+
     def render(self, context):
         if self.url:
             context[self.var_name] = feedparser.parse(self.url)
         else:
-            context[self.var_name] = feedparser.parse(context[self.url_var_name])
+            try:
+                context[self.var_name] = feedparser.parse(context[self.url_var_name])
+            except KeyError:
+                raise template.TemplateSyntaxError, "the variable \"%s\" can't be found in the context" % self.url_var_name
         return ''
 
 import re
@@ -31,8 +35,8 @@ def get_rss(parser, token):
         raise template.TemplateSyntaxError, "%r tag had invalid arguments" % tag_name
     url, var_name = m.groups()
     
-    if not (url[0] == url[-1] and url[0] in ('"', "'")):
-        return RssParserNode(var_name, url_var_name=url)
-    else:
+    if url[0] == url[-1] and url[0] in ('"', "'"):
         return RssParserNode(var_name, url=url[1:-1])
+    else:
+        return RssParserNode(var_name, url_var_name=url)
     

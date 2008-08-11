@@ -1,7 +1,21 @@
 {% load cache %}
 {% load rss %}
+{% load pledgie %}
 
-{% cache 1 rss %}
+{% cache 300 pledgie_cache %}
+	{% get_pledgie_campaign_details "1356" as pledgie %}
+	{{ pledgie.amount_raised }}{{ pledgie.currency }} {% if pledgie.goal %}({{ pledgie.percent_towards_goal }}%) of {{ pledgie.goal }}{{ pledgie.currency }}{% endif %} raised for {{ pledgie.title }}
+
+	{% get_rss "http://pledgie.com/campaigns/1356/donations_feed.xml" as pledgie_rss %}
+	<h1>Latest 5 donators</h1>
+	<ul>
+		{% for entry in pledgie_rss.entries|slice:":10" %}
+		<li>{{ entry.title }}</li>
+		{% endfor %}
+	</ul>
+{% endcache %}
+
+{% cache 3600 rss_cache %}
 	{% get_rss rss_url as rss %}
 	<h1>News</h1>
 	{% for entry in rss.entries|slice:":5" %}

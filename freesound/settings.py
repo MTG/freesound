@@ -26,7 +26,7 @@ USE_I18N = False
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.auth',
     'django.core.context_processors.debug',
-    # 'django.core.context_processors.i18n',
+    'django.core.context_processors.i18n',
     'context_processor.context_extra',
 )
 
@@ -34,7 +34,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
+    #'django.template.loaders.eggs.load_template_source',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -75,7 +75,7 @@ INSTALLED_APPS = (
     'support',
     'tags',
     'forum',
-    'django_docs',
+    'viki',
 )
 
 DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'
@@ -105,5 +105,5 @@ from local_settings import *
 
 TEMPLATE_DEBUG = DEBUG
 
-if TEMPLATE_DEBUG:
-    TEMPLATE_STRING_IF_INVALID = 'MISSING VAR %s'
+#if TEMPLATE_DEBUG:
+#    TEMPLATE_STRING_IF_INVALID = 'MISSING VAR %s'

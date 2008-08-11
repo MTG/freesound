@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% load filefunctions %}
 
-{% block page_title %}Describe{% endblock %}
-{% block body %}
+{% block title %}{{ block.super }}Describe{% endblock %}
 
+{% block head %}
+{{ block.super }}
 <script type="text/javascript">
 	function toggle_ul(element)
 	{
@@ -41,7 +42,9 @@
 			option.selected = false;
 	}
 </script>
+{% endblock %}
 
+{% block content %}
 <ul id="root_file" class="upload">
 	{% show_file file_structure %}
 </ul>

@@ -30,7 +30,6 @@ def describe(request):
         if form.is_valid():
             return HttpResponse(str(form.cleaned_data["files"]))
         else:
-            return HttpResponse("not valid")
             return HttpResponseRedirect(reverse("accounts-describe"))
     else:
         form = FileChoiceForm(files.items())

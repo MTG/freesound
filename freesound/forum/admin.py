@@ -3,14 +3,14 @@ from django.contrib import admin
 from models import Category, Forum, Thread, Post
 
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('order', 'name')
+    list_display = ('name', 'change_order')
 
 admin.site.register(Category, CategoryAdmin)
     
 
 class ForumAdmin(admin.ModelAdmin):
     raw_id_fields = ('last_post', )
-    list_display = ('order', 'name', 'num_threads', 'num_views')
+    list_display = ('name', 'num_threads', 'num_views', 'change_order')
 
 admin.site.register(Forum, ForumAdmin)
 

@@ -4,20 +4,18 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_unicode
+from general.models import OrderedModel
 
-class Category(models.Model):
-    order = models.PositiveSmallIntegerField(db_index=True, default=0)
+class Category(OrderedModel):
     name = models.CharField(max_length=50)
 
     def __unicode__(self):
         return self.name
-    
-    class Meta:
-        ordering = ('order',)
    
 
-class Forum(models.Model):
-    order = models.PositiveSmallIntegerField(default=0)
+class Forum(OrderedModel):
+    category = models.ForeignKey(Category)
+    
     name = models.CharField(max_length=50)
     name_slug = models.CharField(max_length=50, unique=True)
     description = models.CharField(max_length=250)
@@ -29,9 +27,6 @@ class Forum(models.Model):
     def __unicode__(self):
         return self.name
     
-    class Meta:
-        ordering = ('order',)
-        
     @models.permalink
     def get_absolute_url(self):
         return ("forum", (smart_unicode(self.name_slug),))

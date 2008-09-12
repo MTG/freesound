@@ -5,10 +5,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.db import models
 from favorites.models import Favorite
-from geotags.models import GeoTag
 from images.models import Image
 from ratings.models import Rating
 from tags.models import TaggedItem
+from geotags.models import GeoTag
 
 class SocialModel(models.Model):
     tags = generic.GenericRelation(TaggedItem)
@@ -16,9 +16,11 @@ class SocialModel(models.Model):
     ratings = generic.GenericRelation(Rating)
     fans = generic.GenericRelation(Favorite)
     images = generic.GenericRelation(Image)
+    geotags = generic.GenericRelation(GeoTag)
 
     class Meta:
         abstract = True
+        
 
 class OrderedModel(models.Model):
     order = models.PositiveIntegerField(editable=False)

@@ -14,7 +14,10 @@ class Message(models.Model):
     read = models.BooleanField(default=False, db_index=True)
     deleted = models.BooleanField(default=False, db_index=True)
     
-    created = models.DateTimeField(db_index=True)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):
         return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)
+    
+    class Meta:
+        ordering = ('-created',)

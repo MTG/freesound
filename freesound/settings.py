@@ -95,7 +95,9 @@ IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cg
 INTERNAL_IPS = ['localhost', '127.0.0.1']
 
 FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
+
 FORUM_POSTS_PER_PAGE = 20
+FORUM_THREADS_PER_PAGE = 40
 
 FILES_UPLOAD_DIRECTORY = "/freesound/uploads/"
 FILES_UPLOAD_OK_DIRECTORY = "/freesound/uploads_ok/"
@@ -103,6 +105,8 @@ FILES_UPLOAD_OK_DIRECTORY = "/freesound/uploads_ok/"
 
 # leave at bottom starting here!
 from local_settings import *
+
+print "TODO: create logging sinks in settings.py"
 
 TEMPLATE_DEBUG = DEBUG
 

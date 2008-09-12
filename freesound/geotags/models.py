@@ -10,9 +10,13 @@ class GeoTag(models.Model):
 
     lat = models.FloatField(db_index=True)
     lon = models.FloatField(db_index=True)
-    zoom = models.IntegerField(db_index=True)
+    zoom = models.IntegerField()
 
-    created = models.DateTimeField()
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField(db_index=True)
+    content_object = generic.GenericForeignKey()
+
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __unicode__(self):
         return u"(%f,%f)" % (self.lat, self.lon)

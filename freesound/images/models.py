@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.utils.translation import ugettext as _
 
 class Image(models.Model):
     user = models.ForeignKey(User)
@@ -13,21 +13,20 @@ class Image(models.Model):
     # fileid__username__filenameslug
     base_filename_slug = models.CharField(max_length=512)
     
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField(db_index=True)
-    content_object = generic.GenericForeignKey()
-        
     # moderation
     MODERATION_STATE_CHOICES = (
                                 ("PE",_('Pending')),
                                 ("OK",_('OK')),
                                )
     
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField(db_index=True)
+    content_object = generic.GenericForeignKey()
+
     moderation_state = models.CharField(db_index=True, max_length=3, choices=MODERATION_STATE_CHOICES)
     moderation_date = models.DateTimeField(null=True, blank=True)
     
-    created = models.DateTimeField()
-    modified = models.DateTimeField()
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):
         return u"%s from %s" % (self.title, self.user)

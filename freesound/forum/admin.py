@@ -19,6 +19,7 @@ class ThreadAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', 'last_post')
     list_display = ('forum', 'author', 'title', 'status', 'num_posts', 'num_views', 'created')
     list_filters = ('status',)
+    search_fields = ('=author__username', "title")
 
 admin.site.register(Thread, ThreadAdmin)
 
@@ -26,5 +27,6 @@ admin.site.register(Thread, ThreadAdmin)
 class PostAdmin(admin.ModelAdmin):
     raw_id_fields = ('author', 'thread')
     list_display = ('thread', 'author', 'num_views', 'created')
+    search_fields = ('=author__username', "body")
 
 admin.site.register(Post, PostAdmin)

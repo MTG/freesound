@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_unicode
 from general.models import OrderedModel
+from django.conf import settings
 
 class Category(OrderedModel):
     name = models.CharField(max_length=50)
@@ -17,7 +18,7 @@ class Forum(OrderedModel):
     category = models.ForeignKey(Category)
     
     name = models.CharField(max_length=50)
-    name_slug = models.CharField(max_length=50, unique=True)
+    name_slug = models.CharField(max_length=50, unique=True, db_index=True)
     description = models.CharField(max_length=250)
 
     num_threads = models.PositiveIntegerField(default=0)
@@ -48,7 +49,7 @@ class Thread(models.Model):
     num_views = models.PositiveIntegerField(default=0)
     last_post = models.OneToOneField('Post', null=True, blank=True, default=None, related_name="latest_in_thread")
 
-    created = models.DateTimeField(db_index=True)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     class Meta:
         ordering = ('-status', '-created')
@@ -57,11 +58,7 @@ class Thread(models.Model):
         return self.title
     
     def save(self):
-        if not self.id:
-            self.created = datetime.now()
-        
         super(Thread, self).save()
-        
         f = self.forum
         f.num_threads = Thread.objects.filter(forum=self.forum).count()
         f.save()
@@ -78,7 +75,7 @@ class Post(models.Model):
     
     num_views = models.PositiveIntegerField(default=0)
     
-    created = models.DateTimeField(db_index=True)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     class Meta:
         ordering = ('-created',)
@@ -87,9 +84,6 @@ class Post(models.Model):
         return u"Post by %s in %s" % (self.author, self.thread)
 
     def save(self):
-        if not self.id:
-            self.created = datetime.now()
-        
         super(Post, self).save()
 
         t = self.thread

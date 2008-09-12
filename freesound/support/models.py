@@ -19,7 +19,7 @@ class Question(models.Model):
     question = models.TextField()
     
     answered = models.BooleanField()
-    created = models.DateTimeField()
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __unicode__(self):
         return u"%s - %s: %s - %s answered: %s" % (self.user, self.email, self.type, self.subject, self.answered)
@@ -44,4 +44,4 @@ class Reply(models.Model):
     reply = models.TextField()
     standard_rely = models.OneToOneField(StandardReply, null=True, blank=True, default=None, related_name="standard_reply")
     
-    created = models.DateTimeField()
+    created = models.DateTimeField(db_index=True, auto_now_add=True)

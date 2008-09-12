@@ -6,12 +6,12 @@ from django.db import models
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
 from general.models import SocialModel
-from geotags.models import GeoTag
+from general.models import OrderedModel
 
-class License(models.Model):
+class License(OrderedModel):
     """A creative commons license model"""
     name = models.CharField(max_length=512)
-    abbreviation = models.CharField(max_length=5)
+    abbreviation = models.CharField(max_length=5, db_index=True)
     summary = models.TextField()
     deed_url = models.URLField()
     legal_code_url = models.URLField()
@@ -22,8 +22,7 @@ class License(models.Model):
 
 class Sound(SocialModel):
     user = models.ForeignKey(User)
-    created = models.DateTimeField()
-    modified = models.DateTimeField()
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     # filenames
     original_path = models.CharField(max_length=512, null=True, blank=True, default=None) # name of the file on disk before processing
@@ -32,7 +31,6 @@ class Sound(SocialModel):
     # user defined fields
     description = models.TextField()
     license = models.ForeignKey(License)
-    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
     original_filename = models.CharField(max_length=512) # name of the file the user uploaded
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None)
@@ -80,6 +78,9 @@ class Sound(SocialModel):
     @models.permalink
     def get_absolute_url(self):
         return ('sound', (smart_unicode(self.id),))
+    
+    class Meta(SocialModel.Meta):
+        ordering = ("-created", )
 
 
 class Pack(SocialModel):
@@ -89,8 +90,7 @@ class Pack(SocialModel):
     
     description = models.TextField()
 
-    created = models.DateTimeField()
-    modified = models.DateTimeField()
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __unicode__(self):
         return u"%s by %s" % (self.name, self.user)
@@ -99,8 +99,9 @@ class Pack(SocialModel):
     def get_absolute_url(self):
         return ('pack', (smart_unicode(self.id),))    
     
-    class Meta:
+    class Meta(SocialModel.Meta):
         unique_together = ('user', 'name')
+        ordering = ("-created",)
 
 
 class Report(models.Model):
@@ -114,7 +115,11 @@ class Report(models.Model):
     )
     reason_type = models.CharField(max_length=1, choices=REASON_TYPE_CHOICES, default="T")
     reason = models.TextField()
-    created = models.DateTimeField()
+    
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __unicode__(self):
         return u"%s: %s" % (self.reason_type, self.reason[:100])
+    
+    class Meta:
+        ordering = ("-created",)

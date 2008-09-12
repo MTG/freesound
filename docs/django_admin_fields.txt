@@ -1,0 +1,39 @@
+date_hierarchy = 'field'
+
+# fields to show in edit page
+fields = ('url', 'title', 'content')
+
+# more complex "fields"
+fieldsets = (
+        (None, {
+            'fields': ('url', 'title', 'content', 'sites')
+        }),
+        ('Advanced options', {
+            'classes': ('collapse',),
+            'fields': ('enable_comments', 'registration_required', 'template_name')
+        }),
+    )
+    
+# to whow in the list
+list_display = ('first_name', 'last_name')
+
+# what's clickable in the list
+list_display_links = ('first_name', 'last_name')
+
+# clickable drill-down. Only for BooleanField, CharField, DateField, DateTimeField, IntegerField or ForeignKey.
+list_filter = ('is_staff', 'is_superuser')
+
+# nr per list page
+list_per_page = 5
+
+# prepopulation
+prepopulated_fields = {"slug": ("title",)}
+
+# use radio fields instead of dropdown
+radio_fields = {"group": admin.VERTICAL}
+
+# don't do the dropdown
+raw_id_fields = ("newspaper",)
+
+# search fields, prefix with "=" for exact matches
+search_fields = ('foreign_key__related_fieldname', '=other_field")

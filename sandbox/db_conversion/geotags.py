@@ -1,6 +1,6 @@
 import MySQLdb as my
-import codecs, sys
-from django.template.defaultfilters import slugify
+import codecs
+import sys
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -13,16 +13,15 @@ granularity = 1000
 
 while True:
     print start
-    my_curs.execute("SELECT ID, name, userID, date FROM audio_file_packs WHERE (select audio_file.id from audio_file where packID=audio_file_packs.id limit 1) is not null limit %d, %d" % (start, granularity))
+    my_curs.execute("SELECT audioFileID, lon, lat, zoom, date FROM geotags WHERE (select audio_file.id from audio_file where audio_file_packs.id=AudioFileId limit 1) is not null limit %d, %d" % (start, granularity))
     rows = my_curs.fetchall()
     start += len(rows)
     
     if len(rows) == 0:
         break
     
-    cleaned_data = []
     for row in rows:
-        id, name, user_id, created = row
+        object_id, lon, lat, zoom, created = row
         description = ""
         name_slug = slugify(name)
         

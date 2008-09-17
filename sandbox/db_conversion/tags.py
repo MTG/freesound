@@ -2,6 +2,7 @@ import MySQLdb as my
 import codecs
 import re
 import psycopg2
+import sys
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -9,10 +10,12 @@ output_file = codecs.open(output_filename, 'wt', 'utf-8')
 output_filename2 = '/tmp/importfile2.dat'
 output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd="m1dn1ght",db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=True)
+password = getpass()
+
+my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=True)
 my_curs = my_conn.cursor()
 
-ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='m1dn1ght'")
+ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[2])
 ppsql_cur = ppsql_conn.cursor()
 print "getting all valid sound ids"
 ppsql_cur.execute("SELECT id FROM sounds_sound")

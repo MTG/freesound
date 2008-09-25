@@ -4,11 +4,11 @@ sequence:
 * packs
 * sounds
 * tags
+* geotags
 
 todo:
 
-* geotags
+* messaging
 * profile
 * remixes
 * forum posts
-* messaging

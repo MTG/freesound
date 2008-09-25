@@ -11,8 +11,8 @@ class Profile(SocialModel):
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.CharField(max_length=140, null=True, blank=True)
 
-    newsletter = models.BooleanField(default=True, db_index=True)
-    whitelisted = models.BooleanField(default=False, db_index=True)
+    wants_newsletter = models.BooleanField(default=True, db_index=True)
+    is_whitelisted = models.BooleanField(default=False, db_index=True)
     
     def __unicode__(self):
         return self.user.username

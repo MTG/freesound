@@ -18,7 +18,7 @@ class Question(models.Model):
     subject = models.TextField(null=True, blank=True, default=None)
     question = models.TextField()
     
-    answered = models.BooleanField()
+    is_answered = models.BooleanField()
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __unicode__(self):

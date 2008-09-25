@@ -22,7 +22,7 @@
 
 import optparse, math, sys
 import scikits.audiolab as audiolab
-import ImageFilter, ImageChops, Image, ImageDraw, ImageColor
+from PIL import ImageFilter, ImageChops, Image, ImageDraw, ImageColor
 import numpy
 
 class TestAudioFile(object):
@@ -226,11 +226,45 @@ def interpolate_colors(colors, flat=False, num_colors=256):
             palette.append((int(r), int(g), int(b)))
         
     return palette
-    
+
+from functools import partial
+
+def desaturate(rgb, amount):
+    """
+        desaturate colors by amount
+        amount == 0, no change
+        amount == 1, grey
+    """
+    luminosity = sum(rgb) / 3.0
+    desat = lambda color: color - amount * (color - luminosity)
+
+    return tuple(map(int, map(desat, rgb)))
 
 class WaveformImage(object):
-    def __init__(self, image_width, image_height):
-        self.image = Image.new("RGB", (image_width, image_height))
+    def __init__(self, image_width, image_height, palette=4):
+
+        if palette == 1:
+            background_color = (0,0,0)
+            colors = [
+                        (50,0,200),
+                        (0,220,80),
+                        (255,224,0),
+                     ]
+        elif palette == 2:
+            background_color = (0,0,0)
+            colors = [self.color_from_value(value/29.0) for value in range(0,30)]
+        elif palette == 3:
+            background_color = (213, 217, 221)
+            colors = map( partial(desaturate, amount=0.7), [
+                        (50,0,200),
+                        (0,220,80),
+                        (255,224,0),
+                     ])
+        elif palette == 4:
+             background_color = (213, 217, 221)
+             colors = map( partial(desaturate, amount=0.8), [self.color_from_value(value/29.0) for value in range(0,30)])
+            
+        self.image = Image.new("RGB", (image_width, image_height), background_color)
         
         self.image_width = image_width
         self.image_height = image_height
@@ -238,14 +272,8 @@ class WaveformImage(object):
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
         
-        colors = [
-                    (50,0,200),
-                    (0,220,80),
-                    (255,224,0),
-                 ]
-        
         # this line gets the old "screaming" colors back...
-        # colors = [self.color_from_value(value/29.0) for value in range(0,30)]
+        # 
         
         self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()
@@ -311,23 +339,35 @@ class WaveformImage(object):
         
         
 class SpectrogramImage(object):
-    def __init__(self, image_width, image_height, fft_size):
+    def __init__(self, image_width, image_height, fft_size, palette=1):
+        if palette == 1:
+            colors = [
+                        (0, 0, 0),
+                        (58/4,68/4,65/4),
+                        (80/2,100/2,153/2),
+                        (90,180,100),
+                        (224,224,44),
+                        (255,60,30),
+                        (255,255,255)
+                     ]
+        elif palette == 2:
+            colors = map( partial(desaturate, amount=0.7), [
+                        (0, 0, 0),
+                        (58/4,68/4,65/4),
+                        (80/2,100/2,153/2),
+                        (90,180,100),
+                        (224,224,44),
+                        (255,60,30),
+                        (255,255,255)
+                     ])
+            
+            
         self.image = Image.new("P", (image_height, image_width))
         
         self.image_width = image_width
         self.image_height = image_height
         self.fft_size = fft_size
-        
-        colors = [
-                    (0, 0, 0),
-                    (58/4,68/4,65/4),
-                    (80/2,100/2,153/2),
-                    (90,180,100),
-                    (224,224,44),
-                    (255,60,30),
-                    (255,255,255)
-                 ]
-        
+                
         self.image.putpalette(interpolate_colors(colors, True))
 
         # generate the lookup which translates y-coordinate to fft-bin
@@ -388,7 +428,6 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
     
     waveform.save(output_filename_w)
     spectrogram.save(output_filename_s)
-
 
 if __name__ == '__main__':
     parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")

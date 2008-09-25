@@ -104,7 +104,7 @@ class Post(models.Model):
 class Subscription(models.Model):
     author = models.ForeignKey(User)
     thread = models.ForeignKey(Thread)
-    active = models.BooleanField(db_index=True, default=True)
+    is_active = models.BooleanField(db_index=True, default=True)
     
     class Meta:
         unique_together = ("author", "thread")

@@ -35,4 +35,4 @@ class TaggedItem(models.Model):
 
     class Meta:
         ordering = ("-created",)
-        unique_together = ('tag', 'content_type', 'object_id')
+        unique_together = (('tag', 'content_type', 'object_id'),)

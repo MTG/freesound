@@ -60,7 +60,7 @@ class Sound(SocialModel):
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="PE")
     moderation_date = models.DateTimeField(null=True, blank=True, default=None)
-    moderation_bad_description = models.BooleanField(default=False)
+    has_bad_description = models.BooleanField(default=False)
     
     # processing
     PROCESSING_STATE_CHOICES = (

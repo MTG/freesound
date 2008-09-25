@@ -20,6 +20,9 @@ class GeoTag(models.Model):
     
     def __unicode__(self):
         return u"(%f,%f)" % (self.lat, self.lon)
+    
+    class Meta:
+        unique_together = (("object_id", "content_type"),)
 
     @models.permalink
     def get_absolute_url(self):

@@ -8,12 +8,23 @@ output_file = codecs.open(output_filename, 'wt', 'utf-8')
 my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=True)
 my_curs = my_conn.cursor()
 
+content_type_id = 18
+
 start = 0
 granularity = 1000
 
 while True:
     print start
-    my_curs.execute("SELECT audioFileID, lon, lat, zoom, date FROM geotags WHERE (select audio_file.id from audio_file where audio_file_packs.id=AudioFileId limit 1) is not null limit %d, %d" % (start, granularity))
+    my_curs.execute("""
+    SELECT
+        geotags.id, userID, audioFileID, lon, lat, zoom, date
+    FROM geotags
+    LEFT JOIN audio_file on audio_file.id=geotags.audioFileID
+    LEFT JOIN phpbb_users on phpbb_users.user_id=audio_file.userID
+    WHERE
+        audio_file.id is not null and
+        phpbb_users.user_id is not null
+    limit %d, %d""" % (start, granularity))
     rows = my_curs.fetchall()
     start += len(rows)
     
@@ -21,16 +32,13 @@ while True:
         break
     
     for row in rows:
-        object_id, lon, lat, zoom, created = row
-        description = ""
-        name_slug = slugify(name)
+        id, user_id, object_id, lon, lat, zoom, created = row
         
-        if id == 1420:
-            user_id = 588695;
+        zoom = int(zoom)
         
-        output_file.write(u"\t".join(map(unicode, [id, name, user_id, created, description, name_slug])) + "\n")
+        output_file.write(u"\t".join(map(unicode, [id, user_id, object_id, content_type_id, lon, lat, zoom, created])) + "\n")
 
 print """
-copy sounds_pack (id, name, user_id, created, description, name_slug) from '%s';
+copy geotags_geotag (id, user_id, object_id, content_type_id, lon, lat, zoom, created) from '%s';
 vacuum analyze sounds_pack;
 """ % output_filename

@@ -4,8 +4,8 @@ from models import Question, StandardReply, Reply
 
 class QuestionAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', )
-    list_display = ('user', 'email', 'type', 'subject', 'answered')
-    list_filter = ('answered', )
+    list_display = ('user', 'email', 'type', 'subject', 'is_answered')
+    list_filter = ('is_answered', )
 
 admin.site.register(Question, QuestionAdmin)
 

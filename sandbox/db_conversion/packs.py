@@ -33,5 +33,6 @@ while True:
 
 print """
 copy sounds_pack (id, name, user_id, created, description, name_slug) from '%s';
+select setval('sounds_pack_id_seq',(select max(id)+1 from sounds_pack));
 vacuum analyze sounds_pack;
 """ % output_filename

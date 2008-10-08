@@ -3,12 +3,17 @@ import smtpd
 import socket
 import sys
 
+PORT = 2525
+HOST = 'localhost'
+
 class FakeServer(smtpd.SMTPServer):
     def __init__(self):
-        smtpd.SMTPServer.__init__(self, ("localhost", 2525), None)
+        smtpd.SMTPServer.__init__(self, (HOST, PORT), None)
 
     def process_message(self, peer, mailfrom, rcpttos, data):
         print "---------------<MAIL>----------------------------------"
+        print peer
+        print mailfrom
         print rcpttos
         print data
         print "---------------</MAIL>---------------------------------"
@@ -20,7 +25,7 @@ if __name__ == "__main__":
         print str(e)
         sys.exit()
         
-    print "running fake smtp"
+    print "running fake smtp at", HOST, PORT
     
     try:
         asyncore.loop()

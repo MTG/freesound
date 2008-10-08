@@ -13,7 +13,7 @@ class SoundAdmin(admin.ModelAdmin):
                  ('Filenames', {'fields': ('original_path', 'base_filename_slug')}),
                  ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'sources', 'pack')}),
                  ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate', 'filesize', 'channels')}),
-                 ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'moderation_bad_description')}),
+                 ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description')}),
                  ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_log')}),
                  )
     raw_id_fields = ('user', 'pack', 'sources')
@@ -21,7 +21,6 @@ class SoundAdmin(admin.ModelAdmin):
     list_filter = ('moderation_state', 'license', 'processing_state')
 
 admin.site.register(Sound, SoundAdmin)
-
 
 class PackAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)

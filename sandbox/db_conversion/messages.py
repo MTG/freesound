@@ -1,6 +1,9 @@
 import MySQLdb as my
 import codecs
 import sys
+import psycopg2
+from phpbb_code import render_to_html
+import re
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -14,40 +17,26 @@ my_curs = my_conn.cursor()
 content_type_id = 18
 
 start = 0
-granularity = 1000
+granularity = 10000
 
-"""
-class MessageBody(models.Model):
-    body = models.TextField()
-
-class Message(models.Model):
-    user_from = models.ForeignKey(User, related_name='messages_sent')
-    user_to = models.ForeignKey(User, related_name='messages_received')
-    
-    subject = models.CharField(max_length=128)
-    
-    body = models.ForeignKey(MessageBody)
-        
-    is_sent = models.BooleanField(default=True, db_index=True)
-    is_read = models.BooleanField(default=False, db_index=True)
-    is_archived = models.BooleanField(default=False, db_index=True)
-    
-    created = models.DateTimeField(db_index=True, auto_now_add=True)
-"""
-
-ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[2])
+ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[1])
 ppsql_cur = ppsql_conn.cursor()
 print "getting all valid user ids"
 ppsql_cur.execute("SELECT id FROM auth_user")
-valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
-print "done"
+valid_user_ids = dict((int(row[0]),1) for row in ppsql_cur.fetchall())
+print "done, gotten", len(valid_user_ids), "ids"
 
 unique_texts = {}
 current_text_id = 1
 
+n_messages = 0
+n_ignored = 0
+
+message_id = 0
+
 while True:
     print start
-    my_curs.execute("""select privmsgs_id, privmsgs_type, privmsgs_subject, privmsgs_from_userid, privmsgs_to_userid, FROM_UNIXTIME(privmsgs_date), privmsgs_text from phpbb_privmsgs inner join phpbb_privmsgs_text on phpbb_privmsgs.privmsg_id=phpbb_privmsgs_text.privmsgs_text_id limit %d, %d""" % (start, granularity))
+    my_curs.execute("""select privmsgs_id, privmsgs_type, privmsgs_subject, privmsgs_from_userid, privmsgs_to_userid, FROM_UNIXTIME(privmsgs_date), privmsgs_text from phpbb_privmsgs inner join phpbb_privmsgs_text on phpbb_privmsgs.privmsgs_id=phpbb_privmsgs_text.privmsgs_text_id limit %d, %d""" % (start, granularity))
     rows = my_curs.fetchall()
     start += len(rows)
     
@@ -55,7 +44,13 @@ while True:
         break
     
     for row in rows:
-        id, type, subject, from_user_id, to_user_id, date, text = row
+        id, type, subject, user_from_id, user_to_id, created, text = row
+        
+        n_messages += 1
+        
+        if user_from_id not in valid_user_ids or user_to_id not in valid_user_ids:
+            print "ignoring message from", user_from_id, "to", user_to_id
+            n_ignored += 1
         
         try:
             text_id = unique_texts[text]
@@ -63,36 +58,60 @@ while True:
             text_id = current_text_id
             unique_texts[text] = current_text_id
             current_text_id += 1
-            # TODO: write text to file (removing \n and \t)
+            
+            tmp = text
+            text = render_to_html(text)
+            
+            if "[" in text:
+                print "-------------------------------"
+                print re.findall(r"\[[^\[]*\]", text)
+                print "-------------------------------"
+            
+            output_file.write(u"\t".join(map(unicode, [text_id, text.replace("\r","\\r").replace("\n", "\\n").replace("\t", "\\t").replace("\\","\\\\")])) + "\n")
+        
+        subject = subject.replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t").replace("\\","\\\\")
+        
+        body_id = text_id
         
         if type in [1,5]:
-            sent = 1
-            archived = 0
-            read = 0
-        
-            sent = 0
-            archived = 0
-            read = 0
-        elif type == 0:
-            sent = 0
-            archived = 0
-            read = 1
-        elif type == 2:
-            sent = 1
-            archived = 0
-            read = 0
-        elif type == 3:
-            sent = 0
-            archived = 1
-            read = 1
-        elif type == 4:
-            sent = 1
-            archived = 1
-            read = 1
+            is_sent = 1
+            is_archived = 0
+            is_read = 0
                 
-        #output_file.write(u"\t".join(map(unicode, [id, user_id, object_id, content_type_id, lon, lat, zoom, created])) + "\n")
+            output_file2.write(u"\t".join(map(unicode, [message_id, user_from_id, user_to_id, subject, body_id, is_sent, is_read, is_archived, created])) + "\n")
+            message_id += 1
+        
+            is_sent = 0
+            is_archived = 0
+            is_read = 0
+        elif type == 0:
+            is_sent = 0
+            is_archived = 0
+            is_read = 1
+        elif type == 2:
+            is_sent = 1
+            is_archived = 0
+            is_read = 0
+        elif type == 3:
+            is_sent = 0
+            is_archived = 1
+            is_read = 1
+        elif type == 4:
+            is_sent = 1
+            is_archived = 1
+            is_read = 1
+                
+        output_file2.write(u"\t".join(map(unicode, [message_id, user_from_id, user_to_id, subject, body_id, is_sent, is_read, is_archived, created])) + "\n")
+        message_id += 1
+
+print "messages", n_messages
+print "ignored", n_ignored
 
 print """
-copy geotags_geotag (id, user_id, object_id, content_type_id, lon, lat, zoom, created) from '%s';
-vacuum analyze sounds_pack;
-""" % output_filename
+copy messages_messagebody (id, body) from '%s';
+select setval('messages_messagebody_id_seq',(select max(id)+1 from messages_messagebody));
+vacuum analyze messages_messagebody;
+copy messages_message (id, user_from_id, user_to_id, subject, body_id, is_sent, is_read, is_archived, created) from '%s';
+select setval('messages_message_id_seq',(select max(id)+1 from messages_message));
+vacuum analyze messages_message;
+""" % (output_filename, output_filename2)

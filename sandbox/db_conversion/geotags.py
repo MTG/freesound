@@ -40,5 +40,6 @@ while True:
 
 print """
 copy geotags_geotag (id, user_id, object_id, content_type_id, lon, lat, zoom, created) from '%s';
-vacuum analyze sounds_pack;
+select setval('geotags_geotag_id_seq',(select max(id)+1 from geotags_geotag));
+vacuum analyze geotags_geotag;
 """ % output_filename

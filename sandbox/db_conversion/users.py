@@ -29,6 +29,7 @@ while True:
 print """
 alter table auth_user drop constraint auth_user_username_key;
 copy auth_user (id, is_active, username, password, date_joined, last_login, email, first_name, last_name, is_staff, is_superuser) from '%s';
+select setval('auth_user_id_seq',(select max(id)+1 from auth_user));
 delete from auth_user where username in (select username from auth_user group by username having count(*) > 1);
 delete from auth_user where email in (select email from auth_user group by email having count(*) > 1) and last_login = '1970-01-01 01:00:00+01';
 delete from auth_user where lower(username) in (select lower(username) from auth_user group by lower(username) having count(*) > 1) and last_login='1970-01-01 01:00:00+01';

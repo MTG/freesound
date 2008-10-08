@@ -4,9 +4,9 @@ from models import Profile
 
 class ProfileAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', ) 
-    list_display = ('user', 'home_page', 'signature', 'whitelisted')
+    list_display = ('user', 'home_page', 'signature', 'is_whitelisted')
     ordering = ('user__username', )
-    list_filter = ('whitelisted', 'newsletter', )
+    list_filter = ('is_whitelisted', 'wants_newsletter', )
     search_fields = ('=user__username', )
 
 admin.site.register(Profile, ProfileAdmin)

@@ -97,7 +97,9 @@ output_file2.write(u"\n".join([u"\t".join(map(unicode, item)) for item in lookup
 
 print """
 copy tags_tag (name, id) from '%s';
+select setval('tags_tag_id_seq',(select max(id)+1 from tags_tag));
 vacuum analyze tags_tag;
 copy tags_taggeditem (id, user_id, tag_id, content_type_id, object_id, created) from '%s';
+select setval('tags_taggeditem_id_seq',(select max(id)+1 from tags_taggeditem));
 vacuum analyze tags_taggeditem;
 """ % (output_filename2, output_filename)

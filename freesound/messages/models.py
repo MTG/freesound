@@ -5,6 +5,9 @@ from django.db import models
 class MessageBody(models.Model):
     body = models.TextField()
 
+    def __unicode__(self):
+        return self.body[0:30] + u"[...]"
+
 class Message(models.Model):
     user_from = models.ForeignKey(User, related_name='messages_sent')
     user_to = models.ForeignKey(User, related_name='messages_received')

@@ -1,7 +1,7 @@
 import MySQLdb as my
 import codecs
-import postmarkup
 import sys
+from phpbb_code import render_to_html
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -34,7 +34,7 @@ while True:
         my_curs.execute("SELECT text FROM audio_file_text_description where audioFileId = %d" % id)
 
         description = "\n".join((r[0] for r in my_curs.fetchall()))
-        description = postmarkup.render_bbcode(description, auto_urls=False).replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
+        description = render_to_html(description).replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
 
         original_path = None
         moderation_date = created
@@ -82,5 +82,6 @@ while True:
 
 print """
 copy sounds_sound (id, user_id, created, original_path, base_filename_slug, description, license_id, original_filename, pack_id, type, duration, bitrate, bitdepth, samplerate, filesize, channels, md5, moderation_state, moderation_date, moderation_bad_description, processing_state, processing_date, processing_log) from '%s' null as 'None';
+select setval('sounds_sound_id_seq',(select max(id)+1 from sounds_sound));
 vacuum analyze sounds_sound;
 """ % output_filename

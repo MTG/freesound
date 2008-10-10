@@ -1,14 +1,14 @@
 sequence:
 
 * users
+* profile
 * packs
 * sounds
 * tags
 * geotags
+* messaging
+* remixes
 
 todo:
 
-* messaging
-* profile
-* remixes
 * forum posts

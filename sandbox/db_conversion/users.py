@@ -1,11 +1,12 @@
 import MySQLdb as my
 import codecs
 import sys
+from text_utils import prepare_for_insert, smart_character_decoding
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1],db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=True)
+my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1],db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
 my_curs = my_conn.cursor()
 
 start = 1 # start at one, we don't want the anonymous user!
@@ -23,6 +24,10 @@ while True:
     cleaned_data = []
     for row in rows:
         user_id, user_active, username, user_password, user_regdate, user_lastvisit, user_email = row
+        
+        username = smart_character_decoding(username)
+        user_email = smart_character_decoding(user_email)
+        
         username = username.replace(u"&amp;", u"&").replace(u"&lt;", u"<").replace(u"&gt;", u">").replace("&quot;","\"")
         output_file.write(u"\t".join([unicode(user_id), unicode(user_active), username, user_password, unicode(user_regdate), unicode(user_lastvisit), user_email, u"", u"", "0", "0"]) + "\n")
 

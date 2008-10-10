@@ -5,7 +5,7 @@ from django.template.defaultfilters import slugify
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=True)
+my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
 my_curs = my_conn.cursor()
 
 start = 0
@@ -23,6 +23,9 @@ while True:
     cleaned_data = []
     for row in rows:
         id, name, user_id, created = row
+        
+        name = smart_character_decoding(name)
+        
         description = ""
         name_slug = slugify(name)
         
@@ -33,6 +36,7 @@ while True:
 
 print """
 copy sounds_pack (id, name, user_id, created, description, name_slug) from '%s';
+delete from sounds_pack where (select count(*) from sounds_sound where pack_id=sounds_pack.id) = 0; -- delete empty packs
 select setval('sounds_pack_id_seq',(select max(id)+1 from sounds_pack));
 vacuum analyze sounds_pack;
 """ % output_filename

@@ -2,7 +2,7 @@ import MySQLdb as my
 import codecs
 import sys
 import psycopg2
-from phpbb_code import render_to_html
+from text_utils import prepare_for_insert, smart_character_decoding
 import re
 
 output_filename = '/tmp/importfile.dat'
@@ -11,7 +11,7 @@ output_file = codecs.open(output_filename, 'wt', 'utf-8')
 output_filename2 = '/tmp/importfile2.dat'
 output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=True)
+my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
 my_curs = my_conn.cursor()
 
 content_type_id = 18
@@ -46,6 +46,11 @@ while True:
     for row in rows:
         id, type, subject, user_from_id, user_to_id, created, text = row
         
+        if subject:
+            subject = smart_character_decoding(subject)
+        if text:
+            text = smart_character_encoding(text)
+        
         n_messages += 1
         
         if user_from_id not in valid_user_ids or user_to_id not in valid_user_ids:
@@ -59,17 +64,11 @@ while True:
             unique_texts[text] = current_text_id
             current_text_id += 1
             
-            tmp = text
-            text = render_to_html(text)
-            
-            if "[" in text:
-                print "-------------------------------"
-                print re.findall(r"\[[^\[]*\]", text)
-                print "-------------------------------"
-            
-            output_file.write(u"\t".join(map(unicode, [text_id, text.replace("\r","\\r").replace("\n", "\\n").replace("\t", "\\t").replace("\\","\\\\")])) + "\n")
+            text = prepare_for_insert( text, True )
+
+            output_file.write(u"\t".join(map(unicode, [text_id, text])) + "\n")
         
-        subject = subject.replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t").replace("\\","\\\\")
+        subject = prepare_for_insert(subject, html_code=False, bb_code=False)
         
         body_id = text_id
         

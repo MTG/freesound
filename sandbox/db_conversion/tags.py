@@ -3,6 +3,7 @@ import codecs
 import re
 import psycopg2
 import sys
+from text_utils import prepare_for_insert, smart_character_decoding
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -12,10 +13,10 @@ output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
 
 password = getpass()
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=True)
+my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
 my_curs = my_conn.cursor()
 
-ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[2])
+ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[1])
 ppsql_cur = ppsql_conn.cursor()
 print "getting all valid sound ids"
 ppsql_cur.execute("SELECT id FROM sounds_sound")
@@ -76,6 +77,8 @@ while True:
     for row in rows:
         try:
             ID, AudioFileID, userID, tagID, date, tags = row
+            
+            tags = smart_character_decoding(tags)
             
             if not AudioFileID in valid_sound_ids or not userID in valid_user_ids:
                 continue

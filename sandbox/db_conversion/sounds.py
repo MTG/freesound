@@ -1,12 +1,11 @@
 import MySQLdb as my
-import codecs
-import sys
-from phpbb_code import render_to_html
+import codecs, sys, re
+from text_utils import prepare_for_insert, smart_character_decoding
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=True)
+my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
 my_curs = my_conn.cursor()
 
 start = 0
@@ -28,14 +27,19 @@ while True:
     for row in rows:
         id, original_filename, user_id, duration, bitrate, bitdepth, filesize, created, samplerate, channels, pack_id, moderation_state, moderation_bad_description, md5, base_filename_slug, type = row
         
+        original_filename = smart_character_decoding(original_filename)
+        
         if id in dup_sounds or id in missing_files:
             continue
         
         my_curs.execute("SELECT text FROM audio_file_text_description where audioFileId = %d" % id)
+        
+        descriptions = []
+        for d in my_curs.fetchall():
+            descriptions.append(smart_character_decoding(d[0]))
 
-        description = "\n".join((r[0] for r in my_curs.fetchall()))
-        description = render_to_html(description).replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
-
+        description = prepare_for_insert( u"\n".join(descriptions))
+        
         original_path = None
         moderation_date = created
         processing_date = created
@@ -81,7 +85,7 @@ while True:
         output_file.write(u"\t".join(map(unicode, all_vars)) + "\n")
 
 print """
-copy sounds_sound (id, user_id, created, original_path, base_filename_slug, description, license_id, original_filename, pack_id, type, duration, bitrate, bitdepth, samplerate, filesize, channels, md5, moderation_state, moderation_date, moderation_bad_description, processing_state, processing_date, processing_log) from '%s' null as 'None';
+copy sounds_sound (id, user_id, created, original_path, base_filename_slug, description, license_id, original_filename, pack_id, type, duration, bitrate, bitdepth, samplerate, filesize, channels, md5, moderation_state, moderation_date, has_bad_description, processing_state, processing_date, processing_log) from '%s' null as 'None';
 select setval('sounds_sound_id_seq',(select max(id)+1 from sounds_sound));
 vacuum analyze sounds_sound;
 """ % output_filename

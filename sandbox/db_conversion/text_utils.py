@@ -1,11 +1,11 @@
 import unittest, re
 from BeautifulSoup import BeautifulSoup, Comment
 
-def smart_character_decoding(string):
+def smart_character_decoding(string, verbose=False):
     try:
         decoded = string.decode("utf-8")
-        if any(ord(c) >= 128 for c in string):
-            print "utf-8", decoded.encode('utf-8')
+        if verbose and any(ord(c) >= 128 for c in string):
+            print "\tutf-8", decoded.encode('utf-8')
         return decoded
     except UnicodeError:
         decoded = string.decode("latin-1")
@@ -108,7 +108,7 @@ def clean_html(input):
     """
     
     delete_tags = [u"script", u"style", u"head"]
-    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br", u"ul", u"li"]
+    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br", u"ul", u"li", u"blockquote"]
     ok_attributes = {u"a": [u"href"], u"img": [u"src", u"alt", u"title"]}
     # all other tags: replace with the content of the tag
     

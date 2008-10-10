@@ -1,6 +1,7 @@
 import MySQLdb as my
 import codecs, sys
 from django.template.defaultfilters import slugify
+from text_utils import prepare_for_insert, smart_character_decoding
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -36,7 +37,6 @@ while True:
 
 print """
 copy sounds_pack (id, name, user_id, created, description, name_slug) from '%s';
-delete from sounds_pack where (select count(*) from sounds_sound where pack_id=sounds_pack.id) = 0; -- delete empty packs
 select setval('sounds_pack_id_seq',(select max(id)+1 from sounds_pack));
 vacuum analyze sounds_pack;
 """ % output_filename

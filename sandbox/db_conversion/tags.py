@@ -11,8 +11,6 @@ output_file = codecs.open(output_filename, 'wt', 'utf-8')
 output_filename2 = '/tmp/importfile2.dat'
 output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
 
-password = getpass()
-
 my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
 my_curs = my_conn.cursor()
 
@@ -78,7 +76,7 @@ while True:
         try:
             ID, AudioFileID, userID, tagID, date, tags = row
             
-            tags = smart_character_decoding(tags)
+            tags = smart_character_decoding(tags, True)
             
             if not AudioFileID in valid_sound_ids or not userID in valid_user_ids:
                 continue

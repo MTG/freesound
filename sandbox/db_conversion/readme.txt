@@ -8,7 +8,9 @@ sequence:
 * geotags
 * messaging
 * remixes
+* forum posts
 
 todo:
 
-* forum posts
+comments
+votes

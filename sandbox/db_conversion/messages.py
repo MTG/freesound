@@ -49,7 +49,7 @@ while True:
         if subject:
             subject = smart_character_decoding(subject)
         if text:
-            text = smart_character_encoding(text)
+            text = smart_character_decoding(text)
         
         n_messages += 1
         

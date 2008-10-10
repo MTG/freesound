@@ -10,7 +10,7 @@ output_file = codecs.open(output_filename, 'w', 'utf-8', errors='strict')
 my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False, use_unicode=False)
 my_curs = my_conn.cursor()
 
-check_user_ids = False
+check_user_ids = True
 
 if check_user_ids:
     ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[1])
@@ -62,7 +62,6 @@ while True:
             if home_page:
                 home_page = home_page.lower()
                 split = home_page.split()
-
                 if len(split) > 1:
                     home_page = split[0]
                 
@@ -70,8 +69,6 @@ while True:
                     home_page = None
 
             if signature:
-                if user_id == 57709:
-                    print repr(signature)
                 signature = prepare_for_insert(signature)
             
             if about:

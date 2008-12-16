@@ -9,6 +9,8 @@ def smart_character_decoding(string, verbose=False):
         return decoded
     except UnicodeError:
         decoded = string.decode("latin-1")
+        if verbose:
+            print "found data which doesn't decode in utf-8!"
         return decoded
 
 def shout_percentage(string):

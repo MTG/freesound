@@ -9,8 +9,5 @@ sequence:
 * messaging
 * remixes
 * forum posts
-
-todo:
-
-comments
-votes
+* comments
+* votes

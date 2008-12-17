@@ -241,7 +241,7 @@ def desaturate(rgb, amount):
     return tuple(map(int, map(desat, rgb)))
 
 class WaveformImage(object):
-    def __init__(self, image_width, image_height, palette=4):
+    def __init__(self, image_width, image_height, palette=1):
 
         if palette == 1:
             background_color = (0,0,0)
@@ -249,6 +249,7 @@ class WaveformImage(object):
                         (50,0,200),
                         (0,220,80),
                         (255,224,0),
+                        (255,70,0),
                      ]
         elif palette == 2:
             background_color = (0,0,0)
@@ -271,9 +272,6 @@ class WaveformImage(object):
         
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
-        
-        # this line gets the old "screaming" colors back...
-        # 
         
         self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()

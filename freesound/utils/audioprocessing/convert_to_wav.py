@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 from processing import convert_to_wav, audio_info, AudioProcessingException
 

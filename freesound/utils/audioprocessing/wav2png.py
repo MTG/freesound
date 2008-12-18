@@ -20,9 +20,10 @@
 # Authors:
 #   Bram de Jong <bram.dejong at domain.com where domain in gmail>
 
-import optparse, math, sys
+import math, sys, os, subprocess
 import scikits.audiolab as audiolab
 from PIL import ImageFilter, ImageChops, Image, ImageDraw, ImageColor
+from django.utils import simplejson
 import numpy
 
 class TestAudioFile(object):
@@ -426,6 +427,53 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
     
     waveform.save(output_filename_w)
     spectrogram.save(output_filename_s)
+
+
+class AudioProcessingException(Exception):
+    pass
+
+
+def convert_to_wav(input_filename, output_filename):
+    # converts any audio file type to wav, 44.1, 16bit, stereo
+    # uses mplayer to play whatever, and store the format as a wave file
+    
+    if not os.path.exists(input_filename):
+        raise AudioProcessingException, "file does not exist"
+    
+    command = ["mplayer", "-vc", "null", "-vo", "null", "-af", "channels=2,resample=44100:0:0", "-ao", "pcm:fast:file=\"%s\"" % output_filename, input_filename]
+    
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (stdout, stderr) = process.communicate()
+    
+    if process.returncode != 0 or not os.path.exists(output_filename):
+        raise AudioProcessingException, stdout
+    
+    return stdout
+
+
+def audio_info(input_filename):
+    # extract samplerate, channels, ... from an audio file using getid3
+    
+    if not os.path.exists(input_filename):
+        raise AudioProcessingException, "file does not exist"
+    
+    command = ["./extract_audio_data.php", input_filename]
+    
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (stdout, stderr) = process.communicate()
+    
+    parsed = simplejson.loads(stdout)
+    
+    if "error" in parsed:
+        raise AudioProcessingException, "extract_audio_data error: " + "\n".join(parsed["error"])
+
+    return dict(samplerate=parsed["sample_rate"], bitrate=parsed["avg_bit_rate"], bits=parsed["bits_per_sample"], channels=parsed["channels"], type=parsed["format_name"], duration=parsed["playing_time"])
+
+
+def convert_to_mp3(input_filename, output_filename, quality):
+    # converts 
+    pass
+
 
 if __name__ == '__main__':
     parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")

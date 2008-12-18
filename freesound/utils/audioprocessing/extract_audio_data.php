@@ -96,7 +96,7 @@ class AudioInfo {
 		$this->result['channels']        = @$this->info['audio']['channels'];
 		$this->result['sample_rate']     = @$this->info['audio']['sample_rate'];
 		$this->result['bits_per_sample'] = @$this->info['audio']['bits_per_sample'];
-		$this->result['playing_time']    = @$this->info['playtime_seconds'] * 1000;
+		$this->result['playing_time']    = @$this->info['playtime_seconds'];
 		$this->result['avg_bit_rate']    = @$this->info['audio']['bitrate'];
 		//$this->result['tags']            = @$this->info['tags'];
 		//$this->result['comments']        = @$this->info['comments'];

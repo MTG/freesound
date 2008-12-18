@@ -31,6 +31,9 @@ import numpy
 import scikits.audiolab as audiolab
 
 
+class AudioProcessingException(Exception):
+    pass
+
 class TestAudioFile(object):
     """A class that mimics audiolab.sndfile but generates noise instead of reading
     a wave file. Additionally it can be told to have a "broken" header and thus crashing
@@ -483,6 +486,9 @@ def audio_info(input_filename):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     (stdout, stderr) = process.communicate()
     
+    if process.returncode != 0:
+        raise AudioProcessingException, stdout
+
     parsed = simplejson.loads(stdout)
     
     if "error" in parsed:
@@ -495,4 +501,11 @@ def convert_to_mp3(input_filename, output_filename):
     """
     converts the incoming wave file to a lofi mp3 file
     """
-    pass
+    
+    if not os.path.exists(input_filename):
+        raise AudioProcessingException, "file does not exist"
+
+    command = ["lame", "--silent", "--abr", "70", input_filename, output_filename]
+
+    if process.returncode != 0 or not os.path.exists(output_filename):
+        raise AudioProcessingException, stdout

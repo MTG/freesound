@@ -111,11 +111,15 @@ class AudioInfo {
 	}
 }
 
+try {
+    $au = new AudioInfo();
 
-$a = array();
+    print json_encode($au->Info($argv[1]));
 
-$au = new AudioInfo();
-
-print json_encode($au->Info($argv[1]));
-
+    return 0;
+}
+catch (Exception $e) {
+    print json_encode(array("error" => array($e->getMessage())));
+    return 1;
+}
 ?>

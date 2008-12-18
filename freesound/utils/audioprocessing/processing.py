@@ -429,10 +429,6 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
     spectrogram.save(output_filename_s)
 
 
-class AudioProcessingException(Exception):
-    pass
-
-
 def convert_to_wav(input_filename, output_filename):
     # converts any audio file type to wav, 44.1, 16bit, stereo
     # uses mplayer to play whatever, and store the format as a wave file

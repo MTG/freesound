@@ -4,7 +4,7 @@ import os, subprocess
 import hotshot
 from hotshot import stats
 
-from processing import create_png
+from processing import create_wave_pngs
 
 parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")
 parser.add_option("-a", "--waveout", action="store", dest="output_filename_w", type="string", help="output waveform image (default input filename + _w.png)")
@@ -36,10 +36,10 @@ for input_file in args:
     print "processing file %s:\n\t" % input_file
 
     if not options.profile:
-        create_png(*args)
+        create_wave_pngs(*args)
     else:
         prof = hotshot.Profile("stats")
-        prof.runcall(create_png, *args)
+        prof.runcall(create_wave_pngs, *args)
         prof.close()
         
         print "\n---------- profiling information ----------\n"

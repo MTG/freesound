@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# wav2png.py -- converts wave files to wave file and spectrogram images
+# processing.py -- various audio processing functions
 # Copyright (C) 2008 MUSIC TECHNOLOGY GROUP (MTG)
 #                    UNIVERSITAT POMPEU FABRA
 #
@@ -20,11 +20,16 @@
 # Authors:
 #   Bram de Jong <bram.dejong at domain.com where domain in gmail>
 
-import math, sys, os, subprocess
-import scikits.audiolab as audiolab
 from PIL import ImageFilter, ImageChops, Image, ImageDraw, ImageColor
 from django.utils import simplejson
+from functools import partial
+import math
+import sys
+import os
+import subprocess
 import numpy
+import scikits.audiolab as audiolab
+
 
 class TestAudioFile(object):
     """A class that mimics audiolab.sndfile but generates noise instead of reading
@@ -58,6 +63,10 @@ class TestAudioFile(object):
 
 
 class AudioProcessor(object):
+    """
+    The audio processor processes chunks of audio an calculates the spectrac centroid and the peak
+    samples in that chunk of audio.
+    """
     def __init__(self, audio_file, fft_size, window_function=numpy.ones):
         self.fft_size = fft_size
         self.window = window_function(self.fft_size)
@@ -228,7 +237,6 @@ def interpolate_colors(colors, flat=False, num_colors=256):
         
     return palette
 
-from functools import partial
 
 def desaturate(rgb, amount):
     """
@@ -241,7 +249,12 @@ def desaturate(rgb, amount):
 
     return tuple(map(int, map(desat, rgb)))
 
+
 class WaveformImage(object):
+    """
+    Given peaks and spectral centroids from the AudioProcessor, this class will construct
+    a wavefile image which can be saved as PNG.
+    """
     def __init__(self, image_width, image_height, palette=1):
 
         if palette == 1:
@@ -338,6 +351,10 @@ class WaveformImage(object):
         
         
 class SpectrogramImage(object):
+    """
+    Given spectra from the AudioProcessor, this class will construct a wavefile image which
+    can be saved as PNG.
+    """
     def __init__(self, image_width, image_height, fft_size, palette=1):
         if palette == 1:
             colors = [
@@ -401,7 +418,10 @@ class SpectrogramImage(object):
         self.image.transpose(Image.ROTATE_90).save(filename)
 
 
-def create_png(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size):
+def create_wave_pngs(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size):
+    """
+    Utility function for creating both wavefile and spectrum images from an audio input file.
+    """
     audio_file = audiolab.sndfile(input_filename, 'read')
 
     samples_per_pixel = audio_file.get_nframes() / float(image_width)
@@ -430,8 +450,10 @@ def create_png(input_filename, output_filename_w, output_filename_s, image_width
 
 
 def convert_to_wav(input_filename, output_filename):
-    # converts any audio file type to wav, 44.1, 16bit, stereo
-    # uses mplayer to play whatever, and store the format as a wave file
+    """
+    converts any audio file type to wav, 44.1, 16bit, stereo
+    uses mplayer to play whatever, and store the format as a wave file
+    """
     
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file does not exist"
@@ -448,12 +470,15 @@ def convert_to_wav(input_filename, output_filename):
 
 
 def audio_info(input_filename):
-    # extract samplerate, channels, ... from an audio file using getid3
+    """
+    extract samplerate, channels, ... from an audio file using getid3
+    in order for this to work make sure that the getid3 directory (in this directory) is added to the path!
+    """
     
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file does not exist"
     
-    command = ["./extract_audio_data.php", input_filename]
+    command = ["extract_audio_data.php", input_filename]
     
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     (stdout, stderr) = process.communicate()
@@ -466,54 +491,8 @@ def audio_info(input_filename):
     return dict(samplerate=parsed["sample_rate"], bitrate=parsed["avg_bit_rate"], bits=parsed["bits_per_sample"], channels=parsed["channels"], type=parsed["format_name"], duration=parsed["playing_time"])
 
 
-def convert_to_mp3(input_filename, output_filename, quality):
-    # converts 
+def convert_to_mp3(input_filename, output_filename):
+    """
+    converts the incoming wave file to a lofi mp3 file
+    """
     pass
-
-
-if __name__ == '__main__':
-    parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")
-    parser.add_option("-a", "--waveout", action="store", dest="output_filename_w", type="string", help="output waveform image (default input filename + _w.png)")
-    parser.add_option("-s", "--specout", action="store", dest="output_filename_s", type="string", help="output spectrogram image (default input filename + _s.png)")
-    parser.add_option("-w", "--width", action="store", dest="image_width", type="int", help="image width in pixels (default %default)")
-    parser.add_option("-h", "--height", action="store", dest="image_height", type="int", help="image height in pixels (default %default)")
-    parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int", help="fft size, power of 2 for increased performance (default %default)")
-    parser.add_option("-p", "--profile", action="store_true", dest="profile", help="run profiler and output profiling information")
-    
-    parser.set_defaults(output_filename_w=None, output_filename_s=None, image_width=500, image_height=170, fft_size=2048)
-
-    (options, args) = parser.parse_args()
-
-    if len(args) == 0:
-        parser.print_help()
-        parser.error("not enough arguments")
-   
-    if len(args) > 1 and (options.output_filename_w != None or options.output_filename_s != None):
-        parser.error("when processing multiple files you can't define the output filename!")
-   
-    # process all files so the user can use wildcards like *.wav
-    for input_file in args:
-        
-        output_file_w = options.output_filename_w or input_file + "_w.png"
-        output_file_s = options.output_filename_s or input_file + "_s.png"
-        
-        args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size)
-
-        print "processing file %s:\n\t" % input_file
-    
-        if not options.profile:
-            create_png(*args)
-        else:
-            import hotshot
-            from hotshot import stats
-            prof = hotshot.Profile("stats")
-            prof.runcall(create_png, *args)
-            prof.close()
-            
-            print "\n---------- profiling information ----------\n"
-            s = stats.load("stats")
-            s.strip_dirs()
-            s.sort_stats("time")
-            s.print_stats(30)
-        
-        print " done"

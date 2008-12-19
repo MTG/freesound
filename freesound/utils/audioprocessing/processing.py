@@ -459,7 +459,7 @@ def convert_to_wav(input_filename, output_filename):
     """
     
     if not os.path.exists(input_filename):
-        raise AudioProcessingException, "file does not exist"
+        raise AudioProcessingException, "file %s does not exist" % input_filename
     
     command = ["mplayer", "-vc", "null", "-vo", "null", "-af", "channels=2,resample=44100:0:0", "-ao", "pcm:fast:file=\"%s\"" % output_filename, input_filename]
     
@@ -479,7 +479,7 @@ def audio_info(input_filename):
     """
     
     if not os.path.exists(input_filename):
-        raise AudioProcessingException, "file does not exist"
+        raise AudioProcessingException, "file %s does not exist" % input_filename
     
     command = ["extract_audio_data.php", input_filename]
     
@@ -503,9 +503,12 @@ def convert_to_mp3(input_filename, output_filename):
     """
     
     if not os.path.exists(input_filename):
-        raise AudioProcessingException, "file does not exist"
+        raise AudioProcessingException, "file %s does not exist" % input_filename
 
     command = ["lame", "--silent", "--abr", "70", input_filename, output_filename]
+
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (stdout, stderr) = process.communicate()
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, stdout

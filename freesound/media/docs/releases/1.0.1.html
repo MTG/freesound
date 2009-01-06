@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Django 1.0.1 release notes &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Release notes" href="index.html" />
+    <link rel="next" title="Django 1.0.2 release notes" href="1.0.2.html" />
+    <link rel="prev" title="Porting your apps from Django 0.96 to 1.0" href="1.0-porting-guide.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="1.0-porting-guide.html" title="Porting your apps from Django 0.96 to 1.0">previous</a> 
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="1.0.2.html" title="Django 1.0.2 release notes">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-1.0.1">
+            
+  
+  <div class="section" id="s-django-1-0-1-release-notes">
+<span id="s-releases-1-0-1"></span><span id="django-1-0-1-release-notes"></span><span id="releases-1-0-1"></span><h1>Django 1.0.1 release notes<a class="headerlink" href="#django-1-0-1-release-notes" title="Permalink to this headline">¶</a></h1>
+<p>Welcome to Django 1.0.1!</p>
+<p>This is the first &#8220;bugfix&#8221; release in the Django 1.0 series, improving
+the stability and performance of the Django 1.0 codebase. As such,
+Django 1.0.1 contains no new features (and, pursuant to <a class="reference external" href="http://docs.djangoproject.com/en/dev/misc/api-stability/">our
+compatibility policy</a>, maintains backwards compatibility with Django
+1.0), but does contain a number of fixes and other
+improvements. Django 1.0.1 is a recommended upgrade for any
+development or deployment currently using or targeting Django 1.0.</p>
+<div class="section" id="s-fixes-and-improvements-in-django-1-0-1">
+<span id="fixes-and-improvements-in-django-1-0-1"></span><h2>Fixes and improvements in Django 1.0.1<a class="headerlink" href="#fixes-and-improvements-in-django-1-0-1" title="Permalink to this headline">¶</a></h2>
+<p>Django 1.0.1 contains over two hundred fixes to the original Django
+1.0 codebase; full details of every fix are available in <a class="reference external" href="http://code.djangoproject.com/log/django/branches/releases/1.0.X">the
+Subversion log of the 1.0.X branch</a>, but here are some of the
+highlights:</p>
+<ul class="simple">
+<li>Several fixes in <tt class="docutils literal"><span class="pre">django.contrib.comments</span></tt>, pertaining to RSS
+feeds of comments, default ordering of comments and the XHTML and
+internationalization of the default templates for comments.</li>
+<li>Multiple fixes for Django&#8217;s support of Oracle databases, including
+pagination support for GIS QuerySets, more efficient slicing of
+results and improved introspection of existing databases.</li>
+<li>Several fixes for query support in the Django object-relational
+mapper, including repeated setting and resetting of ordering and
+fixes for working with <tt class="docutils literal"><span class="pre">INSERT</span></tt>-only queries.</li>
+<li>Multiple fixes for inline forms in formsets.</li>
+<li>Multiple fixes for <tt class="docutils literal"><span class="pre">unique</span></tt> and <tt class="docutils literal"><span class="pre">unique_together</span></tt> model
+constraints in automatically-generated forms.</li>
+<li>Fixed support for custom callable <tt class="docutils literal"><span class="pre">upload_to</span></tt> declarations when
+handling file uploads through automatically-generated forms.</li>
+<li>Fixed support for sorting an admin change list based on a callable
+attributes in <tt class="docutils literal"><span class="pre">list_display</span></tt>.</li>
+<li>A fix to the application of autoescaping for literal strings passed
+to the <tt class="docutils literal"><span class="pre">join</span></tt> template filter. Previously, literal strings passed
+to <tt class="docutils literal"><span class="pre">join</span></tt> were automatically escaped, contrary to <a class="reference external" href="http://docs.djangoproject.com/en/dev/topics/templates/#string-literals-and-automatic-escaping">the documented
+behavior for autoescaping and literal strings</a>. Literal strings
+passed to <tt class="docutils literal"><span class="pre">join</span></tt> are no longer automatically escaped, meaning you
+must now manually escape them; this is an incompatibility if you
+were relying on this bug, but not if you were relying on escaping
+behaving as documented.</li>
+<li>Improved and expanded translation files for many of the languages
+Django supports by default.</li>
+<li>And as always, a large number of improvements to Django&#8217;s
+documentation, including both corrections to existing documents and
+expanded and new documentation.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Django 1.0.1 release notes</a><ul>
+<li><a class="reference external" href="#fixes-and-improvements-in-django-1-0-1">Fixes and improvements in Django 1.0.1</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="1.0-porting-guide.html">Porting your apps from Django 0.96 to 1.0</a></li>
+    
+    
+      <li>Next: <a href="1.0.2.html">Django 1.0.2 release notes</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Release notes</a>
+        
+        <ul><li>Django 1.0.1 release notes</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/releases/1.0.1.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="1.0-porting-guide.html" title="Porting your apps from Django 0.96 to 1.0">previous</a> 
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="1.0.2.html" title="Django 1.0.2 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

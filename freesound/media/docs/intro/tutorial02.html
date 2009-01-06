@@ -1,0 +1,496 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Writing your first Django app, part 2 &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Getting started" href="index.html" />
+    <link rel="next" title="Writing your first Django app, part 3" href="tutorial03.html" />
+    <link rel="prev" title="Writing your first Django app, part 1" href="tutorial01.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="tutorial01.html" title="Writing your first Django app, part 1">previous</a> 
+     |
+    <a href="index.html" title="Getting started" accesskey="U">up</a>
+   |
+    <a href="tutorial03.html" title="Writing your first Django app, part 3">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="intro-tutorial02">
+            
+  
+  <div class="section" id="s-writing-your-first-django-app-part-2">
+<span id="s-intro-tutorial02"></span><span id="writing-your-first-django-app-part-2"></span><span id="intro-tutorial02"></span><h1>Writing your first Django app, part 2<a class="headerlink" href="#writing-your-first-django-app-part-2" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial begins where <a class="reference external" href="tutorial01.html#intro-tutorial01"><em>Tutorial 1</em></a> left off. We&#8217;re
+continuing the Web-poll application and will focus on Django&#8217;s
+automatically-generated admin site.</p>
+<div class="admonition-philosophy admonition ">
+<p class="first admonition-title">Philosophy</p>
+<p>Generating admin sites for your staff or clients to add, change and delete
+content is tedious work that doesn&#8217;t require much creativity. For that
+reason, Django entirely automates creation of admin interfaces for models.</p>
+<p>Django was written in a newsroom environment, with a very clear separation
+between &#8220;content publishers&#8221; and the &#8220;public&#8221; site. Site managers use the
+system to add news stories, events, sports scores, etc., and that content is
+displayed on the public site. Django solves the problem of creating a
+unified interface for site administrators to edit content.</p>
+<p class="last">The admin isn&#8217;t necessarily intended to be used by site visitors; it&#8217;s for
+site managers.</p>
+</div>
+<div class="section" id="s-activate-the-admin-site">
+<span id="activate-the-admin-site"></span><h2>Activate the admin site<a class="headerlink" href="#activate-the-admin-site" title="Permalink to this headline">¶</a></h2>
+<p>The Django admin site is not activated by default &#8211; it&#8217;s an opt-in thing. To
+activate the admin site for your installation, do these three things:</p>
+<ul>
+<li><p class="first">Add <tt class="docutils literal"><span class="pre">&quot;django.contrib.admin&quot;</span></tt> to your <a class="reference external" href="../ref/settings.html#setting-INSTALLED_APPS"><tt class="xref docutils literal"><span class="pre">INSTALLED_APPS</span></tt></a> setting.</p>
+</li>
+<li><p class="first">Run <tt class="docutils literal"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">syncdb</span></tt>. Since you have added a new application
+to <a class="reference external" href="../ref/settings.html#setting-INSTALLED_APPS"><tt class="xref docutils literal"><span class="pre">INSTALLED_APPS</span></tt></a>, the database tables need to be updated.</p>
+</li>
+<li><p class="first">Edit your <tt class="docutils literal"><span class="pre">mysite/urls.py</span></tt> file and uncomment the lines below the
+&#8220;Uncomment the next two lines...&#8221; comment. This file is a URLconf;
+we&#8217;ll dig into URLconfs in the next tutorial. For now, all you need to
+know is that it maps URL roots to applications. In the end, you should
+have a <tt class="docutils literal"><span class="pre">urls.py</span></tt> file that looks like this:</p>
+<pre class="literal-block">
+from django.conf.urls.defaults import *
+
+# Uncomment the next two lines to enable the admin:
+<strong>from django.contrib import admin</strong>
+<strong>admin.autodiscover()</strong>
+
+urlpatterns = patterns('',
+    # Example:
+    # (r'^mysite/', include('mysite.foo.urls')),
+
+    # Uncomment the admin/doc line below and add 'django.contrib.admindocs'
+    # to INSTALLED_APPS to enable admin documentation:
+    # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
+
+    # Uncomment the next line to enable the admin:
+    <strong>(r'^admin/(.*)', admin.site.root),</strong>
+)
+</pre>
+<p>(The bold lines are the ones that needed to be uncommented.)</p>
+</li>
+</ul>
+</div>
+<div class="section" id="s-start-the-development-server">
+<span id="start-the-development-server"></span><h2>Start the development server<a class="headerlink" href="#start-the-development-server" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s start the development server and explore the admin site.</p>
+<p>Recall from Tutorial 1 that you start the development server like so:</p>
+<div class="highlight-bash"><div class="highlight"><pre>python manage.py runserver
+</pre></div>
+</div>
+<p>Now, open a Web browser and go to &quot;/admin/&quot; on your local domain -- e.g.,
+<a class="reference external" href="http://127.0.0.1:8000/admin/">http://127.0.0.1:8000/admin/</a>. You should see the admin's login screen:</p>
+<img alt="Django admin login screen" src="../_images/admin01.png" />
+</div>
+<div class="section" id="s-enter-the-admin-site">
+<span id="enter-the-admin-site"></span><h2>Enter the admin site<a class="headerlink" href="#enter-the-admin-site" title="Permalink to this headline">¶</a></h2>
+<p>Now, try logging in. (You created a superuser account in the first part of this
+tutorial, remember?) You should see the Django admin index page:</p>
+<img alt="Django admin index page" src="../_images/admin02t.png" />
+<p>You should see a few other types of editable content, including groups, users
+and sites. These are core features Django ships with by default.</p>
+</div>
+<div class="section" id="s-make-the-poll-app-modifiable-in-the-admin">
+<span id="make-the-poll-app-modifiable-in-the-admin"></span><h2>Make the poll app modifiable in the admin<a class="headerlink" href="#make-the-poll-app-modifiable-in-the-admin" title="Permalink to this headline">¶</a></h2>
+<p>But where's our poll app? It's not displayed on the admin index page.</p>
+<p>Just one thing to do: We need to tell the admin that <tt class="docutils literal"><span class="pre">Poll</span></tt>
+objects have an admin interface. To do this, create a file called
+<tt class="docutils literal"><span class="pre">admin.py</span></tt> in your <tt class="docutils literal"><span class="pre">polls</span></tt> directory, and edit it to look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">mysite.polls.models</span> <span class="kn">import</span> <span class="n">Poll</span>
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Poll</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You'll need to restart the development server to see your changes. Normally,
+the server auto-reloads code every time you modify a file, but the action of
+creating a new file doesn't trigger the auto-reloading logic.</p>
+</div>
+<div class="section" id="s-explore-the-free-admin-functionality">
+<span id="explore-the-free-admin-functionality"></span><h2>Explore the free admin functionality<a class="headerlink" href="#explore-the-free-admin-functionality" title="Permalink to this headline">¶</a></h2>
+<p>Now that we've registered <tt class="docutils literal"><span class="pre">Poll</span></tt>, Django knows that it should be displayed on
+the admin index page:</p>
+<img alt="Django admin index page, now with polls displayed" src="../_images/admin03t.png" />
+<p>Click &quot;Polls.&quot; Now you're at the &quot;change list&quot; page for polls. This page
+displays all the polls in the database and lets you choose one to change it.
+There's the &quot;What's up?&quot; poll we created in the first tutorial:</p>
+<img alt="Polls change list page" src="../_images/admin04t.png" />
+<p>Click the &quot;What's up?&quot; poll to edit it:</p>
+<img alt="Editing form for poll object" src="../_images/admin05t.png" />
+<p>Things to note here:</p>
+<ul class="simple">
+<li>The form is automatically generated from the Poll model.</li>
+<li>The different model field types (<a title="django.db.models.DateTimeField" class="reference external" href="../ref/models/fields.html#django.db.models.DateTimeField"><tt class="xref docutils literal"><span class="pre">DateTimeField</span></tt></a>,
+<a title="django.db.models.CharField" class="reference external" href="../ref/models/fields.html#django.db.models.CharField"><tt class="xref docutils literal"><span class="pre">CharField</span></tt></a>) correspond to the appropriate HTML
+input widget. Each type of field knows how to display itself in the Django
+admin.</li>
+<li>Each <a title="django.db.models.DateTimeField" class="reference external" href="../ref/models/fields.html#django.db.models.DateTimeField"><tt class="xref docutils literal"><span class="pre">DateTimeField</span></tt></a> gets free JavaScript
+shortcuts. Dates get a &quot;Today&quot; shortcut and calendar popup, and times get
+a &quot;Now&quot; shortcut and a convenient popup that lists commonly entered times.</li>
+</ul>
+<p>The bottom part of the page gives you a couple of options:</p>
+<ul class="simple">
+<li>Save -- Saves changes and returns to the change-list page for this type of
+object.</li>
+<li>Save and continue editing -- Saves changes and reloads the admin page for
+this object.</li>
+<li>Save and add another -- Saves changes and loads a new, blank form for this
+type of object.</li>
+<li>Delete -- Displays a delete confirmation page.</li>
+</ul>
+<p>Change the &quot;Date published&quot; by clicking the &quot;Today&quot; and &quot;Now&quot; shortcuts. Then
+click &quot;Save and continue editing.&quot; Then click &quot;History&quot; in the upper right.
+You'll see a page listing all changes made to this object via the Django admin,
+with the timestamp and username of the person who made the change:</p>
+<img alt="History page for poll object" src="../_images/admin06t.png" />
+</div>
+<div class="section" id="s-customize-the-admin-form">
+<span id="customize-the-admin-form"></span><h2>Customize the admin form<a class="headerlink" href="#customize-the-admin-form" title="Permalink to this headline">¶</a></h2>
+<p>Take a few minutes to marvel at all the code you didn't have to write. When you
+call <tt class="docutils literal"><span class="pre">admin.site.register(Poll)</span></tt>, Django just lets you edit the object and
+&quot;guess&quot; at how to display it within the admin. Often you'll want to control how
+the admin looks and works. You'll do this by telling Django about the options
+you want when you register the object.</p>
+<p>Let's see how this works by reordering the fields on the edit form. Replace the
+<tt class="docutils literal"><span class="pre">admin.site.register(Poll)</span></tt> line with:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PollAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;pub_date&#39;</span><span class="p">,</span> <span class="s">&#39;question&#39;</span><span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Poll</span><span class="p">,</span> <span class="n">PollAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You'll follow this pattern -- create a model admin object, then pass it as the
+second argument to <tt class="docutils literal"><span class="pre">admin.site.register()</span></tt> -- any time you need to change the
+admin options for an object.</p>
+<p>This particular change above makes the &quot;Publication date&quot; come before the
+&quot;Question&quot; field:</p>
+<img alt="Fields have been reordered" src="../_images/admin07.png" />
+<p>This isn't impressive with only two fields, but for admin forms with dozens
+of fields, choosing an intuitive order is an important usability detail.</p>
+<p>And speaking of forms with dozens of fields, you might want to split the form
+up into fieldsets:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PollAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="bp">None</span><span class="p">,</span>               <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;question&#39;</span><span class="p">]}),</span>
+        <span class="p">(</span><span class="s">&#39;Date information&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;pub_date&#39;</span><span class="p">]}),</span>
+    <span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Poll</span><span class="p">,</span> <span class="n">PollAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The first element of each tuple in <tt class="docutils literal"><span class="pre">fieldsets</span></tt> is the title of the fieldset.
+Here's what our form looks like now:</p>
+<img alt="Form has fieldsets now" src="../_images/admin08t.png" />
+<p>You can assign arbitrary HTML classes to each fieldset. Django provides a
+<tt class="docutils literal"><span class="pre">&quot;collapse&quot;</span></tt> class that displays a particular fieldset initially collapsed.
+This is useful when you have a long form that contains a number of fields that
+aren't commonly used:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PollAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="bp">None</span><span class="p">,</span>               <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;question&#39;</span><span class="p">]}),</span>
+        <span class="p">(</span><span class="s">&#39;Date information&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;pub_date&#39;</span><span class="p">],</span> <span class="s">&#39;classes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;collapse&#39;</span><span class="p">]}),</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+<img alt="Fieldset is initially collapsed" src="../_images/admin09.png" />
+</div>
+<div class="section" id="s-adding-related-objects">
+<span id="adding-related-objects"></span><h2>Adding related objects<a class="headerlink" href="#adding-related-objects" title="Permalink to this headline">¶</a></h2>
+<p>OK, we have our Poll admin page. But a <tt class="docutils literal"><span class="pre">Poll</span></tt> has multiple <tt class="docutils literal"><span class="pre">Choices</span></tt>, and
+the admin page doesn't display choices.</p>
+<p>Yet.</p>
+<p>There are two ways to solve this problem. The first register <tt class="docutils literal"><span class="pre">Choice</span></tt> with the
+admin just as we did with <tt class="docutils literal"><span class="pre">Poll</span></tt>. That's easy:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">mysite.polls.models</span> <span class="kn">import</span> <span class="n">Choice</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Choice</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now &quot;Choices&quot; is an available option in the Django admin. The &quot;Add choice&quot; form
+looks like this:</p>
+<img alt="Choice admin page" src="../_images/admin10.png" />
+<p>In that form, the &quot;Poll&quot; field is a select box containing every poll in the
+database. Django knows that a <a title="django.db.models.ForeignKey" class="reference external" href="../ref/models/fields.html#django.db.models.ForeignKey"><tt class="xref docutils literal"><span class="pre">ForeignKey</span></tt></a> should be
+represented in the admin as a <tt class="docutils literal"><span class="pre">&lt;select&gt;</span></tt> box. In our case, only one poll
+exists at this point.</p>
+<p>Also note the &quot;Add Another&quot; link next to &quot;Poll.&quot; Every object with a
+<tt class="docutils literal"><span class="pre">ForeignKey</span></tt> relationship to another gets this for free. When you click &quot;Add
+Another,&quot; you'll get a popup window with the &quot;Add poll&quot; form. If you add a poll
+in that window and click &quot;Save,&quot; Django will save the poll to the database and
+dynamically add it as the selected choice on the &quot;Add choice&quot; form you're
+looking at.</p>
+<p>But, really, this is an inefficient way of adding Choice objects to the system.
+It'd be better if you could add a bunch of Choices directly when you create the
+Poll object. Let's make that happen.</p>
+<p>Remove the <tt class="docutils literal"><span class="pre">register()</span></tt> call for the Choice model. Then, edit the <tt class="docutils literal"><span class="pre">Poll</span></tt>
+registration code to read:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ChoiceInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">StackedInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Choice</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="mf">3</span>
+
+<span class="k">class</span> <span class="nc">PollAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="bp">None</span><span class="p">,</span>               <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;question&#39;</span><span class="p">]}),</span>
+        <span class="p">(</span><span class="s">&#39;Date information&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;pub_date&#39;</span><span class="p">],</span> <span class="s">&#39;classes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;collapse&#39;</span><span class="p">]}),</span>
+    <span class="p">]</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">[</span><span class="n">ChoiceInline</span><span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Poll</span><span class="p">,</span> <span class="n">PollAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This tells Django: &quot;Choice objects are edited on the Poll admin page. By
+default, provide enough fields for 3 choices.&quot;</p>
+<p>Load the &quot;Add poll&quot; page to see how that looks:</p>
+<img alt="Add poll page now has choices on it" src="../_images/admin11t.png" />
+<p>It works like this: There are three slots for related Choices -- as specified
+by <tt class="docutils literal"><span class="pre">extra</span></tt> -- and each time you come back to the &quot;Change&quot; page for an
+already-created object, you get another three extra slots.</p>
+<p>One small problem, though. It takes a lot of screen space to display all the
+fields for entering related Choice objects. For that reason, Django offers a
+tabular way of displaying inline related objects; you just need to change
+the <tt class="docutils literal"><span class="pre">ChoiceInline</span></tt> declaration to read:</p>
+<div class="highlight-python"><pre>class ChoiceInline(admin.TabularInline):
+    #...</pre>
+</div>
+<p>With that <tt class="docutils literal"><span class="pre">TabularInline</span></tt> (instead of <tt class="docutils literal"><span class="pre">StackedInline</span></tt>), the
+related objects are displayed in a more compact, table-based format:</p>
+<img alt="Add poll page now has more compact choices" src="../_images/admin12.png" />
+</div>
+<div class="section" id="s-customize-the-admin-change-list">
+<span id="customize-the-admin-change-list"></span><h2>Customize the admin change list<a class="headerlink" href="#customize-the-admin-change-list" title="Permalink to this headline">¶</a></h2>
+<p>Now that the Poll admin page is looking good, let's make some tweaks to the
+&quot;change list&quot; page -- the one that displays all the polls in the system.</p>
+<p>Here's what it looks like at this point:</p>
+<img alt="Polls change list page" src="../_images/admin04t.png" />
+<p>By default, Django displays the <tt class="docutils literal"><span class="pre">str()</span></tt> of each object. But sometimes it'd be
+more helpful if we could display individual fields. To do that, use the
+<tt class="docutils literal"><span class="pre">list_display</span></tt> admin option, which is a tuple of field names to display, as
+columns, on the change list page for the object:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PollAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="c"># ...</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;question&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Just for good measure, let's also include the <tt class="docutils literal"><span class="pre">was_published_today</span></tt> custom
+method from Tutorial 1:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PollAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="c"># ...</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;question&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">,</span> <span class="s">&#39;was_published_today&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now the poll change list page looks like this:</p>
+<img alt="Polls change list page, updated" src="../_images/admin13t.png" />
+<p>You can click on the column headers to sort by those values -- except in the
+case of the <tt class="docutils literal"><span class="pre">was_published_today</span></tt> header, because sorting by the output of
+an arbitrary method is not supported. Also note that the column header for
+<tt class="docutils literal"><span class="pre">was_published_today</span></tt> is, by default, the name of the method (with
+underscores replaced with spaces). But you can change that by giving that
+method a <tt class="docutils literal"><span class="pre">short_description</span></tt> attribute:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">was_published_today</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pub_date</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">==</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+<span class="n">was_published_today</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s">&#39;Published today?&#39;</span>
+</pre></div>
+</div>
+<p>Let's add another improvement to the Poll change list page: Filters. Add the
+following line to <tt class="docutils literal"><span class="pre">PollAdmin</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">list_filter</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;pub_date&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>That adds a &quot;Filter&quot; sidebar that lets people filter the change list by the
+<tt class="docutils literal"><span class="pre">pub_date</span></tt> field:</p>
+<img alt="Polls change list page, updated" src="../_images/admin14t.png" />
+<p>The type of filter displayed depends on the type of field you're filtering on.
+Because <tt class="docutils literal"><span class="pre">pub_date</span></tt> is a DateTimeField, Django knows to give the default
+filter options for DateTimeFields: &quot;Any date,&quot; &quot;Today,&quot; &quot;Past 7 days,&quot;
+&quot;This month,&quot; &quot;This year.&quot;</p>
+<p>This is shaping up well. Let's add some search capability:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">search_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;question&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>That adds a search box at the top of the change list. When somebody enters
+search terms, Django will search the <tt class="docutils literal"><span class="pre">question</span></tt> field. You can use as many
+fields as you'd like -- although because it uses a <tt class="docutils literal"><span class="pre">LIKE</span></tt> query behind the
+scenes, keep it reasonable, to keep your database happy.</p>
+<p>Finally, because Poll objects have dates, it'd be convenient to be able to
+drill down by date. Add this line:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">date_hierarchy</span> <span class="o">=</span> <span class="s">&#39;pub_date&#39;</span>
+</pre></div>
+</div>
+<p>That adds hierarchical navigation, by date, to the top of the change list page.
+At top level, it displays all available years. Then it drills down to months
+and, ultimately, days.</p>
+<p>Now's also a good time to note that change lists give you free pagination. The
+default is to display 50 items per page. Change-list pagination, search boxes,
+filters, date-hierarchies and column-header-ordering all work together like you
+think they should.</p>
+</div>
+<div class="section" id="s-customize-the-admin-look-and-feel">
+<span id="customize-the-admin-look-and-feel"></span><h2>Customize the admin look and feel<a class="headerlink" href="#customize-the-admin-look-and-feel" title="Permalink to this headline">¶</a></h2>
+<p>Clearly, having &quot;Django administration&quot; at the top of each admin page is
+ridiculous. It's just placeholder text.</p>
+<p>That's easy to change, though, using Django's template system. The Django admin
+is powered by Django itself, and its interfaces use Django's own template
+system. (How meta!)</p>
+<p>Open your settings file (<tt class="docutils literal"><span class="pre">mysite/settings.py</span></tt>, remember) and look at the
+<a class="reference external" href="../ref/settings.html#setting-TEMPLATE_DIRS"><tt class="xref docutils literal"><span class="pre">TEMPLATE_DIRS</span></tt></a> setting. <a class="reference external" href="../ref/settings.html#setting-TEMPLATE_DIRS"><tt class="xref docutils literal"><span class="pre">TEMPLATE_DIRS</span></tt></a> is a tuple of
+filesystem directories to check when loading Django templates. It's a search
+path.</p>
+<p>By default, <a class="reference external" href="../ref/settings.html#setting-TEMPLATE_DIRS"><tt class="xref docutils literal"><span class="pre">TEMPLATE_DIRS</span></tt></a> is empty. So, let's add a line to it, to
+tell Django where our templates live:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">TEMPLATE_DIRS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s">&quot;/home/my_username/mytemplates&quot;</span><span class="p">,</span> <span class="c"># Change this to your own directory.</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Now copy the template <tt class="docutils literal"><span class="pre">admin/base_site.html</span></tt> from within the default Django
+admin template directory (<tt class="docutils literal"><span class="pre">django/contrib/admin/templates</span></tt>) into an <tt class="docutils literal"><span class="pre">admin</span></tt>
+subdirectory of whichever directory you're using in <a class="reference external" href="../ref/settings.html#setting-TEMPLATE_DIRS"><tt class="xref docutils literal"><span class="pre">TEMPLATE_DIRS</span></tt></a>.
+For example, if your <a class="reference external" href="../ref/settings.html#setting-TEMPLATE_DIRS"><tt class="xref docutils literal"><span class="pre">TEMPLATE_DIRS</span></tt></a> includes
+<tt class="docutils literal"><span class="pre">&quot;/home/my_username/mytemplates&quot;</span></tt>, as above, then copy
+<tt class="docutils literal"><span class="pre">django/contrib/admin/templates/admin/base_site.html</span></tt> to
+<tt class="docutils literal"><span class="pre">/home/my_username/mytemplates/admin/base_site.html</span></tt>. Don't forget that
+<tt class="docutils literal"><span class="pre">admin</span></tt> subdirectory.</p>
+<p>Then, just edit the file and replace the generic Django text with your own
+site's name as you see fit.</p>
+<p>Note that any of Django's default admin templates can be overridden. To
+override a template, just do the same thing you did with <tt class="docutils literal"><span class="pre">base_site.html</span></tt> --
+copy it from the default directory into your custom directory, and make
+changes.</p>
+<p>Astute readers will ask: But if <a class="reference external" href="../ref/settings.html#setting-TEMPLATE_DIRS"><tt class="xref docutils literal"><span class="pre">TEMPLATE_DIRS</span></tt></a> was empty by default,
+how was Django finding the default admin templates? The answer is that, by
+default, Django automatically looks for a <tt class="docutils literal"><span class="pre">templates/</span></tt> subdirectory within
+each app package, for use as a fallback. See the <a class="reference external" href="../ref/templates/api.html#template-loaders"><em>template loader
+documentation</em></a> for full information.</p>
+</div>
+<div class="section" id="s-customize-the-admin-index-page">
+<span id="customize-the-admin-index-page"></span><h2>Customize the admin index page<a class="headerlink" href="#customize-the-admin-index-page" title="Permalink to this headline">¶</a></h2>
+<p>On a similar note, you might want to customize the look and feel of the Django
+admin index page.</p>
+<p>By default, it displays all the apps in <a class="reference external" href="../ref/settings.html#setting-INSTALLED_APPS"><tt class="xref docutils literal"><span class="pre">INSTALLED_APPS</span></tt></a> that have been
+registered with the admin application, in alphabetical order. You may want to
+make significant changes to the layout. After all, the index is probably the
+most important page of the admin, and it should be easy to use.</p>
+<p>The template to customize is <tt class="docutils literal"><span class="pre">admin/index.html</span></tt>. (Do the same as with
+<tt class="docutils literal"><span class="pre">admin/base_site.html</span></tt> in the previous section -- copy it from the default
+directory to your custom template directory.) Edit the file, and you'll see it
+uses a template variable called <tt class="docutils literal"><span class="pre">app_list</span></tt>. That variable contains every
+installed Django app. Instead of using that, you can hard-code links to
+object-specific admin pages in whatever way you think is best.</p>
+<p>When you're comfortable with the admin site, read <a class="reference external" href="tutorial03.html#intro-tutorial03"><em>part 3 of this tutorial</em></a> to start working on public poll views.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Writing your first Django app, part 2</a><ul>
+<li><a class="reference external" href="#activate-the-admin-site">Activate the admin site</a></li>
+<li><a class="reference external" href="#start-the-development-server">Start the development server</a></li>
+<li><a class="reference external" href="#enter-the-admin-site">Enter the admin site</a></li>
+<li><a class="reference external" href="#make-the-poll-app-modifiable-in-the-admin">Make the poll app modifiable in the admin</a></li>
+<li><a class="reference external" href="#explore-the-free-admin-functionality">Explore the free admin functionality</a></li>
+<li><a class="reference external" href="#customize-the-admin-form">Customize the admin form</a></li>
+<li><a class="reference external" href="#adding-related-objects">Adding related objects</a></li>
+<li><a class="reference external" href="#customize-the-admin-change-list">Customize the admin change list</a></li>
+<li><a class="reference external" href="#customize-the-admin-look-and-feel">Customize the admin look and feel</a></li>
+<li><a class="reference external" href="#customize-the-admin-index-page">Customize the admin index page</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="tutorial01.html">Writing your first Django app, part 1</a></li>
+    
+    
+      <li>Next: <a href="tutorial03.html">Writing your first Django app, part 3</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Getting started</a>
+        
+        <ul><li>Writing your first Django app, part 2</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/intro/tutorial02.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="tutorial01.html" title="Writing your first Django app, part 1">previous</a> 
+     |
+    <a href="index.html" title="Getting started" accesskey="U">up</a>
+   |
+    <a href="tutorial03.html" title="Writing your first Django app, part 3">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

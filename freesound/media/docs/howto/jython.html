@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Running Django on Jython &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="&#8220;How-to&#8221; guides" href="index.html" />
+    <link rel="next" title="Integrating Django with a legacy database" href="legacy-databases.html" />
+    <link rel="prev" title="Providing initial data for models" href="initial-data.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="initial-data.html" title="Providing initial data for models">previous</a> 
+     |
+    <a href="index.html" title="&amp;#8220;How-to&amp;#8221; guides" accesskey="U">up</a>
+   |
+    <a href="legacy-databases.html" title="Integrating Django with a legacy database">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="howto-jython">
+            
+  
+  <div class="section" id="s-running-django-on-jython">
+<span id="s-howto-jython"></span><span id="running-django-on-jython"></span><span id="howto-jython"></span><h1>Running Django on Jython<a class="headerlink" href="#running-django-on-jython" title="Permalink to this headline">¶</a></h1>
+<p id="index-0"><a class="reference external" href="http://jython.org/">Jython</a> is an implementation of Python that runs on the Java platform (JVM).
+Django runs cleanly on Jython version 2.5 or later, which means you can deploy
+Django on any Java platform.</p>
+<p>This document will get you up and running with Django on top of Jython.</p>
+<div class="section" id="s-installing-jython">
+<span id="installing-jython"></span><h2>Installing Jython<a class="headerlink" href="#installing-jython" title="Permalink to this headline">¶</a></h2>
+<p>Django works with Jython versions 2.5 and higher.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>As of the writing of this document, a version of Jython compatible with
+Django has not yet been released. The forthcoming 2.5a2+ release will be be
+the first in which Django will work out of the box.</p>
+<p class="last">In the meantime, you&#8217;ll need to use the latest development version of Jython
+obtained from Jython&#8217;s SVN repository.</p>
+</div>
+<p>Download Jython at <a class="reference external" href="http://jython.org/">http://jython.org/</a>.</p>
+</div>
+<div class="section" id="s-creating-a-servlet-container">
+<span id="creating-a-servlet-container"></span><h2>Creating a servlet container<a class="headerlink" href="#creating-a-servlet-container" title="Permalink to this headline">¶</a></h2>
+<p>If you just want to experiment with Django, skip ahead to the next section;
+Django includes a lightweight Web server you can use for testing, so you won&#8217;t
+need to set up anything else until you&#8217;re ready to deploy Django in production.</p>
+<p>If you want to use Django on a production site, use a Java servlet container,
+such as <a class="reference external" href="http://tomcat.apache.org/">Apache Tomcat</a>. Full JavaEE applications servers such as <a class="reference external" href="https://glassfish.dev.java.net/">GlassFish</a>
+or <a class="reference external" href="http://www.jboss.org/">JBoss</a> are also OK, if you need the extra features they include.</p>
+</div>
+<div class="section" id="s-installing-django">
+<span id="installing-django"></span><h2>Installing Django<a class="headerlink" href="#installing-django" title="Permalink to this headline">¶</a></h2>
+<p>The next step is to install Django itself. This is exactly the same as
+installing Django on standard Python, so see
+<a class="reference external" href="../topics/install.html#removing-old-versions-of-django"><em>Remove any old versions of Django</em></a> and <a class="reference external" href="../topics/install.html#install-django-code"><em>Install the Django code</em></a> for
+instructions.</p>
+</div>
+<div class="section" id="s-installing-jython-platform-support-libraries">
+<span id="installing-jython-platform-support-libraries"></span><h2>Installing Jython platform support libraries<a class="headerlink" href="#installing-jython-platform-support-libraries" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference external" href="http://code.google.com/p/django-jython/">django-jython</a> project contains database backends and management commands
+for Django/Jython development. Note that the builtin Django backends won&#8217;t work
+on top of Jython.</p>
+<p>To install it, follow the <a class="reference external" href="http://code.google.com/p/django-jython/wiki/Install">installation instructions</a> detailed on the project
+website. Also, read the <a class="reference external" href="http://code.google.com/p/django-jython/wiki/DatabaseBackends">database backends</a> documentation there.</p>
+</div>
+<div class="section" id="s-differences-with-django-on-jython">
+<span id="differences-with-django-on-jython"></span><h2>Differences with Django on Jython<a class="headerlink" href="#differences-with-django-on-jython" title="Permalink to this headline">¶</a></h2>
+<p id="index-1">At this point, Django on Jython should behave nearly identically to Django
+running on standard Python. However, are a few differences to keep in mind:</p>
+<ul class="simple">
+<li>Remember to use the <tt class="docutils literal"><span class="pre">jython</span></tt> command instead of <tt class="docutils literal"><span class="pre">python</span></tt>. The
+documentation uses <tt class="docutils literal"><span class="pre">python</span></tt> for consistancy, but if you&#8217;re using Jython
+you&#8217;ll want to mentally replace <tt class="docutils literal"><span class="pre">python</span></tt> with <tt class="docutils literal"><span class="pre">jython</span></tt> every time it
+occurs.</li>
+<li>Similarly, you&#8217;ll need to use the <tt class="docutils literal"><span class="pre">JYTHONPATH</span></tt> environment variable
+instead of <tt class="docutils literal"><span class="pre">PYTHONPATH</span></tt>.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Running Django on Jython</a><ul>
+<li><a class="reference external" href="#installing-jython">Installing Jython</a></li>
+<li><a class="reference external" href="#creating-a-servlet-container">Creating a servlet container</a></li>
+<li><a class="reference external" href="#installing-django">Installing Django</a></li>
+<li><a class="reference external" href="#installing-jython-platform-support-libraries">Installing Jython platform support libraries</a></li>
+<li><a class="reference external" href="#differences-with-django-on-jython">Differences with Django on Jython</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="initial-data.html">Providing initial data for models</a></li>
+    
+    
+      <li>Next: <a href="legacy-databases.html">Integrating Django with a legacy database</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">&#8220;How-to&#8221; guides</a>
+        
+        <ul><li>Running Django on Jython</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/howto/jython.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="initial-data.html" title="Providing initial data for models">previous</a> 
+     |
+    <a href="index.html" title="&amp;#8220;How-to&amp;#8221; guides" accesskey="U">up</a>
+   |
+    <a href="legacy-databases.html" title="Integrating Django with a legacy database">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Porting your apps from Django 0.96 to 1.0 &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Django 1.0 release notes" href="1.0.html" />
+    <link rel="next" title="Django 1.0.1 release notes" href="1.0.1.html" />
+    <link rel="prev" title="Django 1.0 release notes" href="1.0.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="1.0.html" title="Django 1.0 release notes">previous</a> 
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="1.0.1.html" title="Django 1.0.1 release notes">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-1.0-porting-guide">
+            
+  
+  <div class="section" id="s-porting-your-apps-from-django-0-96-to-1-0">
+<span id="porting-your-apps-from-django-0-96-to-1-0"></span><h1>Porting your apps from Django 0.96 to 1.0<a class="headerlink" href="#porting-your-apps-from-django-0-96-to-1-0" title="Permalink to this headline">¶</a></h1>
+<p>Django 1.0 breaks compatibility with 0.96 in some areas.</p>
+<p>This guide will help you port 0.96 projects and apps to 1.0. The first part of
+this document includes the common changes needed to run with 1.0. If after going
+through the first part your code still breaks, check the section <a class="reference internal" href="#less-common-changes">Less-common
+Changes</a> for a list of a bunch of less-common compatibility issues.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The <a class="reference external" href="1.0.html#releases-1-0"><em>1.0 release notes</em></a>. That document explains the new
+features in 1.0 more deeply; the porting guide is more concerned with
+helping you quickly update your code.</p>
+</div>
+<div class="section" id="s-common-changes">
+<span id="common-changes"></span><h2>Common changes<a class="headerlink" href="#common-changes" title="Permalink to this headline">¶</a></h2>
+<p>This section describes the changes between 0.96 and 1.0 that most users will
+need to make.</p>
+<div class="section" id="s-use-unicode">
+<span id="use-unicode"></span><h3>Use Unicode<a class="headerlink" href="#use-unicode" title="Permalink to this headline">¶</a></h3>
+<p>Change string literals (<tt class="docutils literal"><span class="pre">'foo'</span></tt>) into Unicode literals (<tt class="docutils literal"><span class="pre">u'foo'</span></tt>). Django
+now uses Unicode strings throughout. In most places, raw strings will continue
+to work, but updating to use Unicode literals will prevent some obscure
+problems.</p>
+<p>See <a class="reference external" href="../ref/unicode.html#ref-unicode"><em>Unicode data in Django</em></a> for full details.</p>
+</div>
+<div class="section" id="s-models">
+<span id="models"></span><h3>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h3>
+<p>Common changes to your models file:</p>
+<div class="section" id="s-rename-maxlength-to-max-length">
+<span id="rename-maxlength-to-max-length"></span><h4>Rename <tt class="docutils literal"><span class="pre">maxlength</span></tt> to <tt class="docutils literal"><span class="pre">max_length</span></tt><a class="headerlink" href="#rename-maxlength-to-max-length" title="Permalink to this headline">¶</a></h4>
+<p>Rename your <tt class="docutils literal"><span class="pre">maxlength</span></tt> argument to <tt class="docutils literal"><span class="pre">max_length</span></tt> (this was changed to be
+consistent with form fields):</p>
+</div>
+<div class="section" id="s-replace-str-with-unicode">
+<span id="replace-str-with-unicode"></span><h4>Replace <tt class="docutils literal"><span class="pre">__str__</span></tt> with <tt class="docutils literal"><span class="pre">__unicode__</span></tt><a class="headerlink" href="#replace-str-with-unicode" title="Permalink to this headline">¶</a></h4>
+<p>Replace your model&#8217;s <tt class="docutils literal"><span class="pre">__str__</span></tt> function with a <tt class="docutils literal"><span class="pre">__unicode__</span></tt> method, and
+make sure you <a class="reference internal" href="#use-unicode">use Unicode</a> (<tt class="docutils literal"><span class="pre">u'foo'</span></tt>) in that method.</p>
+</div>
+<div class="section" id="s-remove-prepopulated-from">
+<span id="remove-prepopulated-from"></span><h4>Remove <tt class="docutils literal"><span class="pre">prepopulated_from</span></tt><a class="headerlink" href="#remove-prepopulated-from" title="Permalink to this headline">¶</a></h4>
+<p>Remove the <tt class="docutils literal"><span class="pre">prepopulated_from</span></tt> argument on model fields. It&#8217;s no longer valid
+and has been moved to the <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> class in <tt class="docutils literal"><span class="pre">admin.py</span></tt>. See <a class="reference internal" href="#the-admin">the
+admin</a>, below, for more details about changes to the admin.</p>
+</div>
+<div class="section" id="s-remove-core">
+<span id="remove-core"></span><h4>Remove <tt class="docutils literal"><span class="pre">core</span></tt><a class="headerlink" href="#remove-core" title="Permalink to this headline">¶</a></h4>
+<p>Remove the <tt class="docutils literal"><span class="pre">core</span></tt> argument from your model fields. It is no longer
+necessary, since the equivalent functionality (part of <a class="reference external" href="../ref/contrib/admin.html#admin-inlines"><em>inline editing</em></a>) is handled differently by the admin interface now. You don&#8217;t
+have to worry about inline editing until you get to <a class="reference internal" href="#the-admin">the admin</a> section,
+below. For now, remove all references to <tt class="docutils literal"><span class="pre">core</span></tt>.</p>
+</div>
+<div class="section" id="s-replace-class-admin-with-admin-py">
+<span id="replace-class-admin-with-admin-py"></span><h4>Replace <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Admin:</span></tt> with <tt class="docutils literal"><span class="pre">admin.py</span></tt><a class="headerlink" href="#replace-class-admin-with-admin-py" title="Permalink to this headline">¶</a></h4>
+<p>Remove all your inner <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Admin</span></tt> declarations from your models. They won&#8217;t
+break anything if you leave them, but they also won&#8217;t do anything. To register
+apps with the admin you&#8217;ll move those declarations to an <tt class="docutils literal"><span class="pre">admin.py</span></tt> file;
+see <a class="reference internal" href="#the-admin">the admin</a> below for more details.</p>
+</div>
+<div class="section" id="s-example">
+<span id="example"></span><h4>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h4>
+<p>Below is an example <tt class="docutils literal"><span class="pre">models.py</span></tt> file with all the changes you&#8217;ll need to make:</p>
+<p>Old (0.96) <tt class="docutils literal"><span class="pre">models.py</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">maxlength</span><span class="o">=</span><span class="mf">30</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">maxlength</span><span class="o">=</span><span class="mf">30</span><span class="p">)</span>
+    <span class="n">slug</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">maxlength</span><span class="o">=</span><span class="mf">60</span><span class="p">,</span> <span class="n">prepopulate_from</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">))</span>
+
+    <span class="k">class</span> <span class="nc">Admin</span><span class="p">:</span>
+        <span class="n">list_display</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>New (1.0) <tt class="docutils literal"><span class="pre">models.py</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">30</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">30</span><span class="p">)</span>
+    <span class="n">slug</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">60</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">u&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>New (1.0) <tt class="docutils literal"><span class="pre">admin.py</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">models</span> <span class="kn">import</span> <span class="n">Author</span>
+
+<span class="k">class</span> <span class="nc">AuthorAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">]</span>
+    <span class="n">prepopulated_fields</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;slug&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Author</span><span class="p">,</span> <span class="n">AuthorAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-the-admin">
+<span id="the-admin"></span><h3>The Admin<a class="headerlink" href="#the-admin" title="Permalink to this headline">¶</a></h3>
+<p>One of the biggest changes in 1.0 is the new admin. The Django administrative
+interface (<tt class="docutils literal"><span class="pre">django.contrib.admin</span></tt>) has been completely refactored; admin
+definitions are now completely decoupled from model definitions, the framework
+as been rewritten to use Django's new form-handling library and redesigned with
+extensibility and customization in mind.</p>
+<p>Practically, this means you'll need to rewrite all of your <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Admin</span></tt>
+declarations. You've already seen in <a class="reference internal" href="#models">models</a> above how to replace your <tt class="docutils literal"><span class="pre">class</span>
+<span class="pre">Admin</span></tt> with a <tt class="docutils literal"><span class="pre">admin.site.register()</span></tt> call in an <tt class="docutils literal"><span class="pre">admin.py</span></tt> file. Below are
+some more details on how to rewrite that <tt class="docutils literal"><span class="pre">Admin</span></tt> declaration into the new
+syntax.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">A contributor to <a class="reference external" href="http://www.djangosnippets.org/">djangosnippets</a> has written a script that'll <a class="reference external" href="http://www.djangosnippets.org/snippets/603/">scan your
+models.py and generate a corresponding admin.py</a>.</p>
+</div>
+<div class="section" id="s-use-new-inline-syntax">
+<span id="use-new-inline-syntax"></span><h4>Use new inline syntax<a class="headerlink" href="#use-new-inline-syntax" title="Permalink to this headline">¶</a></h4>
+<p>The new <tt class="docutils literal"><span class="pre">edit_inline</span></tt> options have all been moved to <tt class="docutils literal"><span class="pre">admin.py</span></tt>. Here's an
+example:</p>
+<p>Old (0.96):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Parent</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">edit_inline</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">STACKED</span><span class="p">,</span> <span class="n">num_in_admin</span><span class="o">=</span><span class="mf">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>New (1.0):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ChildInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">StackedInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Child</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="mf">3</span>
+
+<span class="k">class</span> <span class="nc">ParentAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Parent</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">[</span><span class="n">ChildInline</span><span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">ParentAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference external" href="../ref/contrib/admin.html#admin-inlines"><em>InlineModelAdmin objects</em></a> for more details.</p>
+</div>
+<div class="section" id="s-simplify-fields-or-use-fieldsets">
+<span id="simplify-fields-or-use-fieldsets"></span><h4>Simplify <tt class="docutils literal"><span class="pre">fields</span></tt>, or use <tt class="docutils literal"><span class="pre">fieldsets</span></tt><a class="headerlink" href="#simplify-fields-or-use-fieldsets" title="Permalink to this headline">¶</a></h4>
+<p>The old <tt class="docutils literal"><span class="pre">fields</span></tt> syntax was quite confusing, and has been simplified. The old
+syntax still works, but you'll need to use <tt class="docutils literal"><span class="pre">fieldsets</span></tt> instead.</p>
+<p>Old (0.96):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ModelOne</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">class</span> <span class="nc">Admin</span><span class="p">:</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;foo&#39;</span><span class="p">,</span><span class="s">&#39;bar&#39;</span><span class="p">)}),</span>
+        <span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">ModelTwo</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">class</span> <span class="nc">Admin</span><span class="p">:</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s">&#39;group1&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;foo&#39;</span><span class="p">,</span><span class="s">&#39;bar&#39;</span><span class="p">),</span>   <span class="s">&#39;classes&#39;</span><span class="p">:</span> <span class="s">&#39;collapse&#39;</span><span class="p">}),</span>
+            <span class="p">(</span><span class="s">&#39;group2&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;spam&#39;</span><span class="p">,</span><span class="s">&#39;eggs&#39;</span><span class="p">),</span> <span class="s">&#39;classes&#39;</span><span class="p">:</span> <span class="s">&#39;collapse wide&#39;</span><span class="p">}),</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p>New (1.0):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ModelOneAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;foo&#39;</span><span class="p">,</span> <span class="s">&#39;bar&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">ModelTwoAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s">&#39;group1&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;foo&#39;</span><span class="p">,</span><span class="s">&#39;bar&#39;</span><span class="p">),</span>   <span class="s">&#39;classes&#39;</span><span class="p">:</span> <span class="s">&#39;collapse&#39;</span><span class="p">}),</span>
+        <span class="p">(</span><span class="s">&#39;group2&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;spam&#39;</span><span class="p">,</span><span class="s">&#39;eggs&#39;</span><span class="p">),</span> <span class="s">&#39;classes&#39;</span><span class="p">:</span> <span class="s">&#39;collapse wide&#39;</span><span class="p">}),</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<ul class="last simple">
+<li>More detailed information about the changes and the reasons behind them
+can be found on the <a class="reference external" href="http://code.djangoproject.com/wiki/NewformsAdminBranch">NewformsAdminBranch wiki page</a></li>
+<li>The new admin comes with a ton of new features; you can read about them in
+the <a class="reference external" href="../ref/contrib/admin.html#ref-contrib-admin"><em>admin documentation</em></a>.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="s-urls">
+<span id="urls"></span><h3>URLs<a class="headerlink" href="#urls" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-update-your-root-urls-py">
+<span id="update-your-root-urls-py"></span><h4>Update your root <tt class="docutils literal"><span class="pre">urls.py</span></tt><a class="headerlink" href="#update-your-root-urls-py" title="Permalink to this headline">¶</a></h4>
+<p>If you're using the admin site, you need to update your root <tt class="docutils literal"><span class="pre">urls.py</span></tt>.</p>
+<p>Old (0.96) <tt class="docutils literal"><span class="pre">urls.py</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^admin/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s">&#39;django.contrib.admin.urls&#39;</span><span class="p">)),</span>
+
+    <span class="c"># ... the rest of your URLs here ...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>New (1.0) <tt class="docutils literal"><span class="pre">urls.py</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c"># The next two lines enable the admin and load each admin.py file:</span>
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">autodiscover</span><span class="p">()</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^admin/(.*)&#39;</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">root</span><span class="p">),</span>
+
+    <span class="c"># ... the rest of your URLs here ...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-views">
+<span id="views"></span><h3>Views<a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-use-django-forms-instead-of-newforms">
+<span id="use-django-forms-instead-of-newforms"></span><h4>Use <tt class="docutils literal"><span class="pre">django.forms</span></tt> instead of <tt class="docutils literal"><span class="pre">newforms</span></tt><a class="headerlink" href="#use-django-forms-instead-of-newforms" title="Permalink to this headline">¶</a></h4>
+<p>Replace <tt class="docutils literal"><span class="pre">django.newforms</span></tt> with <tt class="docutils literal"><span class="pre">django.forms</span></tt> -- Django 1.0 renamed the
+<tt class="docutils literal"><span class="pre">newforms</span></tt> module (introduced in 0.96) to plain old <tt class="docutils literal"><span class="pre">forms</span></tt>. The
+<tt class="docutils literal"><span class="pre">oldforms</span></tt> module was also removed.</p>
+<p>If you're already using the <tt class="docutils literal"><span class="pre">newforms</span></tt> library, and you used our recommended
+<tt class="docutils literal"><span class="pre">import</span></tt> statement syntax, all you have to do is change your import
+statements.</p>
+<p>Old:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">newforms</span> <span class="k">as</span> <span class="n">forms</span>
+</pre></div>
+</div>
+<p>New:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+</pre></div>
+</div>
+<p>If you're using the old forms system (formerly known as <tt class="docutils literal"><span class="pre">django.forms</span></tt> and
+<tt class="docutils literal"><span class="pre">django.oldforms</span></tt>), you'll have to rewrite your forms. A good place to start
+is the <a class="reference external" href="../topics/forms/index.html#topics-forms-index"><em>forms documentation</em></a></p>
+</div>
+<div class="section" id="s-handle-uploaded-files-using-the-new-api">
+<span id="handle-uploaded-files-using-the-new-api"></span><h4>Handle uploaded files using the new API<a class="headerlink" href="#handle-uploaded-files-using-the-new-api" title="Permalink to this headline">¶</a></h4>
+<p>Replace use of uploaded files -- that is, entries in <tt class="docutils literal"><span class="pre">request.FILES</span></tt> -- as
+simple dictionaries with the new <a title="django.core.files.UploadedFile" class="reference external" href="../topics/http/file-uploads.html#django.core.files.UploadedFile"><tt class="xref docutils literal"><span class="pre">UploadedFile</span></tt></a>. The
+old dictionary syntax no longer works.</p>
+<p>Thus, in a view like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s">&#39;file_field_name&#39;</span><span class="p">]</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>...you'd need to make the following changes:</p>
+<table class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Old (0.96)</th>
+<th class="head">New (1.0)</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><tt class="docutils literal"><span class="pre">f['content']</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">f.read()</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">f['filename']</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">f.name</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">f['content-type']</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">f.content_type</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="s-work-with-file-fields-using-the-new-api">
+<span id="work-with-file-fields-using-the-new-api"></span><h4>Work with file fields using the new API<a class="headerlink" href="#work-with-file-fields-using-the-new-api" title="Permalink to this headline">¶</a></h4>
+<p>The internal implementation of <a title="django.db.models.FileField" class="reference external" href="../ref/models/fields.html#django.db.models.FileField"><tt class="xref docutils literal"><span class="pre">django.db.models.FileField</span></tt></a> have changed.
+A visible result of this is that the way you access special attributes (URL,
+filename, image size, etc) of these model fields has changed. You will need to
+make the following changes, assuming your model's
+<a title="django.db.models.FileField" class="reference external" href="../ref/models/fields.html#django.db.models.FileField"><tt class="xref docutils literal"><span class="pre">FileField</span></tt></a> is called <tt class="docutils literal"><span class="pre">myfile</span></tt>:</p>
+<table class="docutils">
+<colgroup>
+<col width="58%" />
+<col width="42%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Old (0.96)</th>
+<th class="head">New (1.0)</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><tt class="docutils literal"><span class="pre">myfile.get_content_filename()</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">myfile.content.path</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">myfile.get_content_url()</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">myfile.content.url</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">myfile.get_content_size()</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">myfile.content.size</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">myfile.save_content_file()</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">myfile.content.save()</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">myfile.get_content_width()</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">myfile.content.width</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">myfile.get_content_height()</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">myfile.content.height</span></tt></td>
+</tr>
+</tbody>
+</table>
+<p>Note that the <tt class="docutils literal"><span class="pre">width</span></tt> and <tt class="docutils literal"><span class="pre">height</span></tt> attributes only make sense for
+<a title="django.db.models.ImageField" class="reference external" href="../ref/models/fields.html#django.db.models.ImageField"><tt class="xref docutils literal"><span class="pre">ImageField</span></tt></a> fields. More details can be found in the
+<a class="reference external" href="../ref/models/fields.html#ref-models-fields"><em>model API</em></a> documentation.</p>
+</div>
+</div>
+<div class="section" id="s-templates">
+<span id="templates"></span><h3>Templates<a class="headerlink" href="#templates" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-learn-to-love-autoescaping">
+<span id="learn-to-love-autoescaping"></span><h4>Learn to love autoescaping<a class="headerlink" href="#learn-to-love-autoescaping" title="Permalink to this headline">¶</a></h4>
+<p>By default, the template system now automatically HTML-escapes the output of
+every variable. To learn more, see <a class="reference external" href="../topics/templates.html#automatic-html-escaping"><em>Automatic HTML escaping</em></a>.</p>
+<p>To disable auto-escaping for an individual variable, use the <a class="reference external" href="../ref/templates/builtins.html#tfilter-safe"><tt class="xref docutils literal"><span class="pre">safe</span></tt></a>
+filter:</p>
+<div class="highlight-html+django"><div class="highlight"><pre>This will be escaped: <span class="cp">{{</span> <span class="nv">data</span> <span class="cp">}}</span>
+This will not be escaped: <span class="cp">{{</span> <span class="nv">data</span><span class="o">|</span><span class="nf">safe</span> <span class="cp">}}</span>
+</pre></div>
+</div>
+<p>To disable auto-escaping for an entire template, wrap the template (or just a
+particular section of the template) in the <a class="reference external" href="../ref/templates/builtins.html#ttag-autoescape"><tt class="xref docutils literal"><span class="pre">autoescape</span></tt></a> tag:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="cp">{%</span> <span class="k">autoescape</span> <span class="nv">off</span> <span class="cp">%}</span>
+   ... unescaped template content here ...
+<span class="cp">{%</span> <span class="k">endautoescape</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="s-less-common-changes">
+<span id="less-common-changes"></span><h2>Less-common changes<a class="headerlink" href="#less-common-changes" title="Permalink to this headline">¶</a></h2>
+<p>The following changes are smaller, more localized changes. They should only
+affect more advanced users, but it's probably worth reading through the list and
+checking your code for these things.</p>
+<div class="section" id="s-signals">
+<span id="signals"></span><h3>Signals<a class="headerlink" href="#signals" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add <tt class="docutils literal"><span class="pre">**kwargs</span></tt> to any registered signal handlers.</li>
+<li>Connect, disconnect, and send signals via methods on the
+<a title="django.dispatch.Signal" class="reference external" href="../topics/signals.html#django.dispatch.Signal"><tt class="xref docutils literal"><span class="pre">Signal</span></tt></a> object instead of through module methods in
+<tt class="docutils literal"><span class="pre">django.dispatch.dispatcher</span></tt>.</li>
+<li>Remove any use of the <tt class="docutils literal"><span class="pre">Anonymous</span></tt> and <tt class="docutils literal"><span class="pre">Any</span></tt> sender options; they no longer
+exist. You can still receive signals sent by any sender by using
+<tt class="docutils literal"><span class="pre">sender=None</span></tt></li>
+<li>Make any custom signals you've declared into instances of
+<tt class="xref docutils literal"><span class="pre">django.dispatch.Signal`</span></tt> instead of anonymous objects.</li>
+</ul>
+<p>Here's quick summary of the code changes you'll need to make:</p>
+<table class="docutils">
+<colgroup>
+<col width="56%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Old (0.96)</th>
+<th class="head">New (1.0)</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><tt class="docutils literal"><span class="pre">def</span> <span class="pre">callback(sender)</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">def</span> <span class="pre">callback(sender,</span> <span class="pre">**kwargs)</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">sig</span> <span class="pre">=</span> <span class="pre">object()</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">sig</span> <span class="pre">=</span> <span class="pre">django.dispatch.Signal()</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">dispatcher.connect(callback,</span> <span class="pre">sig)</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">sig.connect(callback)</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">dispatcher.send(sig,</span> <span class="pre">sender)</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">sig.send(sender)</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">dispatcher.connect(callback,</span> <span class="pre">sig,</span> <span class="pre">sender=Any)</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">sig.connect(callback,</span> <span class="pre">sender=None)</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="s-comments">
+<span id="comments"></span><h3>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">¶</a></h3>
+<p>If you were using Django 0.96's <tt class="docutils literal"><span class="pre">django.contrib.comments</span></tt> app, you'll need to
+upgrade to the new comments app introduced in 1.0. See
+<a class="reference external" href="../ref/contrib/comments/upgrade.html#ref-contrib-comments-upgrade"><em>Upgrading from Django's previous comment system</em></a> for details.</p>
+</div>
+<div class="section" id="s-template-tags">
+<span id="template-tags"></span><h3>Template tags<a class="headerlink" href="#template-tags" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-spaceless-tag">
+<span id="spaceless-tag"></span><h4><a class="reference external" href="../ref/templates/builtins.html#ttag-spaceless"><tt class="xref docutils literal"><span class="pre">spaceless</span></tt></a> tag<a class="headerlink" href="#spaceless-tag" title="Permalink to this headline">¶</a></h4>
+<p>The spaceless template tag now removes <em>all</em> spaces between HTML tags, instead
+of preserving a single space.</p>
+</div>
+</div>
+<div class="section" id="s-local-flavors">
+<span id="local-flavors"></span><h3>Local flavors<a class="headerlink" href="#local-flavors" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-u-s-local-flavor">
+<span id="u-s-local-flavor"></span><h4>U.S. local flavor<a class="headerlink" href="#u-s-local-flavor" title="Permalink to this headline">¶</a></h4>
+<p><tt class="docutils literal"><span class="pre">django.contrib.localflavor.usa</span></tt> has been renamed to
+<tt class="xref docutils literal"><span class="pre">django.contrib.localflavor.us</span></tt>. This change was made to match the naming
+scheme of other local flavors. To migrate your code, all you need to do is
+change the imports.</p>
+</div>
+</div>
+<div class="section" id="s-sessions">
+<span id="sessions"></span><h3>Sessions<a class="headerlink" href="#sessions" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-getting-a-new-session-key">
+<span id="getting-a-new-session-key"></span><h4>Getting a new session key<a class="headerlink" href="#getting-a-new-session-key" title="Permalink to this headline">¶</a></h4>
+<p><tt class="docutils literal"><span class="pre">SeesionBase.get_new_session_key()</span></tt> has been renamed to
+<tt class="docutils literal"><span class="pre">_get_new_session_key()</span></tt>. <tt class="docutils literal"><span class="pre">get_new_session_object()</span></tt> no longer exists.</p>
+</div>
+</div>
+<div class="section" id="s-fixtures">
+<span id="fixtures"></span><h3>Fixtures<a class="headerlink" href="#fixtures" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-loading-a-row-no-longer-calls-save">
+<span id="loading-a-row-no-longer-calls-save"></span><h4>Loading a row no longer calls <tt class="docutils literal"><span class="pre">save()</span></tt><a class="headerlink" href="#loading-a-row-no-longer-calls-save" title="Permalink to this headline">¶</a></h4>
+<p>Previously, loading a row automatically ran the model's <tt class="docutils literal"><span class="pre">save()</span></tt> method. This
+is no longer the case, so any fields (for example: timestamps) that were
+auto-populated by a <tt class="docutils literal"><span class="pre">save()</span></tt> now need explicit values in any fixture.</p>
+</div>
+</div>
+<div class="section" id="s-settings">
+<span id="settings"></span><h3>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-better-exceptions">
+<span id="better-exceptions"></span><h4>Better exceptions<a class="headerlink" href="#better-exceptions" title="Permalink to this headline">¶</a></h4>
+<p>The old <tt class="xref docutils literal"><span class="pre">EnvironmentError</span></tt> has split into an <tt class="xref docutils literal"><span class="pre">ImportError</span></tt> when
+Django fails to find the settings module and a <tt class="xref docutils literal"><span class="pre">RuntimeError</span></tt> when you try
+to reconfigure settings after having already used them</p>
+</div>
+<div class="section" id="s-login-url-has-moved">
+<span id="login-url-has-moved"></span><h4><tt class="docutils literal"><span class="pre">LOGIN_URL</span></tt> has moved<a class="headerlink" href="#login-url-has-moved" title="Permalink to this headline">¶</a></h4>
+<p>The <tt class="docutils literal"><span class="pre">LOGIN_URL</span></tt> constant moved from <tt class="docutils literal"><span class="pre">django.contrib.auth</span></tt> into the
+<tt class="docutils literal"><span class="pre">settings</span></tt> module. Instead of using <tt class="docutils literal"><span class="pre">from</span> <span class="pre">django.contrib.auth</span> <span class="pre">import</span>
+<span class="pre">LOGIN_URL</span></tt> refer to <a class="reference external" href="../ref/settings.html#setting-LOGIN_URL"><tt class="xref docutils literal"><span class="pre">settings.LOGIN_URL</span></tt></a>.</p>
+</div>
+<div class="section" id="s-append-slash-behavior-has-been-updated">
+<span id="append-slash-behavior-has-been-updated"></span><h4><a class="reference external" href="../ref/settings.html#setting-APPEND_SLASH"><tt class="xref docutils literal"><span class="pre">APPEND_SLASH</span></tt></a> behavior has been updated<a class="headerlink" href="#append-slash-behavior-has-been-updated" title="Permalink to this headline">¶</a></h4>
+<p>In 0.96, if a URL didn't end in a slash or have a period in the final
+component of its path, and <tt class="docutils literal"><span class="pre">APPEND_SLASH</span></tt> was True, Django would redirect
+to the same URL, but with a slash appended to the end. Now, Django checks to
+see whether the pattern without the trailing slash would be matched by
+something in your URL patterns. If so, no redirection takes place, because it
+is assumed you deliberately wanted to catch that pattern.</p>
+<p>For most people, this won't require any changes. Some people, though, have URL
+patterns that look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="s">r&#39;/some_prefix/(.*)$&#39;</span>
+</pre></div>
+</div>
+<p>Previously, those patterns would have been redirected to have a trailing
+slash. If you always want a slash on such URLs, rewrite the pattern as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="s">r&#39;/some_prefix/(.*/)$&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-smaller-model-changes">
+<span id="smaller-model-changes"></span><h3>Smaller model changes<a class="headerlink" href="#smaller-model-changes" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-different-exception-from-get">
+<span id="different-exception-from-get"></span><h4>Different exception from <tt class="docutils literal"><span class="pre">get()</span></tt><a class="headerlink" href="#different-exception-from-get" title="Permalink to this headline">¶</a></h4>
+<p>Managers now return a <tt class="xref docutils literal"><span class="pre">MultipleObjectsReturned</span></tt> exception
+instead of <tt class="xref docutils literal"><span class="pre">AssertionError</span></tt>:</p>
+<p>Old (0.96):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">Model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+    <span class="n">handle_the_error</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>New (1.0):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">Model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">Model</span><span class="o">.</span><span class="n">MultipleObjectsReturned</span><span class="p">:</span>
+    <span class="n">handle_the_error</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-lazydate-has-been-fired">
+<span id="lazydate-has-been-fired"></span><h4><tt class="docutils literal"><span class="pre">LazyDate</span></tt> has been fired<a class="headerlink" href="#lazydate-has-been-fired" title="Permalink to this headline">¶</a></h4>
+<p>The <tt class="docutils literal"><span class="pre">LazyDate</span></tt> helper class no longer exists.</p>
+<p>Default field values and query arguments can both be callable objects, so
+instances of <tt class="docutils literal"><span class="pre">LazyDate</span></tt> can be replaced with a reference to <tt class="docutils literal"><span class="pre">datetime.datetime.now</span></tt>:</p>
+<p>Old (0.96):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Article</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">maxlength</span><span class="o">=</span><span class="mf">100</span><span class="p">)</span>
+    <span class="n">published</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">LazyDate</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>New (1.0):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="k">class</span> <span class="nc">Article</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">100</span><span class="p">)</span>
+    <span class="n">published</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-decimalfield-is-new-and-floatfield-is-now-a-proper-float">
+<span id="decimalfield-is-new-and-floatfield-is-now-a-proper-float"></span><h4><tt class="docutils literal"><span class="pre">DecimalField</span></tt> is new, and <tt class="docutils literal"><span class="pre">FloatField</span></tt> is now a proper float<a class="headerlink" href="#decimalfield-is-new-and-floatfield-is-now-a-proper-float" title="Permalink to this headline">¶</a></h4>
+<p>Old (0.96):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">field_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mf">10</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mf">3</span><span class="p">)</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>New (1.0):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">field_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mf">10</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mf">3</span><span class="p">)</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>If you forget to make this change, you will see errors about <tt class="docutils literal"><span class="pre">FloatField</span></tt>
+not taking a <tt class="docutils literal"><span class="pre">max_digits</span></tt> attribute in <tt class="docutils literal"><span class="pre">__init__</span></tt>, because the new
+<tt class="docutils literal"><span class="pre">FloatField</span></tt> takes no precision-related arguments.</p>
+<p>If you're using MySQL or PostgreSQL, no further changes are needed. The
+database column types for <tt class="docutils literal"><span class="pre">DecimalField</span></tt> are the same as for the old
+<tt class="docutils literal"><span class="pre">FloatField</span></tt>.</p>
+<p>If you're using SQLite, you need to force the database to view the
+appropriate columns as decimal types, rather than floats. To do this, you'll
+need to reload your data. Do this after you have made the change to using
+<tt class="docutils literal"><span class="pre">DecimalField</span></tt> in your code and updated the Django code.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p><strong>Back up your database first!</strong></p>
+<p class="last">For SQLite, this means making a copy of the single file that stores the
+database (the name of that file is the <tt class="docutils literal"><span class="pre">DATABASE_NAME</span></tt> in your settings.py
+file).</p>
+</div>
+<p>To upgrade each application to use a <tt class="docutils literal"><span class="pre">DecimalField</span></tt>, you can do the
+following, replacing <tt class="docutils literal"><span class="pre">&lt;app&gt;</span></tt> in the code below with each app's name:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>./manage.py dumpdata --format<span class="o">=</span>xml &lt;app&gt; &gt; data-dump.xml
+<span class="nv">$ </span>./manage.py reset &lt;app&gt;
+<span class="nv">$ </span>./manage.py loaddata data-dump.xml
+</pre></div>
+</div>
+<p>Notes:</p>
+<ol class="arabic simple">
+<li>It's important that you remember to use XML format in the first step of
+this process. We are exploiting a feature of the XML data dumps that makes
+porting floats to decimals with SQLite possible.</li>
+<li>In the second step you will be asked to confirm that you are prepared to
+lose the data for the application(s) in question. Say yes; we'll restore
+this data in the third step, of course.</li>
+<li><tt class="docutils literal"><span class="pre">DecimalField</span></tt> is not used in any of the apps shipped with Django prior
+to this change being made, so you do not need to worry about performing
+this procedure for any of the standard Django models.</li>
+</ol>
+<p>If something goes wrong in the above process, just copy your backed up
+database file over the original file and start again.</p>
+</div>
+</div>
+<div class="section" id="s-internationalization">
+<span id="internationalization"></span><h3>Internationalization<a class="headerlink" href="#internationalization" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-django-views-i18n-set-language-now-requires-a-post-request">
+<span id="django-views-i18n-set-language-now-requires-a-post-request"></span><h4><tt class="xref docutils literal"><span class="pre">django.views.i18n.set_language()</span></tt> now requires a POST request<a class="headerlink" href="#django-views-i18n-set-language-now-requires-a-post-request" title="Permalink to this headline">¶</a></h4>
+<p>Previously, a GET request was used. The old behavior meant that state (the
+locale used to display the site) could be changed by a GET request, which is
+against the HTTP specification's recommendations. Code calling this view must
+ensure that a POST request is now made, instead of a GET. This means you can
+no longer use a link to access the view, but must use a form submission of
+some kind (e.g. a button).</p>
+</div>
+<div class="section" id="s-is-no-longer-in-builtins">
+<span id="is-no-longer-in-builtins"></span><h4><tt class="docutils literal"><span class="pre">_()</span></tt> is no longer in builtins<a class="headerlink" href="#is-no-longer-in-builtins" title="Permalink to this headline">¶</a></h4>
+<p><tt class="docutils literal"><span class="pre">_()</span></tt> (the callable object whose name is a single underscore) is no longer
+monkeypatched into builtins -- that is, it's no longer available magically in
+every module.</p>
+<p>If you were previously relying on <tt class="docutils literal"><span class="pre">_()</span></tt> always being present, you should now
+explicitly import <tt class="docutils literal"><span class="pre">ugettext</span></tt> or <tt class="docutils literal"><span class="pre">ugettext_lazy</span></tt>, if appropriate, and alias
+it to <tt class="docutils literal"><span class="pre">_</span></tt> yourself:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext</span> <span class="k">as</span> <span class="n">_</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-http-request-response-objects">
+<span id="http-request-response-objects"></span><h3>HTTP request/response objects<a class="headerlink" href="#http-request-response-objects" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-dictionary-access-to-httprequest">
+<span id="dictionary-access-to-httprequest"></span><h4>Dictionary access to <tt class="docutils literal"><span class="pre">HttpRequest</span></tt><a class="headerlink" href="#dictionary-access-to-httprequest" title="Permalink to this headline">¶</a></h4>
+<p><tt class="docutils literal"><span class="pre">HttpRequest</span></tt> objects no longer directly support dictionary-style
+access; previously, both <tt class="docutils literal"><span class="pre">GET</span></tt> and <tt class="docutils literal"><span class="pre">POST</span></tt> data were directly
+available on the <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object (e.g., you could check for a
+piece of form data by using <tt class="docutils literal"><span class="pre">if</span> <span class="pre">'some_form_key'</span> <span class="pre">in</span> <span class="pre">request</span></tt> or by
+reading <tt class="docutils literal"><span class="pre">request['some_form_key']</span></tt>. This is no longer supported; if
+you need access to the combined <tt class="docutils literal"><span class="pre">GET</span></tt> and <tt class="docutils literal"><span class="pre">POST</span></tt> data, use
+<tt class="docutils literal"><span class="pre">request.REQUEST</span></tt> instead.</p>
+<p>It is strongly suggested, however, that you always explicitly look in
+the appropriate dictionary for the type of request you expect to
+receive (<tt class="docutils literal"><span class="pre">request.GET</span></tt> or <tt class="docutils literal"><span class="pre">request.POST</span></tt>); relying on the combined
+<tt class="docutils literal"><span class="pre">request.REQUEST</span></tt> dictionary can mask the origin of incoming data.</p>
+</div>
+<div class="section" id="s-accessing-httpresponse-headers">
+<span id="accessing-httpresponse-headers"></span><h4>Accessing <tt class="docutils literal"><span class="pre">HTTPResponse</span></tt> headers<a class="headerlink" href="#accessing-httpresponse-headers" title="Permalink to this headline">¶</a></h4>
+<p><tt class="docutils literal"><span class="pre">django.http.HttpResponse.headers</span></tt> has been renamed to <tt class="docutils literal"><span class="pre">_headers</span></tt> and
+<tt class="xref docutils literal"><span class="pre">HttpResponse`</span></tt> now supports containment checking directly. So use
+<tt class="docutils literal"><span class="pre">if</span> <span class="pre">header</span> <span class="pre">in</span> <span class="pre">response:</span></tt> instead of <tt class="docutils literal"><span class="pre">if</span> <span class="pre">header</span> <span class="pre">in</span> <span class="pre">response.headers:</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="s-generic-relations">
+<span id="generic-relations"></span><h3>Generic relations<a class="headerlink" href="#generic-relations" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-generic-relations-have-been-moved-out-of-core">
+<span id="generic-relations-have-been-moved-out-of-core"></span><h4>Generic relations have been moved out of core<a class="headerlink" href="#generic-relations-have-been-moved-out-of-core" title="Permalink to this headline">¶</a></h4>
+<p>The generic relation classes -- <tt class="docutils literal"><span class="pre">GenericForeignKey</span></tt> and <tt class="docutils literal"><span class="pre">GenericRelation</span></tt>
+-- have moved into the <a title="Provides generic interface to installed models." class="reference external" href="../ref/contrib/contenttypes.html#module-django.contrib.contenttypes"><tt class="xref docutils literal"><span class="pre">django.contrib.contenttypes</span></tt></a> module.</p>
+</div>
+</div>
+<div class="section" id="s-testing">
+<span id="testing"></span><h3>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-django-test-client-login-has-changed">
+<span id="django-test-client-login-has-changed"></span><h4><tt class="xref docutils literal"><span class="pre">django.test.Client.login()</span></tt> has changed<a class="headerlink" href="#django-test-client-login-has-changed" title="Permalink to this headline">¶</a></h4>
+<p>Old (0.96):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.test</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="n">c</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s">&#39;/path/to/login&#39;</span><span class="p">,</span><span class="s">&#39;myuser&#39;</span><span class="p">,</span><span class="s">&#39;mypassword&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>New (1.0):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># ... same as above, but then:</span>
+<span class="n">c</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s">&#39;myuser&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">&#39;mypassword&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-management-commands">
+<span id="management-commands"></span><h3>Management commands<a class="headerlink" href="#management-commands" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-running-management-commands-from-your-code">
+<span id="running-management-commands-from-your-code"></span><h4>Running management commands from your code<a class="headerlink" href="#running-management-commands-from-your-code" title="Permalink to this headline">¶</a></h4>
+<p><tt class="xref docutils literal"><span class="pre">django.core.management`</span></tt> has been greatly refactored.</p>
+<p>Calls to management services in your code now need to use
+<tt class="docutils literal"><span class="pre">call_command</span></tt>. For example, if you have some test code that calls flush and
+load_data:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core</span> <span class="kn">import</span> <span class="n">management</span>
+<span class="n">management</span><span class="o">.</span><span class="n">flush</span><span class="p">(</span><span class="n">verbosity</span><span class="o">=</span><span class="mf">0</span><span class="p">,</span> <span class="n">interactive</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">management</span><span class="o">.</span><span class="n">load_data</span><span class="p">([</span><span class="s">&#39;test_data&#39;</span><span class="p">],</span> <span class="n">verbosity</span><span class="o">=</span><span class="mf">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>...you'll need to change this code to read:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core</span> <span class="kn">import</span> <span class="n">management</span>
+<span class="n">management</span><span class="o">.</span><span class="n">call_command</span><span class="p">(</span><span class="s">&#39;flush&#39;</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mf">0</span><span class="p">,</span> <span class="n">interactive</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">management</span><span class="o">.</span><span class="n">call_command</span><span class="p">(</span><span class="s">&#39;loaddata&#39;</span><span class="p">,</span> <span class="s">&#39;test_data&#39;</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mf">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-subcommands-must-now-preceed-options">
+<span id="subcommands-must-now-preceed-options"></span><h4>Subcommands must now preceed options<a class="headerlink" href="#subcommands-must-now-preceed-options" title="Permalink to this headline">¶</a></h4>
+<p><tt class="docutils literal"><span class="pre">django-admin.py</span></tt> and <tt class="docutils literal"><span class="pre">manage.py</span></tt> now require subcommands to precede
+options. So:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>django-admin.py --settings<span class="o">=</span>foo.bar runserver
+</pre></div>
+</div>
+<p>...no longer works and should be changed to:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>django-admin.py runserver --settings<span class="o">=</span>foo.bar
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-syndication">
+<span id="syndication"></span><h3>Syndication<a class="headerlink" href="#syndication" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-feed-init-has-changed">
+<span id="feed-init-has-changed"></span><h4><tt class="docutils literal"><span class="pre">Feed.__init__</span></tt> has changed<a class="headerlink" href="#feed-init-has-changed" title="Permalink to this headline">¶</a></h4>
+<p>The <tt class="docutils literal"><span class="pre">__init__()</span></tt> method of the syndication framework's <tt class="docutils literal"><span class="pre">Feed</span></tt> class now
+takes an <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object as its second parameter, instead of the feed's
+URL. This allows the syndication framework to work without requiring the sites
+framework. This only affects code that subclasses <tt class="docutils literal"><span class="pre">Feed</span></tt> and overrides the
+<tt class="docutils literal"><span class="pre">__init__()</span></tt> method, and code that calls <tt class="docutils literal"><span class="pre">Feed.__init__()</span></tt> directly.</p>
+</div>
+</div>
+<div class="section" id="s-data-structures">
+<span id="data-structures"></span><h3>Data structures<a class="headerlink" href="#data-structures" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-sorteddictfromlist-is-gone">
+<span id="sorteddictfromlist-is-gone"></span><h4><tt class="docutils literal"><span class="pre">SortedDictFromList</span></tt> is gone<a class="headerlink" href="#sorteddictfromlist-is-gone" title="Permalink to this headline">¶</a></h4>
+<p><tt class="docutils literal"><span class="pre">django.newforms.forms.SortedDictFromList</span></tt> was removed.
+<tt class="xref docutils literal"><span class="pre">django.utils.datastructures.SortedDict</span></tt> can now be instantiated with
+a sequence of tuples.</p>
+<p>To update your code:</p>
+<ol class="arabic simple">
+<li>Use <tt class="xref docutils literal"><span class="pre">django.utils.datastructures.SortedDict</span></tt> wherever you were
+using <tt class="docutils literal"><span class="pre">django.newforms.forms.SortedDictFromList</span></tt>.</li>
+<li>Because <tt class="xref docutils literal"><span class="pre">django.utils.datastructures.SortedDict.copy()</span></tt> doesn't
+return a deepcopy as <tt class="docutils literal"><span class="pre">SortedDictFromList.copy()</span></tt> did, you will need
+to update your code if you were relying on a deepcopy. Do this by using
+<tt class="docutils literal"><span class="pre">copy.deepcopy</span></tt> directly.</li>
+</ol>
+</div>
+</div>
+<div class="section" id="s-database-backend-functions">
+<span id="database-backend-functions"></span><h3>Database backend functions<a class="headerlink" href="#database-backend-functions" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-database-backend-functions-have-been-renamed">
+<span id="database-backend-functions-have-been-renamed"></span><h4>Database backend functions have been renamed<a class="headerlink" href="#database-backend-functions-have-been-renamed" title="Permalink to this headline">¶</a></h4>
+<p>Almost <em>all</em> of the database backend-level functions have been renamed and/or
+relocated. None of these were documented, but you'll need to change your code
+if you're using any of these functions, all of which are in <tt class="xref docutils literal"><span class="pre">django.db</span></tt>:</p>
+<table class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="57%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Old (0.96)</th>
+<th class="head">New (1.0)</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_autoinc_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.autoinc_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_date_extract_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.date_extract_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_date_trunc_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.date_trunc_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_datetime_cast_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.datetime_cast_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_deferrable_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.deferrable_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_drop_foreignkey_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.drop_foreignkey_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_fulltext_search_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.fulltext_search_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_last_insert_id</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.last_insert_id</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_limit_offset_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.limit_offset_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_max_name_length</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.max_name_length</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_pk_default_value</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.pk_default_value</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_random_function_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.random_function_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_sql_flush</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.sql_flush</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_sql_sequence_reset</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.sequence_reset_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_start_transaction_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.start_transaction_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_tablespace_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.tablespace_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.quote_name</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.quote_name</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_query_set_class</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.query_set_class</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_field_cast_sql</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.field_cast_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.get_drop_sequence</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.ops.drop_sequence_sql</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.OPERATOR_MAPPING</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.operators</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.allows_group_by_ordinal</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.allows_group_by_ordinal</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.allows_unique_and_pk</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.allows_unique_and_pk</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.autoindexes_primary_keys</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.autoindexes_primary_keys</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.needs_datetime_string_cast</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.needs_datetime_string_cast</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.needs_upper_for_iops</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.needs_upper_for_iops</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.supports_constraints</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.supports_constraints</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.supports_tablespaces</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.supports_tablespaces</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.uses_case_insensitive_names</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.uses_case_insensitive_names</span></tt></td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">backend.uses_custom_queryset</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">connection.features.uses_custom_queryset</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Porting your apps from Django 0.96 to 1.0</a><ul>
+<li><a class="reference external" href="#common-changes">Common changes</a><ul>
+<li><a class="reference external" href="#use-unicode">Use Unicode</a></li>
+<li><a class="reference external" href="#models">Models</a><ul>
+<li><a class="reference external" href="#rename-maxlength-to-max-length">Rename <tt class="docutils literal"><span class="pre">maxlength</span></tt> to <tt class="docutils literal"><span class="pre">max_length</span></tt></a></li>
+<li><a class="reference external" href="#replace-str-with-unicode">Replace <tt class="docutils literal"><span class="pre">__str__</span></tt> with <tt class="docutils literal"><span class="pre">__unicode__</span></tt></a></li>
+<li><a class="reference external" href="#remove-prepopulated-from">Remove <tt class="docutils literal"><span class="pre">prepopulated_from</span></tt></a></li>
+<li><a class="reference external" href="#remove-core">Remove <tt class="docutils literal"><span class="pre">core</span></tt></a></li>
+<li><a class="reference external" href="#replace-class-admin-with-admin-py">Replace <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Admin:</span></tt> with <tt class="docutils literal"><span class="pre">admin.py</span></tt></a></li>
+<li><a class="reference external" href="#example">Example</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#the-admin">The Admin</a><ul>
+<li><a class="reference external" href="#use-new-inline-syntax">Use new inline syntax</a></li>
+<li><a class="reference external" href="#simplify-fields-or-use-fieldsets">Simplify <tt class="docutils literal"><span class="pre">fields</span></tt>, or use <tt class="docutils literal"><span class="pre">fieldsets</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#urls">URLs</a><ul>
+<li><a class="reference external" href="#update-your-root-urls-py">Update your root <tt class="docutils literal"><span class="pre">urls.py</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#views">Views</a><ul>
+<li><a class="reference external" href="#use-django-forms-instead-of-newforms">Use <tt class="docutils literal"><span class="pre">django.forms</span></tt> instead of <tt class="docutils literal"><span class="pre">newforms</span></tt></a></li>
+<li><a class="reference external" href="#handle-uploaded-files-using-the-new-api">Handle uploaded files using the new API</a></li>
+<li><a class="reference external" href="#work-with-file-fields-using-the-new-api">Work with file fields using the new API</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#templates">Templates</a><ul>
+<li><a class="reference external" href="#learn-to-love-autoescaping">Learn to love autoescaping</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#less-common-changes">Less-common changes</a><ul>
+<li><a class="reference external" href="#signals">Signals</a></li>
+<li><a class="reference external" href="#comments">Comments</a></li>
+<li><a class="reference external" href="#template-tags">Template tags</a><ul>
+<li><a class="reference external" href="#spaceless-tag"><tt class="docutils literal"><span class="pre">spaceless</span></tt> tag</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#local-flavors">Local flavors</a><ul>
+<li><a class="reference external" href="#u-s-local-flavor">U.S. local flavor</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#sessions">Sessions</a><ul>
+<li><a class="reference external" href="#getting-a-new-session-key">Getting a new session key</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#fixtures">Fixtures</a><ul>
+<li><a class="reference external" href="#loading-a-row-no-longer-calls-save">Loading a row no longer calls <tt class="docutils literal"><span class="pre">save()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#settings">Settings</a><ul>
+<li><a class="reference external" href="#better-exceptions">Better exceptions</a></li>
+<li><a class="reference external" href="#login-url-has-moved"><tt class="docutils literal"><span class="pre">LOGIN_URL</span></tt> has moved</a></li>
+<li><a class="reference external" href="#append-slash-behavior-has-been-updated"><tt class="docutils literal"><span class="pre">APPEND_SLASH</span></tt> behavior has been updated</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#smaller-model-changes">Smaller model changes</a><ul>
+<li><a class="reference external" href="#different-exception-from-get">Different exception from <tt class="docutils literal"><span class="pre">get()</span></tt></a></li>
+<li><a class="reference external" href="#lazydate-has-been-fired"><tt class="docutils literal"><span class="pre">LazyDate</span></tt> has been fired</a></li>
+<li><a class="reference external" href="#decimalfield-is-new-and-floatfield-is-now-a-proper-float"><tt class="docutils literal"><span class="pre">DecimalField</span></tt> is new, and <tt class="docutils literal"><span class="pre">FloatField</span></tt> is now a proper float</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#internationalization">Internationalization</a><ul>
+<li><a class="reference external" href="#django-views-i18n-set-language-now-requires-a-post-request"><tt class="docutils literal"><span class="pre">django.views.i18n.set_language()</span></tt> now requires a POST request</a></li>
+<li><a class="reference external" href="#is-no-longer-in-builtins"><tt class="docutils literal"><span class="pre">_()</span></tt> is no longer in builtins</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#http-request-response-objects">HTTP request/response objects</a><ul>
+<li><a class="reference external" href="#dictionary-access-to-httprequest">Dictionary access to <tt class="docutils literal"><span class="pre">HttpRequest</span></tt></a></li>
+<li><a class="reference external" href="#accessing-httpresponse-headers">Accessing <tt class="docutils literal"><span class="pre">HTTPResponse</span></tt> headers</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#generic-relations">Generic relations</a><ul>
+<li><a class="reference external" href="#generic-relations-have-been-moved-out-of-core">Generic relations have been moved out of core</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#testing">Testing</a><ul>
+<li><a class="reference external" href="#django-test-client-login-has-changed"><tt class="docutils literal"><span class="pre">django.test.Client.login()</span></tt> has changed</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#management-commands">Management commands</a><ul>
+<li><a class="reference external" href="#running-management-commands-from-your-code">Running management commands from your code</a></li>
+<li><a class="reference external" href="#subcommands-must-now-preceed-options">Subcommands must now preceed options</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#syndication">Syndication</a><ul>
+<li><a class="reference external" href="#feed-init-has-changed"><tt class="docutils literal"><span class="pre">Feed.__init__</span></tt> has changed</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#data-structures">Data structures</a><ul>
+<li><a class="reference external" href="#sorteddictfromlist-is-gone"><tt class="docutils literal"><span class="pre">SortedDictFromList</span></tt> is gone</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#database-backend-functions">Database backend functions</a><ul>
+<li><a class="reference external" href="#database-backend-functions-have-been-renamed">Database backend functions have been renamed</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="1.0.html">Django 1.0 release notes</a></li>
+    
+    
+      <li>Next: <a href="1.0.1.html">Django 1.0.1 release notes</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Release notes</a>
+        
+          <ul><li><a href="1.0.html">Django 1.0 release notes</a>
+        
+        <ul><li>Porting your apps from Django 0.96 to 1.0</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/releases/1.0-porting-guide.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="1.0.html" title="Django 1.0 release notes">previous</a> 
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="1.0.1.html" title="Django 1.0.1 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,719 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>URL dispatcher &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Handling HTTP requests" href="index.html" />
+    <link rel="next" title="Writing Views" href="views.html" />
+    <link rel="prev" title="Handling HTTP requests" href="index.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="index.html" title="Handling HTTP requests">previous</a> 
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="views.html" title="Writing Views">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-http-urls">
+            
+  
+  <div class="section" id="s-url-dispatcher">
+<span id="s-topics-http-urls"></span><span id="url-dispatcher"></span><span id="topics-http-urls"></span><h1>URL dispatcher<a class="headerlink" href="#url-dispatcher" title="Permalink to this headline">¶</a></h1>
+<p>A clean, elegant URL scheme is an important detail in a high-quality Web
+application. Django lets you design URLs however you want, with no framework
+limitations.</p>
+<p>There&#8217;s no <tt class="docutils literal"><span class="pre">.php</span></tt> or <tt class="docutils literal"><span class="pre">.cgi</span></tt> required, and certainly none of that
+<tt class="docutils literal"><span class="pre">0,2097,1-1-1928,00</span></tt> nonsense.</p>
+<p>See <a class="reference external" href="http://www.w3.org/Provider/Style/URI">Cool URIs don&#8217;t change</a>, by World Wide Web creator Tim Berners-Lee, for
+excellent arguments on why URLs should be clean and usable.</p>
+<div class="section" id="s-overview">
+<span id="overview"></span><h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>To design URLs for an app, you create a Python module informally called a
+<strong>URLconf</strong> (URL configuration). This module is pure Python code and
+is a simple mapping between URL patterns (as simple regular expressions) to
+Python callback functions (your views).</p>
+<p>This mapping can be as short or as long as needed. It can reference other
+mappings. And, because it&#8217;s pure Python code, it can be constructed
+dynamically.</p>
+</div>
+<div class="section" id="s-id1">
+<span id="s-how-django-processes-a-request"></span><span id="id1"></span><span id="how-django-processes-a-request"></span><h2>How Django processes a request<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>When a user requests a page from your Django-powered site, this is the
+algorithm the system follows to determine which Python code to execute:</p>
+<ol class="arabic simple">
+<li>Django determines the root URLconf module to use. Ordinarily,
+this is the value of the <tt class="docutils literal"><span class="pre">ROOT_URLCONF</span></tt> setting, but if the incoming
+<tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object has an attribute called <tt class="docutils literal"><span class="pre">urlconf</span></tt>, its value
+will be used in place of the <tt class="docutils literal"><span class="pre">ROOT_URLCONF</span></tt> setting.</li>
+<li>Django loads that Python module and looks for the variable
+<tt class="docutils literal"><span class="pre">urlpatterns</span></tt>. This should be a Python list, in the format returned by
+the function <tt class="docutils literal"><span class="pre">django.conf.urls.defaults.patterns()</span></tt>.</li>
+<li>Django runs through each URL pattern, in order, and stops at the first
+one that matches the requested URL.</li>
+<li>Once one of the regexes matches, Django imports and calls the given
+view, which is a simple Python function. The view gets passed an
+<a title="django.http.HttpRequest" class="reference external" href="../../ref/request-response.html#django.http.HttpRequest"><tt class="xref docutils literal"><span class="pre">HttpRequest</span></tt></a> as its first argument and any values
+captured in the regex as remaining arguments.</li>
+</ol>
+</div>
+<div class="section" id="s-example">
+<span id="example"></span><h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>Here&#8217;s a sample URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/2003/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.special_case_2003&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.year_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/(\d{2})/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.month_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/(\d{2})/(\d+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.article_detail&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">from</span> <span class="pre">django.conf.urls.defaults</span> <span class="pre">import</span> <span class="pre">*</span></tt> makes the <tt class="docutils literal"><span class="pre">patterns()</span></tt>
+function available.</li>
+<li>To capture a value from the URL, just put parenthesis around it.</li>
+<li>There's no need to add a leading slash, because every URL has that. For
+example, it's <tt class="docutils literal"><span class="pre">^articles</span></tt>, not <tt class="docutils literal"><span class="pre">^/articles</span></tt>.</li>
+<li>The <tt class="docutils literal"><span class="pre">'r'</span></tt> in front of each regular expression string is optional but
+recommended. It tells Python that a string is &quot;raw&quot; -- that nothing in
+the string should be escaped. See <a class="reference external" href="http://diveintopython.org/regular_expressions/street_addresses.html#re.matching.2.3">Dive Into Python's explanation</a>.</li>
+</ul>
+<p>Example requests:</p>
+<ul class="simple">
+<li>A request to <tt class="docutils literal"><span class="pre">/articles/2005/03/</span></tt> would match the third entry in the
+list. Django would call the function
+<tt class="docutils literal"><span class="pre">news.views.month_archive(request,</span> <span class="pre">'2005',</span> <span class="pre">'03')</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">/articles/2005/3/</span></tt> would not match any URL patterns, because the
+third entry in the list requires two digits for the month.</li>
+<li><tt class="docutils literal"><span class="pre">/articles/2003/</span></tt> would match the first pattern in the list, not the
+second one, because the patterns are tested in order, and the first one
+is the first test to pass. Feel free to exploit the ordering to insert
+special cases like this.</li>
+<li><tt class="docutils literal"><span class="pre">/articles/2003</span></tt> would not match any of these patterns, because each
+pattern requires that the URL end with a slash.</li>
+<li><tt class="docutils literal"><span class="pre">/articles/2003/03/3/</span></tt> would match the final pattern. Django would call
+the function <tt class="docutils literal"><span class="pre">news.views.article_detail(request,</span> <span class="pre">'2003',</span> <span class="pre">'03',</span> <span class="pre">'3')</span></tt>.</li>
+</ul>
+</div>
+<div class="section" id="s-named-groups">
+<span id="named-groups"></span><h2>Named groups<a class="headerlink" href="#named-groups" title="Permalink to this headline">¶</a></h2>
+<p>The above example used simple, <em>non-named</em> regular-expression groups (via
+parenthesis) to capture bits of the URL and pass them as <em>positional</em> arguments
+to a view. In more advanced usage, it's possible to use <em>named</em>
+regular-expression groups to capture URL bits and pass them as <em>keyword</em>
+arguments to a view.</p>
+<p>In Python regular expressions, the syntax for named regular-expression groups
+is <tt class="docutils literal"><span class="pre">(?P&lt;name&gt;pattern)</span></tt>, where <tt class="docutils literal"><span class="pre">name</span></tt> is the name of the group and
+<tt class="docutils literal"><span class="pre">pattern</span></tt> is some pattern to match.</p>
+<p>Here's the above example URLconf, rewritten to use named groups:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/2003/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.special_case_2003&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(?P&lt;year&gt;\d{4})/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.year_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(?P&lt;year&gt;\d{4})/(?P&lt;month&gt;\d{2})/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.month_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(?P&lt;year&gt;\d{4})/(?P&lt;month&gt;\d{2})/(?P&lt;day&gt;\d+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.article_detail&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This accomplishes exactly the same thing as the previous example, with one
+subtle difference: The captured values are passed to view functions as keyword
+arguments rather than positional arguments. For example:</p>
+<ul class="simple">
+<li>A request to <tt class="docutils literal"><span class="pre">/articles/2005/03/</span></tt> would call the function
+<tt class="docutils literal"><span class="pre">news.views.month_archive(request,</span> <span class="pre">year='2005',</span> <span class="pre">month='03')</span></tt>, instead
+of <tt class="docutils literal"><span class="pre">news.views.month_archive(request,</span> <span class="pre">'2005',</span> <span class="pre">'03')</span></tt>.</li>
+<li>A request to <tt class="docutils literal"><span class="pre">/articles/2003/03/3/</span></tt> would call the function
+<tt class="docutils literal"><span class="pre">news.views.article_detail(request,</span> <span class="pre">year='2003',</span> <span class="pre">month='03',</span> <span class="pre">day='3')</span></tt>.</li>
+</ul>
+<p>In practice, this means your URLconfs are slightly more explicit and less prone
+to argument-order bugs -- and you can reorder the arguments in your views'
+function definitions. Of course, these benefits come at the cost of brevity;
+some developers find the named-group syntax ugly and too verbose.</p>
+<div class="section" id="s-the-matching-grouping-algorithm">
+<span id="the-matching-grouping-algorithm"></span><h3>The matching/grouping algorithm<a class="headerlink" href="#the-matching-grouping-algorithm" title="Permalink to this headline">¶</a></h3>
+<p>Here's the algorithm the URLconf parser follows, with respect to named groups
+vs. non-named groups in a regular expression:</p>
+<p>If there are any named arguments, it will use those, ignoring non-named arguments.
+Otherwise, it will pass all non-named arguments as positional arguments.</p>
+<p>In both cases, it will pass any extra keyword arguments as keyword arguments.
+See &quot;Passing extra options to view functions&quot; below.</p>
+</div>
+</div>
+<div class="section" id="s-what-the-urlconf-searches-against">
+<span id="what-the-urlconf-searches-against"></span><h2>What the URLconf searches against<a class="headerlink" href="#what-the-urlconf-searches-against" title="Permalink to this headline">¶</a></h2>
+<p>The URLconf searches against the requested URL, as a normal Python string. This
+does not include GET or POST parameters, or the domain name.</p>
+<p>For example, in a request to <tt class="docutils literal"><span class="pre">http://www.example.com/myapp/</span></tt>, the URLconf
+will look for <tt class="docutils literal"><span class="pre">myapp/</span></tt>.</p>
+<p>In a request to <tt class="docutils literal"><span class="pre">http://www.example.com/myapp/?page=3</span></tt>, the URLconf will look
+for <tt class="docutils literal"><span class="pre">myapp/</span></tt>.</p>
+<p>The URLconf doesn't look at the request method. In other words, all request
+methods -- <tt class="docutils literal"><span class="pre">POST</span></tt>, <tt class="docutils literal"><span class="pre">GET</span></tt>, <tt class="docutils literal"><span class="pre">HEAD</span></tt>, etc. -- will be routed to the same
+function for the same URL.</p>
+</div>
+<div class="section" id="s-syntax-of-the-urlpatterns-variable">
+<span id="syntax-of-the-urlpatterns-variable"></span><h2>Syntax of the urlpatterns variable<a class="headerlink" href="#syntax-of-the-urlpatterns-variable" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">urlpatterns</span></tt> should be a Python list, in the format returned by the function
+<tt class="docutils literal"><span class="pre">django.conf.urls.defaults.patterns()</span></tt>. Always use <tt class="docutils literal"><span class="pre">patterns()</span></tt> to create
+the <tt class="docutils literal"><span class="pre">urlpatterns</span></tt> variable.</p>
+<p>Convention is to use <tt class="docutils literal"><span class="pre">from</span> <span class="pre">django.conf.urls.defaults</span> <span class="pre">import</span> <span class="pre">*</span></tt> at the top of
+your URLconf. This gives your module access to these objects:</p>
+<div class="section" id="s-patterns">
+<span id="patterns"></span><h3>patterns<a class="headerlink" href="#patterns" title="Permalink to this headline">¶</a></h3>
+<p>A function that takes a prefix, and an arbitrary number of URL patterns, and
+returns a list of URL patterns in the format Django needs.</p>
+<p>The first argument to <tt class="docutils literal"><span class="pre">patterns()</span></tt> is a string <tt class="docutils literal"><span class="pre">prefix</span></tt>. See
+&quot;The view prefix&quot; below.</p>
+<p>The remaining arguments should be tuples in this format:</p>
+<div class="highlight-python"><pre>(regular expression, Python callback function [, optional dictionary [, optional name]])</pre>
+</div>
+<p>...where <tt class="docutils literal"><span class="pre">optional</span> <span class="pre">dictionary</span></tt> and <tt class="docutils literal"><span class="pre">optional</span> <span class="pre">name</span></tt> are optional. (See
+<a class="reference internal" href="#passing-extra-options-to-view-functions">Passing extra options to view functions</a> below.)</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Because <cite>patterns()</cite> is a function call, it accepts a maximum of 255
+arguments (URL patterns, in this case). This is a limit for all Python
+function calls. This is rarely a problem in practice, because you'll
+typically structure your URL patterns modularly by using <cite>include()</cite>
+sections. However, on the off-chance you do hit the 255-argument limit,
+realize that <cite>patterns()</cite> returns a Python list, so you can split up the
+construction of the list.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="o">...</span>
+    <span class="p">)</span>
+<span class="n">urlpatterns</span> <span class="o">+=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="o">...</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p class="last">Python lists have unlimited size, so there's no limit to how many URL
+patterns you can construct. The only limit is that you can only create 254
+at a time (the 255th argument is the initial prefix argument).</p>
+</div>
+</div>
+<div class="section" id="s-url">
+<span id="url"></span><h3>url<a class="headerlink" href="#url" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>You can use the <tt class="docutils literal"><span class="pre">url()</span></tt> function, instead of a tuple, as an argument to
+<tt class="docutils literal"><span class="pre">patterns()</span></tt>. This is convenient if you want to specify a name without the
+optional extra arguments dictionary. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="n">url</span><span class="p">(</span><span class="s">r&#39;^index/$&#39;</span><span class="p">,</span> <span class="n">index_view</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;main-view&quot;</span><span class="p">),</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This function takes five arguments, most of which are optional:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">url</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="#id2">Naming URL patterns</a> for why the <tt class="docutils literal"><span class="pre">name</span></tt> parameter is useful.</p>
+<p>The <tt class="docutils literal"><span class="pre">prefix</span></tt> parameter has the same meaning as the first argument to
+<tt class="docutils literal"><span class="pre">patterns()</span></tt> and is only relevant when you're passing a string as the
+<tt class="docutils literal"><span class="pre">view</span></tt> parameter.</p>
+</div>
+<div class="section" id="s-handler404">
+<span id="handler404"></span><h3>handler404<a class="headerlink" href="#handler404" title="Permalink to this headline">¶</a></h3>
+<p>A string representing the full Python import path to the view that should be
+called if none of the URL patterns match.</p>
+<p>By default, this is <tt class="docutils literal"><span class="pre">'django.views.defaults.page_not_found'</span></tt>. That default
+value should suffice.</p>
+</div>
+<div class="section" id="s-handler500">
+<span id="handler500"></span><h3>handler500<a class="headerlink" href="#handler500" title="Permalink to this headline">¶</a></h3>
+<p>A string representing the full Python import path to the view that should be
+called in case of server errors. Server errors happen when you have runtime
+errors in view code.</p>
+<p>By default, this is <tt class="docutils literal"><span class="pre">'django.views.defaults.server_error'</span></tt>. That default
+value should suffice.</p>
+</div>
+<div class="section" id="s-include">
+<span id="include"></span><h3>include<a class="headerlink" href="#include" title="Permalink to this headline">¶</a></h3>
+<p>A function that takes a full Python import path to another URLconf that should
+be &quot;included&quot; in this place. See <a class="reference internal" href="#including-other-urlconfs">Including other URLconfs</a> below.</p>
+</div>
+</div>
+<div class="section" id="s-notes-on-capturing-text-in-urls">
+<span id="notes-on-capturing-text-in-urls"></span><h2>Notes on capturing text in URLs<a class="headerlink" href="#notes-on-capturing-text-in-urls" title="Permalink to this headline">¶</a></h2>
+<p>Each captured argument is sent to the view as a plain Python string, regardless
+of what sort of match the regular expression makes. For example, in this
+URLconf line:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^articles/(?P&lt;year&gt;\d{4})/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.year_archive&#39;</span><span class="p">),</span>
+</pre></div>
+</div>
+<p>...the <tt class="docutils literal"><span class="pre">year</span></tt> argument to <tt class="docutils literal"><span class="pre">news.views.year_archive()</span></tt> will be a string, not
+an integer, even though the <tt class="docutils literal"><span class="pre">\d{4}</span></tt> will only match integer strings.</p>
+<p>A convenient trick is to specify default parameters for your views' arguments.
+Here's an example URLconf and view:</p>
+<div class="highlight-python"><pre># URLconf
+urlpatterns = patterns('',
+    (r'^blog/$', 'blog.views.page'),
+    (r'^blog/page(?P&lt;num&gt;\d+)/$', 'blog.views.page'),
+)
+
+# View (in blog/views.py)
+def page(request, num="1"):
+    # Output the appropriate page of blog entries, according to num.</pre>
+</div>
+<p>In the above example, both URL patterns point to the same view --
+<tt class="docutils literal"><span class="pre">blog.views.page</span></tt> -- but the first pattern doesn't capture anything from the
+URL. If the first pattern matches, the <tt class="docutils literal"><span class="pre">page()</span></tt> function will use its
+default argument for <tt class="docutils literal"><span class="pre">num</span></tt>, <tt class="docutils literal"><span class="pre">&quot;1&quot;</span></tt>. If the second pattern matches,
+<tt class="docutils literal"><span class="pre">page()</span></tt> will use whatever <tt class="docutils literal"><span class="pre">num</span></tt> value was captured by the regex.</p>
+</div>
+<div class="section" id="s-performance">
+<span id="performance"></span><h2>Performance<a class="headerlink" href="#performance" title="Permalink to this headline">¶</a></h2>
+<p>Each regular expression in a <tt class="docutils literal"><span class="pre">urlpatterns</span></tt> is compiled the first time it's
+accessed. This makes the system blazingly fast.</p>
+</div>
+<div class="section" id="s-the-view-prefix">
+<span id="the-view-prefix"></span><h2>The view prefix<a class="headerlink" href="#the-view-prefix" title="Permalink to this headline">¶</a></h2>
+<p>You can specify a common prefix in your <tt class="docutils literal"><span class="pre">patterns()</span></tt> call, to cut down on
+code duplication.</p>
+<p>Here's the example URLconf from the <a class="reference external" href="../../intro/overview.html#intro-overview"><em>Django overview</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.news.views.year_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/(\d{2})/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.news.views.month_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/(\d{2})/(\d+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.news.views.article_detail&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>In this example, each view has a common prefix -- <tt class="docutils literal"><span class="pre">'mysite.news.views'</span></tt>.
+Instead of typing that out for each entry in <tt class="docutils literal"><span class="pre">urlpatterns</span></tt>, you can use the
+first argument to the <tt class="docutils literal"><span class="pre">patterns()</span></tt> function to specify a prefix to apply to
+each view function.</p>
+<p>With this in mind, the above example can be written more concisely as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;mysite.news.views&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/$&#39;</span><span class="p">,</span> <span class="s">&#39;year_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/(\d{2})/$&#39;</span><span class="p">,</span> <span class="s">&#39;month_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(\d{4})/(\d{2})/(\d+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;article_detail&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that you don't put a trailing dot (<tt class="docutils literal"><span class="pre">&quot;.&quot;</span></tt>) in the prefix. Django puts
+that in automatically.</p>
+<div class="section" id="s-multiple-view-prefixes">
+<span id="multiple-view-prefixes"></span><h3>Multiple view prefixes<a class="headerlink" href="#multiple-view-prefixes" title="Permalink to this headline">¶</a></h3>
+<p>In practice, you'll probably end up mixing and matching views to the point
+where the views in your <tt class="docutils literal"><span class="pre">urlpatterns</span></tt> won't have a common prefix. However,
+you can still take advantage of the view prefix shortcut to remove duplication.
+Just add multiple <tt class="docutils literal"><span class="pre">patterns()</span></tt> objects together, like this:</p>
+<p>Old:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.generic.date_based.archive_index&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^(?P&lt;year&gt;\d{4})/(?P&lt;month&gt;[a-z]{3})/$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.generic.date_based.archive_month&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^tag/(?P&lt;tag&gt;\w+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;weblog.views.tag&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>New:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;django.views.generic.date_based&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^$&#39;</span><span class="p">,</span> <span class="s">&#39;archive_index&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^(?P&lt;year&gt;\d{4})/(?P&lt;month&gt;[a-z]{3})/$&#39;</span><span class="p">,</span><span class="s">&#39;archive_month&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">urlpatterns</span> <span class="o">+=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;weblog.views&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^tag/(?P&lt;tag&gt;\w+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;tag&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-including-other-urlconfs">
+<span id="including-other-urlconfs"></span><h2>Including other URLconfs<a class="headerlink" href="#including-other-urlconfs" title="Permalink to this headline">¶</a></h2>
+<p>At any point, your <tt class="docutils literal"><span class="pre">urlpatterns</span></tt> can &quot;include&quot; other URLconf modules. This
+essentially &quot;roots&quot; a set of URLs below other ones.</p>
+<p>For example, here's the URLconf for the <a class="reference external" href="http://www.djangoproject.com/">Django Web site</a> itself. It includes a
+number of other URLconfs:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^weblog/&#39;</span><span class="p">,</span>        <span class="n">include</span><span class="p">(</span><span class="s">&#39;django_website.apps.blog.urls.blog&#39;</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s">r&#39;^documentation/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s">&#39;django_website.apps.docs.urls.docs&#39;</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s">r&#39;^comments/&#39;</span><span class="p">,</span>      <span class="n">include</span><span class="p">(</span><span class="s">&#39;django.contrib.comments.urls&#39;</span><span class="p">)),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that the regular expressions in this example don't have a <tt class="docutils literal"><span class="pre">$</span></tt>
+(end-of-string match character) but do include a trailing slash. Whenever
+Django encounters <tt class="docutils literal"><span class="pre">include()</span></tt>, it chops off whatever part of the URL matched
+up to that point and sends the remaining string to the included URLconf for
+further processing.</p>
+<div class="section" id="s-captured-parameters">
+<span id="captured-parameters"></span><h3>Captured parameters<a class="headerlink" href="#captured-parameters" title="Permalink to this headline">¶</a></h3>
+<p>An included URLconf receives any captured parameters from parent URLconfs, so
+the following example is valid:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># In settings/urls/main.py</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^(?P&lt;username&gt;\w+)/blog/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s">&#39;foo.urls.blog&#39;</span><span class="p">)),</span>
+<span class="p">)</span>
+
+<span class="c"># In foo/urls/blog.py</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;foo.views&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^$&#39;</span><span class="p">,</span> <span class="s">&#39;blog.index&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^archive/$&#39;</span><span class="p">,</span> <span class="s">&#39;blog.archive&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>In the above example, the captured <tt class="docutils literal"><span class="pre">&quot;username&quot;</span></tt> variable is passed to the
+included URLconf, as expected.</p>
+</div>
+</div>
+<div class="section" id="s-passing-extra-options-to-view-functions">
+<span id="passing-extra-options-to-view-functions"></span><h2>Passing extra options to view functions<a class="headerlink" href="#passing-extra-options-to-view-functions" title="Permalink to this headline">¶</a></h2>
+<p>URLconfs have a hook that lets you pass extra arguments to your view functions,
+as a Python dictionary.</p>
+<p>Any URLconf tuple can have an optional third element, which should be a
+dictionary of extra keyword arguments to pass to the view function.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;blog.views&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^blog/(?P&lt;year&gt;\d{4})/$&#39;</span><span class="p">,</span> <span class="s">&#39;year_archive&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;foo&#39;</span><span class="p">:</span> <span class="s">&#39;bar&#39;</span><span class="p">}),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>In this example, for a request to <tt class="docutils literal"><span class="pre">/blog/2005/</span></tt>, Django will call the
+<tt class="docutils literal"><span class="pre">blog.views.year_archive()</span></tt> view, passing it these keyword arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">year</span><span class="o">=</span><span class="s">&#39;2005&#39;</span><span class="p">,</span> <span class="n">foo</span><span class="o">=</span><span class="s">&#39;bar&#39;</span>
+</pre></div>
+</div>
+<p>This technique is used in <a class="reference external" href="../../ref/generic-views.html#ref-generic-views"><em>generic views</em></a> and in the
+<a class="reference external" href="../../ref/contrib/syndication.html#ref-contrib-syndication"><em>syndication framework</em></a> to pass metadata and
+options to views.</p>
+<div class="admonition-dealing-with-conflicts admonition ">
+<p class="first admonition-title">Dealing with conflicts</p>
+<p class="last">It's possible to have a URL pattern which captures named keyword arguments,
+and also passes arguments with the same names in its dictionary of extra
+arguments. When this happens, the arguments in the dictionary will be used
+instead of the arguments captured in the URL.</p>
+</div>
+<div class="section" id="s-passing-extra-options-to-include">
+<span id="passing-extra-options-to-include"></span><h3>Passing extra options to <tt class="docutils literal"><span class="pre">include()</span></tt><a class="headerlink" href="#passing-extra-options-to-include" title="Permalink to this headline">¶</a></h3>
+<p>Similarly, you can pass extra options to <tt class="docutils literal"><span class="pre">include()</span></tt>. When you pass extra
+options to <tt class="docutils literal"><span class="pre">include()</span></tt>, <em>each</em> line in the included URLconf will be passed
+the extra options.</p>
+<p>For example, these two URLconf sets are functionally identical:</p>
+<p>Set one:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># main.py</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^blog/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s">&#39;inner&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s">&#39;blogid&#39;</span><span class="p">:</span> <span class="mf">3</span><span class="p">}),</span>
+<span class="p">)</span>
+
+<span class="c"># inner.py</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^archive/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.views.archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^about/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.views.about&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Set two:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># main.py</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^blog/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s">&#39;inner&#39;</span><span class="p">)),</span>
+<span class="p">)</span>
+
+<span class="c"># inner.py</span>
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^archive/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.views.archive&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;blogid&#39;</span><span class="p">:</span> <span class="mf">3</span><span class="p">}),</span>
+    <span class="p">(</span><span class="s">r&#39;^about/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.views.about&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;blogid&#39;</span><span class="p">:</span> <span class="mf">3</span><span class="p">}),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that extra options will <em>always</em> be passed to <em>every</em> line in the included
+URLconf, regardless of whether the line's view actually accepts those options
+as valid. For this reason, this technique is only useful if you're certain that
+every view in the included URLconf accepts the extra options you're passing.</p>
+</div>
+</div>
+<div class="section" id="s-passing-callable-objects-instead-of-strings">
+<span id="passing-callable-objects-instead-of-strings"></span><h2>Passing callable objects instead of strings<a class="headerlink" href="#passing-callable-objects-instead-of-strings" title="Permalink to this headline">¶</a></h2>
+<p>Some developers find it more natural to pass the actual Python function object
+rather than a string containing the path to its module. This alternative is
+supported -- you can pass any callable object as the view.</p>
+<p>For example, given this URLconf in &quot;string&quot; notation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^archive/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.views.archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^about/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.views.about&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^contact/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.views.contact&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>You can accomplish the same thing by passing objects rather than strings. Just
+be sure to import the objects:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">mysite.views</span> <span class="kn">import</span> <span class="n">archive</span><span class="p">,</span> <span class="n">about</span><span class="p">,</span> <span class="n">contact</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^archive/$&#39;</span><span class="p">,</span> <span class="n">archive</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^about/$&#39;</span><span class="p">,</span> <span class="n">about</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^contact/$&#39;</span><span class="p">,</span> <span class="n">contact</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The following example is functionally identical. It's just a bit more compact
+because it imports the module that contains the views, rather than importing
+each view individually:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">mysite</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^archive/$&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">archive</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^about/$&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">about</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^contact/$&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">contact</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The style you use is up to you.</p>
+<p>Note that if you use this technique -- passing objects rather than strings --
+the view prefix (as explained in &quot;The view prefix&quot; above) will have no effect.</p>
+</div>
+<div class="section" id="s-id2">
+<span id="s-naming-url-patterns"></span><span id="id2"></span><span id="naming-url-patterns"></span><h2>Naming URL patterns<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>It's fairly common to use the same view function in multiple URL patterns in
+your URLconf. For example, these two URL patterns both point to the <tt class="docutils literal"><span class="pre">archive</span></tt>
+view:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^archive/(\d{4})/$&#39;</span><span class="p">,</span> <span class="n">archive</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^archive-summary/(\d{4})/$&#39;</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;summary&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">}),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This is completely valid, but it leads to problems when you try to do reverse
+URL matching (through the <tt class="docutils literal"><span class="pre">permalink()</span></tt> decorator or the <a class="reference external" href="../../ref/templates/builtins.html#ttag-url"><tt class="xref docutils literal"><span class="pre">url</span></tt></a> template
+tag. Continuing this example, if you wanted to retrieve the URL for the
+<tt class="docutils literal"><span class="pre">archive</span></tt> view, Django's reverse URL matcher would get confused, because <em>two</em>
+URLpatterns point at that view.</p>
+<p>To solve this problem, Django supports <strong>named URL patterns</strong>. That is, you can
+give a name to a URL pattern in order to distinguish it from other patterns
+using the same view and parameters. Then, you can use this name in reverse URL
+matching.</p>
+<p>Here's the above example, rewritten to use named URL patterns:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="n">url</span><span class="p">(</span><span class="s">r&#39;^archive/(\d{4})/$&#39;</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;full-archive&quot;</span><span class="p">),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s">r&#39;^archive-summary/(\d{4})/$&#39;</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;summary&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">},</span> <span class="s">&quot;arch-summary&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>With these names in place (<tt class="docutils literal"><span class="pre">full-archive</span></tt> and <tt class="docutils literal"><span class="pre">arch-summary</span></tt>), you can
+target each pattern individually by using its name:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="cp">{%</span> <span class="k">url</span> <span class="nv">arch</span><span class="o">-</span><span class="nv">summary</span> <span class="m">1945</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">url</span> <span class="nv">full</span><span class="o">-</span><span class="nv">archive</span> <span class="m">2007</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+<p>Even though both URL patterns refer to the <tt class="docutils literal"><span class="pre">archive</span></tt> view here, using the
+<tt class="docutils literal"><span class="pre">name</span></tt> parameter to <tt class="docutils literal"><span class="pre">url()</span></tt> allows you to tell them apart in templates.</p>
+<p>The string used for the URL name can contain any characters you like. You are
+not restricted to valid Python names.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>When you name your URL patterns, make sure you use names that are unlikely
+to clash with any other application's choice of names. If you call your URL
+pattern <tt class="docutils literal"><span class="pre">comment</span></tt>, and another application does the same thing, there's
+no guarantee which URL will be inserted into your template when you use
+this name.</p>
+<p class="last">Putting a prefix on your URL names, perhaps derived from the application
+name, will decrease the chances of collision. We recommend something like
+<tt class="docutils literal"><span class="pre">myapp-comment</span></tt> instead of <tt class="docutils literal"><span class="pre">comment</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="s-utility-methods">
+<span id="utility-methods"></span><h2>Utility methods<a class="headerlink" href="#utility-methods" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-reverse">
+<span id="reverse"></span><h3>reverse()<a class="headerlink" href="#reverse" title="Permalink to this headline">¶</a></h3>
+<p>If you need to use something similar to the <a class="reference external" href="../../ref/templates/builtins.html#ttag-url"><tt class="xref docutils literal"><span class="pre">url</span></tt></a> template tag in
+your code, Django provides the following method (in the
+<tt class="docutils literal"><span class="pre">django.core.urlresolvers</span></tt> module):</p>
+<dl class="function">
+<dt id="django.core.urlresolvers.reverse">
+<!--[django.core.urlresolvers.reverse]--><tt class="descname">reverse</tt>(<em>viewname</em>, <em>urlconf=None</em>, <em>args=None</em>, <em>kwargs=None</em>)<a class="headerlink" href="#django.core.urlresolvers.reverse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p><tt class="docutils literal"><span class="pre">viewname</span></tt> is either the function name (either a function reference, or the
+string version of the name, if you used that form in <tt class="docutils literal"><span class="pre">urlpatterns</span></tt>) or the
+<a class="reference internal" href="#id2">URL pattern name</a>.  Normally, you won't need to worry about the
+<tt class="docutils literal"><span class="pre">urlconf</span></tt> parameter and will only pass in the positional and keyword
+arguments to use in the URL matching. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.urlresolvers</span> <span class="kn">import</span> <span class="n">reverse</span>
+
+<span class="k">def</span> <span class="nf">myview</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s">&#39;arch-summary&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="mf">1945</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">reverse()</span></tt> function can reverse a large variety of regular expression
+patterns for URLs, but not every possible one. The main restriction at the
+moment is that the pattern cannot contain alternative choices using the
+vertical bar (<tt class="docutils literal"><span class="pre">&quot;|&quot;</span></tt>) character. You can quite happily use such patterns for
+matching against incoming URLs and sending them off to views, but you cannot
+reverse such patterns.</p>
+<div class="admonition-make-sure-your-views-are-all-correct admonition ">
+<p class="first admonition-title">Make sure your views are all correct</p>
+<p>As part of working out which URL names map to which patterns, the
+<tt class="docutils literal"><span class="pre">reverse()</span></tt> function has to import all of your URLConf files and examine
+the name of each view. This involves importing each view function. If
+there are <em>any</em> errors whilst importing any of your view functions, it
+will cause <tt class="docutils literal"><span class="pre">reverse()</span></tt> to raise an error, even if that view function is
+not the one you are trying to reverse.</p>
+<p class="last">Make sure that any views you reference in your URLConf files exist and can
+be imported correctly. Do not include lines that reference views you
+haven't written yet, because those views will not be importable.</p>
+</div>
+</div>
+<div class="section" id="s-permalink">
+<span id="permalink"></span><h3>permalink()<a class="headerlink" href="#permalink" title="Permalink to this headline">¶</a></h3>
+<p>The <a title="django.db.models.permalink" class="reference external" href="../../ref/models/instances.html#django.db.models.permalink"><tt class="xref docutils literal"><span class="pre">django.db.models.permalink()</span></tt></a> decorator is useful for writing short
+methods that return a full URL path. For example, a model's
+<tt class="docutils literal"><span class="pre">get_absolute_url()</span></tt> method. See <a title="django.db.models.permalink" class="reference external" href="../../ref/models/instances.html#django.db.models.permalink"><tt class="xref docutils literal"><span class="pre">django.db.models.permalink()</span></tt></a> for more.</p>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">URL dispatcher</a><ul>
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#id1">How Django processes a request</a></li>
+<li><a class="reference external" href="#example">Example</a></li>
+<li><a class="reference external" href="#named-groups">Named groups</a><ul>
+<li><a class="reference external" href="#the-matching-grouping-algorithm">The matching/grouping algorithm</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#what-the-urlconf-searches-against">What the URLconf searches against</a></li>
+<li><a class="reference external" href="#syntax-of-the-urlpatterns-variable">Syntax of the urlpatterns variable</a><ul>
+<li><a class="reference external" href="#patterns">patterns</a></li>
+<li><a class="reference external" href="#url">url</a></li>
+<li><a class="reference external" href="#handler404">handler404</a></li>
+<li><a class="reference external" href="#handler500">handler500</a></li>
+<li><a class="reference external" href="#include">include</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#notes-on-capturing-text-in-urls">Notes on capturing text in URLs</a></li>
+<li><a class="reference external" href="#performance">Performance</a></li>
+<li><a class="reference external" href="#the-view-prefix">The view prefix</a><ul>
+<li><a class="reference external" href="#multiple-view-prefixes">Multiple view prefixes</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#including-other-urlconfs">Including other URLconfs</a><ul>
+<li><a class="reference external" href="#captured-parameters">Captured parameters</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#passing-extra-options-to-view-functions">Passing extra options to view functions</a><ul>
+<li><a class="reference external" href="#passing-extra-options-to-include">Passing extra options to <tt class="docutils literal"><span class="pre">include()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#passing-callable-objects-instead-of-strings">Passing callable objects instead of strings</a></li>
+<li><a class="reference external" href="#id2">Naming URL patterns</a></li>
+<li><a class="reference external" href="#utility-methods">Utility methods</a><ul>
+<li><a class="reference external" href="#reverse">reverse()</a></li>
+<li><a class="reference external" href="#permalink">permalink()</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="index.html">Handling HTTP requests</a></li>
+    
+    
+      <li>Next: <a href="views.html">Writing Views</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">Using Django</a>
+        
+          <ul><li><a href="index.html">Handling HTTP requests</a>
+        
+        <ul><li>URL dispatcher</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/topics/http/urls.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="index.html" title="Handling HTTP requests">previous</a> 
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="views.html" title="Writing Views">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

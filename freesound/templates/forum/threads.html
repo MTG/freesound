@@ -1,0 +1,50 @@
+{% extends "forum/section.html" %}
+
+{% block title %}Forum: {{forum.name}}{% endblock %}
+
+{% block breadcrumb %}
+&#187; <a href="{{forum.get_absolute_url}}">{{forum.name}}</a>
+{% endblock %}
+
+{% block section_content %}
+<div class="forum_pagination">
+	<div class="forum_button"><a href="#">New Topic</a></div>
+	Pages: 
+	1, 
+	<a href="#">2</a>, 
+	<a href="#">3</a> ... 
+	<a href="#">100</a>, 
+	<a href="#">102</a>, 
+	<a href="#">103</a>
+
+</div>
+
+{% url thread forum.name_slug threads.0.id %}
+
+<ul id="topics">
+{% for thread in threads %}
+	<li>
+		<div class="latest_post">
+			<a href="{{thread.latest_post.get_absolute_url}}">Latest post</a> by <a href="{% url account thread.last_post.author.username %}">{{thread.last_post.author.username}}</a><br />
+			on {{thread.last_post.created}}
+		</div>
+		<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">
+
+		<a href="{{thread.get_absolute_url}}" class="topic_subject">{{thread.title}}</a><br />
+		{{thread.num_posts}} post{{thread.num_posts|pluralize}}
+	</li>
+{% endfor %}
+</ul>
+
+<div class="forum_pagination">
+	<div class="forum_button"><a href="#">New Topic</a></div>
+	Pages: 
+	1, 
+	<a href="#">2</a>, 
+	<a href="#">3</a> ... 
+	<a href="#">100</a>, 
+	<a href="#">102</a>, 
+	<a href="#">103</a>
+
+</div>
+{% endblock %}

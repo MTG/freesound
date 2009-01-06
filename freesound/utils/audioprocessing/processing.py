@@ -452,6 +452,33 @@ def create_wave_pngs(input_filename, output_filename_w, output_filename_s, image
     spectrogram.save(output_filename_s)
 
 
+def create_wave_png_fs1(input_filename, output_filename_w, image_width, image_height):
+    audio_file = audiolab.sndfile(input_filename, 'read')
+    
+    fft_size = 1024
+
+    samples_per_pixel = audio_file.get_nframes() / float(image_width)
+    processor = AudioProcessor(audio_file, fft_size, numpy.hanning)
+    
+    waveform = WaveformImage(image_width, image_height, palette=2)
+    
+    for x in range(image_width):
+        
+        if x % (image_width/10) == 0:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            
+        seek_point = int(x * samples_per_pixel)
+        next_seek_point = int((x + 1) * samples_per_pixel)
+        
+        (spectral_centroid, db_spectrum) = processor.spectral_centroid(seek_point)
+        peaks = processor.peaks(seek_point, next_seek_point)
+        
+        waveform.draw_peaks(x, peaks, spectral_centroid)
+    
+    waveform.save(output_filename_w)
+
+
 def convert_to_wav(input_filename, output_filename):
     """
     converts any audio file type to wav, 44.1, 16bit, stereo

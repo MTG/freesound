@@ -1,0 +1,484 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Formsets &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Working with forms" href="index.html" />
+    <link rel="next" title="Form Media" href="media.html" />
+    <link rel="prev" title="Creating forms from models" href="modelforms.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="modelforms.html" title="Creating forms from models">previous</a> 
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="media.html" title="Form Media">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-forms-formsets">
+            
+  
+  <div class="section" id="s-id1">
+<span id="s-formsets"></span><span id="s-topics-forms-formsets"></span><span id="id1"></span><span id="formsets"></span><span id="topics-forms-formsets"></span><h1>Formsets<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>A formset is a layer of abstraction to working with multiple forms on the same
+page. It can be best compared to a data grid. Let&#8217;s say you have the following
+form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">ArticleForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">title</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">pub_date</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You might want to allow the user to create several articles at once. To create
+a formset out of an <tt class="docutils literal"><span class="pre">ArticleForm</span></tt> you would do:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django.forms.formsets</span> <span class="kn">import</span> <span class="n">formset_factory</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You now have created a formset named <tt class="docutils literal"><span class="pre">ArticleFormSet</span></tt>. The formset gives you
+the ability to iterate over the forms in the formset and display them as you
+would with a regular form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">formset</span><span class="o">.</span><span class="n">forms</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">form</span><span class="o">.</span><span class="n">as_table</span><span class="p">()</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-title&quot; id=&quot;id_form-0-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-pub_date&quot; id=&quot;id_form-0-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre></div>
+</div>
+<p>As you can see it only displayed one form. This is because by default the
+<tt class="docutils literal"><span class="pre">formset_factory</span></tt> defines one extra form. This can be controlled with the
+<tt class="docutils literal"><span class="pre">extra</span></tt> parameter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="mf">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="s-using-initial-data-with-a-formset">
+<span id="using-initial-data-with-a-formset"></span><h2>Using initial data with a formset<a class="headerlink" href="#using-initial-data-with-a-formset" title="Permalink to this headline">¶</a></h2>
+<p>Initial data is what drives the main usability of a formset. As shown above
+you can define the number of extra forms. What this means is that you are
+telling the formset how many additional forms to show in addition to the
+number of forms it generates from the initial data. Lets take a look at an
+example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="mf">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="p">[</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Django is now open source&#39;</span><span class="p">,</span>
+<span class="gp">... </span>     <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()},</span>
+<span class="gp">... </span><span class="p">])</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">formset</span><span class="o">.</span><span class="n">forms</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">form</span><span class="o">.</span><span class="n">as_table</span><span class="p">()</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-title&quot; value=&quot;Django is now open source&quot; id=&quot;id_form-0-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-pub_date&quot; value=&quot;2008-05-12&quot; id=&quot;id_form-0-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-1-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-1-title&quot; id=&quot;id_form-1-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-1-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-1-pub_date&quot; id=&quot;id_form-1-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-2-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-2-title&quot; id=&quot;id_form-2-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-2-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-2-pub_date&quot; id=&quot;id_form-2-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre></div>
+</div>
+<p>There are now a total of three forms showing above. One for the initial data
+that was passed in and two extra forms. Also note that we are passing in a
+list of dictionaries as the initial data.</p>
+</div>
+<div class="section" id="s-limiting-the-maximum-number-of-forms">
+<span id="limiting-the-maximum-number-of-forms"></span><h2>Limiting the maximum number of forms<a class="headerlink" href="#limiting-the-maximum-number-of-forms" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">max_num</span></tt> parameter to <tt class="docutils literal"><span class="pre">formset_factory</span></tt> gives you the ability to
+force the maximum number of forms the formset will display:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="mf">2</span><span class="p">,</span> <span class="n">max_num</span><span class="o">=</span><span class="mf">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormset</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">formset</span><span class="o">.</span><span class="n">forms</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">form</span><span class="o">.</span><span class="n">as_table</span><span class="p">()</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-title&quot; id=&quot;id_form-0-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-pub_date&quot; id=&quot;id_form-0-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre></div>
+</div>
+<p>A <tt class="docutils literal"><span class="pre">max_num</span></tt> value of <tt class="docutils literal"><span class="pre">0</span></tt> (the default) puts no limit on the number forms
+displayed.</p>
+</div>
+<div class="section" id="s-formset-validation">
+<span id="formset-validation"></span><h2>Formset validation<a class="headerlink" href="#formset-validation" title="Permalink to this headline">¶</a></h2>
+<p>Validation with a formset is about identical to a regular <tt class="docutils literal"><span class="pre">Form</span></tt>. There is
+an <tt class="docutils literal"><span class="pre">is_valid</span></tt> method on the formset to provide a convenient way to validate
+each form in the formset:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">({})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>We passed in no data to the formset which is resulting in a valid form. The
+formset is smart enough to ignore extra forms that were not changed. If we
+attempt to provide an article, but fail to do so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s">&#39;form-TOTAL_FORMS&#39;</span><span class="p">:</span> <span class="s">u&#39;1&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-INITIAL_FORMS&#39;</span><span class="p">:</span> <span class="s">u&#39;1&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-title&#39;</span><span class="p">:</span> <span class="s">u&#39;Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-pub_date&#39;</span><span class="p">:</span> <span class="s">u&#39;&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span><span class="o">.</span><span class="n">errors</span>
+<span class="go">[{&#39;pub_date&#39;: [u&#39;This field is required.&#39;]}]</span>
+</pre></div>
+</div>
+<p>As we can see the formset properly performed validation and gave us the
+expected errors.</p>
+<div class="section" id="s-id2">
+<span id="s-understanding-the-managementform"></span><span id="id2"></span><span id="understanding-the-managementform"></span><h3>Understanding the ManagementForm<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>You may have noticed the additional data that was required in the formset's
+data above. This data is coming from the <tt class="docutils literal"><span class="pre">ManagementForm</span></tt>. This form is
+dealt with internally to the formset. If you don't use it, it will result in
+an exception:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-title&#39;</span><span class="p">:</span> <span class="s">u&#39;Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-pub_date&#39;</span><span class="p">:</span> <span class="s">u&#39;&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">django.forms.util.ValidationError: [u&#39;ManagementForm data is missing or has been tampered with&#39;]</span>
+</pre></div>
+</div>
+<p>It is used to keep track of how many form instances are being displayed. If
+you are adding new forms via JavaScript, you should increment the count fields
+in this form as well.</p>
+</div>
+<div class="section" id="s-custom-formset-validation">
+<span id="custom-formset-validation"></span><h3>Custom formset validation<a class="headerlink" href="#custom-formset-validation" title="Permalink to this headline">¶</a></h3>
+<p>A formset has a <tt class="docutils literal"><span class="pre">clean</span></tt> method similar to the one on a <tt class="docutils literal"><span class="pre">Form</span></tt> class. This
+is where you define your own validation that deals at the formset level:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django.forms.formsets</span> <span class="kn">import</span> <span class="n">BaseFormSet</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">BaseArticleFormSet</span><span class="p">(</span><span class="n">BaseFormSet</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">,</span> <span class="s">u&#39;An error occured.&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">,</span> <span class="n">formset</span><span class="o">=</span><span class="n">BaseArticleFormSet</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">({})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span><span class="o">.</span><span class="n">non_form_errors</span><span class="p">()</span>
+<span class="go">[u&#39;An error occured.&#39;]</span>
+</pre></div>
+</div>
+<p>The formset <tt class="docutils literal"><span class="pre">clean</span></tt> method is called after all the <tt class="docutils literal"><span class="pre">Form.clean</span></tt> methods
+have been called. The errors will be found using the <tt class="docutils literal"><span class="pre">non_form_errors()</span></tt>
+method on the formset.</p>
+</div>
+</div>
+<div class="section" id="s-dealing-with-ordering-and-deletion-of-forms">
+<span id="dealing-with-ordering-and-deletion-of-forms"></span><h2>Dealing with ordering and deletion of forms<a class="headerlink" href="#dealing-with-ordering-and-deletion-of-forms" title="Permalink to this headline">¶</a></h2>
+<p>Common use cases with a formset is dealing with ordering and deletion of the
+form instances. This has been dealt with for you. The <tt class="docutils literal"><span class="pre">formset_factory</span></tt>
+provides two optional parameters <tt class="docutils literal"><span class="pre">can_order</span></tt> and <tt class="docutils literal"><span class="pre">can_delete</span></tt> that will do
+the extra work of adding the extra fields and providing simpler ways of
+getting to that data.</p>
+<div class="section" id="s-can-order">
+<span id="can-order"></span><h3><tt class="docutils literal"><span class="pre">can_order</span></tt><a class="headerlink" href="#can-order" title="Permalink to this headline">¶</a></h3>
+<p>Default: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p>Lets create a formset with the ability to order:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">,</span> <span class="n">can_order</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="p">[</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #1&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mf">2008</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">10</span><span class="p">)},</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #2&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mf">2008</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">11</span><span class="p">)},</span>
+<span class="gp">... </span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">formset</span><span class="o">.</span><span class="n">forms</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">form</span><span class="o">.</span><span class="n">as_table</span><span class="p">()</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-title&quot; value=&quot;Article #1&quot; id=&quot;id_form-0-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-pub_date&quot; value=&quot;2008-05-10&quot; id=&quot;id_form-0-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-ORDER&quot;&gt;Order:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-ORDER&quot; value=&quot;1&quot; id=&quot;id_form-0-ORDER&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-1-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-1-title&quot; value=&quot;Article #2&quot; id=&quot;id_form-1-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-1-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-1-pub_date&quot; value=&quot;2008-05-11&quot; id=&quot;id_form-1-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-1-ORDER&quot;&gt;Order:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-1-ORDER&quot; value=&quot;2&quot; id=&quot;id_form-1-ORDER&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-2-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-2-title&quot; id=&quot;id_form-2-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-2-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-2-pub_date&quot; id=&quot;id_form-2-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-2-ORDER&quot;&gt;Order:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-2-ORDER&quot; id=&quot;id_form-2-ORDER&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre></div>
+</div>
+<p>This adds an additional field to each form. This new field is named <tt class="docutils literal"><span class="pre">ORDER</span></tt>
+and is an <tt class="docutils literal"><span class="pre">forms.IntegerField</span></tt>. For the forms that came from the initial
+data it automatically assigned them a numeric value. Lets look at what will
+happen when the user changes these values:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s">&#39;form-TOTAL_FORMS&#39;</span><span class="p">:</span> <span class="s">u&#39;3&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-INITIAL_FORMS&#39;</span><span class="p">:</span> <span class="s">u&#39;2&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #1&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-pub_date&#39;</span><span class="p">:</span> <span class="s">u&#39;2008-05-10&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-ORDER&#39;</span><span class="p">:</span> <span class="s">u&#39;2&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-1-title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #2&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-1-pub_date&#39;</span><span class="p">:</span> <span class="s">u&#39;2008-05-11&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-1-ORDER&#39;</span><span class="p">:</span> <span class="s">u&#39;1&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-2-title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #3&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-2-pub_date&#39;</span><span class="p">:</span> <span class="s">u&#39;2008-05-01&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-2-ORDER&#39;</span><span class="p">:</span> <span class="s">u&#39;0&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">}</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="p">[</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #1&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mf">2008</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">10</span><span class="p">)},</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #2&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mf">2008</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">11</span><span class="p">)},</span>
+<span class="gp">... </span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">formset</span><span class="o">.</span><span class="n">ordered_forms</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span>
+<span class="go">{&#39;pub_date&#39;: datetime.date(2008, 5, 1), &#39;ORDER&#39;: 0, &#39;title&#39;: u&#39;Article #3&#39;}</span>
+<span class="go">{&#39;pub_date&#39;: datetime.date(2008, 5, 11), &#39;ORDER&#39;: 1, &#39;title&#39;: u&#39;Article #2&#39;}</span>
+<span class="go">{&#39;pub_date&#39;: datetime.date(2008, 5, 10), &#39;ORDER&#39;: 2, &#39;title&#39;: u&#39;Article #1&#39;}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-can-delete">
+<span id="can-delete"></span><h3><tt class="docutils literal"><span class="pre">can_delete</span></tt><a class="headerlink" href="#can-delete" title="Permalink to this headline">¶</a></h3>
+<p>Default: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p>Lets create a formset with the ability to delete:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">,</span> <span class="n">can_delete</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="p">[</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #1&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mf">2008</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">10</span><span class="p">)},</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #2&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mf">2008</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">11</span><span class="p">)},</span>
+<span class="gp">... </span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">formset</span><span class="o">.</span><span class="n">forms</span><span class="p">:</span>
+<span class="go">....    print form.as_table()</span>
+<span class="go">&lt;input type=&quot;hidden&quot; name=&quot;form-TOTAL_FORMS&quot; value=&quot;3&quot; id=&quot;id_form-TOTAL_FORMS&quot; /&gt;&lt;input type=&quot;hidden&quot; name=&quot;form-INITIAL_FORMS&quot; value=&quot;2&quot; id=&quot;id_form-INITIAL_FORMS&quot; /&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-title&quot; value=&quot;Article #1&quot; id=&quot;id_form-0-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-pub_date&quot; value=&quot;2008-05-10&quot; id=&quot;id_form-0-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-DELETE&quot;&gt;Delete:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;checkbox&quot; name=&quot;form-0-DELETE&quot; id=&quot;id_form-0-DELETE&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-1-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-1-title&quot; value=&quot;Article #2&quot; id=&quot;id_form-1-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-1-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-1-pub_date&quot; value=&quot;2008-05-11&quot; id=&quot;id_form-1-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-1-DELETE&quot;&gt;Delete:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;checkbox&quot; name=&quot;form-1-DELETE&quot; id=&quot;id_form-1-DELETE&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-2-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-2-title&quot; id=&quot;id_form-2-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-2-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-2-pub_date&quot; id=&quot;id_form-2-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-2-DELETE&quot;&gt;Delete:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;checkbox&quot; name=&quot;form-2-DELETE&quot; id=&quot;id_form-2-DELETE&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre></div>
+</div>
+<p>Similar to <tt class="docutils literal"><span class="pre">can_order</span></tt> this adds a new field to each form named <tt class="docutils literal"><span class="pre">DELETE</span></tt>
+and is a <tt class="docutils literal"><span class="pre">forms.BooleanField</span></tt>. When data comes through marking any of the
+delete fields you can access them with <tt class="docutils literal"><span class="pre">deleted_forms</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s">&#39;form-TOTAL_FORMS&#39;</span><span class="p">:</span> <span class="s">u&#39;3&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-INITIAL_FORMS&#39;</span><span class="p">:</span> <span class="s">u&#39;2&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #1&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-pub_date&#39;</span><span class="p">:</span> <span class="s">u&#39;2008-05-10&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-0-DELETE&#39;</span><span class="p">:</span> <span class="s">u&#39;on&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-1-title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #2&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-1-pub_date&#39;</span><span class="p">:</span> <span class="s">u&#39;2008-05-11&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-1-DELETE&#39;</span><span class="p">:</span> <span class="s">u&#39;&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-2-title&#39;</span><span class="p">:</span> <span class="s">u&#39;&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-2-pub_date&#39;</span><span class="p">:</span> <span class="s">u&#39;&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s">&#39;form-2-DELETE&#39;</span><span class="p">:</span> <span class="s">u&#39;&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">}</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="p">[</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #1&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mf">2008</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">10</span><span class="p">)},</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&#39;Article #2&#39;</span><span class="p">,</span> <span class="s">&#39;pub_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mf">2008</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">11</span><span class="p">)},</span>
+<span class="gp">... </span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span> <span class="k">for</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">formset</span><span class="o">.</span><span class="n">deleted_forms</span><span class="p">]</span>
+<span class="go">[{&#39;DELETE&#39;: True, &#39;pub_date&#39;: datetime.date(2008, 5, 10), &#39;title&#39;: u&#39;Article #1&#39;}]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-adding-additional-fields-to-a-formset">
+<span id="adding-additional-fields-to-a-formset"></span><h2>Adding additional fields to a formset<a class="headerlink" href="#adding-additional-fields-to-a-formset" title="Permalink to this headline">¶</a></h2>
+<p>If you need to add additional fields to the formset this can be easily
+accomplished. The formset base class provides an <tt class="docutils literal"><span class="pre">add_fields</span></tt> method. You
+can simply override this method to add your own fields or even redefine the
+default fields/attributes of the order and deletion fields:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">BaseArticleFormSet</span><span class="p">(</span><span class="n">BaseFormSet</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">add_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="nb">super</span><span class="p">(</span><span class="n">BaseArticleFormSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">add_fields</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">form</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&quot;my_field&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ArticleFormSet</span> <span class="o">=</span> <span class="n">formset_factory</span><span class="p">(</span><span class="n">ArticleForm</span><span class="p">,</span> <span class="n">formset</span><span class="o">=</span><span class="n">BaseArticleFormSet</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">formset</span> <span class="o">=</span> <span class="n">ArticleFormSet</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">form</span> <span class="ow">in</span> <span class="n">formset</span><span class="o">.</span><span class="n">forms</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">form</span><span class="o">.</span><span class="n">as_table</span><span class="p">()</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-title&quot;&gt;Title:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-title&quot; id=&quot;id_form-0-title&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-pub_date&quot;&gt;Pub date:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-pub_date&quot; id=&quot;id_form-0-pub_date&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_form-0-my_field&quot;&gt;My field:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;form-0-my_field&quot; id=&quot;id_form-0-my_field&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-using-a-formset-in-views-and-templates">
+<span id="using-a-formset-in-views-and-templates"></span><h2>Using a formset in views and templates<a class="headerlink" href="#using-a-formset-in-views-and-templates" title="Permalink to this headline">¶</a></h2>
+<p>Using a formset inside a view is as easy as using a regular <tt class="docutils literal"><span class="pre">Form</span></tt> class.
+The only thing you will want to be aware of is making sure to use the
+management form inside the template. Lets look at a sample view:</p>
+<div class="highlight-python"><pre>def manage_articles(request):
+    ArticleFormSet = formset_factory(ArticleForm)
+    if request.method == 'POST':
+        formset = ArticleFormSet(request.POST, request.FILES)
+        if formset.is_valid():
+            # do something with the formset.cleaned_data
+    else:
+        formset = ArticleFormSet()
+    return render_to_response('manage_articles.html', {'formset': formset})</pre>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">manage_articles.html</span></tt> template might look like this:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span> <span class="na">action=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;</span>
+    <span class="cp">{{</span> <span class="nv">formset.management_form</span> <span class="cp">}}</span>
+    <span class="nt">&lt;table&gt;</span>
+        <span class="cp">{%</span> <span class="k">for</span> <span class="nv">form</span> <span class="k">in</span> <span class="nv">formset.forms</span> <span class="cp">%}</span>
+        <span class="cp">{{</span> <span class="nv">form</span> <span class="cp">}}</span>
+        <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+    <span class="nt">&lt;/table&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>However the above can be slightly shortcutted and let the formset itself deal
+with the management form:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span> <span class="na">action=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;table&gt;</span>
+        <span class="cp">{{</span> <span class="nv">formset</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/table&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>The above ends up calling the <tt class="docutils literal"><span class="pre">as_table</span></tt> method on the formset class.</p>
+<div class="section" id="s-using-more-than-one-formset-in-a-view">
+<span id="using-more-than-one-formset-in-a-view"></span><h3>Using more than one formset in a view<a class="headerlink" href="#using-more-than-one-formset-in-a-view" title="Permalink to this headline">¶</a></h3>
+<p>You are able to use more than one formset in a view if you like. Formsets
+borrow much of its behavior from forms. With that said you are able to use
+<tt class="docutils literal"><span class="pre">prefix</span></tt> to prefix formset form field names with a given value to allow
+more than one formset to be sent to a view without name clashing. Lets take
+a look at how this might be accomplished:</p>
+<div class="highlight-python"><pre>def manage_articles(request):
+    ArticleFormSet = formset_factory(ArticleForm)
+    BookFormSet = formset_factory(BookForm)
+    if request.method == 'POST':
+        article_formset = ArticleFormSet(request.POST, request.FILES, prefix='articles')
+        book_formset = BookFormSet(request.POST, request.FILES, prefix='books')
+        if article_formset.is_valid() and book_formset.is_valid():
+            # do something with the cleaned_data on the formsets.
+    else:
+        article_formset = ArticleFormSet(prefix='articles')
+        book_formset = BookFormSet(prefix='books')
+    return render_to_response('manage_articles.html', {
+        'article_formset': article_formset,
+        'book_formset': book_formset,
+    })</pre>
+</div>
+<p>You would then render the formsets as normal. It is important to point out
+that you need to pass <tt class="docutils literal"><span class="pre">prefix</span></tt> on both the POST and non-POST cases so that
+it is rendered and processed correctly.</p>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Formsets</a><ul>
+<li><a class="reference external" href="#using-initial-data-with-a-formset">Using initial data with a formset</a></li>
+<li><a class="reference external" href="#limiting-the-maximum-number-of-forms">Limiting the maximum number of forms</a></li>
+<li><a class="reference external" href="#formset-validation">Formset validation</a><ul>
+<li><a class="reference external" href="#id2">Understanding the ManagementForm</a></li>
+<li><a class="reference external" href="#custom-formset-validation">Custom formset validation</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#dealing-with-ordering-and-deletion-of-forms">Dealing with ordering and deletion of forms</a><ul>
+<li><a class="reference external" href="#can-order"><tt class="docutils literal"><span class="pre">can_order</span></tt></a></li>
+<li><a class="reference external" href="#can-delete"><tt class="docutils literal"><span class="pre">can_delete</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#adding-additional-fields-to-a-formset">Adding additional fields to a formset</a></li>
+<li><a class="reference external" href="#using-a-formset-in-views-and-templates">Using a formset in views and templates</a><ul>
+<li><a class="reference external" href="#using-more-than-one-formset-in-a-view">Using more than one formset in a view</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="modelforms.html">Creating forms from models</a></li>
+    
+    
+      <li>Next: <a href="media.html">Form Media</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">Using Django</a>
+        
+          <ul><li><a href="index.html">Working with forms</a>
+        
+        <ul><li>Formsets</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/topics/forms/formsets.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="modelforms.html" title="Creating forms from models">previous</a> 
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="media.html" title="Form Media">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

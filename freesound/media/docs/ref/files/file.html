@@ -1,0 +1,260 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The File object &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="File handling reference" href="index.html" />
+    <link rel="next" title="File storage API" href="storage.html" />
+    <link rel="prev" title="File handling reference" href="index.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="index.html" title="File handling reference">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="storage.html" title="File storage API">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-files-file">
+            
+  
+  <div class="section" id="s-the-file-object">
+<span id="s-ref-files-file"></span><span id="the-file-object"></span><span id="ref-files-file"></span><h1>The <tt class="docutils literal"><span class="pre">File</span></tt> object<a class="headerlink" href="#the-file-object" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="django.core.files.File">
+<!--[django.core.files.File]-->class <tt class="descname">File</tt>(<em>file_object</em>)<a class="headerlink" href="#django.core.files.File" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<div class="section" id="s-file-attributes-and-methods">
+<span id="file-attributes-and-methods"></span><h2><tt class="docutils literal"><span class="pre">File</span></tt> attributes and methods<a class="headerlink" href="#file-attributes-and-methods" title="Permalink to this headline">¶</a></h2>
+<p>Django&#8217;s <tt class="docutils literal"><span class="pre">File</span></tt> has the following attributes and methods:</p>
+<dl class="attribute">
+<dt id="django.core.files.File.name">
+<!--[django.core.files.File.name]--><tt class="descclassname">File.</tt><tt class="descname">name</tt><a class="headerlink" href="#django.core.files.File.name" title="Permalink to this definition">¶</a></dt>
+<dd>The name of file including the relative path from <a class="reference external" href="../settings.html#setting-MEDIA_ROOT"><tt class="xref docutils literal"><span class="pre">MEDIA_ROOT</span></tt></a>.</dd></dl>
+
+<dl class="attribute">
+<dt id="django.core.files.File.path">
+<!--[django.core.files.File.path]--><tt class="descclassname">File.</tt><tt class="descname">path</tt><a class="headerlink" href="#django.core.files.File.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>The absolute path to the file&#8217;s location on a local filesystem.</p>
+<p><a class="reference external" href="../../howto/custom-file-storage.html#howto-custom-file-storage"><em>Custom file storage systems</em></a> may not store
+files locally; files stored on these systems will have a <tt class="docutils literal"><span class="pre">path</span></tt> of
+<tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="django.core.files.File.url">
+<!--[django.core.files.File.url]--><tt class="descclassname">File.</tt><tt class="descname">url</tt><a class="headerlink" href="#django.core.files.File.url" title="Permalink to this definition">¶</a></dt>
+<dd><p>The URL where the file can be retrieved. This is often useful in
+<a class="reference external" href="../../topics/templates.html#topics-templates"><em>templates</em></a>; for example, a bit of a template for
+displaying a <tt class="docutils literal"><span class="pre">Car</span></tt> (see above) might look like:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">&#39;</span><span class="cp">{{</span> <span class="nv">car.photo.url</span> <span class="cp">}}</span><span class="s">&#39;</span> <span class="na">alt=</span><span class="s">&#39;</span><span class="cp">{{</span> <span class="nv">car.name</span> <span class="cp">}}</span><span class="s">&#39;</span> <span class="nt">/&gt;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="django.core.files.File.size">
+<!--[django.core.files.File.size]--><tt class="descclassname">File.</tt><tt class="descname">size</tt><a class="headerlink" href="#django.core.files.File.size" title="Permalink to this definition">¶</a></dt>
+<dd>The size of the file in bytes.</dd></dl>
+
+<dl class="method">
+<dt id="django.core.files.File.open">
+<!--[django.core.files.File.open]--><tt class="descclassname">File.</tt><tt class="descname">open</tt>(<em>mode=None</em>)<a class="headerlink" href="#django.core.files.File.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open or reopen the file (which by definition also does <tt class="docutils literal"><span class="pre">File.seek(0)</span></tt>).
+The <tt class="docutils literal"><span class="pre">mode</span></tt> argument allows the same values as Python's standard
+<tt class="docutils literal"><span class="pre">open()</span></tt>.</p>
+<p>When reopening a file, <tt class="docutils literal"><span class="pre">mode</span></tt> will override whatever mode the file was
+originally opened with; <tt class="xref docutils literal"><span class="pre">None</span></tt> means to reopen with the original mode.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django.core.files.File.read">
+<!--[django.core.files.File.read]--><tt class="descclassname">File.</tt><tt class="descname">read</tt>(<em>num_bytes=None</em>)<a class="headerlink" href="#django.core.files.File.read" title="Permalink to this definition">¶</a></dt>
+<dd>Read content from the file. The optional <tt class="docutils literal"><span class="pre">size</span></tt> is the number of bytes to
+read; if not specified, the file will be read to the end.</dd></dl>
+
+<dl class="method">
+<dt id="django.core.files.File.__iter__">
+<!--[django.core.files.File.__iter__]--><tt class="descclassname">File.</tt><tt class="descname">__iter__</tt>()<a class="headerlink" href="#django.core.files.File.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd>Iterate over the file yielding one line at a time.</dd></dl>
+
+<dl class="method">
+<dt id="django.core.files.File.chunks">
+<!--[django.core.files.File.chunks]--><tt class="descclassname">File.</tt><tt class="descname">chunks</tt>(<em>chunk_size=None</em>)<a class="headerlink" href="#django.core.files.File.chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over the file yielding &quot;chunks&quot; of a given size. <tt class="docutils literal"><span class="pre">chunk_size</span></tt>
+defaults to 64 KB.</p>
+<p>This is especially useful with very large files since it allows them to be
+streamed off disk and avoids storing the whole file in memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django.core.files.File.multiple_chunks">
+<!--[django.core.files.File.multiple_chunks]--><tt class="descclassname">File.</tt><tt class="descname">multiple_chunks</tt>(<em>chunk_size=None</em>)<a class="headerlink" href="#django.core.files.File.multiple_chunks" title="Permalink to this definition">¶</a></dt>
+<dd>Returns <tt class="xref docutils literal"><span class="pre">True</span></tt> if the file is large enough to require multiple chunks to
+access all of its content give some <tt class="docutils literal"><span class="pre">chunk_size</span></tt>.</dd></dl>
+
+<dl class="method">
+<dt id="django.core.files.File.write">
+<!--[django.core.files.File.write]--><tt class="descclassname">File.</tt><tt class="descname">write</tt>(<em>content</em>)<a class="headerlink" href="#django.core.files.File.write" title="Permalink to this definition">¶</a></dt>
+<dd>Writes the specified content string to the file. Depending on the storage
+system behind the scenes, this content might not be fully committed until
+<tt class="docutils literal"><span class="pre">close()</span></tt> is called on the file.</dd></dl>
+
+<dl class="method">
+<dt id="django.core.files.File.close">
+<!--[django.core.files.File.close]--><tt class="descclassname">File.</tt><tt class="descname">close</tt>()<a class="headerlink" href="#django.core.files.File.close" title="Permalink to this definition">¶</a></dt>
+<dd>Close the file.</dd></dl>
+
+</div>
+<div class="section" id="s-additional-imagefield-attributes">
+<span id="additional-imagefield-attributes"></span><h2>Additional <tt class="docutils literal"><span class="pre">ImageField</span></tt> attributes<a class="headerlink" href="#additional-imagefield-attributes" title="Permalink to this headline">¶</a></h2>
+<dl class="attribute">
+<dt id="django.core.files.File.width">
+<!--[django.core.files.File.width]--><tt class="descclassname">File.</tt><tt class="descname">width</tt><a class="headerlink" href="#django.core.files.File.width" title="Permalink to this definition">¶</a></dt>
+<dd>Width of the image.</dd></dl>
+
+<dl class="attribute">
+<dt id="django.core.files.File.height">
+<!--[django.core.files.File.height]--><tt class="descclassname">File.</tt><tt class="descname">height</tt><a class="headerlink" href="#django.core.files.File.height" title="Permalink to this definition">¶</a></dt>
+<dd>Height of the image.</dd></dl>
+
+</div>
+<div class="section" id="s-additional-methods-on-files-attached-to-objects">
+<span id="additional-methods-on-files-attached-to-objects"></span><h2>Additional methods on files attached to objects<a class="headerlink" href="#additional-methods-on-files-attached-to-objects" title="Permalink to this headline">¶</a></h2>
+<p>Any <a title="django.core.files.File" class="reference internal" href="#django.core.files.File"><tt class="xref docutils literal"><span class="pre">File</span></tt></a> that's associated with an object (as with <tt class="docutils literal"><span class="pre">Car.photo</span></tt>,
+above) will also have a couple of extra methods:</p>
+<dl class="method">
+<dt id="django.core.files.File.save">
+<!--[django.core.files.File.save]--><tt class="descclassname">File.</tt><tt class="descname">save</tt>(<em>name</em>, <em>content</em>, <em>save=True</em>)<a class="headerlink" href="#django.core.files.File.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a new file with the file name and contents provided. This will not
+replace the existing file, but will create a new file and update the object
+to point to it. If <tt class="docutils literal"><span class="pre">save</span></tt> is <tt class="xref docutils literal"><span class="pre">True</span></tt>, the model's <tt class="docutils literal"><span class="pre">save()</span></tt> method will
+be called once the file is saved. That is, these two lines:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">car</span><span class="o">.</span><span class="n">photo</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;myphoto.jpg&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">car</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>are the same as this one line:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">car</span><span class="o">.</span><span class="n">photo</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;myphoto.jpg&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that the <tt class="docutils literal"><span class="pre">content</span></tt> argument must be an instance of
+<a title="django.core.files.File" class="reference internal" href="#django.core.files.File"><tt class="xref docutils literal"><span class="pre">File</span></tt></a> or of a subclass of <a title="django.core.files.File" class="reference internal" href="#django.core.files.File"><tt class="xref docutils literal"><span class="pre">File</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="django.core.files.File.delete">
+<!--[django.core.files.File.delete]--><tt class="descclassname">File.</tt><tt class="descname">delete</tt>(<em>save=True</em>)<a class="headerlink" href="#django.core.files.File.delete" title="Permalink to this definition">¶</a></dt>
+<dd>Remove the file from the model instance and delete the underlying file. The
+<tt class="docutils literal"><span class="pre">save</span></tt> argument works as above.</dd></dl>
+
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">The <tt class="docutils literal"><span class="pre">File</span></tt> object</a><ul>
+<li><a class="reference external" href="#file-attributes-and-methods"><tt class="docutils literal"><span class="pre">File</span></tt> attributes and methods</a></li>
+<li><a class="reference external" href="#additional-imagefield-attributes">Additional <tt class="docutils literal"><span class="pre">ImageField</span></tt> attributes</a></li>
+<li><a class="reference external" href="#additional-methods-on-files-attached-to-objects">Additional methods on files attached to objects</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="index.html">File handling reference</a></li>
+    
+    
+      <li>Next: <a href="storage.html">File storage API</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">API Reference</a>
+        
+          <ul><li><a href="index.html">File handling reference</a>
+        
+        <ul><li>The <tt class="docutils literal"><span class="pre">File</span></tt> object</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/ref/files/file.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="index.html" title="File handling reference">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="storage.html" title="File storage API">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

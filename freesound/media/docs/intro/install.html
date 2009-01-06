@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Quick install guide &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Getting started" href="index.html" />
+    <link rel="next" title="Writing your first Django app, part 1" href="tutorial01.html" />
+    <link rel="prev" title="Django at a glance" href="overview.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="overview.html" title="Django at a glance">previous</a> 
+     |
+    <a href="index.html" title="Getting started" accesskey="U">up</a>
+   |
+    <a href="tutorial01.html" title="Writing your first Django app, part 1">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="intro-install">
+            
+  
+  <div class="section" id="s-quick-install-guide">
+<span id="s-intro-install"></span><span id="quick-install-guide"></span><span id="intro-install"></span><h1>Quick install guide<a class="headerlink" href="#quick-install-guide" title="Permalink to this headline">¶</a></h1>
+<p>Before you can use Django, you&#8217;ll need to get it installed. We have a
+<a class="reference external" href="../topics/install.html#topics-install"><em>complete installation guide</em></a> that covers all the
+possibilities; this guide will guide you to a simple, minimal installation
+that&#8217;ll work while you walk through the introduction.</p>
+<div class="section" id="s-install-python">
+<span id="install-python"></span><h2>Install Python<a class="headerlink" href="#install-python" title="Permalink to this headline">¶</a></h2>
+<p>Being a Python Web framework, Django requires Python. It works with any Python
+version from 2.3 to 2.6 (due to backwards
+incompatibilities in Python 3.0, Django does not currently work with
+Python 3.0; see <a class="reference external" href="../faq/install.html#faq-install"><em>the Django FAQ</em></a> for more
+information on supported Python versions and the 3.0 transition), but we recommend installing Python 2.5 or later. If you do so, you won&#8217;t need to set up a database just yet: Python 2.5 or later includes a lightweight database called <a class="reference external" href="http://sqlite.org/">SQLite</a>.</p>
+<p>Get Python at <a class="reference external" href="http://www.python.org">http://www.python.org</a>. If you&#8217;re running Linux or Mac OS X, you
+probably already have it installed.</p>
+<div class="admonition-django-on-jython admonition ">
+<p class="first admonition-title">Django on Jython</p>
+<p class="last">If you use <a class="reference external" href="http://www.jython.org/">Jython</a> (a Python implementation for the Java platform), you&#8217;ll
+need to follow a few additional steps. See <a class="reference external" href="../howto/jython.html#howto-jython"><em>Running Django on Jython</em></a> for details.</p>
+</div>
+<p>You can verify that Python&#8217;s installed by typing <tt class="docutils literal"><span class="pre">python</span></tt> from your shell; you should see something like:</p>
+<div class="highlight-python"><pre>Python 2.5.1 (r251:54863, Jan 17 2008, 19:35:17)
+[GCC 4.0.1 (Apple Inc. build 5465)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt;</pre>
+</div>
+</div>
+<div class="section" id="s-set-up-a-database">
+<span id="set-up-a-database"></span><h2>Set up a database<a class="headerlink" href="#set-up-a-database" title="Permalink to this headline">¶</a></h2>
+<p>If you installed Python 2.5 or later, you can skip this step for now.</p>
+<p>If not, or if you'd like to work with a &quot;large&quot; database engine like PostgreSQL,
+MySQL, or Oracle, consult the <a class="reference external" href="../topics/install.html#database-installation"><em>database installation information</em></a>.</p>
+</div>
+<div class="section" id="s-remove-any-old-versions-of-django">
+<span id="remove-any-old-versions-of-django"></span><h2>Remove any old versions of Django<a class="headerlink" href="#remove-any-old-versions-of-django" title="Permalink to this headline">¶</a></h2>
+<p>If you are upgrading your installation of Django from a previous version, you
+will need to <a class="reference external" href="../topics/install.html#removing-old-versions-of-django"><em>uninstall the old Django version before installing the new
+version</em></a>.</p>
+</div>
+<div class="section" id="s-install-django">
+<span id="install-django"></span><h2>Install Django<a class="headerlink" href="#install-django" title="Permalink to this headline">¶</a></h2>
+<p>You've got three easy options to install Django:</p>
+<ul class="simple">
+<li>Install a version of Django <a class="reference external" href="../misc/distributions.html#misc-distributions"><em>provided by your operating system
+distribution</em></a>. This is the quickest option for those
+who have operating systems that distribute Django.</li>
+<li><a class="reference external" href="../topics/install.html#installing-official-release"><em>Install an official release</em></a>. This
+is the best approach for users who want a stable version number and aren't
+concerned about running a slightly older version of Django.</li>
+<li><a class="reference external" href="../topics/install.html#installing-development-version"><em>Install the latest development version</em></a>. This is best for users who want the
+latest-and-greatest features and aren't afraid of running brand-new code.</li>
+</ul>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">If do either of the first two steps, keep an eye out for parts of the
+documentation marked <strong>new in development version</strong>. That phrase flags
+features that are only available in development versions of Django; if you
+try to use them with an official release they won't work.</p>
+</div>
+</div>
+<div class="section" id="s-that-s-it">
+<span id="that-s-it"></span><h2>That's it!<a class="headerlink" href="#that-s-it" title="Permalink to this headline">¶</a></h2>
+<p>That's it -- you can now <a class="reference external" href="tutorial01.html#intro-tutorial01"><em>move onto the tutorial</em></a>.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Quick install guide</a><ul>
+<li><a class="reference external" href="#install-python">Install Python</a></li>
+<li><a class="reference external" href="#set-up-a-database">Set up a database</a></li>
+<li><a class="reference external" href="#remove-any-old-versions-of-django">Remove any old versions of Django</a></li>
+<li><a class="reference external" href="#install-django">Install Django</a></li>
+<li><a class="reference external" href="#that-s-it">That&#8217;s it!</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="overview.html">Django at a glance</a></li>
+    
+    
+      <li>Next: <a href="tutorial01.html">Writing your first Django app, part 1</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Getting started</a>
+        
+        <ul><li>Quick install guide</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/intro/install.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="overview.html" title="Django at a glance">previous</a> 
+     |
+    <a href="index.html" title="Getting started" accesskey="U">up</a>
+   |
+    <a href="tutorial01.html" title="Writing your first Django app, part 1">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

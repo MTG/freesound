@@ -1,18 +1,77 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 	<head>
 		{% block head %}
-		<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-		<title>{% block title %}Freesound.org - {% endblock %}</title>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?" />
+		<meta name="keywords" content="free, sound" />
+		<link rel="stylesheet" type="text/css" href="{{media_url}}all.css" />
+		<!--[if IE 6]>
+			<link rel="stylesheet" type="text/css" href="{{media_url}}ie6.css" />
+		<![endif]-->
+		<title>Freesound.org - {% block title %}{% endblock %}</title>
+		<!-- 
 		<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 		<script type="text/javascript">
 			google.load("prototype", "1.6.0.2");
 		</script>
-		<link rel="stylesheet" type="text/css" href="{{media_url}}css/freesound.css"/>
-		{% endblock %}
+		 -->
+		 {% endblock %}
 	</head>
+	
 	<body>
-	{% block content %}
-	{% endblock %}
+		
+		<div id="header">
+			<div id="account_nav">
+				<div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />Bram</div>
+				<a href="#">Messages</a><div id="messages_count"><div>2</div></div>
+				<a href="#">Settings</a>
+				<a href="#">Sign Out</a>
+				<a href="#" id="upload_button"></a>
+			</div>
+			
+			<a href="/" id="logo"></a>
+			
+			<div id="search">
+			<form method="get" action="/search/">
+				<fieldset>
+			   	<input type="text" name="q" value="" size="30" />
+			   	<input type="submit" value="" id="search_submit" />
+				</fieldset>
+			</form>
+			</div>
+			
+			<ul id="site_nav">
+			{% block navigation %}
+				<li class="active_tab"><a href="#" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
+				<li><a href="#" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
+				<li><a href="#" id="site_nav_forums"><span class="site_nav_icon"></span>Forums</a></li>
+				<li><a href="#" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
+			{% endblock %}
+			</ul>
+		</div>
+		
+		<div id="wrapper">
+		<div id="container">
+
+		{% block content %}
+		{% endblock %}
+	
+		</div>
+		</div>
+		
+		<div id="footer_wrapper">
+			<div id="footer">
+				<div id="footer_links">
+					<a href="/developers/">Developers</a>	<a href="http://blog.freesound.org/">Blog</a>	<a href="/contact/">Contact</a>
+				</div>
+				<div id="footer_credits">
+					Design by <a href="http://www.pixelshell.com">Pixelshell</a>. Code by <a href="http://www.mtg.upf.edu/">MTG (UPF)</a>. Some Rights Reserved.
+				</div>
+			</div>
+		</div>
+		
 	</body>
+	
 </html>

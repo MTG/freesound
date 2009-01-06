@@ -1,0 +1,480 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Sending e-mail &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Using Django" href="index.html" />
+    <link rel="next" title="Internationalization" href="i18n.html" />
+    <link rel="prev" title="Django&#8217;s cache framework" href="cache.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="cache.html" title="Django&amp;#8217;s cache framework">previous</a> 
+     |
+    <a href="index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="i18n.html" title="Internationalization">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-email">
+            
+  
+  <div class="section" id="s-module-django.core.mail">
+<span id="s-topics-email"></span><span id="module-django.core.mail"></span><span id="topics-email"></span><h1>Sending e-mail<a class="headerlink" href="#module-django.core.mail" title="Permalink to this headline">¶</a></h1>
+<p>Although Python makes sending e-mail relatively easy via the <a class="reference external" href="http://docs.python.org/library/smtplib.html">smtplib library</a>,
+Django provides a couple of light wrappers over it, to make sending e-mail
+extra quick.</p>
+<p>The code lives in a single module: <tt class="docutils literal"><span class="pre">django.core.mail</span></tt>.</p>
+<div class="section" id="s-quick-example">
+<span id="quick-example"></span><h2>Quick example<a class="headerlink" href="#quick-example" title="Permalink to this headline">¶</a></h2>
+<p>In two lines:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span>
+
+<span class="n">send_mail</span><span class="p">(</span><span class="s">&#39;Subject here&#39;</span><span class="p">,</span> <span class="s">&#39;Here is the message.&#39;</span><span class="p">,</span> <span class="s">&#39;from@example.com&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s">&#39;to@example.com&#39;</span><span class="p">],</span> <span class="n">fail_silently</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Mail is sent using the SMTP host and port specified in the <a class="reference external" href="../ref/settings.html#setting-EMAIL_HOST"><tt class="xref docutils literal"><span class="pre">EMAIL_HOST</span></tt></a>
+and <a class="reference external" href="../ref/settings.html#setting-EMAIL_PORT"><tt class="xref docutils literal"><span class="pre">EMAIL_PORT</span></tt></a> settings. The <a class="reference external" href="../ref/settings.html#setting-EMAIL_HOST_USER"><tt class="xref docutils literal"><span class="pre">EMAIL_HOST_USER</span></tt></a> and
+<a class="reference external" href="../ref/settings.html#setting-EMAIL_HOST_PASSWORD"><tt class="xref docutils literal"><span class="pre">EMAIL_HOST_PASSWORD</span></tt></a> settings, if set, are used to authenticate to the
+SMTP server, and the <a class="reference external" href="../ref/settings.html#setting-EMAIL_USE_TLS"><tt class="xref docutils literal"><span class="pre">EMAIL_USE_TLS</span></tt></a> setting controls whether a secure
+connection is used.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The character set of e-mail sent with <tt class="docutils literal"><span class="pre">django.core.mail</span></tt> will be set to
+the value of your <a class="reference external" href="../ref/settings.html#setting-DEFAULT_CHARSET"><tt class="xref docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt></a> setting.</p>
+</div>
+</div>
+<div class="section" id="s-send-mail">
+<span id="send-mail"></span><h2>send_mail()<a class="headerlink" href="#send-mail" title="Permalink to this headline">¶</a></h2>
+<p>The simplest way to send e-mail is using the function
+<tt class="docutils literal"><span class="pre">django.core.mail.send_mail()</span></tt>. Here's its definition:</p>
+<blockquote>
+<dl class="function">
+<dt id="django.core.mail.send_mail">
+<!--[django.core.mail.send_mail]--><tt class="descname">send_mail</tt>(<em>subject</em>, <em>message</em>, <em>from_email</em>, <em>recipient_list</em>, <em>fail_silently=False</em>, <em>auth_user=None</em>, <em>auth_password=None</em>)<a class="headerlink" href="#django.core.mail.send_mail" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</blockquote>
+<p>The <tt class="docutils literal"><span class="pre">subject</span></tt>, <tt class="docutils literal"><span class="pre">message</span></tt>, <tt class="docutils literal"><span class="pre">from_email</span></tt> and <tt class="docutils literal"><span class="pre">recipient_list</span></tt> parameters
+are required.</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">subject</span></tt>: A string.</li>
+<li><tt class="docutils literal"><span class="pre">message</span></tt>: A string.</li>
+<li><tt class="docutils literal"><span class="pre">from_email</span></tt>: A string.</li>
+<li><tt class="docutils literal"><span class="pre">recipient_list</span></tt>: A list of strings, each an e-mail address. Each
+member of <tt class="docutils literal"><span class="pre">recipient_list</span></tt> will see the other recipients in the &quot;To:&quot;
+field of the e-mail message.</li>
+<li><tt class="docutils literal"><span class="pre">fail_silently</span></tt>: A boolean. If it's <tt class="xref docutils literal"><span class="pre">False</span></tt>, <tt class="docutils literal"><span class="pre">send_mail</span></tt> will raise
+an <tt class="docutils literal"><span class="pre">smtplib.SMTPException</span></tt>. See the <a class="reference external" href="http://docs.python.org/library/smtplib.html">smtplib docs</a> for a list of
+possible exceptions, all of which are subclasses of <tt class="docutils literal"><span class="pre">SMTPException</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">auth_user</span></tt>: The optional username to use to authenticate to the SMTP
+server. If this isn't provided, Django will use the value of the
+<tt class="docutils literal"><span class="pre">EMAIL_HOST_USER</span></tt> setting.</li>
+<li><tt class="docutils literal"><span class="pre">auth_password</span></tt>: The optional password to use to authenticate to the
+SMTP server. If this isn't provided, Django will use the value of the
+<tt class="docutils literal"><span class="pre">EMAIL_HOST_PASSWORD</span></tt> setting.</li>
+</ul>
+</div>
+<div class="section" id="s-send-mass-mail">
+<span id="send-mass-mail"></span><h2>send_mass_mail()<a class="headerlink" href="#send-mass-mail" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">django.core.mail.send_mass_mail()</span></tt> is intended to handle mass e-mailing.
+Here's the definition:</p>
+<blockquote>
+<dl class="function">
+<dt id="django.core.mail.send_mass_mail">
+<!--[django.core.mail.send_mass_mail]--><tt class="descname">send_mass_mail</tt>(<em>datatuple</em>, <em>fail_silently=False</em>, <em>auth_user=None</em>, <em>auth_password=None</em>)<a class="headerlink" href="#django.core.mail.send_mass_mail" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</blockquote>
+<p><tt class="docutils literal"><span class="pre">datatuple</span></tt> is a tuple in which each element is in this format:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="n">recipient_list</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">fail_silently</span></tt>, <tt class="docutils literal"><span class="pre">auth_user</span></tt> and <tt class="docutils literal"><span class="pre">auth_password</span></tt> have the same functions
+as in <tt class="docutils literal"><span class="pre">send_mail()</span></tt>.</p>
+<p>Each separate element of <tt class="docutils literal"><span class="pre">datatuple</span></tt> results in a separate e-mail message.
+As in <tt class="docutils literal"><span class="pre">send_mail()</span></tt>, recipients in the same <tt class="docutils literal"><span class="pre">recipient_list</span></tt> will all see
+the other addresses in the e-mail messages' &quot;To:&quot; field.</p>
+<div class="section" id="s-send-mass-mail-vs-send-mail">
+<span id="send-mass-mail-vs-send-mail"></span><h3>send_mass_mail() vs. send_mail()<a class="headerlink" href="#send-mass-mail-vs-send-mail" title="Permalink to this headline">¶</a></h3>
+<p>The main difference between <tt class="docutils literal"><span class="pre">send_mass_mail()</span></tt> and <tt class="docutils literal"><span class="pre">send_mail()</span></tt> is that
+<tt class="docutils literal"><span class="pre">send_mail()</span></tt> opens a connection to the mail server each time it's executed,
+while <tt class="docutils literal"><span class="pre">send_mass_mail()</span></tt> uses a single connection for all of its messages.
+This makes <tt class="docutils literal"><span class="pre">send_mass_mail()</span></tt> slightly more efficient.</p>
+</div>
+</div>
+<div class="section" id="s-mail-admins">
+<span id="mail-admins"></span><h2>mail_admins()<a class="headerlink" href="#mail-admins" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">django.core.mail.mail_admins()</span></tt> is a shortcut for sending an e-mail to the
+site admins, as defined in the <a class="reference external" href="../ref/settings.html#setting-ADMINS"><tt class="xref docutils literal"><span class="pre">ADMINS</span></tt></a> setting. Here's the definition:</p>
+<blockquote>
+<dl class="function">
+<dt id="django.core.mail.mail_admins">
+<!--[django.core.mail.mail_admins]--><tt class="descname">mail_admins</tt>(<em>subject</em>, <em>message</em>, <em>fail_silently=False</em>)<a class="headerlink" href="#django.core.mail.mail_admins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</blockquote>
+<p><tt class="docutils literal"><span class="pre">mail_admins()</span></tt> prefixes the subject with the value of the
+<a class="reference external" href="../ref/settings.html#setting-EMAIL_SUBJECT_PREFIX"><tt class="xref docutils literal"><span class="pre">EMAIL_SUBJECT_PREFIX</span></tt></a> setting, which is <tt class="docutils literal"><span class="pre">&quot;[Django]</span> <span class="pre">&quot;</span></tt> by default.</p>
+<p>The &quot;From:&quot; header of the e-mail will be the value of the
+<a class="reference external" href="../ref/settings.html#setting-SERVER_EMAIL"><tt class="xref docutils literal"><span class="pre">SERVER_EMAIL</span></tt></a> setting.</p>
+<p>This method exists for convenience and readability.</p>
+</div>
+<div class="section" id="s-mail-managers-function">
+<span id="mail-managers-function"></span><h2>mail_managers() function<a class="headerlink" href="#mail-managers-function" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">django.core.mail.mail_managers()</span></tt> is just like <tt class="docutils literal"><span class="pre">mail_admins()</span></tt>, except it
+sends an e-mail to the site managers, as defined in the <a class="reference external" href="../ref/settings.html#setting-MANAGERS"><tt class="xref docutils literal"><span class="pre">MANAGERS</span></tt></a>
+setting. Here's the definition:</p>
+<blockquote>
+<dl class="function">
+<dt id="django.core.mail.mail_managers">
+<!--[django.core.mail.mail_managers]--><tt class="descname">mail_managers</tt>(<em>subject</em>, <em>message</em>, <em>fail_silently=False</em>)<a class="headerlink" href="#django.core.mail.mail_managers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</blockquote>
+</div>
+<div class="section" id="s-examples">
+<span id="examples"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>This sends a single e-mail to <a class="reference external" href="mailto:john&#37;&#52;&#48;example&#46;com">john<span>&#64;</span>example<span>&#46;</span>com</a> and <a class="reference external" href="mailto:jane&#37;&#52;&#48;example&#46;com">jane<span>&#64;</span>example<span>&#46;</span>com</a>, with them
+both appearing in the &quot;To:&quot;:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">send_mail</span><span class="p">(</span><span class="s">&#39;Subject&#39;</span><span class="p">,</span> <span class="s">&#39;Message.&#39;</span><span class="p">,</span> <span class="s">&#39;from@example.com&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s">&#39;john@example.com&#39;</span><span class="p">,</span> <span class="s">&#39;jane@example.com&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>This sends a message to <a class="reference external" href="mailto:john&#37;&#52;&#48;example&#46;com">john<span>&#64;</span>example<span>&#46;</span>com</a> and <a class="reference external" href="mailto:jane&#37;&#52;&#48;example&#46;com">jane<span>&#64;</span>example<span>&#46;</span>com</a>, with them both
+receiving a separate e-mail:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">datatuple</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s">&#39;Subject&#39;</span><span class="p">,</span> <span class="s">&#39;Message.&#39;</span><span class="p">,</span> <span class="s">&#39;from@example.com&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;john@example.com&#39;</span><span class="p">]),</span>
+    <span class="p">(</span><span class="s">&#39;Subject&#39;</span><span class="p">,</span> <span class="s">&#39;Message.&#39;</span><span class="p">,</span> <span class="s">&#39;from@example.com&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;jane@example.com&#39;</span><span class="p">]),</span>
+<span class="p">)</span>
+<span class="n">send_mass_mail</span><span class="p">(</span><span class="n">datatuple</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-preventing-header-injection">
+<span id="preventing-header-injection"></span><h2>Preventing header injection<a class="headerlink" href="#preventing-header-injection" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.nyphp.org/phundamentals/email_header_injection.php">Header injection</a> is a security exploit in which an attacker inserts extra
+e-mail headers to control the &quot;To:&quot; and &quot;From:&quot; in e-mail messages that your
+scripts generate.</p>
+<p>The Django e-mail functions outlined above all protect against header injection
+by forbidding newlines in header values. If any <tt class="docutils literal"><span class="pre">subject</span></tt>, <tt class="docutils literal"><span class="pre">from_email</span></tt> or
+<tt class="docutils literal"><span class="pre">recipient_list</span></tt> contains a newline (in either Unix, Windows or Mac style),
+the e-mail function (e.g. <tt class="docutils literal"><span class="pre">send_mail()</span></tt>) will raise
+<tt class="docutils literal"><span class="pre">django.core.mail.BadHeaderError</span></tt> (a subclass of <tt class="docutils literal"><span class="pre">ValueError</span></tt>) and, hence,
+will not send the e-mail. It's your responsibility to validate all data before
+passing it to the e-mail functions.</p>
+<p>If a <tt class="docutils literal"><span class="pre">message</span></tt> contains headers at the start of the string, the headers will
+simply be printed as the first bit of the e-mail message.</p>
+<p>Here's an example view that takes a <tt class="docutils literal"><span class="pre">subject</span></tt>, <tt class="docutils literal"><span class="pre">message</span></tt> and <tt class="docutils literal"><span class="pre">from_email</span></tt>
+from the request's POST data, sends that to <a class="reference external" href="mailto:admin&#37;&#52;&#48;example&#46;com">admin<span>&#64;</span>example<span>&#46;</span>com</a> and redirects to
+&quot;/contact/thanks/&quot; when it's done:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span><span class="p">,</span> <span class="n">BadHeaderError</span>
+
+<span class="k">def</span> <span class="nf">send_email</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;subject&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">from_email</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;from_email&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">subject</span> <span class="ow">and</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">from_email</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">send_mail</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;admin@example.com&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">BadHeaderError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;Invalid header found.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="s">&#39;/contact/thanks/&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># In reality we&#39;d use a form class</span>
+        <span class="c"># to get proper validation errors.</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;Make sure all fields are entered and valid.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-the-emailmessage-and-smtpconnection-classes">
+<span id="s-emailmessage-and-smtpconnection"></span><span id="the-emailmessage-and-smtpconnection-classes"></span><span id="emailmessage-and-smtpconnection"></span><h2>The EmailMessage and SMTPConnection classes<a class="headerlink" href="#the-emailmessage-and-smtpconnection-classes" title="Permalink to this headline">¶</a></h2>
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>Django's <tt class="docutils literal"><span class="pre">send_mail()</span></tt> and <tt class="docutils literal"><span class="pre">send_mass_mail()</span></tt> functions are actually thin
+wrappers that make use of the <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> and <tt class="docutils literal"><span class="pre">SMTPConnection</span></tt> classes
+in <tt class="docutils literal"><span class="pre">django.core.mail</span></tt>.  If you ever need to customize the way Django sends
+e-mail, you can subclass these two classes to suit your needs.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Not all features of the <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> class are available through the
+<tt class="docutils literal"><span class="pre">send_mail()</span></tt> and related wrapper functions. If you wish to use advanced
+features, such as BCC'ed recipients, file attachments, or multi-part
+e-mail, you'll need to create <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> instances directly.</p>
+<p class="last">This is a design feature. <tt class="docutils literal"><span class="pre">send_mail()</span></tt> and related functions were
+originally the only interface Django provided. However, the list of
+parameters they accepted was slowly growing over time. It made sense to
+move to a more object-oriented design for e-mail messages and retain the
+original functions only for backwards compatibility.</p>
+</div>
+<p>In general, <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> is responsible for creating the e-mail message
+itself. <tt class="docutils literal"><span class="pre">SMTPConnection</span></tt> is responsible for the network connection side of
+the operation. This means you can reuse the same connection (an
+<tt class="docutils literal"><span class="pre">SMTPConnection</span></tt> instance) for multiple messages.</p>
+<div class="section" id="s-emailmessage-objects">
+<span id="emailmessage-objects"></span><h3>EmailMessage Objects<a class="headerlink" href="#emailmessage-objects" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="django.core.mail.EmailMessage">
+<!--[django.core.mail.EmailMessage]-->class <tt class="descname">EmailMessage</tt><a class="headerlink" href="#django.core.mail.EmailMessage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> class is initialized with the following parameters (in
+the given order, if positional arguments are used). All parameters are
+optional and can be set at any time prior to calling the <tt class="docutils literal"><span class="pre">send()</span></tt> method.</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">subject</span></tt>: The subject line of the e-mail.</li>
+<li><tt class="docutils literal"><span class="pre">body</span></tt>: The body text. This should be a plain text message.</li>
+<li><tt class="docutils literal"><span class="pre">from_email</span></tt>: The sender's address. Both <tt class="docutils literal"><span class="pre">fred&#64;example.com</span></tt> and
+<tt class="docutils literal"><span class="pre">Fred</span> <span class="pre">&lt;fred&#64;example.com&gt;</span></tt> forms are legal. If omitted, the
+<a class="reference external" href="../ref/settings.html#setting-DEFAULT_FROM_EMAIL"><tt class="xref docutils literal"><span class="pre">DEFAULT_FROM_EMAIL</span></tt></a> setting is used.</li>
+<li><tt class="docutils literal"><span class="pre">to</span></tt>: A list or tuple of recipient addresses.</li>
+<li><tt class="docutils literal"><span class="pre">bcc</span></tt>: A list or tuple of addresses used in the &quot;Bcc&quot; header when
+sending the e-mail.</li>
+<li><tt class="docutils literal"><span class="pre">connection</span></tt>: An <tt class="docutils literal"><span class="pre">SMTPConnection</span></tt> instance. Use this parameter if
+you want to use the same connection for multiple messages. If omitted, a
+new connection is created when <tt class="docutils literal"><span class="pre">send()</span></tt> is called.</li>
+<li><tt class="docutils literal"><span class="pre">attachments</span></tt>: A list of attachments to put on the message. These can
+be either <tt class="docutils literal"><span class="pre">email.MIMEBase.MIMEBase</span></tt> instances, or <tt class="docutils literal"><span class="pre">(filename,</span>
+<span class="pre">content,</span> <span class="pre">mimetype)</span></tt> triples.</li>
+<li><tt class="docutils literal"><span class="pre">headers</span></tt>: A dictionary of extra headers to put on the message. The
+keys are the header name, values are the header values. It's up to the
+caller to ensure header names and values are in the correct format for
+an e-mail message.</li>
+</ul>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">email</span> <span class="o">=</span> <span class="n">EmailMessage</span><span class="p">(</span><span class="s">&#39;Hello&#39;</span><span class="p">,</span> <span class="s">&#39;Body goes here&#39;</span><span class="p">,</span> <span class="s">&#39;from@example.com&#39;</span><span class="p">,</span>
+            <span class="p">[</span><span class="s">&#39;to1@example.com&#39;</span><span class="p">,</span> <span class="s">&#39;to2@example.com&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;bcc@example.com&#39;</span><span class="p">],</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Reply-To&#39;</span><span class="p">:</span> <span class="s">&#39;another@example.com&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>The class has the following methods:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">send(fail_silently=False)</span></tt> sends the message, using either
+the connection that is specified in the <tt class="docutils literal"><span class="pre">connection</span></tt>
+attribute, or creating a new connection if none already
+exists. If the keyword argument <tt class="docutils literal"><span class="pre">fail_silently</span></tt> is <tt class="xref docutils literal"><span class="pre">True</span></tt>,
+exceptions raised while sending the message will be quashed.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">message()</span></tt> constructs a <tt class="docutils literal"><span class="pre">django.core.mail.SafeMIMEText</span></tt> object (a
+subclass of Python's <tt class="docutils literal"><span class="pre">email.MIMEText.MIMEText</span></tt> class) or a
+<tt class="docutils literal"><span class="pre">django.core.mail.SafeMIMEMultipart</span></tt> object holding the
+message to be sent. If you ever need to extend the <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> class,
+you'll probably want to override this method to put the content you want
+into the MIME object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">recipients()</span></tt> returns a list of all the recipients of the message,
+whether they're recorded in the <tt class="docutils literal"><span class="pre">to</span></tt> or <tt class="docutils literal"><span class="pre">bcc</span></tt> attributes. This is
+another method you might need to override when subclassing, because the
+SMTP server needs to be told the full list of recipients when the message
+is sent. If you add another way to specify recipients in your class, they
+need to be returned from this method as well.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">attach()</span></tt> creates a new file attachment and adds it to the message.
+There are two ways to call <tt class="docutils literal"><span class="pre">attach()</span></tt>:</p>
+<ul>
+<li><p class="first">You can pass it a single argument that is an
+<tt class="docutils literal"><span class="pre">email.MIMEBase.MIMEBase</span></tt> instance. This will be inserted directly
+into the resulting message.</p>
+</li>
+<li><p class="first">Alternatively, you can pass <tt class="docutils literal"><span class="pre">attach()</span></tt> three arguments:
+<tt class="docutils literal"><span class="pre">filename</span></tt>, <tt class="docutils literal"><span class="pre">content</span></tt> and <tt class="docutils literal"><span class="pre">mimetype</span></tt>. <tt class="docutils literal"><span class="pre">filename</span></tt> is the name
+of the file attachment as it will appear in the e-mail, <tt class="docutils literal"><span class="pre">content</span></tt> is
+the data that will be contained inside the attachment and
+<tt class="docutils literal"><span class="pre">mimetype</span></tt> is the optional MIME type for the attachment. If you
+omit <tt class="docutils literal"><span class="pre">mimetype</span></tt>, the MIME content type will be guessed from the
+filename of the attachment.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">message</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="s">&#39;design.png&#39;</span><span class="p">,</span> <span class="n">img_data</span><span class="p">,</span> <span class="s">&#39;image/png&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">attach_file()</span></tt> creates a new attachment using a file from your
+filesystem. Call it with the path of the file to attach and, optionally,
+the MIME type to use for the attachment. If the MIME type is omitted, it
+will be guessed from the filename. The simplest use would be:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">message</span><span class="o">.</span><span class="n">attach_file</span><span class="p">(</span><span class="s">&#39;/images/weather_map.png&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="section" id="s-sending-alternative-content-types">
+<span id="sending-alternative-content-types"></span><h4>Sending alternative content types<a class="headerlink" href="#sending-alternative-content-types" title="Permalink to this headline">¶</a></h4>
+<p>It can be useful to include multiple versions of the content in an e-mail;
+the classic example is to send both text and HTML versions of a message. With
+Django's e-mail library, you can do this using the <tt class="docutils literal"><span class="pre">EmailMultiAlternatives</span></tt>
+class. This subclass of <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> has an <tt class="docutils literal"><span class="pre">attach_alternative()</span></tt> method
+for including extra versions of the message body in the e-mail. All the other
+methods (including the class initialization) are inherited directly from
+<tt class="docutils literal"><span class="pre">EmailMessage</span></tt>.</p>
+<p>To send a text and HTML combination, you could write:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">EmailMultiAlternatives</span>
+
+<span class="n">subject</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="n">to</span> <span class="o">=</span> <span class="s">&#39;hello&#39;</span><span class="p">,</span> <span class="s">&#39;from@example.com&#39;</span><span class="p">,</span> <span class="s">&#39;to@example.com&#39;</span>
+<span class="n">text_content</span> <span class="o">=</span> <span class="s">&#39;This is an important message.&#39;</span>
+<span class="n">html_content</span> <span class="o">=</span> <span class="s">&#39;&lt;p&gt;This is an &lt;strong&gt;important&lt;/strong&gt; message.&lt;/p&gt;&#39;</span>
+<span class="n">msg</span> <span class="o">=</span> <span class="n">EmailMultiAlternatives</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">text_content</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="p">[</span><span class="n">to</span><span class="p">])</span>
+<span class="n">msg</span><span class="o">.</span><span class="n">attach_alternative</span><span class="p">(</span><span class="n">html_content</span><span class="p">,</span> <span class="s">&quot;text/html&quot;</span><span class="p">)</span>
+<span class="n">msg</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>By default, the MIME type of the <tt class="docutils literal"><span class="pre">body</span></tt> parameter in an <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> is
+<tt class="docutils literal"><span class="pre">&quot;text/plain&quot;</span></tt>. It is good practice to leave this alone, because it
+guarantees that any recipient will be able to read the e-mail, regardless of
+their mail client. However, if you are confident that your recipients can
+handle an alternative content type, you can use the <tt class="docutils literal"><span class="pre">content_subtype</span></tt>
+attribute on the <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> class to change the main content type. The
+major type will always be <tt class="docutils literal"><span class="pre">&quot;text&quot;</span></tt>, but you can change it to the subtype. For
+example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">msg</span> <span class="o">=</span> <span class="n">EmailMessage</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">html_content</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="p">[</span><span class="n">to</span><span class="p">])</span>
+<span class="n">msg</span><span class="o">.</span><span class="n">content_subtype</span> <span class="o">=</span> <span class="s">&quot;html&quot;</span>  <span class="c"># Main content is now text/html</span>
+<span class="n">msg</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-smtpconnection-objects">
+<span id="smtpconnection-objects"></span><h3>SMTPConnection Objects<a class="headerlink" href="#smtpconnection-objects" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="django.core.mail.SMTPConnection">
+<!--[django.core.mail.SMTPConnection]-->class <tt class="descname">SMTPConnection</tt><a class="headerlink" href="#django.core.mail.SMTPConnection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The <tt class="docutils literal"><span class="pre">SMTPConnection</span></tt> class is initialized with the host, port, username and
+password for the SMTP server. If you don't specify one or more of those
+options, they are read from your settings file.</p>
+<p>If you're sending lots of messages at once, the <tt class="docutils literal"><span class="pre">send_messages()</span></tt> method of
+the <tt class="docutils literal"><span class="pre">SMTPConnection</span></tt> class is useful. It takes a list of <tt class="docutils literal"><span class="pre">EmailMessage</span></tt>
+instances (or subclasses) and sends them over a single connection. For example,
+if you have a function called <tt class="docutils literal"><span class="pre">get_notification_email()</span></tt> that returns a
+list of <tt class="docutils literal"><span class="pre">EmailMessage</span></tt> objects representing some periodic e-mail you wish to
+send out, you could send this with:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">connection</span> <span class="o">=</span> <span class="n">SMTPConnection</span><span class="p">()</span>   <span class="c"># Use default settings for connection</span>
+<span class="n">messages</span> <span class="o">=</span> <span class="n">get_notification_email</span><span class="p">()</span>
+<span class="n">connection</span><span class="o">.</span><span class="n">send_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Sending e-mail</a><ul>
+<li><a class="reference external" href="#quick-example">Quick example</a></li>
+<li><a class="reference external" href="#send-mail">send_mail()</a></li>
+<li><a class="reference external" href="#send-mass-mail">send_mass_mail()</a><ul>
+<li><a class="reference external" href="#send-mass-mail-vs-send-mail">send_mass_mail() vs. send_mail()</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#mail-admins">mail_admins()</a></li>
+<li><a class="reference external" href="#mail-managers-function">mail_managers() function</a></li>
+<li><a class="reference external" href="#examples">Examples</a></li>
+<li><a class="reference external" href="#preventing-header-injection">Preventing header injection</a></li>
+<li><a class="reference external" href="#the-emailmessage-and-smtpconnection-classes">The EmailMessage and SMTPConnection classes</a><ul>
+<li><a class="reference external" href="#emailmessage-objects">EmailMessage Objects</a><ul>
+<li><a class="reference external" href="#sending-alternative-content-types">Sending alternative content types</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#smtpconnection-objects">SMTPConnection Objects</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="cache.html">Django&#8217;s cache framework</a></li>
+    
+    
+      <li>Next: <a href="i18n.html">Internationalization</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Using Django</a>
+        
+        <ul><li>Sending e-mail</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/topics/email.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="cache.html" title="Django&amp;#8217;s cache framework">previous</a> 
+     |
+    <a href="index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="i18n.html" title="Internationalization">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Writing your first Django app, part 4 &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Getting started" href="index.html" />
+    <link rel="next" title="What to read next" href="whatsnext.html" />
+    <link rel="prev" title="Writing your first Django app, part 3" href="tutorial03.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="tutorial03.html" title="Writing your first Django app, part 3">previous</a> 
+     |
+    <a href="index.html" title="Getting started" accesskey="U">up</a>
+   |
+    <a href="whatsnext.html" title="What to read next">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="intro-tutorial04">
+            
+  
+  <div class="section" id="s-writing-your-first-django-app-part-4">
+<span id="s-intro-tutorial04"></span><span id="writing-your-first-django-app-part-4"></span><span id="intro-tutorial04"></span><h1>Writing your first Django app, part 4<a class="headerlink" href="#writing-your-first-django-app-part-4" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial begins where <a class="reference external" href="tutorial03.html#intro-tutorial03"><em>Tutorial 3</em></a> left off. We&#8217;re
+continuing the Web-poll application and will focus on simple form processing and
+cutting down our code.</p>
+<div class="section" id="s-write-a-simple-form">
+<span id="write-a-simple-form"></span><h2>Write a simple form<a class="headerlink" href="#write-a-simple-form" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s update our poll detail template (&#8220;polls/detail.html&#8221;) from the last
+tutorial, so that the template contains an HTML <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> element:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;h1&gt;</span><span class="cp">{{</span> <span class="nv">poll.question</span> <span class="cp">}}</span><span class="nt">&lt;/h1&gt;</span>
+
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">error_message</span> <span class="cp">%}</span><span class="nt">&lt;p&gt;&lt;strong&gt;</span><span class="cp">{{</span> <span class="nv">error_message</span> <span class="cp">}}</span><span class="nt">&lt;/strong&gt;&lt;/p&gt;</span><span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+
+<span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&quot;/polls/</span><span class="cp">{{</span> <span class="nv">poll.id</span> <span class="cp">}}</span><span class="s">/vote/&quot;</span> <span class="na">method=</span><span class="s">&quot;post&quot;</span><span class="nt">&gt;</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">choice</span> <span class="k">in</span> <span class="nv">poll.choice_set.all</span> <span class="cp">%}</span>
+    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;radio&quot;</span> <span class="na">name=</span><span class="s">&quot;choice&quot;</span> <span class="na">id=</span><span class="s">&quot;choice</span><span class="cp">{{</span> <span class="nb">forloop</span><span class="nv">.counter</span> <span class="cp">}}</span><span class="s">&quot;</span> <span class="na">value=</span><span class="s">&quot;</span><span class="cp">{{</span> <span class="nv">choice.id</span> <span class="cp">}}</span><span class="s">&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">&quot;choice</span><span class="cp">{{</span> <span class="nb">forloop</span><span class="nv">.counter</span> <span class="cp">}}</span><span class="s">&quot;</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">choice.choice</span> <span class="cp">}}</span><span class="nt">&lt;/label&gt;&lt;br</span> <span class="nt">/&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Vote&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>A quick rundown:</p>
+<ul class="simple">
+<li>The above template displays a radio button for each poll choice. The
+<tt class="docutils literal"><span class="pre">value</span></tt> of each radio button is the associated poll choice's ID. The
+<tt class="docutils literal"><span class="pre">name</span></tt> of each radio button is <tt class="docutils literal"><span class="pre">&quot;choice&quot;</span></tt>. That means, when somebody
+selects one of the radio buttons and submits the form, it'll send the
+POST data <tt class="docutils literal"><span class="pre">choice=3</span></tt>. This is HTML Forms 101.</li>
+<li>We set the form's <tt class="docutils literal"><span class="pre">action</span></tt> to <tt class="docutils literal"><span class="pre">/polls/{{</span> <span class="pre">poll.id</span> <span class="pre">}}/vote/</span></tt>, and we
+set <tt class="docutils literal"><span class="pre">method=&quot;post&quot;</span></tt>. Using <tt class="docutils literal"><span class="pre">method=&quot;post&quot;</span></tt> (as opposed to
+<tt class="docutils literal"><span class="pre">method=&quot;get&quot;</span></tt>) is very important, because the act of submitting this
+form will alter data server-side. Whenever you create a form that alters
+data server-side, use <tt class="docutils literal"><span class="pre">method=&quot;post&quot;</span></tt>. This tip isn't specific to
+Django; it's just good Web development practice.</li>
+<li><tt class="docutils literal"><span class="pre">forloop.counter</span></tt> indicates how many times the <a class="reference external" href="../ref/templates/builtins.html#ttag-for"><tt class="xref docutils literal"><span class="pre">for</span></tt></a> tag has gone
+through its loop</li>
+</ul>
+<p>Now, let's create a Django view that handles the submitted data and does
+something with it. Remember, in <a class="reference external" href="tutorial03.html#intro-tutorial03"><em>Tutorial 3</em></a>, we created
+a URLconf for the polls application that includes this line:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^(?P&lt;poll_id&gt;\d+)/vote/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.polls.views.vote&#39;</span><span class="p">),</span>
+</pre></div>
+</div>
+<p>So let's create a <tt class="docutils literal"><span class="pre">vote()</span></tt> function in <tt class="docutils literal"><span class="pre">mysite/polls/views.py</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">render_to_response</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
+<span class="kn">from</span> <span class="nn">django.core.urlresolvers</span> <span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span> <span class="nn">mysite.polls.models</span> <span class="kn">import</span> <span class="n">Choice</span><span class="p">,</span> <span class="n">Poll</span>
+<span class="c"># ...</span>
+<span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">poll_id</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Poll</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">poll_id</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">selected_choice</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">choice_set</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s">&#39;choice&#39;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="n">Choice</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">):</span>
+        <span class="c"># Redisplay the poll voting form.</span>
+        <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;polls/detail.html&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s">&#39;poll&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span>
+            <span class="s">&#39;error_message&#39;</span><span class="p">:</span> <span class="s">&quot;You didn&#39;t select a choice.&quot;</span><span class="p">,</span>
+        <span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">selected_choice</span><span class="o">.</span><span class="n">votes</span> <span class="o">+=</span> <span class="mf">1</span>
+        <span class="n">selected_choice</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="c"># Always return an HttpResponseRedirect after successfully dealing</span>
+        <span class="c"># with POST data. This prevents data from being posted twice if a</span>
+        <span class="c"># user hits the Back button.</span>
+        <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s">&#39;mysite.polls.views.results&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">,)))</span>
+</pre></div>
+</div>
+<p>This code includes a few things we haven't covered yet in this tutorial:</p>
+<ul>
+<li><p class="first"><a title="django.http.HttpRequest.POST" class="reference external" href="../ref/request-response.html#django.http.HttpRequest.POST"><tt class="xref docutils literal"><span class="pre">request.POST</span></tt></a> is a dictionary-like
+object that lets you access submitted data by key name. In this case,
+<tt class="docutils literal"><span class="pre">request.POST['choice']</span></tt> returns the ID of the selected choice, as a
+string. <a title="django.http.HttpRequest.POST" class="reference external" href="../ref/request-response.html#django.http.HttpRequest.POST"><tt class="xref docutils literal"><span class="pre">request.POST</span></tt></a> values are
+always strings.</p>
+<p>Note that Django also provides <a title="django.http.HttpRequest.GET" class="reference external" href="../ref/request-response.html#django.http.HttpRequest.GET"><tt class="xref docutils literal"><span class="pre">request.GET</span></tt></a> for accessing GET data in the same way --
+but we're explicitly using <a title="django.http.HttpRequest.POST" class="reference external" href="../ref/request-response.html#django.http.HttpRequest.POST"><tt class="xref docutils literal"><span class="pre">request.POST</span></tt></a> in our code, to ensure that data is only
+altered via a POST call.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">request.POST['choice']</span></tt> will raise <tt class="xref docutils literal"><span class="pre">KeyError</span></tt> if <tt class="docutils literal"><span class="pre">choice</span></tt> wasn't
+provided in POST data. The above code checks for <tt class="xref docutils literal"><span class="pre">KeyError</span></tt> and
+redisplays the poll form with an error message if <tt class="docutils literal"><span class="pre">choice</span></tt> isn't given.</p>
+</li>
+<li><p class="first">After incrementing the choice count, the code returns an
+<a title="django.http.HttpResponseRedirect" class="reference external" href="../ref/request-response.html#django.http.HttpResponseRedirect"><tt class="xref docutils literal"><span class="pre">HttpResponseRedirect</span></tt></a> rather than a normal
+<a title="django.http.HttpResponse" class="reference external" href="../ref/request-response.html#django.http.HttpResponse"><tt class="xref docutils literal"><span class="pre">HttpResponse</span></tt></a>.
+<a title="django.http.HttpResponseRedirect" class="reference external" href="../ref/request-response.html#django.http.HttpResponseRedirect"><tt class="xref docutils literal"><span class="pre">HttpResponseRedirect</span></tt></a> takes a single argument: the
+URL to which the user will be redirected (see the following point for how
+we construct the URL in this case).</p>
+<p>As the Python comment above points out, you should always return an
+<a title="django.http.HttpResponseRedirect" class="reference external" href="../ref/request-response.html#django.http.HttpResponseRedirect"><tt class="xref docutils literal"><span class="pre">HttpResponseRedirect</span></tt></a> after successfully dealing with
+POST data. This tip isn't specific to Django; it's just good Web
+development practice.</p>
+</li>
+<li><p class="first">We are using the <a title="django.core.urlresolvers.reverse" class="reference external" href="../topics/http/urls.html#django.core.urlresolvers.reverse"><tt class="xref docutils literal"><span class="pre">reverse()</span></tt></a> function in the
+<a title="django.http.HttpResponseRedirect" class="reference external" href="../ref/request-response.html#django.http.HttpResponseRedirect"><tt class="xref docutils literal"><span class="pre">HttpResponseRedirect</span></tt></a> constructor in this example.
+This function helps avoid having to hardcode a URL in the view function.
+It is given the name of the view that we want to pass control to and the
+variable portion of the URL pattern that points to that view. In this
+case, using the URLconf we set up in Tutorial 3, this
+<a title="django.core.urlresolvers.reverse" class="reference external" href="../topics/http/urls.html#django.core.urlresolvers.reverse"><tt class="xref docutils literal"><span class="pre">reverse()</span></tt></a> call will return a string like</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="s">&#39;/polls/3/results/&#39;</span>
+</pre></div>
+</div>
+<p>... where the <tt class="docutils literal"><span class="pre">3</span></tt> is the value of <tt class="docutils literal"><span class="pre">p.id</span></tt>. This redirected URL will
+then call the <tt class="docutils literal"><span class="pre">'results'</span></tt> view to display the final page. Note that you
+need to use the full name of the view here (including the prefix).</p>
+</li>
+</ul>
+<p>As mentioned in Tutorial 3, <tt class="docutils literal"><span class="pre">request</span></tt> is a <a title="django.http.HttpRequest" class="reference external" href="../ref/request-response.html#django.http.HttpRequest"><tt class="xref docutils literal"><span class="pre">HttpRequest</span></tt></a>
+object. For more on <a title="django.http.HttpRequest" class="reference external" href="../ref/request-response.html#django.http.HttpRequest"><tt class="xref docutils literal"><span class="pre">HttpRequest</span></tt></a> objects, see the
+<a class="reference external" href="../ref/request-response.html#ref-request-response"><em>request and response documentation</em></a>.</p>
+<p>After somebody votes in a poll, the <tt class="docutils literal"><span class="pre">vote()</span></tt> view redirects to the results
+page for the poll. Let's write that view:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">poll_id</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Poll</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">poll_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;polls/results.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;poll&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>This is almost exactly the same as the <tt class="docutils literal"><span class="pre">detail()</span></tt> view from <a class="reference external" href="tutorial03.html#intro-tutorial03"><em>Tutorial 3</em></a>. The only difference is the template name. We'll fix this
+redundancy later.</p>
+<p>Now, create a <tt class="docutils literal"><span class="pre">results.html</span></tt> template:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;h1&gt;</span><span class="cp">{{</span> <span class="nv">poll.question</span> <span class="cp">}}</span><span class="nt">&lt;/h1&gt;</span>
+
+<span class="nt">&lt;ul&gt;</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">choice</span> <span class="k">in</span> <span class="nv">poll.choice_set.all</span> <span class="cp">%}</span>
+    <span class="nt">&lt;li&gt;</span><span class="cp">{{</span> <span class="nv">choice.choice</span> <span class="cp">}}</span> -- <span class="cp">{{</span> <span class="nv">choice.votes</span> <span class="cp">}}</span> vote<span class="cp">{{</span> <span class="nv">choice.votes</span><span class="o">|</span><span class="nf">pluralize</span> <span class="cp">}}</span><span class="nt">&lt;/li&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre></div>
+</div>
+<p>Now, go to <tt class="docutils literal"><span class="pre">/polls/1/</span></tt> in your browser and vote in the poll. You should see a
+results page that gets updated each time you vote. If you submit the form
+without having chosen a choice, you should see the error message.</p>
+</div>
+<div class="section" id="s-use-generic-views-less-code-is-better">
+<span id="use-generic-views-less-code-is-better"></span><h2>Use generic views: Less code is better<a class="headerlink" href="#use-generic-views-less-code-is-better" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">detail()</span></tt> (from <a class="reference external" href="tutorial03.html#intro-tutorial03"><em>Tutorial 3</em></a>) and <tt class="docutils literal"><span class="pre">results()</span></tt>
+views are stupidly simple -- and, as mentioned above, redundant. The <tt class="docutils literal"><span class="pre">index()</span></tt>
+view (also from Tutorial 3), which displays a list of polls, is similar.</p>
+<p>These views represent a common case of basic Web development: getting data from
+the database according to a parameter passed in the URL, loading a template and
+returning the rendered template. Because this is so common, Django provides a
+shortcut, called the &quot;generic views&quot; system.</p>
+<p>Generic views abstract common patterns to the point where you don't even need
+to write Python code to write an app.</p>
+<p>Let's convert our poll app to use the generic views system, so we can delete a
+bunch of our own code. We'll just have to take a few steps to make the
+conversion.</p>
+<div class="admonition-why-the-code-shuffle admonition ">
+<p class="first admonition-title">Why the code-shuffle?</p>
+<p>Generally, when writing a Django app, you'll evaluate whether generic views
+are a good fit for your problem, and you'll use them from the beginning,
+rather than refactoring your code halfway through. But this tutorial
+intentionally has focused on writing the views &quot;the hard way&quot; until now, to
+focus on core concepts.</p>
+<p class="last">You should know basic math before you start using a calculator.</p>
+</div>
+<p>First, open the <tt class="docutils literal"><span class="pre">polls/urls.py</span></tt> URLconf. It looks like this, according to the
+tutorial so far:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;mysite.polls.views&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^$&#39;</span><span class="p">,</span> <span class="s">&#39;index&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^(?P&lt;poll_id&gt;\d+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;detail&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^(?P&lt;poll_id&gt;\d+)/results/$&#39;</span><span class="p">,</span> <span class="s">&#39;results&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^(?P&lt;poll_id&gt;\d+)/vote/$&#39;</span><span class="p">,</span> <span class="s">&#39;vote&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Change it like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">mysite.polls.models</span> <span class="kn">import</span> <span class="n">Poll</span>
+
+<span class="n">info_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;queryset&#39;</span><span class="p">:</span> <span class="n">Poll</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.generic.list_detail.object_list&#39;</span><span class="p">,</span> <span class="n">info_dict</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^(?P&lt;object_id&gt;\d+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.generic.list_detail.object_detail&#39;</span><span class="p">,</span> <span class="n">info_dict</span><span class="p">),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s">r&#39;^(?P&lt;object_id&gt;\d+)/results/$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.generic.list_detail.object_detail&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">info_dict</span><span class="p">,</span> <span class="n">template_name</span><span class="o">=</span><span class="s">&#39;polls/results.html&#39;</span><span class="p">),</span> <span class="s">&#39;poll_results&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^(?P&lt;poll_id&gt;\d+)/vote/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.polls.views.vote&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>We're using two generic views here:
+<tt class="xref docutils literal"><span class="pre">object_list()</span></tt> and
+<tt class="xref docutils literal"><span class="pre">object_detail()</span></tt>. Respectively, those two
+views abstract the concepts of &quot;display a list of objects&quot; and &quot;display a detail
+page for a particular type of object.&quot;</p>
+<ul class="simple">
+<li>Each generic view needs to know what data it will be acting upon. This
+data is provided in a dictionary. The <tt class="docutils literal"><span class="pre">queryset</span></tt> key in this dictionary
+points to the list of objects to be manipulated by the generic view.</li>
+<li>The <tt class="xref docutils literal"><span class="pre">object_detail()</span></tt> generic view
+expects the ID value captured from the URL to be called <tt class="docutils literal"><span class="pre">&quot;object_id&quot;</span></tt>,
+so we've changed <tt class="docutils literal"><span class="pre">poll_id</span></tt> to <tt class="docutils literal"><span class="pre">object_id</span></tt> for the generic views.</li>
+<li>We've added a name, <tt class="docutils literal"><span class="pre">poll_results</span></tt>, to the results view so that we have
+a way to refer to its URL later on (see the documentation about
+<a class="reference external" href="../topics/http/urls.html#naming-url-patterns"><em>naming URL patterns</em></a> for information). We're
+also using the <tt class="xref docutils literal"><span class="pre">url()</span></tt> function from
+<tt class="xref docutils literal"><span class="pre">django.conf.urls.defaults</span></tt> here. It's a good habit to use
+<tt class="xref docutils literal"><span class="pre">url()</span></tt> when you are providing a pattern
+name like this.</li>
+</ul>
+<p>By default, the <tt class="xref docutils literal"><span class="pre">object_detail()</span></tt> generic
+view uses a template called <tt class="docutils literal"><span class="pre">&lt;app</span> <span class="pre">name&gt;/&lt;model</span> <span class="pre">name&gt;_detail.html</span></tt>. In our
+case, it'll use the template <tt class="docutils literal"><span class="pre">&quot;polls/poll_detail.html&quot;</span></tt>. Thus, rename your
+<tt class="docutils literal"><span class="pre">polls/detail.html</span></tt> template to <tt class="docutils literal"><span class="pre">polls/poll_detail.html</span></tt>, and change the
+<tt class="xref docutils literal"><span class="pre">render_to_response()</span></tt> line in <tt class="docutils literal"><span class="pre">vote()</span></tt>.</p>
+<p>Similarly, the <tt class="xref docutils literal"><span class="pre">object_list()</span></tt> generic
+view uses a template called <tt class="docutils literal"><span class="pre">&lt;app</span> <span class="pre">name&gt;/&lt;model</span> <span class="pre">name&gt;_list.html</span></tt>. Thus, rename
+<tt class="docutils literal"><span class="pre">polls/index.html</span></tt> to <tt class="docutils literal"><span class="pre">polls/poll_list.html</span></tt>.</p>
+<p>Because we have more than one entry in the URLconf that uses
+<tt class="xref docutils literal"><span class="pre">object_detail()</span></tt> for the polls app, we
+manually specify a template name for the results view:
+<tt class="docutils literal"><span class="pre">template_name='polls/results.html'</span></tt>. Otherwise, both views would use the same
+template. Note that we use <tt class="docutils literal"><span class="pre">dict()</span></tt> to return an altered dictionary in place.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><tt class="xref docutils literal"><span class="pre">django.db.models.QuerySet.all()</span></tt> is lazy</p>
+<p>It might look a little frightening to see <tt class="docutils literal"><span class="pre">Poll.objects.all()</span></tt> being used
+in a detail view which only needs one <tt class="docutils literal"><span class="pre">Poll</span></tt> object, but don't worry;
+<tt class="docutils literal"><span class="pre">Poll.objects.all()</span></tt> is actually a special object called a
+<a title="django.db.models.QuerySet" class="reference external" href="../ref/models/querysets.html#django.db.models.QuerySet"><tt class="xref docutils literal"><span class="pre">QuerySet</span></tt></a>, which is &quot;lazy&quot; and doesn't hit your
+database until it absolutely has to. By the time the database query happens,
+the <tt class="xref docutils literal"><span class="pre">object_detail()</span></tt> generic view
+will have narrowed its scope down to a single object, so the eventual query
+will only select one row from the database.</p>
+<p class="last">If you'd like to know more about how that works, The Django database API
+documentation <a class="reference external" href="../topics/db/queries.html#querysets-are-lazy"><em>explains the lazy nature of QuerySet objects</em></a>.</p>
+</div>
+<p>In previous parts of the tutorial, the templates have been provided with a
+context that contains the <tt class="docutils literal"><span class="pre">poll</span></tt> and <tt class="docutils literal"><span class="pre">latest_poll_list</span></tt> context variables.
+However, the generic views provide the variables <tt class="docutils literal"><span class="pre">object</span></tt> and <tt class="docutils literal"><span class="pre">object_list</span></tt>
+as context. Therefore, you need to change your templates to match the new
+context variables. Go through your templates, and modify any reference to
+<tt class="docutils literal"><span class="pre">latest_poll_list</span></tt> to <tt class="docutils literal"><span class="pre">object_list</span></tt>, and change any reference to <tt class="docutils literal"><span class="pre">poll</span></tt>
+to <tt class="docutils literal"><span class="pre">object</span></tt>.</p>
+<p>You can now delete the <tt class="docutils literal"><span class="pre">index()</span></tt>, <tt class="docutils literal"><span class="pre">detail()</span></tt> and <tt class="docutils literal"><span class="pre">results()</span></tt> views
+from <tt class="docutils literal"><span class="pre">polls/views.py</span></tt>. We don't need them anymore -- they have been replaced
+by generic views.</p>
+<p>The <tt class="docutils literal"><span class="pre">vote()</span></tt> view is still required. However, it must be modified to match the
+new context variables. In the <tt class="xref docutils literal"><span class="pre">render_to_response()</span></tt> call,
+rename the <tt class="docutils literal"><span class="pre">poll</span></tt> context variable to <tt class="docutils literal"><span class="pre">object</span></tt>.</p>
+<p>The last thing to do is fix the URL handling to account for the use of generic
+views. In the vote view above, we used the
+<a title="django.core.urlresolvers.reverse" class="reference external" href="../topics/http/urls.html#django.core.urlresolvers.reverse"><tt class="xref docutils literal"><span class="pre">reverse()</span></tt></a> function to avoid hard-coding our
+URLs. Now that we've switched to a generic view, we'll need to change the
+<a title="django.core.urlresolvers.reverse" class="reference external" href="../topics/http/urls.html#django.core.urlresolvers.reverse"><tt class="xref docutils literal"><span class="pre">reverse()</span></tt></a> call to point back to our new generic
+view. We can't simply use the view function anymore -- generic views can be (and
+are) used multiple times -- but we can use the name we've given:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s">&#39;poll_results&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">,)))</span>
+</pre></div>
+</div>
+<p>Run the server, and use your new polling app based on generic views.</p>
+<p>For full details on generic views, see the <a class="reference external" href="../topics/http/generic-views.html#topics-http-generic-views"><em>generic views documentation</em></a>.</p>
+</div>
+<div class="section" id="s-coming-soon">
+<span id="coming-soon"></span><h2>Coming soon<a class="headerlink" href="#coming-soon" title="Permalink to this headline">¶</a></h2>
+<p>The tutorial ends here for the time being. Future installments of the tutorial
+will cover:</p>
+<ul class="simple">
+<li>Advanced form processing</li>
+<li>Using the RSS framework</li>
+<li>Using the cache framework</li>
+<li>Using the comments framework</li>
+<li>Advanced admin features: Permissions</li>
+<li>Advanced admin features: Custom JavaScript</li>
+</ul>
+<p>In the meantime, you might want to check out some pointers on <a class="reference external" href="whatsnext.html#intro-whatsnext"><em>where to go
+from here</em></a></p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Writing your first Django app, part 4</a><ul>
+<li><a class="reference external" href="#write-a-simple-form">Write a simple form</a></li>
+<li><a class="reference external" href="#use-generic-views-less-code-is-better">Use generic views: Less code is better</a></li>
+<li><a class="reference external" href="#coming-soon">Coming soon</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="tutorial03.html">Writing your first Django app, part 3</a></li>
+    
+    
+      <li>Next: <a href="whatsnext.html">What to read next</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Getting started</a>
+        
+        <ul><li>Writing your first Django app, part 4</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/intro/tutorial04.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="tutorial03.html" title="Writing your first Django app, part 3">previous</a> 
+     |
+    <a href="index.html" title="Getting started" accesskey="U">up</a>
+   |
+    <a href="whatsnext.html" title="What to read next">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

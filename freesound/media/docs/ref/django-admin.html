@@ -1,0 +1,932 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>django-admin.py and manage.py &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="API Reference" href="index.html" />
+    <link rel="next" title="File handling reference" href="files/index.html" />
+    <link rel="prev" title="Notes about supported databases" href="databases.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="databases.html" title="Notes about supported databases">previous</a> 
+     |
+    <a href="index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="files/index.html" title="File handling reference">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-django-admin">
+            
+  
+  <div class="section" id="s-django-admin-py-and-manage-py">
+<span id="s-ref-django-admin"></span><span id="django-admin-py-and-manage-py"></span><span id="ref-django-admin"></span><h1>django-admin.py and manage.py<a class="headerlink" href="#django-admin-py-and-manage-py" title="Permalink to this headline">¶</a></h1>
+<p><tt class="docutils literal"><span class="pre">django-admin.py</span></tt> is Django&#8217;s command-line utility for administrative tasks.
+This document outlines all it can do.</p>
+<p>In addition, <tt class="docutils literal"><span class="pre">manage.py</span></tt> is automatically created in each Django project.
+<tt class="docutils literal"><span class="pre">manage.py</span></tt> is a thin wrapper around <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> that takes care of
+two things for you before delegating to <tt class="docutils literal"><span class="pre">django-admin.py</span></tt>:</p>
+<ul class="simple">
+<li>It puts your project&#8217;s package on <tt class="docutils literal"><span class="pre">sys.path</span></tt>.</li>
+<li>It sets the <span class="target" id="index-7"></span><strong class="xref">DJANGO_SETTINGS_MODULE</strong> environment variable so that
+it points to your project&#8217;s <tt class="docutils literal"><span class="pre">settings.py</span></tt> file.</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> script should be on your system path if you installed
+Django via its <tt class="docutils literal"><span class="pre">setup.py</span></tt> utility. If it&#8217;s not on your path, you can find it
+in <tt class="docutils literal"><span class="pre">site-packages/django/bin</span></tt> within your Python installation. Consider
+symlinking it from some place on your path, such as <tt class="docutils literal"><span class="pre">/usr/local/bin</span></tt>.</p>
+<p>For Windows users, who do not have symlinking functionality available, you can
+copy <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> to a location on your existing path or edit the
+<tt class="docutils literal"><span class="pre">PATH</span></tt> settings (under <tt class="docutils literal"><span class="pre">Settings</span> <span class="pre">-</span> <span class="pre">Control</span> <span class="pre">Panel</span> <span class="pre">-</span> <span class="pre">System</span> <span class="pre">-</span> <span class="pre">Advanced</span> <span class="pre">-</span>
+<span class="pre">Environment...</span></tt>) to point to its installed location.</p>
+<p>Generally, when working on a single Django project, it&#8217;s easier to use
+<tt class="docutils literal"><span class="pre">manage.py</span></tt>. Use <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> with <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt>, or the
+<tt class="docutils literal"><span class="pre">--settings</span></tt> command line option, if you need to switch between multiple
+Django settings files.</p>
+<p>The command-line examples throughout this document use <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> to
+be consistent, but any example can use <tt class="docutils literal"><span class="pre">manage.py</span></tt> just as well.</p>
+<div class="section" id="s-usage">
+<span id="usage"></span><h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash"><div class="highlight"><pre>django-admin.py &lt;subcommand&gt; <span class="o">[</span>options<span class="o">]</span>
+manage.py &lt;subcommand&gt; <span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">subcommand</span></tt> should be one of the subcommands listed in this document.
+<tt class="docutils literal"><span class="pre">options</span></tt>, which is optional, should be zero or more of the options available
+for the given subcommand.</p>
+<div class="section" id="s-getting-runtime-help">
+<span id="getting-runtime-help"></span><h3>Getting runtime help<a class="headerlink" href="#getting-runtime-help" title="Permalink to this headline">¶</a></h3>
+<dl class="django-admin-option">
+<dt id="djadminopt---help">
+<tt class="descname">--help</tt><tt class="descclassname"></tt><a class="headerlink" href="#djadminopt---help" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Run <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">help</span></tt> to display a list of all available subcommands.
+Run <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">help</span> <span class="pre">&lt;subcommand&gt;</span></tt> to display a description of the
+given subcommand and a list of its available options.</p>
+</div>
+<div class="section" id="s-app-names">
+<span id="app-names"></span><h3>App names<a class="headerlink" href="#app-names" title="Permalink to this headline">¶</a></h3>
+<p>Many subcommands take a list of &quot;app names.&quot; An &quot;app name&quot; is the basename of
+the package containing your models. For example, if your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>
+contains the string <tt class="docutils literal"><span class="pre">'mysite.blog'</span></tt>, the app name is <tt class="docutils literal"><span class="pre">blog</span></tt>.</p>
+</div>
+<div class="section" id="s-determining-the-version">
+<span id="determining-the-version"></span><h3>Determining the version<a class="headerlink" href="#determining-the-version" title="Permalink to this headline">¶</a></h3>
+<dl class="django-admin-option">
+<dt id="djadminopt---version">
+<tt class="descname">--version</tt><tt class="descclassname"></tt><a class="headerlink" href="#djadminopt---version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Run <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">--version</span></tt> to display the current Django version.</p>
+<p>Examples of output:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="mf">0.95</span>
+<span class="mf">0.96</span>
+<span class="mf">0.97</span><span class="o">-</span><span class="n">pre</span><span class="o">-</span><span class="n">SVN</span><span class="o">-</span><span class="mf">6069</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-displaying-debug-output">
+<span id="displaying-debug-output"></span><h3>Displaying debug output<a class="headerlink" href="#displaying-debug-output" title="Permalink to this headline">¶</a></h3>
+<dl class="django-admin-option">
+<dt id="djadminopt---verbosity">
+<tt class="descname">--verbosity</tt><tt class="descclassname"> &lt;amount&gt;</tt><a class="headerlink" href="#djadminopt---verbosity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Use <tt class="docutils literal"><span class="pre">--verbosity</span></tt> to specify the amount of notification and debug information
+that <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> should print to the console. For more details, see the
+documentation for the <a class="reference internal" href="#django-admin-verbosity"><em>default options for django-admin.py</em></a>.</p>
+</div>
+</div>
+<div class="section" id="s-available-subcommands">
+<span id="available-subcommands"></span><h2>Available subcommands<a class="headerlink" href="#available-subcommands" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-cleanup">
+<span id="cleanup"></span><h3>cleanup<a class="headerlink" href="#cleanup" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>Can be run as a cronjob or directly to clean out old data from the database
+(only expired sessions at the moment).</p>
+</div>
+<div class="section" id="s-compilemessages">
+<span id="compilemessages"></span><h3>compilemessages<a class="headerlink" href="#compilemessages" title="Permalink to this headline">¶</a></h3>
+<div class="versionchanged">
+<span class="title">Changed in Django 1.0:</span> Before 1.0 this was the &quot;bin/compile-messages.py&quot; command.</div>
+<p>Compiles .po files created with <tt class="docutils literal"><span class="pre">makemessages</span></tt> to .mo files for use with
+the builtin gettext support. See <a class="reference external" href="../topics/i18n.html#topics-i18n"><em>Internationalization</em></a>.</p>
+<div class="section" id="s-locale">
+<span id="locale"></span><h4>--locale<a class="headerlink" href="#locale" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--locale</span></tt> or <tt class="docutils literal"><span class="pre">-l</span></tt> option to specify the locale to process.
+If not provided all locales are processed.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py compilemessages --locale=br_PT</pre>
+</div>
+</div>
+</div>
+<div class="section" id="s-createcachetable">
+<span id="createcachetable"></span><h3>createcachetable<a class="headerlink" href="#createcachetable" title="Permalink to this headline">¶</a></h3>
+<dl class="django-admin">
+<dt id="djadmin-createcachetable &lt;tablename&gt;">
+<tt class="descname">django-admin.py createcachetable &lt;tablename&gt;</tt><a class="headerlink" href="#djadmin-createcachetable <tablename>" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Creates a cache table named <tt class="docutils literal"><span class="pre">tablename</span></tt> for use with the database cache
+backend. See <a class="reference external" href="../topics/cache.html#topics-cache"><em>Django's cache framework</em></a> for more information.</p>
+</div>
+<div class="section" id="s-createsuperuser">
+<span id="createsuperuser"></span><h3>createsuperuser<a class="headerlink" href="#createsuperuser" title="Permalink to this headline">¶</a></h3>
+<dl class="django-admin">
+<dt id="djadmin-createsuperuser">
+<tt class="descname">django-admin.py createsuperuser</tt><a class="headerlink" href="#djadmin-createsuperuser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>Creates a superuser account (a user who has all permissions). This is
+useful if you need to create an initial superuser account but did not
+do so during <tt class="docutils literal"><span class="pre">syncdb</span></tt>, or if you need to programmatically generate
+superuser accounts for your site(s).</p>
+<p>When run interactively, this command will prompt for a password for
+the new superuser account. When run non-interactively, no password
+will be set, and the superuser account will not be able to log in until
+a password has been manually set for it.</p>
+<dl class="django-admin-option">
+<dt id="djadminopt---username">
+<tt class="descname">--username</tt><tt class="descclassname"></tt><a class="headerlink" href="#djadminopt---username" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="django-admin-option">
+<dt id="djadminopt---email">
+<tt class="descname">--email</tt><tt class="descclassname"></tt><a class="headerlink" href="#djadminopt---email" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The username and e-mail address for the new account can be supplied by
+using the <tt class="docutils literal"><span class="pre">--username</span></tt> and <tt class="docutils literal"><span class="pre">--email</span></tt> arguments on the command
+line. If either of those is not supplied, <tt class="docutils literal"><span class="pre">createsuperuser</span></tt> will prompt for
+it when running interactively.</p>
+<p>This command is only available if Django's <a class="reference external" href="../topics/auth.html#topics-auth"><em>authentication system</em></a> (<tt class="docutils literal"><span class="pre">django.contrib.auth</span></tt>) is installed.</p>
+</div>
+<div class="section" id="s-dbshell">
+<span id="dbshell"></span><h3>dbshell<a class="headerlink" href="#dbshell" title="Permalink to this headline">¶</a></h3>
+<dl class="django-admin">
+<dt id="djadmin-dbshell">
+<tt class="descname">django-admin.py dbshell</tt><a class="headerlink" href="#djadmin-dbshell" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Runs the command-line client for the database engine specified in your
+<tt class="docutils literal"><span class="pre">DATABASE_ENGINE</span></tt> setting, with the connection parameters specified in your
+<tt class="docutils literal"><span class="pre">DATABASE_USER</span></tt>, <tt class="docutils literal"><span class="pre">DATABASE_PASSWORD</span></tt>, etc., settings.</p>
+<ul class="simple">
+<li>For PostgreSQL, this runs the <tt class="docutils literal"><span class="pre">psql</span></tt> command-line client.</li>
+<li>For MySQL, this runs the <tt class="docutils literal"><span class="pre">mysql</span></tt> command-line client.</li>
+<li>For SQLite, this runs the <tt class="docutils literal"><span class="pre">sqlite3</span></tt> command-line client.</li>
+</ul>
+<p>This command assumes the programs are on your <tt class="docutils literal"><span class="pre">PATH</span></tt> so that a simple call to
+the program name (<tt class="docutils literal"><span class="pre">psql</span></tt>, <tt class="docutils literal"><span class="pre">mysql</span></tt>, <tt class="docutils literal"><span class="pre">sqlite3</span></tt>) will find the program in
+the right place. There's no way to specify the location of the program
+manually.</p>
+</div>
+<div class="section" id="s-diffsettings">
+<span id="diffsettings"></span><h3>diffsettings<a class="headerlink" href="#diffsettings" title="Permalink to this headline">¶</a></h3>
+<dl class="django-admin">
+<dt id="djadmin-diffsettings">
+<tt class="descname">django-admin.py diffsettings</tt><a class="headerlink" href="#djadmin-diffsettings" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Displays differences between the current settings file and Django's default
+settings.</p>
+<p>Settings that don't appear in the defaults are followed by <tt class="docutils literal"><span class="pre">&quot;###&quot;</span></tt>. For
+example, the default settings don't define <tt class="docutils literal"><span class="pre">ROOT_URLCONF</span></tt>, so
+<tt class="docutils literal"><span class="pre">ROOT_URLCONF</span></tt> is followed by <tt class="docutils literal"><span class="pre">&quot;###&quot;</span></tt> in the output of <tt class="docutils literal"><span class="pre">diffsettings</span></tt>.</p>
+<p>Note that Django's default settings live in <tt class="docutils literal"><span class="pre">django/conf/global_settings.py</span></tt>,
+if you're ever curious to see the full list of defaults.</p>
+</div>
+<div class="section" id="s-dumpdata">
+<span id="dumpdata"></span><h3>dumpdata<a class="headerlink" href="#dumpdata" title="Permalink to this headline">¶</a></h3>
+<dl class="django-admin">
+<dt id="djadmin-dumpdata &lt;appname appname ...&gt;">
+<tt class="descname">django-admin.py dumpdata &lt;appname appname ...&gt;</tt><a class="headerlink" href="#djadmin-dumpdata <appname appname ...>" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Outputs to standard output all data in the database associated with the named
+application(s).</p>
+<p>If no application name is provided, all installed applications will be dumped.</p>
+<p>The output of <tt class="docutils literal"><span class="pre">dumpdata</span></tt> can be used as input for <tt class="docutils literal"><span class="pre">loaddata</span></tt>.</p>
+<p>Note that <tt class="docutils literal"><span class="pre">dumpdata</span></tt> uses the default manager on the model for selecting the
+records to dump. If you're using a <a class="reference external" href="../topics/db/managers.html#custom-managers"><em>custom manager</em></a> as
+the default manager and it filters some of the available records, not all of the
+objects will be dumped.</p>
+<dl class="django-admin-option">
+<dt id="djadminopt---exclude">
+<tt class="descname">--exclude</tt><tt class="descclassname"></tt><a class="headerlink" href="#djadminopt---exclude" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>Exclude a specific application from the applications whose contents is
+output. For example, to specifically exclude the <cite>auth</cite> application from
+the output, you would call:</p>
+<div class="highlight-python"><pre>django-admin.py dumpdata --exclude=auth</pre>
+</div>
+<p>If you want to exclude multiple applications, use multiple <tt class="docutils literal"><span class="pre">--exclude</span></tt>
+directives:</p>
+<div class="highlight-python"><pre>django-admin.py dumpdata --exclude=auth --exclude=contenttypes</pre>
+</div>
+<dl class="django-admin-option">
+<dt id="djadminopt---format">
+<tt class="descname">--format</tt><tt class="descclassname"> &lt;fmt&gt;</tt><a class="headerlink" href="#djadminopt---format" title="Permalink to this definition">¶</a></dt>
+<dd>By default, <tt class="docutils literal"><span class="pre">dumpdata</span></tt> will format its output in JSON, but you can use the
+<tt class="docutils literal"><span class="pre">--format</span></tt> option to specify another format. Currently supported formats
+are listed in <a class="reference external" href="../topics/serialization.html#serialization-formats"><em>Serialization formats</em></a>.</dd></dl>
+
+<dl class="django-admin-option">
+<dt id="djadminopt---indent">
+<tt class="descname">--indent</tt><tt class="descclassname"> &lt;num&gt;</tt><a class="headerlink" href="#djadminopt---indent" title="Permalink to this definition">¶</a></dt>
+<dd>By default, <tt class="docutils literal"><span class="pre">dumpdata</span></tt> will output all data on a single line. This isn't
+easy for humans to read, so you can use the <tt class="docutils literal"><span class="pre">--indent</span></tt> option to
+pretty-print the output with a number of indentation spaces.</dd></dl>
+
+</div>
+<div class="section" id="s-flush">
+<span id="flush"></span><h3>flush<a class="headerlink" href="#flush" title="Permalink to this headline">¶</a></h3>
+<p>Returns the database to the state it was in immediately after syncdb was
+executed. This means that all data will be removed from the database, any
+post-synchronization handlers will be re-executed, and the <tt class="docutils literal"><span class="pre">initial_data</span></tt>
+fixture will be re-installed.</p>
+<dl class="django-admin-option">
+<dt id="djadminopt---noinput">
+<tt class="descname">--noinput</tt><tt class="descclassname"></tt><a class="headerlink" href="#djadminopt---noinput" title="Permalink to this definition">¶</a></dt>
+<dd>Use the <tt class="docutils literal"><span class="pre">--noinput</span></tt> option to suppress all user prompting, such as &quot;Are
+you sure?&quot; confirmation messages. This is useful if <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> is
+being executed as an unattended, automated script.</dd></dl>
+
+</div>
+<div class="section" id="s-inspectdb">
+<span id="inspectdb"></span><h3>inspectdb<a class="headerlink" href="#inspectdb" title="Permalink to this headline">¶</a></h3>
+<p>Introspects the database tables in the database pointed-to by the
+<tt class="docutils literal"><span class="pre">DATABASE_NAME</span></tt> setting and outputs a Django model module (a <tt class="docutils literal"><span class="pre">models.py</span></tt>
+file) to standard output.</p>
+<p>Use this if you have a legacy database with which you'd like to use Django.
+The script will inspect the database and create a model for each table within
+it.</p>
+<p>As you might expect, the created models will have an attribute for every field
+in the table. Note that <tt class="docutils literal"><span class="pre">inspectdb</span></tt> has a few special cases in its field-name
+output:</p>
+<ul class="simple">
+<li>If <tt class="docutils literal"><span class="pre">inspectdb</span></tt> cannot map a column's type to a model field type, it'll
+use <tt class="docutils literal"><span class="pre">TextField</span></tt> and will insert the Python comment
+<tt class="docutils literal"><span class="pre">'This</span> <span class="pre">field</span> <span class="pre">type</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">guess.'</span></tt> next to the field in the generated
+model.</li>
+<li>If the database column name is a Python reserved word (such as
+<tt class="docutils literal"><span class="pre">'pass'</span></tt>, <tt class="docutils literal"><span class="pre">'class'</span></tt> or <tt class="docutils literal"><span class="pre">'for'</span></tt>), <tt class="docutils literal"><span class="pre">inspectdb</span></tt> will append
+<tt class="docutils literal"><span class="pre">'_field'</span></tt> to the attribute name. For example, if a table has a column
+<tt class="docutils literal"><span class="pre">'for'</span></tt>, the generated model will have a field <tt class="docutils literal"><span class="pre">'for_field'</span></tt>, with
+the <tt class="docutils literal"><span class="pre">db_column</span></tt> attribute set to <tt class="docutils literal"><span class="pre">'for'</span></tt>. <tt class="docutils literal"><span class="pre">inspectdb</span></tt> will insert
+the Python comment
+<tt class="docutils literal"><span class="pre">'Field</span> <span class="pre">renamed</span> <span class="pre">because</span> <span class="pre">it</span> <span class="pre">was</span> <span class="pre">a</span> <span class="pre">Python</span> <span class="pre">reserved</span> <span class="pre">word.'</span></tt> next to the
+field.</li>
+</ul>
+<p>This feature is meant as a shortcut, not as definitive model generation. After
+you run it, you'll want to look over the generated models yourself to make
+customizations. In particular, you'll need to rearrange models' order, so that
+models that refer to other models are ordered properly.</p>
+<p>Primary keys are automatically introspected for PostgreSQL, MySQL and
+SQLite, in which case Django puts in the <tt class="docutils literal"><span class="pre">primary_key=True</span></tt> where
+needed.</p>
+<p><tt class="docutils literal"><span class="pre">inspectdb</span></tt> works with PostgreSQL, MySQL and SQLite. Foreign-key detection
+only works in PostgreSQL and with certain types of MySQL tables.</p>
+</div>
+<div class="section" id="s-loaddata-fixture-fixture">
+<span id="loaddata-fixture-fixture"></span><h3>loaddata &lt;fixture fixture ...&gt;<a class="headerlink" href="#loaddata-fixture-fixture" title="Permalink to this headline">¶</a></h3>
+<p>Searches for and loads the contents of the named fixture into the database.</p>
+<div class="section" id="s-what-s-a-fixture">
+<span id="what-s-a-fixture"></span><h4>What's a &quot;fixture&quot;?<a class="headerlink" href="#what-s-a-fixture" title="Permalink to this headline">¶</a></h4>
+<p>A <em>fixture</em> is a collection of files that contain the serialized contents of
+the database. Each fixture has a unique name, and the files that comprise the
+fixture can be distributed over multiple directories, in multiple applications.</p>
+<p>Django will search in three locations for fixtures:</p>
+<ol class="arabic simple">
+<li>In the <tt class="docutils literal"><span class="pre">fixtures</span></tt> directory of every installed application</li>
+<li>In any directory named in the <tt class="docutils literal"><span class="pre">FIXTURE_DIRS</span></tt> setting</li>
+<li>In the literal path named by the fixture</li>
+</ol>
+<p>Django will load any and all fixtures it finds in these locations that match
+the provided fixture names.</p>
+<p>If the named fixture has a file extension, only fixtures of that type
+will be loaded. For example:</p>
+<div class="highlight-python"><pre>django-admin.py loaddata mydata.json</pre>
+</div>
+<p>would only load JSON fixtures called <tt class="docutils literal"><span class="pre">mydata</span></tt>. The fixture extension
+must correspond to the registered name of a
+<a class="reference external" href="../topics/serialization.html#serialization-formats"><em>serializer</em></a> (e.g., <tt class="docutils literal"><span class="pre">json</span></tt> or <tt class="docutils literal"><span class="pre">xml</span></tt>).</p>
+<p>If you omit the extensions, Django will search all available fixture types
+for a matching fixture. For example:</p>
+<div class="highlight-python"><pre>django-admin.py loaddata mydata</pre>
+</div>
+<p>would look for any fixture of any fixture type called <tt class="docutils literal"><span class="pre">mydata</span></tt>. If a fixture
+directory contained <tt class="docutils literal"><span class="pre">mydata.json</span></tt>, that fixture would be loaded
+as a JSON fixture.</p>
+<p>The fixtures that are named can include directory components. These
+directories will be included in the search path. For example:</p>
+<div class="highlight-python"><pre>django-admin.py loaddata foo/bar/mydata.json</pre>
+</div>
+<p>would search <tt class="docutils literal"><span class="pre">&lt;appname&gt;/fixtures/foo/bar/mydata.json</span></tt> for each installed
+application,  <tt class="docutils literal"><span class="pre">&lt;dirname&gt;/foo/bar/mydata.json</span></tt> for each directory in
+<tt class="docutils literal"><span class="pre">FIXTURE_DIRS</span></tt>, and the literal path <tt class="docutils literal"><span class="pre">foo/bar/mydata.json</span></tt>.</p>
+<p>Note that the order in which fixture files are processed is undefined. However,
+all fixture data is installed as a single transaction, so data in
+one fixture can reference data in another fixture. If the database backend
+supports row-level constraints, these constraints will be checked at the
+end of the transaction.</p>
+<p>The <tt class="docutils literal"><span class="pre">dumpdata</span></tt> command can be used to generate input for <tt class="docutils literal"><span class="pre">loaddata</span></tt>.</p>
+</div>
+<div class="section" id="s-compressed-fixtures">
+<span id="compressed-fixtures"></span><h4>Compressed fixtures<a class="headerlink" href="#compressed-fixtures" title="Permalink to this headline">¶</a></h4>
+<p>Fixtures may be compressed in <tt class="docutils literal"><span class="pre">zip</span></tt>, <tt class="docutils literal"><span class="pre">gz</span></tt>, or <tt class="docutils literal"><span class="pre">bz2</span></tt> format. For example:</p>
+<div class="highlight-python"><pre>django-admin.py loaddata mydata.json</pre>
+</div>
+<p>would look for any of <tt class="docutils literal"><span class="pre">mydata.json</span></tt>, <tt class="docutils literal"><span class="pre">mydata.json.zip</span></tt>,
+<tt class="docutils literal"><span class="pre">mydata.json.gz</span></tt>, or <tt class="docutils literal"><span class="pre">mydata.json.bz2</span></tt>.  The first file contained within a
+zip-compressed archive is used.</p>
+<p>Note that if two fixtures with the same name but different
+fixture type are discovered (for example, if <tt class="docutils literal"><span class="pre">mydata.json</span></tt> and
+<tt class="docutils literal"><span class="pre">mydata.xml.gz</span></tt> were found in the same fixture directory), fixture
+installation will be aborted, and any data installed in the call to
+<tt class="docutils literal"><span class="pre">loaddata</span></tt> will be removed from the database.</p>
+<div class="admonition-mysql-and-fixtures admonition ">
+<p class="first admonition-title">MySQL and Fixtures</p>
+<p class="last">Unfortunately, MySQL isn't capable of completely supporting all the
+features of Django fixtures. If you use MyISAM tables, MySQL doesn't
+support transactions or constraints, so you won't get a rollback if
+multiple transaction files are found, or validation of fixture data.
+If you use InnoDB tables, you won't be able to have any forward
+references in your data files - MySQL doesn't provide a mechanism to
+defer checking of row constraints until a transaction is committed.</p>
+</div>
+</div>
+</div>
+<div class="section" id="s-makemessages">
+<span id="makemessages"></span><h3>makemessages<a class="headerlink" href="#makemessages" title="Permalink to this headline">¶</a></h3>
+<div class="versionchanged">
+<span class="title">Changed in Django 1.0:</span> Before 1.0 this was the <tt class="docutils literal"><span class="pre">bin/make-messages.py</span></tt> command.</div>
+<p>Runs over the entire source tree of the current directory and pulls out all
+strings marked for translation. It creates (or updates) a message file in the
+conf/locale (in the django tree) or locale (for project and application)
+directory. After making changes to the messages files you need to compile them
+with <tt class="docutils literal"><span class="pre">compilemessages</span></tt> for use with the builtin gettext support. See the
+<a class="reference external" href="../topics/i18n.html#how-to-create-language-files"><em>i18n documentation</em></a> for details.</p>
+<div class="section" id="s-all">
+<span id="all"></span><h4>--all<a class="headerlink" href="#all" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--all</span></tt> or <tt class="docutils literal"><span class="pre">-a</span></tt> option to update the message files for all
+available languages.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages --all</pre>
+</div>
+</div>
+<div class="section" id="s-extension">
+<span id="extension"></span><h4>--extension<a class="headerlink" href="#extension" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--extension</span></tt> or <tt class="docutils literal"><span class="pre">-e</span></tt> option to specify a list of file extensions
+to examine (default: &quot;.html&quot;).</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages --locale=de --extension xhtml</pre>
+</div>
+<p>Separate multiple extensions with commas or use -e or --extension multiple times:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages --locale=de --extension=html,txt --extension xml</pre>
+</div>
+</div>
+<div class="section" id="s-id1">
+<span id="id1"></span><h4>--locale<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--locale</span></tt> or <tt class="docutils literal"><span class="pre">-l</span></tt> option to specify the locale to process.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages --locale=br_PT</pre>
+</div>
+</div>
+<div class="section" id="s-domain">
+<span id="domain"></span><h4>--domain<a class="headerlink" href="#domain" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--domain</span></tt> or <tt class="docutils literal"><span class="pre">-d</span></tt> option to change the domain of the messages files.
+Currently supported:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">django</span></tt> for all <tt class="docutils literal"><span class="pre">*.py</span></tt> and <tt class="docutils literal"><span class="pre">*.html</span></tt> files (default)</li>
+<li><tt class="docutils literal"><span class="pre">djangojs</span></tt> for <tt class="docutils literal"><span class="pre">*.js</span></tt> files</li>
+</ul>
+</div>
+</div>
+<div class="section" id="s-reset-appname-appname">
+<span id="reset-appname-appname"></span><h3>reset &lt;appname appname ...&gt;<a class="headerlink" href="#reset-appname-appname" title="Permalink to this headline">¶</a></h3>
+<p>Executes the equivalent of <tt class="docutils literal"><span class="pre">sqlreset</span></tt> for the given app name(s).</p>
+<div class="section" id="s-noinput">
+<span id="noinput"></span><h4>--noinput<a class="headerlink" href="#noinput" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--noinput</span></tt> option to suppress all user prompting, such as
+&quot;Are you sure?&quot; confirmation messages. This is useful if <tt class="docutils literal"><span class="pre">django-admin.py</span></tt>
+is being executed as an unattended, automated script.</p>
+</div>
+</div>
+<div class="section" id="s-runfcgi-options">
+<span id="runfcgi-options"></span><h3>runfcgi [options]<a class="headerlink" href="#runfcgi-options" title="Permalink to this headline">¶</a></h3>
+<p>Starts a set of FastCGI processes suitable for use with any Web server that
+supports the FastCGI protocol. See the <a class="reference external" href="../howto/deployment/fastcgi.html#howto-deployment-fastcgi"><em>FastCGI deployment documentation</em></a> for details. Requires the Python FastCGI module from
+<a class="reference external" href="http://www.saddi.com/software/flup/">flup</a>.</p>
+</div>
+<div class="section" id="s-runserver-optional-port-number-or-ipaddr-port">
+<span id="runserver-optional-port-number-or-ipaddr-port"></span><h3>runserver [optional port number, or ipaddr:port]<a class="headerlink" href="#runserver-optional-port-number-or-ipaddr-port" title="Permalink to this headline">¶</a></h3>
+<p>Starts a lightweight development Web server on the local machine. By default,
+the server runs on port 8000 on the IP address 127.0.0.1. You can pass in an
+IP address and port number explicitly.</p>
+<p>If you run this script as a user with normal privileges (recommended), you
+might not have access to start a port on a low port number. Low port numbers
+are reserved for the superuser (root).</p>
+<p>DO NOT USE THIS SERVER IN A PRODUCTION SETTING. It has not gone through
+security audits or performance tests. (And that's how it's gonna stay. We're in
+the business of making Web frameworks, not Web servers, so improving this
+server to be able to handle a production environment is outside the scope of
+Django.)</p>
+<p>The development server automatically reloads Python code for each request, as
+needed. You don't need to restart the server for code changes to take effect.</p>
+<p>When you start the server, and each time you change Python code while the
+server is running, the server will validate all of your installed models. (See
+the <tt class="docutils literal"><span class="pre">validate</span></tt> command below.) If the validator finds errors, it will print
+them to standard output, but it won't stop the server.</p>
+<p>You can run as many servers as you want, as long as they're on separate ports.
+Just execute <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">runserver</span></tt> more than once.</p>
+<p>Note that the default IP address, 127.0.0.1, is not accessible from other
+machines on your network. To make your development server viewable to other
+machines on the network, use its own IP address (e.g. <tt class="docutils literal"><span class="pre">192.168.2.1</span></tt>) or
+<tt class="docutils literal"><span class="pre">0.0.0.0</span></tt>.</p>
+<div class="section" id="s-adminmedia">
+<span id="adminmedia"></span><h4>--adminmedia<a class="headerlink" href="#adminmedia" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--adminmedia</span></tt> option to tell Django where to find the various CSS
+and JavaScript files for the Django admin interface. Normally, the development
+server serves these files out of the Django source tree magically, but you'd
+want to use this if you made any changes to those files for your own site.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py runserver --adminmedia=/tmp/new-admin-style/</pre>
+</div>
+</div>
+<div class="section" id="s-noreload">
+<span id="noreload"></span><h4>--noreload<a class="headerlink" href="#noreload" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--noreload</span></tt> option to disable the use of the auto-reloader. This
+means any Python code changes you make while the server is running will <em>not</em>
+take effect if the particular Python modules have already been loaded into
+memory.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py runserver --noreload</pre>
+</div>
+</div>
+<div class="section" id="s-examples-of-using-different-ports-and-addresses">
+<span id="examples-of-using-different-ports-and-addresses"></span><h4>Examples of using different ports and addresses<a class="headerlink" href="#examples-of-using-different-ports-and-addresses" title="Permalink to this headline">¶</a></h4>
+<p>Port 8000 on IP address 127.0.0.1:</p>
+<div class="highlight-python"><pre>django-admin.py runserver</pre>
+</div>
+<p>Port 8000 on IP address 1.2.3.4:</p>
+<div class="highlight-python"><pre>django-admin.py runserver 1.2.3.4:8000</pre>
+</div>
+<p>Port 7000 on IP address 127.0.0.1:</p>
+<div class="highlight-python"><pre>django-admin.py runserver 7000</pre>
+</div>
+<p>Port 7000 on IP address 1.2.3.4:</p>
+<div class="highlight-python"><pre>django-admin.py runserver 1.2.3.4:7000</pre>
+</div>
+</div>
+<div class="section" id="s-serving-static-files-with-the-development-server">
+<span id="serving-static-files-with-the-development-server"></span><h4>Serving static files with the development server<a class="headerlink" href="#serving-static-files-with-the-development-server" title="Permalink to this headline">¶</a></h4>
+<p>By default, the development server doesn't serve any static files for your site
+(such as CSS files, images, things under <tt class="docutils literal"><span class="pre">MEDIA_URL</span></tt> and so forth). If
+you want to configure Django to serve static media, read <a class="reference external" href="../howto/static-files.html#howto-static-files"><em>How to serve static files</em></a>.</p>
+</div>
+<div class="section" id="s-turning-off-auto-reload">
+<span id="turning-off-auto-reload"></span><h4>Turning off auto-reload<a class="headerlink" href="#turning-off-auto-reload" title="Permalink to this headline">¶</a></h4>
+<p>To disable auto-reloading of code while the development server is running, use the
+<tt class="docutils literal"><span class="pre">--noreload</span></tt> option, like so:</p>
+<div class="highlight-python"><pre>django-admin.py runserver --noreload</pre>
+</div>
+</div>
+</div>
+<div class="section" id="s-shell">
+<span id="shell"></span><h3>shell<a class="headerlink" href="#shell" title="Permalink to this headline">¶</a></h3>
+<p>Starts the Python interactive interpreter.</p>
+<p>Django will use <a class="reference external" href="http://ipython.scipy.org/">IPython</a>, if it's installed. If you have IPython installed and
+want to force use of the &quot;plain&quot; Python interpreter, use the <tt class="docutils literal"><span class="pre">--plain</span></tt>
+option, like so:</p>
+<div class="highlight-python"><pre>django-admin.py shell --plain</pre>
+</div>
+</div>
+<div class="section" id="s-sql-appname-appname">
+<span id="sql-appname-appname"></span><h3>sql &lt;appname appname ...&gt;<a class="headerlink" href="#sql-appname-appname" title="Permalink to this headline">¶</a></h3>
+<p>Prints the CREATE TABLE SQL statements for the given app name(s).</p>
+</div>
+<div class="section" id="s-sqlall-appname-appname">
+<span id="sqlall-appname-appname"></span><h3>sqlall &lt;appname appname ...&gt;<a class="headerlink" href="#sqlall-appname-appname" title="Permalink to this headline">¶</a></h3>
+<p>Prints the CREATE TABLE and initial-data SQL statements for the given app name(s).</p>
+<p>Refer to the description of <tt class="docutils literal"><span class="pre">sqlcustom</span></tt> for an explanation of how to
+specify initial data.</p>
+</div>
+<div class="section" id="s-sqlclear-appname-appname">
+<span id="sqlclear-appname-appname"></span><h3>sqlclear &lt;appname appname ...&gt;<a class="headerlink" href="#sqlclear-appname-appname" title="Permalink to this headline">¶</a></h3>
+<p>Prints the DROP TABLE SQL statements for the given app name(s).</p>
+</div>
+<div class="section" id="s-sqlcustom-appname-appname">
+<span id="sqlcustom-appname-appname"></span><h3>sqlcustom &lt;appname appname ...&gt;<a class="headerlink" href="#sqlcustom-appname-appname" title="Permalink to this headline">¶</a></h3>
+<p>Prints the custom SQL statements for the given app name(s).</p>
+<p>For each model in each specified app, this command looks for the file
+<tt class="docutils literal"><span class="pre">&lt;appname&gt;/sql/&lt;modelname&gt;.sql</span></tt>, where <tt class="docutils literal"><span class="pre">&lt;appname&gt;</span></tt> is the given app name and
+<tt class="docutils literal"><span class="pre">&lt;modelname&gt;</span></tt> is the model's name in lowercase. For example, if you have an
+app <tt class="docutils literal"><span class="pre">news</span></tt> that includes a <tt class="docutils literal"><span class="pre">Story</span></tt> model, <tt class="docutils literal"><span class="pre">sqlcustom</span></tt> will attempt
+to read a file <tt class="docutils literal"><span class="pre">news/sql/story.sql</span></tt> and append it to the output of this
+command.</p>
+<p>Each of the SQL files, if given, is expected to contain valid SQL. The SQL
+files are piped directly into the database after all of the models'
+table-creation statements have been executed. Use this SQL hook to make any
+table modifications, or insert any SQL functions into the database.</p>
+<p>Note that the order in which the SQL files are processed is undefined.</p>
+</div>
+<div class="section" id="s-sqlflush">
+<span id="sqlflush"></span><h3>sqlflush<a class="headerlink" href="#sqlflush" title="Permalink to this headline">¶</a></h3>
+<p>Prints the SQL statements that would be executed for the <a class="reference internal" href="#flush">flush</a> command.</p>
+</div>
+<div class="section" id="s-sqlindexes-appname-appname">
+<span id="sqlindexes-appname-appname"></span><h3>sqlindexes &lt;appname appname ...&gt;<a class="headerlink" href="#sqlindexes-appname-appname" title="Permalink to this headline">¶</a></h3>
+<p>Prints the CREATE INDEX SQL statements for the given app name(s).</p>
+</div>
+<div class="section" id="s-sqlreset-appname-appname">
+<span id="sqlreset-appname-appname"></span><h3>sqlreset &lt;appname appname ...&gt;<a class="headerlink" href="#sqlreset-appname-appname" title="Permalink to this headline">¶</a></h3>
+<p>Prints the DROP TABLE SQL, then the CREATE TABLE SQL, for the given app name(s).</p>
+</div>
+<div class="section" id="s-sqlsequencereset-appname-appname">
+<span id="sqlsequencereset-appname-appname"></span><h3>sqlsequencereset &lt;appname appname ...&gt;<a class="headerlink" href="#sqlsequencereset-appname-appname" title="Permalink to this headline">¶</a></h3>
+<p>Prints the SQL statements for resetting sequences for the given app name(s).</p>
+<p>See <a class="reference external" href="http://simon.incutio.com/archive/2004/04/21/postgres">http://simon.incutio.com/archive/2004/04/21/postgres</a> for more information.</p>
+</div>
+<div class="section" id="s-startapp-appname">
+<span id="startapp-appname"></span><h3>startapp &lt;appname&gt;<a class="headerlink" href="#startapp-appname" title="Permalink to this headline">¶</a></h3>
+<p>Creates a Django app directory structure for the given app name in the current
+directory.</p>
+</div>
+<div class="section" id="s-startproject-projectname">
+<span id="startproject-projectname"></span><h3>startproject &lt;projectname&gt;<a class="headerlink" href="#startproject-projectname" title="Permalink to this headline">¶</a></h3>
+<p>Creates a Django project directory structure for the given project name in the
+current directory.</p>
+<p>This command is disabled when the <tt class="docutils literal"><span class="pre">--settings</span></tt> option to
+<tt class="docutils literal"><span class="pre">django-admin.py</span></tt> is used, or when the environment variable
+<tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt> has been set. To re-enable it in these
+situations, either omit the <tt class="docutils literal"><span class="pre">--settings</span></tt> option or unset
+<tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt>.</p>
+</div>
+<div class="section" id="s-syncdb">
+<span id="syncdb"></span><h3>syncdb<a class="headerlink" href="#syncdb" title="Permalink to this headline">¶</a></h3>
+<p>Creates the database tables for all apps in <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> whose tables
+have not already been created.</p>
+<p>Use this command when you've added new applications to your project and want to
+install them in the database. This includes any apps shipped with Django that
+might be in <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> by default. When you start a new project, run
+this command to install the default apps.</p>
+<div class="admonition-syncdb-will-not-alter-existing-tables admonition ">
+<p class="first admonition-title">Syncdb will not alter existing tables</p>
+<p><tt class="docutils literal"><span class="pre">syncdb</span></tt> will only create tables for models which have not yet been
+installed. It will <em>never</em> issue <tt class="docutils literal"><span class="pre">ALTER</span> <span class="pre">TABLE</span></tt> statements to match
+changes made to a model class after installation. Changes to model classes
+and database schemas often involve some form of ambiguity and, in those
+cases, Django would have to guess at the correct changes to make. There is
+a risk that critical data would be lost in the process.</p>
+<p class="last">If you have made changes to a model and wish to alter the database tables
+to match, use the <tt class="docutils literal"><span class="pre">sql</span></tt> command to display the new SQL structure and
+compare that to your existing table schema to work out the changes.</p>
+</div>
+<p>If you're installing the <tt class="docutils literal"><span class="pre">django.contrib.auth</span></tt> application, <tt class="docutils literal"><span class="pre">syncdb</span></tt> will
+give you the option of creating a superuser immediately.</p>
+<p><tt class="docutils literal"><span class="pre">syncdb</span></tt> will also search for and install any fixture named <tt class="docutils literal"><span class="pre">initial_data</span></tt>
+with an appropriate extension (e.g. <tt class="docutils literal"><span class="pre">json</span></tt> or <tt class="docutils literal"><span class="pre">xml</span></tt>). See the
+documentation for <tt class="docutils literal"><span class="pre">loaddata</span></tt> for details on the specification of fixture
+data files.</p>
+<div class="section" id="s-id2">
+<span id="id2"></span><h4>--noinput<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--noinput</span></tt> option to suppress all user prompting, such as
+&quot;Are you sure?&quot; confirmation messages. This is useful if <tt class="docutils literal"><span class="pre">django-admin.py</span></tt>
+is being executed as an unattended, automated script.</p>
+</div>
+</div>
+<div class="section" id="s-test">
+<span id="test"></span><h3>test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h3>
+<p>Runs tests for all installed models. See <a class="reference external" href="../topics/testing.html#topics-testing"><em>Testing Django applications</em></a> for more
+information.</p>
+<div class="section" id="s-id3">
+<span id="id3"></span><h4>--noinput<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<p>Use the <tt class="docutils literal"><span class="pre">--noinput</span></tt> option to suppress all user prompting, such as
+&quot;Are you sure?&quot; confirmation messages. This is useful if <tt class="docutils literal"><span class="pre">django-admin.py</span></tt>
+is being executed as an unattended, automated script.</p>
+</div>
+</div>
+<div class="section" id="s-testserver-fixture-fixture">
+<span id="testserver-fixture-fixture"></span><h3>testserver &lt;fixture fixture ...&gt;<a class="headerlink" href="#testserver-fixture-fixture" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>Runs a Django development server (as in <tt class="docutils literal"><span class="pre">runserver</span></tt>) using data from the
+given fixture(s).</p>
+<p>For example, this command:</p>
+<div class="highlight-python"><pre>django-admin.py testserver mydata.json</pre>
+</div>
+<p>...would perform the following steps:</p>
+<ol class="arabic simple">
+<li>Create a test database, as described in <a class="reference external" href="../topics/testing.html#topics-testing"><em>Testing Django applications</em></a>.</li>
+<li>Populate the test database with fixture data from the given fixtures.
+(For more on fixtures, see the documentation for <tt class="docutils literal"><span class="pre">loaddata</span></tt> above.)</li>
+<li>Runs the Django development server (as in <tt class="docutils literal"><span class="pre">runserver</span></tt>), pointed at
+this newly created test database instead of your production database.</li>
+</ol>
+<p>This is useful in a number of ways:</p>
+<ul class="simple">
+<li>When you're writing <a class="reference external" href="../topics/testing.html#topics-testing"><em>unit tests</em></a> of how your views
+act with certain fixture data, you can use <tt class="docutils literal"><span class="pre">testserver</span></tt> to interact with
+the views in a Web browser, manually.</li>
+<li>Let's say you're developing your Django application and have a &quot;pristine&quot;
+copy of a database that you'd like to interact with. You can dump your
+database to a fixture (using the <tt class="docutils literal"><span class="pre">dumpdata</span></tt> command, explained above),
+then use <tt class="docutils literal"><span class="pre">testserver</span></tt> to run your Web application with that data. With
+this arrangement, you have the flexibility of messing up your data
+in any way, knowing that whatever data changes you're making are only
+being made to a test database.</li>
+</ul>
+<p>Note that this server does <em>not</em> automatically detect changes to your Python
+source code (as <tt class="docutils literal"><span class="pre">runserver</span></tt> does). It does, however, detect changes to
+templates.</p>
+<div class="section" id="s-addrport-port-number-or-ipaddr-port">
+<span id="addrport-port-number-or-ipaddr-port"></span><h4>--addrport [port number or ipaddr:port]<a class="headerlink" href="#addrport-port-number-or-ipaddr-port" title="Permalink to this headline">¶</a></h4>
+<p>Use <tt class="docutils literal"><span class="pre">--addrport</span></tt> to specify a different port, or IP address and port, from
+the default of 127.0.0.1:8000. This value follows exactly the same format and
+serves exactly the same function as the argument to the <tt class="docutils literal"><span class="pre">runserver</span></tt> subcommand.</p>
+<p>Examples:</p>
+<p>To run the test server on port 7000 with <tt class="docutils literal"><span class="pre">fixture1</span></tt> and <tt class="docutils literal"><span class="pre">fixture2</span></tt>:</p>
+<div class="highlight-python"><pre>django-admin.py testserver --addrport 7000 fixture1 fixture2
+django-admin.py testserver fixture1 fixture2 --addrport 7000</pre>
+</div>
+<p>(The above statements are equivalent. We include both of them to demonstrate
+that it doesn't matter whether the options come before or after the fixture
+arguments.)</p>
+<p>To run on 1.2.3.4:7000 with a <tt class="docutils literal"><span class="pre">test</span></tt> fixture:</p>
+<div class="highlight-python"><pre>django-admin.py testserver --addrport 1.2.3.4:7000 test</pre>
+</div>
+</div>
+</div>
+<div class="section" id="s-validate">
+<span id="validate"></span><h3>validate<a class="headerlink" href="#validate" title="Permalink to this headline">¶</a></h3>
+<p>Validates all installed models (according to the <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> setting)
+and prints validation errors to standard output.</p>
+</div>
+</div>
+<div class="section" id="s-default-options">
+<span id="default-options"></span><h2>Default options<a class="headerlink" href="#default-options" title="Permalink to this headline">¶</a></h2>
+<p>Although some subcommands may allow their own custom options, every subcommand
+allows for the following options:</p>
+<div class="section" id="s-pythonpath">
+<span id="pythonpath"></span><h3>--pythonpath<a class="headerlink" href="#pythonpath" title="Permalink to this headline">¶</a></h3>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py syncdb --pythonpath='/home/djangoprojects/myproject'</pre>
+</div>
+<p>Adds the given filesystem path to the Python <a class="reference external" href="http://diveintopython.org/getting_to_know_python/everything_is_an_object.html">import search path</a>. If this
+isn't provided, <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> will use the <tt class="docutils literal"><span class="pre">PYTHONPATH</span></tt> environment
+variable.</p>
+<p>Note that this option is unnecessary in <tt class="docutils literal"><span class="pre">manage.py</span></tt>, because it takes care of
+setting the Python path for you.</p>
+</div>
+<div class="section" id="s-settings">
+<span id="settings"></span><h3>--settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h3>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py syncdb --settings=mysite.settings</pre>
+</div>
+<p>Explicitly specifies the settings module to use. The settings module should be
+in Python package syntax, e.g. <tt class="docutils literal"><span class="pre">mysite.settings</span></tt>. If this isn't provided,
+<tt class="docutils literal"><span class="pre">django-admin.py</span></tt> will use the <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt> environment
+variable.</p>
+<p>Note that this option is unnecessary in <tt class="docutils literal"><span class="pre">manage.py</span></tt>, because it uses
+<tt class="docutils literal"><span class="pre">settings.py</span></tt> from the current project by default.</p>
+</div>
+<div class="section" id="s-traceback">
+<span id="traceback"></span><h3>--traceback<a class="headerlink" href="#traceback" title="Permalink to this headline">¶</a></h3>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py syncdb --traceback</pre>
+</div>
+<p>By default, <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> will show a simple error message whenever an
+error occurs. If you specify <tt class="docutils literal"><span class="pre">--traceback</span></tt>, <tt class="docutils literal"><span class="pre">django-admin.py</span></tt>  will
+output a full stack trace whenever an exception is raised.</p>
+</div>
+<div class="section" id="s-verbosity">
+<span id="s-django-admin-verbosity"></span><span id="verbosity"></span><span id="django-admin-verbosity"></span><h3>--verbosity<a class="headerlink" href="#verbosity" title="Permalink to this headline">¶</a></h3>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>django-admin.py syncdb --verbosity 2</pre>
+</div>
+<p>Use <tt class="docutils literal"><span class="pre">--verbosity</span></tt> to specify the amount of notification and debug information
+that <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> should print to the console.</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">0</span></tt> means no output.</li>
+<li><tt class="docutils literal"><span class="pre">1</span></tt> means normal output (default).</li>
+<li><tt class="docutils literal"><span class="pre">2</span></tt> means verbose output.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="s-extra-niceties">
+<span id="extra-niceties"></span><h2>Extra niceties<a class="headerlink" href="#extra-niceties" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-syntax-coloring">
+<span id="syntax-coloring"></span><h3>Syntax coloring<a class="headerlink" href="#syntax-coloring" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> / <tt class="docutils literal"><span class="pre">manage.py</span></tt> commands that output SQL to standard
+output will use pretty color-coded output if your terminal supports
+ANSI-colored output. It won't use the color codes if you're piping the
+command's output to another program.</p>
+</div>
+<div class="section" id="s-bash-completion">
+<span id="bash-completion"></span><h3>Bash completion<a class="headerlink" href="#bash-completion" title="Permalink to this headline">¶</a></h3>
+<p>If you use the Bash shell, consider installing the Django bash completion
+script, which lives in <tt class="docutils literal"><span class="pre">extras/django_bash_completion</span></tt> in the Django
+distribution. It enables tab-completion of <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> and
+<tt class="docutils literal"><span class="pre">manage.py</span></tt> commands, so you can, for instance...</p>
+<ul class="simple">
+<li>Type <tt class="docutils literal"><span class="pre">django-admin.py</span></tt>.</li>
+<li>Press [TAB] to see all available options.</li>
+<li>Type <tt class="docutils literal"><span class="pre">sql</span></tt>, then [TAB], to see all available options whose names start
+with <tt class="docutils literal"><span class="pre">sql</span></tt>.</li>
+</ul>
+<p>See <a class="reference external" href="../howto/custom-management-commands.html#howto-custom-management-commands"><em>Writing custom django-admin commands</em></a> for how to add customized actions.</p>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">django-admin.py and manage.py</a><ul>
+<li><a class="reference external" href="#usage">Usage</a><ul>
+<li><a class="reference external" href="#getting-runtime-help">Getting runtime help</a></li>
+<li><a class="reference external" href="#app-names">App names</a></li>
+<li><a class="reference external" href="#determining-the-version">Determining the version</a></li>
+<li><a class="reference external" href="#displaying-debug-output">Displaying debug output</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#available-subcommands">Available subcommands</a><ul>
+<li><a class="reference external" href="#cleanup">cleanup</a></li>
+<li><a class="reference external" href="#compilemessages">compilemessages</a><ul>
+<li><a class="reference external" href="#locale">&#8211;locale</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#createcachetable">createcachetable</a></li>
+<li><a class="reference external" href="#createsuperuser">createsuperuser</a></li>
+<li><a class="reference external" href="#dbshell">dbshell</a></li>
+<li><a class="reference external" href="#diffsettings">diffsettings</a></li>
+<li><a class="reference external" href="#dumpdata">dumpdata</a></li>
+<li><a class="reference external" href="#flush">flush</a></li>
+<li><a class="reference external" href="#inspectdb">inspectdb</a></li>
+<li><a class="reference external" href="#loaddata-fixture-fixture">loaddata &lt;fixture fixture ...&gt;</a><ul>
+<li><a class="reference external" href="#what-s-a-fixture">What&#8217;s a &#8220;fixture&#8221;?</a></li>
+<li><a class="reference external" href="#compressed-fixtures">Compressed fixtures</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#makemessages">makemessages</a><ul>
+<li><a class="reference external" href="#all">&#8211;all</a></li>
+<li><a class="reference external" href="#extension">&#8211;extension</a></li>
+<li><a class="reference external" href="#id1">&#8211;locale</a></li>
+<li><a class="reference external" href="#domain">&#8211;domain</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#reset-appname-appname">reset &lt;appname appname ...&gt;</a><ul>
+<li><a class="reference external" href="#noinput">&#8211;noinput</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#runfcgi-options">runfcgi [options]</a></li>
+<li><a class="reference external" href="#runserver-optional-port-number-or-ipaddr-port">runserver [optional port number, or ipaddr:port]</a><ul>
+<li><a class="reference external" href="#adminmedia">&#8211;adminmedia</a></li>
+<li><a class="reference external" href="#noreload">&#8211;noreload</a></li>
+<li><a class="reference external" href="#examples-of-using-different-ports-and-addresses">Examples of using different ports and addresses</a></li>
+<li><a class="reference external" href="#serving-static-files-with-the-development-server">Serving static files with the development server</a></li>
+<li><a class="reference external" href="#turning-off-auto-reload">Turning off auto-reload</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#shell">shell</a></li>
+<li><a class="reference external" href="#sql-appname-appname">sql &lt;appname appname ...&gt;</a></li>
+<li><a class="reference external" href="#sqlall-appname-appname">sqlall &lt;appname appname ...&gt;</a></li>
+<li><a class="reference external" href="#sqlclear-appname-appname">sqlclear &lt;appname appname ...&gt;</a></li>
+<li><a class="reference external" href="#sqlcustom-appname-appname">sqlcustom &lt;appname appname ...&gt;</a></li>
+<li><a class="reference external" href="#sqlflush">sqlflush</a></li>
+<li><a class="reference external" href="#sqlindexes-appname-appname">sqlindexes &lt;appname appname ...&gt;</a></li>
+<li><a class="reference external" href="#sqlreset-appname-appname">sqlreset &lt;appname appname ...&gt;</a></li>
+<li><a class="reference external" href="#sqlsequencereset-appname-appname">sqlsequencereset &lt;appname appname ...&gt;</a></li>
+<li><a class="reference external" href="#startapp-appname">startapp &lt;appname&gt;</a></li>
+<li><a class="reference external" href="#startproject-projectname">startproject &lt;projectname&gt;</a></li>
+<li><a class="reference external" href="#syncdb">syncdb</a><ul>
+<li><a class="reference external" href="#id2">&#8211;noinput</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#test">test</a><ul>
+<li><a class="reference external" href="#id3">&#8211;noinput</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#testserver-fixture-fixture">testserver &lt;fixture fixture ...&gt;</a><ul>
+<li><a class="reference external" href="#addrport-port-number-or-ipaddr-port">&#8211;addrport [port number or ipaddr:port]</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#validate">validate</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#default-options">Default options</a><ul>
+<li><a class="reference external" href="#pythonpath">&#8211;pythonpath</a></li>
+<li><a class="reference external" href="#settings">&#8211;settings</a></li>
+<li><a class="reference external" href="#traceback">&#8211;traceback</a></li>
+<li><a class="reference external" href="#verbosity">&#8211;verbosity</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#extra-niceties">Extra niceties</a><ul>
+<li><a class="reference external" href="#syntax-coloring">Syntax coloring</a></li>
+<li><a class="reference external" href="#bash-completion">Bash completion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="databases.html">Notes about supported databases</a></li>
+    
+    
+      <li>Next: <a href="files/index.html">File handling reference</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">API Reference</a>
+        
+        <ul><li>django-admin.py and manage.py</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/ref/django-admin.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="databases.html" title="Notes about supported databases">previous</a> 
+     |
+    <a href="index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="files/index.html" title="File handling reference">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

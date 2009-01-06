@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Upgrading from Django&#8217;s previous comment system &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Django&#8217;s comments framework" href="index.html" />
+    <link rel="next" title="The contenttypes framework" href="../contenttypes.html" />
+    <link rel="prev" title="Signals sent by the comments app" href="signals.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../../genindex.html">Index</a>  |
+        <a title="Search" href="../../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="signals.html" title="Signals sent by the comments app">previous</a> 
+     |
+    <a href="../../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="../contenttypes.html" title="The contenttypes framework">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-contrib-comments-upgrade">
+            
+  
+  <div class="section" id="s-upgrading-from-django-s-previous-comment-system">
+<span id="s-ref-contrib-comments-upgrade"></span><span id="upgrading-from-django-s-previous-comment-system"></span><span id="ref-contrib-comments-upgrade"></span><h1>Upgrading from Django&#8217;s previous comment system<a class="headerlink" href="#upgrading-from-django-s-previous-comment-system" title="Permalink to this headline">¶</a></h1>
+<p>Prior versions of Django included an outdated, undocumented comment system. Users who reverse-engineered this framework will need to upgrade to use the
+new comment system; this guide explains how.</p>
+<p>The main changes from the old system are:</p>
+<ul class="simple">
+<li>This new system is documented.</li>
+<li>It uses modern Django features like <a class="reference external" href="../../../topics/forms/index.html#topics-forms-index"><em>forms</em></a> and
+<a class="reference external" href="../../../topics/forms/modelforms.html#topics-forms-modelforms"><em>modelforms</em></a>.</li>
+<li>It has a single <tt class="docutils literal"><span class="pre">Comment</span></tt> model instead of separate <tt class="docutils literal"><span class="pre">FreeComment</span></tt> and
+<tt class="docutils literal"><span class="pre">Comment</span></tt> models.</li>
+<li>Comments have &#8220;email&#8221; and &#8220;URL&#8221; fields.</li>
+<li>No ratings, photos and karma. This should only effect World Online.</li>
+<li>The <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">comment_form</span> <span class="pre">%}</span></tt> tag no longer exists. Instead, there&#8217;s now two
+functions: <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">get_comment_form</span> <span class="pre">%}</span></tt>, which returns a form for posting a
+new comment, and <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">render_comment_form</span> <span class="pre">%}</span></tt>, which renders said form
+using the <tt class="docutils literal"><span class="pre">comments/form.html</span></tt> template.</li>
+</ul>
+<div class="section" id="s-upgrading-data">
+<span id="upgrading-data"></span><h2>Upgrading data<a class="headerlink" href="#upgrading-data" title="Permalink to this headline">¶</a></h2>
+<p>The data models for Django&#8217;s comment system have changed, as have the
+table names. Before you transfer your existing data into the new comments
+system, make sure that you have installed the new comments system as
+explained in the
+<a class="reference external" href="index.html#ref-contrib-comments-index"><em>quick start guide</em></a>.
+This will ensure that the new tables have been properly created.</p>
+<p>To transfer your data into the new comments system, you&#8217;ll need to directly
+run the following SQL:</p>
+<div class="highlight-sql"><div class="highlight"><pre><span class="k">BEGIN</span><span class="p">;</span>
+
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">django_comments</span>
+    <span class="p">(</span><span class="n">content_type_id</span><span class="p">,</span> <span class="n">object_pk</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">user_name</span><span class="p">,</span> <span class="n">user_email</span><span class="p">,</span> <span class="n">user_url</span><span class="p">,</span>
+    <span class="k">comment</span><span class="p">,</span> <span class="n">submit_date</span><span class="p">,</span> <span class="n">ip_address</span><span class="p">,</span> <span class="n">is_public</span><span class="p">,</span> <span class="n">is_removed</span><span class="p">)</span>
+<span class="k">SELECT</span>
+    <span class="n">content_type_id</span><span class="p">,</span> <span class="n">object_id</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">person_name</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="k">comment</span><span class="p">,</span>
+    <span class="n">submit_date</span><span class="p">,</span> <span class="n">ip_address</span><span class="p">,</span> <span class="n">is_public</span><span class="p">,</span> <span class="n">approved</span>
+<span class="k">FROM</span> <span class="n">comments_freecomment</span><span class="p">;</span>
+
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">django_comments</span>
+    <span class="p">(</span><span class="n">content_type_id</span><span class="p">,</span> <span class="n">object_pk</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">user_name</span><span class="p">,</span> <span class="n">user_email</span><span class="p">,</span>
+    <span class="n">user_url</span><span class="p">,</span> <span class="k">comment</span><span class="p">,</span> <span class="n">submit_date</span><span class="p">,</span> <span class="n">ip_address</span><span class="p">,</span> <span class="n">is_public</span><span class="p">,</span> <span class="n">is_removed</span><span class="p">)</span>
+<span class="k">SELECT</span>
+    <span class="n">content_type_id</span><span class="p">,</span> <span class="n">object_id</span><span class="p">,</span> <span class="n">site_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="k">comment</span><span class="p">,</span>
+    <span class="n">submit_date</span><span class="p">,</span> <span class="n">ip_address</span><span class="p">,</span> <span class="n">is_public</span><span class="p">,</span> <span class="n">is_removed</span>
+<span class="k">FROM</span> <span class="n">comments_comment</span><span class="p">;</span>
+
+<span class="k">UPDATE</span> <span class="n">django_comments</span> <span class="k">SET</span> <span class="n">user_name</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="k">SELECT</span> <span class="n">username</span> <span class="k">FROM</span> <span class="n">auth_user</span>
+    <span class="k">WHERE</span> <span class="n">django_comments</span><span class="p">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">auth_user</span><span class="p">.</span><span class="n">id</span>
+<span class="p">)</span> <span class="k">WHERE</span> <span class="n">django_comments</span><span class="p">.</span><span class="n">user_id</span> <span class="k">is</span> <span class="k">not</span> <span class="k">NULL</span><span class="p">;</span>
+<span class="k">UPDATE</span> <span class="n">django_comments</span> <span class="k">SET</span> <span class="n">user_email</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="k">SELECT</span> <span class="n">email</span> <span class="k">FROM</span> <span class="n">auth_user</span>
+    <span class="k">WHERE</span> <span class="n">django_comments</span><span class="p">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">auth_user</span><span class="p">.</span><span class="n">id</span>
+<span class="p">)</span> <span class="k">WHERE</span> <span class="n">django_comments</span><span class="p">.</span><span class="n">user_id</span> <span class="k">is</span> <span class="k">not</span> <span class="k">NULL</span><span class="p">;</span>
+
+<span class="k">COMMIT</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Upgrading from Django&#8217;s previous comment system</a><ul>
+<li><a class="reference external" href="#upgrading-data">Upgrading data</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="signals.html">Signals sent by the comments app</a></li>
+    
+    
+      <li>Next: <a href="../contenttypes.html">The contenttypes framework</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../../index.html">API Reference</a>
+        
+          <ul><li><a href="../index.html">The &#8220;django.contrib&#8221; add-ons</a>
+        
+          <ul><li><a href="index.html">Django&#8217;s comments framework</a>
+        
+        <ul><li>Upgrading from Django&#8217;s previous comment system</li></ul>
+        </li></ul></li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../../_sources/ref/contrib/comments/upgrade.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="signals.html" title="Signals sent by the comments app">previous</a> 
+     |
+    <a href="../../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="../contenttypes.html" title="The contenttypes framework">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

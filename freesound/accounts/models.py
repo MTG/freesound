@@ -9,10 +9,13 @@ class Profile(SocialModel):
     
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
-    signature = models.CharField(max_length=140, null=True, blank=True)
+    signature = models.TextField(max_length=256, null=True, blank=True)
 
     wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
+    
+    #num_sounds = models.PositiveIntegerField(editable=False)
+    #num_posts = models.PositiveIntegerField(editable=False)
     
     def __unicode__(self):
         return self.user.username
@@ -22,4 +25,4 @@ class Profile(SocialModel):
         return ('account', (smart_unicode(self.user.username),))
     
     class Meta(SocialModel.Meta):
-        ordering = ('-user__created', )
+        ordering = ('-user__date_joined', )

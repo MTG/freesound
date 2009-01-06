@@ -1,0 +1,21 @@
+{% extends "forum/section.html" %}
+
+{% block title %}Forums{% endblock %}
+
+{% block section_content %}
+<ul id="forums">
+{% for forum in forums %}
+	<li>
+		<div class="latest_post">
+			<a href="{{forum.latest_post.get_absolute_url}}">Latest post</a> by <a href="{% url account forum.last_post.author.username %}">{{forum.last_post.author.username}}</a><br />
+			on {{forum.last_post.created}}
+		</div>
+		<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">
+
+		<a href="{% url forum forum.name_slug %}" class="forum_name">{{forum.name}}</a><br />
+		{{forum.num_threads}} topic{{forum.num_threads|pluralize}}
+	</li>
+				
+{% endfor %}
+</ul>
+{% endblock %}

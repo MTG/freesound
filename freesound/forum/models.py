@@ -7,22 +7,13 @@ from django.utils.encoding import smart_unicode
 from general.models import OrderedModel
 from django.conf import settings
 
-class Category(OrderedModel):
-    name = models.CharField(max_length=50)
-
-    def __unicode__(self):
-        return self.name
-   
-
 class Forum(OrderedModel):
-    category = models.ForeignKey(Category)
-    
+
     name = models.CharField(max_length=50)
     name_slug = models.CharField(max_length=50, unique=True, db_index=True)
     description = models.CharField(max_length=250)
 
     num_threads = models.PositiveIntegerField(default=0)
-    num_views = models.PositiveIntegerField(default=0)
     last_post = models.OneToOneField('Post', null=True, blank=True, default=None, related_name="latest_in_forum")
 
     def __unicode__(self):
@@ -46,11 +37,14 @@ class Thread(models.Model):
     status = models.PositiveSmallIntegerField(choices=THREAD_STATUS_CHOICES, default=1)
     
     num_posts = models.PositiveIntegerField(default=1)
-    num_views = models.PositiveIntegerField(default=0)
     last_post = models.OneToOneField('Post', null=True, blank=True, default=None, related_name="latest_in_thread")
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
+    @models.permalink
+    def get_absolute_url(self):
+        return ("thread", (smart_unicode(self.forum.name_slug), self.id))
+
     class Meta:
         ordering = ('-status', '-created')
 
@@ -63,17 +57,10 @@ class Thread(models.Model):
         f.num_threads = Thread.objects.filter(forum=self.forum).count()
         f.save()
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("thread", (smart_unicode(self.forum.name_slug), smart_unicode(self.id)))
-
-
 class Post(models.Model):
     thread = models.ForeignKey(Thread)
     author = models.ForeignKey(User)
     body = models.TextField()
-    
-    num_views = models.PositiveIntegerField(default=0)
     
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     

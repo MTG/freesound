@@ -12,7 +12,7 @@ class SoundAdmin(admin.ModelAdmin):
     fieldsets = ((None, {'fields': ('user', )}),
                  ('Filenames', {'fields': ('original_path', 'base_filename_slug')}),
                  ('User defined fields', {'fields': ('description', 'license', 'original_filename', 'sources', 'pack')}),
-                 ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate', 'filesize', 'channels')}),
+                 ('File properties', {'fields': ('md5', 'type', 'duration', 'bitrate', 'bitdepth', 'samplerate', 'filesize', 'channels', 'date_recorded')}),
                  ('Moderation', {'fields': ('moderation_state', 'moderation_date', 'has_bad_description')}),
                  ('Processing', {'fields': ('processing_state', 'processing_date', 'processing_log')}),
                  )

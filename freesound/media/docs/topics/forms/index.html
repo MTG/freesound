@@ -1,0 +1,496 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Working with forms &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Using Django" href="../index.html" />
+    <link rel="next" title="Creating forms from models" href="modelforms.html" />
+    <link rel="prev" title="How to use sessions" href="../http/sessions.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="../http/sessions.html" title="How to use sessions">previous</a> 
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="modelforms.html" title="Creating forms from models">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-forms-index">
+            
+  
+  <div class="section" id="s-working-with-forms">
+<span id="s-topics-forms-index"></span><span id="working-with-forms"></span><span id="topics-forms-index"></span><h1>Working with forms<a class="headerlink" href="#working-with-forms" title="Permalink to this headline">¶</a></h1>
+<div class="admonition-about-this-document admonition ">
+<p class="first admonition-title">About this document</p>
+<p class="last">This document provides an introduction to Django&#8217;s form handling features.
+For a more detailed look at the forms API, see <a class="reference external" href="../../ref/forms/api.html#ref-forms-api"><em>The Forms API</em></a>. For
+documentation of the available field types, see <a class="reference external" href="../../ref/forms/fields.html#ref-forms-fields"><em>Form fields</em></a>.</p>
+</div>
+<p><tt class="docutils literal"><span class="pre">django.forms</span></tt> is Django&#8217;s form-handling library.</p>
+<p>While it is possible to process form submissions just using Django&#8217;s
+<a title="django.http.HttpRequest" class="reference external" href="../../ref/request-response.html#django.http.HttpRequest"><tt class="xref docutils literal"><span class="pre">HttpRequest</span></tt></a> class, using the form library takes care of a
+number of common form-related tasks. Using it, you can:</p>
+<ol class="arabic simple">
+<li>Display an HTML form with automatically generated form widgets.</li>
+<li>Checking submitted data against a set of validation rules.</li>
+<li>Redisplaying a form in the case of validation errors.</li>
+<li>Converting submitted form data to the relevant Python data types.</li>
+</ol>
+<div class="section" id="s-overview">
+<span id="overview"></span><h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>The library deals with these concepts:</p>
+<dl class="glossary docutils">
+<dt id="term-widget">Widget</dt>
+<dd>A class that corresponds to an HTML form widget, e.g.
+<tt class="docutils literal"><span class="pre">&lt;input</span> <span class="pre">type=&quot;text&quot;&gt;</span></tt> or <tt class="docutils literal"><span class="pre">&lt;textarea&gt;</span></tt>. This handles rendering of the
+widget as HTML.</dd>
+<dt id="term-field">Field</dt>
+<dd>A class that is responsible for doing validation, e.g.
+an <tt class="docutils literal"><span class="pre">EmailField</span></tt> that makes sure its data is a valid e-mail address.</dd>
+<dt id="term-form">Form</dt>
+<dd>A collection of fields that knows how to validate itself and
+display itself as HTML.</dd>
+<dt id="term-form-media">Form Media</dt>
+<dd>The CSS and JavaScript resources that are required to render a form.</dd>
+</dl>
+<p>The library is decoupled from the other Django components, such as the database
+layer, views and templates. It relies only on Django settings, a couple of
+<tt class="docutils literal"><span class="pre">django.utils</span></tt> helper functions and Django&#8217;s internationalization hooks (but
+you&#8217;re not required to be using internationalization features to use this
+library).</p>
+</div>
+<div class="section" id="s-form-objects">
+<span id="form-objects"></span><h2>Form objects<a class="headerlink" href="#form-objects" title="Permalink to this headline">¶</a></h2>
+<p>A Form object encapsulates a sequence of form fields and a collection of
+validation rules that must be fulfilled in order for the form to be accepted.
+Form classes are created as subclasses of <tt class="docutils literal"><span class="pre">django.forms.Form</span></tt> and
+make use of a declarative style that you&#8217;ll be familiar with if you&#8217;ve used
+Django&#8217;s database models.</p>
+<p>For example, consider a form used to implement &#8220;contact me&#8221; functionality on a
+personal Web site:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">ContactForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">100</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+    <span class="n">sender</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">()</span>
+    <span class="n">cc_myself</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A form is composed of <tt class="docutils literal"><span class="pre">Field</span></tt> objects. In this case, our form has four
+fields: <tt class="docutils literal"><span class="pre">subject</span></tt>, <tt class="docutils literal"><span class="pre">message</span></tt>, <tt class="docutils literal"><span class="pre">sender</span></tt> and <tt class="docutils literal"><span class="pre">cc_myself</span></tt>. <tt class="docutils literal"><span class="pre">CharField</span></tt>,
+<tt class="docutils literal"><span class="pre">EmailField</span></tt> and <tt class="docutils literal"><span class="pre">BooleanField</span></tt> are just three of the available field types;
+a full list can be found in <a class="reference external" href="../../ref/forms/fields.html#ref-forms-fields"><em>Form fields</em></a>.</p>
+<p>If your form is going to be used to directly add or edit a Django model, you can
+use a <a class="reference external" href="modelforms.html#topics-forms-modelforms"><em>ModelForm</em></a> to avoid duplicating your model
+description.</p>
+<div class="section" id="s-using-a-form-in-a-view">
+<span id="using-a-form-in-a-view"></span><h3>Using a form in a view<a class="headerlink" href="#using-a-form-in-a-view" title="Permalink to this headline">¶</a></h3>
+<p>The standard pattern for processing a form in a view looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">contact</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span> <span class="c"># If the form has been submitted...</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span> <span class="c"># A form bound to the POST data</span>
+        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span> <span class="c"># All validation rules pass</span>
+            <span class="c"># Process the data in form.cleaned_data</span>
+            <span class="c"># ...</span>
+            <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="s">&#39;/thanks/&#39;</span><span class="p">)</span> <span class="c"># Redirect after POST</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">()</span> <span class="c"># An unbound form</span>
+
+    <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;contact.html&#39;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span>
+    <span class="p">})</span>
+</pre></div>
+</div>
+<p>There are three code paths here:</p>
+<ol class="arabic simple">
+<li>If the form has not been submitted, an unbound instance of ContactForm is
+created and passed to the template.</li>
+<li>If the form has been submitted, a bound instance of the form is created
+using <tt class="docutils literal"><span class="pre">request.POST</span></tt>. If the submitted data is valid, it is processed
+and the user is re-directed to a &quot;thanks&quot; page.</li>
+<li>If the form has been submitted but is invalid, the bound form instance is
+passed on to the template.</li>
+</ol>
+<div class="versionchanged">
+<span class="title">Changed in Django 1.0:</span> The <tt class="docutils literal"><span class="pre">cleaned_data</span></tt> attribute was called <tt class="docutils literal"><span class="pre">clean_data</span></tt> in earlier releases.</div>
+<p>The distinction between <strong>bound</strong> and <strong>unbound</strong> forms is important. An unbound
+form does not have any data associated with it; when rendered to the user, it
+will be empty or will contain default values. A bound form does have submitted
+data, and hence can be used to tell if that data is valid. If an invalid bound
+form is rendered it can include inline error messages telling the user where
+they went wrong.</p>
+<p>See <a class="reference external" href="../../ref/forms/api.html#ref-forms-api-bound-unbound"><em>Bound and unbound forms</em></a> for further information on the
+differences between bound and unbound forms.</p>
+</div>
+<div class="section" id="s-processing-the-data-from-a-form">
+<span id="processing-the-data-from-a-form"></span><h3>Processing the data from a form<a class="headerlink" href="#processing-the-data-from-a-form" title="Permalink to this headline">¶</a></h3>
+<p>Once <tt class="docutils literal"><span class="pre">is_valid()</span></tt> returns <tt class="xref docutils literal"><span class="pre">True</span></tt>, you can process the form submission safe
+in the knowledge that it conforms to the validation rules defined by your form.
+While you could access <tt class="docutils literal"><span class="pre">request.POST</span></tt> directly at this point, it is better to
+access <tt class="docutils literal"><span class="pre">form.cleaned_data</span></tt>. This data has not only been validated but will
+also be converted in to the relevant Python types for you. In the above example,
+<tt class="docutils literal"><span class="pre">cc_myself</span></tt> will be a boolean value. Likewise, fields such as <tt class="docutils literal"><span class="pre">IntegerField</span></tt>
+and <tt class="docutils literal"><span class="pre">FloatField</span></tt> convert values to a Python int and float respectively.</p>
+<p>Extending the above example, here's how the form data could be processed:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s">&#39;subject&#39;</span><span class="p">]</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span>
+    <span class="n">sender</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s">&#39;sender&#39;</span><span class="p">]</span>
+    <span class="n">cc_myself</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s">&#39;cc_myself&#39;</span><span class="p">]</span>
+
+    <span class="n">recipients</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;info@example.com&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">cc_myself</span><span class="p">:</span>
+        <span class="n">recipients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="p">)</span>
+
+    <span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span>
+    <span class="n">send_mail</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">recipients</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="s">&#39;/thanks/&#39;</span><span class="p">)</span> <span class="c"># Redirect after POST</span>
+</pre></div>
+</div>
+<p>For more on sending e-mail from Django, see <a class="reference external" href="../email.html#topics-email"><em>Sending e-mail</em></a>.</p>
+</div>
+<div class="section" id="s-displaying-a-form-using-a-template">
+<span id="displaying-a-form-using-a-template"></span><h3>Displaying a form using a template<a class="headerlink" href="#displaying-a-form-using-a-template" title="Permalink to this headline">¶</a></h3>
+<p>Forms are designed to work with the Django template language. In the above
+example, we passed our <tt class="docutils literal"><span class="pre">ContactForm</span></tt> instance to the template using the
+context variable <tt class="docutils literal"><span class="pre">form</span></tt>. Here's a simple example template:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&quot;/contact/&quot;</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span><span class="nt">&gt;</span>
+<span class="cp">{{</span> <span class="nv">form.as_p</span> <span class="cp">}}</span>
+<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Submit&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>The form only outputs its own fields; it is up to you to provide the surrounding
+<tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> tags and the submit button.</p>
+<p><tt class="docutils literal"><span class="pre">form.as_p</span></tt> will output the form with each form field and accompanying label
+wrapped in a paragraph. Here's the output for our example template:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&quot;/contact/&quot;</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;p&gt;&lt;label</span> <span class="na">for=</span><span class="s">&quot;id_subject&quot;</span><span class="nt">&gt;</span>Subject:<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">&quot;id_subject&quot;</span> <span class="na">type=</span><span class="s">&quot;text&quot;</span> <span class="na">name=</span><span class="s">&quot;subject&quot;</span> <span class="na">maxlength=</span><span class="s">&quot;100&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;p&gt;&lt;label</span> <span class="na">for=</span><span class="s">&quot;id_message&quot;</span><span class="nt">&gt;</span>Message:<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;text&quot;</span> <span class="na">name=</span><span class="s">&quot;message&quot;</span> <span class="na">id=</span><span class="s">&quot;id_message&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;p&gt;&lt;label</span> <span class="na">for=</span><span class="s">&quot;id_sender&quot;</span><span class="nt">&gt;</span>Sender:<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;text&quot;</span> <span class="na">name=</span><span class="s">&quot;sender&quot;</span> <span class="na">id=</span><span class="s">&quot;id_sender&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;p&gt;&lt;label</span> <span class="na">for=</span><span class="s">&quot;id_cc_myself&quot;</span><span class="nt">&gt;</span>Cc myself:<span class="nt">&lt;/label&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;checkbox&quot;</span> <span class="na">name=</span><span class="s">&quot;cc_myself&quot;</span> <span class="na">id=</span><span class="s">&quot;id_cc_myself&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Submit&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>Note that each form field has an ID attribute set to <tt class="docutils literal"><span class="pre">id_&lt;field-name&gt;</span></tt>, which
+is referenced by the accompanying label tag. This is important for ensuring
+forms are accessible to assistive technology such as screen reader software. You
+can also <a class="reference external" href="../../ref/forms/api.html#ref-forms-api-configuring-label"><em>customize the way in which labels and ids are generated</em></a>.</p>
+<p>You can also use <tt class="docutils literal"><span class="pre">form.as_table</span></tt> to output table rows (you'll need to provide
+your own <tt class="docutils literal"><span class="pre">&lt;table&gt;</span></tt> tags) and <tt class="docutils literal"><span class="pre">form.as_ul</span></tt> to output list items.</p>
+</div>
+<div class="section" id="s-customizing-the-form-template">
+<span id="customizing-the-form-template"></span><h3>Customizing the form template<a class="headerlink" href="#customizing-the-form-template" title="Permalink to this headline">¶</a></h3>
+<p>If the default generated HTML is not to your taste, you can completely customize
+the way a form is presented using the Django template language. Extending the
+above example:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&quot;/contact/&quot;</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;fieldWrapper&quot;</span><span class="nt">&gt;</span>
+        <span class="cp">{{</span> <span class="nv">form.subject.errors</span> <span class="cp">}}</span>
+        <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">&quot;id_subject&quot;</span><span class="nt">&gt;</span>E-mail subject:<span class="nt">&lt;/label&gt;</span>
+        <span class="cp">{{</span> <span class="nv">form.subject</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;fieldWrapper&quot;</span><span class="nt">&gt;</span>
+        <span class="cp">{{</span> <span class="nv">form.message.errors</span> <span class="cp">}}</span>
+        <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">&quot;id_message&quot;</span><span class="nt">&gt;</span>Your message:<span class="nt">&lt;/label&gt;</span>
+        <span class="cp">{{</span> <span class="nv">form.message</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;fieldWrapper&quot;</span><span class="nt">&gt;</span>
+        <span class="cp">{{</span> <span class="nv">form.sender.errors</span> <span class="cp">}}</span>
+        <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">&quot;id_sender&quot;</span><span class="nt">&gt;</span>Your email address:<span class="nt">&lt;/label&gt;</span>
+        <span class="cp">{{</span> <span class="nv">form.sender</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;fieldWrapper&quot;</span><span class="nt">&gt;</span>
+        <span class="cp">{{</span> <span class="nv">form.cc_myself.errors</span> <span class="cp">}}</span>
+        <span class="nt">&lt;label</span> <span class="na">for=</span><span class="s">&quot;id_cc_myself&quot;</span><span class="nt">&gt;</span>CC yourself?<span class="nt">&lt;/label&gt;</span>
+        <span class="cp">{{</span> <span class="nv">form.cc_myself</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;p&gt;&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Send message&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>Each named form-field can be output to the template using
+<tt class="docutils literal"><span class="pre">{{</span> <span class="pre">form.name_of_field</span> <span class="pre">}}</span></tt>, which will produce the HTML needed to display the
+form widget. Using <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">form.name_of_field.errors</span> <span class="pre">}}</span></tt> displays a list of form
+errors, rendered as an unordered list. This might look like:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;errorlist&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;li&gt;</span>Sender is required.<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre></div>
+</div>
+<p>The list has a CSS class of <tt class="docutils literal"><span class="pre">errorlist</span></tt> to allow you to style its appearance.
+If you wish to further customize the display of errors you can do so by looping
+over them:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="cp">{%</span> <span class="k">if</span> <span class="nv">form.subject.errors</span> <span class="cp">%}</span>
+    <span class="nt">&lt;ol&gt;</span>
+    <span class="cp">{%</span> <span class="k">for</span> <span class="nv">error</span> <span class="k">in</span> <span class="nv">form.subject.errors</span> <span class="cp">%}</span>
+        <span class="nt">&lt;li&gt;&lt;strong&gt;</span><span class="cp">{{</span> <span class="nv">error</span><span class="o">|</span><span class="nf">escape</span> <span class="cp">}}</span><span class="nt">&lt;/strong&gt;&lt;/li&gt;</span>
+    <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+    <span class="nt">&lt;/ol&gt;</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-looping-over-the-form-s-fields">
+<span id="looping-over-the-form-s-fields"></span><h3>Looping over the form's fields<a class="headerlink" href="#looping-over-the-form-s-fields" title="Permalink to this headline">¶</a></h3>
+<p>If you're using the same HTML for each of your form fields, you can reduce
+duplicate code by looping through each field in turn using a <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">for</span> <span class="pre">%}</span></tt>
+loop:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&quot;/contact/&quot;</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span><span class="nt">&gt;</span>
+    <span class="cp">{%</span> <span class="k">for</span> <span class="nv">field</span> <span class="k">in</span> <span class="nv">form</span> <span class="cp">%}</span>
+        <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;fieldWrapper&quot;</span><span class="nt">&gt;</span>
+            <span class="cp">{{</span> <span class="nv">field.errors</span> <span class="cp">}}</span>
+            <span class="cp">{{</span> <span class="nv">field.label_tag</span> <span class="cp">}}</span>: <span class="cp">{{</span> <span class="nv">field</span> <span class="cp">}}</span>
+        <span class="nt">&lt;/div&gt;</span>
+    <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+    <span class="nt">&lt;p&gt;&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Send message&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>Within this loop, <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">field</span> <span class="pre">}}</span></tt> is an instance of <tt class="xref docutils literal"><span class="pre">BoundField</span></tt>.
+<tt class="docutils literal"><span class="pre">BoundField</span></tt> also has the following attributes, which can be useful in your
+templates:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">field.label</span> <span class="pre">}}</span></tt></dt>
+<dd>The label of the field, e.g. <tt class="docutils literal"><span class="pre">E-mail</span> <span class="pre">address</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">field.label_tag</span> <span class="pre">}}</span></tt></dt>
+<dd>The field's label wrapped in the appropriate HTML <tt class="docutils literal"><span class="pre">&lt;label&gt;</span></tt> tag,
+e.g. <tt class="docutils literal"><span class="pre">&lt;label</span> <span class="pre">for=&quot;id_email&quot;&gt;E-mail</span> <span class="pre">address&lt;/label&gt;</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">field.html_name</span> <span class="pre">}}</span></tt></dt>
+<dd>The name of the field that will be used in the input element's name
+field. This takes the form prefix into account, if it has been set.</dd>
+<dt><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">field.help_text</span> <span class="pre">}}</span></tt></dt>
+<dd>Any help text that has been associated with the field.</dd>
+<dt><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">field.errors</span> <span class="pre">}}</span></tt></dt>
+<dd>Outputs a <tt class="docutils literal"><span class="pre">&lt;ul</span> <span class="pre">class=&quot;errorlist&quot;&gt;</span></tt> containing any validation errors
+corresponding to this field. You can customize the presentation of
+the errors with a <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">for</span> <span class="pre">error</span> <span class="pre">in</span> <span class="pre">field.errors</span> <span class="pre">%}</span></tt> loop. In this
+case, each object in the loop is a simple string containing the error
+message.</dd>
+<dt><tt class="docutils literal"><span class="pre">field.is_hidden</span></tt></dt>
+<dd><p class="first">This attribute is <tt class="xref docutils literal"><span class="pre">True</span></tt> is the form field is a hidden field and
+<tt class="xref docutils literal"><span class="pre">False</span></tt> otherwise. It's not particularly useful as a template
+variable, but could be useful in conditional tests such as:</p>
+<div class="last highlight-html+django"><div class="highlight"><pre><span class="cp">{%</span> <span class="k">if</span> <span class="nv">field.is_hidden</span> <span class="cp">%}</span>
+   <span class="c">{# Do something special #}</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="section" id="s-looping-over-hidden-and-visible-fields">
+<span id="looping-over-hidden-and-visible-fields"></span><h4>Looping over hidden and visible fields<a class="headerlink" href="#looping-over-hidden-and-visible-fields" title="Permalink to this headline">¶</a></h4>
+<p>If you're manually laying out a form in a template, as opposed to relying on
+Django's default form layout, you might want to treat <tt class="docutils literal"><span class="pre">&lt;input</span> <span class="pre">type=&quot;hidden&quot;&gt;</span></tt>
+fields differently than non-hidden fields. For example, because hidden fields
+don't display anything, putting error messages &quot;next to&quot; the field could cause
+confusion for your users -- so errors for those fields should be handled
+differently.</p>
+<p>Django provides two methods on a form that allow you to loop over the hidden
+and visible fields independently: <tt class="docutils literal"><span class="pre">hidden_fields()</span></tt> and
+<tt class="docutils literal"><span class="pre">visible_fields()</span></tt>. Here's a modification of an earlier example that uses
+these two methods:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&quot;/contact/&quot;</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span><span class="nt">&gt;</span>
+    <span class="cp">{%</span> <span class="k">for</span> <span class="nv">field</span> <span class="k">in</span> <span class="nv">form.visible_fields</span> <span class="cp">%}</span>
+        <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;fieldWrapper&quot;</span><span class="nt">&gt;</span>
+
+            <span class="c">{# Include the hidden fields in the form #}</span>
+            <span class="cp">{%</span> <span class="k">if</span> <span class="nb">forloop</span><span class="nv">.first</span> <span class="cp">%}</span>
+                <span class="cp">{%</span> <span class="k">for</span> <span class="nv">hidden</span> <span class="k">in</span> <span class="nv">form.hidden_fields</span> <span class="cp">%}</span>
+                <span class="cp">{{</span> <span class="nv">field</span> <span class="cp">}}</span>
+                <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+            <span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+
+            <span class="cp">{{</span> <span class="nv">field.errors</span> <span class="cp">}}</span>
+            <span class="cp">{{</span> <span class="nv">field.label_tag</span> <span class="cp">}}</span>: <span class="cp">{{</span> <span class="nv">field</span> <span class="cp">}}</span>
+        <span class="nt">&lt;/div&gt;</span>
+    <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+    <span class="nt">&lt;p&gt;&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Send message&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>This example does not handle any errors in the hidden fields. Usually, an
+error in a hidden field is a sign of form tampering, since normal form
+interaction won't alter them. However, you could easily insert some error
+displays for those form errors, as well.</p>
+<div class="versionadded">
+<span class="title">New in Django 1.1:</span> The <tt class="docutils literal"><span class="pre">hidden_fields</span></tt> and <tt class="docutils literal"><span class="pre">visible_fields</span></tt> methods are new in Django
+1.1.</div>
+</div>
+</div>
+<div class="section" id="s-reusable-form-templates">
+<span id="reusable-form-templates"></span><h3>Reusable form templates<a class="headerlink" href="#reusable-form-templates" title="Permalink to this headline">¶</a></h3>
+<p>If your site uses the same rendering logic for forms in multiple places, you
+can reduce duplication by saving the form's loop in a standalone template and
+using the <a class="reference external" href="../../ref/templates/builtins.html#ttag-include"><tt class="xref docutils literal"><span class="pre">include</span></tt></a> tag to reuse it in other templates:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&quot;/contact/&quot;</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span><span class="nt">&gt;</span>
+    <span class="cp">{%</span> <span class="k">include</span> <span class="s2">&quot;form_snippet.html&quot;</span> <span class="cp">%}</span>
+    <span class="nt">&lt;p&gt;&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Send message&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+
+# In form_snippet.html:
+
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">field</span> <span class="k">in</span> <span class="nv">form</span> <span class="cp">%}</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;fieldWrapper&quot;</span><span class="nt">&gt;</span>
+        <span class="cp">{{</span> <span class="nv">field.errors</span> <span class="cp">}}</span>
+        <span class="cp">{{</span> <span class="nv">field.label_tag</span> <span class="cp">}}</span>: <span class="cp">{{</span> <span class="nv">field</span> <span class="cp">}}</span>
+    <span class="nt">&lt;/div&gt;</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+<p>If the form object passed to a template has a different name within the
+context, you can alias it using the <a class="reference external" href="../../ref/templates/builtins.html#ttag-with"><tt class="xref docutils literal"><span class="pre">with</span></tt></a> tag:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">&quot;/comments/add/&quot;</span> <span class="na">method=</span><span class="s">&quot;POST&quot;</span><span class="nt">&gt;</span>
+    <span class="cp">{%</span> <span class="k">with</span> <span class="nv">comment_form</span> <span class="k">as</span> <span class="nv">form</span> <span class="cp">%}</span>
+        <span class="cp">{%</span> <span class="k">include</span> <span class="s2">&quot;form_snippet.html&quot;</span> <span class="cp">%}</span>
+    <span class="cp">{%</span> <span class="k">endwith</span> <span class="cp">%}</span>
+    <span class="nt">&lt;p&gt;&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Submit comment&quot;</span> <span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+</div>
+<p>If you find yourself doing this often, you might consider creating a custom
+<a class="reference external" href="../../howto/custom-template-tags.html#howto-custom-template-tags-inclusion-tags"><em>inclusion tag</em></a>.</p>
+</div>
+</div>
+<div class="section" id="s-further-topics">
+<span id="further-topics"></span><h2>Further topics<a class="headerlink" href="#further-topics" title="Permalink to this headline">¶</a></h2>
+<p>This covers the basics, but forms can do a whole lot more:</p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="modelforms.html">Creating forms from models</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="formsets.html">Formsets</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="media.html">Form Media</a></li>
+</ul>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The <a class="reference external" href="../../ref/forms/index.html#ref-forms-index"><em>form API reference</em></a>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Working with forms</a><ul>
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#form-objects">Form objects</a><ul>
+<li><a class="reference external" href="#using-a-form-in-a-view">Using a form in a view</a></li>
+<li><a class="reference external" href="#processing-the-data-from-a-form">Processing the data from a form</a></li>
+<li><a class="reference external" href="#displaying-a-form-using-a-template">Displaying a form using a template</a></li>
+<li><a class="reference external" href="#customizing-the-form-template">Customizing the form template</a></li>
+<li><a class="reference external" href="#looping-over-the-form-s-fields">Looping over the form&#8217;s fields</a><ul>
+<li><a class="reference external" href="#looping-over-hidden-and-visible-fields">Looping over hidden and visible fields</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#reusable-form-templates">Reusable form templates</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#further-topics">Further topics</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="../http/sessions.html">How to use sessions</a></li>
+    
+    
+      <li>Next: <a href="modelforms.html">Creating forms from models</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">Using Django</a>
+        
+        <ul><li>Working with forms</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/topics/forms/index.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="../http/sessions.html" title="How to use sessions">previous</a> 
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="modelforms.html" title="Creating forms from models">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

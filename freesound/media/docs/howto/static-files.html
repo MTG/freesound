@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>How to serve static files &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="&#8220;How-to&#8221; guides" href="index.html" />
+    <link rel="next" title="Django FAQ" href="../faq/index.html" />
+    <link rel="prev" title="Outputting PDFs with Django" href="outputting-pdf.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="outputting-pdf.html" title="Outputting PDFs with Django">previous</a> 
+     |
+    <a href="index.html" title="&amp;#8220;How-to&amp;#8221; guides" accesskey="U">up</a>
+   |
+    <a href="../faq/index.html" title="Django FAQ">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="howto-static-files">
+            
+  
+  <div class="section" id="s-module-django.views.static">
+<span id="s-howto-static-files"></span><span id="module-django.views.static"></span><span id="howto-static-files"></span><h1>How to serve static files<a class="headerlink" href="#module-django.views.static" title="Permalink to this headline">¶</a></h1>
+<p>Django itself doesn&#8217;t serve static (media) files, such as images, style sheets,
+or video. It leaves that job to whichever Web server you choose.</p>
+<p>The reasoning here is that standard Web servers, such as <a class="reference external" href="http://httpd.apache.org/">Apache</a> and <a class="reference external" href="http://www.lighttpd.net/">lighttpd</a>,
+are much more fine-tuned at serving static files than a Web application
+framework.</p>
+<p>With that said, Django does support static files <strong>during development</strong>. You can
+use the <tt class="xref docutils literal"><span class="pre">django.views.static.serve()</span></tt> view to serve media files.</p>
+<div class="section" id="s-the-big-fat-disclaimer">
+<span id="the-big-fat-disclaimer"></span><h2>The big, fat disclaimer<a class="headerlink" href="#the-big-fat-disclaimer" title="Permalink to this headline">¶</a></h2>
+<p>Using this method is <strong>inefficient</strong> and <strong>insecure</strong>. Do not use this in a
+production setting. Use this only for development.</p>
+<p>For information on serving static files in an Apache production environment,
+see the <a class="reference external" href="deployment/modpython.html#serving-media-files"><em>Django mod_python documentation</em></a>.</p>
+</div>
+<div class="section" id="s-how-to-do-it">
+<span id="how-to-do-it"></span><h2>How to do it<a class="headerlink" href="#how-to-do-it" title="Permalink to this headline">¶</a></h2>
+<p>Here&#8217;s the formal definition of the <tt class="xref docutils literal"><span class="pre">serve()</span></tt> view:</p>
+<dl class="function">
+<dt>
+<tt class="descname">def serve(request, path, document_root, show_indexes=False):</tt></dt>
+<dd></dd></dl>
+
+<p>To use it, just put this in your <a class="reference external" href="../topics/http/urls.html#topics-http-urls"><em>URLconf</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^site_media/(?P&lt;path&gt;.*)$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.static.serve&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s">&#39;document_root&#39;</span><span class="p">:</span> <span class="s">&#39;/path/to/media&#39;</span><span class="p">}),</span>
+</pre></div>
+</div>
+<p>...where <tt class="docutils literal"><span class="pre">site_media</span></tt> is the URL where your media will be rooted, and
+<tt class="docutils literal"><span class="pre">/path/to/media</span></tt> is the filesystem root for your media. This will call the
+<tt class="xref docutils literal"><span class="pre">serve()</span></tt> view, passing in the path from the URLconf
+and the (required) <tt class="docutils literal"><span class="pre">document_root</span></tt> parameter.</p>
+<p>Given the above URLconf:</p>
+<ul class="simple">
+<li>The file <tt class="docutils literal"><span class="pre">/path/to/media/foo.jpg</span></tt> will be made available at the URL
+<tt class="docutils literal"><span class="pre">/site_media/foo.jpg</span></tt>.</li>
+<li>The file <tt class="docutils literal"><span class="pre">/path/to/media/css/mystyles.css</span></tt> will be made available
+at the URL <tt class="docutils literal"><span class="pre">/site_media/css/mystyles.css</span></tt>.</li>
+<li>The file <tt class="docutils literal"><span class="pre">/path/bar.jpg</span></tt> will not be accessible, because it doesn't
+fall under the document root.</li>
+</ul>
+<p>Of course, it's not compulsory to use a fixed string for the
+<tt class="docutils literal"><span class="pre">'document_root'</span></tt> value. You might wish to make that an entry in your
+settings file and use the setting value there. That will allow you and
+other developers working on the code to easily change the value as
+required. For example, if we have a line in <tt class="docutils literal"><span class="pre">settings.py</span></tt> that says:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">STATIC_DOC_ROOT</span> <span class="o">=</span> <span class="s">&#39;/path/to/media&#39;</span>
+</pre></div>
+</div>
+<p>...we could write the above <a class="reference external" href="../topics/http/urls.html#topics-http-urls"><em>URLconf</em></a> entry as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="o">...</span>
+<span class="p">(</span><span class="s">r&#39;^site_media/(?P&lt;path&gt;.*)$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.static.serve&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s">&#39;document_root&#39;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">STATIC_DOC_ROOT</span><span class="p">}),</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-directory-listings">
+<span id="directory-listings"></span><h2>Directory listings<a class="headerlink" href="#directory-listings" title="Permalink to this headline">¶</a></h2>
+<p>Optionally, you can pass the <tt class="docutils literal"><span class="pre">show_indexes</span></tt> parameter to the
+<tt class="xref docutils literal"><span class="pre">serve()</span></tt> view. This is <tt class="xref docutils literal"><span class="pre">False</span></tt> by default. If it's
+<tt class="xref docutils literal"><span class="pre">True</span></tt>, Django will display file listings for directories.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^site_media/(?P&lt;path&gt;.*)$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.static.serve&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s">&#39;document_root&#39;</span><span class="p">:</span> <span class="s">&#39;/path/to/media&#39;</span><span class="p">,</span> <span class="s">&#39;show_indexes&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">}),</span>
+</pre></div>
+</div>
+<p>You can customize the index view by creating a template called
+<tt class="docutils literal"><span class="pre">static/directory_index.html</span></tt>. That template gets two objects in its context:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">directory</span></tt> -- the directory name (a string)</li>
+<li><tt class="docutils literal"><span class="pre">file_list</span></tt> -- a list of file names (as strings) in the directory</li>
+</ul>
+<p>Here's the default <tt class="docutils literal"><span class="pre">static/directory_index</span></tt> template:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="cp">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;</span>
+<span class="nt">&lt;html</span> <span class="na">xmlns=</span><span class="s">&quot;http://www.w3.org/1999/xhtml&quot;</span> <span class="na">xml:lang=</span><span class="s">&quot;en&quot;</span> <span class="na">lang=</span><span class="s">&quot;en&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+    <span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">&quot;Content-type&quot;</span> <span class="na">content=</span><span class="s">&quot;text/html; charset=utf-8&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">&quot;Content-Language&quot;</span> <span class="na">content=</span><span class="s">&quot;en-us&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;meta</span> <span class="na">name=</span><span class="s">&quot;robots&quot;</span> <span class="na">content=</span><span class="s">&quot;NONE,NOARCHIVE&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;title&gt;</span>Index of <span class="cp">{{</span> <span class="nv">directory</span> <span class="cp">}}</span><span class="nt">&lt;/title&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;h1&gt;</span>Index of <span class="cp">{{</span> <span class="nv">directory</span> <span class="cp">}}</span><span class="nt">&lt;/h1&gt;</span>
+    <span class="nt">&lt;ul&gt;</span>
+    <span class="cp">{%</span> <span class="k">for</span> <span class="nv">f</span> <span class="k">in</span> <span class="nv">file_list</span> <span class="cp">%}</span>
+    <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;</span><span class="cp">{{</span> <span class="nv">f</span> <span class="cp">}}</span><span class="s">&quot;</span><span class="nt">&gt;</span><span class="cp">{{</span> <span class="nv">f</span> <span class="cp">}}</span><span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+    <span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+    <span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-limiting-use-to-debug-true">
+<span id="limiting-use-to-debug-true"></span><h2>Limiting use to DEBUG=True<a class="headerlink" href="#limiting-use-to-debug-true" title="Permalink to this headline">¶</a></h2>
+<p>Because URLconfs are just plain Python modules, you can use Python logic to
+make the static-media view available only in development mode. This is a handy
+trick to make sure the static-serving view doesn't slip into a production
+setting by mistake.</p>
+<p>Do this by wrapping an <tt class="docutils literal"><span class="pre">if</span> <span class="pre">DEBUG</span></tt> statement around the
+<tt class="xref docutils literal"><span class="pre">django.views.static.serve()</span></tt> inclusion. Here's a full example URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/2003/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.special_case_2003&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(?P&lt;year&gt;\d{4})/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.year_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(?P&lt;year&gt;\d{4})/(?P&lt;month&gt;\d{2})/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.month_archive&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^articles/(?P&lt;year&gt;\d{4})/(?P&lt;month&gt;\d{2})/(?P&lt;day&gt;\d+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;news.views.article_detail&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+    <span class="n">urlpatterns</span> <span class="o">+=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s">r&#39;^site_media/(?P&lt;path&gt;.*)$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.static.serve&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;document_root&#39;</span><span class="p">:</span> <span class="s">&#39;/path/to/media&#39;</span><span class="p">}),</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>This code is straightforward. It imports the settings and checks the value of
+the <a class="reference external" href="../ref/settings.html#setting-DEBUG"><tt class="xref docutils literal"><span class="pre">DEBUG</span></tt></a> setting. If it evaluates to <tt class="xref docutils literal"><span class="pre">True</span></tt>, then <tt class="docutils literal"><span class="pre">site_media</span></tt>
+will be associated with the <tt class="docutils literal"><span class="pre">django.views.static.serve</span></tt> view. If not, then the
+view won't be made available.</p>
+<p>Of course, the catch here is that you'll have to remember to set <tt class="docutils literal"><span class="pre">DEBUG=False</span></tt>
+in your production settings file. But you should be doing that anyway.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">How to serve static files</a><ul>
+<li><a class="reference external" href="#the-big-fat-disclaimer">The big, fat disclaimer</a></li>
+<li><a class="reference external" href="#how-to-do-it">How to do it</a></li>
+<li><a class="reference external" href="#directory-listings">Directory listings</a></li>
+<li><a class="reference external" href="#limiting-use-to-debug-true">Limiting use to DEBUG=True</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="outputting-pdf.html">Outputting PDFs with Django</a></li>
+    
+    
+      <li>Next: <a href="../faq/index.html">Django FAQ</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">&#8220;How-to&#8221; guides</a>
+        
+        <ul><li>How to serve static files</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/howto/static-files.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="outputting-pdf.html" title="Outputting PDFs with Django">previous</a> 
+     |
+    <a href="index.html" title="&amp;#8220;How-to&amp;#8221; guides" accesskey="U">up</a>
+   |
+    <a href="../faq/index.html" title="Django FAQ">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

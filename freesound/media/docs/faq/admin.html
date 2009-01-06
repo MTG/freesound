@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FAQ: The admin &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Django FAQ" href="index.html" />
+    <link rel="next" title="FAQ: Contributing code" href="contributing.html" />
+    <link rel="prev" title="FAQ: Databases and models" href="models.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="models.html" title="FAQ: Databases and models">previous</a> 
+     |
+    <a href="index.html" title="Django FAQ" accesskey="U">up</a>
+   |
+    <a href="contributing.html" title="FAQ: Contributing code">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="faq-admin">
+            
+  
+  <div class="section" id="s-faq-the-admin">
+<span id="s-faq-admin"></span><span id="faq-the-admin"></span><span id="faq-admin"></span><h1>FAQ: The admin<a class="headerlink" href="#faq-the-admin" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="s-i-can-t-log-in-when-i-enter-a-valid-username-and-password-it-just-brings-up-the-login-page-again-with-no-error-messages">
+<span id="i-can-t-log-in-when-i-enter-a-valid-username-and-password-it-just-brings-up-the-login-page-again-with-no-error-messages"></span><h2>I can&#8217;t log in. When I enter a valid username and password, it just brings up the login page again, with no error messages.<a class="headerlink" href="#i-can-t-log-in-when-i-enter-a-valid-username-and-password-it-just-brings-up-the-login-page-again-with-no-error-messages" title="Permalink to this headline">¶</a></h2>
+<p>The login cookie isn&#8217;t being set correctly, because the domain of the cookie
+sent out by Django doesn&#8217;t match the domain in your browser. Try these two
+things:</p>
+<ul class="simple">
+<li>Set the <tt class="docutils literal"><span class="pre">SESSION_COOKIE_DOMAIN</span></tt> setting in your admin config file
+to match your domain. For example, if you&#8217;re going to
+&#8220;<a class="reference external" href="http://www.example.com/admin/">http://www.example.com/admin/</a>&#8221; in your browser, in
+&#8220;myproject.settings&#8221; you should set <tt class="docutils literal"><span class="pre">SESSION_COOKIE_DOMAIN</span> <span class="pre">=</span> <span class="pre">'www.example.com'</span></tt>.</li>
+<li>Some browsers (Firefox?) don&#8217;t like to accept cookies from domains that
+don&#8217;t have dots in them. If you&#8217;re running the admin site on &#8220;localhost&#8221;
+or another domain that doesn&#8217;t have a dot in it, try going to
+&#8220;localhost.localdomain&#8221; or &#8220;127.0.0.1&#8221;. And set
+<tt class="docutils literal"><span class="pre">SESSION_COOKIE_DOMAIN</span></tt> accordingly.</li>
+</ul>
+</div>
+<div class="section" id="s-i-can-t-log-in-when-i-enter-a-valid-username-and-password-it-brings-up-the-login-page-again-with-a-please-enter-a-correct-username-and-password-error">
+<span id="i-can-t-log-in-when-i-enter-a-valid-username-and-password-it-brings-up-the-login-page-again-with-a-please-enter-a-correct-username-and-password-error"></span><h2>I can&#8217;t log in. When I enter a valid username and password, it brings up the login page again, with a &#8220;Please enter a correct username and password&#8221; error.<a class="headerlink" href="#i-can-t-log-in-when-i-enter-a-valid-username-and-password-it-brings-up-the-login-page-again-with-a-please-enter-a-correct-username-and-password-error" title="Permalink to this headline">¶</a></h2>
+<p>If you&#8217;re sure your username and password are correct, make sure your user
+account has <tt class="docutils literal"><span class="pre">is_active</span></tt> and <tt class="docutils literal"><span class="pre">is_staff</span></tt> set to True. The admin site only
+allows access to users with those two fields both set to True.</p>
+</div>
+<div class="section" id="s-how-can-i-prevent-the-cache-middleware-from-caching-the-admin-site">
+<span id="how-can-i-prevent-the-cache-middleware-from-caching-the-admin-site"></span><h2>How can I prevent the cache middleware from caching the admin site?<a class="headerlink" href="#how-can-i-prevent-the-cache-middleware-from-caching-the-admin-site" title="Permalink to this headline">¶</a></h2>
+<p>Set the <tt class="xref docutils literal"><span class="pre">CACHE_MIDDLEWARE_ANONYMOUS_ONLY</span></tt> setting to <tt class="xref docutils literal"><span class="pre">True</span></tt>. See the
+<a class="reference external" href="../topics/cache.html#topics-cache"><em>cache documentation</em></a> for more information.</p>
+</div>
+<div class="section" id="s-how-do-i-automatically-set-a-field-s-value-to-the-user-who-last-edited-the-object-in-the-admin">
+<span id="how-do-i-automatically-set-a-field-s-value-to-the-user-who-last-edited-the-object-in-the-admin"></span><h2>How do I automatically set a field&#8217;s value to the user who last edited the object in the admin?<a class="headerlink" href="#how-do-i-automatically-set-a-field-s-value-to-the-user-who-last-edited-the-object-in-the-admin" title="Permalink to this headline">¶</a></h2>
+<p>At this point, Django doesn&#8217;t have an official way to do this. But it&#8217;s an oft-requested
+feature, so we&#8217;re discussing how it can be implemented. The problem is we don&#8217;t want to couple
+the model layer with the admin layer with the request layer (to get the current user). It&#8217;s a
+tricky problem.</p>
+<p>One person hacked up a <a class="reference external" href="http://lukeplant.me.uk/blog.php?id=1107301634">solution that doesn&#8217;t require patching Django</a>, but note that it&#8217;s an
+unofficial solution, and there&#8217;s no guarantee it won&#8217;t break at some point.</p>
+</div>
+<div class="section" id="s-how-do-i-limit-admin-access-so-that-objects-can-only-be-edited-by-the-users-who-created-them">
+<span id="how-do-i-limit-admin-access-so-that-objects-can-only-be-edited-by-the-users-who-created-them"></span><h2>How do I limit admin access so that objects can only be edited by the users who created them?<a class="headerlink" href="#how-do-i-limit-admin-access-so-that-objects-can-only-be-edited-by-the-users-who-created-them" title="Permalink to this headline">¶</a></h2>
+<p>See the answer to the previous question.</p>
+</div>
+<div class="section" id="s-my-admin-site-css-and-images-showed-up-fine-using-the-development-server-but-they-re-not-displaying-when-using-mod-python">
+<span id="my-admin-site-css-and-images-showed-up-fine-using-the-development-server-but-they-re-not-displaying-when-using-mod-python"></span><h2>My admin-site CSS and images showed up fine using the development server, but they&#8217;re not displaying when using mod_python.<a class="headerlink" href="#my-admin-site-css-and-images-showed-up-fine-using-the-development-server-but-they-re-not-displaying-when-using-mod-python" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference external" href="../howto/deployment/modpython.html#howto-deployment-modpython-serving-the-admin-files"><em>serving the admin files </em></a>
+in the &#8220;How to use Django with mod_python&#8221; documentation.</p>
+</div>
+<div class="section" id="s-my-list-filter-contains-a-manytomanyfield-but-the-filter-doesn-t-display">
+<span id="my-list-filter-contains-a-manytomanyfield-but-the-filter-doesn-t-display"></span><h2>My &#8220;list_filter&#8221; contains a ManyToManyField, but the filter doesn&#8217;t display.<a class="headerlink" href="#my-list-filter-contains-a-manytomanyfield-but-the-filter-doesn-t-display" title="Permalink to this headline">¶</a></h2>
+<p>Django won&#8217;t bother displaying the filter for a <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> if there
+are fewer than two related objects.</p>
+<p>For example, if your <tt class="docutils literal"><span class="pre">list_filter</span></tt> includes <tt class="docutils literal"><span class="pre">sites</span></tt>, and there&#8217;s only one
+site in your database, it won&#8217;t display a &#8220;Site&#8221; filter. In that case,
+filtering by site would be meaningless.</p>
+</div>
+<div class="section" id="s-how-can-i-customize-the-functionality-of-the-admin-interface">
+<span id="how-can-i-customize-the-functionality-of-the-admin-interface"></span><h2>How can I customize the functionality of the admin interface?<a class="headerlink" href="#how-can-i-customize-the-functionality-of-the-admin-interface" title="Permalink to this headline">¶</a></h2>
+<p>You&#8217;ve got several options. If you want to piggyback on top of an add/change
+form that Django automatically generates, you can attach arbitrary JavaScript
+modules to the page via the model&#8217;s <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Admin</span></tt> <tt class="docutils literal"><span class="pre">js</span></tt> parameter. That
+parameter is a list of URLs, as strings, pointing to JavaScript modules that
+will be included within the admin form via a <tt class="docutils literal"><span class="pre">&lt;script&gt;</span></tt> tag.</p>
+<p>If you want more flexibility than simply tweaking the auto-generated forms,
+feel free to write custom views for the admin. The admin is powered by Django
+itself, and you can write custom views that hook into the authentication
+system, check permissions and do whatever else they need to do.</p>
+<p>If you want to customize the look-and-feel of the admin interface, read the
+next question.</p>
+</div>
+<div class="section" id="s-the-dynamically-generated-admin-site-is-ugly-how-can-i-change-it">
+<span id="the-dynamically-generated-admin-site-is-ugly-how-can-i-change-it"></span><h2>The dynamically-generated admin site is ugly! How can I change it?<a class="headerlink" href="#the-dynamically-generated-admin-site-is-ugly-how-can-i-change-it" title="Permalink to this headline">¶</a></h2>
+<p>We like it, but if you don&#8217;t agree, you can modify the admin site&#8217;s
+presentation by editing the CSS stylesheet and/or associated image files. The
+site is built using semantic HTML and plenty of CSS hooks, so any changes you&#8217;d
+like to make should be possible by editing the stylesheet. We&#8217;ve got a
+<a class="reference external" href="../obsolete/admin-css.html#obsolete-admin-css"><em>guide to the CSS used in the admin</em></a> to get you started.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">FAQ: The admin</a><ul>
+<li><a class="reference external" href="#i-can-t-log-in-when-i-enter-a-valid-username-and-password-it-just-brings-up-the-login-page-again-with-no-error-messages">I can&#8217;t log in. When I enter a valid username and password, it just brings up the login page again, with no error messages.</a></li>
+<li><a class="reference external" href="#i-can-t-log-in-when-i-enter-a-valid-username-and-password-it-brings-up-the-login-page-again-with-a-please-enter-a-correct-username-and-password-error">I can&#8217;t log in. When I enter a valid username and password, it brings up the login page again, with a &#8220;Please enter a correct username and password&#8221; error.</a></li>
+<li><a class="reference external" href="#how-can-i-prevent-the-cache-middleware-from-caching-the-admin-site">How can I prevent the cache middleware from caching the admin site?</a></li>
+<li><a class="reference external" href="#how-do-i-automatically-set-a-field-s-value-to-the-user-who-last-edited-the-object-in-the-admin">How do I automatically set a field&#8217;s value to the user who last edited the object in the admin?</a></li>
+<li><a class="reference external" href="#how-do-i-limit-admin-access-so-that-objects-can-only-be-edited-by-the-users-who-created-them">How do I limit admin access so that objects can only be edited by the users who created them?</a></li>
+<li><a class="reference external" href="#my-admin-site-css-and-images-showed-up-fine-using-the-development-server-but-they-re-not-displaying-when-using-mod-python">My admin-site CSS and images showed up fine using the development server, but they&#8217;re not displaying when using mod_python.</a></li>
+<li><a class="reference external" href="#my-list-filter-contains-a-manytomanyfield-but-the-filter-doesn-t-display">My &#8220;list_filter&#8221; contains a ManyToManyField, but the filter doesn&#8217;t display.</a></li>
+<li><a class="reference external" href="#how-can-i-customize-the-functionality-of-the-admin-interface">How can I customize the functionality of the admin interface?</a></li>
+<li><a class="reference external" href="#the-dynamically-generated-admin-site-is-ugly-how-can-i-change-it">The dynamically-generated admin site is ugly! How can I change it?</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="models.html">FAQ: Databases and models</a></li>
+    
+    
+      <li>Next: <a href="contributing.html">FAQ: Contributing code</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Django FAQ</a>
+        
+        <ul><li>FAQ: The admin</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/faq/admin.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="models.html" title="FAQ: Databases and models">previous</a> 
+     |
+    <a href="index.html" title="Django FAQ" accesskey="U">up</a>
+   |
+    <a href="contributing.html" title="FAQ: Contributing code">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

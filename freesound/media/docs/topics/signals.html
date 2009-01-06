@@ -1,0 +1,275 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Signals &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Using Django" href="index.html" />
+    <link rel="next" title="&#8220;How-to&#8221; guides" href="../howto/index.html" />
+    <link rel="prev" title="Django settings" href="settings.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="settings.html" title="Django settings">previous</a> 
+     |
+    <a href="index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="../howto/index.html" title="&amp;#8220;How-to&amp;#8221; guides">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-signals">
+            
+  
+  <div class="section" id="s-module-django.dispatch">
+<span id="s-topics-signals"></span><span id="module-django.dispatch"></span><span id="topics-signals"></span><h1>Signals<a class="headerlink" href="#module-django.dispatch" title="Permalink to this headline">¶</a></h1>
+<p>Django includes a &#8220;signal dispatcher&#8221; which helps allow decoupled applications
+get notified when actions occur elsewhere in the framework. In a nutshell,
+signals allow certain <em>senders</em> to notify a set of <em>receivers</em> that some action
+has taken place. They&#8217;re especially useful when many pieces of code may be
+interested in the same events.</p>
+<p>Django provides a <a class="reference external" href="../ref/signals.html#ref-signals"><em>set of built-in signals</em></a> that let user
+code get notified by Django itself of certain actions. These include some useful
+notifications:</p>
+<ul>
+<li><p class="first"><a title="django.db.models.signals.pre_save" class="reference external" href="../ref/signals.html#django.db.models.signals.pre_save"><tt class="xref docutils literal"><span class="pre">django.db.models.signals.pre_save</span></tt></a> &amp;
+<a title="django.db.models.signals.post_save" class="reference external" href="../ref/signals.html#django.db.models.signals.post_save"><tt class="xref docutils literal"><span class="pre">django.db.models.signals.post_save</span></tt></a></p>
+<p>Sent before or after a model&#8217;s <a title="django.db.models.Model.save" class="reference external" href="../ref/models/instances.html#django.db.models.Model.save"><tt class="xref docutils literal"><span class="pre">save()</span></tt></a> method
+is called.</p>
+</li>
+<li><p class="first"><a title="django.db.models.signals.pre_delete" class="reference external" href="../ref/signals.html#django.db.models.signals.pre_delete"><tt class="xref docutils literal"><span class="pre">django.db.models.signals.pre_delete</span></tt></a> &amp;
+<a title="django.db.models.signals.post_delete" class="reference external" href="../ref/signals.html#django.db.models.signals.post_delete"><tt class="xref docutils literal"><span class="pre">django.db.models.signals.post_delete</span></tt></a></p>
+<p>Sent before or after a model&#8217;s <tt class="xref docutils literal"><span class="pre">delete()</span></tt>
+method is called.</p>
+</li>
+<li><p class="first"><a title="django.core.signals.request_started" class="reference external" href="../ref/signals.html#django.core.signals.request_started"><tt class="xref docutils literal"><span class="pre">django.core.signals.request_started</span></tt></a> &amp;
+<a title="django.core.signals.request_finished" class="reference external" href="../ref/signals.html#django.core.signals.request_finished"><tt class="xref docutils literal"><span class="pre">django.core.signals.request_finished</span></tt></a></p>
+<p>Sent when Django starts or finishes an HTTP request.</p>
+</li>
+</ul>
+<p>See the <a class="reference external" href="../ref/signals.html#ref-signals"><em>built-in signal documentation</em></a> for a complete list,
+and a complete explanation of each signal.</p>
+<p>You can also <a class="reference internal" href="#defining-and-sending-signals">define and send your own custom signals</a>; see below.</p>
+<div class="section" id="s-listening-to-signals">
+<span id="listening-to-signals"></span><h2>Listening to signals<a class="headerlink" href="#listening-to-signals" title="Permalink to this headline">¶</a></h2>
+<p>To receive a signal, you need to register a <em>receiver</em> function that gets called
+when the signal is sent. Let&#8217;s see how this works by registering a signal that
+gets called after each HTTP request is finished. We&#8217;ll be connecting to the
+<a title="django.core.signals.request_finished" class="reference external" href="../ref/signals.html#django.core.signals.request_finished"><tt class="xref docutils literal"><span class="pre">request_finished</span></tt></a> signal.</p>
+<div class="section" id="s-receiver-functions">
+<span id="receiver-functions"></span><h3>Receiver functions<a class="headerlink" href="#receiver-functions" title="Permalink to this headline">¶</a></h3>
+<p>First, we need to define a receiver function. A receiver can be any Python function or method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_callback</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&quot;Request finished!&quot;</span>
+</pre></div>
+</div>
+<p>Notice that the function takes a <tt class="docutils literal"><span class="pre">sender</span></tt> argument, along with wildcard
+keyword arguments (<tt class="docutils literal"><span class="pre">**kwargs</span></tt>); all signal handlers must take these arguments.</p>
+<p>We'll look at senders <a class="reference internal" href="#connecting-to-signals-sent-by-specific-senders">a bit later</a>, but right now look at the <tt class="docutils literal"><span class="pre">**kwargs</span></tt>
+argument. All signals send keyword arguments, and may change those keyword
+arguments at any time. In the case of
+<a title="django.core.signals.request_finished" class="reference external" href="../ref/signals.html#django.core.signals.request_finished"><tt class="xref docutils literal"><span class="pre">request_finished</span></tt></a>, it's documented as sending no
+arguments, which means we might be tempted to write our signal handling as
+<tt class="docutils literal"><span class="pre">my_callback(sender)</span></tt>.</p>
+<p>This would be wrong -- in fact, Django will throw an error if you do so. That's
+because at any point arguments could get added to the signal and your receiver
+must be able to handle those new arguments.</p>
+</div>
+<div class="section" id="s-connecting-receiver-functions">
+<span id="connecting-receiver-functions"></span><h3>Connecting receiver functions<a class="headerlink" href="#connecting-receiver-functions" title="Permalink to this headline">¶</a></h3>
+<p>Next, we'll need to connect our receiver to the signal:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.signals</span> <span class="kn">import</span> <span class="n">request_finished</span>
+
+<span class="n">request_finished</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">my_callback</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, our <tt class="docutils literal"><span class="pre">my_callback</span></tt> function will be called each time a request finishes.</p>
+<div class="admonition-where-should-this-code-live admonition ">
+<p class="first admonition-title">Where should this code live?</p>
+<p class="last">You can put signal handling and registration code anywhere you like.
+However, you'll need to make sure that the module it's in gets imported
+early on so that the signal handling gets registered before any signals need
+to be sent. This makes your app's <tt class="docutils literal"><span class="pre">models.py</span></tt> a good place to put
+registration of signal handlers.</p>
+</div>
+</div>
+<div class="section" id="s-connecting-to-signals-sent-by-specific-senders">
+<span id="connecting-to-signals-sent-by-specific-senders"></span><h3>Connecting to signals sent by specific senders<a class="headerlink" href="#connecting-to-signals-sent-by-specific-senders" title="Permalink to this headline">¶</a></h3>
+<p>Some signals get sent many times, but you'll only be interested in recieving a
+certain subset of those signals. For example, consider the
+<a title="django.db.models.signals.pre_save" class="reference external" href="../ref/signals.html#django.db.models.signals.pre_save"><tt class="xref docutils literal"><span class="pre">django.db.models.signals.pre_save</span></tt></a> signal sent before a model gets saved.
+Most of the time, you don't need to know when <em>any</em> model gets saved -- just
+when one <em>specific</em> model is saved.</p>
+<p>In these cases, you can register to receive signals sent only by particular
+senders. In the case of <a title="django.db.models.signals.pre_save" class="reference external" href="../ref/signals.html#django.db.models.signals.pre_save"><tt class="xref docutils literal"><span class="pre">django.db.models.signals.pre_save</span></tt></a>, the sender
+will be the model class being saved, so you can indicate that you only want
+signals sent by some model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="kn">import</span> <span class="n">pre_save</span>
+<span class="kn">from</span> <span class="nn">myapp.models</span> <span class="kn">import</span> <span class="n">MyModel</span>
+
+<span class="k">def</span> <span class="nf">my_handler</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">pre_save</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">my_handler</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">MyModel</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">my_handler</span></tt> function will only be called when an instance of <tt class="docutils literal"><span class="pre">MyModel</span></tt>
+is saved.</p>
+<p>Different signals use different objects as their senders; you'll need to consult
+the <a class="reference external" href="../ref/signals.html#ref-signals"><em>built-in signal documentation</em></a> for details of each
+particular signal.</p>
+</div>
+</div>
+<div class="section" id="s-defining-and-sending-signals">
+<span id="defining-and-sending-signals"></span><h2>Defining and sending signals<a class="headerlink" href="#defining-and-sending-signals" title="Permalink to this headline">¶</a></h2>
+<p>Your applications can take advantage of the signal infrastructure and provide its own signals.</p>
+<div class="section" id="s-defining-signals">
+<span id="defining-signals"></span><h3>Defining signals<a class="headerlink" href="#defining-signals" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="django.dispatch.Signal">
+<!--[django.dispatch.Signal]-->class <tt class="descname">Signal</tt>(<span class="optional">[</span><em>providing_args=list</em><span class="optional">]</span>)<a class="headerlink" href="#django.dispatch.Signal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>All signals are <a title="django.dispatch.Signal" class="reference internal" href="#django.dispatch.Signal"><tt class="xref docutils literal"><span class="pre">django.dispatch.Signal</span></tt></a> instances. The
+<tt class="docutils literal"><span class="pre">providing_args</span></tt> is a list of the names of arguments the signal will provide
+to listeners.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">django.dispatch</span>
+
+<span class="n">pizza_done</span> <span class="o">=</span> <span class="n">django</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">Signal</span><span class="p">(</span><span class="n">providing_args</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;toppings&quot;</span><span class="p">,</span> <span class="s">&quot;size&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>This declares a <tt class="docutils literal"><span class="pre">pizza_done</span></tt> signal that will provide receivers with
+<tt class="docutils literal"><span class="pre">toppings</span></tt> and <tt class="docutils literal"><span class="pre">size</span></tt> arguments.</p>
+<p>Remember that you're allowed to change this list of arguments at any time, so getting the API right on the first try isn't necessary.</p>
+</div>
+<div class="section" id="s-sending-signals">
+<span id="sending-signals"></span><h3>Sending signals<a class="headerlink" href="#sending-signals" title="Permalink to this headline">¶</a></h3>
+<dl class="method">
+<dt id="django.dispatch.Signal.send">
+<!--[django.dispatch.Signal.send]--><tt class="descclassname">Signal.</tt><tt class="descname">send</tt>(<em>sender</em>, <em>**kwargs</em>)<a class="headerlink" href="#django.dispatch.Signal.send" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>To send a signal, call <a title="django.dispatch.Signal.send" class="reference internal" href="#django.dispatch.Signal.send"><tt class="xref docutils literal"><span class="pre">Signal.send()</span></tt></a>. You must provide the <tt class="docutils literal"><span class="pre">sender</span></tt> argument, and may provide as many other keyword arguments as you like.</p>
+<p>For example, here's how sending our <tt class="docutils literal"><span class="pre">pizza_done</span></tt> signal might look:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PizzaStore</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">send_pizza</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">toppings</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="n">pizza_done</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">sender</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">toppings</span><span class="o">=</span><span class="n">toppings</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Signals</a><ul>
+<li><a class="reference external" href="#listening-to-signals">Listening to signals</a><ul>
+<li><a class="reference external" href="#receiver-functions">Receiver functions</a></li>
+<li><a class="reference external" href="#connecting-receiver-functions">Connecting receiver functions</a></li>
+<li><a class="reference external" href="#connecting-to-signals-sent-by-specific-senders">Connecting to signals sent by specific senders</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#defining-and-sending-signals">Defining and sending signals</a><ul>
+<li><a class="reference external" href="#defining-signals">Defining signals</a></li>
+<li><a class="reference external" href="#sending-signals">Sending signals</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="settings.html">Django settings</a></li>
+    
+    
+      <li>Next: <a href="../howto/index.html">&#8220;How-to&#8221; guides</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Using Django</a>
+        
+        <ul><li>Signals</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/topics/signals.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="settings.html" title="Django settings">previous</a> 
+     |
+    <a href="index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="../howto/index.html" title="&amp;#8220;How-to&amp;#8221; guides">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

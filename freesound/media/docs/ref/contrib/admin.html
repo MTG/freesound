@@ -1,0 +1,1177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The Django admin site &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="The &#8220;django.contrib&#8221; add-ons" href="index.html" />
+    <link rel="next" title="django.contrib.auth" href="auth.html" />
+    <link rel="prev" title="The &#8220;django.contrib&#8221; add-ons" href="index.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="index.html" title="The &amp;#8220;django.contrib&amp;#8221; add-ons">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="auth.html" title="&lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;django.contrib.auth&lt;/span&gt;&lt;/tt&gt;">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-contrib-admin">
+            
+  
+  <div class="section" id="s-module-django.contrib.admin">
+<span id="s-ref-contrib-admin"></span><span id="module-django.contrib.admin"></span><span id="ref-contrib-admin"></span><h1>The Django admin site<a class="headerlink" href="#module-django.contrib.admin" title="Permalink to this headline">¶</a></h1>
+<p>One of the most powerful parts of Django is the automatic admin interface. It
+reads metadata in your model to provide a powerful and production-ready
+interface that content producers can immediately use to start adding content to
+the site. In this document, we discuss how to activate, use and customize
+Django&#8217;s admin interface.</p>
+<div class="admonition-note admonition ">
+<p class="first admonition-title">Note</p>
+<p class="last">The admin site has been refactored significantly since Django 0.96. This
+document describes the newest version of the admin site, which allows for
+much richer customization. If you follow the development of Django itself,
+you may have heard this described as &#8220;newforms-admin.&#8221;</p>
+</div>
+<div class="section" id="s-overview">
+<span id="overview"></span><h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>There are five steps in activating the Django admin site:</p>
+<ol class="arabic simple">
+<li>Add <tt class="docutils literal"><span class="pre">django.contrib.admin</span></tt> to your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> setting.</li>
+<li>Determine which of your application&#8217;s models should be editable in the
+admin interface.</li>
+<li>For each of those models, optionally create a <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> class that
+encapsulates the customized admin functionality and options for that
+particular model.</li>
+<li>Instantiate an <tt class="docutils literal"><span class="pre">AdminSite</span></tt> and tell it about each of your models and
+<tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> classes.</li>
+<li>Hook the <tt class="docutils literal"><span class="pre">AdminSite</span></tt> instance into your URLconf.</li>
+</ol>
+</div>
+<div class="section" id="s-modeladmin-objects">
+<span id="modeladmin-objects"></span><h2><tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> objects<a class="headerlink" href="#modeladmin-objects" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> class is the representation of a model in the admin
+interface. These are stored in a file named <tt class="docutils literal"><span class="pre">admin.py</span></tt> in your application.
+Let&#8217;s take a look at a very simple example of the <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">myproject.myapp.models</span> <span class="kn">import</span> <span class="n">Author</span>
+
+<span class="k">class</span> <span class="nc">AuthorAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="k">pass</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Author</span><span class="p">,</span> <span class="n">AuthorAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition-do-you-need-a-modeladmin-object-at-all admonition ">
+<p class="first admonition-title">Do you need a <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> object at all?</p>
+<p>In the preceding example, the <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> class doesn't define any
+custom values (yet). As a result, the default admin interface will be
+provided. If you are happy with the default admin interface, you don't
+need to define a <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> object at all -- you can register the
+model class without providing a <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> description. The
+preceding example could be simplified to:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">myproject.myapp.models</span> <span class="kn">import</span> <span class="n">Author</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Author</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-modeladmin-options">
+<span id="modeladmin-options"></span><h3><tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> Options<a class="headerlink" href="#modeladmin-options" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> is very flexible. It has several options for dealing with
+customizing the interface. All options are defined on the <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt>
+subclass:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">AuthorAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">date_hierarchy</span> <span class="o">=</span> <span class="s">&#39;pub_date&#39;</span>
+</pre></div>
+</div>
+<div class="section" id="s-date-hierarchy">
+<span id="date-hierarchy"></span><h4><tt class="docutils literal"><span class="pre">date_hierarchy</span></tt><a class="headerlink" href="#date-hierarchy" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">date_hierarchy</span></tt> to the name of a <tt class="docutils literal"><span class="pre">DateField</span></tt> or <tt class="docutils literal"><span class="pre">DateTimeField</span></tt> in
+your model, and the change list page will include a date-based drilldown
+navigation by that field.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">date_hierarchy</span> <span class="o">=</span> <span class="s">&#39;pub_date&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-form">
+<span id="form"></span><h4><tt class="docutils literal"><span class="pre">form</span></tt><a class="headerlink" href="#form" title="Permalink to this headline">¶</a></h4>
+<p>By default a <tt class="docutils literal"><span class="pre">ModelForm</span></tt> is dynamically created for your model. It is used
+to create the form presented on both the add/change pages. You can easily
+provide your own <tt class="docutils literal"><span class="pre">ModelForm</span></tt> to override any default form behavior on the
+add/change pages.</p>
+<p>For an example see the section <a class="reference internal" href="#adding-custom-validation-to-the-admin">Adding custom validation to the admin</a>.</p>
+</div>
+<div class="section" id="s-fieldsets">
+<span id="fieldsets"></span><h4><tt class="docutils literal"><span class="pre">fieldsets</span></tt><a class="headerlink" href="#fieldsets" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">fieldsets</span></tt> to control the layout of admin &quot;add&quot; and &quot;change&quot; pages.</p>
+<p><tt class="docutils literal"><span class="pre">fieldsets</span></tt> is a list of two-tuples, in which each two-tuple represents a
+<tt class="docutils literal"><span class="pre">&lt;fieldset&gt;</span></tt> on the admin form page. (A <tt class="docutils literal"><span class="pre">&lt;fieldset&gt;</span></tt> is a &quot;section&quot; of the
+form.)</p>
+<p>The two-tuples are in the format <tt class="docutils literal"><span class="pre">(name,</span> <span class="pre">field_options)</span></tt>, where <tt class="docutils literal"><span class="pre">name</span></tt> is a
+string representing the title of the fieldset and <tt class="docutils literal"><span class="pre">field_options</span></tt> is a
+dictionary of information about the fieldset, including a list of fields to be
+displayed in it.</p>
+<p>A full example, taken from the <tt class="docutils literal"><span class="pre">django.contrib.flatpages.FlatPage</span></tt> model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">FlatPageAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;url&#39;</span><span class="p">,</span> <span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;content&#39;</span><span class="p">,</span> <span class="s">&#39;sites&#39;</span><span class="p">)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s">&#39;Advanced options&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s">&#39;classes&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;collapse&#39;</span><span class="p">,),</span>
+            <span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;enable_comments&#39;</span><span class="p">,</span> <span class="s">&#39;registration_required&#39;</span><span class="p">,</span> <span class="s">&#39;template_name&#39;</span><span class="p">)</span>
+        <span class="p">}),</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>This results in an admin page that looks like:</p>
+<blockquote>
+<img alt="../../_images/flatfiles_admin.png" src="../../_images/flatfiles_admin.png" />
+</blockquote>
+<p>If <tt class="docutils literal"><span class="pre">fieldsets</span></tt> isn't given, Django will default to displaying each field
+that isn't an <tt class="docutils literal"><span class="pre">AutoField</span></tt> and has <tt class="docutils literal"><span class="pre">editable=True</span></tt>, in a single fieldset,
+in the same order as the fields are defined in the model.</p>
+<p>The <tt class="docutils literal"><span class="pre">field_options</span></tt> dictionary can have the following keys:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">fields</span></tt></dt>
+<dd><p class="first">A tuple of field names to display in this fieldset. This key is
+required.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+<span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">,</span> <span class="s">&#39;address&#39;</span><span class="p">,</span> <span class="s">&#39;city&#39;</span><span class="p">,</span> <span class="s">&#39;state&#39;</span><span class="p">),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To display multiple fields on the same line, wrap those fields in
+their own tuple. In this example, the <tt class="docutils literal"><span class="pre">first_name</span></tt> and <tt class="docutils literal"><span class="pre">last_name</span></tt>
+fields will display on the same line:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="p">{</span>
+<span class="s">&#39;fields&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">),</span> <span class="s">&#39;address&#39;</span><span class="p">,</span> <span class="s">&#39;city&#39;</span><span class="p">,</span> <span class="s">&#39;state&#39;</span><span class="p">),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">classes</span></tt></dt>
+<dd><p class="first">A list containing extra CSS classes to apply to the fieldset.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+<span class="s">&#39;classes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;wide&#39;</span><span class="p">,</span> <span class="s">&#39;extrapretty&#39;</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p class="last">Two useful classes defined by the default admin site stylesheet are
+<tt class="docutils literal"><span class="pre">collapse</span></tt> and <tt class="docutils literal"><span class="pre">wide</span></tt>. Fieldsets with the <tt class="docutils literal"><span class="pre">collapse</span></tt> style will
+be initially collapsed in the admin and replaced with a small
+&quot;click to expand&quot; link. Fieldsets with the <tt class="docutils literal"><span class="pre">wide</span></tt> style will be
+given extra horizontal space.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">description</span></tt></dt>
+<dd><p class="first">A string of optional extra text to be displayed at the top of each
+fieldset, under the heading of the fieldset.</p>
+<p class="last">Note that this value is <em>not</em> HTML-escaped when it's displayed in
+the admin interface. This lets you include HTML if you so desire.
+Alternatively you can use plain text and
+<tt class="docutils literal"><span class="pre">django.utils.html.escape()</span></tt> to escape any HTML special
+characters.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="s-fields">
+<span id="fields"></span><h4><tt class="docutils literal"><span class="pre">fields</span></tt><a class="headerlink" href="#fields" title="Permalink to this headline">¶</a></h4>
+<p>Use this option as an alternative to <tt class="docutils literal"><span class="pre">fieldsets</span></tt> if the layout does not
+matter and if you want to only show a subset of the available fields in the
+form. For example, you could define a simpler version of the admin form for
+the <tt class="docutils literal"><span class="pre">django.contrib.flatpages.FlatPage</span></tt> model as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">FlatPageAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;url&#39;</span><span class="p">,</span> <span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;content&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the above example, only the fields 'url', 'title' and 'content' will be
+displayed, sequentially, in the form.</p>
+<div class="admonition-note admonition ">
+<p class="first admonition-title">Note</p>
+<p class="last">This <tt class="docutils literal"><span class="pre">fields</span></tt> option should not be confused with the <tt class="docutils literal"><span class="pre">fields</span></tt>
+dictionary key that is within the <tt class="docutils literal"><span class="pre">fieldsets</span></tt> option, as described in
+the previous section.</p>
+</div>
+</div>
+<div class="section" id="s-exclude">
+<span id="exclude"></span><h4><tt class="docutils literal"><span class="pre">exclude</span></tt><a class="headerlink" href="#exclude" title="Permalink to this headline">¶</a></h4>
+<p>This attribute, if given, should be a list of field names to exclude from the
+form.</p>
+<p>For example, let's consider the following model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">100</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">3</span><span class="p">)</span>
+    <span class="n">birth_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want a form for the <tt class="docutils literal"><span class="pre">Author</span></tt> model that includes only the <tt class="docutils literal"><span class="pre">name</span></tt>
+and <tt class="docutils literal"><span class="pre">title</span></tt> fields, you would specify <tt class="docutils literal"><span class="pre">fields</span></tt> or <tt class="docutils literal"><span class="pre">exclude</span></tt> like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">AuthorAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;title&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">AuthorAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">exclude</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;birth_date&#39;</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p>Since the Author model only has three fields, <tt class="docutils literal"><span class="pre">name</span></tt>, <tt class="docutils literal"><span class="pre">title</span></tt>, and
+<tt class="docutils literal"><span class="pre">birth_date</span></tt>, the forms resulting from the above declarations will contain
+exactly the same fields.</p>
+</div>
+<div class="section" id="s-filter-horizontal">
+<span id="filter-horizontal"></span><h4><tt class="docutils literal"><span class="pre">filter_horizontal</span></tt><a class="headerlink" href="#filter-horizontal" title="Permalink to this headline">¶</a></h4>
+<p>Use a nifty unobtrusive JavaScript &quot;filter&quot; interface instead of the
+usability-challenged <tt class="docutils literal"><span class="pre">&lt;select</span> <span class="pre">multiple&gt;</span></tt> in the admin form. The value is a
+list of fields that should be displayed as a horizontal filter interface. See
+<tt class="docutils literal"><span class="pre">filter_vertical</span></tt> to use a vertical interface.</p>
+</div>
+<div class="section" id="s-filter-vertical">
+<span id="filter-vertical"></span><h4><tt class="docutils literal"><span class="pre">filter_vertical</span></tt><a class="headerlink" href="#filter-vertical" title="Permalink to this headline">¶</a></h4>
+<p>Same as <tt class="docutils literal"><span class="pre">filter_horizontal</span></tt>, but is a vertical display of the filter
+interface.</p>
+</div>
+<div class="section" id="s-list-display">
+<span id="list-display"></span><h4><tt class="docutils literal"><span class="pre">list_display</span></tt><a class="headerlink" href="#list-display" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">list_display</span></tt> to control which fields are displayed on the change list
+page of the admin.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you don't set <tt class="docutils literal"><span class="pre">list_display</span></tt>, the admin site will display a single column
+that displays the <tt class="docutils literal"><span class="pre">__unicode__()</span></tt> representation of each object.</p>
+<p>You have four possible values that can be used in <tt class="docutils literal"><span class="pre">list_display</span></tt>:</p>
+<ul>
+<li><p class="first">A field of the model. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">A callable that accepts one parameter for the model instance. For
+example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">upper_case_name</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">last_name</span><span class="p">))</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+<span class="n">upper_case_name</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s">&#39;Name&#39;</span>
+
+<span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="n">upper_case_name</span><span class="p">,)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">A string representing an attribute on the <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt>. This behaves
+same as the callable. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;upper_case_name&#39;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">upper_case_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+      <span class="k">return</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">last_name</span><span class="p">))</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">upper_case_name</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s">&#39;Name&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">A string representing an attribute on the model. This behaves almost
+the same as the callable, but <tt class="docutils literal"><span class="pre">self</span></tt> in this context is the model
+instance. Here's a full model example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">50</span><span class="p">)</span>
+    <span class="n">birthday</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">decade_born_in</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">birthday</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y&#39;</span><span class="p">)[:</span><span class="mf">3</span><span class="p">]</span> <span class="o">+</span> <span class="s">&quot;0&#39;s&quot;</span>
+    <span class="n">decade_born_in</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s">&#39;Birth decade&#39;</span>
+
+<span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;decade_born_in&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>A few special cases to note about <tt class="docutils literal"><span class="pre">list_display</span></tt>:</p>
+<ul>
+<li><p class="first">If the field is a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>, Django will display the
+<tt class="docutils literal"><span class="pre">__unicode__()</span></tt> of the related object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> fields aren't supported, because that would entail
+executing a separate SQL statement for each row in the table. If you
+want to do this nonetheless, give your model a custom method, and add
+that method's name to <tt class="docutils literal"><span class="pre">list_display</span></tt>. (See below for more on custom
+methods in <tt class="docutils literal"><span class="pre">list_display</span></tt>.)</p>
+</li>
+<li><p class="first">If the field is a <tt class="docutils literal"><span class="pre">BooleanField</span></tt> or <tt class="docutils literal"><span class="pre">NullBooleanField</span></tt>, Django will
+display a pretty &quot;on&quot; or &quot;off&quot; icon instead of <tt class="xref docutils literal"><span class="pre">True</span></tt> or <tt class="xref docutils literal"><span class="pre">False</span></tt>.</p>
+</li>
+<li><p class="first">If the string given is a method of the model, <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> or a
+callable, Django will HTML-escape the output by default. If you'd rather
+not escape the output of the method, give the method an <tt class="docutils literal"><span class="pre">allow_tags</span></tt>
+attribute whose value is <tt class="xref docutils literal"><span class="pre">True</span></tt>.</p>
+<p>Here's a full example model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">50</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">50</span><span class="p">)</span>
+    <span class="n">color_code</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">6</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">colored_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;&lt;span style=&quot;color: #</span><span class="si">%s</span><span class="s">;&quot;&gt;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&lt;/span&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">color_code</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_name</span><span class="p">)</span>
+    <span class="n">colored_name</span><span class="o">.</span><span class="n">allow_tags</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">,</span> <span class="s">&#39;colored_name&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">If the string given is a method of the model, <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> or a
+callable that returns True or False Django will display a pretty &quot;on&quot; or
+&quot;off&quot; icon if you give the method a <tt class="docutils literal"><span class="pre">boolean</span></tt> attribute whose value is
+<tt class="xref docutils literal"><span class="pre">True</span></tt>.</p>
+<p>Here's a full example model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">50</span><span class="p">)</span>
+    <span class="n">birthday</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">born_in_fifties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">birthday</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y&#39;</span><span class="p">)[:</span><span class="mf">3</span><span class="p">]</span> <span class="o">==</span> <span class="mf">5</span>
+    <span class="n">born_in_fifties</span><span class="o">.</span><span class="n">boolean</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;born_in_fifties&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The <tt class="docutils literal"><span class="pre">__str__()</span></tt> and <tt class="docutils literal"><span class="pre">__unicode__()</span></tt> methods are just as valid in
+<tt class="docutils literal"><span class="pre">list_display</span></tt> as any other model method, so it's perfectly OK to do
+this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;__unicode__&#39;</span><span class="p">,</span> <span class="s">&#39;some_other_field&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Usually, elements of <tt class="docutils literal"><span class="pre">list_display</span></tt> that aren't actual database fields
+can't be used in sorting (because Django does all the sorting at the
+database level).</p>
+<p>However, if an element of <tt class="docutils literal"><span class="pre">list_display</span></tt> represents a certain database
+field, you can indicate this fact by setting the <tt class="docutils literal"><span class="pre">admin_order_field</span></tt>
+attribute of the item.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">50</span><span class="p">)</span>
+    <span class="n">color_code</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">6</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">colored_first_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;&lt;span style=&quot;color: #</span><span class="si">%s</span><span class="s">;&quot;&gt;</span><span class="si">%s</span><span class="s">&lt;/span&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">color_code</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_name</span><span class="p">)</span>
+    <span class="n">colored_first_name</span><span class="o">.</span><span class="n">allow_tags</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">colored_first_name</span><span class="o">.</span><span class="n">admin_order_field</span> <span class="o">=</span> <span class="s">&#39;first_name&#39;</span>
+
+<span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;colored_first_name&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The above will tell Django to order by the <tt class="docutils literal"><span class="pre">first_name</span></tt> field when
+trying to sort by <tt class="docutils literal"><span class="pre">colored_first_name</span></tt> in the admin.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="s-list-display-links">
+<span id="list-display-links"></span><h4><tt class="docutils literal"><span class="pre">list_display_links</span></tt><a class="headerlink" href="#list-display-links" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">list_display_links</span></tt> to control which fields in <tt class="docutils literal"><span class="pre">list_display</span></tt> should
+be linked to the &quot;change&quot; page for an object.</p>
+<p>By default, the change list page will link the first column -- the first field
+specified in <tt class="docutils literal"><span class="pre">list_display</span></tt> -- to the change page for each item. But
+<tt class="docutils literal"><span class="pre">list_display_links</span></tt> lets you change which columns are linked. Set
+<tt class="docutils literal"><span class="pre">list_display_links</span></tt> to a list or tuple of field names (in the same format as
+<tt class="docutils literal"><span class="pre">list_display</span></tt>) to link.</p>
+<p><tt class="docutils literal"><span class="pre">list_display_links</span></tt> can specify one or many field names. As long as the
+field names appear in <tt class="docutils literal"><span class="pre">list_display</span></tt>, Django doesn't care how many (or how
+few) fields are linked. The only requirement is: If you want to use
+<tt class="docutils literal"><span class="pre">list_display_links</span></tt>, you must define <tt class="docutils literal"><span class="pre">list_display</span></tt>.</p>
+<p>In this example, the <tt class="docutils literal"><span class="pre">first_name</span></tt> and <tt class="docutils literal"><span class="pre">last_name</span></tt> fields will be linked on
+the change list page:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">,</span> <span class="s">&#39;birthday&#39;</span><span class="p">)</span>
+    <span class="n">list_display_links</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, note that in order to use <tt class="docutils literal"><span class="pre">list_display_links</span></tt>, you must define
+<tt class="docutils literal"><span class="pre">list_display</span></tt>, too.</p>
+</div>
+<div class="section" id="s-list-filter">
+<span id="list-filter"></span><h4><tt class="docutils literal"><span class="pre">list_filter</span></tt><a class="headerlink" href="#list-filter" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">list_filter</span></tt> to activate filters in the right sidebar of the change list
+page of the admin. This should be a list of field names, and each specified
+field should be either a <tt class="docutils literal"><span class="pre">BooleanField</span></tt>, <tt class="docutils literal"><span class="pre">CharField</span></tt>, <tt class="docutils literal"><span class="pre">DateField</span></tt>,
+<tt class="docutils literal"><span class="pre">DateTimeField</span></tt>, <tt class="docutils literal"><span class="pre">IntegerField</span></tt> or <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>.</p>
+<p>This example, taken from the <tt class="docutils literal"><span class="pre">django.contrib.auth.models.User</span></tt> model, shows
+how both <tt class="docutils literal"><span class="pre">list_display</span></tt> and <tt class="docutils literal"><span class="pre">list_filter</span></tt> work:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">UserAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;username&#39;</span><span class="p">,</span> <span class="s">&#39;email&#39;</span><span class="p">,</span> <span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">,</span> <span class="s">&#39;is_staff&#39;</span><span class="p">)</span>
+    <span class="n">list_filter</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;is_staff&#39;</span><span class="p">,</span> <span class="s">&#39;is_superuser&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The above code results in an admin change list page that looks like this:</p>
+<blockquote>
+<img alt="../../_images/users_changelist.png" src="../../_images/users_changelist.png" />
+</blockquote>
+<p>(This example also has <tt class="docutils literal"><span class="pre">search_fields</span></tt> defined. See below.)</p>
+</div>
+<div class="section" id="s-list-per-page">
+<span id="list-per-page"></span><h4><tt class="docutils literal"><span class="pre">list_per_page</span></tt><a class="headerlink" href="#list-per-page" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">list_per_page</span></tt> to control how many items appear on each paginated admin
+change list page. By default, this is set to <tt class="docutils literal"><span class="pre">100</span></tt>.</p>
+</div>
+<div class="section" id="s-list-select-related">
+<span id="list-select-related"></span><h4><tt class="docutils literal"><span class="pre">list_select_related</span></tt><a class="headerlink" href="#list-select-related" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">list_select_related</span></tt> to tell Django to use <tt class="docutils literal"><span class="pre">select_related()</span></tt> in
+retrieving the list of objects on the admin change list page. This can save you
+a bunch of database queries.</p>
+<p>The value should be either <tt class="xref docutils literal"><span class="pre">True</span></tt> or <tt class="xref docutils literal"><span class="pre">False</span></tt>. Default is <tt class="xref docutils literal"><span class="pre">False</span></tt>.</p>
+<p>Note that Django will use <tt class="docutils literal"><span class="pre">select_related()</span></tt>, regardless of this setting,
+if one of the <tt class="docutils literal"><span class="pre">list_display</span></tt> fields is a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>.</p>
+<p>For more on <tt class="docutils literal"><span class="pre">select_related()</span></tt>, see
+<a class="reference external" href="../models/querysets.html#select-related"><em>the select_related() docs</em></a>.</p>
+</div>
+<div class="section" id="s-inlines">
+<span id="inlines"></span><h4><tt class="docutils literal"><span class="pre">inlines</span></tt><a class="headerlink" href="#inlines" title="Permalink to this headline">¶</a></h4>
+<p>See <tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> objects below.</p>
+</div>
+<div class="section" id="s-ordering">
+<span id="ordering"></span><h4><tt class="docutils literal"><span class="pre">ordering</span></tt><a class="headerlink" href="#ordering" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">ordering</span></tt> to specify how objects on the admin change list page should be
+ordered. This should be a list or tuple in the same format as a model's
+<tt class="docutils literal"><span class="pre">ordering</span></tt> parameter.</p>
+<p>If this isn't provided, the Django admin will use the model's default ordering.</p>
+<div class="admonition-note admonition ">
+<p class="first admonition-title">Note</p>
+<p class="last">Django will only honor the first element in the list/tuple; any others
+will be ignored.</p>
+</div>
+</div>
+<div class="section" id="s-prepopulated-fields">
+<span id="prepopulated-fields"></span><h4><tt class="docutils literal"><span class="pre">prepopulated_fields</span></tt><a class="headerlink" href="#prepopulated-fields" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">prepopulated_fields</span></tt> to a dictionary mapping field names to the fields
+it should prepopulate from:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">prepopulated_fields</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;slug&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s">&quot;title&quot;</span><span class="p">,)}</span>
+</pre></div>
+</div>
+<p>When set, the given fields will use a bit of JavaScript to populate from the
+fields assigned. The main use for this functionality is to automatically
+generate the value for <tt class="docutils literal"><span class="pre">SlugField</span></tt> fields from one or more other fields. The
+generated value is produced by concatenating the values of the source fields,
+and then by transforming that result into a valid slug (e.g. substituting
+dashes for spaces).</p>
+<p><tt class="docutils literal"><span class="pre">prepopulated_fields</span></tt> doesn't accept <tt class="docutils literal"><span class="pre">DateTimeField</span></tt>, <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>, nor
+<tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> fields.</p>
+</div>
+<div class="section" id="s-radio-fields">
+<span id="radio-fields"></span><h4><tt class="docutils literal"><span class="pre">radio_fields</span></tt><a class="headerlink" href="#radio-fields" title="Permalink to this headline">¶</a></h4>
+<p>By default, Django's admin uses a select-box interface (&lt;select&gt;) for
+fields that are <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> or have <tt class="docutils literal"><span class="pre">choices</span></tt> set. If a field is present
+in <tt class="docutils literal"><span class="pre">radio_fields</span></tt>, Django will use a radio-button interface instead.
+Assuming <tt class="docutils literal"><span class="pre">group</span></tt> is a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> on the <tt class="docutils literal"><span class="pre">Person</span></tt> model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">radio_fields</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;group&quot;</span><span class="p">:</span> <span class="n">admin</span><span class="o">.</span><span class="n">VERTICAL</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>You have the choice of using <tt class="docutils literal"><span class="pre">HORIZONTAL</span></tt> or <tt class="docutils literal"><span class="pre">VERTICAL</span></tt> from the
+<tt class="docutils literal"><span class="pre">django.contrib.admin</span></tt> module.</p>
+<p>Don't include a field in <tt class="docutils literal"><span class="pre">radio_fields</span></tt> unless it's a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> or has
+<tt class="docutils literal"><span class="pre">choices</span></tt> set.</p>
+</div>
+<div class="section" id="s-raw-id-fields">
+<span id="raw-id-fields"></span><h4><tt class="docutils literal"><span class="pre">raw_id_fields</span></tt><a class="headerlink" href="#raw-id-fields" title="Permalink to this headline">¶</a></h4>
+<p>By default, Django's admin uses a select-box interface (&lt;select&gt;) for
+fields that are <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>. Sometimes you don't want to incur the
+overhead of having to select all the related instances to display in the
+drop-down.</p>
+<p><tt class="docutils literal"><span class="pre">raw_id_fields</span></tt> is a list of fields you would like to change
+into a <tt class="docutils literal"><span class="pre">Input</span></tt> widget for either a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> or <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">raw_id_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;newspaper&quot;</span><span class="p">,)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-save-as">
+<span id="save-as"></span><h4><tt class="docutils literal"><span class="pre">save_as</span></tt><a class="headerlink" href="#save-as" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">save_as</span></tt> to enable a &quot;save as&quot; feature on admin change forms.</p>
+<p>Normally, objects have three save options: &quot;Save&quot;, &quot;Save and continue editing&quot;
+and &quot;Save and add another&quot;. If <tt class="docutils literal"><span class="pre">save_as</span></tt> is <tt class="xref docutils literal"><span class="pre">True</span></tt>, &quot;Save and add another&quot;
+will be replaced by a &quot;Save as&quot; button.</p>
+<p>&quot;Save as&quot; means the object will be saved as a new object (with a new ID),
+rather than the old object.</p>
+<p>By default, <tt class="docutils literal"><span class="pre">save_as</span></tt> is set to <tt class="xref docutils literal"><span class="pre">False</span></tt>.</p>
+</div>
+<div class="section" id="s-save-on-top">
+<span id="save-on-top"></span><h4><tt class="docutils literal"><span class="pre">save_on_top</span></tt><a class="headerlink" href="#save-on-top" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">save_on_top</span></tt> to add save buttons across the top of your admin change
+forms.</p>
+<p>Normally, the save buttons appear only at the bottom of the forms. If you set
+<tt class="docutils literal"><span class="pre">save_on_top</span></tt>, the buttons will appear both on the top and the bottom.</p>
+<p>By default, <tt class="docutils literal"><span class="pre">save_on_top</span></tt> is set to <tt class="xref docutils literal"><span class="pre">False</span></tt>.</p>
+</div>
+<div class="section" id="s-search-fields">
+<span id="search-fields"></span><h4><tt class="docutils literal"><span class="pre">search_fields</span></tt><a class="headerlink" href="#search-fields" title="Permalink to this headline">¶</a></h4>
+<p>Set <tt class="docutils literal"><span class="pre">search_fields</span></tt> to enable a search box on the admin change list page.
+This should be set to a list of field names that will be searched whenever
+somebody submits a search query in that text box.</p>
+<p>These fields should be some kind of text field, such as <tt class="docutils literal"><span class="pre">CharField</span></tt> or
+<tt class="docutils literal"><span class="pre">TextField</span></tt>. You can also perform a related lookup on a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> with
+the lookup API &quot;follow&quot; notation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">search_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;foreign_key__related_fieldname&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>When somebody does a search in the admin search box, Django splits the search
+query into words and returns all objects that contain each of the words, case
+insensitive, where each word must be in at least one of <tt class="docutils literal"><span class="pre">search_fields</span></tt>. For
+example, if <tt class="docutils literal"><span class="pre">search_fields</span></tt> is set to <tt class="docutils literal"><span class="pre">['first_name',</span> <span class="pre">'last_name']</span></tt> and a
+user searches for <tt class="docutils literal"><span class="pre">john</span> <span class="pre">lennon</span></tt>, Django will do the equivalent of this SQL
+<tt class="docutils literal"><span class="pre">WHERE</span></tt> clause:</p>
+<div class="highlight-python"><pre>WHERE (first_name ILIKE '%john%' OR last_name ILIKE '%john%')
+AND (first_name ILIKE '%lennon%' OR last_name ILIKE '%lennon%')</pre>
+</div>
+<p>For faster and/or more restrictive searches, prefix the field name
+with an operator:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">^</span></tt></dt>
+<dd><p class="first">Matches the beginning of the field. For example, if <tt class="docutils literal"><span class="pre">search_fields</span></tt> is
+set to <tt class="docutils literal"><span class="pre">['^first_name',</span> <span class="pre">'^last_name']</span></tt> and a user searches for
+<tt class="docutils literal"><span class="pre">john</span> <span class="pre">lennon</span></tt>, Django will do the equivalent of this SQL <tt class="docutils literal"><span class="pre">WHERE</span></tt>
+clause:</p>
+<div class="highlight-python"><pre>WHERE (first_name ILIKE 'john%' OR last_name ILIKE 'john%')
+AND (first_name ILIKE 'lennon%' OR last_name ILIKE 'lennon%')</pre>
+</div>
+<p class="last">This query is more efficient than the normal <tt class="docutils literal"><span class="pre">'%john%'</span></tt> query, because
+the database only needs to check the beginning of a column's data, rather
+than seeking through the entire column's data. Plus, if the column has an
+index on it, some databases may be able to use the index for this query,
+even though it's a <tt class="docutils literal"><span class="pre">LIKE</span></tt> query.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">=</span></tt></dt>
+<dd><p class="first">Matches exactly, case-insensitive. For example, if
+<tt class="docutils literal"><span class="pre">search_fields</span></tt> is set to <tt class="docutils literal"><span class="pre">['=first_name',</span> <span class="pre">'=last_name']</span></tt> and
+a user searches for <tt class="docutils literal"><span class="pre">john</span> <span class="pre">lennon</span></tt>, Django will do the equivalent
+of this SQL <tt class="docutils literal"><span class="pre">WHERE</span></tt> clause:</p>
+<div class="highlight-python"><pre>WHERE (first_name ILIKE 'john' OR last_name ILIKE 'john')
+AND (first_name ILIKE 'lennon' OR last_name ILIKE 'lennon')</pre>
+</div>
+<p class="last">Note that the query input is split by spaces, so, following this example,
+it's currently not possible to search for all records in which
+<tt class="docutils literal"><span class="pre">first_name</span></tt> is exactly <tt class="docutils literal"><span class="pre">'john</span> <span class="pre">winston'</span></tt> (containing a space).</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">&#64;</span></tt></dt>
+<dd>Performs a full-text match. This is like the default search method but uses
+an index. Currently this is only available for MySQL.</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="s-modeladmin-methods">
+<span id="modeladmin-methods"></span><h3><tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> methods<a class="headerlink" href="#modeladmin-methods" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="s-save-model-self-request-obj-form-change">
+<span id="save-model-self-request-obj-form-change"></span><h4><tt class="docutils literal"><span class="pre">save_model(self,</span> <span class="pre">request,</span> <span class="pre">obj,</span> <span class="pre">form,</span> <span class="pre">change)</span></tt><a class="headerlink" href="#save-model-self-request-obj-form-change" title="Permalink to this headline">¶</a></h4>
+<p>The <tt class="docutils literal"><span class="pre">save_model</span></tt> method is given the <tt class="docutils literal"><span class="pre">HttpRequest</span></tt>, a model instance,
+a <tt class="docutils literal"><span class="pre">ModelForm</span></tt> instance and a boolean value based on whether it is adding or
+changing the object. Here you can do any pre- or post-save operations.</p>
+<p>For example to attach <tt class="docutils literal"><span class="pre">request.user</span></tt> to the object prior to saving:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">save_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-save-formset-self-request-form-formset-change">
+<span id="save-formset-self-request-form-formset-change"></span><h4><tt class="docutils literal"><span class="pre">save_formset(self,</span> <span class="pre">request,</span> <span class="pre">form,</span> <span class="pre">formset,</span> <span class="pre">change)</span></tt><a class="headerlink" href="#save-formset-self-request-form-formset-change" title="Permalink to this headline">¶</a></h4>
+<p>The <tt class="docutils literal"><span class="pre">save_formset</span></tt> method is given the <tt class="docutils literal"><span class="pre">HttpRequest</span></tt>, the parent
+<tt class="docutils literal"><span class="pre">ModelForm</span></tt> instance and a boolean value based on whether it is adding or
+changing the parent object.</p>
+<p>For example to attach <tt class="docutils literal"><span class="pre">request.user</span></tt> to each changed formset
+model instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">save_formset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">formset</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="n">instances</span> <span class="o">=</span> <span class="n">formset</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">commit</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span> <span class="n">instances</span><span class="p">:</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">formset</span><span class="o">.</span><span class="n">save_m2m</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-modeladmin-media-definitions">
+<span id="modeladmin-media-definitions"></span><h3><tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> media definitions<a class="headerlink" href="#modeladmin-media-definitions" title="Permalink to this headline">¶</a></h3>
+<p>There are times where you would like add a bit of CSS and/or JavaScript to
+the add/change views. This can be accomplished by using a Media inner class
+on your <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Media</span><span class="p">:</span>
+        <span class="n">css</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&quot;all&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s">&quot;my_styles.css&quot;</span><span class="p">,)</span>
+        <span class="p">}</span>
+        <span class="n">js</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;my_code.js&quot;</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p>Keep in mind that this will be prepended with <tt class="docutils literal"><span class="pre">MEDIA_URL</span></tt>. The same rules
+apply as <a class="reference external" href="../../topics/forms/media.html#topics-forms-media"><em>regular media definitions on forms</em></a>.</p>
+</div>
+<div class="section" id="s-adding-custom-validation-to-the-admin">
+<span id="adding-custom-validation-to-the-admin"></span><h3>Adding custom validation to the admin<a class="headerlink" href="#adding-custom-validation-to-the-admin" title="Permalink to this headline">¶</a></h3>
+<p>Adding custom validation of data in the admin is quite easy. The automatic admin
+interfaces reuses <tt class="xref docutils literal"><span class="pre">django.forms</span></tt>, and the <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> class gives you
+the ability define your own form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ArticleAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">MyArticleAdminForm</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">MyArticleAdminForm</span></tt> can be defined anywhere as long as you import where
+needed. Now within your form you can add your own custom validation for
+any field:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyArticleAdminForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Article</span>
+
+    <span class="k">def</span> <span class="nf">clean_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># do something that validates your data</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>It is important you use a <tt class="docutils literal"><span class="pre">ModelForm</span></tt> here otherwise things can break. See the
+<a class="reference external" href="../forms/index.html#ref-forms-index"><em>forms</em></a> documentation on <a class="reference external" href="../forms/validation.html#ref-forms-validation"><em>custom validation</em></a> for more information.</p>
+</div>
+</div>
+<div class="section" id="s-inlinemodeladmin-objects">
+<span id="s-admin-inlines"></span><span id="inlinemodeladmin-objects"></span><span id="admin-inlines"></span><h2><tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> objects<a class="headerlink" href="#inlinemodeladmin-objects" title="Permalink to this headline">¶</a></h2>
+<p>The admin interface has the ability to edit models on the same page as a
+parent model. These are called inlines. You can add them to a model by
+specifying them in a <tt class="docutils literal"><span class="pre">ModelAdmin.inlines</span></tt> attribute:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">BookInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">TabularInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+
+<span class="k">class</span> <span class="nc">AuthorAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">BookInline</span><span class="p">,</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+<p>Django provides two subclasses of <tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> and they are:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">TabularInline</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">StackedInline</span></tt></li>
+</ul>
+<p>The difference between these two is merely the template used to render them.</p>
+<div class="section" id="s-inlinemodeladmin-options">
+<span id="inlinemodeladmin-options"></span><h3><tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> options<a class="headerlink" href="#inlinemodeladmin-options" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> class is a subclass of <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> so it inherits
+all the same functionality as well as some of its own:</p>
+<div class="section" id="s-model">
+<span id="model"></span><h4><tt class="docutils literal"><span class="pre">model</span></tt><a class="headerlink" href="#model" title="Permalink to this headline">¶</a></h4>
+<p>The model in which the inline is using. This is required.</p>
+</div>
+<div class="section" id="s-fk-name">
+<span id="fk-name"></span><h4><tt class="docutils literal"><span class="pre">fk_name</span></tt><a class="headerlink" href="#fk-name" title="Permalink to this headline">¶</a></h4>
+<p>The name of the foreign key on the model. In most cases this will be dealt
+with automatically, but <tt class="docutils literal"><span class="pre">fk_name</span></tt> must be specified explicitly if there are
+more than one foreign key to the same parent model.</p>
+</div>
+<div class="section" id="s-formset">
+<span id="formset"></span><h4><tt class="docutils literal"><span class="pre">formset</span></tt><a class="headerlink" href="#formset" title="Permalink to this headline">¶</a></h4>
+<p>This defaults to <tt class="docutils literal"><span class="pre">BaseInlineFormSet</span></tt>. Using your own formset can give you
+many possibilities of customization. Inlines are built around
+<a class="reference external" href="../../topics/forms/modelforms.html#model-formsets"><em>model formsets</em></a>.</p>
+</div>
+<div class="section" id="s-id1">
+<span id="id1"></span><h4><tt class="docutils literal"><span class="pre">form</span></tt><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>The value for <tt class="docutils literal"><span class="pre">form</span></tt> is inherited from <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt>. This is what is
+passed through to <tt class="docutils literal"><span class="pre">formset_factory</span></tt> when creating the formset for this
+inline.</p>
+</div>
+<div class="section" id="s-extra">
+<span id="extra"></span><h4><tt class="docutils literal"><span class="pre">extra</span></tt><a class="headerlink" href="#extra" title="Permalink to this headline">¶</a></h4>
+<p>This controls the number of extra forms the formset will display in addition
+to the initial forms. See the
+<a class="reference external" href="../../topics/forms/formsets.html#topics-forms-formsets"><em>formsets documentation</em></a> for more information.</p>
+</div>
+<div class="section" id="s-max-num">
+<span id="max-num"></span><h4><tt class="docutils literal"><span class="pre">max_num</span></tt><a class="headerlink" href="#max-num" title="Permalink to this headline">¶</a></h4>
+<p>This controls the maximum number of forms to show in the inline. This doesn't
+directly correlate to the number of objects, but can if the value is small
+enough. See <a class="reference external" href="../../topics/forms/modelforms.html#model-formsets-max-num"><em>Limiting the number of editable objects</em></a> for more information.</p>
+</div>
+<div class="section" id="s-id2">
+<span id="id2"></span><h4><tt class="docutils literal"><span class="pre">raw_id_fields</span></tt><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<p>By default, Django's admin uses a select-box interface (&lt;select&gt;) for
+fields that are <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>. Sometimes you don't want to incur the
+overhead of having to select all the related instances to display in the
+drop-down.</p>
+<p><tt class="docutils literal"><span class="pre">raw_id_fields</span></tt> is a list of fields you would like to change
+into a <tt class="docutils literal"><span class="pre">Input</span></tt> widget for either a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> or <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">BookInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">TabularInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+    <span class="n">raw_id_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;pages&quot;</span><span class="p">,)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-template">
+<span id="template"></span><h4><tt class="docutils literal"><span class="pre">template</span></tt><a class="headerlink" href="#template" title="Permalink to this headline">¶</a></h4>
+<p>The template used to render the inline on the page.</p>
+</div>
+<div class="section" id="s-verbose-name">
+<span id="verbose-name"></span><h4><tt class="docutils literal"><span class="pre">verbose_name</span></tt><a class="headerlink" href="#verbose-name" title="Permalink to this headline">¶</a></h4>
+<p>An override to the <tt class="docutils literal"><span class="pre">verbose_name</span></tt> found in the model's inner <tt class="docutils literal"><span class="pre">Meta</span></tt> class.</p>
+</div>
+<div class="section" id="s-verbose-name-plural">
+<span id="verbose-name-plural"></span><h4><tt class="docutils literal"><span class="pre">verbose_name_plural</span></tt><a class="headerlink" href="#verbose-name-plural" title="Permalink to this headline">¶</a></h4>
+<p>An override to the <tt class="docutils literal"><span class="pre">verbose_name_plural</span></tt> found in the model's inner <tt class="docutils literal"><span class="pre">Meta</span></tt>
+class.</p>
+</div>
+</div>
+<div class="section" id="s-working-with-a-model-with-two-or-more-foreign-keys-to-the-same-parent-model">
+<span id="working-with-a-model-with-two-or-more-foreign-keys-to-the-same-parent-model"></span><h3>Working with a model with two or more foreign keys to the same parent model<a class="headerlink" href="#working-with-a-model-with-two-or-more-foreign-keys-to-the-same-parent-model" title="Permalink to this headline">¶</a></h3>
+<p>It is sometimes possible to have more than one foreign key to the same model.
+Take this model for instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Friendship</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">to_person</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s">&quot;friends&quot;</span><span class="p">)</span>
+    <span class="n">from_person</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s">&quot;from_friends&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you wanted to display an inline on the <tt class="docutils literal"><span class="pre">Person</span></tt> admin add/change pages
+you need to explicitly define the foreign key since it is unable to do so
+automatically:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">FriendshipInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">TabularInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Friendship</span>
+    <span class="n">fk_name</span> <span class="o">=</span> <span class="s">&quot;to_person&quot;</span>
+
+<span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">FriendshipInline</span><span class="p">,</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-working-with-many-to-many-intermediary-models">
+<span id="working-with-many-to-many-intermediary-models"></span><h3>Working with Many-to-Many Intermediary Models<a class="headerlink" href="#working-with-many-to-many-intermediary-models" title="Permalink to this headline">¶</a></h3>
+<p>By default, admin widgets for many-to-many relations will be displayed inline
+on whichever model contains the actual reference to the <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt>.
+However, when you specify an intermediary model using the <tt class="docutils literal"><span class="pre">through</span></tt>
+argument to a <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt>, the admin will not display a widget by
+default. This is because each instance of that intermediary model requires
+more information than could be displayed in a single widget, and the layout
+required for multiple widgets will vary depending on the intermediate model.</p>
+<p>However, we still want to be able to edit that information inline. Fortunately,
+this is easy to do with inline admin models. Suppose we have the following
+models:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">128</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Group</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">128</span><span class="p">)</span>
+    <span class="n">members</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">through</span><span class="o">=</span><span class="s">&#39;Membership&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Membership</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">person</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Person</span><span class="p">)</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Group</span><span class="p">)</span>
+    <span class="n">date_joined</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">invite_reason</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">64</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The first step in displaying this intermediate model in the admin is to
+define an inline class for the <tt class="docutils literal"><span class="pre">Membership</span></tt> model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MembershipInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">TabularInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Membership</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="mf">1</span>
+</pre></div>
+</div>
+<p>This simple example uses the default <tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> values for the
+<tt class="docutils literal"><span class="pre">Membership</span></tt> model, and limits the extra add forms to one. This could be
+customized using any of the options available to <tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> classes.</p>
+<p>Now create admin views for the <tt class="docutils literal"><span class="pre">Person</span></tt> and <tt class="docutils literal"><span class="pre">Group</span></tt> models:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">(</span><span class="n">MembershipInline</span><span class="p">,)</span>
+
+<span class="k">class</span> <span class="nc">GroupAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">(</span><span class="n">MembershipInline</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p>Finally, register your <tt class="docutils literal"><span class="pre">Person</span></tt> and <tt class="docutils literal"><span class="pre">Group</span></tt> models with the admin site:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="n">PersonAdmin</span><span class="p">)</span>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Group</span><span class="p">,</span> <span class="n">GroupAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now your admin site is set up to edit <tt class="docutils literal"><span class="pre">Membership</span></tt> objects inline from
+either the <tt class="docutils literal"><span class="pre">Person</span></tt> or the <tt class="docutils literal"><span class="pre">Group</span></tt> detail pages.</p>
+</div>
+<div class="section" id="s-using-generic-relations-as-an-inline">
+<span id="using-generic-relations-as-an-inline"></span><h3>Using generic relations as an inline<a class="headerlink" href="#using-generic-relations-as-an-inline" title="Permalink to this headline">¶</a></h3>
+<p>It is possible to use an inline with generically related objects. Let's say
+you have the following models:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Image</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ImageField</span><span class="p">(</span><span class="n">upload_to</span><span class="o">=</span><span class="s">&quot;images&quot;</span><span class="p">)</span>
+    <span class="n">content_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ContentType</span><span class="p">)</span>
+    <span class="n">object_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">()</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">generic</span><span class="o">.</span><span class="n">GenericForeignKey</span><span class="p">(</span><span class="s">&quot;content_type&quot;</span><span class="p">,</span> <span class="s">&quot;object_id&quot;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Product</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to allow editing and creating <tt class="docutils literal"><span class="pre">Image</span></tt> instance on the <tt class="docutils literal"><span class="pre">Product</span></tt>
+add/change views you can simply use <tt class="docutils literal"><span class="pre">GenericInlineModelAdmin</span></tt> provided by
+<tt class="docutils literal"><span class="pre">django.contrib.contenttypes.generic</span></tt>. In your <tt class="docutils literal"><span class="pre">admin.py</span></tt> for this
+example app:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.contrib.contenttypes</span> <span class="kn">import</span> <span class="n">generic</span>
+
+<span class="kn">from</span> <span class="nn">myproject.myapp.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">Product</span>
+
+<span class="k">class</span> <span class="nc">ImageInline</span><span class="p">(</span><span class="n">generic</span><span class="o">.</span><span class="n">GenericTabularInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Image</span>
+
+<span class="k">class</span> <span class="nc">ProductAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ImageInline</span><span class="p">,</span>
+    <span class="p">]</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Product</span><span class="p">,</span> <span class="n">ProductAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">django.contrib.contenttypes.generic</span></tt> provides both a <tt class="docutils literal"><span class="pre">GenericTabularInline</span></tt>
+and <tt class="docutils literal"><span class="pre">GenericStackedInline</span></tt> and behave just like any other inline. See the
+<a class="reference external" href="contenttypes.html#ref-contrib-contenttypes"><em>contenttypes documentation</em></a> for more specific
+information.</p>
+</div>
+</div>
+<div class="section" id="s-overriding-admin-templates">
+<span id="overriding-admin-templates"></span><h2>Overriding Admin Templates<a class="headerlink" href="#overriding-admin-templates" title="Permalink to this headline">¶</a></h2>
+<p>It is relatively easy to override many of the templates which the admin module
+uses to generate the various pages of an admin site. You can even override a few
+of these templates for a specific app, or a specific model.</p>
+<div class="section" id="s-set-up-your-projects-admin-template-directories">
+<span id="set-up-your-projects-admin-template-directories"></span><h3>Set up your projects admin template directories<a class="headerlink" href="#set-up-your-projects-admin-template-directories" title="Permalink to this headline">¶</a></h3>
+<p>The admin template files are located in the <tt class="docutils literal"><span class="pre">contrib/admin/templates/admin</span></tt>
+directory.</p>
+<p>In order to override one or more of them, first create an <tt class="docutils literal"><span class="pre">admin</span></tt> directory in
+your project's <tt class="docutils literal"><span class="pre">templates</span></tt> directory. This can be any of the directories you
+specified in <tt class="docutils literal"><span class="pre">TEMPLATE_DIRS</span></tt>.</p>
+<p>Within this <tt class="docutils literal"><span class="pre">admin</span></tt> directory, create sub-directories named after your app.
+Within these app subdirectories create sub-directories named after your models.
+Note, that the admin app will lowercase the model name when looking for the
+directory, so make sure you name the directory in all lowercase if you are going
+to run your app on a case-sensitive filesystem.</p>
+<p>To override an admin template for a specific app, copy and edit the template
+from the <tt class="docutils literal"><span class="pre">django/contrib/admin/templates/admin</span></tt> directory, and save it to one
+of the directories you just created.</p>
+<p>For example, if we wanted to add a tool to the change list view for all the
+models in an app named <tt class="docutils literal"><span class="pre">my_app</span></tt>, we would copy
+<tt class="docutils literal"><span class="pre">contrib/admin/templates/admin/change_list.html</span></tt> to the
+<tt class="docutils literal"><span class="pre">templates/admin/my_app/</span></tt> directory of our project, and make any necessary
+changes.</p>
+<p>If we wanted to add a tool to the change list view for only a specific model
+named 'Page', we would copy that same file to the
+<tt class="docutils literal"><span class="pre">templates/admin/my_app/page</span></tt> directory of our project.</p>
+</div>
+<div class="section" id="s-overriding-vs-replacing-an-admin-template">
+<span id="overriding-vs-replacing-an-admin-template"></span><h3>Overriding vs. replacing an admin template<a class="headerlink" href="#overriding-vs-replacing-an-admin-template" title="Permalink to this headline">¶</a></h3>
+<p>Because of the modular design of the admin templates, it is usually neither
+necessary nor advisable to replace an entire template. It is almost always
+better to override only the section of the template which you need to change.</p>
+<p>To continue the example above, we want to add a new link next to the <tt class="docutils literal"><span class="pre">History</span></tt>
+tool for the <tt class="docutils literal"><span class="pre">Page</span></tt> model. After looking at <tt class="docutils literal"><span class="pre">change_form.html</span></tt> we determine
+that we only need to override the <tt class="docutils literal"><span class="pre">object-tools</span></tt> block. Therefore here is our
+new <tt class="docutils literal"><span class="pre">change_form.html</span></tt> :</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="cp">{%</span> <span class="k">extends</span> <span class="s2">&quot;admin/change_form.html&quot;</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">load</span> <span class="nv">i18n</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">object</span><span class="o">-</span><span class="nv">tools</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">change</span> <span class="cp">%}{%</span> <span class="k">if</span> <span class="k">not</span> <span class="nv">is_popup</span> <span class="cp">%}</span>
+  <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;object-tools&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;history/&quot;</span> <span class="na">class=</span><span class="s">&quot;historylink&quot;</span><span class="nt">&gt;</span><span class="cp">{%</span> <span class="k">trans</span> <span class="s2">&quot;History&quot;</span> <span class="cp">%}</span><span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+    <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;mylink/&quot;</span> <span class="na">class=</span><span class="s">&quot;historylink&quot;</span><span class="nt">&gt;</span>My Link<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+    <span class="cp">{%</span> <span class="k">if</span> <span class="nv">has_absolute_url</span> <span class="cp">%}</span>
+        <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;../../../r/</span><span class="cp">{{</span> <span class="nv">content_type_id</span> <span class="cp">}}</span><span class="s">/</span><span class="cp">{{</span> <span class="nv">object_id</span> <span class="cp">}}</span><span class="s">/&quot;</span> <span class="na">class=</span><span class="s">&quot;viewsitelink&quot;</span><span class="nt">&gt;</span>
+            <span class="cp">{%</span> <span class="k">trans</span> <span class="s2">&quot;View on site&quot;</span> <span class="cp">%}</span><span class="nt">&lt;/a&gt;</span>
+        <span class="nt">&lt;/li&gt;</span>
+    <span class="cp">{%</span> <span class="k">endif</span><span class="cp">%}</span>
+  <span class="nt">&lt;/ul&gt;</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+<p>And that's it! If we placed this file in the <tt class="docutils literal"><span class="pre">templates/admin/my_app</span></tt>
+directory, our link would appear on every model's change form.</p>
+</div>
+<div class="section" id="s-templates-which-may-be-overridden-per-app-or-model">
+<span id="templates-which-may-be-overridden-per-app-or-model"></span><h3>Templates which may be overridden per app or model<a class="headerlink" href="#templates-which-may-be-overridden-per-app-or-model" title="Permalink to this headline">¶</a></h3>
+<p>Not every template in <tt class="docutils literal"><span class="pre">contrib\admin\templates\admin</span></tt> may be overridden per
+app or per model. The following can:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">change_form.html</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">change_list.html</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">delete_confirmation.html</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">object_history.html</span></tt></li>
+</ul>
+<p>For those templates that cannot be overridden in this way, you may still
+override them for your entire project. Just place the new version in your
+<tt class="docutils literal"><span class="pre">templates/admin</span></tt> directory. This is particularly useful to create custom 404
+and 500 pages.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Some of the admin templates, such as <tt class="docutils literal"><span class="pre">change_list_request.html</span></tt> are used
+to render custom inclusion tags. These may be overridden, but in such cases
+you are probably better off creating your own version of the tag in question
+and giving it a different name. That way you can use it selectively.</p>
+</div>
+</div>
+<div class="section" id="s-root-and-login-templates">
+<span id="root-and-login-templates"></span><h3>Root and login templates<a class="headerlink" href="#root-and-login-templates" title="Permalink to this headline">¶</a></h3>
+<p>If you wish to change the index or login templates, you are better off creating
+your own <tt class="docutils literal"><span class="pre">AdminSite</span></tt> instance (see below), and changing the <tt class="docutils literal"><span class="pre">index_template</span></tt>
+or <tt class="docutils literal"><span class="pre">login_template</span></tt> properties.</p>
+</div>
+</div>
+<div class="section" id="s-adminsite-objects">
+<span id="adminsite-objects"></span><h2><tt class="docutils literal"><span class="pre">AdminSite</span></tt> objects<a class="headerlink" href="#adminsite-objects" title="Permalink to this headline">¶</a></h2>
+<p>A Django administrative site is represented by an instance of
+<tt class="docutils literal"><span class="pre">django.contrib.admin.sites.AdminSite</span></tt>; by default, an instance of
+this class is created as <tt class="docutils literal"><span class="pre">django.contrib.admin.site</span></tt> and you can
+register your models and <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> instances with it.</p>
+<p>If you'd like to set up your own administrative site with custom
+behavior, however, you're free to subclass <tt class="docutils literal"><span class="pre">AdminSite</span></tt> and override
+or add anything you like. Then, simply create an instance of your
+<tt class="docutils literal"><span class="pre">AdminSite</span></tt> subclass (the same way you'd instantiate any other
+Python class), and register your models and <tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> subclasses
+with it instead of using the default.</p>
+<div class="section" id="s-hooking-adminsite-instances-into-your-urlconf">
+<span id="hooking-adminsite-instances-into-your-urlconf"></span><h3>Hooking <tt class="docutils literal"><span class="pre">AdminSite</span></tt> instances into your URLconf<a class="headerlink" href="#hooking-adminsite-instances-into-your-urlconf" title="Permalink to this headline">¶</a></h3>
+<p>The last step in setting up the Django admin is to hook your <tt class="docutils literal"><span class="pre">AdminSite</span></tt>
+instance into your URLconf. Do this by pointing a given URL at the
+<tt class="docutils literal"><span class="pre">AdminSite.root</span></tt> method.</p>
+<p>In this example, we register the default <tt class="docutils literal"><span class="pre">AdminSite</span></tt> instance
+<tt class="docutils literal"><span class="pre">django.contrib.admin.site</span></tt> at the URL <tt class="docutils literal"><span class="pre">/admin/</span></tt></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># urls.py</span>
+<span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+
+<span class="n">admin</span><span class="o">.</span><span class="n">autodiscover</span><span class="p">()</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">&#39;^admin/(.*)&#39;</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">root</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Above we used <tt class="docutils literal"><span class="pre">admin.autodiscover()</span></tt> to automatically load the
+<tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> admin.py modules.</p>
+<p>In this example, we register the <tt class="docutils literal"><span class="pre">AdminSite</span></tt> instance
+<tt class="docutils literal"><span class="pre">myproject.admin.admin_site</span></tt> at the URL <tt class="docutils literal"><span class="pre">/myadmin/</span></tt></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># urls.py</span>
+<span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">myproject.admin</span> <span class="kn">import</span> <span class="n">admin_site</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">&#39;^myadmin/(.*)&#39;</span><span class="p">,</span> <span class="n">admin_site</span><span class="o">.</span><span class="n">root</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>There is really no need to use autodiscover when using your own <tt class="docutils literal"><span class="pre">AdminSite</span></tt>
+instance since you will likely be importing all the per-app admin.py modules
+in your <tt class="docutils literal"><span class="pre">myproject.admin</span></tt> module.</p>
+<p>Note that the regular expression in the URLpattern <em>must</em> group everything in
+the URL that comes after the URL root -- hence the <tt class="docutils literal"><span class="pre">(.*)</span></tt> in these examples.</p>
+</div>
+<div class="section" id="s-multiple-admin-sites-in-the-same-urlconf">
+<span id="multiple-admin-sites-in-the-same-urlconf"></span><h3>Multiple admin sites in the same URLconf<a class="headerlink" href="#multiple-admin-sites-in-the-same-urlconf" title="Permalink to this headline">¶</a></h3>
+<p>It's easy to create multiple instances of the admin site on the same
+Django-powered Web site. Just create multiple instances of <tt class="docutils literal"><span class="pre">AdminSite</span></tt> and
+root each one at a different URL.</p>
+<p>In this example, the URLs <tt class="docutils literal"><span class="pre">/basic-admin/</span></tt> and <tt class="docutils literal"><span class="pre">/advanced-admin/</span></tt> feature
+separate versions of the admin site -- using the <tt class="docutils literal"><span class="pre">AdminSite</span></tt> instances
+<tt class="docutils literal"><span class="pre">myproject.admin.basic_site</span></tt> and <tt class="docutils literal"><span class="pre">myproject.admin.advanced_site</span></tt>,
+respectively:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># urls.py</span>
+<span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">myproject.admin</span> <span class="kn">import</span> <span class="n">basic_site</span><span class="p">,</span> <span class="n">advanced_site</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">&#39;^basic-admin/(.*)&#39;</span><span class="p">,</span> <span class="n">basic_site</span><span class="o">.</span><span class="n">root</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">&#39;^advanced-admin/(.*)&#39;</span><span class="p">,</span> <span class="n">advanced_site</span><span class="o">.</span><span class="n">root</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">The Django admin site</a><ul>
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#modeladmin-objects"><tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> objects</a><ul>
+<li><a class="reference external" href="#modeladmin-options"><tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> Options</a><ul>
+<li><a class="reference external" href="#date-hierarchy"><tt class="docutils literal"><span class="pre">date_hierarchy</span></tt></a></li>
+<li><a class="reference external" href="#form"><tt class="docutils literal"><span class="pre">form</span></tt></a></li>
+<li><a class="reference external" href="#fieldsets"><tt class="docutils literal"><span class="pre">fieldsets</span></tt></a></li>
+<li><a class="reference external" href="#fields"><tt class="docutils literal"><span class="pre">fields</span></tt></a></li>
+<li><a class="reference external" href="#exclude"><tt class="docutils literal"><span class="pre">exclude</span></tt></a></li>
+<li><a class="reference external" href="#filter-horizontal"><tt class="docutils literal"><span class="pre">filter_horizontal</span></tt></a></li>
+<li><a class="reference external" href="#filter-vertical"><tt class="docutils literal"><span class="pre">filter_vertical</span></tt></a></li>
+<li><a class="reference external" href="#list-display"><tt class="docutils literal"><span class="pre">list_display</span></tt></a></li>
+<li><a class="reference external" href="#list-display-links"><tt class="docutils literal"><span class="pre">list_display_links</span></tt></a></li>
+<li><a class="reference external" href="#list-filter"><tt class="docutils literal"><span class="pre">list_filter</span></tt></a></li>
+<li><a class="reference external" href="#list-per-page"><tt class="docutils literal"><span class="pre">list_per_page</span></tt></a></li>
+<li><a class="reference external" href="#list-select-related"><tt class="docutils literal"><span class="pre">list_select_related</span></tt></a></li>
+<li><a class="reference external" href="#inlines"><tt class="docutils literal"><span class="pre">inlines</span></tt></a></li>
+<li><a class="reference external" href="#ordering"><tt class="docutils literal"><span class="pre">ordering</span></tt></a></li>
+<li><a class="reference external" href="#prepopulated-fields"><tt class="docutils literal"><span class="pre">prepopulated_fields</span></tt></a></li>
+<li><a class="reference external" href="#radio-fields"><tt class="docutils literal"><span class="pre">radio_fields</span></tt></a></li>
+<li><a class="reference external" href="#raw-id-fields"><tt class="docutils literal"><span class="pre">raw_id_fields</span></tt></a></li>
+<li><a class="reference external" href="#save-as"><tt class="docutils literal"><span class="pre">save_as</span></tt></a></li>
+<li><a class="reference external" href="#save-on-top"><tt class="docutils literal"><span class="pre">save_on_top</span></tt></a></li>
+<li><a class="reference external" href="#search-fields"><tt class="docutils literal"><span class="pre">search_fields</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#modeladmin-methods"><tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> methods</a><ul>
+<li><a class="reference external" href="#save-model-self-request-obj-form-change"><tt class="docutils literal"><span class="pre">save_model(self,</span> <span class="pre">request,</span> <span class="pre">obj,</span> <span class="pre">form,</span> <span class="pre">change)</span></tt></a></li>
+<li><a class="reference external" href="#save-formset-self-request-form-formset-change"><tt class="docutils literal"><span class="pre">save_formset(self,</span> <span class="pre">request,</span> <span class="pre">form,</span> <span class="pre">formset,</span> <span class="pre">change)</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#modeladmin-media-definitions"><tt class="docutils literal"><span class="pre">ModelAdmin</span></tt> media definitions</a></li>
+<li><a class="reference external" href="#adding-custom-validation-to-the-admin">Adding custom validation to the admin</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#inlinemodeladmin-objects"><tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> objects</a><ul>
+<li><a class="reference external" href="#inlinemodeladmin-options"><tt class="docutils literal"><span class="pre">InlineModelAdmin</span></tt> options</a><ul>
+<li><a class="reference external" href="#model"><tt class="docutils literal"><span class="pre">model</span></tt></a></li>
+<li><a class="reference external" href="#fk-name"><tt class="docutils literal"><span class="pre">fk_name</span></tt></a></li>
+<li><a class="reference external" href="#formset"><tt class="docutils literal"><span class="pre">formset</span></tt></a></li>
+<li><a class="reference external" href="#id1"><tt class="docutils literal"><span class="pre">form</span></tt></a></li>
+<li><a class="reference external" href="#extra"><tt class="docutils literal"><span class="pre">extra</span></tt></a></li>
+<li><a class="reference external" href="#max-num"><tt class="docutils literal"><span class="pre">max_num</span></tt></a></li>
+<li><a class="reference external" href="#id2"><tt class="docutils literal"><span class="pre">raw_id_fields</span></tt></a></li>
+<li><a class="reference external" href="#template"><tt class="docutils literal"><span class="pre">template</span></tt></a></li>
+<li><a class="reference external" href="#verbose-name"><tt class="docutils literal"><span class="pre">verbose_name</span></tt></a></li>
+<li><a class="reference external" href="#verbose-name-plural"><tt class="docutils literal"><span class="pre">verbose_name_plural</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#working-with-a-model-with-two-or-more-foreign-keys-to-the-same-parent-model">Working with a model with two or more foreign keys to the same parent model</a></li>
+<li><a class="reference external" href="#working-with-many-to-many-intermediary-models">Working with Many-to-Many Intermediary Models</a></li>
+<li><a class="reference external" href="#using-generic-relations-as-an-inline">Using generic relations as an inline</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#overriding-admin-templates">Overriding Admin Templates</a><ul>
+<li><a class="reference external" href="#set-up-your-projects-admin-template-directories">Set up your projects admin template directories</a></li>
+<li><a class="reference external" href="#overriding-vs-replacing-an-admin-template">Overriding vs. replacing an admin template</a></li>
+<li><a class="reference external" href="#templates-which-may-be-overridden-per-app-or-model">Templates which may be overridden per app or model</a></li>
+<li><a class="reference external" href="#root-and-login-templates">Root and login templates</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#adminsite-objects"><tt class="docutils literal"><span class="pre">AdminSite</span></tt> objects</a><ul>
+<li><a class="reference external" href="#hooking-adminsite-instances-into-your-urlconf">Hooking <tt class="docutils literal"><span class="pre">AdminSite</span></tt> instances into your URLconf</a></li>
+<li><a class="reference external" href="#multiple-admin-sites-in-the-same-urlconf">Multiple admin sites in the same URLconf</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="index.html">The &#8220;django.contrib&#8221; add-ons</a></li>
+    
+    
+      <li>Next: <a href="auth.html"><tt class="docutils literal"><span class="pre">django.contrib.auth</span></tt></a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">API Reference</a>
+        
+          <ul><li><a href="index.html">The &#8220;django.contrib&#8221; add-ons</a>
+        
+        <ul><li>The Django admin site</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/ref/contrib/admin.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="index.html" title="The &amp;#8220;django.contrib&amp;#8221; add-ons">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="auth.html" title="&lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;django.contrib.auth&lt;/span&gt;&lt;/tt&gt;">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

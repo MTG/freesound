@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FAQ: Installation &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Django FAQ" href="index.html" />
+    <link rel="next" title="FAQ: Using Django" href="usage.html" />
+    <link rel="prev" title="FAQ: General" href="general.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="general.html" title="FAQ: General">previous</a> 
+     |
+    <a href="index.html" title="Django FAQ" accesskey="U">up</a>
+   |
+    <a href="usage.html" title="FAQ: Using Django">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="faq-install">
+            
+  
+  <div class="section" id="s-faq-installation">
+<span id="s-faq-install"></span><span id="faq-installation"></span><span id="faq-install"></span><h1>FAQ: Installation<a class="headerlink" href="#faq-installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="s-how-do-i-get-started">
+<span id="how-do-i-get-started"></span><h2>How do I get started?<a class="headerlink" href="#how-do-i-get-started" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><a class="reference external" href="http://www.djangoproject.com/download/">Download the code</a>.</li>
+<li>Install Django (read the <a class="reference external" href="../intro/install.html#intro-install"><em>installation guide</em></a>).</li>
+<li>Walk through the <a class="reference external" href="../intro/tutorial01.html#intro-tutorial01"><em>tutorial</em></a>.</li>
+<li>Check out the rest of the <a class="reference external" href="../index.html#index"><em>documentation</em></a>, and <a class="reference external" href="http://www.djangoproject.com/community/">ask questions</a> if you
+run into trouble.</li>
+</ol>
+</div>
+<div class="section" id="s-what-are-django-s-prerequisites">
+<span id="what-are-django-s-prerequisites"></span><h2>What are Django&#8217;s prerequisites?<a class="headerlink" href="#what-are-django-s-prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>Django requires <a class="reference external" href="http://www.python.org/">Python</a>, specifically any version of Python from 2.3
+through 2.6. No other Python libraries are required for basic Django
+usage.</p>
+<p>For a development environment &#8211; if you just want to experiment with Django &#8211;
+you don&#8217;t need to have a separate Web server installed; Django comes with its
+own lightweight development server. For a production environment, we recommend
+<a class="reference external" href="http://httpd.apache.org/">Apache 2</a> and <a class="reference external" href="http://www.modpython.org/">mod_python</a>, although Django follows the <a class="reference external" href="http://www.python.org/peps/pep-0333.html">WSGI</a> spec, which
+means it can run on a variety of server platforms.</p>
+<p>If you want to use Django with a database, which is probably the case, you&#8217;ll
+also need a database engine. <a class="reference external" href="http://www.postgresql.org/">PostgreSQL</a> is recommended, because we&#8217;re
+PostgreSQL fans, and <a class="reference external" href="http://www.mysql.com/">MySQL</a>, <a class="reference external" href="http://www.sqlite.org/">SQLite 3</a>, and <a class="reference external" href="http://www.oracle.com/">Oracle</a> are also supported.</p>
+</div>
+<div class="section" id="s-do-i-lose-anything-by-using-python-2-3-versus-newer-python-versions-such-as-python-2-5">
+<span id="do-i-lose-anything-by-using-python-2-3-versus-newer-python-versions-such-as-python-2-5"></span><h2>Do I lose anything by using Python 2.3 versus newer Python versions, such as Python 2.5?<a class="headerlink" href="#do-i-lose-anything-by-using-python-2-3-versus-newer-python-versions-such-as-python-2-5" title="Permalink to this headline">¶</a></h2>
+<p>Not in the core framework. Currently, Django itself officially
+supports any version of Python from 2.3 through 2.6,
+inclusive. However, some add-on components may require a more recent
+Python version; the <tt class="docutils literal"><span class="pre">django.contrib.gis</span></tt> component, for example,
+requires at least Python 2.4, and third-party applications for use
+with Django are, of course, free to set their own version
+requirements.</p>
+<p>Please note, however, that over the next year or two Django will begin
+dropping support for older Python versions as part of a migration
+which will end with Django running on Python 3.0 (see next question
+for details). So if you&#8217;re just starting out with Python, it&#8217;s
+recommended that you use the latest 2.x release (currently, Python
+2.6). This will let you take advantage of the numerous improvements
+and optimizations to the Python language since version 2.3, and will
+help ease the process of dropping support for older Python versions on
+the road to Python 3.0.</p>
+</div>
+<div class="section" id="s-can-i-use-django-with-python-3-0">
+<span id="can-i-use-django-with-python-3-0"></span><h2>Can I use Django with Python 3.0?<a class="headerlink" href="#can-i-use-django-with-python-3-0" title="Permalink to this headline">¶</a></h2>
+<p>Not at the moment. Python 3.0 introduced a number of
+backwards-incompatible changes to the Python language, and although
+these changes are generally a good thing for Python&#8217;s future, it will
+be a while before most Python software catches up and is able to run
+on Python 3.0. For larger Python-based software like Django, the
+transition is expected to take at least a year or two (since it
+involves dropping support for older Python releases and so must be
+done gradually).</p>
+<p>In the meantime, Python 2.x releases will be supported and provided
+with bug fixes and security updates by the Python development team, so
+continuing to use a Python 2.x release during the transition should
+not present any risk.</p>
+</div>
+<div class="section" id="s-do-i-have-to-use-mod-python">
+<span id="do-i-have-to-use-mod-python"></span><h2>Do I have to use mod_python?<a class="headerlink" href="#do-i-have-to-use-mod-python" title="Permalink to this headline">¶</a></h2>
+<p>Although we recommend mod_python for production use, you don&#8217;t have to use it,
+thanks to the fact that Django uses an arrangement called <a class="reference external" href="http://www.python.org/peps/pep-0333.html">WSGI</a>. Django can
+talk to any WSGI-enabled server. Other non-mod_python deployment setups are
+FastCGI, SCGI or AJP. See
+<a class="reference external" href="../howto/deployment/fastcgi.html#howto-deployment-fastcgi"><em>How to use Django with FastCGI, SCGI or AJP</em></a>
+for full information.</p>
+<p>Also, see the <a class="reference external" href="http://code.djangoproject.com/wiki/ServerArrangements">server arrangements wiki page</a> for other deployment strategies.</p>
+<p>If you just want to play around and develop things on your local computer, use
+the development Web server that comes with Django. Things should Just Work.</p>
+</div>
+<div class="section" id="s-how-do-i-install-mod-python-on-windows">
+<span id="how-do-i-install-mod-python-on-windows"></span><h2>How do I install mod_python on Windows?<a class="headerlink" href="#how-do-i-install-mod-python-on-windows" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>For Python 2.4, grab mod_python from <a class="reference external" href="http://www.lehuen.com/nicolas/index.php/2005/02/21/39-win32-build-of-mod_python-314-for-python-24">win32 build of mod_python for
+Python 2.4</a>.</li>
+<li>For Python 2.4, check out this <a class="reference external" href="http://thinkhole.org/wp/django-on-windows/">Django on Windows howto</a>.</li>
+<li>For Python 2.3, grab mod_python from <a class="reference external" href="http://www.modpython.org/">http://www.modpython.org/</a> and read
+<a class="reference external" href="http://groups-beta.google.com/group/comp.lang.python/msg/139af8c83a5a9d4f">Running mod_python on Apache on Windows2000</a>.</li>
+<li>Also, try this (not Windows-specific) <a class="reference external" href="http://www.dscpl.com.au/articles/modpython-001.html">guide to getting mod_python
+working</a>.</li>
+</ul>
+</div>
+<div class="section" id="s-will-django-run-under-shared-hosting-like-textdrive-or-dreamhost">
+<span id="will-django-run-under-shared-hosting-like-textdrive-or-dreamhost"></span><h2>Will Django run under shared hosting (like TextDrive or Dreamhost)?<a class="headerlink" href="#will-django-run-under-shared-hosting-like-textdrive-or-dreamhost" title="Permalink to this headline">¶</a></h2>
+<p>See our <a class="reference external" href="http://code.djangoproject.com/wiki/DjangoFriendlyWebHosts">Django-friendly Web hosts</a> page.</p>
+</div>
+<div class="section" id="s-should-i-use-the-official-version-or-development-version">
+<span id="should-i-use-the-official-version-or-development-version"></span><h2>Should I use the official version or development version?<a class="headerlink" href="#should-i-use-the-official-version-or-development-version" title="Permalink to this headline">¶</a></h2>
+<p>The Django developers improve Django every day and are pretty good about not
+checking in broken code. We use the development code (from the Subversion
+repository) directly on our servers, so we consider it stable. With that in
+mind, we recommend that you use the latest development code, because it
+generally contains more features and fewer bugs than the &#8220;official&#8221; releases.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">FAQ: Installation</a><ul>
+<li><a class="reference external" href="#how-do-i-get-started">How do I get started?</a></li>
+<li><a class="reference external" href="#what-are-django-s-prerequisites">What are Django&#8217;s prerequisites?</a></li>
+<li><a class="reference external" href="#do-i-lose-anything-by-using-python-2-3-versus-newer-python-versions-such-as-python-2-5">Do I lose anything by using Python 2.3 versus newer Python versions, such as Python 2.5?</a></li>
+<li><a class="reference external" href="#can-i-use-django-with-python-3-0">Can I use Django with Python 3.0?</a></li>
+<li><a class="reference external" href="#do-i-have-to-use-mod-python">Do I have to use mod_python?</a></li>
+<li><a class="reference external" href="#how-do-i-install-mod-python-on-windows">How do I install mod_python on Windows?</a></li>
+<li><a class="reference external" href="#will-django-run-under-shared-hosting-like-textdrive-or-dreamhost">Will Django run under shared hosting (like TextDrive or Dreamhost)?</a></li>
+<li><a class="reference external" href="#should-i-use-the-official-version-or-development-version">Should I use the official version or development version?</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="general.html">FAQ: General</a></li>
+    
+    
+      <li>Next: <a href="usage.html">FAQ: Using Django</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Django FAQ</a>
+        
+        <ul><li>FAQ: Installation</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/faq/install.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="general.html" title="FAQ: General">previous</a> 
+     |
+    <a href="index.html" title="Django FAQ" accesskey="U">up</a>
+   |
+    <a href="usage.html" title="FAQ: Using Django">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

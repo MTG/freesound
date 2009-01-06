@@ -1,0 +1,400 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Design philosophies &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Meta-documentation and miscellany" href="index.html" />
+    <link rel="next" title="Third-party distributions of Django" href="distributions.html" />
+    <link rel="prev" title="API stability" href="api-stability.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="api-stability.html" title="API stability">previous</a> 
+     |
+    <a href="index.html" title="Meta-documentation and miscellany" accesskey="U">up</a>
+   |
+    <a href="distributions.html" title="Third-party distributions of Django">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="misc-design-philosophies">
+            
+  
+  <div class="section" id="s-design-philosophies">
+<span id="s-misc-design-philosophies"></span><span id="design-philosophies"></span><span id="misc-design-philosophies"></span><h1>Design philosophies<a class="headerlink" href="#design-philosophies" title="Permalink to this headline">¶</a></h1>
+<p>This document explains some of the fundamental philosophies Django&#8217;s developers
+have used in creating the framework. Its goal is to explain the past and guide
+the future.</p>
+<div class="section" id="s-overall">
+<span id="overall"></span><h2>Overall<a class="headerlink" href="#overall" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-id1">
+<span id="s-loose-coupling"></span><span id="id1"></span><span id="loose-coupling"></span><h3>Loose coupling<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p id="index-3">A fundamental goal of Django&#8217;s stack is <a class="reference external" href="http://c2.com/cgi/wiki?CouplingAndCohesion">loose coupling and tight cohesion</a>.
+The various layers of the framework shouldn&#8217;t &#8220;know&#8221; about each other unless
+absolutely necessary.</p>
+<p>For example, the template system knows nothing about Web requests, the database
+layer knows nothing about data display and the view system doesn&#8217;t care which
+template system a programmer uses.</p>
+<p>Although Django comes with a full stack for convenience, the pieces of the
+stack are independent of another wherever possible.</p>
+</div>
+<div class="section" id="s-id2">
+<span id="s-less-code"></span><span id="id2"></span><span id="less-code"></span><h3>Less code<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>Django apps should use as little code as possible; they should lack boilerplate.
+Django should take full advantage of Python&#8217;s dynamic capabilities, such as
+introspection.</p>
+</div>
+<div class="section" id="s-id3">
+<span id="s-quick-development"></span><span id="id3"></span><span id="quick-development"></span><h3>Quick development<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>The point of a Web framework in the 21st century is to make the tedious aspects
+of Web development fast. Django should allow for incredibly quick Web
+development.</p>
+</div>
+<div class="section" id="s-don-t-repeat-yourself-dry">
+<span id="s-dry"></span><span id="don-t-repeat-yourself-dry"></span><span id="dry"></span><h3>Don&#8217;t repeat yourself (DRY)<a class="headerlink" href="#don-t-repeat-yourself-dry" title="Permalink to this headline">¶</a></h3>
+<p id="index-4">Every distinct concept and/or piece of data should live in one, and only one,
+place. Redundancy is bad. Normalization is good.</p>
+<p>The framework, within reason, should deduce as much as possible from as little
+as possible.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The <a class="reference external" href="http://c2.com/cgi/wiki?DontRepeatYourself">discussion of DRY on the Portland Pattern Repository</a></p>
+</div>
+</div>
+<div class="section" id="s-id5">
+<span id="s-explicit-is-better-than-implicit"></span><span id="id5"></span><span id="explicit-is-better-than-implicit"></span><h3>Explicit is better than implicit<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>This, a <a class="reference external" href="http://www.python.org/dev/peps/pep-0020/">core Python principle</a>, means Django shouldn&#8217;t do too much &#8220;magic.&#8221;
+Magic shouldn&#8217;t happen unless there&#8217;s a really good reason for it. Magic is
+worth using only if it creates a huge convenience unattainable in other ways,
+and it isn&#8217;t implemented in a way that confuses developers who are trying to
+learn how to use the feature.</p>
+</div>
+<div class="section" id="s-id6">
+<span id="s-consistency"></span><span id="id6"></span><span id="consistency"></span><h3>Consistency<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>The framework should be consistent at all levels. Consistency applies to
+everything from low-level (the Python coding style used) to high-level (the
+&#8220;experience&#8221; of using Django).</p>
+</div>
+</div>
+<div class="section" id="s-models">
+<span id="models"></span><h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-id7">
+<span id="id7"></span><h3>Explicit is better than implicit<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>Fields shouldn&#8217;t assume certain behaviors based solely on the name of the
+field. This requires too much knowledge of the system and is prone to errors.
+Instead, behaviors should be based on keyword arguments and, in some cases, on
+the type of the field.</p>
+</div>
+<div class="section" id="s-include-all-relevant-domain-logic">
+<span id="include-all-relevant-domain-logic"></span><h3>Include all relevant domain logic<a class="headerlink" href="#include-all-relevant-domain-logic" title="Permalink to this headline">¶</a></h3>
+<p>Models should encapsulate every aspect of an &#8220;object,&#8221; following Martin
+Fowler&#8217;s <a class="reference external" href="http://www.martinfowler.com/eaaCatalog/activeRecord.html">Active Record</a> design pattern.</p>
+<p>This is why both the data represented by a model and information about
+it (its human-readable name, options like default ordering, etc.) are
+defined in the model class; all the information needed to understand a
+given model should be stored <em>in</em> the model.</p>
+</div>
+</div>
+<div class="section" id="s-database-api">
+<span id="database-api"></span><h2>Database API<a class="headerlink" href="#database-api" title="Permalink to this headline">¶</a></h2>
+<p>The core goals of the database API are:</p>
+<div class="section" id="s-sql-efficiency">
+<span id="sql-efficiency"></span><h3>SQL efficiency<a class="headerlink" href="#sql-efficiency" title="Permalink to this headline">¶</a></h3>
+<p>It should execute SQL statements as few times as possible, and it should
+optimize statements internally.</p>
+<p>This is why developers need to call <tt class="docutils literal"><span class="pre">save()</span></tt> explicitly, rather than the
+framework saving things behind the scenes silently.</p>
+<p>This is also why the <tt class="docutils literal"><span class="pre">select_related()</span></tt> <tt class="docutils literal"><span class="pre">QuerySet</span></tt> method exists. It&#8217;s an
+optional performance booster for the common case of selecting &#8220;every related
+object.&#8221;</p>
+</div>
+<div class="section" id="s-terse-powerful-syntax">
+<span id="terse-powerful-syntax"></span><h3>Terse, powerful syntax<a class="headerlink" href="#terse-powerful-syntax" title="Permalink to this headline">¶</a></h3>
+<p>The database API should allow rich, expressive statements in as little syntax
+as possible. It should not rely on importing other modules or helper objects.</p>
+<p>Joins should be performed automatically, behind the scenes, when necessary.</p>
+<p>Every object should be able to access every related object, systemwide. This
+access should work both ways.</p>
+</div>
+<div class="section" id="s-option-to-drop-into-raw-sql-easily-when-needed">
+<span id="option-to-drop-into-raw-sql-easily-when-needed"></span><h3>Option to drop into raw SQL easily, when needed<a class="headerlink" href="#option-to-drop-into-raw-sql-easily-when-needed" title="Permalink to this headline">¶</a></h3>
+<p>The database API should realize it&#8217;s a shortcut but not necessarily an
+end-all-be-all. The framework should make it easy to write custom SQL &#8211; entire
+statements, or just custom <tt class="docutils literal"><span class="pre">WHERE</span></tt> clauses as custom parameters to API calls.</p>
+</div>
+</div>
+<div class="section" id="s-url-design">
+<span id="url-design"></span><h2>URL design<a class="headerlink" href="#url-design" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-id8">
+<span id="id8"></span><h3>Loose coupling<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>URLs in a Django app should not be coupled to the underlying Python code. Tying
+URLs to Python function names is a Bad And Ugly Thing.</p>
+<p>Along these lines, the Django URL system should allow URLs for the same app to
+be different in different contexts. For example, one site may put stories at
+<tt class="docutils literal"><span class="pre">/stories/</span></tt>, while another may use <tt class="docutils literal"><span class="pre">/news/</span></tt>.</p>
+</div>
+<div class="section" id="s-infinite-flexibility">
+<span id="infinite-flexibility"></span><h3>Infinite flexibility<a class="headerlink" href="#infinite-flexibility" title="Permalink to this headline">¶</a></h3>
+<p>URLs should be as flexible as possible. Any conceivable URL design should be
+allowed.</p>
+</div>
+<div class="section" id="s-encourage-best-practices">
+<span id="encourage-best-practices"></span><h3>Encourage best practices<a class="headerlink" href="#encourage-best-practices" title="Permalink to this headline">¶</a></h3>
+<p>The framework should make it just as easy (or even easier) for a developer to
+design pretty URLs than ugly ones.</p>
+<p>File extensions in Web-page URLs should be avoided.</p>
+<p>Vignette-style commas in URLs deserve severe punishment.</p>
+</div>
+<div class="section" id="s-id9">
+<span id="s-definitive-urls"></span><span id="id9"></span><span id="definitive-urls"></span><h3>Definitive URLs<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p id="index-5">Technically, <tt class="docutils literal"><span class="pre">foo.com/bar</span></tt> and <tt class="docutils literal"><span class="pre">foo.com/bar/</span></tt> are two different URLs, and
+search-engine robots (and some Web traffic-analyzing tools) would treat them as
+separate pages. Django should make an effort to &#8220;normalize&#8221; URLs so that
+search-engine robots don&#8217;t get confused.</p>
+<p>This is the reasoning behind the <a class="reference external" href="../ref/settings.html#setting-APPEND_SLASH"><tt class="xref docutils literal"><span class="pre">APPEND_SLASH</span></tt></a> setting.</p>
+</div>
+</div>
+<div class="section" id="s-template-system">
+<span id="template-system"></span><h2>Template system<a class="headerlink" href="#template-system" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-separate-logic-from-presentation">
+<span id="s-separation-of-logic-and-presentation"></span><span id="separate-logic-from-presentation"></span><span id="separation-of-logic-and-presentation"></span><h3>Separate logic from presentation<a class="headerlink" href="#separate-logic-from-presentation" title="Permalink to this headline">¶</a></h3>
+<p>We see a template system as a tool that controls presentation and
+presentation-related logic &#8211; and that&#8217;s it. The template system shouldn&#8217;t
+support functionality that goes beyond this basic goal.</p>
+<p>If we wanted to put everything in templates, we&#8217;d be using PHP. Been there,
+done that, wised up.</p>
+</div>
+<div class="section" id="s-discourage-redundancy">
+<span id="discourage-redundancy"></span><h3>Discourage redundancy<a class="headerlink" href="#discourage-redundancy" title="Permalink to this headline">¶</a></h3>
+<p>The majority of dynamic Web sites use some sort of common sitewide design &#8211;
+a common header, footer, navigation bar, etc. The Django template system should
+make it easy to store those elements in a single place, eliminating duplicate
+code.</p>
+<p>This is the philosophy behind <a class="reference external" href="../topics/templates.html#template-inheritance"><em>template inheritance</em></a>.</p>
+</div>
+<div class="section" id="s-be-decoupled-from-html">
+<span id="be-decoupled-from-html"></span><h3>Be decoupled from HTML<a class="headerlink" href="#be-decoupled-from-html" title="Permalink to this headline">¶</a></h3>
+<p>The template system shouldn&#8217;t be designed so that it only outputs HTML. It
+should be equally good at generating other text-based formats, or just plain
+text.</p>
+</div>
+<div class="section" id="s-xml-should-not-be-used-for-template-languages">
+<span id="xml-should-not-be-used-for-template-languages"></span><h3>XML should not be used for template languages<a class="headerlink" href="#xml-should-not-be-used-for-template-languages" title="Permalink to this headline">¶</a></h3>
+<p id="index-6">Using an XML engine to parse templates introduces a whole new world of human
+error in editing templates &#8211; and incurs an unacceptable level of overhead in
+template processing.</p>
+</div>
+<div class="section" id="s-assume-designer-competence">
+<span id="assume-designer-competence"></span><h3>Assume designer competence<a class="headerlink" href="#assume-designer-competence" title="Permalink to this headline">¶</a></h3>
+<p>The template system shouldn&#8217;t be designed so that templates necessarily are
+displayed nicely in WYSIWYG editors such as Dreamweaver. That is too severe of
+a limitation and wouldn&#8217;t allow the syntax to be as nice as it is. Django
+expects template authors are comfortable editing HTML directly.</p>
+</div>
+<div class="section" id="s-treat-whitespace-obviously">
+<span id="treat-whitespace-obviously"></span><h3>Treat whitespace obviously<a class="headerlink" href="#treat-whitespace-obviously" title="Permalink to this headline">¶</a></h3>
+<p>The template system shouldn&#8217;t do magic things with whitespace. If a template
+includes whitespace, the system should treat the whitespace as it treats text
+&#8211; just display it. Any whitespace that&#8217;s not in a template tag should be
+displayed.</p>
+</div>
+<div class="section" id="s-don-t-invent-a-programming-language">
+<span id="don-t-invent-a-programming-language"></span><h3>Don&#8217;t invent a programming language<a class="headerlink" href="#don-t-invent-a-programming-language" title="Permalink to this headline">¶</a></h3>
+<p>The template system intentionally doesn&#8217;t allow the following:</p>
+<ul class="simple">
+<li>Assignment to variables</li>
+<li>Advanced logic</li>
+</ul>
+<p>The goal is not to invent a programming language. The goal is to offer just
+enough programming-esque functionality, such as branching and looping, that is
+essential for making presentation-related decisions.</p>
+<p>The Django template system recognizes that templates are most often written by
+<em>designers</em>, not <em>programmers</em>, and therefore should not assume Python
+knowledge.</p>
+</div>
+<div class="section" id="s-safety-and-security">
+<span id="safety-and-security"></span><h3>Safety and security<a class="headerlink" href="#safety-and-security" title="Permalink to this headline">¶</a></h3>
+<p>The template system, out of the box, should forbid the inclusion of malicious
+code &#8211; such as commands that delete database records.</p>
+<p>This is another reason the template system doesn&#8217;t allow arbitrary Python code.</p>
+</div>
+<div class="section" id="s-extensibility">
+<span id="extensibility"></span><h3>Extensibility<a class="headerlink" href="#extensibility" title="Permalink to this headline">¶</a></h3>
+<p>The template system should recognize that advanced template authors may want
+to extend its technology.</p>
+<p>This is the philosophy behind custom template tags and filters.</p>
+</div>
+</div>
+<div class="section" id="s-views">
+<span id="views"></span><h2>Views<a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-simplicity">
+<span id="simplicity"></span><h3>Simplicity<a class="headerlink" href="#simplicity" title="Permalink to this headline">¶</a></h3>
+<p>Writing a view should be as simple as writing a Python function. Developers
+shouldn&#8217;t have to instantiate a class when a function will do.</p>
+</div>
+<div class="section" id="s-use-request-objects">
+<span id="use-request-objects"></span><h3>Use request objects<a class="headerlink" href="#use-request-objects" title="Permalink to this headline">¶</a></h3>
+<p>Views should have access to a request object &#8211; an object that stores metadata
+about the current request. The object should be passed directly to a view
+function, rather than the view function having to access the request data from
+a global variable. This makes it light, clean and easy to test views by passing
+in &#8220;fake&#8221; request objects.</p>
+</div>
+<div class="section" id="s-id10">
+<span id="id10"></span><h3>Loose coupling<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>A view shouldn&#8217;t care about which template system the developer uses &#8211; or even
+whether a template system is used at all.</p>
+</div>
+<div class="section" id="s-differentiate-between-get-and-post">
+<span id="differentiate-between-get-and-post"></span><h3>Differentiate between GET and POST<a class="headerlink" href="#differentiate-between-get-and-post" title="Permalink to this headline">¶</a></h3>
+<p>GET and POST are distinct; developers should explicitly use one or the other.
+The framework should make it easy to distinguish between GET and POST data.</p>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Design philosophies</a><ul>
+<li><a class="reference external" href="#overall">Overall</a><ul>
+<li><a class="reference external" href="#id1">Loose coupling</a></li>
+<li><a class="reference external" href="#id2">Less code</a></li>
+<li><a class="reference external" href="#id3">Quick development</a></li>
+<li><a class="reference external" href="#don-t-repeat-yourself-dry">Don&#8217;t repeat yourself (DRY)</a></li>
+<li><a class="reference external" href="#id5">Explicit is better than implicit</a></li>
+<li><a class="reference external" href="#id6">Consistency</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#models">Models</a><ul>
+<li><a class="reference external" href="#id7">Explicit is better than implicit</a></li>
+<li><a class="reference external" href="#include-all-relevant-domain-logic">Include all relevant domain logic</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#database-api">Database API</a><ul>
+<li><a class="reference external" href="#sql-efficiency">SQL efficiency</a></li>
+<li><a class="reference external" href="#terse-powerful-syntax">Terse, powerful syntax</a></li>
+<li><a class="reference external" href="#option-to-drop-into-raw-sql-easily-when-needed">Option to drop into raw SQL easily, when needed</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#url-design">URL design</a><ul>
+<li><a class="reference external" href="#id8">Loose coupling</a></li>
+<li><a class="reference external" href="#infinite-flexibility">Infinite flexibility</a></li>
+<li><a class="reference external" href="#encourage-best-practices">Encourage best practices</a></li>
+<li><a class="reference external" href="#id9">Definitive URLs</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#template-system">Template system</a><ul>
+<li><a class="reference external" href="#separate-logic-from-presentation">Separate logic from presentation</a></li>
+<li><a class="reference external" href="#discourage-redundancy">Discourage redundancy</a></li>
+<li><a class="reference external" href="#be-decoupled-from-html">Be decoupled from HTML</a></li>
+<li><a class="reference external" href="#xml-should-not-be-used-for-template-languages">XML should not be used for template languages</a></li>
+<li><a class="reference external" href="#assume-designer-competence">Assume designer competence</a></li>
+<li><a class="reference external" href="#treat-whitespace-obviously">Treat whitespace obviously</a></li>
+<li><a class="reference external" href="#don-t-invent-a-programming-language">Don&#8217;t invent a programming language</a></li>
+<li><a class="reference external" href="#safety-and-security">Safety and security</a></li>
+<li><a class="reference external" href="#extensibility">Extensibility</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#views">Views</a><ul>
+<li><a class="reference external" href="#simplicity">Simplicity</a></li>
+<li><a class="reference external" href="#use-request-objects">Use request objects</a></li>
+<li><a class="reference external" href="#id10">Loose coupling</a></li>
+<li><a class="reference external" href="#differentiate-between-get-and-post">Differentiate between GET and POST</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="api-stability.html">API stability</a></li>
+    
+    
+      <li>Next: <a href="distributions.html">Third-party distributions of Django</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Meta-documentation and miscellany</a>
+        
+        <ul><li>Design philosophies</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/misc/design-philosophies.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="api-stability.html" title="API stability">previous</a> 
+     |
+    <a href="index.html" title="Meta-documentation and miscellany" accesskey="U">up</a>
+   |
+    <a href="distributions.html" title="Third-party distributions of Django">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

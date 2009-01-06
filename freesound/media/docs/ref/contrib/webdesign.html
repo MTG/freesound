@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>django.contrib.webdesign &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="The &#8220;django.contrib&#8221; add-ons" href="index.html" />
+    <link rel="next" title="Notes about supported databases" href="../databases.html" />
+    <link rel="prev" title="The syndication feed framework" href="syndication.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="syndication.html" title="The syndication feed framework">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="../databases.html" title="Notes about supported databases">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-contrib-webdesign">
+            
+  
+  <div class="section" id="s-module-django.contrib.webdesign">
+<span id="s-ref-contrib-webdesign"></span><span id="module-django.contrib.webdesign"></span><span id="ref-contrib-webdesign"></span><h1>django.contrib.webdesign<a class="headerlink" href="#module-django.contrib.webdesign" title="Permalink to this headline">¶</a></h1>
+<p>The <tt class="docutils literal"><span class="pre">django.contrib.webdesign</span></tt> package, part of the
+<a class="reference external" href="index.html#ref-contrib-index"><em>&#8220;django.contrib&#8221; add-ons</em></a>, provides various Django
+helpers that are particularly useful to Web <em>designers</em> (as opposed to
+developers).</p>
+<p>At present, the package contains only a single template tag. If you have ideas
+for Web-designer-friendly functionality in Django, please
+<a class="reference external" href="../../internals/contributing.html#internals-contributing"><em>suggest them</em></a>.</p>
+<div class="section" id="s-template-tags">
+<span id="template-tags"></span><h2>Template tags<a class="headerlink" href="#template-tags" title="Permalink to this headline">¶</a></h2>
+<p>To use these template tags, add <tt class="docutils literal"><span class="pre">'django.contrib.webdesign'</span></tt> to your
+<a class="reference external" href="../settings.html#setting-INSTALLED_APPS"><tt class="xref docutils literal"><span class="pre">INSTALLED_APPS</span></tt></a> setting. Once you&#8217;ve done that, use
+<tt class="docutils literal"><span class="pre">{%</span> <span class="pre">load</span> <span class="pre">webdesign</span> <span class="pre">%}</span></tt> in a template to give your template access to the tags.</p>
+</div>
+<div class="section" id="s-lorem">
+<span id="lorem"></span><h2>lorem<a class="headerlink" href="#lorem" title="Permalink to this headline">¶</a></h2>
+<p>Displays random &#8220;lorem ipsum&#8221; Latin text. This is useful for providing sample
+data in templates.</p>
+<p>Usage:</p>
+<div class="highlight-python"><pre>{% lorem [count] [method] [random] %}</pre>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">lorem</span> <span class="pre">%}</span></tt> tag can be used with zero, one, two or three arguments.
+The arguments are:</p>
+<table class="docutils">
+<colgroup>
+<col width="15%" />
+<col width="85%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Argument</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><tt class="docutils literal"><span class="pre">count</span></tt></td>
+<td>A number (or variable) containing the number of paragraphs or
+words to generate (default is 1).</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">method</span></tt></td>
+<td>Either <tt class="docutils literal"><span class="pre">w</span></tt> for words, <tt class="docutils literal"><span class="pre">p</span></tt> for HTML paragraphs or <tt class="docutils literal"><span class="pre">b</span></tt>
+for plain-text paragraph blocks (default is <tt class="docutils literal"><span class="pre">b</span></tt>).</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">random</span></tt></td>
+<td>The word <tt class="docutils literal"><span class="pre">random</span></tt>, which if given, does not use the common
+paragraph (&quot;Lorem ipsum dolor sit amet...&quot;) when generating
+text.</td>
+</tr>
+</tbody>
+</table>
+<p>Examples:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">{%</span> <span class="pre">lorem</span> <span class="pre">%}</span></tt> will output the common &quot;lorem ipsum&quot; paragraph.</li>
+<li><tt class="docutils literal"><span class="pre">{%</span> <span class="pre">lorem</span> <span class="pre">3</span> <span class="pre">p</span> <span class="pre">%}</span></tt> will output the common &quot;lorem ipsum&quot; paragraph
+and two random paragraphs each wrapped in HTML <tt class="docutils literal"><span class="pre">&lt;p&gt;</span></tt> tags.</li>
+<li><tt class="docutils literal"><span class="pre">{%</span> <span class="pre">lorem</span> <span class="pre">2</span> <span class="pre">w</span> <span class="pre">random</span> <span class="pre">%}</span></tt> will output two random Latin words.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">django.contrib.webdesign</a><ul>
+<li><a class="reference external" href="#template-tags">Template tags</a></li>
+<li><a class="reference external" href="#lorem">lorem</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="syndication.html">The syndication feed framework</a></li>
+    
+    
+      <li>Next: <a href="../databases.html">Notes about supported databases</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">API Reference</a>
+        
+          <ul><li><a href="index.html">The &#8220;django.contrib&#8221; add-ons</a>
+        
+        <ul><li>django.contrib.webdesign</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/ref/contrib/webdesign.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="syndication.html" title="The syndication feed framework">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="../databases.html" title="Notes about supported databases">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

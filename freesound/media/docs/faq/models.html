@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FAQ: Databases and models &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Django FAQ" href="index.html" />
+    <link rel="next" title="FAQ: The admin" href="admin.html" />
+    <link rel="prev" title="FAQ: Getting Help" href="help.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="help.html" title="FAQ: Getting Help">previous</a> 
+     |
+    <a href="index.html" title="Django FAQ" accesskey="U">up</a>
+   |
+    <a href="admin.html" title="FAQ: The admin">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="faq-models">
+            
+  
+  <div class="section" id="s-faq-databases-and-models">
+<span id="s-faq-models"></span><span id="faq-databases-and-models"></span><span id="faq-models"></span><h1>FAQ: Databases and models<a class="headerlink" href="#faq-databases-and-models" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="s-how-can-i-see-the-raw-sql-queries-django-is-running">
+<span id="how-can-i-see-the-raw-sql-queries-django-is-running"></span><h2>How can I see the raw SQL queries Django is running?<a class="headerlink" href="#how-can-i-see-the-raw-sql-queries-django-is-running" title="Permalink to this headline">¶</a></h2>
+<p>Make sure your Django <tt class="docutils literal"><span class="pre">DEBUG</span></tt> setting is set to <tt class="xref docutils literal"><span class="pre">True</span></tt>. Then, just do
+this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">connection</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">connection</span><span class="o">.</span><span class="n">queries</span>
+<span class="go">[{&#39;sql&#39;: &#39;SELECT polls_polls.id,polls_polls.question,polls_polls.pub_date FROM polls_polls&#39;,</span>
+<span class="go">&#39;time&#39;: &#39;0.002&#39;}]</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">connection.queries</span></tt> is only available if <tt class="docutils literal"><span class="pre">DEBUG</span></tt> is <tt class="xref docutils literal"><span class="pre">True</span></tt>. It's a list
+of dictionaries in order of query execution. Each dictionary has the following:</p>
+<div class="highlight-python"><pre>``sql`` -- The raw SQL statement
+``time`` -- How long the statement took to execute, in seconds.</pre>
+</div>
+<p><tt class="docutils literal"><span class="pre">connection.queries</span></tt> includes all SQL statements -- INSERTs, UPDATES,
+SELECTs, etc. Each time your app hits the database, the query will be recorded.</p>
+</div>
+<div class="section" id="s-can-i-use-django-with-a-pre-existing-database">
+<span id="can-i-use-django-with-a-pre-existing-database"></span><h2>Can I use Django with a pre-existing database?<a class="headerlink" href="#can-i-use-django-with-a-pre-existing-database" title="Permalink to this headline">¶</a></h2>
+<p>Yes. See <a class="reference external" href="../howto/legacy-databases.html#howto-legacy-databases"><em>Integrating with a legacy database</em></a>.</p>
+</div>
+<div class="section" id="s-if-i-make-changes-to-a-model-how-do-i-update-the-database">
+<span id="if-i-make-changes-to-a-model-how-do-i-update-the-database"></span><h2>If I make changes to a model, how do I update the database?<a class="headerlink" href="#if-i-make-changes-to-a-model-how-do-i-update-the-database" title="Permalink to this headline">¶</a></h2>
+<p>If you don't mind clearing data, your project's <tt class="docutils literal"><span class="pre">manage.py</span></tt> utility has an
+option to reset the SQL for a particular application:</p>
+<div class="highlight-python"><pre>manage.py reset appname</pre>
+</div>
+<p>This drops any tables associated with <tt class="docutils literal"><span class="pre">appname</span></tt> and recreates them.</p>
+<p>If you do care about deleting data, you'll have to execute the <tt class="docutils literal"><span class="pre">ALTER</span> <span class="pre">TABLE</span></tt>
+statements manually in your database. That's the way we've always done it,
+because dealing with data is a very sensitive operation that we've wanted to
+avoid automating. That said, there's some work being done to add partially
+automated database-upgrade functionality.</p>
+</div>
+<div class="section" id="s-do-django-models-support-multiple-column-primary-keys">
+<span id="do-django-models-support-multiple-column-primary-keys"></span><h2>Do Django models support multiple-column primary keys?<a class="headerlink" href="#do-django-models-support-multiple-column-primary-keys" title="Permalink to this headline">¶</a></h2>
+<p>No. Only single-column primary keys are supported.</p>
+<p>But this isn't an issue in practice, because there's nothing stopping you from
+adding other constraints (using the <tt class="docutils literal"><span class="pre">unique_together</span></tt> model option or
+creating the constraint directly in your database), and enforcing the
+uniqueness at that level. Single-column primary keys are needed for things such
+as the admin interface to work; e.g., you need a simple way of being able to
+specify an object to edit or delete.</p>
+</div>
+<div class="section" id="s-how-do-i-add-database-specific-options-to-my-create-table-statements-such-as-specifying-myisam-as-the-table-type">
+<span id="how-do-i-add-database-specific-options-to-my-create-table-statements-such-as-specifying-myisam-as-the-table-type"></span><h2>How do I add database-specific options to my CREATE TABLE statements, such as specifying MyISAM as the table type?<a class="headerlink" href="#how-do-i-add-database-specific-options-to-my-create-table-statements-such-as-specifying-myisam-as-the-table-type" title="Permalink to this headline">¶</a></h2>
+<p>We try to avoid adding special cases in the Django code to accommodate all the
+database-specific options such as table type, etc. If you'd like to use any of
+these options, create an <a class="reference external" href="../howto/initial-data.html#initial-sql"><em>SQL initial data file</em></a> that
+contains <tt class="docutils literal"><span class="pre">ALTER</span> <span class="pre">TABLE</span></tt> statements that do what you want to do. The initial
+data files are executed in your database after the <tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">TABLE</span></tt> statements.</p>
+<p>For example, if you're using MySQL and want your tables to use the MyISAM table
+type, create an initial data file and put something like this in it:</p>
+<div class="highlight-python"><pre>ALTER TABLE myapp_mytable ENGINE=MyISAM;</pre>
+</div>
+<p>As explained in the <a class="reference external" href="../howto/initial-data.html#initial-sql"><em>SQL initial data file</em></a> documentation,
+this SQL file can contain arbitrary SQL, so you can make any sorts of changes
+you need to make.</p>
+</div>
+<div class="section" id="s-why-is-django-leaking-memory">
+<span id="why-is-django-leaking-memory"></span><h2>Why is Django leaking memory?<a class="headerlink" href="#why-is-django-leaking-memory" title="Permalink to this headline">¶</a></h2>
+<p>Django isn't known to leak memory. If you find your Django processes are
+allocating more and more memory, with no sign of releasing it, check to make
+sure your <tt class="docutils literal"><span class="pre">DEBUG</span></tt> setting is set to <tt class="xref docutils literal"><span class="pre">False</span></tt>. If <tt class="docutils literal"><span class="pre">DEBUG</span></tt> is <tt class="xref docutils literal"><span class="pre">True</span></tt>, then
+Django saves a copy of every SQL statement it has executed.</p>
+<p>(The queries are saved in <tt class="docutils literal"><span class="pre">django.db.connection.queries</span></tt>. See
+<a class="reference internal" href="#how-can-i-see-the-raw-sql-queries-django-is-running">How can I see the raw SQL queries Django is running?</a>.)</p>
+<p>To fix the problem, set <tt class="docutils literal"><span class="pre">DEBUG</span></tt> to <tt class="xref docutils literal"><span class="pre">False</span></tt>.</p>
+<p>If you need to clear the query list manually at any point in your functions,
+just call <tt class="docutils literal"><span class="pre">reset_queries()</span></tt>, like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">db</span>
+<span class="n">db</span><span class="o">.</span><span class="n">reset_queries</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">FAQ: Databases and models</a><ul>
+<li><a class="reference external" href="#how-can-i-see-the-raw-sql-queries-django-is-running">How can I see the raw SQL queries Django is running?</a></li>
+<li><a class="reference external" href="#can-i-use-django-with-a-pre-existing-database">Can I use Django with a pre-existing database?</a></li>
+<li><a class="reference external" href="#if-i-make-changes-to-a-model-how-do-i-update-the-database">If I make changes to a model, how do I update the database?</a></li>
+<li><a class="reference external" href="#do-django-models-support-multiple-column-primary-keys">Do Django models support multiple-column primary keys?</a></li>
+<li><a class="reference external" href="#how-do-i-add-database-specific-options-to-my-create-table-statements-such-as-specifying-myisam-as-the-table-type">How do I add database-specific options to my CREATE TABLE statements, such as specifying MyISAM as the table type?</a></li>
+<li><a class="reference external" href="#why-is-django-leaking-memory">Why is Django leaking memory?</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="help.html">FAQ: Getting Help</a></li>
+    
+    
+      <li>Next: <a href="admin.html">FAQ: The admin</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Django FAQ</a>
+        
+        <ul><li>FAQ: Databases and models</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/faq/models.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="help.html" title="FAQ: Getting Help">previous</a> 
+     |
+    <a href="index.html" title="Django FAQ" accesskey="U">up</a>
+   |
+    <a href="admin.html" title="FAQ: The admin">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

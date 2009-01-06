@@ -1,0 +1,296 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Customizing the Django admin interface &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Deprecated/obsolete documentation" href="index.html" />
+    <link rel="prev" title="Deprecated/obsolete documentation" href="index.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="index.html" title="Deprecated/obsolete documentation">previous</a> 
+     |
+    <a href="index.html" title="Deprecated/obsolete documentation" accesskey="U">up</a></div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="obsolete-admin-css">
+            
+  
+  <div class="section" id="s-customizing-the-django-admin-interface">
+<span id="s-obsolete-admin-css"></span><span id="customizing-the-django-admin-interface"></span><span id="obsolete-admin-css"></span><h1>Customizing the Django admin interface<a class="headerlink" href="#customizing-the-django-admin-interface" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">The design of the admin has changed somewhat since this document was
+written, and parts may not apply any more. This document is no longer
+maintained since an official API for customizing the Django admin interface
+is in development.</p>
+</div>
+<p>Django&#8217;s dynamic admin interface gives you a fully-functional admin for free
+with no hand-coding required. The dynamic admin is designed to be
+production-ready, not just a starting point, so you can use it as-is on a real
+site. While the underlying format of the admin pages is built in to Django, you
+can customize the look and feel by editing the admin stylesheet and images.</p>
+<p>Here&#8217;s a quick and dirty overview some of the main styles and classes used in
+the Django admin CSS.</p>
+<div class="section" id="s-modules">
+<span id="modules"></span><h2>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">.module</span></tt> class is a basic building block for grouping content in the
+admin. It&#8217;s generally applied to a <tt class="docutils literal"><span class="pre">div</span></tt> or a <tt class="docutils literal"><span class="pre">fieldset</span></tt>. It wraps the content
+group in a box and applies certain styles to the elements within. An <tt class="docutils literal"><span class="pre">h2</span></tt>
+within a <tt class="docutils literal"><span class="pre">div.module</span></tt> will align to the top of the <tt class="docutils literal"><span class="pre">div</span></tt> as a header for the
+whole group.</p>
+<img alt="Example use of module class on admin homepage" src="../_images/module.gif" />
+</div>
+<div class="section" id="s-column-types">
+<span id="column-types"></span><h2>Column Types<a class="headerlink" href="#column-types" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All admin pages (except the dashboard) are fluid-width. All fixed-width
+classes from previous Django versions have been removed.</p>
+</div>
+<p>The base template for each admin page has a block that defines the column
+structure for the page. This sets a class on the page content area
+(<tt class="docutils literal"><span class="pre">div#content</span></tt>) so everything on the page knows how wide it should be. There
+are three column types available.</p>
+<dl class="docutils">
+<dt>colM</dt>
+<dd>This is the default column setting for all pages. The &#8220;M&#8221; stands for &#8220;main&#8221;.
+Assumes that all content on the page is in one main column
+(<tt class="docutils literal"><span class="pre">div#content-main</span></tt>).</dd>
+<dt>colMS</dt>
+<dd>This is for pages with one main column and a sidebar on the right. The &#8220;S&#8221;
+stands for &#8220;sidebar&#8221;. Assumes that main content is in <tt class="docutils literal"><span class="pre">div#content-main</span></tt>
+and sidebar content is in <tt class="docutils literal"><span class="pre">div#content-related</span></tt>. This is used on the main
+admin page.</dd>
+<dt>colSM</dt>
+<dd>Same as above, with the sidebar on the left. The source order of the columns
+doesn&#8217;t matter.</dd>
+</dl>
+<p>For instance, you could stick this in a template to make a two-column page with
+the sidebar on the right:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="cp">{%</span> <span class="k">block</span> <span class="nv">coltype</span> <span class="cp">%}</span>colMS<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-text-styles">
+<span id="text-styles"></span><h2>Text Styles<a class="headerlink" href="#text-styles" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-font-sizes">
+<span id="font-sizes"></span><h3>Font Sizes<a class="headerlink" href="#font-sizes" title="Permalink to this headline">¶</a></h3>
+<p>Most HTML elements (headers, lists, etc.) have base font sizes in the stylesheet
+based on context. There are three classes are available for forcing text to a
+certain size in any context.</p>
+<dl class="docutils">
+<dt>small</dt>
+<dd>11px</dd>
+<dt>tiny</dt>
+<dd>10px</dd>
+<dt>mini</dt>
+<dd>9px (use sparingly)</dd>
+</dl>
+</div>
+<div class="section" id="s-font-styles-and-alignment">
+<span id="font-styles-and-alignment"></span><h3>Font Styles and Alignment<a class="headerlink" href="#font-styles-and-alignment" title="Permalink to this headline">¶</a></h3>
+<p>There are also a few styles for styling text.</p>
+<dl class="docutils">
+<dt>.quiet</dt>
+<dd>Sets font color to light gray. Good for side notes in instructions. Combine
+with <tt class="docutils literal"><span class="pre">.small</span></tt> or <tt class="docutils literal"><span class="pre">.tiny</span></tt> for sheer excitement.</dd>
+<dt>.help</dt>
+<dd>This is a custom class for blocks of inline help text explaining the
+function of form elements. It makes text smaller and gray, and when applied
+to <tt class="docutils literal"><span class="pre">p</span></tt> elements within <tt class="docutils literal"><span class="pre">.form-row</span></tt> elements (see Form Styles below),
+it will offset the text to align with the form field. Use this for help
+text, instead of <tt class="docutils literal"><span class="pre">small</span> <span class="pre">quiet</span></tt>. It works on other elements, but try to
+put the class on a <tt class="docutils literal"><span class="pre">p</span></tt> whenever you can.</dd>
+<dt>.align-left</dt>
+<dd>It aligns the text left. Only works on block elements containing inline
+elements.</dd>
+<dt>.align-right</dt>
+<dd>Are you paying attention?</dd>
+<dt>.nowrap</dt>
+<dd>Keeps text and inline objects from wrapping. Comes in handy for table
+headers you want to stay on one line.</dd>
+</dl>
+</div>
+<div class="section" id="s-floats-and-clears">
+<span id="floats-and-clears"></span><h3>Floats and Clears<a class="headerlink" href="#floats-and-clears" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>float-left</dt>
+<dd>floats left</dd>
+<dt>float-right</dt>
+<dd>floats right</dd>
+<dt>clear</dt>
+<dd>clears all</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="s-object-tools">
+<span id="object-tools"></span><h2>Object Tools<a class="headerlink" href="#object-tools" title="Permalink to this headline">¶</a></h2>
+<p>Certain actions which apply directly to an object are used in form and
+changelist pages. These appear in a &quot;toolbar&quot; row above the form or changelist,
+to the right of the page. The tools are wrapped in a <tt class="docutils literal"><span class="pre">ul</span></tt> with the class
+<tt class="docutils literal"><span class="pre">object-tools</span></tt>. There are two custom tool types which can be defined with an
+additional class on the <tt class="docutils literal"><span class="pre">a</span></tt> for that tool. These are <tt class="docutils literal"><span class="pre">.addlink</span></tt> and
+<tt class="docutils literal"><span class="pre">.viewsitelink</span></tt>.</p>
+<p>Example from a changelist page:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;object-tools&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/stories/add/&quot;</span> <span class="na">class=</span><span class="s">&quot;addlink&quot;</span><span class="nt">&gt;</span>Add redirect<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre></div>
+</div>
+<img alt="Object tools on a changelist page" src="../_images/objecttools_01.gif" />
+<p>and from a form page:</p>
+<div class="highlight-html+django"><div class="highlight"><pre><span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;object-tools&quot;</span><span class="nt">&gt;</span>
+ <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/history/303/152383/&quot;</span><span class="nt">&gt;</span>History<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+ <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">&quot;/r/303/152383/&quot;</span> <span class="na">class=</span><span class="s">&quot;viewsitelink&quot;</span><span class="nt">&gt;</span>View on site<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+</pre></div>
+</div>
+<img alt="Object tools on a form page" src="../_images/objecttools_02.gif" />
+</div>
+<div class="section" id="s-form-styles">
+<span id="form-styles"></span><h2>Form Styles<a class="headerlink" href="#form-styles" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-fieldsets">
+<span id="fieldsets"></span><h3>Fieldsets<a class="headerlink" href="#fieldsets" title="Permalink to this headline">¶</a></h3>
+<p>Admin forms are broken up into groups by <tt class="docutils literal"><span class="pre">fieldset</span></tt> elements. Each form fieldset
+should have a class <tt class="docutils literal"><span class="pre">.module</span></tt>. Each fieldset should have a header <tt class="docutils literal"><span class="pre">h2</span></tt> within the
+fieldset at the top (except the first group in the form, and in some cases where the
+group of fields doesn't have a logical label).</p>
+<p>Each fieldset can also take extra classes in addition to <tt class="docutils literal"><span class="pre">.module</span></tt> to apply
+appropriate formatting to the group of fields.</p>
+<dl class="docutils">
+<dt>.aligned</dt>
+<dd>This will align the labels and inputs side by side on the same line.</dd>
+<dt>.wide</dt>
+<dd>Used in combination with <tt class="docutils literal"><span class="pre">.aligned</span></tt> to widen the space available for the
+labels.</dd>
+</dl>
+</div>
+<div class="section" id="s-form-rows">
+<span id="form-rows"></span><h3>Form Rows<a class="headerlink" href="#form-rows" title="Permalink to this headline">¶</a></h3>
+<p>Each row of the form (within the <tt class="docutils literal"><span class="pre">fieldset</span></tt>) should be enclosed in a <tt class="docutils literal"><span class="pre">div</span></tt>
+with class <tt class="docutils literal"><span class="pre">form-row</span></tt>. If the field in the row is required, a class of
+<tt class="docutils literal"><span class="pre">required</span></tt> should also be added to the <tt class="docutils literal"><span class="pre">div.form-row</span></tt>.</p>
+<img alt="Example use of form-row class" src="../_images/formrow.gif" />
+</div>
+<div class="section" id="s-labels">
+<span id="labels"></span><h3>Labels<a class="headerlink" href="#labels" title="Permalink to this headline">¶</a></h3>
+<p>Form labels should always precede the field, except in the case
+of checkboxes and radio buttons, where the <tt class="docutils literal"><span class="pre">input</span></tt> should come first. Any
+explanation or help text should follow the <tt class="docutils literal"><span class="pre">label</span></tt> in a <tt class="docutils literal"><span class="pre">p</span></tt> with class
+<tt class="docutils literal"><span class="pre">.help</span></tt>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Customizing the Django admin interface</a><ul>
+<li><a class="reference external" href="#modules">Modules</a></li>
+<li><a class="reference external" href="#column-types">Column Types</a></li>
+<li><a class="reference external" href="#text-styles">Text Styles</a><ul>
+<li><a class="reference external" href="#font-sizes">Font Sizes</a></li>
+<li><a class="reference external" href="#font-styles-and-alignment">Font Styles and Alignment</a></li>
+<li><a class="reference external" href="#floats-and-clears">Floats and Clears</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#object-tools">Object Tools</a></li>
+<li><a class="reference external" href="#form-styles">Form Styles</a><ul>
+<li><a class="reference external" href="#fieldsets">Fieldsets</a></li>
+<li><a class="reference external" href="#form-rows">Form Rows</a></li>
+<li><a class="reference external" href="#labels">Labels</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="index.html">Deprecated/obsolete documentation</a></li>
+    
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Deprecated/obsolete documentation</a>
+        
+        <ul><li>Customizing the Django admin interface</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/obsolete/admin-css.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="index.html" title="Deprecated/obsolete documentation">previous</a> 
+     |
+    <a href="index.html" title="Deprecated/obsolete documentation" accesskey="U">up</a></div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

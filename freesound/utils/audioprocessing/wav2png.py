@@ -2,6 +2,7 @@
 
 import os, subprocess
 import hotshot
+import optparse
 from hotshot import stats
 
 from processing import create_wave_pngs

@@ -1,0 +1,470 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>How to use Django with FastCGI, SCGI or AJP &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Deploying Django" href="index.html" />
+    <link rel="next" title="Error reporting via e-mail" href="../error-reporting.html" />
+    <link rel="prev" title="How to use Django with Apache and mod_python" href="modpython.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="modpython.html" title="How to use Django with Apache and mod_python">previous</a> 
+     |
+    <a href="../index.html" title="&amp;#8220;How-to&amp;#8221; guides" accesskey="U">up</a>
+   |
+    <a href="../error-reporting.html" title="Error reporting via e-mail">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="howto-deployment-fastcgi">
+            
+  
+  <div class="section" id="s-how-to-use-django-with-fastcgi-scgi-or-ajp">
+<span id="s-howto-deployment-fastcgi"></span><span id="how-to-use-django-with-fastcgi-scgi-or-ajp"></span><span id="howto-deployment-fastcgi"></span><h1>How to use Django with FastCGI, SCGI or AJP<a class="headerlink" href="#how-to-use-django-with-fastcgi-scgi-or-ajp" title="Permalink to this headline">¶</a></h1>
+<p>Although the current preferred setup for running Django is <a class="reference external" href="modpython.html#howto-deployment-modpython"><em>Apache with
+mod_python</em></a>, many people use shared hosting, on
+which protocols such as FastCGI, SCGI or AJP are the only viable options. In
+some setups, these protocols also allow better security &#8211; and, possibly, better
+performance &#8211; than <a class="reference external" href="http://www.modpython.org/">mod_python</a>.</p>
+<div class="admonition-note admonition ">
+<p class="first admonition-title">Note</p>
+<p class="last">This document primarily focuses on FastCGI. Other protocols, such as SCGI
+and AJP, are also supported, through the <tt class="docutils literal"><span class="pre">flup</span></tt> Python package. See the
+<a class="reference internal" href="#protocols">Protocols</a> section below for specifics about SCGI and AJP.</p>
+</div>
+<p>Essentially, FastCGI is an efficient way of letting an external application
+serve pages to a Web server. The Web server delegates the incoming Web requests
+(via a socket) to FastCGI, which executes the code and passes the response back
+to the Web server, which, in turn, passes it back to the client&#8217;s Web browser.</p>
+<p>Like mod_python, FastCGI allows code to stay in memory, allowing requests to be
+served with no startup time. Unlike <a class="reference external" href="http://www.modpython.org/">mod_python</a> (or <a class="reference external" href="http://perl.apache.org/">mod_perl</a>), a FastCGI
+process doesn&#8217;t run inside the Web server process, but in a separate,
+persistent process.</p>
+<div class="admonition-why-run-code-in-a-separate-process admonition ">
+<p class="first admonition-title">Why run code in a separate process?</p>
+<p>The traditional <tt class="docutils literal"><span class="pre">mod_*</span></tt> arrangements in Apache embed various scripting
+languages (most notably PHP, Python and Perl) inside the process space of
+your Web server. Although this lowers startup time &#8211; because code doesn&#8217;t
+have to be read off disk for every request &#8211; it comes at the cost of
+memory use. For mod_python, for example, every Apache process gets its own
+Python interpreter, which uses up a considerable amount of RAM.</p>
+<p class="last">Due to the nature of FastCGI, it&#8217;s even possible to have processes that run
+under a different user account than the Web server process. That&#8217;s a nice
+security benefit on shared systems, because it means you can secure your
+code from other users.</p>
+</div>
+<div class="section" id="s-prerequisite-flup">
+<span id="prerequisite-flup"></span><h2>Prerequisite: flup<a class="headerlink" href="#prerequisite-flup" title="Permalink to this headline">¶</a></h2>
+<p>Before you can start using FastCGI with Django, you&#8217;ll need to install <a class="reference external" href="http://www.saddi.com/software/flup/">flup</a>, a
+Python library for dealing with FastCGI. Version 0.5 or newer should work fine.</p>
+</div>
+<div class="section" id="s-starting-your-fastcgi-server">
+<span id="starting-your-fastcgi-server"></span><h2>Starting your FastCGI server<a class="headerlink" href="#starting-your-fastcgi-server" title="Permalink to this headline">¶</a></h2>
+<p>FastCGI operates on a client-server model, and in most cases you&#8217;ll be starting
+the FastCGI process on your own. Your Web server (be it Apache, lighttpd, or
+otherwise) only contacts your Django-FastCGI process when the server needs a
+dynamic page to be loaded. Because the daemon is already running with the code
+in memory, it&#8217;s able to serve the response very quickly.</p>
+<div class="admonition-note admonition ">
+<p class="first admonition-title">Note</p>
+<p class="last">If you&#8217;re on a shared hosting system, you&#8217;ll probably be forced to use
+Web server-managed FastCGI processes. See the section below on running
+Django with Web server-managed processes for more information.</p>
+</div>
+<p>A Web server can connect to a FastCGI server in one of two ways: It can use
+either a Unix domain socket (a &#8220;named pipe&#8221; on Win32 systems), or it can use a
+TCP socket. What you choose is a manner of preference; a TCP socket is usually
+easier due to permissions issues.</p>
+<p>To start your server, first change into the directory of your project (wherever
+your <a class="reference external" href="../../ref/django-admin.html#ref-django-admin"><em>manage.py</em></a> is), and then run the
+<tt class="xref docutils literal"><span class="pre">runfcgi</span></tt> command:</p>
+<div class="highlight-bash"><div class="highlight"><pre>./manage.py runfcgi <span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+<p>If you specify <tt class="docutils literal"><span class="pre">help</span></tt> as the only option after <tt class="xref docutils literal"><span class="pre">runfcgi</span></tt>, it'll
+display a list of all the available options.</p>
+<p>You'll need to specify either a <tt class="docutils literal"><span class="pre">socket</span></tt>, a <tt class="docutils literal"><span class="pre">protocol</span></tt> or both <tt class="docutils literal"><span class="pre">host</span></tt> and
+<tt class="docutils literal"><span class="pre">port</span></tt>. Then, when you set up your Web server, you'll just need to point it at
+the host/port or socket you specified when starting the FastCGI server. See the
+<a class="reference internal" href="#examples">examples</a>, below.</p>
+<div class="section" id="s-protocols">
+<span id="protocols"></span><h3>Protocols<a class="headerlink" href="#protocols" title="Permalink to this headline">¶</a></h3>
+<p>Django supports all the protocols that <a class="reference external" href="http://www.saddi.com/software/flup/">flup</a> does, namely <a class="reference external" href="http://www.fastcgi.com/">fastcgi</a>, <a class="reference external" href="http://python.ca/scgi/protocol.txt">SCGI</a> and
+<a class="reference external" href="http://tomcat.apache.org/connectors-doc/ajp/ajpv13a.html">AJP1.3</a> (the Apache JServ Protocol, version 1.3). Select your preferred
+protocol by using the <tt class="docutils literal"><span class="pre">protocol=&lt;protocol_name&gt;</span></tt> option with <tt class="docutils literal"><span class="pre">./manage.py</span>
+<span class="pre">runfcgi</span></tt> -- where <tt class="docutils literal"><span class="pre">&lt;protocol_name&gt;</span></tt> may be one of: <tt class="docutils literal"><span class="pre">fcgi</span></tt> (the default),
+<tt class="docutils literal"><span class="pre">scgi</span></tt> or <tt class="docutils literal"><span class="pre">ajp</span></tt>. For example:</p>
+<div class="highlight-bash"><div class="highlight"><pre>./manage.py runfcgi <span class="nv">protocol</span><span class="o">=</span>scgi
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-examples">
+<span id="examples"></span><h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<p>Running a threaded server on a TCP port:</p>
+<div class="highlight-bash"><div class="highlight"><pre>./manage.py runfcgi <span class="nv">method</span><span class="o">=</span>threaded <span class="nv">host</span><span class="o">=</span>127.0.0.1 <span class="nv">port</span><span class="o">=</span>3033
+</pre></div>
+</div>
+<p>Running a preforked server on a Unix domain socket:</p>
+<div class="highlight-bash"><div class="highlight"><pre>./manage.py runfcgi <span class="nv">method</span><span class="o">=</span>prefork <span class="nv">socket</span><span class="o">=</span>/home/user/mysite.sock <span class="nv">pidfile</span><span class="o">=</span>django.pid
+</pre></div>
+</div>
+<p>Run without daemonizing (backgrounding) the process (good for debugging):</p>
+<div class="highlight-bash"><div class="highlight"><pre>./manage.py runfcgi <span class="nv">daemonize</span><span class="o">=</span><span class="nb">false </span><span class="nv">socket</span><span class="o">=</span>/tmp/mysite.sock <span class="nv">maxrequests</span><span class="o">=</span>1
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-stopping-the-fastcgi-daemon">
+<span id="stopping-the-fastcgi-daemon"></span><h3>Stopping the FastCGI daemon<a class="headerlink" href="#stopping-the-fastcgi-daemon" title="Permalink to this headline">¶</a></h3>
+<p>If you have the process running in the foreground, it's easy enough to stop it:
+Simply hitting <tt class="docutils literal"><span class="pre">Ctrl-C</span></tt> will stop and quit the FastCGI server. However, when
+you're dealing with background processes, you'll need to resort to the Unix
+<tt class="docutils literal"><span class="pre">kill</span></tt> command.</p>
+<p>If you specify the <tt class="docutils literal"><span class="pre">pidfile</span></tt> option to <tt class="xref docutils literal"><span class="pre">runfcgi</span></tt>, you can kill the
+running FastCGI daemon like this:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nb">kill</span> <span class="sb">`</span>cat <span class="nv">$PIDFILE</span><span class="sb">`</span>
+</pre></div>
+</div>
+<p>...where <tt class="docutils literal"><span class="pre">$PIDFILE</span></tt> is the <tt class="docutils literal"><span class="pre">pidfile</span></tt> you specified.</p>
+<p>To easily restart your FastCGI daemon on Unix, try this small shell script:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="c">#!/bin/bash</span>
+
+<span class="c"># Replace these three settings.</span>
+<span class="nv">PROJDIR</span><span class="o">=</span><span class="s2">&quot;/home/user/myproject&quot;</span>
+<span class="nv">PIDFILE</span><span class="o">=</span><span class="s2">&quot;$PROJDIR/mysite.pid&quot;</span>
+<span class="nv">SOCKET</span><span class="o">=</span><span class="s2">&quot;$PROJDIR/mysite.sock&quot;</span>
+
+<span class="nb">cd</span> <span class="nv">$PROJDIR</span>
+<span class="k">if</span> <span class="o">[</span> -f <span class="nv">$PIDFILE</span> <span class="o">]</span>; <span class="k">then</span>
+<span class="k">    </span><span class="nb">kill</span> <span class="sb">`</span>cat -- <span class="nv">$PIDFILE</span><span class="sb">`</span>
+    rm -f -- <span class="nv">$PIDFILE</span>
+<span class="k">fi</span>
+
+<span class="nb">exec</span> /usr/bin/env - <span class="se">\</span>
+  <span class="nv">PYTHONPATH</span><span class="o">=</span><span class="s2">&quot;../python:..&quot;</span> <span class="se">\</span>
+  ./manage.py runfcgi <span class="nv">socket</span><span class="o">=</span><span class="nv">$SOCKET</span> <span class="nv">pidfile</span><span class="o">=</span><span class="nv">$PIDFILE</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-apache-setup">
+<span id="apache-setup"></span><h2>Apache setup<a class="headerlink" href="#apache-setup" title="Permalink to this headline">¶</a></h2>
+<p>To use Django with Apache and FastCGI, you'll need Apache installed and
+configured, with <a class="reference external" href="http://www.fastcgi.com/mod_fastcgi/docs/mod_fastcgi.html">mod_fastcgi</a> installed and enabled. Consult the Apache
+documentation for instructions.</p>
+<p>Once you've got that set up, point Apache at your Django FastCGI instance by
+editing the <tt class="docutils literal"><span class="pre">httpd.conf</span></tt> (Apache configuration) file. You'll need to do two
+things:</p>
+<ul class="simple">
+<li>Use the <tt class="docutils literal"><span class="pre">FastCGIExternalServer</span></tt> directive to specify the location of
+your FastCGI server.</li>
+<li>Use <tt class="docutils literal"><span class="pre">mod_rewrite</span></tt> to point URLs at FastCGI as appropriate.</li>
+</ul>
+<div class="section" id="s-specifying-the-location-of-the-fastcgi-server">
+<span id="specifying-the-location-of-the-fastcgi-server"></span><h3>Specifying the location of the FastCGI server<a class="headerlink" href="#specifying-the-location-of-the-fastcgi-server" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">FastCGIExternalServer</span></tt> directive tells Apache how to find your FastCGI
+server. As the <a class="reference external" href="http://www.fastcgi.com/mod_fastcgi/docs/mod_fastcgi.html#FastCgiExternalServer">FastCGIExternalServer docs</a> explain, you can specify either a
+<tt class="docutils literal"><span class="pre">socket</span></tt> or a <tt class="docutils literal"><span class="pre">host</span></tt>. Here are examples of both:</p>
+<div class="highlight-apache"><div class="highlight"><pre><span class="c"># Connect to FastCGI via a socket / named pipe.</span>
+<span class="nb">FastCGIExternalServer</span> <span class="sx">/home/user/public_html/mysite.fcgi</span> -socket <span class="sx">/home/user/mysite.sock</span>
+
+<span class="c"># Connect to FastCGI via a TCP host/port.</span>
+<span class="nb">FastCGIExternalServer</span> <span class="sx">/home/user/public_html/mysite.fcgi</span> -host <span class="m">127.0.0.1</span>:3033
+</pre></div>
+</div>
+<p>In either case, the file <tt class="docutils literal"><span class="pre">/home/user/public_html/mysite.fcgi</span></tt> doesn't
+actually have to exist. It's just a URL used by the Web server internally -- a
+hook for signifying which requests at a URL should be handled by FastCGI. (More
+on this in the next section.)</p>
+</div>
+<div class="section" id="s-using-mod-rewrite-to-point-urls-at-fastcgi">
+<span id="using-mod-rewrite-to-point-urls-at-fastcgi"></span><h3>Using mod_rewrite to point URLs at FastCGI<a class="headerlink" href="#using-mod-rewrite-to-point-urls-at-fastcgi" title="Permalink to this headline">¶</a></h3>
+<p>The second step is telling Apache to use FastCGI for URLs that match a certain
+pattern. To do this, use the <a class="reference external" href="http://httpd.apache.org/docs/2.0/mod/mod_rewrite.html">mod_rewrite</a> module and rewrite URLs to
+<tt class="docutils literal"><span class="pre">mysite.fcgi</span></tt> (or whatever you specified in the <tt class="docutils literal"><span class="pre">FastCGIExternalServer</span></tt>
+directive, as explained in the previous section).</p>
+<p>In this example, we tell Apache to use FastCGI to handle any request that
+doesn't represent a file on the filesystem and doesn't start with <tt class="docutils literal"><span class="pre">/media/</span></tt>.
+This is probably the most common case, if you're using Django's admin site:</p>
+<div class="highlight-apache"><div class="highlight"><pre><span class="nt">&lt;VirtualHost</span> <span class="s">12.34.56.78</span><span class="nt">&gt;</span>
+  <span class="nb">ServerName</span> example.com
+  <span class="nb">DocumentRoot</span> <span class="sx">/home/user/public_html</span>
+  <span class="nb">Alias</span> <span class="sx">/media</span> <span class="sx">/home/user/python/django/contrib/admin/media</span>
+  <span class="nb">RewriteEngine</span> <span class="k">On</span>
+  <span class="nb">RewriteRule</span> ^/(media.*)$ /$1 [QSA,L,PT]
+  <span class="nb">RewriteCond</span> %{REQUEST_FILENAME} !-f
+  <span class="nb">RewriteRule</span> ^/(.*)$ <span class="sx">/mysite.fcgi/</span>$1 [QSA,L]
+<span class="nt">&lt;/VirtualHost&gt;</span>
+</pre></div>
+</div>
+<p>Django will automatically use the pre-rewrite version of the URL when
+constructing URLs with the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">url</span> <span class="pre">%}</span></tt> template tag (and similar methods).</p>
+</div>
+</div>
+<div class="section" id="s-lighttpd-setup">
+<span id="lighttpd-setup"></span><h2>lighttpd setup<a class="headerlink" href="#lighttpd-setup" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.lighttpd.net/">lighttpd</a> is a lightweight Web server commonly used for serving static files. It
+supports FastCGI natively and, thus, is a good choice for serving both static
+and dynamic pages, if your site doesn't have any Apache-specific needs.</p>
+<p>Make sure <tt class="docutils literal"><span class="pre">mod_fastcgi</span></tt> is in your modules list, somewhere after
+<tt class="docutils literal"><span class="pre">mod_rewrite</span></tt> and <tt class="docutils literal"><span class="pre">mod_access</span></tt>, but not after <tt class="docutils literal"><span class="pre">mod_accesslog</span></tt>. You'll
+probably want <tt class="docutils literal"><span class="pre">mod_alias</span></tt> as well, for serving admin media.</p>
+<p>Add the following to your lighttpd config file:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">server</span><span class="p">.</span><span class="n">document</span><span class="o">-</span><span class="n">root</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">/home/user/public_html&quot;</span>
+<span class="n">fastcgi</span><span class="p">.</span><span class="n">server</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;</span><span class="s">/mysite.fcgi&quot;</span> <span class="o">=&gt;</span> <span class="p">(</span>
+        <span class="s2">&quot;</span><span class="s">main&quot;</span> <span class="o">=&gt;</span> <span class="p">(</span>
+            <span class="o">#</span> <span class="n">Use</span> <span class="n">host</span> <span class="o">/</span> <span class="n">port</span> <span class="n">instead</span> <span class="n">of</span> <span class="n">socket</span> <span class="k">for</span> <span class="n">TCP</span> <span class="n">fastcgi</span>
+            <span class="o">#</span> <span class="s2">&quot;</span><span class="s">host&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;</span><span class="s">127.0.0.1&quot;</span><span class="p">,</span>
+            <span class="o">#</span> <span class="s2">&quot;</span><span class="s">port&quot;</span> <span class="o">=&gt;</span> <span class="mi">3033</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="s">socket&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;</span><span class="s">/home/user/mysite.sock&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="s">check-local&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;</span><span class="s">disable&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="n">alias</span><span class="p">.</span><span class="n">url</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;</span><span class="s">/media/&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;</span><span class="s">/home/user/django/contrib/admin/media/&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">url</span><span class="p">.</span><span class="n">rewrite</span><span class="o">-</span><span class="n">once</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;</span><span class="s">^(/media.*)$&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;</span><span class="s">$1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;</span><span class="s">^/favicon\.ico$&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;</span><span class="s">/media/favicon.ico&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;</span><span class="s">^(/.*)$&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;</span><span class="s">/mysite.fcgi$1&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="s-running-multiple-django-sites-on-one-lighttpd">
+<span id="running-multiple-django-sites-on-one-lighttpd"></span><h3>Running multiple Django sites on one lighttpd<a class="headerlink" href="#running-multiple-django-sites-on-one-lighttpd" title="Permalink to this headline">¶</a></h3>
+<p>lighttpd lets you use &quot;conditional configuration&quot; to allow configuration to be
+customized per host. To specify multiple FastCGI sites, just add a conditional
+block around your FastCGI config for each site:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="c"># If the hostname is &#39;www.example1.com&#39;...</span>
+<span class="nv">$HTTP</span><span class="o">[</span><span class="s2">&quot;host&quot;</span><span class="o">]</span> <span class="o">==</span> <span class="s2">&quot;www.example1.com&quot;</span> <span class="o">{</span>
+    server.document-root <span class="o">=</span> <span class="s2">&quot;/foo/site1&quot;</span>
+    fastcgi.server <span class="o">=</span> <span class="o">(</span>
+       ...
+    <span class="o">)</span>
+    ...
+<span class="o">}</span>
+
+<span class="c"># If the hostname is &#39;www.example2.com&#39;...</span>
+<span class="nv">$HTTP</span><span class="o">[</span><span class="s2">&quot;host&quot;</span><span class="o">]</span> <span class="o">==</span> <span class="s2">&quot;www.example2.com&quot;</span> <span class="o">{</span>
+    server.document-root <span class="o">=</span> <span class="s2">&quot;/foo/site2&quot;</span>
+    fastcgi.server <span class="o">=</span> <span class="o">(</span>
+       ...
+    <span class="o">)</span>
+    ...
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>You can also run multiple Django installations on the same site simply by
+specifying multiple entries in the <tt class="docutils literal"><span class="pre">fastcgi.server</span></tt> directive. Add one
+FastCGI host for each.</p>
+</div>
+</div>
+<div class="section" id="s-running-django-on-a-shared-hosting-provider-with-apache">
+<span id="running-django-on-a-shared-hosting-provider-with-apache"></span><h2>Running Django on a shared-hosting provider with Apache<a class="headerlink" href="#running-django-on-a-shared-hosting-provider-with-apache" title="Permalink to this headline">¶</a></h2>
+<p>Many shared-hosting providers don't allow you to run your own server daemons or
+edit the <tt class="docutils literal"><span class="pre">httpd.conf</span></tt> file. In these cases, it's still possible to run Django
+using Web server-spawned processes.</p>
+<div class="admonition-note admonition ">
+<p class="first admonition-title">Note</p>
+<p class="last">If you're using Web server-spawned processes, as explained in this section,
+there's no need for you to start the FastCGI server on your own. Apache
+will spawn a number of processes, scaling as it needs to.</p>
+</div>
+<p>In your Web root directory, add this to a file named <tt class="docutils literal"><span class="pre">.htaccess</span></tt>:</p>
+<div class="highlight-apache"><div class="highlight"><pre><span class="nb">AddHandler</span> fastcgi-script .fcgi
+<span class="nb">RewriteEngine</span> <span class="k">On</span>
+<span class="nb">RewriteCond</span> %{REQUEST_FILENAME} !-f
+<span class="nb">RewriteRule</span> ^(.*)$ mysite.fcgi/$1 [QSA,L]
+</pre></div>
+</div>
+<p>Then, create a small script that tells Apache how to spawn your FastCGI
+program. Create a file <tt class="docutils literal"><span class="pre">mysite.fcgi</span></tt> and place it in your Web directory, and
+be sure to make it executable:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">os</span>
+
+<span class="c"># Add a custom Python path.</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span> <span class="s">&quot;/home/user/python&quot;</span><span class="p">)</span>
+
+<span class="c"># Switch to the directory of your project. (Optional.)</span>
+<span class="c"># os.chdir(&quot;/home/user/myproject&quot;)</span>
+
+<span class="c"># Set the DJANGO_SETTINGS_MODULE environment variable.</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;DJANGO_SETTINGS_MODULE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;myproject.settings&quot;</span>
+
+<span class="kn">from</span> <span class="nn">django.core.servers.fastcgi</span> <span class="kn">import</span> <span class="n">runfastcgi</span>
+<span class="n">runfastcgi</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s">&quot;threaded&quot;</span><span class="p">,</span> <span class="n">daemonize</span><span class="o">=</span><span class="s">&quot;false&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="s-restarting-the-spawned-server">
+<span id="restarting-the-spawned-server"></span><h3>Restarting the spawned server<a class="headerlink" href="#restarting-the-spawned-server" title="Permalink to this headline">¶</a></h3>
+<p>If you change any Python code on your site, you'll need to tell FastCGI the
+code has changed. But there's no need to restart Apache in this case. Rather,
+just reupload <tt class="docutils literal"><span class="pre">mysite.fcgi</span></tt>, or edit the file, so that the timestamp on the
+file will change. When Apache sees the file has been updated, it will restart
+your Django application for you.</p>
+<p>If you have access to a command shell on a Unix system, you can accomplish this
+easily by using the <tt class="docutils literal"><span class="pre">touch</span></tt> command:</p>
+<div class="highlight-bash"><div class="highlight"><pre>touch mysite.fcgi
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="s-serving-admin-media-files">
+<span id="serving-admin-media-files"></span><h2>Serving admin media files<a class="headerlink" href="#serving-admin-media-files" title="Permalink to this headline">¶</a></h2>
+<p>Regardless of the server and configuration you eventually decide to use, you
+will also need to give some thought to how to serve the admin media files. The
+advice given in the <a class="reference external" href="modpython.html#serving-the-admin-files"><em>modpython</em></a> documentation
+is also applicable in the setups detailed above.</p>
+</div>
+<div class="section" id="s-forcing-the-url-prefix-to-a-particular-value">
+<span id="forcing-the-url-prefix-to-a-particular-value"></span><h2>Forcing the URL prefix to a particular value<a class="headerlink" href="#forcing-the-url-prefix-to-a-particular-value" title="Permalink to this headline">¶</a></h2>
+<p>Because many of these fastcgi-based solutions require rewriting the URL at
+some point inside the webserver, the path information that Django sees may not
+resemble the original URL that was passed in. This is a problem if the Django
+application is being served from under a particular prefix and you want your
+URLs from the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">url</span> <span class="pre">%}</span></tt> tag to look like the prefix, rather than the
+rewritten version, which might contain, for example, <tt class="docutils literal"><span class="pre">mysite.fcgi</span></tt>.</p>
+<p>Django makes a good attempt to work out what the real script name prefix
+should be. In particular, if the webserver sets the <tt class="docutils literal"><span class="pre">SCRIPT_URL</span></tt> (specific
+to Apache's mod_rewrite), or <tt class="docutils literal"><span class="pre">REDIRECT_URL</span></tt> (set by a few servers, including
+Apache + mod_rewrite in some situations), Django will work out the original
+prefix automatically.</p>
+<p>In the cases where Django cannot work out the prefix correctly and where you
+want the original value to be used in URLs, you can set the
+<tt class="docutils literal"><span class="pre">FORCE_SCRIPT_NAME</span></tt> setting in your main <tt class="docutils literal"><span class="pre">settings</span></tt> file. This sets the
+script name uniformly for every URL served via that settings file. Thus you'll
+need to use different settings files if you want different sets of URLs to
+have different script names in this case, but that is a rare situation.</p>
+<p>As an example of how to use it, if your Django configuration is serving all of
+the URLs under <tt class="docutils literal"><span class="pre">'/'</span></tt> and you wanted to use this setting, you would set
+<tt class="docutils literal"><span class="pre">FORCE_SCRIPT_NAME</span> <span class="pre">=</span> <span class="pre">''</span></tt> in your settings file.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">How to use Django with FastCGI, SCGI or AJP</a><ul>
+<li><a class="reference external" href="#prerequisite-flup">Prerequisite: flup</a></li>
+<li><a class="reference external" href="#starting-your-fastcgi-server">Starting your FastCGI server</a><ul>
+<li><a class="reference external" href="#protocols">Protocols</a></li>
+<li><a class="reference external" href="#examples">Examples</a></li>
+<li><a class="reference external" href="#stopping-the-fastcgi-daemon">Stopping the FastCGI daemon</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#apache-setup">Apache setup</a><ul>
+<li><a class="reference external" href="#specifying-the-location-of-the-fastcgi-server">Specifying the location of the FastCGI server</a></li>
+<li><a class="reference external" href="#using-mod-rewrite-to-point-urls-at-fastcgi">Using mod_rewrite to point URLs at FastCGI</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#lighttpd-setup">lighttpd setup</a><ul>
+<li><a class="reference external" href="#running-multiple-django-sites-on-one-lighttpd">Running multiple Django sites on one lighttpd</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#running-django-on-a-shared-hosting-provider-with-apache">Running Django on a shared-hosting provider with Apache</a><ul>
+<li><a class="reference external" href="#restarting-the-spawned-server">Restarting the spawned server</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#serving-admin-media-files">Serving admin media files</a></li>
+<li><a class="reference external" href="#forcing-the-url-prefix-to-a-particular-value">Forcing the URL prefix to a particular value</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="modpython.html">How to use Django with Apache and mod_python</a></li>
+    
+    
+      <li>Next: <a href="../error-reporting.html">Error reporting via e-mail</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">&#8220;How-to&#8221; guides</a>
+        
+          <ul><li><a href="index.html">Deploying Django</a>
+        
+        <ul><li>How to use Django with FastCGI, SCGI or AJP</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/howto/deployment/fastcgi.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="modpython.html" title="How to use Django with Apache and mod_python">previous</a> 
+     |
+    <a href="../index.html" title="&amp;#8220;How-to&amp;#8221; guides" accesskey="U">up</a>
+   |
+    <a href="../error-reporting.html" title="Error reporting via e-mail">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

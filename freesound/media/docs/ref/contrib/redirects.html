@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The redirects app &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="The &#8220;django.contrib&#8221; add-ons" href="index.html" />
+    <link rel="next" title="The sitemap framework" href="sitemaps.html" />
+    <link rel="prev" title="The &#8220;local flavor&#8221; add-ons" href="localflavor.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="localflavor.html" title="The &amp;#8220;local flavor&amp;#8221; add-ons">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="sitemaps.html" title="The sitemap framework">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-contrib-redirects">
+            
+  
+  <div class="section" id="s-module-django.contrib.redirects">
+<span id="s-ref-contrib-redirects"></span><span id="module-django.contrib.redirects"></span><span id="ref-contrib-redirects"></span><h1>The redirects app<a class="headerlink" href="#module-django.contrib.redirects" title="Permalink to this headline">¶</a></h1>
+<p>Django comes with an optional redirects application. It lets you store simple
+redirects in a database and handles the redirecting for you.</p>
+<div class="section" id="s-installation">
+<span id="installation"></span><h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>To install the redirects app, follow these steps:</p>
+<ol class="arabic simple">
+<li>Add <tt class="docutils literal"><span class="pre">'django.contrib.redirects'</span></tt> to your <a class="reference external" href="../settings.html#setting-INSTALLED_APPS"><tt class="xref docutils literal"><span class="pre">INSTALLED_APPS</span></tt></a>
+setting.</li>
+<li>Add <tt class="docutils literal"><span class="pre">'django.contrib.redirects.middleware.RedirectFallbackMiddleware'</span></tt>
+to your <a class="reference external" href="../settings.html#setting-MIDDLEWARE_CLASSES"><tt class="xref docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt></a> setting.</li>
+<li>Run the command <tt class="xref docutils literal"><span class="pre">manage.py</span> <span class="pre">syncdb</span></tt>.</li>
+</ol>
+</div>
+<div class="section" id="s-how-it-works">
+<span id="how-it-works"></span><h2>How it works<a class="headerlink" href="#how-it-works" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">syncdb</span></tt> creates a <tt class="docutils literal"><span class="pre">django_redirect</span></tt> table in your database. This
+is a simple lookup table with <tt class="docutils literal"><span class="pre">site_id</span></tt>, <tt class="docutils literal"><span class="pre">old_path</span></tt> and <tt class="docutils literal"><span class="pre">new_path</span></tt> fields.</p>
+<p>The <tt class="docutils literal"><span class="pre">RedirectFallbackMiddleware</span></tt> does all of the work. Each time any Django
+application raises a 404 error, this middleware checks the redirects database
+for the requested URL as a last resort. Specifically, it checks for a redirect
+with the given <tt class="docutils literal"><span class="pre">old_path</span></tt> with a site ID that corresponds to the
+<a class="reference external" href="../settings.html#setting-SITE_ID"><tt class="xref docutils literal"><span class="pre">SITE_ID</span></tt></a> setting.</p>
+<ul class="simple">
+<li>If it finds a match, and <tt class="docutils literal"><span class="pre">new_path</span></tt> is not empty, it redirects to
+<tt class="docutils literal"><span class="pre">new_path</span></tt>.</li>
+<li>If it finds a match, and <tt class="docutils literal"><span class="pre">new_path</span></tt> is empty, it sends a 410 (&#8220;Gone&#8221;)
+HTTP header and empty (content-less) response.</li>
+<li>If it doesn&#8217;t find a match, the request continues to be processed as
+usual.</li>
+</ul>
+<p>The middleware only gets activated for 404s &#8211; not for 500s or responses of any
+other status code.</p>
+<p>Note that the order of <a class="reference external" href="../settings.html#setting-MIDDLEWARE_CLASSES"><tt class="xref docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt></a> matters. Generally, you
+can put <tt class="docutils literal"><span class="pre">RedirectFallbackMiddleware</span></tt> at the end of the list, because it&#8217;s a
+last resort.</p>
+<p>For more on middleware, read the <a class="reference external" href="../../topics/http/middleware.html#topics-http-middleware"><em>middleware docs</em></a>.</p>
+</div>
+<div class="section" id="s-how-to-add-change-and-delete-redirects">
+<span id="how-to-add-change-and-delete-redirects"></span><h2>How to add, change and delete redirects<a class="headerlink" href="#how-to-add-change-and-delete-redirects" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="s-via-the-admin-interface">
+<span id="via-the-admin-interface"></span><h3>Via the admin interface<a class="headerlink" href="#via-the-admin-interface" title="Permalink to this headline">¶</a></h3>
+<p>If you&#8217;ve activated the automatic Django admin interface, you should see a
+&#8220;Redirects&#8221; section on the admin index page. Edit redirects as you edit any
+other object in the system.</p>
+</div>
+<div class="section" id="s-via-the-python-api">
+<span id="via-the-python-api"></span><h3>Via the Python API<a class="headerlink" href="#via-the-python-api" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="django.contrib.redirects.models.Redirect">
+<!--[django.contrib.redirects.models.Redirect]-->class <tt class="descclassname">models.</tt><tt class="descname">Redirect</tt><a class="headerlink" href="#django.contrib.redirects.models.Redirect" title="Permalink to this definition">¶</a></dt>
+<dd>Redirects are represented by a standard <a class="reference external" href="../../topics/db/models.html#topics-db-models"><em>Django model</em></a>,
+which lives in <a class="reference external" href="http://code.djangoproject.com/browser/django/trunk/django/contrib/redirects/models.py">django/contrib/redirects/models.py</a>. You can access redirect
+objects via the <a class="reference external" href="../../topics/db/queries.html#topics-db-queries"><em>Django database API</em></a>.</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">The redirects app</a><ul>
+<li><a class="reference external" href="#installation">Installation</a></li>
+<li><a class="reference external" href="#how-it-works">How it works</a></li>
+<li><a class="reference external" href="#how-to-add-change-and-delete-redirects">How to add, change and delete redirects</a><ul>
+<li><a class="reference external" href="#via-the-admin-interface">Via the admin interface</a></li>
+<li><a class="reference external" href="#via-the-python-api">Via the Python API</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="localflavor.html">The &#8220;local flavor&#8221; add-ons</a></li>
+    
+    
+      <li>Next: <a href="sitemaps.html">The sitemap framework</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">API Reference</a>
+        
+          <ul><li><a href="index.html">The &#8220;django.contrib&#8221; add-ons</a>
+        
+        <ul><li>The redirects app</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/ref/contrib/redirects.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="localflavor.html" title="The &amp;#8220;local flavor&amp;#8221; add-ons">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="sitemaps.html" title="The sitemap framework">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

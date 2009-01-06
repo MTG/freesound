@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FAQ: General &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Django FAQ" href="index.html" />
+    <link rel="next" title="FAQ: Installation" href="install.html" />
+    <link rel="prev" title="Django FAQ" href="index.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="index.html" title="Django FAQ">previous</a> 
+     |
+    <a href="index.html" title="Django FAQ" accesskey="U">up</a>
+   |
+    <a href="install.html" title="FAQ: Installation">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="faq-general">
+            
+  
+  <div class="section" id="s-id1">
+<span id="s-faq-general"></span><span id="id1"></span><span id="faq-general"></span><h1>FAQ: General<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="s-why-does-this-project-exist">
+<span id="why-does-this-project-exist"></span><h2>Why does this project exist?<a class="headerlink" href="#why-does-this-project-exist" title="Permalink to this headline">¶</a></h2>
+<p>Django grew from a very practical need: World Online, a newspaper Web
+operation, is responsible for building intensive Web applications on journalism
+deadlines. In the fast-paced newsroom, World Online often has only a matter of
+hours to take a complicated Web application from concept to public launch.</p>
+<p>At the same time, the World Online Web developers have consistently been
+perfectionists when it comes to following best practices of Web development.</p>
+<p>In fall 2003, the World Online developers (Adrian Holovaty and Simon Willison)
+ditched PHP and began using Python to develop its Web sites. As they built
+intensive, richly interactive sites such as Lawrence.com, they began to extract
+a generic Web development framework that let them build Web applications more
+and more quickly. They tweaked this framework constantly, adding improvements
+over two years.</p>
+<p>In summer 2005, World Online decided to open-source the resulting software,
+Django. Django would not be possible without a whole host of open-source
+projects &#8211; <a class="reference external" href="http://httpd.apache.org/">Apache</a>, <a class="reference external" href="http://www.python.org/">Python</a>, and <a class="reference external" href="http://www.postgresql.org/">PostgreSQL</a> to name a few &#8211; and we&#8217;re
+thrilled to be able to give something back to the open-source community.</p>
+</div>
+<div class="section" id="s-what-does-django-mean-and-how-do-you-pronounce-it">
+<span id="what-does-django-mean-and-how-do-you-pronounce-it"></span><h2>What does &#8220;Django&#8221; mean, and how do you pronounce it?<a class="headerlink" href="#what-does-django-mean-and-how-do-you-pronounce-it" title="Permalink to this headline">¶</a></h2>
+<p>Django is named after <a class="reference external" href="http://en.wikipedia.org/wiki/Django_Reinhardt">Django Reinhardt</a>, a gypsy jazz guitarist from the 1930s
+to early 1950s. To this day, he&#8217;s considered one of the best guitarists of all time.</p>
+<p>Listen to his music. You&#8217;ll like it.</p>
+<p>Django is pronounced <strong>JANG</strong>-oh. Rhymes with FANG-oh. The &#8220;D&#8221; is silent.</p>
+<p>We&#8217;ve also recorded an <a class="reference external" href="http://red-bean.com/~adrian/django_pronunciation.mp3">audio clip of the pronunciation</a>.</p>
+</div>
+<div class="section" id="s-is-django-stable">
+<span id="is-django-stable"></span><h2>Is Django stable?<a class="headerlink" href="#is-django-stable" title="Permalink to this headline">¶</a></h2>
+<p>Yes. World Online has been using Django for more than three years. Sites built
+on Django have weathered traffic spikes of over one million hits an hour and a
+number of Slashdottings. Yes, it&#8217;s quite stable.</p>
+</div>
+<div class="section" id="s-does-django-scale">
+<span id="does-django-scale"></span><h2>Does Django scale?<a class="headerlink" href="#does-django-scale" title="Permalink to this headline">¶</a></h2>
+<p>Yes. Compared to development time, hardware is cheap, and so Django is
+designed to take advantage of as much hardware as you can throw at it.</p>
+<p>Django uses a &#8220;shared-nothing&#8221; architecture, which means you can add hardware
+at any level &#8211; database servers, caching servers or Web/application servers.</p>
+<p>The framework cleanly separates components such as its database layer and
+application layer. And it ships with a simple-yet-powerful
+<a class="reference external" href="../topics/cache.html#topics-cache"><em>cache framework</em></a>.</p>
+</div>
+<div class="section" id="s-who-s-behind-this">
+<span id="who-s-behind-this"></span><h2>Who&#8217;s behind this?<a class="headerlink" href="#who-s-behind-this" title="Permalink to this headline">¶</a></h2>
+<p>Django was originally developed at World Online, the Web department of a
+newspaper in Lawrence, Kansas, USA. Django&#8217;s now run by an international team of
+volunteers; you can read all about them over at the <a class="reference external" href="../internals/committers.html#internals-committers"><em>list of committers</em></a></p>
+</div>
+<div class="section" id="s-which-sites-use-django">
+<span id="which-sites-use-django"></span><h2>Which sites use Django?<a class="headerlink" href="#which-sites-use-django" title="Permalink to this headline">¶</a></h2>
+<p>The Django wiki features a consistently growing <a class="reference external" href="http://code.djangoproject.com/wiki/DjangoPoweredSites">list of Django-powered sites</a>.
+Feel free to add your Django-powered site to the list.</p>
+</div>
+<div class="section" id="s-django-appears-to-be-a-mvc-framework-but-you-call-the-controller-the-view-and-the-view-the-template-how-come-you-don-t-use-the-standard-names">
+<span id="s-mtv"></span><span id="django-appears-to-be-a-mvc-framework-but-you-call-the-controller-the-view-and-the-view-the-template-how-come-you-don-t-use-the-standard-names"></span><span id="mtv"></span><h2>Django appears to be a MVC framework, but you call the Controller the &#8220;view&#8221;, and the View the &#8220;template&#8221;. How come you don&#8217;t use the standard names?<a class="headerlink" href="#django-appears-to-be-a-mvc-framework-but-you-call-the-controller-the-view-and-the-view-the-template-how-come-you-don-t-use-the-standard-names" title="Permalink to this headline">¶</a></h2>
+<p>Well, the standard names are debatable.</p>
+<p>In our interpretation of MVC, the &#8220;view&#8221; describes the data that gets presented
+to the user. It&#8217;s not necessarily <em>how</em> the data <em>looks</em>, but <em>which</em> data is
+presented. The view describes <em>which data you see</em>, not <em>how you see it.</em> It&#8217;s
+a subtle distinction.</p>
+<p>So, in our case, a &#8220;view&#8221; is the Python callback function for a particular URL,
+because that callback function describes which data is presented.</p>
+<p>Furthermore, it&#8217;s sensible to separate content from presentation &#8211; which is
+where templates come in. In Django, a &#8220;view&#8221; describes which data is presented,
+but a view normally delegates to a template, which describes <em>how</em> the data is
+presented.</p>
+<p>Where does the &#8220;controller&#8221; fit in, then? In Django&#8217;s case, it&#8217;s probably the
+framework itself: the machinery that sends a request to the appropriate view,
+according to the Django URL configuration.</p>
+<p>If you&#8217;re hungry for acronyms, you might say that Django is a &#8220;MTV&#8221; framework
+&#8211; that is, &#8220;model&#8221;, &#8220;template&#8221;, and &#8220;view.&#8221; That breakdown makes much more
+sense.</p>
+<p>At the end of the day, of course, it comes down to getting stuff done. And,
+regardless of how things are named, Django gets stuff done in a way that&#8217;s most
+logical to us.</p>
+</div>
+<div class="section" id="s-framework-x-does-feature-y-why-doesn-t-django">
+<span id="framework-x-does-feature-y-why-doesn-t-django"></span><h2>&lt;Framework X&gt; does &lt;feature Y&gt; &#8211; why doesn&#8217;t Django?<a class="headerlink" href="#framework-x-does-feature-y-why-doesn-t-django" title="Permalink to this headline">¶</a></h2>
+<p>We&#8217;re well aware that there are other awesome Web frameworks out there, and
+we&#8217;re not averse to borrowing ideas where appropriate. However, Django was
+developed precisely because we were unhappy with the status quo, so please be
+aware that &#8220;because &lt;Framework X&gt; does it&#8221; is not going to be sufficient reason
+to add a given feature to Django.</p>
+</div>
+<div class="section" id="s-why-did-you-write-all-of-django-from-scratch-instead-of-using-other-python-libraries">
+<span id="why-did-you-write-all-of-django-from-scratch-instead-of-using-other-python-libraries"></span><h2>Why did you write all of Django from scratch, instead of using other Python libraries?<a class="headerlink" href="#why-did-you-write-all-of-django-from-scratch-instead-of-using-other-python-libraries" title="Permalink to this headline">¶</a></h2>
+<p>When Django was originally written a couple of years ago, Adrian and Simon
+spent quite a bit of time exploring the various Python Web frameworks
+available.</p>
+<p>In our opinion, none of them were completely up to snuff.</p>
+<p>We&#8217;re picky. You might even call us perfectionists. (With deadlines.)</p>
+<p>Over time, we stumbled across open-source libraries that did things we&#8217;d
+already implemented. It was reassuring to see other people solving similar
+problems in similar ways, but it was too late to integrate outside code: We&#8217;d
+already written, tested and implemented our own framework bits in several
+production settings &#8211; and our own code met our needs delightfully.</p>
+<p>In most cases, however, we found that existing frameworks/tools inevitably had
+some sort of fundamental, fatal flaw that made us squeamish. No tool fit our
+philosophies 100%.</p>
+<p>Like we said: We&#8217;re picky.</p>
+<p>We&#8217;ve documented our philosophies on the
+<a class="reference external" href="../misc/design-philosophies.html#misc-design-philosophies"><em>design philosophies page</em></a>.</p>
+</div>
+<div class="section" id="s-is-django-a-content-management-system-cms">
+<span id="is-django-a-content-management-system-cms"></span><h2>Is Django a content-management-system (CMS)?<a class="headerlink" href="#is-django-a-content-management-system-cms" title="Permalink to this headline">¶</a></h2>
+<p>No, Django is not a CMS, or any sort of &#8220;turnkey product&#8221; in and of itself.
+It&#8217;s a Web framework; it&#8217;s a programming tool that lets you build Web sites.</p>
+<p>For example, it doesn&#8217;t make much sense to compare Django to something like
+<a class="reference external" href="http://drupal.org/">Drupal</a>, because Django is something you use to <em>create</em> things like Drupal.</p>
+<p>Of course, Django&#8217;s automatic admin site is fantastic and timesaving &#8211; but
+the admin site is one module of Django the framework. Furthermore, although
+Django has special conveniences for building &#8220;CMS-y&#8221; apps, that doesn&#8217;t mean
+it&#8217;s not just as appropriate for building &#8220;non-CMS-y&#8221; apps (whatever that
+means!).</p>
+</div>
+<div class="section" id="s-how-can-i-download-the-django-documentation-to-read-it-offline">
+<span id="how-can-i-download-the-django-documentation-to-read-it-offline"></span><h2>How can I download the Django documentation to read it offline?<a class="headerlink" href="#how-can-i-download-the-django-documentation-to-read-it-offline" title="Permalink to this headline">¶</a></h2>
+<p>The Django docs are available in the <tt class="docutils literal"><span class="pre">docs</span></tt> directory of each Django tarball
+release. These docs are in ReST (ReStructured Text) format, and each text file
+corresponds to a Web page on the official Django site.</p>
+<p>Because the documentation is <a class="reference external" href="http://code.djangoproject.com/browser/django/trunk/docs">stored in revision control</a>, you can browse
+documentation changes just like you can browse code changes.</p>
+<p>Technically, the docs on Django&#8217;s site are generated from the latest development
+versions of those ReST documents, so the docs on the Django site may offer more
+information than the docs that come with the latest Django release.</p>
+</div>
+<div class="section" id="s-where-can-i-find-django-developers-for-hire">
+<span id="where-can-i-find-django-developers-for-hire"></span><h2>Where can I find Django developers for hire?<a class="headerlink" href="#where-can-i-find-django-developers-for-hire" title="Permalink to this headline">¶</a></h2>
+<p>Consult our <a class="reference external" href="http://code.djangoproject.com/wiki/DevelopersForHire">developers for hire page</a> for a list of Django developers who
+would be happy to help you.</p>
+<p>You might also be interested in posting a job to <a class="reference external" href="http://djangogigs.com/">http://djangogigs.com/</a> .
+If you want to find Django-capable people in your local area, try
+<a class="reference external" href="http://djangopeople.net/">http://djangopeople.net/</a> .</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">FAQ: General</a><ul>
+<li><a class="reference external" href="#why-does-this-project-exist">Why does this project exist?</a></li>
+<li><a class="reference external" href="#what-does-django-mean-and-how-do-you-pronounce-it">What does &#8220;Django&#8221; mean, and how do you pronounce it?</a></li>
+<li><a class="reference external" href="#is-django-stable">Is Django stable?</a></li>
+<li><a class="reference external" href="#does-django-scale">Does Django scale?</a></li>
+<li><a class="reference external" href="#who-s-behind-this">Who&#8217;s behind this?</a></li>
+<li><a class="reference external" href="#which-sites-use-django">Which sites use Django?</a></li>
+<li><a class="reference external" href="#django-appears-to-be-a-mvc-framework-but-you-call-the-controller-the-view-and-the-view-the-template-how-come-you-don-t-use-the-standard-names">Django appears to be a MVC framework, but you call the Controller the &#8220;view&#8221;, and the View the &#8220;template&#8221;. How come you don&#8217;t use the standard names?</a></li>
+<li><a class="reference external" href="#framework-x-does-feature-y-why-doesn-t-django">&lt;Framework X&gt; does &lt;feature Y&gt; &#8211; why doesn&#8217;t Django?</a></li>
+<li><a class="reference external" href="#why-did-you-write-all-of-django-from-scratch-instead-of-using-other-python-libraries">Why did you write all of Django from scratch, instead of using other Python libraries?</a></li>
+<li><a class="reference external" href="#is-django-a-content-management-system-cms">Is Django a content-management-system (CMS)?</a></li>
+<li><a class="reference external" href="#how-can-i-download-the-django-documentation-to-read-it-offline">How can I download the Django documentation to read it offline?</a></li>
+<li><a class="reference external" href="#where-can-i-find-django-developers-for-hire">Where can I find Django developers for hire?</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="index.html">Django FAQ</a></li>
+    
+    
+      <li>Next: <a href="install.html">FAQ: Installation</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Django FAQ</a>
+        
+        <ul><li>FAQ: General</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/faq/general.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="index.html" title="Django FAQ">previous</a> 
+     |
+    <a href="index.html" title="Django FAQ" accesskey="U">up</a>
+   |
+    <a href="install.html" title="FAQ: Installation">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

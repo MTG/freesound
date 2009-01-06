@@ -1,0 +1,365 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Django version 0.96 release notes &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="Release notes" href="index.html" />
+    <link rel="next" title="Django 1.0 alpha release notes" href="1.0-alpha-1.html" />
+    <link rel="prev" title="Django version 0.95 release notes" href="0.95.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="0.95.html" title="Django version 0.95 release notes">previous</a> 
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="1.0-alpha-1.html" title="Django 1.0 alpha release notes">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-0.96">
+            
+  
+  <div class="section" id="s-django-version-0-96-release-notes">
+<span id="s-releases-0-96"></span><span id="django-version-0-96-release-notes"></span><span id="releases-0-96"></span><h1>Django version 0.96 release notes<a class="headerlink" href="#django-version-0-96-release-notes" title="Permalink to this headline">¶</a></h1>
+<p>Welcome to Django 0.96!</p>
+<p>The primary goal for 0.96 is a cleanup and stabilization of the features
+introduced in 0.95. There have been a few small <a class="reference internal" href="#backwards-incompatible-changes">backwards-incompatible
+changes</a> since 0.95, but the upgrade process should be fairly simple
+and should not require major changes to existing applications.</p>
+<p>However, we&#8217;re also releasing 0.96 now because we have a set of
+backwards-incompatible changes scheduled for the near future. Once
+completed, they will involve some code changes for application
+developers, so we recommend that you stick with Django 0.96 until the
+next official release; then you&#8217;ll be able to upgrade in one step
+instead of needing to make incremental changes to keep up with the
+development version of Django.</p>
+<div class="section" id="s-backwards-incompatible-changes">
+<span id="backwards-incompatible-changes"></span><h2>Backwards-incompatible changes<a class="headerlink" href="#backwards-incompatible-changes" title="Permalink to this headline">¶</a></h2>
+<p>The following changes may require you to update your code when you switch from
+0.95 to 0.96:</p>
+<div class="section" id="s-mysqldb-version-requirement">
+<span id="mysqldb-version-requirement"></span><h3><tt class="docutils literal"><span class="pre">MySQLdb</span></tt> version requirement<a class="headerlink" href="#mysqldb-version-requirement" title="Permalink to this headline">¶</a></h3>
+<p>Due to a bug in older versions of the <tt class="docutils literal"><span class="pre">MySQLdb</span></tt> Python module (which
+Django uses to connect to MySQL databases), Django&#8217;s MySQL backend now
+requires version 1.2.1p2 or higher of <tt class="docutils literal"><span class="pre">MySQLdb</span></tt>, and will raise
+exceptions if you attempt to use an older version.</p>
+<p>If you&#8217;re currently unable to upgrade your copy of <tt class="docutils literal"><span class="pre">MySQLdb</span></tt> to meet
+this requirement, a separate, backwards-compatible backend, called
+&#8220;mysql_old&#8221;, has been added to Django. To use this backend, change
+the <a class="reference external" href="../ref/settings.html#setting-DATABASE_ENGINE"><tt class="xref docutils literal"><span class="pre">DATABASE_ENGINE</span></tt></a> setting in your Django settings file from
+this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DATABASE_ENGINE</span> <span class="o">=</span> <span class="s">&quot;mysql&quot;</span>
+</pre></div>
+</div>
+<p>to this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DATABASE_ENGINE</span> <span class="o">=</span> <span class="s">&quot;mysql_old&quot;</span>
+</pre></div>
+</div>
+<p>However, we strongly encourage MySQL users to upgrade to a more recent
+version of <tt class="docutils literal"><span class="pre">MySQLdb</span></tt> as soon as possible, The &quot;mysql_old&quot; backend is
+provided only to ease this transition, and is considered deprecated;
+aside from any necessary security fixes, it will not be actively
+maintained, and it will be removed in a future release of Django.</p>
+<p>Also, note that some features, like the new <a class="reference external" href="../ref/settings.html#setting-DATABASE_OPTIONS"><tt class="xref docutils literal"><span class="pre">DATABASE_OPTIONS</span></tt></a>
+setting (see the <a class="reference external" href="http://www.djangoproject.com/documentation/0.96/databases/">databases documentation</a> for details), are only
+available on the &quot;mysql&quot; backend, and will not be made available for
+&quot;mysql_old&quot;.</p>
+</div>
+<div class="section" id="s-database-constraint-names-changed">
+<span id="database-constraint-names-changed"></span><h3>Database constraint names changed<a class="headerlink" href="#database-constraint-names-changed" title="Permalink to this headline">¶</a></h3>
+<p>The format of the constraint names Django generates for foreign key
+references have changed slightly. These names are generally only used
+when it is not possible to put the reference directly on the affected
+column, so they are not always visible.</p>
+<p>The effect of this change is that running <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">reset</span></tt> and
+similar commands against an existing database may generate SQL with
+the new form of constraint name, while the database itself contains
+constraints named in the old form; this will cause the database server
+to raise an error message about modifying non-existent constraints.</p>
+<p>If you need to work around this, there are two methods available:</p>
+<ol class="arabic simple">
+<li>Redirect the output of <tt class="docutils literal"><span class="pre">manage.py</span></tt> to a file, and edit the
+generated SQL to use the correct constraint names before
+executing it.</li>
+<li>Examine the output of <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">sqlall</span></tt> to see the new-style
+constraint names, and use that as a guide to rename existing
+constraints in your database.</li>
+</ol>
+</div>
+<div class="section" id="s-name-changes-in-manage-py">
+<span id="name-changes-in-manage-py"></span><h3>Name changes in <tt class="docutils literal"><span class="pre">manage.py</span></tt><a class="headerlink" href="#name-changes-in-manage-py" title="Permalink to this headline">¶</a></h3>
+<p>A few of the options to <tt class="docutils literal"><span class="pre">manage.py</span></tt> have changed with the addition of fixture
+support:</p>
+<ul class="simple">
+<li>There are new <tt class="docutils literal"><span class="pre">dumpdata</span></tt> and <tt class="docutils literal"><span class="pre">loaddata</span></tt> commands which, as
+you might expect, will dump and load data to/from the
+database. These commands can operate against any of Django's
+supported serialization formats.</li>
+<li>The <tt class="docutils literal"><span class="pre">sqlinitialdata</span></tt> command has been renamed to <tt class="docutils literal"><span class="pre">sqlcustom</span></tt> to
+emphasize that <tt class="docutils literal"><span class="pre">loaddata</span></tt> should be used for data (and <tt class="docutils literal"><span class="pre">sqlcustom</span></tt> for
+other custom SQL -- views, stored procedures, etc.).</li>
+<li>The vestigial <tt class="docutils literal"><span class="pre">install</span></tt> command has been removed. Use <tt class="docutils literal"><span class="pre">syncdb</span></tt>.</li>
+</ul>
+</div>
+<div class="section" id="s-backslash-escaping-changed">
+<span id="backslash-escaping-changed"></span><h3>Backslash escaping changed<a class="headerlink" href="#backslash-escaping-changed" title="Permalink to this headline">¶</a></h3>
+<p>The Django database API now escapes backslashes given as query parameters. If
+you have any database API code that matches backslashes, and it was working before
+(despite the lack of escaping), you'll have to change your code to &quot;unescape&quot; the
+slashes one level.</p>
+<p>For example, this used to work:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Find text containing a single backslash</span>
+<span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">text__contains</span><span class="o">=</span><span class="s">&#39;</span><span class="se">\\\\</span><span class="s">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The above is now incorrect, and should be rewritten as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Find text containing a single backslash</span>
+<span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">text__contains</span><span class="o">=</span><span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-removed-enable-psyco-setting">
+<span id="removed-enable-psyco-setting"></span><h3>Removed ENABLE_PSYCO setting<a class="headerlink" href="#removed-enable-psyco-setting" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">ENABLE_PSYCO</span></tt> setting no longer exists. If your settings file includes
+<tt class="docutils literal"><span class="pre">ENABLE_PSYCO</span></tt> it will have no effect; to use <a class="reference external" href="http://psyco.sourceforge.net/">Psyco</a>, we recommend
+writing a middleware class to activate it.</p>
+</div>
+</div>
+<div class="section" id="s-what-s-new-in-0-96">
+<span id="what-s-new-in-0-96"></span><h2>What's new in 0.96?<a class="headerlink" href="#what-s-new-in-0-96" title="Permalink to this headline">¶</a></h2>
+<p>This revision represents over a thousand source commits and over four hundred
+bug fixes, so we can't possibly catalog all the changes. Here, we describe the
+most notable changes in this release.</p>
+<div class="section" id="s-new-forms-library">
+<span id="new-forms-library"></span><h3>New forms library<a class="headerlink" href="#new-forms-library" title="Permalink to this headline">¶</a></h3>
+<p><tt class="docutils literal"><span class="pre">django.newforms</span></tt> is Django's new form-handling library. It's a
+replacement for <tt class="docutils literal"><span class="pre">django.forms</span></tt>, the old form/manipulator/validation
+framework.  Both APIs are available in 0.96, but over the next two
+releases we plan to switch completely to the new forms system, and
+deprecate and remove the old system.</p>
+<p>There are three elements to this transition:</p>
+<ul>
+<li><p class="first">We've copied the current <tt class="docutils literal"><span class="pre">django.forms</span></tt> to
+<tt class="docutils literal"><span class="pre">django.oldforms</span></tt>. This allows you to upgrade your code <em>now</em>
+rather than waiting for the backwards-incompatible change and
+rushing to fix your code after the fact.  Just change your
+import statements like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>             <span class="c"># 0.95-style</span>
+<span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">oldforms</span> <span class="k">as</span> <span class="n">forms</span> <span class="c"># 0.96-style</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The next official release of Django will move the current
+<tt class="docutils literal"><span class="pre">django.newforms</span></tt> to <tt class="docutils literal"><span class="pre">django.forms</span></tt>. This will be a
+backwards-incompatible change, and anyone still using the old
+version of <tt class="docutils literal"><span class="pre">django.forms</span></tt> at that time will need to change
+their import statements as described above.</p>
+</li>
+<li><p class="first">The next release after that will completely remove
+<tt class="docutils literal"><span class="pre">django.oldforms</span></tt>.</p>
+</li>
+</ul>
+<p>Although the <tt class="docutils literal"><span class="pre">newforms</span></tt> library will continue to evolve, it's ready for use
+for most common cases. We recommend that anyone new to form handling skip the
+old forms system and start with the new.</p>
+<p>For more information about <tt class="docutils literal"><span class="pre">django.newforms</span></tt>, read the <a class="reference external" href="http://www.djangoproject.com/documentation/0.96/newforms/">newforms
+documentation</a>.</p>
+</div>
+<div class="section" id="s-urlconf-improvements">
+<span id="urlconf-improvements"></span><h3>URLconf improvements<a class="headerlink" href="#urlconf-improvements" title="Permalink to this headline">¶</a></h3>
+<p>You can now use any callable as the callback in URLconfs (previously, only
+strings that referred to callables were allowed). This allows a much more
+natural use of URLconfs. For example, this URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">&#39;^myview/$&#39;</span><span class="p">,</span> <span class="s">&#39;mysite.myapp.views.myview&#39;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>can now be rewritten as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">mysite.myapp.views</span> <span class="kn">import</span> <span class="n">myview</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">&#39;^myview/$&#39;</span><span class="p">,</span> <span class="n">myview</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>One useful application of this can be seen when using decorators; this
+change allows you to apply decorators to views <em>in your
+URLconf</em>. Thus, you can make a generic view require login very
+easily:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.decorators</span> <span class="kn">import</span> <span class="n">login_required</span>
+<span class="kn">from</span> <span class="nn">django.views.generic.list_detail</span> <span class="kn">import</span> <span class="n">object_list</span>
+<span class="kn">from</span> <span class="nn">mysite.myapp.models</span> <span class="kn">import</span> <span class="n">MyModel</span>
+
+<span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;queryset&quot;</span> <span class="p">:</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">&#39;^myview/$&#39;</span><span class="p">,</span> <span class="n">login_required</span><span class="p">(</span><span class="n">object_list</span><span class="p">),</span> <span class="n">info</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that both syntaxes (strings and callables) are valid, and will continue to
+be valid for the foreseeable future.</p>
+</div>
+<div class="section" id="s-the-test-framework">
+<span id="the-test-framework"></span><h3>The test framework<a class="headerlink" href="#the-test-framework" title="Permalink to this headline">¶</a></h3>
+<p>Django now includes a test framework so you can start transmuting fear into
+boredom (with apologies to Kent Beck). You can write tests based on <a class="reference external" href="http://docs.python.org/lib/module-doctest.html">doctest</a>
+or <a class="reference external" href="http://docs.python.org/lib/module-unittest.html">unittest</a> and test your views with a simple test client.</p>
+<p>There is also new support for &quot;fixtures&quot; -- initial data, stored in any of the
+supported <a class="reference external" href="http://www.djangoproject.com/documentation/0.96/serialization/">serialization formats</a>, that will be loaded into your database at the
+start of your tests. This makes testing with real data much easier.</p>
+<p>See <a class="reference external" href="http://www.djangoproject.com/documentation/0.96/testing/">the testing documentation</a> for the full details.</p>
+</div>
+<div class="section" id="s-improvements-to-the-admin-interface">
+<span id="improvements-to-the-admin-interface"></span><h3>Improvements to the admin interface<a class="headerlink" href="#improvements-to-the-admin-interface" title="Permalink to this headline">¶</a></h3>
+<p>A small change, but a very nice one: dedicated views for adding and
+updating users have been added to the admin interface, so you no
+longer need to worry about working with hashed passwords in the admin.</p>
+</div>
+</div>
+<div class="section" id="s-thanks">
+<span id="thanks"></span><h2>Thanks<a class="headerlink" href="#thanks" title="Permalink to this headline">¶</a></h2>
+<p>Since 0.95, a number of people have stepped forward and taken a major
+new role in Django's development. We'd like to thank these people for
+all their hard work:</p>
+<ul class="simple">
+<li>Russell Keith-Magee and Malcolm Tredinnick for their major code
+contributions. This release wouldn't have been possible without them.</li>
+<li>Our new release manager, James Bennett, for his work in getting out
+0.95.1, 0.96, and (hopefully) future release.</li>
+<li>Our ticket managers Chris Beaven (aka SmileyChris), Simon Greenhill,
+Michael Radziej, and Gary Wilson. They agreed to take on the monumental
+task of wrangling our tickets into nicely cataloged submission. Figuring
+out what to work on is now about a million times easier; thanks again,
+guys.</li>
+<li>Everyone who submitted a bug report, patch or ticket comment. We can't
+possibly thank everyone by name -- over 200 developers submitted patches
+that went into 0.96 -- but everyone who's contributed to Django is listed
+in <a class="reference external" href="http://code.djangoproject.com/browser/django/trunk/AUTHORS">AUTHORS</a>.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Django version 0.96 release notes</a><ul>
+<li><a class="reference external" href="#backwards-incompatible-changes">Backwards-incompatible changes</a><ul>
+<li><a class="reference external" href="#mysqldb-version-requirement"><tt class="docutils literal"><span class="pre">MySQLdb</span></tt> version requirement</a></li>
+<li><a class="reference external" href="#database-constraint-names-changed">Database constraint names changed</a></li>
+<li><a class="reference external" href="#name-changes-in-manage-py">Name changes in <tt class="docutils literal"><span class="pre">manage.py</span></tt></a></li>
+<li><a class="reference external" href="#backslash-escaping-changed">Backslash escaping changed</a></li>
+<li><a class="reference external" href="#removed-enable-psyco-setting">Removed ENABLE_PSYCO setting</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#what-s-new-in-0-96">What&#8217;s new in 0.96?</a><ul>
+<li><a class="reference external" href="#new-forms-library">New forms library</a></li>
+<li><a class="reference external" href="#urlconf-improvements">URLconf improvements</a></li>
+<li><a class="reference external" href="#the-test-framework">The test framework</a></li>
+<li><a class="reference external" href="#improvements-to-the-admin-interface">Improvements to the admin interface</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#thanks">Thanks</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="0.95.html">Django version 0.95 release notes</a></li>
+    
+    
+      <li>Next: <a href="1.0-alpha-1.html">Django 1.0 alpha release notes</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">Release notes</a>
+        
+        <ul><li>Django version 0.96 release notes</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/releases/0.96.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="0.95.html" title="Django version 0.95 release notes">previous</a> 
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="1.0-alpha-1.html" title="Django 1.0 alpha release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

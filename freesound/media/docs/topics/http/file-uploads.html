@@ -1,0 +1,457 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>File Uploads &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Handling HTTP requests" href="index.html" />
+    <link rel="next" title="Django shortcut functions" href="shortcuts.html" />
+    <link rel="prev" title="Writing Views" href="views.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="views.html" title="Writing Views">previous</a> 
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="shortcuts.html" title="Django shortcut functions">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-http-file-uploads">
+            
+  
+  <div class="section" id="s-file-uploads">
+<span id="s-topics-http-file-uploads"></span><span id="file-uploads"></span><span id="topics-http-file-uploads"></span><h1>File Uploads<a class="headerlink" href="#file-uploads" title="Permalink to this headline">¶</a></h1>
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>When Django handles a file upload, the file data ends up placed in
+<tt class="docutils literal"><span class="pre">request.FILES</span></tt> (for more on the <tt class="docutils literal"><span class="pre">request</span></tt> object see the documentation for
+<a class="reference external" href="../../ref/request-response.html#ref-request-response"><em>request and response objects</em></a>). This document
+explains how files are stored on disk and in memory, and how to customize the
+default behavior.</p>
+<div class="section" id="s-basic-file-uploads">
+<span id="basic-file-uploads"></span><h2>Basic file uploads<a class="headerlink" href="#basic-file-uploads" title="Permalink to this headline">¶</a></h2>
+<p>Consider a simple form containing a <tt class="docutils literal"><span class="pre">FileField</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">UploadFileForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mf">50</span><span class="p">)</span>
+    <span class="nb">file</span>  <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">FileField</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>A view handling this form will receive the file data in <tt class="docutils literal"><span class="pre">request.FILES</span></tt>, which
+is a dictionary containing a key for each <tt class="docutils literal"><span class="pre">FileField</span></tt> (or <tt class="docutils literal"><span class="pre">ImageField</span></tt>, or
+other <tt class="docutils literal"><span class="pre">FileField</span></tt> subclass) in the form. So the data from the above form would
+be accessible as <tt class="docutils literal"><span class="pre">request.FILES['file']</span></tt>.</p>
+<p>Most of the time, you'll simply pass the file data from <tt class="docutils literal"><span class="pre">request</span></tt> into the
+form as described in <a class="reference external" href="../../ref/forms/api.html#binding-uploaded-files"><em>Binding uploaded files to a form</em></a>. This would look
+something like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render_to_response</span>
+
+<span class="c"># Imaginary function to handle an uploaded file.</span>
+<span class="kn">from</span> <span class="nn">somewhere</span> <span class="kn">import</span> <span class="n">handle_uploaded_file</span>
+
+<span class="k">def</span> <span class="nf">upload_file</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">UploadFileForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">FILES</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">handle_uploaded_file</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s">&#39;file&#39;</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="s">&#39;/success/url/&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">UploadFileForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;upload.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Notice that we have to pass <tt class="docutils literal"><span class="pre">request.FILES</span></tt> into the form's constructor; this
+is how file data gets bound into a form.</p>
+<div class="section" id="s-handling-uploaded-files">
+<span id="handling-uploaded-files"></span><h3>Handling uploaded files<a class="headerlink" href="#handling-uploaded-files" title="Permalink to this headline">¶</a></h3>
+<p>The final piece of the puzzle is handling the actual file data from
+<tt class="docutils literal"><span class="pre">request.FILES</span></tt>. Each entry in this dictionary is an <tt class="docutils literal"><span class="pre">UploadedFile</span></tt> object
+-- a simple wrapper around an uploaded file. You'll usually use one of these
+methods to access the uploaded content:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">UploadedFile.read()</span></tt></dt>
+<dd>Read the entire uploaded data from the file. Be careful with this
+method: if the uploaded file is huge it can overwhelm your system if you
+try to read it into memory. You'll probably want to use <tt class="docutils literal"><span class="pre">chunks()</span></tt>
+instead; see below.</dd>
+<dt><tt class="docutils literal"><span class="pre">UploadedFile.multiple_chunks()</span></tt></dt>
+<dd>Returns <tt class="xref docutils literal"><span class="pre">True</span></tt> if the uploaded file is big enough to require
+reading in multiple chunks. By default this will be any file
+larger than 2.5 megabytes, but that's configurable; see below.</dd>
+<dt><tt class="docutils literal"><span class="pre">UploadedFile.chunks()</span></tt></dt>
+<dd><p class="first">A generator returning chunks of the file. If <tt class="docutils literal"><span class="pre">multiple_chunks()</span></tt> is
+<tt class="xref docutils literal"><span class="pre">True</span></tt>, you should use this method in a loop instead of <tt class="docutils literal"><span class="pre">read()</span></tt>.</p>
+<p class="last">In practice, it's often easiest simply to use <tt class="docutils literal"><span class="pre">chunks()</span></tt> all the time;
+see the example below.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">UploadedFile.name</span></tt></dt>
+<dd>The name of the uploaded file (e.g. <tt class="docutils literal"><span class="pre">my_file.txt</span></tt>).</dd>
+<dt><tt class="docutils literal"><span class="pre">UploadedFile.size</span></tt></dt>
+<dd>The size, in bytes, of the uploaded file.</dd>
+</dl>
+<p>There are a few other methods and attributes available on <tt class="docutils literal"><span class="pre">UploadedFile</span></tt>
+objects; see <a class="reference internal" href="#uploadedfile-objects">UploadedFile objects</a> for a complete reference.</p>
+<p>Putting it all together, here's a common way you might handle an uploaded file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">handle_uploaded_file</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="n">destination</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;some/file/name.txt&#39;</span><span class="p">,</span> <span class="s">&#39;wb+&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">chunks</span><span class="p">():</span>
+        <span class="n">destination</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="n">destination</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Looping over <tt class="docutils literal"><span class="pre">UploadedFile.chunks()</span></tt> instead of using <tt class="docutils literal"><span class="pre">read()</span></tt> ensures that
+large files don't overwhelm your system's memory.</p>
+</div>
+<div class="section" id="s-where-uploaded-data-is-stored">
+<span id="where-uploaded-data-is-stored"></span><h3>Where uploaded data is stored<a class="headerlink" href="#where-uploaded-data-is-stored" title="Permalink to this headline">¶</a></h3>
+<p>Before you save uploaded files, the data needs to be stored somewhere.</p>
+<p>By default, if an uploaded file is smaller than 2.5 megabytes, Django will hold
+the entire contents of the upload in memory. This means that saving the file
+involves only a read from memory and a write to disk and thus is very fast.</p>
+<p>However, if an uploaded file is too large, Django will write the uploaded file
+to a temporary file stored in your system's temporary directory. On a Unix-like
+platform this means you can expect Django to generate a file called something
+like <tt class="docutils literal"><span class="pre">/tmp/tmpzfp6I6.upload</span></tt>. If an upload is large enough, you can watch this
+file grow in size as Django streams the data onto disk.</p>
+<p>These specifics -- 2.5 megabytes; <tt class="docutils literal"><span class="pre">/tmp</span></tt>; etc. -- are simply &quot;reasonable
+defaults&quot;. Read on for details on how you can customize or completely replace
+upload behavior.</p>
+</div>
+<div class="section" id="s-changing-upload-handler-behavior">
+<span id="changing-upload-handler-behavior"></span><h3>Changing upload handler behavior<a class="headerlink" href="#changing-upload-handler-behavior" title="Permalink to this headline">¶</a></h3>
+<p>Three settings control Django's file upload behavior:</p>
+<dl class="docutils">
+<dt><a class="reference external" href="../../ref/settings.html#setting-FILE_UPLOAD_MAX_MEMORY_SIZE"><tt class="xref docutils literal"><span class="pre">FILE_UPLOAD_MAX_MEMORY_SIZE</span></tt></a></dt>
+<dd><p class="first">The maximum size, in bytes, for files that will be uploaded into memory.
+Files larger than <a class="reference external" href="../../ref/settings.html#setting-FILE_UPLOAD_MAX_MEMORY_SIZE"><tt class="xref docutils literal"><span class="pre">FILE_UPLOAD_MAX_MEMORY_SIZE</span></tt></a> will be
+streamed to disk.</p>
+<p class="last">Defaults to 2.5 megabytes.</p>
+</dd>
+<dt><a class="reference external" href="../../ref/settings.html#setting-FILE_UPLOAD_TEMP_DIR"><tt class="xref docutils literal"><span class="pre">FILE_UPLOAD_TEMP_DIR</span></tt></a></dt>
+<dd><p class="first">The directory where uploaded files larger than
+<a class="reference external" href="../../ref/settings.html#setting-FILE_UPLOAD_MAX_MEMORY_SIZE"><tt class="xref docutils literal"><span class="pre">FILE_UPLOAD_MAX_MEMORY_SIZE</span></tt></a> will be stored.</p>
+<p class="last">Defaults to your system's standard temporary directory (i.e. <tt class="docutils literal"><span class="pre">/tmp</span></tt> on
+most Unix-like systems).</p>
+</dd>
+<dt><a class="reference external" href="../../ref/settings.html#setting-FILE_UPLOAD_PERMISSIONS"><tt class="xref docutils literal"><span class="pre">FILE_UPLOAD_PERMISSIONS</span></tt></a></dt>
+<dd><p class="first">The numeric mode (i.e. <tt class="docutils literal"><span class="pre">0644</span></tt>) to set newly uploaded files to. For
+more information about what these modes mean, see the <a class="reference external" href="http://docs.python.org/lib/os-file-dir.html">documentation for
+os.chmod</a></p>
+<p>If this isn't given or is <tt class="xref docutils literal"><span class="pre">None</span></tt>, you'll get operating-system
+dependent behavior. On most platforms, temporary files will have a mode
+of <tt class="docutils literal"><span class="pre">0600</span></tt>, and files saved from memory will be saved using the
+system's standard umask.</p>
+<div class="last admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>If you're not familiar with file modes, please note that the leading
+<tt class="docutils literal"><span class="pre">0</span></tt> is very important: it indicates an octal number, which is the
+way that modes must be specified. If you try to use <tt class="docutils literal"><span class="pre">644</span></tt>, you'll
+get totally incorrect behavior.</p>
+<p class="last"><strong>Always prefix the mode with a 0.</strong></p>
+</div>
+</dd>
+<dt><a class="reference external" href="../../ref/settings.html#setting-FILE_UPLOAD_HANDLERS"><tt class="xref docutils literal"><span class="pre">FILE_UPLOAD_HANDLERS</span></tt></a></dt>
+<dd><p class="first">The actual handlers for uploaded files. Changing this setting allows
+complete customization -- even replacement -- of Django's upload
+process. See <a class="reference internal" href="#upload-handlers">upload handlers</a>, below, for details.</p>
+<p>Defaults to:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&quot;django.core.files.uploadhandler.MemoryFileUploadHandler&quot;</span><span class="p">,</span>
+ <span class="s">&quot;django.core.files.uploadhandler.TemporaryFileUploadHandler&quot;</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p class="last">Which means &quot;try to upload to memory first, then fall back to temporary
+files.&quot;</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="s-uploadedfile-objects">
+<span id="uploadedfile-objects"></span><h2><tt class="docutils literal"><span class="pre">UploadedFile</span></tt> objects<a class="headerlink" href="#uploadedfile-objects" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="django.core.files.UploadedFile">
+<!--[django.core.files.UploadedFile]-->class <tt class="descname">UploadedFile</tt><a class="headerlink" href="#django.core.files.UploadedFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>In addition to those inherited from <a title="django.core.files.File" class="reference external" href="../../ref/files/file.html#django.core.files.File"><tt class="xref docutils literal"><span class="pre">File</span></tt></a>, all <tt class="docutils literal"><span class="pre">UploadedFile</span></tt> objects
+define the following methods/attributes:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">UploadedFile.content_type</span></tt></dt>
+<dd>The content-type header uploaded with the file (e.g. <tt class="docutils literal"><span class="pre">text/plain</span></tt> or
+<tt class="docutils literal"><span class="pre">application/pdf</span></tt>). Like any data supplied by the user, you shouldn't
+trust that the uploaded file is actually this type. You'll still need to
+validate that the file contains the content that the content-type header
+claims -- &quot;trust but verify.&quot;</dd>
+<dt><tt class="docutils literal"><span class="pre">UploadedFile.charset</span></tt></dt>
+<dd>For <tt class="docutils literal"><span class="pre">text/*</span></tt> content-types, the character set (i.e. <tt class="docutils literal"><span class="pre">utf8</span></tt>) supplied
+by the browser. Again, &quot;trust but verify&quot; is the best policy here.</dd>
+<dt><tt class="docutils literal"><span class="pre">UploadedFile.temporary_file_path()</span></tt></dt>
+<dd>Only files uploaded onto disk will have this method; it returns the full
+path to the temporary uploaded file.</dd>
+</dl>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Like regular Python files, you can read the file line-by-line simply by
+iterating over the uploaded file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">uploadedfile</span><span class="p">:</span>
+    <span class="n">do_something_with</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="last">However, <em>unlike</em> standard Python files, <a title="django.core.files.UploadedFile" class="reference internal" href="#django.core.files.UploadedFile"><tt class="xref docutils literal"><span class="pre">UploadedFile</span></tt></a> only
+understands <tt class="docutils literal"><span class="pre">\n</span></tt> (also known as &quot;Unix-style&quot;) line endings. If you know
+that you need to handle uploaded files with different line endings, you'll
+need to do so in your view.</p>
+</div>
+</div>
+<div class="section" id="s-upload-handlers">
+<span id="upload-handlers"></span><h2>Upload Handlers<a class="headerlink" href="#upload-handlers" title="Permalink to this headline">¶</a></h2>
+<p>When a user uploads a file, Django passes off the file data to an <em>upload
+handler</em> -- a small class that handles file data as it gets uploaded. Upload
+handlers are initially defined in the <tt class="docutils literal"><span class="pre">FILE_UPLOAD_HANDLERS</span></tt> setting, which
+defaults to:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&quot;django.core.files.uploadhandler.MemoryFileUploadHandler&quot;</span><span class="p">,</span>
+ <span class="s">&quot;django.core.files.uploadhandler.TemporaryFileUploadHandler&quot;</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p>Together the <tt class="docutils literal"><span class="pre">MemoryFileUploadHandler</span></tt> and <tt class="docutils literal"><span class="pre">TemporaryFileUploadHandler</span></tt>
+provide Django's default file upload behavior of reading small files into memory
+and large ones onto disk.</p>
+<p>You can write custom handlers that customize how Django handles files. You
+could, for example, use custom handlers to enforce user-level quotas, compress
+data on the fly, render progress bars, and even send data to another storage
+location directly without storing it locally.</p>
+<div class="section" id="s-modifying-upload-handlers-on-the-fly">
+<span id="modifying-upload-handlers-on-the-fly"></span><h3>Modifying upload handlers on the fly<a class="headerlink" href="#modifying-upload-handlers-on-the-fly" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes particular views require different upload behavior. In these cases,
+you can override upload handlers on a per-request basis by modifying
+<tt class="docutils literal"><span class="pre">request.upload_handlers</span></tt>. By default, this list will contain the upload
+handlers given by <tt class="docutils literal"><span class="pre">FILE_UPLOAD_HANDLERS</span></tt>, but you can modify the list as you
+would any other list.</p>
+<p>For instance, suppose you've written a <tt class="docutils literal"><span class="pre">ProgressBarUploadHandler</span></tt> that
+provides feedback on upload progress to some sort of AJAX widget. You'd add this
+handler to your upload handlers like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">request</span><span class="o">.</span><span class="n">upload_handlers</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span> <span class="n">ProgressBarUploadHandler</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>You'd probably want to use <tt class="docutils literal"><span class="pre">list.insert()</span></tt> in this case (instead of
+<tt class="docutils literal"><span class="pre">append()</span></tt>) because a progress bar handler would need to run <em>before</em> any
+other handlers. Remember, the upload handlers are processed in order.</p>
+<p>If you want to replace the upload handlers completely, you can just assign a new
+list:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">request</span><span class="o">.</span><span class="n">upload_handlers</span> <span class="o">=</span> <span class="p">[</span><span class="n">ProgressBarUploadHandler</span><span class="p">()]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>You can only modify upload handlers <em>before</em> accessing
+<tt class="docutils literal"><span class="pre">request.POST</span></tt> or <tt class="docutils literal"><span class="pre">request.FILES</span></tt> -- it doesn't make sense to
+change upload handlers after upload handling has already
+started. If you try to modify <tt class="docutils literal"><span class="pre">request.upload_handlers</span></tt> after
+reading from <tt class="docutils literal"><span class="pre">request.POST</span></tt> or <tt class="docutils literal"><span class="pre">request.FILES</span></tt> Django will
+throw an error.</p>
+<p class="last">Thus, you should always modify uploading handlers as early in your view as
+possible.</p>
+</div>
+</div>
+<div class="section" id="s-writing-custom-upload-handlers">
+<span id="writing-custom-upload-handlers"></span><h3>Writing custom upload handlers<a class="headerlink" href="#writing-custom-upload-handlers" title="Permalink to this headline">¶</a></h3>
+<p>All file upload handlers should be subclasses of
+<tt class="docutils literal"><span class="pre">django.core.files.uploadhandler.FileUploadHandler</span></tt>. You can define upload
+handlers wherever you wish.</p>
+<div class="section" id="s-required-methods">
+<span id="required-methods"></span><h4>Required methods<a class="headerlink" href="#required-methods" title="Permalink to this headline">¶</a></h4>
+<p>Custom file upload handlers <strong>must</strong> define the following methods:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">FileUploadHandler.receive_data_chunk(self,</span> <span class="pre">raw_data,</span> <span class="pre">start)</span></tt></dt>
+<dd><p class="first">Receives a &quot;chunk&quot; of data from the file upload.</p>
+<p><tt class="docutils literal"><span class="pre">raw_data</span></tt> is a byte string containing the uploaded data.</p>
+<p><tt class="docutils literal"><span class="pre">start</span></tt> is the position in the file where this <tt class="docutils literal"><span class="pre">raw_data</span></tt> chunk
+begins.</p>
+<p>The data you return will get fed into the subsequent upload handlers'
+<tt class="docutils literal"><span class="pre">receive_data_chunk</span></tt> methods. In this way, one handler can be a
+&quot;filter&quot; for other handlers.</p>
+<p>Return <tt class="xref docutils literal"><span class="pre">None</span></tt> from <tt class="docutils literal"><span class="pre">receive_data_chunk</span></tt> to sort-circuit remaining
+upload handlers from getting this chunk.. This is useful if you're
+storing the uploaded data yourself and don't want future handlers to
+store a copy of the data.</p>
+<p class="last">If you raise a <tt class="docutils literal"><span class="pre">StopUpload</span></tt> or a <tt class="docutils literal"><span class="pre">SkipFile</span></tt> exception, the upload
+will abort or the file will be completely skipped.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">FileUploadHandler.file_complete(self,</span> <span class="pre">file_size)</span></tt></dt>
+<dd><p class="first">Called when a file has finished uploading.</p>
+<p class="last">The handler should return an <tt class="docutils literal"><span class="pre">UploadedFile</span></tt> object that will be stored
+in <tt class="docutils literal"><span class="pre">request.FILES</span></tt>. Handlers may also return <tt class="xref docutils literal"><span class="pre">None</span></tt> to indicate that
+the <tt class="docutils literal"><span class="pre">UploadedFile</span></tt> object should come from subsequent upload handlers.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="s-optional-methods">
+<span id="optional-methods"></span><h4>Optional methods<a class="headerlink" href="#optional-methods" title="Permalink to this headline">¶</a></h4>
+<p>Custom upload handlers may also define any of the following optional methods or
+attributes:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">FileUploadHandler.chunk_size</span></tt></dt>
+<dd><p class="first">Size, in bytes, of the &quot;chunks&quot; Django should store into memory and feed
+into the handler. That is, this attribute controls the size of chunks
+fed into <tt class="docutils literal"><span class="pre">FileUploadHandler.receive_data_chunk</span></tt>.</p>
+<p>For maximum performance the chunk sizes should be divisible by <tt class="docutils literal"><span class="pre">4</span></tt> and
+should not exceed 2 GB (2<sup>31</sup> bytes) in size. When there are
+multiple chunk sizes provided by multiple handlers, Django will use the
+smallest chunk size defined by any handler.</p>
+<p class="last">The default is 64*2<sup>10</sup> bytes, or 64 KB.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">FileUploadHandler.new_file(self,</span> <span class="pre">field_name,</span> <span class="pre">file_name,</span> <span class="pre">content_type,</span> <span class="pre">content_length,</span> <span class="pre">charset)</span></tt></dt>
+<dd><p class="first">Callback signaling that a new file upload is starting. This is called
+before any data has been fed to any upload handlers.</p>
+<p><tt class="docutils literal"><span class="pre">field_name</span></tt> is a string name of the file <tt class="docutils literal"><span class="pre">&lt;input&gt;</span></tt> field.</p>
+<p><tt class="docutils literal"><span class="pre">file_name</span></tt> is the unicode filename that was provided by the browser.</p>
+<p><tt class="docutils literal"><span class="pre">content_type</span></tt> is the MIME type provided by the browser -- E.g.
+<tt class="docutils literal"><span class="pre">'image/jpeg'</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">content_length</span></tt> is the length of the image given by the browser.
+Sometimes this won't be provided and will be <tt class="xref docutils literal"><span class="pre">None</span></tt>., <tt class="xref docutils literal"><span class="pre">None</span></tt>
+otherwise.</p>
+<p><tt class="docutils literal"><span class="pre">charset</span></tt> is the character set (i.e. <tt class="docutils literal"><span class="pre">utf8</span></tt>) given by the browser.
+Like <tt class="docutils literal"><span class="pre">content_length</span></tt>, this sometimes won't be provided.</p>
+<p class="last">This method may raise a <tt class="docutils literal"><span class="pre">StopFutureHandlers</span></tt> exception to prevent
+future handlers from handling this file.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">FileUploadHandler.upload_complete(self)</span></tt></dt>
+<dd>Callback signaling that the entire upload (all files) has completed.</dd>
+<dt><tt class="docutils literal"><span class="pre">FileUploadHandler.handle_raw_input(self,</span> <span class="pre">input_data,</span> <span class="pre">META,</span> <span class="pre">content_length,</span> <span class="pre">boundary,</span> <span class="pre">encoding)</span></tt></dt>
+<dd><p class="first">Allows the handler to completely override the parsing of the raw
+HTTP input.</p>
+<p><tt class="docutils literal"><span class="pre">input_data</span></tt> is a file-like object that supports <tt class="docutils literal"><span class="pre">read()</span></tt>-ing.</p>
+<p><tt class="docutils literal"><span class="pre">META</span></tt> is the same object as <tt class="docutils literal"><span class="pre">request.META</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">content_length</span></tt> is the length of the data in <tt class="docutils literal"><span class="pre">input_data</span></tt>. Don't
+read more than <tt class="docutils literal"><span class="pre">content_length</span></tt> bytes from <tt class="docutils literal"><span class="pre">input_data</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">boundary</span></tt> is the MIME boundary for this request.</p>
+<p><tt class="docutils literal"><span class="pre">encoding</span></tt> is the encoding of the request.</p>
+<p class="last">Return <tt class="xref docutils literal"><span class="pre">None</span></tt> if you want upload handling to continue, or a tuple of
+<tt class="docutils literal"><span class="pre">(POST,</span> <span class="pre">FILES)</span></tt> if you want to return the new data structures suitable
+for the request directly.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">File Uploads</a><ul>
+<li><a class="reference external" href="#basic-file-uploads">Basic file uploads</a><ul>
+<li><a class="reference external" href="#handling-uploaded-files">Handling uploaded files</a></li>
+<li><a class="reference external" href="#where-uploaded-data-is-stored">Where uploaded data is stored</a></li>
+<li><a class="reference external" href="#changing-upload-handler-behavior">Changing upload handler behavior</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#uploadedfile-objects"><tt class="docutils literal"><span class="pre">UploadedFile</span></tt> objects</a></li>
+<li><a class="reference external" href="#upload-handlers">Upload Handlers</a><ul>
+<li><a class="reference external" href="#modifying-upload-handlers-on-the-fly">Modifying upload handlers on the fly</a></li>
+<li><a class="reference external" href="#writing-custom-upload-handlers">Writing custom upload handlers</a><ul>
+<li><a class="reference external" href="#required-methods">Required methods</a></li>
+<li><a class="reference external" href="#optional-methods">Optional methods</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="views.html">Writing Views</a></li>
+    
+    
+      <li>Next: <a href="shortcuts.html">Django shortcut functions</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">Using Django</a>
+        
+          <ul><li><a href="index.html">Handling HTTP requests</a>
+        
+        <ul><li>File Uploads</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/topics/http/file-uploads.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="views.html" title="Writing Views">previous</a> 
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="shortcuts.html" title="Django shortcut functions">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

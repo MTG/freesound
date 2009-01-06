@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Cross Site Request Forgery protection &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../../index.html" />
+    <link rel="up" title="The &#8220;django.contrib&#8221; add-ons" href="index.html" />
+    <link rel="next" title="Databrowse" href="databrowse.html" />
+    <link rel="prev" title="The contenttypes framework" href="contenttypes.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Search" href="../../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="contenttypes.html" title="The contenttypes framework">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="databrowse.html" title="Databrowse">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-contrib-csrf">
+            
+  
+  <div class="section" id="s-module-django.contrib.csrf">
+<span id="s-ref-contrib-csrf"></span><span id="module-django.contrib.csrf"></span><span id="ref-contrib-csrf"></span><h1>Cross Site Request Forgery protection<a class="headerlink" href="#module-django.contrib.csrf" title="Permalink to this headline">¶</a></h1>
+<p>The CsrfMiddleware class provides easy-to-use protection against
+<a class="reference external" href="http://www.squarefree.com/securitytips/web-developers.html#CSRF">Cross Site Request Forgeries</a>.  This type of attack occurs when a malicious
+Web site creates a link or form button that is intended to perform some action
+on your Web site, using the credentials of a logged-in user who is tricked
+into clicking on the link in their browser.</p>
+<p>The first defense against CSRF attacks is to ensure that GET requests
+are side-effect free.  POST requests can then be protected by adding this
+middleware into your list of installed middleware.</p>
+<div class="section" id="s-how-to-use-it">
+<span id="how-to-use-it"></span><h2>How to use it<a class="headerlink" href="#how-to-use-it" title="Permalink to this headline">¶</a></h2>
+<p>Add the middleware <tt class="docutils literal"><span class="pre">'django.contrib.csrf.middleware.CsrfMiddleware'</span></tt> to
+your list of middleware classes, <a class="reference external" href="../settings.html#setting-MIDDLEWARE_CLASSES"><tt class="xref docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt></a>. It needs to process
+the response after the SessionMiddleware, so must come before it in the
+list. It also must process the response before things like compression
+happen to the response, so it must come after GZipMiddleware in the
+list.</p>
+<div class="section" id="s-exceptions">
+<span id="exceptions"></span><h3>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<span class="title">New in Django 1.1.</span> </div>
+<p>To manually exclude a view function from being handled by the
+CsrfMiddleware, you can use the <tt class="docutils literal"><span class="pre">csrf_exempt</span></tt> decorator, found in
+the <tt class="docutils literal"><span class="pre">django.contrib.csrf.middleware</span></tt> module. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib.csrf.middleware</span> <span class="kn">import</span> <span class="n">csrf_exempt</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;Hello world&#39;</span><span class="p">)</span>
+<span class="n">my_view</span> <span class="o">=</span> <span class="n">csrf_exempt</span><span class="p">(</span><span class="n">my_view</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You don't have to worry about doing this for most AJAX views. Any request sent
+with &quot;X-Requested-With: XMLHttpRequest&quot; is automatically exempt. (See the next
+section.)</p>
+</div>
+</div>
+<div class="section" id="s-how-it-works">
+<span id="how-it-works"></span><h2>How it works<a class="headerlink" href="#how-it-works" title="Permalink to this headline">¶</a></h2>
+<p>CsrfMiddleware does two things:</p>
+<ol class="arabic simple">
+<li>It modifies outgoing requests by adding a hidden form field to all
+'POST' forms, with the name 'csrfmiddlewaretoken' and a value which is
+a hash of the session ID plus a secret. If there is no session ID set,
+this modification of the response isn't done, so there is very little
+performance penalty for those requests that don't have a session.</li>
+<li>On all incoming POST requests that have the session cookie set, it
+checks that the 'csrfmiddlewaretoken' is present and correct. If it
+isn't, the user will get a 403 error.</li>
+</ol>
+<p>This ensures that only forms that have originated from your Web site
+can be used to POST data back.</p>
+<p>It deliberately only targets HTTP POST requests (and the corresponding POST
+forms). GET requests ought never to have any potentially dangerous side
+effects (see <a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html">9.1.1 Safe Methods, HTTP 1.1, RFC 2616</a>), and so a
+CSRF attack with a GET request ought to be harmless.</p>
+<p>POST requests that are not accompanied by a session cookie are not protected,
+but they do not need to be protected, since the 'attacking' Web site
+could make these kind of requests anyway.</p>
+<p>The Content-Type is checked before modifying the response, and only
+pages that are served as 'text/html' or 'application/xml+xhtml'
+are modified.</p>
+<p>The middleware tries to be smart about requests that come in via AJAX. Many
+JavaScript toolkits send an &quot;X-Requested-With: XMLHttpRequest&quot; HTTP header;
+these requests are detected and automatically <em>not</em> handled by this middleware.
+We can do this safely because, in the context of a browser, the header can only
+be added by using <tt class="docutils literal"><span class="pre">XMLHttpRequest</span></tt>, and browsers already implement a
+same-domain policy for <tt class="docutils literal"><span class="pre">XMLHttpRequest</span></tt>. (Note that this is not secure if you
+don't trust content within the same domain or subdomains.)</p>
+<p>The above two functions of <tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt> are split between two
+classes: <tt class="docutils literal"><span class="pre">CsrfResponseMiddleware</span></tt> and <tt class="docutils literal"><span class="pre">CsrfViewMiddleware</span></tt>
+respectively.  This allows the individual components to be used and/or
+replaced instead of using <tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt>.</p>
+<div class="versionchanged">
+<span class="title">Changed in Django 1.1:</span> (previous versions of Django did not provide these two components
+of <tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt> as described above)</div>
+</div>
+<div class="section" id="s-limitations">
+<span id="limitations"></span><h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
+<p>CsrfMiddleware requires Django's session framework to work. If you have
+a custom authentication system that manually sets cookies and the like,
+it won't help you.</p>
+<p>If your app creates HTML pages and forms in some unusual way, (e.g.
+it sends fragments of HTML in JavaScript document.write statements)
+you might bypass the filter that adds the hidden field to the form,
+in which case form submission will always fail.  It may still be possible
+to use the middleware, provided you can find some way to get the
+CSRF token and ensure that is included when your form is submitted.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Cross Site Request Forgery protection</a><ul>
+<li><a class="reference external" href="#how-to-use-it">How to use it</a><ul>
+<li><a class="reference external" href="#exceptions">Exceptions</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#how-it-works">How it works</a></li>
+<li><a class="reference external" href="#limitations">Limitations</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="contenttypes.html">The contenttypes framework</a></li>
+    
+    
+      <li>Next: <a href="databrowse.html">Databrowse</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="../index.html">API Reference</a>
+        
+          <ul><li><a href="index.html">The &#8220;django.contrib&#8221; add-ons</a>
+        
+        <ul><li>Cross Site Request Forgery protection</li></ul>
+        </li></ul></li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../../_sources/ref/contrib/csrf.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="contenttypes.html" title="The contenttypes framework">previous</a> 
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="databrowse.html" title="Databrowse">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

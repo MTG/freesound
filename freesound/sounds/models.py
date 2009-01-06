@@ -34,6 +34,7 @@ class Sound(SocialModel):
     original_filename = models.CharField(max_length=512) # name of the file the user uploaded
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None)
+    date_recorded = models.DateField(null=True, blank=True, default=None)
     
     # file properties
     SOUND_TYPE_CHOICES = (
@@ -71,6 +72,8 @@ class Sound(SocialModel):
     processing_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="PE")
     processing_date = models.DateTimeField(null=True, blank=True, default=None)
     processing_log = models.TextField(null=True, blank=True, default=None)
+    
+    #num_comments
     
     def __unicode__(self):
         return u"%s by %s" % (self.base_filename_slug, self.user)

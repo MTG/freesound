@@ -1,0 +1,461 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Unicode data in Django &mdash; Django v1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Django v1.0 documentation" href="../index.html" />
+    <link rel="up" title="API Reference" href="index.html" />
+    <link rel="next" title="Meta-documentation and miscellany" href="../misc/index.html" />
+    <link rel="prev" title="The Django template language: For Python programmers" href="templates/api.html" /> 
+  </head>
+  <body>
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django v1.0 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Search" href="../modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="templates/api.html" title="The Django template language: For Python programmers">previous</a> 
+     |
+    <a href="index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="../misc/index.html" title="Meta-documentation and miscellany">next</a> &raquo;</div>
+    </div>
+    
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-unicode">
+            
+  
+  <div class="section" id="s-unicode-data-in-django">
+<span id="s-ref-unicode"></span><span id="unicode-data-in-django"></span><span id="ref-unicode"></span><h1>Unicode data in Django<a class="headerlink" href="#unicode-data-in-django" title="Permalink to this headline">¶</a></h1>
+<div class="versionadded">
+<span class="title">New in Django 1.0.</span> </div>
+<p>Django natively supports Unicode data everywhere. Providing your database can
+somehow store the data, you can safely pass around Unicode strings to
+templates, models and the database.</p>
+<p>This document tells you what you need to know if you&#8217;re writing applications
+that use data or templates that are encoded in something other than ASCII.</p>
+<div class="section" id="s-creating-the-database">
+<span id="creating-the-database"></span><h2>Creating the database<a class="headerlink" href="#creating-the-database" title="Permalink to this headline">¶</a></h2>
+<p>Make sure your database is configured to be able to store arbitrary string
+data. Normally, this means giving it an encoding of UTF-8 or UTF-16. If you use
+a more restrictive encoding &#8211; for example, latin1 (iso8859-1) &#8211; you won&#8217;t be
+able to store certain characters in the database, and information will be lost.</p>
+<ul class="simple">
+<li>MySQL users, refer to the <a class="reference external" href="http://www.mysql.org/doc/refman/5.1/en/charset-database.html">MySQL manual</a> (section 10.3.2 for MySQL 5.1) for
+details on how to set or alter the database character set encoding.</li>
+<li>PostgreSQL users, refer to the <a class="reference external" href="http://www.postgresql.org/docs/8.2/static/multibyte.html#AEN24104">PostgreSQL manual</a> (section 21.2.2 in
+PostgreSQL 8) for details on creating databases with the correct encoding.</li>
+<li>SQLite users, there is nothing you need to do. SQLite always uses UTF-8
+for internal encoding.</li>
+</ul>
+<p>All of Django&#8217;s database backends automatically convert Unicode strings into
+the appropriate encoding for talking to the database. They also automatically
+convert strings retrieved from the database into Python Unicode strings. You
+don&#8217;t even need to tell Django what encoding your database uses: that is
+handled transparently.</p>
+<p>For more, see the section &#8220;The database API&#8221; below.</p>
+</div>
+<div class="section" id="s-general-string-handling">
+<span id="general-string-handling"></span><h2>General string handling<a class="headerlink" href="#general-string-handling" title="Permalink to this headline">¶</a></h2>
+<p>Whenever you use strings with Django &#8211; e.g., in database lookups, template
+rendering or anywhere else &#8211; you have two choices for encoding those strings.
+You can use Unicode strings, or you can use normal strings (sometimes called
+&#8220;bytestrings&#8221;) that are encoded using UTF-8.</p>
+<div class="admonition-warning admonition ">
+<p class="first admonition-title">Warning</p>
+<p>A bytestring does not carry any information with it about its encoding.
+For that reason, we have to make an assumption, and Django assumes that all
+bytestrings are in UTF-8.</p>
+<p class="last">If you pass a string to Django that has been encoded in some other format,
+things will go wrong in interesting ways. Usually, Django will raise a
+<tt class="docutils literal"><span class="pre">UnicodeDecodeError</span></tt> at some point.</p>
+</div>
+<p>If your code only uses ASCII data, it&#8217;s safe to use your normal strings,
+passing them around at will, because ASCII is a subset of UTF-8.</p>
+<p>Don&#8217;t be fooled into thinking that if your <a class="reference external" href="settings.html#setting-DEFAULT_CHARSET"><tt class="xref docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt></a> setting is set
+to something other than <tt class="docutils literal"><span class="pre">'utf-8'</span></tt> you can use that other encoding in your
+bytestrings! <a class="reference external" href="settings.html#setting-DEFAULT_CHARSET"><tt class="xref docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt></a> only applies to the strings generated as
+the result of template rendering (and e-mail). Django will always assume UTF-8
+encoding for internal bytestrings. The reason for this is that the
+<a class="reference external" href="settings.html#setting-DEFAULT_CHARSET"><tt class="xref docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt></a> setting is not actually under your control (if you are the
+application developer). It&#8217;s under the control of the person installing and
+using your application &#8211; and if that person chooses a different setting, your
+code must still continue to work. Ergo, it cannot rely on that setting.</p>
+<p>In most cases when Django is dealing with strings, it will convert them to
+Unicode strings before doing anything else. So, as a general rule, if you pass
+in a bytestring, be prepared to receive a Unicode string back in the result.</p>
+<div class="section" id="s-translated-strings">
+<span id="translated-strings"></span><h3>Translated strings<a class="headerlink" href="#translated-strings" title="Permalink to this headline">¶</a></h3>
+<p>Aside from Unicode strings and bytestrings, there&#8217;s a third type of string-like
+object you may encounter when using Django. The framework&#8217;s
+internationalization features introduce the concept of a &#8220;lazy translation&#8221; &#8211;
+a string that has been marked as translated but whose actual translation result
+isn&#8217;t determined until the object is used in a string. This feature is useful
+in cases where the translation locale is unknown until the string is used, even
+though the string might have originally been created when the code was first
+imported.</p>
+<p>Normally, you won&#8217;t have to worry about lazy translations. Just be aware that
+if you examine an object and it claims to be a
+<tt class="docutils literal"><span class="pre">django.utils.functional.__proxy__</span></tt> object, it is a lazy translation.
+Calling <tt class="docutils literal"><span class="pre">unicode()</span></tt> with the lazy translation as the argument will generate a
+Unicode string in the current locale.</p>
+<p>For more details about lazy translation objects, refer to the
+<a class="reference external" href="../topics/i18n.html#topics-i18n"><em>internationalization</em></a> documentation.</p>
+</div>
+<div class="section" id="s-useful-utility-functions">
+<span id="useful-utility-functions"></span><h3>Useful utility functions<a class="headerlink" href="#useful-utility-functions" title="Permalink to this headline">¶</a></h3>
+<p>Because some string operations come up again and again, Django ships with a few
+useful functions that should make working with Unicode and bytestring objects
+a bit easier.</p>
+<div class="section" id="s-conversion-functions">
+<span id="conversion-functions"></span><h4>Conversion functions<a class="headerlink" href="#conversion-functions" title="Permalink to this headline">¶</a></h4>
+<p>The <tt class="docutils literal"><span class="pre">django.utils.encoding</span></tt> module contains a few functions that are handy
+for converting back and forth between Unicode and bytestrings.</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">smart_unicode(s,</span> <span class="pre">encoding='utf-8',</span> <span class="pre">strings_only=False,</span> <span class="pre">errors='strict')</span></tt>
+converts its input to a Unicode string. The <tt class="docutils literal"><span class="pre">encoding</span></tt> parameter
+specifies the input encoding. (For example, Django uses this internally
+when processing form input data, which might not be UTF-8 encoded.) The
+<tt class="docutils literal"><span class="pre">strings_only</span></tt> parameter, if set to True, will result in Python
+numbers, booleans and <tt class="xref docutils literal"><span class="pre">None</span></tt> not being converted to a string (they keep
+their original types). The <tt class="docutils literal"><span class="pre">errors</span></tt> parameter takes any of the values
+that are accepted by Python&#8217;s <tt class="docutils literal"><span class="pre">unicode()</span></tt> function for its error
+handling.</p>
+<p>If you pass <tt class="docutils literal"><span class="pre">smart_unicode()</span></tt> an object that has a <tt class="docutils literal"><span class="pre">__unicode__</span></tt>
+method, it will use that method to do the conversion.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">force_unicode(s,</span> <span class="pre">encoding='utf-8',</span> <span class="pre">strings_only=False,</span>
+<span class="pre">errors='strict')</span></tt> is identical to <tt class="docutils literal"><span class="pre">smart_unicode()</span></tt> in almost all
+cases. The difference is when the first argument is a <a class="reference external" href="../topics/i18n.html#lazy-translations"><em>lazy
+translation</em></a> instance. While <tt class="docutils literal"><span class="pre">smart_unicode()</span></tt>
+preserves lazy translations, <tt class="docutils literal"><span class="pre">force_unicode()</span></tt> forces those objects to a
+Unicode string (causing the translation to occur). Normally, you&#8217;ll want
+to use <tt class="docutils literal"><span class="pre">smart_unicode()</span></tt>. However, <tt class="docutils literal"><span class="pre">force_unicode()</span></tt> is useful in
+template tags and filters that absolutely <em>must</em> have a string to work
+with, not just something that can be converted to a string.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">smart_str(s,</span> <span class="pre">encoding='utf-8',</span> <span class="pre">strings_only=False,</span> <span class="pre">errors='strict')</span></tt>
+is essentially the opposite of <tt class="docutils literal"><span class="pre">smart_unicode()</span></tt>. It forces the first
+argument to a bytestring. The <tt class="docutils literal"><span class="pre">strings_only</span></tt> parameter has the same
+behavior as for <tt class="docutils literal"><span class="pre">smart_unicode()</span></tt> and <tt class="docutils literal"><span class="pre">force_unicode()</span></tt>. This is
+slightly different semantics from Python&#8217;s builtin <tt class="docutils literal"><span class="pre">str()</span></tt> function,
+but the difference is needed in a few places within Django&#8217;s internals.</p>
+</li>
+</ul>
+<p>Normally, you&#8217;ll only need to use <tt class="docutils literal"><span class="pre">smart_unicode()</span></tt>. Call it as early as
+possible on any input data that might be either Unicode or a bytestring, and
+from then on, you can treat the result as always being Unicode.</p>
+</div>
+<div class="section" id="s-uri-and-iri-handling">
+<span id="uri-and-iri-handling"></span><h4>URI and IRI handling<a class="headerlink" href="#uri-and-iri-handling" title="Permalink to this headline">¶</a></h4>
+<p>Web frameworks have to deal with URLs (which are a type of <a class="reference external" href="http://www.ietf.org/rfc/rfc3987.txt">IRI</a>). One
+requirement of URLs is that they are encoded using only ASCII characters.
+However, in an international environment, you might need to construct a
+URL from an <a class="reference external" href="http://www.ietf.org/rfc/rfc3987.txt">IRI</a> &#8211; very loosely speaking, a URI that can contain Unicode
+characters. Quoting and converting an IRI to URI can be a little tricky, so
+Django provides some assistance.</p>
+<ul class="simple">
+<li>The function <tt class="docutils literal"><span class="pre">django.utils.encoding.iri_to_uri()</span></tt> implements the
+conversion from IRI to URI as required by the specification (<a class="reference external" href="http://www.ietf.org/rfc/rfc3987.txt">RFC
+3987</a>).</li>
+<li>The functions <tt class="docutils literal"><span class="pre">django.utils.http.urlquote()</span></tt> and
+<tt class="docutils literal"><span class="pre">django.utils.http.urlquote_plus()</span></tt> are versions of Python&#8217;s standard
+<tt class="docutils literal"><span class="pre">urllib.quote()</span></tt> and <tt class="docutils literal"><span class="pre">urllib.quote_plus()</span></tt> that work with non-ASCII
+characters. (The data is converted to UTF-8 prior to encoding.)</li>
+</ul>
+<p>These two groups of functions have slightly different purposes, and it&#8217;s
+important to keep them straight. Normally, you would use <tt class="docutils literal"><span class="pre">urlquote()</span></tt> on the
+individual portions of the IRI or URI path so that any reserved characters
+such as &#8216;&amp;&#8217; or &#8216;%&#8217; are correctly encoded. Then, you apply <tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt> to
+the full IRI and it converts any non-ASCII characters to the correct encoded
+values.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Technically, it isn&#8217;t correct to say that <tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt> implements the
+full algorithm in the IRI specification. It doesn&#8217;t (yet) perform the
+international domain name encoding portion of the algorithm.</p>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt> function will not change ASCII characters that are
+otherwise permitted in a URL. So, for example, the character &#8216;%&#8217; is not
+further encoded when passed to <tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt>. This means you can pass a
+full URL to this function and it will not mess up the query string or anything
+like that.</p>
+<p>An example might clarify things here:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">urlquote</span><span class="p">(</span><span class="s">u&#39;Paris &amp; Orléans&#39;</span><span class="p">)</span>
+<span class="go">u&#39;Paris%20%26%20Orl%C3%A9ans&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iri_to_uri</span><span class="p">(</span><span class="s">u&#39;/favorites/François/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">urlquote</span><span class="p">(</span><span class="s">u&#39;Paris &amp; Orléans&#39;</span><span class="p">))</span>
+<span class="go">&#39;/favorites/Fran%C3%A7ois/Paris%20%26%20Orl%C3%A9ans&#39;</span>
+</pre></div>
+</div>
+<p>If you look carefully, you can see that the portion that was generated by
+<tt class="docutils literal"><span class="pre">urlquote()</span></tt> in the second example was not double-quoted when passed to
+<tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt>. This is a very important and useful feature. It means that
+you can construct your IRI without worrying about whether it contains
+non-ASCII characters and then, right at the end, call <tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt> on the
+result.</p>
+<p>The <tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt> function is also idempotent, which means the following is
+always true:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">iri_to_uri</span><span class="p">(</span><span class="n">iri_to_uri</span><span class="p">(</span><span class="n">some_string</span><span class="p">))</span> <span class="o">=</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">some_string</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>So you can safely call it multiple times on the same IRI without risking
+double-quoting problems.</p>
+</div>
+</div>
+</div>
+<div class="section" id="s-models">
+<span id="models"></span><h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
+<p>Because all strings are returned from the database as Unicode strings, model
+fields that are character based (CharField, TextField, URLField, etc) will
+contain Unicode values when Django retrieves data from the database. This
+is <em>always</em> the case, even if the data could fit into an ASCII bytestring.</p>
+<p>You can pass in bytestrings when creating a model or populating a field, and
+Django will convert it to Unicode when it needs to.</p>
+<div class="section" id="s-choosing-between-str-and-unicode">
+<span id="choosing-between-str-and-unicode"></span><h3>Choosing between <tt class="docutils literal"><span class="pre">__str__()</span></tt> and <tt class="docutils literal"><span class="pre">__unicode__()</span></tt><a class="headerlink" href="#choosing-between-str-and-unicode" title="Permalink to this headline">¶</a></h3>
+<p>One consequence of using Unicode by default is that you have to take some care
+when printing data from the model.</p>
+<p>In particular, rather than giving your model a <tt class="docutils literal"><span class="pre">__str__()</span></tt> method, we
+recommended you implement a <tt class="docutils literal"><span class="pre">__unicode__()</span></tt> method. In the <tt class="docutils literal"><span class="pre">__unicode__()</span></tt>
+method, you can quite safely return the values of all your fields without
+having to worry about whether they fit into a bytestring or not. (The way
+Python works, the result of <tt class="docutils literal"><span class="pre">__str__()</span></tt> is <em>always</em> a bytestring, even if you
+accidentally try to return a Unicode object).</p>
+<p>You can still create a <tt class="docutils literal"><span class="pre">__str__()</span></tt> method on your models if you want, of
+course, but you shouldn't need to do this unless you have a good reason.
+Django's <tt class="docutils literal"><span class="pre">Model</span></tt> base class automatically provides a <tt class="docutils literal"><span class="pre">__str__()</span></tt>
+implementation that calls <tt class="docutils literal"><span class="pre">__unicode__()</span></tt> and encodes the result into UTF-8.
+This means you'll normally only need to implement a <tt class="docutils literal"><span class="pre">__unicode__()</span></tt> method
+and let Django handle the coercion to a bytestring when required.</p>
+</div>
+<div class="section" id="s-taking-care-in-get-absolute-url">
+<span id="taking-care-in-get-absolute-url"></span><h3>Taking care in <tt class="docutils literal"><span class="pre">get_absolute_url()</span></tt><a class="headerlink" href="#taking-care-in-get-absolute-url" title="Permalink to this headline">¶</a></h3>
+<p>URLs can only contain ASCII characters. If you're constructing a URL from
+pieces of data that might be non-ASCII, be careful to encode the results in a
+way that is suitable for a URL. The <tt class="docutils literal"><span class="pre">django.db.models.permalink()</span></tt> decorator
+handles this for you automatically.</p>
+<p>If you're constructing a URL manually (i.e., <em>not</em> using the <tt class="docutils literal"><span class="pre">permalink()</span></tt>
+decorator), you'll need to take care of the encoding yourself. In this case,
+use the <tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt> and <tt class="docutils literal"><span class="pre">urlquote()</span></tt> functions that were documented
+<a class="reference internal" href="#uri-and-iri-handling">above</a>. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.encoding</span> <span class="kn">import</span> <span class="n">iri_to_uri</span>
+<span class="kn">from</span> <span class="nn">django.utils.http</span> <span class="kn">import</span> <span class="n">urlquote</span>
+
+<span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s">u&#39;/person/</span><span class="si">%s</span><span class="s">/?x=0&amp;y=0&#39;</span> <span class="o">%</span> <span class="n">urlquote</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This function returns a correctly encoded URL even if <tt class="docutils literal"><span class="pre">self.location</span></tt> is
+something like &quot;Jack visited Paris &amp; Orléans&quot;. (In fact, the <tt class="docutils literal"><span class="pre">iri_to_uri()</span></tt>
+call isn't strictly necessary in the above example, because all the
+non-ASCII characters would have been removed in quoting in the first line.)</p>
+</div>
+</div>
+<div class="section" id="s-the-database-api">
+<span id="the-database-api"></span><h2>The database API<a class="headerlink" href="#the-database-api" title="Permalink to this headline">¶</a></h2>
+<p>You can pass either Unicode strings or UTF-8 bytestrings as arguments to
+<tt class="docutils literal"><span class="pre">filter()</span></tt> methods and the like in the database API. The following two
+querysets are identical:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">qs</span> <span class="o">=</span> <span class="n">People</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__contains</span><span class="o">=</span><span class="s">u&#39;Å&#39;</span><span class="p">)</span>
+<span class="n">qs</span> <span class="o">=</span> <span class="n">People</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__contains</span><span class="o">=</span><span class="s">&#39;</span><span class="se">\xc3</span><span class="s">\85&#39;</span><span class="p">)</span> <span class="c"># UTF-8 encoding of Å</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-templates">
+<span id="templates"></span><h2>Templates<a class="headerlink" href="#templates" title="Permalink to this headline">¶</a></h2>
+<p>You can use either Unicode or bytestrings when creating templates manually:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">Template</span>
+<span class="n">t1</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="s">&#39;This is a bytestring template.&#39;</span><span class="p">)</span>
+<span class="n">t2</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="s">u&#39;This is a Unicode template.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But the common case is to read templates from the filesystem, and this creates
+a slight complication: not all filesystems store their data encoded as UTF-8.
+If your template files are not stored with a UTF-8 encoding, set the <a class="reference external" href="settings.html#setting-FILE_CHARSET"><tt class="xref docutils literal"><span class="pre">FILE_CHARSET</span></tt></a>
+setting to the encoding of the files on disk. When Django reads in a template
+file, it will convert the data from this encoding to Unicode. (<a class="reference external" href="settings.html#setting-FILE_CHARSET"><tt class="xref docutils literal"><span class="pre">FILE_CHARSET</span></tt></a>
+is set to <tt class="docutils literal"><span class="pre">'utf-8'</span></tt> by default.)</p>
+<p>The <a class="reference external" href="settings.html#setting-DEFAULT_CHARSET"><tt class="xref docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt></a> setting controls the encoding of rendered templates.
+This is set to UTF-8 by default.</p>
+<div class="section" id="s-template-tags-and-filters">
+<span id="template-tags-and-filters"></span><h3>Template tags and filters<a class="headerlink" href="#template-tags-and-filters" title="Permalink to this headline">¶</a></h3>
+<p>A couple of tips to remember when writing your own template tags and filters:</p>
+<ul class="simple">
+<li>Always return Unicode strings from a template tag's <tt class="docutils literal"><span class="pre">render()</span></tt> method
+and from template filters.</li>
+<li>Use <tt class="docutils literal"><span class="pre">force_unicode()</span></tt> in preference to <tt class="docutils literal"><span class="pre">smart_unicode()</span></tt> in these
+places. Tag rendering and filter calls occur as the template is being
+rendered, so there is no advantage to postponing the conversion of lazy
+translation objects into strings. It's easier to work solely with Unicode
+strings at that point.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="s-e-mail">
+<span id="e-mail"></span><h2>E-mail<a class="headerlink" href="#e-mail" title="Permalink to this headline">¶</a></h2>
+<p>Django's e-mail framework (in <tt class="docutils literal"><span class="pre">django.core.mail</span></tt>) supports Unicode
+transparently. You can use Unicode data in the message bodies and any headers.
+However, you're still obligated to respect the requirements of the e-mail
+specifications, so, for example, e-mail addresses should use only ASCII
+characters.</p>
+<p>The following code example demonstrates that everything except e-mail addresses
+can be non-ASCII:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">EmailMessage</span>
+
+<span class="n">subject</span> <span class="o">=</span> <span class="s">u&#39;My visit to Sør-Trøndelag&#39;</span>
+<span class="n">sender</span> <span class="o">=</span> <span class="s">u&#39;Arnbjörg Ráðormsdóttir &lt;arnbjorg@example.com&gt;&#39;</span>
+<span class="n">recipients</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Fred &lt;fred@example.com&#39;</span><span class="p">]</span>
+<span class="n">body</span> <span class="o">=</span> <span class="s">u&#39;...&#39;</span>
+<span class="n">EmailMessage</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">recipients</span><span class="p">)</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="s-form-submission">
+<span id="form-submission"></span><h2>Form submission<a class="headerlink" href="#form-submission" title="Permalink to this headline">¶</a></h2>
+<p>HTML form submission is a tricky area. There's no guarantee that the
+submission will include encoding information, which means the framework might
+have to guess at the encoding of submitted data.</p>
+<p>Django adopts a &quot;lazy&quot; approach to decoding form data. The data in an
+<tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object is only decoded when you access it. In fact, most of
+the data is not decoded at all. Only the <tt class="docutils literal"><span class="pre">HttpRequest.GET</span></tt> and
+<tt class="docutils literal"><span class="pre">HttpRequest.POST</span></tt> data structures have any decoding applied to them. Those
+two fields will return their members as Unicode data. All other attributes and
+methods of <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> return data exactly as it was submitted by the
+client.</p>
+<p>By default, the <a class="reference external" href="settings.html#setting-DEFAULT_CHARSET"><tt class="xref docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt></a> setting is used as the assumed encoding
+for form data. If you need to change this for a particular form, you can set
+the <tt class="docutils literal"><span class="pre">encoding</span></tt> attribute on an <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> instance. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">some_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c"># We know that the data must be encoded as KOI8-R (for some reason).</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="s">&#39;koi8-r&#39;</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>You can even change the encoding after having accessed <tt class="docutils literal"><span class="pre">request.GET</span></tt> or
+<tt class="docutils literal"><span class="pre">request.POST</span></tt>, and all subsequent accesses will use the new encoding.</p>
+<p>Most developers won't need to worry about changing form encoding, but this is
+a useful feature for applications that talk to legacy systems whose encoding
+you cannot control.</p>
+<p>Django does not decode the data of file uploads, because that data is normally
+treated as collections of bytes, rather than strings. Any automatic decoding
+there would alter the meaning of the stream of bytes.</p>
+</div>
+</div>
+
+
+          </div>         
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../contents.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Unicode data in Django</a><ul>
+<li><a class="reference external" href="#creating-the-database">Creating the database</a></li>
+<li><a class="reference external" href="#general-string-handling">General string handling</a><ul>
+<li><a class="reference external" href="#translated-strings">Translated strings</a></li>
+<li><a class="reference external" href="#useful-utility-functions">Useful utility functions</a><ul>
+<li><a class="reference external" href="#conversion-functions">Conversion functions</a></li>
+<li><a class="reference external" href="#uri-and-iri-handling">URI and IRI handling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#models">Models</a><ul>
+<li><a class="reference external" href="#choosing-between-str-and-unicode">Choosing between <tt class="docutils literal"><span class="pre">__str__()</span></tt> and <tt class="docutils literal"><span class="pre">__unicode__()</span></tt></a></li>
+<li><a class="reference external" href="#taking-care-in-get-absolute-url">Taking care in <tt class="docutils literal"><span class="pre">get_absolute_url()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#the-database-api">The database API</a></li>
+<li><a class="reference external" href="#templates">Templates</a><ul>
+<li><a class="reference external" href="#template-tags-and-filters">Template tags and filters</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#e-mail">E-mail</a></li>
+<li><a class="reference external" href="#form-submission">Form submission</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Browse</h3>
+  <ul>
+    
+      <li>Prev: <a href="templates/api.html">The Django template language: For Python programmers</a></li>
+    
+    
+      <li>Next: <a href="../misc/index.html">Meta-documentation and miscellany</a></li>
+    
+  </ul>
+  <h3>You are here:</h3>
+  <ul>
+      <li>
+        <a href="../index.html">Django v1.0 documentation</a>
+        
+          <ul><li><a href="index.html">API Reference</a>
+        
+        <ul><li>Unicode data in Django</li></ul>
+        </li></ul>
+      </li>
+  </ul>  
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/ref/unicode.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Jan 06, 2009</p>
+          </div> 
+        
+      
+    </div>
+    
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="templates/api.html" title="The Django template language: For Python programmers">previous</a> 
+     |
+    <a href="index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="../misc/index.html" title="Meta-documentation and miscellany">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

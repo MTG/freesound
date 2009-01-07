@@ -1,0 +1,53 @@
+{% extends "forum/_section.html" %}
+
+{% load paginator %}
+
+{% block title %}forums - {{forum.name}} - {{thread.title}}{% endblock %}
+
+{% block breadcrumb %}
+&#187; <a href="{{forum.get_absolute_url}}">{{forum.name}}</a> &#187; <a href="{% url thread forum.name_slug thread.id}}">{{thread.title}}</a>
+{% endblock %}
+
+{% block section_content %}
+<div class="forum_pagination">
+	<div class="forum_button"><a href="#">Post Reply</a></div>
+	{% show_paginator paginator page current_page request %} 
+</div>
+
+<ul id="posts">
+{% for post in page.object_list %}
+	<li>
+		<a name="post{{post.id}}"></a>
+		<a href="{% url account post.author.username %}"><img src="{{media_url}}images/32x32_avatar.png" width="32" height="32" alt="avatar" /></a>
+		<div class="post_details">
+			<div class="post_author"><a href="{% url account post.author.username %}">{{post.author.username}}</a></div>
+			<div class="post_date">{{post.created|timesince}}</div>
+			<div class="post_author_stats">
+				{% comment %}
+				{{post.author.num_posts}} post{{post.author.num_posts|pluralize}}<br />
+				{{post.author.num_sounds}} post{{post.author.num_sounds|pluralize}}
+				{% endcomment %}
+			</div>
+		</div>
+		<a href="#" class="post_quote"></a>
+		
+		{% if forloop.first and not page.has_previous %}
+		<div class="subject">
+			{{thread.title}}
+		</div>
+		{% endif %}
+		
+		{{post.body|safe|linebreaks}}
+		
+		{% if post.author.profile.signature %}
+		<div class="signature">{{post.author.profile.signature|safe}}</div>
+		{% endif %}
+	</li>
+{% endfor %}
+</ul>
+
+<div class="forum_pagination">
+	<div class="forum_button"><a href="#">Post Reply</a></div>
+	{% show_paginator paginator page current_page request %} 
+</div>
+{% endblock %}

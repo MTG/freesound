@@ -1,6 +1,9 @@
-{% extends "forum/section.html" %}
+{% extends "forum/_section.html" %}
 
-{% block title %}Forum: {{forum.name}}{% endblock %}
+{% load paginator %}
+{% load util %}
+
+{% block title %}forums - {{forum.name}}{% endblock %}
 
 {% block breadcrumb %}
 &#187; <a href="{{forum.get_absolute_url}}">{{forum.name}}</a>
@@ -9,28 +12,25 @@
 {% block section_content %}
 <div class="forum_pagination">
 	<div class="forum_button"><a href="#">New Topic</a></div>
-	Pages: 
-	1, 
-	<a href="#">2</a>, 
-	<a href="#">3</a> ... 
-	<a href="#">100</a>, 
-	<a href="#">102</a>, 
-	<a href="#">103</a>
-
+	{% show_paginator paginator page current_page request %} 
 </div>
 
-{% url thread forum.name_slug threads.0.id %}
-
 <ul id="topics">
-{% for thread in threads %}
+{% for thread in page.object_list %}
 	<li>
 		<div class="latest_post">
-			<a href="{{thread.latest_post.get_absolute_url}}">Latest post</a> by <a href="{% url account thread.last_post.author.username %}">{{thread.last_post.author.username}}</a><br />
-			on {{thread.last_post.created}}
+			<a href="{% url post forum.name_slug thread.id thread.last_post.id %}">Latest post</a> by <a href="{% url account thread.last_post.author.username %}">{{thread.last_post.author.username}}</a><br />
+			{{thread.last_post.created|timesince}} ago
 		</div>
-		<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">
 
-		<a href="{{thread.get_absolute_url}}" class="topic_subject">{{thread.title}}</a><br />
+		{% pyif thread.last_post.created < last_action_time %}
+		<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">
+		{% else %}
+		<img src="{{media_url}}images/forum_new.png" width="20" height="20" alt="new posts">
+		{% endif %}
+
+		{% comment %}use url tag here because get_absolute_url does more queries!{% endcomment %}
+		<a href="{% url thread forum.name_slug thread.id %}" class="topic_subject">{{thread.title|safe}}</a><br />
 		{{thread.num_posts}} post{{thread.num_posts|pluralize}}
 	</li>
 {% endfor %}
@@ -38,13 +38,6 @@
 
 <div class="forum_pagination">
 	<div class="forum_button"><a href="#">New Topic</a></div>
-	Pages: 
-	1, 
-	<a href="#">2</a>, 
-	<a href="#">3</a> ... 
-	<a href="#">100</a>, 
-	<a href="#">102</a>, 
-	<a href="#">103</a>
-
+	{% show_paginator paginator page current_page request %} 
 </div>
 {% endblock %}

@@ -47,6 +47,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.transaction.TransactionMiddleware',
 )
 
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
@@ -111,5 +113,6 @@ print "TODO: create logging sinks in settings.py"
 
 TEMPLATE_DEBUG = DEBUG
 
-#if TEMPLATE_DEBUG:
-#    TEMPLATE_STRING_IF_INVALID = 'MISSING VAR %s'
+if DEBUG:
+    MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+    INSTALLED_APPS += ('debug_toolbar',)

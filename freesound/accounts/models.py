@@ -5,7 +5,7 @@ from django.utils.encoding import smart_unicode
 from general.models import SocialModel
 
 class Profile(SocialModel):
-    user = models.ForeignKey(User, unique=True)
+    user = models.OneToOneField(User)
     
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
@@ -13,6 +13,8 @@ class Profile(SocialModel):
 
     wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
+    
+    last_action_time = models.DateTimeField()
     
     #num_sounds = models.PositiveIntegerField(editable=False)
     #num_posts = models.PositiveIntegerField(editable=False)

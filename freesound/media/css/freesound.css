@@ -1,18 +1,3 @@
-body {
-	font-family: arial;
-}
-
-a {
-	outline: none;
-	text-decoration: none;
-	color: #a00;
-}
-
-a:hover {
-	text-decoration: underline;
-	color: #a00;
-}
-
 ul.upload * {
 	list-style: none;
 }

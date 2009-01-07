@@ -4,8 +4,6 @@ from django.conf import settings
 from django.conf.urls.defaults import *
 from django.contrib import admin
 
-print "AUTODISCOVER"
-
 admin.autodiscover()
 
 urlpatterns = patterns('',
@@ -51,7 +49,7 @@ urlpatterns = patterns('',
     url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
     
     (r'^help/', include('viki.urls')),
-    
+
     (r'^forum/', include('forum.urls')),
 
     url(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$', 'general.views.admin_move_ordered_model', name="admin-move"),

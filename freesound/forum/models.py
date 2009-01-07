@@ -14,6 +14,8 @@ class Forum(OrderedModel):
     description = models.CharField(max_length=250)
 
     num_threads = models.PositiveIntegerField(default=0)
+    num_posts = models.PositiveIntegerField(default=0)
+    
     last_post = models.OneToOneField('Post', null=True, blank=True, default=None, related_name="latest_in_forum")
 
     def __unicode__(self):
@@ -50,12 +52,7 @@ class Thread(models.Model):
 
     def __unicode__(self):
         return self.title
-    
-    def save(self):
-        super(Thread, self).save()
-        f = self.forum
-        f.num_threads = Thread.objects.filter(forum=self.forum).count()
-        f.save()
+
 
 class Post(models.Model):
     thread = models.ForeignKey(Thread)
@@ -63,29 +60,17 @@ class Post(models.Model):
     body = models.TextField()
     
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+    #modified = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ('-created',)
+        ordering = ('created',)
 
     def __unicode__(self):
         return u"Post by %s in %s" % (self.author, self.thread)
-
-    def save(self):
-        super(Post, self).save()
-
-        t = self.thread
-        t.num_posts = Post.objects.filter(thread=self.thread).count()
-        t.last_post = self
-        t.save()
         
-        f = self.thread.forum
-        f.last_post = self
-        f.save()
-        
+    @models.permalink
     def get_absolute_url(self):
-        posts_before = Post.objects.filter(thread=self.thread, created__lt=self.created).count()
-        page = 1 + posts_before / settings.FORUM_POSTS_PER_PAGE
-        return self.thread.get_absolute_url() + "?page=%d#post%d" % (page, self.id)
+        return ("post", (smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id))
 
 
 class Subscription(models.Model):

@@ -10,7 +10,7 @@
 		<!--[if IE 6]>
 			<link rel="stylesheet" type="text/css" href="{{media_url}}ie6.css" />
 		<![endif]-->
-		<title>{{last_action_time}} - Freesound.org - {% block title %}{% endblock %}</title>
+		<title>Freesound.org - {% block title %}{% endblock %}</title>
 		<!-- 
 		<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 		<script type="text/javascript">
@@ -24,11 +24,17 @@
 		
 		<div id="header">
 			<div id="account_nav">
-				<div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />Bram</div>
+				{% if request.user.is_authenticated %}
+				<div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />{{request.user.username}}</div>
 				<a href="#">Messages</a><div id="messages_count"><div>2</div></div>
 				<a href="#">Settings</a>
-				<a href="#">Sign Out</a>
+				<a href="{% url accounts-logout %}">Log Out</a>
 				<a href="#" id="upload_button"></a>
+				{% else %}
+				<a href="#">Register</a>
+				<a href="{% url accounts-login%}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
+				<a href="#" id="upload_button"></a>
+				{% endif %}
 			</div>
 			
 			<a href="/" id="logo"></a>
@@ -43,12 +49,12 @@
 			</div>
 			
 			<ul id="site_nav">
-			{% block navigation %}
-				<li class="active_tab"><a href="#" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
-				<li><a href="#" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
-				<li><a href="#" id="site_nav_forums"><span class="site_nav_icon"></span>Forums</a></li>
-				<li><a href="#" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
-			{% endblock %}
+				{% if user.is_authenticated %}
+				<li class="{% block tab_home_active %}{% endblock %}"><a href="{% url accounts-home %}" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
+				{% endif %}
+				<li class="{% block tab_sounds_active %}{% endblock %}"><a href="#{% url sounds %}" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
+				<li class="{% block tab_forums_active %}{% endblock %}"><a href="{% url forums-forums %}" id="site_nav_forums"><span class="site_nav_icon"></span>Forums</a></li>
+				<li class="{% block tab_help_active %}{% endblock %}"><a href="/help/" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
 			</ul>
 		</div>
 		

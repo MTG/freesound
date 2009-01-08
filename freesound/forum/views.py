@@ -1,14 +1,17 @@
-from django.conf import settings
+from django.conf import settings, settings
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, InvalidPage
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
-from django.core.paginator import Paginator, InvalidPage
-from django.conf import settings
+from django.template import RequestContext, loader
 from models import *
+from forms import *
+
 
 def forums(request):
     forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
     return render_to_response('forum/index.html', locals(), context_instance=RequestContext(request))
+
 
 def forum(request, forum_name_slug):
     try:
@@ -31,6 +34,7 @@ def forum(request, forum_name_slug):
 
     return render_to_response('forum/threads.html', locals(), context_instance=RequestContext(request))
 
+
 def thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id)
@@ -50,6 +54,7 @@ def thread(request, forum_name_slug, thread_id):
 
     return render_to_response('forum/thread.html', locals(), context_instance=RequestContext(request))
 
+
 def post(request, forum_name_slug, thread_id, post_id):
     post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)
 
@@ -58,9 +63,28 @@ def post(request, forum_name_slug, thread_id, post_id):
     url = post.thread.get_absolute_url() + "?page=%d#post%d" % (page, post.id)
 
     return HttpResponseRedirect(url)
-    
-def add_post(request, thread_id=None):
-    pass
 
-def edit_post(request, post_id):
-    pass
+
+@login_required
+def reply(request, forum_name_slug, thread_id, post_id=None):
+    thread = get_object_or_404(Thread, id=thread_id, forum__name_slug=forum_name_slug)
+    
+    if post_id:
+        post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)
+        quote = loader.render_to_string('forum/quote_style.html', {'post':post})
+    else:
+        post = None
+        quote = ""
+    
+    if request.method == 'POST':
+        form = PostReplyForm(quote, request.POST)
+        if form.is_valid():
+            post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+            return HttpResponseRedirect(post.get_absolute_url())
+    else:
+        if quote:
+            form = PostReplyForm(quote, {'body':quote})
+        else:
+            form = PostReplyForm(quote)
+        
+    return render_to_response('forum/reply.html', locals(), context_instance=RequestContext(request))

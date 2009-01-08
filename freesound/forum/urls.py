@@ -3,10 +3,10 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('forum.views',
-    url(r'^$', 'forums', name='forums'),
-    url(r'^(?P<forum_name_slug>[\w\-]+)/$', 'forum', name="forum"),
-    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', 'thread', name="thread"),
-    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/$', 'post', name="post"),
-    url(r'^add_post/$', 'add_post', name="post-add"),
-    url(r'^edit_post/(?P<post_id>\d+)/$', 'edit_post', name="post-edit"),
+    url(r'^$', 'forums', name='forums-forums'),
+    url(r'^(?P<forum_name_slug>[\w\-]+)/$', 'forum', name="forums-forum"),
+    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', 'thread', name="forums-thread"),
+    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/$', 'post', name="forums-post"),
+    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/reply/$', 'reply', name="forums-reply"),
+    url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/(?P<post_id>\d+)/reply/$', 'reply', name="forums-reply-quote"),
 )

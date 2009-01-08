@@ -1,71 +1,38 @@
 from django.template import Node, NodeList
-
 from django.template import TemplateSyntaxError, VariableDoesNotExist
-
 from django.template import Library
-
 import re
 
-
-
 # For Python 2.3
-
 if not hasattr(__builtins__, 'set'):
-
     from sets import Set as set
 
-
-
 register = Library()
-
 variable_re = re.compile(r'[\w._\|\"\']+')
-
 string_re = re.compile(r'^([\"\']).*\1$')
-
-
 
 TAGNAME = 'pyif' # Hopefully this can replace django's built-in if tag
 
-
-
 class IfNode(Node):
-
     def __init__(self, expression, variables, nodelist_true, nodelist_false):
-
         self.expression = expression
-
         self.variables = variables
-
         self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
 
-
-
     def __repr__(self):
-
         return "<If node>"
 
-
-
     def __iter__(self):
-
         for node in self.nodelist_true:
-
             yield node
-
         for node in self.nodelist_false:
-
             yield node
-
-
 
     def get_nodes_by_type(self, nodetype):
 
         nodes = []
-
         if isinstance(self, nodetype):
-
             nodes.append(self)
-
         nodes.extend(self.nodelist_true.get_nodes_by_type(nodetype))
 
         nodes.extend(self.nodelist_false.get_nodes_by_type(nodetype))
@@ -99,9 +66,7 @@ class IfNode(Node):
             variable_context[context_name] = value
 
         try:
-
             resultant = eval(expression, variable_context)
-
         except:
 
             resultant = False
@@ -145,3 +110,4 @@ def do_if(parser, token):
     return IfNode(expression, variables, nodelist_true, nodelist_false)
 
 do_if = register.tag(TAGNAME, do_if)
+

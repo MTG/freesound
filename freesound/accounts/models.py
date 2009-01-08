@@ -16,8 +16,8 @@ class Profile(SocialModel):
     
     last_action_time = models.DateTimeField()
     
-    #num_sounds = models.PositiveIntegerField(editable=False)
-    #num_posts = models.PositiveIntegerField(editable=False)
+    num_sounds = models.PositiveIntegerField(editable=False, default=0)
+    num_posts = models.PositiveIntegerField(editable=False, default=0)
     
     def __unicode__(self):
         return self.user.username

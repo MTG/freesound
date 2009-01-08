@@ -1,16 +1,17 @@
 {% extends "forum/_section.html" %}
 
 {% load paginator %}
+{% load smileys %}
 
 {% block title %}forums - {{forum.name}} - {{thread.title}}{% endblock %}
 
 {% block breadcrumb %}
-&#187; <a href="{{forum.get_absolute_url}}">{{forum.name}}</a> &#187; <a href="{% url thread forum.name_slug thread.id}}">{{thread.title}}</a>
+&#187; <a href="{{forum.get_absolute_url}}">{{forum.name}}</a> &#187; <a href="{% url forums-thread forum.name_slug thread.id}}">{{thread.title}}</a>
 {% endblock %}
 
 {% block section_content %}
 <div class="forum_pagination">
-	<div class="forum_button"><a href="#">Post Reply</a></div>
+	<div class="forum_button"><a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a></div>
 	{% show_paginator paginator page current_page request %} 
 </div>
 
@@ -21,15 +22,14 @@
 		<a href="{% url account post.author.username %}"><img src="{{media_url}}images/32x32_avatar.png" width="32" height="32" alt="avatar" /></a>
 		<div class="post_details">
 			<div class="post_author"><a href="{% url account post.author.username %}">{{post.author.username}}</a></div>
-			<div class="post_date">{{post.created|timesince}}</div>
+			<div class="post_date">{{post.created|timesince}} ago</div>
 			<div class="post_author_stats">
-				{% comment %}
-				{{post.author.num_posts}} post{{post.author.num_posts|pluralize}}<br />
-				{{post.author.num_sounds}} post{{post.author.num_sounds|pluralize}}
-				{% endcomment %}
+				{{post.author.profile.num_sounds}} sound{{post.author.profile.num_sounds|pluralize}}<br/>
+				{{post.author.profile.num_posts}} post{{post.author.profile.num_posts|pluralize}}<br>
+				Joined: {{post.author.date_joined|date:"d M Y"}}
 			</div>
 		</div>
-		<a href="#" class="post_quote"></a>
+		<a href="{% url forums-reply-quote forum.name_slug thread.id post.id %}" class="post_quote"></a>
 		
 		{% if forloop.first and not page.has_previous %}
 		<div class="subject">
@@ -37,17 +37,17 @@
 		</div>
 		{% endif %}
 		
-		{{post.body|safe|linebreaks}}
+		{{post.body|smileys|safe|linebreaks}}
 		
 		{% if post.author.profile.signature %}
-		<div class="signature">{{post.author.profile.signature|safe}}</div>
+		<div class="signature">{{post.author.profile.signature|smileys|safe}}</div>
 		{% endif %}
 	</li>
 {% endfor %}
 </ul>
 
 <div class="forum_pagination">
-	<div class="forum_button"><a href="#">Post Reply</a></div>
+	<div class="forum_button"><a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a></div>
 	{% show_paginator paginator page current_page request %} 
 </div>
 {% endblock %}

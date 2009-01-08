@@ -1,0 +1,17 @@
+{% extends "forum/_section.html" %}
+
+{% block title %}forum - reply{% endblock %}
+
+{% block section_content %}
+
+<h1>Reply</h1>
+
+<form method="post" action=".">
+<table>
+{{form}}
+</table>
+<input type="submit" value="reply" />
+</form>
+
+
+{% endblock %}

@@ -1,5 +1,7 @@
 {% extends "forum/_section.html" %}
 
+{% load util %}
+
 {% block title %}forums{% endblock %}
 
 {% block section_content %}
@@ -7,13 +9,18 @@
 {% for forum in forums %}
 	<li>
 		<div class="latest_post">
-			<a href="{% url post forum.name_slug forum.last_post.thread.id forum.last_post.id %}">Latest post</a> by <a href="{% url account forum.last_post.author.username %}">{{forum.last_post.author.username}}</a><br />
+			<a href="{% url forums-post forum.name_slug forum.last_post.thread.id forum.last_post.id %}">Latest post</a> by <a href="{% url account forum.last_post.author.username %}">{{forum.last_post.author.username}}</a><br />
 			{{forum.last_post.created|timesince}} ago
 		</div>
-		<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">
+
+		{% pyif forum.last_post.created > last_action_time and forum.last_post.author != request.user %}
+			<img src="{{media_url}}images/forum_new.png" width="20" height="20" alt="new posts">
+		{% else %}
+			<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">
+		{% endif %}
 
 		<a href="{{forum.get_absolute_url}}" class="forum_name">{{forum.name}}</a><br />
-		{{forum.num_threads}} thread{{forum.num_threads|pluralize}}
+		{{forum.num_threads}} thread{{forum.num_threads|pluralize}}, {{forum.num_posts}} post{{forum.num_posts|pluralize}}
 	</li>
 {% endfor %}
 </ul>

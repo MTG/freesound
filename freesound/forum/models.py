@@ -23,7 +23,7 @@ class Forum(OrderedModel):
     
     @models.permalink
     def get_absolute_url(self):
-        return ("forum", (smart_unicode(self.name_slug),))
+        return ("forums-forum", (smart_unicode(self.name_slug),))
 
 
 class Thread(models.Model):
@@ -45,7 +45,7 @@ class Thread(models.Model):
     
     @models.permalink
     def get_absolute_url(self):
-        return ("thread", (smart_unicode(self.forum.name_slug), self.id))
+        return ("forums-thread", (smart_unicode(self.forum.name_slug), self.id))
 
     class Meta:
         ordering = ('-status', '-created')
@@ -70,7 +70,7 @@ class Post(models.Model):
         
     @models.permalink
     def get_absolute_url(self):
-        return ("post", (smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id))
+        return ("forums-post", (smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id))
 
 
 class Subscription(models.Model):
@@ -88,4 +88,4 @@ class Subscription(models.Model):
     # B > notify A, set Subscription passive
     # C > notify B, set subscription passive
     # B comes to see > set subscription acive
-    # D > notify B
+    # D > notify B and C

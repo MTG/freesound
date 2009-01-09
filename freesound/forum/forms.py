@@ -3,6 +3,7 @@ from utils.forms import HtmlCleaningCharField
 
 class PostReplyForm(forms.Form):
     body = HtmlCleaningCharField(widget=forms.Textarea)
+    subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False)
 
     def __init__(self, quote, *args, **kwargs):
         self.quote = quote
@@ -13,3 +14,8 @@ class PostReplyForm(forms.Form):
         if self.quote and body.strip() == self.quote:
             raise forms.ValidationError("You should type something...")
         return body
+
+class NewThreadForm(forms.Form):
+    title = HtmlCleaningCharField()
+    body = HtmlCleaningCharField(widget=forms.Textarea)
+    subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False)

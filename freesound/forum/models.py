@@ -38,7 +38,7 @@ class Thread(models.Model):
     )
     status = models.PositiveSmallIntegerField(choices=THREAD_STATUS_CHOICES, default=1)
     
-    num_posts = models.PositiveIntegerField(default=1)
+    num_posts = models.PositiveIntegerField(default=0)
     last_post = models.OneToOneField('Post', null=True, blank=True, default=None, related_name="latest_in_thread")
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -48,7 +48,7 @@ class Thread(models.Model):
         return ("forums-thread", (smart_unicode(self.forum.name_slug), self.id))
 
     class Meta:
-        ordering = ('-status', '-created')
+        ordering = ('-status', '-last_post__created')
 
     def __unicode__(self):
         return self.title

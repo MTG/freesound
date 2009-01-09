@@ -58,6 +58,22 @@ a.external_link:hover {
 	background: url(images/external_link_button.png) no-repeat bottom;
 }
 
+/* Formatting Elements
+------------------------------------------------------*/
+.signature ul {
+	list-style-type: disc;
+	padding-left: 18px;
+	padding-bottom: 18px;
+}
+.signature ol {
+	list-style-type: decimal;
+	padding-left: 24px;
+	padding-bottom: 18px;
+}
+.signature ul li, ol li {
+	float: none;
+}
+
 /* Header and Navigation
 ------------------------------------------------------*/
 #header {
@@ -130,6 +146,7 @@ a.external_link:hover {
 	height: 31px;
 	background: url(images/upload_button.png);
 }
+
 /* Site Navigation
 ------------------------------------------------------*/
 #site_nav {
@@ -402,73 +419,118 @@ a.external_link:hover {
 #forums .latest_post, #topics .latest_post {
 	float: right;
 	color: #444;
+	text-align: right;
+}
+#topics .highlighted .topic_subject {
+	font-weight: bold;
+	color: #CC4040;
+}
+#topics .highlighted .topic_subject:hover {
+	color: #9C3131;
 }
 .forum_pagination {
 	position: relative;
-	padding: 8px 15px;
+	padding: 8px 15px 8px 11px;
 	font-size: 12px;
-	background-color: #E1F0FF;
+	background-color: #EBF4FD;
 	margin: 10px 0;
+	height: 15px;
 }
 .forum_pagination a {
 	text-decoration: underline;
 	font-weight: bold;
 }
+.pagination li {
+	float: left;
+}
+.pagination li a {
+	padding: 4px;
+}
+.pagination .current-page {
+	padding: 0 4px;
+	margin-top: -1px;
+	font-weight: bold;
+	background-color: #D2E2F9;
+	border-top: solid 1px #C3D4EA;
+	border-bottom: solid 1px #FFF;
+	color: #444;
+}
+
+/* Posts formatting
+------------------------------------------------------*/
 #posts {
 	font-size: 13px;
+	padding: 0;
 }
-#posts li {
+#posts .post {
+	list-style-type: none;
 	position: relative;
 	padding: 15px 35px 15px 230px;
-	margin-bottom: 15px;
+	margin: 0 0 15px 0;
 	background: url(images/post_bg.png) repeat-y left;
 	border-top: solid 2px #E6E6E6;
 	min-height: 40px;
 }
-#posts li img {
+#posts .post .avatar {
 	position: absolute;
-	left: 14px;
-	top: 17px;
+	left: 15px;
+	top: 42px;
 }
-#posts li .post_details {
-	position: absolute;
-	width: 135px;
-	left: 55px;
-	top: 15px;
-	overflow: hidden;
-	text-align: left;
-}
-#posts li .post_details .post_author {
+#posts .post .post_author {
 	font-size: 14px;
 	font-weight: bold;
-	margin-bottom: 2px;
+	position: absolute;
+	width: 175px;
+	left: 15px;
+	top: 15px;
+	overflow: hidden;
 }
-#posts li .post_details .post_date {
-	font-size: 10px;
-	color: #999;
-}
-#posts li .post_details .post_author_stats { 
+#posts .post .post_date {
+	position: absolute;
+	width: 175px;
+	left: 56px;
+	top: 76px;
 	font-size: 11px;
-	margin-top: 5px;
-	color: #444;
+	color: #BABABA;
 }
-#posts li .subject {
+#posts .post .post_author_stats { 
+	font-size: 11px;
+	color: #444;
+	position: absolute;
+	width: 145px;
+	left: 55px;
+	top: 42px;
+	line-height: 16px;
+}
+#posts .post .subject {
 	padding-bottom: 15px;
 	font-size: 17px;
 	font-weight: bold;
 }
-#posts li p {
+#posts .post p, #posts .post blockquote {
 	font-size: 12px;
 	margin-bottom: 18px;
 	line-height: 18px;
 	color: #222;
 }
-#posts li .signature {
+#posts .post blockquote {
+	background-color: #F6F6F6;
+	padding: 15px;
+	border-left: solid 2px #DEDEDE;
+}
+#posts .post blockquote em {
+	font-style: italic;
+}
+#posts .post .signature {
 	padding: 10px;
 	border-top: dashed 1px #C4C4C4;
 	font-size: 12px;
 	color: #777;
 }
+#posts .post .signature p {
+	color: #777;
+}
+
 .forum_button {
 	position: absolute;
 	right: 0;

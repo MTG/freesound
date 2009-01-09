@@ -4,36 +4,33 @@ import re
 
 register = template.Library()
 
-replacements = {
-    ":)": "happy",
-    ":-)": "happy",
-    ":s": "oups",
-    ":-s": "oups",
-    ":d": "extatic",
-    ":-d": "extatic",
-    ":*": "kiss",
-    ":-*": "kiss",
-    ":(": "sad",
-    ":-(": "sad",
-    ":|": "soso",
-    ":-|": "soso",
-    "8)": "sun",
-    "8-)": "sun",
-    ":o": "surprise",
-    ":-o": "surprise",
-    ":p": "tongue",
-    ":-p": "tongue",
-    ":'(": "cry",
-    }
+mapping = """8-) 8) cool
+:'( cry
+:D :-D grin
+=) happy
+:-| :| neutral
+:( :-( sad
+:) :-) smile
+:P :-P tongue
+:S :-S weird
+;) ;-) wink
+:O :-O woot"""
+
+d = []
+for emoticons, name in map(lambda x: (x[:-1], x[-1]), [x.split() for x in mapping.lower().split("\n")]):
+    for emoticon in emoticons:
+        d.append((emoticon,name))
+
+emoticons = dict(d)
 
 def smiley_replace(matchobj):
     try:
-        expression = replacements[matchobj.group(0).lower()]
+        expression = emoticons[matchobj.group(0).lower()]
         return "<img src=\"%simages/smileys/%s.png\" alt=\"%s\" class=\"smiley\" />" % (settings.MEDIA_URL, expression, expression)
     except KeyError:
         return matchobj.group(0)
 
-smiley_replacer = re.compile("8\-?\)|:'\(|:\-?[OoPpSsDd\)\(\*\|]")
+smiley_replacer = re.compile("=\)|;\-?\)|8\-?\)|:'\(|:\-?[OoPpSsDd\)\(\|]")
 
 @register.filter
 def smileys(string):

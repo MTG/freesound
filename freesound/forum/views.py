@@ -79,7 +79,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     if request.method == 'POST':
         form = PostReplyForm(quote, request.POST)
         if form.is_valid():
-            post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+            post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
             return HttpResponseRedirect(post.get_absolute_url())
     else:
         if quote:
@@ -88,3 +88,19 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
             form = PostReplyForm(quote)
         
     return render_to_response('forum/reply.html', locals(), context_instance=RequestContext(request))
+
+
+@login_required
+def new_thread(request, forum_name_slug):
+    forum = get_object_or_404(Forum, name_slug=forum_name_slug)
+
+    if request.method == 'POST':
+        form = NewThreadForm(request.POST)
+        if form.is_valid():
+            thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
+            post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+            return HttpResponseRedirect(post.get_absolute_url())
+    else:
+        form = NewThreadForm()
+        
+    return render_to_response('forum/new_thread.html', locals(), context_instance=RequestContext(request))

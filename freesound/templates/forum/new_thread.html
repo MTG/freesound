@@ -1,0 +1,17 @@
+{% extends "forum/_section.html" %}
+
+{% block title %}forum - new thread{% endblock %}
+
+{% block section_content %}
+
+<h1>New thread</h1>
+
+<form method="post" action=".">
+<table>
+{{form}}
+</table>
+<input type="submit" value="create thread" />
+</form>
+
+
+{% endblock %}

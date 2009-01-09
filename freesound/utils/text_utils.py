@@ -18,6 +18,8 @@ def is_shouting(string):
     >>> is_shouting('This is a regular phrase.')
     False
     """
+    if len(string) < 5:
+        return False
     return shout_percentage(string) > 0.6
 
 

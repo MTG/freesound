@@ -12,11 +12,11 @@
 			<a href="{% url forums-post forum.name_slug forum.last_post.thread.id forum.last_post.id %}">Latest post</a> by <a href="{% url account forum.last_post.author.username %}">{{forum.last_post.author.username}}</a><br />
 			{{forum.last_post.created|timesince}} ago
 		</div>
-
+		
 		{% pyif forum.last_post.created > last_action_time and forum.last_post.author != request.user %}
-			<img src="{{media_url}}images/forum_new.png" width="20" height="20" alt="new posts">
+			<img src="{{media_url}}images/forum_new.png" width="20" height="20" alt="new posts" />
 		{% else %}
-			<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">
+			<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts" />
 		{% endif %}
 
 		<a href="{{forum.get_absolute_url}}" class="forum_name">{{forum.name}}</a><br />

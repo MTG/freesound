@@ -469,7 +469,7 @@ a.external_link:hover {
 	margin: 0 0 15px 0;
 	background: url(images/post_bg.png) repeat-y left;
 	border-top: solid 2px #E6E6E6;
-	min-height: 40px;
+	min-height: 80px;
 }
 #posts .post .avatar {
 	position: absolute;
@@ -485,15 +485,7 @@ a.external_link:hover {
 	top: 15px;
 	overflow: hidden;
 }
-#posts .post .post_date {
-	position: absolute;
-	width: 175px;
-	left: 56px;
-	top: 76px;
-	font-size: 11px;
-	color: #BABABA;
-}
-#posts .post .post_author_stats { 
+#posts .post .post_details { 
 	font-size: 11px;
 	color: #444;
 	position: absolute;
@@ -501,6 +493,9 @@ a.external_link:hover {
 	left: 55px;
 	top: 42px;
 	line-height: 16px;
+}
+#posts .post .post_details .post_date {
+	color: #BABABA;
 }
 #posts .post .subject {
 	padding-bottom: 15px;

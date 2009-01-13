@@ -19,12 +19,12 @@
 	<li class="post">
 		<a name="post{{post.id}}"></a>
 		<a href="{% url account post.author.username %}"><img src="{{media_url}}images/32x32_avatar.png" width="32" height="32" alt="avatar" class="avatar" /></a>
-		<div class="post_date">{{post.created|timesince}} ago</div>
 		<div class="post_author"><a href="{% url account post.author.username %}">{{post.author.username}}</a></div>
-		<div class="post_author_stats">
+		<div class="post_details">
 			{{post.author.profile.num_sounds}} sound{{post.author.profile.num_sounds|pluralize}}<br/>
 			{{post.author.profile.num_posts}} post{{post.author.profile.num_posts|pluralize}}<br>
 			<!-- Joined: {{post.author.date_joined|date:"d M Y"}}<br/> -->
+			<div class="post_date">{{post.created|timesince}} ago</div>
 		</div>
 
 		<a href="{% url forums-reply-quote forum.name_slug thread.id post.id %}" class="post_quote"></a>

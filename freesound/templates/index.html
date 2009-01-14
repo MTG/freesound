@@ -3,7 +3,171 @@
 {% load cache %}
 {% load rss %}
 {% load pledgie %}
+{% load util %}
 
+{% block content %}
+<div id="content"> <!-- START of Content area -->
+
+	<div id="featured_sound" class="content_box">
+		<h3>Featured Sound</h3>
+		<div class="sample_player_small">
+			
+			<div class="sample_player">
+				<img src="{{media_url}}images/sample_player_small.png" width="120" height="69" class="small_player" alt="" />
+				<a class="title" href="#">Boing.wav</a>
+					<div class="stars">
+						<a href="#"><img src="images/star_on.png" width="13" height="13" alt="" /></a>
+
+						<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
+						<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
+						<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
+						<a href="#"><img src="{{media_url}}images/star_off.png" width="13" height="13" alt="" /></a>
+					</div>
+				<p class="description">Created by flicking the tightening key on the underside of a camera tripod quick release plate.</p>
+			</div>
+			
+			<div class="sample_information">
+
+				<a class="user" href="#">itsallhappening</a><br />
+				<span class="date">Feb 25th 2008</span><br />
+				<span class="download_count">92 Downloads</span><br />
+				<a class="comments" href="#">3 comments</a>
+			</div>		
+			
+		</div>
+	</div>
+
+	<div id="latest_news" class="content_box">
+		<h3><a href="/blog/">Latest News</a></h3>
+
+		{% get_rss rss_url as rss %}
+		{% for entry in rss.entries|slice:":5" %}
+			<div class="blog_post">
+			<h2><a href="{{entry.link}}">{{entry.title}}</a></h2>
+			<span class="post_date"> {{entry.date_parsed|tuple_to_time|date:"F jS, Y"}}</span> <span class="post_author">{{entry.author}}</span>
+			<p>
+				{{entry.summary|safe}}
+			</p>
+			<div class="read_more_link"><a href="{{entry.link}}">Read Full Entry</a></div>
+			</div>
+		{% endfor %}
+	</div>
+	
+	<div id="recent_additions" class="content_box">
+		<h3>Recent Additions</h3>
+
+		<div class="sample_player_small">
+
+			<div class="sample_player">
+				<img src="{{media_url}}images/sample_player_small.png" width="120" height="69" class="small_player" alt="" />
+				<a class="title" href="#">Park in autumn.wav</a>
+					<div class="stars">
+						<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
+						<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
+						<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
+						<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
+
+						<a href="#"><img src="images/star_off.png" width="13" height="13" alt="" /></a>
+					</div>
+				<p class="description">Well, what I learned from doing this recording was, that the geese, which I wanted to record, are not staying in...</p>
+			</div>
+			
+			<div class="sample_information">
+				<a class="user" href="#">inchadney</a><br />
+				<span class="date">June 24th 2008</span><br />
+
+				<span class="download_count">2 Downloads</span><br />
+				<a class="comments" href="#">No comments yet</a>
+			</div>
+			
+			<div class="sample_more"><img src="images/plus.png" alt="" /> 15 more sounds from <a href="#">inchadney</a> in the last 48 hours</div>
+		</div>
+	</div>
+	
+</div> <!-- END of Content area -->
+
+<div id="sidebar"> <!-- START of Sidebar-->
+	
+	<div class="continuous_sidebar_box">
+		<div id="about">
+			<div id="post_it">
+			<h2>Welcome to Freesound</h2>
+
+			<p>Freesound is a collaborative database of Creative Commons Licensed sounds. Browse, download and share sounds.</p>
+			</div>
+		</div>
+		
+		
+		<div id="support">
+			<img src="{{media_url}}images/content/tshirt.png" alt="" width="166" height="167" />
+			<h3>Support Us. Get your Freesound T-Shirt!</h3>
+			<p>Select your store:</p>
+
+			<a href="#" class="external_link">Europe</a>
+			<a href="#" class="external_link">US Canada and Asia</a>
+		</div>
+	</div>
+	
+	<div id="donation_box">
+		<p><b>Love Freesound?</b> <span id="count_down">Only <b>€1070.00</b> to go!</span></p>
+
+		<a class="donation_button" href="#">Donate Now</a>
+		<div id="donation_meter_box"><span id="meter">49%</span></div>
+	</div>
+	
+	<div id="latest_forum_posts" class="sidebar_box">
+		<h3>Latest Forum Posts</h3>
+		<ul>
+			<li class="odd">
+
+				<a href="#">German radio tuning</a><br />
+				in Sample Requests<br />
+				by erilee, 1 hour 23 minutes ago
+			</li>
+			<li class="even">
+				<a href="#">Secret place...</a><br />
+				in Sample Requests<br />
+
+				by maxyEmarf, 1 hour 43 minutes ago
+			</li>
+			<li class="odd">
+				<a href="#">HELP! Im a beginner</a><br />
+				in Production Techniques, Music Gear, Tips an...<br />
+				by richardofoakshire, 5 hours 11 minutes ago
+			</li>
+			<li class="even">
+				<a href="#">Other planets recordings?</a><br />
+
+				in Sample Requests<br />
+				by NoiseCollector, 5 hours 33 minutes ago
+			</li>
+			<li class="odd">
+				<a href="#">Design Nightingale Logo, part 2</a><br />
+				in Freesound Project<br />
+				by ERH, 11 hours ago
+			</li>
+
+		</ul>
+		<a class="more_posts_button" href="#"><img src="{{media_url}}images/arrow_down.png" alt="arrow" />More Posts</a>
+	</div>
+	
+	<div id="freesound_projects" class="sidebar_box">
+		<h3>Freesound Projects</h3>
+		<a href="http://radio.freesound.org/" id="freesoundradio"><img src="{{media_url}}images/freesoundradio.png" alt="Freesound Radio" /></a>
+		<a href="http://barcelona.freesound.org/" id="sonsdebarcelona"><img src="{{media_url}}images/sonsdebarcelona.png" alt="sonsdebarcelona" /></a>
+	</div>
+	
+</div> <!-- END of Sidebar -->
+
+<div id="credits">
+	A Website by: <a href="http://www.mtg.upf.edu/" id="mtg_link"><img src="{{media_url}}images/credits/mtg.png" alt="Music Technology Group" /></a>
+	Supported by: <a href="http://www.google.com/" id="google_link"><img src="{{media_url}}images/credits/google.png" alt="Google" /></a> <a href="http://www.letusa.es/" id="letusa_link"><img src="{{media_url}}images/credits/letusa.png" alt="Letusa" /></a>
+</div>
+
+{% endblock %}
+
+		
+		
 {% cache 300 pledgie_cache %}
 	{% get_pledgie_campaign_details "1356" as pledgie %}
 	{{ pledgie.amount_raised }}{{ pledgie.currency }} {% if pledgie.goal %}({{ pledgie.percent_towards_goal }}%) of {{ pledgie.goal }}{{ pledgie.currency }}{% endif %} raised for {{ pledgie.title }}
@@ -15,21 +179,4 @@
 		<li>{{ entry.title }}</li>
 		{% endfor %}
 	</ul>
-{% endcache %}
-
-{% cache 3600 rss_cache %}
-	{% get_rss rss_url as rss %}
-	<h1>News</h1>
-	{% for entry in rss.entries|slice:":5" %}
-		<h2><a href="{{entry.link}}">{{entry.title}}</a></h2>
-		<p>
-			{{entry.summary|safe}}
-		</p>
-		<p>
-			<a href="{{entry.link}}">read more...</a>
-		</p>
-	{% endfor %}
-	<p>
-		<a href="{{rss.feed.link}}">More news...</a>
-	</p>
 {% endcache %}

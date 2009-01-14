@@ -665,7 +665,7 @@ a.donation_button:hover {
 	border: 1px solid #565656;
 	line-height: 30px;
 	height: 27px;
-	width: 49%;
+	//width: 49%;
 	text-indent: -9999px;
 }
 #latest_forum_posts {

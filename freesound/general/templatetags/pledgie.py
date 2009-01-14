@@ -11,17 +11,27 @@ class PledgieParserNode(template.Node):
         self.var_name = var_name
 
     def render(self, context):
+        pledgie_id = None
+        
         if self.pledgie_id_var_name:
             try:
-                url = "http://pledgie.com/campaigns/%d.json" % context[self.pledgie_id_var_name]
+                pledgie_id = int(context[self.pledgie_id_var_name])
             except KeyError:
                 raise template.TemplateSyntaxError, "the variable \"%s\" can't be found in the context" % self.pledgie_id_var_name
+            except ValueError:
+                raise template.TemplateSyntaxError, "pledgie campaign id's need to be integers!"
         else:
-            url = "http://pledgie.com/campaigns/%d.json" % self.pledgie_id
+            pledgie_id = int(self.pledgie_id)
+            
+        api_url = "http://pledgie.com/campaigns/%d.json" % pledgie_id
+        pledge_url = "http://pledgie.com/campaigns/%d/" % pledgie_id
         
-        data = urllib.urlopen(url).read()
+        data = simplejson.loads(urllib.urlopen(api_url).read())
         
-        context[self.var_name] = simplejson.loads(data)
+        data["to_go"] = data["goal"] - data["amount_raised"]
+        data["url"] = pledge_url
+        
+        context[self.var_name] = data
         
         return ''
 

@@ -37,6 +37,7 @@
 		</div>
 	</div>
 
+	{% cache 600 rss_cache %}
 	<div id="latest_news" class="content_box">
 		<h3><a href="/blog/">Latest News</a></h3>
 
@@ -52,6 +53,7 @@
 			</div>
 		{% endfor %}
 	</div>
+	{% endcache %}
 	
 	<div id="recent_additions" class="content_box">
 		<h3>Recent Additions</h3>
@@ -103,52 +105,33 @@
 			<h3>Support Us. Get your Freesound T-Shirt!</h3>
 			<p>Select your store:</p>
 
-			<a href="#" class="external_link">Europe</a>
-			<a href="#" class="external_link">US Canada and Asia</a>
+			<a href="http://freesound.spreadshirt.net/" class="external_link">Europe</a>
+			<a href="http://freesound.spreadshirt.com/" class="external_link">US Canada and Asia</a>
 		</div>
 	</div>
 	
+	{% cache 600 pledgie_cache %}
 	<div id="donation_box">
-		<p><b>Love Freesound?</b> <span id="count_down">Only <b>€1070.00</b> to go!</span></p>
+		{% get_pledgie_campaign_details pledgie_campaign as pledgie %}
+		<p><b>Love Freesound?</b> <span id="count_down">Only <b>{{ pledgie.to_go }}{{ pledgie.currency }}</b> to go!</span></p>
 
-		<a class="donation_button" href="#">Donate Now</a>
-		<div id="donation_meter_box"><span id="meter">49%</span></div>
+		<a class="donation_button" href="{{pledgie.url}}">Donate Now</a>
+		<div id="donation_meter_box"><span id="meter" style="width:{{ pledgie.percent_towards_goal }}%">{{ pledgie.percent_towards_goal }}%</span></div>
 	</div>
+	{% endcache %}
 	
 	<div id="latest_forum_posts" class="sidebar_box">
 		<h3>Latest Forum Posts</h3>
 		<ul>
-			<li class="odd">
-
-				<a href="#">German radio tuning</a><br />
-				in Sample Requests<br />
-				by erilee, 1 hour 23 minutes ago
+			{% for post in latest_forum_posts %}
+			<li class="{% cycle 'odd' 'even' %}">
+				<a href="{{post.get_absolute_url}}">{{post.thread.title}}</a><br />
+				in {{post.thread.forum}}<br />
+				by {{post.author.username}}, {{post.created|timesince}} ago
 			</li>
-			<li class="even">
-				<a href="#">Secret place...</a><br />
-				in Sample Requests<br />
-
-				by maxyEmarf, 1 hour 43 minutes ago
-			</li>
-			<li class="odd">
-				<a href="#">HELP! Im a beginner</a><br />
-				in Production Techniques, Music Gear, Tips an...<br />
-				by richardofoakshire, 5 hours 11 minutes ago
-			</li>
-			<li class="even">
-				<a href="#">Other planets recordings?</a><br />
-
-				in Sample Requests<br />
-				by NoiseCollector, 5 hours 33 minutes ago
-			</li>
-			<li class="odd">
-				<a href="#">Design Nightingale Logo, part 2</a><br />
-				in Freesound Project<br />
-				by ERH, 11 hours ago
-			</li>
-
+			{% endfor %}
 		</ul>
-		<a class="more_posts_button" href="#"><img src="{{media_url}}images/arrow_down.png" alt="arrow" />More Posts</a>
+		<a class="more_posts_button" href="{% url forums-forums %}"><img src="{{media_url}}images/arrow_down.png" alt="arrow" />More Posts</a>
 	</div>
 	
 	<div id="freesound_projects" class="sidebar_box">
@@ -165,18 +148,3 @@
 </div>
 
 {% endblock %}
-
-		
-		
-{% cache 300 pledgie_cache %}
-	{% get_pledgie_campaign_details "1356" as pledgie %}
-	{{ pledgie.amount_raised }}{{ pledgie.currency }} {% if pledgie.goal %}({{ pledgie.percent_towards_goal }}%) of {{ pledgie.goal }}{{ pledgie.currency }}{% endif %} raised for {{ pledgie.title }}
-
-	{% get_rss "http://pledgie.com/campaigns/1356/donations_feed.xml" as pledgie_rss %}
-	<h1>Latest 5 donators</h1>
-	<ul>
-		{% for entry in pledgie_rss.entries|slice:":10" %}
-		<li>{{ entry.title }}</li>
-		{% endfor %}
-	</ul>
-{% endcache %}

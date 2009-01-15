@@ -374,13 +374,12 @@ class SpectrogramImage(object):
                      ])
             
             
-        self.image = Image.new("P", (image_height, image_width))
+        self.image = Image.new("RGB", (image_height, image_width))
         
         self.image_width = image_width
         self.image_height = image_height
         self.fft_size = fft_size
-        self.palette = interpolate_colors(colors, True)
-        self.image.putpalette(self.palette)
+        self.palette = interpolate_colors(colors)
 
         # generate the lookup which translates y-coordinate to fft-bin
         self.y_to_bin = []
@@ -404,14 +403,15 @@ class SpectrogramImage(object):
             
     def draw_spectrum(self, x, spectrum):
         for (index, alpha) in self.y_to_bin:
-            self.pixels.append( int( ((255.0-alpha) * spectrum[index] + alpha * spectrum[index + 1] )) )
+            self.pixels.append( self.palette[int( ((255.0-alpha) * spectrum[index] + alpha * spectrum[index + 1] ))] )
             
         for y in range(len(self.y_to_bin), self.image_height):
-            self.pixels.append(0)
+            self.pixels.append(self.palette[0])
 
-    def save(self, filename):
+    def save(self, filename, quality=90):
+        assert filename.endswith("jpg")
         self.image.putdata(self.pixels)
-        self.image.transpose(Image.ROTATE_90).save(filename)
+        self.image.transpose(Image.ROTATE_90).save(filename, quality=quality)
 
 
 def create_wave_pngs(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size):

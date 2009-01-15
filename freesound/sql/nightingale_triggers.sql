@@ -20,9 +20,9 @@ CREATE OR REPLACE FUNCTION forum_post_delete() RETURNS TRIGGER AS
 $BODY$
 DECLARE
 BEGIN
-    UPDATE forum_thread SET num_posts = num_posts - 1 WHERE forum_thread.id = OLD.thread_id;
-    UPDATE forum_forum  SET num_posts = num_posts - 1 WHERE forum_forum.id = (SELECT forum_id FROM forum_thread WHERE forum_thread.id = OLD.thread_id);
-    UPDATE accounts_profile SET num_posts = num_posts - 1 WHERE user_id = OLD.author_id;
+    UPDATE forum_thread SET num_posts = num_posts - 1 WHERE forum_thread.id = OLD.thread_id AND num_posts > 0;
+    UPDATE forum_forum  SET num_posts = num_posts - 1 WHERE forum_forum.id = (SELECT forum_id FROM forum_thread WHERE forum_thread.id = OLD.thread_id) AND num_posts > 0;
+    UPDATE accounts_profile SET num_posts = num_posts - 1 WHERE user_id = OLD.author_id AND num_posts > 0;
     RETURN NEW;
 END;
 $BODY$
@@ -50,7 +50,7 @@ CREATE OR REPLACE FUNCTION forum_thread_delete() RETURNS TRIGGER AS
 $BODY$
 DECLARE
 BEGIN
-    UPDATE forum_forum  SET num_threads = num_threads - 1 WHERE forum_forum.id = OLD.forum_id;
+    UPDATE forum_forum  SET num_threads = num_threads - 1 WHERE forum_forum.id = OLD.forum_id WHERE num_threads > 0;
     RETURN NEW;
 END;
 $BODY$
@@ -70,9 +70,9 @@ BEGIN
     END IF;
     IF NEW.forum_id < OLD.forum_id THEN
         UPDATE forum_forum SET num_threads = num_threads + 1 WHERE id = NEW.forum_id;
-        UPDATE forum_forum SET num_threads = num_threads - 1 WHERE id = OLD.forum_id;
+        UPDATE forum_forum SET num_threads = num_threads - 1 WHERE id = OLD.forum_id AND num_threads > 0;
     ELSE
-        UPDATE forum_forum SET num_threads = num_threads - 1 WHERE id = OLD.forum_id;
+        UPDATE forum_forum SET num_threads = num_threads - 1 WHERE id = OLD.forum_id AND num_threads > 0;
         UPDATE forum_forum SET num_threads = num_threads + 1 WHERE id = NEW.forum_id;
     END IF;
     RETURN NEW;
@@ -102,7 +102,7 @@ BEGIN
 
     -- come from all ok, go to not all ok
     IF (NEW.moderation_state != 'OK' OR NEW.processing_state != 'OK') AND (OLD.moderation_state = 'OK' AND OLD.processing_state = 'OK') THEN
-        UPDATE accounts_profile SET num_sounds = num_sounds - 1 WHERE user_id = NEW.user_id;
+        UPDATE accounts_profile SET num_sounds = num_sounds - 1 WHERE user_id = NEW.user_id AND num_sounds > 0;
     END IF;
 
     RETURN NEW;
@@ -117,7 +117,7 @@ CREATE OR REPLACE FUNCTION sounds_sound_delete() RETURNS TRIGGER AS
 $BODY$
 DECLARE
 BEGIN
-    UPDATE accounts_profile SET num_sounds = num_sounds - 1 WHERE user_id = OLD.user_id;
+    UPDATE accounts_profile SET num_sounds = num_sounds - 1 WHERE user_id = OLD.user_id AND num_sounds > 0;
     RETURN NEW;
 END;
 $BODY$

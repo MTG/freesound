@@ -16,6 +16,6 @@ class PostReplyForm(forms.Form):
         return body
 
 class NewThreadForm(forms.Form):
-    title = HtmlCleaningCharField()
+    title = forms.CharField()
     body = HtmlCleaningCharField(widget=forms.Textarea)
     subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False)

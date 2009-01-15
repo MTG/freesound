@@ -3,6 +3,7 @@ from django.template import TemplateSyntaxError, VariableDoesNotExist
 from django.template import Library
 import re
 import datetime, time
+from django.template.defaultfilters import stringfilter
 
 # For Python 2.3
 if not hasattr(__builtins__, 'set'):
@@ -82,6 +83,16 @@ def do_if(parser, token):
 
 do_if = register.tag(TAGNAME, do_if)
 
+
 @register.filter
 def tuple_to_time(t):
     return datetime.datetime(*t[0:6]) + datetime.timedelta(seconds=time.timezone)
+
+
+@register.filter(name='truncate_string')
+@stringfilter
+def truncate_string(value, length):
+    if len(value) > length:
+        return value[:length-3] + u"..."
+    else:
+        return value

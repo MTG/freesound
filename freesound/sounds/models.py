@@ -5,8 +5,8 @@ from django.contrib.contenttypes import generic
 from django.db import models
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
-from general.models import SocialModel
-from general.models import OrderedModel
+from general.models import OrderedModel, SocialModel
+from utils.sql import DelayedQueryExecuter
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -18,6 +18,35 @@ class License(OrderedModel):
 
     def __unicode__(self):
         return self.name
+
+class SoundManager(models.Manager):
+    def latest_additions(self, num_sounds):
+        return DelayedQueryExecuter("""
+                select
+                    username,
+                    sound_id,
+                    extra
+                from (
+                select
+                    (select username from auth_user where auth_user.id = user_id) as username,
+                    max(id) as sound_id,
+                    max(created) as created,
+                    count(*) - 1 as extra
+                from
+                    sounds_sound
+                where
+                    created > now() - interval '5 months'
+                group by
+                    user_id
+                ) as X order by created desc limit %d;""" % num_sounds)
+    
+    def random(self):
+        import random
+        count = self.all().count()
+        offset = random.randint(0, count-1)
+        cursor = connection.cursor()
+        cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
+        return cursor.fetchone()[0]
 
 
 class Sound(SocialModel):
@@ -73,7 +102,11 @@ class Sound(SocialModel):
     processing_date = models.DateTimeField(null=True, blank=True, default=None)
     processing_log = models.TextField(null=True, blank=True, default=None)
     
-    #num_comments
+    num_comments = models.IntegerField(default=0)
+    num_downloads = models.IntegerField(default=0)
+    avg_rating = models.FloatField(default=0)
+    
+    objects = SoundManager()
     
     def __unicode__(self):
         return u"%s by %s" % (self.base_filename_slug, self.user)

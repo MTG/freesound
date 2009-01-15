@@ -42,8 +42,7 @@ class SoundManager(models.Manager):
     
     def random(self):
         import random
-        count = self.all().count()
-        offset = random.randint(0, count-1)
+        offset = random.randint(0, self.all().count() - 1)
         cursor = connection.cursor()
         cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
         return cursor.fetchone()[0]

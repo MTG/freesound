@@ -40,20 +40,13 @@ class TestAudioFile(object):
     in the middle of the file. Also useful for testing ultra-short files of 20 samples."""
     def __init__(self, num_frames, has_broken_header=False):
         self.seekpoint = 0
-        self.num_frames = num_frames
+        self.nframes = num_frames
+        self.samplerate = 44100
+        self.channels = 1
         self.has_broken_header = has_broken_header
 
     def seek(self, seekpoint):
         self.seekpoint = seekpoint
-
-    def get_nframes(self):
-        return self.num_frames
-
-    def get_samplerate(self):
-        return 44100
-
-    def get_channels(self):
-        return 1
 
     def read_frames(self, frames_to_read):
         if self.has_broken_header and self.seekpoint + frames_to_read > self.num_frames / 2:
@@ -74,9 +67,9 @@ class AudioProcessor(object):
         self.fft_size = fft_size
         self.window = window_function(self.fft_size)
         self.audio_file = audio_file
-        self.frames = audio_file.get_nframes()
-        self.samplerate = audio_file.get_samplerate()
-        self.channels = audio_file.get_channels()
+        self.frames = audio_file.nframes
+        self.samplerate = audio_file.samplerate
+        self.channels = audio_file.channels
         self.spectrum_range = None
         self.lower = 100
         self.higher = 22050
@@ -386,8 +379,8 @@ class SpectrogramImage(object):
         self.image_width = image_width
         self.image_height = image_height
         self.fft_size = fft_size
-                
-        self.image.putpalette(interpolate_colors(colors, True))
+        self.palette = interpolate_colors(colors, True)
+        self.image.putpalette(self.palette)
 
         # generate the lookup which translates y-coordinate to fft-bin
         self.y_to_bin = []
@@ -425,9 +418,9 @@ def create_wave_pngs(input_filename, output_filename_w, output_filename_s, image
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
     """
-    audio_file = audiolab.sndfile(input_filename, 'read')
+    audio_file = audiolab.Sndfile(input_filename, 'r')
 
-    samples_per_pixel = audio_file.get_nframes() / float(image_width)
+    samples_per_pixel = audio_file.nframes / float(image_width)
     processor = AudioProcessor(audio_file, fft_size, numpy.hanning)
     
     waveform = WaveformImage(image_width, image_height)
@@ -457,7 +450,7 @@ def create_wave_png_fs1(input_filename, output_filename_w, image_width, image_he
     
     fft_size = 1024
 
-    samples_per_pixel = audio_file.get_nframes() / float(image_width)
+    samples_per_pixel = audio_file.nframes / float(image_width)
     processor = AudioProcessor(audio_file, fft_size, numpy.hanning)
     
     waveform = WaveformImage(image_width, image_height, palette=2)

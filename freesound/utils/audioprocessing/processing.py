@@ -252,6 +252,8 @@ class WaveformImage(object):
     a wavefile image which can be saved as PNG.
     """
     def __init__(self, image_width, image_height, palette=1):
+        if image_height % 2 == 0:
+            raise AudioProcessingException, "wavefile images look much better at uneven height"
 
         if palette == 1:
             background_color = (0,0,0)

@@ -41,6 +41,7 @@ class SoundManager(models.Manager):
                 ) as X order by created desc limit %d;""" % num_sounds)
     
     def random(self):
+        from django.db import connection
         import random
         offset = random.randint(0, self.all().count() - 1)
         cursor = connection.cursor()

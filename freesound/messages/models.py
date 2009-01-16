@@ -21,6 +21,9 @@ class Message(models.Model):
     is_archived = models.BooleanField(default=False, db_index=True)
     
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+    
+    def get_absolute_url(self):
+        return ("message", (smart_unicode(self.id),))
 
     def __unicode__(self):
         return u"from: [%s] to: [%s]" % (self.user_from, self.user_to)

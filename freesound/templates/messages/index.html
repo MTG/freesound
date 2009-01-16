@@ -1,0 +1,30 @@
+{% extends "messages/_section.html" %}
+
+{% load paginator %}
+{% load util %}
+
+{% block title %}messages - inbox{% endblock %}
+
+{% block section_content %}
+
+<h1>Messages - Inbox</h1>
+
+<div class="forum_pagination">
+	{% show_paginator paginator page current_page request %} 
+</div>
+
+<table>
+{% for message in page.object_list %}
+	<tr>
+		<td><a href="{% url message message.id %}" {% if not message.is_read %}class="unread"{% endif %}>{{message.subject}}</a></td>
+		<td><a href="{% url account message.user_from.username %}">{{message.user_from.username}}</a></td>
+		<td>{{message.created|date:"F jS, Y"}}</td>
+	</tr>
+{% endfor %}
+</table>
+
+<div class="forum_pagination">
+	{% show_paginator paginator page current_page request %} 
+</div>
+
+{% endblock %}

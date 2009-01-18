@@ -208,13 +208,6 @@ class AudioProcessor(object):
     
         if block_size > end_seek - start_seek:
             block_size = end_seek - start_seek
-            
-        if block_size <= 1:
-            samples = self.read(start_seek, 1)
-            return samples[0], samples[0]
-        elif block_size == 2:
-            samples = self.read(start_seek, True)
-            return samples[0], samples[1]
         
         for i in range(start_seek, end_seek, block_size):
             samples = self.read(i, block_size)

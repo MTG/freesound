@@ -1,0 +1,1 @@
+package ui {    public interface ISoundDisplayObserver     {    	function onClick(soundDisplay:SoundDisplay, procent:Number):void;    }}

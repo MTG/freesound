@@ -1,0 +1,1 @@
+package  {    public interface ISoundManager     {        function set loop(on : Boolean) : void;        function get loop():Boolean        function play() : void;        function pause() : void;        function stop() : void;        function get playing(): Boolean;    }}

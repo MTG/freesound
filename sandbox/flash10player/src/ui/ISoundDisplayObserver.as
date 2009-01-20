@@ -1,1 +1,1 @@
-package ui {    public interface ISoundDisplayObserver     {    	function onClick(soundDisplay:SoundDisplay, procent:Number):void;    }}
+package ui {    public interface ISoundDisplayObserver     {    	function onSoundDisplayClick(soundDisplay:SoundDisplay, procent:Number):void;    }}

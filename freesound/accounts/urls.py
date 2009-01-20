@@ -16,7 +16,8 @@ urlpatterns = patterns('accounts.views',
     url(r'^describe/$', 'describe', name="accounts-describe"),
     url(r'^attribution/$', 'attribution', name="accounts-attribution"),
 
-    url(r'^messages/$', messages.messages, name='messages'),
+    url(r'^messages/$', messages.inbox, name='messages'),
+    url(r'^messages/sent/$', messages.sent_messages, name='messages-sent'),
+    url(r'^messages/archived/$', messages.archived_messages, name='messages-archived'),
     url(r'^messages/(?P<message_id>\d+)/$', messages.message, name='message'),
-    url(r'^messages/sent/$', messages.sent, name='messages-sent'),
 )

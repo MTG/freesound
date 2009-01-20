@@ -1,0 +1,16 @@
+{% extends "messages/_section.html" %}
+
+{% load util %}
+{% load smileys %}
+
+{% block title %}messages - message{% endblock %}
+
+{% block section_content %}
+
+<h2>{{message.subject}}</h2>
+<p><strong>From:</strong> {{message.user_from.username}}</p>
+<p><strong>Date:</strong> {{message.created|date:"F jS, Y"}}</p>
+<p><strong>Body</strong></p>
+{{message.body.body|smileys|safe|linebreaks}}
+
+{% endblock %}

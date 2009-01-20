@@ -3,11 +3,11 @@
 {% load paginator %}
 {% load util %}
 
-{% block title %}messages - inbox{% endblock %}
+{% block title %}messages - {{page_title|lower}}{% endblock %}
 
 {% block section_content %}
 
-<h1>Messages - Inbox</h1>
+<h1>Messages - {{page_title}}</h1>
 
 <div class="forum_pagination">
 	{% show_paginator paginator page current_page request %} 

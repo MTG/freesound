@@ -1,0 +1,1 @@
+package ui {    public interface IButtonObserver     {    	function onButtonDown(button:IButton) : void;    	function onButtonUp(button:IButton) : void;    }}

@@ -5,24 +5,49 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<script type="text/javascript" src="swfobject.js"></script>
 		<script type="text/javascript">
-            var flashvars = {
+            var flashvars1 = {
                 baseUrl: "./",
-                waveformUrl: "waveform.png",
-                spectralUrl: "spectral.jpg",
-                soundUrl: "preview.mp3",
-                duration: 3457.95
+                waveformUrl: "waveform1.png",
+                spectralUrl: "spectral1.jpg",
+                soundUrl: "preview1.mp3",
+                duration: (1000*82991)/24000
             }
-            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent", "900", "149", "10.0.0", false, flashvars, {}, {});
+            var flashvars2 = {
+                baseUrl: "./",
+                waveformUrl: "waveform2.png",
+                spectralUrl: "spectral2.jpg",
+                soundUrl: "preview2.mp3",
+                duration: (1000*3000431)/44100
+            }
+            var flashvars3 = {
+                baseUrl: "./",
+                waveformUrl: "waveform3.png",
+                spectralUrl: "spectral3.jpg",
+                soundUrl: "preview3.mp3",
+                duration: (1000*1071)/44100
+            }
+            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent1", "900", "149", "10.0.0", false, flashvars1, {}, {});
+            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent2", "900", "149", "10.0.0", false, flashvars2, {}, {});
+            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent3", "900", "149", "10.0.0", false, flashvars3, {}, {});
 		</script>
 	</head>
-	<body>
-	    <h1>hello there :)</h1>
-	    <p>some html here</p>
-		<div id="myAlternativeContent">
+	<body bgcolor=#EEEEEE>
+	    <h1>Flash 10 Freesound 2 player</h1>
+	    <p>You need flash 10 to see these players...</p>
+		<div id="myAlternativeContent1">
 			<a href="http://www.adobe.com/go/getflashplayer">
 				<img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash player" />
 			</a>
 		</div>
-	    <p>some more html here</p>
+		<div id="myAlternativeContent2">
+			<a href="http://www.adobe.com/go/getflashplayer">
+				<img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash player" />
+			</a>
+		</div>
+		<div id="myAlternativeContent3">
+			<a href="http://www.adobe.com/go/getflashplayer">
+				<img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash player" />
+			</a>
+		</div>
 	</body>
 </html>

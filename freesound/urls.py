@@ -37,7 +37,9 @@ urlpatterns = patterns('',
     
     url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
     
-    #(r'^help/', include('viki.urls')),
+    url(r'^help/$', "django.views.generic.simple.redirect_to", kwargs={'url': "/help/main/"}, name="wiki"),
+    url(r'^help/(?P<name>\w+)/$', 'wiki.views.page', name="wiki-page"),
+    url(r'^help/(?P<name>\w+)/edit/$', 'wiki.views.editpage', name="wiki-page-edit"),
 
     (r'^forum/', include('forum.urls')),
 

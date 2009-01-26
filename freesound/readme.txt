@@ -7,6 +7,7 @@
     install PIL (Python Imaging Library)
     install NumPy
     install python module "audiolab" (dependency: libsndfile)
+    markdown from git repos + install mdx_wikilink.py into python path
     
 * easy_install the following packages:
     BeautifulSoup

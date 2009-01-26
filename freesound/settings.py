@@ -50,6 +50,7 @@ INSTALLED_APPS = (
     'support',
     'tags',
     'forum',
+    'wiki'
 )
 
 TEMPLATE_DIRS = (

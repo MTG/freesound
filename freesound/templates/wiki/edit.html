@@ -1,0 +1,24 @@
+{% extends "wiki/_section.html" %}
+
+{% load markup %}
+
+{% block title %}help - {{name}}{% endblock %}
+
+{% block section_content %}
+
+<h1>Editing {{name}}</h1>
+{% if content %}
+<ul>
+	<li><strong>previous edit date</strong>: {{content.created}}</li>
+	<li><strong>previous author</strong>: {{content.author.username}}</li>
+</ul>
+{% endif %}
+
+<form method="post" action=".">
+<table>
+{{form}}
+</table>
+<input type="submit" value="save" />
+</form>
+
+{% endblock %}

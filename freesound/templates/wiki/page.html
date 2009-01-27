@@ -2,11 +2,11 @@
 
 {% load markup %}
 
-{% block title %}{{content.title}}{% endblock %}
+{% block title %}help - {{content.title}}{% endblock %}
 
 {% block section_content %}
 
-<h1>{{content.title}}{% if perms.wiki.edit_page %} - <a href="{% url wiki-page-edit content.page.name %}">edit</a>{% endif %}</h1>
+{% if perms.wiki.edit_page %}<div class="wiki-edit"><a href="{% url wiki-page-edit name %}">edit</a><div>{% endif %}
 
 {{content.body|markdown:"wikilinks,footnotes"}}
 

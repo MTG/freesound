@@ -35,7 +35,7 @@ class SoundManager(models.Manager):
                 from
                     sounds_sound
                 where
-                    created > now() - interval '5 months'
+                    created > now() - interval '1 year'
                 group by
                     user_id
                 ) as X order by created desc limit %d;""" % num_sounds)

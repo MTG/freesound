@@ -116,6 +116,9 @@ FORUM_THREADS_PER_PAGE = 40
 FILES_UPLOAD_DIRECTORY = "/freesound/uploads/"
 FILES_UPLOAD_OK_DIRECTORY = "/freesound/uploads_ok/"
 
+# urls for which the "lasta ction time" needs updating
+LAST_ACTION_TIME_URLS = ('/forum/', )
+
 
 # leave at bottom starting here!
 from local_settings import *

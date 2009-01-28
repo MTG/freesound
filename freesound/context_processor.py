@@ -33,5 +33,9 @@ def get_last_action_time(user):
     return last_action_time
             
 def context_extra(request):
+    return_dict = {'media_url': settings.MEDIA_URL, 'request': request}
     
-    return {'media_url': settings.MEDIA_URL, 'request': request, 'last_action_time': get_last_action_time(request.user)}
+    if any(map(lambda s: request.get_full_path().startswith(s), settings.LAST_ACTION_TIME_URLS)):
+        return_dict['last_action_time'] = get_last_action_time(request.user)
+    
+    return return_dict

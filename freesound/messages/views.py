@@ -27,24 +27,32 @@ def get_messages(request, qs, **kwargs):
 
     return render_to_response('messages/message_list.html', combine_dicts(locals(), kwargs), context_instance=RequestContext(request))
 
+# base query object
+base_qs = Message.objects.select_related('body', 'user_from', 'user_to')
+
 @login_required
 def inbox(request):
-    qs = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False)
+    qs = base_qs.filter(user_to=request.user, is_archived=False, is_sent=False)
     return get_messages(request, qs, page_title="Inbox")
 
 @login_required
 def sent_messages(request):
-    qs = Message.objects.filter(user_from=request.user, is_archived=False, is_sent=True)
+    qs = base_qs.filter(user_from=request.user, is_archived=False, is_sent=True)
     return get_messages(request, qs, page_title="Sent messages")
 
 @login_required
 def archived_messages(request):
-    qs = Message.objects.filter(user_to=request.user, is_archived=True, is_sent=False)
+    qs = base_qs.filter(user_to=request.user, is_archived=True, is_sent=False)
     return get_messages(request, qs, page_title="Archived messages")
 
 @login_required
 def message(request, message_id):
-    message = get_object_or_404(Message, id=message_id)
+    try:
+        message = base_qs.get(id=message_id)
+    except Message.DoesNotExist:
+        raise Http404
+    
     if message.user_from != request.user and message.user_to != request.user:
         raise Http404
+    
     return render_to_response('messages/message.html', locals(), context_instance=RequestContext(request))

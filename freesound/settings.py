@@ -119,6 +119,7 @@ FILES_UPLOAD_OK_DIRECTORY = "/freesound/uploads_ok/"
 # urls for which the "lasta ction time" needs updating
 LAST_ACTION_TIME_URLS = ('/forum/', )
 
+MARKDOWN_FILTER_SETTINGS = {'wikilink': [('base_url', '/help/'), ('end_url', '/'), ('html_class', 'wikilink')]}
 
 # leave at bottom starting here!
 from local_settings import *

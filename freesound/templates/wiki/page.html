@@ -4,10 +4,15 @@
 
 {% block title %}help - {{content.title}}{% endblock %}
 
+{% block head %}
+{{ block.super }}
+		<link rel="stylesheet" type="text/css" href="{{media_url}}code.css" />
+{% endblock %}
+
 {% block section_content %}
 
 {% if perms.wiki.edit_page %}<div class="wiki-edit"><a href="{% url wiki-page-edit name %}">edit</a><div>{% endif %}
 
-{{content.body|markdown:"wikilinks,footnotes"}}
+{{content.body|markdown:"wikilink,codehilite"}}
 
 {% endblock %}

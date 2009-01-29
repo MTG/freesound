@@ -16,3 +16,4 @@
     psycopg2
     python-memcached
     pycrypto
+    pygments

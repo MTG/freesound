@@ -1,0 +1,23 @@
+Index: markup.py
+===================================================================
+--- markup.py	(revision 9791)
++++ markup.py	(working copy)
+@@ -66,12 +66,16 @@
+             else:
+                 safe_mode = False
+ 
++            # if there are extension configs in the settings, get them
++            extension_configs = getattr(settings, "MARKDOWN_FILTER_SETTINGS", {}) 
++            md = markdown.Markdown(extensions=extensions, extension_configs=extension_configs, safe_mode=safe_mode)
++            
+             # Unicode support only in markdown v1.7 or above. Version_info
+             # exist only in markdown v1.6.2rc-2 or above.
+             if getattr(markdown, "version_info", None) < (1,7):
+-                return mark_safe(force_unicode(markdown.markdown(smart_str(value), extensions, safe_mode=safe_mode)))
++                return mark_safe(force_unicode(md.convert(force_unicode(value))))
+             else:
+-                return mark_safe(markdown.markdown(force_unicode(value), extensions, safe_mode=safe_mode))
++                return mark_safe(md.convert(force_unicode(value)))
+         else:
+             return mark_safe(force_unicode(markdown.markdown(smart_str(value))))
+ markdown.is_safe = True

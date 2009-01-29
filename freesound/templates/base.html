@@ -25,16 +25,15 @@
 		<div id="header">
 			<div id="account_nav">
 				{% if request.user.is_authenticated %}
-				<div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />{{request.user.username}}</div>
-				<a href="#">Messages</a><div id="messages_count"><div>2</div></div>
-				<a href="#">Settings</a>
-				<a href="{% url accounts-logout %}">Log Out</a>
-				<a href="#" id="upload_button"></a>
+					<div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />{{request.user.username}}</div>
+					<a href="{% url messages %}">Messages</a><div id="messages_count"><div>2</div></div>
+					<a href="#">Settings</a>
+					<a href="{% url accounts-logout %}">Log Out</a>
 				{% else %}
-				<a href="#">Register</a>
-				<a href="{% url accounts-login%}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
-				<a href="#" id="upload_button"></a>
+					<a href="#">Register</a>
+					<a href="{% url accounts-login%}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
 				{% endif %}
+				<a href="{% url accounts-upload %}" id="upload_button"></a>
 			</div>
 			
 			<a href="/" id="logo"></a>

@@ -1,27 +1,42 @@
 {% extends "messages/_section.html" %}
 
 {% load paginator %}
-{% load util %}
-
-{% block title %}messages - {{page_title|lower}}{% endblock %}
 
 {% block section_content %}
-
-<h1>Messages - {{page_title}}</h1>
 
 <div class="forum_pagination">
 	{% show_paginator paginator page current_page request %} 
 </div>
 
-<table>
+<form method="POST" action="{% url messages-change-state %}">
+
+<table border="1" width="100%">
+	<tr>
+		<th>&nbsp;<//td>
+		<td>Subject</td>
+		<td>From</td>
+		<td>To</td>
+		<td>Date</td>
+	</tr>
 {% for message in page.object_list %}
 	<tr>
+		<td><input name="cb_{{message.id}}" type="checkbox"><//td>
 		<td><a href="{% url message message.id %}" {% if not message.is_read %}class="unread"{% endif %}>{{message.subject}}</a></td>
 		<td><a href="{% url account message.user_from.username %}">{{message.user_from.username}}</a></td>
+		<td><a href="{% url account message.user_to.username %}">{{message.user_to.username}}</a></td>
 		<td>{{message.created|date:"F jS, Y"}}</td>
 	</tr>
 {% endfor %}
 </table>
+
+<select name="choice" id="id_choice">
+{% block options %}
+{% endblock %}
+</select>
+<input type="hidden" name="next" value="{{request.path}}" />
+<input type="submit" name="submit" value="go!" />
+
+</form>
 
 <div class="forum_pagination">
 	{% show_paginator paginator page current_page request %} 

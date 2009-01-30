@@ -3,14 +3,16 @@
 {% load util %}
 {% load smileys %}
 
-{% block title %}messages - message{% endblock %}
+{% block title %}messages - {{message.subject}} - {{message.user_from.username}}{% endblock %}
 
 {% block section_content %}
 
-<h2>{{message.subject}}</h2>
-<p><strong>From:</strong> {{message.user_from.username}}</p>
-<p><strong>Date:</strong> {{message.created|date:"F jS, Y"}}</p>
-<p><strong>Body</strong></p>
+<h2 class="message-subject">{{message.subject}}</h2>
+<p class="message-from"><strong>From:</strong> <a href="{% url account message.user_from.username %}">{{message.user_from.username}}</a></p>
+<p class="message-to"><strong>To:</strong> <a href="{% url account message.user_to.username %}">{{message.user_to.username}}</a></p>
+<p class="message-date"><strong>Date:</strong> {{message.created|date:"F jS, Y"}}</p>
+<div class="message-body">
 {{message.body.body|smileys|safe|linebreaks}}
+</div>
 
 {% endblock %}

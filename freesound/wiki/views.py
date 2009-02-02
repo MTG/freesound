@@ -1,6 +1,7 @@
 # Create your views here.
 from django.core.urlresolvers import reverse
 from django.forms import ModelForm
+from django import forms
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -20,6 +21,8 @@ def editpage(request, name):
 
     # the class for editing...
     class ContentForm(ModelForm):
+        title = forms.CharField(widget=forms.TextInput(attrs={'size': '100'}))
+        body = forms.CharField(widget=forms.Textarea(attrs={'rows':'40', 'cols':'100'}))
         class Meta:
             model = Content
             exclude = ('author', 'page', "created")

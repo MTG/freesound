@@ -14,7 +14,7 @@
 
 {% block content %}
 <form id="upload-form" enctype="multipart/form-data" method="post" action="{% url accounts-upload-unique unique_id %}" onsubmit="submitUploadForm();">
-	{{ upload_form }}
+	{{ upload_form.as_p }}
 	<input type="submit" value="submit" name="submit"/>
 </form>
 {% endblock %}

@@ -2,9 +2,9 @@
 
 {% block title %}forum - reply{% endblock %}
 
-{% block section_content %}
+{% block breadcrumb %} &#187; <a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a>{% endblock %}
 
-<h1>Reply</h1>
+{% block section_content %}
 
 <form method="post" action=".">
 <table>

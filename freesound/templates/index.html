@@ -6,6 +6,8 @@
 {% load util %}
 {% load display_sound %}
 
+{% block page_css_id %}home{% endblock %}
+
 {% block content %}
 <div id="content">
 	<!-- featured sound -->
@@ -23,10 +25,10 @@
 		{% get_rss rss_url as rss %}
 		{% for entry in rss.entries|slice:":5" %}
 			<div class="blog_post">
-			<h2><a href="{{entry.link}}">{{entry.title}}</a></h2>
-			<span class="post_date"> {{entry.date_parsed|tuple_to_time|date:"F jS, Y"}}</span> <span class="post_author">{{entry.author}}</span>
+			<h2><a href="{{entry.link}}">{{entry.title|truncatewords:10}}</a></h2>
+			<span class="post_date">{{entry.date_parsed|tuple_to_time|date:"F jS, Y"}}</span> <span class="post_author">{{entry.author}}</span>
 			<p>
-				{{entry.summary|safe}}
+				{{entry.summary|safe|striptags|truncatewords:100}}
 			</p>
 			<div class="read_more_link"><a href="{{entry.link}}">Read Full Entry</a></div>
 			</div>

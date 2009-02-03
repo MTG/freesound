@@ -44,7 +44,7 @@ a.external_link:hover {
 
 /* General Mark-up Styling
 ------------------------------------------------------*/
-.general_styles h1 {
+h1 {
 	font-family: Arial, sans-serif;
 	font-size: 32px;
 	font-weight: bold;
@@ -52,7 +52,7 @@ a.external_link:hover {
 	margin-bottom: 18px;
 	width: 100%;
 }
-.general_styles h2 {
+h2 {
 	font-family: Arial, sans-serif;
 	font-size: 22px;
 	font-weight: bold;
@@ -60,69 +60,68 @@ a.external_link:hover {
 	color: #333;
 	margin-bottom: 16px;
 }
-.general_styles h3 {
+h3 {
 	font-size: 14px;
 	font-weight: bold;
 	line-height: 1em;
 	color: #AB4646;
 	margin-bottom: 16px;
 }
-.general_styles p {
+p {
 	font-size: 12px;
 	line-height: 18px;
 	margin-bottom: 18px;
 }
-.general_styles ul {
+ul {
 	list-style-type: disc;
 	padding-left: 18px;
 	padding-bottom: 18px;
 	font-size: 13px;
 	line-height: 18px;
 }
-.general_styles ol {
+ol {
 	list-style-type: decimal;
 	padding-left: 24px;
 	padding-bottom: 18px;
 	font-size: 13px;
 	line-height: 18px;
 }
-.general_styles em {
+em {
 	font-style: italic;
 }
-.general_styles strong {
+strong {
 	font-weight: bold;
 }
-.general_styles blockquote {
+blockquote {
 	margin-left: 1px;
-	margin-right: 18px;
 	padding: 16px 18px;
 	font-style: italic;
 	border-left: 2px solid #eee;
 	background: #fafafa;
 }
-.general_styles blockquote p {
+blockquote p {
 	font-size: 15px;
 	line-height: 20px;
 	color: #333;
 }
-.general_styles blockquote blockquote {
+blockquote blockquote {
 	padding: 0;
 	border: 0;
 }
-.general_styles hr {
+hr {
 	border-top: 1px solid #eee;
 	border-bottom: 1px solid #eee;
 	border-left: none;
 	margin: 16px 0;
 	height: 5px;
 }
-.general_styles table {
+table {
 	font-size: 12px;
 	margin-bottom: 18px;
 	padding: 4px;
 	border: 6px solid #f6f6f6;
 }
-.general_styles th {
+th {
 	font-family: Arial, sans-serif;
 	font-size: 15px;
 	color: #666;
@@ -133,7 +132,7 @@ a.external_link:hover {
 	padding: 6px 6px 6px 12px;
 	background: #f8f8f8;
 }
-.general_styles td {
+td {
 	font: Verdana, sans-serif;
 	border-right: 1px solid #dadada;
 	border-bottom: 1px solid #dadada;
@@ -141,23 +140,22 @@ a.external_link:hover {
 	padding: 6px 6px 6px 12px;
 	color: #333;
 }
-.general_styles form {
+form {
 	margin-left: 1px;
-	margin-right: 18px;
 	padding: 16px 18px;
 	border-left: 2px solid #eee;
 	background: #fafafa;
 }
-.general_styles form label {
+form label {
 	display: block;
 }
-.general_styles form input, .general_styles form textarea {
+form input, form textarea {
 	padding: 3px;
 }
-.general_styles form #id_subscribe {
+form #id_subscribe {
 	margin-top: 6px;
 }
-.general_styles ul.errorlist {
+ul.errorlist {
 	list-style-type: none;
 	padding: 0 0 4px 0;
 	color: #666;
@@ -259,6 +257,11 @@ a.external_link:hover {
 	position: absolute;
 	left: 18px;
 	bottom: 0;
+	padding: 0;
+}
+#site_nav ul {
+	padding: 0;
+	margin: 0;
 }
 #site_nav li {
 	display: inline;
@@ -331,6 +334,10 @@ a.external_link:hover {
 	width: 281px;
 	height: 42px;
 	background: url(images/search.png);
+}
+#search form {
+	padding: 0;
+	margin: 0;
 }
 #search input {
 	position: absolute;
@@ -458,6 +465,7 @@ body#home h3 {
 .sample_player_small .description {
 	margin-right: 10px;
 	margin-top: 2px;
+	margin-bottom: 0;
 	font-size: 12px;
 	line-height: 16px;
 	color: #333;
@@ -550,11 +558,18 @@ body#home h3 {
 	color: #929292;
 }
 #sound_description {
-	font-size: 13px;
 	color: #333;
 	margin: 15px 0 20px 0;
 }
-
+#sound_description p {
+	font-size: 13px;
+	line-height: 16px;
+}
+ul#tags {
+	padding: 0;
+	margin: 0;
+	line-height: 16px;
+}
 #tags li {
 	display: block;
 	float: left;
@@ -574,6 +589,11 @@ body#home h3 {
 #comments_heading {
 	clear: both;
 	padding: 30px 0 5px 0;
+}
+ul#comments {
+	padding: 0;
+	line-height: 16px;
+	list-style-type: none;
 }
 #comments li {
 	position: relative;
@@ -598,6 +618,12 @@ body#home h3 {
 #comments li .comment_date {
 	color: #AFAFAF;
 	font-size: 11px;
+}
+#comments li p {
+	padding: 0;
+	margin: 0;
+	font-size: 13px;
+	line-height: 16px;
 }
 
 #download {
@@ -643,6 +669,11 @@ body#home h3 {
 	font-weight: bold;
 	line-height: 1.6em;
 }
+ul#sound_links {
+	padding: 20px 30px;
+	line-height: 16px;
+	list-style-type: none;
+}
 #sound_links li img {
 	position: relative;
 	top: 2px;
@@ -683,12 +714,17 @@ body#home h3 {
 #breadcrumb a {
 	color: #000;
 }
+ul#forums, ul#topics {
+	padding: 0;
+	line-height: 16px;
+}
 #forums li, #topics li {
 	padding: 10px 10px 10px 40px;
 	border-bottom: solid 1px #E4E4E4;
 	font-size: 11px;
 	color: #777;
 	position: relative;
+	list-style-type: none;
 }
 #forums li img, #topics li img {
 	position: absolute;
@@ -729,6 +765,10 @@ body#home h3 {
 .forum_pagination a {
 	text-decoration: underline;
 	font-weight: bold;
+}
+ul.pagination {
+	line-height: 16px;
+	list-style-type: none;
 }
 .pagination li {
 	float: left;
@@ -799,9 +839,10 @@ body#home h3 {
 	color: #222;
 }
 #posts .post blockquote {
+	color: #666;
 	background-color: #F6F6F6;
 	padding: 15px;
-	border-left: solid 2px #DEDEDE;
+	border-left: solid 2px #eee;
 }
 #posts .post blockquote em {
 	font-style: italic;
@@ -885,10 +926,12 @@ body#home h3 {
 }
 #post_it h2 {
 	margin: 0 0 10px 0;
+	color: #000;
 }
 #post_it p {
 	font-size: 13px;
 	margin: 0 20px 0 0;
+	line-height: 16px;
 }
 #support img {
 	float: left;
@@ -902,7 +945,8 @@ body#home #support h3 {
 }
 #support p {
 	font-size: 12px;
-	margin: 0 0 8px 0;
+	margin-bottom: 8px;
+	line-height: 14px;
 }
 #donation_box {
 	background: url(images/donation_box_bg.png) no-repeat top left;
@@ -961,6 +1005,10 @@ a.donation_button:hover {
 #latest_forum_posts {
 	width: 324px;
 	padding: 0 12px;
+}
+#latest_forum_posts ul {
+	padding: 0;
+	line-height: 13px;
 }
 #latest_forum_posts h3 {
 	margin-left: 2px;

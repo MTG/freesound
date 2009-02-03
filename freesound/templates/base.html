@@ -11,16 +11,14 @@
 			<link rel="stylesheet" type="text/css" href="{{media_url}}ie6.css" />
 		<![endif]-->
 		<title>Freesound.org - {% block title %}{% endblock %}</title>
-		<!-- 
 		<script src="http://www.google.com/jsapi" type="text/javascript"></script>
 		<script type="text/javascript">
 			google.load("prototype", "1.6.0.2");
 		</script>
-		 -->
-		 {% endblock %}
+		{% endblock %}
 	</head>
 	
-	<body>
+	<body id="{% block page_css_id %}{% endblock %}">
 		
 		<div id="header">
 			<div id="account_nav">
@@ -28,10 +26,10 @@
 					<div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />{{request.user.username}}</div>
 					<a href="{% url messages %}">Messages</a><div id="messages_count"><div>2</div></div>
 					<a href="#">Settings</a>
-					<a href="{% url accounts-logout %}">Log Out</a>
+					<a href="{% url accounts-logout %}?next=/">Log Out</a>
 				{% else %}
 					<a href="#">Register</a>
-					<a href="{% url accounts-login%}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
+					<a href="{% url accounts-login %}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
 				{% endif %}
 				<a href="{% url accounts-upload %}" id="upload_button"></a>
 			</div>

@@ -67,7 +67,8 @@ def post(request, forum_name_slug, thread_id, post_id):
 
 @login_required
 def reply(request, forum_name_slug, thread_id, post_id=None):
-    thread = get_object_or_404(Thread, id=thread_id, forum__name_slug=forum_name_slug)
+    forum = get_object_or_404(Forum, name_slug=forum_name_slug)
+    thread = get_object_or_404(Thread, id=thread_id, forum=forum)
     
     if post_id:
         post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)

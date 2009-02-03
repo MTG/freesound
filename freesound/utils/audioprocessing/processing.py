@@ -471,8 +471,11 @@ def convert_to_wav(input_filename, output_filename):
     
     command = ["mplayer", "-vc", "null", "-vo", "null", "-af", "channels=2,resample=44100:0:0", "-ao", "pcm:fast:file=\"%s\"" % output_filename, input_filename]
     
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    (stdout, stderr) = process.communicate()
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        (stdout, stderr) = process.communicate()
+    except OSError:
+        raise AudioProcessingException, "mplayer not found."
     
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, stdout
@@ -489,10 +492,13 @@ def audio_info(input_filename):
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
     
-    command = ["extract_audio_data.php", input_filename]
-    
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    (stdout, stderr) = process.communicate()
+    try:
+        command = ["extract_audio_data.php", input_filename]
+        
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        (stdout, stderr) = process.communicate()
+    except OSError:
+        raise AudioProcessingException, "extract_audio_data.php not found"
     
     if process.returncode != 0:
         raise AudioProcessingException, stdout
@@ -513,10 +519,13 @@ def convert_to_mp3(input_filename, output_filename):
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
 
-    command = ["lame", "--silent", "--abr", "70", input_filename, output_filename]
-
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    (stdout, stderr) = process.communicate()
+    try:
+        command = ["lame", "--silent", "--abr", "70", input_filename, output_filename]
+    
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        (stdout, stderr) = process.communicate()
+    except OSError:
+        raise AudioProcessingException, "lame not found"
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, stdout

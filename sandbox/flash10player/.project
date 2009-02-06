@@ -16,29 +16,29 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>playerglobal.swc</name>
-			<type>1</type>
-			<locationURI>flex_sdk_3_2_0_3457/frameworks/libs/player/10/playerglobal.swc</locationURI>
-		</link>
-		<link>
-			<name>rpc.swc</name>
-			<type>1</type>
-			<locationURI>flex_sdk_3_2_0_3457/frameworks/libs/rpc.swc</locationURI>
-		</link>
-		<link>
-			<name>utilities.swc</name>
-			<type>1</type>
-			<locationURI>flex_sdk_3_2_0_3457/frameworks/libs/utilities.swc</locationURI>
-		</link>
-		<link>
 			<name>flex.swc</name>
 			<type>1</type>
-			<locationURI>flex_sdk_3_2_0_3457/frameworks/libs/flex.swc</locationURI>
+			<locationURI>FLEX_SDK/frameworks/libs/flex.swc</locationURI>
 		</link>
 		<link>
 			<name>framework.swc</name>
 			<type>1</type>
-			<locationURI>flex_sdk_3_2_0_3457/frameworks/libs/framework.swc</locationURI>
+			<locationURI>FLEX_SDK/frameworks/libs/framework.swc</locationURI>
+		</link>
+		<link>
+			<name>playerglobal.swc</name>
+			<type>1</type>
+			<locationURI>FLEX_SDK/frameworks/libs/player/10/playerglobal.swc</locationURI>
+		</link>
+		<link>
+			<name>rpc.swc</name>
+			<type>1</type>
+			<locationURI>FLEX_SDK/frameworks/libs/rpc.swc</locationURI>
+		</link>
+		<link>
+			<name>utilities.swc</name>
+			<type>1</type>
+			<locationURI>FLEX_SDK/frameworks/libs/utilities.swc</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

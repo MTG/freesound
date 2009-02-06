@@ -5,55 +5,48 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<script type="text/javascript" src="swfobject.js"></script>
 		<script type="text/javascript">
-            var flashvars1 = {
-                baseUrl: "./",
-                waveformUrl: "waveform1.png",
-                spectralUrl: "spectral1.jpg",
-                soundUrl: "preview1.mp3",
-                duration: (1000*82991)/24000
+            var filenames = ["1148__walkerbelm__shirty",
+                "1162__walkerbelm__so_fmperc",
+                "11__Bram__sweep_log",
+                "18901__jr206__BlackBirdsong_filter",
+                "34876__Sruddi1__SQUEAKY_TOY",
+                "36643__altemark__2feed1",
+                "38660__ERH__bell_sequence_5b",
+                "39914__digifishmusic__Katy_Sings_LaaOooAaa",
+                "44365__debudding__Emaj_Stab_Acoustic_AB_split_stereo_pair_Oktava_",
+                "44373__bantha_brain___Klaus_",
+                "44552__sjcongo__sjcongolpc",
+                "52441__john9__Barking_and_Boy_1_m.",
+                "61520__teatako__garbleradio"];
+                
+            var lengths = [302398, 151232, 88200, 2998802, 227328, 1071, 706332, 1212893, 22050, 16114, 182687, 3284016, 1094181];
+                
+            function load()
+            {
+                for (var i=0; i<filenames.length; i++)
+                {
+                    var file = filenames[i];
+                    
+        			var flashvars = {
+        				baseUrl: "./",
+        				waveformUrl: file + ".wav_w.png",
+        				spectralUrl: file + ".wav_s.jpg",
+        				soundUrl:  file + ".mp3",
+        				duration: (lengths[i]*1000.0)/44100.0
+        			}
+        			
+        			var divID = "content" + i;
+        			
+        			document.getElementById("players").innerHTML += "<p id=\"" + divID + "\"></div>"
+        
+        			swfobject.embedSWF("Flash10Player.swf", divID, "900", "201", "10.0.0", false, flashvars, {}, {});
+                }
             }
-            var flashvars2 = {
-                baseUrl: "./",
-                waveformUrl: "waveform2.png",
-                spectralUrl: "spectral2.jpg",
-                soundUrl: "preview2.mp3",
-                duration: (1000*3000431)/44100
-            }
-            var flashvars3 = {
-                baseUrl: "./",
-                waveformUrl: "waveform3.png",
-                spectralUrl: "spectral3.jpg",
-                soundUrl: "preview3.mp3",
-                duration: (1000*1071)/44100
-            }
-            var flashvars4 = {
-                baseUrl: "./",
-                waveformUrl: "waveform4.png",
-                spectralUrl: "spectral4.jpg",
-                soundUrl: "preview4.mp3",
-                duration: (1000*1212893)/44100
-            }
-            var flashvars5 = {
-                baseUrl: "./",
-                waveformUrl: "waveform5.png",
-                spectralUrl: "spectral5.jpg",
-                soundUrl: "preview5.mp3",
-                duration: (1000*1212893)/44100
-            }
-            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent1", "900", "149", "10.0.0", false, flashvars1, {}, {});
-            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent2", "900", "149", "10.0.0", false, flashvars2, {}, {});
-            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent3", "900", "149", "10.0.0", false, flashvars3, {}, {});
-            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent4", "900", "149", "10.0.0", false, flashvars4, {}, {});
-            swfobject.embedSWF("Flash10Player.swf", "myAlternativeContent5", "900", "149", "10.0.0", false, flashvars5, {}, {});
 		</script>
 	</head>
-	<body bgcolor=#EEEEEE>
-	    <h1>Flash 10 Freesound 2 player</h1>
-	    <p>You need flash 10 to see these players...</p>
-		<div id="myAlternativeContent1"></div>
-		<div id="myAlternativeContent2"></div>
-		<div id="myAlternativeContent3"></div>
-		<div id="myAlternativeContent4"></div>
-		<div id="myAlternativeContent5"></div>
+	<body bgcolor=#EEEEEE onload="load();">
+		<h1>Flash 10 Freesound 2 player</h1>
+		<p>You need flash 10 to see these players...</p>
+		<div id="players"></div>
 	</body>
 </html>

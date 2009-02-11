@@ -80,4 +80,8 @@ def message(request, message_id):
     if message.user_from != request.user and message.user_to != request.user:
         raise Http404
     
+    if not message.is_read:
+        message.is_read = True
+        message.save()
+        
     return render_to_response('messages/message.html', locals(), context_instance=RequestContext(request))

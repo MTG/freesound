@@ -7,12 +7,17 @@
 
 {% block section_content %}
 
-<h2 class="message-subject">{{message.subject}}</h2>
-<p class="message-from"><strong>From:</strong> <a href="{% url account message.user_from.username %}">{{message.user_from.username}}</a></p>
-<p class="message-to"><strong>To:</strong> <a href="{% url account message.user_to.username %}">{{message.user_to.username}}</a></p>
-<p class="message-date"><strong>Date:</strong> {{message.created|date:"F jS, Y"}}</p>
-<div class="message-body">
-{{message.body.body|smileys|safe|linebreaks}}
+<div class="message_container">
+	<dl class="message_header">
+		<dt>From: </dt> <dd><a href="{% url account message.user_from.username %}">{{message.user_from.username}}</a></dd>
+		<dt>To: </dt> <dd><a href="{% url account message.user_to.username %}">{{message.user_to.username}}</a></dd>
+		<dt>Date: </dt> <dd>{{message.created|date:"F jS, Y"}}</dd>
+		<dt>Subject:</dt> <dd>{{message.subject}}</dd>
+	</dl>
+	
+	<div class="message-body">
+		{{message.body.body|smileys|safe|linebreaks}}
+	</div>
 </div>
 
 {% endblock %}

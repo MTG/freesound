@@ -116,6 +116,8 @@ FORUM_THREADS_PER_PAGE = 40
 FILES_UPLOAD_DIRECTORY = "/freesound/uploads/"
 FILES_UPLOAD_OK_DIRECTORY = "/freesound/uploads_ok/"
 
+SOUND_COMMENTS_PER_PAGE = 5
+
 # urls for which the "lasta ction time" needs updating
 LAST_ACTION_TIME_URLS = ('/forum/', )
 
@@ -128,7 +130,7 @@ print "TODO: create logging sinks in settings.py"
 
 TEMPLATE_DEBUG = DEBUG
 
-if DEBUG:
+if not DEBUG:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)
     

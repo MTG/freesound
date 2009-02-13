@@ -1,9 +1,12 @@
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
+from django.core.paginator import Paginator, InvalidPage
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from sounds.models import Sound
 from forum.models import Post
-from django.core.cache import cache
+from sounds.models import Sound
+from comments.models import Comment
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
@@ -24,7 +27,24 @@ def sounds(request):
     pass
 
 def sound(request, username, sound_id):
-    pass
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+
+    content_type = ContentType.objects.get_for_model(Sound)
+
+    paginator = Paginator(Comment.objects.filter(content_type=content_type, object_id=sound_id), settings.SOUND_COMMENTS_PER_PAGE)
+
+    try:
+        current_page = int(request.GET.get("page", 1))
+    except ValueError:
+        current_page = 1
+
+    try:
+        page = paginator.page(current_page)
+    except InvalidPage:
+        page = paginator.page(1)
+        current_page = 1
+
+    return render_to_response('sounds/sound.html', locals(), context_instance=RequestContext(request))
 
 def pack(request, pack_id):
     pass

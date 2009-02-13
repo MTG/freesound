@@ -23,7 +23,7 @@ urlpatterns = patterns('',
 
     url(r'^browse/$', 'sounds.views.sounds', name="sounds"),
 
-    url(r'^browse/tags/(?P<multiple_tags>[\w//-]*)$', 'tags.views.tags', name="tags"),
+    url(r'^browse/tags/(?P<multiple_tags>[\w//-]*)/$', 'tags.views.tags', name="tags"),
     
     url(r'^browse/packs/$', 'sounds.views.packs', name="packs"),
     

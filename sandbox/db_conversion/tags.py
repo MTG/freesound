@@ -57,7 +57,7 @@ def tag_lookup(tag):
         tag_id += 1
         return lookup_dict[tag]
 
-content_type_id = 18
+content_type_id = 19
 
 unique_test = {}
 

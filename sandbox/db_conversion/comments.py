@@ -2,6 +2,7 @@ import MySQLdb as my
 import codecs, sys
 from django.template.defaultfilters import slugify
 from text_utils import prepare_for_insert, smart_character_decoding
+from HTMLParser import HTMLParseError
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -12,7 +13,7 @@ my_curs = my_conn.cursor()
 start = 0
 granularity = 1000
 
-content_type_id = 18
+content_type_id = 19
 
 while True:
     print start
@@ -34,7 +35,11 @@ while True:
     for row in rows:
         id, object_id, user_id, created, comment = row
         
-        comment = prepare_for_insert(smart_character_decoding(comment))
+        try:
+            comment = prepare_for_insert(smart_character_decoding(comment))
+        except HTMLParseError:
+            print comment
+            continue
 
         output_file.write(u"\t".join(map(unicode, [id, user_id, content_type_id, object_id, comment, None, created])) + "\n")
 

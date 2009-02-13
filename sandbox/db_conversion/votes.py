@@ -12,7 +12,7 @@ my_curs = my_conn.cursor()
 start = 0
 granularity = 100000
 
-content_type_id = 18
+content_type_id = 19
 
 ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[1])
 ppsql_cur = ppsql_conn.cursor()

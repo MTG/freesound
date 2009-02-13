@@ -6,7 +6,7 @@ output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
 output_filename2 = '/tmp/importfile2.dat'
-output_file2 = codecs.open(output_filename, 'wt', 'utf-8')
+output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
 
 my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
 my_curs = my_conn.cursor()
@@ -44,5 +44,6 @@ print """
 copy geotags_geotag (id, user_id, lon, lat, zoom, created) from '%s';
 select setval('geotags_geotag_id_seq',(select max(id)+1 from geotags_geotag));
 vacuum analyze geotags_geotag;
-Also run command: psql freesound < %s
+-- NOW RUN COMMAND: psql freesound < %s
+vacuum analyze sounds_sound;
 """ % (output_filename, output_filename2)

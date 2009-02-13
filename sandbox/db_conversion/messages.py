@@ -14,8 +14,6 @@ output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
 my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
 my_curs = my_conn.cursor()
 
-content_type_id = 18
-
 start = 0
 granularity = 10000
 

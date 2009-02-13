@@ -6,8 +6,10 @@ sequence:
 * sounds
 * tags
 * geotags
-* messaging
+* messages
 * remixes
-* forum posts
+* forums
+* threads
+* posts
 * comments
 * votes

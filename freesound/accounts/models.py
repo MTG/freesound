@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_unicode
 from general.models import SocialModel
+from geotags.models import GeoTag
 
 class Profile(SocialModel):
     user = models.OneToOneField(User)
@@ -10,6 +11,7 @@ class Profile(SocialModel):
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
+    geotag = models.ForeignKey(Geotag, null=True, blank=True, default=None)
 
     wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)

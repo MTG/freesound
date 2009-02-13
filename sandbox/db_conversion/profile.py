@@ -73,12 +73,14 @@ while True:
             
             if about:
                 about = prepare_for_insert(about)
+            
+            geotag = None
         
-            output_file.write(u"\t".join(map(unicode, [insert_id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter])) + u"\n")
+            output_file.write(u"\t".join(map(unicode, [insert_id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter, geotag])) + u"\n")
             insert_id += 1
 
 print """
-copy accounts_profile (id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter) from '%s';
+copy accounts_profile (id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter, geotag) from '%s' null as 'None';
 select setval('accounts_profile_id_seq',(select max(id)+1 from accounts_profile));
 vacuum analyze accounts_profile;
 """ % output_filename        

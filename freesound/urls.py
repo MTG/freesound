@@ -46,6 +46,7 @@ urlpatterns = patterns('',
     url(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$', 'general.views.admin_move_ordered_model', name="admin-move"),
     (r'^admin/doc/', include('django.contrib.admindocs.urls')),
     (r'^admin/(.*)', admin.site.root),
+    (r'helpdesk/', include('helpdesk.urls')),
 )
 
 if settings.DEBUG:

@@ -46,12 +46,12 @@ while True:
         
         post_text = prepare_for_insert(smart_character_decoding(post_text))
 
-        all_vars = [post_id, topic_id, poster_id, post_text, post_time]
+        all_vars = [post_id, topic_id, poster_id, post_text, post_time, post_time]
         
         output_file.write(u"\t".join(map(unicode, all_vars)) + u"\n")
  
 print """
-copy forum_post (id, thread_id, author_id, body, created) from '%s' null as 'None';
+copy forum_post (id, thread_id, author_id, body, created, modified) from '%s' null as 'None';
 select setval('forum_post_id_seq',(select max(id)+1 from forum_post));
 vacuum analyze forum_post;
 """ % output_filename

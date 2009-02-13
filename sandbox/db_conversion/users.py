@@ -42,7 +42,7 @@ copy auth_user (id, is_active, username, password, date_joined, last_login, emai
 select setval('auth_user_id_seq',(select max(id)+1 from auth_user));
 vacuum analyze auth_user;
 
-create table TEMP_TABLE as select select username from auth_user group by username having count(*) > 1;
+create table TEMP_TABLE as select username from auth_user group by username having count(*) > 1;
 delete from auth_user where username in (select username from TEMP_TABLE);
 drop table TEMP_TABLE;
 

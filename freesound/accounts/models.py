@@ -14,7 +14,7 @@ class Profile(SocialModel):
     wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
     
-    last_action_time = models.DateTimeField()
+    last_action_time = models.DateTimeField(null=True, blank=True, default=None)
     
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)

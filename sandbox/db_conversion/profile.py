@@ -3,6 +3,7 @@ import psycopg2
 import codecs, sys, re
 import time
 from text_utils import prepare_for_insert, smart_character_decoding
+from HTMLParser import HTMLParseError
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'w', 'utf-8', errors='strict')
@@ -72,7 +73,11 @@ while True:
                 signature = prepare_for_insert(signature)
             
             if about:
-                about = prepare_for_insert(about)
+                try:
+                    about = prepare_for_insert(about)
+                except HTMLParseError:
+                    print "filthy code in html"
+                    about = ""
         
             output_file.write(u"\t".join(map(unicode, [insert_id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter])) + u"\n")
             insert_id += 1

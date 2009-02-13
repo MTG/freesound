@@ -66,6 +66,7 @@ class Sound(SocialModel):
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None)
     date_recorded = models.DateField(null=True, blank=True, default=None)
+    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
     
     # file properties
     SOUND_TYPE_CHOICES = (

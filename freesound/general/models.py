@@ -8,7 +8,6 @@ from favorites.models import Favorite
 from images.models import Image
 from ratings.models import Rating
 from tags.models import TaggedItem
-from geotags.models import GeoTag
 
 class SocialModel(models.Model):
     tags = generic.GenericRelation(TaggedItem)
@@ -16,7 +15,6 @@ class SocialModel(models.Model):
     ratings = generic.GenericRelation(Rating)
     fans = generic.GenericRelation(Favorite)
     images = generic.GenericRelation(Image)
-    geotags = generic.GenericRelation(GeoTag)
 
     class Meta:
         abstract = True

@@ -174,7 +174,7 @@ class Report(models.Model):
 class Download(models.Model):
     user = models.ForeignKey(User)
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
-    pack = models.ForeignKey(Sound, null=True, blank=True, default=None)
+    pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     class Meta:

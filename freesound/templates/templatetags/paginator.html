@@ -1,17 +1,17 @@
 {% if page.has_other_pages %}
 {% spaceless %}
 <ul class="pagination">
-	{% if page.has_previous %}<li class="previous-page"><a href="{{ url }}{{ page.previous_page_number }}{{anchor}}" title="Previous Page">previous</a></li>{% endif %}
-	{% if show_first %}<li class="first-page"><a href="{{ url }}1{{anchor}}" title="First Page">first</a></li>{% endif %}
+	{% if page.has_previous %}<li class="previous-page"><a href="{{ url }}{{ page.previous_page_number }}{% if anchor %}#{{anchor}}{% endif %}" title="Previous Page">previous</a></li>{% endif %}
+	{% if show_first %}<li class="first-page"><a href="{{ url }}1{% if anchor %}#{{anchor}}{% endif %}" title="First Page">first</a></li>{% endif %}
 	{% for num in page_numbers %}
 	  {% ifequal num current_page %}
 	    <li class="current-page">{{ num }}</li> 
 	  {% else %}
-	    <li class="other-page"><a href="{{ url }}{{ num }}{{anchor}}" title="Page {{ num }}">{{ num }}</a></li>
+	    <li class="other-page"><a href="{{ url }}{{ num }}{% if anchor %}#{{anchor}}{% endif %}" title="Page {{ num }}">{{ num }}</a></li>
 	  {% endifequal %}
 	{% endfor %}
-	{% if show_last %}<li class="last-page"><a href="{{ url }}{{ paginator.num_pages }}{{anchor}}" title="Last Page">last</a></li>{% endif %}
-	{% if page.has_next %}<li class="next-page"><a href="{{ url }}{{ page.next_page_number }}{{anchor}}" title="Next Page">next</a></li>{% endif %}
+	{% if show_last %}<li class="last-page"><a href="{{ url }}{{ paginator.num_pages }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page">last</a></li>{% endif %}
+	{% if page.has_next %}<li class="next-page"><a href="{{ url }}{{ page.next_page_number }}{% if anchor %}#{{anchor}}{% endif %}" title="Next Page">next</a></li>{% endif %}
 </ul>
 {% endspaceless %}
 {% else %}

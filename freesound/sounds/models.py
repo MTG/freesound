@@ -6,6 +6,7 @@ from django.db import models
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
 from general.models import OrderedModel, SocialModel
+from geotags.models import GeoTag
 from utils.sql import DelayedQueryExecuter
 
 class License(OrderedModel):

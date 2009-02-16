@@ -46,6 +46,18 @@ def sound(request, username, sound_id):
 
     return render_to_response('sounds/sound.html', locals(), context_instance=RequestContext(request))
 
+def remixes(request, username, sound_id):
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    pass
+
+def sources(request, username, sound_id):
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    pass
+
+def geotag(request, username, sound_id):
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    pass
+
 def pack(request, pack_id):
     pass
 

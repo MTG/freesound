@@ -115,14 +115,58 @@ class Sound(SocialModel):
     def __unicode__(self):
         return u"%s by %s" % (self.base_filename_slug, self.user)
     
+    def paths(self):
+        id_folder = self.id/1000
+        
+        sound_folder = u"%d/sounds/" % id_folder
+        sound_base = u"%s.%s" % (self.base_filename_slug, self.type)
+        sound_path = sound_folder + sound_base 
+        
+        preview_folder = u"%d/previews/" % id_folder
+        preview_base = u"%s.mp3" % self.base_filename_slug
+        preview_path = preview_folder + preview_base
+        
+        waveform_folder = preview_folder
+        waveform_base = u"%s.png" % self.base_filename_slug
+        waveform_path = waveform_folder + waveform_base
+        
+        spectral_folder = preview_folder
+        spectral_base = u"%s.jpg" % self.base_filename_slug
+        spectral_path = spectral_folder + spectral_base
+
+        return dict(((k,v) for (k,v) in locals().items() if k not in ["self", "id_folder"]))
+    
     def get_channels_display(self):
        if self.channels == 1:
            return u"Mono" 
        elif self.channels == 2:
            return u"Stereo" 
        else:
-           return self.channels 
+           return self.channels
+    
+    def type_warning(self):
+        return self.type == "ogg" or self.type == "flac" 
+    
+    def duration_warning(self):
+        return self.duration > 60
+    
+    def filesize_warning(self):
+        # warn for 50MB and up
+        return self.filesize > 50 * 1024 * 1024
 
+    def samplerate_warning(self):
+        # warn anything special
+        return self.samplerate not in [11025, 22050, 44100]
+    
+    def bitdepth_warning(self):
+        return self.bitdepth not in [8,16]
+        
+    def bitrate_warning(self):
+        return self.bitrate not in [32, 64, 96, 128, 160, 192, 224, 256, 320]
+
+    def channels_warning(self):
+        return self.channels not in [1,2]
+    
     @models.permalink
     def get_absolute_url(self):
         return ('sound', (smart_unicode(self.id),))

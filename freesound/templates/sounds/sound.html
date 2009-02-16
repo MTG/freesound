@@ -3,6 +3,15 @@
 {% load paginator %}
 {% load util %}
 
+{% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
+
+{% block head %}
+{{ block.super }}
+	<script type="text/javascript">
+		swfobject.registerObject("player_{{sound.id}}", "10");
+	</script>
+{% endblock head %}
+
 {% block section_content %}
 
 <div id="single_sample_header">
@@ -17,7 +26,18 @@
 </div>
 
 <div id="single_sample_player">
-	<img src="{{media_url}}images/content/single_sample_sound.png" />
+	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="900" height="201" id="player_{{sound.id}}">
+    	<param name="movie" value="{{media_url}}swf/Flash10Player.swf" />
+        <param name="flashvars" value="baseUrl={{data_url}}{{sound.paths.preview_folder}}&amp;waveformUrl={{sound.paths.waveform_base}}&amp;spectralUrl={{sound.paths.spectral_base}}&amp;soundUrl={{sound.paths.preview_base}}&amp;duration={{sound.duration}}" />
+        <!--[if !IE]>-->
+        <object type="application/x-shockwave-flash" data="{{media_url}}swf/Flash10Player.swf" width="900" height="201">
+        	<param name="flashvars" value="baseUrl={{data_url}}{{sound.paths.preview_folder}}&amp;waveformUrl={{sound.paths.waveform_base}}&amp;spectralUrl={{sound.paths.spectral_base}}&amp;soundUrl={{sound.paths.preview_base}}&amp;duration={{sound.duration}}" />
+	        <!--<![endif]-->
+	        <a href="http://www.adobe.com/go/getflashplayer"><img src="{{media_url}}images/get_flash_player.png" alt="Get Adobe Flash player" /></a>
+	        <!--[if !IE]>-->
+        </object>
+        <!--<![endif]-->
+    </object>
 </div>
 
 <div id="single_sample_content">
@@ -73,28 +93,35 @@
 <div id="single_sample_sidebar">
 	<div id="download">
 		<a href="#" id="download_button"></a>
-		<div id="download_text">Downloaded<br /><b>5546</b> times</div>
+		<div id="download_text">Downloaded<br /><b>{{sound.num_downloads}}</b> times</div>
 	</div>
 
 	<dl id="sound_information_box">
-		<dt><img src="{{media_url}}images/info_red.png" width="12" height="12" />Type</dt><dd>{{sound.get_type_display}} (.{{sound.type}})</dd>
-		<dt><img src="{{media_url}}images/info.png" width="12" height="12" />Duration</dt><dd>{{sound.duration|duration}}</dd>
-		<dt><img src="{{media_url}}images/info_red.png" width="12" height="12" />Filesize</dt><dd>{{sound.filesize|filesizeformat}}</dd>
+		<dt><a href="{% url wiki-page "soundinfo/type" %}#{{sound.type}}"><img src="{{media_url}}images/info{% if sound.type_warning %}_red{% endif %}.png" width="12" height="12" /></a>Type</dt><dd>{{sound.get_type_display}} (.{{sound.type}})</dd>
+		<dt><a href="{% url wiki-page "soundinfo/duration" %}"><img src="{{media_url}}images/info{% if sound.duration_warning %}_red{% endif %}.png" width="12" height="12" /></a>Duration</dt><dd>{{sound.duration|duration}}</dd>
+		<dt><a href="{% url wiki-page "soundinfo/filesize" %}"><img src="{{media_url}}images/info{% if sound.filesize_warning %}_red{% endif %}.png" width="12" height="12" /></a>Filesize</dt><dd>{{sound.filesize|filesizeformat}}</dd>
 		
 		{% if sound.bitdepth %}
-		<dt><img src="{{media_url}}images/info.png" width="12" height="12" />Samplerate</dt><dd>{{sound.samplerate}} Hz</dd>
-		<dt><img src="{{media_url}}images/info.png" width="12" height="12" />Bitdepth</dt><dd>{{sound.bitdepth}} bit</dd>
+		<dt><a href="{% url wiki-page "soundinfo/samplerate" %}"><img src="{{media_url}}images/info{% if sound.samplerate_warning %}_red{% endif %}.png" width="12" height="12" /></a>Samplerate</dt><dd>{{sound.samplerate}} Hz</dd>
+		<dt><a href="{% url wiki-page "soundinfo/bitdepth" %}"><img src="{{media_url}}images/info{% if sound.bitdepth_warning %}_red{% endif %}.png" width="12" height="12" /></a>Bitdepth</dt><dd>{{sound.bitdepth}} bit</dd>
 		{% else %}
-		<dt><img src="{{media_url}}images/info.png" width="12" height="12" />Bitrate</dt><dd>{{sound.bitrate}} kbps</dd>
+		<dt><a href="{% url wiki-page "soundinfo/bitrate" %}"><img src="{{media_url}}images/info{% if sound.bitrate_warning %}_red{% endif %}.png" width="12" height="12" /></a>Bitrate</dt><dd>{{sound.bitrate}} kbps</dd>
 		{% endif %}        
-		<dt><img src="{{media_url}}images/info.png" width="12" height="12" />Channels</dt><dd>{{sound.get_channels_display}}</dd>
+		<dt><a href="{% url wiki-page "soundinfo/channels" %}"><img src="{{media_url}}images/info{% if sound.channels_warning %}_red{% endif %}.png" width="12" height="12" /></a>Channels</dt><dd>{{sound.get_channels_display}}</dd>
 	</dl>
 
 	<ul id="sound_links">
-		<li><img src="{{media_url}}images/geotag.png" width="16" height="16" /><a href="#">Geotag</a></li>
-		<li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="#">Similar sounds</a></li>
-		<li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="#">Remixes</a></li>
-		<li><img src="{{media_url}}images/sources.png" width="16" height="16" /><a href="#">Sources</a></li>
+		{% if sound.geotag %}
+		<li><img src="{{media_url}}images/geotag.png" width="16" height="16" /><a href="{% url sound-geotag %}">Geotag</a></li>
+		{% endif %}
+		<li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar %}">Similar sounds</a></li>
+		{% if sound.remixes.all.count %}
+		<li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="{% url sound-remixes %}">Remixes</a></li>
+		{% endif %}
+		
+		{% if sound.sources.all.count %}
+		<li><img src="{{media_url}}images/sources.png" width="16" height="16" /><a href="{% url sound-sources %}">Sources</a></li>
+		{% endif %}
 	</ul>
 
 	<div id="flag_sound">
@@ -102,8 +129,8 @@
 	</div>
 
 	<div id="sound_license">
-		<img src="images/creative_commons.png" with="95" height="23" alt="Creative Commons" />
-		This work is licensed under a Creative Commons Sampling Plus 1.0 License.
+		<img src="{{media_url}}images/creative_commons.png" with="95" height="23" alt="Creative Commons" />
+		<a href="{{sound.license.deed_url}}">This work is licensed under the {{sound.license.name}} License.</a>
 	</div>
 </div> <!-- single_sample_sidebar -->
 

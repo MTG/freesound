@@ -1,6 +1,7 @@
 from django import template
 from django.utils import simplejson
 import urllib
+from django.conf import settings
 
 register = template.Library()
 
@@ -26,7 +27,7 @@ class PledgieParserNode(template.Node):
         api_url = "http://pledgie.com/campaigns/%d.json" % pledgie_id
         pledge_url = "http://pledgie.com/campaigns/%d/" % pledgie_id
         
-        data = simplejson.loads(urllib.urlopen(api_url).read())
+        data = simplejson.loads(urllib.urlopen(api_url, proxies=settings.PROXIES).read())
         
         data["to_go"] = data["goal"] - data["amount_raised"]
         data["url"] = pledge_url

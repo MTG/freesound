@@ -1,5 +1,7 @@
 from django import template
 import feedparser
+import urllib2
+from django.conf import settings
 
 register = template.Library()
 
@@ -10,11 +12,12 @@ class RssParserNode(template.Node):
         self.var_name = var_name
 
     def render(self, context):
+        proxy = urllib2.ProxyHandler( settings.PROXIES )
         if self.url:
-            context[self.var_name] = feedparser.parse(self.url)
+            context[self.var_name] = feedparser.parse(self.url, handlers=[proxy])
         else:
             try:
-                context[self.var_name] = feedparser.parse(context[self.url_var_name])
+                context[self.var_name] = feedparser.parse(context[self.url_var_name], handlers=[proxy])
             except KeyError:
                 raise template.TemplateSyntaxError, "the variable \"%s\" can't be found in the context" % self.url_var_name
         return ''

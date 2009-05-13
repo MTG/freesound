@@ -76,8 +76,7 @@
 	{% cache 900 pledgie_cache %}
 	<div id="donation_box">
 		{% get_pledgie_campaign_details pledgie_campaign as pledgie %}
-		<p><b>Love Freesound?</b> <span id="count_down">Only <b>{{ pledgie.to_go }}{{ pledgie.currency }}</b> to go!</span></p>
-
+		<p><strong>Love Freesound?</strong> <span id="count_down">Only <strong>{{ pledgie.to_go }}{{ pledgie.currency }}</strong> to go!</span></p>
 		<a class="donation_button" href="{{pledgie.url}}">Donate Now</a>
 		<div id="donation_meter_box"><span id="meter" style="width:{{ pledgie.percent_towards_goal }}%">{{ pledgie.percent_towards_goal }}%</span></div>
 	</div>

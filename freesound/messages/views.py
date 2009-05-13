@@ -1,13 +1,16 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.sites.models import Site
 from django.core.paginator import Paginator, InvalidPage
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext, loader
-from utils.functional import exceptional
+from forms import *
 from models import *
+from utils.functional import exceptional
+from utils.mail import send_mail_template
 
 def combine_dicts(dict1, dict2):
     return dict(dict1.items() + dict2.items())
@@ -85,3 +88,29 @@ def message(request, message_id):
         message.save()
         
     return render_to_response('messages/message.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+def new_message(request, username=None):
+    if request.method == 'POST':
+        form = PostReplyForm(request.POST)
+        if form.is_valid():
+            user_from = request.user
+            user_to = form.cleaned_data["to"]
+            subject = form.cleaned_data["subject"]
+            body = MessageBody.objects.create(body=form.cleaned_data["body"])
+
+            Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=True, is_archived=False, is_read=False)
+            Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False, is_archived=False, is_read=False)
+            
+            # send the user an email to notify him of the sent message!
+            current_site = Site.objects.get_current()
+            send_mail_template(u'You have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
+            
+            return HttpResponseRedirect(reverse("messages"))
+    else:
+        if username:
+            form = PostReplyForm(initial=dict(to=username))
+        else:
+            form = PostReplyForm()
+    
+    return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))

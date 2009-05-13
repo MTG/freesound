@@ -97,9 +97,10 @@ MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
 
 DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'
 EMAIL_HOST = 'iua-mail.upf.edu'
+EMAIL_PORT = 25
 EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
-EMAIL_SUBJECT_PREFIX = 'Freesound. '
+EMAIL_SUBJECT_PREFIX = u'Freesound. '
 
 SEND_BROKEN_LINK_EMAILS = False
 

@@ -21,4 +21,6 @@ urlpatterns = patterns('accounts.views',
     url(r'^messages/archived/$', messages.archived_messages, name='messages-archived'),
     url(r'^messages/changestate/$', messages.messages_change_state, name='messages-change-state'),
     url(r'^messages/(?P<message_id>\d+)/$', messages.message, name='message'),
+    url(r'^messages/new/$', messages.new_message, name='messages-new'),
+    url(r'^messages/new/(?P<username>[^//]+)/$', messages.new_message, name='messages-new'),
 )

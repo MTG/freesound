@@ -1,0 +1,14 @@
+{% extends "messages/_section.html" %}
+
+{% block tab_messages_new_active %}active{% endblock %}
+
+{% block title %}messages - new message{% endblock %}
+
+{% block section_content %}
+
+<form method="post" action=".">
+{{form.as_p}}
+<input type="submit" value="send" />
+</form>
+
+{% endblock %}

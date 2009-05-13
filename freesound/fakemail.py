@@ -1,3 +1,6 @@
+# TODO: test the built in python mail server:
+# python -m smtpd -n -c DebuggingServer localhost:1025 
+
 import asyncore
 import smtpd
 import socket

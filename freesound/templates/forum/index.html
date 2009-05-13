@@ -9,8 +9,10 @@
 {% for forum in forums %}
 	<li>
 		<div class="latest_post">
+			{% if forum.last_post.id %}
 			<a href="{% url forums-post forum.name_slug forum.last_post.thread.id forum.last_post.id %}">Latest post</a> by <a href="{% url account forum.last_post.author.username %}">{{forum.last_post.author.username}}</a><br />
 			{{forum.last_post.created|timesince}} ago
+			{% endif %}
 		</div>
 		
 		{% pyif forum.last_post.created > last_action_time and forum.last_post.author != request.user %}

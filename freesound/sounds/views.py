@@ -10,7 +10,7 @@ from comments.models import Comment
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
-    pledgie_campaign = 1356
+    pledgie_campaign = 4045
 
     latest_forum_posts = Post.objects.select_related('author', 'thread', 'thread__forum').all().order_by("-created")[0:10]
     latest_additions = Sound.objects.latest_additions(5)
@@ -55,6 +55,10 @@ def sources(request, username, sound_id):
     pass
 
 def geotag(request, username, sound_id):
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    pass
+
+def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     pass
 

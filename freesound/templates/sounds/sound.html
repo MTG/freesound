@@ -112,15 +112,15 @@
 
 	<ul id="sound_links">
 		{% if sound.geotag %}
-		<li><img src="{{media_url}}images/geotag.png" width="16" height="16" /><a href="{% url sound-geotag %}">Geotag</a></li>
+		<li><img src="{{media_url}}images/geotag.png" width="16" height="16" /><a href="{% url sound-geotag sound.user.username sound.id %}">Geotag</a></li>
 		{% endif %}
-		<li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar %}">Similar sounds</a></li>
+		<li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
 		{% if sound.remixes.all.count %}
-		<li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="{% url sound-remixes %}">Remixes</a></li>
+		<li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
 		{% endif %}
 		
 		{% if sound.sources.all.count %}
-		<li><img src="{{media_url}}images/sources.png" width="16" height="16" /><a href="{% url sound-sources %}">Sources</a></li>
+		<li><img src="{{media_url}}images/sources.png" width="16" height="16" /><a href="{% url sound-sources sound.user.username sound.id %}">Sources</a></li>
 		{% endif %}
 	</ul>
 

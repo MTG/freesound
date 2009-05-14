@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from forms import UploadFileForm, FileChoiceForm
+from forms import UploadFileForm, FileChoiceForm, RegistrationForm
 from utils.encryption import decrypt
 from utils.filesystem import generate_tree
 import os
@@ -23,8 +23,16 @@ def activate_user(request, activation_key):
     except:
         return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
 
-def signup(request):
-    pass
+def registration(request):
+    if request.method == "POST":
+        form = RegistrationForm(request, request.POST)
+        if form.is_valid():
+            form.save()
+            return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
+    else:
+        form = RegistrationForm(request)
+        
+    return render_to_response('accounts/registration.html', locals(), context_instance=RequestContext(request))
 
 @login_required
 def home(request):

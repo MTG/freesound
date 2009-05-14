@@ -1,0 +1,12 @@
+{% extends "accounts/_section.html" %}
+
+{% block title %}registration{% endblock %}
+
+{% block section_content %}
+<h1>Registration</h1>
+<form method="post" action=".">
+{{form.as_p}}
+<input type="submit" value="Register" />
+</form>
+
+{% endblock %}

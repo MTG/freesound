@@ -4,12 +4,17 @@ from django.conf.urls.defaults import *
 import django.contrib.auth.views as authviews
 import messages.views as messages
 import views as accounts
+import django.contrib.auth.views as authviews
 
 urlpatterns = patterns('accounts.views',
     url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html'}, name="accounts-login"),
     url(r'^logout/$', authviews.logout, {'template_name': 'accounts/logout.html'}, name="accounts-logout"),
     url(r'^activate/(?P<activation_key>[^//]+)/$', accounts.activate_user, name="accounts-activate-user"),
     url(r'^signup/$', accounts.signup, name="accounts-signup"),
+    url(r'^resetpassword/$', authviews.password_reset, {'template_name':'accounts/password_reset_form.html', 'email_template_name':'accounts/password_reset_email.html'}, name="accounts-password-reset"),
+    url(r'^resetpassword/done/$', authviews.password_reset_done, {'template_name':'accounts/password_reset_done.html'}),
+    url(r'^resetpassword/confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', authviews.password_reset_confirm, {'template_name':'accounts/password_reset_confirm.html'}),
+    url(r'^resetpassword/complete/$', authviews.password_reset_complete, {'template_name':'accounts/password_reset_complete.html'}),
     
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),

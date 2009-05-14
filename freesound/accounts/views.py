@@ -1,14 +1,30 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forms import UploadFileForm, FileChoiceForm
+from utils.encryption import decrypt
 from utils.filesystem import generate_tree
 import os
 import random
+
+def activate_user(request, activation_key):
+    try:
+        user = User.objects.get(id=int(decrypt(activation_key)))
+        user.is_active = True
+        user.save()
+        return HttpResponseRedirect(reverse("accounts-home"))
+    except User.DoesNotExist:
+        return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
+    except:
+        return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
+
+def signup(request):
+    pass
 
 @login_required
 def home(request):

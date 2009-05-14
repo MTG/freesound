@@ -11,6 +11,7 @@
     install python module "audiolab" (dependency: libsndfile)
     
 * easy_install the following packages:
+	recaptcha-client
     BeautifulSoup
     feedparser
     ipython

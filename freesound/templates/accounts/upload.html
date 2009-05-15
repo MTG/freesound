@@ -1,19 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}{{ block.super }}Upload{% endblock %}
-
-{% block head %}
-{{ block.super }}
-<script type="text/javascript">
-	function submitUploadForm()
-	{
-		return true
-	}
-</script>
-{% endblock %}
+{% block title %}upload files{% endblock %}
 
 {% block content %}
-<form id="upload-form" enctype="multipart/form-data" method="post" action="{% url accounts-upload-unique unique_id %}" onsubmit="submitUploadForm();">
+<h1>Upload files</h1>
+<form enctype="multipart/form-data" method="post" action=".">
 	{{ upload_form.as_p }}
 	<input type="submit" value="submit" name="submit"/>
 </form>

@@ -88,7 +88,6 @@ def account(request, username):
 
 def handle_uploaded_file(request, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
-
     directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id))
     directory_ok = os.path.join(settings.FILES_UPLOAD_OK_DIRECTORY, str(request.user.id))
     
@@ -113,7 +112,6 @@ def upload(request):
 
         if form.is_valid():
             handle_uploaded_file(request, request.FILES["file"])
-            
             return HttpResponseRedirect(reverse("accounts-describe"))
     else:
         form = UploadFileForm()

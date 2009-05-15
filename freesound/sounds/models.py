@@ -116,6 +116,9 @@ class Sound(SocialModel):
         return u"%s by %s" % (self.base_filename_slug, self.user)
     
     def paths(self):
+        if hasattr(self, '_paths_cache'):
+            return self._paths_cache
+
         id_folder = self.id/1000
         
         sound_folder = u"%d/sounds/" % id_folder
@@ -133,9 +136,15 @@ class Sound(SocialModel):
         spectral_folder = preview_folder
         spectral_base = u"%s.jpg" % self.base_filename_slug
         spectral_path = spectral_folder + spectral_base
+        
+        paths = locals().copy()
+        paths.pop("self")
+        paths.pop("id_folder")
+        
+        self._paths_cache = paths
 
-        return dict(((k,v) for (k,v) in locals().items() if k not in ["self", "id_folder"]))
-    
+        return paths
+
     def get_channels_display(self):
        if self.channels == 1:
            return u"Mono" 

@@ -113,19 +113,15 @@ IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cg
 # See debug comments, when DEBUG is True
 INTERNAL_IPS = ['localhost', '127.0.0.1']
 
-
-FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
-FORUM_POSTS_PER_PAGE = 20
-FORUM_THREADS_PER_PAGE = 40
-FILES_UPLOAD_DIRECTORY = "/freesound/uploads/"
-FILES_UPLOAD_OK_DIRECTORY = "/freesound/uploads_ok/"
-
-SOUND_COMMENTS_PER_PAGE = 5
-
 # urls for which the "lasta ction time" needs updating
 LAST_ACTION_TIME_URLS = ('/forum/', )
 
 MARKDOWN_FILTER_SETTINGS = {'wikilink': [('base_url', '/help/'), ('end_url', '/'), ('html_class', 'wikilink')]}
+
+FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
+FORUM_POSTS_PER_PAGE = 20
+FORUM_THREADS_PER_PAGE = 40
+SOUND_COMMENTS_PER_PAGE = 5
 
 # leave at bottom starting here!
 from local_settings import *

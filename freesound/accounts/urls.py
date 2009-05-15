@@ -20,8 +20,6 @@ urlpatterns = patterns('accounts.views',
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
 
     url(r'^upload/$', accounts.upload, name="accounts-upload"),
-    url(r'^upload/(?P<unique_id>\d{10})/$', accounts.upload, name="accounts-upload-unique"),
-    url(r'^upload/progress/(?P<unique_id>\d{10})/$', accounts.upload_progress, name="accounts-upload-progress"),
     url(r'^describe/$', accounts.describe, name="accounts-describe"),
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),
 

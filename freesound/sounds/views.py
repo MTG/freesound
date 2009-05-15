@@ -56,7 +56,8 @@ def sources(request, username, sound_id):
 
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    pass
+    google_api_key = settings.GOOGLE_API_KEY
+    return render_to_response('sounds/geotag.html', locals(), context_instance=RequestContext(request))
 
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")

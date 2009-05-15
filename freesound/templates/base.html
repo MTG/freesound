@@ -19,7 +19,7 @@
 		{% endblock %}
 	</head>
 	
-	<body id="{% block page_css_id %}{% endblock %}">
+	<body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">
 		
 		<div id="header">
 			<div id="account_nav">

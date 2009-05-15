@@ -31,13 +31,11 @@ urlpatterns = patterns('',
     
     url(r'^browse/packs/$', 'sounds.views.packs', name="packs"),
     
-    url(r'^browse/random/$', 'sounds.views.random', "sounds-random"),
-    url(r'^browse/remixed/$', 'sounds.views.remixed', "sounds-remixed"),
-    url(r'^browse/geotagged/$', 'geotags.views.geotags', "geotags"),
+    url(r'^browse/random/$', 'sounds.views.random', name="sounds-random"),
+    url(r'^browse/remixed/$', 'sounds.views.remixed', name="sounds-remixed"),
+    url(r'^browse/geotagged/$', 'geotags.views.geotags', name="geotags"),
     
-    #url(r'^browse/geotagged/(?P<sound_id>\d+)/$', 'geotags.views.geotag', "geotag"),
-    
-    url(r'^contact/$', 'support.views.contact', "contact"),
+    url(r'^contact/$', 'support.views.contact', name="contact"),
     
     url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
     

@@ -1,6 +1,7 @@
 from django import forms
-from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext as _
+from models import Profile
 from utils.forms import RecaptchaForm
 
 class UploadFileForm(forms.Form):
@@ -24,6 +25,7 @@ class RegistrationForm(RecaptchaForm):
     email2 = forms.EmailField(label=_("Email confirmation"))
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+    newsletter = forms.BooleanField(label=_("Sign up for the newsletter (only once every 4 months or so)?"), required=False, initial=True)
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -56,8 +58,15 @@ class RegistrationForm(RecaptchaForm):
         username = self.cleaned_data["username"]
         email = self.cleaned_data["email2"]
         password = self.cleaned_data["password2"]
+        first_name = self.cleaned_data.get("first_name", "")
+        last_name = self.cleaned_data.get("flast_name", "")
+        newsletter = self.cleaned_data.get("newsletter", False)
 
-        user = User(username, "", "", email, password, False, False, False)
+        user = User(username=username, first_name=first_name, last_name=last_name, email=email, password=password,is_staff=False, is_active=False, is_superuser=False)
         user.set_password(password)
         user.save()
-        return user    
+        
+        profile = Profile(user=user, wants_newsletter=newsletter)
+        profile.save()
+
+        return user

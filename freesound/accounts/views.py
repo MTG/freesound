@@ -1,14 +1,16 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forms import UploadFileForm, FileChoiceForm, RegistrationForm
-from utils.encryption import decrypt
+from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
+from utils.mail import send_mail_template
 import os
 import random
 
@@ -23,24 +25,34 @@ def activate_user(request, activation_key):
     except:
         return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
 
+
 def registration(request):
     if request.method == "POST":
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            
+            encrypted_user_id = encrypt(str(user.id))
+            current_site = Site.objects.get_current()
+            
+            send_mail_template(u'Activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
+            
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = RegistrationForm(request)
         
     return render_to_response('accounts/registration.html', locals(), context_instance=RequestContext(request))
 
+
 @login_required
 def home(request):
     pass
 
+
 @login_required
 def edit(request):
     pass
+
 
 @login_required
 def describe(request):
@@ -60,6 +72,7 @@ def describe(request):
 
     return render_to_response('accounts/describe.html', { "file_structure": file_structure, "form": form }, context_instance=RequestContext(request))
 
+
 @login_required
 def attribution(request):
     pass
@@ -67,6 +80,7 @@ def attribution(request):
 
 def accounts(request):
     pass
+
 
 def account(request, username):
     pass

@@ -90,7 +90,7 @@ def handle_uploaded_file(request, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
 
     directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id))
-    directory_ok = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id))
+    directory_ok = os.path.join(settings.FILES_UPLOAD_OK_DIRECTORY, str(request.user.id))
     
     try:
         os.mkdir(directory)

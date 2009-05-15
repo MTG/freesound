@@ -26,10 +26,10 @@
 				{% if request.user.is_authenticated %}
 					<div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />{{request.user.username}}</div>
 					<a href="{% url messages %}">Messages</a><div id="messages_count"><div>2</div></div>
-					<a href="#">Settings</a>
+					<a href="{% url accounts-edit %}">Settings</a>
 					<a href="{% url accounts-logout %}?next=/">Log Out</a>
 				{% else %}
-					<a href="#">Register</a>
+					<a href="{% url accounts-register %}">Register</a>
 					<a href="{% url accounts-login %}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
 				{% endif %}
 				<a href="{% url accounts-upload %}" id="upload_button"></a>

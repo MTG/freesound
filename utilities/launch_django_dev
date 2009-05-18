@@ -5,7 +5,7 @@ if [[ $# == 0 ]]; then
 elif [[ $# == 1 && -d "$1" ]]; then
   PROJECT_DIR="$@"
 else
-  print "usage: iterm.sh [rails project directory]"
+  print "usage: iterm.sh [freesound project directory]"
   return 1
 fi
     

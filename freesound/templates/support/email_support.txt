@@ -1,0 +1,16 @@
+---support email-----------------------------
+{% block body %}
+{{message}}
+{% endblock %}
+---------------------------------------------
+
+{% if user %}
+-- 
+user: http://{{current_site.domain}}{% url account user.username %}
+is_active: {{user.is_active|yesno}}
+joined: {{user.date_joined|date:"F jS, Y"}}
+num sounds: {{user.get_profile.num_sounds}}
+num posts: {{user.get_profile.num_posts}}
+{% else %}
+no user info
+{% endif %}

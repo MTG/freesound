@@ -1,4 +1,4 @@
-#Wed Feb 11 13:50:06 CET 2009
+#Mon May 18 14:15:16 CEST 2009
 eclipse.preferences.version=1
 encoding//accounts/admin.py=UTF-8
 encoding//accounts/models.py=UTF-8
@@ -13,6 +13,7 @@ encoding//forum/urls.py=UTF-8
 encoding//general/models.py=UTF-8
 encoding//geotags/admin.py=UTF-8
 encoding//geotags/models.py=UTF-8
+encoding//geotags/urls.py=UTF-8
 encoding//images/admin.py=UTF-8
 encoding//images/models.py=UTF-8
 encoding//messages/admin.py=UTF-8
@@ -29,6 +30,7 @@ encoding//templates/index.html=UTF-8
 encoding//utils/paypal/wrapper.py=UTF-8
 encoding//wiki/admin.py=UTF-8
 encoding//wiki/models.py=UTF-8
+encoding//wiki/urls.py=UTF-8
 encoding/local_settings.example.py=UTF-8
 encoding/local_settings.py=UTF-8
 encoding/manage.py=UTF-8

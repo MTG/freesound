@@ -38,7 +38,7 @@ osascript <<-eof
       launch session "Default Session"
       tell the last session
           write text "clear"
-          write text "su - postgres"
+          write text "python manage.py dbshell"
           set name to "db"
       end tell
 

@@ -5,3 +5,6 @@ def geotags(request):
 
 def geotag(request, geotag_id):
     pass
+
+def infowindow(request):
+    pass

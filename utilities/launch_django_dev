@@ -1,0 +1,64 @@
+#!/bin/sh
+
+if [[ $# == 0 ]]; then
+  PROJECT_DIR=$PWD
+elif [[ $# == 1 && -d "$1" ]]; then
+  PROJECT_DIR="$@"
+else
+  print "usage: iterm.sh [rails project directory]"
+  return 1
+fi
+    
+osascript <<-eof
+  tell application "iTerm"
+
+    make new terminal
+
+    tell the last terminal
+
+      activate current session
+
+      launch session "Default Session"
+
+      tell the last session
+          write text "cd \"$PROJECT_DIR\""
+          write text "clear"
+          write text "python manage.py runserver"
+          set name to "django server"
+      end tell
+
+      launch session "Default Session"
+      tell the last session
+          write text "cd \"$PROJECT_DIR\""
+          write text "clear"
+          write text "python manage.py shell_plus"
+          set name to "django shell"
+      end tell
+
+      launch session "Default Session"
+      tell the last session
+          write text "clear"
+          write text "su - postgres"
+          set name to "db"
+      end tell
+
+      launch session "Default Session"
+      tell the last session
+        write text "cd \"$PROJECT_DIR\""
+        write text "clear"
+        write text "memcached -v"
+        set name to "memcached"
+      end tell
+
+      launch session "Default Session"
+      tell the last session
+        write text "cd \"$PROJECT_DIR\""
+        write text "clear"
+        write text "./fake_smtp"
+        set name to "fake smtp"
+      end tell
+
+    end tell
+    set the bounds of the first window to {100, 100, 1500, 900} 
+  end tell
+eof

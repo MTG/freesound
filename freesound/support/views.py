@@ -7,7 +7,6 @@ from forms import ContactForm
 from utils.mail import send_mail_template
 
 def contact(request):
-
     email_sent = False
     user = None
     

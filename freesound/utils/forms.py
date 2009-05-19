@@ -1,5 +1,5 @@
 from django import forms
-from utils.text_utils import clean_html, is_shouting
+from utils.text import clean_html, is_shouting
 from django.conf import settings
 from recaptcha.client import captcha
 

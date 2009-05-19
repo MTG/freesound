@@ -24,7 +24,9 @@
     var point = new GLatLng({{sound.geotag.lat}}, {{sound.geotag.lon}});
     var marker = new GMarker(point);
     GEvent.addListener(marker, "click", function() {
-		marker.openInfoWindowHtml("Marker <b>hello</b>");
+		GDownloadUrl( "{% url geotags-infowindow sound.id %}", function(data, responseCode) {
+			marker.openInfoWindowHtml(data);
+		});
 	});
     map.addOverlay(marker);
 </script>

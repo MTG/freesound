@@ -7,7 +7,6 @@ from django.template import RequestContext, loader
 from models import *
 from forms import *
 
-
 def forums(request):
     forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
     return render_to_response('forum/index.html', locals(), context_instance=RequestContext(request))

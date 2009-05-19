@@ -33,7 +33,7 @@ urlpatterns = patterns('',
     
     (r'^help/', include('wiki.urls')),
     (r'^forum/', include('forum.urls')),
-    (r'^geotag/', include('geotags.urls')),
+    (r'^geotags/', include('geotags.urls')),
     (r'^account/', include('accounts.urls')),
     (r'^helpdesk/', include('helpdesk.urls')),
     

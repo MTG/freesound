@@ -163,6 +163,13 @@ ul.errorlist {
 	color: #666;
 	font-style: italic;
 }
+div.infowindow {
+	font-size: 12px;
+	line-height: 18px;
+	margin-bottom: 18px;
+	width: 200px;
+	color: red;
+}
 
 /* Formatting Elements
 ------------------------------------------------------*/

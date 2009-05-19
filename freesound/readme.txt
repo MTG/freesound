@@ -20,3 +20,5 @@
     pycrypto
     pygments
 	mysql-python ( only for the DB conversion)
+
+* install getid3 in the php include path

@@ -35,7 +35,7 @@
 * getID3() settings
 */
 
-require_once('getid3.php');
+require_once('getid3/getid3.php');
 
 
 

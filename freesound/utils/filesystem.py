@@ -1,6 +1,7 @@
 from Crypto.Cipher import AES
 from django.conf import settings
 import base64
+import md5
 import os
 
 class File:
@@ -44,3 +45,15 @@ def generate_tree(path):
             
 
     return lookups[path], files
+
+def md5file(filename):
+    """Return the hex digest of a file without loading it all into memory"""
+    fh = open(filename, "rb")
+    digest = md5.new()
+    while 1:
+        buf = fh.read(4096)
+        if buf == "":
+            break
+        digest.update(buf)
+    fh.close()
+    return digest.hexdigest()

@@ -24,12 +24,11 @@ from PIL import ImageFilter, ImageChops, Image, ImageDraw, ImageColor
 from django.utils import simplejson
 from functools import partial
 import math
-import sys
-import os
-import subprocess
 import numpy
+import os
 import scikits.audiolab as audiolab
-
+import subprocess
+import sys
 
 class AudioProcessingException(Exception):
     pass
@@ -493,7 +492,7 @@ def audio_info(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
     
     try:
-        command = ["extract_audio_data.php", input_filename]
+        command = [os.path.join(os.path.dirname(__file__), "extract_audio_data.php"), input_filename]
         
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         (stdout, stderr) = process.communicate()

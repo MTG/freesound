@@ -1,9 +1,11 @@
 {% load cache %}
 {% load util %}
-{% cache 600 display_sound sound_id %}
 {% with sound.0 as sound %}
 <div class="sample_player">
-	<img src="{{media_url}}images/sample_player_small.png" width="120" height="69" class="small_player" alt="" />
+	<div class="small_player">
+		{% include "sounds/player_medium.html" %}
+	</div>
+	
 	<a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:20}}</a>
 		<div class="stars">
 			<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
@@ -22,4 +24,5 @@
 	<a class="comments" href="{% url sound sound.user.username sound.id %}">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 </div>
 {% endwith %}
+{% cache 600 display_sound sound_id %}
 {% endcache %}

@@ -463,9 +463,11 @@ body#home h3 {
 	width: 400px;
 	float: left;
 }
-.sample_player_small img.small_player {
+.sample_player_small div.small_player {
 	float: left;
 	margin-right: 14px;
+	width:120px;
+	height:71px
 }
 .sample_player_small .title {
 	font-size: 14px;

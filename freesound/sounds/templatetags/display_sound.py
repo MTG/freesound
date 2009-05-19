@@ -9,13 +9,15 @@ def display_sound(context, sound):
         return {
                 'sound_id': sound.id,
                 'sound': [sound],
-                'media_url': context['media_url']
+                'media_url': context['media_url'],
+                'data_url': context['data_url']
                 }        
     elif isinstance(sound, int):
         return {
                 'sound_id': sound,
                 'sound': Sound.objects.select_related('user').filter(id=sound), # need to use filter here because we don't want the query to be evaluated already!
-                'media_url': context['media_url']
+                'media_url': context['media_url'],
+                'data_url': context['data_url']
                 }
     else:
         print "sound is", sound, type(sound)

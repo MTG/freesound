@@ -430,7 +430,7 @@ class SpectrogramImage(object):
         self.image.transpose(Image.ROTATE_90).save(filename, quality=quality)
 
 
-def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size):
+def create_wave_images(input_filename, output_filename_w, output_filename_s, image_width, image_height, fft_size, progress_callback=None):
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
     """
@@ -442,10 +442,9 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
     
     for x in range(image_width):
         
-        if x % (image_width/10) == 0:
-            sys.stdout.write('.')
-            sys.stdout.flush()
-            
+        if progress_callback and x % (image_width/10) == 0:
+            progress_callback((x*100)/image_width)
+
         seek_point = int(x * samples_per_pixel)
         next_seek_point = int((x + 1) * samples_per_pixel)
         
@@ -455,6 +454,9 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
         waveform.draw_peaks(x, peaks, spectral_centroid)
         spectrogram.draw_spectrum(x, db_spectrum)
     
+    if progress_callback:
+        progress_callback(100)
+        
     waveform.save(output_filename_w)
     spectrogram.save(output_filename_s)
 

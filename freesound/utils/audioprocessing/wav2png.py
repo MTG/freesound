@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
-import os, subprocess
+from hotshot import stats
+from processing import create_wave_images
 import hotshot
 import optparse
-from hotshot import stats
+import os
+import subprocess
+import sys
 
-from processing import create_wave_images
 
 parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")
 parser.add_option("-a", "--waveout", action="store", dest="output_filename_w", type="string", help="output waveform image (default input filename + _w.png)")
@@ -25,6 +27,10 @@ if len(args) == 0:
    
     if len(args) > 1 and (options.output_filename_w != None or options.output_filename_s != None):
         parser.error("when processing multiple files you can't define the output filename!")
+ 
+def progress_callback(percentage):
+    sys.stdout.write(str(percentage) + "% ")
+    sys.stdout.flush()
    
     # process all files so the user can use wildcards like *.wav
 for input_file in args:
@@ -32,7 +38,7 @@ for input_file in args:
     output_file_w = options.output_filename_w or input_file + "_w.png"
     output_file_s = options.output_filename_s or input_file + "_s.jpg"
     
-    args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size)
+    args = (input_file, output_file_w, output_file_s, options.image_width, options.image_height, options.fft_size, progress_callback)
 
     print "processing file %s:\n\t" % input_file,
 
@@ -49,4 +55,4 @@ for input_file in args:
         s.sort_stats("time")
         s.print_stats(30)
     
-    print " done"
+    print

@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from forms import ContactForm
@@ -26,8 +25,6 @@ def contact(request):
                     user = User.objects.get(email__iexact=email_from)
                 except User.DoesNotExist:
                     pass
-                
-            current_site = Site.objects.get_current()
             
             send_mail_template(subject, "support/email_support.txt", locals(), email_from)
 

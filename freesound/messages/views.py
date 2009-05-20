@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib.sites.models import Site
 from django.core.paginator import Paginator, InvalidPage
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -103,7 +102,6 @@ def new_message(request, username=None):
             Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False, is_archived=False, is_read=False)
             
             # send the user an email to notify him of the sent message!
-            current_site = Site.objects.get_current()
             send_mail_template(u'You have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
             
             return HttpResponseRedirect(reverse("messages"))

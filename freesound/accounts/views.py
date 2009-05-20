@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -33,7 +32,6 @@ def registration(request):
             user = form.save()
             
             encrypted_user_id = encrypt(str(user.id))
-            current_site = Site.objects.get_current()
             
             send_mail_template(u'Activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
             

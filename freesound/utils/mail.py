@@ -1,6 +1,7 @@
-from django.template.loader import render_to_string
-from django.core.mail import send_mail as core_send_mail
 from django.conf import settings
+from django.contrib.sites.models import Site
+from django.core.mail import send_mail as core_send_mail
+from django.template.loader import render_to_string
 
 def send_mail(subject, email_body, email_from=None, email_to=[]):
     """ Sends email with a lot of defaults"""
@@ -18,4 +19,6 @@ def send_mail(subject, email_body, email_from=None, email_to=[]):
         print "failed sending email"
 
 def send_mail_template(subject, template, context, email_from=None, email_to=[]):
+    context["current_site"] = Site.objects.get_current()
+    context["settings"] = settings
     send_mail(subject, render_to_string(template, context), email_from, email_to)

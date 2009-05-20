@@ -3,7 +3,7 @@ from utils.forms import HtmlCleaningCharField
 
 class PostReplyForm(forms.Form):
     body = HtmlCleaningCharField(widget=forms.Textarea)
-    subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False)
+    subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False, initial=True)
 
     def __init__(self, quote, *args, **kwargs):
         self.quote = quote
@@ -18,4 +18,4 @@ class PostReplyForm(forms.Form):
 class NewThreadForm(forms.Form):
     title = forms.CharField()
     body = HtmlCleaningCharField(widget=forms.Textarea)
-    subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False)
+    subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False, initial=True)

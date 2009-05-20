@@ -6,6 +6,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext, loader
 from models import *
 from forms import *
+from utils.mail import send_mail_template
 
 def forums(request):
     forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
@@ -39,6 +40,12 @@ def thread(request, forum_name_slug, thread_id):
     thread = get_object_or_404(Thread, forum=forum, id=thread_id)
 
     paginator = Paginator(Post.objects.select_related('author', 'author__profile').filter(thread=thread), settings.FORUM_POSTS_PER_PAGE)
+    
+    # a logged in user watching a thread can activate his subscription to that thread!
+    # we assume the user has seen the latest post if he is browsing the thread
+    # this is not entirely correct, but should be close enough
+    if request.user.is_authenticated():
+        Subscription.objects.filter(thread=thread, subscriber=request.user, is_active=False).update(is_active=True)
 
     try:
         current_page = int(request.GET.get("page", 1))
@@ -80,6 +87,24 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         form = PostReplyForm(quote, request.POST)
         if form.is_valid():
             post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
+            
+            if form.cleaned_data["subscribe"]:
+                subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
+                if not subscription.is_active:
+                    subscription.is_active = True
+                    subscription.save()
+                
+            # figure out if there are active subscriptions in this thread
+            emails_to_notify = []
+            for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
+                emails_to_notify.append(subscription.subscriber.email)
+                print "NOTIFY", subscription.subscriber.email
+                subscription.is_active = False
+                subscription.save()
+            
+            if emails_to_notify:
+                send_mail_template(u"topic reply notification - " + thread.title, "forum/email_new_post_notification.txt", dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify)
+            
             return HttpResponseRedirect(post.get_absolute_url())
     else:
         if quote:
@@ -99,8 +124,20 @@ def new_thread(request, forum_name_slug):
         if form.is_valid():
             thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
             post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+            
+            if form.cleaned_data["subscribe"]:
+                Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
+            
             return HttpResponseRedirect(post.get_absolute_url())
     else:
         form = NewThreadForm()
         
     return render_to_response('forum/new_thread.html', locals(), context_instance=RequestContext(request))
+
+
+@login_required
+def unsubscribe_from_thread(request, forum_name_slug, thread_id):
+    forum = get_object_or_404(Forum, name_slug=forum_name_slug)
+    thread = get_object_or_404(Thread, forum=forum, id=thread_id)
+    Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
+    return render_to_response('forum/unsubscribe_from_thread.html', locals(), context_instance=RequestContext(request))

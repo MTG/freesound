@@ -1,0 +1,13 @@
+{% extends "email_base.txt" %}
+
+{% block salutation %}Freesounder{% endblock %}
+
+{% block body %}
+A thread you are subscribed to over at Freesound.org has been replied to by user {{post.author.username}}:
+
+Thread: "{{thread.title}}"
+Post URL: http://{{current_site.domain}}{{post.get_absolute_url}}
+
+If you wish to stop recieving subscription messages, you can unsubscribe by clicking this link:
+http://{{current_site.domain}}{% url forums-thread-unsubscribe forum.name_slug thread.id %}
+{% endblock %}

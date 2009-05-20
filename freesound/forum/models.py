@@ -74,15 +74,15 @@ class Post(models.Model):
 
 
 class Subscription(models.Model):
-    author = models.ForeignKey(User)
+    subscriber = models.ForeignKey(User)
     thread = models.ForeignKey(Thread)
     is_active = models.BooleanField(db_index=True, default=True)
     
     class Meta:
-        unique_together = ("author", "thread")
+        unique_together = ("subscriber", "thread")
         
     def __unicode__(self):
-        return u"%s subscribed to %s" % (self.author, self.thread)
+        return u"%s subscribed to %s" % (self.subscriber, self.thread)
 
     # A
     # B > notify A, set Subscription passive

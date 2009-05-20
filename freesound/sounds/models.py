@@ -58,16 +58,17 @@ class Sound(SocialModel):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     # filenames
+    original_filename = models.CharField(max_length=512) # name of the file the user uploaded
     original_path = models.CharField(max_length=512, null=True, blank=True, default=None) # name of the file on disk before processing
     base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None) # base of the filename, this will be something like: id__username__filenameslug
    
     # user defined fields
     description = models.TextField()
+    date_recorded = models.DateField(null=True, blank=True, default=None)
+
     license = models.ForeignKey(License)
-    original_filename = models.CharField(max_length=512) # name of the file the user uploaded
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None)
-    date_recorded = models.DateField(null=True, blank=True, default=None)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
     
     # file properties
@@ -107,8 +108,8 @@ class Sound(SocialModel):
     processing_date = models.DateTimeField(null=True, blank=True, default=None)
     processing_log = models.TextField(null=True, blank=True, default=None)
     
-    num_comments = models.IntegerField(default=0)
-    num_downloads = models.IntegerField(default=0)
+    num_comments = models.PositiveIntegerField(default=0)
+    num_downloads = models.PositiveIntegerField(default=0)
     avg_rating = models.FloatField(default=0)
     
     objects = SoundManager()
@@ -223,8 +224,8 @@ class Sound(SocialModel):
                 win("found the file")
             
             # md5
-            self.md5 = md5file(self.original_path)
-            self.save()
+            #self.md5 = md5file(self.original_path)
+            #self.save()
             
             # get basic info
             try:
@@ -306,6 +307,8 @@ class Pack(SocialModel):
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
+    num_downloads = models.PositiveIntegerField(default=0)
+
     def __unicode__(self):
         return u"%s by %s" % (self.name, self.user)
 

@@ -33,10 +33,10 @@ while True:
         if id == 1420:
             user_id = 588695;
         
-        output_file.write(u"\t".join(map(unicode, [id, name, user_id, created, description, name_slug])) + "\n")
+        output_file.write(u"\t".join(map(unicode, [id, name, user_id, created, description, name_slug, 0])) + "\n")
 
 print """
-copy sounds_pack (id, name, user_id, created, description, name_slug) from '%s';
+copy sounds_pack (id, name, user_id, created, description, name_slug, num_downloads) from '%s';
 select setval('sounds_pack_id_seq',(select max(id)+1 from sounds_pack));
 vacuum analyze sounds_pack;
 """ % output_filename

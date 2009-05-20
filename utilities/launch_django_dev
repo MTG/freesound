@@ -32,11 +32,12 @@ osascript <<-eof
           write text "cd \"$PROJECT_DIR\""
           write text "clear"
           write text "python manage.py shell_plus"
-          set name to "django shell"
+          set name to "django shell / python"
       end tell
 
       launch session "Default Session"
       tell the last session
+          write text "cd \"$PROJECT_DIR\""
           write text "clear"
           write text "python manage.py dbshell"
           set name to "db"

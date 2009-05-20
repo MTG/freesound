@@ -10,13 +10,14 @@ def send_mail(subject, email_body, email_from=None, email_to=[]):
     
     if not email_to:
         email_to = [email for (name, email) in settings.ADMINS]
-    elif not isinstance(email_to, tuple) or not isinstance(email_to, list):
+    elif not isinstance(email_to, tuple) and not isinstance(email_to, list):
         email_to = [email_to]
     
     try:
         core_send_mail(settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, email_to, fail_silently=False)
     except:
         print "failed sending email"
+        raise
 
 def send_mail_template(subject, template, context, email_from=None, email_to=[]):
     context["current_site"] = Site.objects.get_current()

@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
+from django.core import urlresolvers
 from django.db import models
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
@@ -187,109 +188,11 @@ class Sound(SocialModel):
     
     def process(self, force=False):
         if force or self.processing_state != "OK":
-            from utils.text import slugify
-            import tempfile, os.path, os
-            import utils.audioprocessing.processing as audioprocessing
-            from utils.filesystem import md5file
-            
-            def fail(message, error=None):
-                self.processing_log += "--FAIL---------\n" + message + "\n"
-                if error:
-                    self.processing_log += str(error) + "\n----------\n"
-                self.processing_state = "FA"
-                self.save()
-                
-            def win(message):
-                self.processing_log += "--WIN----------\n" + message + "\n"
-            
-            def cleanup(files):
-                for filename in files:
-                    try:
-                        os.unlink(filename)
-                    except:
-                        pass
-            
-            # only keep the last processing attempt
-            self.processing_log = "" 
-            self.processing_date = datetime.now()
-            original_filename = os.path.splitext(os.path.basename(self.original_filename))[0]
-            self.base_filename_slug = "%d__%s__%s" % (self.id, slugify(self.user.username), slugify(original_filename))
-            self.save()
-            paths = self.paths()
-
-            if not os.path.exists(self.original_path):
-                fail("the file to be processed isn't there")
-                return False
-            else:
-                win("found the file")
-            
-            # md5
-            #self.md5 = md5file(self.original_path)
-            #self.save()
-            
-            # get basic info
-            try:
-                audio_info = audioprocessing.audio_info(self.original_path)
-                win("got the audio info")
-            except Exception, e:
-                fail("audio information extraction has failed", e)
-                return False
-            
-            self.samplerate = audio_info["samplerate"]
-            self.bitrate = audio_info["bitrate"]
-            self.bitdepth = audio_info["bits"]
-            self.channels = audio_info["channels"]
-            self.duration = audio_info["duration"]
-            self.type = audio_info["type"]
-            self.save()
-            
-            # convert to wave file
-            tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(self.id))
-            try:
-                audioprocessing.convert_to_wav(self.original_path, tmp_wavefile)
-                win("converted to wave file: " + tmp_wavefile)
-            except Exception, e:
-                fail("conversion to wave file has failed", e)
-                return False
-            
-            # create preview
-            try:
-                mp3_path = os.path.join(settings.DATA_PATH, paths["preview_path"])
-                os.makedirs(os.path.dirname(mp3_path))
-                audioprocessing.convert_to_mp3(tmp_wavefile, mp3_path)
-                win("created mp3: " + mp3_path)
-            except Exception, e:
-                cleanup([tmp_wavefile])
-                fail("conversion to mp3 has failed", e)
-                return False
-            
-            try:
-                waveform_path_m = os.path.join(settings.DATA_PATH, paths["waveform_path_m"])
-                spectral_path_m = os.path.join(settings.DATA_PATH, paths["spectral_path_m"])
-                audioprocessing.create_wave_images(tmp_wavefile, waveform_path_m, spectral_path_m, 120, 71, 2048)
-                win("created png, medium size: " + waveform_path_m)
-            except Exception, e:
-                cleanup([tmp_wavefile])
-                fail("conversion to mp3 has failed", e)
-                return False
-
-            try:
-                waveform_path_l = os.path.join(settings.DATA_PATH, paths["waveform_path_l"])
-                spectral_path_l = os.path.join(settings.DATA_PATH, paths["spectral_path_l"])
-                audioprocessing.create_wave_images(tmp_wavefile, waveform_path_l, spectral_path_l, 900, 201, 2048)
-                win("created png, large size: " + waveform_path_l)
-            except Exception, e:
-                cleanup([tmp_wavefile])
-                fail("conversion to mp3 has failed", e)
-                return False
-
-            cleanup([tmp_wavefile])
-            self.processing_state = "OK"
-            self.save()
-            
+            from utils.audioprocessing.freesound_audio_processing import process
+            return process(self)
+        else:
             return True
-            # create png SMALL
-                
+            
     @models.permalink
     def get_absolute_url(self):
         return ('sound', (smart_unicode(self.id),))

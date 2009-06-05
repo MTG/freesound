@@ -123,10 +123,15 @@ FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
 SOUND_COMMENTS_PER_PAGE = 5
 
+# data path, where all files should go to
+DATA_PATH = '/Users/bram/Development/nightingale/freesound/media/data/'
+os.path.join(os.path.dirname(__file__), 'media/data/')
+
+import logging.config
+logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'freesound.ini'))
+
 # leave at bottom starting here!
 from local_settings import *
-
-print "TODO: create logging sinks in settings.py"
 
 TEMPLATE_DEBUG = DEBUG
 

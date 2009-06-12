@@ -83,9 +83,3 @@ class Subscription(models.Model):
         
     def __unicode__(self):
         return u"%s subscribed to %s" % (self.subscriber, self.thread)
-
-    # A
-    # B > notify A, set Subscription passive
-    # C > notify B, set subscription passive
-    # B comes to see > set subscription acive
-    # D > notify B and C

@@ -1,3 +1,4 @@
+------------------------------------------------------------------------------------------------------------------------------------------
 -- on post creation, increment counters for user, thread and post
 -- also set the "last_post_id" on the forum and thread
 CREATE OR REPLACE FUNCTION forum_post_insert() RETURNS TRIGGER AS
@@ -14,6 +15,7 @@ LANGUAGE plpgsql;
 DROP TRIGGER forum_post_insert ON forum_post;
 CREATE TRIGGER forum_post_insert AFTER INSERT ON forum_post FOR EACH ROW EXECUTE PROCEDURE forum_post_insert();
 
+------------------------------------------------------------------------------------------------------------------------------------------
 -- on post deletion, decrement counters for user, thread and post
 -- ignore the "last post" link.
 CREATE OR REPLACE FUNCTION forum_post_delete() RETURNS TRIGGER AS
@@ -32,6 +34,7 @@ CREATE TRIGGER forum_post_delete AFTER DELETE ON forum_post FOR EACH ROW EXECUTE
 
 -- posts will never be changed from thread, so we don't need an update trigger for them
 
+------------------------------------------------------------------------------------------------------------------------------------------
 -- on thread insert, increment thread-counter for forum
 CREATE OR REPLACE FUNCTION forum_thread_insert() RETURNS TRIGGER AS
 $BODY$
@@ -45,6 +48,7 @@ LANGUAGE plpgsql;
 DROP TRIGGER forum_thread_insert ON forum_thread;
 CREATE TRIGGER forum_thread_insert AFTER INSERT ON forum_thread FOR EACH ROW EXECUTE PROCEDURE forum_thread_insert();
 
+------------------------------------------------------------------------------------------------------------------------------------------
 -- on thread delete, decrement thread-counter for forum
 CREATE OR REPLACE FUNCTION forum_thread_delete() RETURNS TRIGGER AS
 $BODY$
@@ -58,6 +62,7 @@ LANGUAGE plpgsql;
 DROP TRIGGER forum_thread_delete ON forum_thread;
 CREATE TRIGGER forum_thread_delete AFTER DELETE ON forum_thread FOR EACH ROW EXECUTE PROCEDURE forum_thread_delete();
 
+------------------------------------------------------------------------------------------------------------------------------------------
 -- on thread update, check the forum_id. If it has changed, update counts!
 -- careful with deadlocks, see
 -- http://www.depesz.com/index.php/2007/09/12/objects-in-categories-counters-with-triggers/
@@ -82,6 +87,7 @@ LANGUAGE 'plpgsql';
 DROP TRIGGER forum_thread_update ON forum_thread;
 CREATE TRIGGER forum_thread_update AFTER UPDATE ON forum_thread FOR EACH ROW EXECUTE PROCEDURE forum_thread_update();
 
+------------------------------------------------------------------------------------------------------------------------------------------
 -- on sound update, increment the counters for the sound's user
 -- if moderation and processing is ok, increment
 -- if not, decrement
@@ -112,6 +118,7 @@ LANGUAGE 'plpgsql';
 DROP TRIGGER sounds_sound_update ON sounds_sound;
 CREATE TRIGGER sounds_sound_update AFTER UPDATE ON sounds_sound FOR EACH ROW EXECUTE PROCEDURE sounds_sound_update();
 
+------------------------------------------------------------------------------------------------------------------------------------------
 -- on sound delete, decrement sound count for user
 CREATE OR REPLACE FUNCTION sounds_sound_delete() RETURNS TRIGGER AS
 $BODY$
@@ -124,3 +131,27 @@ $BODY$
 LANGUAGE plpgsql;
 DROP TRIGGER forum_post_delete ON forum_post;
 CREATE TRIGGER forum_post_delete AFTER DELETE ON forum_post FOR EACH ROW EXECUTE PROCEDURE forum_post_delete();
+
+------------------------------------------------------------------------------------------------------------------------------------------
+-- on rating insert, update or delete the sound avg_rating
+CREATE OR REPLACE FUNCTION sound_update_rating() RETURNS TRIGGER AS
+$BODY$
+DECLARE
+    content_type INTEGER;
+BEGIN
+    SELECT id INTO content_type FROM django_content_type WHERE app_label='sounds' AND model='sound';    
+    IF content_type = tmp.content_type_id THEN
+        IF TG_OP = 'INSERT' THEN
+            UPDATE sounds_sound SET num_ratings=num_ratings+1, avg_rating=(SELECT coalesce(avg(rating),0) FROM ratings_rating WHERE content_type_id=tmp.content_type_id AND object_id=tmp.object_id) WHERE sounds_sound.id=NEW.object_id;
+        ELSIF TG_OP = 'DELETE' THEN
+            UPDATE sounds_sound SET num_ratings=num_ratings-1, avg_rating=(SELECT coalesce(avg(rating),0) FROM ratings_rating WHERE content_type_id=tmp.content_type_id AND object_id=tmp.object_id) WHERE sounds_sound.id=OLD.object_id;
+        ELSE -- UPDATE
+            UPDATE sounds_sound SET avg_rating=(SELECT coalesce(avg(rating),0) FROM ratings_rating WHERE content_type_id=tmp.content_type_id AND object_id=tmp.object_id) WHERE sounds_sound.id=NEW.object_id;
+        END IF;
+    END IF;
+    RETURN tmp;
+END;
+$BODY$
+LANGUAGE plpgsql;
+DROP TRIGGER ratings_post_everything ON ratings_rating;
+CREATE TRIGGER ratings_post_everything AFTER DELETE OR UPDATE OR INSERT ON ratings_rating FOR EACH ROW EXECUTE PROCEDURE sound_update_rating();

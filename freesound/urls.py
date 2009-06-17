@@ -31,11 +31,11 @@ urlpatterns = patterns('',
 
     url(r'^search/$', 'sounds.views.search', name='sounds-search'),
     
+    (r'^ratings/', include('ratings.urls')),
     (r'^help/', include('wiki.urls')),
     (r'^forum/', include('forum.urls')),
     (r'^geotags/', include('geotags.urls')),
     (r'^account/', include('accounts.urls')),
-    (r'^helpdesk/', include('helpdesk.urls')),
     
     url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
 

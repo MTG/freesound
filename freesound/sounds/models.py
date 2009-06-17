@@ -111,7 +111,9 @@ class Sound(SocialModel):
     
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
+    
     avg_rating = models.FloatField(default=0)
+    num_ratings = models.PositiveIntegerField(default=0)
     
     objects = SoundManager()
     
@@ -185,6 +187,9 @@ class Sound(SocialModel):
     
     def duration_ms(self):
         return self.duration * 1000
+    
+    def rating_percent(self):
+        return int(self.avg_rating*10)
     
     def process(self, force=False):
         if force or self.processing_state != "OK":

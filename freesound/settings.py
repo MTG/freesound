@@ -51,7 +51,6 @@ INSTALLED_APPS = (
     'tags',
     'forum',
     'wiki',
-    'helpdesk',
 )
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
@@ -122,6 +121,8 @@ FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
 SOUND_COMMENTS_PER_PAGE = 5
+SOUNDS_PER_PAGE = 15
+PACKS_PER_PAGE = 50
 
 # data path, where all files should go to
 DATA_PATH = '/Users/bram/Development/nightingale/freesound/media/data/'

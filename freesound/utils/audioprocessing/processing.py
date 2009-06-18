@@ -21,11 +21,11 @@
 #   Bram de Jong <bram.dejong at domain.com where domain in gmail>
 
 from PIL import ImageFilter, ImageChops, Image, ImageDraw, ImageColor
-from django.utils import simplejson
 from functools import partial
 import math
 import numpy
 import os
+import re
 import scikits.audiolab as audiolab
 import subprocess
 import sys
@@ -492,24 +492,91 @@ def audio_info(input_filename):
     
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
-    
-    try:
-        command = [os.path.join(os.path.dirname(__file__), "extract_audio_data.php"), input_filename]
+
+    if not input_filename.lower().endswith(".mp3"):
+        command = ["sndfile-info", input_filename]
+    else:
+        command = ["lame", "--decode", input_filename, "/dev/null"]
         
+    try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         (stdout, stderr) = process.communicate()
     except OSError:
-        raise AudioProcessingException, "extract_audio_data.php not found"
-    
+        raise AudioProcessingException, "can not find audio-info extraction program"
+
     if process.returncode != 0:
         raise AudioProcessingException, stdout
-
-    parsed = simplejson.loads(stdout)
     
-    if "error" in parsed:
-        raise AudioProcessingException, "extract_audio_data error: " + "\n".join(parsed["error"])
+    stdout = stdout.replace("\n", " ")
+    
+    if not input_filename.lower().endswith(".mp3"):
+        # parse sndfile info
+        bitdepth = None
+        
+        m = re.match(r".*Bit Width\s+: (\d+).*", stdout)
+        try:
+            bitdepth = int(m.group(1))
+        except:
+            pass
+        
+        m = re.match(r".+Sample Rate : (\d+).+", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in sndfile-info, no Sample Rate"
+        samplerate = int(m.group(1))
+        
+        m = re.match(r".*Channels    : (\d+).*", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in sndfile-info, no Channels"
+        channels = int(m.group(1))
+        
+        m = re.match(r".*Duration    : (?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>[\d\.]+).*", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in sndfile-info, no duration"
+        duration = int(m.group("hours"))*60*60 + int(m.group("minutes"))*60 + float(m.group("seconds"))
+    else:
+        bitdepth = None
+        
+        m = re.match(r".*(?P<channels>\d) channel.*", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in lame, no channels"
+        channels = int(m.group("channels"))
+        
+        m = re.match(r".*\((?P<samplerate>[\d\.]+) kHz.*", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in lame, no kHz"
+        samplerate = float(m.group("samplerate"))*1000
+        
+        skip_start = 0
+        try:
+            m = re.match(r".*skipping initial (?P<skip_start>\d+) samples.*", stdout)
+            skip_start = int(m.group("skip_start"))
+        except:
+            pass
+            
+        skip_end = 0
+        try:
+            m = re.match(r".*skipping final (?P<skip_end>\d+) samples.*", stdout)
+            skip_end = int(m.group("skip_end"))
+        except:
+            pass
 
-    return dict(samplerate=parsed["sample_rate"], bitrate=parsed["avg_bit_rate"], bits=parsed["bits_per_sample"], channels=parsed["channels"], type=parsed["format_name"], duration=parsed["playing_time"])
+        m = re.match(r".*Frame#  \d+\/(?P<frames>\d+).*", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in lame, no frames"
+        frames = int(m.group("frames"))
+        
+        duration = ((frames*1152) - skip_end - skip_start)/samplerate
+    
+    bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration
+
+    sound_type = os.path.splitext(input_filename.lower())[1].strip(".")
+
+    if sound_type == "fla":
+        sound_type = "flac"
+    elif sound_type == "aif":
+        sound_type = "aiff"
+
+    return dict(samplerate=samplerate, bitrate=bitrate, bits=bitdepth, channels=channels, type=sound_type, duration=duration)
 
 
 def convert_to_mp3(input_filename, output_filename):

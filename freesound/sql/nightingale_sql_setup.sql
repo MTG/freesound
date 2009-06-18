@@ -42,3 +42,8 @@ where t.user_id=accounts_profile.user_id;
 update sounds_sound set avg_rating=t.avg_rating, num_ratings=t.num_ratings
 from ( select object_id as sound_id, avg(rating) as avg_rating, count(*) as num_ratings from ratings_rating where content_type_id=(select id from django_content_type where app_label='sounds' and model='sound') group by object_id ) as t
 where t.sound_id=sounds_sound.id;
+
+-- correct num_comments for all sounds
+update sounds_sound set num_comments=t.num_comments
+from ( select object_id as sound_id, count(*) as num_comments from comments_comment where content_type_id=(select id from django_content_type where app_label='sounds' and model='sound') group by object_id ) as t
+where t.sound_id=sounds_sound.id;

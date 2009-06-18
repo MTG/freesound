@@ -6,4 +6,5 @@ def tags(request, multiple_tags=None):
     else:
         multiple_tags = []
     
+    multiple_tags = filter(lambda x:x, multiple_tags)
     pass

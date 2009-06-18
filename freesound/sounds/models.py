@@ -77,7 +77,7 @@ class Sound(SocialModel):
         ('wav', 'Wave'),
         ('ogg', 'Ogg Vorbis'),
         ('aif', 'AIFF'),
-        ('mp3', 'Mpeg II layer 3'),
+        ('mp3', 'Mp3'),
         ('flac', 'Flac')
     )
     type = models.CharField(db_index=True, max_length=4, choices=SOUND_TYPE_CHOICES)

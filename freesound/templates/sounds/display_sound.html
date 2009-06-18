@@ -17,14 +17,14 @@
 			<li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
 		</ul>
 	</div>
-	<p class="description">{{sound.description|striptags|truncatewords:30}}</p>
+	<p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
 </div>
 
 <div class="sample_information">
 	<a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
 	<span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
 	<span class="download_count">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</span><br />
-	<a class="comments" href="{% url sound sound.user.username sound.id %}">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
+	<a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 </div>
 {% endwith %}
 {% cache 600 display_sound sound_id %}

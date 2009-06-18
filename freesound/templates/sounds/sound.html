@@ -86,11 +86,12 @@
 		</div>
 	</div> <!-- comments_container -->
 	
-	<form>
+	<form method="POST" action=".#comments" id="sound_comment_form">
 		<fieldset>
 			<h4 id="leave_a_comment">Leave a comment:</h4>
-			<textarea id="comment_textarea"></textarea><br />
-			<input type="submit" value="Post comment"></input>
+			{{form}}
+			<!--<textarea name="comment" id="comment_textarea"></textarea><br />-->
+			<input id="sound_comment_submit" type="submit" value="Post comment"></input>
 		</fieldset>
 	</form>
 

@@ -1,12 +1,15 @@
+from comments.models import Comment
+from django import forms
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.paginator import Paginator, InvalidPage
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forum.models import Post
 from sounds.models import Sound
-from comments.models import Comment
+from utils.forms import HtmlCleaningCharField
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
@@ -32,6 +35,17 @@ def sound(request, username, sound_id):
     content_type = ContentType.objects.get_for_model(Sound)
 
     paginator = Paginator(Comment.objects.filter(content_type=content_type, object_id=sound_id), settings.SOUND_COMMENTS_PER_PAGE)
+
+    class CommentForm(forms.Form):
+        comment = HtmlCleaningCharField(widget=forms.Textarea)
+    
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            sound.comments.add(Comment(content_object=sound, user=request.user, comment=form.cleaned_data["comment"]))
+            return HttpResponseRedirect(sound.get_absolute_url())
+    else:
+        form = CommentForm()
 
     try:
         current_page = int(request.GET.get("page", 1))

@@ -673,7 +673,8 @@ ul#comments {
 #leave_a_comment {
 	margin-bottom: 15px;
 }
-#comment_textarea {
+
+#sound_comment_form #id_comment {
 	width: 530px;
 	height: 120px;
 	margin-bottom: 10px;

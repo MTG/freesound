@@ -2,8 +2,10 @@ google.load("prototype", "1.6.0.3");
 google.load("swfobject", "2.2")
 google.setOnLoadCallback(function() {
     setupStarRatings();
+    switchFormSubmits()
 });
 
+// set up the rating stars to use ajax
 function setupStarRatings()
 {
     $$("ul.star-rating > li > a").each(function (element) {
@@ -26,4 +28,13 @@ function setupStarRatings()
             event.stop();
         });
     });
+}
+
+function switchFormSubmits()
+{
+    if (!isLoggedIn)
+    {
+        $('sound_comment_submit').value = "Please log in to comment";
+        $('sound_comment_submit').disable();
+    }
 }

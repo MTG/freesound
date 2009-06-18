@@ -200,7 +200,7 @@ class Sound(SocialModel):
             
     @models.permalink
     def get_absolute_url(self):
-        return ('sound', (smart_unicode(self.id),))
+        return ('sound', (self.user.username, smart_unicode(self.id),))
     
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

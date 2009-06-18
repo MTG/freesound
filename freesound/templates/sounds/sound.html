@@ -2,6 +2,7 @@
 
 {% load paginator %}
 {% load util %}
+{% load ratings %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
 
@@ -19,11 +20,15 @@
 <div id="single_sample_header">
 	{% if sound.pack %}<a href="{% url pack username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
 	<div class="stars">
-		<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
-		<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
-		<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
-		<a href="#"><img src="{{media_url}}images/star_on.png" width="13" height="13" alt="" /></a>
-		<a href="#"><img src="{{media_url}}images/star_off.png" width="13" height="13" alt="" /></a>
+		<ul class="star-rating">
+			<li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
+			<li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star">1</a></li>
+			<li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars">2</a></li>
+			<li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars">3</a></li>
+			<li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars">4</a></li>
+			<li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
+		</ul>
+		({{sound.num_ratings}})
 	</div>
 </div>
 

@@ -5,7 +5,7 @@ from models import Rating
 from django.db import IntegrityError
 
 @login_required
-def rate(request, content_type_id, object_id, rating):
+def add(request, content_type_id, object_id, rating):
     rating = int(rating)
     if rating in range(1,6):
         # in order to keep the ratings compatible with freesound 1, we multiply by two...

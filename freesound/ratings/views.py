@@ -17,4 +17,4 @@ def rate(request, content_type_id, object_id, rating):
             rating_object.save()
         except Rating.DoesNotExist:
             rating_object = Rating.objects.create(user=request.user, object_id=object_id, content_type=content_type, rating=rating)
-    return HttpResponse("all ok")
+    return HttpResponse(Rating.objects.filter(object_id=object_id, content_type=content_type).count()) 

@@ -11,17 +11,19 @@ function setupStarRatings()
             if (!isLoggedIn)
             {
                 element.href = loginUrl;
+                return;
             }
-            else
-            {
-                new Ajax.Request(element.href, {
-                    method: 'get',
-                    onSuccess: function(transport) {
-                        alert("voted");
-                    }
-                });
-                event.stop();
-            }
+
+            new Ajax.Request(element.href, {
+                method: 'get',
+                onSuccess: function(transport) {
+                    var numRatingsElement = $$("div.stars > span.numratings").first();
+                    if (numRatingsElement)
+                        numRatingsElement.update("(" + transport.responseText + ")");
+                }
+            });
+            
+            event.stop();
         });
     });
 }

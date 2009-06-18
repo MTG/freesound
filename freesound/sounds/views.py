@@ -8,8 +8,9 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forum.models import Post
-from sounds.models import Sound
+from sounds.models import Sound, Pack
 from utils.forms import HtmlCleaningCharField
+from django.contrib.auth.models import User
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
@@ -77,8 +78,23 @@ def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     pass
 
-def pack(request, pack_id):
-    pass
+def pack(request, username, pack_id):
+    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
+
+    paginator = Paginator(Sound.objects.filter(pack=pack, moderation_state="OK", processing_state="OK"), settings.SOUNDS_PER_PAGE)
+
+    try:
+        current_page = int(request.GET.get("page", 1))
+    except ValueError:
+        current_page = 1
+
+    try:
+        page = paginator.page(current_page)
+    except InvalidPage:
+        page = paginator.page(1)
+        current_page = 1
+
+    return render_to_response('sounds/pack.html', locals(), context_instance=RequestContext(request))
 
 def remixed(request):
      pass
@@ -89,8 +105,25 @@ def random(request):
 def packs(request):
     pass
 
+from django.db.models import Count, Max
+
 def packs_for_user(request, username):
-    pass
+    user = get_object_or_404(User, username__iexact=username)
+
+    paginator = Paginator(Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("name"), settings.PACKS_PER_PAGE)
+
+    try:
+        current_page = int(request.GET.get("page", 1))
+    except ValueError:
+        current_page = 1
+
+    try:
+        page = paginator.page(current_page)
+    except InvalidPage:
+        page = paginator.page(1)
+        current_page = 1
+
+    return render_to_response('sounds/packs.html', locals(), context_instance=RequestContext(request))
 
 def search(request):
     pass

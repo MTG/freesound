@@ -104,8 +104,14 @@ class AudioInfo {
         //$this->result['md5']             = @$this->info['md5_file'];
         $this->result['format_name'] = @$this->info['fileformat'];
 
+        echo "format name" . $this->result['format_name'];
+
         if ($this->result['format_name'] == "riff")
-             $this->result['format_name'] = $this->info['audio']['dataformat'];
+        {
+            echo "dataformat" . $this->info['audio']['dataformat'];
+            print_r($this->info);
+            $this->result['format_name'] = $this->info['audio']['dataformat'];
+        }
 
 		return $this->result;
 	}

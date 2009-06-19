@@ -25,6 +25,9 @@ while True:
     for row in rows:
         user_id, user_active, username, user_password, user_regdate, user_lastvisit, user_email = row
         
+        if user_id == 16967:
+            continue
+        
         username = smart_character_decoding(username)
         user_email = smart_character_decoding(user_email)
         
@@ -56,6 +59,6 @@ drop table TEMP_TABLE;
 
 update auth_user set is_staff=true, is_superuser=true where username='Bram';
 
-alter table auth_user add constraint auth_user_username_key unique(username);
+create unique index auth_user_username_upper_key ON auth_user ((upper(username)));
 vacuum analyze auth_user;
-""" % output_filename        
+""" % output_filename

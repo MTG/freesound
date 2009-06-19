@@ -1392,3 +1392,43 @@ a.donation_button:hover {
 /* for an inline rater */
 .inline-rating{
 }
+
+.list_order
+{
+	list-style:none;
+}
+
+.list_order li {
+	display: inline;
+}
+
+.list_order li a {
+	border: 1px solid;
+	padding: 5px;
+}
+
+.list_order li a.selected {
+	border: 2px solid;
+	padding: 5px;
+	afont-weight: bold;
+}
+
+p.about
+{
+    font-style:italic;
+    padding: 20px;
+    width: 400px;
+    background-color: #F6F6F6;
+}
+
+p.tagcloud
+{
+    padding: 20px;
+    width: 400px;
+    background-color: #F6F6F6;
+}
+
+p.tagcloud a
+{
+    padding: 2px;
+}

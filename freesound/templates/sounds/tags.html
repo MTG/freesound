@@ -1,0 +1,31 @@
+{% extends "sounds/_section.html" %}
+
+{% load display_sound %}
+{% load paginator %}
+
+{% block title %}tags{% endblock title %}
+
+{% block section_content %}
+<h1>Tags</h1>
+{% if multiple_tags %}
+    <p>
+    	You are seeing sounds tagged with:
+    	{% for tag in multiple_tags %}
+    	    <a href="{% url tags tag %}">{{tag}}</a>
+    	{% endfor %}
+    </p>
+
+    {% show_paginator paginator page current_page request %}
+    
+    {% for sound in page.object_list %}
+    <div class="sample_player_small">
+    	{% display_sound sound %}
+    </div>
+    {% endfor %}
+    
+    {% show_paginator paginator page current_page request %}
+{% else %}
+    show complete tagcloud
+{% endif %}
+
+{% endblock %}

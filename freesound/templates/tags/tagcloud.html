@@ -1,0 +1,3 @@
+{% for tag in tags %}
+<span style="font-size:{{tag.size}}em"><a href="{% url tags tag.tag %}">{{tag.tag}}</a></span>
+{% endfor %}

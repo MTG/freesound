@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.encoding import smart_unicode
 from general.models import SocialModel
 from geotags.models import GeoTag
+from utils.sql import DelayedQueryExecuter
 
 class Profile(SocialModel):
     user = models.OneToOneField(User)
@@ -28,5 +29,23 @@ class Profile(SocialModel):
     def get_absolute_url(self):
         return ('account', (smart_unicode(self.user.username),))
     
+    def get_tagcloud(self):
+        return DelayedQueryExecuter("""
+            select
+                tags_tag.name as tag,
+                X.c as count
+            from (
+                select
+                    tag_id,
+                    count(*) as c
+                from tags_taggeditem
+                where user_id=%d
+                group by tag_id
+                order by c
+                desc limit 10
+            ) as X
+            left join tags_tag on tags_tag.id=X.tag_id
+            order by tags_tag.name;""" % self.user.id)
+
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

@@ -7,11 +7,18 @@
 {% block section_content %}
 <h1>Packs by <a href="{% url account user.username %}">{{user.username}}</a></h1>
 
+<h3>Orderer by</h3>
+<ul class="list_order">
+<li><a href="?order=name" {% ifequal order "name" %}class="selected"{% endifequal %}>name</a></li>
+<li><a href="?order=-last_update" {% ifequal order "-last_update" %}class="selected"{% endifequal %}>last update</a></li>
+<li><a href="?order=-num_sounds" {% ifequal order "-num_sounds" %}class="selected"{% endifequal %}>number of sounds</a></li>
+</ul>
+
 {% show_paginator paginator page current_page request %}
 
 <ul>
 {% for pack in page.object_list %}
-	<li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>), <span class="pack_update">last updated {{pack.last_update|timesince}} ago<span></li>
+	<li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
 {% endfor %}
 </ul>
 

@@ -1,16 +1,17 @@
 from comments.models import Comment
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.paginator import Paginator, InvalidPage
-from django.http import HttpResponseRedirect
+from django.db.models import Count, Max
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forum.models import Post
 from sounds.models import Sound, Pack
 from utils.forms import HtmlCleaningCharField
-from django.contrib.auth.models import User
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
@@ -105,12 +106,15 @@ def random(request):
 def packs(request):
     pass
 
-from django.db.models import Count, Max
-
 def packs_for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
 
-    paginator = Paginator(Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("name"), settings.PACKS_PER_PAGE)
+    order = request.GET.get("order", "name")
+    
+    if order not in ["name", "-last_update", "-created", "-num_sounds"]:
+        order = "name"
+    
+    paginator = Paginator(Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order), settings.PACKS_PER_PAGE)
 
     try:
         current_page = int(request.GET.get("page", 1))

@@ -1,6 +1,7 @@
 {% load cache %}
 {% load util %}
 {% load ratings %}
+{% cache 600 display_sound sound_id %}
 {% with sound.0 as sound %}
 <div class="sample_player">
 	<div class="small_player">
@@ -27,5 +28,4 @@
 	<a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 </div>
 {% endwith %}
-{% cache 600 display_sound sound_id %}
 {% endcache %}

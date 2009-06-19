@@ -136,7 +136,7 @@ from local_settings import *
 
 TEMPLATE_DEBUG = DEBUG
 
-if not DEBUG:
+if DEBUG:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)
     

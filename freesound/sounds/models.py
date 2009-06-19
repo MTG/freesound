@@ -166,7 +166,8 @@ class Sound(SocialModel):
         return self.type == "ogg" or self.type == "flac" 
     
     def duration_warning(self):
-        return self.duration > 60
+        # warn from 5 minutes and more
+        return self.duration > 60*5
     
     def filesize_warning(self):
         # warn for 50MB and up

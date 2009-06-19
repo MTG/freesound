@@ -32,7 +32,10 @@ def sounds(request):
     pass
 
 def sound(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    try:
+        sound = Sound.objects.select_related("license", "user").get(user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    except Sound.DoesNotExist:
+        raise Http404
 
     content_type = ContentType.objects.get_for_model(Sound)
 

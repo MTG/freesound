@@ -17,6 +17,7 @@
     ipython
     psycopg2
     python-memcached
+	python-cjson
     pycrypto
     pygments
 	mysql-python ( only for the DB conversion)

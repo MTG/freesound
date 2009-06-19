@@ -418,7 +418,7 @@ class Solr(object):
         return self.decoder.decode(self._request(query_string=query_string))
     
     def add(self, docs):
-        self._post(self.encoder.encode(docs))
+        self._request(self.encoder.encode(docs))
         if self.auto_commit:
             self.commit()
             

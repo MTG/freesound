@@ -31,7 +31,7 @@ def get_last_action_time(user):
         cache.set(cache_key, now, 5*60)
     
     return last_action_time
-            
+
 def context_extra(request):
     return_dict = {'data_url': settings.DATA_URL, 'media_url': settings.MEDIA_URL, 'request': request}
     

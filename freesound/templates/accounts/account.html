@@ -1,0 +1,80 @@
+{% extends "accounts/_section.html" %}
+
+{% load display_sound %}
+{% load tagcloud %}
+
+{% block title %}{{user.username}}{% endblock %}
+
+{% block onunload %}GUnload(){% endblock %}
+
+{% block head %}
+    {{ block.super }}
+    <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{google_api_key}}" type="text/javascript"></script>
+{% endblock head %}
+
+{% block section_content %}
+    <h1>{{user.username}}</h1>
+    {% if user.profile.about %}
+    <p class="about">
+        {{user.profile.about|safe}}
+    </p>
+    {% endif %}
+    
+    <ul>
+        <li><a href="{% url messages-new user.username %}">Send a private message to this user</a></li>
+        {% if user.profile.home_page %}
+        <li>home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
+        {% endif %}
+        <li>Has a been a user for {{user.date_joined|timesince}}</li>
+        <li>Number of sounds: {{user.profile.num_sounds}}</li>
+        <li>Number of forum posts: {{user.profile.num_posts}}</li>
+    </ul>
+    
+    <p class="tagcloud">
+    {% display_tagcloud user.profile.get_tagcloud %}
+    </p>
+    
+    {% if latest_geotags %}
+    <h3>Latest geotags</h3>
+    <div id="map_canvas" style="width: 400px; height: 300px; border: 1px solid black;"></div>
+    <script type="text/javascript">
+    	var map = new GMap2(document.getElementById("map_canvas"));
+    	map.setUIToDefault();
+    	map.setMapType(G_SATELLITE_MAP);
+    	
+    	var bounds = new GLatLngBounds();
+    
+        {% for geotaged_sound in latest_geotags %}
+        var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
+        bounds.extend(point);
+        var marker = new GMarker(point);
+        GEvent.addListener(marker, "click", function() {
+    		GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
+    			marker.openInfoWindowHtml(data);
+    		});
+    	});
+        map.addOverlay(marker);
+    
+        zoomToBounds(map, bounds);
+    
+        {% endfor %}
+    </script>
+    <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
+    {% endif %}
+    
+    <h3>Latest sounds</h3>
+    {% for sound in latest_sounds %}
+    <div class="sample_player_small">
+    	{% display_sound sound %}
+    </div>
+    {% endfor %}
+    <p><a href="{% url sounds-for-user user.username %}">more...</a></p>
+    
+    <h3>Latest packs</h3>
+    <ul>
+    {% for pack in latest_packs %}
+    	<li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
+    {% endfor %}
+    <ul>
+    <p><a href="{% url packs-for-user user.username %}">more...</a></p>
+{% endblock %}

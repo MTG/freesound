@@ -3,10 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
+from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forms import UploadFileForm, FileChoiceForm, RegistrationForm
+from geotags.models import GeoTag
+from sounds.models import Sound, Pack
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
 from utils.mail import send_mail_template
@@ -68,7 +71,7 @@ def describe(request):
     else:
         form = FileChoiceForm(files.items())
 
-    return render_to_response('accounts/describe.html', { "file_structure": file_structure, "form": form }, context_instance=RequestContext(request))
+    return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
 
 
 @login_required
@@ -81,7 +84,11 @@ def accounts(request):
 
 
 def account(request, username):
-    pass
+    user = get_object_or_404(User, username__iexact=username)
+    latest_sounds = Sound.objects.filter(moderation_state="OK", processing_state="OK", user=user)[0:settings.SOUNDS_PER_PAGE]
+    latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
+    latest_geotags = Sound.objects.filter(moderation_state="OK", processing_state="OK", user=user).exclude(geotag=None)[0:10]
+    return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request)) 
 
 
 def handle_uploaded_file(request, f):

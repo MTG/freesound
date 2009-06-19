@@ -29,7 +29,7 @@
  http://wiki.apache.org/solr/SchemaXml
 -->
 
-<schema name="freesound" version="1.1">
+<schema name="example" version="1.1">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.1" is Solr's version number for the schema syntax and semantics.  It should
@@ -242,9 +242,9 @@
              
              http://java.sun.com/j2se/1.5.0/docs/api/java/util/regex/package-summary.html
           -->
-        <!-- <filter class="solr.PatternReplaceFilterFactory"
+        <filter class="solr.PatternReplaceFilterFactory"
                 pattern="([^a-z])" replacement="" replace="all"
-        />-->
+        />
       </analyzer>
     </fieldType>
 
@@ -256,40 +256,133 @@
  </types>
 
 
-	<fields>
-		<field name="id" type="integer" indexed="true" stored="true" required="true" />
-		<field name="pack" type="text" indexed="true" stored="true" required="false" />
-		<field name="pack_original" type="string" indexed="true" stored="true" />
-		<field name="pack_id" type="integer" indexed="true" stored="true" required="true" />
-		<field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
-		<field name="user_id" type="integer" indexed="true" stored="true" required="true" />
-		<field name="created" type="date" indexed="true" stored="true" required="true" />
-		<field name="filename" type="text" indexed="true" stored="true" required="true" />
-		<field name="downloads" type="slong" indexed="true" stored="true" required="true" />
-		<field name="votes" type="slong" indexed="true" stored="true" required="true" />
-		<field name="rating" type="sfloat" indexed="true" stored="true" required="true" />
-		<field name="url_image" type="string" indexed="false" stored="true" required="true" />
-		<field name="url_preview" type="string" indexed="false" stored="true" required="true" />
-		<field name="is_remix" type="boolean" indexed="true" stored="true" required="true" />
-		<field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
-		<field name="type" type="alphaOnlySort" indexed="true" stored="true" required="true" />
-		<field name="samplerate" type="sint" indexed="true" stored="true" required="true" />
-		<field name="bitrate" type="sint" indexed="true" stored="true" required="true" />
-		<field name="bitdepth" type="sint" indexed="true" stored="true" required="true" />
-		<field name="channels" type="sint" indexed="true" stored="true" required="true" />
-		<field name="duration" type="sdouble" indexed="true" stored="true" required="true" />
-		<field name="filesize" type="slong" indexed="true" stored="true" required="true" />
-		<field name="description" type="text" indexed="true" stored="true" required="false" />
-		<field name="tag" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/>
-		<field name="comment" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
-	</fields>
-	
-	<copyField source="pack" dest="pack_original" />
-	
-	<uniqueKey>id</uniqueKey>
-	
-	<defaultSearchField>description</defaultSearchField>
-	
-	<solrQueryParser defaultOperator="AND"/>
+ <fields>
+   <!-- Valid attributes for fields:
+     name: mandatory - the name for the field
+     type: mandatory - the name of a previously defined type from the <types> section
+     indexed: true if this field should be indexed (searchable or sortable)
+     stored: true if this field should be retrievable
+     compressed: [false] if this field should be stored using gzip compression
+       (this will only apply if the field type is compressable; among
+       the standard field types, only TextField and StrField are)
+     multiValued: true if this field may contain multiple values per document
+     omitNorms: (expert) set to true to omit the norms associated with
+       this field (this disables length normalization and index-time
+       boosting for the field, and saves some memory).  Only full-text
+       fields or fields that need an index-time boost need norms.
+     termVectors: [false] set to true to store the term vector for a given field.
+       When using MoreLikeThis, fields used for similarity should be stored for 
+       best performance.
+   -->
+
+   <field name="id" type="string" indexed="true" stored="true" required="true" /> 
+   <field name="sku" type="textTight" indexed="true" stored="true" omitNorms="true"/>
+   <field name="name" type="text" indexed="true" stored="true"/>
+   <field name="nameSort" type="string" indexed="true" stored="false"/>
+   <field name="alphaNameSort" type="alphaOnlySort" indexed="true" stored="false"/>
+   <field name="manu" type="text" indexed="true" stored="true" omitNorms="true"/>
+   <field name="cat" type="text_ws" indexed="true" stored="true" multiValued="true" omitNorms="true" termVectors="true" />
+   <field name="features" type="text" indexed="true" stored="true" multiValued="true"/>
+   <field name="includes" type="text" indexed="true" stored="true"/>
+
+   <field name="weight" type="sfloat" indexed="true" stored="true"/>
+   <field name="price"  type="sfloat" indexed="true" stored="true"/>
+   <!-- "default" values can be specified for fields, indicating which
+        value should be used if no value is specified when adding a document.
+     -->
+   <field name="popularity" type="sint" indexed="true" stored="true" default="0"/>
+   <field name="inStock" type="boolean" indexed="true" stored="true"/>
+
+   <!-- Some sample docs exists solely to demonstrate the spellchecker
+        functionality, this is the only field they container.
+        Typically you might build the spellchecker of "catchall" type field
+        containing all of the text in each document
+     -->
+   <field name="word" type="string" indexed="true" stored="true"/>
+
+   
+   <!-- catchall field, containing all other searchable text fields (implemented
+        via copyField further on in this schema  -->
+   <field name="text" type="text" indexed="true" stored="false" multiValued="true"/>
+
+   <!-- non-tokenized version of manufacturer to make it easier to sort or group
+        results by manufacturer.  copied from "manu" via copyField -->
+   <field name="manu_exact" type="string" indexed="true" stored="false"/>
+
+   <!-- Here, default is used to create a "timestamp" field indicating
+        When each document was indexed.
+     -->
+   <field name="timestamp" type="date" indexed="true" stored="true" default="NOW" multiValued="false"/>
+   
+   <field name="spell" type="textSpell" indexed="true" stored="true" multiValued="true"/>
+   <!-- Dynamic field definitions.  If a field name is not found, dynamicFields
+        will be used if the name matches any of the patterns.
+        RESTRICTION: the glob-like pattern in the name attribute must have
+        a "*" only at the start or the end.
+        EXAMPLE:  name="*_i" will match any field ending in _i (like myid_i, z_i)
+        Longer patterns will be matched first.  if equal size patterns
+        both match, the first appearing in the schema will be used.  -->
+   <dynamicField name="*_i"  type="sint"    indexed="true"  stored="true"/>
+   <dynamicField name="*_s"  type="string"  indexed="true"  stored="true"/>
+   <dynamicField name="*_l"  type="slong"   indexed="true"  stored="true"/>
+   <dynamicField name="*_t"  type="text"    indexed="true"  stored="true"/>
+   <dynamicField name="*_b"  type="boolean" indexed="true"  stored="true"/>
+   <dynamicField name="*_f"  type="sfloat"  indexed="true"  stored="true"/>
+   <dynamicField name="*_d"  type="sdouble" indexed="true"  stored="true"/>
+   <dynamicField name="*_dt" type="date"    indexed="true"  stored="true"/>
+
+   <dynamicField name="random*" type="random" />
+
+   <!-- uncomment the following to ignore any fields that don't already match an existing 
+        field name or dynamic field, rather than reporting them as an error. 
+        alternately, change the type="ignored" to some other type e.g. "text" if you want 
+        unknown fields indexed and/or stored by default --> 
+   <!--dynamicField name="*" type="ignored" /-->
+   
+ </fields>
+
+ <!-- Field to use to determine and enforce document uniqueness. 
+      Unless this field is marked with required="false", it will be a required field
+   -->
+ <uniqueKey>id</uniqueKey>
+
+ <!-- field for the QueryParser to use when an explicit fieldname is absent -->
+ <defaultSearchField>text</defaultSearchField>
+
+ <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
+ <solrQueryParser defaultOperator="OR"/>
+
+  <!-- copyField commands copy one field to another at the time a document
+        is added to the index.  It's used either to index the same field differently,
+        or to add multiple fields to the same field for easier/faster searching.  -->
+   <copyField source="id" dest="sku"/>
+
+   <copyField source="incubationdate_dt" dest="incubationdate_s"/>
+   <copyField source="cat" dest="text"/>
+   <copyField source="name" dest="text"/>
+   <copyField source="name" dest="nameSort"/>
+   <copyField source="name" dest="alphaNameSort"/>
+   <copyField source="manu" dest="text"/>
+   <copyField source="features" dest="text"/>
+   <copyField source="includes" dest="text"/>
+
+   <copyField source="manu" dest="manu_exact"/>
+
+  <copyField source="name" dest="spell"/>
+
+ <!-- Similarity is the scoring routine for each document vs. a query.
+      A custom similarity may be specified here, but the default is fine
+      for most applications.  -->
+ <!-- <similarity class="org.apache.lucene.search.DefaultSimilarity"/> -->
+ <!-- ... OR ...
+      Specify a SimilarityFactory class name implementation
+      allowing parameters to be used.
+ -->
+ <!--
+ <similarity class="com.example.solr.CustomSimilarityFactory">
+   <str name="paramkey">param value</str>
+ </similarity>
+ -->
+
 
 </schema>

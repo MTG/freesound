@@ -195,27 +195,27 @@
          autowarmCount - the number of entries to prepopulate from
            and old cache.
          -->
-   <filterCache
+    <filterCache
       class="solr.LRUCache"
-      size="65536"
-      initialSize="16384"
-      autowarmCount="16384"/>
+      size="512"
+      initialSize="512"
+      autowarmCount="128"/>
 
    <!-- queryResultCache caches results of searches - ordered lists of
          document ids (DocList) based on a query, a sort, and the range
          of documents requested.  -->
-	<queryResultCache
+    <queryResultCache
       class="solr.LRUCache"
-      size="32768"
-      initialSize="32768"
-      autowarmCount="16384"/>
+      size="512"
+      initialSize="512"
+      autowarmCount="32"/>
 
   <!-- documentCache caches Lucene Document objects (the stored fields for each document).
        Since Lucene internal document ids are transient, this cache will not be autowarmed.  -->
-	<documentCache
+    <documentCache
       class="solr.LRUCache"
-      size="32768"
-      initialSize="32768"
+      size="512"
+      initialSize="512"
       autowarmCount="0"/>
 
     <!-- If true, stored fields that are not requested will be loaded lazily.

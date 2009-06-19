@@ -38,3 +38,18 @@ function switchFormSubmits()
         $('sound_comment_submit').disable();
     }
 }
+
+// ----------GOOGLE MAPS FUNCTION -------------
+function zoomToBounds(map, bounds)
+{
+    var center = bounds.getCenter();
+    var newZoom = map.getBoundsZoomLevel(bounds) - 1;
+    if (map.getZoom() != newZoom)
+    {
+        map.setCenter(center, newZoom);
+    }
+    else
+    {
+        map.panTo(center);
+    }
+}

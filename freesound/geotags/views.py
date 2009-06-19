@@ -10,6 +10,9 @@ from sounds.models import Sound
 def geotags(request):
     pass
 
+def for_user(request, username):
+    pass
+
 def infowindow(request, sound_id):
     try:
         sound = Sound.objects.select_related('user', 'geotag').get(id=sound_id)

@@ -5,3 +5,4 @@ local_settings.py
 .amateras
 audio.log
 web.log
+search.log

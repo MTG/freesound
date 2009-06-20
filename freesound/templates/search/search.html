@@ -1,0 +1,84 @@
+{% extends "sounds/_section.html" %}
+
+{% load display_sound %}
+{% load paginator %}
+{% load search %}
+
+{% block title %}sound search{% endblock title %}
+
+{% block section_content %}
+
+<form id="search_form" method="get" action="{% url sounds-search %}">
+	<fieldset>
+   	<input type="text" name="q" value="{{search_query}}" size="30" />
+   	<input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
+   	<select name="s">
+        <option value="duration desc">Duration (long first)</option>
+        <option value="duration asc">Duration (short first)</option>
+        <option value="created desc">Date added (latest first)</option>
+        <option value="num_downloads desc">Downloads (most first)</option>
+        <option value="rating desc">Rating (highest rated first)</option>
+        <option value="rating asc">Rating (lowest rated first)</option>
+     </select>
+   	<input type="submit" value="search" id="search_submit" />
+	</fieldset>
+</form>
+
+<p id="filter_query_display">
+</p>
+
+<script type="text/javascript">
+    function removeTag(tag)
+    {
+        $("filter_query").value = $F("filter_query").replace(tag, "")
+    }
+    
+    var i = 0;
+    
+    $F("filter_query").scan(/[\w-]+:\"[\w-]+\"/, function (filter) {
+        var filter_id = "filter_" + i++;
+        
+        $('filter_query_display').insert(new Element("a", {id:filter_id, title:"remove this filter"}).update(filter).observe("click", function (event) {
+            removeTag(filter);
+            $(filter_id).remove();
+            event.stop();
+            $("search_form").submit();
+        }))
+    })
+</script>
+
+{% if error %}
+    Failed searching! Please fix your query...
+{% else %}
+<div style="float:right">
+    <h3>tags</h3>
+    {% display_facet "tag" results.facets.tag "cloud" %}
+
+    <h3>type</h3>
+    {% display_facet "type" results.facets.type "list" %}
+
+    <h3>samplerate</h3>
+    {% display_facet "samplerate" results.facets.samplerate "list" %}
+    
+    <h3>bitdepth</h3>
+    {% display_facet "bitdepth" results.facets.bitdepth "list" %}
+
+    <h3>channels</h3>
+    {% display_facet "channels" results.facets.channels "list" %}
+
+    <h3>users</h3>
+    {% display_facet "username" results.facets.username "cloud" %}
+</div>
+
+{% show_paginator paginator page current_page request %}
+
+{% for result in results.docs %}
+<div class="sample_player_small">
+	{% display_sound result.id %}
+</div>
+{% endfor %}
+
+{% show_paginator paginator page current_page request %}
+{% endif %}
+
+{% endblock %}

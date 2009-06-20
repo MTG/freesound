@@ -31,7 +31,7 @@ def search(request):
     
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))
-        paginator = SolrResponseInterpreterPaginator(results)
+        paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
         page = paginator.page(current_page)
         error = False
     except SolrException, e:

@@ -260,7 +260,7 @@
 		<field name="id" type="integer" indexed="true" stored="true" required="true" />
 		<field name="pack" type="text" indexed="true" stored="true" required="false" />
 		<field name="pack_original" type="string" indexed="true" stored="true" />
-		<field name="pack_id" type="integer" indexed="true" stored="true" required="true" />
+		<field name="pack_id" type="integer" indexed="true" stored="true" required="false" />
 		<field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
 		<field name="user_id" type="integer" indexed="true" stored="true" required="true" />
 		<field name="created" type="date" indexed="true" stored="true" required="true" />

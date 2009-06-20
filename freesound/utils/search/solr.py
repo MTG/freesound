@@ -390,7 +390,10 @@ class Solr(object):
             self.conn = httplib.HTTPConnection(self.host, self.port)
 
     def _request(self, query_string="", message=""):
-        path = '%s/select/?%s' % (self.path, query_string)
+        if query_string != "":
+            path = '%s/select/?%s' % (self.path, query_string)
+        else:
+            path = '%s/update' % self.path
         
         if self.verbose:
             print "Connecting to Solr server: %s:%s" % (self.host, self.port)
@@ -414,11 +417,15 @@ class Solr(object):
         
         return response
     
-    def select(self, query_string):
-        return self.decoder.decode(self._request(query_string=query_string))
+    def select(self, query_string, raw=False):
+        if raw:
+            return self._request(query_string=query_string).read()
+        else:
+            return self.decoder.decode(self._request(query_string=query_string))
     
     def add(self, docs):
-        self._request(self.encoder.encode(docs))
+        encoded_docs = self.encoder.encode(docs)
+        self._request(message=encoded_docs)
         if self.auto_commit:
             self.commit()
             
@@ -463,10 +470,7 @@ class SolrResponseInterpreter(object):
         {facet:number, facet:number, ..., None:number}
         """
         for facet, fields in self.facets.items():
-            field_dict = {}
-            for index in range(0, len(fields), 2):
-                field_dict[fields[index]] = fields[index+1]
-            self.facets[facet] = field_dict
+            self.facets[facet] = [(fields[index], fields[index+1]) for index in range(0, len(fields), 2)]
 
         try:
             self.highlighting = response["highlighting"]
@@ -520,6 +524,24 @@ class SolrResponseInterpreter(object):
             print i, "\"%s\"" % d,
         else:
             print i, d,
+
+
+class SolrResponseInterpreterPaginator(object):
+    def __init__(self, interpreter):
+        self.count = interpreter.num_found
+        self.num_pages = interpreter.num_found / interpreter.num_rows if interpreter.num_rows > 0 else 0
+        self.page_range = range(1, self.num_pages + 1)
+        self.interpreter = interpreter
+        
+    def page(self, num):
+        return dict(object_list=self.interpreter.docs,
+                    has_next=self.interpreter.start + self.interpreter.num_rows < self.interpreter.num_found,
+                    has_previous=self.interpreter.start > 0,
+                    has_other_pages=self.interpreter.num_found > self.interpreter.num_rows,
+                    next_page_number=num + 1,
+                    previous_page_number=num - 1,
+                    start_index=self.interpreter.start + 1,
+                    end_index=self.interpreter.start + self.interpreter.num_found)
 
 
 if __name__ == "__main__":

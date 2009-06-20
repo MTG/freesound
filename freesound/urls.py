@@ -30,7 +30,7 @@ urlpatterns = patterns('',
     
     url(r'^contact/', 'support.views.contact', name="contact"),
 
-    url(r'^search/$', 'sounds.views.search', name='sounds-search'),
+    url(r'^search/$', 'search.views.search', name='sounds-search'),
     
     (r'^ratings/', include('ratings.urls')),
     (r'^help/', include('wiki.urls')),

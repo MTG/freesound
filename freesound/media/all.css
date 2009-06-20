@@ -1424,11 +1424,31 @@ p.about
 p.tagcloud
 {
     padding: 20px;
-    width: 400px;
+    width: 300px;
     background-color: #F6F6F6;
 }
 
 p.tagcloud a
 {
     padding: 2px;
+}
+
+#filter_query_display
+{
+    background-color: #F6F6F6;
+    padding: 10px;
+}
+
+#filter_query_display a
+{
+    border: 1px solid #2C74C9;
+    padding: 5px;
+    text-decoration: none;
+    margin: 1px;
+}
+
+#filter_query_display a:hover
+{
+    border: 2px solid #2C74C9;
+    text-decoration: none;
 }

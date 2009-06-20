@@ -23,4 +23,5 @@ def display_tagcloud(tags):
         large_size = 1.8
         lookup = dict(zip(unique_counts, size_generator(small_size, large_size, len(unique_counts))))
         tags = [annotate(tag, size=lookup[tag["count"]]) for tag in tags]
+        print tags
     return {"tags":tags}  

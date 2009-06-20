@@ -1,8 +1,10 @@
 google.load("prototype", "1.6.0.3");
 google.load("swfobject", "2.2")
+
 google.setOnLoadCallback(function() {
     setupStarRatings();
-    switchFormSubmits()
+    switchFormSubmits();
+    setupFaceting();
 });
 
 // set up the rating stars to use ajax
@@ -37,6 +39,18 @@ function switchFormSubmits()
         $('sound_comment_submit').value = "Please log in to comment";
         $('sound_comment_submit').disable();
     }
+}
+
+function setupFaceting()
+{
+    $$(".facet_item").each(function (element) {
+        element.observe("mouseover", function (event) {
+            element.down("span.facet_addremove").show()
+        })
+        element.observe("mouseout", function (event) {
+            element.down("span.facet_addremove").hide()
+        })
+    });
 }
 
 // ----------GOOGLE MAPS FUNCTION -------------

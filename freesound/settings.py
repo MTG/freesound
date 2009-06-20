@@ -51,6 +51,7 @@ INSTALLED_APPS = (
     'tags',
     'forum',
     'wiki',
+    'search',
 )
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)

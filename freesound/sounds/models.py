@@ -199,6 +199,10 @@ class Sound(SocialModel):
         else:
             return True
             
+    def add_to_search_index(self):
+        from utils.search.search import add_sound_to_solr
+        add_sound_to_solr(self)
+
     @models.permalink
     def get_absolute_url(self):
         return ('sound', (self.user.username, smart_unicode(self.id),))

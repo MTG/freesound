@@ -132,9 +132,6 @@ def packs_for_user(request, username):
 
     return render_to_response('sounds/packs.html', locals(), context_instance=RequestContext(request))
 
-def search(request):
-    pass
-
 def for_user(request, username):
     pass
 

@@ -527,22 +527,26 @@ class SolrResponseInterpreter(object):
 
 
 class SolrResponseInterpreterPaginator(object):
-    def __init__(self, interpreter, num_searched):
-        self.count = interpreter.num_found
-        self.num_pages = interpreter.num_found / num_searched + 1 if num_searched > 0 else 0
-        self.page_range = range(1, self.num_pages + 1)
+    def __init__(self, interpreter, num_per_page):
+        self.num_per_page = num_per_page
         self.interpreter = interpreter
-        self.num_searched = num_searched
         
-    def page(self, num):
-        return dict(object_list=self.interpreter.docs,
-                    has_next=self.interpreter.start + self.num_searched < self.interpreter.num_found,
-                    has_previous=self.interpreter.start > 0,
-                    has_other_pages=num > 1 and num <= self.num_pages,
-                    next_page_number=num + 1,
-                    previous_page_number=num - 1,
-                    start_index=self.interpreter.start,
-                    end_index=self.interpreter.start + self.interpreter.num_found)
+        self.count = interpreter.num_found
+
+        self.num_pages = interpreter.num_found / num_per_page + int(interpreter.num_found % num_per_page != 0) 
+        
+        self.page_range = range(1, self.num_pages + 1)
+        
+    def page(self, page_num):
+        object_list = self.interpreter.docs
+        has_next = page_num < self.num_pages
+        has_previous = page_num > 1
+        has_other_pages = has_next or has_previous
+        next_page_number = page_num + 1
+        previous_page_number = page_num - 1
+        #start_index = self.interpreter.start
+        #end_index = self.interpreter.start + self.interpreter.num_found
+        return locals()
 
 
 if __name__ == "__main__":

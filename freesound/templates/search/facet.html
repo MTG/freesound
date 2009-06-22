@@ -2,7 +2,7 @@
  <ul>
     {% for f in facet %}
         {% if f.item %}
-        <li class="facet_item"><a href="{% url sounds-search %}?q={{search_query}}&f={% if filter_query %}{{filter_query}}{% endif %}{{filter}}%3A%22{{f.item}}%22">{{f.item}}</a> ({{f.count}})</li>
+        <li class="facet_item"><a href="{% url sounds-search %}?q={{search_query}}&f={% if filter_query %}{{filter_query}}{% endif %}{{filter}}:%22{{f.item}}%22">{{f.item}}</a> ({{f.count}})</li>
         {% endif %}
     {% endfor %}
 </ul>
@@ -11,7 +11,7 @@
 <p class="tagcloud">
     {% for f in facet %}
         {% if f.item %}
-        <span class="facet_item" style="font-size:{{f.size}}em"><a href="{% url sounds-search %}?q={{search_query}}&f={% if filter_query %}{{filter_query}}{% endif %}{{filter}}%3A%22{{f.item}}%22">{{f.item}}</a></span>
+        <span class="facet_item" style="font-size:{{f.size}}em"><a href="{% url sounds-search %}?q={{search_query}}&f={% if filter_query %}{{filter_query}}{% endif %}{{filter}}:%22{{f.item}}%22">{{f.item}}</a></span>
         {% endif %}
     {% endfor %}
 </p>

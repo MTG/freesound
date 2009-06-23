@@ -23,3 +23,5 @@
 	mysql-python ( only for the DB conversion)
 
 * install getid3 in the php include path
+
+* create the directory /var/log/freesound/ and make sure it's writable by whoever is running the server

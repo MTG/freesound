@@ -11,6 +11,8 @@ logger = logging.getLogger("search")
 def search(request):
     search_query = request.GET.get("q")
     filter_query = request.GET.get("f", "")
+    
+    #"samplerate:[22050 to *]"
 
     sort = request.GET.get("s", None)
     if sort:
@@ -21,13 +23,13 @@ def search(request):
     solr = Solr("http://localhost:8983/solr/")
     
     query = SolrQuery()
-    query.set_dismax_query(search_query, query_fields=[("id", 4), ("tag",3), ("description",3), ("username",2), ("pack_original",2), ("filename",2), "comment"])
+    query.set_dismax_query(search_query, query_fields=[("id", 4), ("tag",3), ("description",3), ("username",2), ("pack_tokenized",2), ("filename",2), "comment"])
     query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE, rows=settings.SOUNDS_PER_PAGE, field_list=["id"], filter_query=filter_query, sort=sort)
-    query.add_facet_fields("samplerate", "pack_original", "username", "tag", "bitrate", "bitdepth", "type", "channels")
+    query.add_facet_fields("samplerate", "pack", "username", "tag", "bitrate", "bitdepth", "type", "channels")
     query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
     query.set_facet_options("tag", limit=30)
     query.set_facet_options("username", limit=30)
-    query.set_facet_options("pack_original", limit=10)
+    query.set_facet_options("pack", limit=10)
     
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))

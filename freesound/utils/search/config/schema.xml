@@ -258,33 +258,50 @@
 
 	<fields>
 		<field name="id" type="integer" indexed="true" stored="true" required="true" />
-		<field name="pack" type="text" indexed="true" stored="true" required="false" />
-		<field name="pack_original" type="string" indexed="true" stored="true" />
-		<field name="pack_id" type="integer" indexed="true" stored="true" required="false" />
 		<field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
-		<field name="user_id" type="integer" indexed="true" stored="true" required="true" />
+
 		<field name="created" type="date" indexed="true" stored="true" required="true" />
+
 		<field name="filename" type="text" indexed="true" stored="true" required="true" />
-		<field name="downloads" type="slong" indexed="true" stored="true" required="true" />
-		<field name="votes" type="slong" indexed="true" stored="true" required="true" />
-		<field name="rating" type="sfloat" indexed="true" stored="true" required="true" />
-		<field name="url_image" type="string" indexed="false" stored="true" required="true" />
-		<field name="url_preview" type="string" indexed="false" stored="true" required="true" />
-		<field name="is_remix" type="boolean" indexed="true" stored="true" required="true" />
-		<field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
-		<field name="type" type="alphaOnlySort" indexed="true" stored="true" required="true" />
-		<field name="samplerate" type="sint" indexed="true" stored="true" required="true" />
-		<field name="bitrate" type="sint" indexed="true" stored="true" required="true" />
-		<field name="bitdepth" type="sint" indexed="true" stored="true" required="true" />
-		<field name="channels" type="sint" indexed="true" stored="true" required="true" />
-		<field name="duration" type="sdouble" indexed="true" stored="true" required="true" />
-		<field name="filesize" type="slong" indexed="true" stored="true" required="true" />
+
 		<field name="description" type="text" indexed="true" stored="true" required="false" />
 		<field name="tag" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/>
+
+		<field name="license" type="string" indexed="true" stored="true" />
+
+		<field name="is_remix" type="boolean" indexed="true" stored="true" required="true" />
+		<field name="was_remixed" type="boolean" indexed="true" stored="true" required="true" />
+
+		<field name="pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal -->
+		<field name="pack_tokenized" type="text" indexed="true" stored="true" required="false" /> <!-- parsed -->
+
+		<field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
+
+		<field name="type" type="alphaOnlySort" indexed="true" stored="true" required="true" />
+		<field name="duration" type="sdouble" indexed="true" stored="true" required="true" />
+		<field name="bitdepth" type="sint" indexed="true" stored="true" required="true" />
+		<field name="bitrate" type="sint" indexed="true" stored="true" required="true" />
+		<field name="samplerate" type="sint" indexed="true" stored="true" required="true" />
+		<field name="filesize" type="slong" indexed="true" stored="true" required="true" />
+		<field name="channels" type="sint" indexed="true" stored="true" required="true" />
+		<field name="md5" type="string" indexed="true" stored="true" />
+
+		<field name="downloads" type="slong" indexed="true" stored="true" required="true" /> <!-- num downloads -->
+
+		<field name="rating" type="sfloat" indexed="true" stored="true" required="true" /> <!-- num ratings -->
+		<field name="ratings" type="slong" indexed="true" stored="true" required="true" /> <!-- avg rating -->
+		
 		<field name="comment" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
+		<field name="comments" type="slong" indexed="true" stored="true" required="true" /> <!-- num comments -->
+
+		<field name="url_waveform_m" type="string" indexed="false" stored="true" required="true" />
+		<field name="url_waveform_l" type="string" indexed="false" stored="true" required="true" />
+		<field name="url_spectrum_m" type="string" indexed="false" stored="true" required="true" />
+		<field name="url_spectrum_l" type="string" indexed="false" stored="true" required="true" />
+		<field name="url_preview" type="string" indexed="false" stored="true" required="true" />
 	</fields>
 	
-	<copyField source="pack" dest="pack_original" />
+	<copyField source="pack" dest="pack_tokenized" />
 	
 	<uniqueKey>id</uniqueKey>
 	

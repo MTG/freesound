@@ -1,6 +1,7 @@
 from solr import *
 from sounds.models import Sound
 import logging
+from django.conf import settings
 
 logger = logging.getLogger("search")
 
@@ -9,41 +10,48 @@ def convert_to_solr_document(sound):
     document = {}
 
     document["id"] = sound.id
-    if sound.pack:
-        document["pack"] = sound.pack.name
-        document["pack_id"] = sound.pack.id
     document["username"] = sound.user.username
-    document["user_id"] = sound.user.id
     document["created"] = sound.created
-    
-    # rename all of these to reflect db fields?
     document["filename"] = sound.original_filename
-    document["downloads"] = sound.num_downloads
-    document["votes"] = sound.num_ratings
-    document["rating"] = sound.avg_rating
+
+    document["description"] = sound.description
+    document["tag"] = [taggeditem.tag.name for taggeditem in sound.tags.all()]
     
-    # TODO: add license!! go through all fields...
-    # make sure the solr names are human readable, because we will use them "as is"
-    # so num_comments should be "comments", pack should be pack, not pack_original, pack should become pack_tokenized
-    
-    # should we add all the paths?
-    # should we add the base URL?
-    document["url_preview"] = sound.paths()["preview_path"]
-    document["url_image"] = sound.paths()["waveform_path_m"]
+    document["license"] = sound.license.name
     
     document["is_remix"] = bool(sound.sources.count())
+    document["was_remixed"] = bool(sound.remixes.count())
+
+    if sound.pack:
+        document["pack"] = sound.pack.name
+    
     document["is_geotagged"] = sound.geotag != None
 
     document["type"] = sound.type
-    document["samplerate"] = int(sound.samplerate)
-    document["bitrate"] = sound.bitrate
-    document["bitdepth"] = sound.bitdepth
-    document["channels"] = sound.channels
+
     document["duration"] = sound.duration
+    document["bitdepth"] = sound.bitdepth
+    document["bitrate"] = sound.bitrate
+    document["samplerate"] = int(sound.samplerate)
     document["filesize"] = sound.filesize
-    document["description"] = sound.description
-    document["tag"] = [taggeditem.tag.name for taggeditem in sound.tags.all()]
+    document["channels"] = sound.channels
+    document["md5"] = sound.md5
+
+    document["downloads"] = sound.num_downloads
+
+    document["rating"] = sound.avg_rating
+    document["ratings"] = sound.num_ratings
+
     document["comment"] = [comment.comment for comment in sound.comments.all()]
+    document["comments"] = sound.comments.count()
+
+    paths = sound.paths()
+    
+    document["url_waveform_m"] = paths["waveform_path_m"]
+    document["url_waveform_l"] = paths["waveform_path_l"]
+    document["url_spectrum_m"] = paths["spectral_path_m"]
+    document["url_spectrum_l"] = paths["spectral_path_l"]
+    document["url_preview"] = paths["preview_path"]
     
     return document
 
@@ -59,13 +67,16 @@ def add_sound_to_solr(sound):
 def add_sounds_to_solr(sounds):
     logger.info("adding multiple sounds to solr index")
     try:
-        Solr().add(map(convert_to_solr_document, sounds))
+        logger.info("creating XML")
+        documents = map(convert_to_solr_document, sounds)
+        logger.info("posting to Solr")
+        Solr().add(documents)
     except SolrException, e:
         logger.error("failed to add sound batch to solr index, reason: %s" % (sound.id, str(e)))
 
 
-def add_all_sounds_to_solr(slice_size=100):
-    qs = Sound.objects.select_related("pack", "user").filter(processing_state="OK", moderation_state="OK")
+def add_all_sounds_to_solr(slice_size=1000):
+    qs = Sound.objects.select_related("pack", "user", "license").filter(processing_state="OK", moderation_state="OK")
     num_sounds = qs.count()
     for i in range(0, num_sounds, slice_size):
         add_sounds_to_solr(qs[i:i+slice_size])

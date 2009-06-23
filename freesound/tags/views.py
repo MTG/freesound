@@ -4,13 +4,13 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.paginator import Paginator, InvalidPage
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Q
 from django.http import HttpResponseRedirect
-
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.db.models import Q
 from sounds.models import Sound
+from utils.search.search import *
+
 
 def tags(request, multiple_tags=None):
     if multiple_tags:
@@ -20,21 +20,43 @@ def tags(request, multiple_tags=None):
     
     multiple_tags = sorted(filter(lambda x:x, multiple_tags))
     
-    sounds = Sound.objects.filter(processing_state="OK", moderation_state="OK")
-    for tag in multiple_tags:
-        sounds = sounds.filter(tags__tag__name=tag)
-
-    paginator = Paginator(sounds, settings.SOUNDS_PER_PAGE)
-
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
 
+    """
+    sounds = Sound.objects.select_related('user').filter(processing_state="OK", moderation_state="OK")
+    for tag in multiple_tags:
+        sounds = sounds.filter(tags__tag__name=tag)
+    """
+
+    solr = Solr("http://localhost:8983/solr/")
+    
+    query = SolrQuery()
+    if multiple_tags:
+        query.set_query(" ".join("tag:\"" + tag + "\"" for tag in multiple_tags))
+    else:
+        query.set_query("*:*")
+    query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE, rows=settings.SOUNDS_PER_PAGE, field_list=["id"], sort=["downloads desc"])
+    query.add_facet_fields("tag")
+    query.set_facet_options_default(limit=100, sort=True, mincount=1, count_missing=False)
+    
     try:
+        results = SolrResponseInterpreter(solr.select(unicode(query)))
+        paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
         page = paginator.page(current_page)
-    except InvalidPage:
-        page = paginator.page(1)
-        current_page = 1
+        error = False
+    except SolrException, e:
+        logger.warning("search error: error %s" % (e))
+        error = True
+
+    #paginator = Paginator(sounds, settings.SOUNDS_PER_PAGE)
+
+#    try:
+#        page = paginator.page(current_page)
+#    except InvalidPage:
+#        page = paginator.page(1)
+#        current_page = 1
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))

@@ -88,7 +88,7 @@ def similar(request, username, sound_id):
 def pack(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
 
-    paginator = Paginator(Sound.objects.filter(pack=pack, moderation_state="OK", processing_state="OK"), settings.SOUNDS_PER_PAGE)
+    paginator = Paginator(Sound.objects.select_related('user').filter(pack=pack, moderation_state="OK", processing_state="OK"), settings.SOUNDS_PER_PAGE)
 
     try:
         current_page = int(request.GET.get("page", 1))

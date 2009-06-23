@@ -2,28 +2,33 @@
 
 {% load display_sound %}
 {% load paginator %}
+{% load search %}
 
 {% block title %}tags{% endblock title %}
 
 {% block section_content %}
 <h1>Tags</h1>
-{% if multiple_tags %}
+    {% if multiple_tags %}
     <p>
     	You are seeing sounds tagged with:
     	{% for tag in multiple_tags %}
     	    <a href="{% url tags tag %}">{{tag}}</a>
     	{% endfor %}
     </p>
+    {% endif %}
+
+    {% display_facet "tag" results.facets.tag "cloud" %}
 
     {% show_paginator paginator page current_page request %}
     
     {% for sound in page.object_list %}
     <div class="sample_player_small">
-    	{% display_sound sound %}
+    	{% display_sound sound.id %}
     </div>
     {% endfor %}
     
     {% show_paginator paginator page current_page request %}
+{% if multiple_tags %}
 {% else %}
     show complete tagcloud
 {% endif %}

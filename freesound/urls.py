@@ -22,6 +22,7 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', 'sounds.views.pack', name="pack"),
 
     url(r'^browse/$', 'sounds.views.sounds', name="sounds"),
+    url(r'^browse/tags/$', 'tags.views.tags', name="tags"),
     url(r'^browse/tags/(?P<multiple_tags>[\w//-]*)/$', 'tags.views.tags', name="tags"),
     url(r'^browse/packs/$', 'sounds.views.packs', name="packs"),
     url(r'^browse/random/$', 'sounds.views.random', name="sounds-random"),

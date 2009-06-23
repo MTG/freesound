@@ -36,8 +36,11 @@ function switchFormSubmits()
 {
     if (!isLoggedIn)
     {
-        $('sound_comment_submit').value = "Please log in to comment";
-        $('sound_comment_submit').disable();
+        if ($('sound_comment_submit'))
+        {
+            $('sound_comment_submit').value = "Please log in to comment";
+            $('sound_comment_submit').disable();
+        }
     }
 }
 

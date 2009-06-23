@@ -13,12 +13,9 @@
    	<input type="text" name="q" value="{{search_query}}" size="30" />
    	<input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
    	<select name="s">
-        <option value="duration desc">Duration (long first)</option>
-        <option value="duration asc">Duration (short first)</option>
-        <option value="created desc">Date added (latest first)</option>
-        <option value="num_downloads desc">Downloads (most first)</option>
-        <option value="rating desc">Rating (highest rated first)</option>
-        <option value="rating asc">Rating (lowest rated first)</option>
+   	    {% for option in sort_options %}
+        <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
+        {% endfor %}
      </select>
    	<input type="submit" value="search" id="search_submit" />
 	</fieldset>
@@ -28,49 +25,89 @@
 </p>
 
 <script type="text/javascript">
-    function removeTag(tag)
+    function removeFilter(tag)
     {
-        $("filter_query").value = $F("filter_query").replace(tag, "")
+        $("filter_query").value = $F("filter_query").replace(tag + " ", "").replace(tag, "").strip()
+    }
+
+    function addFilter(tag)
+    {
+        if ($F("filter_query").search(tag) == -1)
+        {
+            if ($("filter_query").value != "")
+                $("filter_query").value = $("filter_query").value + " " + tag;
+            else
+                $("filter_query").value = $("filter_query").value + tag;
+    
+            $("search_form").submit();
+        }
+        else
+        {
+            alert("you already added this filter");
+        }
+    }
+
+    function update_filter_display()
+    {
+        var i = 0;
+        $F("filter_query").scan(/[\w-]+:\"[^\"]+\"/, function (filter) {
+            var filter_id = "filter_" + i++;
+            
+            $('filter_query_display').insert(new Element("a", {id:filter_id, title:"remove this filter"}).update(filter).observe("click", function (event) {
+                removeFilter(filter);
+                $(filter_id).remove();
+                event.stop();
+                $("search_form").submit();
+            }))
+        })
     }
     
-    var i = 0;
-    
-    $F("filter_query").scan(/[\w-]+:\"[\w-]+\"/, function (filter) {
-        var filter_id = "filter_" + i++;
-        
-        $('filter_query_display').insert(new Element("a", {id:filter_id, title:"remove this filter"}).update(filter).observe("click", function (event) {
-            removeTag(filter);
-            $(filter_id).remove();
-            event.stop();
-            $("search_form").submit();
-        }))
-    })
+    update_filter_display();
 </script>
 
 {% if error %}
     Failed searching! Please fix your query...
 {% else %}
 <div style="float:right">
-    <h3>tags</h3>
-    {% display_facet "tag" results.facets.tag "cloud" %}
-
-    <h3>type</h3>
-    {% display_facet "type" results.facets.type "list" %}
-
-    <h3>samplerate</h3>
-    {% display_facet "samplerate" results.facets.samplerate "list" %}
+    {% if results.facets.tag %}
+        <h3>tags</h3>
+        {% display_facet "tag" results.facets.tag "cloud" %}
+    {% endif %}
     
-    <h3>bitdepth</h3>
-    {% display_facet "bitdepth" results.facets.bitdepth "list" %}
+    {% if results.facets.type %}
+        <h3>type</h3>
+        {% display_facet "type" results.facets.type "list" %}
+    {% endif %}
 
-    <h3>channels</h3>
-    {% display_facet "channels" results.facets.channels "list" %}
+    {% if results.facets.samplerate %}
+        <h3>samplerate</h3>
+        {% display_facet "samplerate" results.facets.samplerate "list" %}
+    {% endif %}
+    
+    {% if results.facets.bitdepth %}
+        <h3>bitdepth</h3>
+        {% display_facet "bitdepth" results.facets.bitdepth "list" %}
+    {% endif %}
 
-    <h3>users</h3>
-    {% display_facet "username" results.facets.username "cloud" %}
+    {% if results.facets.channels %}
+        <h3>channels</h3>
+        {% display_facet "channels" results.facets.channels "list" %}
+    {% endif %}
+
+    {% if results.facets.pack %}
+        <h3>packs</h3>
+        {% display_facet "pack" results.facets.pack "list" %}
+    {% endif %}
+
+    {% if results.facets.username %}
+        <h3>users</h3>
+        {% display_facet "username" results.facets.username "cloud" %}
+    {% endif %}
 </div>
 
+<div class="search_paginator">
 {% show_paginator paginator page current_page request %}
+</div>
 
 {% for result in results.docs %}
 <div class="sample_player_small">
@@ -78,7 +115,10 @@
 </div>
 {% endfor %}
 
+<div class="search_paginator">
 {% show_paginator paginator page current_page request %}
+</div>
+
 {% endif %}
 
 {% endblock %}

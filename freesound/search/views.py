@@ -5,19 +5,37 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from utils.search.search import *
+import operator
 
 logger = logging.getLogger("search")
 
 def search(request):
-    search_query = request.GET.get("q")
+    search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     
-    #"samplerate:[22050 to *]"
+    sort = request.GET.get("s", "downloads desc")
+    
+    sort_options = [
+        ("Duration (long first)"," duration desc"),
+        ("Duration (short first)", "duration asc"),
+        ("Date added (newest first)", "created desc"),
+        ("Date added (oldest first)", "created asc"),
+        ("Downloads (most first)", "downloads desc"),
+        ("Downloads (least first)", "downloads asc"),
+        ("Rating (highest first)", "rating desc"),
+        ("Rating (lowest first)", "rating asc")
+    ]
 
-    sort = request.GET.get("s", None)
-    if sort:
-        sort = [sort]
-
+    if sort in map(operator.itemgetter(1), sort_options):
+        if sort == "rating desc":
+            sort = [sort, "ratings desc"]
+        elif  sort == "rating asc":
+            sort = [sort, "ratings desc"]
+        else:
+            sort = [sort]
+    else:
+        sort = ["downloads desc"]
+        
     current_page = int(request.GET.get("page", 1))
 
     solr = Solr("http://localhost:8983/solr/")

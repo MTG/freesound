@@ -66,13 +66,19 @@ def add_sound_to_solr(sound):
 
 def add_sounds_to_solr(sounds):
     logger.info("adding multiple sounds to solr index")
+    solr = Solr()
+
     try:
         logger.info("creating XML")
         documents = map(convert_to_solr_document, sounds)
         logger.info("posting to Solr")
-        Solr().add(documents)
+        solr.add(documents)
     except SolrException, e:
         logger.error("failed to add sound batch to solr index, reason: %s" % (sound.id, str(e)))
+    
+    logger.info("optimizing solr index")
+    solr.optimize()
+    logger.info("done")
 
 
 def add_all_sounds_to_solr(slice_size=1000):

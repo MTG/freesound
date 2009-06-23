@@ -15,5 +15,7 @@ def display_facet(context, filter, facet, type):
             facet.sort(cmp=lambda x, y: cmp(x[0].lower(), y[0].lower()))
             
         facet = [dict(item=item,count=count,size=lookup[count]) for (item,count) in facet if item != "0"]
+
     context.update({"facet":facet, "type":type, "filter":filter})
+    
     return context

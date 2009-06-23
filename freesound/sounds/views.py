@@ -33,13 +33,15 @@ def sounds(request):
 
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user").get(user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+        sound = Sound.objects.select_related("license", "user", "pack").get(user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     except Sound.DoesNotExist:
         raise Http404
+    
+    tags = sound.tags.select_related("tag").all()
 
     content_type = ContentType.objects.get_for_model(Sound)
 
-    paginator = Paginator(Comment.objects.filter(content_type=content_type, object_id=sound_id), settings.SOUND_COMMENTS_PER_PAGE)
+    paginator = Paginator(Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id), settings.SOUND_COMMENTS_PER_PAGE)
 
     class CommentForm(forms.Form):
         comment = HtmlCleaningCharField(widget=forms.Textarea)
@@ -48,6 +50,7 @@ def sound(request, username, sound_id):
         form = CommentForm(request.POST)
         if form.is_valid():
             sound.comments.add(Comment(content_object=sound, user=request.user, comment=form.cleaned_data["comment"]))
+            invalidate_template_cache()
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         form = CommentForm()

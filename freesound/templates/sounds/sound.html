@@ -3,6 +3,7 @@
 {% load paginator %}
 {% load util %}
 {% load ratings %}
+{% load cache %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
 
@@ -17,6 +18,7 @@
 
 {% block section_content %}
 
+{% cache 3600 "sound_header" sound.id %}
 <div id="single_sample_header">
 	{% if sound.pack %}<a href="{% url pack username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
 	<div class="stars">
@@ -60,10 +62,11 @@
 	</div>
 	
 	<ul id="tags">
-		{% for tag_link in sound.tags.all %}
+		{% for tag_link in tags %}
 			<li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
 		{% endfor %}
 	</ul>
+{% endcache %}
 	
 	<div id="comments_container">
 		<h4 id="comments_heading">Comments</h4>
@@ -89,15 +92,14 @@
 	<form method="POST" action=".#comments" id="sound_comment_form">
 		<fieldset>
 			<h4 id="leave_a_comment">Leave a comment:</h4>
-			{{form}}
-			<!--<textarea name="comment" id="comment_textarea"></textarea><br />-->
-			<input id="sound_comment_submit" type="submit" value="Post comment"></input>
+			{{form.as_p}}
+			<input id="sound_comment_submit" type="submit" value="Post comment" />
 		</fieldset>
 	</form>
-
 </div> <!-- single_sample_content -->
 
 
+{% cache 3600 "sound_footer" sound.id %}
 <div id="single_sample_sidebar">
 	<div id="download">
 		<a href="#" id="download_button"></a>
@@ -141,5 +143,6 @@
 		<a href="{{sound.license.deed_url}}">This work is licensed under the {{sound.license.name}} License.</a>
 	</div>
 </div> <!-- single_sample_sidebar -->
+{% endcache %}
 
 {% endblock section_content %}

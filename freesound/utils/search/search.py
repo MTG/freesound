@@ -81,7 +81,7 @@ def add_sounds_to_solr(sounds):
     logger.info("done")
 
 
-def add_all_sounds_to_solr(slice_size=1000):
+def add_all_sounds_to_solr(slice_size=4000):
     qs = Sound.objects.select_related("pack", "user", "license").filter(processing_state="OK", moderation_state="OK")
     num_sounds = qs.count()
     for i in range(0, num_sounds, slice_size):

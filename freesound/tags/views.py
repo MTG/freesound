@@ -25,13 +25,7 @@ def tags(request, multiple_tags=None):
     except ValueError:
         current_page = 1
 
-    """
-    sounds = Sound.objects.select_related('user').filter(processing_state="OK", moderation_state="OK")
-    for tag in multiple_tags:
-        sounds = sounds.filter(tags__tag__name=tag)
-    """
-
-    solr = Solr("http://localhost:8983/solr/")
+    solr = Solr(settings.SOLR_URL)
     
     query = SolrQuery()
     if multiple_tags:
@@ -50,13 +44,7 @@ def tags(request, multiple_tags=None):
     except SolrException, e:
         logger.warning("search error: error %s" % (e))
         error = True
-
-    #paginator = Paginator(sounds, settings.SOUNDS_PER_PAGE)
-
-#    try:
-#        page = paginator.page(current_page)
-#    except InvalidPage:
-#        page = paginator.page(1)
-#        current_page = 1
+    
+    tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))

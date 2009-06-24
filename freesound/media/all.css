@@ -1389,9 +1389,13 @@ a.donation_button:hover {
 	z-index:1;
 	background-position: left center;
 }
+
 /* for an inline rater */
 .inline-rating{
 }
+
+/* Packs
+------------------------------------------------------*/
 
 .list_order
 {
@@ -1410,8 +1414,12 @@ a.donation_button:hover {
 .list_order li a.selected {
 	border: 2px solid;
 	padding: 5px;
-	afont-weight: bold;
+    font-weight: bold;
 }
+
+
+/* Account page
+------------------------------------------------------*/
 
 p.about
 {
@@ -1421,17 +1429,8 @@ p.about
     background-color: #F6F6F6;
 }
 
-p.tagcloud
-{
-    padding: 20px;
-    width: 300px;
-    background-color: #F6F6F6;
-}
-
-p.tagcloud a
-{
-    padding: 2px;
-}
+/* Search
+------------------------------------------------------*/
 
 #filter_query_display
 {
@@ -1451,4 +1450,43 @@ p.tagcloud a
 {
     border: 2px solid #2C74C9;
     text-decoration: none;
+}
+
+
+/* Tagclouds
+------------------------------------------------------*/
+
+p.user_tagcloud
+{
+    padding: 20px;
+    width: 400px;
+    background-color: #F6F6F6;
+}
+
+p.user_tagcloud a
+{
+    padding: 2px;
+}
+
+.tagcloud
+{
+    padding: 20px;
+    background-color: #F6F6F6;
+}
+
+span.tag_addremove a
+{
+    font-size: 13px;
+    vertical-align: super;
+    color: #A1ABB1;
+    font-weight: bold;
+}
+
+span.tag_addremove a:hover
+{
+    font-size: 13px;
+    vertical-align: super;
+    color: #19507E;
+    text-decoration: none;
+    font-weight: bold;
 }

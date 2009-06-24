@@ -59,14 +59,14 @@ def convert_to_solr_document(sound):
 def add_sound_to_solr(sound):
     logger.info("adding single sound to solr index")
     try:
-        Solr().add([convert_to_solr_document(sound)])
+        Solr(settings.SOLR_URL).add([convert_to_solr_document(sound)])
     except SolrException, e:
         logger.error("failed to add sound %d to solr index, reason: %s" % (sound.id, str(e)))
 
 
 def add_sounds_to_solr(sounds):
     logger.info("adding multiple sounds to solr index")
-    solr = Solr()
+    solr = Solr(settings.SOLR_URL)
 
     try:
         logger.info("creating XML")

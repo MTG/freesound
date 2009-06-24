@@ -2,35 +2,41 @@
 
 {% load display_sound %}
 {% load paginator %}
-{% load search %}
+{% load tags %}
+{% load util %}
 
 {% block title %}tags{% endblock title %}
 
 {% block section_content %}
 <h1>Tags</h1>
-    {% if multiple_tags %}
-    <p>
-    	You are seeing sounds tagged with:
-    	{% for tag in multiple_tags %}
-    	    <a href="{% url tags tag %}">{{tag}}</a>
-    	{% endfor %}
-    </p>
-    {% endif %}
 
-    {% display_facet "tag" results.facets.tag "cloud" %}
-
-    {% show_paginator paginator page current_page request %}
-    
-    {% for sound in page.object_list %}
-    <div class="sample_player_small">
-    	{% display_sound sound.id %}
-    </div>
+<div class="tagcloud">
+    {% for tag in tags|add_sizes:"True:0.7:1.8" %}
+        <span style="font-size:{{tag.size}}em">
+            {% if tag.name|in_list:multiple_tags %}
+                {% if multiple_tags|join_tags_except:tag.name %}
+                {{tag.name}}<span class="tag_addremove"><a href="{% url tags multiple_tags|join_tags_except:tag.name %}">-</a></span>
+                {% else %}
+                {{tag.name}}<span class="tag_addremove"><a href="{% url tags %}">-</a></span>
+                {% endif %}
+            {% else %}
+                <a href="{% url tags tag.name %}">{{tag.name}}</a><span class="tag_addremove"><a href="{{request.path}}{{tag.name}}/">+</a></span>
+            {% endif %}
+        </span>
     {% endfor %}
-    
-    {% show_paginator paginator page current_page request %}
+</div>
+
 {% if multiple_tags %}
-{% else %}
-    show complete tagcloud
+<h1>Sounds with these tags</h1>
+{% show_paginator paginator page current_page request %}
+    
+{% for sound in page.object_list %}
+<div class="sample_player_small">
+	{% display_sound sound.id %}
+</div>
+{% endfor %}
+
+{% show_paginator paginator page current_page request %}
 {% endif %}
 
 {% endblock %}

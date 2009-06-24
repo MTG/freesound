@@ -38,7 +38,7 @@ def search(request):
         
     current_page = int(request.GET.get("page", 1))
 
-    solr = Solr("http://localhost:8983/solr/")
+    solr = Solr(settings.SOLR_URL)
     
     query = SolrQuery()
     query.set_dismax_query(search_query, query_fields=[("id", 4), ("tag",3), ("description",3), ("username",2), ("pack_tokenized",2), ("filename",2), "comment"])

@@ -1,7 +1,7 @@
 {% extends "accounts/_section.html" %}
 
 {% load display_sound %}
-{% load tagcloud %}
+{% load tags %}
 
 {% block title %}{{user.username}}{% endblock %}
 
@@ -30,8 +30,8 @@
         <li>Number of forum posts: {{user.profile.num_posts}}</li>
     </ul>
     
-    <p class="tagcloud">
-    {% display_tagcloud user.profile.get_tagcloud %}
+    <p class="user_tagcloud">
+    {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url tags tag.name %}">{{tag.name}}</a></span> {% endfor %}
     </p>
     
     {% if latest_geotags %}

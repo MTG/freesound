@@ -1,10 +1,10 @@
 {% ifequal type "list" %}
  <ul>
-    {% for f in facet %}<li class="facet_item"><a href="javascript:addFilter('{{filter}}:&quot;{{f.item}}&quot;')">{{f.item}}</a> ({{f.count}})</li>{% endfor %}
+    {% for f in facet %}<li class="facet_item"><a href="javascript:addFilter('{{filter}}:&quot;{{f.name}}&quot;')">{{f.name}}</a> ({{f.count}})</li>{% endfor %}
 </ul>
 {% endifequal %}
 {% ifequal type "cloud" %}
 <p class="tagcloud">
-    {% for f in facet %}<span class="facet_item" style="font-size:{{f.size}}em"><a href="javascript:addFilter('{{filter}}:&quot;{{f.item}}&quot;')">{{f.item}}</a></span> {% endfor %}
+    {% for f in facet %}<span class="facet_item" style="font-size:{{f.size}}em"><a href="javascript:addFilter('{{filter}}:&quot;{{f.name}}&quot;')">{{f.name}}</a></span> {% endfor %}
 </p>
 {% endifequal %}

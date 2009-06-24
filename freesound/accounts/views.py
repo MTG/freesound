@@ -85,6 +85,7 @@ def accounts(request):
 
 def account(request, username):
     user = get_object_or_404(User, username__iexact=username)
+    tags = user.profile.get_tagcloud()
     latest_sounds = Sound.objects.filter(moderation_state="OK", processing_state="OK", user=user)[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.objects.filter(moderation_state="OK", processing_state="OK", user=user).exclude(geotag=None)[0:10]

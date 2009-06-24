@@ -32,7 +32,7 @@ class Profile(SocialModel):
     def get_tagcloud(self):
         return DelayedQueryExecuter("""
             select
-                tags_tag.name as tag,
+                tags_tag.name as name,
                 X.c as count
             from (
                 select

@@ -23,7 +23,7 @@ urlpatterns = patterns('',
 
     url(r'^browse/$', 'sounds.views.sounds', name="sounds"),
     url(r'^browse/tags/$', 'tags.views.tags', name="tags"),
-    url(r'^browse/tags/(?P<multiple_tags>[\w//-]*)/$', 'tags.views.tags', name="tags"),
+    url(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', 'tags.views.tags', name="tags"),
     url(r'^browse/packs/$', 'sounds.views.packs', name="packs"),
     url(r'^browse/random/$', 'sounds.views.random', name="sounds-random"),
     url(r'^browse/remixed/$', 'sounds.views.remixed', name="sounds-remixed"),
@@ -47,7 +47,8 @@ urlpatterns = patterns('',
     (r'^admin/(.*)', admin.site.root),
 )
 
-if settings.DEBUG:
-    urlpatterns += patterns('',
-        (r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
-    )
+#if you need django to host the admin files...
+#if settings.DEBUG:
+#    urlpatterns += patterns('',
+#        (r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
+#    )

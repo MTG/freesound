@@ -10,6 +10,7 @@ from forms import *
 from models import *
 from utils.functional import exceptional
 from utils.mail import send_mail_template
+from utils.cache import invalidate_template_cache
 
 def combine_dicts(dict1, dict2):
     return dict(dict1.items() + dict2.items())
@@ -30,6 +31,7 @@ def paginate(request, qs):
     
     return dict(paginator=paginator, current_page=current_page, page=page)
 
+@login_required
 def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
@@ -48,11 +50,12 @@ def messages_change_state(request):
             elif choice == "r":
                 messages.update(is_read=True)
             
+            invalidate_template_cache("user_header", request.user.id)
+            
     return HttpResponseRedirect(request.POST.get("next", reverse("messages")))
 
 # base query object
 base_qs = Message.objects.select_related('body', 'user_from', 'user_to')
-
 
 @login_required
 def inbox(request):
@@ -84,6 +87,7 @@ def message(request, message_id):
     
     if not message.is_read:
         message.is_read = True
+        invalidate_template_cache("user_header", request.user.id)
         message.save()
         
     return render_to_response('messages/message.html', locals(), context_instance=RequestContext(request))
@@ -101,8 +105,14 @@ def new_message(request, username=None):
             Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=True, is_archived=False, is_read=False)
             Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False, is_archived=False, is_read=False)
             
-            # send the user an email to notify him of the sent message!
-            send_mail_template(u'You have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
+            invalidate_template_cache("user_header", user_to.id)
+            
+            try:
+                # send the user an email to notify him of the sent message!
+                send_mail_template(u'You have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
+            except:
+                # if the email sending fails, ignore...
+                pass
             
             return HttpResponseRedirect(reverse("messages"))
     else:

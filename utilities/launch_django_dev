@@ -58,6 +58,14 @@ osascript <<-eof
         write text "./fake_smtp"
         set name to "fake smtp"
       end tell
+      
+      launch session "Default Session"
+      tell the last session
+        write text "cd /Users/bram/Development/sandbox/apache-solr-1.3.0/example"
+        write text "clear"
+        write text "java -jar start.jar"
+        set name to "solr"
+      end tell
 
     end tell
     set the bounds of the first window to {100, 100, 1500, 900} 

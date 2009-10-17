@@ -1,3 +1,5 @@
+import re
+
 def size_generator(small_size, large_size, num_items):
     if num_items <= 1:
         yield (small_size + large_size)*0.5

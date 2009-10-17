@@ -54,6 +54,11 @@ class SoundManager(models.Manager):
         return cursor.fetchone()[0]
 
 
+class PublicSoundManager(models.Manager):
+    """ a class which only returns public sounds """
+    def get_query_set(self):
+        return super(PublicSoundManager, self).get_query_set().filter(moderation_state="OK", processing_state="OK")
+
 class Sound(SocialModel):
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -116,6 +121,7 @@ class Sound(SocialModel):
     num_ratings = models.PositiveIntegerField(default=0)
     
     objects = SoundManager()
+    public = PublicSoundManager()
     
     def __unicode__(self):
         return u"%s by %s" % (self.base_filename_slug, self.user)

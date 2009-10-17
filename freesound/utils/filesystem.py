@@ -1,8 +1,6 @@
-from Crypto.Cipher import AES
-from django.conf import settings
-import base64
 import md5
 import os
+import zlib
 
 class File:
     id = 0
@@ -57,3 +55,14 @@ def md5file(filename):
         digest.update(buf)
     fh.close()
     return digest.hexdigest()
+
+def crc32file(filename):
+    fh = open(filename, "rb")
+    crc32 = 0
+    while 1:
+        buf = fh.read(4096)
+        if buf == "":
+            break
+        crc32 = zlib.crc32(buf, crc32)
+    fh.close()
+    return hex(crc32)[2:]

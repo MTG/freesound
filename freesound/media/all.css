@@ -146,6 +146,7 @@ form {
 	padding: 16px 18px;
 	border-left: 2px solid #eee;
 	background: #fafafa;
+	margin-bottom: 10px;
 }
 form label {
 	display: block;
@@ -160,9 +161,10 @@ form #id_subscribe {
 ul.errorlist {
 	list-style-type: none;
 	padding: 0 0 4px 0;
-	color: #666;
+	color: #bd2d33;
 	font-style: italic;
 }
+
 div.infowindow {
 	font-size: 12px;
 	line-height: 18px;
@@ -1472,6 +1474,13 @@ p.user_tagcloud a
 {
     padding: 20px;
     background-color: #F6F6F6;
+}
+
+.search-tagcloud
+{
+    padding: 20px;
+    background-color: #F6F6F6;
+    width: 300px;
 }
 
 span.tag_addremove a

@@ -4,7 +4,7 @@
 </ul>
 {% endifequal %}
 {% ifequal type "cloud" %}
-<p class="tagcloud">
+<p class="search-tagcloud">
     {% for f in facet %}<span class="facet_item" style="font-size:{{f.size}}em"><a href="javascript:addFilter('{{filter}}:&quot;{{f.name}}&quot;')">{{f.name}}</a></span> {% endfor %}
 </p>
 {% endifequal %}

@@ -22,7 +22,7 @@ def activate_user(request, activation_key):
         user.is_active = True
         user.save()
         return HttpResponseRedirect(reverse("accounts-home"))
-    except User.DoesNotExist:
+    except User.DoesNotExist: #@UndefinedVariable
         return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
     except:
         return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))

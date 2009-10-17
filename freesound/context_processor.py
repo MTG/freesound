@@ -19,7 +19,7 @@ def get_last_action_time(user):
             last_action_time = profile.last_action_time
             if last_action_time == None:
                 last_action_time = now
-        except Profile.DoesNotExist:
+        except Profile.DoesNotExist: #@UndefinedVariable
             profile = None
             last_action_time = now
             

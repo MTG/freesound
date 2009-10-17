@@ -49,7 +49,7 @@ class SoundManager(models.Manager):
         from django.db import connection
         import random
         offset = random.randint(0, self.filter(moderation_state="OK", processing_state="OK").count() - 1)
-        cursor = connection.cursor()
+        cursor = connection.cursor() #@UndefinedVariable
         cursor.execute("select id from sounds_sound where processing_state = 'OK' and moderation_state = 'OK' offset %d limit 1" % offset)
         return cursor.fetchone()[0]
 

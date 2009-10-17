@@ -34,7 +34,7 @@ def sounds(request):
 def sound(request, username, sound_id):
     try:
         sound = Sound.objects.select_related("license", "user", "pack").get(user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    except Sound.DoesNotExist:
+    except Sound.DoesNotExist: #@UndefinedVariable
         raise Http404
     
     tags = sound.tags.select_related("tag").all()

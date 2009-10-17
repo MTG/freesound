@@ -31,7 +31,7 @@ class RegistrationForm(RecaptchaForm):
         username = self.cleaned_data["username"]
         try:
             User.objects.get(username__iexact=username)
-        except User.DoesNotExist:
+        except User.DoesNotExist: #@UndefinedVariable
             return username
         raise forms.ValidationError(_("A user with that username already exists."))
 

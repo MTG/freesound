@@ -1,7 +1,28 @@
-google.load("prototype", "1.6.0.3");
-google.load("swfobject", "2.2")
+function d()
+{
+    if (window.console && window.console.firebug)
+    {
+        console.debug.apply(this, arguments);
+    }
+    else
+    {
+        var dbg = $('debug_element');
+        if (!dbg)
+        {
+            $$('body')[0].insert({bottom: '<ul id="debug_element" style="font-size: 9px; background-color: white; border:1px solid black; height: 200px; position: absolute; bottom:0px; right: 0px; width: 600px; overflow:scroll"></ul>'});
+            dbg = $('debug_element');
+        }
+        var a = [];
+        for (var i=0; i<arguments.length; i++)
+        {
+            a.push(Object.toJSON(arguments[i]));
+        }
+        dbg.insert(new Element("li").insert(a.join(" ")));
+        dbg.scrollTop = dbg.scrollHeight
+    }
+}
 
-google.setOnLoadCallback(function() {
+Event.observe(window, 'load', function() {
     setupStarRatings();
     switchFormSubmits();
     setupFaceting();

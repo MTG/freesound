@@ -1,6 +1,7 @@
 from comments.models import Comment
 from django import forms
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
@@ -12,6 +13,7 @@ from django.template import RequestContext
 from forum.models import Post
 from sounds.models import Sound, Pack
 from utils.forms import HtmlCleaningCharField
+from utils.cache import invalidate_template_cache
 from freesound_exceptions import PermissionDenied
 
 def front_page(request):
@@ -51,7 +53,7 @@ def sound(request, username, sound_id):
         form = CommentForm(request.POST)
         if form.is_valid():
             sound.comments.add(Comment(content_object=sound, user=request.user, comment=form.cleaned_data["comment"]))
-            invalidate_template_cache()
+            #invalidate_template_cache()
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         form = CommentForm()
@@ -69,6 +71,42 @@ def sound(request, username, sound_id):
 
     return render_to_response('sounds/sound.html', locals(), context_instance=RequestContext(request))
 
+from forms import *
+from utils.functional import first
+
+@login_required
+def sound_edit(request, username, sound_id):
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    
+    if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
+        raise PermissionDenied
+    
+    # figure out which of the forms was submitted
+    submitted_form = None
+    try:
+        submitted_form = first(lambda x: x[0] == "form_selection", request.POST.items())[1]
+    except TypeError:
+        pass
+    
+    if submitted_form == "geotag":
+        geotag_form = GeotaggingForm(request.POST)
+        if geotag_form.is_valid():
+            pass
+    else:
+        geotag_form = GeotaggingForm(initial={'form_selection':"geotag"})
+        
+    if submitted_form == "description":
+        description_form = SoundDescriptionForm(request.POST)
+        if description_form.is_valid():
+            pass
+    else:
+        description_form = SoundDescriptionForm(initial={'form_selection':"description"})
+    
+    google_api_key = settings.GOOGLE_API_KEY
+    
+    return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
+
+    
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     pass
@@ -105,10 +143,10 @@ def pack(request, username, pack_id):
     return render_to_response('sounds/pack.html', locals(), context_instance=RequestContext(request))
 
 def remixed(request):
-     pass
+    pass
  
 def random(request):
-     pass
+    pass
 
 def packs(request):
     pass

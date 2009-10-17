@@ -4,7 +4,6 @@ from django.conf.urls.defaults import *
 import django.contrib.auth.views as authviews
 import messages.views as messages
 import views as accounts
-import django.contrib.auth.views as authviews
 
 urlpatterns = patterns('accounts.views',
     url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html'}, name="accounts-login"),
@@ -19,6 +18,7 @@ urlpatterns = patterns('accounts.views',
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
 
+    url(r'^upload/file/$', accounts.upload_file, name="accounts-upload-file"),
     url(r'^upload/$', accounts.upload, name="accounts-upload"),
     url(r'^describe/$', accounts.describe, name="accounts-describe"),
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),

@@ -1,20 +1,20 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, \
+    HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forms import UploadFileForm, FileChoiceForm, RegistrationForm
-from geotags.models import GeoTag
 from sounds.models import Sound, Pack
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
 from utils.mail import send_mail_template
 import os
-import random
 
 def activate_user(request, activation_key):
     try:
@@ -85,10 +85,12 @@ def accounts(request):
 
 def account(request, username):
     user = get_object_or_404(User, username__iexact=username)
+    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    latest_sounds = Sound.objects.filter(moderation_state="OK", processing_state="OK", user=user)[0:settings.SOUNDS_PER_PAGE]
+    latest_sounds = Sound.public.filter(user=user)[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
-    latest_geotags = Sound.objects.filter(moderation_state="OK", processing_state="OK", user=user).exclude(geotag=None)[0:10]
+    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
+    google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request)) 
 
 
@@ -109,22 +111,37 @@ def handle_uploaded_file(request, f):
         
     file(os.path.join(directory_ok, f.name), "w").write(" ")
 
+def upload_file(request):
+    """ upload a file. This function does something weird: it gets the session id from the
+    POST variables. This is weird but... as far as we know it's not too bad as we only need
+    the user login """
+    
+    # get the current session engine
+    engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])
+    session_data = engine.SessionStore(request.POST.get('sessionid', ''))
+    
+    try:
+        user_id = session_data['_auth_user_id']
+    except KeyError:
+        return HttpResponseBadRequest("User is not logged in.")
+    
+    try:
+        request.user = User.objects.get(id=user_id)
+    except User.DoesNotExist: #@UndefinedVariable
+        return HttpResponseBadRequest("User with this ID does not exist.")
 
-@login_required
-def upload(request):
-        
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
 
         if form.is_valid():
             handle_uploaded_file(request, request.FILES["file"])
-            return HttpResponseRedirect(reverse("accounts-describe"))
+            return HttpResponse("File uploaded OK")
+        else:
+            return HttpResponseBadRequest("Form is not valid.")
     else:
-        form = UploadFileForm()
-    
-    return render_to_response('accounts/upload.html', { "upload_form" : form }, context_instance=RequestContext(request))
-
+        return HttpResponseBadRequest("No POST data in request")
 
 @login_required
-def upload_progress(request, unique_id):
-    return render_to_response('accounts/upload-progress.html', { "progress": cache.get(unique_id) }, context_instance=RequestContext(request))
+def upload(request):
+    site = Site.objects.get_current()
+    return render_to_response('accounts/upload.html', locals(), context_instance=RequestContext(request))

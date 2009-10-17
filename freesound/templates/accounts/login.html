@@ -2,6 +2,16 @@
 
 {% block title %}login{% endblock %}
 
+{% block head %}
+{{ block.super }}
+<script type="text/javascript">
+    Event.observe(window, 'load', function()
+    {
+        $("id_username").focus()
+    });
+</script>
+{% endblock %}
+
 {% block section_content %}
 <h1>Login...</h1>
 <form method="post" action=".">
@@ -9,7 +19,11 @@
 <input type="submit" value="login" />
 <input type="hidden" name="next" value="{{ next }}" />
 </form>
-<script type="text/javascript">
-	$("id_username").focus()
-</script>
+
+<h1>Reminders</h1>
+<ul>
+    <li><a href="{% url accounts-password-reset %}">Reset your password</a></li>
+    <li>Resend activation code</li>
+    <li>Forgotten username</li>
+</ul>
 {% endblock %}

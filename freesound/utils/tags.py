@@ -11,9 +11,29 @@ def annotate(dictionary, **kwargs):
     return x
 
 def annotate_tags(tags, sort=True, small_size=0.7, large_size=1.8):
+    """
+    if tags are given as:
+    [ {"name": "tag1", "count": 1}, {"name": "tag2", "count": 200}, {"name": "tag3", "count": 200}]
+    after this function the list will look like this:
+    [ {"name": "tag1", "count": 1, "size": 0.7}, {"name": "tag2", "count": 200, "size": 1.8}, {"name": "tag3", "count": 200, "size": 1.8}]
+    """
     unique_counts = sorted(dict((tag["count"], 1) for tag in tags).keys())
     lookup = dict(zip(unique_counts, size_generator(small_size, large_size, len(unique_counts))))
     tags = [annotate(tag, size=lookup[tag["count"]]) for tag in tags]
     if sort:
         tags.sort(cmp=lambda x, y: cmp(x["name"].lower(), y["name"].lower()))
     return tags
+
+alphanum_only = re.compile(r"[^a-zA-Z0-9-]")
+multi_dashes = re.compile(r"-+")
+
+def clean_and_split_tags(tags):
+    tags = alphanum_only.sub("", tags)
+    tags = multi_dashes.sub("-", tags)
+
+    unique_tags = {}
+    for tag in tags.split():
+        unique_tags[tag.strip("-")] = 1
+    
+    common_words = "the of to and an in is it you that he was for on are with as i his they be at".split()
+    return filter(lambda s: s not in common_words and s, unique_tags.keys())

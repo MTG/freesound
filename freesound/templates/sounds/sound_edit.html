@@ -1,0 +1,62 @@
+{% extends "sounds/_section.html" %}
+
+{% block title %}&quot;editing {{sound.original_filename}}{% endblock title %}
+
+{% block onunload %}GUnload(){% endblock %}
+
+{% block head %}
+{{ block.super }}
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{google_api_key}}" type="text/javascript"></script>
+{% endblock head %}
+
+{% block section_content %}
+
+<h2>Sound description</h2>
+
+<form method="post">
+{{description_form.as_p}}
+<input type="submit" name="submit" value="submit" />
+</form>
+
+<h2>Geotag</h2>
+
+<div id="map" style="width: 400px; height:400px;"></div>
+<form method="post">
+{{geotag_form.as_p}}
+<input type="submit" name="submit" value="submit" />
+</form>
+
+<script type="text/javascript">
+    var initialCenter = new GLatLng(23.885837699862005,21.796875);
+    
+    var map = new GMap2($("map"));
+    map.setCenter(initialCenter, 2);
+    map.setMapType( G_HYBRID_MAP );
+    map.enableContinuousZoom();
+    map.addControl(new GSmallMapControl());
+    map.addControl(new GMapTypeControl());
+    
+    var centerIcon = new GIcon();
+    centerIcon.image = "http://www.freesound.org/geotagging/arrow.png";
+    centerIcon.iconSize = new GSize(25, 24);
+    centerIcon.shadowSize = new GSize(0, 0);
+    centerIcon.iconAnchor = new GPoint(0, 24);
+    centerIcon.infoWindowAnchor = new GPoint(25, 0);
+    
+    var centerMarker = new GMarker(initialCenter, centerIcon);
+    map.addOverlay(centerMarker);
+
+    GEvent.addListener(map, "move", updateAndAddCenter);
+
+    function updateAndAddCenter()
+    {
+        var center = map.getCenter();
+        var zoom = map.getZoom();
+        // update form
+        $("id_lon").value = center.lng();
+        $("id_lat").value = center.lat();
+        $("id_zoom").value = zoom;
+        centerMarker.setLatLng(center);
+    }
+</script>
+{% endblock section_content %}

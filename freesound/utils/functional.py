@@ -46,3 +46,8 @@ def compose(func_1, func_2, unpack=False):
         def composition(*args, **kwargs):
             return func_1(func_2(*args, **kwargs))
     return composition
+
+def first(predicate, itterator):
+    for item in itterator:
+        if predicate(item):
+            return item

@@ -12,6 +12,7 @@ from django.template import RequestContext
 from forum.models import Post
 from sounds.models import Sound, Pack
 from utils.forms import HtmlCleaningCharField
+from freesound_exceptions import PermissionDenied
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS

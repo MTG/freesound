@@ -1,5 +1,4 @@
 from django import template
-from sounds.models import Sound
 from utils.tags import annotate_tags
 
 register = template.Library()

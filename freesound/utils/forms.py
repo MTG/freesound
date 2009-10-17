@@ -2,6 +2,7 @@ from django import forms
 from utils.text import clean_html, is_shouting
 from django.conf import settings
 from recaptcha.client import captcha
+from utils.tags import clean_and_split_tags
 
 class HtmlCleaningCharField(forms.CharField):
     def clean(self, value):
@@ -11,6 +12,17 @@ class HtmlCleaningCharField(forms.CharField):
             raise forms.ValidationError('Please moderate the amount of upper case characters in your post...')
         
         return clean_html(value)
+
+
+class TagField(forms.CharField):
+    def clean(self, value):
+        print dir(self)
+        tags = clean_and_split_tags(value)
+        
+        if len(tags) < 3:
+            raise forms.ValidationError('Your sound should AT LEAST have 3 tags...')
+        
+        return tags
 
 
 class RecaptchaWidget(forms.Widget):

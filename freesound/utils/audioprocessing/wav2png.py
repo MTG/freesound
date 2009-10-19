@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from hotshot import stats
-from processing import create_wave_images
+from processing import create_wave_images, AudioProcessingException
 import hotshot
 import optparse
 import os
@@ -17,7 +17,7 @@ parser.add_option("-h", "--height", action="store", dest="image_height", type="i
 parser.add_option("-f", "--fft", action="store", dest="fft_size", type="int", help="fft size, power of 2 for increased performance (default %default)")
 parser.add_option("-p", "--profile", action="store_true", dest="profile", help="run profiler and output profiling information")
 
-parser.set_defaults(output_filename_w=None, output_filename_s=None, image_width=500, image_height=170, fft_size=2048)
+parser.set_defaults(output_filename_w=None, output_filename_s=None, image_width=500, image_height=171, fft_size=2048)
 
 (options, args) = parser.parse_args()
 
@@ -43,7 +43,10 @@ for input_file in args:
     print "processing file %s:\n\t" % input_file,
 
     if not options.profile:
-        create_wave_images(*args)
+        try:
+            create_wave_images(*args)
+        except AudioProcessingException, e:
+            print "Error running wav2png: ", e
     else:
         prof = hotshot.Profile("stats")
         prof.runcall(create_wave_images, *args)

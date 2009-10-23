@@ -1,14 +1,13 @@
 markdown
 pycrypto
 BeautifulSoup
-PIL
 functional
-feedparser
-numpy
+FeedParser
 scikits.audiolab
 Pygments
 python-cjson
 python-memcached
+flup
 django-extensions
 django-debug-toolbar
 django==1.1
@@ -16,7 +15,7 @@ django==1.1
 # The packate for 'recaptcha-client' fails to install.
 # See: http://code.google.com/p/recaptcha/issues/detail?id=55
 # Install our own version.
-http://cloud.github.com/downloads/bram/freesound/recaptcha-client-1.0.4-with-ez-setup.tar.gz
+http://cloud.github.com/downloads/bram/freesound/recaptcha-client-1.0.4-with.ez.setup.tar.gz
 #
 # jutda-helpdesk doesn't has a setup.py file so can't be installed
 # with pip.

@@ -12,9 +12,9 @@ rm recaptcha-client-1.0.4.tar.gz
 # download ez_setup.py
 wget http://peak.telecommunity.com/dist/ez_setup.py -O recaptcha-client-1.0.4/ez_setup.py
 # include on the dist
-echo "require ez_setup.py" >> recaptcha-client-1.0.4/MANIFEST.in
+echo "include ez_setup.py" >> recaptcha-client-1.0.4/MANIFEST.in
 # edit the version so we can know it's not the original package
-sed -i 's/1.0.4/1.0.4-with-ez-setup/' recaptcha-client-1.0.4/setup.py
+sed -i 's/1.0.4/1.0.4-with.ez.setup/' recaptcha-client-1.0.4/setup.py
 # repackage
 cd recaptcha-client-1.0.4/
 ./setup.py sdist

@@ -13,6 +13,6 @@
 
 {% if perms.wiki.edit_page %}<div class="wiki-edit"><a href="{% url wiki-page-edit name %}">edit</a><div>{% endif %}
 
-{{content.body|markdown:"wikilink,codehilite"}}
+{{content.body|markdown:"wikilinks,codehilite"}}
 
 {% endblock %}

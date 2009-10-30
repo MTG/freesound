@@ -108,8 +108,6 @@ FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 # urls for which the "lasta ction time" needs updating
 LAST_ACTION_TIME_URLS = ('/forum/', )
 
-MARKDOWN_FILTER_SETTINGS = {'wikilink': [('base_url', '/help/'), ('end_url', '/'), ('html_class', 'wikilink')]}
-
 FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40

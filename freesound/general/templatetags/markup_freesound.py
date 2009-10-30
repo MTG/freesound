@@ -44,8 +44,8 @@ def markdown(value, arg=''):
             else:
                 safe_mode = False
 
-            # if there are extension configs in the settings, get them
-            extension_configs = getattr(settings, "MARKDOWN_FILTER_SETTINGS", {}) 
+            extension_configs = {'wikilinks': [('base_url', '/help/'), ('end_url', '/'), ('html_class', 'wikilink')]}
+             
             md = markdown.Markdown(extensions=extensions, extension_configs=extension_configs, safe_mode=safe_mode)
             
             # Unicode support only in markdown v1.7 or above. Version_info

@@ -6,4 +6,3 @@ local_settings.py
 audio.log
 web.log
 search.log
-uploads

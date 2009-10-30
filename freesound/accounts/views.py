@@ -97,19 +97,16 @@ def account(request, username):
 def handle_uploaded_file(request, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
     directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id))
-    directory_ok = os.path.join(settings.FILES_UPLOAD_OK_DIRECTORY, str(request.user.id))
     
     try:
         os.mkdir(directory)
-        os.mkdir(directory_ok)
     except:
         pass
 
     destination = open(os.path.join(directory, f.name), 'wb')
     for chunk in f.chunks():
         destination.write(chunk)
-        
-    file(os.path.join(directory_ok, f.name), "w").write(" ")
+
 
 def upload_file(request):
     """ upload a file. This function does something weird: it gets the session id from the

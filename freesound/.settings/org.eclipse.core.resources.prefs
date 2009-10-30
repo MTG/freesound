@@ -1,4 +1,4 @@
-#Thu Oct 08 16:42:39 CEST 2009
+#Fri Oct 30 11:45:53 CET 2009
 eclipse.preferences.version=1
 encoding//accounts/admin.py=UTF-8
 encoding//accounts/models.py=utf-8
@@ -33,7 +33,7 @@ encoding//utils/search/solr.py=UTF-8
 encoding//wiki/admin.py=UTF-8
 encoding//wiki/models.py=UTF-8
 encoding//wiki/urls.py=UTF-8
-encoding/local_settings.example.py=UTF-8
+encoding/local_settings.example.py=utf-8
 encoding/local_settings.py=utf-8
 encoding/manage.py=UTF-8
 encoding/settings.py=utf-8

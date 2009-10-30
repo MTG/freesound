@@ -67,12 +67,6 @@ TEMPLATE_DIRS = (
 # Email that error messages come from
 SERVER_EMAIL = 'devnull@iua.upf.edu'
 
-DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'freesound'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'freesound'             # Not used with sqlite3.
-DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
-DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
-
 TIME_ZONE = 'Europe/Brussels'
 
 LANGUAGE_CODE = 'en-us'
@@ -94,16 +88,7 @@ ROOT_URLCONF = 'urls'
 AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/home/login/'
 
-# Absolute path to the directory that holds media.
-# Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
-
 DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'
-EMAIL_HOST = 'iua-mail.upf.edu'
-EMAIL_PORT = 25
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
-EMAIL_SUBJECT_PREFIX = u'Freesound. '
 
 SEND_BROKEN_LINK_EMAILS = False
 
@@ -113,6 +98,12 @@ IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cg
 # A tuple of IP addresses, as strings, that:
 # See debug comments, when DEBUG is True
 INTERNAL_IPS = ['localhost', '127.0.0.1']
+
+# Absolute path to the directory that holds media.
+# Example: "/home/media/media.lawrence.com/"
+MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
+
+FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
 # urls for which the "lasta ction time" needs updating
 LAST_ACTION_TIME_URLS = ('/forum/', )
@@ -127,8 +118,7 @@ SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 50
 
 # data path, where all files should go to
-DATA_PATH = '/Users/bram/Development/nightingale/freesound/media/data/'
-os.path.join(os.path.dirname(__file__), 'media/data/')
+DATA_PATH = os.path.join(os.path.dirname(__file__), 'media/data/')
 
 import logging.config
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'freesound.ini'))

@@ -46,5 +46,23 @@
             "order": 4, 
             "legal_code_url": "http://creativecommons.org/licenses/by-nc/3.0/legalcode"
         }
+    },
+    {
+        "pk": 1,
+        "model": "wiki.page",
+        "fields": {
+            "name": "blank"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "wiki.content",
+        "fields": {
+            "body": "# Blank page #\r\n\r\nThis page is blank because it wasn't edited by an administrator yet. If you are an administrator, you can create this page by clicking edit in the upper right corner.",
+            "title": "blank page",
+            "created": "2009-02-16 15:32:23",
+            "page": 1,
+            "author": 1
+        }
     }
 ]

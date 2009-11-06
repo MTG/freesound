@@ -19,7 +19,7 @@ class Page(models.Model):
 
 class Content(models.Model):
     page = models.ForeignKey(Page)
-    author = models.ForeignKey(User)
+    author = models.ForeignKey(User, null=True, blank=True, default=None)
     title = models.CharField(max_length=250)
     body = models.TextField()
     created = models.DateTimeField(db_index=True, auto_now_add=True)

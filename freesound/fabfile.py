@@ -13,10 +13,11 @@ def restart():
     """Restart FastCGI"""
     run('''sudo supervisorctl restart freesound''')
     
-def deploy():
-    """Get latest version from Github and restart."""
+def pull():
+    """Get latest version from Github"""
     run('''cd freesound/ && git pull''')
+
+def deploy():
+    """pull and restart"""
+    pull()
     restart()
-    
-    
-    

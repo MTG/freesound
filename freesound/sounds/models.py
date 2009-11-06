@@ -10,6 +10,8 @@ from django.utils.translation import ugettext as _
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from utils.sql import DelayedQueryExecuter
+from tags.models import TaggedItem, Tag
+from django.contrib.contenttypes.models import ContentType
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -219,6 +221,19 @@ class Sound(SocialModel):
     def get_absolute_url(self):
         return ('sound', (self.user.username, smart_unicode(self.id),))
     
+    def set_tags(self, tags):
+        # remove tags that are not in the list
+        for tagged_item in self.tags.all():
+            if tagged_item.tag.name not in tags:
+                tagged_item.delete()
+
+        # add tags that are not there yet
+        for tag in tags:
+            if self.tags.filter(tag__name=tag).count() == 0:
+                (tag_object, created) = Tag.objects.get_or_create(name=tag)
+                tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
+                tagged_object.save()
+    
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 
@@ -228,7 +243,7 @@ class Pack(SocialModel):
     name = models.CharField(max_length=255)
     name_slug = models.SlugField(max_length=255, db_index=True)
     
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True, default=None)
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     

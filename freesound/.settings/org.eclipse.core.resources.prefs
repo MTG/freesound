@@ -1,4 +1,4 @@
-#Fri Oct 30 14:13:07 CET 2009
+#Fri Nov 06 13:13:45 CET 2009
 eclipse.preferences.version=1
 encoding//accounts/admin.py=UTF-8
 encoding//accounts/models.py=utf-8
@@ -8,11 +8,11 @@ encoding//comments/models.py=UTF-8
 encoding//favorites/admin.py=UTF-8
 encoding//favorites/models.py=utf-8
 encoding//forum/admin.py=UTF-8
-encoding//forum/models.py=UTF-8
+encoding//forum/models.py=utf-8
 encoding//forum/urls.py=UTF-8
-encoding//general/models.py=UTF-8
+encoding//general/models.py=utf-8
 encoding//geotags/admin.py=UTF-8
-encoding//geotags/models.py=UTF-8
+encoding//geotags/models.py=utf-8
 encoding//geotags/urls.py=UTF-8
 encoding//images/admin.py=UTF-8
 encoding//images/models.py=UTF-8
@@ -26,7 +26,7 @@ encoding//sounds/models.py=utf-8
 encoding//support/admin.py=UTF-8
 encoding//support/models.py=UTF-8
 encoding//tags/admin.py=UTF-8
-encoding//tags/models.py=UTF-8
+encoding//tags/models.py=utf-8
 encoding//templates/index.html=UTF-8
 encoding//utils/paypal/wrapper.py=UTF-8
 encoding//utils/search/solr.py=UTF-8

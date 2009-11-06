@@ -16,11 +16,10 @@ class HtmlCleaningCharField(forms.CharField):
 
 class TagField(forms.CharField):
     def clean(self, value):
-        print dir(self)
         tags = clean_and_split_tags(value)
         
         if len(tags) < 3:
-            raise forms.ValidationError('Your sound should AT LEAST have 3 tags...')
+            raise forms.ValidationError('Your should AT LEAST have 3 tags...')
         
         return tags
 

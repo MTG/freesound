@@ -1,3 +1,4 @@
+from sets import Set
 import re
 
 def size_generator(small_size, large_size, num_items):
@@ -26,16 +27,11 @@ def annotate_tags(tags, sort=True, small_size=0.7, large_size=1.8):
         tags.sort(cmp=lambda x, y: cmp(x["name"].lower(), y["name"].lower()))
     return tags
 
-alphanum_only = re.compile(r"[^a-zA-Z0-9-]")
+alphanum_only = re.compile(r"[^ a-zA-Z0-9-]")
 multi_dashes = re.compile(r"-+")
 
 def clean_and_split_tags(tags):
     tags = alphanum_only.sub("", tags)
     tags = multi_dashes.sub("-", tags)
-
-    unique_tags = {}
-    for tag in tags.split():
-        unique_tags[tag.strip("-")] = 1
-    
     common_words = "the of to and an in is it you that he was for on are with as i his they be at".split()
-    return filter(lambda s: s not in common_words and s, unique_tags.keys())
+    return Set([tag for tag in [tag.strip('-') for tag in tags.split()] if tag and tag not in common_words])    

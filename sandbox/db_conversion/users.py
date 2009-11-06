@@ -6,7 +6,7 @@ from text_utils import prepare_for_insert, smart_character_decoding
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1],db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
+my_conn = my.connect(host="localhost", user="freesound_web", passwd=sys.argv[1],db="freesound", use_unicode=False)
 my_curs = my_conn.cursor()
 
 start = 1 # start at one, we don't want the anonymous user!
@@ -25,7 +25,7 @@ while True:
     for row in rows:
         user_id, user_active, username, user_password, user_regdate, user_lastvisit, user_email = row
         
-        if user_id == 16967:
+        if user_id in (16967,1037753,1294123):
             continue
         
         username = smart_character_decoding(username)
@@ -45,17 +45,10 @@ copy auth_user (id, is_active, username, password, date_joined, last_login, emai
 select setval('auth_user_id_seq',(select max(id)+1 from auth_user));
 vacuum analyze auth_user;
 
-create table TEMP_TABLE as select username from auth_user group by username having count(*) > 1;
-delete from auth_user where username in (select username from TEMP_TABLE);
-drop table TEMP_TABLE;
-
-create table TEMP_TABLE as select email from auth_user group by email having count(*) > 1;
-delete from auth_user where email in (select email from TEMP_TABLE) and last_login = '1970-01-01 01:00:00+01';
-drop table TEMP_TABLE;
-
-create table TEMP_TABLE as select lower(username) as username from auth_user group by lower(username) having count(*) > 1;
-delete from auth_user where lower(username) in (select username from TEMP_TABLE) and last_login='1970-01-01 01:00:00+01';
-drop table TEMP_TABLE;
+delete from auth_user where email in (select email from auth_user group by email having count(*) > 1) and last_login = '1970-01-01 01:00:00+01';
+delete from auth_user where is_active = false and upper(username) in (select upper(username) from auth_user group by upper(username) having count(*) > 1);
+delete from auth_user where last_login = '1970-01-01 01:00:00+01' and upper(username) in (select upper(username) from auth_user group by upper(username) having count(*) > 1);
+delete from auth_user where id in (63988, 25491, 64476, 1294123, 898674, 166110, 543349);
 
 update auth_user set is_staff=true, is_superuser=true where username='Bram';
 

@@ -13,24 +13,47 @@
 
 <h2>Sound description</h2>
 
-<form method="post">
-{{description_form.as_p}}
-<input type="submit" name="submit" value="submit" />
+<a id="description"></a>
+<form method="post" action="#description">
+    {{description_form.as_p}}
+    <input type="submit" name="submit" value="submit" />
 </form>
+
+
+<h2>Pack</h2>
+
+<a id="pack"></a>
+<form method="post" action="#pack">
+    {{pack_form.as_p}}
+    <input type="submit" name="submit" value="submit" />
+</form>
+
 
 <h2>Geotag</h2>
 
-<div id="map" style="width: 400px; height:400px;"></div>
-<form method="post">
-{{geotag_form.as_p}}
-<input type="submit" name="submit" value="submit" />
+<a id="geotag"></a>
+<form method="post" action="#geotag">
+    {{geotag_form.as_p}}
+    <p>
+        <label for="map">Drag this map to set the geotag:</label> 
+        <div id="map" style="width: 400px; height:400px; margin-bottom: 1em;"></div>
+    </p>
+    <input type="submit" name="submit" value="submit" />
 </form>
 
 <script type="text/javascript">
-    var initialCenter = new GLatLng(23.885837699862005,21.796875);
-    
     var map = new GMap2($("map"));
-    map.setCenter(initialCenter, 2);
+    
+    var initialCenter = new GLatLng(23.885837699862005,21.796875);
+    var initialZoom = 2;
+    
+    {% if sound.geotag %}
+    initialCenter = new GLatLng({{sound.geotag.lat}},{{sound.geotag.lon}});
+    initialZoom = {{sound.geotag.zoom}}; 
+    {% endif %}
+
+    map.setCenter(initialCenter, initialZoom);
+    
     map.setMapType( G_HYBRID_MAP );
     map.enableContinuousZoom();
     map.addControl(new GSmallMapControl());
@@ -48,15 +71,39 @@
 
     GEvent.addListener(map, "move", updateAndAddCenter);
 
+    updateAndAddCenter()
+
     function updateAndAddCenter()
     {
         var center = map.getCenter();
         var zoom = map.getZoom();
         // update form
-        $("id_lon").value = center.lng();
-        $("id_lat").value = center.lat();
-        $("id_zoom").value = zoom;
+        if (!$("{{geotag_form.remove_geotag.auto_id}}").checked)
+        {
+            $("{{geotag_form.lon.auto_id}}").value = center.lng();
+            $("{{geotag_form.lat.auto_id}}").value = center.lat();
+            $("{{geotag_form.zoom.auto_id}}").value = zoom;
+        }
         centerMarker.setLatLng(center);
     }
+    
+    
+    $("{{geotag_form.remove_geotag.auto_id}}").observe('change', function (event) {
+        if (this.checked)
+        {
+            $("{{geotag_form.lon.auto_id}}").disable().value = "";
+            $("{{geotag_form.lat.auto_id}}").disable().value = "";
+            $("{{geotag_form.zoom.auto_id}}").disable().value = "";
+        }
+        else
+        {
+            $("{{geotag_form.lon.auto_id}}").enable();
+            $("{{geotag_form.lat.auto_id}}").enable();
+            $("{{geotag_form.zoom.auto_id}}").enable();
+            updateAndAddCenter();
+        }
+    });
+    
+    update
 </script>
 {% endblock section_content %}

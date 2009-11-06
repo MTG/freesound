@@ -15,6 +15,11 @@ from sounds.models import Sound, Pack
 from utils.forms import HtmlCleaningCharField
 from utils.cache import invalidate_template_cache
 from freesound_exceptions import PermissionDenied
+from forms import *
+from utils.functional import first
+from geotags.models import GeoTag
+from utils.text import slugify
+
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
@@ -31,8 +36,10 @@ def front_page(request):
     
     return render_to_response('index.html', locals(), context_instance=RequestContext(request)) 
  
+
 def sounds(request):
     pass
+
 
 def sound(request, username, sound_id):
     try:
@@ -71,8 +78,6 @@ def sound(request, username, sound_id):
 
     return render_to_response('sounds/sound.html', locals(), context_instance=RequestContext(request))
 
-from forms import *
-from utils.functional import first
 
 @login_required
 def sound_edit(request, username, sound_id):
@@ -81,27 +86,69 @@ def sound_edit(request, username, sound_id):
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
     
-    # figure out which of the forms was submitted
-    submitted_form = None
-    try:
-        submitted_form = first(lambda x: x[0] == "form_selection", request.POST.items())[1]
-    except TypeError:
-        pass
+    def is_selected(prefix):
+        if request.POST:
+            for name in request.POST.keys():
+                if name.startswith(prefix + '-'):
+                    return True
+        return False
     
-    if submitted_form == "geotag":
-        geotag_form = GeotaggingForm(request.POST)
-        if geotag_form.is_valid():
-            pass
-    else:
-        geotag_form = GeotaggingForm(initial={'form_selection':"geotag"})
-        
-    if submitted_form == "description":
-        description_form = SoundDescriptionForm(request.POST)
+    if is_selected("description"):
+        description_form = SoundDescriptionForm(request.POST, prefix="description")
         if description_form.is_valid():
-            pass
+            data = description_form.cleaned_data
+            sound.set_tags(data["tags"])
+            sound.description = data["description"]
+            sound.save()
+            invalidate_template_cache("sound_header", sound.id)
+            return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        description_form = SoundDescriptionForm(initial={'form_selection':"description"})
+        tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
+        description_form = SoundDescriptionForm(prefix="description", initial=dict(tags=tags, description=sound.description))
     
+    packs = Pack.objects.filter(user=request.user)
+    
+    if is_selected("pack"):
+        pack_form = PackForm(packs, request.POST, prefix="pack")
+        if pack_form.is_valid():
+            data = pack_form.cleaned_data
+            if data['new_pack']:
+                (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'], name_slug=slugify(data['new_pack']))
+                sound.pack = pack
+            else:
+                sound.pack = data["pack"]
+            sound.save()
+            invalidate_template_cache("sound_header", sound.id)
+            return HttpResponseRedirect(sound.get_absolute_url())
+    else:
+        pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id))
+
+    if is_selected("geotag"):
+        geotag_form = GeotaggingForm(request.POST, prefix="geotag")
+        if geotag_form.is_valid():
+            data = geotag_form.cleaned_data
+            if data["remove_geotag"]:
+                if sound.geotag:
+                    geotag = sound.geotag.delete()
+                    sound.geotag = None
+                    sound.save()
+            else:
+                if sound.geotag:
+                    sound.geotag.lat = data["lat"]
+                    sound.geotag.lon = data["lon"]
+                    sound.geotag.zoom = data["zoom"]
+                else:
+                    sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+                    sound.save()
+            
+            invalidate_template_cache("sound_footer", sound.id)
+            return HttpResponseRedirect(sound.get_absolute_url())    
+    else:
+        if sound.geotag:
+            geotag_form = GeotaggingForm(prefix="geotag", initial=dict(lat=sound.geotag.lat, lon=sound.geotag.lon, zoom=sound.geotag.zoom))
+        else:
+            geotag_form = GeotaggingForm(prefix="geotag")
+
     google_api_key = settings.GOOGLE_API_KEY
     
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
@@ -111,18 +158,22 @@ def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     pass
 
+
 def sources(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     pass
+
 
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('sounds/geotag.html', locals(), context_instance=RequestContext(request))
 
+
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     pass
+
 
 def pack(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
@@ -142,14 +193,18 @@ def pack(request, username, pack_id):
 
     return render_to_response('sounds/pack.html', locals(), context_instance=RequestContext(request))
 
+
 def remixed(request):
     pass
  
+
 def random(request):
     pass
 
+
 def packs(request):
     pass
+
 
 def packs_for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
@@ -173,6 +228,7 @@ def packs_for_user(request, username):
         current_page = 1
 
     return render_to_response('sounds/packs.html', locals(), context_instance=RequestContext(request))
+
 
 def for_user(request, username):
     pass

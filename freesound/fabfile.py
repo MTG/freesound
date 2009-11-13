@@ -15,7 +15,7 @@ def restart():
     
 def pull():
     """Get latest version from Github"""
-    run('''cd freesound/ && git pull''')
+    run('''cd freesound/ && git pull origin master''')
 
 def deploy():
     """pull and restart"""

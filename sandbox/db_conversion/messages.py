@@ -53,6 +53,7 @@ while True:
         if user_from_id not in valid_user_ids or user_to_id not in valid_user_ids:
             print "ignoring message from", user_from_id, "to", user_to_id
             n_ignored += 1
+            continue
         
         try:
             text_id = unique_texts[text]

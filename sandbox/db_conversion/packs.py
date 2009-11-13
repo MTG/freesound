@@ -1,6 +1,6 @@
 import MySQLdb as my
 import codecs, sys
-from django.template.defaultfilters import slugify
+from text_utils import slugify
 from text_utils import prepare_for_insert, smart_character_decoding
 from local_settings import *
 

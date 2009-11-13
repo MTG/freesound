@@ -43,7 +43,7 @@ CREATE TRIGGER forum_thread_insert AFTER INSERT ON forum_thread FOR EACH ROW EXE
 -- on thread delete, decrement thread-counter for forum
 CREATE OR REPLACE FUNCTION forum_thread_delete() RETURNS TRIGGER AS $BODY$
     BEGIN
-        UPDATE forum_forum  SET num_threads = num_threads - 1 WHERE forum_forum.id = OLD.forum_id WHERE num_threads > 0;
+        UPDATE forum_forum  SET num_threads = num_threads - 1 WHERE forum_forum.id = OLD.forum_id AND num_threads > 0;
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;

@@ -100,7 +100,18 @@ If your webserver is on another machine you must allow access to the database.
 Edit your `/etc/postgresql/8.3/main/pg_hba.conf` and add something like:
 
     host    <freesound_db>  <freesound_db_user>  193.145.55.3/32   md5
+    
+Create the language plpgsql in the database
 
+    createlang -d freesound plpgsql
+
+Install the SQL triggers in the database:
+
+	freesound/sql/nightingale_triggers.sql
+	
+If an import was done, run the initial setup which fixes the num_counts
+
+	freesound/sql/nightingale_sql_setup.sql
 
 Create a directory for logs
 ---------------------------

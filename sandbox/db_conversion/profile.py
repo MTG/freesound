@@ -4,17 +4,18 @@ import codecs, sys, re
 import time
 from text_utils import prepare_for_insert, smart_character_decoding
 from HTMLParser import HTMLParseError
+from local_settings import *
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'w', 'utf-8', errors='strict')
 
-my_conn = my.connect(host="localhost", user="freesound_web", passwd=sys.argv[1], db="freesound", use_unicode=False)
+my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
 
 check_user_ids = True
 
 if check_user_ids:
-    ppsql_conn = psycopg2.connect("host='localhost' dbname='freesound' user='freesoundpg' password='%s'" % sys.argv[2])
+    ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
     ppsql_cur = ppsql_conn.cursor()
     print "getting all valid user ids"
     ppsql_cur.execute("SELECT id FROM auth_user")

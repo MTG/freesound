@@ -1,12 +1,12 @@
+from local_settings import *
 import MySQLdb as my
-import codecs, sys, psycopg2
-from django.template.defaultfilters import slugify
-from text_utils import prepare_for_insert, smart_character_decoding
+import codecs
+import psycopg2
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
+my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
 
 start = 0
@@ -14,7 +14,7 @@ granularity = 100000
 
 content_type_id = 19
 
-ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[1])
+ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
 ppsql_cur = ppsql_conn.cursor()
 print "getting all valid sound ids"
 ppsql_cur.execute("SELECT id FROM sounds_sound")

@@ -1,9 +1,8 @@
+from local_settings import *
+from text_utils import prepare_for_insert, smart_character_decoding
 import MySQLdb as my
 import codecs
-import sys
 import psycopg2
-from text_utils import prepare_for_insert, smart_character_decoding
-import re
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -11,13 +10,13 @@ output_file = codecs.open(output_filename, 'wt', 'utf-8')
 output_filename2 = '/tmp/importfile2.dat'
 output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
+my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
 
 start = 0
 granularity = 10000
 
-ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[1])
+ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
 ppsql_cur = ppsql_conn.cursor()
 print "getting all valid user ids"
 ppsql_cur.execute("SELECT id FROM auth_user")

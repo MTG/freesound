@@ -1,4 +1,5 @@
 import MySQLdb as my
+import psycopg2
 import codecs
 from local_settings import *
 
@@ -7,6 +8,13 @@ output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
 my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
+
+ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
+ppsql_cur = ppsql_conn.cursor()
+print "getting all valid sound ids"
+ppsql_cur.execute("SELECT id FROM sounds_sound")
+valid_sound_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
+print "done"
 
 start = 0
 granularity = 10000
@@ -23,6 +31,9 @@ while True:
     
     for row in rows:
         id, parentID = row
+        
+        if id not in valid_sound_ids or parentID not in valid_sound_ids:
+            continue
 
         all_vars = [insert_id, id, parentID]
         

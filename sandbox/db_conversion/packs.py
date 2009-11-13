@@ -1,4 +1,5 @@
 import MySQLdb as my
+import psycopg2
 import codecs, sys
 from text_utils import slugify
 from text_utils import prepare_for_insert, smart_character_decoding
@@ -9,6 +10,13 @@ output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
 my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
+
+ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
+ppsql_cur = ppsql_conn.cursor()
+print "getting all valid user ids"
+ppsql_cur.execute("SELECT id FROM auth_user")
+valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
+print "done"
 
 start = 0
 granularity = 1000
@@ -25,6 +33,9 @@ while True:
     cleaned_data = []
     for row in rows:
         id, name, user_id, created = row
+        
+        if user_id not in valid_user_ids:
+            continue
         
         name = smart_character_decoding(name)
         

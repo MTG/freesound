@@ -12,15 +12,12 @@ output_file = codecs.open(output_filename, 'w', 'utf-8', errors='strict')
 my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
 
-check_user_ids = True
-
-if check_user_ids:
-    ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
-    ppsql_cur = ppsql_conn.cursor()
-    print "getting all valid user ids"
-    ppsql_cur.execute("SELECT id FROM auth_user")
-    valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
-    print "done"
+ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
+ppsql_cur = ppsql_conn.cursor()
+print "getting all valid user ids"
+ppsql_cur.execute("SELECT id FROM auth_user")
+valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
+print "done"
 
 start = 0
 granularity = 100000

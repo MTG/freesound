@@ -1,11 +1,11 @@
 import MySQLdb as my
-import codecs, sys, re
-from text_utils import prepare_for_insert
+import codecs
+from local_settings import *
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False, use_unicode=False)
+my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
 
 start = 0

@@ -20,13 +20,13 @@ print "done"
 start = 0
 granularity = 10000
 
-dup_sounds = [13300, 5979, 13216, 11216, 39633, 53746, 16732, 8379, 51906, 14098, 9897, 2874, 47442, 13312, 55043, 55026, 55048, 55040, 55058, 9589, 133, 16731, 16733, 16733, 16734, 47441, 2406, 26718, 39631, 39634, 41198, 5301, 2905, 7187, 2194, 1393, 5299, 5989]
+md5s = {}
 
 missing_files = [49525, 57342, 57343, 57346, 57355]
 
 while True:
     print start
-    my_curs.execute("SELECT ID, originalFilename, userID, duration, bitrate, bitdepth, filesize, dateAdded, samplerate, channels, packID, moderated, badDescription, md5, newFilename, extension FROM audio_file limit %d, %d" % (start, granularity))
+    my_curs.execute("SELECT ID, originalFilename, userID, duration, bitrate, bitdepth, filesize, dateAdded, samplerate, channels, packID, moderated, badDescription, md5, newFilename, extension FROM audio_file ORDER BY dateAdded limit %d, %d" % (start, granularity))
     rows = my_curs.fetchall()
     start += len(rows)
     
@@ -41,8 +41,13 @@ while True:
         
         original_filename = smart_character_decoding(original_filename)
         
-        if id in dup_sounds or id in missing_files:
+        if id in missing_files:
             continue
+        
+        if md5 in md5s:
+            continue
+        else:
+            md5s[md5] = 1
         
         my_curs.execute("SELECT text FROM audio_file_text_description where audioFileId = %d" % id)
         

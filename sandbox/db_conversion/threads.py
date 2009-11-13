@@ -1,12 +1,13 @@
 import MySQLdb as my
 import psycopg2
-import codecs, sys, re
+import codecs, sys
 from text_utils import prepare_for_insert, smart_character_decoding
+from local_settings import *
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False, use_unicode=False)
+my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
 
 start = 0
@@ -15,7 +16,7 @@ granularity = 1000
 check_user_ids = True
 
 if check_user_ids:
-    ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[1])
+    ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
     ppsql_cur = ppsql_conn.cursor()
     print "getting all valid user ids"
     ppsql_cur.execute("SELECT id FROM auth_user")

@@ -121,12 +121,14 @@ DATA_PATH = os.path.join(os.path.dirname(__file__), 'media/data/')
 import logging.config
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'freesound.ini'))
 
+DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
+
 # leave at bottom starting here!
 from local_settings import *
 
 TEMPLATE_DEBUG = DEBUG
 
-if DEBUG:
+if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)
     

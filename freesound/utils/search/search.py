@@ -1,4 +1,4 @@
-from solr import *
+from solr import Solr, SolrException
 from sounds.models import Sound
 import logging
 from django.conf import settings
@@ -74,7 +74,7 @@ def add_sounds_to_solr(sounds):
         logger.info("posting to Solr")
         solr.add(documents)
     except SolrException, e:
-        logger.error("failed to add sound batch to solr index, reason: %s" % (sound.id, str(e)))
+        logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
     
     logger.info("optimizing solr index")
     solr.optimize()

@@ -1,12 +1,13 @@
-import MySQLdb as my
-import codecs, sys, re
-from text_utils import prepare_for_insert, smart_character_decoding
 from django.template.defaultfilters import slugify
+from text_utils import smart_character_decoding
+import MySQLdb as my
+import codecs
+from local_settings import *
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
+my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
 
 my_curs.execute("select forum_id, forum_name, forum_desc, forum_order from phpbb_forums")

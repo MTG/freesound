@@ -1,9 +1,10 @@
+from local_settings import *
+from text_utils import smart_character_decoding
 import MySQLdb as my
+from sets import Set
 import codecs
-import re
 import psycopg2
-import sys
-from text_utils import prepare_for_insert, smart_character_decoding
+import re
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
@@ -11,10 +12,10 @@ output_file = codecs.open(output_filename, 'wt', 'utf-8')
 output_filename2 = '/tmp/importfile2.dat'
 output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
+my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
 
-ppsql_conn = psycopg2.connect("dbname='freesound' user='freesound' password='%s'" % sys.argv[1])
+ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
 ppsql_cur = ppsql_conn.cursor()
 print "getting all valid sound ids"
 ppsql_cur.execute("SELECT id FROM sounds_sound")
@@ -28,20 +29,14 @@ print "done"
 start = 0
 granularity = 100000
 
-
-alphanum_only = re.compile(r"[^a-zA-Z0-9-]")
+alphanum_only = re.compile(r"[^ a-zA-Z0-9-]")
 multi_dashes = re.compile(r"-+")
 
-def clean_and_split_tags(tags, debug=False):
+def clean_and_split_tags(tags):
     tags = alphanum_only.sub("", tags)
     tags = multi_dashes.sub("-", tags)
-
-    unique_tags = {}
-    for tag in tags.split():
-        unique_tags[tag.strip("-")] = 1
-    
-    common_words = "the of to and a an in is it you that he was for on are with as i his they be at".split()
-    return filter(lambda s: s not in common_words and s, unique_tags.keys())
+    common_words = "the of to and an in is it you that he was for on are with as i his they be at".split()
+    return Set([tag for tag in [tag.strip('-') for tag in tags.split()] if tag and tag not in common_words])    
 
 tag_id = 0
 lookup_dict = {}

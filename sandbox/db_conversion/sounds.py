@@ -1,12 +1,21 @@
-import MySQLdb as my
-import codecs, sys, re
+from local_settings import *
 from text_utils import prepare_for_insert, smart_character_decoding
+import MySQLdb as my
+import codecs
+import psycopg2
 
 output_filename = '/tmp/importfile.dat'
 output_file = codecs.open(output_filename, 'wt', 'utf-8')
 
-my_conn = my.connect(host="localhost", user="freesound", passwd=sys.argv[1], db="freesound", unix_socket="/var/mysql/mysql.sock", use_unicode=False)
+my_conn = my.connect(**MYSQL_CONNECT)
 my_curs = my_conn.cursor()
+
+ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
+ppsql_cur = ppsql_conn.cursor()
+print "getting all valid user ids"
+ppsql_cur.execute("SELECT id FROM auth_user")
+valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
+print "done"
 
 start = 0
 granularity = 10000
@@ -26,6 +35,9 @@ while True:
     
     for row in rows:
         id, original_filename, user_id, duration, bitrate, bitdepth, filesize, created, samplerate, channels, pack_id, moderation_state, moderation_bad_description, md5, base_filename_slug, type = row
+        
+        if user_id not in valid_user_ids:
+            continue
         
         original_filename = smart_character_decoding(original_filename)
         

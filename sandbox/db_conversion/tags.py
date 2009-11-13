@@ -79,6 +79,10 @@ while True:
             for tag in clean_and_split_tags(tags):
                 tid = tag_lookup(tag)
                 
+                if len(tag) > 100:
+                    print AudioFileID, tag
+                    continue
+
                 hash = "%d %d %d" % (userID, tid, AudioFileID)
                 if hash in unique_test:
                     print "\tduplicate tag", AudioFileID, tag, tid

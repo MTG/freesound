@@ -11,8 +11,21 @@
 {% endblock head %}
 
 {% block section_content %}
-<h1>Geotags</h1>
+
+{% if for_user %}
+    <h1>Geotags for <a href="{% url account for_user.username %}">{{for_user.username}}</a></h1>
+{% else %}
+    {% if tag %}
+        <h1>Geotags tagged with <a href="{% url tags tag %}">{{tag}}</a></h1>
+    {% else %}
+        <h1>Geotags</h1>
+    {% endif %}
+{% endif %}
+
 <div id="map_canvas" style="width: 910px; height: 600px; border: 1px solid black;"></div>
+{% if for_user or tag %}
+    <p>You can also view <a href="{% url geotags %}">all geotags</a></p>
+{% endif %}
 <script type="text/javascript">
 	var map = new GMap2($("map_canvas"));
 	map.setUIToDefault();
@@ -21,10 +34,14 @@
 	map.setMapType( G_SATELLITE_MAP );
 	map.enableContinuousZoom();
 	
-	{% if tag %}
-    GDownloadUrl('{% url geotags-json tag %}', function(data, responseCode)
+    {% if for_user %}
+        GDownloadUrl('{% url geotags-for-user-json for_user.username %}', function(data, responseCode)
     {% else %}
-    GDownloadUrl('{% url geotags-json %}', function(data, responseCode)
+    	{% if tag %}
+            GDownloadUrl('{% url geotags-json tag %}', function(data, responseCode)
+        {% else %}
+            GDownloadUrl('{% url geotags-json %}', function(data, responseCode)
+        {% endif %}
     {% endif %}
     {
     	var bounds = new GLatLngBounds();

@@ -37,7 +37,7 @@ urlpatterns = patterns('',
     url(r'^browse/packs/$', sounds.views.packs, name="packs"),
     url(r'^browse/random/$', sounds.views.random, name="sounds-random"),
     url(r'^browse/remixed/$', sounds.views.remixed, name="sounds-remixed"),
-    url(r'^browse/geotagged/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
+    url(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
     
     url(r'^contact/', support.views.contact, name="contact"),
 

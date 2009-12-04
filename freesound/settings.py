@@ -65,8 +65,11 @@ TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(__file__), 'templates'),
 )
 
-# Email that error messages come from
+# Email settings
 SERVER_EMAIL = 'devnull@iua.upf.edu'
+EMAIL_SUBJECT_PREFIX = '[freesound] '
+SEND_BROKEN_LINK_EMAILS = False
+DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'
 
 TIME_ZONE = 'Europe/Brussels'
 
@@ -88,10 +91,6 @@ ROOT_URLCONF = 'urls'
 
 AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/home/login/'
-
-DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'
-
-SEND_BROKEN_LINK_EMAILS = False
 
 IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf')
 IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', 'favicon.ico', '.php')

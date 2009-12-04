@@ -132,7 +132,7 @@
 	</ul>
 
 	<div id="flag_sound">
-		Sound illegal or offensive? <a href="#">Flag it.</a>
+		Sound illegal or offensive? <a href="{% url sound-flag sound.user.username sound.id %}" title="flag this sound as ilegal, offensive or other...">Flag it!</a>
 	</div>
 
 	<div id="sound_license">

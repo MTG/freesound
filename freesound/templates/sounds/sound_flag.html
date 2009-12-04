@@ -1,0 +1,14 @@
+{% extends "sounds/_section.html" %}
+
+{% block title %}&quot;flag {{sound.original_filename}}{% endblock title %}
+
+{% block section_content %}
+
+<h2>Flagging &quot;{{sound.original_filename}}&quot;</h2>
+
+<form method="post" action=".">{% csrf_token %}
+    {{flag_form.as_p}}
+    <input type="submit" name="submit" value="submit" />
+</form>
+
+{% endblock section_content %}

@@ -233,3 +233,28 @@ def packs_for_user(request, username):
 def for_user(request, username):
     pass
 
+
+def flag(request, username, sound_id):
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    
+    user = None
+    email = None
+    if request.user.is_authenticated():
+        user = request.user
+        email = request.user.email
+
+    if request.method == "POST":
+        flag_form = FlagForm(request.POST)
+        if flag_form.is_valid():
+            flag = flag_form.save(commit=False)
+            flag.reporting_user=user
+            flag.sound = sound
+            flag.save()
+            return HttpResponseRedirect(sound.get_absolute_url())
+    else:
+        if user:
+            flag_form = FlagForm(initial=dict(email=email))
+        else:
+            flag_form = FlagForm()
+    
+    return render_to_response('sounds/sound_flag.html', locals(), context_instance=RequestContext(request))

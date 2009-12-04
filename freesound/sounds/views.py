@@ -10,14 +10,15 @@ from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from forum.models import Post
-from sounds.models import Sound, Pack
-from utils.forms import HtmlCleaningCharField
-from utils.cache import invalidate_template_cache
-from freesound_exceptions import PermissionDenied
 from forms import *
-from utils.functional import first
+from forum.models import Post
+from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
+from sounds.models import Sound, Pack
+from utils.cache import invalidate_template_cache
+from utils.forms import HtmlCleaningCharField
+from utils.functional import first
+from utils.mail import send_mail_template
 from utils.text import slugify
 
 
@@ -260,6 +261,9 @@ def flag(request, username, sound_id):
             flag.reporting_user=user
             flag.sound = sound
             flag.save()
+            
+            send_mail_template(u"[flag] flagged file", "sounds/email_flag.txt", dict(flag=flag), flag.email)
+
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if user:

@@ -9,6 +9,6 @@ kindest,
 
  - The Freesound Mail Robot!
 
-PS: replies to this email address will end up in the garbage can, please see the message for further details!
+{% block ps %}PS: replies to this email address will end up in the garbage can, please see the message for further details!{% endblock %}
 
 {% block footer %}{% endblock %}

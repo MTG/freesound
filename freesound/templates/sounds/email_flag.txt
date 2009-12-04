@@ -1,0 +1,18 @@
+{% extends "email_base.txt" %}
+
+{% block salutation %}admin{% endblock %}
+
+{% block body %}
+A sound was flagged:
+
+
+Sound: http://{{current_site.domain}}{{flag.sound.get_absolute_url}}
+{% if flag.reporting_user %}
+Reporting user: http://{{current_site.domain}}{% url account flag.reporting_user.username %}
+{% endif %}
+Reason type: {{flag.get_reason_type_display}}
+
+Reason:
+{{flag.reason}}
+{% endblock %}
+{% block ps %}{% endblock %}

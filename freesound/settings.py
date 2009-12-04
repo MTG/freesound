@@ -91,6 +91,8 @@ ROOT_URLCONF = 'urls'
 
 AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/home/login/'
+LOGOUT_URL = '/home/logout/'
+LOGIN_REDIRECT_URL = '/home/'
 
 IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf')
 IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', 'favicon.ico', '.php')

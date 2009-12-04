@@ -261,16 +261,16 @@ class Pack(SocialModel):
         ordering = ("-created",)
 
 
-class Report(models.Model):
+class Flag(models.Model):
     sound = models.ForeignKey(Sound)
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
-    email = models.EmailField(null=True, blank=True)
+    email = models.EmailField()
     REASON_TYPE_CHOICES = (
-        ("O",_('Offending')),
-        ("I",_('Illegal')),
-        ("T",_('Other')),
+        ("O",_('Offending sound')),
+        ("I",_('Illegal sound')),
+        ("T",_('Other problem')),
     )
-    reason_type = models.CharField(max_length=1, choices=REASON_TYPE_CHOICES, default="T")
+    reason_type = models.CharField(max_length=1, choices=REASON_TYPE_CHOICES, default="I")
     reason = models.TextField()
     
     created = models.DateTimeField(db_index=True, auto_now_add=True)

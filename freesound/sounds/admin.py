@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from models import License, Sound, Pack, Report
+from models import License, Sound, Pack, Flag
 
 class LicenseAdmin(admin.ModelAdmin):
     list_display = ('name', 'deed_url', 'legal_code_url', 'change_order')
@@ -29,7 +29,7 @@ class PackAdmin(admin.ModelAdmin):
 admin.site.register(Pack, PackAdmin)
 
 
-class ReportAdmin(admin.ModelAdmin):
+class FlagAdmin(admin.ModelAdmin):
     raw_id_fields = ('reporting_user', 'sound')
     list_display = ('reporting_user', 'email', 'reason_type')
-admin.site.register(Report, ReportAdmin)
+admin.site.register(Flag, FlagAdmin)

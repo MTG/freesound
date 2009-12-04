@@ -176,9 +176,9 @@ class SolrQuery(object):
         """
         try:
             if field not in self.params['facet.field']:
-                raise SolrQueryException, "setting facet options for field that doesn't exist"
+                raise SolrException, "setting facet options for field that doesn't exist"
         except KeyError:
-            raise SolrQueryException, "you haven't defined any facet fields yet"
+            raise SolrException, "you haven't defined any facet fields yet"
         
         self.params['f.%s.facet.limit' % field] = limit
         self.params['f.%s.facet.offset' % field] = offset
@@ -215,9 +215,9 @@ class SolrQuery(object):
         """
         try:
             if field not in self.params['facet.date']:
-                raise SolrQueryException, "setting date facet options for field that doesn't exist"
+                raise SolrException, "setting date facet options for field that doesn't exist"
         except KeyError:
-            raise SolrQueryException, "you haven't defined any date facet fields yet"
+            raise SolrException, "you haven't defined any date facet fields yet"
 
         self.params['f.%s.date.start' % field] = start
         self.params['f.%s.date.end' % field] = start
@@ -266,9 +266,9 @@ class SolrQuery(object):
         """
         try:
             if field not in self.params['hl.fl']:
-                raise SolrQueryException, "setting highlighting options for field that doesn't exist"
+                raise SolrException, "setting highlighting options for field that doesn't exist"
         except KeyError:
-            raise SolrQueryException, "you haven't defined any highlighting fields yet"
+            raise SolrException, "you haven't defined any highlighting fields yet"
 
         self.params['f.%s.hl.fl.snippets' % field] = snippets
         self.params['f.%s.hl.fragsize' % field] = fragment_size

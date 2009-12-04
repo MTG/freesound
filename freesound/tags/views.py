@@ -1,16 +1,9 @@
 # Create your views here.
-from django.conf import settings
-from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
-from django.core.paginator import Paginator, InvalidPage
-from django.db.models import Count, Max, Q
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response
 from django.template import RequestContext
-from sounds.models import Sound
-from utils.search.search import *
-
+from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
+    SolrResponseInterpreterPaginator, SolrException, Solr
+from django.conf import settings
 
 def tags(request, multiple_tags=None):
     if multiple_tags:
@@ -42,7 +35,6 @@ def tags(request, multiple_tags=None):
         page = paginator.page(current_page)
         error = False
     except SolrException, e:
-        logger.warning("search error: error %s" % (e))
         error = True
     
     tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]

@@ -1,4 +1,4 @@
-from django.conf import settings, settings
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.core.paginator import Paginator, InvalidPage
@@ -24,6 +24,7 @@ def getags_json(request, tag=None):
     return HttpResponse(simplejson.dumps(sounds_data))
 
 def geotags(request, tag=None):
+    google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('geotags/geotags.html', locals(), context_instance=RequestContext(request))
 
 def for_user(request, username):

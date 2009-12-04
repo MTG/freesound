@@ -4,7 +4,7 @@
 
 {% block section_content %}
 
-<h2>Flagging &quot;{{sound.original_filename}}&quot;</h2>
+<h2>Flagging <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a></h2>
 
 <form method="post" action=".">{% csrf_token %}
     {{flag_form.as_p}}

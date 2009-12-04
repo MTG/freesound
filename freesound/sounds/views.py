@@ -87,7 +87,7 @@ def sound_edit(request, username, sound_id):
         raise PermissionDenied
     
     def is_selected(prefix):
-        if request.POST:
+        if request.method == "POST":
             for name in request.POST.keys():
                 if name.startswith(prefix + '-'):
                     return True
@@ -121,7 +121,7 @@ def sound_edit(request, username, sound_id):
             invalidate_template_cache("sound_header", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id))
+        pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
 
     if is_selected("geotag"):
         geotag_form = GeotaggingForm(request.POST, prefix="geotag")
@@ -148,6 +148,16 @@ def sound_edit(request, username, sound_id):
             geotag_form = GeotaggingForm(prefix="geotag", initial=dict(lat=sound.geotag.lat, lon=sound.geotag.lon, zoom=sound.geotag.zoom))
         else:
             geotag_form = GeotaggingForm(prefix="geotag")
+
+    if is_selected("license"):
+        license_form = LicenseForm(request.POST, prefix="license")
+        if license_form.is_valid():
+            sound.license = license_form.cleaned_data["license"]
+            sound.save()
+            invalidate_template_cache("sound_footer", sound.id)
+            return HttpResponseRedirect(sound.get_absolute_url())
+    else:
+        license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
 
     google_api_key = settings.GOOGLE_API_KEY
     

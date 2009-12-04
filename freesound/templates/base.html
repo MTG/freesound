@@ -14,6 +14,11 @@
 		<script type="text/javascript">
             var isLoggedIn = {{request.user.is_authenticated|yesno:"true,false"}};
             var loginUrl = "{% url accounts-login %}?next={{request.path}}";
+            {% if messages %}
+                {% for message in messages %}
+                alert("{{ message }}");
+                {% endfor %}
+            {% endif %}
 		</script>
 		<script src="{{media_url}}freesound.js" type="text/javascript"></script>
 		{% endblock %}
@@ -52,9 +57,9 @@
 				{% if user.is_authenticated %}
 				<li class="{% block tab_home_active %}{% endblock %}"><a href="{% url accounts-home %}" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
 				{% endif %}
-				<li class="{% block tab_sounds_active %}{% endblock %}"><a href="#{% url sounds %}" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
+				<li class="{% block tab_sounds_active %}{% endblock %}"><a href="{% url sounds %}" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
 				<li class="{% block tab_forums_active %}{% endblock %}"><a href="{% url forums-forums %}" id="site_nav_forums"><span class="site_nav_icon"></span>Forums</a></li>
-				<li class="{% block tab_help_active %}{% endblock %}"><a href="/help/" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
+				<li class="{% block tab_help_active %}{% endblock %}"><a href="{% url wiki %}" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
 			</ul>
 		</div>
 		

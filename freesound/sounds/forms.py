@@ -1,7 +1,7 @@
 from django import forms
-from django.contrib.auth.models import User
 from utils.forms import *
 from models import Pack
+from sounds.models import License, Flag
 
 class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
@@ -22,14 +22,17 @@ class GeotaggingForm(forms.Form):
         
         return data
 
+
 class SoundDescriptionForm(forms.Form):
     tags = TagField(widget=forms.widgets.TextInput(attrs={"size":40}), help_text="Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea)
+
 
 class PackChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, pack):
         return pack.name
     
+
 class PackForm(forms.Form):
     pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
     new_pack = HtmlCleaningCharField(label="Or fill in the name of a new pack:", required=False, min_length=1)
@@ -38,9 +41,24 @@ class PackForm(forms.Form):
         super(PackForm, self).__init__(*args, **kwargs)
         self.fields['pack'].queryset = pack_choices
     
-    def clean_add_to_new_pack(self):
+    def clean_new_pack(self):
         try:
             Pack.objects.get(name=self.cleaned_data['new_pack'])
             raise forms.ValidationError('This pack name already exists!')
         except Pack.DoesNotExist: #@UndefinedVariable
             return self.cleaned_data['new_pack']
+
+
+class LicenseForm(forms.Form):
+    license = forms.ModelChoiceField(queryset=License.objects.filter(is_public=True), required=True, empty_label=None)
+    
+    def clean_license(self):
+        if self.cleaned_data['license'].abbreviation == "samp+":
+            raise forms.ValidationError('We are in the process of slowly removing this license, please choose another one.')
+        return self.cleaned_data['license']
+
+
+class FlagForm(forms.ModelForm):
+    class Meta:
+        model = Flag
+        exclude = ('sound', 'reporting_user', 'created')

@@ -109,7 +109,7 @@ def new_message(request, username=None):
             
             try:
                 # send the user an email to notify him of the sent message!
-                send_mail_template(u'You have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
+                send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
             except:
                 # if the email sending fails, ignore...
                 pass

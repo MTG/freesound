@@ -23,7 +23,7 @@ def contact(request):
             if not user:
                 try:
                     user = User.objects.get(email__iexact=email_from)
-                except User.DoesNotExist:
+                except User.DoesNotExist: #@UndefinedVariable
                     pass
             
             send_mail_template(subject, "support/email_support.txt", locals(), email_from)

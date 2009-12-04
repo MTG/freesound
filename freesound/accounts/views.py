@@ -36,7 +36,7 @@ def registration(request):
             
             encrypted_user_id = encrypt(str(user.id))
             
-            send_mail_template(u'Activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
+            send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
             
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:

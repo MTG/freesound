@@ -23,13 +23,13 @@ class SocialModel(models.Model):
 class OrderedModel(models.Model):
     order = models.PositiveIntegerField(editable=False)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         if not self.id:
             try:
                 self.order = self.__class__.objects.all().order_by("-order")[0].order + 1
             except IndexError:
                 self.order = 0
-        super(OrderedModel, self).save()
+        super(OrderedModel, self).save(*args, **kwargs)
 
     def change_order(self):
         model_type_id = ContentType.objects.get_for_model(self.__class__).id

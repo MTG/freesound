@@ -49,7 +49,7 @@
 	{% show_file file_structure %}
 </ul>
 
-<form action="." method="post" id="fileform">
+<form action="." method="post" id="fileform">{% csrf_token %}
 	<div style="display:none">
 	{{form.as_p}}
 	</div>

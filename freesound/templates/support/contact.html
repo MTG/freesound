@@ -11,7 +11,7 @@
 <p>
 	Please make sure that you checked the <a href="{% url wiki %}">help</a> pages and the <a href="{% url forums-forums %}">forums</a> for possible answers to your questions! If your answer is easily found in either of these, we will ignore your email...
 </p>
-<form method="post" action=".">
+<form method="post" action=".">{% csrf_token %}
 {{form.as_p}}
 <input type="submit" value="send" />
 </form>

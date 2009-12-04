@@ -8,7 +8,7 @@
 
 {% block section_content %}
 
-<form method="POST" action="{% url messages-change-state %}" class="messages_form">
+<form method="post" action="{% url messages-change-state %}" class="messages_form">{% csrf_token %}
 	<table class="messages_table">
 		<tr>
 			<th id="messages_table_header_checkbox"><input id="select_all" type="checkbox" /></th>

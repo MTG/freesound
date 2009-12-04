@@ -14,16 +14,23 @@
 <h2>Sound description</h2>
 
 <a id="description"></a>
-<form method="post" action="#description">
+<form method="post" action="#description">{% csrf_token %}
     {{description_form.as_p}}
     <input type="submit" name="submit" value="submit" />
 </form>
 
+<h2>Sound license</h2>
+
+<a id="license"></a>
+<form method="post" action="#license">{% csrf_token %}
+    {{license_form.as_p}}
+    <input type="submit" name="submit" value="submit" />
+</form>
 
 <h2>Pack</h2>
 
 <a id="pack"></a>
-<form method="post" action="#pack">
+<form method="post" action="#pack">{% csrf_token %}
     {{pack_form.as_p}}
     <input type="submit" name="submit" value="submit" />
 </form>
@@ -32,7 +39,7 @@
 <h2>Geotag</h2>
 
 <a id="geotag"></a>
-<form method="post" action="#geotag">
+<form method="post" action="#geotag">{% csrf_token %}
     {{geotag_form.as_p}}
     <p>
         <label for="map">Drag this map to set the geotag:</label> 
@@ -103,7 +110,6 @@
             updateAndAddCenter();
         }
     });
-    
-    update
+
 </script>
 {% endblock section_content %}

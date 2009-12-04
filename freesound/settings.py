@@ -28,6 +28,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.doc.XViewMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware'
 )
 
 INSTALLED_APPS = (

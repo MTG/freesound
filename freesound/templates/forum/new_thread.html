@@ -6,7 +6,7 @@
 
 {% block section_content %}
 
-<form method="post" action=".">
+<form method="post" action=".">{% csrf_token %}
 <table>
 {{form.as_p}}
 </table>

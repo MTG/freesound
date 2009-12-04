@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load absurl %}
 
 {% block title %}upload files{% endblock %}
 
@@ -192,7 +193,7 @@ span.filename
     <li>All files are <strong>moderated</strong>, if you upload illegal files or files that don't follow the <a href="{% url wiki-page "what-is-legal" %}">guidelines</a> they will be removed in the moderation process...</li>
     <li>We prefer <strong>wav, aif and flac</strong> but we support ogg and mp3 too.</li>
 </ul>
-<form enctype="multipart/form-data" method="post" action="{% url accounts-upload-file %}">
+<form enctype="multipart/form-data" method="post" action="{% url accounts-upload-file %}">{% csrf_token %}
     <p style="display:none" id="multiple-upload">
 	    Click the button to upload files. Inside the "file open" dialog you can select multiple files at once (osx: apple-click, windows/linux: ctrl-click):
 	</p>

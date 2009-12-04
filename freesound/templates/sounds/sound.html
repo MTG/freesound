@@ -87,7 +87,7 @@
 		</div>
 	</div> <!-- comments_container -->
 	
-	<form method="POST" action=".#comments" id="sound_comment_form">
+	<form method="POST" action=".#comments" id="sound_comment_form">{% csrf_token %}
 		<fieldset>
 			<h4 id="leave_a_comment">Leave a comment:</h4>
 			{{form.as_p}}

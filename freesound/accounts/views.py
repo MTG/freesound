@@ -140,5 +140,4 @@ def upload_file(request):
 
 @login_required
 def upload(request):
-    site = Site.objects.get_current()
     return render_to_response('accounts/upload.html', locals(), context_instance=RequestContext(request))

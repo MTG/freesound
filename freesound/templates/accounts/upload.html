@@ -150,7 +150,7 @@ span.filename
         
         var settings_object =
         {
-            upload_url : "http://{{ site.domain }}{% url accounts-upload-file %}",
+            upload_url : "{% absurl accounts-upload-file %}",
             flash_url : "{{media_url}}swf/swfupload.swf",
             button_placeholder_id : "placeholder",
             post_params: {'sessionid': '{{request.session.session_key}}'},

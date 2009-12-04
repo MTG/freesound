@@ -1,11 +1,10 @@
 from django.conf import settings
-from django.core.cache import cache
-from django.core.paginator import Paginator, InvalidPage
-from django.http import HttpResponseRedirect, Http404, HttpResponse
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response
 from django.template import RequestContext
-from utils.search.search import *
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
+    SolrResponseInterpreterPaginator, SolrException
 import operator
+import logging
 
 logger = logging.getLogger("search")
 

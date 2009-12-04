@@ -10,7 +10,7 @@ python-memcached
 flup
 django-extensions
 django-debug-toolbar
-django==1.1
+svn+http://code.djangoproject.com/svn/django/trunk/
 #
 # The packate for 'recaptcha-client' fails to install.
 # See: http://code.google.com/p/recaptcha/issues/detail?id=55

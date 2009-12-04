@@ -12,15 +12,15 @@
 
 <div class="tagcloud">
     {% for tag in tags|add_sizes:"True:0.7:1.8" %}
-        <span style="font-size:{{tag.size}}em">
+        <span style="font-size:{{tag.size}}em;">
             {% if tag.name|in_list:multiple_tags %}
-                {% if multiple_tags|join_tags_except:tag.name %}
-                {{tag.name}}<span class="tag_addremove"><a href="{% url tags multiple_tags|join_tags_except:tag.name %}">-</a></span>
+                {% if multiple_tags|join_tags_exclude:tag.name %}
+                {{tag.name}}<span class="tag_addremove"><a href="{% url tags multiple_tags|join_tags_exclude:tag.name %}">-</a></span>
                 {% else %}
                 {{tag.name}}<span class="tag_addremove"><a href="{% url tags %}">-</a></span>
                 {% endif %}
             {% else %}
-                <a href="{% url tags tag.name %}">{{tag.name}}</a><span class="tag_addremove"><a href="{{request.path}}{{tag.name}}/">+</a></span>
+                <a href="{% url tags tag.name %}">{{tag.name}}</a><span class="tag_addremove"><a href="{% url tags multiple_tags|join_tags_include:tag.name %}">+</a></span>
             {% endif %}
         </span>
     {% endfor %}

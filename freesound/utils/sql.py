@@ -15,7 +15,7 @@ class DelayedQueryExecuter:
             column_names = [desc[0] for desc in cursor.description]
             
             # cursor.fetchall fetches all results in one go (i.e. not a generator) so this is just as fast
-            self.cache = (dict(zip(column_names, row)) for row in cursor.fetchall())
+            self.cache = [dict(zip(column_names, row)) for row in cursor.fetchall()]
 
         for row in self.cache:
             yield row

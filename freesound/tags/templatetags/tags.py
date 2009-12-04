@@ -9,5 +9,9 @@ def add_sizes(tags, arguments):
     return annotate_tags(tags, sort.lower() == "true", float(small_size), float(large_size))
 
 @register.filter
-def join_tags_except(list, exclude):
+def join_tags_exclude(list, exclude):
     return "/".join(sorted(filter(lambda x: x != exclude, list))) if list else None
+
+@register.filter
+def join_tags_include(list, include):
+    return "/".join(sorted(list + [include])) if list else include

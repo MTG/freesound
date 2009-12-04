@@ -1,4 +1,11 @@
-<div style="infowindow">
-{{sound.original_filename}}<br/>
-{{sound.description|safe}}</br>
-</div>
+{% include "sounds/player_medium.html" %}
+<p>
+    <strong>Sound:</strong> <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a><br />
+    <strong>Author:</strong> <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
+    <strong>Tags:</strong>
+	{% for tag_link in sound.tags.all %}
+		<a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a>{% if forloop.last %}{% else %} | {% endif %}
+	{% endfor %}<br/>
+    <strong>Description:</strong> "{{sound.description|striptags|safe}}"<br/>
+    <a href="javascript:setMaxZoomCenter(map, {{sound.geotag.lat}}, {{sound.geotag.lon}}, {{sound.geotag.zoom}})">Zoom in!</a>
+</p>

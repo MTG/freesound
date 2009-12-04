@@ -81,7 +81,7 @@ function setupFaceting()
 function zoomToBounds(map, bounds)
 {
     var center = bounds.getCenter();
-    var newZoom = map.getBoundsZoomLevel(bounds) - 1;
+    var newZoom = map.getBoundsZoomLevel(bounds);
     if (map.getZoom() != newZoom)
     {
         map.setCenter(center, newZoom);
@@ -90,4 +90,21 @@ function zoomToBounds(map, bounds)
     {
         map.panTo(center);
     }
+}
+
+function setMaxZoomCenter(map, lat, lng, zoom)
+{
+    var latlng = new GLatLng(lat, lng);
+    
+    map.getCurrentMapType().getMaxZoomAtLatLng(latlng, function(response)
+    {
+        if (response && response['status'] == G_GEO_SUCCESS)
+        {
+            map.setCenter(latlng, response['zoom']);
+        }
+        else
+        {
+            map.setCenter(latlng, zoom);
+        }
+    });
 }

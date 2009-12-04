@@ -16,7 +16,7 @@ from utils.sql import DelayedQueryExecuter
 class License(OrderedModel):
     """A creative commons license model"""
     name = models.CharField(max_length=512)
-    abbreviation = models.CharField(max_length=5, db_index=True)
+    abbreviation = models.CharField(max_length=8, db_index=True)
     summary = models.TextField()
     deed_url = models.URLField()
     legal_code_url = models.URLField()

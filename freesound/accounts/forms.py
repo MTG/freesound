@@ -2,10 +2,11 @@ from django import forms
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 from models import Profile
-from utils.forms import RecaptchaForm
+from utils.forms import RecaptchaForm, HtmlCleaningCharField
 
 class UploadFileForm(forms.Form):
     file = forms.FileField()
+
 
 class FileChoiceForm(forms.Form):
     files = forms.MultipleChoiceField()
@@ -50,7 +51,7 @@ class RegistrationForm(RecaptchaForm):
         try:
             User.objects.get(email__iexact=email2)
             raise forms.ValidationError(_("A user using that email address already exists."))
-        except User.DoesNotExist:
+        except User.DoesNotExist: #@UndefinedVariable
             pass
         return email2
 
@@ -70,3 +71,45 @@ class RegistrationForm(RecaptchaForm):
         profile.save()
 
         return user
+
+
+class ReactivationForm(forms.Form):
+    user = forms.CharField(label="The username or email you signed up with")
+    
+    def clean_user(self):
+        username_or_email = self.cleaned_data["user"]
+        
+        try:
+            return User.objects.get(email__iexact=username_or_email, is_active=False)
+        except User.DoesNotExist: #@UndefinedVariable
+            pass
+        
+        try:
+            return User.objects.get(username__iexact=username_or_email, is_active=False)
+        except User.DoesNotExist: #@UndefinedVariable
+            pass
+        
+        raise forms.ValidationError(_("No non-active user with such email or username exists."))
+
+
+class UsernameReminderForm(forms.Form):
+    user = forms.EmailField(label="The email address you signed up with")
+    
+    def clean_user(self):
+        email = self.cleaned_data["user"]
+        
+        print email
+        
+        try:
+            return User.objects.get(email__iexact=email)
+        except User.DoesNotExist: #@UndefinedVariable
+            raise forms.ValidationError(_("No user with such an email exists."))
+        
+
+class ProfileForm(forms.ModelForm):
+    about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)))
+    signature = HtmlCleaningCharField(label="Forum signature", widget=forms.Textarea(attrs=dict(rows=20, cols=70)))
+    wants_newsletter = forms.BooleanField(label="Subscribed to newsletter", required=False)
+    class Meta:
+        model = Profile
+        fields = ('home_page', 'wants_newsletter', 'about', 'signature')

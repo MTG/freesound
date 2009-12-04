@@ -21,10 +21,6 @@
 </form>
 <p>Don't have an account yet? Why not <a href="{% url accounts-register %}">register</a>?</p>
 
-<h1>Reminders</h1>
-<ul>
-    <li><a href="{% url accounts-password-reset %}">Reset your password</a></li>
-    <li>Resend activation code</li>
-    <li>Forgotten username</li>
-</ul>
+{% include "accounts/reminders.html" %}
+
 {% endblock %}

@@ -1,0 +1,15 @@
+{% extends "accounts/_section.html" %}
+
+{% block title %}username reminder{% endblock %}
+
+{% block section_content %}
+<h1>Username reminder</h1>
+{% if sent %}
+    <p>A username reminder was sent to you email address, please make sure you check both your <strong>inbox</strong> and your <strong>spam folder</strong> the our email!</p>
+{% else %}
+    <form method="post" action=".">{% csrf_token %}
+    {{form.as_p}}
+    <input type="submit" value="Send username reminder" />
+    </form>
+{% endif %}
+{% endblock %}

@@ -1,15 +1,14 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
-from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from forms import UploadFileForm, FileChoiceForm, RegistrationForm
+from forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
+    ReactivationForm, UsernameReminderForm, ProfileForm
 from sounds.models import Sound, Pack
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
@@ -18,26 +17,26 @@ import os
 
 def activate_user(request, activation_key):
     try:
-        user = User.objects.get(id=int(decrypt(activation_key)))
+        user_id = decrypt(activation_key)
+        user = User.objects.get(id=int(user_id))
         user.is_active = True
         user.save()
-        return HttpResponseRedirect(reverse("accounts-home"))
+        return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
     except User.DoesNotExist: #@UndefinedVariable
         return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
-    except:
+    except TypeError:
         return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
 
+def send_activation(user):
+    encrypted_user_id = encrypt(str(user.id))
+    send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
 
 def registration(request):
     if request.method == "POST":
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
             user = form.save()
-            
-            encrypted_user_id = encrypt(str(user.id))
-            
-            send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
-            
+            send_activation(user)
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = RegistrationForm(request)
@@ -45,14 +44,58 @@ def registration(request):
     return render_to_response('accounts/registration.html', locals(), context_instance=RequestContext(request))
 
 
+def resend_activation(request):
+    if request.method == "POST":
+        form = ReactivationForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data["user"]
+            send_activation(user)
+            return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
+    else:
+        form = ReactivationForm()
+        
+    return render_to_response('accounts/resend_activation.html', locals(), context_instance=RequestContext(request))
+
+
+def username_reminder(request):
+    if request.method == "POST":
+        form = UsernameReminderForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data["user"]
+            send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt', dict(user=user), None, user.email)
+
+            return render_to_response('accounts/username_reminder.html', dict(form=form, sent=True), context_instance=RequestContext(request))
+    else:
+        form = UsernameReminderForm()
+        
+    return render_to_response('accounts/username_reminder.html', dict(form=form, sent=False), context_instance=RequestContext(request))
+
+
 @login_required
 def home(request):
-    pass
-
+    user = request.user
+    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
+    tags = user.profile.get_tagcloud()
+    latest_sounds = Sound.public.filter(user=user)[0:5]
+    latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
+    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
+    google_api_key = settings.GOOGLE_API_KEY
+    home = True
+    return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 @login_required
 def edit(request):
-    pass
+    profile = request.user.profile
+    
+    if request.method == "POST":
+        form = ProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse("accounts-home"))
+    else:
+        form = ProfileForm(instance=profile)
+        
+    return render_to_response('accounts/edit.html', dict(form=form, sent=False), context_instance=RequestContext(request))
 
 
 @login_required
@@ -91,6 +134,7 @@ def account(request, username):
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
+    home = False
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request)) 
 
 

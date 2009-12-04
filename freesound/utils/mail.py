@@ -15,11 +15,11 @@ def send_mail(subject, email_body, email_from=None, email_to=[]):
     
     try:
         core_send_mail(settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, email_to, fail_silently=False)
+        return True
     except:
-        print "failed sending email"
-        raise
+        return False
 
 def send_mail_template(subject, template, context, email_from=None, email_to=[]):
     context["current_site"] = Site.objects.get_current()
     context["settings"] = settings
-    send_mail(subject, render_to_string(template, context), email_from, email_to)
+    return send_mail(subject, render_to_string(template, context), email_from, email_to)

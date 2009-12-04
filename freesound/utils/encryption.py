@@ -20,7 +20,6 @@ def decrypt(quoted_string):
     decryptor = AES.new(settings.SECRET_KEY[0:16])
     
     encoded_string = urllib.unquote(quoted_string)
-    print encoded_string
     
     encrypted_string = base64.b64decode(encoded_string)
     

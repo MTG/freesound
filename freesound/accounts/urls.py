@@ -8,6 +8,8 @@ import views as accounts
 urlpatterns = patterns('accounts.views',
     url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html'}, name="accounts-login"),
     url(r'^logout/$', authviews.logout, {'template_name': 'accounts/logout.html'}, name="accounts-logout"),
+    url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),
+    url(r'^username/$', accounts.username_reminder, name="accounts-username-reminder"),
     url(r'^activate/(?P<activation_key>[^//]+)/$', accounts.activate_user, name="accounts-activate"),
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^resetpassword/$', authviews.password_reset, {'template_name':'accounts/password_reset_form.html', 'email_template_name':'accounts/password_reset_email.html'}, name="accounts-password-reset"),

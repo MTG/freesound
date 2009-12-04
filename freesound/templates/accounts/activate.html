@@ -3,13 +3,17 @@
 {% block title %}user activation{% endblock %}
 
 {% block section_content %}
-<h1>Activation failed...</h1>
-{% if user_does_not_exist %}
-<p>We're sorry but the user you are trying to activate does not exist anymore! Please sign up again...</p>
+{% if all_ok %}
+    <h1>Activation succeeded...</h1>
+    <p>You have been activated. Please <a href="{% url accounts-login %}">log in</a> to continue.
+{% else %}
+    <h1>Activation failed...</h1>
+    {% if user_does_not_exist %}
+    <p>We're sorry but the user you are trying to activate does not exist anymore! Please sign up again...</p>
+    {% endif %}
+    
+    {% if decode_error %}
+    <p>We're sorry but we can't find that activation key in the database. Try copy-pasting the link that we sent you instead of clicking it...</p>
+    {% endif %}
 {% endif %}
-
-{% if decode_error %}
-<p>We're sorry but we can't find that activation key in the database. Try copy-pasting the link that we sent you instead of clicking it...</p>
-{% endif %}
-
 {% endblock %}

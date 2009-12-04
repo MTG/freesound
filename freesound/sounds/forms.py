@@ -59,6 +59,7 @@ class LicenseForm(forms.Form):
 
 
 class FlagForm(forms.ModelForm):
+    email = forms.EmailField(label="Your email")
     class Meta:
         model = Flag
         exclude = ('sound', 'reporting_user', 'created')

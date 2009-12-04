@@ -11,7 +11,7 @@ class Profile(SocialModel):
     
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
-    signature = models.TextField(max_length=256, null=True, blank=True)
+    signature = models.URLField(max_length=256, null=True, blank=True)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
 
     wants_newsletter = models.BooleanField(default=True, db_index=True)

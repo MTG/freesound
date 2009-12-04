@@ -3,15 +3,15 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
 from django.db import models
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
-from utils.sql import DelayedQueryExecuter
 from tags.models import TaggedItem, Tag
-from django.contrib.contenttypes.models import ContentType
+from utils.sql import DelayedQueryExecuter
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -20,6 +20,7 @@ class License(OrderedModel):
     summary = models.TextField()
     deed_url = models.URLField()
     legal_code_url = models.URLField()
+    is_public = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.name
@@ -169,12 +170,12 @@ class Sound(SocialModel):
         return paths
 
     def get_channels_display(self):
-       if self.channels == 1:
-           return u"Mono" 
-       elif self.channels == 2:
-           return u"Stereo" 
-       else:
-           return self.channels
+        if self.channels == 1:
+            return u"Mono" 
+        elif self.channels == 2:
+            return u"Stereo" 
+        else:
+            return self.channels
     
     def type_warning(self):
         return self.type == "ogg" or self.type == "flac" 
@@ -230,7 +231,7 @@ class Sound(SocialModel):
         # add tags that are not there yet
         for tag in tags:
             if self.tags.filter(tag__name=tag).count() == 0:
-                (tag_object, created) = Tag.objects.get_or_create(name=tag)
+                (tag_object, created) = Tag.objects.get_or_create(name=tag) #@UnusedVariable
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
                 tagged_object.save()
     

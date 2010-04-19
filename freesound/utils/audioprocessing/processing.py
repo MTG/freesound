@@ -201,6 +201,9 @@ class AudioProcessor(object):
         max_value = -1
         min_index = -1
         min_value = 1
+        
+        if start_seek < 0:
+        	start_seek = 0
     
         if end_seek > self.audio_file.nframes:
             end_seek = self.audio_file.nframes

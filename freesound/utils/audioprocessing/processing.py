@@ -205,9 +205,13 @@ class AudioProcessor(object):
         if end_seek > self.audio_file.nframes:
             end_seek = self.audio_file.nframes
     
+        if end_seek <= start_seek:
+            samples = self.read(start_seek, 1)
+            return (samples[0], samples[0])
+
         if block_size > end_seek - start_seek:
             block_size = end_seek - start_seek
-        
+
         for i in range(start_seek, end_seek, block_size):
             samples = self.read(i, block_size)
     

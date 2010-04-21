@@ -103,8 +103,8 @@ class AudioProcessor(object):
         self.clip = lambda val, low, high: min(high, max(low, val))
         
         # figure out what the maximum value is for an FFT doing the FFT of a DC signal
-        fft = numpy.fft.fft(numpy.ones(fft_size) * self.window)
-        max_fft = (numpy.abs(fft[:fft.shape[0] / 2 + 1])).max()
+        fft = numpy.fft.rfft(numpy.ones(fft_size) * self.window)
+        max_fft = (numpy.abs(fft)).max()
         # set the scale to normalized audio and normalized FFT
         self.scale = 1.0/max_level/max_fft if max_level > 0 else 1
 
@@ -164,8 +164,8 @@ class AudioProcessor(object):
         samples = self.read(seek_point - self.fft_size/2, self.fft_size, True)
 
         samples *= self.window
-        fft = numpy.fft.fft(samples)
-        spectrum = self.scale * numpy.abs(fft[:fft.shape[0] / 2 + 1]) # normalized abs(FFT) between 0 and 1
+        fft = numpy.fft.rfft(samples)
+        spectrum = self.scale * numpy.abs(fft) # normalized abs(FFT) between 0 and 1
         length = numpy.float64(spectrum.shape[0])
         
         # scale the db spectrum from [- spec_range db ... 0 db] > [0..1]

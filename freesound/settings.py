@@ -126,7 +126,7 @@ logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'freesound.ini
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
 # leave at bottom starting here!
-from local_settings import *
+from local_settings import * #@UnusedWildImport
 
 TEMPLATE_DEBUG = DEBUG
 

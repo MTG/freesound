@@ -76,12 +76,14 @@
 	
 	<!-- pledgie -->
 	{% cache 900 pledgie_cache %}
+	{% get_pledgie_campaign_details pledgie_campaign as pledgie %}
+	{% if pledgie %}
 	<div id="donation_box">
-		{% get_pledgie_campaign_details pledgie_campaign as pledgie %}
-		<p><strong>Love Freesound?</strong> <span id="count_down">Only <strong>{{ pledgie.to_go }}{{ pledgie.currency }}</strong> to go!</span></p>
+		<p><strong>Love Freesound?</strong> <span id="count_down">Only <strong>{{ pledgie.to_go }}&euro;</strong> to go!</span></p>
 		<a class="donation_button" href="{{pledgie.url}}">Donate Now</a>
-		<div id="donation_meter_box"><span id="meter" style="width:{{ pledgie.percent_towards_goal }}%">{{ pledgie.percent_towards_goal }}%</span></div>
+		<div id="donation_meter_box"><span id="meter" style="width:{{ pledgie.campaign.percent_towards_goal }}%">{{ pledgie.campaign.percent_towards_goal }}%</span></div>
 	</div>
+	{% endif %}
 	{% endcache %}
 	
 	<!-- latest forum posts -->

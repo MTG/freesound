@@ -24,7 +24,7 @@ from utils.text import slugify
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
-    pledgie_campaign = 4045
+    pledgie_campaign = settings.PLEDGIE_CAMPAIGN
 
     latest_forum_posts = Post.objects.select_related('author', 'thread', 'thread__forum').all().order_by("-created")[0:10]
     latest_additions = Sound.objects.latest_additions(5)

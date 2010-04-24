@@ -111,6 +111,8 @@ FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 LAST_ACTION_TIME_URLS = ('/forum/', )
 
 FREESOUND_RSS = "http://www.freesound.org/blog/?feed=rss2"
+PLEDGIE_CAMPAIGN=8639
+
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
 SOUND_COMMENTS_PER_PAGE = 5

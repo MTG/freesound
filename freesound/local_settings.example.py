@@ -36,7 +36,8 @@ EMAIL_PORT = 2525
 
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 
-PROXIES = {'http': 'http://proxy.upf.edu:8080'}
+PROXIES = {}
+#PROXIES = {'http': 'http://proxy.upf.edu:8080'}
 
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''

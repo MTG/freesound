@@ -1,3 +1,5 @@
+import sys
+
 def exceptional(func,alt_return=None,alt_exceptions=(Exception,),final=None,catch=None):
     """turns exceptions into alternative return value"""
     def _exceptional(*args,**kwargs):

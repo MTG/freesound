@@ -15,6 +15,6 @@ def add(request, content_type_id, object_id, rating):
             rating_object = Rating.objects.get(user=request.user, object_id=object_id, content_type=content_type)
             rating_object.rating = rating;
             rating_object.save()
-        except Rating.DoesNotExist:
+        except Rating.DoesNotExist: #@UndefinedVariable
             rating_object = Rating.objects.create(user=request.user, object_id=object_id, content_type=content_type, rating=rating)
     return HttpResponse(Rating.objects.filter(object_id=object_id, content_type=content_type).count()) 

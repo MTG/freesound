@@ -1,4 +1,4 @@
-#Mon Dec 21 15:54:11 CET 2009
+#Sat Apr 24 16:07:45 CEST 2010
 eclipse.preferences.version=1
 encoding//accounts/admin.py=UTF-8
 encoding//accounts/models.py=utf-8
@@ -17,7 +17,7 @@ encoding//geotags/urls.py=utf-8
 encoding//images/admin.py=UTF-8
 encoding//images/models.py=UTF-8
 encoding//messages/admin.py=UTF-8
-encoding//messages/models.py=UTF-8
+encoding//messages/models.py=utf-8
 encoding//ratings/admin.py=UTF-8
 encoding//ratings/models.py=UTF-8
 encoding//ratings/urls.py=UTF-8

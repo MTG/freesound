@@ -20,7 +20,7 @@
 # Authors:
 #   Bram de Jong <bram.dejong at domain.com where domain in gmail>
 
-from PIL import ImageFilter, ImageChops, Image, ImageDraw, ImageColor
+from PIL import Image, ImageDraw, ImageColor #@UnresolvedImport
 from functools import partial
 import math
 import numpy
@@ -28,7 +28,6 @@ import os
 import re
 import scikits.audiolab as audiolab
 import subprocess
-import sys
 
 class AudioProcessingException(Exception):
     pass
@@ -305,8 +304,8 @@ class WaveformImage(object):
                         (255,224,0),
                      ])
         elif palette == 4:
-             background_color = (213, 217, 221)
-             colors = map( partial(desaturate, amount=0.8), [self.color_from_value(value/29.0) for value in range(0,30)])
+            background_color = (213, 217, 221)
+            colors = map( partial(desaturate, amount=0.8), [self.color_from_value(value/29.0) for value in range(0,30)])
             
         self.image = Image.new("RGB", (image_width, image_height), background_color)
         

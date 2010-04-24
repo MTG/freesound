@@ -125,7 +125,7 @@ def process(sound):
             sound.save()
             success("moved original file from %s to %s" % (sound.original_path, new_original_path))
         except IOError, e:
-           failure("failed to move file from %s to %s" % (sound.original_path, new_original_path), e) 
+            failure("failed to move file from %s to %s" % (sound.original_path, new_original_path), e) 
         
     cleanup([tmp_wavefile])
     sound.processing_state = "OK"

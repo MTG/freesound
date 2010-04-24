@@ -8,5 +8,5 @@ class CustomModelBackend(ModelBackend):
             user = User.objects.get(username__iexact=username)
             if user.check_password(password):
                 return user
-        except User.DoesNotExist:
+        except User.DoesNotExist: #@UndefinedVariable
             return None

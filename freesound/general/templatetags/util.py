@@ -106,4 +106,4 @@ def duration(value):
 
 @register.filter
 def in_list(value,arg):
-   return value in arg
+    return value in arg

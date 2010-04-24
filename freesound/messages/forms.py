@@ -8,7 +8,7 @@ class ManualUserField(forms.CharField):
             raise forms.ValidationError('Please enter a username.')
         try:
             return User.objects.get(username__iexact=value)
-        except User.DoesNotExist:
+        except User.DoesNotExist: #@UndefinedVariable
             raise forms.ValidationError("We are sorry, but this username does not exist...")
 
 class PostReplyForm(forms.Form):

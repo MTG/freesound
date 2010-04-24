@@ -1,73 +1,27 @@
-#!/bin/sh
-
-if [[ $# == 0 ]]; then
-  PROJECT_DIR=$PWD
-elif [[ $# == 1 && -d "$1" ]]; then
-  PROJECT_DIR="$@"
-else
-  print "usage: iterm.sh [freesound project directory]"
-  return 1
-fi
+# function title
+# {
+#    printf "\033]0;%s\007" "$1"
+# }
     
-osascript <<-eof
-  tell application "iTerm"
+cd /Users/bram/Development/nightingale/freesound
+title "django server"
+python manage.py runserver 8080
 
-    make new terminal
+cd /Users/bram/Development/nightingale/freesound
+title "django shell / python"
+python manage.py shell_plus
 
-    tell the last terminal
+cd /Users/bram/Development/nightingale/freesound
+title "db"
+python manage.py dbshell
 
-      activate current session
+title "memcached"
+memcached -v
 
-      launch session "Default Session"
+cd /Users/bram/Development/nightingale/freesound 
+title "fake smtp"
+./fake_smtp
 
-      tell the last session
-          write text "cd \"$PROJECT_DIR\""
-          write text "clear"
-          write text "python manage.py runserver"
-          set name to "django server"
-      end tell
-
-      launch session "Default Session"
-      tell the last session
-          write text "cd \"$PROJECT_DIR\""
-          write text "clear"
-          write text "python manage.py shell_plus"
-          set name to "django shell / python"
-      end tell
-
-      launch session "Default Session"
-      tell the last session
-          write text "cd \"$PROJECT_DIR\""
-          write text "clear"
-          write text "python manage.py dbshell"
-          set name to "db"
-      end tell
-
-      launch session "Default Session"
-      tell the last session
-        write text "cd \"$PROJECT_DIR\""
-        write text "clear"
-        write text "memcached -v"
-        set name to "memcached"
-      end tell
-
-      launch session "Default Session"
-      tell the last session
-        write text "cd \"$PROJECT_DIR\""
-        write text "clear"
-        write text "./fake_smtp"
-        set name to "fake smtp"
-      end tell
-      
-      launch session "Default Session"
-      tell the last session
-        write text "cd /Users/bram/Development/sandbox/apache-solr-1.3.0/example"
-        write text "clear"
-        write text "java -jar start.jar"
-        set name to "solr"
-      end tell
-
-    end tell
-    set the bounds of the first window to {100, 100, 1500, 900} 
-  end tell
-eof
+cd /Users/bram/Development/sandbox/apache-solr-1.3.0/example
+title "solr"
+java -jar start.jar

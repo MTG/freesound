@@ -1,5 +1,9 @@
 == Views ==
 
+* finish attribution page (add formats)
+
+* rewrite views who use pagination to use paginate in utils.pagination
+
 * browse/ sounds.views.sounds
 * home/attribution/ -> accounts.views.attribution
 * people/ -> accounts.views.accounts

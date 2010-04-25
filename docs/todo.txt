@@ -1,0 +1,28 @@
+== Views ==
+
+* browse/ sounds.views.sounds
+* home/attribution/ -> accounts.views.attribution
+* people/ -> accounts.views.accounts
+* people/bram/sounds/ -> sounds.views.for_user
+* people/bram/sounds/1234/remixes/ -> sounds.views.remixes
+* people/bram/sounds/1234/sources/ -> sounds.views.sources
+* people/bram/sounds/1234/similar/ -> sounds.views.similar
+* browse/remixed/ -> sounds.views.remixed
+* browse/random/ -> sounds.views.random
+* browse/packs/ -> sounds.views.packs
+
+== Other ==
+
+* X-ACCEL-REDIRECT for file downloading
+* sound edit > remix
+* user delete self
+* user delete sound
+* add CRC-32 to database?
+* moderation "reason/note" field
+* sql trigger should update "last post" when deleting forum posts
+* address book from sent messages
+* cache RSS+pledgie on disk + generate via django jobs
+* voting stars
+* smallest flash player
+* account activation "done" page
+* API

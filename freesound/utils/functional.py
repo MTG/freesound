@@ -53,3 +53,6 @@ def first(predicate, itterator):
     for item in itterator:
         if predicate(item):
             return item
+
+def combine_dicts(dict1, dict2):
+    return dict(dict1.items() + dict2.items())

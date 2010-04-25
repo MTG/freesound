@@ -1,6 +1,7 @@
 {% extends "accounts/_section.html" %}
 
 {% load paginator %}
+{% load absurl %}
 
 {% block title %}Attribution{% endblock %}
 
@@ -8,30 +9,75 @@
 
 <h1>Attribution</h1>
 <p>
-	This is the list of files you have downloaded. When you use freesound samples (under the attribution pof attribution non-commercial license), you have to <a href="{% url wiki-page "atribution" %}">credit the original creator of the sound</a>. This list makes it a little bit easier to do so.<br/>
-	There are 3 flavors of this list: <a href="?format=html">regular</a>, <a href="?format=html">html</a> or <a href="?format=plaintext">plain text</a>.
+	This is the list of files you have downloaded. When you use freesound samples (under the "attribution" or "attribution non-commercial license"), you have to <a href="{% url wiki-page "atribution" %}">credit the original creator of the sound</a> in your work. This list makes it a little bit easier to do so. "S" means sound, "P" means pack.<br/>
+	There are 3 flavors of this list: <a href="?format=regular">regular</a>, <a href="?format=html">html</a> or <a href="?format=plaintext">plain text</a>.
 </p>
 
 {% show_paginator paginator page current_page request %}
 
 {% regroup page.object_list by created|date:"F jS, Y" as downloads %}
 
-{% for group in downloads %}
-	<h2>Downloaded on {{group.grouper}}</h2>
-	<ul>
-		{% for download_item in group.list %}
-			{% if download_item.sound %}
-				{% with download_item.sound as sound %}
-					<li>S: <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a></li>
-				{% endwith %}
-			{% else %}
-				{% with download_item.pack as pack %}
-					<li>P: <a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></li>
-				{% endwith %}
-			{% endif %}
-		{% endfor %}
-	</ul>
-{% endfor %}
+{% ifequal format "regular" %}
+	{% for group in downloads %}
+		<h2>Downloaded on {{group.grouper}}</h2>
+		<ul>
+			{% for download_item in group.list %}
+				{% if download_item.sound %}
+					{% with download_item.sound as sound %}
+						<li>S: <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a></li>
+					{% endwith %}
+				{% else %}
+					{% with download_item.pack as pack %}
+						<li>P: <a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></li>
+					{% endwith %}
+				{% endif %}
+			{% endfor %}
+		</ul>
+	{% endfor %}
+{% endifequal %}
+
+{% ifequal format "html" %}
+<p>
+	{% for group in downloads %}
+		{% filter force_escape %}<h2>Downloaded on {{group.grouper}}</h2>{% endfilter %}<br />
+		{% filter force_escape %}<ul>{% endfilter %}<br />
+			{% for download_item in group.list %}
+				&nbsp;&nbsp;&nbsp;&nbsp;{% filter force_escape %}
+				{% if download_item.sound %}
+					{% with download_item.sound as sound %}
+						<li>S: <a href="{% absurl sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% absurl account sound.user.username %}">{{sound.user.username}}</a></li>
+					{% endwith %}
+				{% else %}
+					{% with download_item.pack as pack %}
+						<li>P: <a href="{% absurl pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% absurl account pack.user.username %}">{{pack.user.username}}</a></li>
+					{% endwith %}
+				{% endif %}
+				{% endfilter %}<br />
+			{% endfor %}
+		{% filter force_escape %}</ul>{% endfilter %}<br />
+	{% endfor %}
+</p>
+{% endifequal %}
+
+{% ifequal format "plaintext" %}
+<p>
+	{% for group in downloads %}
+    Downloaded on {{group.grouper}}<br />
+			{% for download_item in group.list %}
+			    &nbsp;&nbsp;&nbsp;&nbsp;
+				{% if download_item.sound %}
+					{% with download_item.sound as sound %}
+		                S: {{sound.original_filename}} by {{sound.user.username}} -- {% absurl sound sound.user.username sound.id %}<br />
+					{% endwith %}
+				{% else %}
+					{% with download_item.pack as pack %}
+		                P: {{pack.name}} by {{pack.user.username}} -- {% absurl pack pack.user.username pack.id %}<br/>
+					{% endwith %}
+				{% endif %}
+			{% endfor %}
+	{% endfor %}
+</p>
+{% endifequal %}
 
 {% show_paginator paginator page current_page request %}
 

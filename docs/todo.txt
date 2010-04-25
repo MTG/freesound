@@ -1,11 +1,8 @@
 == Views ==
 
-* finish attribution page (add formats)
-
 * rewrite views who use pagination to use paginate in utils.pagination
 
 * browse/ sounds.views.sounds
-* home/attribution/ -> accounts.views.attribution
 * people/ -> accounts.views.accounts
 * people/bram/sounds/ -> sounds.views.for_user
 * people/bram/sounds/1234/remixes/ -> sounds.views.remixes

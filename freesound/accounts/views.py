@@ -119,12 +119,12 @@ def describe(request):
 
 @login_required
 def attribution(request):
-    pass
-
+    qs = Download.objects.filter(user=request.user)
+    format = request.GET.get("format", "regular")
+    return render_to_response('accounts/attribution.html', combine_dicts(paginate(request, qs, 40), locals()), context_instance=RequestContext(request))
 
 def accounts(request):
     pass
-
 
 def account(request, username):
     user = get_object_or_404(User, username__iexact=username)

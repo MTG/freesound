@@ -1,0 +1,38 @@
+{% extends "accounts/_section.html" %}
+
+{% load paginator %}
+
+{% block title %}Attribution{% endblock %}
+
+{% block content %}
+
+<h1>Attribution</h1>
+<p>
+	This is the list of files you have downloaded. When you use freesound samples (under the attribution pof attribution non-commercial license), you have to <a href="{% url wiki-page "atribution" %}">credit the original creator of the sound</a>. This list makes it a little bit easier to do so.<br/>
+	There are 3 flavors of this list: <a href="?format=html">regular</a>, <a href="?format=html">html</a> or <a href="?format=plaintext">plain text</a>.
+</p>
+
+{% show_paginator paginator page current_page request %}
+
+{% regroup page.object_list by created|date:"F jS, Y" as downloads %}
+
+{% for group in downloads %}
+	<h2>Downloaded on {{group.grouper}}</h2>
+	<ul>
+		{% for download_item in group.list %}
+			{% if download_item.sound %}
+				{% with download_item.sound as sound %}
+					<li>S: <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a></li>
+				{% endwith %}
+			{% else %}
+				{% with download_item.pack as pack %}
+					<li>P: <a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></li>
+				{% endwith %}
+			{% endif %}
+		{% endfor %}
+	</ul>
+{% endfor %}
+
+{% show_paginator paginator page current_page request %}
+
+{% endblock %}

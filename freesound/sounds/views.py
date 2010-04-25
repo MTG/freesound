@@ -1,4 +1,6 @@
+from comments.forms import CommentForm
 from comments.models import Comment
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -8,15 +10,15 @@ from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from forms import *
 from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
-from sounds.models import Sound
+from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
+    LicenseForm, FlagForm
+from sounds.models import Sound, Pack
 from utils.cache import invalidate_template_cache
 from utils.mail import send_mail_template
 from utils.text import slugify
-
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
@@ -50,9 +52,6 @@ def sound(request, username, sound_id):
 
     paginator = Paginator(Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id), settings.SOUND_COMMENTS_PER_PAGE)
 
-    class CommentForm(forms.Form):
-        comment = HtmlCleaningCharField(widget=forms.Textarea)
-    
     if request.method == "POST":
         form = CommentForm(request.POST)
         if form.is_valid():

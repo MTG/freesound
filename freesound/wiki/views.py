@@ -5,12 +5,12 @@ from django import forms
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from models import *
+from wiki.models import Content, Page
 
 def page(request, name):
     try:
         content = Content.objects.filter(page__name__iexact=name).select_related().latest()
-    except Content.DoesNotExist:
+    except Content.DoesNotExist: #@UndefinedVariable
         content = Content.objects.filter(page__name__iexact="blank").select_related().latest()
     
     return render_to_response('wiki/page.html', locals(), context_instance=RequestContext(request)) 
@@ -41,7 +41,7 @@ def editpage(request, name):
             # if the page already exists, load up the previous content
             content = Content.objects.filter(page__name__iexact=name).select_related().latest()
             form = ContentForm(initial={"title": content.title, "body":content.body})
-        except Content.DoesNotExist:
+        except Content.DoesNotExist: #@UndefinedVariable
             form = ContentForm()
 
     return render_to_response('wiki/edit.html', locals(), context_instance=RequestContext(request)) 

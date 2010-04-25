@@ -427,7 +427,7 @@ class SpectrogramImage(object):
             self.pixels.append( self.palette[int((255.0-alpha) * spectrum[index] + alpha * spectrum[index + 1])] )
         
         # if the FFT is too small to fill up the image, fill with black to the top
-        for y in range(len(self.y_to_bin), self.image_height):
+        for y in range(len(self.y_to_bin), self.image_height): #@UnusedVariable
             self.pixels.append(self.palette[0])
 
     def save(self, filename, quality=80):
@@ -482,7 +482,7 @@ def convert_to_wav(input_filename, output_filename):
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         (stdout, stderr) = process.communicate()
     except OSError:
-        raise AudioProcessingException, "mplayer not found."
+        raise AudioProcessingException, "mplayer not found: " + stderr
     
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, stdout
@@ -508,7 +508,7 @@ def audio_info(input_filename):
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         (stdout, stderr) = process.communicate()
     except OSError:
-        raise AudioProcessingException, "can not find audio-info extraction program"
+        raise AudioProcessingException, "can not find audio-info extraction program: "+ stderr
 
     if process.returncode != 0:
         raise AudioProcessingException, stdout
@@ -599,7 +599,7 @@ def convert_to_mp3(input_filename, output_filename):
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         (stdout, stderr) = process.communicate()
     except OSError:
-        raise AudioProcessingException, "lame not found"
+        raise AudioProcessingException, "lame not found: " + stderr
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, stdout

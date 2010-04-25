@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from wiki.models import *
+from wiki.models import Page, Content
 
 class PageAdmin(admin.ModelAdmin):
     list_display = ('name', )

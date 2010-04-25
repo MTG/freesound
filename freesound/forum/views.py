@@ -4,9 +4,9 @@ from django.core.paginator import Paginator, InvalidPage
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext, loader
-from models import *
-from forms import *
 from utils.mail import send_mail_template
+from forum.models import Forum, Thread, Post, Subscription
+from forum.forms import PostReplyForm, NewThreadForm
 
 def forums(request):
     forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
@@ -16,7 +16,7 @@ def forums(request):
 def forum(request, forum_name_slug):
     try:
         forum = Forum.objects.get(name_slug=forum_name_slug)
-    except Forum.DoesNotExist:
+    except Forum.DoesNotExist: #@UndefinedVariable
         raise Http404
     
     paginator = Paginator(Thread.objects.filter(forum=forum).select_related('last_post', 'last_post__author'), settings.FORUM_THREADS_PER_PAGE)

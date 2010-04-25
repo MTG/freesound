@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url, include
 from django.contrib import admin
 from django.views.generic.simple import direct_to_template
-
-import sounds.views
 import accounts.views
 import geotags.views
 import search.views
+import sounds.views
 import support.views
 import tags.views
 

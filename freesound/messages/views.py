@@ -5,11 +5,11 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from forms import *
-from models import *
 from utils.functional import exceptional
 from utils.mail import send_mail_template
 from utils.cache import invalidate_template_cache
+from messages.models import Message, MessageBody
+from messages.forms import MessageReplyForm
 
 def combine_dicts(dict1, dict2):
     return dict(dict1.items() + dict2.items())
@@ -78,7 +78,7 @@ def archived_messages(request):
 def message(request, message_id):
     try:
         message = base_qs.get(id=message_id)
-    except Message.DoesNotExist:
+    except Message.DoesNotExist: #@UndefinedVariable
         raise Http404
     
     if message.user_from != request.user and message.user_to != request.user:
@@ -94,7 +94,7 @@ def message(request, message_id):
 @login_required
 def new_message(request, username=None):
     if request.method == 'POST':
-        form = PostReplyForm(request.POST)
+        form = MessageReplyForm(request.POST)
         if form.is_valid():
             user_from = request.user
             user_to = form.cleaned_data["to"]
@@ -116,8 +116,8 @@ def new_message(request, username=None):
             return HttpResponseRedirect(reverse("messages"))
     else:
         if username:
-            form = PostReplyForm(initial=dict(to=username))
+            form = MessageReplyForm(initial=dict(to=username))
         else:
-            form = PostReplyForm()
+            form = MessageReplyForm()
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))

@@ -1,6 +1,7 @@
-from utils.forms import *
 from models import Pack
 from sounds.models import License, Flag
+from django import forms
+from utils.forms import TagField, HtmlCleaningCharField
 
 class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)

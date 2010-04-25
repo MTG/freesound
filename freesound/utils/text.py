@@ -172,7 +172,7 @@ def clean_html(input):
         try:
             if element.name in ok_attributes.keys():
                 # delete all attributes we don't want
-                for (attr_name, attr_value) in element.attrs:
+                for (attr_name, attr_value) in element.attrs: #@UnusedVariable
                     if attr_name not in ok_attributes[element.name]:
                         del element[attr_name]
 

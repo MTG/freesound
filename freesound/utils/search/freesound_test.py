@@ -1,5 +1,5 @@
 import time
-from solr import *
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter
 
 """An example of usage, with the freesound custom schema...
 """

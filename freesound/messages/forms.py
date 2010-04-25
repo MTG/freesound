@@ -11,7 +11,7 @@ class ManualUserField(forms.CharField):
         except User.DoesNotExist: #@UndefinedVariable
             raise forms.ValidationError("We are sorry, but this username does not exist...")
 
-class PostReplyForm(forms.Form):
+class MessageReplyForm(forms.Form):
     to = ManualUserField()
     subject = forms.CharField(min_length=3, max_length=128)
     body = HtmlCleaningCharField(widget=forms.Textarea)

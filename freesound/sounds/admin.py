@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from models import License, Sound, Pack, Flag
+from sounds.models import Download, License, Sound, Pack, Flag
 
 class LicenseAdmin(admin.ModelAdmin):
     list_display = ('name', 'deed_url', 'legal_code_url', 'change_order')
@@ -33,3 +33,9 @@ class FlagAdmin(admin.ModelAdmin):
     raw_id_fields = ('reporting_user', 'sound')
     list_display = ('reporting_user', 'email', 'reason_type')
 admin.site.register(Flag, FlagAdmin)
+
+class DownloadAdmin(admin.ModelAdmin):
+    raw_id_fields = ('user', 'pack', 'sound')
+    list_display = ('user', 'created', 'sound', 'pack')
+
+admin.site.register(Download, DownloadAdmin)

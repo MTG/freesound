@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from models import Forum, Thread, Post
+from forum.models import Forum, Thread, Post
 
 class ForumAdmin(admin.ModelAdmin):
     raw_id_fields = ('last_post', )

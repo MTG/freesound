@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from models import Favorite
+from favorites.models import Favorite
 
 class FavoriteAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',) 

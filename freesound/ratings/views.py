@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
-from models import Rating
+from ratings.models import Rating
 
 @login_required
 def add(request, content_type_id, object_id, rating):

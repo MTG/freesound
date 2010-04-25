@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
-from models import Profile
+from accounts.models import Profile
 from utils.forms import RecaptchaForm, HtmlCleaningCharField
 
 class UploadFileForm(forms.Form):

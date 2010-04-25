@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from models import Image
+from images.models import Image
 
 class ImageAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',) 

@@ -1,3 +1,5 @@
+from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
+    ReactivationForm, UsernameReminderForm, ProfileForm
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -7,13 +9,13 @@ from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
-    ReactivationForm, UsernameReminderForm, ProfileForm
-from sounds.models import Sound, Pack
+from sounds.models import Sound, Pack, Download
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
 from utils.mail import send_mail_template
+from utils.pagination import paginate
 import os
+from utils.functional import combine_dicts
 
 def activate_user(request, activation_key):
     try:

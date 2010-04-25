@@ -19,9 +19,4 @@ def absurl(parser, token, node_cls=AbsoluteURLNode):
         kwargs=node_instance.kwargs,
         asvar=node_instance.asvar)
 
-absurl = register.tag(absurl)        
-
-
-
-
-
+absurl = register.tag(absurl)

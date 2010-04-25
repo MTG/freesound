@@ -3,7 +3,7 @@
 from django.conf.urls.defaults import patterns, url
 import django.contrib.auth.views as authviews
 import messages.views as messages
-import views as accounts
+import accounts.views as accounts
 
 urlpatterns = patterns('accounts.views',
     url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html'}, name="accounts-login"),

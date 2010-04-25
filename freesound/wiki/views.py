@@ -1,7 +1,6 @@
 # Create your views here.
-from django.core.urlresolvers import reverse
-from django.forms import ModelForm
 from django import forms
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -20,7 +19,7 @@ def editpage(request, name):
         raise Http404
 
     # the class for editing...
-    class ContentForm(ModelForm):
+    class ContentForm(forms.ModelForm):
         title = forms.CharField(widget=forms.TextInput(attrs={'size': '100'}))
         body = forms.CharField(widget=forms.Textarea(attrs={'rows':'40', 'cols':'100'}))
         class Meta:

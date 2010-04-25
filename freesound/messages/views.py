@@ -1,34 +1,15 @@
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, InvalidPage
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from messages.forms import MessageReplyForm
+from messages.models import Message, MessageBody
+from utils.cache import invalidate_template_cache
 from utils.functional import exceptional
 from utils.mail import send_mail_template
-from utils.cache import invalidate_template_cache
-from messages.models import Message, MessageBody
-from messages.forms import MessageReplyForm
-
-def combine_dicts(dict1, dict2):
-    return dict(dict1.items() + dict2.items())
-
-def paginate(request, qs):
-    paginator = Paginator(qs, 20)
-
-    try:
-        current_page = int(request.GET.get("page", 1))
-    except ValueError:
-        current_page = 1
-
-    try:
-        page = paginator.page(current_page)
-    except InvalidPage:
-        page = paginator.page(1)
-        current_page = 1
-    
-    return dict(paginator=paginator, current_page=current_page, page=page)
+from utils.pagination import paginate
 
 @login_required
 def messages_change_state(request):

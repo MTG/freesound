@@ -1,9 +1,9 @@
 # Create your views here.
+from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
-from django.conf import settings
 
 def tags(request, multiple_tags=None):
     if multiple_tags:

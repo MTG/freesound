@@ -1,6 +1,5 @@
-from models import Pack
-from sounds.models import License, Flag
 from django import forms
+from sounds.models import License, Flag, Pack
 from utils.forms import TagField, HtmlCleaningCharField
 
 class GeotaggingForm(forms.Form):

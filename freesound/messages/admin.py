@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from models import Message, MessageBody
+from messages.models import Message, MessageBody
 
 class MessageAdmin(admin.ModelAdmin):
     raw_id_fields = ('user_from', 'user_to', 'body')

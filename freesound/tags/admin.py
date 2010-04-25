@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from models import Tag, TaggedItem
+from tags.models import Tag, TaggedItem
 
 class TagAdmin(admin.ModelAdmin):
     list_display = ('tag',)

@@ -1,4 +1,4 @@
-import unittest, re, unicodedata
+import re, unicodedata
 from BeautifulSoup import BeautifulSoup, Comment
 from htmlentitydefs import name2codepoint
 from django.utils.encoding import smart_unicode

@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
-from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import generic
-from django.contrib.contenttypes.models import ContentType
-from django.core import urlresolvers
 from django.db import models
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _

@@ -1,9 +1,7 @@
 from datetime import datetime
 from django.conf import settings
-from utils.filesystem import md5file
 from utils.text import slugify
 import logging
-import os
 import os.path
 import tempfile
 import utils.audioprocessing.processing as audioprocessing

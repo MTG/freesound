@@ -1,7 +1,4 @@
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.core import serializers
-from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404, HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext

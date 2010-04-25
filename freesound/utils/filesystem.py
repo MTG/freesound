@@ -21,8 +21,6 @@ class File:
                 child.recursive_print(spacer + "  ")        
 
 def generate_tree(path):
-    all_files = []
-
     lookups = {path: File(path, path, True)}
     files = {} 
     

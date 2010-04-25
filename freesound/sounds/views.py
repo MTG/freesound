@@ -1,6 +1,4 @@
 from comments.models import Comment
-from django import forms
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -14,10 +12,8 @@ from forms import *
 from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
-from sounds.models import Sound, Pack
+from sounds.models import Sound
 from utils.cache import invalidate_template_cache
-from utils.forms import HtmlCleaningCharField
-from utils.functional import first
 from utils.mail import send_mail_template
 from utils.text import slugify
 

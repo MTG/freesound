@@ -30,7 +30,7 @@
 from datetime import datetime, date
 from time import strptime
 from xml.etree import cElementTree as ET
-import itertools, re, urllib, urllib2
+import itertools, re, urllib
 import httplib, urlparse
 import cjson
 
@@ -347,7 +347,7 @@ class SolrJsonResponseDecoder(BaseSolrResponseDecoder):
         
     def decode(self, response_object):
         #return self._decode_dates(simplejson.load(response_object))
-        return self._decode_dates(cjson.decode(response_object.read()))
+        return self._decode_dates(cjson.decode(response_object.read())) #@UndefinedVariable
     
     def _decode_dates(self, d):
         """Recursively decode date strings to datetime objects.

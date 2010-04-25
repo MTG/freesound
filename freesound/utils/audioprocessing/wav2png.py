@@ -4,8 +4,6 @@ from hotshot import stats
 from processing import create_wave_images, AudioProcessingException
 import hotshot
 import optparse
-import os
-import subprocess
 import sys
 
 

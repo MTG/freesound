@@ -1,8 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from models import Rating
-from django.db import IntegrityError
 
 @login_required
 def add(request, content_type_id, object_id, rating):

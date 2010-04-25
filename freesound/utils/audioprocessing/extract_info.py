@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-from processing import convert_to_wav, audio_info, AudioProcessingException
+from processing import audio_info, AudioProcessingException
 
 try:
     for (k,v) in audio_info(sys.argv[1]).items():

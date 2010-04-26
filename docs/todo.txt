@@ -15,10 +15,10 @@
 == Other ==
 
 * X-ACCEL-REDIRECT for file downloading
+* messages need "reply" button at bottom + add "reply_to_message" field in the Message
 * sound edit > remix
 * user delete self
 * user delete sound
-* add CRC-32 to database?
 * moderation "reason/note" field
 * sql trigger should update "last post" when deleting forum posts
 * address book from sent messages

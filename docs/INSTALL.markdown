@@ -4,7 +4,7 @@ Installation manual for Nightingale/Freesound
 This document describes the installation of Freesound in a Debian Lenny host.
 Some configuration files may reside on different places for other distributions.
 
-We choosed to deploy freesound inside a virtualenv. This is optional but makes
+We chose to deploy freesound inside a virtualenv. This is optional but makes
 easier to meet the Python requirements without creating conflicts with other
 software.
 
@@ -71,7 +71,6 @@ This is only recommended for local development.
  * Import the freesound project (import existing project into workspace)
 
 
-
 Configuration
 =============
 
@@ -100,7 +99,7 @@ If your webserver is on another machine you must allow access to the database.
 Edit your `/etc/postgresql/8.3/main/pg_hba.conf` and add something like:
 
     host    <freesound_db>  <freesound_db_user>  193.145.55.3/32   md5
-    
+
 Create the language plpgsql in the database
 
     createlang -d freesound plpgsql
@@ -108,7 +107,7 @@ Create the language plpgsql in the database
 Install the SQL triggers in the database:
 
 	freesound/sql/nightingale_triggers.sql
-	
+
 If an import was done, run the initial setup which fixes the num_counts
 
 	freesound/sql/nightingale_sql_setup.sql

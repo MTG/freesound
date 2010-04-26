@@ -1,6 +1,7 @@
 /media/data
 .amateras
 local_settings.py
+logger.ini
 *.pyc
 .amateras
 audio.log

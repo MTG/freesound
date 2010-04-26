@@ -15,6 +15,9 @@ and
 
     /etc/supervisord.d/freesound.ini
 
+The log can be found in
+
+    /var/log/freesound/supervisord.log
 
 Solr
 ----

@@ -123,7 +123,7 @@ PACKS_PER_PAGE = 50
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'media/data/')
 
 import logging.config
-logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'freesound.ini'))
+logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 

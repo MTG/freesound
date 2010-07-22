@@ -1,6 +1,6 @@
 == Views ==
 
-* rewrite views who use pagination to use paginate in utils.pagination
+* rewrite views that use pagination to use paginate in utils.pagination
 
 * browse/ sounds.views.sounds
 * people/ -> accounts.views.accounts
@@ -27,3 +27,15 @@
 * smallest flash player
 * account activation "done" page
 * API
+* make sure there is a moderated date and a created date -> avg moderation time!
+* list of tables that need to be regenerated (use SQL triggers?)
+* SOLR -> mejorar la instalacion (aguascalientes)
+* sounds dir mounted via NFS -> try new processing algorithms!
+* downloads table -> convert to postgres
+* insert into downloads table -> X-Accel-redirect solves this
+* judta helpdesk, integrate with contact form & sound/post flagging
+
+== Features, bugreports ==
+
+* find someone to manage this @ freesound. quodbup?
+* get something similar to uservoice

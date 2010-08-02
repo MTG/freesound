@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.paginator import Paginator, InvalidPage
 from django.db.models import Count, Max
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forum.models import Post
@@ -15,10 +15,11 @@ from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
     LicenseForm, FlagForm
-from sounds.models import Sound, Pack
+from sounds.models import Sound, Pack, Download
 from utils.cache import invalidate_template_cache
 from utils.mail import send_mail_template
 from utils.text import slugify
+import os
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
@@ -74,7 +75,26 @@ def sound(request, username, sound_id):
 
     return render_to_response('sounds/sound.html', locals(), context_instance=RequestContext(request))
 
+from django.core.servers.basehttp import FileWrapper
 
+@login_required
+def sound_download(request, username, sound_id):
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound_path = sound.paths()["sound_path"]
+    Download.objects.get_or_create(user=request.user, sound=sound)
+    if settings.DEBUG:
+        file_path = os.path.join(settings.DATA_PATH, sound_path)
+        wrapper = FileWrapper(file(file_path, "rb"))
+        response = HttpResponse(wrapper, content_type='application/octet-stream')
+        response['Content-Length'] = os.path.getsize(file_path)
+        return response
+    else:
+        response = HttpResponse()
+        # let nginx determine the correct content type 
+        response['Content-Type']=""
+        response['X-Accel-Redirect'] = os.path.join("downloads/", sound_path)
+        return response
+        
 @login_required
 def sound_edit(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")

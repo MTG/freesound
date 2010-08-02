@@ -99,7 +99,7 @@
 {% cache 3600 sound_footer sound.id %}
 <div id="single_sample_sidebar">
 	<div id="download">
-		<a href="#" id="download_button"></a>
+		<a href="{% url sound-download sound.user.username sound.id %}{{ sound.paths.sound_base }}" id="download_button" title="download sound"></a>
 		<div id="download_text">Downloaded<br /><b>{{sound.num_downloads}}</b> times</div>
 	</div>
 

@@ -1,0 +1,19 @@
+{% extends "sounds/_section.html" %}
+
+{% load display_sound %}
+{% load paginator %}
+
+{% block title %}Delete {{sound.original_filename}}{% endblock title %}
+
+{% block section_content %}
+<h1>Delete <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a></h1>
+
+<p>
+    {% if waited_too_long %}
+    Sorry, you waited too long, ... try again?<br/>
+    {% endif %}
+    WARNING: file can not be undeleted, not even by administrators...<br/>
+    If you are entirely sure you want to delete this file, click <a href="?sound={{encrypted_link}}">here</a> (link valid for 10 seconds only)
+</p>
+
+{% endblock %}

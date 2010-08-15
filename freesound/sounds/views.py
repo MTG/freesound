@@ -26,6 +26,19 @@ from utils.pagination import paginate
 from utils.text import slugify
 import os
 
+def sounds(request):
+    pass
+
+def remixed(request):
+    pass
+
+def random(request):
+    pass
+
+def packs(request):
+    pass
+
+
 def get_random_sound():
     cache_key = "random_sound"
     random_sound = cache.get(cache_key)
@@ -43,10 +56,7 @@ def front_page(request):
     random_sound = get_random_sound()
     
     return render_to_response('index.html', locals(), context_instance=RequestContext(request)) 
- 
 
-def sounds(request):
-    pass
 
 def sound(request, username, sound_id):
     try:
@@ -88,6 +98,7 @@ def sound_download(request, username, sound_id):
         response['Content-Type']="application/octet-stream"
         response['X-Accel-Redirect'] = os.path.join("downloads/", sound_path)
         return response
+
         
 @login_required
 def sound_edit(request, username, sound_id):
@@ -203,18 +214,6 @@ def pack(request, username, pack_id):
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
 
-def remixed(request):
-    pass
- 
-
-def random(request):
-    pass
-
-
-def packs(request):
-    pass
-
-
 def packs_for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     order = request.GET.get("order", "name")
@@ -248,6 +247,10 @@ def delete(request, username, sound_id):
             sound_id, now = decrypt(encrypted_string).split("\t")
             sound_id = int(sound_id)
             link_generated_time = float(now)
+            
+            if sound_id != sound.id:
+                raise PermissionDenied
+            
             if abs(time.time() - link_generated_time) < 10:
                 sound.delete()
                 return HttpResponseRedirect(reverse("accounts-home"))

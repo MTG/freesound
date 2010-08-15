@@ -12,7 +12,7 @@ def convert_to_solr_document(sound):
     document["id"] = sound.id
     document["username"] = sound.user.username
     document["created"] = sound.created
-    document["filename"] = sound.original_filename
+    document["original_filename"] = sound.original_filename
 
     document["description"] = sound.description
     document["tag"] = [taggeditem.tag.name for taggeditem in sound.tags.all()]
@@ -37,21 +37,21 @@ def convert_to_solr_document(sound):
     document["channels"] = sound.channels
     document["md5"] = sound.md5
 
-    document["downloads"] = sound.num_downloads
+    document["num_downloads"] = sound.num_downloads
 
-    document["rating"] = sound.avg_rating
-    document["ratings"] = sound.num_ratings
+    document["avg_rating"] = sound.avg_rating
+    document["num_ratings"] = sound.num_ratings
 
     document["comment"] = [comment.comment for comment in sound.comments.all()]
     document["comments"] = sound.comments.count()
 
     paths = sound.paths()
     
-    document["url_waveform_m"] = paths["waveform_path_m"]
-    document["url_waveform_l"] = paths["waveform_path_l"]
-    document["url_spectrum_m"] = paths["spectral_path_m"]
-    document["url_spectrum_l"] = paths["spectral_path_l"]
-    document["url_preview"] = paths["preview_path"]
+    document["waveform_path_m"] = paths["waveform_path_m"]
+    document["waveform_path_l"] = paths["waveform_path_l"]
+    document["spectral_path_m"] = paths["spectral_path_m"]
+    document["spectral_path_l"] = paths["spectral_path_l"]
+    document["preview_path"] = paths["preview_path"]
     
     return document
 

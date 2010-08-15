@@ -12,28 +12,28 @@ def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     
-    sort = request.GET.get("s", "downloads desc")
+    sort = request.GET.get("s", "num_downloads desc")
     
     sort_options = [
         ("Duration (long first)"," duration desc"),
         ("Duration (short first)", "duration asc"),
         ("Date added (newest first)", "created desc"),
         ("Date added (oldest first)", "created asc"),
-        ("Downloads (most first)", "downloads desc"),
-        ("Downloads (least first)", "downloads asc"),
-        ("Rating (highest first)", "rating desc"),
-        ("Rating (lowest first)", "rating asc")
+        ("Downloads (most first)", "num_downloads desc"),
+        ("Downloads (least first)", "num_downloads asc"),
+        ("Rating (highest first)", "avg_rating desc"),
+        ("Rating (lowest first)", "avg_rating asc")
     ]
 
     if sort in map(operator.itemgetter(1), sort_options):
-        if sort == "rating desc":
-            sort = [sort, "ratings desc"]
-        elif  sort == "rating asc":
-            sort = [sort, "ratings desc"]
+        if sort == "avg_rating desc":
+            sort = [sort, "avg_ratings desc"]
+        elif  sort == "avg_rating asc":
+            sort = [sort, "avg_ratings desc"]
         else:
             sort = [sort]
     else:
-        sort = ["downloads desc"]
+        sort = ["num_downloads desc"]
         
     current_page = int(request.GET.get("page", 1))
 

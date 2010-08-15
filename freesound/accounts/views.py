@@ -16,8 +16,12 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 import os
 from utils.functional import combine_dicts
+from django.core.exceptions import PermissionDenied
 
 def activate_user(request, activation_key):
+    if request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("accounts-home"))
+    
     try:
         user_id = decrypt(activation_key)
         user = User.objects.get(id=int(user_id))
@@ -34,6 +38,9 @@ def send_activation(user):
     send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
 
 def registration(request):
+    if request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("accounts-home"))
+    
     if request.method == "POST":
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
@@ -47,6 +54,9 @@ def registration(request):
 
 
 def resend_activation(request):
+    if request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("accounts-home"))
+    
     if request.method == "POST":
         form = ReactivationForm(request.POST)
         if form.is_valid():
@@ -60,6 +70,9 @@ def resend_activation(request):
 
 
 def username_reminder(request):
+    if request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("accounts-home"))
+    
     if request.method == "POST":
         form = UsernameReminderForm(request.POST)
         if form.is_valid():
@@ -187,3 +200,33 @@ def upload_file(request):
 @login_required
 def upload(request):
     return render_to_response('accounts/upload.html', locals(), context_instance=RequestContext(request))
+
+
+@login_required
+def delete(request):
+    import time
+    
+    encrypted_string = request.GET.get("user", None)
+     
+    waited_too_long = False
+    
+    if encrypted_string != None:
+        try:
+            user_id, now = decrypt(encrypted_string).split("\t")
+            user_id = int(user_id)
+
+            if user_id != request.user.id:
+                raise PermissionDenied
+
+            link_generated_time = float(now)
+            if abs(time.time() - link_generated_time) < 10:
+                request.user.delete()
+                return HttpResponseRedirect(reverse("front-page"))
+            else:
+                waited_too_long = True
+        except:
+            pass
+    
+    encrypted_link = encrypt(u"%d\t%f" % (request.user.id, time.time()))
+            
+    return render_to_response('accounts/delete.html', locals(), context_instance=RequestContext(request))

@@ -19,6 +19,7 @@ urlpatterns = patterns('accounts.views',
     
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
+    url(r'^delete/$', accounts.delete, name="accounts-delete"),
 
     url(r'^upload/file/$', accounts.upload_file, name="accounts-upload-file"),
     url(r'^upload/$', accounts.upload, name="accounts-upload"),

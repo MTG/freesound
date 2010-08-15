@@ -13,7 +13,6 @@
 
 * test X-ACCEL-REDIRECT on server
 * sound edit > remix
-* user delete self
 * sql trigger should update "last post" when deleting forum posts
 * address book from sent messages
 * cache RSS+pledgie on disk + generate via django jobs

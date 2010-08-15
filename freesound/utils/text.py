@@ -83,7 +83,7 @@ def startswithone(string, starts):
     reduce(lambda a,b: a or string.startswith(b), starts, False)
 
 
-url_regex = re.compile("(http://[^ ]+)", re.IGNORECASE)
+url_regex = re.compile("(http://\S+)", re.IGNORECASE)
 
 def replace_element_by_children(soup, element):
     """
@@ -150,6 +150,8 @@ def clean_html(input):
     u'GALORE: <a href="http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator'
     """
     
+    print input
+    
     delete_tags = [u"script", u"style", u"head"]
     ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br", u"ul", u"li", u"blockquote", u"code"]
     ok_attributes = {u"a": [u"href"], u"img": [u"src", u"alt", u"title"]}
@@ -194,6 +196,8 @@ def clean_html(input):
     for text in soup.findAll(text=url_regex):
         if not text.findParents(u'a'):
             text.replaceWith(url_regex.sub(r'<a href="\1" rel="nofollow">\1</a>', text))
+    
+    print unicode(soup)
     
     return unicode(soup)
 

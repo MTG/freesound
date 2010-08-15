@@ -14,4 +14,4 @@ class ManualUserField(forms.CharField):
 class MessageReplyForm(forms.Form):
     to = ManualUserField()
     subject = forms.CharField(min_length=3, max_length=128)
-    body = HtmlCleaningCharField(widget=forms.Textarea)
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))

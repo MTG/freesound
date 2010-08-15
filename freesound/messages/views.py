@@ -10,6 +10,7 @@ from utils.cache import invalidate_template_cache
 from utils.functional import exceptional
 from utils.mail import send_mail_template
 from utils.pagination import paginate
+from BeautifulSoup import BeautifulSoup
 
 @login_required
 def messages_change_state(request):
@@ -99,15 +100,16 @@ def new_message(request, username=None, message_id=None):
         form = MessageReplyForm()
         if message_id:
             try:
-                import textwrap
                 message = Message.objects.get(id=message_id)
 
                 if message.user_from != request.user and message.user_to != request.user:
                     raise Http404
 
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
-                body = textwrap.fill(text=body, replace_whitespace=False)
+                body = ''.join(BeautifulSoup(body).findAll(text=True))
                 body = "\n".join([(">" if line.startswith(">") else "> ") + line.strip() for line in body.split("\n")])
+                body = "> --- " + message.user_from.username + " wrote:\n>\n" + body
+                
                 subject = "re: " + message.subject
                 to = message.user_from.username
 

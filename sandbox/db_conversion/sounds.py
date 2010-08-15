@@ -80,6 +80,7 @@ while True:
         num_downloads = 0
         avg_rating = 0
         num_ratings = 0
+        moderation_note = None
         
         all_vars = [id,
             user_id,
@@ -100,6 +101,7 @@ while True:
             md5,
             moderation_state,
             moderation_date,
+            moderation_note,
             moderation_bad_description,
             processing_state,
             processing_date,
@@ -109,7 +111,7 @@ while True:
         output_file.write(u"\t".join(map(unicode, all_vars)) + "\n")
 
 print """
-copy sounds_sound (id, user_id, created, original_path, base_filename_slug, description, license_id, original_filename, pack_id, type, duration, bitrate, bitdepth, samplerate, filesize, channels, md5, moderation_state, moderation_date, has_bad_description, processing_state, processing_date, processing_log, geotag_id, num_comments, num_downloads, avg_rating, num_ratings) from '%s' null as 'None';
+copy sounds_sound (id, user_id, created, original_path, base_filename_slug, description, license_id, original_filename, pack_id, type, duration, bitrate, bitdepth, samplerate, filesize, channels, md5, moderation_state, moderation_date, moderation_note, has_bad_description, processing_state, processing_date, processing_log, geotag_id, num_comments, num_downloads, avg_rating, num_ratings) from '%s' null as 'None';
 select setval('sounds_sound_id_seq',(select max(id)+1 from sounds_sound));
 vacuum analyze sounds_sound;
 """ % output_filename

@@ -90,8 +90,7 @@ def sound_download(request, username, sound_id):
         return response
     else:
         response = HttpResponse()
-        # let nginx determine the correct content type 
-        response['Content-Type']=""
+        response['Content-Type']="application/octet-stream"
         response['X-Accel-Redirect'] = os.path.join("downloads/", sound_path)
         return response
         

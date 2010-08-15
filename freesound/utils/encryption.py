@@ -12,7 +12,7 @@ def encrypt(decrypted_string):
     encrypted_string = encryptor.encrypt(decrypted_string)
     
     # base64 encoded strings have "=" signs, quote them!
-    encoded_string = urllib.quote(base64.b64encode(encrypted_string))
+    encoded_string = urllib.quote(base64.b64encode(encrypted_string).replace("/", ".").replace("+", "_").replace("=", "-"))
     
     return encoded_string
 
@@ -21,7 +21,7 @@ def decrypt(quoted_string):
     
     encoded_string = urllib.unquote(quoted_string)
     
-    encrypted_string = base64.b64decode(encoded_string)
+    encrypted_string = base64.b64decode(encoded_string.replace(".", "/").replace("_", "+").replace("-", "="))
     
     decrypted_string = decryptor.decrypt(encrypted_string).strip()
     

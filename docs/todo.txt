@@ -14,8 +14,7 @@
 
 == Other ==
 
-* X-ACCEL-REDIRECT for file downloading
-* messages need "reply" button at bottom + add "reply_to_message" field in the Message
+* test X-ACCEL-REDIRECT on server
 * sound edit > remix
 * user delete self
 * user delete sound

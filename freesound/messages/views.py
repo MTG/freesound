@@ -73,7 +73,7 @@ def message(request, message_id):
     return render_to_response('messages/message.html', locals(), context_instance=RequestContext(request))
 
 @login_required
-def new_message(request, username=None):
+def new_message(request, username=None, message_id=None):
     if request.method == 'POST':
         form = MessageReplyForm(request.POST)
         if form.is_valid():
@@ -96,9 +96,25 @@ def new_message(request, username=None):
             
             return HttpResponseRedirect(reverse("messages"))
     else:
-        if username:
+        form = MessageReplyForm()
+        if message_id:
+            try:
+                import textwrap
+                message = Message.objects.get(id=message_id)
+
+                if message.user_from != request.user and message.user_to != request.user:
+                    raise Http404
+
+                body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
+                body = textwrap.fill(text=body, replace_whitespace=False)
+                body = "\n".join([(">" if line.startswith(">") else "> ") + line.strip() for line in body.split("\n")])
+                subject = "re: " + message.subject
+                to = message.user_from.username
+
+                form = MessageReplyForm(initial=dict(to=to, subject=subject, body=body))
+            except Message.DoesNotExist:
+                pass
+        elif username:
             form = MessageReplyForm(initial=dict(to=username))
-        else:
-            form = MessageReplyForm()
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))

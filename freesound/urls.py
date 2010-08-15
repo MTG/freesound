@@ -57,6 +57,7 @@ urlpatterns = patterns('',
 )
 
 #if you need django to host the admin files...
+#from django.conf import settings
 #if settings.DEBUG:
 #    urlpatterns += patterns('',
 #        (r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),

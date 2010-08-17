@@ -1,21 +1,19 @@
 from django.conf import settings
 from piston.handler import BaseHandler
 from piston.utils import rc
-from forms import SoundSearchForm
-from search.views import SEARCH_DEFAULT_SORT, SEARCH_SORT_OPTIONS_API, \
-    search_prepare_sort, search_prepare_query
+from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
+from search.views import search_prepare_sort, search_prepare_query
 from sounds.models import Sound
-from utils.search.solr import Solr, SolrException
+from utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import logging, os
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 from utils.search.search import add_all_sounds_to_solr
 from django.contrib.sites.models import Site
+from utils.pagination import paginate
 
 logger = logging.getLogger("api")
-
-SOUNDS_PER_API_RESPONSE = 20
 
 '''
 N.B.:
@@ -29,7 +27,9 @@ TODO:
 - do something about ugly try/except statements in prepare_* functions
 - check if no fields are missing
 - check if tags are actually working
-- write test suite
+- refactor with reverse
+- clean functions for search form
+- throttling
 '''
 
 # UTILITY FUNCTIONS
@@ -137,54 +137,54 @@ class SoundSearchHandler(BaseHandler):
     curl:           curl http://www.freesound.org/api/search/?q=hoelahoep
     '''
     def read(self, request):
-        form = SoundSearchForm(request.GET)
+        form = SoundSearchForm(SEARCH_SORT_OPTIONS_API, request.GET)
         if not form.is_valid():
             resp = rc.BAD_REQUEST
             resp.content = form.errors
             return resp
+        
         cd = form.cleaned_data
-        search_query = cd.get("q") if cd.get("q") != None else ""
-        filter_query = cd.get("f") if cd.get("f") != None else ""
-        current_page = cd.get("p") if cd.get("p") != None else 1
-        sort         = cd.get("s") if cd.get("s") != None else SEARCH_DEFAULT_SORT
-        
-        params = [search_query, filter_query, current_page, sort]
-        
-        solr_sort = search_prepare_sort(sort, SEARCH_SORT_OPTIONS_API)
-    
+
         solr = Solr(settings.SOLR_URL)    
-        query = search_prepare_query(search_query, filter_query, solr_sort, current_page, SOUNDS_PER_API_RESPONSE)
+    
+        query = search_prepare_query(cd['query'],
+                                     cd['filter'], 
+                                     search_prepare_sort(cd['sort'], SEARCH_SORT_OPTIONS_API),
+                                     cd['page'],
+                                     settings.SOUNDS_PER_API_RESPONSE)
         
         try:
-            # results will be a list of ids
-            #sound_ids = SolrResponseInterpreter(solr.select(unicode(query)))
-            sound_ids = solr.select(unicode(query))['response']['docs']
-            #sound_ids = [1, 2]
-            sounds = []
-            for sound_id in sound_ids:
-                sound = Sound.objects.select_related('user').get(id=sound_id)
-                sounds.append(prepare_collection_sound(sound))
+            results = SolrResponseInterpreter(solr.select(unicode(query)))
+            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_API_RESPONSE)
+            page = paginator.page(form.cleaned_data['page'])
+            
+            sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=sound_id)) \
+                      for sound_id in page['object_list']]
             result = {'sounds': sounds}
+            print result
             # construct previous and next urls
-            if current_page > 1:
-                previous = self.__construct_search_link(search_query, current_page-1, filter_query, sort)
-                result['previous'] = previous
-            if len(sound_ids) >= SOUNDS_PER_API_RESPONSE:
-                next     = self.__construct_search_link(search_query, current_page+1, filter_query, sort)
-                result['next'] = next
+            if page['has_other_pages']:
+                if page['has_previous']:
+                    result['previous'] = self.__construct_pagination_link(cd['query'], 
+                                                                          page['previous_page_number'], 
+                                                                          cd['filter'], 
+                                                                          cd['sort'])
+                if page['has_next']:
+                    result['next'] = self.__construct_pagination_link(cd['query'], 
+                                                                      page['next_page_number'], 
+                                                                      cd['filter'], 
+                                                                      cd['sort'])
             return result
         except SolrException, e:
-            error = "search error: search_query %s filter_query %s sort %s error %s.. %s" % (search_query, filter_query, sort, e, params)
+            error = "search error: search_query %s filter_query %s sort %s error %s" \
+                        % (cd['search'], cd['filter'], cd['sort'], e)
             logger.warning(error)
             resp = rc.INTERNAL_ERROR
-            resp.content = error+'\n'+str(query)
+            resp.content = error
             return resp
     
-    def __construct_search_link(self, q, p, f, s):
-        if p < 1:
-            return None
-        else:
-            return API_BASE+'/sounds/search?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s)
+    def __construct_pagination_link(self, q, p, f, s):
+        return API_BASE+'/sounds/search?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s)
 
 class SoundHandler(BaseHandler):
     '''
@@ -279,26 +279,19 @@ class UserSoundsHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'This user (%s) does not exist.' % username
             return resp
-        try:
-            p = int(request.GET.get('p', 1))
-            if p < 1:
-                p = 1
-        except:
-            p = 1
-        sounds = Sound.public.filter(user=user)[(p-1)*SOUNDS_PER_API_RESPONSE:p*SOUNDS_PER_API_RESPONSE]
-        sounds = [prepare_collection_sound(sound, include_user=False) for sound in sounds]
+        p = request.GET.get('p', 0)    
+        page = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, p)['page']
+        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
         result = {'sounds': sounds}
-        if p > 1:
-            result['previous'] = self.__construct_pagination_link(username, p-1)
-        if len(sounds) >= SOUNDS_PER_API_RESPONSE:
-            result['next'] = self.__construct_pagination_link(username, p+1)
+        if page.has_other_pages():
+            if page.has_previous():
+                result['previous'] = self.__construct_pagination_link(username, page.previous_page_number())
+            if page.has_next():
+                result['next'] = self.__construct_pagination_link(username, page.next_page_number())
         return result
     
     def __construct_pagination_link(self, u, p):
-        if p < 1:
-            return None
-        else:
-            return API_BASE+'/people/%s/sounds?&p=%s' % (u, p)
+        return API_BASE+'/people/%s/sounds?p=%s' % (u, p)
 
 class UserPacksHandler(BaseHandler):
     pass

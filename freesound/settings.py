@@ -119,6 +119,7 @@ FORUM_THREADS_PER_PAGE = 40
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 50
+SOUNDS_PER_API_RESPONSE = 15
 
 # data path, where all files should go to
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'media/data/')

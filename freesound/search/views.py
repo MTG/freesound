@@ -5,35 +5,12 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 import operator
 import logging
+import forms
 
 logger = logging.getLogger("search")
-    
-SEARCH_SORT_OPTIONS_WEB = [
-        ("Duration (long first)"," duration desc"),
-        ("Duration (short first)", "duration asc"),
-        ("Date added (newest first)", "created desc"),
-        ("Date added (oldest first)", "created asc"),
-        ("Downloads (most first)", "num_downloads desc"),
-        ("Downloads (least first)", "num_downloads asc"),
-        ("Rating (highest first)", "avg_rating desc"),
-        ("Rating (lowest first)", "avg_rating asc")
-    ]
-
-SEARCH_SORT_OPTIONS_API = [
-        ("duration_desc"," duration desc"),
-        ("duration_asc", "duration asc"),
-        ("created_desc", "created desc"),
-        ("created_asc", "created asc"),
-        ("downloads_desc", "num_downloads desc"),
-        ("downloads_asc", "num_downloads asc"),
-        ("rating_desc", "avg_rating desc"),
-        ("rating_asc", "avg_rating asc")
-    ]
-
-SEARCH_DEFAULT_SORT = "num_downloads desc"
 
 def search_prepare_sort(sort, options):
-    if sort in [x[1] for x in SEARCH_SORT_OPTIONS_WEB]:
+    if sort in [x[1] for x in options]:
         if sort == "avg_rating desc":
             sort = [sort, "avg_ratings desc"]
         elif  sort == "avg_rating asc":
@@ -43,8 +20,6 @@ def search_prepare_sort(sort, options):
     else:
         sort = ["num_downloads desc"]
     return sort
-
-settings.SOUNDS_PER_PAGE
 
 def search_prepare_query(search_query, filter_query, sort, current_page, sounds_per_page):
     query = SolrQuery()
@@ -61,9 +36,9 @@ def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     current_page = int(request.GET.get("page", 1))
-    sort = request.GET.get("s", SEARCH_DEFAULT_SORT)
+    sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
     
-    sort = search_prepare_sort(sort, SEARCH_SORT_OPTIONS_WEB)
+    sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
     solr = Solr(settings.SOLR_URL)
     

@@ -14,13 +14,13 @@ class CsrfExemptResource(Resource):
 
 urlpatterns = patterns('',
     # sounds
-    url(r'^sounds/search/?$',                                            CsrfExemptResource(SoundSearchHandler)),
-    url(r'^sounds/(?P<sound_id>\d+)/?$',                                 CsrfExemptResource(SoundHandler)),
-    url(r'^sounds/(?P<sound_id>\d+)/(?P<file_or_preview>\w+)/?$',        CsrfExemptResource(SoundServeHandler)),
+    url(r'^sounds/search/?$',                                        CsrfExemptResource(SoundSearchHandler), name='api-search'),
+    url(r'^sounds/(?P<sound_id>\d+)/?$',                             CsrfExemptResource(SoundHandler),       name='single-sound'),
+    url(r'^sounds/(?P<sound_id>\d+)/(?P<file_or_preview>\w+)/?$',    CsrfExemptResource(SoundServeHandler),  name='sound-serve'),
     # users
-    url(r'^people/(?P<username>[\w_-]+)/?$',                             CsrfExemptResource(UserHandler)),
-    url(r'^people/(?P<username>[\w_-]+)/sounds/?$',                      CsrfExemptResource(UserSoundsHandler)),
-    url(r'^people/(?P<username>[\w_-]+)/packs/?$',                       CsrfExemptResource(UserPacksHandler)),
+    url(r'^people/(?P<username>[\w_-]+)/?$',                         CsrfExemptResource(UserHandler),        name='single-user'),
+    url(r'^people/(?P<username>[\w_-]+)/sounds/?$',                  CsrfExemptResource(UserSoundsHandler),  name='user-sounds'),
+    url(r'^people/(?P<username>[\w_-]+)/packs/?$',                   CsrfExemptResource(UserPacksHandler),   name='users-packs'),
     
    # url(r'^update_solr/?$',                                             CsrfExemptResource(UpdateSolrHandler)),
    # website

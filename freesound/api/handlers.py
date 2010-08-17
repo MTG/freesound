@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from utils.search.search import add_all_sounds_to_solr
 from django.contrib.sites.models import Site
 from utils.pagination import paginate
+from django.core.urlresolvers import reverse
 
 logger = logging.getLogger("api")
 
@@ -32,26 +33,26 @@ TODO:
 
 # UTILITY FUNCTIONS
 
-WEB_BASE = 'http://'+Site.objects.get_current().domain
-API_BASE = WEB_BASE+'/api'
+def prepend_base(rel):
+    return "http://%s%s" % (Site.objects.get_current().domain, rel)
 
 def get_sound_api_url(id):
-    return API_BASE+'/sounds/'+str(id)
+    return prepend_base(reverse('single-sound', args=[id]))
 
 def get_sound_web_url(username, id):
-    return WEB_BASE+'/people/'+username+'/sounds/'+str(id)+'/'
+    return prepend_base(reverse('sound', args=[username, id]))
 
 def get_user_api_url(username):
-    return API_BASE+'/people/'+username
+    return prepend_base(reverse('single-user', args=[username]))
 
 def get_user_web_url(username):
-    return WEB_BASE+'/people/'+username+'/'
+    return prepend_base(reverse('account', args=[username]))
 
 def get_user_sounds_api_url(username):
-    return API_BASE+'/people/'+username+'/sounds'
+    return prepend_base(reverse('user-sounds', args=[username]))
 
 def get_user_packs_api_url(username):
-    return API_BASE+'/people/'+username+'/packs'
+    return prepend_base(reverse('user-packs', args=[username]))
 
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)
@@ -182,7 +183,7 @@ class SoundSearchHandler(BaseHandler):
             return resp
     
     def __construct_pagination_link(self, q, p, f, s):
-        return API_BASE+'/sounds/search?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s)
+        return prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s))
 
 class SoundHandler(BaseHandler):
     '''
@@ -277,8 +278,7 @@ class UserSoundsHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'This user (%s) does not exist.' % username
             return resp
-        p = request.GET.get('p', 0)    
-        page = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, p)['page']
+        page = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')['page']
         sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
         result = {'sounds': sounds}
         if page.has_other_pages():
@@ -289,7 +289,7 @@ class UserSoundsHandler(BaseHandler):
         return result
     
     def __construct_pagination_link(self, u, p):
-        return API_BASE+'/people/%s/sounds?p=%s' % (u, p)
+        return get_user_sounds_api_url(u)+'?p=%s' % (u, p)
 
 class UserPacksHandler(BaseHandler):
     pass

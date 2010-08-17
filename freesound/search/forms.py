@@ -25,25 +25,25 @@ SEARCH_SORT_OPTIONS_API = [
 SEARCH_DEFAULT_SORT = "num_downloads desc"
 
 class SoundSearchForm(forms.Form):
-    query   = forms.CharField(required=False, label='q')
-    page    = forms.IntegerField(required=False, label='p')
-    filter  = forms.CharField(required=False, label='f')
-    sort    = forms.ChoiceField(required=False, choices=SEARCH_SORT_OPTIONS_WEB, label='s')
+    q    = forms.CharField(required=False, label='query')
+    p    = forms.IntegerField(required=False, label='page')
+    f    = forms.CharField(required=False, label='filter')
+    s    = forms.ChoiceField(required=False, choices=SEARCH_SORT_OPTIONS_WEB, label='sort')
     
-    def clean_query(self):
-        q = self.cleaned_data['query'] 
+    def clean_q(self):
+        q = self.cleaned_data['q'] 
         return q if q != None else ""  
     
-    def clean_filter(self):
-        f = self.cleaned_data['filter'] 
+    def clean_f(self):
+        f = self.cleaned_data['f'] 
         return f if f != None else ""  
             
-    def clean_page(self):
-        p = self.cleaned_data['page'] 
+    def clean_p(self):
+        p = self.cleaned_data['p'] 
         return p if p != None or p >= 1 else 1  
     
-    def clean_sort(self):
-        s = self.cleaned_data['sort'] 
+    def clean_s(self):
+        s = self.cleaned_data['s'] 
         return s if s != None else SEARCH_DEFAULT_SORT
         
     def __init__(self, sort_options, *args, **kargs):

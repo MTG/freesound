@@ -1,16 +1,12 @@
 from django.core.paginator import Paginator, InvalidPage
 
-def paginate(request, qs, items_per_page=20, given_page=False):
+def paginate(request, qs, items_per_page=20, page_get_name='page'):
     paginator = Paginator(qs, items_per_page)
 
     try:
-        if not given_page:
-            current_page = int(request.GET.get("page", 1))
-        else:
-            current_page = int(given_page)
+        current_page = int(request.GET.get(page_get_name, 1))
     except ValueError:
         current_page = 1
-
     try:
         page = paginator.page(current_page)
     except InvalidPage:

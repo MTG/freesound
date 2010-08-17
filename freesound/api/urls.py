@@ -1,6 +1,7 @@
 from django.conf.urls.defaults import *
 from piston.resource import Resource
 from handlers import *
+from views import create_api_key
 from key_authentication import KeyAuthentication
 
 auth = KeyAuthentication()
@@ -22,4 +23,6 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[\w_-]+)/packs/?$',                       CsrfExemptResource(UserPacksHandler)),
     
    # url(r'^update_solr/?$',                                             CsrfExemptResource(UpdateSolrHandler)),
+   # website
+    url(r'^apply/?$', create_api_key),
 )

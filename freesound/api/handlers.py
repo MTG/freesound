@@ -21,7 +21,7 @@ N.B.:
 - curl examples do not include authentication
 
 TODO:
-- authentication
+- authentication (let users create api-keys on the web)
 - pack handlers
 - download updates
 - do something about ugly try/except statements in prepare_* functions

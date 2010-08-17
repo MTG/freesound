@@ -1,5 +1,7 @@
 # fabfile.py
-from fabric.api import run
+from fabric.api import env, run
+
+env.hosts = ['fsweb@tabasco.upf.edu']
 
 def stop():
     """Stop FastCGI"""

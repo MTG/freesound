@@ -15,7 +15,7 @@ def page(request, name):
     return render_to_response('wiki/page.html', locals(), context_instance=RequestContext(request)) 
 
 def editpage(request, name):
-    if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
+    if not (request.user.is_authenticated() and request.user.has_perm('wiki.add_page')):
         raise Http404
 
     # the class for editing...

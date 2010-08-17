@@ -6,12 +6,12 @@ ADMINS = (
     ('Bram de Jong', 'support@freesound.org'),
 )
 
-DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+DATABASE_ENGINE = 'sqlite'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'freesound'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'freesound'             # Not used with sqlite3.
+DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
-DATABASE_PASSWORD = 'x'
+DATABASE_PASSWORD = ''
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).

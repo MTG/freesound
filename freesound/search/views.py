@@ -7,14 +7,8 @@ import operator
 import logging
 
 logger = logging.getLogger("search")
-
-def search(request):
-    search_query = request.GET.get("q", "")
-    filter_query = request.GET.get("f", "")
     
-    sort = request.GET.get("s", "num_downloads desc")
-    
-    sort_options = [
+SEARCH_SORT_OPTIONS_WEB = [
         ("Duration (long first)"," duration desc"),
         ("Duration (short first)", "duration asc"),
         ("Date added (newest first)", "created desc"),
@@ -25,7 +19,21 @@ def search(request):
         ("Rating (lowest first)", "avg_rating asc")
     ]
 
-    if sort in map(operator.itemgetter(1), sort_options):
+SEARCH_SORT_OPTIONS_API = [
+        ("duration_desc"," duration desc"),
+        ("duration_asc", "duration asc"),
+        ("created_desc", "created desc"),
+        ("created_asc", "created asc"),
+        ("downloads_desc", "num_downloads desc"),
+        ("downloads_asc", "num_downloads asc"),
+        ("rating_desc", "avg_rating desc"),
+        ("rating_asc", "avg_rating asc")
+    ]
+
+SEARCH_DEFAULT_SORT = "num_downloads desc"
+
+def search_prepare_sort(sort, options):
+    if sort in [x[1] for x in SEARCH_SORT_OPTIONS_WEB]:
         if sort == "avg_rating desc":
             sort = [sort, "avg_ratings desc"]
         elif  sort == "avg_rating asc":
@@ -34,19 +42,32 @@ def search(request):
             sort = [sort]
     else:
         sort = ["num_downloads desc"]
-        
-    current_page = int(request.GET.get("page", 1))
+    return sort
 
-    solr = Solr(settings.SOLR_URL)
-    
+settings.SOUNDS_PER_PAGE
+
+def search_prepare_query(search_query, filter_query, sort, current_page, sounds_per_page):
     query = SolrQuery()
     query.set_dismax_query(search_query, query_fields=[("id", 4), ("tag",3), ("description",3), ("username",2), ("pack_tokenized",2), ("filename",2), "comment"])
-    query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE, rows=settings.SOUNDS_PER_PAGE, field_list=["id"], filter_query=filter_query, sort=sort)
+    query.set_query_options(start=(current_page - 1) * sounds_per_page, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
     query.add_facet_fields("samplerate", "pack", "username", "tag", "bitrate", "bitdepth", "type", "channels")
     query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
     query.set_facet_options("tag", limit=30)
     query.set_facet_options("username", limit=30)
     query.set_facet_options("pack", limit=10)
+    return query
+
+def search(request):
+    search_query = request.GET.get("q", "")
+    filter_query = request.GET.get("f", "")
+    current_page = int(request.GET.get("page", 1))
+    sort = request.GET.get("s", SEARCH_DEFAULT_SORT)
+    
+    sort = search_prepare_sort(sort, SEARCH_SORT_OPTIONS_WEB)
+
+    solr = Solr(settings.SOLR_URL)
+    
+    query = search_prepare_query(search_query, filter_query, sort, current_page, settings.SOUNDS_PER_PAGE)
     
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))

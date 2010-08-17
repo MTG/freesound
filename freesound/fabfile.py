@@ -1,23 +1,29 @@
-# fabfile.py
-from fabric.api import env, run
+from __future__ import with_statement
+from fabric.api import env, run, cd
 
-env.hosts = ['fsweb@tabasco.upf.edu']
+env.hosts = ["fsweb@tabasco.upf.edu"]
+
+def syncdb():
+    """run syncdb remotely"""
+    with cd("freesound/freesound"):
+        run("source /home/fsweb/.virtualenvs/freesound/bin/activate && python manage.py syncdb")
 
 def stop():
     """Stop FastCGI"""
-    run('''sudo supervisorctl stop freesound''')
+    run("sudo supervisorctl stop freesound")
     
 def start():
     """Start FastCGI"""
-    run('''sudo supervisorctl start freesound''')
+    run("sudo supervisorctl start freesound")
     
 def restart():
     """Restart FastCGI"""
-    run('''sudo supervisorctl restart freesound''')
+    run("sudo supervisorctl restart freesound")
     
 def pull():
     """Get latest version from Github"""
-    run('''cd freesound/ && git pull origin master''')
+    with cd("freesound"):
+        run("git pull origin master")
 
 def deploy():
     """pull and restart"""

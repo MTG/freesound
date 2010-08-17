@@ -4,7 +4,7 @@ import base64
 import urllib
 
 def encrypt(decrypted_string):
-    encryptor = AES.new(settings.SECRET_KEY[0:16])
+    encryptor = AES.new(settings.SECRET_KEY[0:16]) #@UndefinedVariable
     
     # encrypted strings need to be len() = multiple of 16
     decrypted_string += u' ' * ( 16 - len(decrypted_string) % 16 )
@@ -17,7 +17,7 @@ def encrypt(decrypted_string):
     return encoded_string
 
 def decrypt(quoted_string):
-    decryptor = AES.new(settings.SECRET_KEY[0:16])
+    decryptor = AES.new(settings.SECRET_KEY[0:16]) #@UndefinedVariable
     
     encoded_string = urllib.unquote(quoted_string)
     

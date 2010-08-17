@@ -15,6 +15,7 @@ def create_api_key(request):
             db_api_key.name        = form.cleaned_data['name']
             db_api_key.url         = form.cleaned_data['url']
             db_api_key.save()
+            form = ApiKeyForm()
     else:
         form = ApiKeyForm()
     return render_to_response('api/apply_key.html', 

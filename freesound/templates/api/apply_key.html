@@ -20,9 +20,9 @@
     <h3>Your existing keys</h3>
     
     <table>
-    <tr><th>key</th><th>application</th><th>status</th></tr>
+    <tr><th>Key</th><th>Application</th><th>Status</th><th>Description</th></tr>
     {% for key in user.api_keys.all %}
-        <tr><td>{{ key.key }}</td><td>{{ key.name }}</td><td>{{ key.status }}</td></tr>
+        <tr><td>{{ key.key }}</td><td>{{ key.name }}</td><td>{{ key.status }}</td><td>{{ key.description }}</td></tr>
     {% endfor %}
     </table>
 {% endblock %}

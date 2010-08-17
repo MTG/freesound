@@ -21,14 +21,12 @@ N.B.:
 - curl examples do not include authentication
 
 TODO:
-- authentication (let users create api-keys on the web)
+- refactor with reverse
 - pack handlers
 - download updates
 - do something about ugly try/except statements in prepare_* functions
 - check if no fields are missing
 - check if tags are actually working
-- refactor with reverse
-- clean functions for search form
 - throttling
 '''
 

@@ -13,7 +13,7 @@ class KeyAuthentication():
         if not api_key:
             return False
         try:
-            db_api_key = ApiKey.objects.get(key=api_key, status='approved')
+            db_api_key = ApiKey.objects.get(key=api_key, status='OK')
         except ApiKey.DoesNotExist:
             return False
         request.user = db_api_key.user                

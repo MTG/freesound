@@ -7,6 +7,7 @@ scikits.audiolab
 Pygments
 python-cjson
 python-memcached
+django_piston
 flup
 django-extensions
 django-debug-toolbar

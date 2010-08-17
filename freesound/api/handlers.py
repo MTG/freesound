@@ -82,9 +82,12 @@ def prepare_single_sound(sound):
     except:
         pass
     d['user'] = prepare_minimal_user(sound)
-    d['tags'] = [tagged.tag.name for tagged in sound.tags.select_related("tag").all()]
+    d['tags'] = get_tags(sound)
     d.update(get_sound_links(sound))
     return d
+
+def get_tags(sound):
+    return [tagged.tag.name for tagged in sound.tags.select_related("tag").all()]
 
 def prepare_collection_sound(sound, include_user=True):
     d = {}
@@ -92,7 +95,7 @@ def prepare_collection_sound(sound, include_user=True):
         d[field] = getattr(sound, field)
     if include_user:
         d['user'] = prepare_minimal_user(sound)
-    d['tags'] = [tag.name for tag in sound.tags.select_related("tag").all()]
+    d['tags'] = get_tags(sound)
     d.update(get_sound_links(sound))
     return d
 

@@ -25,7 +25,7 @@ def tags(request, multiple_tags=None):
         query.set_query(" ".join("tag:\"" + tag + "\"" for tag in multiple_tags))
     else:
         query.set_query("*:*")
-    query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE, rows=settings.SOUNDS_PER_PAGE, field_list=["id"], sort=["downloads desc"])
+    query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE, rows=settings.SOUNDS_PER_PAGE, field_list=["id"], sort=["num_downloads desc"])
     query.add_facet_fields("tag")
     query.set_facet_options_default(limit=100, sort=True, mincount=1, count_missing=False)
     
@@ -34,9 +34,9 @@ def tags(request, multiple_tags=None):
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
         page = paginator.page(current_page)
         error = False
+        tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]
     except SolrException, e:
         error = True
-    
-    tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]
+        print "SOLR ERROR", e
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))

@@ -22,7 +22,7 @@ def search_prepare_sort(sort, options):
 
 def search_prepare_query(search_query, filter_query, sort, current_page, sounds_per_page):
     query = SolrQuery()
-    query.set_dismax_query(search_query, query_fields=[("id", 4), ("tag",3), ("description",3), ("username",2), ("pack_tokenized",2), ("filename",2), "comment"])
+    query.set_dismax_query(search_query, query_fields=[("id", 4), ("tag",3), ("description",3), ("username",2), ("pack_tokenized",2), ("original_filename",2), "comment"])
     query.set_query_options(start=(current_page - 1) * sounds_per_page, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
     query.add_facet_fields("samplerate", "pack", "username", "tag", "bitrate", "bitdepth", "type", "channels")
     query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
@@ -50,6 +50,7 @@ def search(request):
         error = False
     except SolrException, e:
         logger.warning("search error: search_query %s filter_query %s sort %s error %s" % (search_query, filter_query, sort, e))
+        print e
         error = True
     
     return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))

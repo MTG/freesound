@@ -22,12 +22,11 @@ N.B.:
 - curl examples do not include authentication
 
 TODO:
-- refactor with reverse
 - pack handlers
 - download updates
 - do something about ugly try/except statements in prepare_* functions
-- check if no fields are missing
-- check if tags are actually working
+
+LATER:
 - throttling
 '''
 
@@ -82,14 +81,8 @@ def prepare_single_sound(sound):
         d['geotag'] = [sound.geotag.lat,sound._geotag_cache.lon]
     except:
         pass
-    try:
-        d['user'] = prepare_minimal_user(sound)
-    except:
-        pass
-    try:
-        d['tags'] = [tag.name for tag in sound.tags.select_related("tag").all()]
-    except:
-        pass
+    d['user'] = prepare_minimal_user(sound)
+    d['tags'] = [tagged.tag.name for tagged in sound.tags.select_related("tag").all()]
     d.update(get_sound_links(sound))
     return d
 
@@ -98,14 +91,8 @@ def prepare_collection_sound(sound, include_user=True):
     for field in ["duration", "base_filename_slug", "type", "original_filename"]:
         d[field] = getattr(sound, field)
     if include_user:
-        try:
-            d['user'] = prepare_minimal_user(sound)
-        except:
-            pass
-    try:
-        d['tags'] = [tag.name for tag in sound.tags.select_related("tag").all()]
-    except:
-        pass
+        d['user'] = prepare_minimal_user(sound)
+    d['tags'] = [tag.name for tag in sound.tags.select_related("tag").all()]
     d.update(get_sound_links(sound))
     return d
 

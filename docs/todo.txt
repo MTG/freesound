@@ -11,6 +11,9 @@
 
 == Other ==
 
+* pack generation
+* process/copy all the sounds to test the processing scripts
+* add database "Site" fix to deploy
 * test X-ACCEL-REDIRECT on server
 * sound edit > remix
 * sql trigger should update "last post" when deleting forum posts

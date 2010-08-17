@@ -136,37 +136,36 @@ class SoundSearchHandler(BaseHandler):
 
         solr = Solr(settings.SOLR_URL)    
     
-        query = search_prepare_query(cd['query'],
-                                     cd['filter'], 
-                                     search_prepare_sort(cd['sort'], SEARCH_SORT_OPTIONS_API),
-                                     cd['page'],
+        query = search_prepare_query(cd['q'],
+                                     cd['f'], 
+                                     search_prepare_sort(cd['s'], SEARCH_SORT_OPTIONS_API),
+                                     cd['p'],
                                      settings.SOUNDS_PER_API_RESPONSE)
         
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_API_RESPONSE)
-            page = paginator.page(form.cleaned_data['page'])
-            
-            sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=sound_id)) \
-                      for sound_id in page['object_list']]
+            page = paginator.page(form.cleaned_data['p'])
+            sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) \
+                      for object in page['object_list']]
             result = {'sounds': sounds}
             print result
             # construct previous and next urls
             if page['has_other_pages']:
                 if page['has_previous']:
-                    result['previous'] = self.__construct_pagination_link(cd['query'], 
+                    result['previous'] = self.__construct_pagination_link(cd['q'], 
                                                                           page['previous_page_number'], 
-                                                                          cd['filter'], 
-                                                                          cd['sort'])
+                                                                          cd['f'], 
+                                                                          cd['s'])
                 if page['has_next']:
-                    result['next'] = self.__construct_pagination_link(cd['query'], 
+                    result['next'] = self.__construct_pagination_link(cd['q'], 
                                                                       page['next_page_number'], 
-                                                                      cd['filter'], 
-                                                                      cd['sort'])
+                                                                      cd['f'], 
+                                                                      cd['s'])
             return result
         except SolrException, e:
             error = "search error: search_query %s filter_query %s sort %s error %s" \
-                        % (cd['search'], cd['filter'], cd['sort'], e)
+                        % (cd['s'], cd['f'], cd['s'], e)
             logger.warning(error)
             resp = rc.INTERNAL_ERROR
             resp.content = error

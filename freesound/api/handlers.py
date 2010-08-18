@@ -3,7 +3,7 @@ from piston.handler import BaseHandler
 from piston.utils import rc
 from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
-from sounds.models import Sound
+from sounds.models import Sound, Pack
 from utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import logging, os
 from django.core.servers.basehttp import FileWrapper
@@ -53,6 +53,15 @@ def get_user_sounds_api_url(username):
 def get_user_packs_api_url(username):
     return prepend_base(reverse('user-packs', args=[username]))
 
+def get_pack_api_url(pack_id):
+    return prepend_base(reverse('single-pack', args=[pack_id]))
+
+def get_pack_web_url(username, pack_id):
+    return prepend_base(reverse('pack', args=[username, pack_id]))
+
+def get_pack_sounds_api_url(pack_id):
+    return prepend_base(reverse('pack-sounds', args=[pack_id]))
+
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)
     d = {'ref': ref,
@@ -63,15 +72,20 @@ def get_sound_links(sound):
          'waveform_l': prepare_image_link(sound.paths()['waveform_path_l']),
          'spectral_m': prepare_image_link(sound.paths()['spectral_path_m']),
          'spectral_l': prepare_image_link(sound.paths()['spectral_path_l']),}
+    if sound.pack_id:
+        d['pack'] = get_pack_api_url(sound.pack_id)
     return d
 
 def prepare_image_link(p):
-    return settings.DATA_URL + p 
+    if settings.DATA_URL.startswith('/'):
+        return prepend_base(settings.DATA_URL)+p
+    else:
+        return settings.DATA_URL + p 
 
-def prepare_minimal_user(sound):
-    return {'username': sound.user.username,
-            'ref': get_user_api_url(sound.user.username),
-            'url': get_user_web_url(sound.user.username),}
+def prepare_minimal_user(user):
+    return {'username': user.username,
+            'ref': get_user_api_url(user.username),
+            'url': get_user_web_url(user.username),}
 
 def prepare_single_sound(sound):
     d = {}
@@ -88,7 +102,7 @@ def prepare_single_sound(sound):
         d['geotag'] = [sound.geotag.lat,sound._geotag_cache.lon]
     except:
         pass
-    d['user'] = prepare_minimal_user(sound)
+    d['user'] = prepare_minimal_user(sound.user)
     d['tags'] = get_tags(sound)
     d.update(get_sound_links(sound))
     return d
@@ -101,7 +115,7 @@ def prepare_collection_sound(sound, include_user=True):
     for field in ["duration", "base_filename_slug", "type", "original_filename"]:
         d[field] = getattr(sound, field)
     if include_user:
-        d['user'] = prepare_minimal_user(sound)
+        d['user'] = prepare_minimal_user(sound.user)
     d['tags'] = get_tags(sound)
     d.update(get_sound_links(sound))
     return d
@@ -117,6 +131,18 @@ def prepare_single_user(user):
     d['signature'] = user.profile.signature
     d['sounds'] = get_user_sounds_api_url(user.username)
     d['packs'] = get_user_packs_api_url(user.username)
+    return d
+
+def prepare_single_pack(pack, include_user=True):
+    d = {}
+    for field in ["description", "name", "num_downloads", "created"]:
+        d[field] = getattr(pack, field)
+    user = User.objects.get(id=pack.user_id)
+    if include_user:
+        d['user'] = prepare_minimal_user(user)
+    d['ref'] = get_pack_api_url(pack.id)
+    d['url'] = get_pack_web_url(user.username, pack.id)
+    d['sounds'] = get_pack_sounds_api_url(pack.id)
     return d
 
 # HANDLERS
@@ -289,10 +315,57 @@ class UserSoundsHandler(BaseHandler):
         return get_user_sounds_api_url(u)+'?p=%s' % p
 
 class UserPacksHandler(BaseHandler):
-    pass
+    allowed_methods = ('GET',)
+    
+    def read(self, request, username):
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            resp = rc.NOT_FOUND
+            resp.content = 'This user (%s) does not exist.' % username
+            return resp
+        packs = [prepare_single_pack(pack, include_user=False) for pack in Pack.objects.filter(user=user)]
+        return packs
+
+class PackHandler(BaseHandler):
+    allowed_methods = ('GET',)
+    
+    def read(self, request, pack_id):
+        try:
+            pack = Pack.objects.get(id=pack_id)
+        except User.DoesNotExist:
+            resp = rc.NOT_FOUND
+            resp.content = 'There is no pack with this identifier (%s).' % pack_id
+            return resp
+        return prepare_single_pack(pack)
+
+class PackSoundsHandler(BaseHandler):
+    allowed_methods = ('GET',)
+    
+    def read(self, request, pack_id):
+        try:
+            pack = Pack.objects.get(id=pack_id)
+        except User.DoesNotExist:
+            resp = rc.NOT_FOUND
+            resp.content = 'There is no pack with this identifier (%s).' % pack_id
+            return resp
+        page = paginate(request, Sound.objects.filter(pack=pack.id), settings.SOUNDS_PER_API_RESPONSE, 'p')['page']
+        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
+        result = {'sounds': sounds}
+        if page.has_other_pages():
+            if page.has_previous():
+                result['previous'] = self.__construct_pagination_link(pack_id, page.previous_page_number())
+            if page.has_next():
+                result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number())
+        return result
+    
+    def __construct_pagination_link(self, pack_id, p):
+        return get_pack_sounds_api_url(pack_id)+'?p=%s' % p
+
+
+
 
 # N.B. don't add this to a production environment!
-
 class UpdateSolrHandler(BaseHandler):
     allowed_methods = ('GET',)
     

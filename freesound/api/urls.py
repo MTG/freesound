@@ -20,6 +20,9 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[\w_-]+)/?$',                         AR(UserHandler),        name='single-user'),
     url(r'^people/(?P<username>[\w_-]+)/sounds/?$',                  AR(UserSoundsHandler),  name='user-sounds'),
     url(r'^people/(?P<username>[\w_-]+)/packs/?$',                   AR(UserPacksHandler),   name='user-packs'),
+    # packs
+    url(r'^packs/(?P<pack_id>\d+)/?$',                               AR(PackHandler),        name='single-pack'),
+    url(r'^packs/(?P<pack_id>\d+)/sounds/?$',                        AR(PackSoundsHandler),  name='pack-sounds'),
     
    # url(r'^update_solr/?$',                                             CsrfExemptResource(UpdateSolrHandler)),
    # website

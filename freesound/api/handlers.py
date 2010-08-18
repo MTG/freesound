@@ -58,8 +58,15 @@ def get_sound_links(sound):
     d = {'ref': ref,
          'url': get_sound_web_url(sound.user.username, sound.id),
          'serve': ref+'/serve',
-         'preview': ref+'/preview'}
+         'preview': ref+'/preview',
+         'waveform_m': prepare_image_link(sound.paths()['waveform_path_m']),
+         'waveform_l': prepare_image_link(sound.paths()['waveform_path_l']),
+         'spectral_m': prepare_image_link(sound.paths()['spectral_path_m']),
+         'spectral_l': prepare_image_link(sound.paths()['spectral_path_l']),}
     return d
+
+def prepare_image_link(p):
+    return settings.DATA_URL + p 
 
 def prepare_minimal_user(sound):
     return {'username': sound.user.username,
@@ -217,7 +224,7 @@ class SoundServeHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp = 'There is no sound with id %s' % sound_id
             return resp
-        sound_path = sound.paths()["sound_path"] if file_or_preview == 'serve' else sound.paths()['preview_base']
+        sound_path = sound.paths()["sound_path"] if file_or_preview == 'serve' else sound.paths()['preview_path']
         if settings.DEBUG:
             file_path = os.path.join(settings.DATA_PATH, sound_path)
             wrapper = FileWrapper(file(file_path, "rb"))

@@ -279,7 +279,7 @@ class UserSoundsHandler(BaseHandler):
         return result
     
     def __construct_pagination_link(self, u, p):
-        return get_user_sounds_api_url(u)+'?p=%s' % (u, p)
+        return get_user_sounds_api_url(u)+'?p=%s' % p
 
 class UserPacksHandler(BaseHandler):
     pass

@@ -315,8 +315,16 @@ class UserSoundsHandler(BaseHandler):
         return get_user_sounds_api_url(u)+'?p=%s' % p
 
 class UserPacksHandler(BaseHandler):
+    '''
+    api endpoint:   /people/<username>/packs
+    '''
     allowed_methods = ('GET',)
     
+    '''
+    input:          n.a.
+    output:         #user_packs#
+    curl:           curl http://www.freesound.org/api/people/vincent_akkermans/packs
+    '''
     def read(self, request, username):
         try:
             user = User.objects.get(username__iexact=username)
@@ -328,8 +336,16 @@ class UserPacksHandler(BaseHandler):
         return packs
 
 class PackHandler(BaseHandler):
+    '''
+    api endpoint:   /packs/<pack_id>
+    '''
     allowed_methods = ('GET',)
-    
+
+    '''
+    input:          n.a.
+    output:         #user_packs#
+    curl:           curl http://www.freesound.org/api/packs/<pack_id>
+    '''    
     def read(self, request, pack_id):
         try:
             pack = Pack.objects.get(id=pack_id)
@@ -340,8 +356,16 @@ class PackHandler(BaseHandler):
         return prepare_single_pack(pack)
 
 class PackSoundsHandler(BaseHandler):
+    '''
+    api endpoint:   /packs/<pack_id>/sounds
+    '''
     allowed_methods = ('GET',)
-    
+
+    '''
+    input:          p
+    output:         #pack_sounds#
+    curl:           curl http://www.freesound.org/api/packs/<pack_id>/sounds
+    '''    
     def read(self, request, pack_id):
         try:
             pack = Pack.objects.get(id=pack_id)
@@ -361,8 +385,6 @@ class PackSoundsHandler(BaseHandler):
     
     def __construct_pagination_link(self, pack_id, p):
         return get_pack_sounds_api_url(pack_id)+'?p=%s' % p
-
-
 
 
 # N.B. don't add this to a production environment!

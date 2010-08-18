@@ -167,7 +167,8 @@ class SoundSearchHandler(BaseHandler):
             error = "search error: search_query %s filter_query %s sort %s error %s" \
                         % (cd['s'], cd['f'], cd['s'], e)
             logger.warning(error)
-            resp = rc.INTERNAL_ERROR
+            resp = rc.ALL_OK
+            resp.status_code = 500
             resp.content = error
             return resp
     

@@ -41,7 +41,7 @@ class SoundSearchForm(forms.Form):
     def clean_p(self):
         try:
             p = int(self.cleaned_data['p'])
-        except ValueError:
+        except:
             return 1 
         return p if p >= 1 else 1  
     

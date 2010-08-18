@@ -99,7 +99,7 @@
   <mainIndex>
     <!-- options specific to the main on-disk lucene index -->
     <useCompoundFile>false</useCompoundFile>
-    <ramBufferSizeMB>32</ramBufferSizeMB>
+    <ramBufferSizeMB>320</ramBufferSizeMB>
     <mergeFactor>10</mergeFactor>
     <!-- Deprecated -->
     <!--<maxBufferedDocs>1000</maxBufferedDocs>-->
@@ -139,12 +139,11 @@
 
     <!-- Perform a <commit/> automatically under certain conditions:
          maxDocs - number of updates since last commit is greater than this
-         maxTime - oldest uncommited update (in ms) is this long ago
+         maxTime - oldest uncommited update (in ms) is this long ago -->
     <autoCommit> 
       <maxDocs>10000</maxDocs>
       <maxTime>1000</maxTime> 
     </autoCommit>
-    -->
 
     <!-- The RunExecutableListener executes an external command.
          exe - the name of the executable to run
@@ -381,23 +380,6 @@
      <str name="defType">dismax</str>
      <str name="echoParams">explicit</str>
      <float name="tie">0.01</float>
-     <!--
-     <str name="qf">
-        text^0.5 features^1.0 name^1.2 sku^1.5 id^10.0 manu^1.1 cat^1.4
-     </str>
-     <str name="pf">
-        text^0.2 features^1.1 name^1.5 manu^1.4 manu_exact^1.9
-     </str>
-     <str name="bf">
-        ord(popularity)^0.5 recip(rord(price),1,1000,1000)^0.3
-     </str>
-     <str name="fl">
-        id,name,price,score
-     </str>
-     <str name="mm">
-        2&lt;-1 5&lt;-2 6&lt;90%
-     </str>
-     -->
      <int name="ps">100</int>
      <str name="q.alt">*:*</str>
      <!-- example highlighter config, enable per-query with hl=true -->     
@@ -410,61 +392,6 @@
      <!-- <str name="f.text.hl.fragmenter">regex</str>--> <!-- defined below -->
     </lst>
   </requestHandler>
-
-  <!-- Note how you can register the same handler multiple times with
-       different names (and different init parameters)
-    -->
-  <requestHandler name="partitioned" class="solr.SearchHandler" >
-    <lst name="defaults">
-     <str name="defType">dismax</str>
-     <str name="echoParams">explicit</str>
-     <str name="qf">text^0.5 features^1.0 name^1.2 sku^1.5 id^10.0</str>
-     <str name="mm">2&lt;-1 5&lt;-2 6&lt;90%</str>
-     <!-- This is an example of using Date Math to specify a constantly
-          moving date range in a config...
-       -->
-     <str name="bq">incubationdate_dt:[* TO NOW/DAY-1MONTH]^2.2</str>
-    </lst>
-    <!-- In addition to defaults, "appends" params can be specified
-         to identify values which should be appended to the list of
-         multi-val params from the query (or the existing "defaults").
-
-         In this example, the param "fq=instock:true" will be appended to
-         any query time fq params the user may specify, as a mechanism for
-         partitioning the index, independent of any user selected filtering
-         that may also be desired (perhaps as a result of faceted searching).
-
-         NOTE: there is *absolutely* nothing a client can do to prevent these
-         "appends" values from being used, so don't use this mechanism
-         unless you are sure you always want it.
-      -->
-    <lst name="appends">
-      <str name="fq">inStock:true</str>
-    </lst>
-    <!-- "invariants" are a way of letting the Solr maintainer lock down
-         the options available to Solr clients.  Any params values
-         specified here are used regardless of what values may be specified
-         in either the query, the "defaults", or the "appends" params.
-
-         In this example, the facet.field and facet.query params are fixed,
-         limiting the facets clients can use.  Faceting is not turned on by
-         default - but if the client does specify facet=true in the request,
-         these are the only facets they will be able to see counts for;
-         regardless of what other facet.field or facet.query params they
-         may specify.
-
-         NOTE: there is *absolutely* nothing a client can do to prevent these
-         "invariants" values from being used, so don't use this mechanism
-         unless you are sure you always want it.
-      -->
-    <lst name="invariants">
-      <str name="facet.field">cat</str>
-      <str name="facet.field">manu_exact</str>
-      <str name="facet.query">price:[* TO 500]</str>
-      <str name="facet.query">price:[500 TO *]</str>
-    </lst>
-  </requestHandler>
-  
 
   <!--
    Search components are registered to SolrCore and used by Search Handlers
@@ -498,70 +425,6 @@
     </arr>
   -->
 
-   <!-- The spell check component can return a list of alternative spelling
-  suggestions.  -->
-  <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
-
-    <str name="queryAnalyzerFieldType">textSpell</str>
-
-    <lst name="spellchecker">
-      <str name="name">default</str>
-      <str name="field">spell</str>
-      <str name="spellcheckIndexDir">./spellchecker1</str>
-
-    </lst>
-    <lst name="spellchecker">
-      <str name="name">jarowinkler</str>
-      <str name="field">spell</str>
-      <!-- Use a different Distance Measure -->
-      <str name="distanceMeasure">org.apache.lucene.search.spell.JaroWinklerDistance</str>
-      <str name="spellcheckIndexDir">./spellchecker2</str>
-
-    </lst>
-
-    <lst name="spellchecker">
-      <str name="classname">solr.FileBasedSpellChecker</str>
-      <str name="name">file</str>
-      <str name="sourceLocation">spellings.txt</str>
-      <str name="characterEncoding">UTF-8</str>
-      <str name="spellcheckIndexDir">./spellcheckerFile</str>
-    </lst>
-  </searchComponent>
-
-  <!-- a request handler utilizing the spellcheck component -->
-  <requestHandler name="/spellCheckCompRH" class="solr.SearchHandler">
-    <lst name="defaults">
-      <!-- omp = Only More Popular -->
-      <str name="spellcheck.onlyMorePopular">false</str>
-      <!-- exr = Extended Results -->
-      <str name="spellcheck.extendedResults">false</str>
-      <!--  The number of suggestions to return -->
-      <str name="spellcheck.count">1</str>
-    </lst>
-    <arr name="last-components">
-      <str>spellcheck</str>
-    </arr>
-  </requestHandler>
- 
-  <!-- a search component that enables you to configure the top results for
-       a given query regardless of the normal lucene scoring.-->
-  <searchComponent name="elevator" class="solr.QueryElevationComponent" >
-    <!-- pick a fieldType to analyze queries -->
-    <str name="queryFieldType">string</str>
-    <str name="config-file">elevate.xml</str>
-  </searchComponent>
- 
-  <!-- a request handler utilizing the elevator component -->
-  <requestHandler name="/elevate" class="solr.SearchHandler" startup="lazy">
-    <lst name="defaults">
-      <str name="echoParams">explicit</str>
-    </lst>
-    <arr name="last-components">
-      <str>elevator</str>
-    </arr>
-  </requestHandler>
-  
-
   <!-- Update request handler.  
   
        Note: Since solr1.1 requestHandlers requires a valid content type header if posted in 
@@ -577,10 +440,6 @@
    for debugging and as a token server for other types of applications
    -->
   <requestHandler name="/analysis" class="solr.AnalysisRequestHandler" />
-  
-
-  <!-- CSV update handler, loaded on demand -->
-  <requestHandler name="/update/csv" class="solr.CSVRequestHandler" startup="lazy" />
 
 
   <!-- 
@@ -619,38 +478,7 @@
      <str name="echoParams">explicit</str> <!-- for all params (including the default etc) use: 'all' -->
      <str name="echoHandler">true</str>
     </lst>
-  </requestHandler>
-  
-  <highlighting>
-   <!-- Configure the standard fragmenter -->
-   <!-- This could most likely be commented out in the "default" case -->
-   <fragmenter name="gap" class="org.apache.solr.highlight.GapFragmenter" default="true">
-    <lst name="defaults">
-     <int name="hl.fragsize">100</int>
-    </lst>
-   </fragmenter>
-
-   <!-- A regular-expression-based fragmenter (f.i., for sentence extraction) -->
-   <fragmenter name="regex" class="org.apache.solr.highlight.RegexFragmenter">
-    <lst name="defaults">
-      <!-- slightly smaller fragsizes work better because of slop -->
-      <int name="hl.fragsize">70</int>
-      <!-- allow 50% slop on fragment sizes -->
-      <float name="hl.regex.slop">0.5</float> 
-      <!-- a basic sentence pattern -->
-      <str name="hl.regex.pattern">[-\w ,/\n\"']{20,200}</str>
-    </lst>
-   </fragmenter>
-   
-   <!-- Configure the standard formatter -->
-   <formatter name="html" class="org.apache.solr.highlight.HtmlFormatter" default="true">
-    <lst name="defaults">
-     <str name="hl.simple.pre"><![CDATA[<em>]]></str>
-     <str name="hl.simple.post"><![CDATA[</em>]]></str>
-    </lst>
-   </formatter>
-  </highlighting>
-  
+  </requestHandler>  
   
   <!-- queryResponseWriter plugins... query responses will be written using the
     writer specified by the 'wt' request parameter matching the name of a registered
@@ -673,10 +501,6 @@
        in Solr's conf/xslt directory.  Changes to xslt files are checked for
        every xsltCacheLifetimeSeconds.  
    -->
-  <queryResponseWriter name="xslt" class="org.apache.solr.request.XSLTResponseWriter">
-    <int name="xsltCacheLifetimeSeconds">5</int>
-  </queryResponseWriter> 
-
 
   <!-- example of registering a query parser
   <queryParser name="lucene" class="org.apache.solr.search.LuceneQParserPlugin"/>

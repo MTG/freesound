@@ -39,8 +39,11 @@ class SoundSearchForm(forms.Form):
         return f if f != None else ""  
             
     def clean_p(self):
-        p = self.cleaned_data['p'] 
-        return p if p != None or p >= 1 else 1  
+        try:
+            p = int(self.cleaned_data['p'])
+        except ValueError:
+            return 1 
+        return p if p >= 1 else 1  
     
     def clean_s(self):
         s = self.cleaned_data['s'] 
@@ -48,4 +51,4 @@ class SoundSearchForm(forms.Form):
         
     def __init__(self, sort_options, *args, **kargs):
         super(SoundSearchForm, self).__init__(*args, **kargs)
-        self.fields['sort'].choices = sort_options
+        self.fields['s'].choices = sort_options

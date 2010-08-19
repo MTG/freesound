@@ -65,60 +65,62 @@
     update_filter_display();
 </script>
 
-{% if error %}
-    Failed searching! Please fix your query...
-{% else %}
-<div style="float:right">
-    {% if results.facets.tag %}
-        <h3>tags</h3>
-        {% display_facet "tag" results.facets.tag "cloud" %}
-    {% endif %}
+{% if results %}
+    {% if error %}
+        Failed searching! Please fix your query...
+    {% else %}
+    <div style="float:right">
+        {% if results.facets.tag %}
+            <h3>tags</h3>
+            {% display_facet "tag" results.facets.tag "cloud" %}
+        {% endif %}
     
-    {% if results.facets.type %}
-        <h3>type</h3>
-        {% display_facet "type" results.facets.type "list" %}
-    {% endif %}
+        {% if results.facets.type %}
+            <h3>type</h3>
+            {% display_facet "type" results.facets.type "list" %}
+        {% endif %}
 
-    {% if results.facets.samplerate %}
-        <h3>samplerate</h3>
-        {% display_facet "samplerate" results.facets.samplerate "list" %}
-    {% endif %}
+        {% if results.facets.samplerate %}
+            <h3>samplerate</h3>
+            {% display_facet "samplerate" results.facets.samplerate "list" %}
+        {% endif %}
     
-    {% if results.facets.bitdepth %}
-        <h3>bitdepth</h3>
-        {% display_facet "bitdepth" results.facets.bitdepth "list" %}
+        {% if results.facets.bitdepth %}
+            <h3>bitdepth</h3>
+            {% display_facet "bitdepth" results.facets.bitdepth "list" %}
+        {% endif %}
+
+        {% if results.facets.channels %}
+            <h3>channels</h3>
+            {% display_facet "channels" results.facets.channels "list" %}
+        {% endif %}
+
+        {% if results.facets.pack %}
+            <h3>packs</h3>
+            {% display_facet "pack" results.facets.pack "list" %}
+        {% endif %}
+
+        {% if results.facets.username %}
+            <h3>users</h3>
+            {% display_facet "username" results.facets.username "cloud" %}
+        {% endif %}
+    </div>
+
+    <div class="search_paginator">
+    {% show_paginator paginator page current_page request %}
+    </div>
+
+    {% for result in results.docs %}
+    <div class="sample_player_small">
+    	{% display_sound result.id %}
+    </div>
+    {% endfor %}
+
+    <div class="search_paginator">
+    {% show_paginator paginator page current_page request %}
+    </div>
+
     {% endif %}
-
-    {% if results.facets.channels %}
-        <h3>channels</h3>
-        {% display_facet "channels" results.facets.channels "list" %}
-    {% endif %}
-
-    {% if results.facets.pack %}
-        <h3>packs</h3>
-        {% display_facet "pack" results.facets.pack "list" %}
-    {% endif %}
-
-    {% if results.facets.username %}
-        <h3>users</h3>
-        {% display_facet "username" results.facets.username "cloud" %}
-    {% endif %}
-</div>
-
-<div class="search_paginator">
-{% show_paginator paginator page current_page request %}
-</div>
-
-{% for result in results.docs %}
-<div class="sample_player_small">
-	{% display_sound result.id %}
-</div>
-{% endfor %}
-
-<div class="search_paginator">
-{% show_paginator paginator page current_page request %}
-</div>
-
 {% endif %}
 
 {% endblock %}

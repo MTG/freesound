@@ -55,10 +55,9 @@ class Multidict(dict):
         # generator that filters all items: drop (key, value) pairs with value=None and convert bools to lower case strings
         for (key, value) in itertools.ifilter(lambda (key,value): value != None and value != "", all_items()):
             if isinstance(value, bool):
-                value = str(value).lower()
-        
-            if isinstance(value, str):
-                value = value.encode('utf-8')
+                value = unicode(value).lower()
+            else:
+                value = unicode(value).encode('utf-8')
             
             yield (key, value)
 
@@ -277,7 +276,7 @@ class SolrQuery(object):
         self.params['f.%s.hl.simple.pre' % field] = pre
         self.params['f.%s.hl.simple.post' % field] = post
         
-    def __str__(self):
+    def __unicode__(self):
         return urllib.urlencode(Multidict(self.params))
 
 

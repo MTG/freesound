@@ -53,6 +53,6 @@ def search(request):
         print e
         error = True
         
-    sort_options = forms.SEARCH_DEFAULT_SORT
+    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
     
     return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))

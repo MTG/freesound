@@ -52,5 +52,7 @@ def search(request):
         logger.warning("search error: search_query %s filter_query %s sort %s error %s" % (search_query, filter_query, sort, e))
         print e
         error = True
+        
+    sort_options = forms.SEARCH_DEFAULT_SORT
     
     return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))

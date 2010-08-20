@@ -15,7 +15,7 @@
 			{% endif %}
 		</div>
 		
-		{% pyif forum.last_post.created > last_action_time and forum.last_post.author != request.user %}
+		{% if forum.last_post.created > last_action_time and forum.last_post.author != request.user %}
 			<img src="{{media_url}}images/forum_new.png" width="20" height="20" alt="new posts" />
 		{% else %}
 			<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts" />

@@ -17,7 +17,7 @@
 
 <ul id="topics">
 {% for thread in page.object_list %}
-	<li{% pyif thread.status == 2 %} class="highlighted"{% endif %}>
+	<li{% if thread.status == 2 %} class="highlighted"{% endif %}>
 		<div class="latest_post">
 			{% if thread.last_post.id %}
 			<a href="{% url forums-post forum.name_slug thread.id thread.last_post.id %}">Latest post</a> by <a href="{% url account thread.last_post.author.username %}">{{thread.last_post.author.username}}</a><br />
@@ -25,7 +25,7 @@
 			{% endif %}
 		</div>
 
-		{% pyif thread.last_post.created > last_action_time and forum.last_post.author != request.user %}
+		{% if thread.last_post.created > last_action_time and forum.last_post.author != request.user %}
 			<img src="{{media_url}}images/forum_new.png" width="20" height="20" alt="new posts">
 		{% else %}
 			<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts">

@@ -28,7 +28,7 @@ class SoundSearchForm(forms.Form):
     q    = forms.CharField(required=False, label='query')
     p    = forms.CharField(required=False, label='page')
     f    = forms.CharField(required=False, label='filter')
-    s    = forms.ChoiceField(required=False, choices=SEARCH_SORT_OPTIONS_WEB, label='sort')
+    s    = forms.CharField(required=False, label='sort')
     
     def clean_q(self):
         q = self.cleaned_data['q'] 
@@ -47,8 +47,11 @@ class SoundSearchForm(forms.Form):
     
     def clean_s(self):
         s = self.cleaned_data['s']
-        return s if s in [x[1] for x in SEARCH_SORT_OPTIONS_WEB] else SEARCH_DEFAULT_SORT
+        for option in self.sort_options:
+            if option[0] == s:
+                return option[1]
+        return SEARCH_DEFAULT_SORT
         
     def __init__(self, sort_options, *args, **kargs):
         super(SoundSearchForm, self).__init__(*args, **kargs)
-        self.fields['s'].choices = sort_options
+        self.sort_options = sort_options

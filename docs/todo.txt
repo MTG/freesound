@@ -26,7 +26,6 @@
 
 == Api ==
 
-* prefix all urls with "api-"
 
 == Other ==
 

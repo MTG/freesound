@@ -12,6 +12,8 @@ flup
 django-extensions
 django-debug-toolbar
 Django>=1.2.1
+numpy
+psycopg2
 #
 # The packate for 'recaptcha-client' fails to install.
 # See: http://code.google.com/p/recaptcha/issues/detail?id=55

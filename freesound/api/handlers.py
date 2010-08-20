@@ -35,31 +35,31 @@ def prepend_base(rel):
     return "http://%s%s" % (Site.objects.get_current().domain, rel)
 
 def get_sound_api_url(id):
-    return prepend_base(reverse('single-sound', args=[id]))
+    return prepend_base(reverse('api-single-sound', args=[id]))
 
 def get_sound_web_url(username, id):
     return prepend_base(reverse('sound', args=[username, id]))
 
 def get_user_api_url(username):
-    return prepend_base(reverse('single-user', args=[username]))
+    return prepend_base(reverse('api-single-user', args=[username]))
 
 def get_user_web_url(username):
     return prepend_base(reverse('account', args=[username]))
 
 def get_user_sounds_api_url(username):
-    return prepend_base(reverse('user-sounds', args=[username]))
+    return prepend_base(reverse('api-user-sounds', args=[username]))
 
 def get_user_packs_api_url(username):
-    return prepend_base(reverse('user-packs', args=[username]))
+    return prepend_base(reverse('api-user-packs', args=[username]))
 
 def get_pack_api_url(pack_id):
-    return prepend_base(reverse('single-pack', args=[pack_id]))
+    return prepend_base(reverse('api-single-pack', args=[pack_id]))
 
 def get_pack_web_url(username, pack_id):
     return prepend_base(reverse('pack', args=[username, pack_id]))
 
 def get_pack_sounds_api_url(pack_id):
-    return prepend_base(reverse('pack-sounds', args=[pack_id]))
+    return prepend_base(reverse('api-pack-sounds', args=[pack_id]))
 
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)

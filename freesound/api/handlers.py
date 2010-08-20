@@ -144,6 +144,13 @@ def prepare_single_pack(pack, include_user=True):
     d['sounds'] = get_pack_sounds_api_url(pack.id)
     return d
 
+
+def find_api_option(cleaned_sort):
+    for t in SEARCH_SORT_OPTIONS_API:
+        if t[1] == cleaned_sort:
+            return t[0]
+    return None
+
 # HANDLERS
 
 class SoundSearchHandler(BaseHandler):
@@ -165,6 +172,7 @@ class SoundSearchHandler(BaseHandler):
             return resp
         
         cd = form.cleaned_data
+        #return cd
 
         solr = Solr(settings.SOLR_URL)    
     
@@ -188,12 +196,12 @@ class SoundSearchHandler(BaseHandler):
                     result['previous'] = self.__construct_pagination_link(cd['q'], 
                                                                           page['previous_page_number'], 
                                                                           cd['f'], 
-                                                                          cd['s'])
+                                                                          find_api_option(cd['s']))
                 if page['has_next']:
                     result['next'] = self.__construct_pagination_link(cd['q'], 
                                                                       page['next_page_number'], 
                                                                       cd['f'], 
-                                                                      cd['s'])
+                                                                      find_api_option(cd['s']))
             return result
         except SolrException, e:
             error = "search error: search_query %s filter_query %s sort %s error %s" \

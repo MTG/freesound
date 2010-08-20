@@ -1,7 +1,7 @@
 import django.forms as forms
     
 SEARCH_SORT_OPTIONS_WEB = [
-        ("Duration (long first)"," duration desc"),
+        ("Duration (long first)", "duration desc"),
         ("Duration (short first)", "duration asc"),
         ("Date added (newest first)", "created desc"),
         ("Date added (oldest first)", "created asc"),
@@ -12,7 +12,7 @@ SEARCH_SORT_OPTIONS_WEB = [
     ]
 
 SEARCH_SORT_OPTIONS_API = [
-        ("duration_desc"," duration desc"),
+        ("duration_desc", "duration desc"),
         ("duration_asc", "duration asc"),
         ("created_desc", "created desc"),
         ("created_asc", "created asc"),
@@ -26,7 +26,7 @@ SEARCH_DEFAULT_SORT = "num_downloads desc"
 
 class SoundSearchForm(forms.Form):
     q    = forms.CharField(required=False, label='query')
-    p    = forms.IntegerField(required=False, label='page')
+    p    = forms.CharField(required=False, label='page')
     f    = forms.CharField(required=False, label='filter')
     s    = forms.ChoiceField(required=False, choices=SEARCH_SORT_OPTIONS_WEB, label='sort')
     
@@ -46,8 +46,8 @@ class SoundSearchForm(forms.Form):
         return p if p >= 1 else 1  
     
     def clean_s(self):
-        s = self.cleaned_data['s'] 
-        return s if s != None else SEARCH_DEFAULT_SORT
+        s = self.cleaned_data['s']
+        return s if s in [x[1] for x in SEARCH_SORT_OPTIONS_WEB] else SEARCH_DEFAULT_SORT
         
     def __init__(self, sort_options, *args, **kargs):
         super(SoundSearchForm, self).__init__(*args, **kargs)

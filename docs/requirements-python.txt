@@ -11,7 +11,7 @@ django_piston
 flup
 django-extensions
 django-debug-toolbar
-svn+http://code.djangoproject.com/svn/django/trunk/
+Django>=1.2.1
 #
 # The packate for 'recaptcha-client' fails to install.
 # See: http://code.google.com/p/recaptcha/issues/detail?id=55

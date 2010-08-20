@@ -30,8 +30,13 @@
         $("filter_query").value = $F("filter_query").replace(tag + " ", "").replace(tag, "").strip()
     }
 
-    function addFilter(tag)
+    function addFilter(name, filter)
     {
+        if (filter.search(" ") != -1)
+            filter = "\"" + filter + "\""
+
+        var tag = name + ":" + filter;
+        
         if ($F("filter_query").search(tag) == -1)
         {
             if ($("filter_query").value != "")
@@ -50,75 +55,87 @@
     function update_filter_display()
     {
         var i = 0;
-        $F("filter_query").scan(/[\w-]+:\"[^\"]+\"/, function (filter) {
+
+        function add_filter(filter)
+        {
             var filter_id = "filter_" + i++;
-            
+        
             $('filter_query_display').insert(new Element("a", {id:filter_id, title:"remove this filter"}).update(filter).observe("click", function (event) {
                 removeFilter(filter);
                 $(filter_id).remove();
                 event.stop();
                 $("search_form").submit();
             }))
+        }
+
+        $F("filter_query").scan(/[\w-]+:[\w-]+/, function (filter) {
+            add_filter(filter);
+        })
+
+        $F("filter_query").scan(/[\w-]+:\"[^\"]+\"/, function (filter) {
+            add_filter(filter);
         })
     }
     
     update_filter_display();
 </script>
 
-{% if error %}
-    Failed searching! Please fix your query...
-{% else %}
-<div style="float:right">
-    {% if results.facets.tag %}
-        <h3>tags</h3>
-        {% display_facet "tag" results.facets.tag "cloud" %}
-    {% endif %}
+{% if results %}
+    {% if error %}
+        Failed searching! Please fix your query...
+    {% else %}
+    <div style="float:right">
+        {% if results.facets.tag and results.facets.tag|length > 1 %}
+            <h3>tags</h3>
+            {% display_facet "tag" results.facets.tag "cloud" %}
+        {% endif %}
     
-    {% if results.facets.type %}
-        <h3>type</h3>
-        {% display_facet "type" results.facets.type "list" %}
-    {% endif %}
+        {% if results.facets.type and results.facets.type|length > 1 %}
+            <h3>type</h3>
+            {% display_facet "type" results.facets.type "list" %}
+        {% endif %}
 
-    {% if results.facets.samplerate %}
-        <h3>samplerate</h3>
-        {% display_facet "samplerate" results.facets.samplerate "list" %}
-    {% endif %}
+        {% if results.facets.samplerate and results.facets.samplerate|length > 1 %}
+            <h3>samplerate</h3>
+            {% display_facet "samplerate" results.facets.samplerate "list" %}
+        {% endif %}
     
-    {% if results.facets.bitdepth %}
-        <h3>bitdepth</h3>
-        {% display_facet "bitdepth" results.facets.bitdepth "list" %}
+        {% if results.facets.bitdepth and results.facets.bitdepth|length > 1 %}
+            <h3>bitdepth</h3>
+            {% display_facet "bitdepth" results.facets.bitdepth "list" %}
+        {% endif %}
+
+        {% if results.facets.channels and results.facets.channels|length > 1 %}
+            <h3>channels</h3>
+            {% display_facet "channels" results.facets.channels "list" %}
+        {% endif %}
+
+        {% if results.facets.pack and results.facets.pack|length > 1 %}
+            <h3>packs</h3>
+            {% display_facet "pack" results.facets.pack "list" %}
+        {% endif %}
+
+        {% if results.facets.username and results.facets.username|length > 1 %}
+            <h3>users</h3>
+            {% display_facet "username" results.facets.username "cloud" %}
+        {% endif %}
+    </div>
+
+    <div class="search_paginator">
+    {% show_paginator paginator page current_page request %}
+    </div>
+
+    {% for result in results.docs %}
+    <div class="sample_player_small">
+    	{% display_sound result.id %}
+    </div>
+    {% endfor %}
+
+    <div class="search_paginator">
+    {% show_paginator paginator page current_page request %}
+    </div>
+
     {% endif %}
-
-    {% if results.facets.channels %}
-        <h3>channels</h3>
-        {% display_facet "channels" results.facets.channels "list" %}
-    {% endif %}
-
-    {% if results.facets.pack %}
-        <h3>packs</h3>
-        {% display_facet "pack" results.facets.pack "list" %}
-    {% endif %}
-
-    {% if results.facets.username %}
-        <h3>users</h3>
-        {% display_facet "username" results.facets.username "cloud" %}
-    {% endif %}
-</div>
-
-<div class="search_paginator">
-{% show_paginator paginator page current_page request %}
-</div>
-
-{% for result in results.docs %}
-<div class="sample_player_small">
-	{% display_sound result.id %}
-</div>
-{% endfor %}
-
-<div class="search_paginator">
-{% show_paginator paginator page current_page request %}
-</div>
-
 {% endif %}
 
 {% endblock %}

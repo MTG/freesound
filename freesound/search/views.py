@@ -9,11 +9,12 @@ import forms
 logger = logging.getLogger("search")
 
 def search_prepare_sort(sort, options):
+    """ for ordering by rating order by rating, then by number of ratings """
     if sort in [x[1] for x in options]:
         if sort == "avg_rating desc":
-            sort = [sort, "avg_ratings desc"]
+            sort = [sort, "num_ratings desc"]
         elif  sort == "avg_rating asc":
-            sort = [sort, "avg_ratings desc"]
+            sort = [sort, "num_ratings asc"]
         else:
             sort = [sort]
     else:
@@ -36,21 +37,25 @@ def search(request):
     filter_query = request.GET.get("f", "")
     current_page = int(request.GET.get("page", 1))
     sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
+    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
     
-    sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
-
-    solr = Solr(settings.SOLR_URL)
+    if search_query.strip() != "":
+        sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
     
-    query = search_prepare_query(search_query, filter_query, sort, current_page, settings.SOUNDS_PER_PAGE)
-    
-    try:
-        results = SolrResponseInterpreter(solr.select(unicode(query)))
-        paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-        page = paginator.page(current_page)
-        error = False
-    except SolrException, e:
-        logger.warning("search error: search_query %s filter_query %s sort %s error %s" % (search_query, filter_query, sort, e))
-        print e
-        error = True
+        solr = Solr(settings.SOLR_URL)
+        
+        query = search_prepare_query(search_query, filter_query, sort, current_page, settings.SOUNDS_PER_PAGE)
+        
+        try:
+            results = SolrResponseInterpreter(solr.select(unicode(query)))
+            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+            page = paginator.page(current_page)
+            error = False
+        except SolrException, e:
+            logger.warning("search error: query: %s error %s" % (query, e))
+            print e
+            error = True
+    else:
+        results = []
     
     return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))

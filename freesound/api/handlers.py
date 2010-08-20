@@ -22,12 +22,11 @@ N.B.:
 - curl examples do not include authentication
 
 TODO:
-- pack handlers
-- download updates
-- do something about ugly try/except statements in prepare_* functions
+- check serving of files
 
 LATER:
 - throttling
+- download updates
 '''
 
 # UTILITY FUNCTIONS

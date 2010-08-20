@@ -17,9 +17,9 @@ urlpatterns = patterns('',
     url(r'^sounds/(?P<sound_id>\d+)/?$',                             AR(SoundHandler),       name='single-sound'),
     url(r'^sounds/(?P<sound_id>\d+)/(?P<file_or_preview>\w+)/?$',    AR(SoundServeHandler),  name='sound-serve'),
     # users
-    url(r'^people/(?P<username>[\w_-]+)/?$',                         AR(UserHandler),        name='single-user'),
-    url(r'^people/(?P<username>[\w_-]+)/sounds/?$',                  AR(UserSoundsHandler),  name='user-sounds'),
-    url(r'^people/(?P<username>[\w_-]+)/packs/?$',                   AR(UserPacksHandler),   name='user-packs'),
+    url(r'^people/(?P<username>[^//]+)/?$',                         AR(UserHandler),        name='single-user'),
+    url(r'^people/(?P<username>[^//]+)/sounds/?$',                  AR(UserSoundsHandler),  name='user-sounds'),
+    url(r'^people/(?P<username>[^//]+)/packs/?$',                   AR(UserPacksHandler),   name='user-packs'),
     # packs
     url(r'^packs/(?P<pack_id>\d+)/?$',                               AR(PackHandler),        name='single-pack'),
     url(r'^packs/(?P<pack_id>\d+)/sounds/?$',                        AR(PackSoundsHandler),  name='pack-sounds'),

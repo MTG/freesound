@@ -85,7 +85,8 @@ package
 			file.addEventListener(ProgressEvent.PROGRESS, progressHandler); // Dispatched periodically during the file upload or download operation.
 			file.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler); // Dispatched when a call to the FileReference.upload() or FileReference.download() method tries to upload a file to a server or get a file from a server that is outside the caller's security sandbox.
 			file.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteDataHandler); // Dispatched after data is received from the server after a successful upload.
-			var urlRequest : URLRequest = new URLRequest("http://127.0.0.1:8000/home/upload/file/");
+			
+			var urlRequest : URLRequest = new URLRequest("/home/upload/file/");
 			urlRequest.method = URLRequestMethod.POST;
 			
 			if (_sessionId)

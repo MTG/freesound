@@ -27,7 +27,9 @@
 <script type="text/javascript">
     function removeFilter(tag)
     {
-        $("filter_query").value = $F("filter_query").replace(tag + " ", "").replace(tag, "").strip()
+    	var value = $("#filter_query").val();
+    	var cleaned = $.trim(value.replace(tag + " ", "").replace(tag, ""));
+        $("#filter_query").val(cleaned);
     }
 
     function addFilter(name, filter)
@@ -37,20 +39,27 @@
 
         var tag = name + ":" + filter;
         
-        if ($F("filter_query").search(tag) == -1)
+        if ($("#filter_query").val().search(tag) == -1)
         {
-            if ($("filter_query").value != "")
-                $("filter_query").value = $("filter_query").value + " " + tag;
+        	var value = $("#filter_query").val();
+        	 
+            if (value != "")
+                $("#filter_query").val(value + " " + tag);
             else
-                $("filter_query").value = $("filter_query").value + tag;
+                $("#filter_query").val(tag);
     
-            $("search_form").submit();
+            $("#search_form").submit();
         }
         else
         {
             alert("you already added this filter");
         }
     }
+    
+    function scan(value, pattern, callback)
+    {
+		$.each(value.match(pattern) || [], callback);
+	}
 
     function update_filter_display()
     {
@@ -59,22 +68,27 @@
         function add_filter(filter)
         {
             var filter_id = "filter_" + i++;
-        
-            $('filter_query_display').insert(new Element("a", {id:filter_id, title:"remove this filter"}).update(filter).observe("click", function (event) {
+       		var element = $("<a id=\"" + filter_id + "\" title=\"remove this filter\"></a>").html(filter);
+        	
+        	element.click(function (event) {
                 removeFilter(filter);
-                $(filter_id).remove();
-                event.stop();
-                $("search_form").submit();
-            }))
+                element.remove();
+                event.preventDefault();
+                $("#search_form").submit();
+            });
+            
+        	$('#filter_query_display').append(element);
         }
 
-        $F("filter_query").scan(/[\w-]+:[\w-]+/, function (filter) {
+		var value = $("#filter_query").val();
+		
+        scan(value, /[\w-]+:[\w-]+/g, function (index, filter) {
             add_filter(filter);
-        })
+        });
 
-        $F("filter_query").scan(/[\w-]+:\"[^\"]+\"/, function (filter) {
+        scan(value, /[\w-]+:\"[^\"]+\"/g, function (index, filter) {
             add_filter(filter);
-        })
+        });
     }
     
     update_filter_display();

@@ -27,7 +27,7 @@
     <p>You can also view <a href="{% url geotags %}">all geotags</a></p>
 {% endif %}
 <script type="text/javascript">
-	var map = new GMap2($("map_canvas"));
+	var map = new GMap2($("#map_canvas").get(0));
 	map.setUIToDefault();
 
 	map.setCenter(new GLatLng(24, 22), 2);

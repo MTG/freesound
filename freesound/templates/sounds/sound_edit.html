@@ -41,10 +41,8 @@
 <a id="geotag"></a>
 <form method="post" action="#geotag">{% csrf_token %}
     {{geotag_form.as_p}}
-    <p>
         <label for="map">Drag this map to set the geotag:</label> 
         <div id="map" style="width: 400px; height:400px; margin-bottom: 1em;"></div>
-    </p>
     <input type="submit" name="submit" value="submit" />
 </form>
 
@@ -55,7 +53,7 @@
 </p>
 
 <script type="text/javascript">
-    var map = new GMap2($("map"));
+    var map = new GMap2($("#map").get(0));
     
     var initialCenter = new GLatLng(23.885837699862005,21.796875);
     var initialZoom = 2;
@@ -91,28 +89,28 @@
         var center = map.getCenter();
         var zoom = map.getZoom();
         // update form
-        if (!$("{{geotag_form.remove_geotag.auto_id}}").checked)
+        if (!$("#{{geotag_form.remove_geotag.auto_id}}").checked)
         {
-            $("{{geotag_form.lon.auto_id}}").value = center.lng();
-            $("{{geotag_form.lat.auto_id}}").value = center.lat();
-            $("{{geotag_form.zoom.auto_id}}").value = zoom;
+            $("#{{geotag_form.lon.auto_id}}").val(center.lng());
+            $("#{{geotag_form.lat.auto_id}}").val(center.lat());
+            $("#{{geotag_form.zoom.auto_id}}").val(zoom);
         }
         centerMarker.setLatLng(center);
     }
     
     
-    $("{{geotag_form.remove_geotag.auto_id}}").observe('change', function (event) {
+    $("#{{geotag_form.remove_geotag.auto_id}}").change(function (event) {
         if (this.checked)
         {
-            $("{{geotag_form.lon.auto_id}}").disable().value = "";
-            $("{{geotag_form.lat.auto_id}}").disable().value = "";
-            $("{{geotag_form.zoom.auto_id}}").disable().value = "";
+            $("#{{geotag_form.lon.auto_id}}").attr('disabled', 'disabled').val("");
+            $("#{{geotag_form.lat.auto_id}}").attr('disabled', 'disabled').val("");
+            $("#{{geotag_form.zoom.auto_id}}").attr('disabled', 'disabled').val("");
         }
         else
         {
-            $("{{geotag_form.lon.auto_id}}").enable();
-            $("{{geotag_form.lat.auto_id}}").enable();
-            $("{{geotag_form.zoom.auto_id}}").enable();
+            $("#{{geotag_form.lon.auto_id}}").attr('disabled', false);
+            $("#{{geotag_form.lat.auto_id}}").attr('disabled', false);
+            $("#{{geotag_form.zoom.auto_id}}").attr('disabled', false);
             updateAndAddCenter();
         }
     });

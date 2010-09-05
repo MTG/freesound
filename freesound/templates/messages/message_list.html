@@ -19,7 +19,7 @@
 		</tr>
 		{% for message in page.object_list %}
 		<tr {% if not message.is_read %} class="unread"{% endif %}>
-			<td><input name="cb_{{message.id}}" type="checkbox" /><//td>
+			<td><input name="cb_{{message.id}}" type="checkbox" class="message_checkbox" /></td>
 			<td><a href="{% url message message.id %}">{{message.subject}}</a></td>
 			<td><a href="{% url account message.user_from.username %}">{{message.user_from.username}}</a></td>
 			<td><a href="{% url account message.user_to.username %}">{{message.user_to.username}}</a></td>
@@ -41,9 +41,9 @@
 </form>
 
 <script type="text/javascript">
-	$('select_all').observe('click', function(event) {
-		var selectionOn = $F('select_all') == "on";
-		$$('input[type="checkbox"]').each( function (element, index) { 
+	$('#select_all').click(function(event) {
+		var selectionOn = this.checked;
+		$('.message_checkbox').each( function (index, element) { 
 			element.checked = selectionOn;
 		});
 	})

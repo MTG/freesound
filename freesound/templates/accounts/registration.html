@@ -2,17 +2,13 @@
 
 {% block title %}registration{% endblock %}
 
-{% block head %}
-{{ block.super }}
+{% block section_content %}
 <script type="text/javascript">
-    Event.observe(window, 'load', function()
-    {
-        $("id_username").focus()
+    $(function () {
+    	$("#id_username").focus()
     });
 </script>
-{% endblock %}
 
-{% block section_content %}
 <h1>Registration</h1>
 <form method="post" action=".">{% csrf_token %}
 {{form.as_p}}

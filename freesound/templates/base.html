@@ -9,7 +9,7 @@
 		<link rel="stylesheet" type="text/css" href="{{media_url}}all.css" />
 		<!--[if IE 6]><link rel="stylesheet" type="text/css" href="{{media_url}}ie6.css" /><![endif]-->
 		<title>Freesound.org - {% block title %}{% endblock %}</title>
-		<script src="{{media_url}}js/prototype.js" type="text/javascript"></script>
+		<script src="{{media_url}}js/jquery-1.4.2.min.js" type="text/javascript"></script>
 		<script src="{{media_url}}js/swfobject.js" type="text/javascript"></script>
 		<script type="text/javascript">
             var isLoggedIn = {{request.user.is_authenticated|yesno:"true,false"}};

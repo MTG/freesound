@@ -6,35 +6,14 @@
 {% block head %}
 {{ block.super }}
 <script type="text/javascript">
-	function toggle_ul(element)
-	{
-		if (element.hasClassName("minus"))
-			element.removeClassName("minus");
-		else
-			element.addClassName("minus");
-		
-		element.parentNode.parentNode.down("ul").toggle();
-	}
-
 	function select_ul(element)
 	{
-		var parent = element.parentNode.parentNode;
-		parent.select("ul").each( Element.show );
-
-		parent.select("input").each(function (input)
-		{
-			if (input.checked)
-				input.checked = false;
-			else
-				input.checked = true;
-			
-			checkboxChange(input);
-		});
+		$(element.parentNode).find("input").click();
 	}
 	
 	function checkboxChange(checkbox)
 	{
-		var option = $("fileform").down("option[value=" + checkbox.name + "]");
+		var option = $("#fileform").find("option[value=" + checkbox.name + "]").get(0);
 		
 		if (checkbox.checked)
 			option.selected = true;
@@ -53,11 +32,6 @@
 	<div style="display:none">
 	{{form.as_p}}
 	</div>
-	<input type="submit" value="submit" name="submit">
+	<input type="submit" value="describe" name="describe">
 </form>
-
-<script type="text/javascript">
-	$("root_file").select("ul").each( Element.hide );
-	$("root_file").select("input").each(checkboxChange);
-</script>
 {% endblock %}

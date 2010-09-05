@@ -3,20 +3,21 @@ from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from django.views.decorators.csrf import csrf_exempt
 from sounds.models import Sound, Pack, Download
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
+from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 import os
-from utils.functional import combine_dicts
-from django.core.exceptions import PermissionDenied
 
 def activate_user(request, activation_key):
     if request.user.is_authenticated():
@@ -153,9 +154,9 @@ def account(request, username):
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request)) 
 
 
-def handle_uploaded_file(request, f):
+def handle_uploaded_file(user_id, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
-    directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id))
+    directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(user_id))
     
     try:
         os.mkdir(directory)
@@ -167,6 +168,7 @@ def handle_uploaded_file(request, f):
         destination.write(chunk)
 
 
+@csrf_exempt
 def upload_file(request):
     """ upload a file. This function does something weird: it gets the session id from the
     POST variables. This is weird but... as far as we know it's not too bad as we only need
@@ -183,18 +185,22 @@ def upload_file(request):
     
     try:
         request.user = User.objects.get(id=user_id)
-    except User.DoesNotExist: #@UndefinedVariable
+    except User.DoesNotExist:
+        # print "User with this ID does not exist."
         return HttpResponseBadRequest("User with this ID does not exist.")
 
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
-
+    
         if form.is_valid():
-            handle_uploaded_file(request, request.FILES["file"])
+            # print "form ok"
+            handle_uploaded_file(user_id, request.FILES["file"])
             return HttpResponse("File uploaded OK")
         else:
+            # print "form invalid", form.errors
             return HttpResponseBadRequest("Form is not valid.")
     else:
+        # print "no data in post"
         return HttpResponseBadRequest("No POST data in request")
 
 @login_required

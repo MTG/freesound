@@ -4,182 +4,64 @@
 {% block title %}upload files{% endblock %}
 
 {% block head %}
-{{ block.super }}
-<style type="text/css">
-#upload-progress-container
-{
-    border: 1px solid #aaa;
-    margin-top: 20px;
-}
-
-div.queue-container
-{
-    padding: 1px;
-    margin-left: 4px; 
-}
-
-div.progress-container
-{
-    float: left;
-    border: 1px solid #aaa;
-    width: 250px;
-    margin-top:8px;
-    margin-right: 5px;
-}
-div.progress
-{
-    height:9px;
-    width: 0%;
-    background-image: url('{{media_url}}images/progress.gif');
-    background-repeat: repeat-x;
-}
-
-div.progress-done
-{
-    height:9px;
-    background-color: #fdc735;
-    background-image: none;
-    width: 100%;
-}
-
-div.progress-failed
-{
-    height:9px;
-    background-color: #bd2d33;
-    background-image: none;
-    width: 100%;
-}
-
-span.cancel-container img
-{
-    vertical-align:bottom;
-}
-span.filename
-{
-    font-size: 12px;
-    margin-top: 2px;
-}
-</style>
-<script src="{{media_url}}js/swfupload.js" type="text/javascript"></script>
-<script src="{{media_url}}js/swfupload.queue.js" type="text/javascript"></script>
-<script type="text/javascript">
-    var swfu = null; 
-    
-    function fileQueued(file)
+    {{ block.super }}
+    <style type="text/css">
+    #upload-progress-container
     {
-    	$('upload-progress-container').show().insert(
-    	'<div id="file_' + file.id + '" class="queue-container">\
-            <div class="progress-container">\
-                <div class="progress"></div>\
-            </div>\
-            <span class="cancel-container"><img src="{{media_url}}images/cancel.png" /></span>\
-            <span class="filename"><strong class="status">queued</strong>: ' + file.name + '</span>\
-        </div>'
-        );
-
-        $('file_' + file.id).down('span.cancel-container img').observe('click', function (event) {
-            swfu.cancelUpload(file.id);
-        });
+        border: 1px solid #aaa;
+        margin-top: 20px;
     }
-    
-    function fileQueueError(file, errorCode, message)
-    {
-        var status = "";
-        
-        switch (errorCode)
-        {
-    		case SWFUpload.QUEUE_ERROR.QUEUE_LIMIT_EXCEEDED       : status = "queue limit exceeded"; break;
-    		case SWFUpload.QUEUE_ERROR.FILE_EXCEEDS_SIZE_LIMIT    : status = "file exceeds size limit"; break;
-    		case SWFUpload.QUEUE_ERROR.ZERO_BYTE_FILE             : status = "file is zero bytes"; break;
-    		case SWFUpload.QUEUE_ERROR.INVALID_FILETYPE           : status = "invalid filetype"; break;
-        }
 
-        $('file_' + file.id).down("strong.status").innerHTML = status;
-    	$('file_' + file.id).down("span.cancel-container").hide();
-    	$('file_' + file.id).down("div.progress").removeClassName('progress').addClassName('progress-failed').style.width = "100%";
-    }
-    
-    function fileDialogComplete(numFilesSelected, numFilesQueued)
+    div.queue-container
     {
-    	this.startUpload();
+        padding: 1px;
+        margin-left: 4px; 
     }
-    
-    function uploadStart(file)
-    {
-    	$('file_' + file.id).down("strong.status").innerHTML = "uploading";
-    	return true;
-    }
-    
-    function uploadProgress(file, bytesLoaded, bytesTotal)
-    {
-        $('file_' + file.id).down('div.progress').style.width = Math.floor((bytesLoaded*100)/bytesTotal) + "%";
-    }
-    
-    function uploadSuccess(file, serverData)
-    {
-        $('file_' + file.id).down("strong.status").innerHTML = 'done';
-    	$('file_' + file.id).down("span.cancel-container").hide();
-    	$('file_' + file.id).down("div.progress").removeClassName('progress').addClassName('progress-done').style.width = "100%";
-    }
-    
-    function uploadError(file, errorCode, message)
-    {
-        var status = "";
-        
-        switch (errorCode)
-        {
-            case SWFUpload.UPLOAD_ERROR.HTTP_ERROR                     : status = "http error"; break;
-    	    case SWFUpload.UPLOAD_ERROR.MISSING_UPLOAD_URL             : status = "missing upload url"; break;
-    	    case SWFUpload.UPLOAD_ERROR.IO_ERROR                       : status = "io error"; break;
-    	    case SWFUpload.UPLOAD_ERROR.SECURITY_ERROR                 : status = "security error"; break;
-    	    case SWFUpload.UPLOAD_ERROR.UPLOAD_LIMIT_EXCEEDED          : status = "upload limit exceeded"; break;
-        	case SWFUpload.UPLOAD_ERROR.UPLOAD_FAILED                  : status = "upload failed"; break;
-        	case SWFUpload.UPLOAD_ERROR.SPECIFIED_FILE_ID_NOT_FOUND    : status = "specified file id not found"; break;
-        	case SWFUpload.UPLOAD_ERROR.FILE_VALIDATION_FAILED         : status = "file validation failed"; break
-        	case SWFUpload.UPLOAD_ERROR.FILE_CANCELLED                 : status = "canceled"; break;
-        	case SWFUpload.UPLOAD_ERROR.UPLOAD_STOPPED                 : status = "upload stopped"; break;
-        }
 
-        $('file_' + file.id).down("strong.status").innerHTML = status;
-    	$('file_' + file.id).down("span.cancel-container").hide();
-    	$('file_' + file.id).down("div.progress").removeClassName('progress').addClassName('progress-failed').style.width = "100%";
-    }
-    
-    Event.observe(window, 'load', function()
+    div.progress-container
     {
-        $("multiple-upload").show();
-        
-        var settings_object =
-        {
-            upload_url : "{% absurl accounts-upload-file %}",
-            flash_url : "{{media_url}}swf/swfupload.swf",
-            button_placeholder_id : "placeholder",
-            post_params: {'sessionid': '{{request.session.session_key}}'},
-            
-            button_image_url : "{{media_url}}images/upload_button_4.png",
-            button_width : 144,
-            button_height : 31,
-            button_text_left_padding : 0,
-            button_text_top_padding : 0,
+        float: left;
+        border: 1px solid #aaa;
+        width: 250px;
+        margin-top:8px;
+        margin-right: 5px;
+    }
+    div.progress
+    {
+        height:9px;
+        width: 0%;
+        background-image: url('{{media_url}}images/progress.gif');
+        background-repeat: repeat-x;
+    }
 
-            file_post_name : "file",
-            assume_success_timeout : 0,
-            file_types: "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.ogg",
-            file_types_description: "Sound files",
+    div.progress-done
+    {
+        height:9px;
+        background-color: #fdc735;
+        background-image: none;
+        width: 100%;
+    }
 
-			file_queued_handler : fileQueued,
-			file_queue_error_handler : fileQueueError,
-			file_dialog_complete_handler : fileDialogComplete,
-			upload_start_handler : uploadStart,
-			upload_progress_handler : uploadProgress,
-			upload_error_handler : uploadError,
-			upload_success_handler : uploadSuccess,
-		};
+    div.progress-failed
+    {
+        height:9px;
+        background-color: #bd2d33;
+        background-image: none;
+        width: 100%;
+    }
 
-        swfu = new SWFUpload(settings_object);
-    });
-</script>
+    span.cancel-container img
+    {
+        vertical-align:bottom;
+    }
+    span.filename
+    {
+        font-size: 12px;
+        margin-top: 2px;
+    }
+    </style>
 {% endblock %}
+
 
 {% block content %}
 
@@ -193,18 +75,74 @@ span.filename
     <li>All files are <strong>moderated</strong>, if you upload illegal files or files that don't follow the <a href="{% url wiki-page "what-is-legal" %}">guidelines</a> they will be removed in the moderation process...</li>
     <li>We prefer <strong>wav, aif and flac</strong> but we support ogg and mp3 too.</li>
 </ul>
-<form enctype="multipart/form-data" method="post" action="{% url accounts-upload-file %}">{% csrf_token %}
-    <p style="display:none" id="multiple-upload">
-	    Click the button to upload files. Inside the "file open" dialog you can select multiple files at once (osx: apple-click, windows/linux: ctrl-click):
-	</p>
-	<span id="placeholder">
-	    <p><input type="file" name="file" /></p>
-	    <input type="hidden" name="sessionid" value="{{request.session.session_key}}" />
-	</span>
 
-    <div id="upload-progress-container" style="display:none">
-    </div>
-</form>
+<script type="text/javascript">
+	swfobject.registerObject("uploader", "10.1");
+	
+    function uploadError(fileId, message)
+    {
+        if (fileId < 0)
+            alert("Upload error: " + message);
+        else
+        {
+            $('#file_' + fileId).find(".status").html("Failed: " + message);
+        	$('#file_' + fileId).find(".cancel-container").hide();
+        	$('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-failed').css("width", "100%");
+    	}
+    }
 
+    function uploadAdd(fileId, filename)
+    {
+        $("#upload-progress-container").show().append(
+            	'<div id="file_' + fileId + '" class="queue-container">\
+                    <div class="progress-container">\
+                        <div class="progress"></div>\
+                    </div>\
+                    <!-- <span class="cancel-container"><img src="{{media_url}}images/cancel.png" /></span> -->\
+                    <span class="filename"><strong class="status">queued</strong>: ' + filename + '</span>\
+                </div>');
+
+        /*$('#file_' + fileId).select('span.cancel-container img').click(function (event) {
+            swfu.cancelUpload(file.id);
+        });*/
+    }
+
+    function uploadProgress(fileId, percentage)
+    {
+        $('#file_' + fileId).find(".status").html("uploading");
+        $('#file_' + fileId).find('.progress').css("width", percentage + "%");
+    }
+
+    function uploadDone(fileId)
+    {
+        $('#file_' + fileId).find(".status").html('done');
+        //$('#file_' + fileId).select("span.cancel-container").hide();
+        $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-done').css("width", "100%");
+    }
+</script>
+
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="128" height="128" id="uploader">
+	<param name="movie" value="{{media_url}}swf/upload.swf" />
+    <param name="flashvars" value="sessionid={{request.session.session_key}}" />
+    <param name="AllowScriptAccess" value="always" />
+    <!--[if !IE]>-->
+    <object type="application/x-shockwave-flash" data="{{media_url}}swf/upload.swf" width="128" height="128">
+    	<param name="flashvars" value="sessionid={{request.session.session_key}}" />
+    	<param name="AllowScriptAccess" value="always" />
+        <!--<![endif]-->
+        <p>
+            If you install <a href="http://www.adobe.com/go/getflashplayer">flash player 10</a> you will be able to upload multiple files in one go!<br/>
+        </p>
+        <form method="POST" enctype="multipart/form-data" action="/home/upload/file/"> 
+            <input type="file" name="file" /><br/>
+            <input type="submit" value="upload" />
+        </form> 
+        <!--[if !IE]>-->
+    </object>
+    <!--<![endif]-->
+</object>
+
+<div id="upload-progress-container" style="display:none">
+</div>
 
 {% endblock %}

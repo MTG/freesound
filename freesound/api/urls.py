@@ -17,14 +17,13 @@ urlpatterns = patterns('',
     url(r'^sounds/(?P<sound_id>\d+)/?$',                             AR(SoundHandler),       name='api-single-sound'),
     url(r'^sounds/(?P<sound_id>\d+)/(?P<file_or_preview>\w+)/?$',    AR(SoundServeHandler),  name='api-sound-serve'),
     # users
-    url(r'^people/(?P<username>[^//]+)/?$',                         AR(UserHandler),        name='api-single-user'),
-    url(r'^people/(?P<username>[^//]+)/sounds/?$',                  AR(UserSoundsHandler),  name='api-user-sounds'),
-    url(r'^people/(?P<username>[^//]+)/packs/?$',                   AR(UserPacksHandler),   name='api-user-packs'),
+    url(r'^people/(?P<username>[^//]+)/?$',                          AR(UserHandler),        name='api-single-user'),
+    url(r'^people/(?P<username>[^//]+)/sounds/?$',                   AR(UserSoundsHandler),  name='api-user-sounds'),
+    url(r'^people/(?P<username>[^//]+)/packs/?$',                    AR(UserPacksHandler),   name='api-user-packs'),
     # packs
     url(r'^packs/(?P<pack_id>\d+)/?$',                               AR(PackHandler),        name='api-single-pack'),
     url(r'^packs/(?P<pack_id>\d+)/sounds/?$',                        AR(PackSoundsHandler),  name='api-pack-sounds'),
-    
-   # url(r'^update_solr/?$',                                             CsrfExemptResource(UpdateSolrHandler)),
+
    # website
     url(r'^apply/?$', create_api_key),
 )

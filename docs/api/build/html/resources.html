@@ -1,0 +1,801 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Resources &mdash; Freesound API v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Freesound API v1.0 documentation" href="index.html" />
+    <link rel="prev" title="Overview" href="overview.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="overview.html" title="Overview"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Freesound API v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="resources">
+<span id="id1"></span><h1>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="sounds">
+<h2>Sounds<a class="headerlink" href="#sounds" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sound-search-resource">
+<h3>Sound Search resource<a class="headerlink" href="#sound-search-resource" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="uri">
+<h4>URI<a class="headerlink" href="#uri" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-python"><pre>/sounds/search</pre>
+</div>
+<p>The only allowed method is GET.</p>
+</div>
+<div class="section" id="get">
+<h4>GET<a class="headerlink" href="#get" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="request">
+<h5>Request<a class="headerlink" href="#request" title="Permalink to this headline">¶</a></h5>
+<p><strong>Parameters</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="15%" />
+<col width="10%" />
+<col width="14%" />
+<col width="61%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Name</th>
+<th class="head">Type</th>
+<th class="head">Required</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>q</td>
+<td>string</td>
+<td>no</td>
+<td>The query!</td>
+</tr>
+<tr><td>p</td>
+<td>number</td>
+<td>no</td>
+<td>The page of the search result to get</td>
+</tr>
+<tr><td>f</td>
+<td>string</td>
+<td>no</td>
+<td>The filter</td>
+</tr>
+<tr><td>s</td>
+<td>string</td>
+<td>no</td>
+<td>How to sort the results</td>
+</tr>
+</tbody>
+</table>
+<p>TODO: explain how querying works</p>
+<p>TODO: explain how the filter works</p>
+<p>The page (p) parameter can be used to paginate through the results.
+Every page holds 15 sounds and the first page is page 1.</p>
+<p>The sort (s) parameter determines how the results are sorted, and can only be one
+of the following.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Option</th>
+<th class="head">Explanation</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>duration_desc</td>
+<td>Sort by the duration of the sounds, longest sounds first.</td>
+</tr>
+<tr><td>duration_asc</td>
+<td>Same as above, but shortest sounds first.</td>
+</tr>
+<tr><td>created_desc</td>
+<td>Sort by the date of when the sound was added. newest sounds first.</td>
+</tr>
+<tr><td>created_asc</td>
+<td>Same as above, but oldest sounds first.</td>
+</tr>
+<tr><td>downloads_desc</td>
+<td>Sort by the number of downloads, most downloaded sounds first.</td>
+</tr>
+<tr><td>downloads_asc</td>
+<td>Same as above, but least downloaded sounds first.</td>
+</tr>
+<tr><td>rating_desc</td>
+<td>Sort by the average rating given to the sounds, highest rated first.</td>
+</tr>
+<tr><td>rating_asc</td>
+<td>Same as above, but lowest rated sounds first.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Curl Examples</strong></p>
+<div class="highlight-python"><pre># Get the third page with the query 'dogs', with the most downloaded sounds first.
+curl http://www.freesound.org/api/sounds/search?p=3&amp;q=dogs&amp;s=downloads_desc
+TODO: more examples</pre>
+</div>
+</div>
+<div class="section" id="response">
+<span id="sound-search-response"></span><h5>Response<a class="headerlink" href="#response" title="Permalink to this headline">¶</a></h5>
+<p><strong>Properties</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="6%" />
+<col width="83%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Name</th>
+<th class="head">Type</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>sounds</td>
+<td>array</td>
+<td>Array of sounds. Each sound looks like the <a class="reference internal" href="#sound-get-response">response format of a single sound resource</a>.</td>
+</tr>
+<tr><td>previous</td>
+<td>URI</td>
+<td>The URI to go back one page in the search results.</td>
+</tr>
+<tr><td>next</td>
+<td>URI</td>
+<td>The URI to go forward one page in the search results.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>JSON Example</strong></p>
+<div class="highlight-python"><pre>{
+  "sounds": [
+      {
+          "waveform_m": "http://www.freesound.org/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.png",
+          "tags": [
+              "bird",
+              "cheep",
+              "chick",
+              "manorina",
+              "melanocephala",
+              "miner",
+              "nousy",
+              "peep"
+          ],
+          "url": "http://www.freesound.org/people/digifishmusic/sounds/83295/",
+          "type": "wav",
+          "serve": "http://www.freesound.org/api/sounds/83295/serve",
+          "spectral_m": "http://www.freesound.org/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.jpg",
+          "spectral_l": "http://www.freesound.org/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.jpg",
+          "user": {
+              "username": "digifishmusic",
+              "url": "http://www.freesound.org/people/digifishmusic/",
+              "ref": "http://www.freesound.org/api/people/digifishmusic"
+          },
+          "original_filename": "Noisy_Miner_Chick_FeedMe.wav",
+          "base_filename_slug": "83295__digifishmusic__Noisy_Miner_Chick_FeedMe",
+          "duration": 48.548956916100003,
+          "waveform_l": "http://www.freesound.org/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.png",
+          "preview": "http://www.freesound.org/api/sounds/83295/preview",
+          "ref": "http://www.freesound.org/api/sounds/83295",
+          "pack": "http://www.freesound.org/api/packs/2090"
+      },
+
+      *** more sounds ***
+      ],
+  "previous": "http://www.freesound.org/api/sounds/search?q=&amp;p=1&amp;f=&amp;s=downloads_desc",
+  "next": "http://www.freesound.org/api/sounds/search?q=&amp;p=3&amp;f=&amp;s=downloads_desc"
+}</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="sound-resource">
+<h3>Sound resource<a class="headerlink" href="#sound-resource" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h4>URI<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-python"><pre>/sounds/&lt;sound_id&gt;</pre>
+</div>
+<p>The only allowed method is GET.</p>
+</div>
+<div class="section" id="id4">
+<h4>GET<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<p>A GET request to the sound resource returns all the information about the sound.</p>
+<div class="section" id="id5">
+<h5>Request<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h5>
+<p><strong>Curl Example</strong></p>
+<div class="highlight-python"><pre>curl http://www.freesound.org/api/sounds/83295</pre>
+</div>
+</div>
+<div class="section" id="sound-get-response">
+<span id="id6"></span><h5>Response<a class="headerlink" href="#sound-get-response" title="Permalink to this headline">¶</a></h5>
+<p><strong>Properties</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="18%" />
+<col width="6%" />
+<col width="76%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Name</th>
+<th class="head">Type</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>id</td>
+<td>number</td>
+<td>The sound&#8217;s unique identifier.</td>
+</tr>
+<tr><td>ref</td>
+<td>URI</td>
+<td>The URI for this sound.</td>
+</tr>
+<tr><td>url</td>
+<td>URI</td>
+<td>The URI for this sound on the Freesound website.</td>
+</tr>
+<tr><td>preview</td>
+<td>URI</td>
+<td>The URI for retrieving the mp3 preview of the sound.</td>
+</tr>
+<tr><td>serve</td>
+<td>URI</td>
+<td>The URI for retrieving the original sound.</td>
+</tr>
+<tr><td>type</td>
+<td>string</td>
+<td>The type of sound (wav, aif, mp3, etc.).</td>
+</tr>
+<tr><td>duration</td>
+<td>number</td>
+<td>The duration of the sound in seconds.</td>
+</tr>
+<tr><td>samplerate</td>
+<td>number</td>
+<td>The samplerate of the sound.</td>
+</tr>
+<tr><td>bitdepth</td>
+<td>number</td>
+<td>The bit depth of the sound.</td>
+</tr>
+<tr><td>filesize</td>
+<td>number</td>
+<td>The size of the file in bytes.</td>
+</tr>
+<tr><td>bitrate</td>
+<td>number</td>
+<td>The bit rate of the sound.</td>
+</tr>
+<tr><td>channels</td>
+<td>number</td>
+<td>The number of channels.</td>
+</tr>
+<tr><td>original_filename</td>
+<td>string</td>
+<td>The name of the sound file when it was uploaded.</td>
+</tr>
+<tr><td>description</td>
+<td>string</td>
+<td>The description the user gave the sound.</td>
+</tr>
+<tr><td>tags</td>
+<td>array</td>
+<td>An array of tags the user gave the sound.</td>
+</tr>
+<tr><td>license</td>
+<td>string</td>
+<td>The license under which the sound is available to you.</td>
+</tr>
+<tr><td>created</td>
+<td>string</td>
+<td>The date of when the sound was uploaded.</td>
+</tr>
+<tr><td>num_comments</td>
+<td>number</td>
+<td>The number of comments.</td>
+</tr>
+<tr><td>num_downloads</td>
+<td>number</td>
+<td>The number of times the sound was downloaded.</td>
+</tr>
+<tr><td>num_ratings</td>
+<td>number</td>
+<td>The number of times the sound was rated.</td>
+</tr>
+<tr><td>avg_rating</td>
+<td>number</td>
+<td>The average rating of the sound.</td>
+</tr>
+<tr><td>pack</td>
+<td>URI</td>
+<td>If the sound is part of a pack, this URI points to that pack&#8217;s API resource.</td>
+</tr>
+<tr><td>user</td>
+<td>object</td>
+<td>A dictionary with the username, url, and ref for the user that uploaded the sound.</td>
+</tr>
+<tr><td>spectral_m</td>
+<td>URI</td>
+<td>A visualization of the sounds spectrum over time, jpeg file (medium).</td>
+</tr>
+<tr><td>spectral_l</td>
+<td>URI</td>
+<td>A visualization of the sounds spectrum over time, jpeg file (large).</td>
+</tr>
+<tr><td>waveform_m</td>
+<td>URI</td>
+<td>A visualization of the sounds waveform, png file (medium).</td>
+</tr>
+<tr><td>waveform_l</td>
+<td>URI</td>
+<td>A visualization of the sounds waveform, png file (large).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>JSON Example</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s">&quot;duration&quot;</span><span class="p">:</span> <span class="mf">0.384172335601</span><span class="p">,</span>
+  <span class="s">&quot;samplerate&quot;</span><span class="p">:</span> <span class="mf">44100.0</span><span class="p">,</span>
+  <span class="s">&quot;id&quot;</span><span class="p">:</span> <span class="mi">83257</span><span class="p">,</span>
+  <span class="s">&quot;bitdepth&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+  <span class="s">&quot;num_comments&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="s">&quot;filesize&quot;</span><span class="p">:</span> <span class="mi">67928</span><span class="p">,</span>
+  <span class="s">&quot;preview&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/api/sounds/83257/preview&quot;</span><span class="p">,</span>
+  <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/api/sounds/83257&quot;</span><span class="p">,</span>
+  <span class="s">&quot;description&quot;</span><span class="p">:</span> <span class="s">&quot;kick bd drum goa goakick psy psykick kickdrum&quot;</span><span class="p">,</span>
+  <span class="s">&quot;tags&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="s">&quot;bd&quot;</span><span class="p">,</span>
+      <span class="s">&quot;drum&quot;</span><span class="p">,</span>
+      <span class="s">&quot;goa&quot;</span><span class="p">,</span>
+      <span class="s">&quot;goakick&quot;</span><span class="p">,</span>
+      <span class="s">&quot;kick&quot;</span><span class="p">,</span>
+      <span class="s">&quot;kickdrum&quot;</span><span class="p">,</span>
+      <span class="s">&quot;psy&quot;</span><span class="p">,</span>
+      <span class="s">&quot;psykick&quot;</span>
+  <span class="p">],</span>
+  <span class="s">&quot;serve&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/api/sounds/83257/serve&quot;</span><span class="p">,</span>
+  <span class="s">&quot;spectral_m&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.jpg&quot;</span><span class="p">,</span>
+  <span class="s">&quot;spectral_l&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.jpg&quot;</span><span class="p">,</span>
+  <span class="s">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s">&quot;username&quot;</span><span class="p">:</span> <span class="s">&quot;zgump&quot;</span><span class="p">,</span>
+      <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/people/zgump/&quot;</span><span class="p">,</span>
+      <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/api/people/zgump&quot;</span>
+  <span class="p">},</span>
+  <span class="s">&quot;bitrate&quot;</span><span class="p">:</span> <span class="mi">1411</span><span class="p">,</span>
+  <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="s">&quot;num_ratings&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="s">&quot;license&quot;</span><span class="p">:</span> <span class="s">&quot;Sampling+&quot;</span><span class="p">,</span>
+  <span class="s">&quot;created&quot;</span><span class="p">:</span> <span class="s">&quot;2009-11-12 19:58:17&quot;</span><span class="p">,</span>
+  <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/people/zgump/sounds/83257/&quot;</span><span class="p">,</span>
+  <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;wav&quot;</span><span class="p">,</span>
+  <span class="s">&quot;avg_rating&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+  <span class="s">&quot;original_filename&quot;</span><span class="p">:</span> <span class="s">&quot;CLUB KICK 0304.wav&quot;</span><span class="p">,</span>
+  <span class="s">&quot;waveform_l&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.png&quot;</span><span class="p">,</span>
+  <span class="s">&quot;waveform_m&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.png&quot;</span><span class="p">,</span>
+  <span class="s">&quot;channels&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+  <span class="s">&quot;pack&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/api/packs/5467&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="users">
+<h2>Users<a class="headerlink" href="#users" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="user-resource">
+<h3>User resource<a class="headerlink" href="#user-resource" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id7">
+<h4>URI<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-python"><pre>/people/&lt;username&gt;</pre>
+</div>
+<p>The only allowed method is GET.</p>
+</div>
+<div class="section" id="id8">
+<h4>GET<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id9">
+<h5>Request<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h5>
+<p><strong>Curl Examples</strong></p>
+<div class="highlight-python"><pre>curl http://www.freesound.org/api/people/Jovica
+curl http://www.freesound.org/api/people/klankschap</pre>
+</div>
+</div>
+<div class="section" id="id10">
+<h5>Response<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h5>
+<p><strong>Properties</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="8%" />
+<col width="67%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Name</th>
+<th class="head">Type</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>username</td>
+<td>string</td>
+<td>The user&#8217;s username.</td>
+</tr>
+<tr><td>ref</td>
+<td>URI</td>
+<td>The URI for this resource.</td>
+</tr>
+<tr><td>url</td>
+<td>URI</td>
+<td>The profile page for the user on the Freesound website.</td>
+</tr>
+<tr><td>sounds</td>
+<td>URI</td>
+<td>The API URI for this user&#8217;s sound collection.</td>
+</tr>
+<tr><td>packs</td>
+<td>URI</td>
+<td>The API URI for this user&#8217;s pack collection.</td>
+</tr>
+<tr><td>first_name</td>
+<td>string</td>
+<td>The user&#8217;s first name, possibly empty.</td>
+</tr>
+<tr><td>last_name</td>
+<td>string</td>
+<td>The user&#8217;s last name, possibly empty.</td>
+</tr>
+<tr><td>about</td>
+<td>string</td>
+<td>A small text the user wrote about himself.</td>
+</tr>
+<tr><td>home_page</td>
+<td>URI</td>
+<td>The user&#8217;s homepage, possibly empty.</td>
+</tr>
+<tr><td>signature</td>
+<td>string</td>
+<td>The user&#8217;s signature, possibly empty.</td>
+</tr>
+<tr><td>date_joined</td>
+<td>string</td>
+<td>The date the user joined Freesound.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>JSON Example</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s">&quot;username&quot;</span><span class="p">:</span> <span class="s">&quot;Jovica&quot;</span><span class="p">,</span>
+  <span class="s">&quot;first_name&quot;</span><span class="p">:</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+  <span class="s">&quot;last_name&quot;</span><span class="p">:</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+  <span class="s">&quot;packs&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/api/people/Jovica/packs&quot;</span><span class="p">,</span>
+  <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/people/Jovica/&quot;</span><span class="p">,</span>
+  <span class="s">&quot;about&quot;</span><span class="p">:</span> <span class="s">&quot;Policy of use: you must state somewhere somehow (credit lines, web page, whatever) that the Freesound Project served this sounds. It is irrelevant to me whether you mention or not my authorship. Can&#39;t credit? Send me a personal message. (Thanks to dobroide for these words!)</span><span class="se">\r\n\r\n</span><span class="s">If possible, I would also like to hear where the sounds are used, so if you can send me a link or something else, please do so. Thanks!</span><span class="se">\r\n\r\n</span><span class="s">Currently adding LAYERS &amp; DISTOPIA sample packs!</span><span class="se">\r\n\r\n</span><span class="s">For some more information about me, click on the links below:</span><span class="se">\r\n</span><span class="s">&lt;a href=</span><span class="se">\&quot;</span><span class="s">http://www.myspace.com/jovicastorer</span><span class="se">\&quot;</span><span class="s"> rel=</span><span class="se">\&quot;</span><span class="s">nofollow</span><span class="se">\&quot;</span><span class="s">&gt;http://www.myspace.com/jovicastorer&lt;/a&gt;</span><span class="se">\r\n\r\n</span><span class="s">And this is an experimental droney label for which I do some producing, engineering, mixing and mastering:</span><span class="se">\r\n</span><span class="s">&lt;a href=</span><span class="se">\&quot;</span><span class="s">http://www.plaguerecordings.com/index.htm</span><span class="se">\&quot;</span><span class="s"> rel=</span><span class="se">\&quot;</span><span class="s">nofollow</span><span class="se">\&quot;</span><span class="s">&gt;http://www.plaguerecordings.com/index.htm&lt;/a&gt;</span><span class="se">\r\n\r\n</span><span class="s">Currently me and a good friend of mine are working on a new &lt;strong&gt;c-o-l-o-u-r-s&lt;/strong&gt; website. </span><span class="se">\r\n\r\n</span><span class="s">The first release, &lt;strong&gt;&#39;gekarameliseerd&#39;&lt;/strong&gt; by &lt;strong&gt;Jovica Storer&lt;/strong&gt;, is available on:</span><span class="se">\r\n</span><span class="s">- emusic: &lt;a href=</span><span class="se">\&quot;</span><span class="s">http://www.emusic.com/album/Jovica-Storer-Gekarameliseerd-MP3-Download/11666781.html</span><span class="se">\&quot;</span><span class="s"> rel=</span><span class="se">\&quot;</span><span class="s">nofollow</span><span class="se">\&quot;</span><span class="s">&gt;http://www.emusic.com/album/Jovica-Storer-Gekarameliseerd-MP3-Download/11666781.html&lt;/a&gt;</span><span class="se">\r\n</span><span class="s">- iTunes: &lt;a href=</span><span class="se">\&quot;</span><span class="s">http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=333466000&amp;id;=333464878&amp;s;=143443&amp;uo;=6</span><span class="se">\&quot;</span><span class="s"> rel=</span><span class="se">\&quot;</span><span class="s">nofollow</span><span class="se">\&quot;</span><span class="s">&gt;http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=333466000&amp;id;=333464878&amp;s;=143443&amp;uo;=6&lt;/a&gt;</span><span class="se">\r\n</span><span class="s">- Napster: &lt;a href=</span><span class="se">\&quot;</span><span class="s">http://free.napster.com/view/album/index.html?id=13373722</span><span class="se">\&quot;</span><span class="s"> rel=</span><span class="se">\&quot;</span><span class="s">nofollow</span><span class="se">\&quot;</span><span class="s">&gt;http://free.napster.com/view/album/index.html?id=13373722&lt;/a&gt;</span><span class="se">\r\n</span><span class="s">Please check it out and if you want to support me, buy some tracks. Many thanks! </span><span class="se">\r\n\r\n</span><span class="s">Namaste!</span><span class="se">\r\n</span><span class="s">Jovica Storer&quot;</span><span class="p">,</span>
+  <span class="s">&quot;home_page&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.ampcast.com/music/25765/artist.php&quot;</span><span class="p">,</span>
+  <span class="s">&quot;signature&quot;</span><span class="p">:</span> <span class="s">&quot;Namaste!</span><span class="se">\r\n</span><span class="s">Jovica Storer</span><span class="se">\r\n</span><span class="s">&lt;a href=</span><span class="se">\&quot;</span><span class="s">http://www.c-o-l-o-u-r-s.com</span><span class="se">\&quot;</span><span class="s"> rel=</span><span class="se">\&quot;</span><span class="s">nofollow</span><span class="se">\&quot;</span><span class="s">&gt;http://www.c-o-l-o-u-r-s.com&lt;/a&gt;&quot;</span><span class="p">,</span>
+  <span class="s">&quot;sounds&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/api/people/Jovica/sounds&quot;</span><span class="p">,</span>
+  <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://www.freesound.org/api/people/Jovica&quot;</span><span class="p">,</span>
+  <span class="s">&quot;date_joined&quot;</span><span class="p">:</span> <span class="s">&quot;2005-05-07 17:49:39&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="user-sounds-collection">
+<h3>User Sounds collection<a class="headerlink" href="#user-sounds-collection" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id11">
+<h4>URI<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-python"><pre>/people/&lt;username&gt;/sounds</pre>
+</div>
+<p>The only allowed method is GET.</p>
+</div>
+<div class="section" id="id12">
+<h4>GET<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h4>
+<p>TODO: what&#8217;s this resource?</p>
+<div class="section" id="id13">
+<h5>Request<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h5>
+<p><strong>Parameters</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="10%" />
+<col width="13%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Name</th>
+<th class="head">Type</th>
+<th class="head">Required</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>p</td>
+<td>number</td>
+<td>no</td>
+<td>The page of the sound collection to get.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Curl Examples</strong></p>
+<div class="highlight-python"><pre>curl http://www.freesound.org/api/people/thanvannispen/sounds
+curl http://www.freesound.org/api/people/inchadney/sounds?p=5</pre>
+</div>
+</div>
+<div class="section" id="id14">
+<h5>Response<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h5>
+<p>The response is the same as the <a class="reference internal" href="#sound-search-response">sound search response</a>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="user-packs-collection">
+<h3>User Packs collection<a class="headerlink" href="#user-packs-collection" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id16">
+<h4>URI<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-python"><pre>/people/&lt;username&gt;/packs</pre>
+</div>
+<p>The only allowed method is GET.</p>
+</div>
+<div class="section" id="id17">
+<h4>GET<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h4>
+<p>Retrieve an array of the user&#8217;s sound packs.</p>
+<div class="section" id="id18">
+<h5>Request<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h5>
+<p><strong>Curl Examples</strong></p>
+<div class="highlight-python"><pre>curl http://www.freesound.org/api/people/dobroide/packs</pre>
+</div>
+</div>
+<div class="section" id="id19">
+<h5>Response<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h5>
+<p><strong>Properties</strong></p>
+<p>The response is an array. Each item in the array has the same format as the <a class="reference internal" href="#pack-get-response">pack resource format</a>.</p>
+<p><strong>JSON Example</strong></p>
+<div class="highlight-python"><pre>[
+  {
+      "description": "",
+      "created": "2009-09-28 09:50:08",
+      "url": "http://tabasco.upf.edu/people/dobroide/packs/5266/",
+      "sounds": "http://tabasco.upf.edu/api/packs/5266/sounds",
+      "num_downloads": 0,
+      "ref": "http://tabasco.upf.edu/api/packs/5266",
+      "name": "scrub"
+  },
+  {
+      "description": "",
+      "created": "2009-09-20 10:55:32",
+      "url": "http://tabasco.upf.edu/people/dobroide/packs/5230/",
+      "sounds": "http://tabasco.upf.edu/api/packs/5230/sounds",
+      "num_downloads": 0,
+      "ref": "http://tabasco.upf.edu/api/packs/5230",
+      "name": "granada"
+  },
+  *** more packs ***
+]</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="packs">
+<h2>Packs<a class="headerlink" href="#packs" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pack-resource">
+<h3>Pack resource<a class="headerlink" href="#pack-resource" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id21">
+<h4>URI<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-python"><pre>/packs/&lt;pack_id&gt;</pre>
+</div>
+<p>The only allowed method is GET.</p>
+</div>
+<div class="section" id="id22">
+<h4>GET<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id23">
+<h5>Request<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h5>
+<p><strong>Curl Examples</strong></p>
+<div class="highlight-python"><pre>curl http://www.freesound.org/api/packs/5107</pre>
+</div>
+</div>
+<div class="section" id="pack-get-response">
+<span id="id24"></span><h5>Response<a class="headerlink" href="#pack-get-response" title="Permalink to this headline">¶</a></h5>
+<p><strong>Properties</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="8%" />
+<col width="67%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Name</th>
+<th class="head">Type</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>ref</td>
+<td>URI</td>
+<td>The URI for this resource.</td>
+</tr>
+<tr><td>url</td>
+<td>URI</td>
+<td>The URL for this pack&#8217;s page on the Freesound website.</td>
+</tr>
+<tr><td>sounds</td>
+<td>URI</td>
+<td>The API URI for the pack&#8217;s sound collection.</td>
+</tr>
+<tr><td>user</td>
+<td>object</td>
+<td>A JSON object with the user&#8217;s username, url, and ref.</td>
+</tr>
+<tr><td>name</td>
+<td>string</td>
+<td>The pack&#8217;s name.</td>
+</tr>
+<tr><td>description</td>
+<td>string</td>
+<td>The pack&#8217;s description.</td>
+</tr>
+<tr><td>created</td>
+<td>string</td>
+<td>The date when the pack was created.</td>
+</tr>
+<tr><td>num_downloads</td>
+<td>number</td>
+<td>The number of times the pack was downloaded.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>JSON Example</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s">&quot;description&quot;</span><span class="p">:</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+  <span class="s">&quot;created&quot;</span><span class="p">:</span> <span class="s">&quot;2009-09-01 19:56:15&quot;</span><span class="p">,</span>
+  <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/dobroide/packs/5107/&quot;</span><span class="p">,</span>
+  <span class="s">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s">&quot;username&quot;</span><span class="p">:</span> <span class="s">&quot;dobroide&quot;</span><span class="p">,</span>
+      <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/dobroide/&quot;</span><span class="p">,</span>
+      <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/people/dobroide&quot;</span>
+  <span class="p">},</span>
+  <span class="s">&quot;sounds&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5107/sounds&quot;</span><span class="p">,</span>
+  <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5107&quot;</span><span class="p">,</span>
+  <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;Iceland&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="pack-sounds-collection">
+<h3>Pack Sounds collection<a class="headerlink" href="#pack-sounds-collection" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id25">
+<h4>URI<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-python"><pre>/packs/&lt;pack_id&gt;/sounds</pre>
+</div>
+<p>The only allowed method is GET.</p>
+</div>
+<div class="section" id="id26">
+<h4>GET<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h4>
+<p>A paginated collection of the sounds in the pack.</p>
+<div class="section" id="id27">
+<h5>Request<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h5>
+<p><strong>Parameters</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="15%" />
+<col width="10%" />
+<col width="14%" />
+<col width="61%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Name</th>
+<th class="head">Type</th>
+<th class="head">Required</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>p</td>
+<td>number</td>
+<td>no</td>
+<td>The page of the pack&#8217;s sounds to get</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Curl Examples</strong></p>
+<div class="highlight-python"><pre>curl http://www.freesound.org/api/packs/5107/sounds</pre>
+</div>
+</div>
+<div class="section" id="id28">
+<h5>Response<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h5>
+<p>The response is the same as the <a class="reference internal" href="#sound-search-response">sound search response</a>.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/freesound_logo_small.png" alt="Logo"/>
+            </a></p>
+<h4>Contents</h4>
+<ul class="current">
+<li class="toctree-l1"><a class="reference external" href="overview.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference external" href="">Resources</a><ul>
+<li class="toctree-l2"><a class="reference external" href="#sounds">Sounds</a></li>
+<li class="toctree-l2"><a class="reference external" href="#users">Users</a></li>
+<li class="toctree-l2"><a class="reference external" href="#packs">Packs</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="overview.html" title="Overview"
+             >previous</a> |</li>
+        <li><a href="index.html">Freesound API v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2010, Bram de Jong, Vincent Akkermans.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+    </div>
+  </body>
+</html>

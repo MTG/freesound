@@ -79,7 +79,7 @@ def prepare_image_link(p):
     if settings.DATA_URL.startswith('/'):
         return prepend_base(settings.DATA_URL)+p
     else:
-        return settings.DATA_URL + p 
+        return settings.DATA_URL + p
 
 def prepare_minimal_user(user):
     return {'username': user.username,
@@ -89,8 +89,8 @@ def prepare_minimal_user(user):
 def prepare_single_sound(sound):
     d = {}
     for field in ["num_downloads", "channels", "duration", "samplerate", "samplerate", \
-                  "id", "num_comments", "num_ratings", "filesize", "base_filename_slug", \
-                  "type", "description", "original_path", "bitdepth", "bitrate",  "created", \
+                  "id", "num_comments", "num_ratings", "filesize", \
+                  "type", "description", "bitdepth", "bitrate",  "created", \
                   "avg_rating", "original_filename"]:
         d[field] = getattr(sound, field)
     try:
@@ -170,18 +170,18 @@ class SoundSearchHandler(BaseHandler):
             resp = rc.BAD_REQUEST
             resp.content = form.errors
             return resp
-        
+
         cd = form.cleaned_data
         #return cd
 
-        solr = Solr(settings.SOLR_URL)    
-    
+        solr = Solr(settings.SOLR_URL)
+
         query = search_prepare_query(cd['q'],
-                                     cd['f'], 
+                                     cd['f'],
                                      search_prepare_sort(cd['s'], SEARCH_SORT_OPTIONS_API),
                                      cd['p'],
                                      settings.SOUNDS_PER_API_RESPONSE)
-        
+
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_API_RESPONSE)
@@ -193,14 +193,14 @@ class SoundSearchHandler(BaseHandler):
             # construct previous and next urls
             if page['has_other_pages']:
                 if page['has_previous']:
-                    result['previous'] = self.__construct_pagination_link(cd['q'], 
-                                                                          page['previous_page_number'], 
-                                                                          cd['f'], 
+                    result['previous'] = self.__construct_pagination_link(cd['q'],
+                                                                          page['previous_page_number'],
+                                                                          cd['f'],
                                                                           find_api_option(cd['s']))
                 if page['has_next']:
-                    result['next'] = self.__construct_pagination_link(cd['q'], 
-                                                                      page['next_page_number'], 
-                                                                      cd['f'], 
+                    result['next'] = self.__construct_pagination_link(cd['q'],
+                                                                      page['next_page_number'],
+                                                                      cd['f'],
                                                                       find_api_option(cd['s']))
             return result
         except SolrException, e:
@@ -211,7 +211,7 @@ class SoundSearchHandler(BaseHandler):
             resp.status_code = 500
             resp.content = error
             return resp
-    
+
     def __construct_pagination_link(self, q, p, f, s):
         return prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s))
 
@@ -220,14 +220,14 @@ class SoundHandler(BaseHandler):
     api endpoint:   /sounds/<sound_id>
     '''
     allowed_methods = ('GET',)
-    
+
     '''
     input:          n.a.
     output:         #single_sound#
     curl:           curl http://www.freesound.org/api/sounds/2
     '''
     def read(self, request, sound_id):
-        
+
         try:
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
@@ -235,13 +235,13 @@ class SoundHandler(BaseHandler):
             resp = 'There is no sound with id %s' % sound_id
             return resp
         return prepare_single_sound(sound)
-        
+
 class SoundServeHandler(BaseHandler):
     '''
     api endpoint:    /sounds/serve|preview
     '''
     allowed_methods = ('GET',)
-    
+
     '''
     input:        n.a.
     output:       binary file
@@ -289,7 +289,7 @@ class UserHandler(BaseHandler):
             resp.content = 'This user (%s) does not exist.' % username
             return resp
         return prepare_single_user(user)
-    
+
 class UserSoundsHandler(BaseHandler):
     '''
     api endpoint:   /people/<username>/sounds
@@ -317,7 +317,7 @@ class UserSoundsHandler(BaseHandler):
             if page.has_next():
                 result['next'] = self.__construct_pagination_link(username, page.next_page_number())
         return result
-    
+
     def __construct_pagination_link(self, u, p):
         return get_user_sounds_api_url(u)+'?p=%s' % p
 
@@ -326,7 +326,7 @@ class UserPacksHandler(BaseHandler):
     api endpoint:   /people/<username>/packs
     '''
     allowed_methods = ('GET',)
-    
+
     '''
     input:          n.a.
     output:         #user_packs#
@@ -352,7 +352,7 @@ class PackHandler(BaseHandler):
     input:          n.a.
     output:         #user_packs#
     curl:           curl http://www.freesound.org/api/packs/<pack_id>
-    '''    
+    '''
     def read(self, request, pack_id):
         try:
             pack = Pack.objects.get(id=pack_id)
@@ -372,7 +372,7 @@ class PackSoundsHandler(BaseHandler):
     input:          p
     output:         #pack_sounds#
     curl:           curl http://www.freesound.org/api/packs/<pack_id>/sounds
-    '''    
+    '''
     def read(self, request, pack_id):
         try:
             pack = Pack.objects.get(id=pack_id)
@@ -389,7 +389,7 @@ class PackSoundsHandler(BaseHandler):
             if page.has_next():
                 result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number())
         return result
-    
+
     def __construct_pagination_link(self, pack_id, p):
         return get_pack_sounds_api_url(pack_id)+'?p=%s' % p
 
@@ -397,8 +397,7 @@ class PackSoundsHandler(BaseHandler):
 # N.B. don't add this to a production environment!
 class UpdateSolrHandler(BaseHandler):
     allowed_methods = ('GET',)
-    
+
     def read(self, request):
         add_all_sounds_to_solr()
         return rc.ALL_OK
-    

@@ -181,26 +181,27 @@ def upload_file(request):
     try:
         user_id = session_data['_auth_user_id']
     except KeyError:
+        print "User not logged in."
         return HttpResponseBadRequest("User is not logged in.")
     
     try:
         request.user = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        # print "User with this ID does not exist."
+        print "User with this ID does not exist."
         return HttpResponseBadRequest("User with this ID does not exist.")
 
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
     
         if form.is_valid():
-            # print "form ok"
+            print "form ok"
             handle_uploaded_file(user_id, request.FILES["file"])
             return HttpResponse("File uploaded OK")
         else:
-            # print "form invalid", form.errors
+            print "form invalid", form.errors
             return HttpResponseBadRequest("Form is not valid.")
     else:
-        # print "no data in post"
+        print "no data in post"
         return HttpResponseBadRequest("No POST data in request")
 
 @login_required

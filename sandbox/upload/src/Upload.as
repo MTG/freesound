@@ -1,6 +1,5 @@
 package  
 {
-	import avmplus.getQualifiedClassName;
 	import flash.display.Sprite;
 	import flash.display.StageScaleMode;
 	import flash.errors.IllegalOperationError;

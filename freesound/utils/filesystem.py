@@ -27,13 +27,13 @@ def generate_tree(path):
     for (root, dirnames, filenames) in os.walk(path):
         parent = lookups[root]
     
-        for dirname in dirnames:
+        for dirname in sorted(dirnames):
             full_path = os.path.join(root, dirname)
             file_object = File(dirname, full_path, True)
             lookups[full_path] = file_object
             parent.children.append(file_object)
             
-        for filename in filenames:
+        for filename in sorted(filenames):
             full_path = os.path.join(root, filename)
             file_object = File(filename, full_path, False)
             files[file_object.id] = filename

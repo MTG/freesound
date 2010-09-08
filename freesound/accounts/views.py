@@ -168,7 +168,7 @@ def handle_uploaded_file(user_id, f):
         logger.info("\tfailed creating directory, probably already exist")
         pass
 
-    path = os.path.join(directory, f.name)
+    path = os.path.join(directory, os.path.basename(f.name))
     try:
         logger.info("\topening file: %s", path)
         destination = open(path.encode("utf-8"), 'wb')

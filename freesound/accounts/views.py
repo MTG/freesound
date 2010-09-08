@@ -160,7 +160,7 @@ def handle_uploaded_file(user_id, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
     directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(user_id))
     
-    logger.info("handling file upload")
+    logger.info("\thandling file upload")
     
     try:
         os.mkdir(directory)
@@ -170,10 +170,11 @@ def handle_uploaded_file(user_id, f):
 
     path = os.path.join(directory, f.name)
     try:
-        logger.info("opening file: %s", path)
+        logger.info("\topening file: %s", path)
         destination = open(path, 'wb')
         for chunk in f.chunks():
             destination.write(chunk)
+        logger.info("file upload done")
     except IOError, e:
         logger.warning("failed writing file error: %s", str(e))
         
@@ -191,14 +192,14 @@ def upload_file(request):
 
     try:
         user_id = session_data['_auth_user_id']
-        logger.info("user id %s", str(user_id))
+        logger.info("\tuser id %s", str(user_id))
     except KeyError:
         logger.warning("failed to get user id from session")
         return HttpResponseBadRequest("user is not logged in a.k.a. failed session id")
     
     try:
         request.user = User.objects.get(id=user_id)
-        logger.info("found user: %s", request.user.username)
+        logger.info("\tfound user: %s", request.user.username)
     except User.DoesNotExist:
         logger.warning("user with this id does not exist")
         return HttpResponseBadRequest("user with this ID does not exist.")
@@ -207,7 +208,7 @@ def upload_file(request):
         form = UploadFileForm(request.POST, request.FILES)
     
         if form.is_valid():
-            logger.info("form data is valid")
+            logger.info("\tform data is valid")
             handle_uploaded_file(user_id, request.FILES["file"])
             return HttpResponse("File uploaded OK")
         else:

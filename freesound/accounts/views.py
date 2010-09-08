@@ -175,7 +175,7 @@ def handle_uploaded_file(user_id, f):
         for chunk in f.chunks():
             destination.write(chunk)
         logger.info("file upload done")
-    except IOError, e:
+    except Exception, e:
         logger.warning("failed writing file error: %s", str(e))
         
 @csrf_exempt

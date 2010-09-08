@@ -18,6 +18,7 @@ from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 import os
+import logging
 
 def activate_user(request, activation_key):
     if request.user.is_authenticated():
@@ -153,55 +154,67 @@ def account(request, username):
     home = False
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request)) 
 
+logger = logging.getLogger("upload")
 
 def handle_uploaded_file(user_id, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
     directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(user_id))
     
+    logger.info("handling file upload")
+    
     try:
         os.mkdir(directory)
     except:
+        logger.info("failed creating directory, might already exist")
         pass
 
-    destination = open(os.path.join(directory, f.name), 'wb')
-    for chunk in f.chunks():
-        destination.write(chunk)
-
-
+    path = os.path.join(directory, f.name)
+    try:
+        logger.info("opening file: %s", path)
+        destination = open(path, 'wb')
+        for chunk in f.chunks():
+            destination.write(chunk)
+    except IOError, e:
+        logger.warning("failed writing file error: %s", str(e))
+        
 @csrf_exempt
 def upload_file(request):
     """ upload a file. This function does something weird: it gets the session id from the
     POST variables. This is weird but... as far as we know it's not too bad as we only need
     the user login """
     
+    logger.info("start uploading file")
+    
     # get the current session engine
     engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])
     session_data = engine.SessionStore(request.POST.get('sessionid', ''))
-    
+
     try:
         user_id = session_data['_auth_user_id']
+        logger.info("user id %s", str(user_id))
     except KeyError:
-        print "User not logged in."
-        return HttpResponseBadRequest("User is not logged in.")
+        logger.warning("failed to get user id from session")
+        return HttpResponseBadRequest("user is not logged in a.k.a. failed session id")
     
     try:
         request.user = User.objects.get(id=user_id)
+        logger.info("found user: %s", request.user.username)
     except User.DoesNotExist:
-        print "User with this ID does not exist."
-        return HttpResponseBadRequest("User with this ID does not exist.")
+        logger.warning("user with this id does not exist")
+        return HttpResponseBadRequest("user with this ID does not exist.")
 
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
     
         if form.is_valid():
-            print "form ok"
+            logger.info("form data is valid")
             handle_uploaded_file(user_id, request.FILES["file"])
             return HttpResponse("File uploaded OK")
         else:
-            print "form invalid", form.errors
+            logger.warning("form data is invalid: %s", str(form.errors))
             return HttpResponseBadRequest("Form is not valid.")
     else:
-        print "no data in post"
+        logger.warning("no data in post")
         return HttpResponseBadRequest("No POST data in request")
 
 @login_required

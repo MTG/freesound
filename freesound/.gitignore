@@ -7,4 +7,5 @@ logger.ini
 audio.log
 web.log
 search.log
+upload.log
 uploads/*

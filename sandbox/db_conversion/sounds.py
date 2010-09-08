@@ -60,7 +60,7 @@ while True:
         original_path = None
         moderation_date = created
         processing_date = created
-        processing_state = "OK"
+        processing_state = "PE"
         license_id = 1
         processing_log = None
         
@@ -113,5 +113,6 @@ while True:
 print """
 copy sounds_sound (id, user_id, created, original_path, base_filename_slug, description, license_id, original_filename, pack_id, type, duration, bitrate, bitdepth, samplerate, filesize, channels, md5, moderation_state, moderation_date, moderation_note, has_bad_description, processing_state, processing_date, processing_log, geotag_id, num_comments, num_downloads, avg_rating, num_ratings) from '%s' null as 'None';
 select setval('sounds_sound_id_seq',(select max(id)+1 from sounds_sound));
+update sounds_sound set original_path = '/mnt/freesound-data/' || id/1000 || '/sounds/' || base_filename_slug || '.' || type;
 vacuum analyze sounds_sound;
 """ % output_filename

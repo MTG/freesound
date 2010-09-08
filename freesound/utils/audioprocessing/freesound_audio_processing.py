@@ -3,9 +3,9 @@ from django.conf import settings
 from utils.text import slugify
 import logging
 import os.path
+import shutil
 import tempfile
 import utils.audioprocessing.processing as audioprocessing
-import shutil
 
 logger = logging.getLogger("audio")
 
@@ -118,7 +118,8 @@ def process(sound):
                 os.makedirs(os.path.dirname(new_original_path))
             except OSError:
                 pass
-            shutil.move(sound.original_path, new_original_path)
+            #shutil.move(sound.original_path, new_original_path)
+            shutil.copy(sound.original_path, new_original_path)
             sound.original_path = new_original_path
             sound.save()
             success("moved original file from %s to %s" % (sound.original_path, new_original_path))
@@ -130,3 +131,8 @@ def process(sound):
     sound.save()
     
     return True
+
+if __name__ == '__main__':
+    from sounds.models import Sound
+    for sound in Sound.objects.filter(state="PE"):
+        process(sound)

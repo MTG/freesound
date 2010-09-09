@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-
-from hotshot import stats
 from processing import create_wave_images, AudioProcessingException
-import hotshot
 import optparse
 import sys
 
@@ -46,6 +43,9 @@ for input_file in args:
         except AudioProcessingException, e:
             print "Error running wav2png: ", e
     else:
+        from hotshot import stats
+        import hotshot
+
         prof = hotshot.Profile("stats")
         prof.runcall(create_wave_images, *args)
         prof.close()

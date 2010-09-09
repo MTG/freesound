@@ -3,6 +3,7 @@ from processing import create_wave_images, AudioProcessingException
 import optparse
 import sys
 
+print sys.path
 
 parser = optparse.OptionParser("usage: %prog [options] input-filename", conflict_handler="resolve")
 parser.add_option("-a", "--waveout", action="store", dest="output_filename_w", type="string", help="output waveform image (default input filename + _w.png)")

@@ -87,7 +87,7 @@ def process(sound):
         success("created mp3: " + mp3_path)
     except Exception, e:
         cleanup([tmp_wavefile])
-        failure("conversion to mp3 has failed", e)
+        failure("conversion to mp3 (preview) has failed", e)
         return False
     
     try:
@@ -97,7 +97,7 @@ def process(sound):
         success("created png, medium size: " + waveform_path_m)
     except Exception, e:
         cleanup([tmp_wavefile])
-        failure("conversion to mp3 has failed", e)
+        failure("creation of images (M) has failed", e)
         return False
 
     try:
@@ -107,7 +107,7 @@ def process(sound):
         success("created png, large size: " + waveform_path_l)
     except Exception, e:
         cleanup([tmp_wavefile])
-        failure("conversion to mp3 has failed", e)
+        failure("creation of images (L) has failed", e)
         return False
 
     # now move the original
@@ -131,8 +131,3 @@ def process(sound):
     sound.save()
     
     return True
-
-if __name__ == '__main__':
-    from sounds.models import Sound
-    for sound in Sound.objects.filter(state="PE"):
-        process(sound)

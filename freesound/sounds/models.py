@@ -115,7 +115,7 @@ class Sound(SocialModel):
         ("OK",_('OK')),
         ("FA",_('Failed')),
     )
-    processing_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="PE")
+    processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
     processing_date = models.DateTimeField(null=True, blank=True, default=None)
     processing_log = models.TextField(null=True, blank=True, default=None)
     

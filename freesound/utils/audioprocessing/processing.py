@@ -440,9 +440,6 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
     """
     Utility function for creating both wavefile and spectrum images from an audio input file.
     """
-    import sys
-    print "create_wave_images", sys.path
-    
     processor = AudioProcessor(input_filename, fft_size, numpy.hanning)
     samples_per_pixel = processor.audio_file.nframes / float(image_width)
     

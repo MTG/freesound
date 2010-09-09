@@ -87,9 +87,6 @@ CREATE OR REPLACE FUNCTION sounds_sound_update() RETURNS TRIGGER AS $BODY$
         -- come from not all ok to all ok, increment!
         IF (OLD.moderation_state != 'OK' OR OLD.processing_state != 'OK') AND (NEW.moderation_state = 'OK' AND NEW.processing_state = 'OK') THEN
             UPDATE accounts_profile SET num_sounds = num_sounds + 1 WHERE user_id = NEW.user_id;
-            IF NEW.pack_id IS NOT NULL THEN
-                UPDATE sounds_pack SET num_sounds=num_sounds+1 WHERE id=NEW.pack_id;
-            END IF;
         END IF;
     
         -- come from all ok, go to not all ok

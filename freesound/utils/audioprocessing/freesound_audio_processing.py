@@ -9,7 +9,7 @@ import utils.audioprocessing.processing as audioprocessing
 
 logger = logging.getLogger("audio")
 
-def process(sound):
+def process(sound, do_cleanup=True):
     logger.info("processing audio file %d" % sound.id)
     
     def failure(message, error=None):
@@ -30,12 +30,15 @@ def process(sound):
         logger.info(message)
     
     def cleanup(files):
-        success("cleaning up files after processing")
-        for filename in files:
-            try:
-                os.unlink(filename)
-            except:
-                pass
+        if do_cleanup:
+            success("cleaning up files after processing")
+            for filename in files:
+                try:
+                    os.unlink(filename)
+                except:
+                    pass
+        else:
+            success("leaving temporary files...")
     
     # only keep the last processing attempt
     sound.processing_log = "" 

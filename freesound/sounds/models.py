@@ -203,10 +203,10 @@ class Sound(SocialModel):
     def rating_percent(self):
         return int(self.avg_rating*10)
     
-    def process(self, force=False):
+    def process(self, force=False, do_cleanup=True):
         if force or self.processing_state != "OK":
             from utils.audioprocessing.freesound_audio_processing import process
-            return process(self)
+            return process(self, do_cleanup)
         else:
             return True
             

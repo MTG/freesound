@@ -566,7 +566,7 @@ def audio_info(input_filename):
         except:
             pass
 
-        m = re.match(r".*Frame#  \d+\/(?P<frames>\d+).*", stdout)
+        m = re.match(r".*Frame#\s+\d+\/(?P<frames>\d+).*", stdout)
         if m == None:
             raise AudioProcessingException, "non-expected output in lame, no frames"
         frames = int(m.group("frames"))

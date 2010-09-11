@@ -21,7 +21,7 @@ class License(OrderedModel):
         return self.name
 
 class SoundManager(models.Manager):
-    def latest_additions(self, num_sounds):
+    def latest_additions(self, num_sounds, period='1 year'):
         return DelayedQueryExecuter("""
                 select
                     username,
@@ -38,21 +38,24 @@ class SoundManager(models.Manager):
                 where
                     processing_state = 'OK' and
                     moderation_state = 'OK' and
-                    created > now() - interval '1 year'
+                    created > now() - interval '%s'
                 group by
                     user_id
-                ) as X order by created desc limit %d;""" % num_sounds)
+                ) as X order by created desc limit %d;""" % (period, num_sounds))
     
     def random(self):
         from django.db import connection
         import random
         
-        sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
+        print "WARNING: not filtering sound by moderation state in get_random_sound"
+        #sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
+        sound_count = self.all().count()
 
         if sound_count:
             offset = random.randint(0, sound_count - 1)
             cursor = connection.cursor() #@UndefinedVariable
-            cursor.execute("select id from sounds_sound where processing_state = 'OK' and moderation_state = 'OK' offset %d limit 1" % offset)
+            #cursor.execute("select id from sounds_sound where processing_state = 'OK' and moderation_state = 'OK' offset %d limit 1" % offset)
+            cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
             return cursor.fetchone()[0]
         else:
             return None
@@ -245,7 +248,7 @@ class Pack(SocialModel):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     num_downloads = models.PositiveIntegerField(default=0)
-
+    
     def __unicode__(self):
         return u"%s by %s" % (self.name, self.user)
 

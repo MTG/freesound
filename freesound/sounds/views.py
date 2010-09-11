@@ -16,6 +16,7 @@ from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
     LicenseForm, FlagForm
+from accounts.models import Profile
 from sounds.models import Sound, Pack, Download
 from utils.cache import invalidate_template_cache
 from utils.encryption import encrypt, decrypt
@@ -24,9 +25,38 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 import os
+import datetime
+
+def get_random_sound():
+    cache_key = "random_sound"
+    random_sound = cache.get(cache_key)
+    if not random_sound:
+        random_sound = Sound.objects.random()
+        cache.set(cache_key, random_sound, 60*60*24)
+    return random_sound
+
+def get_random_uploader():
+    cache_key = "random_uploader"
+    random_uploader = cache.get(cache_key)
+    if not random_uploader:
+        random_uploader = Profile.objects.random_uploader()
+        cache.set(cache_key, random_uploader, 60*60*24)
+    return random_uploader
 
 def sounds(request):
-    pass
+    n_weeks_back = 51
+    latest_sounds = Sound.objects.latest_additions(5, '3 years')
+    latest_packs = Pack.objects.annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
+
+    # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
+    popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
+    
+    # popular_packs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
+    popular_packs = Pack.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
+    
+    random_sound = get_random_sound()
+    random_uploader = get_random_uploader()
+    return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request)) 
 
 def remixed(request):
     pass
@@ -36,14 +66,6 @@ def random(request):
 
 def packs(request):
     pass
-
-
-def get_random_sound():
-    cache_key = "random_sound"
-    random_sound = cache.get(cache_key)
-    if not random_sound:
-        random_sound = Sound.objects.random()
-        cache.set(cache_key, random_sound, 60*60*24)
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS

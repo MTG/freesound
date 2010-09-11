@@ -1,0 +1,60 @@
+{% extends "sounds/_section.html" %}
+
+{% load display_sound %}
+{% load paginator %}
+
+{% block title %}Sounds browse{% endblock title %}
+
+{% block section_content %}
+<h1>Sounds</h1>
+
+<h2>Uploader of the day: <a href="{% url account random_uploader.username %}">{{random_uploader.username}}</a></h2>
+<ul>
+    <li>Has a been a user for {{random_uploader.date_joined|timesince}}</li>
+    <li>{{random_uploader.profile.num_sounds}} sound{{random_uploader.profile.num_sounds|pluralize}} uploaded</li>
+    <li>{{random_uploader.profile.num_posts}} forum post{{random_uploader.profile.num_posts|pluralize}}</li>
+</ul>
+
+<h2>Sound of the day</h2>
+<div class="sample_player_small">
+    {% if random_sound != None %}
+	{% display_sound random_sound %}
+	{% else %}
+	ranom sound is none
+	{% endif %}
+</div>
+
+<h2>Latest sounds</h2>
+{% for latest_addition in latest_sounds %}
+	<div class="sample_player_small">
+		{% display_sound latest_addition.sound_id %}
+		{% if latest_addition.extra %}
+		<div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
+		{% endif %}
+	</div>
+{% endfor %}
+
+<h2>Latest changed packs</h2>
+<ul>
+{% for pack in latest_packs %}
+	<li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
+{% endfor %}
+</ul>
+
+<h2>Most downloaded sounds (in the last week)</h2>
+{% for sound in popular_sounds %}
+	<div class="sample_player_small">
+		{% display_sound sound.id %}
+		<div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads in the last week</div>
+	</div>
+{% endfor %}
+
+<h2>Most downloaded packs (in the last week)</h2>
+<ul>
+{% for pack in popular_packs %}
+	<li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_d}}</span> downloads)</li>
+{% endfor %}
+</ul>
+
+
+{% endblock %}

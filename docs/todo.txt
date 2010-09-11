@@ -6,17 +6,16 @@
 * browse/random/ -> sounds.views.random
 * browse/packs/ -> sounds.views.packs
 * people/ -> accounts.views.accounts
-* people/bram/sounds/1234/similar/ -> sounds.views.similar
 * packs download
 * sound edit -> remixed from... (use solr?)
-* address book from sent messages
 * account activation "done" page
 * voting stars
+* describe
 * moderation interface
+* pack downloads
+* account picture
 
 == Models ==
-
-* make sure there is a moderated date and a created date -> avg moderation time!
 
 == Database ==
 
@@ -26,6 +25,11 @@
 
 == Api ==
 
+* fix documentation
+
+== Server ==
+
+* 
 
 == Other ==
 
@@ -42,3 +46,8 @@
 
 * find someone to manage this @ freesound. quodbup?
 * get something similar to uservoice
+
+== Later ==
+
+* Views: address book from sent messages
+* Views: people/bram/sounds/1234/similar/ -> sounds.views.similar

@@ -6,6 +6,18 @@ from general.models import SocialModel
 from geotags.models import GeoTag
 from utils.sql import DelayedQueryExecuter
 
+class ProfileManager(models.Manager):
+    def random_uploader(self):
+        import random
+        
+        user_count = User.objects.filter(profile__num_sounds__gte=1).count()
+
+        if user_count:
+            offset = random.randint(0, user_count - 1)
+            return User.objects.filter(profile__num_sounds__gte=1)[offset:offset+1][0]
+        else:
+            return None
+
 class Profile(SocialModel):
     user = models.OneToOneField(User)
     
@@ -21,6 +33,8 @@ class Profile(SocialModel):
     
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
+    
+    objects = ProfileManager()
     
     def __unicode__(self):
         return self.user.username

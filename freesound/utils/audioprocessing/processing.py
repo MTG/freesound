@@ -532,7 +532,6 @@ def audio_info(input_filename):
         except:
             pass
         
-        print stdout
         m = re.match(r".*Sample Rate\s+:\s+(\d+).+", stdout)
         if m == None:
             raise AudioProcessingException, "non-expected output in sndfile-info, no Sample Rate"

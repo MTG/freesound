@@ -517,28 +517,40 @@ def audio_info(input_filename):
     
     if not input_filename.lower().endswith(".mp3"):
         # parse sndfile info
+
         bitdepth = None
-        
-        m = re.match(r".*Bit Width\s+: (\d+).*", stdout)
+        m = re.match(r".*Bit Width\s+:\s+(\d+).*", stdout)
         try:
             bitdepth = int(m.group(1))
         except:
             pass
         
-        m = re.match(r".+Sample Rate : (\d+).+", stdout)
+        riff_length = 0
+        m = re.match(r".*RIFF\s+:\s+(\d+).*", stdout)
+        try:
+            riff_length = int(m.group(1))
+        except:
+            pass
+        
+        m = re.match(r"\.*Sample Rate\s+:\s+(\d+).+", stdout)
         if m == None:
             raise AudioProcessingException, "non-expected output in sndfile-info, no Sample Rate"
         samplerate = int(m.group(1))
         
-        m = re.match(r".*Channels    : (\d+).*", stdout)
+        m = re.match(r".*Channels\s+:\s+(\d+).*", stdout)
         if m == None:
             raise AudioProcessingException, "non-expected output in sndfile-info, no Channels"
         channels = int(m.group(1))
         
-        m = re.match(r".*Duration    : (?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>[\d\.]+).*", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in sndfile-info, no duration"
-        duration = int(m.group("hours"))*60*60 + int(m.group("minutes"))*60 + float(m.group("seconds"))
+        m = re.match(r".*Duration\s+:\s+(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>[\d\.]+).*", stdout)
+        if m != None:
+            duration = int(m.group("hours"))*60*60 + int(m.group("minutes"))*60 + float(m.group("seconds"))
+        else:
+            if riff_length and bitdepth and channels and samplerate:
+                duration = float(riff_length)/float(samplerate*channels*bitdepth)
+            else:
+                raise AudioProcessingException, "non-expected output in sndfile-info, no duration"
+
     else:
         bitdepth = None
         

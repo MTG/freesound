@@ -29,7 +29,6 @@
 
 == Server ==
 
-* 
 
 == Other ==
 
@@ -41,6 +40,7 @@
 * smallest flash player
 * list of tables that need to be regenerated (use SQL triggers?)
 * judta helpdesk, integrate with contact form & sound/post flagging
+* use sndfile-convert and sndfile-resample before trying to use mplayer 
 
 == Features, bugreports ==
 

@@ -65,9 +65,8 @@
     	});
         map.addOverlay(marker);
     
-        zoomToBounds(map, bounds);
-    
         {% endfor %}
+        zoomToBounds(map, bounds);
     </script>
     <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
     {% endif %}

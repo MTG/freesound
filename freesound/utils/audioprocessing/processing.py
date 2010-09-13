@@ -490,6 +490,29 @@ def convert_to_wav(input_filename, output_filename):
     return stdout
     
 
+def convert_to_wav_with_sndfileconvert(input_filename, output_filename):
+    """
+    converts an uncompressed file (wav/aif) type to wav, 44.1, 16bit
+    """
+    
+    if not os.path.exists(input_filename):
+        raise AudioProcessingException, "file %s does not exist" % input_filename
+    
+    command = ["sndfile-convert", "-pcm16", input_filename, output_filename]
+    
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = process.communicate()
+    except OSError:
+        raise AudioProcessingException, "sndfile-convert not found: " + stderr
+    
+    if process.returncode != 0 or not os.path.exists(output_filename):
+        raise AudioProcessingException, stdout
+    
+    return stdout
+
+
+
 def audio_info(input_filename):
     """
     extract samplerate, channels, ... from an audio file using getid3

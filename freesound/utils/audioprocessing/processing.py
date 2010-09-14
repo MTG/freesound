@@ -599,7 +599,7 @@ def audio_info(input_filename):
         if m != None:
             duration = int(m.group("hours"))*60*60 + int(m.group("minutes"))*60 + float(m.group("seconds"))
         else:
-            if riff_length and bitdepth and channels and samplerate:
+            if bitdepth and channels and samplerate:
                 duration = float(riff_length)/float(samplerate*channels*bitdepth)
             else:
                 raise AudioProcessingException, "non-expected output in sndfile-info, no duration"
@@ -656,7 +656,7 @@ def audio_info(input_filename):
             raise AudioProcessingException, "non-expected output in ogginfo, no playback length"
         duration = float(m.group("minutes"))*60 + float(m.group("seconds"))
     
-    bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration
+    bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration if duration > 0 else 0
 
     sound_type = os.path.splitext(input_filename.lower())[1].strip(".")
 

@@ -75,43 +75,24 @@ def process(sound, do_cleanup=True):
     
     tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
 
-    if sound.type in ["wav", "aiff", "flac"]:
-        tmp_wavefile1 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
-        
-        failed_1st_convert = False
-        
-        if sound.type in ["wav", "aiff"]:
-            try:
-                audioprocessing.convert_to_wav_with_sndfileconvert(sound.original_path, tmp_wavefile1)
-                to_cleanup.append(tmp_wavefile1)
-                success("converted to wave file with snd-file: " + tmp_wavefile1)
-            except Exception, e:
-                #failure("conversion to wave file (sndfile) has failed", e)
-                #return False
-                success("FAILED to convert file with sndfile, still trying with mplayer...")
-                tmp_wavefile1 = sound.original_path
-                failed_1st_convert = True
-        else:
-            try:
-                audioprocessing.convert_to_wav_with_flac(sound.original_path, tmp_wavefile1)
-                to_cleanup.append(tmp_wavefile1)
-            except Exception, e:
-                failure("conversion to wave file (flac) has failed", e)
-                return False
-            success("converted to wave file with flac: " + tmp_wavefile1)
-
-        if sound.samplerate != 44100 or failed_1st_convert:
-            try:
-                audioprocessing.convert_to_wav(tmp_wavefile1, tmp_wavefile)
-            except Exception, e:
-                failure("conversion to wave file (mplayer after sndfile) has failed", e)
-                return False
-            
-            success("converted to wave file with mplayer: " + tmp_wavefile)
+    if sound.type in ["wav", "aiff"]:
+        try:
+            audioprocessing.convert_to_wav_with_sndfileconvert(sound.original_path, tmp_wavefile)
             to_cleanup.append(tmp_wavefile)
-        else:
-            success("skipping conversion with mplayer")
-            tmp_wavefile = tmp_wavefile1
+            success("converted to wave file with snd-file: " + tmp_wavefile)
+        except Exception, e:
+            #failure("conversion to wave file (sndfile) has failed", e)
+            #return False
+            success("FAILED to convert file with sndfile, still trying to generate images anyway...")
+            tmp_wavefile = sound.original_path
+    elif sound.type == "flac":
+        try:
+            audioprocessing.convert_to_wav_with_flac(sound.original_path, tmp_wavefile)
+            to_cleanup.append(tmp_wavefile)
+        except Exception, e:
+            failure("conversion to wave file (flac) has failed", e)
+            return False
+        success("converted to wave file with flac: " + tmp_wavefile)
     else: # ogg and mp3, basically...
         try:
             audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)

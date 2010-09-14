@@ -26,7 +26,10 @@ import math
 import numpy
 import os
 import re
-import scikits.audiolab as audiolab
+try:
+    import scikits.audiolab as audiolab
+except ImportError:
+    print "WARNING: audiolab is not installed so wav2png will not work"
 import subprocess
 
 class AudioProcessingException(Exception):
@@ -523,10 +526,14 @@ def audio_info(input_filename):
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
 
-    if not input_filename.lower().endswith(".mp3"):
+    ext = os.path.splitext(input_filename)[1].lower()
+    
+    if ext in [".aif", ".aiff", ".wav", ".flac", ".fla"]:
         command = ["sndfile-info", input_filename]
-    else:
+    elif ext == ".mp3":
         command = ["lame", "--decode", input_filename, "/dev/null"]
+    elif ext == ".ogg":
+        command = ["ogginfo", "-v", input_filename]
         
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -539,7 +546,7 @@ def audio_info(input_filename):
     
     stdout = stdout.replace("\n", " ") + " " + stderr.replace("\n", " ")
     
-    if not input_filename.lower().endswith(".mp3"):
+    if ext in [".aif", ".aiff", ".wav", ".flac", ".fla"]:
         # parse sndfile info
 
         bitdepth = None
@@ -574,8 +581,8 @@ def audio_info(input_filename):
                 duration = float(riff_length)/float(samplerate*channels*bitdepth)
             else:
                 raise AudioProcessingException, "non-expected output in sndfile-info, no duration"
-
-    else:
+            
+    elif ext == ".mp3":
         bitdepth = None
         
         m = re.match(r".*(?P<channels>\d) channel.*", stdout)
@@ -608,6 +615,24 @@ def audio_info(input_filename):
         frames = int(m.group("frames"))
         
         duration = ((frames*1152) - skip_end - skip_start)/samplerate
+        
+    elif ext == ".ogg":
+        bitdepth = None
+        
+        m = re.match(r".*Channels: (?P<channels>\d+) .*", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in ogginfo, no channels"
+        channels = int(m.group("channels"))
+
+        m = re.match(r".*Rate:\s+(?P<samplerate>\d+).*", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in ogginfo, no Rate"
+        samplerate = float(m.group("samplerate"))
+
+        m = re.match(r".*Playback length:\s+(?P<minutes>[\d\.]+)m:(?P<seconds>[\d\.]+)s.*", stdout)
+        if m == None:
+            raise AudioProcessingException, "non-expected output in ogginfo, no playback length"
+        duration = float(m.group("minutes"))*60 + float(m.group("seconds"))
     
     bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration
 

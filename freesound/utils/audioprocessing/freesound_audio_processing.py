@@ -68,7 +68,6 @@ def process(sound, do_cleanup=True):
     sound.channels = audio_info["channels"]
     sound.duration = audio_info["duration"]
     sound.type = audio_info["type"]
-    print audio_info
     sound.save()
     
     to_cleanup = []

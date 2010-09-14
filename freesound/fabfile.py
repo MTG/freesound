@@ -3,6 +3,11 @@ from fabric.api import env, run, cd
 
 env.hosts = ["fsweb@tabasco.upf.edu"]
 
+def clearpyc():
+    """run syncdb remotely"""
+    with cd("freesound/freesound"):
+        run("find . -name \"*.pyc\" -exec rm '{}' ';'")
+
 def syncdb():
     """run syncdb remotely"""
     with cd("freesound/freesound"):
@@ -28,4 +33,5 @@ def pull():
 def deploy():
     """pull and restart"""
     pull()
+    clearpyc()
     restart()

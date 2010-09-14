@@ -83,8 +83,15 @@ def process(sound, do_cleanup=True):
         except Exception, e:
             #failure("conversion to wave file (sndfile) has failed", e)
             #return False
-            success("FAILED to convert file with sndfile, still trying to generate images anyway...")
-            tmp_wavefile = sound.original_path
+            #success("FAILED to convert file with sndfile, still trying to generate images anyway...")
+            #tmp_wavefile = sound.original_path
+            try:
+                audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)
+            except Exception, e:
+                failure("conversion to wave file (mplayer) has failed", e)
+                return False
+            success("converted to wave file: " + tmp_wavefile)
+            to_cleanup.append(tmp_wavefile)
     elif sound.type == "flac":
         try:
             audioprocessing.convert_to_wav_with_flac(sound.original_path, tmp_wavefile)
@@ -97,7 +104,7 @@ def process(sound, do_cleanup=True):
         try:
             audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)
         except Exception, e:
-            failure("conversion to wave file (mplayer only) has failed", e)
+            failure("conversion to wave file (mplayer) has failed", e)
             return False
         success("converted to wave file: " + tmp_wavefile)
         to_cleanup.append(tmp_wavefile)

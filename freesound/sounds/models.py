@@ -88,7 +88,7 @@ class Sound(SocialModel):
     SOUND_TYPE_CHOICES = (
         ('wav', 'Wave'),
         ('ogg', 'Ogg Vorbis'),
-        ('aif', 'AIFF'),
+        ('aiff', 'AIFF'),
         ('mp3', 'Mp3'),
         ('flac', 'Flac')
     )

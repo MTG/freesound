@@ -68,6 +68,7 @@ def process(sound, do_cleanup=True):
     sound.channels = audio_info["channels"]
     sound.duration = audio_info["duration"]
     sound.type = audio_info["type"]
+    print audio_info
     sound.save()
     
     to_cleanup = []
@@ -76,7 +77,7 @@ def process(sound, do_cleanup=True):
     
     tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
 
-    if sound.type in ["wav", "aif"]:
+    if sound.type in ["wav", "aiff"]:
         tmp_wavefile1 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
         try:
             audioprocessing.convert_to_wav_with_sndfileconvert(sound.original_path, tmp_wavefile1)

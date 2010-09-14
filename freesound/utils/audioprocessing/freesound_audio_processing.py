@@ -88,7 +88,7 @@ def process(sound, do_cleanup=True):
             except Exception, e:
                 #failure("conversion to wave file (sndfile) has failed", e)
                 #return False
-                success("FAILED to convert file with sndfile, still trying with mplayer...", e)
+                success("FAILED to convert file with sndfile, still trying with mplayer...")
                 tmp_wavefile1 = sound.original_path
                 failed_1st_convert = True
         else:
@@ -96,7 +96,7 @@ def process(sound, do_cleanup=True):
                 audioprocessing.convert_to_wav_with_flac(sound.original_path, tmp_wavefile1)
                 to_cleanup.append(tmp_wavefile1)
             except Exception, e:
-                success("conversion to wave file (flac) has failed", e)
+                failure("conversion to wave file (flac) has failed", e)
                 return False
             success("converted to wave file with flac: " + tmp_wavefile1)
 

@@ -8,6 +8,12 @@ def clearpyc():
     with cd("freesound/freesound"):
         run("find . -name \"*.pyc\" -exec rm '{}' ';'")
 
+def make_stereofy():
+    pull()
+    with cd("freesound/sandbox/legacy/stereofy/"):
+        run("make clean")
+        run("make")
+
 def syncdb():
     """run syncdb remotely"""
     with cd("freesound/freesound"):

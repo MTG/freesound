@@ -16,6 +16,6 @@ anyoption.o: anyoption.cpp
 	$(CC) $(CXXFLAGS) anyoption.cpp
 	
 clean:	 
-	rm ./*.o
-	rm $(EXEC)
+	rm -f ./*.o
+	rm -f $(EXEC)
 	

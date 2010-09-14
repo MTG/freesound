@@ -95,14 +95,18 @@ def process(sound, do_cleanup=True):
         
         to_cleanup.append(tmp_wavefile1)
 
-        try:
-            audioprocessing.convert_to_wav(tmp_wavefile1, tmp_wavefile)
-        except Exception, e:
-            failure("conversion to wave file (mplayer after sndfile) has failed", e)
-            return False
-        
-        success("converted to wave file with mplayer: " + tmp_wavefile)
-        to_cleanup.append(tmp_wavefile)
+        if sound.channels != 2 or sound.samplerate != 44100:
+            try:
+                audioprocessing.convert_to_wav(tmp_wavefile1, tmp_wavefile)
+            except Exception, e:
+                failure("conversion to wave file (mplayer after sndfile) has failed", e)
+                return False
+            
+            success("converted to wave file with mplayer: " + tmp_wavefile)
+            to_cleanup.append(tmp_wavefile)
+        else:
+            success("skipping conversion with mplayer")
+            tmp_wavefile = tmp_wavefile1
     else: # ogg and mp3, basically...
         try:
             audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)

@@ -572,21 +572,15 @@ def audio_info(input_filename):
         # parse sndfile info
 
         bitdepth = None
-        m = re.match(r".*Bit Width\s+:\s+(\d+).*", stdout)
-        try:
-            bitdepth = int(m.group(1))
-        except:
-            pass
+        m = re.match(r".*(Sample Size|Bit Width)\s+:\s+(?P<bitdepth>\d+).*", stdout)
+        if m != None:
+            bitdepth = int(m.group("bitdepth"))
         
         frames = 0
         
-        m = re.match(r".*Frames\s+:\s+(?P<frames>\d+).+", stdout)
+        m = re.match(r".*(RIFF|Frames)\s+:\s+(?P<frames>\d+).*", stdout)
         if m != None:
             frames = int(m.group("frames"))
-        else:
-            m = re.match(r".*RIFF\s+:\s+(?P<frames>\d+).*", stdout)
-            if m != None:
-                frames = int(m.group("frames"))
         
         m = re.match(r".*Sample Rate\s+:\s+(\d+).+", stdout)
         if m == None:

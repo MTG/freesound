@@ -578,12 +578,15 @@ def audio_info(input_filename):
         except:
             pass
         
-        riff_length = 0
-        m = re.match(r".*RIFF\s+:\s+(\d+).*", stdout)
-        try:
-            riff_length = int(m.group(1))
-        except:
-            pass
+        frames = 0
+        
+        m = re.match(r".*Frames\s+:\s+(?P<frames>\d+).+", stdout)
+        if m != None:
+            frames = int(m.group("frames"))
+        else:
+            m = re.match(r".*RIFF\s+:\s+(?P<frames>\d+).*", stdout)
+            if m != None:
+                frames = int(m.group("frames"))
         
         m = re.match(r".*Sample Rate\s+:\s+(\d+).+", stdout)
         if m == None:
@@ -600,7 +603,7 @@ def audio_info(input_filename):
             duration = int(m.group("hours"))*60*60 + int(m.group("minutes"))*60 + float(m.group("seconds"))
         else:
             if bitdepth and channels and samplerate:
-                duration = float(riff_length)/float(samplerate*channels*bitdepth)
+                duration = float(frames)/float(samplerate*channels*bitdepth)
             else:
                 raise AudioProcessingException, "non-expected output in sndfile-info, no duration"
             

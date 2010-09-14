@@ -78,24 +78,29 @@ def process(sound, do_cleanup=True):
     if sound.type in ["wav", "aiff", "flac"]:
         tmp_wavefile1 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
         
+        failed_1st_convert = False
+        
         if sound.type in ["wav", "aiff"]:
             try:
                 audioprocessing.convert_to_wav_with_sndfileconvert(sound.original_path, tmp_wavefile1)
+                to_cleanup.append(tmp_wavefile1)
+                success("converted to wave file with snd-file: " + tmp_wavefile1)
             except Exception, e:
-                failure("conversion to wave file (sndfile) has failed", e)
-                return False
-            success("converted to wave file with snd-file: " + tmp_wavefile1)
+                #failure("conversion to wave file (sndfile) has failed", e)
+                #return False
+                success("FAILED to convert file with sndfile, still trying with mplayer...", e)
+                tmp_wavefile1 = sound.original_path
+                failed_1st_convert = True
         else:
             try:
                 audioprocessing.convert_to_wav_with_flac(sound.original_path, tmp_wavefile1)
+                to_cleanup.append(tmp_wavefile1)
             except Exception, e:
-                failure("conversion to wave file (flac) has failed", e)
+                success("conversion to wave file (flac) has failed", e)
                 return False
             success("converted to wave file with flac: " + tmp_wavefile1)
-        
-        to_cleanup.append(tmp_wavefile1)
 
-        if sound.channels != 2 or sound.samplerate != 44100:
+        if sound.samplerate != 44100 or failed_1st_convert:
             try:
                 audioprocessing.convert_to_wav(tmp_wavefile1, tmp_wavefile)
             except Exception, e:

@@ -481,8 +481,6 @@ def convert_to_wav(input_filename, output_filename):
     
     command = ["mplayer", "-vc", "null", "-vo", "null", "-af", "channels=2,resample=44100:0:0", "-ao", "pcm:fast:file=\"%s\"" % output_filename, input_filename]
     
-    print " ".join(command)
-        
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = process.communicate()
@@ -504,7 +502,7 @@ def convert_to_wav_with_flac(input_filename, output_filename):
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
     
-    command = ["flac", "-o", output_filename, input_filename]
+    command = ["flac", "-d", "-o", output_filename, input_filename]
     
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

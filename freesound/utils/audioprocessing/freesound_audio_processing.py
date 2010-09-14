@@ -31,14 +31,14 @@ def process(sound, do_cleanup=True):
     
     def cleanup(files):
         if do_cleanup:
-            success("cleaning up files after processing")
+            success("cleaning up files after processing: " + ", ".join(files))
             for filename in files:
                 try:
                     os.unlink(filename)
                 except:
                     pass
         else:
-            success("leaving temporary files...")
+            success("leaving temporary files..." + ", ".join(files))
     
     # only keep the last processing attempt
     sound.processing_log = "" 

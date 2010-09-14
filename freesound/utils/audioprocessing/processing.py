@@ -492,6 +492,28 @@ def convert_to_wav(input_filename, output_filename):
     
     return stdout
 
+
+def convert_to_wav_with_flac(input_filename, output_filename):
+    """
+    converts any audio file type to wav, 44.1, 16bit, stereo
+    uses mplayer to play whatever, and store the format as a wave file
+    """
+    
+    if not os.path.exists(input_filename):
+        raise AudioProcessingException, "file %s does not exist" % input_filename
+    
+    command = ["flac", "-o", output_filename, input_filename]
+    
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = process.communicate()
+    except OSError:
+        raise AudioProcessingException, "flac not found: " + stderr
+    
+    if process.returncode != 0 or not os.path.exists(output_filename):
+        raise AudioProcessingException, stdout
+    
+    return stdout
     
 
 def convert_to_wav_with_sndfileconvert(input_filename, output_filename):

@@ -51,16 +51,15 @@ def process(sound, do_cleanup=True):
     if not os.path.exists(sound.original_path):
         failure("the file to be processed (%s) isn't there" % sound.original_path)
         return False
-    else:
-        success("found the file %s" % sound.original_path)
+    success("found the file %s" % sound.original_path)
     
     # get basic info
     try:
         audio_info = audioprocessing.audio_info(sound.original_path)
-        success("got the audio info")
     except Exception, e:
         failure("audio information extraction has failed", e)
         return False
+    success("got the audio info")
     
     sound.samplerate = audio_info["samplerate"]
     sound.bitrate = audio_info["bitrate"]
@@ -76,32 +75,42 @@ def process(sound, do_cleanup=True):
     
     tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
 
-    if sound.type in ["wav", "aiff"]:
+    if sound.type in ["wav", "aiff", "flac"]:
         tmp_wavefile1 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
-        try:
-            audioprocessing.convert_to_wav_with_sndfileconvert(sound.original_path, tmp_wavefile1)
+        
+        if sound.type in ["wav", "aiff"]:
+            try:
+                audioprocessing.convert_to_wav_with_sndfileconvert(sound.original_path, tmp_wavefile1)
+            except Exception, e:
+                failure("conversion to wave file (sndfile) has failed", e)
+                return False
             success("converted to wave file with snd-file: " + tmp_wavefile1)
-            to_cleanup.append(tmp_wavefile1)
-        except Exception, e:
-            failure("conversion to wave file (sndfile) has failed", e)
-            return False
+        else:
+            try:
+                audioprocessing.convert_to_wav_with_flac(sound.original_path, tmp_wavefile1)
+            except Exception, e:
+                failure("conversion to wave file (flac) has failed", e)
+                return False
+            success("converted to wave file with flac: " + tmp_wavefile1)
+        
+        to_cleanup.append(tmp_wavefile1)
 
         try:
             audioprocessing.convert_to_wav(tmp_wavefile1, tmp_wavefile)
-            success("converted to wave file with mplayer: " + tmp_wavefile)
-            to_cleanup.append(tmp_wavefile)
         except Exception, e:
             failure("conversion to wave file (mplayer after sndfile) has failed", e)
             return False
-    else:
         
+        success("converted to wave file with mplayer: " + tmp_wavefile)
+        to_cleanup.append(tmp_wavefile)
+    else: # ogg and mp3, basically...
         try:
             audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)
-            success("converted to wave file: " + tmp_wavefile)
-            to_cleanup.append(tmp_wavefile)
         except Exception, e:
             failure("conversion to wave file (mplayer only) has failed", e)
             return False
+        success("converted to wave file: " + tmp_wavefile)
+        to_cleanup.append(tmp_wavefile)
     
     # create preview
     mp3_path = os.path.join(settings.DATA_PATH, paths["preview_path"])
@@ -112,33 +121,33 @@ def process(sound, do_cleanup=True):
     
     try:
         audioprocessing.convert_to_mp3(tmp_wavefile, mp3_path)
-        success("created mp3: " + mp3_path)
     except Exception, e:
         cleanup(to_cleanup)
         failure("conversion to mp3 (preview) has failed", e)
         return False
+    success("created mp3: " + mp3_path)
     
     # create waveform images M
     waveform_path_m = os.path.join(settings.DATA_PATH, paths["waveform_path_m"])
     spectral_path_m = os.path.join(settings.DATA_PATH, paths["spectral_path_m"])
     try:
         audioprocessing.create_wave_images(tmp_wavefile, waveform_path_m, spectral_path_m, 120, 71, 2048)
-        success("created png, medium size: " + waveform_path_m)
     except Exception, e:
         cleanup(to_cleanup)
         failure("creation of images (M) has failed", e)
         return False
+    success("created png, medium size: " + waveform_path_m)
 
     # create waveform images L
     waveform_path_l = os.path.join(settings.DATA_PATH, paths["waveform_path_l"])
     spectral_path_l = os.path.join(settings.DATA_PATH, paths["spectral_path_l"])
     try:
         audioprocessing.create_wave_images(tmp_wavefile, waveform_path_l, spectral_path_l, 900, 201, 2048)
-        success("created png, large size: " + waveform_path_l)
     except Exception, e:
         cleanup(to_cleanup)
         failure("creation of images (L) has failed", e)
         return False
+    success("created png, large size: " + waveform_path_l)
 
     # now move the original
     new_original_path = os.path.join(settings.DATA_PATH, paths["sound_path"])
@@ -151,9 +160,9 @@ def process(sound, do_cleanup=True):
         try:
             #shutil.move(sound.original_path, new_original_path)
             shutil.copy(sound.original_path, new_original_path)
-            success("moved original file from %s to %s" % (sound.original_path, new_original_path))
         except IOError, e:
             failure("failed to move file from %s to %s" % (sound.original_path, new_original_path), e) 
+        success("moved original file from %s to %s" % (sound.original_path, new_original_path))
 
         sound.original_path = new_original_path
         sound.save()

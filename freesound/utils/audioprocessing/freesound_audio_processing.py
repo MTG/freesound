@@ -70,14 +70,38 @@ def process(sound, do_cleanup=True):
     sound.type = audio_info["type"]
     sound.save()
     
+    to_cleanup = []
+    
     # convert to wave file
+    
     tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
-    try:
-        audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)
-        success("converted to wave file: " + tmp_wavefile)
-    except Exception, e:
-        failure("conversion to wave file has failed", e)
-        return False
+
+    if sound.type in ["wav", "aif"]:
+        tmp_wavefile1 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+        try:
+            audioprocessing.convert_to_wav_with_sndfileconvert(sound.original_path, tmp_wavefile1)
+            success("converted to wave file with snd-file: " + tmp_wavefile1)
+            to_cleanup.append(tmp_wavefile1)
+        except Exception, e:
+            failure("conversion to wave file (sndfile) has failed", e)
+            return False
+
+        try:
+            audioprocessing.convert_to_wav(tmp_wavefile1, tmp_wavefile)
+            success("converted to wave file with mplayer: " + tmp_wavefile)
+            to_cleanup.append(tmp_wavefile)
+        except Exception, e:
+            failure("conversion to wave file (mplayer after sndfile) has failed", e)
+            return False
+    else:
+        
+        try:
+            audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)
+            success("converted to wave file: " + tmp_wavefile)
+            to_cleanup.append(tmp_wavefile)
+        except Exception, e:
+            failure("conversion to wave file (mplayer only) has failed", e)
+            return False
     
     # create preview
     mp3_path = os.path.join(settings.DATA_PATH, paths["preview_path"])
@@ -90,7 +114,7 @@ def process(sound, do_cleanup=True):
         audioprocessing.convert_to_mp3(tmp_wavefile, mp3_path)
         success("created mp3: " + mp3_path)
     except Exception, e:
-        cleanup([tmp_wavefile])
+        cleanup(to_cleanup)
         failure("conversion to mp3 (preview) has failed", e)
         return False
     
@@ -101,7 +125,7 @@ def process(sound, do_cleanup=True):
         audioprocessing.create_wave_images(tmp_wavefile, waveform_path_m, spectral_path_m, 120, 71, 2048)
         success("created png, medium size: " + waveform_path_m)
     except Exception, e:
-        cleanup([tmp_wavefile])
+        cleanup(to_cleanup)
         failure("creation of images (M) has failed", e)
         return False
 
@@ -112,7 +136,7 @@ def process(sound, do_cleanup=True):
         audioprocessing.create_wave_images(tmp_wavefile, waveform_path_l, spectral_path_l, 900, 201, 2048)
         success("created png, large size: " + waveform_path_l)
     except Exception, e:
-        cleanup([tmp_wavefile])
+        cleanup(to_cleanup)
         failure("creation of images (L) has failed", e)
         return False
 
@@ -134,7 +158,7 @@ def process(sound, do_cleanup=True):
         sound.original_path = new_original_path
         sound.save()
         
-    cleanup([tmp_wavefile])
+    cleanup(to_cleanup)
     sound.processing_state = "OK"
     sound.save()
     

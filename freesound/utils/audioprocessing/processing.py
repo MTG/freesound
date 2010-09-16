@@ -492,7 +492,7 @@ def convert_to_pcm(input_filename, output_filename):
     sound_type = get_sound_type(input_filename)
     
     if sound_type == "mp3":
-        cmd = ["mpg123", input_filename, "-w", output_filename]
+        cmd = ["lame", "--decode", input_filename, output_filename]
     elif sound_type == "ogg":
         cmd = ["oggdec", input_filename, "-o", output_filename]
     elif sound_type == "flac":

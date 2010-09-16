@@ -70,16 +70,16 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		std::cout << "input channels: " << sfinfoIn.channels << std::endl;
-		std::cout << "input samaplerate: " << sfinfoIn.samplerate << std::endl;
-		std::cout << "input # frames: " << sfinfoIn.frames << std::endl;
+		std::cout << "#channels " << sfinfoIn.channels << std::endl;
+		std::cout << "#samplerate " << sfinfoIn.samplerate << std::endl;
+		std::cout << "#duration " << double(sfinfoIn.frames)/double(sfinfoIn.samplerate) << std::endl;
 	}
 
 
 	SNDFILE *fileOut = NULL;
 	SF_INFO sfinfoOut;
 
-	sfinfoOut.format = sfinfoIn.format;
+	sfinfoOut.format = SF_FORMAT_PCM_16;
 	sfinfoOut.samplerate = sfinfoIn.samplerate;
 	sfinfoOut.channels = sfinfoIn.channels < 2 ? sfinfoIn.channels : 2;
 

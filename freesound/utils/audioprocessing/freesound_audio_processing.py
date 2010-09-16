@@ -53,61 +53,43 @@ def process(sound, do_cleanup=True):
         return False
     success("found the file %s" % sound.original_path)
     
-    # get basic info
-    try:
-        audio_info = audioprocessing.audio_info(sound.original_path)
-    except Exception, e:
-        failure("audio information extraction has failed", e)
-        return False
-    success("got the audio info")
-    
-    sound.samplerate = audio_info["samplerate"]
-    sound.bitrate = audio_info["bitrate"]
-    sound.bitdepth = audio_info["bits"]
-    sound.channels = audio_info["channels"]
-    sound.duration = audio_info["duration"]
-    sound.type = audio_info["type"]
+    sound.type = audioprocessing.get_sound_type(sound.original_path)
     sound.save()
-    
-    to_cleanup = []
-    
-    # convert to wave file
-    
-    tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
 
-    if sound.type in ["wav", "aiff"]:
-        try:
-            audioprocessing.convert_to_wav_with_sndfileconvert(sound.original_path, tmp_wavefile)
+    
+    # convert to pcm
+    to_cleanup = []
+    tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+    
+    try:
+        if not audioprocessing.convert_to_pcm(sound.original_path, tmp_wavefile):
+            tmp_wavefile = sound.original_path
+            success("no need to convert, this file is already pcm data")
+        else:
             to_cleanup.append(tmp_wavefile)
-            success("converted to wave file with snd-file: " + tmp_wavefile)
-        except Exception, e:
-            #failure("conversion to wave file (sndfile) has failed", e)
-            #return False
-            #success("FAILED to convert file with sndfile, still trying to generate images anyway...")
-            #tmp_wavefile = sound.original_path
-            try:
-                audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)
-            except Exception, e:
-                failure("conversion to wave file (mplayer) has failed", e)
-                return False
-            success("converted to wave file: " + tmp_wavefile)
-            to_cleanup.append(tmp_wavefile)
-    elif sound.type == "flac":
-        try:
-            audioprocessing.convert_to_wav_with_flac(sound.original_path, tmp_wavefile)
-            to_cleanup.append(tmp_wavefile)
-        except Exception, e:
-            failure("conversion to wave file (flac) has failed", e)
-            return False
-        success("converted to wave file with flac: " + tmp_wavefile)
-    else: # ogg and mp3, basically...
-        try:
-            audioprocessing.convert_to_wav(sound.original_path, tmp_wavefile)
-        except Exception, e:
-            failure("conversion to wave file (mplayer) has failed", e)
-            return False
-        success("converted to wave file: " + tmp_wavefile)
-        to_cleanup.append(tmp_wavefile)
+            success("converted to pcm: " + tmp_wavefile)
+    except Exception, e:
+        failure("conversion to pcm has failed", e)
+        return False
+    
+    tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+    
+    try:
+        info = audioprocessing.stereofy_and_find_info(tmp_wavefile, tmp_wavefile2)
+        to_cleanup.append(tmp_wavefile2)
+    except Exception, e:
+        cleanup(to_cleanup)
+        failure("stereofy has failed", e)
+        return False
+    
+    success("got sound info and stereofied")
+
+    sound.samplerate = info["samplerate"]
+    sound.bitrate = info["bitrate"]
+    sound.bitdepth = info["bitdepth"]
+    sound.channels = info["channels"]
+    sound.duration = info["duration"]
+    sound.save()
     
     # create preview
     mp3_path = os.path.join(settings.DATA_PATH, paths["preview_path"])
@@ -117,7 +99,7 @@ def process(sound, do_cleanup=True):
         pass
     
     try:
-        audioprocessing.convert_to_mp3(tmp_wavefile, mp3_path)
+        audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path)
     except Exception, e:
         cleanup(to_cleanup)
         failure("conversion to mp3 (preview) has failed", e)
@@ -128,7 +110,7 @@ def process(sound, do_cleanup=True):
     waveform_path_m = os.path.join(settings.DATA_PATH, paths["waveform_path_m"])
     spectral_path_m = os.path.join(settings.DATA_PATH, paths["spectral_path_m"])
     try:
-        audioprocessing.create_wave_images(tmp_wavefile, waveform_path_m, spectral_path_m, 120, 71, 2048)
+        audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048)
     except Exception, e:
         cleanup(to_cleanup)
         failure("creation of images (M) has failed", e)
@@ -139,7 +121,7 @@ def process(sound, do_cleanup=True):
     waveform_path_l = os.path.join(settings.DATA_PATH, paths["waveform_path_l"])
     spectral_path_l = os.path.join(settings.DATA_PATH, paths["spectral_path_l"])
     try:
-        audioprocessing.create_wave_images(tmp_wavefile, waveform_path_l, spectral_path_l, 900, 201, 2048)
+        audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048)
     except Exception, e:
         cleanup(to_cleanup)
         failure("creation of images (L) has failed", e)

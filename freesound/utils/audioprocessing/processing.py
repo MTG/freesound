@@ -470,199 +470,102 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
     spectrogram.save(output_filename_s)
 
 
-def convert_to_wav(input_filename, output_filename):
-    """
-    converts any audio file type to wav, 44.1, 16bit, stereo
-    uses mplayer to play whatever, and store the format as a wave file
-    """
-    
-    if not os.path.exists(input_filename):
-        raise AudioProcessingException, "file %s does not exist" % input_filename
-    
-    command = ["mplayer", "-vc", "null", "-vo", "null", "-af", "channels=2,resample=44100:0:0", "-ao", "pcm:fast:file=\"%s\"" % output_filename, input_filename]
-    
-    try:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = process.communicate()
-    except OSError:
-        raise AudioProcessingException, "mplayer not found: " + stderr
-    
-    if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException, stdout
-    
-    return stdout
-
-
-def convert_to_wav_with_flac(input_filename, output_filename):
-    """
-    converts any audio file type to wav, 44.1, 16bit, stereo
-    uses mplayer to play whatever, and store the format as a wave file
-    """
-    
-    if not os.path.exists(input_filename):
-        raise AudioProcessingException, "file %s does not exist" % input_filename
-    
-    command = ["flac", "-d", "-o", output_filename, input_filename]
-    
-    try:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = process.communicate()
-    except OSError:
-        raise AudioProcessingException, "flac not found: " + stderr
-    
-    if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException, stdout
-    
-    return stdout
-    
-
-def convert_to_wav_with_sndfileconvert(input_filename, output_filename):
-    """
-    converts an uncompressed file (wav/aif) type to wav, 44.1, 16bit
-    """
-    
-    if not os.path.exists(input_filename):
-        raise AudioProcessingException, "file %s does not exist" % input_filename
-    
-    command = ["sndfile-convert", "-pcm16", input_filename, output_filename]
-    
-    try:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = process.communicate()
-    except OSError:
-        raise AudioProcessingException, "sndfile-convert not found: " + stderr
-    
-    if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException, stdout
-    
-    return stdout
-
-
-
-def audio_info(input_filename):
-    """
-    extract samplerate, channels, ... from an audio file using getid3
-    in order for this to work make sure that the getid3 directory (in this directory) is added to the path!
-    """
-    
-    if not os.path.exists(input_filename):
-        raise AudioProcessingException, "file %s does not exist" % input_filename
-
-    ext = os.path.splitext(input_filename)[1].lower()
-    
-    if ext in [".aif", ".aiff", ".wav", ".flac", ".fla"]:
-        command = ["sndfile-info", input_filename]
-    elif ext == ".mp3":
-        command = ["lame", "--decode", input_filename, "/dev/null"]
-    elif ext == ".ogg":
-        command = ["ogginfo", "-v", input_filename]
-        
-    try:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = process.communicate()
-    except OSError:
-        raise AudioProcessingException, "can not find audio-info extraction program: "+ stderr
-
-    if process.returncode != 0:
-        raise AudioProcessingException, stdout
-    
-    stdout = stdout.replace("\n", " ") + " " + stderr.replace("\n", " ")
-    
-    if ext in [".aif", ".aiff", ".wav", ".flac", ".fla"]:
-        # parse sndfile info
-
-        bitdepth = None
-        m = re.match(r".*(Sample Size|Bit Width)\s+:\s+(?P<bitdepth>\d+).*", stdout)
-        if m != None:
-            bitdepth = int(m.group("bitdepth"))
-        
-        frames = 0
-        
-        m = re.match(r".*(RIFF|Frames)\s+:\s+(?P<frames>\d+).*", stdout)
-        if m != None:
-            frames = int(m.group("frames"))
-        
-        m = re.match(r".*Sample Rate\s+:\s+(\d+).+", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in sndfile-info, no Sample Rate"
-        samplerate = int(m.group(1))
-        
-        m = re.match(r".*Channels\s+:\s+(\d+).*", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in sndfile-info, no Channels"
-        channels = int(m.group(1))
-        
-        m = re.match(r".*Duration\s+:\s+(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>[\d\.]+).*", stdout)
-        if m != None:
-            duration = int(m.group("hours"))*60*60 + int(m.group("minutes"))*60 + float(m.group("seconds"))
-        else:
-            if bitdepth and channels and samplerate:
-                duration = float(frames)/float(samplerate*channels*bitdepth)
-            else:
-                raise AudioProcessingException, "non-expected output in sndfile-info, no duration"
-            
-    elif ext == ".mp3":
-        bitdepth = None
-        
-        m = re.match(r".*(?P<channels>\d) channel.*", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in lame, no channels"
-        channels = int(m.group("channels"))
-        
-        m = re.match(r".*\((?P<samplerate>[\d\.]+) kHz.*", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in lame, no kHz"
-        samplerate = float(m.group("samplerate"))*1000
-        
-        skip_start = 0
-        try:
-            m = re.match(r".*skipping initial (?P<skip_start>\d+) samples.*", stdout)
-            skip_start = int(m.group("skip_start"))
-        except:
-            pass
-            
-        skip_end = 0
-        try:
-            m = re.match(r".*skipping final (?P<skip_end>\d+) samples.*", stdout)
-            skip_end = int(m.group("skip_end"))
-        except:
-            pass
-
-        m = re.match(r".*Frame#\s+\d+\/(?P<frames>\d+).*", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in lame, no frames"
-        frames = int(m.group("frames"))
-        
-        duration = ((frames*1152) - skip_end - skip_start)/samplerate
-        
-    elif ext == ".ogg":
-        bitdepth = None
-        
-        m = re.match(r".*Channels: (?P<channels>\d+) .*", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in ogginfo, no channels"
-        channels = int(m.group("channels"))
-
-        m = re.match(r".*Rate:\s+(?P<samplerate>\d+).*", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in ogginfo, no Rate"
-        samplerate = float(m.group("samplerate"))
-
-        m = re.match(r".*Playback length:\s+(?P<minutes>[\d\.]+)m:(?P<seconds>[\d\.]+)s.*", stdout)
-        if m == None:
-            raise AudioProcessingException, "non-expected output in ogginfo, no playback length"
-        duration = float(m.group("minutes"))*60 + float(m.group("seconds"))
-    
-    bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration if duration > 0 else 0
-
+def get_sound_type(input_filename):
     sound_type = os.path.splitext(input_filename.lower())[1].strip(".")
 
     if sound_type == "fla":
         sound_type = "flac"
     elif sound_type == "aif":
         sound_type = "aiff"
+        
+    return sound_type
 
-    return dict(samplerate=samplerate, bitrate=bitrate, bits=bitdepth, channels=channels, type=sound_type, duration=duration)
+
+def convert_to_pcm(input_filename, output_filename):
+    """
+    converts any audio file type to pcm audio
+    """
+    
+    if not os.path.exists(input_filename):
+        raise AudioProcessingException, "file %s does not exist" % input_filename
+    
+    sound_type = get_sound_type(input_filename)
+    
+    if sound_type == "mp3":
+        cmd = ["mpg321", input_filename, "-w", output_filename]
+    elif sound_type == "ogg":
+        cmd = ["oggdec", input_filename, "-o", output_filename]
+    elif sound_type == "flac":
+        cmd = ["flac", "-f", "-d", "-s", "-o", output_filename, input_filename]
+    
+    was_converted = False
+    try:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = process.communicate()
+        was_converted = True
+    except OSError:
+        raise AudioProcessingException, "command not found: " + " ".join(cmd) + "\n" + stderr
+    
+    if process.returncode != 0 or not os.path.exists(output_filename):
+        raise AudioProcessingException, "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout  
+    
+    return was_converted
+
+
+def stereofy_and_find_info(input_filename, output_filename):
+    """
+    converts a pcm wave file to two channel, 16 bit integer
+    """
+
+    if not os.path.exists(input_filename):
+        raise AudioProcessingException, "file %s does not exist" % input_filename
+    
+    cmd = ["~/", input_filename, "-w", output_filename]
+    
+    try:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = process.communicate()
+    except OSError:
+        raise AudioProcessingException, "command not found: " + " ".join(cmd) + "\n" + stderr
+    
+    if process.returncode != 0 or not os.path.exists(output_filename):
+        raise AudioProcessingException, "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout 
+    
+    stdout = stdout + " " + stderr
+    
+    duration = 0
+    m = re.match(r".*#duration (?P<duration>\d+).*", stdout)
+    if m != None:
+        duration = float(m.group("duration"))
+    
+    channels = 0
+    m = re.match(r".*#channels (?P<channels>\d+).*", stdout)
+    if m != None:
+        channels = float(m.group("channels"))
+    
+    samplerate = 0
+    m = re.match(r".*#samplerate (?P<samplerate>\d+).*", stdout)
+    if m != None:
+        samplerate = float(m.group("samplerate"))
+    
+    sound_type = get_sound_type(input_filename)
+    
+    bitdepth = None
+    
+    if sound_type in ["wav", "aiff"]:
+        try:
+            process = subprocess.Popen(["sndfile-info", input_filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (stdout, stderr) = process.communicate()
+            m = re.match(r".*(Sample Size|Bit Width)\s+:\s+(?P<bitdepth>\d+).*", stdout + stderr)
+            if m != None:
+                bitdepth = int(m.group("bitdepth"))
+        except Exception, e:
+            print e
+            pass
+    
+    bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration if duration > 0 else 0
+                
+    return dict(duration=duration, channels=channels, samplerate=samplerate, bitrate=bitrate, bitdepth=bitdepth)
 
 
 def convert_to_mp3(input_filename, output_filename):

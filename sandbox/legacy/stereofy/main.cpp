@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	opt->setOption("input",'i');
 	opt->setOption("output",'o');
 	
-	opt->addUsage( "Usage: stereofy --input wavefile.wav --output.wav" );
+	opt->addUsage( "Usage: stereofy --input wavefile.wav --output output.wav" );
 	
 	opt->processCommandArgs( argc, argv );
 

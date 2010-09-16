@@ -47,3 +47,5 @@ GOOGLE_API_KEY = ''
 SOLR_URL = "http://localhost:8983/solr/"
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
+
+STEREOFY_PATH = "/home/fsweb/freesound/sandbox/legacy/stereofy/stereofy"

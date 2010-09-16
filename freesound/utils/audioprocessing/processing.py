@@ -512,7 +512,7 @@ def convert_to_pcm(input_filename, output_filename):
     return was_converted
 
 
-def stereofy_and_find_info(input_filename, output_filename):
+def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filename):
     """
     converts a pcm wave file to two channel, 16 bit integer
     """
@@ -520,7 +520,7 @@ def stereofy_and_find_info(input_filename, output_filename):
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
     
-    cmd = ["~/", input_filename, "-w", output_filename]
+    cmd = [stereofy_executble_path, input_filename, "-w", output_filename]
     
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

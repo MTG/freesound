@@ -75,7 +75,7 @@ def process(sound, do_cleanup=True):
     tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
     
     try:
-        info = audioprocessing.stereofy_and_find_info(tmp_wavefile, tmp_wavefile2)
+        info = audioprocessing.stereofy_and_find_info("/home/fsweb/freesound/sandbox/legacy/stereofy/stereofy", tmp_wavefile, tmp_wavefile2)
         to_cleanup.append(tmp_wavefile2)
     except Exception, e:
         cleanup(to_cleanup)

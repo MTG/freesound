@@ -14,6 +14,31 @@
 
 #define BLOCKSIZE 2048
 
+
+int get_bitwidth (int format)
+{
+    switch (format & SF_FORMAT_SUBMASK)
+    {
+        case SF_FORMAT_PCM_U8 :
+        case SF_FORMAT_PCM_S8 :
+            return 8;
+        case SF_FORMAT_PCM_16 :
+            return 16;
+        case SF_FORMAT_PCM_24 :
+            return 24;
+        case SF_FORMAT_PCM_32 :
+        case SF_FORMAT_FLOAT :
+            return 32;
+        case SF_FORMAT_DOUBLE:
+            return 64;
+        default:
+            break ;
+    };
+    
+    return 0;
+}
+
+
 int main(int argc, char* argv[])
 {
 	AnyOption *opt = new AnyOption();
@@ -73,6 +98,7 @@ int main(int argc, char* argv[])
 		std::cout << "#channels " << sfinfoIn.channels << std::endl;
 		std::cout << "#samplerate " << sfinfoIn.samplerate << std::endl;
 		std::cout << "#duration " << double(sfinfoIn.frames)/double(sfinfoIn.samplerate) << std::endl;
+        std::cout << "#bitdepth " << get_bitwidth(sfinfoIn.format) << std::endl;
 	}
 
 

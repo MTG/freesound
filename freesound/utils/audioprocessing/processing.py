@@ -492,7 +492,7 @@ def convert_to_pcm(input_filename, output_filename):
     sound_type = get_sound_type(input_filename)
     
     if sound_type == "mp3":
-        cmd = ["mpg321", input_filename, "-w", output_filename]
+        cmd = ["mpg123", input_filename, "-w", output_filename]
     elif sound_type == "ogg":
         cmd = ["oggdec", input_filename, "-o", output_filename]
     elif sound_type == "flac":
@@ -506,7 +506,7 @@ def convert_to_pcm(input_filename, output_filename):
         (stdout, stderr) = process.communicate()
         was_converted = True
     except OSError:
-        raise AudioProcessingException, "command not found: " + " ".join(cmd) + "\n" + stderr
+        raise AudioProcessingException, "command not found: " + " ".join(cmd)
     
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout  

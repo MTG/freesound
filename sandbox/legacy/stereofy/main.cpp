@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	// open the soundfile
 	if(!(fileIn = sf_open (inputFilename.c_str(), SFM_READ, &sfinfoIn)))
 	{
-		std::cout << "stereofy: failed to open file" << std::endl;
+		std::cout << "stereofy: failed to open file" << sf_strerror(fileIn) << std::endl;
 		return  1;
 	}
 	else
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 	SNDFILE *fileOut = NULL;
 	SF_INFO sfinfoOut;
 
-	sfinfoOut.format = SF_FORMAT_PCM_16;
+	sfinfoOut.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
 	sfinfoOut.samplerate = sfinfoIn.samplerate;
 	sfinfoOut.channels = sfinfoIn.channels < 2 ? sfinfoIn.channels : 2;
 

@@ -554,8 +554,6 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     m = re.match(r".*#bitdepth (?P<bitdepth>\d+).*", stdout)
     if m != None:
         bitdepth = float(m.group("bitdepth"))
-        if bitdepth == 0:
-            bitdepth = None
 
     bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration if duration > 0 else 0
                 

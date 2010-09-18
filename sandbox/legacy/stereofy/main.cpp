@@ -98,7 +98,9 @@ int main(int argc, char* argv[])
 		std::cout << "#channels " << sfinfoIn.channels << std::endl;
 		std::cout << "#samplerate " << sfinfoIn.samplerate << std::endl;
 		std::cout << "#duration " << double(sfinfoIn.frames)/double(sfinfoIn.samplerate) << std::endl;
-        std::cout << "#bitdepth " << get_bitwidth(sfinfoIn.format) << std::endl;
+        int bitdepth = get_bitwidth(sfinfoIn.format);
+        if (bitdepth != 0)
+            std::cout << "#bitdepth " << get_bitwidth(sfinfoIn.format) << std::endl;
 	}
 
 

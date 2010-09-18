@@ -5,9 +5,9 @@ import logging
 import os.path
 import shutil
 import tempfile
+import os
 import utils.audioprocessing.processing as audioprocessing
 from utils.audioprocessing.processing import AudioProcessingException, NoSpaceLeftException
-import subprocess
 
 logger = logging.getLogger("audio")
 
@@ -16,14 +16,14 @@ def process_pending():
     regular_tmp = "/tmp"
     
     from sounds.models import Sound
+    import glob
     for sound in Sound.objects.filter(processing_state="PE").exclude(original_path=None):
         try:
             process(sound, tmp=special_tmp)
         except NoSpaceLeftException:
             logger.warning("------- no space left on device -> ERASING!")
-            cmd = ["rm", "-rf", special_tmp + "/*"]
-            logger.warning("------- " + " ".join(cmd))
-            subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+            for filename in glob.glob(special_tmp + "/*"):
+                os.unlink(filename)
             logger.warning("------- no space left on device -> ERASED, retrying with regular tmp")
             process(sound, tmp=regular_tmp)
             return

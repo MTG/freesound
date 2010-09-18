@@ -13,9 +13,8 @@ logger = logging.getLogger("audio")
 def process_pending():
     from sounds.models import Sound
     for sound in Sound.objects.filter(processing_state="PE").exclude(original_path=None):
-        process(sound, tmp="/mnt/tmp20m")
         try:
-            pass
+            process(sound, tmp="/mnt/tmp20m")
         except NoSpaceLeftException:
             process(sound, tmp="/tmp/")
 

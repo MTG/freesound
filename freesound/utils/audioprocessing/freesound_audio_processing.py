@@ -6,14 +6,18 @@ import os.path
 import shutil
 import tempfile
 import utils.audioprocessing.processing as audioprocessing
-from utils.audioprocessing.processing import AudioProcessingException
+from utils.audioprocessing.processing import AudioProcessingException, NoSpaceLeftException
 
 logger = logging.getLogger("audio")
 
-def process_pending(tmp="/tmp"):
+def process_pending():
     from sounds.models import Sound
     for sound in Sound.objects.filter(processing_state="PE").exclude(original_path=None):
-        process(sound, tmp=tmp)
+        process(sound, tmp="/mnt/tmp20m")
+        try:
+            pass
+        except NoSpaceLeftException:
+            process(sound, tmp="/tmp/")
 
 def process(sound, do_cleanup=True, tmp="/tmp"):
     logger.info("processing audio file %d" % sound.id)

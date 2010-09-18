@@ -500,18 +500,13 @@ def convert_to_pcm(input_filename, output_filename):
     else:
         return False
     
-    was_converted = False
-    try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = process.communicate()
-        was_converted = True
-    except OSError:
-        raise AudioProcessingException, "command not found: " + " ".join(cmd)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = process.communicate()
     
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout  
     
-    return was_converted
+    return True
 
 
 def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filename):
@@ -524,11 +519,8 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     
     cmd = [stereofy_executble_path, "--input", input_filename, "--output", output_filename]
     
-    try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = process.communicate()
-    except OSError:
-        raise AudioProcessingException, "command not found: " + " ".join(cmd) + "\n" + stderr
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = process.communicate()
     
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout 
@@ -568,13 +560,10 @@ def convert_to_mp3(input_filename, output_filename):
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
 
-    try:
-        command = ["lame", "--silent", "--abr", "70", input_filename, output_filename]
-    
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = process.communicate()
-    except OSError:
-        raise AudioProcessingException, "lame not found: " + stderr
+    command = ["lame", "--silent", "--abr", "70", input_filename, output_filename]
+
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = process.communicate()
 
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, stdout

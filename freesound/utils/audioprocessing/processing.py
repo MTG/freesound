@@ -535,36 +535,28 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     
     stdout = (stdout + " " + stderr).replace("\n", " ")
     
-    duration = 0
+    duration = None
     m = re.match(r".*#duration (?P<duration>[\d\.]+).*",  stdout)
     if m != None:
         duration = float(m.group("duration"))
     
-    channels = 0
+    channels = None
     m = re.match(r".*#channels (?P<channels>\d+).*", stdout)
     if m != None:
         channels = float(m.group("channels"))
     
-    samplerate = 0
+    samplerate = None
     m = re.match(r".*#samplerate (?P<samplerate>\d+).*", stdout)
     if m != None:
         samplerate = float(m.group("samplerate"))
     
-    sound_type = get_sound_type(input_filename)
-    
     bitdepth = None
-    
-    if sound_type in ["wav", "aiff"]:
-        try:
-            process = subprocess.Popen(["sndfile-info", input_filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (stdout, stderr) = process.communicate()
-            m = re.match(r".*(Sample Size|Bit Width)\s+:\s+(?P<bitdepth>\d+).*", stdout + stderr)
-            if m != None:
-                bitdepth = int(m.group("bitdepth"))
-        except Exception, e:
-            print e
-            pass
-    
+    m = re.match(r".*#bitdepth (?P<bitdepth>\d+).*", stdout)
+    if m != None:
+        bitdepth = float(m.group("bitdepth"))
+        if bitdepth == 0:
+            bitdepth = None
+
     bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration if duration > 0 else 0
                 
     return dict(duration=duration, channels=channels, samplerate=samplerate, bitrate=bitrate, bitdepth=bitdepth)

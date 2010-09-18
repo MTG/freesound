@@ -7,6 +7,10 @@ from utils.forms import RecaptchaForm, HtmlCleaningCharField
 class UploadFileForm(forms.Form):
     file = forms.FileField()
 
+class AvatarForm(forms.Form):
+    file = forms.FileField(required=False)
+    remove = forms.BooleanField(label="Remove avatar", required=False)
+    
 
 class FileChoiceForm(forms.Form):
     files = forms.MultipleChoiceField()
@@ -104,7 +108,6 @@ class UsernameReminderForm(forms.Form):
             return User.objects.get(email__iexact=email)
         except User.DoesNotExist: #@UndefinedVariable
             raise forms.ValidationError(_("No user with such an email exists."))
-        
 
 class ProfileForm(forms.ModelForm):
     about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)))

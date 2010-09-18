@@ -13,7 +13,6 @@
 * describe
 * moderation interface
 * pack downloads
-* account picture
 
 == Models ==
 

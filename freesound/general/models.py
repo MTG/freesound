@@ -5,7 +5,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.db import models
 from favorites.models import Favorite
-from images.models import Image
 from ratings.models import Rating
 from tags.models import TaggedItem
 
@@ -14,7 +13,6 @@ class SocialModel(models.Model):
     comments = generic.GenericRelation(Comment)
     ratings = generic.GenericRelation(Rating)
     fans = generic.GenericRelation(Favorite)
-    images = generic.GenericRelation(Image)
 
     class Meta:
         abstract = True

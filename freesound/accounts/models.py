@@ -5,6 +5,7 @@ from django.utils.encoding import smart_unicode
 from general.models import SocialModel
 from geotags.models import GeoTag
 from utils.sql import DelayedQueryExecuter
+from django.conf import settings
 
 class ProfileManager(models.Manager):
     def random_uploader(self):
@@ -23,8 +24,9 @@ class Profile(SocialModel):
     
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
-    signature = models.URLField(max_length=256, null=True, blank=True)
+    signature = models.TextField(max_length=256, null=True, blank=True)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
+    has_avatar = models.BooleanField(default=False)
 
     wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
@@ -42,6 +44,18 @@ class Profile(SocialModel):
     @models.permalink
     def get_absolute_url(self):
         return ('account', (smart_unicode(self.user.username),))
+    
+    def get_avatar_path(self):
+        if self.has_avatar:
+            path_s = "%s%d/%d_%s.jpg" % (settings.PROFILE_IMAGES_URL, self.user.id/1000, self.user.id, "s")
+            path_m = "%s%d/%d_%s.jpg" % (settings.PROFILE_IMAGES_URL, self.user.id/1000, self.user.id, "m")
+            path_l = "%s%d/%d_%s.jpg" % (settings.PROFILE_IMAGES_URL, self.user.id/1000, self.user.id, "l")
+        else:
+            path_s = settings.MEDIA_URL + "images/32x32_avatar.png"
+            path_m = settings.MEDIA_URL + "images/40x40_avatar.png"
+            path_l = settings.MEDIA_URL + "images/40x40_avatar.png"
+            
+        return dict(path_s=path_s, path_m=path_m, path_l=path_l)
     
     def get_tagcloud(self):
         return DelayedQueryExecuter("""

@@ -49,7 +49,7 @@
 
 <div id="single_sample_content">
 
-	<img src="{{media_url}}images/40x40_avatar.png" alt="avatar" id="sound_author_avatar" />
+	<img src="{{sound.user.profile.get_avatar_path.path_m}}" alt="avatar" id="sound_author_avatar" />
 
 	<div id="sound_author_box">
 		<div id="sound_author"><a href="{% url account sound.user.username %}">{{sound.user.username}}</a></div>
@@ -72,7 +72,7 @@
 		<ul id="comments">
 			{% for comment in page.object_list %}
 			<li>
-				<img src="{{media_url}}images/40x40_avatar.png" alt="avatar" class="comment_avatar" />
+				<img src="{{comment.user.profile.get_avatar_path.path_s}}" alt="avatar" class="comment_avatar" />
 				<div class="comment_info">
 					<span class="comment_author"><a href="{% url account comment.user.username %}">{{comment.user.username}}</a></span>
 					<span class="comment_date">{{comment.created|timesince}} ago</span>

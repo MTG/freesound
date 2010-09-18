@@ -1,5 +1,6 @@
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
-    ReactivationForm, UsernameReminderForm, ProfileForm
+    ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
+from accounts.models import Profile
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -15,10 +16,12 @@ from sounds.models import Sound, Pack, Download
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
 from utils.functional import combine_dicts
+from utils.images import extract_square
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-import os
 import logging
+import os
+import tempfile
 
 def activate_user(request, activation_key):
     if request.user.is_authenticated():
@@ -100,19 +103,98 @@ def home(request):
     home = True
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
+
+def handle_uploaded_image(profile, f):
+    # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
+    directory = os.path.join(settings.PROFILE_IMAGES_PATH, str(profile.user.id/1000))
+    
+    logger.info("\thandling profile image upload")
+    
+    try:
+        os.mkdir(directory)
+    except:
+        logger.info("\tfailed creating directory, probably already exist")
+        pass
+
+    ext = os.path.splitext(os.path.basename(f.name))[1]
+    tmp_image_path = tempfile.mktemp(suffix=ext, prefix=str(profile.user.id))
+
+    try:
+        logger.info("\topening file: %s", tmp_image_path)
+        destination = open(tmp_image_path, 'wb')
+        for chunk in f.chunks():
+            destination.write(chunk)
+        destination.close()
+        logger.info("\tfile upload done")
+    except Exception, e:
+        logger.error("\tfailed writing file error: %s", str(e))
+
+    path_s = os.path.join(directory, str(profile.user.id) + "_s.jpg")
+    path_m = os.path.join(directory, str(profile.user.id) + "_m.jpg")
+    path_l = os.path.join(directory, str(profile.user.id) + "_l.jpg")
+    
+    logger.info("\tcreating thumbnails")
+    try:
+        extract_square(tmp_image_path, path_s, 32)
+        profile.has_avatar = True
+        profile.save()
+    except Exception, e:
+        logger.error("\tfailed creating small thumbnails: " + str(e))
+
+    logger.info("\tcreated small thumbnail")
+    
+    try:
+        extract_square(tmp_image_path, path_m, 40)
+    except Exception, e:
+        logger.error("\tfailed creating medium thumbnails: " + str(e))
+
+    try:
+        extract_square(tmp_image_path, path_l, 70)
+    except Exception, e:
+        logger.error("\tfailed creating large thumbnails: " + str(e))
+
+    logger.info("\tcreated medium thumbnail")
+    
+    os.unlink(tmp_image_path)
+
+
 @login_required
 def edit(request):
     profile = request.user.profile
     
-    if request.method == "POST":
-        form = ProfileForm(request.POST, instance=profile)
-        if form.is_valid():
-            form.save()
+    def is_selected(prefix):
+        if request.method == "POST":
+            for name in request.POST.keys():
+                if name.startswith(prefix + '-'):
+                    return True
+            if request.FILES:
+                for name in request.FILES.keys():
+                    if name.startswith(prefix + '-'):
+                        return True
+        return False
+    
+    if is_selected("profile"):
+        profile_form = ProfileForm(request.POST, instance=profile, prefix="profile")
+        if profile_form.is_valid():
+            profile_form.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
-        form = ProfileForm(instance=profile)
+        profile_form = ProfileForm(instance=profile, prefix="profile")
         
-    return render_to_response('accounts/edit.html', dict(form=form, sent=False), context_instance=RequestContext(request))
+    if is_selected("image"):
+        image_form = AvatarForm(request.POST, request.FILES, prefix="image")
+        if image_form.is_valid():
+            if image_form.cleaned_data["remove"]:
+                profile.has_avatar = False
+                profile.save()
+            else:
+                if request.FILES["image-file"]:
+                    handle_uploaded_image(profile, request.FILES["image-file"])
+            return HttpResponseRedirect(reverse("accounts-home"))
+    else:
+        image_form = AvatarForm(prefix="image")
+
+    return render_to_response('accounts/edit.html', dict(profile=profile, profile_form=profile_form, image_form=image_form), context_instance=RequestContext(request))
 
 
 @login_required

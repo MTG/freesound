@@ -18,7 +18,7 @@
 {% for post in page.object_list %}
 	<li class="post">
 		<a name="post{{post.id}}"></a>
-		<a href="{% url account post.author.username %}"><img src="{{media_url}}images/32x32_avatar.png" width="32" height="32" alt="avatar" class="avatar" /></a>
+		<a href="{% url account post.author.username %}"><img src="{{post.author.profile.get_avatar_path.path_s}}" width="32" height="32" alt="avatar" class="avatar" /></a>
 		<div class="post_author"><a href="{% url account post.author.username %}">{{post.author.username}}</a></div>
 		<div class="post_details">
 			{{post.author.profile.num_sounds}} sound{{post.author.profile.num_sounds|pluralize}}<br/>

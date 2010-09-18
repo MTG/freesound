@@ -3,11 +3,20 @@
 {% block title %}edit account{% endblock %}
 
 {% block section_content %}
+
+<h1>Edit your avatar</h1>
+<form method="post" action="." enctype="multipart/form-data">{% csrf_token %}
+    <p>Current:<br/><img src="{{profile.get_avatar_path.path_l}}" /></p>
+    {{image_form.as_p}}
+    <input type="submit" value="Save" />
+</form>
+
 <h1>Edit account</h1>
 <form method="post" action=".">{% csrf_token %}
-{{form.as_p}}
-<input type="submit" value="Save" />
+    {{profile_form.as_p}}
+    <input type="submit" value="Save" />
 </form>
+
 
 <h1>Delete account</h1>
 <p>

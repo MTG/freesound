@@ -88,7 +88,7 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
         failure("stereofy has failed", e)
         return False
     
-    success("got sound info and stereofied")
+    success("got sound info and stereofied: " + tmp_wavefile2)
 
     sound.samplerate = info["samplerate"]
     sound.bitrate = info["bitrate"]

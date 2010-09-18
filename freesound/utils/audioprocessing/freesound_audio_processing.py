@@ -12,7 +12,7 @@ from utils.audioprocessing.processing import AudioProcessingException, NoSpaceLe
 logger = logging.getLogger("audio")
 
 def process_pending():
-    special_tmp = "/mnt/tmp20m"
+    special_tmp = "/mnt/tmp"
     regular_tmp = "/tmp"
     
     from sounds.models import Sound
@@ -26,7 +26,6 @@ def process_pending():
                 os.unlink(filename)
             logger.warning("------- no space left on device -> ERASED, retrying with regular tmp")
             process(sound, tmp=regular_tmp)
-            return
         
 def process(sound, do_cleanup=True, tmp="/tmp"):
     logger.info("processing audio file %d" % sound.id)

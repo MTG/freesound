@@ -21,7 +21,9 @@ def process_pending():
             process(sound, tmp=special_tmp)
         except NoSpaceLeftException:
             logger.warning("------- no space left on device -> ERASING!")
-            subprocess.Popen(["rm", "-rf", os.path.join(special_tmp, "*")], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+            cmd = ["rm", "-rf", special_tmp + "/*"]
+            logger.warning("------- " + " ".join(cmd))
+            subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
             logger.warning("------- no space left on device -> ERASED, retrying with regular tmp")
             process(sound, tmp=regular_tmp)
             return
@@ -88,6 +90,9 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     except AudioProcessingException, e:
         failure("conversion to pcm has failed", e)
         return False
+    except:
+        cleanup(to_cleanup)
+        raise
     
     tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id), dir=tmp)
     
@@ -98,6 +103,9 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
         cleanup(to_cleanup)
         failure("stereofy has failed", e)
         return False
+    except:
+        cleanup(to_cleanup)
+        raise
     
     success("got sound info and stereofied: " + tmp_wavefile2)
 
@@ -117,10 +125,13 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     
     try:
         audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path)
-    except Exception, e:
+    except AudioProcessingException, e:
         cleanup(to_cleanup)
         failure("conversion to mp3 (preview) has failed", e)
         return False
+    except:
+        cleanup(to_cleanup)
+        raise
     success("created mp3: " + mp3_path)
     
     # create waveform images M
@@ -128,10 +139,13 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     spectral_path_m = os.path.join(settings.DATA_PATH, paths["spectral_path_m"])
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048)
-    except Exception, e:
+    except AudioProcessingException, e:
         cleanup(to_cleanup)
         failure("creation of images (M) has failed", e)
         return False
+    except:
+        cleanup(to_cleanup)
+        raise
     success("created png, medium size: " + waveform_path_m)
 
     # create waveform images L
@@ -139,10 +153,13 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     spectral_path_l = os.path.join(settings.DATA_PATH, paths["spectral_path_l"])
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048)
-    except Exception, e:
+    except AudioProcessingException, e:
         cleanup(to_cleanup)
         failure("creation of images (L) has failed", e)
         return False
+    except:
+        cleanup(to_cleanup)
+        raise
     success("created png, large size: " + waveform_path_l)
 
     # now move the original

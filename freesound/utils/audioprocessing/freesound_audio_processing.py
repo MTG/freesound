@@ -6,10 +6,16 @@ import os.path
 import shutil
 import tempfile
 import utils.audioprocessing.processing as audioprocessing
+from utils.audioprocessing.processing import AudioProcessingException
 
 logger = logging.getLogger("audio")
 
-def process(sound, do_cleanup=True):
+def process_pending(tmp="/tmp"):
+    from sounds.models import Sound
+    for sound in Sound.objects.filter(processing_state="PE").exclude(original_path=None):
+        process(sound, tmp=tmp)
+
+def process(sound, do_cleanup=True, tmp="/tmp"):
     logger.info("processing audio file %d" % sound.id)
     
     def failure(message, error=None):
@@ -59,7 +65,7 @@ def process(sound, do_cleanup=True):
     
     # convert to pcm
     to_cleanup = []
-    tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+    tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id), dir=tmp)
     
     try:
         if not audioprocessing.convert_to_pcm(sound.original_path, tmp_wavefile):
@@ -68,16 +74,16 @@ def process(sound, do_cleanup=True):
         else:
             to_cleanup.append(tmp_wavefile)
             success("converted to pcm: " + tmp_wavefile)
-    except Exception, e:
+    except AudioProcessingException, e:
         failure("conversion to pcm has failed", e)
         return False
     
-    tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+    tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id), dir=tmp)
     
     try:
         info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
         to_cleanup.append(tmp_wavefile2)
-    except Exception, e:
+    except AudioProcessingException, e:
         cleanup(to_cleanup)
         failure("stereofy has failed", e)
         return False

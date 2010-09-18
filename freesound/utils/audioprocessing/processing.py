@@ -480,6 +480,8 @@ def get_sound_type(input_filename):
         
     return sound_type
 
+class NoSpaceLeftException(Exception):
+    pass
 
 def convert_to_pcm(input_filename, output_filename):
     """
@@ -504,6 +506,8 @@ def convert_to_pcm(input_filename, output_filename):
     (stdout, stderr) = process.communicate()
     
     if process.returncode != 0 or not os.path.exists(output_filename):
+        if "No space left on device" in stderr + " " + stdout:
+            raise NoSpaceLeftException
         raise AudioProcessingException, "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout  
     
     return True
@@ -523,6 +527,8 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     (stdout, stderr) = process.communicate()
     
     if process.returncode != 0 or not os.path.exists(output_filename):
+        if "No space left on device" in stderr + " " + stdout:
+            raise NoSpaceLeftException
         raise AudioProcessingException, "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout 
     
     stdout = (stdout + " " + stderr).replace("\n", " ")

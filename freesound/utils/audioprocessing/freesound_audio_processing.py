@@ -21,12 +21,11 @@ def process_pending():
             process(sound, tmp=special_tmp)
         except NoSpaceLeftException:
             logger.warning("------- no space left on device -> ERASING!")
-            process = subprocess.Popen(["rm", "-rf", os.path.join(special_tmp, "*")], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            process.communicate()
+            subprocess.Popen(["rm", "-rf", os.path.join(special_tmp, "*")], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
             logger.warning("------- no space left on device -> ERASED, retrying with regular tmp")
             process(sound, tmp=regular_tmp)
             return
-
+        
 def process(sound, do_cleanup=True, tmp="/tmp"):
     logger.info("processing audio file %d" % sound.id)
     

@@ -535,17 +535,17 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     
     stdout = (stdout + " " + stderr).replace("\n", " ")
     
-    duration = None
+    duration = 0
     m = re.match(r".*#duration (?P<duration>[\d\.]+).*",  stdout)
     if m != None:
         duration = float(m.group("duration"))
     
-    channels = None
+    channels = 0
     m = re.match(r".*#channels (?P<channels>\d+).*", stdout)
     if m != None:
         channels = float(m.group("channels"))
     
-    samplerate = None
+    samplerate = 0
     m = re.match(r".*#samplerate (?P<samplerate>\d+).*", stdout)
     if m != None:
         samplerate = float(m.group("samplerate"))

@@ -272,12 +272,10 @@ class Pack(SocialModel):
         attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
         
         zip_file = zipfile.ZipFile("/tmp/test.zip", "w", zipfile.ZIP_STORED, True)
-        #zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
-        print attribution.encode("UTF-8")
+        zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
         
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
             path = os.path.join(settings.DATA_PATH, sound.paths()["sound_path"])
-            print "adding", path 
             zip_file.write(path, os.path.basename(path).encode("utf-8"))
         
         zip_file.close()

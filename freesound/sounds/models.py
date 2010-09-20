@@ -278,7 +278,7 @@ class Pack(SocialModel):
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
             path = os.path.join(settings.DATA_PATH, sound.paths()["sound_path"])
             print "adding", path 
-            zip_file.write(path, os.path.basename(path))
+            zip_file.write(path, os.path.basename(path).encode("utf-8"))
         
         zip_file.close()
         

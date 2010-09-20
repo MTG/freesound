@@ -39,7 +39,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.flatpages',
     'django.contrib.markup',
-    'django_extensions',
     'accounts',
     'comments',
     'favorites',
@@ -54,6 +53,7 @@ INSTALLED_APPS = (
     'wiki',
     'search',
     'api',
+    'django_extensions',
 )
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)

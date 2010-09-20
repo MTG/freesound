@@ -247,6 +247,8 @@ class Pack(SocialModel):
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
+    is_dirty = models.BooleanField(db_index=True, default=True)
+    
     num_downloads = models.PositiveIntegerField(default=0)
     
     def __unicode__(self):
@@ -259,6 +261,28 @@ class Pack(SocialModel):
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name')
         ordering = ("-created",)
+
+    def create_zip(self):
+        from django.conf import settings
+        import zipfile
+        from django.template.loader import render_to_string
+        import os
+
+        licenses = License.objects.all()
+        attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
+        
+        zip_file = zipfile.ZipFile("/tmp/test.zip", "w", zipfile.ZIP_STORED, True)
+        zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
+        
+        for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
+            name = "%s.%s" % (sound.base_filename_slug, sound.type)
+            path = os.path.join(settings.DATA_PATH, sound.paths()["sound_path"])
+            zip_file.write(path, name)
+        
+        zip_file.close()
+        
+        self.is_dirty = False
+        self.save()
 
 
 class Flag(models.Model):

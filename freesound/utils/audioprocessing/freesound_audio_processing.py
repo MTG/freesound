@@ -162,7 +162,7 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     success("created png, large size: " + waveform_path_l)
 
     # now move the original
-    new_original_path = os.path.join(settings.SOUNDS_PATH, paths["sound_path"])
+    new_original_path = os.path.normpath(os.path.join(settings.SOUNDS_PATH, paths["sound_path"]))
     if sound.original_path != new_original_path:
         try:
             os.makedirs(os.path.dirname(new_original_path))

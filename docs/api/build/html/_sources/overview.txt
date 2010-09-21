@@ -11,8 +11,6 @@ RESTful
 The Freesound API is a so called RESTful API, meaning that all requests and
 responses are done with standard HTTP requests.
 
-To read about REST design principles we recommend TODO.
-
 Base URL
 --------
 
@@ -51,7 +49,7 @@ a Freesound account.
 Requests
 --------
 
-The documentation will show for each resource how to interact with it. In
+The documentation will show for each resource how to interact with them. In
 REST you basically have four types of requests: GET, POST, PUT, and DELETE.
 Note that not every resource supports all four types.
 
@@ -64,11 +62,9 @@ For example, the following URIs are all instances of the resource indicated by
 
 ::
 
-  http://www.freesound.org/api/0132dfd197c84db6a8e56012b2e08d02
-  http://www.freesound.org/api/ceda30d8d2cf41eb9a156c7ef288fc54
-  http://www.freesound.org/api/89116d024cf34dc38f269e6b9abb2db5
-  http://www.freesound.org/api/800b2b9ba3884d0092575d9631c58921
-
+  http://www.freesound.org/api/sounds/0132dfd197c84db6a8e56012b2e08d02
+  http://www.freesound.org/api/sounds/ceda30d8d2cf41eb9a156c7ef288fc54
+  http://www.freesound.org/api/sounds/89116d024cf34dc38f269e6b9abb2db5
 
 Responses
 ---------
@@ -91,10 +87,10 @@ to the request. Specify the desired format in lowercase letters as follows:
 ::
 
   # example requests for your files, but with different response formats
-  http://api.canoris.com/files?api_key=12d6dc5486554e278e370cdc49935908&format=json
-  http://api.canoris.com/files?api_key=12d6dc5486554e278e370cdc49935908&format=xml
-  http://api.canoris.com/files?api_key=12d6dc5486554e278e370cdc49935908&format=yaml
-  http://api.canoris.com/files?api_key=12d6dc5486554e278e370cdc49935908&format=pickle
+  http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=json
+  http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=xml
+  http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=yaml
+  http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&format=pickle
 
 N.B. The default format is JSON.
 
@@ -102,7 +98,7 @@ Status Codes
 ____________
 
 It is very important to check the status code of the response and to not
-assume the request has been successful. The following status codes are 
+assume the request was successful. The following status codes are 
 the codes that are used throughout the API.
 
 =========================  =============================================================================================================

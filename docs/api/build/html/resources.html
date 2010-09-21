@@ -141,7 +141,7 @@ of the following.</p>
 <p><strong>Curl Examples</strong></p>
 <div class="highlight-python"><pre># Get the third page with the query 'dogs', with the most downloaded sounds first.
 curl http://www.freesound.org/api/sounds/search?p=3&amp;q=dogs&amp;s=downloads_desc
-TODO: more examples</pre>
+TODO: examples of the more exotic search features</pre>
 </div>
 </div>
 <div class="section" id="response">
@@ -206,9 +206,9 @@ TODO: more examples</pre>
           "preview": "http://www.freesound.org/api/sounds/83295/preview",
           "ref": "http://www.freesound.org/api/sounds/83295",
           "pack": "http://www.freesound.org/api/packs/2090"
-      },
-
-      *** more sounds ***
+      }
+      {'another_sound': 1},
+      {'and_another': 1}
       ],
   "previous": "http://www.freesound.org/api/sounds/search?q=&amp;p=1&amp;f=&amp;s=downloads_desc",
   "next": "http://www.freesound.org/api/sounds/search?q=&amp;p=3&amp;f=&amp;s=downloads_desc"
@@ -578,27 +578,27 @@ curl http://www.freesound.org/api/people/inchadney/sounds?p=5</pre>
 <p><strong>Properties</strong></p>
 <p>The response is an array. Each item in the array has the same format as the <a class="reference internal" href="#pack-get-response">pack resource format</a>.</p>
 <p><strong>JSON Example</strong></p>
-<div class="highlight-python"><pre>[
-  {
-      "description": "",
-      "created": "2009-09-28 09:50:08",
-      "url": "http://tabasco.upf.edu/people/dobroide/packs/5266/",
-      "sounds": "http://tabasco.upf.edu/api/packs/5266/sounds",
-      "num_downloads": 0,
-      "ref": "http://tabasco.upf.edu/api/packs/5266",
-      "name": "scrub"
-  },
-  {
-      "description": "",
-      "created": "2009-09-20 10:55:32",
-      "url": "http://tabasco.upf.edu/people/dobroide/packs/5230/",
-      "sounds": "http://tabasco.upf.edu/api/packs/5230/sounds",
-      "num_downloads": 0,
-      "ref": "http://tabasco.upf.edu/api/packs/5230",
-      "name": "granada"
-  },
-  *** more packs ***
-]</pre>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span>
+  <span class="p">{</span>
+      <span class="s">&quot;description&quot;</span><span class="p">:</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+      <span class="s">&quot;created&quot;</span><span class="p">:</span> <span class="s">&quot;2009-09-28 09:50:08&quot;</span><span class="p">,</span>
+      <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/dobroide/packs/5266/&quot;</span><span class="p">,</span>
+      <span class="s">&quot;sounds&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5266/sounds&quot;</span><span class="p">,</span>
+      <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5266&quot;</span><span class="p">,</span>
+      <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;scrub&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+      <span class="s">&quot;description&quot;</span><span class="p">:</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+      <span class="s">&quot;created&quot;</span><span class="p">:</span> <span class="s">&quot;2009-09-20 10:55:32&quot;</span><span class="p">,</span>
+      <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/dobroide/packs/5230/&quot;</span><span class="p">,</span>
+      <span class="s">&quot;sounds&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5230/sounds&quot;</span><span class="p">,</span>
+      <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5230&quot;</span><span class="p">,</span>
+      <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;granada&quot;</span>
+  <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
 </div>
 </div>
 </div>

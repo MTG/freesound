@@ -20,6 +20,7 @@
 	var map = new GMap2(document.getElementById("map_canvas"));
 	map.setCenter(new GLatLng({{sound.geotag.lat}}, {{sound.geotag.lon}}), {{sound.geotag.zoom}});
 	map.setUIToDefault();
+	map.disableScrollWheelZoom();
 	map.setMapType(G_SATELLITE_MAP);
     var point = new GLatLng({{sound.geotag.lat}}, {{sound.geotag.lon}});
     var marker = new GMarker(point);

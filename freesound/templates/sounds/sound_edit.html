@@ -66,6 +66,7 @@
     map.setCenter(initialCenter, initialZoom);
     
     map.setMapType( G_HYBRID_MAP );
+ 	map.disableScrollWheelZoom();
     map.enableContinuousZoom();
     map.addControl(new GSmallMapControl());
     map.addControl(new GMapTypeControl());

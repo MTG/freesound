@@ -50,6 +50,7 @@
     <script type="text/javascript">
     	var map = new GMap2(document.getElementById("map_canvas"));
     	map.setUIToDefault();
+    	map.disableScrollWheelZoom();
     	map.setMapType(G_SATELLITE_MAP);
     	
     	var bounds = new GLatLngBounds();

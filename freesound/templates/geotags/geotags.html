@@ -29,6 +29,7 @@
 <script type="text/javascript">
 	var map = new GMap2($("#map_canvas").get(0));
 	map.setUIToDefault();
+	map.disableScrollWheelZoom();
 
 	map.setCenter(new GLatLng(24, 22), 2);
 	map.setMapType( G_SATELLITE_MAP );

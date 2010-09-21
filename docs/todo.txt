@@ -6,13 +6,11 @@
 * browse/random/ -> sounds.views.random
 * browse/packs/ -> sounds.views.packs
 * people/ -> accounts.views.accounts
-* packs download
 * sound edit -> remixed from... (use solr?)
 * account activation "done" page
 * voting stars
 * describe
 * moderation interface
-* pack downloads
 
 == Models ==
 
@@ -20,6 +18,7 @@
 
 * add database "Site" fix to deployment script
 * sql trigger should update "last post" when deleting forum posts
+* set up downloads trigger (update sound.num_downloads / pack.num_downloads)
 * downloads table -> convert to postgres
 
 == Api ==
@@ -28,18 +27,16 @@
 
 == Server ==
 
+* host downloads/images/... with shorter urls?
 
 == Other ==
 
 * DRY-out nginx serving + set up (api needs to offer downloads as well)
-* pack generation
 * process/copy all the sounds to test the processing scripts
-* test X-ACCEL-REDIRECT on server
 * cache RSS+pledgie on disk + generate via django jobs
 * smallest flash player
 * list of tables that need to be regenerated (use SQL triggers?)
 * judta helpdesk, integrate with contact form & sound/post flagging
-* use sndfile-convert and sndfile-resample before trying to use mplayer 
 
 == Features, bugreports ==
 

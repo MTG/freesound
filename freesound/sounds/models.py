@@ -279,19 +279,19 @@ class Pack(SocialModel):
         logger = logging.getLogger("audio")
 
         logger.info("creating pack zip for pack %d" % self.id)
-        licenses = License.objects.all()
-        
-        attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
         filename = os.path.join(settings.PACKS_PATH, self.base_filename_slug + ".zip")
+        logger.info("\twill save in %s" % os.path.normpath(filename))
         zip_file = zipfile.ZipFile(filename, "w", zipfile.ZIP_STORED, True)
         
         logger.info("\tadding attribution")
+        licenses = License.objects.all()
+        attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
         zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
         
         logger.info("\tadding sounds")
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
             path = os.path.join(settings.SOUNDS_PATH, sound.paths()["sound_path"])
-            logger.info("\t\tadding %s" % path)
+            logger.info("\t- %s" % os.path.normpath(path))
             zip_file.write(path, os.path.basename(path).encode("utf-8"))
         
         zip_file.close()

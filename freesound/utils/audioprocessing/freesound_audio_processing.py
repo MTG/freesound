@@ -116,7 +116,7 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     sound.save()
     
     # create preview
-    mp3_path = os.path.join(settings.DATA_PATH, paths["preview_path"])
+    mp3_path = os.path.join(settings.SOUNDS_PATH, paths["preview_path"])
     try:
         os.makedirs(os.path.dirname(mp3_path))
     except OSError:
@@ -134,8 +134,8 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     success("created mp3: " + mp3_path)
     
     # create waveform images M
-    waveform_path_m = os.path.join(settings.DATA_PATH, paths["waveform_path_m"])
-    spectral_path_m = os.path.join(settings.DATA_PATH, paths["spectral_path_m"])
+    waveform_path_m = os.path.join(settings.SOUNDS_PATH, paths["waveform_path_m"])
+    spectral_path_m = os.path.join(settings.SOUNDS_PATH, paths["spectral_path_m"])
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048)
     except AudioProcessingException, e:
@@ -148,8 +148,8 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     success("created png, medium size: " + waveform_path_m)
 
     # create waveform images L
-    waveform_path_l = os.path.join(settings.DATA_PATH, paths["waveform_path_l"])
-    spectral_path_l = os.path.join(settings.DATA_PATH, paths["spectral_path_l"])
+    waveform_path_l = os.path.join(settings.SOUNDS_PATH, paths["waveform_path_l"])
+    spectral_path_l = os.path.join(settings.SOUNDS_PATH, paths["spectral_path_l"])
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048)
     except AudioProcessingException, e:
@@ -162,7 +162,7 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     success("created png, large size: " + waveform_path_l)
 
     # now move the original
-    new_original_path = os.path.join(settings.DATA_PATH, paths["sound_path"])
+    new_original_path = os.path.join(settings.SOUNDS_PATH, paths["sound_path"])
     if sound.original_path != new_original_path:
         try:
             os.makedirs(os.path.dirname(new_original_path))

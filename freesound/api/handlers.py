@@ -76,10 +76,10 @@ def get_sound_links(sound):
     return d
 
 def prepare_image_link(p):
-    if settings.DATA_URL.startswith('/'):
-        return prepend_base(settings.DATA_URL)+p
+    if settings.PROFILE_IMAGES_URL.startswith('/'):
+        return prepend_base(settings.PROFILE_IMAGES_URL)+p
     else:
-        return settings.DATA_URL + p
+        return settings.PROFILE_IMAGES_URL + p
 
 def prepare_minimal_user(user):
     return {'username': user.username,
@@ -259,7 +259,7 @@ class SoundServeHandler(BaseHandler):
             return resp
         sound_path = sound.paths()["sound_path"] if file_or_preview == 'serve' else sound.paths()['preview_path']
         if settings.DEBUG:
-            file_path = os.path.join(settings.DATA_PATH, sound_path)
+            file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
             wrapper = FileWrapper(file(file_path, "rb"))
             response = HttpResponse(wrapper, content_type='application/octet-stream')
             response['Content-Length'] = os.path.getsize(file_path)

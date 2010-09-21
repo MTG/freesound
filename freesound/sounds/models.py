@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_unicode
@@ -7,6 +8,8 @@ from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
+from utils.text import slugify
+import logging
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -237,51 +240,63 @@ class Sound(SocialModel):
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 
-
 class Pack(SocialModel):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
-    name_slug = models.SlugField(max_length=255, db_index=True)
-    
+    base_filename_slug = models.SlugField(max_length=512)
     description = models.TextField(null=True, blank=True, default=None)
+    is_dirty = models.BooleanField(db_index=True, default=True)
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
-    is_dirty = models.BooleanField(db_index=True, default=True)
-    
     num_downloads = models.PositiveIntegerField(default=0)
     
     def __unicode__(self):
         return u"%s by %s" % (self.name, self.user)
+    
+    def get_path(self):
+        return settings.PACKS_URL + self.base_filename_slug + ".zip"
 
     @models.permalink
     def get_absolute_url(self):
-        return ('pack', (smart_unicode(self.id),))    
+        return ('pack', (smart_unicode(self.id),))   
     
+    def save(self, *args, **kwargs):
+        self.base_filename_slug = "%d__%s__%s" % (self.id, self.name_slug, slugify(self.user.username)) 
+        super(Pack, self).save(*args, **kwargs)
+        
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name')
         ordering = ("-created",)
 
     def create_zip(self):
-        from django.conf import settings
         import zipfile
         from django.template.loader import render_to_string
         import os
-
-        licenses = License.objects.all()
-        attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
         
-        zip_file = zipfile.ZipFile("/tmp/test.zip", "w", zipfile.ZIP_STORED, True)
+        logger = logging.getLogger("audio")
+
+        logger.info("creating pack zip for pack %d" % self.id)
+        licenses = License.objects.all()
+        
+        attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
+        filename = os.path.join(settings.PACKS_PATH, self.base_filename_slug + ".zip")
+        zip_file = zipfile.ZipFile(filename, "w", zipfile.ZIP_STORED, True)
+        
+        logger.info("\tadding attribution")
         zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
         
+        logger.info("\tadding sounds")
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
-            path = os.path.join(settings.DATA_PATH, sound.paths()["sound_path"])
+            path = os.path.join(settings.SOUNDS_PATH, sound.paths()["sound_path"])
+            logger.info("\t\tadding %s" % path)
             zip_file.write(path, os.path.basename(path).encode("utf-8"))
         
         zip_file.close()
         
         self.is_dirty = False
         self.save()
+        
+        logger.info("\tall done")
 
 
 class Flag(models.Model):

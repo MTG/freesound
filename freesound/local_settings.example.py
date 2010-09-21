@@ -18,9 +18,6 @@ DATABASE_PASSWORD = ''
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = 'http://localhost:8080/fsmedia/'
 
-# data URL, hosted via lighttpd or something similar
-DATA_URL = MEDIA_URL + 'data/'
-
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".

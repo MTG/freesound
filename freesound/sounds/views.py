@@ -109,7 +109,7 @@ def sound_download(request, username, sound_id):
     sound_path = sound.paths()["sound_path"]
     Download.objects.get_or_create(user=request.user, sound=sound)
     if settings.DEBUG:
-        file_path = os.path.join(settings.DATA_PATH, sound_path)
+        file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
         wrapper = FileWrapper(file(file_path, "rb"))
         response = HttpResponse(wrapper, content_type='application/octet-stream')
         response['Content-Length'] = os.path.getsize(file_path)
@@ -158,7 +158,16 @@ def sound_edit(request, username, sound_id):
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'], name_slug=slugify(data['new_pack']))
                 sound.pack = pack
             else:
-                sound.pack = data["pack"]
+                new_pack = data["pack"]
+                old_pack = sound.pack
+                if new_pack != old_pack:
+                    if old_pack:
+                        old_pack.is_dirty = True
+                        old_pack.save()
+                    if new_pack:
+                        new_pack.is_dirty = True
+                        new_pack.save()
+                    sound.pack = new_pack
             sound.save()
             invalidate_template_cache("sound_header", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())

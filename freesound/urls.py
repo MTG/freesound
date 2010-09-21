@@ -29,7 +29,7 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/similar/$', sounds.views.similar, name="sound-similar"),
     url(r'^people/(?P<username>[^//]+)/packs/$', sounds.views.packs_for_user, name="packs-for-user"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', sounds.views.pack, name="pack"),
-    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/$', sounds.views.pack_download, name="pack-download"),
+    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
 
     url(r'^browse/$', sounds.views.sounds, name="sounds"),
     url(r'^browse/tags/$', tags.views.tags, name="tags"),

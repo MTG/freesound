@@ -261,7 +261,7 @@ class Pack(SocialModel):
         return ('pack', (smart_unicode(self.id),))   
     
     def save(self, *args, **kwargs):
-        self.base_filename_slug = "%d__%s__%s" % (self.id, self.name_slug, slugify(self.user.username)) 
+        self.base_filename_slug = "%d__%s__%s" % (self.id, slugify(self.user.username), slugify(self.name)) 
         super(Pack, self).save(*args, **kwargs)
         
     class Meta(SocialModel.Meta):
@@ -272,6 +272,9 @@ class Pack(SocialModel):
         import zipfile
         from django.template.loader import render_to_string
         import os
+        
+        if not self.base_filename_slug.startswith(str(self.id)):
+            self.save()
         
         logger = logging.getLogger("audio")
 

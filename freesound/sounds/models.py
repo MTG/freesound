@@ -253,9 +253,6 @@ class Pack(SocialModel):
     def __unicode__(self):
         return u"%s by %s" % (self.name, self.user)
     
-    def get_path(self):
-        return settings.PACKS_URL + self.base_filename_slug + ".zip"
-
     @models.permalink
     def get_absolute_url(self):
         return ('pack', (smart_unicode(self.id),))   

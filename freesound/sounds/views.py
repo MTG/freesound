@@ -117,7 +117,25 @@ def sound_download(request, username, sound_id):
     else:
         response = HttpResponse()
         response['Content-Type']="application/octet-stream"
-        response['X-Accel-Redirect'] = os.path.join("downloads/", sound_path)
+        response['X-Accel-Redirect'] = os.path.join("downloads/sounds/", sound_path)
+        return response
+
+
+@login_required
+def pack_download(request, username, pack_id):
+    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
+    pack_path = pack.base_filename_slug + '.zip'
+    Download.objects.get_or_create(user=request.user, pack=pack)
+    if settings.DEBUG:
+        file_path = os.path.join(settings.PACKS_PATH, pack_path)
+        wrapper = FileWrapper(file(file_path, "rb"))
+        response = HttpResponse(wrapper, content_type='application/octet-stream')
+        response['Content-Length'] = os.path.getsize(file_path)
+        return response
+    else:
+        response = HttpResponse()
+        response['Content-Type']="application/octet-stream"
+        response['X-Accel-Redirect'] = os.path.join("downloads/packs/", pack_path)
         return response
 
         

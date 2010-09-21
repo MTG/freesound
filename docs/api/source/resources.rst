@@ -26,8 +26,6 @@ The only allowed method is GET.
 GET
 ---
 
-
-
 Request
 '''''''
 
@@ -41,7 +39,6 @@ p          number  no        The page of the search result to get
 f          string  no	     The filter
 s	   string  no	     How to sort the results
 =========  ======  ========  =================================
-
 
 TODO: explain how querying works
 
@@ -72,7 +69,7 @@ rating_asc      Same as above, but lowest rated sounds first.
 
   # Get the third page with the query 'dogs', with the most downloaded sounds first.
   curl http://www.freesound.org/api/sounds/search?p=3&q=dogs&s=downloads_desc
-  TODO: more examples
+  TODO: examples of the more exotic search features
 
 .. _sound-search-response:
 
@@ -126,9 +123,9 @@ __ sound-get-response_
             "preview": "http://www.freesound.org/api/sounds/83295/preview", 
             "ref": "http://www.freesound.org/api/sounds/83295", 
             "pack": "http://www.freesound.org/api/packs/2090"
-        }, 
-
-	*** more sounds ***
+        }
+	{'another_sound': 1},
+	{'and_another': 1}
 	],
     "previous": "http://www.freesound.org/api/sounds/search?q=&p=1&f=&s=downloads_desc", 
     "next": "http://www.freesound.org/api/sounds/search?q=&p=3&f=&s=downloads_desc"
@@ -438,8 +435,7 @@ __ pack-get-response_
         "num_downloads": 0, 
         "ref": "http://tabasco.upf.edu/api/packs/5230", 
         "name": "granada"
-    }, 
-    *** more packs ***
+    }
   ]
 
 

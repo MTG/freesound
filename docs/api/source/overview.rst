@@ -19,7 +19,7 @@ base URL.
 
 ::
 
-  http://www.freesound.org/api
+  http://tabasco.upf.edu/api
 
 There is currently no support for HTTPS, only HTTP.
 

@@ -68,7 +68,7 @@ rating_asc      Same as above, but lowest rated sounds first.
 ::
 
   # Get the third page with the query 'dogs', with the most downloaded sounds first.
-  curl http://www.freesound.org/api/sounds/search?p=3&q=dogs&s=downloads_desc
+  curl http://tabasco.upf.edu/api/sounds/search?p=3&q=dogs&s=downloads_desc
   TODO: examples of the more exotic search features
 
 .. _sound-search-response:
@@ -95,7 +95,7 @@ __ sound-get-response_
   {
     "sounds": [
         {
-            "waveform_m": "http://www.freesound.org/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.png", 
+            "waveform_m": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.png", 
             "tags": [
                 "bird", 
                 "cheep", 
@@ -106,29 +106,29 @@ __ sound-get-response_
                 "nousy", 
                 "peep"
             ], 
-            "url": "http://www.freesound.org/people/digifishmusic/sounds/83295/", 
+            "url": "http://tabasco.upf.edu/people/digifishmusic/sounds/83295/", 
             "type": "wav", 
-            "serve": "http://www.freesound.org/api/sounds/83295/serve", 
-            "spectral_m": "http://www.freesound.org/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.jpg", 
-            "spectral_l": "http://www.freesound.org/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.jpg", 
+            "serve": "http://tabasco.upf.edu/api/sounds/83295/serve", 
+            "spectral_m": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.jpg", 
+            "spectral_l": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.jpg", 
             "user": {
                 "username": "digifishmusic", 
-                "url": "http://www.freesound.org/people/digifishmusic/", 
-                "ref": "http://www.freesound.org/api/people/digifishmusic"
+                "url": "http://tabasco.upf.edu/people/digifishmusic/", 
+                "ref": "http://tabasco.upf.edu/api/people/digifishmusic"
             }, 
             "original_filename": "Noisy_Miner_Chick_FeedMe.wav", 
             "base_filename_slug": "83295__digifishmusic__Noisy_Miner_Chick_FeedMe", 
             "duration": 48.548956916100003, 
-            "waveform_l": "http://www.freesound.org/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.png", 
-            "preview": "http://www.freesound.org/api/sounds/83295/preview", 
-            "ref": "http://www.freesound.org/api/sounds/83295", 
-            "pack": "http://www.freesound.org/api/packs/2090"
+            "waveform_l": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.png", 
+            "preview": "http://tabasco.upf.edu/api/sounds/83295/preview", 
+            "ref": "http://tabasco.upf.edu/api/sounds/83295", 
+            "pack": "http://tabasco.upf.edu/api/packs/2090"
         }
 	{'another_sound': 1},
 	{'and_another': 1}
 	],
-    "previous": "http://www.freesound.org/api/sounds/search?q=&p=1&f=&s=downloads_desc", 
-    "next": "http://www.freesound.org/api/sounds/search?q=&p=3&f=&s=downloads_desc"
+    "previous": "http://tabasco.upf.edu/api/sounds/search?q=&p=1&f=&s=downloads_desc", 
+    "next": "http://tabasco.upf.edu/api/sounds/search?q=&p=3&f=&s=downloads_desc"
   }
 
 
@@ -159,7 +159,7 @@ Request
 
 ::
 
-  curl http://www.freesound.org/api/sounds/83295
+  curl http://tabasco.upf.edu/api/sounds/83295
 
 .. _sound-get-response:
 
@@ -211,8 +211,8 @@ waveform_l	      URI      A visualization of the sounds waveform, png file (larg
     "bitdepth": 16, 
     "num_comments": 0, 
     "filesize": 67928, 
-    "preview": "http://www.freesound.org/api/sounds/83257/preview", 
-    "ref": "http://www.freesound.org/api/sounds/83257", 
+    "preview": "http://tabasco.upf.edu/api/sounds/83257/preview", 
+    "ref": "http://tabasco.upf.edu/api/sounds/83257", 
     "description": "kick bd drum goa goakick psy psykick kickdrum", 
     "tags": [
         "bd", 
@@ -224,27 +224,27 @@ waveform_l	      URI      A visualization of the sounds waveform, png file (larg
         "psy", 
         "psykick"
     ], 
-    "serve": "http://www.freesound.org/api/sounds/83257/serve", 
-    "spectral_m": "http://www.freesound.org/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.jpg", 
-    "spectral_l": "http://www.freesound.org/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.jpg", 
+    "serve": "http://tabasco.upf.edu/api/sounds/83257/serve", 
+    "spectral_m": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.jpg", 
+    "spectral_l": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.jpg", 
     "user": {
         "username": "zgump", 
-        "url": "http://www.freesound.org/people/zgump/", 
-        "ref": "http://www.freesound.org/api/people/zgump"
+        "url": "http://tabasco.upf.edu/people/zgump/", 
+        "ref": "http://tabasco.upf.edu/api/people/zgump"
     }, 
     "bitrate": 1411, 
     "num_downloads": 0, 
     "num_ratings": 0, 
     "license": "Sampling+", 
     "created": "2009-11-12 19:58:17", 
-    "url": "http://www.freesound.org/people/zgump/sounds/83257/", 
+    "url": "http://tabasco.upf.edu/people/zgump/sounds/83257/", 
     "type": "wav", 
     "avg_rating": 0.0, 
     "original_filename": "CLUB KICK 0304.wav", 
-    "waveform_l": "http://www.freesound.org/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.png", 
-    "waveform_m": "http://www.freesound.org/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.png", 
+    "waveform_l": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.png", 
+    "waveform_m": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.png", 
     "channels": 2, 
-    "pack": "http://www.freesound.org/api/packs/5467"
+    "pack": "http://tabasco.upf.edu/api/packs/5467"
   }
 
 
@@ -281,8 +281,8 @@ Request
 
 ::
 
-  curl http://www.freesound.org/api/people/Jovica
-  curl http://www.freesound.org/api/people/klankschap
+  curl http://tabasco.upf.edu/api/people/Jovica
+  curl http://tabasco.upf.edu/api/people/klankschap
 
 
 Response
@@ -315,13 +315,13 @@ date_joined	      string   The date the user joined Freesound.
     "username": "Jovica", 
     "first_name": "", 
     "last_name": "", 
-    "packs": "http://www.freesound.org/api/people/Jovica/packs", 
-    "url": "http://www.freesound.org/people/Jovica/", 
+    "packs": "http://tabasco.upf.edu/api/people/Jovica/packs", 
+    "url": "http://tabasco.upf.edu/people/Jovica/", 
     "about": "Policy of use: you must state somewhere somehow (credit lines, web page, whatever) that the Freesound Project served this sounds. It is irrelevant to me whether you mention or not my authorship. Can't credit? Send me a personal message. (Thanks to dobroide for these words!)\r\n\r\nIf possible, I would also like to hear where the sounds are used, so if you can send me a link or something else, please do so. Thanks!\r\n\r\nCurrently adding LAYERS & DISTOPIA sample packs!\r\n\r\nFor some more information about me, click on the links below:\r\n<a href=\"http://www.myspace.com/jovicastorer\" rel=\"nofollow\">http://www.myspace.com/jovicastorer</a>\r\n\r\nAnd this is an experimental droney label for which I do some producing, engineering, mixing and mastering:\r\n<a href=\"http://www.plaguerecordings.com/index.htm\" rel=\"nofollow\">http://www.plaguerecordings.com/index.htm</a>\r\n\r\nCurrently me and a good friend of mine are working on a new <strong>c-o-l-o-u-r-s</strong> website. \r\n\r\nThe first release, <strong>'gekarameliseerd'</strong> by <strong>Jovica Storer</strong>, is available on:\r\n- emusic: <a href=\"http://www.emusic.com/album/Jovica-Storer-Gekarameliseerd-MP3-Download/11666781.html\" rel=\"nofollow\">http://www.emusic.com/album/Jovica-Storer-Gekarameliseerd-MP3-Download/11666781.html</a>\r\n- iTunes: <a href=\"http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=333466000&id;=333464878&s;=143443&uo;=6\" rel=\"nofollow\">http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=333466000&id;=333464878&s;=143443&uo;=6</a>\r\n- Napster: <a href=\"http://free.napster.com/view/album/index.html?id=13373722\" rel=\"nofollow\">http://free.napster.com/view/album/index.html?id=13373722</a>\r\nPlease check it out and if you want to support me, buy some tracks. Many thanks! \r\n\r\nNamaste!\r\nJovica Storer", 
     "home_page": "http://www.ampcast.com/music/25765/artist.php", 
     "signature": "Namaste!\r\nJovica Storer\r\n<a href=\"http://www.c-o-l-o-u-r-s.com\" rel=\"nofollow\">http://www.c-o-l-o-u-r-s.com</a>", 
-    "sounds": "http://www.freesound.org/api/people/Jovica/sounds", 
-    "ref": "http://www.freesound.org/api/people/Jovica", 
+    "sounds": "http://tabasco.upf.edu/api/people/Jovica/sounds", 
+    "ref": "http://tabasco.upf.edu/api/people/Jovica", 
     "date_joined": "2005-05-07 17:49:39"
   }
 
@@ -363,8 +363,8 @@ p          number  no        The page of the sound collection to get.
 
 ::
 
-  curl http://www.freesound.org/api/people/thanvannispen/sounds
-  curl http://www.freesound.org/api/people/inchadney/sounds?p=5
+  curl http://tabasco.upf.edu/api/people/thanvannispen/sounds
+  curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5
 
 Response
 ''''''''
@@ -401,7 +401,7 @@ Request
 
 ::
 
-  curl http://www.freesound.org/api/people/dobroide/packs
+  curl http://tabasco.upf.edu/api/people/dobroide/packs
 
 Response
 ''''''''
@@ -469,7 +469,7 @@ Request
 
 ::
 
-  curl http://www.freesound.org/api/packs/5107
+  curl http://tabasco.upf.edu/api/packs/5107
 
 .. _pack-get-response:
 
@@ -545,7 +545,7 @@ p          number  no        The page of the pack's sounds to get
 
 ::
 
-  curl http://www.freesound.org/api/packs/5107/sounds
+  curl http://tabasco.upf.edu/api/packs/5107/sounds
 
 Response
 ''''''''

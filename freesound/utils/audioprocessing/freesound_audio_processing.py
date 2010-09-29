@@ -1,33 +1,21 @@
 from datetime import datetime
 from django.conf import settings
+from utils.audioprocessing.processing import AudioProcessingException
 from utils.text import slugify
 import logging
-import os.path
+import os
 import shutil
 import tempfile
-import os
 import utils.audioprocessing.processing as audioprocessing
-from utils.audioprocessing.processing import AudioProcessingException, NoSpaceLeftException
 
 logger = logging.getLogger("audio")
 
 def process_pending():
-    special_tmp = "/mnt/tmp"
-    regular_tmp = "/tmp"
-    
     from sounds.models import Sound
-    import glob
     for sound in Sound.objects.filter(processing_state="PE").exclude(original_path=None):
-        try:
-            process(sound, tmp=special_tmp)
-        except NoSpaceLeftException:
-            logger.warning("------- no space left on device -> ERASING!")
-            for filename in glob.glob(special_tmp + "/*"):
-                os.unlink(filename)
-            logger.warning("------- no space left on device -> ERASED, retrying with regular tmp")
-            process(sound, tmp=regular_tmp)
+        process(sound)
         
-def process(sound, do_cleanup=True, tmp="/tmp"):
+def process(sound, do_cleanup=True):
     logger.info("processing audio file %d" % sound.id)
     
     def failure(message, error=None):
@@ -77,7 +65,7 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
     
     # convert to pcm
     to_cleanup = []
-    tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id), dir=tmp)
+    tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
     
     try:
         if not audioprocessing.convert_to_pcm(sound.original_path, tmp_wavefile):
@@ -93,7 +81,7 @@ def process(sound, do_cleanup=True, tmp="/tmp"):
         cleanup(to_cleanup)
         raise
     
-    tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id), dir=tmp)
+    tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
     
     try:
         info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)

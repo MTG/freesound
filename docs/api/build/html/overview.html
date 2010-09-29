@@ -60,7 +60,7 @@ responses are done with standard HTTP requests.</p>
 <h2>Base URL<a class="headerlink" href="#base-url" title="Permalink to this headline">¶</a></h2>
 <p>All the REST resources mentioned in the documentation have the following
 base URL.</p>
-<div class="highlight-python"><pre>http://www.freesound.org/api</pre>
+<div class="highlight-python"><pre>http://tabasco.upf.edu/api</pre>
 </div>
 <p>There is currently no support for HTTPS, only HTTP.</p>
 </div>
@@ -70,7 +70,7 @@ base URL.</p>
 present this is done simply by adding an &#8216;api_key&#8217; GET parameter to the end of
 the URI to be requested. A request to the sounds search resource with API key
 <tt class="docutils literal"><span class="pre">12d6dc5486554e278e370cdc49935908</span></tt> would look as follows.</p>
-<div class="highlight-python"><pre>http://www.freesound.org/api/sounds/search?q=barking&amp;api_key=12d6dc5486554e278e370cdc49935908</pre>
+<div class="highlight-python"><pre>http://tabasco.upf.edu/api/sounds/search?q=barking&amp;api_key=12d6dc5486554e278e370cdc49935908</pre>
 </div>
 <p>N.B. The URIs documented on these pages do not show the API keys, but they
 are definitely necessary.</p>
@@ -79,7 +79,7 @@ are definitely necessary.</p>
 <p>You can apply for API keys at the following URL. Note that you will need
 a Freesound account.</p>
 <ul class="simple">
-<li><a class="reference external" href="http://www.freesound.org/api/apply">http://www.freesound.org/api/apply</a></li>
+<li><a class="reference external" href="http://tabasco.upf.edu/api/apply">http://tabasco.upf.edu/api/apply</a></li>
 </ul>
 </div>
 <div class="section" id="requests">
@@ -92,9 +92,9 @@ variable URI (e.g. <tt class="docutils literal"><span class="pre">/sounds/&lt;so
 will have to be replaced to get a valid URI.</p>
 <p>For example, the following URIs are all instances of the resource indicated by
 <tt class="docutils literal"><span class="pre">/sounds/&lt;sound_id&gt;</span></tt>.</p>
-<div class="highlight-python"><pre>http://www.freesound.org/api/sounds/0132dfd197c84db6a8e56012b2e08d02
-http://www.freesound.org/api/sounds/ceda30d8d2cf41eb9a156c7ef288fc54
-http://www.freesound.org/api/sounds/89116d024cf34dc38f269e6b9abb2db5</pre>
+<div class="highlight-python"><pre>http://tabasco.upf.edu/api/sounds/0132dfd197c84db6a8e56012b2e08d02
+http://tabasco.upf.edu/api/sounds/ceda30d8d2cf41eb9a156c7ef288fc54
+http://tabasco.upf.edu/api/sounds/89116d024cf34dc38f269e6b9abb2db5</pre>
 </div>
 </div>
 <div class="section" id="responses">
@@ -111,10 +111,10 @@ is currently the only response format we actively test.</p>
 <p>To specify the desired response format add a &#8216;format&#8217; GET or POST parameter
 to the request. Specify the desired format in lowercase letters as follows:</p>
 <div class="highlight-python"><pre># example requests for your files, but with different response formats
-http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&amp;format=json
-http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&amp;format=xml
-http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&amp;format=yaml
-http://www.freesound.org/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&amp;format=pickle</pre>
+http://tabasco.upf.edu/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&amp;format=json
+http://tabasco.upf.edu/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&amp;format=xml
+http://tabasco.upf.edu/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&amp;format=yaml
+http://tabasco.upf.edu/api/sounds/search?api_key=12d6dc5486554e278e370cdc49935908&amp;format=pickle</pre>
 </div>
 <p>N.B. The default format is JSON.</p>
 </div>

@@ -40,5 +40,5 @@ def deploy():
     """pull and restart"""
     pull()
     make_stereofy()
-    clearpyc()
+    #clearpyc()
     restart()

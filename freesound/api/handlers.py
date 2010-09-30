@@ -91,7 +91,7 @@ def prepare_single_sound(sound):
     for field in ["num_downloads", "channels", "duration", "samplerate", "samplerate", \
                   "id", "num_comments", "num_ratings", "filesize", \
                   "type", "description", "bitdepth", "bitrate",  "created", \
-                  "avg_rating", "original_filename"]:
+                  "avg_rating", "original_filename", "base_filename_slug"]:
         d[field] = getattr(sound, field)
     try:
         d['license'] = sound.license.name

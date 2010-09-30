@@ -232,7 +232,7 @@ class SoundHandler(BaseHandler):
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
             resp = rc.NOT_FOUND
-            resp = 'There is no sound with id %s' % sound_id
+            resp.content = 'There is no sound with id %s' % sound_id
             return resp
         return prepare_single_sound(sound)
 

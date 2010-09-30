@@ -66,10 +66,10 @@ TEMPLATE_DIRS = (
 )
 
 # Email settings
-SERVER_EMAIL = 'devnull@iua.upf.edu'
+SERVER_EMAIL = 'noreply@freesound.org'
 EMAIL_SUBJECT_PREFIX = '[freesound] '
 SEND_BROKEN_LINK_EMAILS = False
-DEFAULT_FROM_EMAIL = 'The Freesound Bot <devnull@iua.upf.edu>'
+DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
 
 TIME_ZONE = 'Europe/Brussels'
 

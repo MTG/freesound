@@ -106,7 +106,7 @@ def sound(request, username, sound_id):
 @login_required
 def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    sound_path = sound.paths()["sound_path"]
+    sound_path = sound.paths()["sound_path"] # 34/sounds/123_something.wav
     Download.objects.get_or_create(user=request.user, sound=sound)
     if settings.DEBUG:
         file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
@@ -117,7 +117,7 @@ def sound_download(request, username, sound_id):
     else:
         response = HttpResponse()
         response['Content-Type']="application/octet-stream"
-        response['X-Accel-Redirect'] = os.path.join("downloads/sounds/", sound_path)
+        response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_path)
         return response
 
 

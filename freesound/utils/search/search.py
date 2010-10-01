@@ -30,8 +30,8 @@ def convert_to_solr_document(sound):
     document["type"] = sound.type
 
     document["duration"] = sound.duration
-    document["bitdepth"] = sound.bitdepth
-    document["bitrate"] = sound.bitrate
+    document["bitdepth"] = sound.bitdepth if sound.bitdepth != None else 0
+    document["bitrate"] = sound.bitrate if sound.bitrate != None else 0
     document["samplerate"] = int(sound.samplerate)
     document["filesize"] = sound.filesize
     document["channels"] = sound.channels

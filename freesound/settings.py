@@ -68,8 +68,10 @@ TEMPLATE_DIRS = (
 # Email settings
 SERVER_EMAIL = 'noreply@freesound.org'
 EMAIL_SUBJECT_PREFIX = '[freesound] '
-SEND_BROKEN_LINK_EMAILS = False
+SEND_BROKEN_LINK_EMAILS = True
 DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
 
 TIME_ZONE = 'Europe/Brussels'
 
@@ -135,6 +137,7 @@ PACKS_PATH = os.path.join(DATA_PATH, 'packs/')
 from local_settings import * #@UnusedWildImport
 
 TEMPLATE_DEBUG = DEBUG
+MANAGERS = ADMINS
 
 # data URL, hosted via lighttpd or something similar
 DATA_URL = MEDIA_URL + 'data/'

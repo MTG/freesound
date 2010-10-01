@@ -59,7 +59,7 @@ def sounds(request):
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request)) 
 
 def remixed(request):
-    raise Exception("hello")
+    pass
 
 def random(request):
     pass

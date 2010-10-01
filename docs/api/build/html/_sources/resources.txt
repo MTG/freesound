@@ -9,8 +9,6 @@ Sounds
 
 
 
-
-
 Sound Search resource
 =====================
 
@@ -40,14 +38,99 @@ f          string  no	     The filter
 s	   string  no	     How to sort the results
 =========  ======  ========  =================================
 
-TODO: explain how querying works
+**q for query**
 
-TODO: explain how the filter works
+From the Solr Wiki: This is designed to be support raw input
+strings provided by users with no special escaping. '+' and '-'
+characters are treated as "mandatory" and "prohibited" modifiers for
+the subsequent terms. Text wrapped in balanced quote characters '"'
+are treated as phrases, any query containing an odd number of quote
+characters is evaluated as if there were no quote characters at all.
+Wildcards are not supported.
+    
+default is "+"
+    
+Some examples::
 
-The page (p) parameter can be used to paginate through the results.
+  q=bass -drum
+  q="bass drum" -double
+  q=username bass heavy -drum
+
+The q-query does a weighted search over many of the the fields defined
+below. So, searching for "1234" will find you files with id 1234,
+files that have 1234 in the description etc etc. Think of "q" as being
+the "universal google search parameter".
+	    	    
+**f for filters**
+	    
+all filters come in the form fieldname:query or fieldname:"query"
+and fieldname can be any of these:
+
+======================  ====================================================
+id		        integer, sound id on freesound
+username: 		string, not tokenized
+created: 		date
+original_filename: 	string, tokenized
+description: 		string, tokenized
+tag: 			string
+license: 		string (all the same for all
+freesound 		sounds for now)
+is_remix: 		boolean
+was_remixed: 		boolean
+pack: 			string
+pack_tokenized: 	string, tokenized
+is_geotagged: 		boolean
+type: 			string, original file type, one of wav,
+    			aiff, ogg, mp3, flac
+duration: 		numerical, duration of sound in seconds
+bitdepth: 		integer, WARNING is not to be trusted right now
+bitrate: 		numerical, WARNING is not to be trusted right now
+samplerate: 		integer
+filesize: 		integer, file size in bytes
+channels: 		integer, numer of channels in sound,
+			mostly 1 or 2, sometimes more
+md5: 			string, 32-byte md5 hash of file
+num_downloads: 		integer, all zero right now (not imported data)
+avg_rating: 		numerical, average rating, from 0 to 5
+num_ratings: 		integer, number of ratings
+comment: 		string, tokenized
+comments: 		numerical, number of comments
+======================  ====================================================
+    
+string filters can be quoted to keep them together 
+(see examples) numeric/integer filters can have a 
+range as a query, looking like this (the "TO" needs 
+to be upper case!)::
+
+  [start TO end]
+  [* TO end]
+  [start to \*]
+
+dates can have ranges (and math) too (the "TO" needs to be upper case!)::
+
+  created:[* TO NOW]
+  created:[1976-03-06T23:59:59.999Z TO *]
+  created:[1995-12-31T23:59:59.999Z TO 2007-03-06T00:00:00Z]
+  created:[NOW-1YEAR/DAY TO NOW/DAY+1DAY]
+  created:[1976-03-06T23:59:59.999Z TO 1976-03-06T23:59:59.999Z+1YEAR]
+  created:[1976-03-06T23:59:59.999Z/YEAR TO 1976-03-06T23:59:59.999Z]
+
+Some examples::
+    
+  f=tag:bass tag:drum
+  f=tag:bass description:"really heavy"
+  f=is_geotagged:true tag:field-recording duration:[60 TO 120]
+  f=samplerate:44100 type:wav channels:2
+  f=duration:[0.1 TO 0.3] avg_rating:[3 TO *]
+
+**p for page**
+
+The p parameter can be used to paginate through the results.
 Every page holds 15 sounds and the first page is page 1.
 
-The sort (s) parameter determines how the results are sorted, and can only be one
+**s for sort**
+
+The s parameter determines how the results are sorted, and can only be one
 of the following.
 
 ==============  ====================================================================

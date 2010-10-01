@@ -20,6 +20,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Freesound API v1.0 documentation" href="index.html" />
+    <link rel="next" title="Client Libraries" href="client_libs.html" />
     <link rel="prev" title="Overview" href="overview.html" /> 
   </head>
   <body>
@@ -29,6 +30,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="client_libs.html" title="Client Libraries"
+             accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="P">previous</a> |</li>
@@ -95,11 +99,143 @@
 </tr>
 </tbody>
 </table>
-<p>TODO: explain how querying works</p>
-<p>TODO: explain how the filter works</p>
-<p>The page (p) parameter can be used to paginate through the results.
+<p><strong>q for query</strong></p>
+<p>From the Solr Wiki: This is designed to be support raw input
+strings provided by users with no special escaping. &#8216;+&#8217; and &#8216;-&#8216;
+characters are treated as &#8220;mandatory&#8221; and &#8220;prohibited&#8221; modifiers for
+the subsequent terms. Text wrapped in balanced quote characters &#8216;&#8221;&#8217;
+are treated as phrases, any query containing an odd number of quote
+characters is evaluated as if there were no quote characters at all.
+Wildcards are not supported.</p>
+<p>default is &#8220;+&#8221;</p>
+<p>Some examples:</p>
+<div class="highlight-python"><pre>q=bass -drum
+q="bass drum" -double
+q=username bass heavy -drum</pre>
+</div>
+<p>The q-query does a weighted search over many of the the fields defined
+below. So, searching for &#8220;1234&#8221; will find you files with id 1234,
+files that have 1234 in the description etc etc. Think of &#8220;q&#8221; as being
+the &#8220;universal google search parameter&#8221;.</p>
+<p><strong>f for filters</strong></p>
+<p>all filters come in the form fieldname:query or fieldname:&#8221;query&#8221;
+and fieldname can be any of these:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<tbody valign="top">
+<tr><td>id</td>
+<td>integer, sound id on freesound</td>
+</tr>
+<tr><td>username:</td>
+<td>string, not tokenized</td>
+</tr>
+<tr><td>created:</td>
+<td>date</td>
+</tr>
+<tr><td>original_filename:</td>
+<td>string, tokenized</td>
+</tr>
+<tr><td>description:</td>
+<td>string, tokenized</td>
+</tr>
+<tr><td>tag:</td>
+<td>string</td>
+</tr>
+<tr><td>license:</td>
+<td>string (all the same for all</td>
+</tr>
+<tr><td>freesound</td>
+<td>sounds for now)</td>
+</tr>
+<tr><td>is_remix:</td>
+<td>boolean</td>
+</tr>
+<tr><td>was_remixed:</td>
+<td>boolean</td>
+</tr>
+<tr><td>pack:</td>
+<td>string</td>
+</tr>
+<tr><td>pack_tokenized:</td>
+<td>string, tokenized</td>
+</tr>
+<tr><td>is_geotagged:</td>
+<td>boolean</td>
+</tr>
+<tr><td>type:</td>
+<td>string, original file type, one of wav,
+aiff, ogg, mp3, flac</td>
+</tr>
+<tr><td>duration:</td>
+<td>numerical, duration of sound in seconds</td>
+</tr>
+<tr><td>bitdepth:</td>
+<td>integer, WARNING is not to be trusted right now</td>
+</tr>
+<tr><td>bitrate:</td>
+<td>numerical, WARNING is not to be trusted right now</td>
+</tr>
+<tr><td>samplerate:</td>
+<td>integer</td>
+</tr>
+<tr><td>filesize:</td>
+<td>integer, file size in bytes</td>
+</tr>
+<tr><td>channels:</td>
+<td>integer, numer of channels in sound,
+mostly 1 or 2, sometimes more</td>
+</tr>
+<tr><td>md5:</td>
+<td>string, 32-byte md5 hash of file</td>
+</tr>
+<tr><td>num_downloads:</td>
+<td>integer, all zero right now (not imported data)</td>
+</tr>
+<tr><td>avg_rating:</td>
+<td>numerical, average rating, from 0 to 5</td>
+</tr>
+<tr><td>num_ratings:</td>
+<td>integer, number of ratings</td>
+</tr>
+<tr><td>comment:</td>
+<td>string, tokenized</td>
+</tr>
+<tr><td>comments:</td>
+<td>numerical, number of comments</td>
+</tr>
+</tbody>
+</table>
+<p>string filters can be quoted to keep them together
+(see examples) numeric/integer filters can have a
+range as a query, looking like this (the &#8220;TO&#8221; needs
+to be upper case!):</p>
+<div class="highlight-python"><pre>[start TO end]
+[* TO end]
+[start to \*]</pre>
+</div>
+<p>dates can have ranges (and math) too (the &#8220;TO&#8221; needs to be upper case!):</p>
+<div class="highlight-python"><pre>created:[* TO NOW]
+created:[1976-03-06T23:59:59.999Z TO *]
+created:[1995-12-31T23:59:59.999Z TO 2007-03-06T00:00:00Z]
+created:[NOW-1YEAR/DAY TO NOW/DAY+1DAY]
+created:[1976-03-06T23:59:59.999Z TO 1976-03-06T23:59:59.999Z+1YEAR]
+created:[1976-03-06T23:59:59.999Z/YEAR TO 1976-03-06T23:59:59.999Z]</pre>
+</div>
+<p>Some examples:</p>
+<div class="highlight-python"><pre>f=tag:bass tag:drum
+f=tag:bass description:"really heavy"
+f=is_geotagged:true tag:field-recording duration:[60 TO 120]
+f=samplerate:44100 type:wav channels:2
+f=duration:[0.1 TO 0.3] avg_rating:[3 TO *]</pre>
+</div>
+<p><strong>p for page</strong></p>
+<p>The p parameter can be used to paginate through the results.
 Every page holds 15 sounds and the first page is page 1.</p>
-<p>The sort (s) parameter determines how the results are sorted, and can only be one
+<p><strong>s for sort</strong></p>
+<p>The s parameter determines how the results are sorted, and can only be one
 of the following.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -759,6 +895,7 @@ curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5</pre>
 <li class="toctree-l2"><a class="reference external" href="#packs">Packs</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference external" href="client_libs.html">Client Libraries</a></li>
 </ul>
 
 
@@ -787,6 +924,9 @@ curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5</pre>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="client_libs.html" title="Client Libraries"
+             >next</a> |</li>
         <li class="right" >
           <a href="overview.html" title="Overview"
              >previous</a> |</li>

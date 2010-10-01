@@ -8,3 +8,4 @@ Contents:
 
    overview.rst
    resources.rst
+   client_libs.rst

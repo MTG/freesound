@@ -125,8 +125,8 @@ assume the request was successful. The following status codes are
 the codes that are used throughout the API.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="19%" />
-<col width="81%" />
+<col width="27%" />
+<col width="73%" />
 </colgroup>
 <thead valign="bottom">
 <tr><th class="head">HTTP code</th>
@@ -138,7 +138,8 @@ the codes that are used throughout the API.</p>
 <td>Everything went as expected, the usual response for GET requests.</td>
 </tr>
 <tr><td>400 Bad Request</td>
-<td>The request was unsuccessful, most likely because the request itself was invalid.</td>
+<td>The request was unsuccessful, most likely because the request
+itself was invalid.</td>
 </tr>
 <tr><td>401 Unauthorized</td>
 <td>The credentials you provided were wrong.</td>
@@ -154,6 +155,21 @@ the codes that are used throughout the API.</p>
 </tr>
 </tbody>
 </table>
+</div>
+</div>
+<div class="section" id="jsonp-callback">
+<h2>JSONP callback<a class="headerlink" href="#jsonp-callback" title="Permalink to this headline">¶</a></h2>
+<p>Whenever you need a JSONP callback, add the parameter <tt class="docutils literal"><span class="pre">callback</span></tt> to the
+request like so:</p>
+<div class="highlight-python"><pre>?callback=something</pre>
+</div>
+<p>You&#8217;re response will instead of:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>become:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">something</span><span class="p">({</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+</pre></div>
 </div>
 </div>
 <div class="section" id="api-s-resources">
@@ -179,10 +195,12 @@ the codes that are used throughout the API.</p>
 <li class="toctree-l2"><a class="reference external" href="#authentication">Authentication</a></li>
 <li class="toctree-l2"><a class="reference external" href="#requests">Requests</a></li>
 <li class="toctree-l2"><a class="reference external" href="#responses">Responses</a></li>
+<li class="toctree-l2"><a class="reference external" href="#jsonp-callback">JSONP callback</a></li>
 <li class="toctree-l2"><a class="reference external" href="#api-s-resources">API&#8217;s Resources</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference external" href="resources.html">Resources</a></li>
+<li class="toctree-l1"><a class="reference external" href="client_libs.html">Client Libraries</a></li>
 </ul>
 
 

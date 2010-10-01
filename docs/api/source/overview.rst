@@ -101,16 +101,35 @@ It is very important to check the status code of the response and to not
 assume the request was successful. The following status codes are 
 the codes that are used throughout the API.
 
-=========================  =============================================================================================================
+=========================  ====================================================================
 HTTP code                  Explanation
-=========================  =============================================================================================================
+=========================  ====================================================================
 200 OK                     Everything went as expected, the usual response for GET requests.
-400 Bad Request            The request was unsuccessful, most likely because the request itself was invalid.
+400 Bad Request            The request was unsuccessful, most likely because the request 
+    			   itself was invalid.
 401 Unauthorized           The credentials you provided were wrong.
 404 Not Found              The resource requested does not exist.
 405 Method Not Allowed     For this resource this HTTP method does not make sense.
 5xx                        An error on our part, hopefully you will see few of these.
-=========================  =============================================================================================================
+=========================  ====================================================================
+
+
+JSONP callback
+--------------
+
+Whenever you need a JSONP callback, add the parameter ``callback`` to the
+request like so::
+
+  ?callback=something
+
+You're response will instead of::
+
+  {a: 1}
+
+become::
+
+  something({a: 1})
+
 
 API's Resources
 ---------------

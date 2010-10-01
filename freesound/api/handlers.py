@@ -267,10 +267,7 @@ class SoundServeHandler(BaseHandler):
         else:
             response = HttpResponse()
             response['Content-Type']="application/octet-stream"
-            if file_or_preview == 'serve':
-                response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_path)
-            else:
-                response['X-Accel-Redirect'] = os.path.join("/downloads/previews/", sound_path)
+            response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_path)
             return response
 
 class UserHandler(BaseHandler):

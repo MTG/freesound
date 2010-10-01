@@ -76,10 +76,10 @@ def get_sound_links(sound):
     return d
 
 def prepare_image_link(p):
-    if settings.DATA_URL.startswith('/'):
-        return prepend_base(settings.DATA_URL)+p
+    if settings.SOUNDS_URL.startswith('/'):
+        return prepend_base(settings.SOUNDS_URL)+p
     else:
-        return settings.DATA_URL + p
+        return settings.SOUNDS_URL + p
 
 def prepare_minimal_user(user):
     return {'username': user.username,

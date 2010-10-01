@@ -117,7 +117,7 @@ def sound_download(request, username, sound_id):
     else:
         response = HttpResponse()
         response['Content-Type']="application/octet-stream"
-        response['X-Accel-Redirect'] = os.path.join("downloads/sounds/", sound_path)
+        response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_path)
         return response
 
 

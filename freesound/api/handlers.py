@@ -188,7 +188,7 @@ class SoundSearchHandler(BaseHandler):
             page = paginator.page(form.cleaned_data['p'])
             sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) \
                       for object in page['object_list']]
-            result = {'sounds': sounds}
+            result = {'sounds': sounds, 'num_results': paginator.count, 'num_pages': paginator.num_pages}
             print result
             # construct previous and next urls
             if page['has_other_pages']:

@@ -87,7 +87,7 @@ bitdepth: 		integer, WARNING is not to be trusted right now
 bitrate: 		numerical, WARNING is not to be trusted right now
 samplerate: 		integer
 filesize: 		integer, file size in bytes
-channels: 		integer, numer of channels in sound,
+channels: 		integer, number of channels in sound,
 			mostly 1 or 2, sometimes more
 md5: 			string, 32-byte md5 hash of file
 num_downloads: 		integer, all zero right now (not imported data)
@@ -165,6 +165,8 @@ Response
 Name         Type     Description
 ===========  =======  ===========================================================================================
 sounds       array    Array of sounds. Each sound looks like the `response format of a single sound resource`__.
+num_results  int      Number of sounds found that match your search
+num_pages    int      Number of pages (as the result is paginated)
 previous     URI      The URI to go back one page in the search results.
 next         URI      The URI to go forward one page in the search results.
 ===========  =======  ===========================================================================================
@@ -211,7 +213,9 @@ __ sound-get-response_
 	{'and_another': 1}
 	],
     "previous": "http://tabasco.upf.edu/api/sounds/search?q=&p=1&f=&s=downloads_desc", 
-    "next": "http://tabasco.upf.edu/api/sounds/search?q=&p=3&f=&s=downloads_desc"
+    "next": "http://tabasco.upf.edu/api/sounds/search?q=&p=3&f=&s=downloads_desc",
+    "num_results": 1,
+    "num_pages": 1, 
   }
 
 

@@ -185,7 +185,7 @@ aiff, ogg, mp3, flac</td>
 <td>integer, file size in bytes</td>
 </tr>
 <tr><td>channels:</td>
-<td>integer, numer of channels in sound,
+<td>integer, number of channels in sound,
 mostly 1 or 2, sometimes more</td>
 </tr>
 <tr><td>md5:</td>
@@ -300,6 +300,14 @@ TODO: examples of the more exotic search features</pre>
 <td>array</td>
 <td>Array of sounds. Each sound looks like the <a class="reference internal" href="#sound-get-response">response format of a single sound resource</a>.</td>
 </tr>
+<tr><td>num_results</td>
+<td>int</td>
+<td>Number of sounds found that match your search</td>
+</tr>
+<tr><td>num_pages</td>
+<td>int</td>
+<td>Number of pages (as the result is paginated)</td>
+</tr>
 <tr><td>previous</td>
 <td>URI</td>
 <td>The URI to go back one page in the search results.</td>
@@ -347,7 +355,9 @@ TODO: examples of the more exotic search features</pre>
       {'and_another': 1}
       ],
   "previous": "http://tabasco.upf.edu/api/sounds/search?q=&amp;p=1&amp;f=&amp;s=downloads_desc",
-  "next": "http://tabasco.upf.edu/api/sounds/search?q=&amp;p=3&amp;f=&amp;s=downloads_desc"
+  "next": "http://tabasco.upf.edu/api/sounds/search?q=&amp;p=3&amp;f=&amp;s=downloads_desc",
+  "num_results": 1,
+  "num_pages": 1,
 }</pre>
 </div>
 </div>

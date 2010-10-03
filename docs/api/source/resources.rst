@@ -126,7 +126,7 @@ Some examples::
 **p for page**
 
 The p parameter can be used to paginate through the results.
-Every page holds 15 sounds and the first page is page 1.
+Every page holds 30 sounds and the first page is page 1.
 
 **s for sort**
 

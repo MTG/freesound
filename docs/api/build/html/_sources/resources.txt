@@ -208,7 +208,7 @@ __ sound-get-response_
             "preview": "http://tabasco.upf.edu/api/sounds/83295/preview", 
             "ref": "http://tabasco.upf.edu/api/sounds/83295", 
             "pack": "http://tabasco.upf.edu/api/packs/2090"
-        }
+        },
 	{'another_sound': 1},
 	{'and_another': 1}
 	],

@@ -319,46 +319,47 @@ TODO: examples of the more exotic search features</pre>
 </tbody>
 </table>
 <p><strong>JSON Example</strong></p>
-<div class="highlight-python"><pre>{
-  "sounds": [
-      {
-          "waveform_m": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.png",
-          "tags": [
-              "bird",
-              "cheep",
-              "chick",
-              "manorina",
-              "melanocephala",
-              "miner",
-              "nousy",
-              "peep"
-          ],
-          "url": "http://tabasco.upf.edu/people/digifishmusic/sounds/83295/",
-          "type": "wav",
-          "serve": "http://tabasco.upf.edu/api/sounds/83295/serve",
-          "spectral_m": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.jpg",
-          "spectral_l": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.jpg",
-          "user": {
-              "username": "digifishmusic",
-              "url": "http://tabasco.upf.edu/people/digifishmusic/",
-              "ref": "http://tabasco.upf.edu/api/people/digifishmusic"
-          },
-          "original_filename": "Noisy_Miner_Chick_FeedMe.wav",
-          "base_filename_slug": "83295__digifishmusic__Noisy_Miner_Chick_FeedMe",
-          "duration": 48.548956916100003,
-          "waveform_l": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.png",
-          "preview": "http://tabasco.upf.edu/api/sounds/83295/preview",
-          "ref": "http://tabasco.upf.edu/api/sounds/83295",
-          "pack": "http://tabasco.upf.edu/api/packs/2090"
-      }
-      {'another_sound': 1},
-      {'and_another': 1}
-      ],
-  "previous": "http://tabasco.upf.edu/api/sounds/search?q=&amp;p=1&amp;f=&amp;s=downloads_desc",
-  "next": "http://tabasco.upf.edu/api/sounds/search?q=&amp;p=3&amp;f=&amp;s=downloads_desc",
-  "num_results": 1,
-  "num_pages": 1,
-}</pre>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s">&quot;sounds&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+          <span class="s">&quot;waveform_m&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.png&quot;</span><span class="p">,</span>
+          <span class="s">&quot;tags&quot;</span><span class="p">:</span> <span class="p">[</span>
+              <span class="s">&quot;bird&quot;</span><span class="p">,</span>
+              <span class="s">&quot;cheep&quot;</span><span class="p">,</span>
+              <span class="s">&quot;chick&quot;</span><span class="p">,</span>
+              <span class="s">&quot;manorina&quot;</span><span class="p">,</span>
+              <span class="s">&quot;melanocephala&quot;</span><span class="p">,</span>
+              <span class="s">&quot;miner&quot;</span><span class="p">,</span>
+              <span class="s">&quot;nousy&quot;</span><span class="p">,</span>
+              <span class="s">&quot;peep&quot;</span>
+          <span class="p">],</span>
+          <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/digifishmusic/sounds/83295/&quot;</span><span class="p">,</span>
+          <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;wav&quot;</span><span class="p">,</span>
+          <span class="s">&quot;serve&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/83295/serve&quot;</span><span class="p">,</span>
+          <span class="s">&quot;spectral_m&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.jpg&quot;</span><span class="p">,</span>
+          <span class="s">&quot;spectral_l&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.jpg&quot;</span><span class="p">,</span>
+          <span class="s">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="s">&quot;username&quot;</span><span class="p">:</span> <span class="s">&quot;digifishmusic&quot;</span><span class="p">,</span>
+              <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/digifishmusic/&quot;</span><span class="p">,</span>
+              <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/people/digifishmusic&quot;</span>
+          <span class="p">},</span>
+          <span class="s">&quot;original_filename&quot;</span><span class="p">:</span> <span class="s">&quot;Noisy_Miner_Chick_FeedMe.wav&quot;</span><span class="p">,</span>
+          <span class="s">&quot;base_filename_slug&quot;</span><span class="p">:</span> <span class="s">&quot;83295__digifishmusic__Noisy_Miner_Chick_FeedMe&quot;</span><span class="p">,</span>
+          <span class="s">&quot;duration&quot;</span><span class="p">:</span> <span class="mf">48.548956916100003</span><span class="p">,</span>
+          <span class="s">&quot;waveform_l&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.png&quot;</span><span class="p">,</span>
+          <span class="s">&quot;preview&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/83295/preview&quot;</span><span class="p">,</span>
+          <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/83295&quot;</span><span class="p">,</span>
+          <span class="s">&quot;pack&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/2090&quot;</span>
+      <span class="p">},</span>
+      <span class="p">{</span><span class="s">&#39;another_sound&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">&#39;and_another&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+      <span class="p">],</span>
+  <span class="s">&quot;previous&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/search?q=&amp;p=1&amp;f=&amp;s=downloads_desc&quot;</span><span class="p">,</span>
+  <span class="s">&quot;next&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/search?q=&amp;p=3&amp;f=&amp;s=downloads_desc&quot;</span><span class="p">,</span>
+  <span class="s">&quot;num_results&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s">&quot;num_pages&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
 </div>
 </div>
 </div>

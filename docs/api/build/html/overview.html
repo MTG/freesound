@@ -1,3 +1,4 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,14 +11,15 @@
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '#',
+        URL_ROOT:    '',
         VERSION:     '1.0',
-        COLLAPSE_MODINDEX: false,
+        COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Freesound API v1.0 documentation" href="index.html" />
     <link rel="next" title="Resources" href="resources.html" />
@@ -51,6 +53,14 @@
 about Freesound users, packs, and the sounds themselves of course.
 Currently, the API is read only. We might add features for uploading
 sounds in the future.</p>
+<div class="section" id="more-help">
+<h2>More help<a class="headerlink" href="#more-help" title="Permalink to this headline">¶</a></h2>
+<p>If you need more help after reading these documents or want to stay up to
+date on any changes or future feaures of the freesound api or if you would
+like to request more features for the api, please use our google group:</p>
+<div class="highlight-python"><pre>http://groups.google.com/group/freesound-api</pre>
+</div>
+</div>
 <div class="section" id="restful">
 <h2>RESTful<a class="headerlink" href="#restful" title="Permalink to this headline">¶</a></h2>
 <p>The Freesound API is a so called RESTful API, meaning that all requests and
@@ -92,9 +102,9 @@ variable URI (e.g. <tt class="docutils literal"><span class="pre">/sounds/&lt;so
 will have to be replaced to get a valid URI.</p>
 <p>For example, the following URIs are all instances of the resource indicated by
 <tt class="docutils literal"><span class="pre">/sounds/&lt;sound_id&gt;</span></tt>.</p>
-<div class="highlight-python"><pre>http://tabasco.upf.edu/api/sounds/0132dfd197c84db6a8e56012b2e08d02
-http://tabasco.upf.edu/api/sounds/ceda30d8d2cf41eb9a156c7ef288fc54
-http://tabasco.upf.edu/api/sounds/89116d024cf34dc38f269e6b9abb2db5</pre>
+<div class="highlight-python"><pre>http://tabasco.upf.edu/api/sounds/18763
+http://tabasco.upf.edu/api/sounds/11
+http://tabasco.upf.edu/api/sounds/8734</pre>
 </div>
 </div>
 <div class="section" id="responses">
@@ -164,17 +174,17 @@ request like so:</p>
 <div class="highlight-python"><pre>?callback=something</pre>
 </div>
 <p>You&#8217;re response will instead of:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mf">1</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>become:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">something</span><span class="p">({</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">something</span><span class="p">({</span><span class="n">a</span><span class="p">:</span> <span class="mf">1</span><span class="p">})</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="api-s-resources">
 <h2>API&#8217;s Resources<a class="headerlink" href="#api-s-resources" title="Permalink to this headline">¶</a></h2>
-<p>Check out the API&#8217;s <a class="reference external" href="resources.html#resources"><em>Resources</em></a>.</p>
+<p>Check out the API&#8217;s <a class="reference internal" href="resources.html#resources"><em>Resources</em></a>.</p>
 </div>
 </div>
 
@@ -189,36 +199,37 @@ request like so:</p>
             </a></p>
 <h4>Contents</h4>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference external" href="">Overview</a><ul>
-<li class="toctree-l2"><a class="reference external" href="#restful">RESTful</a></li>
-<li class="toctree-l2"><a class="reference external" href="#base-url">Base URL</a></li>
-<li class="toctree-l2"><a class="reference external" href="#authentication">Authentication</a></li>
-<li class="toctree-l2"><a class="reference external" href="#requests">Requests</a></li>
-<li class="toctree-l2"><a class="reference external" href="#responses">Responses</a></li>
-<li class="toctree-l2"><a class="reference external" href="#jsonp-callback">JSONP callback</a></li>
-<li class="toctree-l2"><a class="reference external" href="#api-s-resources">API&#8217;s Resources</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#more-help">More help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#restful">RESTful</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#base-url">Base URL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#authentication">Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requests">Requests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#responses">Responses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jsonp-callback">JSONP callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api-s-resources">API&#8217;s Resources</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference external" href="resources.html">Resources</a></li>
-<li class="toctree-l1"><a class="reference external" href="client_libs.html">Client Libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client_libs.html">Client Libraries</a></li>
 </ul>
 
 
 
 
-          <div id="searchbox" style="display: none">
-            <h3>Quick search</h3>
-              <form class="search" action="search.html" method="get">
-                <input type="text" name="q" size="18" />
-                <input type="submit" value="Go" />
-                <input type="hidden" name="check_keywords" value="yes" />
-                <input type="hidden" name="area" value="default" />
-              </form>
-              <p class="searchtip" style="font-size: 90%">
-              Enter search terms or a module, class or function name.
-              </p>
-          </div>
-          <script type="text/javascript">$('#searchbox').show(0);</script>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -239,8 +250,8 @@ request like so:</p>
       </ul>
     </div>
     <div class="footer">
-      &copy; Copyright 2010, Bram de Jong, Vincent Akkermans.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+        &copy; Copyright 2010, Bram de Jong, Vincent Akkermans.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
     </div>
   </body>
 </html>

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,14 +11,15 @@
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '#',
+        URL_ROOT:    '',
         VERSION:     '1.0',
-        COLLAPSE_MODINDEX: false,
+        COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Freesound API v1.0 documentation" href="index.html" />
     <link rel="next" title="Client Libraries" href="client_libs.html" />
@@ -233,7 +235,7 @@ f=duration:[0.1 TO 0.3] avg_rating:[3 TO *]</pre>
 </div>
 <p><strong>p for page</strong></p>
 <p>The p parameter can be used to paginate through the results.
-Every page holds 15 sounds and the first page is page 1.</p>
+Every page holds 30 sounds and the first page is page 1.</p>
 <p><strong>s for sort</strong></p>
 <p>The s parameter determines how the results are sorted, and can only be one
 of the following.</p>
@@ -351,13 +353,13 @@ TODO: examples of the more exotic search features</pre>
           <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/83295&quot;</span><span class="p">,</span>
           <span class="s">&quot;pack&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/2090&quot;</span>
       <span class="p">},</span>
-      <span class="p">{</span><span class="s">&#39;another_sound&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
-      <span class="p">{</span><span class="s">&#39;and_another&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+      <span class="p">{</span><span class="s">&#39;another_sound&#39;</span><span class="p">:</span> <span class="mf">1</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">&#39;and_another&#39;</span><span class="p">:</span> <span class="mf">1</span><span class="p">}</span>
       <span class="p">],</span>
   <span class="s">&quot;previous&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/search?q=&amp;p=1&amp;f=&amp;s=downloads_desc&quot;</span><span class="p">,</span>
   <span class="s">&quot;next&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/search?q=&amp;p=3&amp;f=&amp;s=downloads_desc&quot;</span><span class="p">,</span>
-  <span class="s">&quot;num_results&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-  <span class="s">&quot;num_pages&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s">&quot;num_results&quot;</span><span class="p">:</span> <span class="mf">1</span><span class="p">,</span>
+  <span class="s">&quot;num_pages&quot;</span><span class="p">:</span> <span class="mf">1</span><span class="p">,</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -511,10 +513,10 @@ TODO: examples of the more exotic search features</pre>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
   <span class="s">&quot;duration&quot;</span><span class="p">:</span> <span class="mf">0.384172335601</span><span class="p">,</span>
   <span class="s">&quot;samplerate&quot;</span><span class="p">:</span> <span class="mf">44100.0</span><span class="p">,</span>
-  <span class="s">&quot;id&quot;</span><span class="p">:</span> <span class="mi">83257</span><span class="p">,</span>
-  <span class="s">&quot;bitdepth&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
-  <span class="s">&quot;num_comments&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-  <span class="s">&quot;filesize&quot;</span><span class="p">:</span> <span class="mi">67928</span><span class="p">,</span>
+  <span class="s">&quot;id&quot;</span><span class="p">:</span> <span class="mf">83257</span><span class="p">,</span>
+  <span class="s">&quot;bitdepth&quot;</span><span class="p">:</span> <span class="mf">16</span><span class="p">,</span>
+  <span class="s">&quot;num_comments&quot;</span><span class="p">:</span> <span class="mf">0</span><span class="p">,</span>
+  <span class="s">&quot;filesize&quot;</span><span class="p">:</span> <span class="mf">67928</span><span class="p">,</span>
   <span class="s">&quot;preview&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/83257/preview&quot;</span><span class="p">,</span>
   <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/sounds/83257&quot;</span><span class="p">,</span>
   <span class="s">&quot;description&quot;</span><span class="p">:</span> <span class="s">&quot;kick bd drum goa goakick psy psykick kickdrum&quot;</span><span class="p">,</span>
@@ -536,9 +538,9 @@ TODO: examples of the more exotic search features</pre>
       <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/zgump/&quot;</span><span class="p">,</span>
       <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/people/zgump&quot;</span>
   <span class="p">},</span>
-  <span class="s">&quot;bitrate&quot;</span><span class="p">:</span> <span class="mi">1411</span><span class="p">,</span>
-  <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-  <span class="s">&quot;num_ratings&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="s">&quot;bitrate&quot;</span><span class="p">:</span> <span class="mf">1411</span><span class="p">,</span>
+  <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mf">0</span><span class="p">,</span>
+  <span class="s">&quot;num_ratings&quot;</span><span class="p">:</span> <span class="mf">0</span><span class="p">,</span>
   <span class="s">&quot;license&quot;</span><span class="p">:</span> <span class="s">&quot;Sampling+&quot;</span><span class="p">,</span>
   <span class="s">&quot;created&quot;</span><span class="p">:</span> <span class="s">&quot;2009-11-12 19:58:17&quot;</span><span class="p">,</span>
   <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/zgump/sounds/83257/&quot;</span><span class="p">,</span>
@@ -547,7 +549,7 @@ TODO: examples of the more exotic search features</pre>
   <span class="s">&quot;original_filename&quot;</span><span class="p">:</span> <span class="s">&quot;CLUB KICK 0304.wav&quot;</span><span class="p">,</span>
   <span class="s">&quot;waveform_l&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.png&quot;</span><span class="p">,</span>
   <span class="s">&quot;waveform_m&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.png&quot;</span><span class="p">,</span>
-  <span class="s">&quot;channels&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+  <span class="s">&quot;channels&quot;</span><span class="p">:</span> <span class="mf">2</span><span class="p">,</span>
   <span class="s">&quot;pack&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5467&quot;</span>
 <span class="p">}</span>
 </pre></div>
@@ -731,7 +733,7 @@ curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5</pre>
       <span class="s">&quot;created&quot;</span><span class="p">:</span> <span class="s">&quot;2009-09-28 09:50:08&quot;</span><span class="p">,</span>
       <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/dobroide/packs/5266/&quot;</span><span class="p">,</span>
       <span class="s">&quot;sounds&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5266/sounds&quot;</span><span class="p">,</span>
-      <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mf">0</span><span class="p">,</span>
       <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5266&quot;</span><span class="p">,</span>
       <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;scrub&quot;</span>
   <span class="p">},</span>
@@ -740,7 +742,7 @@ curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5</pre>
       <span class="s">&quot;created&quot;</span><span class="p">:</span> <span class="s">&quot;2009-09-20 10:55:32&quot;</span><span class="p">,</span>
       <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/people/dobroide/packs/5230/&quot;</span><span class="p">,</span>
       <span class="s">&quot;sounds&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5230/sounds&quot;</span><span class="p">,</span>
-      <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mf">0</span><span class="p">,</span>
       <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5230&quot;</span><span class="p">,</span>
       <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;granada&quot;</span>
   <span class="p">}</span>
@@ -830,7 +832,7 @@ curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5</pre>
       <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/people/dobroide&quot;</span>
   <span class="p">},</span>
   <span class="s">&quot;sounds&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5107/sounds&quot;</span><span class="p">,</span>
-  <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="s">&quot;num_downloads&quot;</span><span class="p">:</span> <span class="mf">0</span><span class="p">,</span>
   <span class="s">&quot;ref&quot;</span><span class="p">:</span> <span class="s">&quot;http://tabasco.upf.edu/api/packs/5107&quot;</span><span class="p">,</span>
   <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;Iceland&quot;</span>
 <span class="p">}</span>
@@ -899,32 +901,32 @@ curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5</pre>
             </a></p>
 <h4>Contents</h4>
 <ul class="current">
-<li class="toctree-l1"><a class="reference external" href="overview.html">Overview</a></li>
-<li class="toctree-l1 current"><a class="current reference external" href="">Resources</a><ul>
-<li class="toctree-l2"><a class="reference external" href="#sounds">Sounds</a></li>
-<li class="toctree-l2"><a class="reference external" href="#users">Users</a></li>
-<li class="toctree-l2"><a class="reference external" href="#packs">Packs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Resources</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sounds">Sounds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#users">Users</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#packs">Packs</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference external" href="client_libs.html">Client Libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client_libs.html">Client Libraries</a></li>
 </ul>
 
 
 
 
-          <div id="searchbox" style="display: none">
-            <h3>Quick search</h3>
-              <form class="search" action="search.html" method="get">
-                <input type="text" name="q" size="18" />
-                <input type="submit" value="Go" />
-                <input type="hidden" name="check_keywords" value="yes" />
-                <input type="hidden" name="area" value="default" />
-              </form>
-              <p class="searchtip" style="font-size: 90%">
-              Enter search terms or a module, class or function name.
-              </p>
-          </div>
-          <script type="text/javascript">$('#searchbox').show(0);</script>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -945,8 +947,8 @@ curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5</pre>
       </ul>
     </div>
     <div class="footer">
-      &copy; Copyright 2010, Bram de Jong, Vincent Akkermans.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+        &copy; Copyright 2010, Bram de Jong, Vincent Akkermans.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
     </div>
   </body>
 </html>

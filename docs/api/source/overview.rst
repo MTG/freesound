@@ -6,6 +6,17 @@ about Freesound users, packs, and the sounds themselves of course.
 Currently, the API is read only. We might add features for uploading
 sounds in the future.
 
+More help
+---------
+
+If you need more help after reading these documents or want to stay up to
+date on any changes or future feaures of the freesound api or if you would
+like to request more features for the api, please use our google group:
+
+::
+
+  http://groups.google.com/group/freesound-api
+
 RESTful
 -------
 The Freesound API is a so called RESTful API, meaning that all requests and
@@ -62,9 +73,9 @@ For example, the following URIs are all instances of the resource indicated by
 
 ::
 
-  http://tabasco.upf.edu/api/sounds/0132dfd197c84db6a8e56012b2e08d02
-  http://tabasco.upf.edu/api/sounds/ceda30d8d2cf41eb9a156c7ef288fc54
-  http://tabasco.upf.edu/api/sounds/89116d024cf34dc38f269e6b9abb2db5
+  http://tabasco.upf.edu/api/sounds/18763
+  http://tabasco.upf.edu/api/sounds/11
+  http://tabasco.upf.edu/api/sounds/8734
 
 Responses
 ---------

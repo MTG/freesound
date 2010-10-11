@@ -24,6 +24,9 @@
 == Api ==
 
 * fix documentation
+* add num_pages and num_results to other API calls
+* use full license URL instead of short license key (i.e. replace "Sampling+" by full deed URL)
+* don't use sendfile for mp3 previews, use URL's
 
 == Server ==
 

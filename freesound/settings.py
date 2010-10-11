@@ -120,7 +120,7 @@ FORUM_THREADS_PER_PAGE = 40
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 50
-SOUNDS_PER_API_RESPONSE = 15
+SOUNDS_PER_API_RESPONSE = 30
 
 import logging.config
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))

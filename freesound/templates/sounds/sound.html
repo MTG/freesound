@@ -121,7 +121,9 @@
 		{% if sound.geotag %}
 		<li><img src="{{media_url}}images/geotag.png" width="16" height="16" /><a href="{% url sound-geotag sound.user.username sound.id %}">Geotag</a></li>
 		{% endif %}
+		{% comment %}
 		<li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
+		{% endcomment %}
 		{% if sound.remixes.all.count %}
 		<li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
 		{% endif %}

@@ -356,7 +356,7 @@ class PackHandler(BaseHandler):
     def read(self, request, pack_id):
         try:
             pack = Pack.objects.get(id=pack_id)
-        except User.DoesNotExist:
+        except Pack.DoesNotExist:
             resp = rc.NOT_FOUND
             resp.content = 'There is no pack with this identifier (%s).' % pack_id
             return resp

@@ -97,7 +97,7 @@ LOGOUT_URL = '/home/logout/'
 LOGIN_REDIRECT_URL = '/home/'
 
 IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf', '/favicon')
-IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', '/similar/')
+IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', 'similar')
 
 # A tuple of IP addresses, as strings, that:
 # See debug comments, when DEBUG is True

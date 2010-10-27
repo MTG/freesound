@@ -1,5 +1,5 @@
 from __future__ import with_statement
-from fabric.api import env, run, cd
+from fabric.api import env, run, cd, sudo
 
 env.hosts = ["fsweb@tabasco.upf.edu"]
 
@@ -21,15 +21,15 @@ def syncdb():
 
 def stop():
     """Stop FastCGI"""
-    run("sudo supervisorctl stop freesound")
+    sudo("supervisorctl stop freesound", shell=False)
     
 def start():
     """Start FastCGI"""
-    run("sudo supervisorctl start freesound")
+    sudo("supervisorctl start freesound", shell=False)
     
 def restart():
     """Restart FastCGI"""
-    run("sudo supervisorctl restart freesound")
+    sudo("supervisorctl restart freesound", shell=False)
     
 def pull():
     """Get latest version from Github"""

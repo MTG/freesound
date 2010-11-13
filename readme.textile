@@ -1,5 +1,3 @@
 Freesound is a project by "MTG":http://www.mtg.upf.edu
 
 All the source code in this repository is licensed as GNU Affero (see License directory)
-
-All bug reports/tickets/feature requests should go in our "lighthouse site":http://freesound.lighthouseapp.com/projects/24091-freesound/overview

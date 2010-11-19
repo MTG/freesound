@@ -3,7 +3,7 @@
 # Django settings for freesound project.
 import os
 
-DEBUG = False
+DEBUG = True
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.auth',

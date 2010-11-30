@@ -94,6 +94,7 @@ def username_reminder(request):
 @login_required
 def home(request):
     user = request.user
+    #redirect to admin page if it doesn´t find the profile - it only happens for the superuser
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     try:
         tags = user.profile.get_tagcloud()
@@ -163,6 +164,7 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def edit(request):
+    #redirect to admin page if it doesn´t find the profile - it only happens for the superuser
     try:
         profile = request.user.profile
     except:
@@ -233,6 +235,7 @@ def accounts(request):
 
 def account(request, username):
     user = get_object_or_404(User, username__iexact=username)
+    #redirect to admin page if it doesn´t find the profile - it only happens for the superuser
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     try:
         tags = user.profile.get_tagcloud()

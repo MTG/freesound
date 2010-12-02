@@ -32,7 +32,7 @@ while True:
         username = smart_character_decoding(username)
         user_email = smart_character_decoding(user_email)
         
-        username = username.replace(u"&amp;", u"&").replace(u"&lt;", u"<").replace(u"&gt;", u">").replace("&quot;","\"")
+        username = decode_htmlentities(username)
         
         if len(user_email) > 75:
             # skip users with crazy email addresses

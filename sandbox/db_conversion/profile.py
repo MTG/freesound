@@ -57,7 +57,7 @@ while True:
         if about:
             about = smart_character_decoding(about)
                     
-        if not check_user_ids or user_id in valid_user_ids:
+        if user_id in valid_user_ids:
             if home_page:
                 home_page = home_page.lower()
                 split = home_page.split()
@@ -79,12 +79,13 @@ while True:
             geotag = None
             num_sounds = 0
             num_posts = 0
+            has_avatar = 0
         
-            output_file.write(u"\t".join(map(unicode, [insert_id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter, geotag, num_sounds, num_posts])) + u"\n")
+            output_file.write(u"\t".join(map(unicode, [insert_id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter, geotag, num_sounds, num_posts, unicode(has_avatar)])) + u"\n")
             insert_id += 1
 
 print """
-copy accounts_profile (id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter, geotag_id, num_sounds, num_posts) from '%s' null as 'None';
+copy accounts_profile (id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter, geotag_id, num_sounds, num_posts, has_avatar) from '%s' null as 'None';
 select setval('accounts_profile_id_seq',(select max(id)+1 from accounts_profile));
 vacuum analyze accounts_profile;
 """ % output_filename        

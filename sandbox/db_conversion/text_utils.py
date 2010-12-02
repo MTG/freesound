@@ -1,9 +1,9 @@
 from BeautifulSoup import BeautifulSoup, Comment
 from django.utils.encoding import smart_unicode
-from htmlentitydefs import name2codepoint
+from htmlentitydefs import name2codepoint as n2cp
 import re
 import unicodedata
-
+import re
 
 def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slug_field='slug', filter_dict=None):
     """ slugify with character translation which translates foreign characters to regular ascii equivalents """
@@ -11,7 +11,7 @@ def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slu
     
     #character entity reference
     if entities:
-        s = re.sub('&(%s);' % '|'.join(name2codepoint), lambda m: unichr(name2codepoint[m.group(1)]), s)
+        s = re.sub('&(%s);' % '|'.join(n2cp), lambda m: unichr(n2cp[m.group(1)]), s)
 
     #decimal character reference
     if decimal:
@@ -52,6 +52,26 @@ def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slu
             counter += 1
     
     return slug.lower()
+
+def substitute_entity(match):
+    ent = match.group(3)
+
+    if match.group(1) == "#":
+        if match.group(2) == '':
+            return unichr(int(ent))
+        elif match.group(2) == 'x':
+            return unichr(int('0x'+ent, 16))
+    else:
+        cp = n2cp.get(ent)
+
+        if cp:
+            return unichr(cp)
+        else:
+            return match.group()
+
+def decode_htmlentities(string):
+    entity_re = re.compile(r'&(#?)(x?)(\d{1,5}|\w{1,8});')
+    return entity_re.subn(substitute_entity, string)[0]
 
 
 def smart_character_decoding(string, verbose=False):

@@ -26,7 +26,7 @@ while True:
     for row in rows:
         user_id, user_active, username, user_password, user_regdate, user_lastvisit, user_email = row
         
-        if user_id in (16967,1037753,1294123):
+        if user_id in (16967,1037753,1294123,99738,563934,697703,912954,960716,1401570,1404962,1414401,1437020,1453087,1488139,1533361,1567137,1574761,1626812,1665254,1677364,1700760,1712557,1717812,1741736,1770978,1840221,1840332):
             continue
         
         username = smart_character_decoding(username)

@@ -1,5 +1,5 @@
 from local_settings import *
-from text_utils import prepare_for_insert, smart_character_decoding
+from text_utils import prepare_for_insert, smart_character_decoding, decode_htmlentities
 import MySQLdb as my
 import codecs
 import psycopg2
@@ -44,7 +44,7 @@ while True:
         id, type, subject, user_from_id, user_to_id, created, text = row
         
         if subject:
-            subject = smart_character_decoding(subject)
+            subject = decode_htmlentities(smart_character_decoding(subject))
         if text:
             text = smart_character_decoding(text)
         

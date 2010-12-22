@@ -1,0 +1,32 @@
+<mockup version="1.0" skin="sketch" measuredW="1237" measuredH="1113" mockupW="989" mockupH="1109">
+  <controls>
+    <control controlID="2" controlTypeID="com.balsamiq.mockups::Image" x="248" y="4" w="-1" h="-1" measuredW="989" measuredH="133" zOrder="0" locked="false" isInGroup="-1">
+      <controlProperties>
+        <src>./assets/fs_screen_top.png</src>
+        <text/>
+      </controlProperties>
+    </control>
+    <control controlID="3" controlTypeID="com.balsamiq.mockups::Image" x="248" y="1026" w="-1" h="-1" measuredW="989" measuredH="87" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <src>./assets/fs_screen_bottom.png</src>
+        <text/>
+      </controlProperties>
+    </control>
+    <control controlID="5" controlTypeID="com.balsamiq.mockups::Arrow" x="248" y="137" w="10" h="889" measuredW="150" measuredH="100" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <backgroundAlpha>0.5</backgroundAlpha>
+        <curvature>0</curvature>
+        <leftArrow>false</leftArrow>
+        <rightArrow>false</rightArrow>
+      </controlProperties>
+    </control>
+    <control controlID="6" controlTypeID="com.balsamiq.mockups::Arrow" x="1227" y="136" w="10" h="889" measuredW="150" measuredH="100" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <backgroundAlpha>0.5</backgroundAlpha>
+        <curvature>0</curvature>
+        <leftArrow>false</leftArrow>
+        <rightArrow>false</rightArrow>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>

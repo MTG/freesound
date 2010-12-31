@@ -189,7 +189,7 @@ class SoundSearchHandler(BaseHandler):
             sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) \
                       for object in page['object_list']]
             result = {'sounds': sounds, 'num_results': paginator.count, 'num_pages': paginator.num_pages}
-            print result
+            
             # construct previous and next urls
             if page['has_other_pages']:
                 if page['has_previous']:
@@ -308,9 +308,12 @@ class UserSoundsHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'This user (%s) does not exist.' % username
             return resp
-        page = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')['page']
+        
+        paginator = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')
+        page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
-        result = {'sounds': sounds}
+        result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
+        
         if page.has_other_pages():
             if page.has_previous():
                 result['previous'] = self.__construct_pagination_link(username, page.previous_page_number())
@@ -380,9 +383,12 @@ class PackSoundsHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no pack with this identifier (%s).' % pack_id
             return resp
-        page = paginate(request, Sound.objects.filter(pack=pack.id), settings.SOUNDS_PER_API_RESPONSE, 'p')['page']
-        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
-        result = {'sounds': sounds}
+            
+        paginator = paginate(request, Sound.objects.filter(pack=pack.id), settings.SOUNDS_PER_API_RESPONSE, 'p')
+        page = paginator['page']
+        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]        
+        result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
+        
         if page.has_other_pages():
             if page.has_previous():
                 result['previous'] = self.__construct_pagination_link(pack_id, page.previous_page_number())

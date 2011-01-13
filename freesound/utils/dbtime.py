@@ -18,6 +18,6 @@ class DBTime():
 		    last_time = Download.objects.order_by('-created')[0].created
 		except Download.DoesNotExist:
 		    last_time = datetime.now()
-		    cache.set(cache_key, DBTime.last_time, 60*60*24)
+	    cache.set(cache_key, DBTime.last_time, 60*60*24)
             DBTime.last_time = last_time
 	return DBTime.last_time

@@ -1,5 +1,4 @@
 from sounds.models import Download
-from sounds.models import Sound
 from django.core.cache import cache
 from django.conf import settings
 from datetime import datetime

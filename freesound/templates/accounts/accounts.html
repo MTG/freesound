@@ -1,0 +1,17 @@
+{% extends "accounts/_section.html" %}
+
+{% load display_sound %}
+{% load tags %}
+
+{% block title %} people {% endblock %}
+
+{% block section_content %}
+<h3> Most active users last {{num_days}} days</h3>
+<ul>
+{% for uid, score in most_active_users %}
+<li>{{ uid }} - {{score}}
+{% endfor %}
+</ul>
+
+{% endblock %}
+

@@ -19,9 +19,15 @@ from utils.functional import combine_dicts
 from utils.images import extract_square
 from utils.mail import send_mail_template
 from utils.pagination import paginate
+from utils.dbtime import DBTime
 import logging
 import os
 import tempfile
+import datetime
+from forum.models import Post
+from comments.models import Comment
+from operator import itemgetter
+
 
 def activate_user(request, activation_key):
     if request.user.is_authenticated():
@@ -223,7 +229,41 @@ def attribution(request):
     return render_to_response('accounts/attribution.html', combine_dicts(paginate(request, qs, 40), locals()), context_instance=RequestContext(request))
 
 def accounts(request):
-    pass
+    num_days = 7
+    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
+    active_users = {}
+    user_scores = {}
+    upload_weight = 1
+    post_weight = 1
+    comment_weight = 1
+
+    latest_uploaders =  Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by()
+    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by()
+    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by()
+    
+    for user in latest_uploaders:
+	active_users[user['user']] = {'uploads':user['id__count'],'posts':0,'comments':0}
+
+    for user in latest_posters:
+	if user['author_id'] in active_users.keys():
+	    active_users[user['author_id']]['posts'] = user['id__count']
+	else:
+	    active_users[user['author_id']] = {'uploads':0,'posts':user['id__count'],'comments':0}
+
+    for user in latest_commenters:
+	if user['user_id'] in active_users.keys():
+	    active_users[user['user_id']]['comments'] = user['id__count']
+	else:
+	    active_users[user['user_id']] = {'uploads':0,'posts':0,'comments':user['id__count']}
+
+    for user,scores in active_users.items():
+	user_name = User.objects.get(pk=user).username
+	user_scores[user_name] = scores['uploads'] * upload_weight + scores['posts'] * post_weight + scores['comments'] * comment_weight
+
+    most_active_users = sorted(user_scores.items(), key=itemgetter(1), reverse=True)[:20]
+
+    return render_to_response('accounts/accounts.html', locals(), context_instance=RequestContext(request))
+
 
 def account(request, username):
     user = get_object_or_404(User, username__iexact=username)

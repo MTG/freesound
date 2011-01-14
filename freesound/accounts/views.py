@@ -94,12 +94,7 @@ def username_reminder(request):
 @login_required
 def home(request):
     user = request.user
-    #redirect to admin page if it doesn´t find the profile - it only happens for the superuser
-    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    try:
-        tags = user.profile.get_tagcloud()
-    except:
-        return HttpResponseRedirect("/admin/") 
+    tags = user.profile.get_tagcloud()    
     latest_sounds = Sound.public.filter(user=user)[0:5]
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
@@ -164,11 +159,7 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def edit(request):
-    #redirect to admin page if it doesn´t find the profile - it only happens for the superuser
-    try:
-        profile = request.user.profile
-    except:
-        return HttpResponseRedirect("/admin/")     
+    profile = request.user.profile   
     
     def is_selected(prefix):
         if request.method == "POST":
@@ -235,12 +226,8 @@ def accounts(request):
 
 def account(request, username):
     user = get_object_or_404(User, username__iexact=username)
-    #redirect to admin page if it doesn´t find the profile - it only happens for the superuser
-    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    try:
-        tags = user.profile.get_tagcloud()
-    except:
-        return HttpResponseRedirect("/admin/")     
+    tags = user.profile.get_tagcloud()
+      
     latest_sounds = Sound.public.filter(user=user)[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]

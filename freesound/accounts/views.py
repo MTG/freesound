@@ -230,9 +230,10 @@ def attribution(request):
 
 def accounts(request):
     num_days = 7
+    num_active_users = 50
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
     active_users = {}
-    user_scores = {}
+    user_cloud = []
     upload_weight = 1
     post_weight = 1
     comment_weight = 1
@@ -255,20 +256,24 @@ def accounts(request):
 	    active_users[user['user_id']]['comments'] = user['id__count']
 	else:
 	    active_users[user['user_id']] = {'uploads':0,'posts':0,'comments':user['id__count']}
+	
 
-    for user,scores in active_users.items():
+    for user,scores in active_users.items()[:num_active_users]:
 	user_name = User.objects.get(pk=user).username
-	user_scores[user_name] = scores['uploads'] * upload_weight + scores['posts'] * post_weight + scores['comments'] * comment_weight
+	user_cloud.append({\
+	    'name':user_name,\
+	    'count':scores['uploads'] * upload_weight + scores['posts'] * post_weight + scores['comments'] * comment_weight})
 
-    most_active_users = sorted(user_scores.items(), key=itemgetter(1), reverse=True)[:20]
-
-    return render_to_response('accounts/accounts.html', locals(), context_instance=RequestContext(request))
+    return render_to_response('accounts/accounts.html', dict(most_active_users=user_cloud,num_days = num_days), context_instance=RequestContext(request))
 
 
 def account(request, username):
     user = get_object_or_404(User, username__iexact=username)
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
+    print tags
+    for t in tags:
+	print t, type(t)
     latest_sounds = Sound.public.filter(user=user)[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]

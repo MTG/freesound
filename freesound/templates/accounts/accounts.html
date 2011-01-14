@@ -7,11 +7,10 @@
 
 {% block section_content %}
 <h3> Most active users last {{num_days}} days</h3>
-<ul>
-{% for uid, score in most_active_users %}
-<li>{{ uid }} - {{score}}
-{% endfor %}
-</ul>
-
+    <div class="tagcloud">
+    {% for user in most_active_users|add_sizes:"False:1.1:2.5" %}
+	<span style="font-size:{{user.size}}em"><a href="{% url account user.name %}">{{user.name}}</a></span> 
+    {% endfor %}
+    </div>
 {% endblock %}
 

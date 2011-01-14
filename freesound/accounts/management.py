@@ -5,10 +5,10 @@ from accounts.models import Profile
 
 
 def create_super_profile(**kwargs):
-    print '== create profile for super user =='
-    userA = User.objects.filter(is_superuser=True)[0]
-    profile = Profile(user=userA)
-    profile.save()
-
+    for user in User.objects.filter(profile=None): # create profiles for all users that don't have profiles yet
+        print '== creating profile for super user', user
+        profile = Profile(user=user)
+        profile.save()
+        
 post_syncdb.connect(create_super_profile, sender=auth_models)
 

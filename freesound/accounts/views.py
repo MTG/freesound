@@ -257,14 +257,16 @@ def accounts(request):
 	else:
 	    active_users[user['user_id']] = {'uploads':0,'posts':0,'comments':user['id__count']}
 	
-
     for user,scores in active_users.items()[:num_active_users]:
 	user_name = User.objects.get(pk=user).username
 	user_cloud.append({\
 	    'name':user_name,\
 	    'count':scores['uploads'] * upload_weight + scores['posts'] * post_weight + scores['comments'] * comment_weight})
+    
+    new_uploaders_qs = Sound.objects.filter(user__date_joined__gte=last_time).values("user__username").annotate(Count('id')).order_by()
+    new_uploaders = [{'name':s['user__username'],'count':s['id__count']} for s in new_uploaders_qs] 
 
-    return render_to_response('accounts/accounts.html', dict(most_active_users=user_cloud,num_days = num_days), context_instance=RequestContext(request))
+    return render_to_response('accounts/accounts.html', dict(most_active_users=user_cloud,num_days = num_days,new_uploaders=new_uploaders), context_instance=RequestContext(request))
 
 
 def account(request, username):

@@ -12,5 +12,12 @@
 	<span style="font-size:{{user.size}}em"><a href="{% url account user.name %}">{{user.name}}</a></span> 
     {% endfor %}
     </div>
+<br />
+<h3> New Uploaders</h3>
+    <div class="tagcloud">
+    {% for user in new_uploaders|add_sizes:"False:1.1:2.5" %}
+	<span style="font-size:{{user.size}}em"><a href="{% url account user.name %}">{{user.name}}</a></span> 
+    {% endfor %}
+    </div>
 {% endblock %}
 

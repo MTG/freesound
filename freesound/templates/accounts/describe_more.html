@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load filefunctions %}
+
+{% block title %}{{ block.super }}Describe{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<script type="text/javascript">
+	function select_ul(element)
+	{
+		$(element.parentNode).find("input").click();
+	}
+	
+	function checkboxChange(checkbox)
+	{
+		var option = $("#fileform").find("option[value=" + checkbox.name + "]").get(0);
+		
+		if (checkbox.checked)
+			option.selected = true;
+		else
+			option.selected = false;
+	}
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>Steps to add files</h2>
+<ol>
+	<li>select files to describe</li>
+	<li>type a description for the selected files</li>
+	<li>quick spelling checker</li>
+	<li>done!</li>
+</ol>
+<!--  
+<h2>Your uploaded files...</h2>
+<p>
+	After uploading files, select and describe them here. You can select more than one file at the same time - but please give files individual descriptions!
+</p>
+<ul id="root_file" class="upload">
+	{% show_file file_structure %}
+</ul>
+<fieldset id="pack" method="post">
+		<legend>Sample pack...</legend>
+		<p>
+			Sample packs are collections of samples which belong together in some way or another. For example, all the different recordings from a drum-kit. Or, if you have a multi-sampled instrument, add it to a pack!
+		</p>
+		<p>
+			If you select more than one sample for description and want them to be automaticaly assigned to a 'pack' use the form below.
+		</p>
+</fieldset><br/><br/>
+	<p>Legal: I agree with the terms detailed below <input name="agree" class="checkbox" type="checkbox"><br/></p>
+	<br/>
+-->
+
+<form action="." method="post" id="fileform">{% csrf_token %}
+    {{ describe_form.non_field_errors }}
+    
+    <div>
+        {{ describe_form.files.errors }}
+        <label for="id_files">Your Files:</label>(<a href="#" onclick="select_ul(this)">select all</a>)
+        {{ describe_form.files }}
+    </div>   
+		<legend>Sample pack...</legend>
+		<p>
+			Sample packs are collections of samples which belong together in some way or another. For example, all the different recordings from a drum-kit. Or, if you have a multi-sampled instrument, add it to a pack!
+		</p>
+		<p>
+			If you select more than one sample for description and want them to be automaticaly assigned to a 'pack' use the form below.
+		</p>
+		
+		<input id="packTypeNone" type="radio" name="packType" value="none" class="checkbox" checked="checked" />
+			Default: The samples I selected don't belong to a pack.<br/>
+		
+		{{ describe_form.pack.errors }}	
+		<input id="packTypeExisting" type="radio" name="packType" value="existing" class="checkbox"/>
+			The samples I selected belong to an existing pack:&nbsp;	      
+	        {{ describe_form.pack }}
+   		<br/>    
+		{{ describe_form.new_pack.errors }}
+		<input id="packTypeNew" type="radio" name="packType" value="new" class="checkbox" onfocus="document.getElementById('packTypeNewName').focus();" />
+			The samples I selected belong to a new pack:&nbsp			
+	        {{ describe_form.new_pack }}  
+       </br>    
+    </br>      
+    <p><input type="submit" value="Next step" name="Nextstep"></p>
+</form>
+
+
+
+{% endblock %}

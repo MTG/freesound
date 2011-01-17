@@ -7,7 +7,11 @@ def extract_square(input_filename, output_filename, size):
     im = Image.open(input_filename)
     
     if im.size[0] < size or im.size[1] < size:
-        raise ImageProcessingError, "image too small"
+        #raise ImageProcessingError, "image too small"
+        #fill out to exactly maxSize (square image)          
+        background = Image.new("RGBA", (size,size), (255, 255, 255, 0)) # use white for empty space  
+        background.paste(im, ((size - im.size[0]) / 2, (size - im.size[1]) / 2))  
+        background.save(output_filename)
 
     if im.size[0] > im.size[1]:
         # --------

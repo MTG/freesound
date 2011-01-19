@@ -94,7 +94,7 @@ def prepare_single_sound(sound):
                   "avg_rating", "original_filename", "base_filename_slug"]:
         d[field] = getattr(sound, field)
     try:
-        d['license'] = sound.license.name
+        d['license'] = sound.license.deed_url
     except:
         pass
     try:
@@ -248,6 +248,7 @@ class SoundServeHandler(BaseHandler):
     curl:         curl http://www.freesound.org/api/sounds/2/serve
     '''
     def read(self, request, sound_id, file_or_preview):
+        
         if not file_or_preview in ['serve', 'preview']:
             resp = rc.NOT_FOUND
             return resp
@@ -312,7 +313,7 @@ class UserSoundsHandler(BaseHandler):
         paginator = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
-        result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
+        result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
         
         if page.has_other_pages():
             if page.has_previous():

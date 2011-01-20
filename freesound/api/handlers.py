@@ -385,7 +385,7 @@ class UserPacksHandler(BaseHandler):
             return resp
         
         packs = [prepare_single_pack(pack, include_user=False) for pack in Pack.objects.filter(user=user)]
-        result = {'packs': packs}
+        result = {'packs': packs, 'num_results': len(packs)}
 
         # Add request id to the result (in case user has specified one)
         try:

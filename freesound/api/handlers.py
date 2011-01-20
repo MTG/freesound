@@ -63,10 +63,12 @@ def get_pack_sounds_api_url(pack_id):
 
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)
+    sound_path = sound.paths()['preview_path']
+     
     d = {'ref': ref,
          'url': get_sound_web_url(sound.user.username, sound.id),
          'serve': ref+'/serve',
-         'preview': ref+'/preview',
+         'preview': os.path.join(settings.SOUNDS_PATH, sound_path) , 
          'waveform_m': prepare_image_link(sound.paths()['waveform_path_m']),
          'waveform_l': prepare_image_link(sound.paths()['waveform_path_l']),
          'spectral_m': prepare_image_link(sound.paths()['spectral_path_m']),
@@ -259,6 +261,7 @@ class SoundServeHandler(BaseHandler):
             resp = 'There is no sound with id %s' % sound_id
             return resp
         sound_path = sound.paths()["sound_path"] if file_or_preview == 'serve' else sound.paths()['preview_path']
+        
         if settings.DEBUG:
             file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
             wrapper = FileWrapper(file(file_path, "rb"))

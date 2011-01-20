@@ -64,11 +64,17 @@ def get_pack_sounds_api_url(pack_id):
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)
     sound_path = sound.paths()['preview_path']
-     
+    
+    # Prepare sound link (static preview)
+    if settings.SOUNDS_URL.startswith('/'):
+        preview_static_path = prepend_base(settings.SOUNDS_URL) + sound_path
+    else:
+        preview_static_path = settings.SOUNDS_URL + sound_path
+    
     d = {'ref': ref,
          'url': get_sound_web_url(sound.user.username, sound.id),
          'serve': ref+'/serve',
-         'preview': os.path.join(settings.SOUNDS_PATH, sound_path) , 
+         'preview': preview_static_path , 
          'waveform_m': prepare_image_link(sound.paths()['waveform_path_m']),
          'waveform_l': prepare_image_link(sound.paths()['waveform_path_l']),
          'spectral_m': prepare_image_link(sound.paths()['spectral_path_m']),

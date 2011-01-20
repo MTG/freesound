@@ -167,6 +167,7 @@ class SoundSearchHandler(BaseHandler):
     curl:           curl http://www.freesound.org/api/search/?q=hoelahoep
     '''
     def read(self, request):
+        
         form = SoundSearchForm(SEARCH_SORT_OPTIONS_API, request.GET)
         if not form.is_valid():
             resp = rc.BAD_REQUEST
@@ -204,6 +205,14 @@ class SoundSearchHandler(BaseHandler):
                                                                       page['next_page_number'],
                                                                       cd['f'],
                                                                       find_api_option(cd['s']))
+            
+            # Add request id to the result (in case user has specified one)
+            try:
+                request_id = request.GET['request_id']
+                result['request_id'] = request_id
+            except:
+                pass
+            
             return result
         except SolrException, e:
             error = "search error: search_query %s filter_query %s sort %s error %s" \
@@ -236,7 +245,17 @@ class SoundHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no sound with id %s' % sound_id
             return resp
-        return prepare_single_sound(sound)
+        
+        result = prepare_single_sound(sound)
+        
+        # Add request id to the result (in case user has specified one)
+        try:
+            request_id = request.GET['request_id']
+            result['request_id'] = request_id
+        except:
+            pass
+        
+        return result
 
 class SoundServeHandler(BaseHandler):
     '''
@@ -292,7 +311,17 @@ class UserHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'This user (%s) does not exist.' % username
             return resp
-        return prepare_single_user(user)
+        
+        result = prepare_single_user(user)
+        
+        # Add request id to the result (in case user has specified one)
+        try:
+            request_id = request.GET['request_id']
+            result['request_id'] = request_id
+        except:
+            pass
+        
+        return result
 
 class UserSoundsHandler(BaseHandler):
     '''
@@ -323,6 +352,14 @@ class UserSoundsHandler(BaseHandler):
                 result['previous'] = self.__construct_pagination_link(username, page.previous_page_number())
             if page.has_next():
                 result['next'] = self.__construct_pagination_link(username, page.next_page_number())
+        
+        # Add request id to the result (in case user has specified one)
+        try:
+            request_id = request.GET['request_id']
+            result['request_id'] = request_id
+        except:
+            pass
+        
         return result
 
     def __construct_pagination_link(self, u, p):
@@ -346,8 +383,18 @@ class UserPacksHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'This user (%s) does not exist.' % username
             return resp
+        
         packs = [prepare_single_pack(pack, include_user=False) for pack in Pack.objects.filter(user=user)]
-        return packs
+        result = {'packs': packs}
+
+        # Add request id to the result (in case user has specified one)
+        try:
+            request_id = request.GET['request_id']
+            result['request_id'] = request_id
+        except:
+            pass
+        
+        return result
 
 class PackHandler(BaseHandler):
     '''
@@ -367,7 +414,17 @@ class PackHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no pack with this identifier (%s).' % pack_id
             return resp
-        return prepare_single_pack(pack)
+        
+        result = prepare_single_pack(pack)
+        
+        # Add request id to the result (in case user has specified one)
+        try:
+            request_id = request.GET['request_id']
+            result['request_id'] = request_id
+        except:
+            pass
+        
+        return result
 
 class PackSoundsHandler(BaseHandler):
     '''
@@ -398,6 +455,14 @@ class PackSoundsHandler(BaseHandler):
                 result['previous'] = self.__construct_pagination_link(pack_id, page.previous_page_number())
             if page.has_next():
                 result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number())
+        
+        # Add request id to the result (in case user has specified one)
+        try:
+            request_id = request.GET['request_id']
+            result['request_id'] = request_id
+        except:
+            pass
+            
         return result
 
     def __construct_pagination_link(self, pack_id, p):

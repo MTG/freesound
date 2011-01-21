@@ -19,9 +19,15 @@ from utils.functional import combine_dicts
 from utils.images import extract_square
 from utils.mail import send_mail_template
 from utils.pagination import paginate
+from utils.dbtime import DBTime
 import logging
 import os
 import tempfile
+import datetime
+from forum.models import Post
+from comments.models import Comment
+from operator import itemgetter
+
 
 def activate_user(request, activation_key):
     if request.user.is_authenticated():
@@ -94,7 +100,8 @@ def username_reminder(request):
 @login_required
 def home(request):
     user = request.user
-    tags = user.profile.get_tagcloud()    
+    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
+    tags = user.profile.get_tagcloud()
     latest_sounds = Sound.public.filter(user=user)[0:5]
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
@@ -159,7 +166,7 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def edit(request):
-    profile = request.user.profile   
+    profile = request.user.profile
     
     def is_selected(prefix):
         if request.method == "POST":
@@ -222,12 +229,50 @@ def attribution(request):
     return render_to_response('accounts/attribution.html', combine_dicts(paginate(request, qs, 40), locals()), context_instance=RequestContext(request))
 
 def accounts(request):
-    pass
+    num_days = 7
+    num_active_users = 50
+    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
+    active_users = {}
+    user_cloud = []
+    upload_weight = 1
+    post_weight = 1
+    comment_weight = 1
+
+    latest_uploaders =  Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by()
+    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by()
+    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by()
+    
+    for user in latest_uploaders:
+	active_users[user['user']] = {'uploads':user['id__count'],'posts':0,'comments':0}
+
+    for user in latest_posters:
+	if user['author_id'] in active_users.keys():
+	    active_users[user['author_id']]['posts'] = user['id__count']
+	else:
+	    active_users[user['author_id']] = {'uploads':0,'posts':user['id__count'],'comments':0}
+
+    for user in latest_commenters:
+	if user['user_id'] in active_users.keys():
+	    active_users[user['user_id']]['comments'] = user['id__count']
+	else:
+	    active_users[user['user_id']] = {'uploads':0,'posts':0,'comments':user['id__count']}
+	
+    for user,scores in active_users.items()[:num_active_users]:
+	user_name = User.objects.get(pk=user).username
+	user_cloud.append({\
+	    'name':user_name,\
+	    'count':scores['uploads'] * upload_weight + scores['posts'] * post_weight + scores['comments'] * comment_weight})
+    
+    new_uploaders_qs = Sound.objects.filter(user__date_joined__gte=last_time).values("user__username").annotate(Count('id')).order_by()
+    new_uploaders = [{'name':s['user__username'],'count':s['id__count']} for s in new_uploaders_qs] 
+
+    return render_to_response('accounts/accounts.html', dict(most_active_users=user_cloud,num_days = num_days,new_uploaders=new_uploaders), context_instance=RequestContext(request))
+
 
 def account(request, username):
     user = get_object_or_404(User, username__iexact=username)
+    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-      
     latest_sounds = Sound.public.filter(user=user)[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]

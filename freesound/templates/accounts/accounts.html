@@ -1,0 +1,23 @@
+{% extends "accounts/_section.html" %}
+
+{% load display_sound %}
+{% load tags %}
+
+{% block title %} people {% endblock %}
+
+{% block section_content %}
+<h3> Most active users last {{num_days}} days</h3>
+    <div class="tagcloud">
+    {% for user in most_active_users|add_sizes:"False:1.1:2.5" %}
+	<span style="font-size:{{user.size}}em"><a href="{% url account user.name %}">{{user.name}}</a></span> 
+    {% endfor %}
+    </div>
+<br />
+<h3> New Uploaders</h3>
+    <div class="tagcloud">
+    {% for user in new_uploaders|add_sizes:"False:1.1:2.5" %}
+	<span style="font-size:{{user.size}}em"><a href="{% url account user.name %}">{{user.name}}</a></span> 
+    {% endfor %}
+    </div>
+{% endblock %}
+

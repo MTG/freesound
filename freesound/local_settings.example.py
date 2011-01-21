@@ -46,3 +46,10 @@ SOLR_URL = "http://localhost:8983/solr/"
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
 STEREOFY_PATH = "/home/fsweb/freesound/sandbox/legacy/stereofy/stereofy"
+
+FILES_UPLOAD_DIRECTORY_MOUNT = '/mnt/freesound/'
+
+SAMBA_FLAG = False #change this if you want to use the samba mount on the local disk
+
+if SAMBA_FLAG:
+    FILES_UPLOAD_DIRECTORY = FILES_UPLOAD_DIRECTORY_MOUNT

@@ -213,11 +213,8 @@ class SoundSearchHandler(BaseHandler):
                                                                       find_api_option(cd['s']))
             
             # Add request id to the result (in case user has specified one)
-            try:
-                request_id = request.GET['request_id']
-                result['request_id'] = request_id
-            except:
-                pass
+            if request.GET.get('request_id', '')!='':
+                result['request_id'] = request.GET.get('request_id', '')
             
             return result
         except SolrException, e:
@@ -255,11 +252,8 @@ class SoundHandler(BaseHandler):
         result = prepare_single_sound(sound)
         
         # Add request id to the result (in case user has specified one)
-        try:
-            request_id = request.GET['request_id']
-            result['request_id'] = request_id
-        except:
-            pass
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
         
         return result
 
@@ -321,11 +315,8 @@ class UserHandler(BaseHandler):
         result = prepare_single_user(user)
         
         # Add request id to the result (in case user has specified one)
-        try:
-            request_id = request.GET['request_id']
-            result['request_id'] = request_id
-        except:
-            pass
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
         
         return result
 
@@ -360,11 +351,8 @@ class UserSoundsHandler(BaseHandler):
                 result['next'] = self.__construct_pagination_link(username, page.next_page_number())
         
         # Add request id to the result (in case user has specified one)
-        try:
-            request_id = request.GET['request_id']
-            result['request_id'] = request_id
-        except:
-            pass
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
         
         return result
 
@@ -394,11 +382,8 @@ class UserPacksHandler(BaseHandler):
         result = {'packs': packs, 'num_results': len(packs)}
 
         # Add request id to the result (in case user has specified one)
-        try:
-            request_id = request.GET['request_id']
-            result['request_id'] = request_id
-        except:
-            pass
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
         
         return result
 
@@ -424,11 +409,8 @@ class PackHandler(BaseHandler):
         result = prepare_single_pack(pack)
         
         # Add request id to the result (in case user has specified one)
-        try:
-            request_id = request.GET['request_id']
-            result['request_id'] = request_id
-        except:
-            pass
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
         
         return result
 
@@ -463,12 +445,9 @@ class PackSoundsHandler(BaseHandler):
                 result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number())
         
         # Add request id to the result (in case user has specified one)
-        try:
-            request_id = request.GET['request_id']
-            result['request_id'] = request_id
-        except:
-            pass
-            
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
+        
         return result
 
     def __construct_pagination_link(self, pack_id, p):

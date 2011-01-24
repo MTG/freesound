@@ -142,6 +142,35 @@ become::
   something({a: 1})
 
 
+Request Identification
+----------------------
+
+When performing multiple requests, the identification with its 
+particular response might become non trivial. For that purpose,
+each request can be complemented with the optional parameter 'request_id'
+that will also be included in the response (so request-response pairing
+becomes easier)
+
+'request_id' can be added in any kind of request and will be returned
+as an additional parameter in the response. Just as an example:
+
+::
+
+  http://tabasco.upf.edu/api/sounds/search?q=dogs&request_id=1234
+
+Will return something like:
+
+::
+
+  {
+     "num_results": 715, 
+     "sounds": [...]
+     "next": "http://localhost:8000/api/sounds/search?q=dogs&p=2&f=&s=downloads_desc", 
+     "num_pages": 24, 
+     "request_id": "1234"
+  }
+
+
 API's Resources
 ---------------
 

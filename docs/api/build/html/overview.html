@@ -174,12 +174,33 @@ request like so:</p>
 <div class="highlight-python"><pre>?callback=something</pre>
 </div>
 <p>You&#8217;re response will instead of:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mf">1</span><span class="p">}</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
 </pre></div>
 </div>
 <p>become:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">something</span><span class="p">({</span><span class="n">a</span><span class="p">:</span> <span class="mf">1</span><span class="p">})</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">something</span><span class="p">({</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
 </pre></div>
+</div>
+</div>
+<div class="section" id="request-identification">
+<h2>Request Identification<a class="headerlink" href="#request-identification" title="Permalink to this headline">¶</a></h2>
+<p>When performing multiple requests, the identification with its
+particular response might become non trivial. For that purpose,
+each request can be complemented with the optional parameter &#8216;request_id&#8217;
+that will also be included in the response (so request-response pairing
+becomes easier)</p>
+<p>&#8216;request_id&#8217; can be added in any kind of request and will be returned
+as an additional parameter in the response. Just as an example:</p>
+<div class="highlight-python"><pre>http://tabasco.upf.edu/api/sounds/search?q=dogs&amp;request_id=1234</pre>
+</div>
+<p>Will return something like:</p>
+<div class="highlight-python"><pre>{
+   "num_results": 715,
+   "sounds": [...]
+   "next": "http://localhost:8000/api/sounds/search?q=dogs&amp;p=2&amp;f=&amp;s=downloads_desc",
+   "num_pages": 24,
+   "request_id": "1234"
+}</pre>
 </div>
 </div>
 <div class="section" id="api-s-resources">
@@ -207,6 +228,7 @@ request like so:</p>
 <li class="toctree-l2"><a class="reference internal" href="#requests">Requests</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#responses">Responses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#jsonp-callback">JSONP callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#request-identification">Request Identification</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#api-s-resources">API&#8217;s Resources</a></li>
 </ul>
 </li>
@@ -251,7 +273,7 @@ request like so:</p>
     </div>
     <div class="footer">
         &copy; Copyright 2010, Bram de Jong, Vincent Akkermans.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>

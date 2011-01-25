@@ -26,12 +26,12 @@ def extract_square(input_filename, output_filename, size):
         
     #if one side of the image is smaller and one is bigger
     elif im.size[0] > size and im.size[1] < size:
-            ratio = im.size[0] / im.size[1]
-            im = im.resize((size * ratio,size), Image.ANTIALIAS)  
+        ratio = im.size[0] / im.size[1]
+        im = im.resize((size * ratio,size), Image.ANTIALIAS)  
                      
     elif im.size[0] < size and im.size[1] > size:  
-            ratio = im.size[1] / im.size[0]
-            im = im.resize((size, size * ratio), Image.ANTIALIAS)
+        ratio = im.size[1] / im.size[0]
+        im = im.resize((size, size * ratio), Image.ANTIALIAS)
            
     if im.size[0] > im.size[1]:
         # --------

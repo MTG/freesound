@@ -205,7 +205,7 @@ __ sound-get-response_
             "base_filename_slug": "83295__digifishmusic__Noisy_Miner_Chick_FeedMe", 
             "duration": 48.548956916100003, 
             "waveform_l": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.png", 
-            "preview": "http://tabasco.upf.edu/api/sounds/83295/preview", 
+            "preview": "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3", 
             "ref": "http://tabasco.upf.edu/api/sounds/83295", 
             "pack": "http://tabasco.upf.edu/api/packs/2090"
         },
@@ -298,7 +298,7 @@ waveform_l	      URI      A visualization of the sounds waveform, png file (larg
     "bitdepth": 16, 
     "num_comments": 0, 
     "filesize": 67928, 
-    "preview": "http://tabasco.upf.edu/api/sounds/83257/preview", 
+    "preview": "http://tabasco.upf.edu/media/data/sounds/83/previews/83257__zgump__club-kick-0304.mp3", 
     "ref": "http://tabasco.upf.edu/api/sounds/83257", 
     "description": "kick bd drum goa goakick psy psykick kickdrum", 
     "tags": [
@@ -322,7 +322,7 @@ waveform_l	      URI      A visualization of the sounds waveform, png file (larg
     "bitrate": 1411, 
     "num_downloads": 0, 
     "num_ratings": 0, 
-    "license": "Sampling+", 
+    "license": "http://creativecommons.org/licenses/sampling+/1.0/", 
     "created": "2009-11-12 19:58:17", 
     "url": "http://tabasco.upf.edu/people/zgump/sounds/83257/", 
     "type": "wav", 
@@ -504,27 +504,29 @@ __ pack-get-response_
 
 ::
 
-  [
-    {
-        "description": "", 
-        "created": "2009-09-28 09:50:08", 
-        "url": "http://tabasco.upf.edu/people/dobroide/packs/5266/", 
-        "sounds": "http://tabasco.upf.edu/api/packs/5266/sounds", 
-        "num_downloads": 0, 
-        "ref": "http://tabasco.upf.edu/api/packs/5266", 
-        "name": "scrub"
-    }, 
-    {
-        "description": "", 
-        "created": "2009-09-20 10:55:32", 
-        "url": "http://tabasco.upf.edu/people/dobroide/packs/5230/", 
-        "sounds": "http://tabasco.upf.edu/api/packs/5230/sounds", 
-        "num_downloads": 0, 
-        "ref": "http://tabasco.upf.edu/api/packs/5230", 
-        "name": "granada"
-    }
-  ]
-
+  {
+    "num_results": 47, 
+    "packs": [
+        {
+            "description": "", 
+            "created": "2009-09-28 09:50:08", 
+            "url": "http://tabasco.upf.edu/people/dobroide/packs/5266/", 
+            "sounds": "http://tabasco.upf.edu/api/packs/5266/sounds", 
+            "num_downloads": 0, 
+            "ref": "http://tabasco.upf.edu/api/packs/5266", 
+            "name": "scrub"
+        }, 
+        {
+            "description": "", 
+            "created": "2009-09-20 10:55:32", 
+            "url": "http://tabasco.upf.edu/people/dobroide/packs/5230/", 
+            "sounds": "http://tabasco.upf.edu/api/packs/5230/sounds", 
+            "num_downloads": 0, 
+            "ref": "http://tabasco.upf.edu/api/packs/5230", 
+            "name": "granada"
+        }
+    ]
+  }
 
 
 

@@ -40,10 +40,63 @@ where t.user_id=accounts_profile.user_id;
 
 -- update the rating for all sounds
 update sounds_sound set avg_rating=t.avg_rating, num_ratings=t.num_ratings
-from ( select object_id as sound_id, avg(rating) as avg_rating, count(*) as num_ratings from ratings_rating where content_type_id=(select id from django_content_type where app_label='sounds' and model='sound') group by object_id ) as t
+from (
+    select
+        object_id as sound_id,
+        avg(rating) as avg_rating,
+        count(*) as num_ratings
+    from ratings_rating
+    where content_type_id=(
+        select id
+        from django_content_type
+        where app_label='sounds' and model='sound'
+    )
+    group by object_id
+) as t
 where t.sound_id=sounds_sound.id;
 
 -- correct num_comments for all sounds
-update sounds_sound set num_comments=t.num_comments
-from ( select object_id as sound_id, count(*) as num_comments from comments_comment where content_type_id=(select id from django_content_type where app_label='sounds' and model='sound') group by object_id ) as t
+update sounds_sound set num_comments=t.num_comments from (
+    select
+        object_id as sound_id,
+        count(*) as num_comments
+    from comments_comment
+    where content_type_id=(
+        select id
+        from django_content_type
+        where app_label='sounds' and model='sound'
+    )
+    group by object_id
+) as t
 where t.sound_id=sounds_sound.id;
+
+-- correct number of downloads per sound
+update sounds_sound set num_downloads=d.num_downloads from (
+    select
+        sound_id,
+        count(1) as num_downloads
+    from sounds_download
+    where
+        pack_id is null
+    group by sound_id
+) as d
+where d.sound_id = sounds_sound.id;
+
+-- correct number of downloads per pack
+update sounds_pack set num_downloads=d.num_downloads
+from (
+    select
+        pack_id,
+        count(1) as num_downloads
+    from sounds_download
+    where
+        sound_id is null
+    group by pack_id
+) as d
+where d.pack_id = sounds_pack.id;
+
+vacuum analyze sounds_sound;
+vacuum analyze sounds_pack;
+vacuum analyze forum_thread;
+vacuum analyze forum_forum;
+vacuum analyze accounts_profile;

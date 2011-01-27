@@ -13,12 +13,52 @@ DROP TRIGGER forum_post_insert ON forum_post;
 CREATE TRIGGER forum_post_insert AFTER INSERT ON forum_post FOR EACH ROW EXECUTE PROCEDURE forum_post_insert();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
+-- this function updates a thread to contain the right "last post"
+CREATE OR REPLACE FUNCTION update_thread_last_post(in input_thread_id integer) RETURNS void AS $BODY$
+    BEGIN
+        update forum_thread set last_post_id=p.last_post from (
+            select fp.id as last_post
+            from forum_post as fp
+            where fp.thread_id=input_thread_id
+            order by created desc
+            limit 1) as p
+        where forum_thread.id=input_thread_id;
+    END;
+$BODY$ LANGUAGE plpgsql;
+
+------------------------------------------------------------------------------------------------------------------------------------------
+-- this function updates a forum to contain the right "last post"
+CREATE OR REPLACE FUNCTION update_forum_last_post(in input_forum_id integer) RETURNS void AS $BODY$
+    BEGIN
+        update forum_forum set last_post_id=t.last_post from (
+            select ft.last_post_id as last_post
+            from forum_thread as ft
+            where
+                ft.forum_id=input_forum_id and
+                last_post_id is not null
+            order by created desc
+            limit 1) as t
+        where forum_forum.id=input_forum_id;
+    END;
+$BODY$ LANGUAGE plpgsql;
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
 -- on post deletion, decrement counters for user, thread and post
 -- ignore the "last post" link.
 CREATE OR REPLACE FUNCTION forum_post_delete() RETURNS TRIGGER AS $BODY$
+    DECLARE
+        thread_last_post_id INTEGER;
+        thread_forum_id INTEGER;
     BEGIN
+        SELECT last_post_id INTO thread_last_post_id FROM forum_thread WHERE forum_thread.id = OLD.thread_id;
+        SELECT forum_id INTO thread_forum_id FROM forum_thread WHERE forum_thread.id = OLD.thread_id;
+        IF thread_last_post_id = OLD.id THEN
+            PERFORM update_thread_last_post(OLD.thread_id);
+            PERFORM update_forum_last_post(thread_forum_id);
+        END IF;
         UPDATE forum_thread SET num_posts = num_posts - 1 WHERE forum_thread.id = OLD.thread_id AND num_posts > 0;
-        UPDATE forum_forum  SET num_posts = num_posts - 1 WHERE forum_forum.id = (SELECT forum_id FROM forum_thread WHERE forum_thread.id = OLD.thread_id) AND num_posts > 0;
+        UPDATE forum_forum SET num_posts = num_posts - 1 WHERE forum_forum.id = thread_forum_id AND num_posts > 0;
         UPDATE accounts_profile SET num_posts = num_posts - 1 WHERE user_id = OLD.author_id AND num_posts > 0;
         RETURN NEW;
     END;
@@ -32,7 +72,7 @@ CREATE TRIGGER forum_post_delete AFTER DELETE ON forum_post FOR EACH ROW EXECUTE
 -- on thread insert, increment thread-counter for forum
 CREATE OR REPLACE FUNCTION forum_thread_insert() RETURNS TRIGGER AS $BODY$
     BEGIN
-        UPDATE forum_forum  SET num_threads = num_threads + 1 WHERE forum_forum.id = NEW.forum_id;
+        UPDATE forum_forum SET num_threads = num_threads + 1 WHERE forum_forum.id = NEW.forum_id;
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
@@ -42,8 +82,14 @@ CREATE TRIGGER forum_thread_insert AFTER INSERT ON forum_thread FOR EACH ROW EXE
 ------------------------------------------------------------------------------------------------------------------------------------------
 -- on thread delete, decrement thread-counter for forum
 CREATE OR REPLACE FUNCTION forum_thread_delete() RETURNS TRIGGER AS $BODY$
+    DECLARE
+        forum_last_post_id INTEGER;
     BEGIN
-        UPDATE forum_forum  SET num_threads = num_threads - 1 WHERE forum_forum.id = OLD.forum_id AND num_threads > 0;
+        SELECT last_post_id INTO forum_last_post_id FROM forum_forum WHERE forum_forum.id = OLD.forum_id;
+        IF forum_last_post_id = OLD.last_post_id THEN
+            PERFORM update_forum_last_post(OLD.forum_id);
+        END IF;
+        UPDATE forum_forum SET num_threads = num_threads - 1 WHERE forum_forum.id = OLD.forum_id AND num_threads > 0;
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;

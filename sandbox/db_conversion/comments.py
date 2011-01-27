@@ -21,11 +21,13 @@ print "getting all valid user ids"
 ppsql_cur.execute("SELECT id FROM auth_user")
 valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
 print "done"
+print "getting correct content_id"
+ppsql_cur.execute("select id from django_content_type where app_label='sounds' and model='sound'")
+content_type_id = ppsql_cur.fetchall()[0][0]
+print "done"
 
 start = 0
 granularity = 1000
-
-content_type_id = 19
 
 while True:
     print start

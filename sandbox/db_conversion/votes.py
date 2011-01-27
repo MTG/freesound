@@ -12,18 +12,24 @@ my_curs = my_conn.cursor()
 start = 0
 granularity = 100000
 
-content_type_id = 19
-
 ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
 ppsql_cur = ppsql_conn.cursor()
 print "getting all valid sound ids"
 ppsql_cur.execute("SELECT id FROM sounds_sound")
 valid_sound_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
 print "done"
+
 print "getting all valid user ids"
 ppsql_cur.execute("SELECT id FROM auth_user")
 valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
 print "done"
+
+print "getting correct content_id"
+ppsql_cur.execute("select id from django_content_type where app_label='sounds' and model='sound'")
+content_type_id = ppsql_cur.fetchall()[0][0]
+print "done"
+
+return;
 
 while True:
     print start

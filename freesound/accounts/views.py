@@ -273,9 +273,6 @@ def account(request, username):
     user = get_object_or_404(User, username__iexact=username)
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    print tags
-    for t in tags:
-	print t, type(t)
     latest_sounds = Sound.public.filter(user=user)[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]

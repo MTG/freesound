@@ -8,7 +8,7 @@
 		{% include "sounds/player_medium.html" %}
 	</div>
 	<a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:20}}</a>
-	<div class="stars">
+
 		<ul class="star-rating">
 			<li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
 			<li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star">1</a></li>
@@ -17,7 +17,7 @@
 			<li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars">4</a></li>
 			<li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
 		</ul>
-	</div>
+
 	<p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
 </div>
 

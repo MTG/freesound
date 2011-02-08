@@ -483,6 +483,29 @@ body#home h3 {
 	line-height: 16px;
 	color: #333;
 }
+.sample_player_small div.link_title {
+    position: relative;
+    height: 18px;
+    width: 90%;
+}
+.sample_player_small div.div_link {
+    position: relative;
+    top: 0px; 
+    float:left; 
+    vertical-align: top;
+}
+.sample_player_small div.div_stars {
+    position: relative; 
+    top: 0px; 
+    float:right; 
+    vertical-align: top; 
+    margin-right: 5px; 
+}
+.sample_player_small div.div_description {
+    position: relative;  
+    width: 90%;  
+    margin-right: 5px; 
+}
 .stars {
 	text-align: right;
 	margin: -18px 10px 0 0;

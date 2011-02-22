@@ -59,3 +59,33 @@ def search(request):
         results = []
     
     return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
+
+def search_remix(request):
+    search_query = request.GET.get("q", "")
+    filter_query = request.GET.get("f", "")
+    current_page = int(request.GET.get("page", 1))
+    sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
+    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
+    search_request = request.META["HTTP_REFERER"]
+    search_sources = request.GET.get("remix-remix", "")
+    
+    if search_query.strip() != "":
+        sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
+    
+        solr = Solr(settings.SOLR_URL)
+        
+        query = search_prepare_query(search_query, filter_query, sort, current_page, settings.SOUNDS_PER_PAGE)
+        
+        try:
+            results = SolrResponseInterpreter(solr.select(unicode(query)))
+            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+            page = paginator.page(current_page)
+            error = False
+        except SolrException, e:
+            logger.warning("search error: query: %s error %s" % (query, e))
+            print e
+            error = True
+    else:
+        results = []
+    
+    return render_to_response('search/remix_search.html', locals(), context_instance=RequestContext(request))

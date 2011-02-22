@@ -15,7 +15,7 @@ from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    LicenseForm, FlagForm
+    LicenseForm, FlagForm, RemixForm
 from accounts.models import Profile
 from sounds.models import Sound, Pack, Download
 from utils.cache import invalidate_template_cache
@@ -227,6 +227,17 @@ def sound_edit(request, username, sound_id):
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
+     
+    remixes = request.REQUEST["remix_sources"]     
+    if is_selected("remix"):
+        remix_form = RemixForm(remixes, request.POST, prefix="remix")
+        if remix_form.is_valid():
+            sound.sources = remix_form.cleaned_data["remix"]
+            sound.save()
+            #invalidate_template_cache("sound_footer", sound.id)
+            return HttpResponseRedirect(sound.get_absolute_url())
+    else:
+        remix_form = RemixForm(remixes, prefix="remix", initial=dict(remix=remixes))
 
     google_api_key = settings.GOOGLE_API_KEY
     

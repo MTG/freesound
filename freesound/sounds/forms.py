@@ -26,6 +26,12 @@ class SoundDescriptionForm(forms.Form):
     tags = TagField(widget=forms.widgets.TextInput(attrs={"size":40}), help_text="Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea)
 
+class RemixForm(forms.Form):
+    remix = HtmlCleaningCharField(label="The sounds used:", required=False, min_length=1)
+    
+    def __init__(self, sources, *args, **kwargs):
+        super(RemixForm, self).__init__(*args, **kwargs)
+        self.fields['remix'].queryset = sources
 
 class PackChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, pack):

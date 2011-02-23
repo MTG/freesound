@@ -41,8 +41,8 @@
 <form method="get" action="{% url sounds-sources %}">
     <fieldset>
     <input type="text" name="q" value="" size="30" />
-    <input type="hidden" name="remix-remix" value=""/>
-    <input type="submit" value="Search Sounds" id="search_submit" onclick="this.previousSibling.previousSibling.value=document.remix_form.childNodes[4].value;"/>
+    <input type="hidden" name="remix-remix" value="{{ remixes }}"/>
+    <input type="submit" value="Search Sounds" id="search_submit"/>
     </fieldset>
 </form>            
 <form method="post" action="#remix" name="remix_form">{% csrf_token %}

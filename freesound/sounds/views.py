@@ -228,11 +228,19 @@ def sound_edit(request, username, sound_id):
     else:
         license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
      
-    remixes = request.REQUEST["remix_sources"]     
+    if ((request.method == 'POST') and (request.POST.get('remix_sources'))):
+        remixes = request.REQUEST["remix_sources"] 
+        new_source = request.REQUEST["new_source"] 
+        sound.sources.add(new_source)
+        sound.save()  
+    else:
+        remixes = sound.get_sources()     
     if is_selected("remix"):
         remix_form = RemixForm(remixes, request.POST, prefix="remix")
         if remix_form.is_valid():
-            sound.sources = remix_form.cleaned_data["remix"]
+            for x in remix_form.cleaned_data["remix"].split(","):
+                if not (sound.sources.filter(id=x)):
+                    sound.sources.add(x)
             sound.save()
             #invalidate_template_cache("sound_footer", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())

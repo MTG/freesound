@@ -94,14 +94,18 @@
     function selectSource(id, div)
     {
         var sources = window.document.return_remix.remix_sources.value
-        if (sources < 3)
+        if (sources < 1)
             window.document.return_remix.remix_sources.value = id;
         else 
         {
-            if ((sources.search(id) == -1) || ((sources.search(id) > -1) && ((sources.search(id)+id.length+1 > sources.length) && (sources[sources.search(id)+id.length+1] != ","))))            
-                window.document.return_remix.remix_sources.value = sources + ","  + id; 
+            arr = sources.split(",");
+            NinArray = true;
+            for (i = 0; i < arr.length; i++)
+               if (parseInt(id) == parseInt(arr[i])) {NinArray = false;break;}
+            if (NinArray)
+                window.document.return_remix.remix_sources.value = window.document.return_remix.remix_sources.value + "," + id;                
         }
-        alert(window.document.return_remix.remix_sources.value);
+        window.document.return_remix.new_source.value = id;
         window.document.return_remix.submit();
         return;
     }
@@ -165,6 +169,7 @@
     </div>
     
     <form name="return_remix" method="post" action="{{ search_request }}#remix">{% csrf_token %}
+        <input type="hidden" name="new_source" value="" />
         <input type="hidden" name="remix_sources" value="{{ search_sources }}" />
     </form>
     

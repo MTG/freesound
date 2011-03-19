@@ -84,7 +84,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         quote = ""
     
     if request.method == 'POST':
-        form = PostReplyForm(quote, request.POST)
+        form = PostReplyForm(request, quote, request.POST)
         if form.is_valid():
             post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
             
@@ -108,9 +108,9 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
             return HttpResponseRedirect(post.get_absolute_url())
     else:
         if quote:
-            form = PostReplyForm(quote, {'body':quote})
+            form = PostReplyForm(request, quote, {'body':quote})
         else:
-            form = PostReplyForm(quote)
+            form = PostReplyForm(request, quote)
         
     return render_to_response('forum/reply.html', locals(), context_instance=RequestContext(request))
 

@@ -14,6 +14,7 @@ django-debug-toolbar
 Django>=1.2.1
 numpy
 psycopg2
+akismet
 #
 # The packate for 'recaptcha-client' fails to install.
 # See: http://code.google.com/p/recaptcha/issues/detail?id=55
@@ -24,5 +25,3 @@ http://cloud.github.com/downloads/bram/freesound/recaptcha-client-1.0.4-with.ez.
 # with pip.
 # Install our own version.
 http://cloud.github.com/downloads/bram/freesound/jutda-helpdesk-r140.tar.gz
-
-			

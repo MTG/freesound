@@ -23,15 +23,14 @@ class PledgieParserNode(template.Node):
                 raise template.TemplateSyntaxError, "pledgie campaign id's need to be integers!"
         else:
             pledgie_id = int(self.pledgie_id)
-            
+
         api_url = "http://pledgie.com/campaigns/%d.json" % pledgie_id
         pledge_url = "http://pledgie.com/campaigns/%d/" % pledgie_id
         
         data = None
         
         try:
-            json_data = unicode(urllib.urlopen(api_url, proxies=settings.PROXIES).read(), "ISO-8859-2", errors='replace')
-            data = simplejson.loads(json_data)
+            data = simplejson.loads(urllib.urlopen(api_url, proxies=settings.PROXIES).read(), "utf-8")
             data["to_go"] = int(data["campaign"]["goal"] - data["campaign"]["amount_raised"])
             data["url"] = pledge_url
         except UnicodeDecodeError:

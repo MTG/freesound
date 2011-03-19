@@ -459,7 +459,7 @@ body#home h3 {
 .sample_player_small {
 	width: 530px;
 	margin: 17px 0;
-	overflow: auto;
+	overflow: hidden;
 }
 .sample_player_small .sample_player {
 	width: 400px;

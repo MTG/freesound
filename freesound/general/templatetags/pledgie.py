@@ -23,7 +23,7 @@ class PledgieParserNode(template.Node):
                 raise template.TemplateSyntaxError, "pledgie campaign id's need to be integers!"
         else:
             pledgie_id = int(self.pledgie_id)
-        print pledgie_id   
+
         api_url = "http://pledgie.com/campaigns/%d.json" % pledgie_id
         pledge_url = "http://pledgie.com/campaigns/%d/" % pledgie_id
         

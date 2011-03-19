@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from comments.models import Comment
+from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
@@ -16,7 +17,11 @@ class SocialModel(models.Model):
 
     class Meta:
         abstract = True
-        
+
+class AkismetSpam(SocialModel):
+    user = models.ForeignKey(User)
+    spam = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
 
 class OrderedModel(models.Model):
     order = models.PositiveIntegerField(editable=False)

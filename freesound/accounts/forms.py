@@ -64,7 +64,7 @@ class RegistrationForm(RecaptchaForm):
         email = self.cleaned_data["email2"]
         password = self.cleaned_data["password2"]
         first_name = self.cleaned_data.get("first_name", "")
-        last_name = self.cleaned_data.get("flast_name", "")
+        last_name = self.cleaned_data.get("last_name", "")
         newsletter = self.cleaned_data.get("newsletter", False)
 
         user = User(username=username, first_name=first_name, last_name=last_name, email=email, password=password,is_staff=False, is_active=False, is_superuser=False)

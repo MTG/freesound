@@ -98,7 +98,7 @@
     {% if error %}
         Failed searching! Please fix your query...
     {% else %}
-    <div style="float:right">
+    <div id="sidebar" style="float:right">
         {% if results.facets.tag and results.facets.tag|length > 1 %}
             <h3>tags</h3>
             {% display_facet "tag" results.facets.tag "cloud" %}

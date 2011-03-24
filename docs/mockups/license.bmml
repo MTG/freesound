@@ -1,0 +1,118 @@
+<mockup version="1.0" skin="sketch" measuredW="992" measuredH="973" mockupW="978" mockupH="964">
+  <controls>
+    <control controlID="54" controlTypeID="com.balsamiq.mockups::VCurly" x="684" y="418" w="308" h="390" measuredW="180" measuredH="140" zOrder="0" locked="false" isInGroup="-1">
+      <controlProperties>
+        <direction>left</direction>
+        <text>Reuse%20this%20part/form%20in%20the%20sound%20editing%20and%20license%20selection%20at%20%22describe%22%20time.</text>
+      </controlProperties>
+    </control>
+    <control controlID="57" controlTypeID="__group__" x="14" y="9" w="667" h="964" measuredW="667" measuredH="964" zOrder="1" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="com.balsamiq.mockups::Paragraph" x="0" y="833" w="667" h="71" measuredW="200" measuredH="140" zOrder="0" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Remember%3A%20no%20matter%20what%20icense%2C%20you%20are%20always%20free%20to%20give%20people%20exceptions%2C%20or%20license%20your%20work%20elsewhere%20under%20another%20license.%20If%20you%20select%20the%20strictest%20license%2C%20people%20will%20need%20to%20go%20through%20the%20motions%20of%20asking%20you%20permission%20to%20use%20their%20work%20for%20certain%20things%2C%20and%20this%20might%20be%20troublesome...</text>
+          </controlProperties>
+        </control>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::RadioButton" x="146" y="400" w="-1" h="-1" measuredW="162" measuredH="22" zOrder="1" locked="false" isInGroup="57">
+          <controlProperties>
+            <state>selected</state>
+            <text>Creative%20Commons%20Zero</text>
+          </controlProperties>
+        </control>
+        <control controlID="2" controlTypeID="com.balsamiq.mockups::RadioButton" x="146" y="535" w="215" h="22" measuredW="199" measuredH="22" zOrder="2" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Creative%20Commons%20Attribution</text>
+          </controlProperties>
+        </control>
+        <control controlID="3" controlTypeID="com.balsamiq.mockups::RadioButton" x="146" y="678" w="325" h="22" measuredW="299" measuredH="22" zOrder="3" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Creative%20Commons%20Attribution%20Non-Commercial</text>
+          </controlProperties>
+        </control>
+        <control controlID="4" controlTypeID="com.balsamiq.mockups::Arrow" x="99" y="401" w="10" h="395" measuredW="150" measuredH="100" zOrder="4" locked="false" isInGroup="57">
+          <controlProperties>
+            <color>13576743</color>
+            <curvature>0</curvature>
+            <rightArrow>false</rightArrow>
+          </controlProperties>
+        </control>
+        <control controlID="5" controlTypeID="com.balsamiq.mockups::Label" x="0" y="768" w="-1" h="-1" measuredW="82" measuredH="23" zOrder="5" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Less%20Free%20%3A-%28</text>
+          </controlProperties>
+        </control>
+        <control controlID="6" controlTypeID="com.balsamiq.mockups::Label" x="0" y="399" w="-1" h="-1" measuredW="83" measuredH="23" zOrder="6" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Very%20free%20%3A-%29</text>
+          </controlProperties>
+        </control>
+        <control controlID="7" controlTypeID="com.balsamiq.mockups::Paragraph" x="190" y="428" w="440" h="50" measuredW="200" measuredH="140" zOrder="7" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Summary%3A%20You%20let%20people%20use%20your%20sounds%20and%20they%20can%20do%20whatever%20they%20want.%20They%20don%27t%20even%20need%20to%20credit%20you.</text>
+          </controlProperties>
+        </control>
+        <control controlID="8" controlTypeID="com.balsamiq.mockups::Link" x="264" y="484" w="-1" h="-1" measuredW="315" measuredH="23" zOrder="8" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>http%3A//creativecommons.org/publicdomain/zero/1.0/</text>
+          </controlProperties>
+        </control>
+        <control controlID="9" controlTypeID="com.balsamiq.mockups::Link" x="264" y="625" w="-1" h="-1" measuredW="277" measuredH="23" zOrder="9" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>http%3A//creativecommons.org/licenses/by/3.0/</text>
+          </controlProperties>
+        </control>
+        <control controlID="10" controlTypeID="com.balsamiq.mockups::Link" x="264" y="767" w="-1" h="-1" measuredW="297" measuredH="23" zOrder="10" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>http%3A//creativecommons.org/licenses/by-nc/2.5/</text>
+          </controlProperties>
+        </control>
+        <control controlID="11" controlTypeID="com.balsamiq.mockups::Paragraph" x="190" y="569" w="440" h="54" measuredW="200" measuredH="140" zOrder="11" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Summary%3A%20You%20let%20people%20use%20your%20sounds%2C%20for%20commercial%20purposes%20too%2C%20but%20they%20always%20need%20to%20credit%20you.</text>
+          </controlProperties>
+        </control>
+        <control controlID="12" controlTypeID="com.balsamiq.mockups::Paragraph" x="190" y="709" w="440" h="54" measuredW="200" measuredH="140" zOrder="12" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Summary%3A%20You%20let%20people%20use%20your%20sounds%2C%20but%20not%20for%20commercial%20purposes.%20They%20also%20always%20need%20to%20credit%20you.</text>
+          </controlProperties>
+        </control>
+        <control controlID="13" controlTypeID="com.balsamiq.mockups::Label" x="191" y="483" w="-1" h="-1" measuredW="72" measuredH="23" zOrder="13" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Read%20more%3A</text>
+          </controlProperties>
+        </control>
+        <control controlID="14" controlTypeID="com.balsamiq.mockups::Label" x="190" y="624" w="-1" h="-1" measuredW="72" measuredH="23" zOrder="14" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Read%20more%3A</text>
+          </controlProperties>
+        </control>
+        <control controlID="15" controlTypeID="com.balsamiq.mockups::Label" x="190" y="767" w="72" h="23" measuredW="72" measuredH="23" zOrder="15" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Read%20more%3A</text>
+          </controlProperties>
+        </control>
+        <control controlID="16" controlTypeID="com.balsamiq.mockups::Title" x="0" y="0" w="-1" h="-1" measuredW="565" measuredH="56" zOrder="16" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Freesound%20Bulk%20License%20Change</text>
+          </controlProperties>
+        </control>
+        <control controlID="17" controlTypeID="com.balsamiq.mockups::Paragraph" x="0" y="94" w="613" h="236" measuredW="200" measuredH="140" zOrder="17" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Hi%21%20It%20looks%20like%20this%20is%20the%20first%20time%20you%20sign%20into%20freesound%20%222%22%2C%20or%20%22nightingale%22%20like%20we%20like%20to%20call%20it.%20For%20a%20while%20the%20friendly%20people%20at%20%5Bcreative%20commons%5D%20have%20been%20telling%20us%20that%20the%20%5BSampling+%20license%5D%20used%20in%20Freesound%20%221%22%20is%20a%20pretty%20silly%20license%2C%20especially%20for%20sounds%20for%20various%20technical%20lawyer%20reasons...%20We%20totaly%20agree%20with%20this%20and%20are%20helping%20creative%20commons%20to%20release%20the%20world%20of%20this%20license...%0A%20%0AFreesound%20%222%22%20now%20gives%20you%20the%20option%20of%20selecting%20one%20of%203%20licenses%20and%20we%20want%20you%20to%20change%20all%20your%20sound%20licenses%20to%20one%20of%20these%203%20licenses%20before%20you%20continue.%20This%20might%20sound%20dramatic%2C%20but%20it%20isn%27t%20really.%20The%20terminology%20used%20in%20these%20new%20licenses%20is%20*much*%20clearer%20and%20there%20are%20fewer%20grey%20areas%2C%20so%20we%20will%20get%20less%20questions%20...%0A%20%0APlease%20note%3A%20of%20course%20you%20can%20still%20change%20sounds%20individually%20afterwards%2C%20that%20speaks%20for%20itself%21</text>
+          </controlProperties>
+        </control>
+        <control controlID="18" controlTypeID="com.balsamiq.mockups::Button" x="551" y="936" w="-1" h="-1" measuredW="95" measuredH="28" zOrder="18" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>Make%20It%20So%21</text>
+          </controlProperties>
+        </control>
+        <control controlID="19" controlTypeID="com.balsamiq.mockups::Title" x="0" y="356" w="-1" h="-1" measuredW="211" measuredH="29" zOrder="19" locked="false" isInGroup="57">
+          <controlProperties>
+            <size>18</size>
+            <text>Change%20all%20my%20sounds%20to%3A</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+  </controls>
+</mockup>

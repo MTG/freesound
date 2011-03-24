@@ -50,15 +50,20 @@ class SoundManager(models.Manager):
         from django.db import connection
         import random
         
-        # TODO: not filtering sound by moderation state in get_random_sound
-        #sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
-        sound_count = self.all().count()
+        if settings.DEBUG:
+            sound_count = self.all().count()
+        else:
+            sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
+        
 
         if sound_count:
             offset = random.randint(0, sound_count - 1)
             cursor = connection.cursor() #@UndefinedVariable
-            #cursor.execute("select id from sounds_sound where processing_state = 'OK' and moderation_state = 'OK' offset %d limit 1" % offset)
-            cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
+            if settings.DEBUG:
+                cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
+            else:
+                cursor.execute("select id from sounds_sound where processing_state = 'OK' and moderation_state = 'OK' offset %d limit 1" % offset)
+            
             return cursor.fetchone()[0]
         else:
             return None

@@ -94,10 +94,10 @@
     update_filter_display();
 </script>
 
-{% if results %}
-    {% if error %}
-        Failed searching! Please fix your query...
-    {% else %}
+{% if error %}
+    {{ error_text }}
+{% else %}
+    {% if results %}
     <div id="sidebar" style="float:right">
         {% if results.facets.tag and results.facets.tag|length > 1 %}
             <h3>tags</h3>

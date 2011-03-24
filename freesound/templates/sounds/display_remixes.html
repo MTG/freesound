@@ -1,0 +1,28 @@
+{% load display_sound %}
+{% load search %}
+
+{% block section_content %}
+
+{% if results %}
+    {% if error %}
+        Failed searching! Please fix your query...
+    {% else %} 
+
+    {% for result in results.docs %}
+    <div class="sample_player_small">
+        {% display_sound result.id %}    
+    </div>
+    <a><div class="add_sound" onClick="addSound({{result.id}})">Click to add sound</div></a>
+    {% endfor %}
+
+
+    {% endif %}
+{% endif %}
+
+{% if id %} 
+ <div class="sample_player_small">
+        {% display_sound id %}    
+</div>
+{% endif %}
+
+{% endblock %}

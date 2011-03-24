@@ -50,7 +50,7 @@ class SoundManager(models.Manager):
         from django.db import connection
         import random
         
-        print "WARNING: not filtering sound by moderation state in get_random_sound"
+        # TODO: not filtering sound by moderation state in get_random_sound
         #sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
         sound_count = self.all().count()
 

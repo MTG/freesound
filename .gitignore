@@ -3,3 +3,6 @@
 *.pyc
 *~
 *settings_local.py
+\#*\#
+*.settings*
+freesound/utils/search/config*/data

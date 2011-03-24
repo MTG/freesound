@@ -53,8 +53,12 @@ def search(request):
             error = False
         except SolrException, e:
             logger.warning("search error: query: %s error %s" % (query, e))
-            print e
             error = True
+            error_text = 'There was an error while searching, is your query correct?'
+        except Exception, e:
+            logger.error("Could probably not connect to Solr - %s" % e)
+            error = True
+            error_text = 'The search server could not be reached, please try again later.' 
     else:
         results = []
     

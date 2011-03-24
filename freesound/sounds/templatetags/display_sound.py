@@ -20,5 +20,4 @@ def display_sound(context, sound):
                 'sounds_url': context['sounds_url']
                 }
     else:
-        print "sound is", sound, type(sound)
         raise template.TemplateSyntaxError, "the display_sound tag needs either a sound id or an actual sound object"

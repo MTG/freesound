@@ -52,7 +52,10 @@ def tag_lookup(tag):
         tag_id += 1
         return lookup_dict[tag]
 
-content_type_id = 19
+print "getting correct content_id"
+ppsql_cur.execute("select id from django_content_type where app_label='sounds' and model='sound'")
+content_type_id = ppsql_cur.fetchall()[0][0]
+print "done"
 
 unique_test = {}
 

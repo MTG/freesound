@@ -102,8 +102,6 @@ class UsernameReminderForm(forms.Form):
     def clean_user(self):
         email = self.cleaned_data["user"]
         
-        print email
-        
         try:
             return User.objects.get(email__iexact=email)
         except User.DoesNotExist: #@UndefinedVariable

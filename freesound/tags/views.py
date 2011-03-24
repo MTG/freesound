@@ -4,6 +4,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
+import logging
+
+search_logger = logging.getLogger("search")
 
 def tags(request, multiple_tags=None):
     if multiple_tags:
@@ -37,6 +40,6 @@ def tags(request, multiple_tags=None):
         tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]
     except SolrException, e:
         error = True
-        print "SOLR ERROR", e
+        search_logger.error("SOLR ERROR - %s" % e)
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))

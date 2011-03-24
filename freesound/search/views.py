@@ -53,7 +53,6 @@ def search(request):
             error = False
         except SolrException, e:
             logger.warning("search error: query: %s error %s" % (query, e))
-            print e
             error = True
     else:
         results = []

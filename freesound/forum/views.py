@@ -7,6 +7,9 @@ from django.template import RequestContext, loader
 from utils.mail import send_mail_template
 from forum.models import Forum, Thread, Post, Subscription
 from forum.forms import PostReplyForm, NewThreadForm
+import logging
+
+logger = logging.getLogger("web")
 
 def forums(request):
     forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
@@ -98,7 +101,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
             emails_to_notify = []
             for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
                 emails_to_notify.append(subscription.subscriber.email)
-                print "NOTIFY", subscription.subscriber.email
+                logger.info("NOTIFY %s" % subscription.subscriber.email)
                 subscription.is_active = False
                 subscription.save()
             

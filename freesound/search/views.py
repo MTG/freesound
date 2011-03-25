@@ -67,11 +67,7 @@ def search(request):
 
 
 def ajax_search(request):
-    #render a single sound with the id
-    if (request.GET.get("id")):
-        id = request.GET.get("id")
-        return render_to_response( 'sounds/display_remixes.html', locals(), context_instance = RequestContext(request))
-     
+
     #render a list of sounds according to the search 
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")

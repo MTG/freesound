@@ -20,7 +20,7 @@
 <script>
 
 //searching for a sound with ajax, solr and loading the results into the results container
-function searchOpen1(page) { 
+function searchOpen(page) { 
     $.get("/search/ajax/",
     {
         q: 'waves',
@@ -28,58 +28,14 @@ function searchOpen1(page) {
         p:page
     },
     function(data) {
-        $('.results_container').append(data);
-    });
-}
-
-//returns the display_sound template for the sound with the specified id
-function getSoundDisplay(id) { alert(0);
-    $.get("/search/ajax/",
-    {
-        id: id
-    },
-    function(data) {
-        alert(data);
-        return data;
-    });
-}
-
-//searching for a sound with json and freesound api and loading the results into the results container
-function searchOpen(page) { 
-    $.getJSON("/api/sounds/search/",
-    {
-        q: $('#txtSearch').val(),
-        api_key:'c6827e4a289d40f2a4f2d57719b0bd7e',
-        s:'downloads_desc',
-        p:page
-    },
-    function(data) {
-        var id, anchor_add, anchor_next
-        $('.load_more').remove();
-        
-        //load the sounds into the results container
-        $.each(data.sounds, function(i,item){
-            id = item.base_filename_slug.split("__")[0]; 
-            var $player_small = $('<div class="sample_player_small"/>');
-            anchor_add = '<a><div class="add_sound" onClick="addSound('+ id +')">Click to add sound</div></a>';   
-            $player_small.html('sound_id='+id);
-            $player_small.append(anchor_add); 
-            $('.results_container').append($player_small);
-        });
-        
-        //set the link to load more results
-        if (page < data.num_pages)
-        {
-            page = page + 1;
-            anchor_next = '<a><div class="load_more" onClick="searchOpen('+ page +')">Load more sounds...</div></a>';  
-            $('.results_container').append(anchor_next);
-        }
+        if (page>1) $('.load_more').remove();
+        $('.results_container').append(data);        
     });
 }
 
 //adding a sounds from the results container to the remix sources container
-function addSound(id) {
-
+function addSound(div,id) {
+    
     var remixes,add_sound = false, anchor_remove 
     
     if ($('#remix_sources').val().length==0)
@@ -99,13 +55,10 @@ function addSound(id) {
         $.post("#add",{ op: "add", add_source: id },
         function(responseData) {
             if (responseData.response=="added")
-            {
-		        //var $player_small = $('<div class="sample_player_small"/>');		        
-		        var sound_player
-		        sound_player = getSoundDisplay(id);
-		        var $player_small = $(sound_player);
-		        anchor_remove = '<a><div class="remove_sound" onClick="removeSound(this,'+ id +')">Remove sound</div></a>';   
-                $player_small.html(''+id);
+            {		        
+		        var $player_small = $(div).parent().parent();
+		        $(div).parent().remove();
+		        anchor_remove = '<a><div class="remove_sound" onClick="removeSound(this,'+ id +')">Remove sound</div></a>';  
                 $player_small.append(anchor_remove); 
                 $('.selected_container').append($player_small);
 		        return true;
@@ -154,6 +107,6 @@ function removeSound(div, id) {
     
 <div name="divResults" class="results_container">
 	<input name="txtSearch" id="txtSearch" type="text" />
-	 <input type="button" value="search" onclick="searchOpen1(1);"/> 
+	 <input type="button" value="search" onclick="searchOpen(1);"/> 
 </div>
 {% endblock section_content %}

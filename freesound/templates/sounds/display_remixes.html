@@ -8,21 +8,19 @@
         Failed searching! Please fix your query...
     {% else %} 
 
-    {% for result in results.docs %}
-    <div class="sample_player_small">
-        {% display_sound result.id %}    
-    </div>
-    <a><div class="add_sound" onClick="addSound({{result.id}})">Click to add sound</div></a>
-    {% endfor %}
-
-
+	    {% for result in results.docs %}
+	    <div class="sample_player_small">
+	        {% display_sound result.id %} 
+	        <a><div class="add_sound" onClick="addSound(this,{{result.id}})">Click to add sound</div></a>   
+	    </div>    
+	    {% endfor %}
+	    
+	    {% if page.has_next %}
+	   
+        <a><div class="load_more" onClick="searchOpen({{page.next_page_number}});">Load more results...</div></a>
+        {% endif %}
+        
     {% endif %}
-{% endif %}
-
-{% if id %} 
- <div class="sample_player_small">
-        {% display_sound id %}    
-</div>
 {% endif %}
 
 {% endblock %}

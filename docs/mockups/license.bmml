@@ -1,12 +1,12 @@
-<mockup version="1.0" skin="sketch" measuredW="992" measuredH="973" mockupW="978" mockupH="964">
+<mockup version="1.0" skin="sketch" measuredW="1044" measuredH="973" mockupW="1030" mockupH="964">
   <controls>
-    <control controlID="54" controlTypeID="com.balsamiq.mockups::VCurly" x="684" y="418" w="308" h="390" measuredW="180" measuredH="140" zOrder="0" locked="false" isInGroup="-1">
+    <control controlID="54" controlTypeID="com.balsamiq.mockups::VCurly" x="736" y="416" w="308" h="390" measuredW="180" measuredH="140" zOrder="0" locked="false" isInGroup="-1">
       <controlProperties>
         <direction>left</direction>
         <text>Reuse%20this%20part/form%20in%20the%20sound%20editing%20and%20license%20selection%20at%20%22describe%22%20time.</text>
       </controlProperties>
     </control>
-    <control controlID="57" controlTypeID="__group__" x="14" y="9" w="667" h="964" measuredW="667" measuredH="964" zOrder="1" locked="false" isInGroup="-1">
+    <control controlID="57" controlTypeID="__group__" x="14" y="9" w="689" h="964" measuredW="689" measuredH="964" zOrder="1" locked="false" isInGroup="-1">
       <groupChildrenDescriptors>
         <control controlID="0" controlTypeID="com.balsamiq.mockups::Paragraph" x="0" y="833" w="667" h="71" measuredW="200" measuredH="140" zOrder="0" locked="false" isInGroup="57">
           <controlProperties>
@@ -46,47 +46,47 @@
             <text>Very%20free%20%3A-%29</text>
           </controlProperties>
         </control>
-        <control controlID="7" controlTypeID="com.balsamiq.mockups::Paragraph" x="190" y="428" w="440" h="50" measuredW="200" measuredH="140" zOrder="7" locked="false" isInGroup="57">
+        <control controlID="7" controlTypeID="com.balsamiq.mockups::Paragraph" x="249" y="437" w="440" h="50" measuredW="200" measuredH="140" zOrder="7" locked="false" isInGroup="57">
           <controlProperties>
             <text>Summary%3A%20You%20let%20people%20use%20your%20sounds%20and%20they%20can%20do%20whatever%20they%20want.%20They%20don%27t%20even%20need%20to%20credit%20you.</text>
           </controlProperties>
         </control>
-        <control controlID="8" controlTypeID="com.balsamiq.mockups::Link" x="264" y="484" w="-1" h="-1" measuredW="315" measuredH="23" zOrder="8" locked="false" isInGroup="57">
+        <control controlID="8" controlTypeID="com.balsamiq.mockups::Link" x="323" y="493" w="-1" h="-1" measuredW="315" measuredH="23" zOrder="8" locked="false" isInGroup="57">
           <controlProperties>
             <text>http%3A//creativecommons.org/publicdomain/zero/1.0/</text>
           </controlProperties>
         </control>
-        <control controlID="9" controlTypeID="com.balsamiq.mockups::Link" x="264" y="625" w="-1" h="-1" measuredW="277" measuredH="23" zOrder="9" locked="false" isInGroup="57">
+        <control controlID="9" controlTypeID="com.balsamiq.mockups::Link" x="323" y="629" w="-1" h="-1" measuredW="277" measuredH="23" zOrder="9" locked="false" isInGroup="57">
           <controlProperties>
             <text>http%3A//creativecommons.org/licenses/by/3.0/</text>
           </controlProperties>
         </control>
-        <control controlID="10" controlTypeID="com.balsamiq.mockups::Link" x="264" y="767" w="-1" h="-1" measuredW="297" measuredH="23" zOrder="10" locked="false" isInGroup="57">
+        <control controlID="10" controlTypeID="com.balsamiq.mockups::Link" x="323" y="773" w="-1" h="-1" measuredW="297" measuredH="23" zOrder="10" locked="false" isInGroup="57">
           <controlProperties>
             <text>http%3A//creativecommons.org/licenses/by-nc/2.5/</text>
           </controlProperties>
         </control>
-        <control controlID="11" controlTypeID="com.balsamiq.mockups::Paragraph" x="190" y="569" w="440" h="54" measuredW="200" measuredH="140" zOrder="11" locked="false" isInGroup="57">
+        <control controlID="11" controlTypeID="com.balsamiq.mockups::Paragraph" x="249" y="573" w="440" h="54" measuredW="200" measuredH="140" zOrder="11" locked="false" isInGroup="57">
           <controlProperties>
             <text>Summary%3A%20You%20let%20people%20use%20your%20sounds%2C%20for%20commercial%20purposes%20too%2C%20but%20they%20always%20need%20to%20credit%20you.</text>
           </controlProperties>
         </control>
-        <control controlID="12" controlTypeID="com.balsamiq.mockups::Paragraph" x="190" y="709" w="440" h="54" measuredW="200" measuredH="140" zOrder="12" locked="false" isInGroup="57">
+        <control controlID="12" controlTypeID="com.balsamiq.mockups::Paragraph" x="249" y="715" w="440" h="54" measuredW="200" measuredH="140" zOrder="12" locked="false" isInGroup="57">
           <controlProperties>
             <text>Summary%3A%20You%20let%20people%20use%20your%20sounds%2C%20but%20not%20for%20commercial%20purposes.%20They%20also%20always%20need%20to%20credit%20you.</text>
           </controlProperties>
         </control>
-        <control controlID="13" controlTypeID="com.balsamiq.mockups::Label" x="191" y="483" w="-1" h="-1" measuredW="72" measuredH="23" zOrder="13" locked="false" isInGroup="57">
+        <control controlID="13" controlTypeID="com.balsamiq.mockups::Label" x="250" y="492" w="-1" h="-1" measuredW="72" measuredH="23" zOrder="13" locked="false" isInGroup="57">
           <controlProperties>
             <text>Read%20more%3A</text>
           </controlProperties>
         </control>
-        <control controlID="14" controlTypeID="com.balsamiq.mockups::Label" x="190" y="624" w="-1" h="-1" measuredW="72" measuredH="23" zOrder="14" locked="false" isInGroup="57">
+        <control controlID="14" controlTypeID="com.balsamiq.mockups::Label" x="249" y="628" w="-1" h="-1" measuredW="72" measuredH="23" zOrder="14" locked="false" isInGroup="57">
           <controlProperties>
             <text>Read%20more%3A</text>
           </controlProperties>
         </control>
-        <control controlID="15" controlTypeID="com.balsamiq.mockups::Label" x="190" y="767" w="72" h="23" measuredW="72" measuredH="23" zOrder="15" locked="false" isInGroup="57">
+        <control controlID="15" controlTypeID="com.balsamiq.mockups::Label" x="249" y="773" w="72" h="23" measuredW="72" measuredH="23" zOrder="15" locked="false" isInGroup="57">
           <controlProperties>
             <text>Read%20more%3A</text>
           </controlProperties>
@@ -110,6 +110,21 @@
           <controlProperties>
             <size>18</size>
             <text>Change%20all%20my%20sounds%20to%3A</text>
+          </controlProperties>
+        </control>
+        <control controlID="22" controlTypeID="com.balsamiq.mockups::Image" x="146" y="437" w="92" h="32" measuredW="403" measuredH="142" zOrder="20" locked="false" isInGroup="57">
+          <controlProperties>
+            <src>../../../../Desktop/cc-zero.png</src>
+          </controlProperties>
+        </control>
+        <control controlID="23" controlTypeID="com.balsamiq.mockups::Image" x="146" y="573" w="92" h="30" measuredW="403" measuredH="141" zOrder="21" locked="false" isInGroup="57">
+          <controlProperties>
+            <src>../../../../Desktop/by.png</src>
+          </controlProperties>
+        </control>
+        <control controlID="24" controlTypeID="com.balsamiq.mockups::Image" x="146" y="715" w="91" h="32" measuredW="403" measuredH="141" zOrder="22" locked="false" isInGroup="57">
+          <controlProperties>
+            <src>../../../../Desktop/by-nc.png</src>
           </controlProperties>
         </control>
       </groupChildrenDescriptors>

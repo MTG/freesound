@@ -112,19 +112,19 @@
             <text>Change%20all%20my%20sounds%20to%3A</text>
           </controlProperties>
         </control>
-        <control controlID="22" controlTypeID="com.balsamiq.mockups::Image" x="146" y="437" w="92" h="32" measuredW="403" measuredH="142" zOrder="20" locked="false" isInGroup="57">
+        <control controlID="25" controlTypeID="com.balsamiq.mockups::Image" x="146" y="437" w="92" h="33" measuredW="403" measuredH="142" zOrder="20" locked="false" isInGroup="57">
           <controlProperties>
-            <src>../../../../Desktop/cc-zero.png</src>
+            <src>./assets/cc-zero.png</src>
           </controlProperties>
         </control>
-        <control controlID="23" controlTypeID="com.balsamiq.mockups::Image" x="146" y="573" w="92" h="30" measuredW="403" measuredH="141" zOrder="21" locked="false" isInGroup="57">
+        <control controlID="26" controlTypeID="com.balsamiq.mockups::Image" x="146" y="573" w="91" h="32" measuredW="403" measuredH="141" zOrder="21" locked="false" isInGroup="57">
           <controlProperties>
-            <src>../../../../Desktop/by.png</src>
+            <src>./assets/cc-by.png</src>
           </controlProperties>
         </control>
-        <control controlID="24" controlTypeID="com.balsamiq.mockups::Image" x="146" y="715" w="91" h="32" measuredW="403" measuredH="141" zOrder="22" locked="false" isInGroup="57">
+        <control controlID="27" controlTypeID="com.balsamiq.mockups::Image" x="146" y="715" w="92" h="32" measuredW="403" measuredH="141" zOrder="22" locked="false" isInGroup="57">
           <controlProperties>
-            <src>../../../../Desktop/by-nc.png</src>
+            <src>./assets/cc-by-nc.png</src>
           </controlProperties>
         </control>
       </groupChildrenDescriptors>

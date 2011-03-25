@@ -65,6 +65,7 @@ def search(request):
     return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
 
 
+
 def ajax_search(request):
     #render a single sound with the id
     if (request.GET.get("id")):
@@ -97,3 +98,4 @@ def ajax_search(request):
         results = []
            
     return render_to_response( 'sounds/display_remixes.html', locals(), context_instance = RequestContext(request))
+

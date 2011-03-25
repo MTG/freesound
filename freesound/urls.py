@@ -44,8 +44,6 @@ urlpatterns = patterns('',
     
     url(r'^search/ajax/$', search.views.ajax_search, name='ajax-search'),
     url(r'^search/$', search.views.search, name='sounds-search'),
-    url(r'^remix_search/$', search.views.search_remix, name='sounds-sources'),
-    
     
     (r'^ratings/', include('ratings.urls')),
     (r'^help/', include('wiki.urls')),

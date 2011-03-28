@@ -4,18 +4,7 @@
 {% block head %}
 {{ block.super }}
 <style TYPE="text/css">
-.results_container {
-    width: 250px;
-    float: right;
-    font-size: 12px;
-    line-height: 18px;
-}
-.selected_container {
-    width: 250px;
-    float: left;
-    font-size: 12px;
-    line-height: 18px;
-}
+
 </style>
 <script>
 
@@ -56,12 +45,16 @@ function addSound(div,id) {
         function(responseData) {
             if (responseData.response=="added")
             {		        
-		        var $player_small = $(div).parent().parent();
+		        var $player_small = $(div).parent();
 		        $(div).parent().remove();
-		        anchor_remove = '<a><div class="remove_sound" onClick="removeSound(this,'+ id +')">Remove sound</div></a>';  
+		        anchor_remove = '<div class="remove_sound" onClick="removeSound(this,'+ id +')">&nbsp;&nbsp;</div>';  
                 $player_small.append(anchor_remove); 
                 $('.selected_container').append($player_small);
 		        return true;
+            }
+            else if (responseData.response=="exists")
+            {
+                return false;
             }
         },
     "json");
@@ -82,6 +75,7 @@ function removeSound(div, id) {
                 $('#remix_sources').val(remixes.join(','));
                 $(div).parents("div:first").remove();
             }
+            else return false;
         },
     "json");    
 }
@@ -99,7 +93,7 @@ function removeSound(div, id) {
 	{% for sound in sources %}
 	<div class="sample_player_small">
 	    {%  display_sound sound.id %}   
-	    <a><div class="remove_sound" onClick="removeSound(this, {{ sound.id }})">Remove sound</div></a>    
+	    <div class="remove_sound" onClick="removeSound(this, {{ sound.id }})">&nbsp;&nbsp;&nbsp;&nbsp;</div>    
 	</div>
 	{% empty %}          
 	{% endfor %} 
@@ -107,6 +101,6 @@ function removeSound(div, id) {
     
 <div name="divResults" class="results_container">
 	<input name="txtSearch" id="txtSearch" type="text" />
-	 <input type="button" value="search" onclick="searchOpen(1);"/> 
+	<input type="button" value="search" onclick="searchOpen(1);"/> 
 </div>
 {% endblock section_content %}

@@ -1522,3 +1522,42 @@ span.tag_addremove a:hover
     text-decoration: none;
     font-weight: bold;
 }
+
+/* Remixes
+------------------------------------------------------*/
+
+.results_container {
+    width: 200px;
+    float: left;
+    font-size: 12px;
+    line-height: 18px;
+    position:relative;
+    display:inline;
+    left:330px;
+}
+.selected_container {
+    width: 200px;
+    float: left;
+    font-size: 12px;
+    line-height: 18px;
+    position:relative;
+    display:inline;
+}
+.remove_sound {
+    background-image: url(images/cancel.png);
+    background-repeat: no-repeat;
+    float:right;
+    top:1px;
+    right: 1px;   
+    position:relative;
+    cursor:pointer;
+}
+.add_sound {
+    background-image: url(images/plus.png);
+    background-repeat: no-repeat;
+    float:right;
+    top:1px;
+    right: 1px;   
+    position:relative;
+    cursor:pointer; 
+}

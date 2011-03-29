@@ -93,7 +93,10 @@ def sound(request, username, sound_id):
         form = CommentForm(request, request.POST)
         if form.is_valid():
             sound.comments.add(Comment(content_object=sound, user=request.user, comment=form.cleaned_data["comment"]))
-            #invalidate_template_cache()
+
+            sound.num_comments = sound.num_comments + 1
+            sound.save() 
+            
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         form = CommentForm(request)

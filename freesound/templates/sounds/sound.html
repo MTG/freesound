@@ -76,6 +76,9 @@
 				<div class="comment_info">
 					<span class="comment_author"><a href="{% url account comment.user.username %}">{{comment.user.username}}</a></span>
 					<span class="comment_date">{{comment.created|timesince}} ago</span>
+                    {% if perms.sound.can_edit or sound.user == request.user %}
+            		<span class="comment_delete"><a href="{% url comment-delete comment.id %}" id="delete_button" title="delete comment">delete comment</a>
+                    {% endif %}
 				</div>
 				{{comment.comment|safe|linebreaks}}
 			</li>		

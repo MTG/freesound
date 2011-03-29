@@ -66,6 +66,12 @@
 	</ul>
 {% endcache %}
 	
+    <div id="sound-edit">
+        {% if perms.sound.can_edit or sound.user == request.user %}
+		<a href="{% url sound-edit sound.user.username sound.id %}" id="edit_button" title="edit sound">edit sound</a>
+        {% endif %}
+    </div>
+
 	<div id="comments_container">
 		<h4 id="comments_heading">Comments</h4>
 		<a name="comments"></a>

@@ -46,6 +46,7 @@ urlpatterns = patterns('',
     url(r'^search/$', search.views.search, name='sounds-search'),
     
     (r'^ratings/', include('ratings.urls')),
+    (r'^comments/', include('comments.urls')),
     (r'^help/', include('wiki.urls')),
     (r'^forum/', include('forum.urls')),
     (r'^geotags/', include('geotags.urls')),

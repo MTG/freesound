@@ -1,4 +1,4 @@
-#Fri Nov 19 14:42:29 CET 2010
+#Tue Mar 29 20:28:21 CEST 2011
 eclipse.preferences.version=1
 encoding//accounts/admin.py=utf-8
 encoding//accounts/models.py=utf-8
@@ -7,6 +7,7 @@ encoding//api/admin.py=utf-8
 encoding//api/handlers.py=utf-8
 encoding//comments/admin.py=utf-8
 encoding//comments/models.py=utf-8
+encoding//comments/urls.py=utf-8
 encoding//favorites/admin.py=utf-8
 encoding//favorites/models.py=utf-8
 encoding//forum/admin.py=utf-8

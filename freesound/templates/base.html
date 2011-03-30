@@ -14,11 +14,6 @@
 		<script type="text/javascript">
             var isLoggedIn = {{request.user.is_authenticated|yesno:"true,false"}};
             var loginUrl = "{% url accounts-login %}?next={{request.path}}";
-            {% if messages %}
-                {% for message in messages %}
-                alert("{{ message }}");
-                {% endfor %}
-            {% endif %}
 		</script>
 		<script src="{{media_url}}freesound.js" type="text/javascript"></script>
 		{% endblock %}
@@ -65,6 +60,14 @@
 		
 		<div id="wrapper">
 		<div id="container">
+		    
+	    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
 
 		{% block content %}
 		{% endblock %}

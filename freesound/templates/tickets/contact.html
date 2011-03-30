@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}
+	Support
+{% endblock title %}
+
+{% block content %}
+	{% if ticket_created %}
+		<h1>Thank you...</h1>
+		<p>Thank you for contacting support, we will reply 
+		as soon as possible. You can view your support ticket 
+		<a href="{% url tickets-ticket ticket.key %}">here</a>.
+		We've also sent you an email with a link to the ticket and 
+		you'll receive another one once when we answer your question.</p>
+	{% else %}
+		<h1>Contact us...</h1>
+		<p>Please make sure that you checked the <a href="{% url wiki %}">
+		help</a> pages and the <a href="{% url forums-forums %}">forums</a> 
+		for possible answers to your questions!</p>
+		<p>If your answer is easily found in either of these, we 
+		will ignore your email...</p>
+		<form method="post" action=".">
+			{% csrf_token %}
+			{{form.as_p}}
+			<input type="submit" value="send" />
+		</form>
+	{% endif %}
+{% endblock content %}

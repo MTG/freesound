@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}
+	Ticket {{ ticket.key }}
+{% endblock title %}
+
+{% block content %}
+	<h1>Ticket #{{ ticket.id }} in queue '{{ ticket.queue.name }}'</h1>
+	
+	<h3>Ticket details</h3>
+	<ul>
+		<li>created by {% if ticket.sender %}
+					   	   {{ ticket.sender.username }}
+					   {% else %}
+						   anonymous
+					   {% endif %}</li>
+		<li>assigned to {% if ticket.assignee %}
+							{{ ticket.assignee.username }}
+						{% else %}
+							no one
+						{% endif %}</li>
+		<li>created on {{ ticket.created }}</li>
+		<li>last modified on {{ ticket.modified }}</li>
+		<li>status is {{ ticket.status }}</li>
+		<li>queue is {{ ticket.queue.name }}</li>
+		{% if ticket.content %}
+			<li>related to {{ ticket.content.object_id }} of type {{ ticket.content.content_type }} </li>
+		{% endif %}
+	</ul>
+	
+	
+	<h3>Ticket controls</h3>
+	<p>TODO: when user has right permissions include the ticket update form
+	
+	<h3>Messages</h3>
+	<p>This ticket was sent by
+		{% if ticket.sender_email %}
+			an anonymous user ({{ ticket.sender_email }}).
+		{% else %}
+			the freesound user <a href="{% url account ticket.sender.username %}">{{ ticket.sender.username }}.</a> 
+		{% endif %}
+	
+	
+	{% for message in ticket.messages.all reversed %}
+		<p>{{ message.created }} - 
+			{% if message.sender %} {{ message.sender.username }}
+		    {% else %} Anonymous {% endif %} wrote: 
+		<p>{{ message.text }}
+	{% endfor %}
+	
+	<h3>Add new message to the ticket</h3>
+	<form method="post" action=".">
+		{% csrf_token %}
+		{{form.as_p}}
+		<input type="submit" value="send" />
+	</form>
+		
+		
+{% endblock content %}

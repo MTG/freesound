@@ -50,6 +50,7 @@ urlpatterns = patterns('',
     (r'^forum/', include('forum.urls')),
     (r'^geotags/', include('geotags.urls')),
     (r'^home/', include('accounts.urls')),
+    (r'^tickets/', include('tickets.urls')),
     
     url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
     url(r'^crossdomain\.xml$', direct_to_template, kwargs={'template':'crossdomain.xml'}, name="crossdomain"),

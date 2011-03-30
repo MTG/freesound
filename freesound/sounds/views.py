@@ -110,37 +110,48 @@ def sound(request, username, sound_id):
 def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     sound_path = sound.paths()["sound_path"] # 34/sounds/123_something.wav
+    
+    if not os.path.exists(os.path.join(settings.SOUNDS_PATH, sound_path)):
+        raise Http404
+
+    attachment_name = os.path.basename(sound_path)
+    
     Download.objects.get_or_create(user=request.user, sound=sound)
     if settings.DEBUG:
         file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
-        wrapper = FileWrapper(file(file_path, "rb"))
-        response = HttpResponse(wrapper, content_type='application/octet-stream')
+        response = HttpResponse(FileWrapper(file(file_path, "rb")))
         response['Content-Length'] = os.path.getsize(file_path)
-        return response
     else:
         response = HttpResponse()
-        response['Content-Type']="application/octet-stream"
         response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_path)
-        return response
 
+    response['Content-Type']="application/octet-stream"
+    response['Content-Disposition'] = "attachment; filename=\"%s\"" % attachment_name
+    
+    return response
 
 @login_required
 def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
-    pack_path = pack.base_filename_slug + '.zip'
+    pack_path = '%d.zip' % pack.id
+
+    if not os.path.exists(os.path.join(settings.PACKS_PATH, pack_path)):
+        raise Http404
+    
     Download.objects.get_or_create(user=request.user, pack=pack)
+    
     if settings.DEBUG:
         file_path = os.path.join(settings.PACKS_PATH, pack_path)
-        wrapper = FileWrapper(file(file_path, "rb"))
-        response = HttpResponse(wrapper, content_type='application/octet-stream')
+        response = HttpResponse(FileWrapper(file(file_path, "rb")))
         response['Content-Length'] = os.path.getsize(file_path)
-        return response
     else:
         response = HttpResponse()
-        response['Content-Type']="application/octet-stream"
         response['X-Accel-Redirect'] = os.path.join("downloads/packs/", pack_path)
-        return response
+    
+    response['Content-Type'] = "application/octet-stream"
+    response['Content-Disposition'] = "attachment; filename=\"%s\"" % pack.get_filename()
 
+    return response
         
 @login_required
 def sound_edit(request, username, sound_id):
@@ -176,7 +187,7 @@ def sound_edit(request, username, sound_id):
         if pack_form.is_valid():
             data = pack_form.cleaned_data
             if data['new_pack']:
-                (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'], name_slug=slugify(data['new_pack']))
+                (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
                 if sound.pack:
                     sound.pack.is_dirty = True
                     sound.pack.save()

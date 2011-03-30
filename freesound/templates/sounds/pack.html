@@ -18,7 +18,7 @@
 
 {% if not pack.is_dirty %}
 <div id="download">
-	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.base_filename_slug }}.zip" id="download_button" title="download pack"></a>
+	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.get_filename }}" id="download_button" title="download pack"></a>
 	<div id="download_text">Downloaded<br /><b>{{pack.num_downloads}}</b> times</div>
 </div>
 {% endif %}

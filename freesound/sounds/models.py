@@ -264,14 +264,14 @@ class Pack(SocialModel):
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name')
         ordering = ("-created",)
+        
+    def get_filename(self):
+        return "%d__%s__%s.zip" % (self.id, slugify(self.user.username), slugify(self.name))
 
     def create_zip(self):
         import zipfile
         from django.template.loader import render_to_string
         import os
-        
-        if not self.base_filename_slug.startswith(str(self.id)):
-            self.save()
         
         logger = logging.getLogger("audio")
 

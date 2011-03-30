@@ -177,6 +177,9 @@ def sound_edit(request, username, sound_id):
             data = pack_form.cleaned_data
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'], name_slug=slugify(data['new_pack']))
+                if sound.pack:
+                    sound.pack.is_dirty = True
+                    sound.pack.save()
                 sound.pack = pack
             else:
                 new_pack = data["pack"]

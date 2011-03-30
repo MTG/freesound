@@ -4,7 +4,6 @@ from django.http import HttpResponseRedirect
 from comments.models import Comment
 from sounds.models import Sound
 from django.core.exceptions import PermissionDenied
-from django.contrib import messages
 
 @login_required
 def delete(request, comment_id):
@@ -23,7 +22,7 @@ def delete(request, comment_id):
             raise PermissionDenied
 
         comment.delete()
-        messages.add_message(request, messages.INFO, 'Comment deleted.')
+        request.user.message_set.create(message='Comment deleted.')
 
         sound.num_comments = sound.num_comments - 1
         sound.save()

@@ -10,6 +10,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.debug',
     'django.core.context_processors.i18n',
     'context_processor.context_extra',
+    'django.contrib.messages.context_processors.messages',
 )
 
 # List of callables that know how to import templates from various sources.
@@ -28,7 +29,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.doc.XViewMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware'
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware'
 )
 
 INSTALLED_APPS = (
@@ -39,6 +41,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.flatpages',
     'django.contrib.markup',
+    'django.contrib.messages',
     'accounts',
     'comments',
     'favorites',
@@ -54,6 +57,7 @@ INSTALLED_APPS = (
     'search',
     'api',
     'django_extensions',
+    'tickets',
 )
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
@@ -166,3 +170,5 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     DEBUG_TOOLBAR_CONFIG = {
         'INTERCEPT_REDIRECTS': False,
     }
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'

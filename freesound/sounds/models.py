@@ -175,7 +175,13 @@ class Sound(SocialModel):
         self._paths_cache = paths
 
         return paths
+    
+    def get_sources(self):
+        return ",".join([str(p.id) for p in self.sources.all()])
 
+    def get_sources(self):
+        return ",".join([str(p.id) for p in self.sources.all()])
+    
     def get_channels_display(self):
         if self.channels == 1:
             return u"Mono" 
@@ -240,7 +246,7 @@ class Sound(SocialModel):
             if self.tags.filter(tag__name=tag).count() == 0:
                 (tag_object, created) = Tag.objects.get_or_create(name=tag) #@UnusedVariable
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
-                tagged_object.save()
+                tagged_object.save()        
     
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

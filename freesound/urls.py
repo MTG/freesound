@@ -24,6 +24,7 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/$', sounds.views.sound_edit, name="sound-edit"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/remixes/$', sounds.views.remixes, name="sound-remixes"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/sources/$', sounds.views.sources, name="sound-sources"),
+    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/remixsources/$', sounds.views.remixsources, name="remix-sources"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/geotag/$', sounds.views.geotag, name="sound-geotag"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/delete/$', sounds.views.delete, name="sound-delete"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/similar/$', sounds.views.similar, name="sound-similar"),
@@ -40,7 +41,8 @@ urlpatterns = patterns('',
     url(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
     
     url(r'^contact/', support.views.contact, name="contact"),
-
+    
+    url(r'^search/ajax/$', search.views.ajax_search, name='ajax-search'),
     url(r'^search/$', search.views.search, name='sounds-search'),
     
     (r'^ratings/', include('ratings.urls')),

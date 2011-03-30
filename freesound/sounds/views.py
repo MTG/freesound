@@ -11,11 +11,12 @@ from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from django.utils import simplejson
 from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    LicenseForm, FlagForm
+    LicenseForm, FlagForm, RemixForm
 from accounts.models import Profile
 from sounds.models import Sound, Pack, Download
 from utils.cache import invalidate_template_cache
@@ -44,7 +45,7 @@ def get_random_uploader():
     return random_uploader
 
 def sounds(request):
-    n_weeks_back = 51
+    n_weeks_back = 20
     latest_sounds = Sound.objects.latest_additions(5, '3 years')
     latest_packs = Pack.objects.annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
 
@@ -244,11 +245,77 @@ def sound_edit(request, username, sound_id):
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
+     
+    if ((request.method == 'POST') and (request.POST.get('remix_sources'))):
+        remixes = request.REQUEST["remix_sources"] 
+        new_source = request.REQUEST["new_source"] 
+        sound.sources.add(new_source)
+        sound.save()  
+    else:
+        remixes = sound.get_sources()     
+    if is_selected("remix"):
+        remix_form = RemixForm(remixes, request.POST, prefix="remix")
+        if remix_form.is_valid():
+            for x in remix_form.cleaned_data["remix"].split(","):
+                if not (sound.sources.filter(id=x)):
+                    sound.sources.add(x)
+            sound.save()
+            #invalidate_template_cache("sound_footer", sound.id)
+            return HttpResponseRedirect(sound.get_absolute_url())
+    else:
+        remix_form = RemixForm(remixes, prefix="remix", initial=dict(remix=remixes))
 
     google_api_key = settings.GOOGLE_API_KEY
     
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
 
+def remixsources(request, username, sound_id):
+        
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    
+    if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
+        raise PermissionDenied
+    
+    def is_selected(prefix):
+        if request.method == "POST":
+            for name in request.POST.keys():
+                if name.startswith(prefix):
+                    return True
+        return False
+    
+    remixes = sound.get_sources()  
+    
+    sources = sound.sources.all()
+    
+    #ajax part
+    #add a sound and return the response for jquery handling
+    if is_selected("add"):
+        try:
+            id = request.POST['add_source']
+            source_nr = sound.sources.filter(id=id).count()
+            if (source_nr<1):
+                sound.sources.add(id)
+                sound.save() 
+                return HttpResponse(simplejson.dumps({'response': 'added'}),
+                                    mimetype="application/json")
+            else:
+                return HttpResponse(simplejson.dumps({'response': 'exists'}),
+                                    mimetype="application/json")                
+        except:
+            pass
+    #remove a sound and return the response for jquery handling    
+    if is_selected("remove"):    
+        try:
+            id = request.POST['remove_source']
+            sound.sources.remove(id)
+            sound.save() 
+            return HttpResponse(simplejson.dumps({'response': 'removed'}),
+                mimetype="application/json")
+        except:
+            pass   
+   
+    return render_to_response('sounds/sound_remix.html', locals(), context_instance=RequestContext(request))
+   
     
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")

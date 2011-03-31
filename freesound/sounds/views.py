@@ -11,7 +11,6 @@ from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.utils import simplejson
 from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
@@ -24,7 +23,6 @@ from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from utils.text import slugify
 import os
 import datetime
 
@@ -250,19 +248,20 @@ def sound_edit(request, username, sound_id):
     
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
 
+
 @login_required
-def remixsources(request, username, sound_id):
+def sound_edit_sources(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
-       
-    if request.method == "POST":
-        form = RemixForm(sound, request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = RemixForm(sound)
+    
+    current_sources = sound.sources.all()
+    sources_string = ",".join(map(str, [source.id for source in current_sources])) 
+    
+    form = RemixForm(sound, request.POST or None, initial=dict(sources=sources_string))
+    if form.is_valid():
+        form.save()
     
     return render_to_response('sounds/sound_remix.html', locals(), context_instance=RequestContext(request))
    

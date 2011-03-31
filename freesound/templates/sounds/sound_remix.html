@@ -3,40 +3,92 @@
 {% load display_sound %}
 {% block head %}
 {{ block.super }}
-<script type="text/javascript">
-    function callback(soundId)
+<style type="text/css" media="all"> 
+    #current-sources
     {
-        var oldValue = $("#id_sources").val();
+        width: 450px;
+        overflow: hidden;
+        border: 1px solid black;
+        float:right;
+        padding: 5px;
+    }
+    
+    #data
+    {
+        width: 450px;
+        overflow: hidden;
+        border: 1px solid black;
+        float:left;
+        padding: 5px;
+    }
 
-        oldValue = oldValue.replace(/[^0-9,]/g, "").replace(/,+/g, ",").replace(/^,+/g, "").replace(/,+$/g, "");
+    #current-sources .add
+    {
+        display: none;
+    }
+    #current-sources .remove
+    {
+        display: inline;
+    }
 
-        if (oldValue)
-            var ids = $.map(oldValue.split(","), function (value) { return parseInt(value); });
-        else
-            var ids = [];
+    #data .add
+    {
+        display: inline;
+    }
+    #data .remove
+    {
+        display: none;
+    }
+</style>
+<script type="text/javascript">
+    var sources = [{% for source in current_sources %}{{source.id}}{% if not forloop.last %},{% endif %}{% endfor %}];
+    
+    function saveSources()
+    {
+        $("#id_sources").val(sources.join(","))
+        $.post("{% url sound-edit-sources sound.user.username sound.id %}", $("#save-form").serialize());
+        return false;
+    }
+
+    function addSound(element, soundId)
+    {
+        if ($.inArray(soundId, sources) == -1)
+        {
+            sources.push(soundId);
+
+            $(element).closest("#data > div").clone().appendTo("#current-sources");
+            
+            $("#id_sources").val(sources.join(","));
+            
+            saveSources();
+        }
+    }
+    
+    function removeSound(element, soundId)
+    {
+        var index = $.inArray(soundId, sources);
+
+        if (index != -1)
+        {
+            sources.splice(index, 1);
         
-        if ($.inArray(soundId, ids) != -1)
-            return;
-        
-        oldValue = ids.join(",")
+            $(element).closest("#current-sources > div").remove();
 
-        if (oldValue)
-            $("#id_sources").val(oldValue + "," + soundId);
-        else
-            $("#id_sources").val(soundId);
+            $("#id_sources").val(sources.join(","));
+            
+            saveSources();
+        }
     }
         
     $(function()
     {
+        $("#id_sources").val(sources.join(","))
+        
         $("#search-button").click(function ()
         {
             var queryString = $.param({q: $("#search-q").val(), ajax: 1});
             $("#data").load("{% url sounds-search %}", queryString);
-        });
-        
-        $("#save-sources").click(function ()
-        {
-            $.post("{% url remix-sources sound.user.username sound.id %}", $("#save-source-form").serialize());
+            return false;
         });
     });
 </script>
@@ -48,16 +100,31 @@
 
 <h2>Editing sources of <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a></h2>
 <p>
-    <input type="text" name="q" id="search-q" />
-    <input type="submit" name="submit" value="submit" id="search-button"/>
 </p>
 
-<form method="post" action=".">{% csrf_token %}
+<form id="save-form">{% csrf_token %}
     {{form.as_p}}
-    <input type="submit" name="submit" value="save sources" id="save-sources" />
+    <p><input type="text" name="q" id="search-q" size="45" /> <input type="submit" name="submit" value="search sources" id="search-button"/></p>
+    <p>Hint: if you know the id of the file you are looking for, search for the id. The id of sounds can be found as the first part of the sound filename.</p>
 </form>
 
 <div id="data">
+    <h3>Search results:</h3>
+</div>
+
+<div id="current-sources">
+    <h3>Current sources:</h3>
+    {% for source in current_sources %}
+    <div>
+        <div class="sample_player_small">
+            {% display_sound source.id %} 
+        </div>    
+        <div>
+            <a class="add" onclick="addSound(this, {{source.id}})">Add</a>
+            <a class="remove" onclick="removeSound(this, {{source.id}})">Remove</a>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 
 {% endblock section_content %}

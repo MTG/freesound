@@ -29,12 +29,11 @@ class SoundDescriptionForm(forms.Form):
 
 
 class RemixForm(forms.Form):
-    sources = forms.CharField(min_length=1)
+    sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput())
     
     def __init__(self, sound, *args, **kwargs):
         self.sound = sound
         super(RemixForm, self).__init__(*args, **kwargs)
-        self.fields['sources'].queryset = ",".join([str(source.id) for source in sound.sources.all()])
     
     def clean_sources(self):
         sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
@@ -50,6 +49,8 @@ class RemixForm(forms.Form):
         return sources
         
     def save(self):
+        #print "before save", ",".join([str(source.id) for source in self.sound.sources.all()])
+
         new_sources = self.cleaned_data['sources']
         
         old_sources = set(source["id"] for source in self.sound.sources.all().values("id"))
@@ -67,6 +68,8 @@ class RemixForm(forms.Form):
              
         for id in new_sources - old_sources: # in new but not in old
             self.sound.sources.add(Sound.objects.get(id=id))
+
+        #print "after save", ",".join([str(source.id) for source in self.sound.sources.all()])
         
 
 class PackChoiceField(forms.ModelChoiceField):

@@ -26,8 +26,7 @@ def ticket(request, ticket_key):
                 message.sender = request.user
             message.ticket = ticket
             message.save()
-    else:
-        form = UserContactForm(request.POST)
+    form = UserContactForm()
     return render_to_response('tickets/ticket.html', 
                               locals(), context_instance=RequestContext(request))
     

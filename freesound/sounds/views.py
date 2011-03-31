@@ -263,7 +263,7 @@ def sound_edit_sources(request, username, sound_id):
     if form.is_valid():
         form.save()
     
-    return render_to_response('sounds/sound_remix.html', locals(), context_instance=RequestContext(request))
+    return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
    
     
 def remixes(request, username, sound_id):

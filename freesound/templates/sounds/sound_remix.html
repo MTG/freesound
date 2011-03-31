@@ -3,104 +3,61 @@
 {% load display_sound %}
 {% block head %}
 {{ block.super }}
-<style TYPE="text/css">
-
-</style>
-<script>
-
-//searching for a sound with ajax, solr and loading the results into the results container
-function searchOpen(page) { 
-    $.get("/search/ajax/",
+<script type="text/javascript">
+    function callback(soundId)
     {
-        q: 'waves',
-        s:'downloads_desc',
-        p:page
-    },
-    function(data) {
-        if (page>1) $('.load_more').remove();
-        $('.results_container').append(data);        
+        var oldValue = $("#id_sources").val();
+
+        oldValue = oldValue.replace(/[^0-9,]/g, "").replace(/,+/g, ",").replace(/^,+/g, "").replace(/,+$/g, "");
+
+        if (oldValue)
+            var ids = $.map(oldValue.split(","), function (value) { return parseInt(value); });
+        else
+            var ids = [];
+        
+        if ($.inArray(soundId, ids) != -1)
+            return;
+        
+        oldValue = ids.join(",")
+
+        if (oldValue)
+            $("#id_sources").val(oldValue + "," + soundId);
+        else
+            $("#id_sources").val(soundId);
+    }
+        
+    $(function()
+    {
+        $("#search-button").click(function ()
+        {
+            var queryString = $.param({q: $("#search-q").val(), ajax: 1});
+            $("#data").load("{% url sounds-search %}", queryString);
+        });
+        
+        $("#save-sources").click(function ()
+        {
+            $.post("{% url remix-sources sound.user.username sound.id %}", $("#save-source-form").serialize());
+        });
     });
-}
-
-//adding a sounds from the results container to the remix sources container
-function addSound(div,id) {
-    
-    var remixes,add_sound = false, anchor_remove 
-    
-    if ($('#remix_sources').val().length==0)
-    {
-        $('#remix_sources').val(id);
-        add_sound=true;
-    }
-    else if ($.inArray(id,remixes)<0)
-    {
-        remixes = $('#remix_sources').val().split(',');
-        $('#remix_sources').val(remixes.join(',')+','+id);
-        add_sound=true;
-    }
-    
-    if (add_sound) 
-    {
-        $.post("#add",{ op: "add", add_source: id },
-        function(responseData) {
-            if (responseData.response=="added")
-            {		        
-		        var $player_small = $(div).parent();
-		        $(div).parent().remove();
-		        anchor_remove = '<div class="remove_sound" onClick="removeSound(this,'+ id +')">&nbsp;&nbsp;</div>';  
-                $player_small.append(anchor_remove); 
-                $('.selected_container').append($player_small);
-		        return true;
-            }
-            else if (responseData.response=="exists")
-            {
-                return false;
-            }
-        },
-    "json");
-    }
-    
-    return false;
-}
-
-function removeSound(div, id) {
-    $.post("#remove",{ op: "remove", remove_source: id } ,
-        function(responseData) {
-            if (responseData.response=="removed")
-            {
-                remixes = $('#remix_sources').val().split(',');
-                remixes = $.grep(remixes, function(value) {
-                    return value != id;
-                });
-                $('#remix_sources').val(remixes.join(','));
-                $(div).parents("div:first").remove();
-            }
-            else return false;
-        },
-    "json");    
-}
-
 </script>
 {% endblock head %}
-{% block title %}Remixes of {{sound.original_filename}}{% endblock title %}
+
+{% block title %}Editing remixes of {{sound.original_filename}}{% endblock title %}
 
 {% block section_content %}
-<h1>Sources of <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a></h1>
 
-<input type="hidden" name="remix_sources" id="remix_sources" value="{{ remixes }}"/>  
+<h2>Editing sources of <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a></h2>
+<p>
+    <input type="text" name="q" id="search-q" />
+    <input type="submit" name="submit" value="submit" id="search-button"/>
+</p>
 
-<div name="divSelected" class="selected_container">
-	{% for sound in sources %}
-	<div class="sample_player_small">
-	    {%  display_sound sound.id %}   
-	    <div class="remove_sound" onClick="removeSound(this, {{ sound.id }})">&nbsp;&nbsp;&nbsp;&nbsp;</div>    
-	</div>
-	{% empty %}          
-	{% endfor %} 
+<form method="post" action=".">{% csrf_token %}
+    {{form.as_p}}
+    <input type="submit" name="submit" value="save sources" id="save-sources" />
+</form>
+
+<div id="data">
 </div>
-    
-<div name="divResults" class="results_container">
-	<input name="txtSearch" id="txtSearch" type="text" />
-	<input type="button" value="search" onclick="searchOpen(1);"/> 
-</div>
+
 {% endblock section_content %}

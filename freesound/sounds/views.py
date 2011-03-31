@@ -246,74 +246,24 @@ def sound_edit(request, username, sound_id):
     else:
         license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
      
-    if ((request.method == 'POST') and (request.POST.get('remix_sources'))):
-        remixes = request.REQUEST["remix_sources"] 
-        new_source = request.REQUEST["new_source"] 
-        sound.sources.add(new_source)
-        sound.save()  
-    else:
-        remixes = sound.get_sources()     
-    if is_selected("remix"):
-        remix_form = RemixForm(remixes, request.POST, prefix="remix")
-        if remix_form.is_valid():
-            for x in remix_form.cleaned_data["remix"].split(","):
-                if not (sound.sources.filter(id=x)):
-                    sound.sources.add(x)
-            sound.save()
-            #invalidate_template_cache("sound_footer", sound.id)
-            return HttpResponseRedirect(sound.get_absolute_url())
-    else:
-        remix_form = RemixForm(remixes, prefix="remix", initial=dict(remix=remixes))
-
     google_api_key = settings.GOOGLE_API_KEY
     
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
 
+@login_required
 def remixsources(request, username, sound_id):
-        
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
+       
+    if request.method == "POST":
+        form = RemixForm(sound, request.POST)
+        if form.is_valid():
+            form.save()
+    else:
+        form = RemixForm(sound)
     
-    def is_selected(prefix):
-        if request.method == "POST":
-            for name in request.POST.keys():
-                if name.startswith(prefix):
-                    return True
-        return False
-    
-    remixes = sound.get_sources()  
-    
-    sources = sound.sources.all()
-    
-    #ajax part
-    #add a sound and return the response for jquery handling
-    if is_selected("add"):
-        try:
-            id = request.POST['add_source']
-            source_nr = sound.sources.filter(id=id).count()
-            if (source_nr<1):
-                sound.sources.add(id)
-                sound.save() 
-                return HttpResponse(simplejson.dumps({'response': 'added'}),
-                                    mimetype="application/json")
-            else:
-                return HttpResponse(simplejson.dumps({'response': 'exists'}),
-                                    mimetype="application/json")                
-        except:
-            pass
-    #remove a sound and return the response for jquery handling    
-    if is_selected("remove"):    
-        try:
-            id = request.POST['remove_source']
-            sound.sources.remove(id)
-            sound.save() 
-            return HttpResponse(simplejson.dumps({'response': 'removed'}),
-                mimetype="application/json")
-        except:
-            pass   
-   
     return render_to_response('sounds/sound_remix.html', locals(), context_instance=RequestContext(request))
    
     

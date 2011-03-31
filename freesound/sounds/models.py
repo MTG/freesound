@@ -176,12 +176,6 @@ class Sound(SocialModel):
 
         return paths
     
-    def get_sources(self):
-        return ",".join([str(p.id) for p in self.sources.all()])
-
-    def get_sources(self):
-        return ",".join([str(p.id) for p in self.sources.all()])
-    
     def get_channels_display(self):
         if self.channels == 1:
             return u"Mono" 

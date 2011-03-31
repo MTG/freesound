@@ -1,6 +1,7 @@
 from django import forms
-from sounds.models import License, Flag, Pack
+from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
+import re
 
 class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
@@ -26,12 +27,47 @@ class SoundDescriptionForm(forms.Form):
     tags = TagField(widget=forms.widgets.TextInput(attrs={"size":40}), help_text="Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea)
 
+
 class RemixForm(forms.Form):
-    remix = HtmlCleaningCharField(label="The sounds used:", required=False, min_length=1)
+    sources = forms.CharField(min_length=1)
     
-    def __init__(self, sources, *args, **kwargs):
+    def __init__(self, sound, *args, **kwargs):
+        self.sound = sound
         super(RemixForm, self).__init__(*args, **kwargs)
-        self.fields['remix'].queryset = sources
+        self.fields['sources'].queryset = ",".join([str(source.id) for source in sound.sources.all()])
+    
+    def clean_sources(self):
+        sources = re.sub("[^0-9,]", "", self.cleaned_data['sources'])
+        sources = re.sub(",+", ",", sources)
+        sources = re.sub("^,+", "", sources)
+        sources = re.sub(",+$", "", sources)
+        
+        sources = set([int(source) for source in sources.split(",")])
+        
+        if len(sources) == 0:
+            raise forms.ValidationError('You did not specify any sources')
+        
+        return sources
+        
+    def save(self):
+        new_sources = self.cleaned_data['sources']
+        
+        old_sources = set(source["id"] for source in self.sound.sources.all().values("id"))
+        
+        try:
+            new_sources.remove(self.sound.id) # stop the universe from collapsing :-D
+        except KeyError:
+            pass
+        
+        for id in old_sources - new_sources: # in old but not in new
+            try:
+                self.sound.sources.remove(Sound.objects.get(id=id))
+            except Sound.DoesNotExist:
+                pass
+             
+        for id in new_sources - old_sources: # in new but not in old
+            self.sound.sources.add(Sound.objects.get(id=id))
+        
 
 class PackChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, pack):

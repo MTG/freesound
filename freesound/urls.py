@@ -42,7 +42,6 @@ urlpatterns = patterns('',
     
     url(r'^contact/', support.views.contact, name="contact"),
     
-    url(r'^search/ajax/$', search.views.ajax_search, name='ajax-search'),
     url(r'^search/$', search.views.search, name='sounds-search'),
     
     (r'^ratings/', include('ratings.urls')),

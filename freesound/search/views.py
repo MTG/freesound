@@ -62,36 +62,7 @@ def search(request):
     else:
         results = []
     
-    return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
-
-
-
-def ajax_search(request):
-
-    #render a list of sounds according to the search 
-    search_query = request.GET.get("q", "")
-    filter_query = request.GET.get("f", "")
-    current_page = int(request.GET.get("page", 1))
-    sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
-    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-
-    if search_query.strip() != "":
-        sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
-    
-        solr = Solr(settings.SOLR_URL)
-        
-        query = search_prepare_query(search_query, filter_query, sort, current_page, settings.SOUNDS_PER_PAGE)
-        
-        try:
-            results = SolrResponseInterpreter(solr.select(unicode(query)))
-            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-            page = paginator.page(current_page)
-            error = False
-        except SolrException, e:
-            logger.warning("search error: query: %s error %s" % (query, e))
-            error = True
+    if request.GET.get("ajax", "") != "1":
+        return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
     else:
-        results = []
-           
-    return render_to_response( 'sounds/display_remixes.html', locals(), context_instance = RequestContext(request))
-
+        return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))

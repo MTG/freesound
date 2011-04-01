@@ -176,12 +176,6 @@ class Sound(SocialModel):
 
         return paths
     
-    def get_sources(self):
-        return ",".join([str(p.id) for p in self.sources.all()])
-
-    def get_sources(self):
-        return ",".join([str(p.id) for p in self.sources.all()])
-    
     def get_channels_display(self):
         if self.channels == 1:
             return u"Mono" 
@@ -254,7 +248,6 @@ class Sound(SocialModel):
 class Pack(SocialModel):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
-    base_filename_slug = models.SlugField(max_length=512)
     description = models.TextField(null=True, blank=True, default=None)
     is_dirty = models.BooleanField(db_index=True, default=True)
 
@@ -268,26 +261,22 @@ class Pack(SocialModel):
     def get_absolute_url(self):
         return ('pack', (smart_unicode(self.id),))   
     
-    def save(self, *args, **kwargs):
-        self.base_filename_slug = "%d__%s__%s" % (self.id, slugify(self.user.username), slugify(self.name)) 
-        super(Pack, self).save(*args, **kwargs)
-        
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name')
         ordering = ("-created",)
+        
+    def get_filename(self):
+        return "%d__%s__%s.zip" % (self.id, slugify(self.user.username), slugify(self.name))
 
     def create_zip(self):
         import zipfile
         from django.template.loader import render_to_string
         import os
         
-        if not self.base_filename_slug.startswith(str(self.id)):
-            self.save()
-        
         logger = logging.getLogger("audio")
 
         logger.info("creating pack zip for pack %d" % self.id)
-        filename = os.path.join(settings.PACKS_PATH, self.base_filename_slug + ".zip")
+        filename = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
         logger.info("\twill save in %s" % os.path.normpath(filename))
         zip_file = zipfile.ZipFile(filename, "w", zipfile.ZIP_STORED, True)
         

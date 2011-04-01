@@ -11,7 +11,6 @@ from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.utils import simplejson
 from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
@@ -24,7 +23,6 @@ from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from utils.text import slugify
 import os
 import datetime
 
@@ -111,37 +109,48 @@ def sound(request, username, sound_id):
 def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     sound_path = sound.paths()["sound_path"] # 34/sounds/123_something.wav
+    
+    if not os.path.exists(os.path.join(settings.SOUNDS_PATH, sound_path)):
+        raise Http404
+
+    attachment_name = os.path.basename(sound_path)
+    
     Download.objects.get_or_create(user=request.user, sound=sound)
     if settings.DEBUG:
         file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
-        wrapper = FileWrapper(file(file_path, "rb"))
-        response = HttpResponse(wrapper, content_type='application/octet-stream')
+        response = HttpResponse(FileWrapper(file(file_path, "rb")))
         response['Content-Length'] = os.path.getsize(file_path)
-        return response
     else:
         response = HttpResponse()
-        response['Content-Type']="application/octet-stream"
         response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_path)
-        return response
 
+    response['Content-Type']="application/octet-stream"
+    response['Content-Disposition'] = "attachment; filename=\"%s\"" % attachment_name
+    
+    return response
 
 @login_required
 def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
-    pack_path = pack.base_filename_slug + '.zip'
+    pack_path = '%d.zip' % pack.id
+
+    if not os.path.exists(os.path.join(settings.PACKS_PATH, pack_path)):
+        raise Http404
+    
     Download.objects.get_or_create(user=request.user, pack=pack)
+    
     if settings.DEBUG:
         file_path = os.path.join(settings.PACKS_PATH, pack_path)
-        wrapper = FileWrapper(file(file_path, "rb"))
-        response = HttpResponse(wrapper, content_type='application/octet-stream')
+        response = HttpResponse(FileWrapper(file(file_path, "rb")))
         response['Content-Length'] = os.path.getsize(file_path)
-        return response
     else:
         response = HttpResponse()
-        response['Content-Type']="application/octet-stream"
         response['X-Accel-Redirect'] = os.path.join("downloads/packs/", pack_path)
-        return response
+    
+    response['Content-Type'] = "application/octet-stream"
+    response['Content-Disposition'] = "attachment; filename=\"%s\"" % pack.get_filename()
 
+    return response
         
 @login_required
 def sound_edit(request, username, sound_id):
@@ -177,7 +186,10 @@ def sound_edit(request, username, sound_id):
         if pack_form.is_valid():
             data = pack_form.cleaned_data
             if data['new_pack']:
-                (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'], name_slug=slugify(data['new_pack']))
+                (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
+                if sound.pack:
+                    sound.pack.is_dirty = True
+                    sound.pack.save()
                 sound.pack = pack
             else:
                 new_pack = data["pack"]
@@ -232,75 +244,26 @@ def sound_edit(request, username, sound_id):
     else:
         license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
      
-    if ((request.method == 'POST') and (request.POST.get('remix_sources'))):
-        remixes = request.REQUEST["remix_sources"] 
-        new_source = request.REQUEST["new_source"] 
-        sound.sources.add(new_source)
-        sound.save()  
-    else:
-        remixes = sound.get_sources()     
-    if is_selected("remix"):
-        remix_form = RemixForm(remixes, request.POST, prefix="remix")
-        if remix_form.is_valid():
-            for x in remix_form.cleaned_data["remix"].split(","):
-                if not (sound.sources.filter(id=x)):
-                    sound.sources.add(x)
-            sound.save()
-            #invalidate_template_cache("sound_footer", sound.id)
-            return HttpResponseRedirect(sound.get_absolute_url())
-    else:
-        remix_form = RemixForm(remixes, prefix="remix", initial=dict(remix=remixes))
-
     google_api_key = settings.GOOGLE_API_KEY
     
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
 
-def remixsources(request, username, sound_id):
-        
+
+@login_required
+def sound_edit_sources(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
     
-    def is_selected(prefix):
-        if request.method == "POST":
-            for name in request.POST.keys():
-                if name.startswith(prefix):
-                    return True
-        return False
+    current_sources = sound.sources.all()
+    sources_string = ",".join(map(str, [source.id for source in current_sources])) 
     
-    remixes = sound.get_sources()  
+    form = RemixForm(sound, request.POST or None, initial=dict(sources=sources_string))
+    if form.is_valid():
+        form.save()
     
-    sources = sound.sources.all()
-    
-    #ajax part
-    #add a sound and return the response for jquery handling
-    if is_selected("add"):
-        try:
-            id = request.POST['add_source']
-            source_nr = sound.sources.filter(id=id).count()
-            if (source_nr<1):
-                sound.sources.add(id)
-                sound.save() 
-                return HttpResponse(simplejson.dumps({'response': 'added'}),
-                                    mimetype="application/json")
-            else:
-                return HttpResponse(simplejson.dumps({'response': 'exists'}),
-                                    mimetype="application/json")                
-        except:
-            pass
-    #remove a sound and return the response for jquery handling    
-    if is_selected("remove"):    
-        try:
-            id = request.POST['remove_source']
-            sound.sources.remove(id)
-            sound.save() 
-            return HttpResponse(simplejson.dumps({'response': 'removed'}),
-                mimetype="application/json")
-        except:
-            pass   
-   
-    return render_to_response('sounds/sound_remix.html', locals(), context_instance=RequestContext(request))
+    return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
    
     
 def remixes(request, username, sound_id):

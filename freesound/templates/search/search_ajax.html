@@ -1,0 +1,31 @@
+{% load display_sound %}
+
+{% block section_content %}
+
+{% if results %}
+    {% if error %}
+    <div>
+        Failed searching! Please fix your query...
+    </div>
+    {% else %} 
+
+	    {% for result in results.docs %}
+        <div>
+    	    <div class="sample_player_small">
+    	        {% display_sound result.id %} 
+    	    </div>    
+    	    <div>
+                <a class="add" onclick="addSound(this, {{result.id}})">Add</a>
+                <a class="remove" onclick="removeSound(this, {{result.id}})">Remove</a>
+            </div>
+        </div>
+	    {% endfor %}
+
+    {% endif %}
+{% else %}
+<div>
+    No results, perhaps widen your search?
+</div>
+{% endif %}
+
+{% endblock %}

@@ -13,7 +13,17 @@
         padding: 5px;
     }
     
-    #data
+    #current-sources .add
+    {
+        display: none;
+    }
+    
+    #current-sources .remove
+    {
+        display: inline;
+    }
+
+    #search-results
     {
         width: 450px;
         overflow: hidden;
@@ -22,32 +32,29 @@
         padding: 5px;
     }
 
-    #current-sources .add
-    {
-        display: none;
-    }
-    #current-sources .remove
+    #search-results .add
     {
         display: inline;
     }
-
-    #data .add
-    {
-        display: inline;
-    }
-    #data .remove
+    
+    #search-results .remove
     {
         display: none;
     }
 </style>
 <script type="text/javascript">
-    var sources = [{% for source in current_sources %}{{source.id}}{% if not forloop.last %},{% endif %}{% endfor %}];
+    var sources = [];
     
     function saveSources()
     {
+        $("#save-button").attr("disabled", "disabled");
+        
         $("#id_sources").val(sources.join(","))
-        $.post("{% url sound-edit-sources sound.user.username sound.id %}", $("#save-form").serialize());
-        return false;
+
+        $.post("{% url sound-edit-sources sound.user.username sound.id %}", $("#save-form").serialize(), function ()
+        {
+            $("#save-button").removeAttr("disabled");
+        });
     }
 
     function addSound(element, soundId)
@@ -56,11 +63,9 @@
         {
             sources.push(soundId);
 
-            $(element).closest("#data > div").clone().appendTo("#current-sources");
+            $(element).closest("#search-results > div").clone().appendTo("#current-sources");
             
             $("#id_sources").val(sources.join(","));
-            
-            saveSources();
         }
     }
     
@@ -75,19 +80,22 @@
             $(element).closest("#current-sources > div").remove();
 
             $("#id_sources").val(sources.join(","));
-            
-            saveSources();
         }
     }
         
     $(function()
     {
-        $("#id_sources").val(sources.join(","))
+        sources = $.map($("#id_sources").val().split(","), function (soundId) { return parseInt(soundId) });
+        
+        $("#save-button").click(function ()
+        {
+            saveSources();
+            return false;
+        });
         
         $("#search-button").click(function ()
         {
-            var queryString = $.param({q: $("#search-q").val(), ajax: 1});
-            $("#data").load("{% url sounds-search %}", queryString);
+            $("#search-results").load("{% url sounds-search %}", $.param({"q": $("#search-q").val(), "ajax": 1}));
             return false;
         });
     });
@@ -106,9 +114,10 @@
     {{form.as_p}}
     <p><input type="text" name="q" id="search-q" size="45" /> <input type="submit" name="submit" value="search sources" id="search-button"/></p>
     <p>Hint: if you know the id of the file you are looking for, search for the id. The id of sounds can be found as the first part of the sound filename.</p>
+    <p><input type="submit" name="save" value="save..." id="save-button"/></p>
 </form>
 
-<div id="data">
+<div id="search-results">
     <h3>Search results:</h3>
 </div>
 

@@ -1,6 +1,9 @@
 # Create your views here.
+from tags.models import Tag
 from django.conf import settings
-from django.shortcuts import render_to_response
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
@@ -43,3 +46,17 @@ def tags(request, multiple_tags=None):
         search_logger.error("SOLR ERROR - %s" % e)
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
+
+def old_tag_link_redirect(request):
+    tag_id = request.GET.get('id', False)
+    if tag_id:
+        tags = ''
+        for tg in tag_id.split('_'):
+            try:
+                tags += (get_object_or_404(Tag, id=int(tg)).name) + '/'
+            except ValueError:
+                raise Http404
+
+        return HttpResponseRedirect(reverse("tags", args=[tags.rstrip('/')]))
+    else:
+        raise Http404    

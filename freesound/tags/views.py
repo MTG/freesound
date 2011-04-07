@@ -47,16 +47,20 @@ def tags(request, multiple_tags=None):
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
 
-def old_tag_link_redirect(request):
-    tag_id = request.GET.get('id', False)
-    if tag_id:
-        tags = ''
-        for tg in tag_id.split('_'):
-            try:
-                tags += (get_object_or_404(Tag, id=int(tg)).name) + '/'
-            except ValueError:
-                raise Http404
-
-        return HttpResponseRedirect(reverse("tags", args=[tags.rstrip('/')]))
-    else:
-        raise Http404    
+# NB. This is not yet used since the tag id's from FS1 are not applicable in FS2 DB.
+#     In any case we would have to change this function a bit so it doesn't throw 404
+#     when we have multiple tags and one is wrong.
+# 
+#def old_tag_link_redirect(request):
+#    tag_id = request.GET.get('id', False)
+#    if tag_id:
+#        tags = ''
+#        for tg in tag_id.split('_'):
+#            try:
+#                tags += (get_object_or_404(Tag, id=int(tg)).name) + '/'
+#            except ValueError:
+#                raise Http404
+#
+#        return HttpResponseRedirect(reverse("tags", args=[tags.rstrip('/')]))
+#    else:
+#        raise Http404    

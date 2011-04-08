@@ -64,7 +64,7 @@ urlpatterns = patterns('',
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
     url(r'^samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
     url(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
-    url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
+#    url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
 )
 
 #if you need django to host the admin files...

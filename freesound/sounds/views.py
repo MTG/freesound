@@ -9,7 +9,8 @@ from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
-from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.http import HttpResponseRedirect, Http404, HttpResponse,\
+    HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forum.models import Post
@@ -26,6 +27,7 @@ from utils.pagination import paginate
 from utils.text import slugify
 import datetime
 import os
+import simplejson as json
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -343,7 +345,7 @@ def old_sound_link_redirect(request):
     if sound_id:
         try:
             sound = get_object_or_404(Sound, id=int(sound_id))
-            return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound_id]))
+            return HttpResponsePermanentRedirect(reverse("sound", args=[sound.user.username, sound_id]))
         except ValueError:
             raise Http404
     else:
@@ -354,7 +356,7 @@ def old_pack_link_redirect(request):
     if pack_id:
         try:
             pack = get_object_or_404(Pack, id=int(pack_id))
-            return HttpResponseRedirect(reverse("pack", args=[pack.user.username, pack_id]))
+            return HttpResponsePermanentRedirect(reverse("pack", args=[pack.user.username, pack_id]))
         except ValueError:
             raise Http404
     else:

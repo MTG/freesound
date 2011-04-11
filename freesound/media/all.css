@@ -1561,3 +1561,41 @@ span.tag_addremove a:hover
     position:relative;
     cursor:pointer; 
 }
+
+/* License form
+------------------------------------------------------*/
+#license-form-wrapper {
+	max-height: 300px;
+	min-height: 300px;
+}
+#license-left, #license-arrow, #license-middle {
+	height: 100%;
+	float: left;
+	margin: 10px;
+}
+.license-option, .license-description {
+	float: left;
+	height: 100%;
+}
+.license-option {
+	margin-left: 10px;
+	margin-right: 30px;
+}
+.license {
+	height: 100px;
+}
+#license-left-top {
+	position: relative;
+	top: 20px;
+}
+#license-left-bottom {
+	position: relative;
+	top: 200px;
+}
+.license-description h3 {
+	color: black;
+}
+.license-option input {
+	position: relative;
+	top: 20px;
+}

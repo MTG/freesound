@@ -16,7 +16,8 @@ from django.views.decorators.csrf import csrf_exempt
 from forum.models import Post
 from operator import itemgetter
 from sounds.models import Sound, Pack, Download
-from telepathy._generated.errors import DoesNotExist
+from sounds.forms import NewLicenseForm, PackForm
+#from telepathy._generated.errors import DoesNotExist
 from utils.dbtime import DBTime
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
@@ -208,19 +209,54 @@ def edit(request):
 def describe(request):
     
     file_structure, files = generate_tree(os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id)))
-    file_structure.name = "Your uploaded files"
+    file_structure.name = 'Your uploaded files'
     
     if request.method == 'POST':
         form = FileChoiceForm(files.items(), request.POST)
-        
         if form.is_valid():
-            return HttpResponse(str(form.cleaned_data["files"]))
-        else:
-            return HttpResponseRedirect(reverse("accounts-describe"))
+            request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]] 
+            return HttpResponseRedirect(reverse('accounts-describe-license'))
     else:
         form = FileChoiceForm(files.items())
-
+    print files.items()
     return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
+
+
+@login_required
+def describe_license(request):
+    if request.method == 'POST':
+        form = NewLicenseForm(request.POST)
+        if form.is_valid():
+            request.session['describe_license'] = form.cleaned_data['license']
+            return HttpResponseRedirect(reverse('accounts-describe-pack'))
+    else:
+        form = NewLicenseForm()
+    return render_to_response('accounts/describe_license.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+def describe_pack(request):
+    packs = Pack.objects.filter(user=request.user)
+    if request.method == 'POST':
+        form = PackForm(packs, request.POST, prefix="pack")
+        if form.is_valid():
+            data = form.cleaned_data
+            if data['new_pack']:
+                pack, created = Pack.objects.get_or_create(user=request.user, name=data['new_pack'])
+                pack.is_dirty = True
+                pack.save()
+                request.session['describe_pack'] = pack
+            elif data['pack']:
+                request.session['describe_pack'] = data['pack']
+            else:
+                request.session['describe_pack'] = False
+            return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+    else:
+        form = PackForm(packs, prefix="pack")
+    return render_to_response('accounts/describe_pack.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+def describe_sounds(request):
+    pass
 
 
 @login_required
@@ -244,25 +280,26 @@ def accounts(request):
     latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by()
     
     for user in latest_uploaders:
-	active_users[user['user']] = {'uploads':user['id__count'],'posts':0,'comments':0}
+        active_users[user['user']] = {'uploads':user['id__count'],'posts':0,'comments':0}
 
     for user in latest_posters:
-	if user['author_id'] in active_users.keys():
-	    active_users[user['author_id']]['posts'] = user['id__count']
-	else:
-	    active_users[user['author_id']] = {'uploads':0,'posts':user['id__count'],'comments':0}
+        if user['author_id'] in active_users.keys():
+            active_users[user['author_id']]['posts'] = user['id__count']
+        else:
+            active_users[user['author_id']] = {'uploads':0,'posts':user['id__count'],'comments':0}
 
     for user in latest_commenters:
-	if user['user_id'] in active_users.keys():
-	    active_users[user['user_id']]['comments'] = user['id__count']
-	else:
-	    active_users[user['user_id']] = {'uploads':0,'posts':0,'comments':user['id__count']}
-	
+        if user['user_id'] in active_users.keys():
+            active_users[user['user_id']]['comments'] = user['id__count']
+        else:
+            active_users[user['user_id']] = {'uploads':0,'posts':0,'comments':user['id__count']}
+
     for user,scores in active_users.items()[:num_active_users]:
-	user_name = User.objects.get(pk=user).username
-	user_cloud.append({\
-	    'name':user_name,\
-	    'count':scores['uploads'] * upload_weight + scores['posts'] * post_weight + scores['comments'] * comment_weight})
+        user_name = User.objects.get(pk=user).username
+        user_cloud.append( {'name': user_name,
+    	                    'count': scores['uploads'] * upload_weight + \
+                                     scores['posts'] * post_weight + \
+                                     scores['comments'] * comment_weight})
     
     new_uploaders_qs = Sound.objects.filter(user__date_joined__gte=last_time).values("user__username").annotate(Count('id')).order_by()
     new_uploaders = [{'name':s['user__username'],'count':s['id__count']} for s in new_uploaders_qs] 

@@ -100,6 +100,13 @@ class LicenseForm(forms.Form):
         if self.cleaned_data['license'].abbreviation == "samp+":
             raise forms.ValidationError('We are in the process of slowly removing this license, please choose another one.')
         return self.cleaned_data['license']
+    
+
+class NewLicenseForm(forms.Form):
+    license = forms.ModelChoiceField(queryset=License.objects.filter(name__startswith='Attribution'), 
+                                     required=True, 
+                                     empty_label=None,
+                                     widget=forms.RadioSelect())
 
 
 class FlagForm(forms.ModelForm):

@@ -114,3 +114,4 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ('home_page', 'wants_newsletter', 'about', 'signature')
+        

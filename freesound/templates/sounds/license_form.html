@@ -1,0 +1,54 @@
+<form action="." method="post" id="license-form">{% csrf_token %}
+	<!-- {{ form.as_p }}  -->
+	
+	{{ form.errors }}
+	<div id="license-form-wrapper">
+		<div id="license-left">
+			<div id="license-left-top">Very free :)</div>
+			<div id="license-left-bottom">Less free :(</div>
+		</div>
+		
+		<div id="license-arrow">
+			<img src="/fsmedia/images/license_arrow.png"/>
+		</div>
+		
+		<div id="license-middle">
+		
+			<div id="license-middle-top" class="license">
+				 <div class="license-option">
+					<input type="radio" id="id_license_0" value="3" name="license" />
+				 </div>
+				 <div class="license-description"> 
+				 	<h3>Attribution</h3>
+				 	<img src="http://i.creativecommons.org/l/by/3.0/88x31.png"/>
+			     </div>
+			</div>
+			
+			<div id="license-middle-middle" class="license">
+				<div class="license-option">
+					<input type="radio" id="id_license_1" value="4" name="license" />
+				</div>
+				<div class="license-description">
+					<h3>Attribution Non-Commercial</h3>
+					<img src="http://i.creativecommons.org/l/by-nc/3.0/88x31.png"/>
+				</div>
+			</div>
+			
+			
+			<div id="license-middle-bottom" class="license">
+				<div class="license-option">
+					<input type="radio" id="id_license_2" value="6" name="license" />
+				</div>
+				<div class="license-description">
+					<h3>Attribution Non-Commercial Share-Alike</h3>
+					<img src="http://i.creativecommons.org/l/by-nc-sa/3.0/88x31.png"/>
+				</div>
+			</div>
+			
+		</div>
+	</div>
+	
+	<br><br>
+	 
+    <input type="submit" name="submit" value="submit" id="submit-button"/>
+</form>

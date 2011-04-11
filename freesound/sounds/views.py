@@ -99,7 +99,7 @@ def sound(request, username, sound_id):
             
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        form = CommentForm()
+        form = CommentForm(request)
     
     qs = Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id)
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))

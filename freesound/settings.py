@@ -54,6 +54,7 @@ INSTALLED_APPS = (
     'search',
     'api',
     'django_extensions',
+    'test_utils',
 )
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)

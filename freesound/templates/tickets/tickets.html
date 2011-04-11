@@ -7,6 +7,6 @@
 {% block content %}
 	<h2>All tickets</h2>
 	{% for ticket in tickets %}
-		{{ticket.key}} <br>
+		{{ticket.id}} - {{ticket.title}}<br>
 	{% endfor %}
 {% endblock content %}

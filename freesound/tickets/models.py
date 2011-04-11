@@ -26,6 +26,7 @@ class LinkedContent(models.Model):
 
 
 class Ticket(models.Model):
+    title           = models.CharField(max_length=256)
     source          = models.CharField(max_length=128)
     status          = models.CharField(max_length=128)
     key             = models.CharField(max_length=32, db_index=True)

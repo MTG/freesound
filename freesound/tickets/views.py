@@ -5,20 +5,30 @@ from django.core.urlresolvers import reverse
 #from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 
 from models import Ticket, Queue, Message
-from forms import UserContactForm, AnonymousContactForm
+from forms import *
 from tickets import *
 
 
 def __get_contact_form(request, use_post=True):
-    RightForm = UserContactForm if request and request.user.is_authenticated() else AnonymousContactForm 
-    return RightForm(request.POST) if use_post else RightForm()
+    return __get_anon_or_user_form(request, AnonymousContactForm, UserContactForm, use_post)
+    
+def __get_message_form(request, use_post=True):
+    return __get_anon_or_user_form(request, AnonymousMessageForm, UserMessageForm, use_post)
 
+def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
+    if len(request.POST.keys()) > 0 and use_post:
+        if request.user.is_authenticated():
+            return user_form(request.POST)
+        else:
+            return anonymous_form(request, request.POST)
+    else:
+        return user_form() if request.user.is_authenticated() else anonymous_form(request)
+        
 
 def ticket(request, ticket_key):
     ticket = get_object_or_404(Ticket, key=ticket_key)
-    
     if request.method == 'POST':
-        form = UserContactForm(request.POST)
+        form = __get_message_form(request)
         if form.is_valid():
             message = Message()
             message.text = form.cleaned_data['message']
@@ -26,7 +36,8 @@ def ticket(request, ticket_key):
                 message.sender = request.user
             message.ticket = ticket
             message.save()
-    form = UserContactForm()
+    else:
+        form = __get_message_form(request, False)
     return render_to_response('tickets/ticket.html', 
                               locals(), context_instance=RequestContext(request))
     
@@ -57,11 +68,11 @@ def new_ticket(request):
 
 def new_contact_ticket(request):
     ticket_created = False
-    
     if request.POST:    
         form = __get_contact_form(request)
         if form.is_valid():
             ticket = Ticket()
+            ticket.title = form.cleaned_data['title']
             ticket.source = TICKET_SOURCE_CONTACT_FORM
             ticket.status = TICKET_STATUS_NEW
             ticket.queue  = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
@@ -71,7 +82,6 @@ def new_contact_ticket(request):
                 message.sender = request.user
             else:
                 ticket.sender_email = form.cleaned_data['email']
-                
             message.text = form.cleaned_data['message']
             ticket.save()
             message.ticket = ticket
@@ -80,5 +90,4 @@ def new_contact_ticket(request):
             # TODO: send email
     else:
         form = __get_contact_form(request, False)
-        
     return render_to_response('tickets/contact.html', locals(), context_instance=RequestContext(request))

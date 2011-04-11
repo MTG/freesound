@@ -5,7 +5,7 @@
 {% endblock title %}
 
 {% block content %}
-	<h1>Ticket #{{ ticket.id }} in queue '{{ ticket.queue.name }}'</h1>
+	<h1>Ticket #{{ ticket.id }} - {{ ticket.title }}</h1>
 	
 	<h3>Ticket details</h3>
 	<ul>
@@ -43,7 +43,7 @@
 	
 	{% for message in ticket.messages.all reversed %}
 		<p>{{ message.created }} - 
-			{% if message.sender %} {{ message.sender.username }}
+			{% if message.sender %} <a href="{% url account message.sender.username %}">{{ message.sender.username }}</a>
 		    {% else %} Anonymous {% endif %} wrote: 
 		<p>{{ message.text }}
 	{% endfor %}

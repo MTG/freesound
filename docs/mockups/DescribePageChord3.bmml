@@ -1,0 +1,67 @@
+<mockup version="1.0" skin="sketch" measuredW="824" measuredH="473" mockupW="657" mockupH="473">
+  <controls>
+    <control controlID="6" controlTypeID="__group__" x="167" y="64" w="657" h="409" measuredW="657" measuredH="409" zOrder="0" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="4" controlTypeID="com.balsamiq.mockups::Image" x="0" y="330" w="657" h="79" measuredW="989" measuredH="87" zOrder="0" locked="false" isInGroup="6">
+          <controlProperties>
+            <src>./assets/fs_screen_bottom.png</src>
+            <text/>
+          </controlProperties>
+        </control>
+        <control controlID="5" controlTypeID="com.balsamiq.mockups::Button" x="572" y="296" w="-1" h="-1" measuredW="66" measuredH="28" zOrder="1" locked="false" isInGroup="6">
+          <controlProperties>
+            <text>Submit</text>
+          </controlProperties>
+        </control>
+        <control controlID="7" controlTypeID="com.balsamiq.mockups::Image" x="314" y="70" w="343" h="211" measuredW="1116" measuredH="322" zOrder="3" locked="false" isInGroup="6">
+          <controlProperties>
+            <src>./assets/LicenceText.PNG</src>
+            <text/>
+          </controlProperties>
+        </control>
+        <control controlID="8" controlTypeID="com.balsamiq.mockups::Title" x="189" y="0" w="-1" h="-1" measuredW="324" measuredH="62" zOrder="5" locked="false" isInGroup="6">
+          <controlProperties>
+            <text>Describe%20Sounds</text>
+          </controlProperties>
+        </control>
+        <control controlID="9" controlTypeID="__group__" x="3" y="72" w="296" h="217" measuredW="296" measuredH="217" zOrder="2" locked="false" isInGroup="6">
+          <groupChildrenDescriptors>
+            <control controlID="0" controlTypeID="com.balsamiq.mockups::Accordion" x="0" y="0" w="296" h="217" measuredW="157" measuredH="250" zOrder="0" locked="false" isInGroup="9">
+              <controlProperties>
+                <selectedIndex>2</selectedIndex>
+                <text>Select%20file%20to%20describe%0ATags%20and%20description%0ASample%20pack%20options%0ARemix%20source%20options</text>
+              </controlProperties>
+            </control>
+            <control controlID="2" controlTypeID="com.balsamiq.mockups::TextInput" x="222" y="118" w="63" h="-1" measuredW="79" measuredH="29" zOrder="1" locked="false" isInGroup="9">
+              <controlProperties>
+                <text/>
+              </controlProperties>
+            </control>
+            <control controlID="8" controlTypeID="com.balsamiq.mockups::CheckBoxGroup" x="6" y="96" w="-1" h="-1" measuredW="207" measuredH="75" zOrder="2" locked="false" isInGroup="9">
+              <controlProperties>
+                <text>%5Bx%5D%20Sound%20is%20not%20part%20of%20a%20pack%0A%5B%20%5D%20Create%20new%20pack%20with%20Sound%0A%5B%20%5D%20Add%20sound%20to%20pack</text>
+              </controlProperties>
+            </control>
+            <control controlID="9" controlTypeID="com.balsamiq.mockups::ComboBox" x="150" y="149" w="-1" h="-1" measuredW="113" measuredH="25" zOrder="3" locked="false" isInGroup="9">
+              <controlProperties>
+                <text>Select%20Sound</text>
+              </controlProperties>
+            </control>
+          </groupChildrenDescriptors>
+        </control>
+        <control controlID="10" controlTypeID="com.balsamiq.mockups::CheckBox" x="325" y="299" w="-1" h="-1" measuredW="238" measuredH="22" zOrder="4" locked="false" isInGroup="6">
+          <controlProperties>
+            <size>10</size>
+            <text>I%20have%20read%20and%20agree%20to%20the%20above%20license</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="7" controlTypeID="com.balsamiq.mockups::Image" x="168" y="0" w="656" h="75" measuredW="989" measuredH="133" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <src>./assets/fs_screen_top.png</src>
+        <text/>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>

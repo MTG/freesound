@@ -1,6 +1,7 @@
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
 from accounts.models import Profile
+from comments.models import Comment
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -8,25 +9,25 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
-    HttpResponseBadRequest
+    HttpResponseBadRequest, HttpResponseNotFound, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
+from forum.models import Post
+from operator import itemgetter
 from sounds.models import Sound, Pack, Download
+from telepathy._generated.errors import DoesNotExist
+from utils.dbtime import DBTime
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
 from utils.functional import combine_dicts
 from utils.images import extract_square
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from utils.dbtime import DBTime
+import datetime
 import logging
 import os
 import tempfile
-import datetime
-from forum.models import Post
-from comments.models import Comment
-from operator import itemgetter
 
 
 def activate_user(request, activation_key):
@@ -377,3 +378,17 @@ def delete(request):
     encrypted_link = encrypt(u"%d\t%f" % (request.user.id, time.time()))
             
     return render_to_response('accounts/delete.html', locals(), context_instance=RequestContext(request))
+
+def old_user_link_redirect(request):
+    user_id = request.GET.get('id', False)
+    if user_id:
+        try:
+            user = get_object_or_404(User, id=int(user_id))
+            return HttpResponseRedirect(reverse("account", args=[user.username]))
+        except ValueError:
+            raise Http404
+    else:
+        raise Http404
+        
+    
+    

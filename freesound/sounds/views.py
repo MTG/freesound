@@ -1,3 +1,4 @@
+from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
 from django.conf import settings
@@ -23,8 +24,9 @@ from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-import os
+from utils.text import slugify
 import datetime
+import os
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -85,9 +87,8 @@ def sound(request, username, sound_id):
         raise Http404
     
     tags = sound.tags.select_related("tag").all()
-
     content_type = ContentType.objects.get_for_model(Sound)
-
+    
     if request.method == "POST":
         form = CommentForm(request, request.POST)
         if form.is_valid():
@@ -98,10 +99,9 @@ def sound(request, username, sound_id):
             
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        form = CommentForm(request)
-
+        form = CommentForm()
+    
     qs = Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id)
-
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
 
@@ -372,3 +372,26 @@ def flag(request, username, sound_id):
             flag_form = FlagForm()
     
     return render_to_response('sounds/sound_flag.html', locals(), context_instance=RequestContext(request))
+
+def old_sound_link_redirect(request):
+    sound_id = request.GET.get('id', False)
+    if sound_id:
+        try:
+            sound = get_object_or_404(Sound, id=int(sound_id))
+            return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound_id]))
+        except ValueError:
+            raise Http404
+    else:
+        raise Http404
+    
+def old_pack_link_redirect(request):
+    pack_id = request.GET.get('id', False)
+    if pack_id:
+        try:
+            pack = get_object_or_404(Pack, id=int(pack_id))
+            return HttpResponseRedirect(reverse("pack", args=[pack.user.username, pack_id]))
+        except ValueError:
+            raise Http404
+    else:
+        raise Http404    
+

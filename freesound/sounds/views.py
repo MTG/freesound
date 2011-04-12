@@ -6,10 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
-from django.http import HttpResponseRedirect, Http404, HttpResponse,\
+from django.http import HttpResponseRedirect, Http404, HttpResponse, \
     HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
@@ -67,7 +68,10 @@ def random(request):
     pass
 
 def packs(request):
-    pass
+    qs = Pack.objects.all()
+    # FIXME: need render to response here
+    return HttpResponse(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE), context_instance=RequestContext(request))
+
 
 def front_page(request):
     rss_url = settings.FREESOUND_RSS

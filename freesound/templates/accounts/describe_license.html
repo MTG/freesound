@@ -4,5 +4,8 @@
 {% block title %}{{ block.super }}Describe - pick license{% endblock %}
 
 {% block content %}
+<form action="." method="post" class="license-form">{% csrf_token %}
 	{% display_license_form form %}
+	<input type="submit" name="submit" value="submit" id="submit-button"/>
+</form>
 {% endblock %}

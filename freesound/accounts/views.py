@@ -15,9 +15,8 @@ from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 from forum.models import Post
 from operator import itemgetter
-from sounds.models import Sound, Pack, Download
-from sounds.forms import NewLicenseForm, PackForm
-#from telepathy._generated.errors import DoesNotExist
+from sounds.models import Sound, Pack, Download, License
+from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm, RemixForm
 from utils.dbtime import DBTime
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree
@@ -212,13 +211,12 @@ def describe(request):
     file_structure.name = 'Your uploaded files'
     
     if request.method == 'POST':
-        form = FileChoiceForm(files.items(), request.POST)
+        form = FileChoiceForm(files, request.POST)
         if form.is_valid():
             request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]] 
             return HttpResponseRedirect(reverse('accounts-describe-license'))
     else:
-        form = FileChoiceForm(files.items())
-    print files.items()
+        form = FileChoiceForm(files)
     return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
 
 
@@ -242,8 +240,6 @@ def describe_pack(request):
             data = form.cleaned_data
             if data['new_pack']:
                 pack, created = Pack.objects.get_or_create(user=request.user, name=data['new_pack'])
-                pack.is_dirty = True
-                pack.save()
                 request.session['describe_pack'] = pack
             elif data['pack']:
                 request.session['describe_pack'] = data['pack']
@@ -254,9 +250,37 @@ def describe_pack(request):
         form = PackForm(packs, prefix="pack")
     return render_to_response('accounts/describe_pack.html', locals(), context_instance=RequestContext(request))
 
+
 @login_required
 def describe_sounds(request):
-    pass
+    SOUNDS_PER_ROUND = 5
+    sounds_to_describe = request.session['describe_sounds'][0:SOUNDS_PER_ROUND]
+    forms = []
+    selected_license = request.session['describe_license']
+    selected_pack    = request.session['describe_pack']
+    
+    for i in range(len(sounds_to_describe)):
+        prefix=str(i)
+        forms.append({})
+        forms[i]['sound'] = sounds_to_describe[i]
+        forms[i]['description'] = SoundDescriptionForm(prefix=prefix)
+        forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
+        if selected_pack:
+            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user), 
+                                        prefix=prefix,
+                                        initial={'pack': selected_pack.id})
+        else:
+            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user), 
+                                        prefix=prefix)
+        if request.session['describe_license']:
+            forms[i]['license'] = NewLicenseForm(prefix=prefix,
+                                                 initial={'license': str(selected_license.id)})
+        else:
+            forms[i]['license'] = NewLicenseForm(prefix=prefix)
+        # cannot include this right now because the remix sources form needs a sound object
+        #forms[prefix]['remix'] = RemixForm(prefix=prefix)
+    #request.session['describe_sounds'] = request.session['describe_sounds'][5:]
+    return render_to_response('accounts/describe_sounds.html', locals(), context_instance=RequestContext(request))
 
 
 @login_required

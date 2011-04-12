@@ -15,8 +15,9 @@ class AvatarForm(forms.Form):
 class FileChoiceForm(forms.Form):
     files = forms.MultipleChoiceField()
     
-    def __init__(self, choices, *args, **kwargs):
+    def __init__(self, files, *args, **kwargs):
         super(FileChoiceForm, self).__init__(*args, **kwargs)
+        choices = files.items()
         self.fields['files'].choices = choices
 
 

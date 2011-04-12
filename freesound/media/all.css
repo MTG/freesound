@@ -1599,3 +1599,39 @@ span.tag_addremove a:hover
 	position: relative;
 	top: 20px;
 }
+
+/* Describe accordion
+------------------------------------------------------*/
+
+.outer-accordion-div {
+	background: #dddddd;
+	padding: 10px;
+	height: 500px;
+}
+.outer-accordion-div h4 {
+	background: #eeeeee;
+}
+.inner-accordion-div {
+	background: #ffffff;
+	padding: 10px;
+}
+.outer-accordion h3 {
+	background: #cccccc;
+	margin: 0px;
+	padding: 10px;
+}
+
+.outer-accordion {
+	width: 900px;
+}
+
+/* Describe google map 
+------------------------------------------------------*/
+.describe-geotag-form {
+	float: left;
+	/*width: 300px;*/
+	margin-left: 30px;
+}
+.describe-gmap {
+	float: left;
+}

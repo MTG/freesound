@@ -456,45 +456,98 @@ body#home h3 {
 
 /* Sample Player : Small
 ------------------------------------------------------*/
+
 .sample_player_small {
-	width: 530px;
-	margin: 17px 0;
+	width: 540px;
+	height:150px;
+	margin: 0px 0px;
+	margin-top:10px;
+	margin-bottom:10px;
 	overflow: hidden;
 }
+
 .sample_player_small .sample_player {
-	width: 400px;
+	width: 410px;
 	float: left;
+	left:0px;
 }
+
 .sample_player_small div.small_player {
 	float: left;
-	margin-right: 14px;
 	width:120px;
-	height:71px
+	height:71px;
 }
+
+.sample_player_small div.sound_title {
+    position: relative;
+}
+
 .sample_player_small .title {
-	font-size: 14px;
+    font-size: 14px;
+	margin-left:10px;
 	font-weight: bold;
 }
-.sample_player_small .description {
-	margin-right: 10px;
-	margin-top: 2px;
-	margin-bottom: 0;
-	font-size: 12px;
-	line-height: 16px;
-	color: #333;
+
+.sample_player_small div.sound_tags {
+    width:300px;
+    margin-left:130px;
+
 }
+/* Overriding regular tags list*/
+.sample_player_small div.sound_tags ul#tags {
+	line-height: 12px;
+	max-height:50px;
+	overflow: hidden;
+	margin-bottom: 2px;
+}
+.sample_player_small div.sound_tags #tags li {
+	height: 12px;
+	background-color: #FFFFFF;
+	border-bottom:none;
+}
+.sample_player_small div.sound_tags #tags li a {
+	padding: 0px 3px 0 0px;
+	min-height: 12px;
+	font-size: 10px;
+	font-weight: bold;
+	background: none;
+}
+
+.sample_player_small div.sound_stars {
+    position: relative; 
+    top: 0px; 
+    float:right; 
+    vertical-align: top; 
+    margin-right: 0px; 
+}
+
 .stars {
 	text-align: right;
-	margin: -18px 10px 0 0;
+	margin: -18px 0px 0 0;
 }
 .stars img {
 	margin-right: -3px;
 }
+
+
+.sample_player_small .sound_description {
+    width:300px;
+    margin-left:130px;
+}
+.sample_player_small .description {
+	margin-right: 2px;
+	margin-top: 2px;
+	margin-bottom: 5px;
+	font-size: 12px;
+	line-height: 16px;
+	color: #333;
+}
+
+
 .sample_player_small .sample_information {
 	float: right;
-	width: 105px;
-	margin-top: 4px;
-	padding: 5px 0 3px 10px;
+	width: 100px;
+	padding: 1px 1px 1px 5px;
 	border-left: 1px solid #d6d6d6;
 	line-height: 15px;
 	font-size: 11px;
@@ -524,6 +577,44 @@ body#home h3 {
 	border-bottom: solid 1px #DCDCDC;
 	padding-bottom: 8px;
 }
+
+
+
+/* Displayed portions of sound player depending on the container */
+/* No wrapper needed for full view */
+
+.sound_list_minimal .sound_description {
+     display:none;
+}
+
+.sound_list_minimal .sound_stars {
+    display:none;
+ }
+
+.sound_list_minimal .sample_information {
+    display:none;
+}
+
+.sound_list_minimal .sample_player_small{
+    height:75px;
+}
+
+
+.sound_list_medium .sound_stars {
+    display:none;
+}
+ 
+.sound_list_medium .sound_description {
+    display:none;
+}
+.sound_list_medium .sample_player_small{
+    height:100px;
+}
+
+.sound_list_normal .sound_stars  {
+     display:none;
+}
+
 
 /* Single Sample Page
 ------------------------------------------------------*/

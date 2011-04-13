@@ -1,9 +1,9 @@
 # Create your views here.
-from tags.models import Tag
+from tags.models import Tag, FS1Tag
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render_to_response, get_object_or_404
+from django.http import Http404, HttpResponsePermanentRedirect
+from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
@@ -47,20 +47,20 @@ def tags(request, multiple_tags=None):
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
 
-# NB. This is not yet used since the tag id's from FS1 are not applicable in FS2 DB.
-#     In any case we would have to change this function a bit so it doesn't throw 404
-#     when we have multiple tags and one is wrong.
-# 
-#def old_tag_link_redirect(request):
-#    tag_id = request.GET.get('id', False)
-#    if tag_id:
-#        tags = ''
-#        for tg in tag_id.split('_'):
-#            try:
-#                tags += (get_object_or_404(Tag, id=int(tg)).name) + '/'
-#            except ValueError:
-#                raise Http404
-#
-#        return HttpResponseRedirect(reverse("tags", args=[tags.rstrip('/')]))
-#    else:
-#        raise Http404    
+
+def old_tag_link_redirect(request):    
+    fs1tag_id = request.GET.get('id', False)
+    if fs1tag_id:
+        tags = fs1tag_id.split('_')
+        try:
+            fs1tags = FS1Tag.objects.filter(fs1_id__in=tags).values_list('tag', flat=True)            
+        except ValueError, e:
+            raise Http404
+            
+        tags = Tag.objects.filter(id__in=fs1tags).values_list('name', flat=True)
+        if not tags:
+            raise Http404
+         
+        return HttpResponsePermanentRedirect(reverse("tags", args=['/'.join(tags)]))
+    else:
+        raise Http404    

@@ -10,7 +10,8 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
-    HttpResponseBadRequest, HttpResponseNotFound, Http404
+    HttpResponseBadRequest, HttpResponseNotFound, Http404,\
+    HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
@@ -542,7 +543,7 @@ def old_user_link_redirect(request):
     if user_id:
         try:
             user = get_object_or_404(User, id=int(user_id))
-            return HttpResponseRedirect(reverse("account", args=[user.username]))
+            return HttpResponsePermanentRedirect(reverse("account", args=[user.username]))
         except ValueError:
             raise Http404
     else:

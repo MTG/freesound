@@ -13,11 +13,13 @@ class GeotaggingForm(forms.Form):
         data = self.cleaned_data
 
         if not data.get('remove_geotag'):
-            lat = data.get('lat')
-            lon = data.get('lon')
-            zoom = data.get('zoom')
+            lat = data.get('lat', False)
+            lon = data.get('lon', False)
+            zoom = data.get('zoom', False)
 
-            if not (lat and lon and zoom):
+            # second clause is to detect when no values were submitted.
+            # otherwise doesn't work in the describe workflow
+            if (not (lat and lon and zoom)) and (not (not lat and not lon and not zoom)):
                 raise forms.ValidationError('Required fields not present.')
         
         return data
@@ -108,7 +110,6 @@ class NewLicenseForm(forms.Form):
                                      empty_label=None,
                                      widget=forms.RadioSelect(),
                                      label='')
-    
 
 
 class FlagForm(forms.ModelForm):

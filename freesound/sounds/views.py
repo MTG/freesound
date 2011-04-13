@@ -68,9 +68,11 @@ def random(request):
     pass
 
 def packs(request):
-    qs = Pack.objects.all()
-    # FIXME: need render to response here
-    return HttpResponse(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE), context_instance=RequestContext(request))
+    order = request.GET.get("order", "name")
+    if order not in ["name", "-last_update", "-created", "-num_sounds"]:
+        order = "name"
+    qs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order)
+    return render_to_response('sounds/browse_packs.html',combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 
 def front_page(request):

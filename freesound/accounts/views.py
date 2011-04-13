@@ -1,3 +1,4 @@
+import datetime, logging, os, tempfile, uuid
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
 from accounts.models import Profile
@@ -24,10 +25,7 @@ from utils.functional import combine_dicts
 from utils.images import extract_square
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-import datetime
-import logging
-import os
-import tempfile
+from geotags.models import GeoTag
 
 
 def activate_user(request, activation_key):
@@ -253,33 +251,99 @@ def describe_pack(request):
 
 @login_required
 def describe_sounds(request):
-    SOUNDS_PER_ROUND = 5
+    SOUNDS_PER_ROUND = 1
     sounds_to_describe = request.session['describe_sounds'][0:SOUNDS_PER_ROUND]
     forms = []
     selected_license = request.session['describe_license']
     selected_pack    = request.session['describe_pack']
     
-    for i in range(len(sounds_to_describe)):
-        prefix=str(i)
-        forms.append({})
-        forms[i]['sound'] = sounds_to_describe[i]
-        forms[i]['description'] = SoundDescriptionForm(prefix=prefix)
-        forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
-        if selected_pack:
-            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user), 
-                                        prefix=prefix,
-                                        initial={'pack': selected_pack.id})
-        else:
-            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user), 
+    # If there are no files in the session redirect to the first describe page
+    if len(sounds_to_describe) <= 0:
+        return HttpResponseRedirect(reverse('accounts-describe'))
+    
+    if request.method == 'POST':
+        # first get all the data
+        for i in range(len(sounds_to_describe)):
+            prefix=str(i)
+            forms.append({})
+            forms[i]['sound'] = sounds_to_describe[i]
+            forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix)
+            forms[i]['geotag'] = GeotaggingForm(request.POST, prefix=prefix)
+            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
+                                        request.POST, 
                                         prefix=prefix)
-        if request.session['describe_license']:
-            forms[i]['license'] = NewLicenseForm(prefix=prefix,
-                                                 initial={'license': str(selected_license.id)})
+            forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
+        # validate each form
+        for i in range(len(sounds_to_describe)):
+            for f in ['description', 'geotag', 'pack', 'license']:
+                if not forms[i][f].is_valid():
+                    # if not valid return to the same form!
+                    return render_to_response('accounts/describe_sounds.html', 
+                                              locals(), 
+                                              context_instance=RequestContext(request))
+        # all valid, then create sounds and moderation tickets
+        for i in range(len(sounds_to_describe)):
+            sound = Sound()
+            sound.user = request.user
+            sound.original_filename = forms[i]['sound'].name
+            sound.original_path = forms[i]['sound'].full_path
+            # TODO: make sure we use the right md5!
+            sound.md5 = str(uuid.uuid4()).replace('-', '')
+            # set the pack (optional)
+            pack = forms[i]['pack'].cleaned_data.get('pack', False)
+            new_pack = forms[i]['pack'].cleaned_data.get('new_pack', False)
+            if not pack and new_pack:
+                pack, created = Pack.objects.get_or_create(user=request.user, name=new_pack)
+            print 'make sure this is a pack object:', pack
+            if pack:
+                sound.pack = pack
+                sound.pack.is_dirty = True
+                sound.pack.save()
+            # set the geotag (if 'lat' is there, all fields are)
+            data = forms[i]['geotag'].cleaned_data
+            if not data.get('remove_geotag') and data.get('lat'): 
+                geotag = GeoTag(user=request.user,
+                                lat=data.get('lat'),
+                                lon=data.get('lon'),
+                                zoom=data.get('zoom'))
+                geotag.save()
+                sound.geotag = geotag
+            # set the license
+            sound.license = forms[i]['license'].cleaned_data['license']
+            # set the tags and descriptions
+            sound.save()
+            data = forms[i]['description'].cleaned_data
+            sound.description = data.get('description', '')
+            sound.set_tags(data.get('tags'))
+        # remove the files we described from the session and redirect to this page
+        request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
+        if len(request.session['describe_sounds']) > 0:
+            return HttpResponseRedirect(reverse('accounts-describe-sounds'))
         else:
-            forms[i]['license'] = NewLicenseForm(prefix=prefix)
-        # cannot include this right now because the remix sources form needs a sound object
-        #forms[prefix]['remix'] = RemixForm(prefix=prefix)
-    #request.session['describe_sounds'] = request.session['describe_sounds'][5:]
+            # TODO: where should I redirect to if there are no more files?
+            return HttpResponseRedirect(reverse('accounts-describe'))
+    else:
+        for i in range(len(sounds_to_describe)):
+            prefix=str(i)
+            forms.append({})
+            forms[i]['sound'] = sounds_to_describe[i]
+            forms[i]['description'] = SoundDescriptionForm(prefix=prefix)
+            forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
+            if selected_pack:
+                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user), 
+                                            prefix=prefix,
+                                            initial={'pack': selected_pack.id})
+            else:
+                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user), 
+                                            prefix=prefix)
+            if request.session['describe_license']:
+                forms[i]['license'] = NewLicenseForm(prefix=prefix,
+                                                     initial={'license': str(selected_license.id)})
+            else:
+                forms[i]['license'] = NewLicenseForm(prefix=prefix)
+            # cannot include this right now because the remix sources form needs a sound object
+            #forms[prefix]['remix'] = RemixForm(prefix=prefix)
+        #request.session['describe_sounds'] = request.session['describe_sounds'][5:]
     return render_to_response('accounts/describe_sounds.html', locals(), context_instance=RequestContext(request))
 
 

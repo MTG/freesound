@@ -20,7 +20,7 @@
 
 
 {% block content %}
-	<form action="." method="POST">
+	<form action="." method="post">{% csrf_token %}
 	<div class="outer-accordion">
 	{% for form in forms %}
 		<h3>{{ form.sound.name }}</h3>
@@ -59,7 +59,7 @@
 				
 				    GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
 				
-				    updateAndAddCenter{{forloop.counter}}()
+				    //updateAndAddCenter{{forloop.counter}}()
 		
 					function updateAndAddCenter{{forloop.counter}}()
 				    {
@@ -110,6 +110,9 @@
 		</div>
 	{% endfor %}
 	</div>
+
+	<input type="submit" name="submit" value="submit and continue" id="submit-button"/>
+	
 	</form>
 
 {% endblock %}

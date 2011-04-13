@@ -7,7 +7,7 @@ class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
     lat = forms.FloatField(min_value=-180, max_value=180, required=False)
     lon = forms.FloatField(min_value=-90, max_value=90, required=False)
-    zoom = forms.IntegerField(min_value=11, error_messages={'min_value': "You should zoom in more until you reach at least zoom %d"}, required=False)
+    zoom = forms.IntegerField(min_value=11, error_messages={'min_value': "You should zoom in more until you reach at least zoom 11"}, required=False)
     
     def clean(self):
         data = self.cleaned_data

@@ -1654,3 +1654,11 @@ span.tag_addremove a:hover
 .describe-gmap {
 	float: left;
 }
+
+/* Notification messages
+------------------------------------------------------*/
+ul.messages {
+	border: 1px solid #ffff00;
+	background-color: #F7F8E0;
+	margin: 20px 70px 20px 70px;
+}

@@ -20,6 +20,20 @@
 
 
 {% block content %}
+<h1>Describe</h1>
+<h3>Step 4 - describe individual sounds ({{request.session.describe_sounds_number}} left)</h3>
+<p>This is the last step in the describe process. If you've selected 
+   more than {{ sounds_per_round }} you will be asked to describe {{ sounds_per_round }}
+   sounds until all are done. In the accordion below you'll have to at least specify tags and
+   a description for each of the uploaded sounds. Please make them as specific and descriptive
+   as humanly possible!
+   
+<p>The license and the pack you've chosen in the previous steps will be applied to each
+   of the files here. You can however change these settings for each individual file.
+   
+<p>You are not required to specify a geolocation for each sound, but if the sound is a 
+   field-recording it's probably a good idea to specify the location.  
+
 	<form action="." method="post">{% csrf_token %}
 	<div class="outer-accordion">
 	{% for form in forms %}

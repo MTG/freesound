@@ -126,6 +126,7 @@ SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 50
 SOUNDS_PER_API_RESPONSE = 30
+SOUNDS_PER_DESCRIBE_ROUND = 4
 
 import logging.config
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))

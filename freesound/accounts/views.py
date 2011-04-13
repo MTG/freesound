@@ -29,6 +29,7 @@ from utils.pagination import paginate
 from utils.text import slugify
 from geotags.models import GeoTag
 from django.contrib import messages
+from settings import SOUNDS_PER_DESCRIBE_ROUND
 
 
 def activate_user(request, activation_key):
@@ -254,14 +255,28 @@ def describe_pack(request):
 
 @login_required
 def describe_sounds(request):
-    SOUNDS_PER_ROUND = 1
-    sounds_to_describe = request.session['describe_sounds'][0:SOUNDS_PER_ROUND]
+    sounds = request.session.get('describe_sounds', False)
+    selected_license = request.session.get('describe_license', False)
+    selected_pack    = request.session.get('describe_pack', False)
+    
+    # This is to prevent people browsing to the /home/describe/sounds page 
+    # without going through the necessary steps.
+    # selected_ack can be False, but license and sounds have to be picked at least
+    if not (sounds and selected_license):
+        msg = 'Please pick at least some sounds and a license.'
+        messages.add_message(request, messages.WARNING, msg)
+        return HttpResponseRedirect(reverse('accounts-describe'))
+    
+    # So SOUNDS_PER_DESCRIBE_ROUND is available in the template
+    sounds_per_round = SOUNDS_PER_DESCRIBE_ROUND
+    sounds_to_describe = sounds[0:sounds_per_round]
     forms = []
-    selected_license = request.session['describe_license']
-    selected_pack    = request.session['describe_pack']
+    request.session['describe_sounds_number'] = len(request.session.get('describe_sounds'))
     
     # If there are no files in the session redirect to the first describe page
     if len(sounds_to_describe) <= 0:
+        msg = 'You have finished describing your sounds.'
+        messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
     
     if request.method == 'POST':
@@ -351,11 +366,12 @@ def describe_sounds(request):
             messages.add_message(request, messages.INFO, 'File %s has been described and is awaiting moderation.' % forms[i]['sound'].name)
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
-        if len(request.session['describe_sounds']) > 0:
-            return HttpResponseRedirect(reverse('accounts-describe-sounds'))
-        else:
-            # TODO: where should I redirect to if there are no more files?
+        if len(request.session['describe_sounds']) <= 0:
+            msg = 'You have described all the selected files.'
+            messages.add_message(request, messages.WARNING, msg)
             return HttpResponseRedirect(reverse('accounts-describe'))
+        else:
+            return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
         for i in range(len(sounds_to_describe)):
             prefix=str(i)

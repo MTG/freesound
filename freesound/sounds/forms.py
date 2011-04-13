@@ -106,7 +106,9 @@ class NewLicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(name__startswith='Attribution'), 
                                      required=True, 
                                      empty_label=None,
-                                     widget=forms.RadioSelect())
+                                     widget=forms.RadioSelect(),
+                                     label='')
+    
 
 
 class FlagForm(forms.ModelForm):

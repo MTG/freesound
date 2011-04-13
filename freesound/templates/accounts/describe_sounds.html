@@ -34,18 +34,18 @@
 	    		<div class="describe-gmap" id="gmap{{forloop.counter}}" style="width: 400px; height:300px;"></div>
 	    		<div class="describe-geotag-form">{{ form.geotag.as_p }}</div>
 	    		<script type="text/javascript">
-				    var map = new GMap2($("#gmap{{forloop.counter}}").get(0));
+				    var map{{forloop.counter}} = new GMap2($("#gmap{{forloop.counter}}").get(0));
 				    
 				    var initialCenter = new GLatLng(23.885837699862005,21.796875);
 				    var initialZoom = 2;
 				
-				    map.setCenter(initialCenter, initialZoom);
+				    map{{forloop.counter}}.setCenter(initialCenter, initialZoom);
 				    
-				    map.setMapType( G_HYBRID_MAP );
-				 	map.disableScrollWheelZoom();
-				    map.enableContinuousZoom();
-				    map.addControl(new GSmallMapControl());
-				    map.addControl(new GMapTypeControl());
+				    map{{forloop.counter}}.setMapType( G_HYBRID_MAP );
+				 	map{{forloop.counter}}.disableScrollWheelZoom();
+				    map{{forloop.counter}}.enableContinuousZoom();
+				    map{{forloop.counter}}.addControl(new GSmallMapControl());
+				    map{{forloop.counter}}.addControl(new GMapTypeControl());
 				    
 				    var centerIcon = new GIcon();
 				    centerIcon.image = "http://www.freesound.org/geotagging/arrow.png";
@@ -54,17 +54,17 @@
 				    centerIcon.iconAnchor = new GPoint(0, 24);
 				    centerIcon.infoWindowAnchor = new GPoint(25, 0);
 				    
-				    var centerMarker = new GMarker(initialCenter, centerIcon);
-				    map.addOverlay(centerMarker);
+				    var centerMarker{{forloop.counter}} = new GMarker(initialCenter, centerIcon);
+				    map{{forloop.counter}}.addOverlay(centerMarker{{forloop.counter}});
 				
-				    GEvent.addListener(map, "move", updateAndAddCenter);
+				    GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
 				
-				    updateAndAddCenter()
+				    updateAndAddCenter{{forloop.counter}}()
 		
-					function updateAndAddCenter()
+					function updateAndAddCenter{{forloop.counter}}()
 				    {
-				        var center = map.getCenter();
-				        var zoom = map.getZoom();
+				        var center = map{{forloop.counter}}.getCenter();
+				        var zoom = map{{forloop.counter}}.getZoom();
 				        // update form
 				        if (!$("#{{form.geotag.remove_geotag.auto_id}}").checked)
 				        {
@@ -72,7 +72,7 @@
 				            $("#{{form.geotag.lat.auto_id}}").val(center.lat());
 				            $("#{{form.geotag.zoom.auto_id}}").val(zoom);
 				        }
-				        centerMarker.setLatLng(center);
+				        centerMarker{{forloop.counter}}.setLatLng(center);
 				    }
 			
 				    $("#{{form.geotag.remove_geotag.auto_id}}").change(function (event) {
@@ -87,7 +87,7 @@
 				            $("#{{form.geotag.lon.auto_id}}").attr('disabled', false);
 				            $("#{{form.geotag.lat.auto_id}}").attr('disabled', false);
 				            $("#{{form.geotag.zoom.auto_id}}").attr('disabled', false);
-				            updateAndAddCenter();
+				            updateAndAddCenter{{forloop.counter}}();
 				        }
 				    });
 				</script>

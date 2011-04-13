@@ -1,4 +1,4 @@
-import datetime, logging, os, tempfile, uuid
+import datetime, logging, os, tempfile, uuid, shutil
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
 from accounts.models import Profile
@@ -20,12 +20,14 @@ from sounds.models import Sound, Pack, Download, License
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm, RemixForm
 from utils.dbtime import DBTime
 from utils.encryption import decrypt, encrypt
-from utils.filesystem import generate_tree
+from utils.filesystem import generate_tree, md5file
 from utils.functional import combine_dicts
 from utils.images import extract_square
 from utils.mail import send_mail_template
 from utils.pagination import paginate
+from utils.text import slugify
 from geotags.models import GeoTag
+from django.contrib import messages
 
 
 def activate_user(request, activation_key):
@@ -287,8 +289,40 @@ def describe_sounds(request):
             sound.user = request.user
             sound.original_filename = forms[i]['sound'].name
             sound.original_path = forms[i]['sound'].full_path
-            # TODO: make sure we use the right md5!
-            sound.md5 = str(uuid.uuid4()).replace('-', '')
+            sound.md5 = md5file(forms[i]['sound'].full_path)
+            # check if file exists or not
+            try:
+                existing_sound = Sound.objects.get(md5=sound.md5)
+                msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>' % \
+                    (forms[i]['sound'].name, reverse('sound', args=[existing_sound.user.username, existing_sound.id]))  
+                messages.add_message(request, messages.WARNING, msg)
+                os.remove(forms[i]['sound'].full_path)
+                continue
+            except Sound.DoesNotExist, e:
+                pass
+            
+            # set the license
+            sound.license = forms[i]['license'].cleaned_data['license']
+            sound.save()
+            # now move the original
+            orig = os.path.splitext(os.path.basename(sound.original_filename))[0]
+            sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
+            paths = sound.paths()
+            new_original_path = os.path.normpath(os.path.join(settings.SOUNDS_PATH, paths["sound_path"]))
+            if sound.original_path != new_original_path:
+                try:
+                    os.makedirs(os.path.dirname(new_original_path))
+                except OSError:
+                    pass
+                try:
+                    shutil.move(sound.original_path, new_original_path)
+                    #shutil.copy(sound.original_path, new_original_path)
+                except IOError, e:
+                    logger.info("failed to move file from %s to %s" % (sound.original_path, new_original_path), e) 
+                logger.info("moved original file from %s to %s" % (sound.original_path, new_original_path))
+                sound.original_path = new_original_path
+                sound.save()
+            
             # set the pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)
             new_pack = forms[i]['pack'].cleaned_data.get('new_pack', False)
@@ -308,13 +342,12 @@ def describe_sounds(request):
                                 zoom=data.get('zoom'))
                 geotag.save()
                 sound.geotag = geotag
-            # set the license
-            sound.license = forms[i]['license'].cleaned_data['license']
             # set the tags and descriptions
-            sound.save()
             data = forms[i]['description'].cleaned_data
             sound.description = data.get('description', '')
             sound.set_tags(data.get('tags'))
+            sound.save()
+            messages.add_message(request, messages.INFO, 'File %s has been described and is awaiting moderation.' % forms[i]['sound'].name)
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
         if len(request.session['describe_sounds']) > 0:

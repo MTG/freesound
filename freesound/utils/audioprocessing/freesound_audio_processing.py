@@ -1,7 +1,6 @@
 from datetime import datetime
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
-from utils.text import slugify
 import logging
 import os
 import shutil
@@ -49,8 +48,6 @@ def process(sound, do_cleanup=True):
     # only keep the last processing attempt
     sound.processing_log = "" 
     sound.processing_date = datetime.now()
-    original_filename = os.path.splitext(os.path.basename(sound.original_filename))[0]
-    sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(original_filename))
     sound.save()
     paths = sound.paths()
 
@@ -148,24 +145,6 @@ def process(sound, do_cleanup=True):
         cleanup(to_cleanup)
         raise
     success("created png, large size: " + waveform_path_l)
-
-    # now move the original
-    new_original_path = os.path.normpath(os.path.join(settings.SOUNDS_PATH, paths["sound_path"]))
-    if sound.original_path != new_original_path:
-        try:
-            os.makedirs(os.path.dirname(new_original_path))
-        except OSError:
-            pass
-
-        try:
-            #shutil.move(sound.original_path, new_original_path)
-            shutil.copy(sound.original_path, new_original_path)
-        except IOError, e:
-            failure("failed to move file from %s to %s" % (sound.original_path, new_original_path), e) 
-        success("moved original file from %s to %s" % (sound.original_path, new_original_path))
-
-        sound.original_path = new_original_path
-        sound.save()
         
     cleanup(to_cleanup)
     sound.processing_state = "OK"

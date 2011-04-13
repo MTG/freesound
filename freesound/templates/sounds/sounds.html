@@ -27,6 +27,7 @@
 </div>
 
 <h2>Latest sounds</h2>
+<div class="sound_list_normal">
 {% for latest_addition in latest_sounds %}
 	<div class="sample_player_small">
 		{% display_sound latest_addition.sound_id %}
@@ -39,6 +40,7 @@
           No sounds in the database!
         </div>
 {% endfor %}
+</div>
 
 <h2>Latest changed packs</h2>
 <ul>

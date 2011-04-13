@@ -29,7 +29,6 @@ from utils.pagination import paginate
 from utils.text import slugify
 import datetime
 import os
-import simplejson as json
 
 def get_random_sound():
     cache_key = "random_sound"

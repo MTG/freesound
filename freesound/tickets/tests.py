@@ -7,7 +7,7 @@ from tickets import QUEUE_BUG_REPORTS, QUEUE_MANAGEMENT, \
 
 class CreateTickets(TestCase):
     
-    fixtures = ['users.json']
+    fixtures = ['moderation_test_users.json']
     
     def setUp(self):
         # test client

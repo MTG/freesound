@@ -1,0 +1,47 @@
+[
+    {
+        "pk": 1, 
+        "model": "tags.fs1tag", 
+        "fields": {
+            "tag": 2, 
+            "fs1_id": 4
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "tags.fs1tag", 
+        "fields": {
+            "tag": 3, 
+            "fs1_id": 5
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "tags.fs1tag", 
+        "fields": {
+            "tag": 4, 
+            "fs1_id": 6
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "tags.tag", 
+        "fields": {
+            "name": "water"
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "tags.tag", 
+        "fields": {
+            "name": "anechoic"
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "tags.tag", 
+        "fields": {
+            "name": "field-recording"
+        }
+    }
+]

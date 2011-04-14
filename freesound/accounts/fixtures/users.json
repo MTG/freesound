@@ -1,0 +1,20 @@
+[
+    {
+        "pk": 2, 
+        "model": "auth.user", 
+        "fields": {
+            "username": "Bram", 
+            "first_name": "", 
+            "last_name": "", 
+            "is_active": true, 
+            "is_superuser": true, 
+            "is_staff": true, 
+            "last_login": "2010-10-13 15:46:20", 
+            "groups": [], 
+            "user_permissions": [], 
+            "password": "bf9db5ff0cc8ed8bf40413521ff465f4", 
+            "email": "anon@xmpl.org", 
+            "date_joined": "2005-02-07 16:42:00"
+        }
+    }
+]

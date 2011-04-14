@@ -542,7 +542,6 @@
             "created": "2009-08-31 01:30:22", 
             "is_dirty": true, 
             "user": 43, 
-            "base_filename_slug": "", 
             "num_downloads": 266, 
             "name": "morphs"
         }
@@ -572,8 +571,7 @@
             "description": "", 
             "created": "2005-04-06 12:25:50", 
             "is_dirty": true, 
-            "user": 2, 
-            "base_filename_slug": "", 
+            "user": 2,             
             "num_downloads": 1327, 
             "name": "sinusoid pack"
         }
@@ -622,7 +620,6 @@
             "created": "2005-04-06 12:25:50", 
             "is_dirty": true, 
             "user": 58, 
-            "base_filename_slug": "", 
             "num_downloads": 2531, 
             "name": "Glass"
         }

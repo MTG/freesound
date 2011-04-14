@@ -379,26 +379,21 @@ def flag(request, username, sound_id):
             flag_form = FlagForm()
     
     return render_to_response('sounds/sound_flag.html', locals(), context_instance=RequestContext(request))
+  
+    
+def __redirect_old_link(request, cls, url_name):
+    obj_id = request.GET.get('id', False)
+    if obj_id:
+        try:
+            obj = get_object_or_404(cls, id=int(obj_id))
+            return HttpResponsePermanentRedirect(reverse(url_name, args=[obj.user.username, obj_id]))
+        except ValueError:
+            raise Http404
+    else:
+        raise Http404   
 
 def old_sound_link_redirect(request):
-    sound_id = request.GET.get('id', False)
-    if sound_id:
-        try:
-            sound = get_object_or_404(Sound, id=int(sound_id))
-            return HttpResponsePermanentRedirect(reverse("sound", args=[sound.user.username, sound_id]))
-        except ValueError:
-            raise Http404
-    else:
-        raise Http404
+    return __redirect_old_link(request, Sound, "sound")  
     
 def old_pack_link_redirect(request):
-    pack_id = request.GET.get('id', False)
-    if pack_id:
-        try:
-            pack = get_object_or_404(Pack, id=int(pack_id))
-            return HttpResponsePermanentRedirect(reverse("pack", args=[pack.user.username, pack_id]))
-        except ValueError:
-            raise Http404
-    else:
-        raise Http404    
-
+    return __redirect_old_link(request, Pack, "pack")  

@@ -30,6 +30,9 @@ from utils.text import slugify
 from geotags.models import GeoTag
 from django.contrib import messages
 from settings import SOUNDS_PER_DESCRIBE_ROUND
+from tickets.models import Ticket, Queue, LinkedContent, Message
+from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
+    TICKET_STATUS_NEW
 
 
 def activate_user(request, activation_key):
@@ -363,6 +366,25 @@ def describe_sounds(request):
             sound.description = data.get('description', '')
             sound.set_tags(data.get('tags'))
             sound.save()
+            # create moderation ticket!
+            ticket = Ticket()
+            ticket.title = 'Moderate sound %s' % sound.original_filename
+            ticket.source = TICKET_SOURCE_NEW_SOUND
+            ticket.status = TICKET_STATUS_NEW
+            ticket.queue = Queue.objects.get(name='sound moderation')
+            ticket.sender = request.user
+            lc = LinkedContent()
+            lc.content_object = sound
+            lc.save()
+            ticket.content = lc
+            ticket.save()
+            message = Message()
+            message.sender = request.user
+            message.text = '%s uploaded %s on %s. Awaiting moderation.' % \
+                (request.user.username, sound.original_filename, datetime.datetime.now())
+            message.ticket = ticket
+            message.save()
+            # add notification that the file was described successfully
             messages.add_message(request, messages.INFO, 'File %s has been described and is awaiting moderation.' % forms[i]['sound'].name)
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]

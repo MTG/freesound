@@ -29,7 +29,7 @@ class Ticket(models.Model):
     title           = models.CharField(max_length=256)
     source          = models.CharField(max_length=128)
     status          = models.CharField(max_length=128)
-    key             = models.CharField(max_length=32, db_index=True)
+    key             = models.CharField(max_length=32, db_index=True, default=lambda: str(uuid.uuid4()).replace('-', ''))
     created         = models.DateTimeField(db_index=True, auto_now_add=True)
     modified        = models.DateTimeField(auto_now=True)
     sender          = models.ForeignKey(User, related_name='sent_tickets', null=True)
@@ -37,10 +37,6 @@ class Ticket(models.Model):
     assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True)
     queue           = models.ForeignKey(Queue, related_name='tickets')
     content         = models.ForeignKey(LinkedContent, null=True)
-    
-    def __init__(self, *args, **kwargs):
-        super(Ticket, self).__init__(*args, **kwargs)
-        self.key = str(uuid.uuid4()).replace('-', '')
 
     @models.permalink
     def get_absolute_url(self):

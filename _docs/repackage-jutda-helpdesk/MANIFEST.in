@@ -1,9 +1,0 @@
-include jutda-helpdesk/CHANGELOG
-include jutda-helpdesk/LICENSE
-include jutda-helpdesk/LICENSE.3RDPARTY
-include jutda-helpdesk/README
-include jutda-helpdesk/UPGRADE
-recursive-include jutda-helpdesk/fixtures *
-recursive-include jutda-helpdesk/htdocs *
-recursive-include jutda-helpdesk/locale *
-recursive-include jutda-helpdesk/templates *

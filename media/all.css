@@ -1707,17 +1707,30 @@ ul.messages {
 /* Moderation interface 
 ------------------------------------------------------*/
 
-ul.moderation-user-list {
-	list-style-type: none;
-}
-ul.moderation-user-list li{
-	height: 48px;
-}
-.moderation-user-list-user p,
-.moderation-user-list-user img {
+.moderation-user-list-wrapper {
 	float: left;
-	margin-right: 6px;
+	width: 100%;
 }
+.moderation-user-list {
+	position: absolute;
+	float: left;
+}
+.moderation-user-list-user {
+	height: 64px;
+	width: 200px;
+	float: left;
+}
+.moderation-user-list-user-left {
+	float: left;
+	height: 64px;
+	width: 64px;
+}
+.moderation-user-list-user-left {
+	float: left;
+	height: 64px;
+}
+
+
 #moderation-delete-form,
 #moderation-defer-form {
 	position: absolute;

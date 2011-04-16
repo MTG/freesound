@@ -8,20 +8,24 @@
 	<h1>Users with new sounds</h1>
 	<!-- include permission checks here -->
 	<p>
-	<ul class="moderation-user-list">
-		{% for user, new_count in users.items %}
-		<li>
+	<div class="moderation-user-list-wrapper">
+		<div class="moderation-user-list">
+			{% for user, new_count in users.items %}
 			<div class="moderation-user-list-user">
-				<img src="{{ user.profile.get_avatar_path.path_l }}"/>
-				<p>{{ user.username }} 
-				<br>{{ new_count }} new sounds
-				<br><a href="{% url tickets-moderation-sounds-asign-user user.id %}">Add these files to your queue</a>
+				<div class="moderation-user-list-user-left">
+					<img src="{{ user.profile.get_avatar_path.path_l }}"/>
+				</div>
+				<div class="moderation-user-list-user-right">
+					<p>{{ user.username }}
+					<br>{{ new_count }} new sounds
+					<br><a href="{% url tickets-moderation-sounds-asign-user user.id %}">
+						<img src="{{media_url}}images/moderation_plus.png"/>Add to queue
+					</a>
+				</div>
 			</div>
-		</li>
-		{% endfor %}
-	</ul>
+			{% endfor %}
+		</div>
+	</div>
 	
-	<br>
-	<br>
-	<p>Start moderation!
+	
 {% endblock content %}

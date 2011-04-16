@@ -149,7 +149,6 @@ class Sound(SocialModel):
         username_slug =  slugify(self.user.username)
         return "%d__%s__%s.%s" % (self.id, username_slug, filename_slug, self.type)
 
-    
     @locations_decorator
     def locations(self):
         id_folder = str(self.id/1000)

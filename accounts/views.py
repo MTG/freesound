@@ -306,7 +306,11 @@ def describe_sounds(request):
             sound.user = request.user
             sound.original_filename = forms[i]['sound'].name
             sound.original_path = forms[i]['sound'].full_path
-            sound.md5 = md5file(forms[i]['sound'].full_path)
+            try:
+                sound.md5 = md5file(forms[i]['sound'].full_path)
+            except IOError:
+                messages.add_message(request, messages.ERROR, 'Something went wrong with accessing the file %s.' % sound.original_path)
+                continue
             sound.type = audioprocessing.get_sound_type(sound.original_path)
             # check if file exists or not
             try:

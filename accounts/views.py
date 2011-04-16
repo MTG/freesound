@@ -212,7 +212,7 @@ def edit(request):
 @login_required
 def describe(request):
     
-    file_structure, files = generate_tree(os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(request.user.id)))
+    file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
     file_structure.name = 'Your uploaded files'
     
     if request.method == 'POST':

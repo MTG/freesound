@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
+from django.contrib import messages
 from django.core.cache import cache
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.servers.basehttp import FileWrapper
@@ -89,7 +90,16 @@ def front_page(request):
 
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user", "pack").get(user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+        # If the user is authenticated and this file is his, don't worry about moderation_state and processing_state
+        if request.user.is_authenticated() \
+            and Sound.objects.raw("SELECT id FROM sounds_sound WHERE user_id = %s AND id = %s" % (request.user.id, sound_id)):
+            sound = Sound.objects.select_related("license", "user", "pack").get(user__username__iexact=username, id=sound_id)
+            if sound.moderation_state != "OK":
+                messages.add_message(request, messages.INFO, 'Be advised, this file has <b>not been moderated</b> yet.')
+            if sound.processing_state != "OK":
+                messages.add_message(request, messages.INFO, 'Be advised, this file has <b>not been processed</b> yet.')
+        else:
+            sound = Sound.objects.select_related("license", "user", "pack").get(user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     except Sound.DoesNotExist: #@UndefinedVariable
         raise Http404
     

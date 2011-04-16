@@ -154,7 +154,7 @@ class Sound(SocialModel):
         id_folder = str(self.id/1000)
         return dict(
             path = os.path.join(settings.SOUNDS_PATH, id_folder, "%d_%d.%s" % (self.id, self.user.id, self.type)),
-            sendfile_url = settings.SOUNDS_SENDFILE_URL + "%d/%d_%d.%s" % (id_folder, self.id, self.user.id, self.type),
+            sendfile_url = settings.SOUNDS_SENDFILE_URL + "%s/%d_%d.%s" % (id_folder, self.id, self.user.id, self.type),
             preview = dict(
                 HQ = dict(
                     mp3 = dict(

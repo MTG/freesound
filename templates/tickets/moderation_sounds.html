@@ -12,7 +12,7 @@
 		{% for user, new_count in users.items %}
 		<li>
 			<div class="moderation-user-list-user">
-				<img src="{{ user.profile.get_avatar_path.path_l }}"/>
+				<img src="{{ user.profile.locations.avatar.L.url }}"/>
 				<p>{{ user.username }} 
 				<br>{{ new_count }} new sounds
 				<br><a href="{% url tickets-moderation-sounds-asign-user user.id %}">Add these files to your queue</a>

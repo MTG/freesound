@@ -17,5 +17,3 @@ def create_locations(sender, **kwargs):
                         % (folder, e))
             else:
                 print ("Folder: '%s' already exists" % folder)
-
-

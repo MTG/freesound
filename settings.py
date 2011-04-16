@@ -154,6 +154,10 @@ AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
 
+SENDFILE_SECRET_URL = "/secret/"
+SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
+PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
+
 #-------------------------------------------------------------------------------
 
 # leave at bottom starting here!

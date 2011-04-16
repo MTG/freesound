@@ -266,7 +266,8 @@ class SoundServeHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp = 'There is no sound with id %s' % sound_id
             return resp
-        sound_path = sound.locations("path") if file_or_preview == 'serve' else sound.locations("preview.LQ.mp3.path")
+        sound_path = sound.locations("path") if file_or_
+         == 'serve' else sound.locations("preview.LQ.mp3.path")
         sound_url = sound.friendly_filename()
         if settings.DEBUG:
             file_path = os.path.join(settings.SOUNDS_PATH, sound_path)

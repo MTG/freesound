@@ -481,7 +481,7 @@ logger = logging.getLogger("upload")
 
 def handle_uploaded_file(user_id, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
-    directory = os.path.join(settings.FILES_UPLOAD_DIRECTORY, str(user_id))
+    directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
     
     logger.info("\thandling file upload")
     

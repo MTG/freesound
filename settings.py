@@ -149,7 +149,7 @@ DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum vie
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 
-FILES_UPLOAD_DIRECTORY = os.path.join(DATA_PATH, "uploads/")
+UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 
 DATA_URL = "/data/"
 AVATARS_URL = DATA_URL + "avatars/"

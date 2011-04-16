@@ -63,31 +63,18 @@ def get_pack_sounds_api_url(pack_id):
 
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)
-    sound_path = sound.paths()['preview_path']
-    
-    # Prepare sound link (static preview)
-    if settings.SOUNDS_URL.startswith('/'):
-        preview_static_path = prepend_base(settings.SOUNDS_URL) + sound_path
-    else:
-        preview_static_path = settings.SOUNDS_URL + sound_path
     
     d = {'ref': ref,
          'url': get_sound_web_url(sound.user.username, sound.id),
          'serve': ref+'/serve',
-         'preview': preview_static_path , 
-         'waveform_m': prepare_image_link(sound.paths()['waveform_path_m']),
-         'waveform_l': prepare_image_link(sound.paths()['waveform_path_l']),
-         'spectral_m': prepare_image_link(sound.paths()['spectral_path_m']),
-         'spectral_l': prepare_image_link(sound.paths()['spectral_path_l']),}
+         'preview'   : prepend_base(sound.locations("preview.LQ.mp3.url")), 
+         'waveform_m': prepend_base(sound.locations("display.wave.M.url")),
+         'waveform_l': prepend_base(sound.locations("display.wave.L.url")),
+         'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
+         'spectral_l': prepend_base(sound.locations("display.spectral.L.url")),}
     if sound.pack_id:
         d['pack'] = get_pack_api_url(sound.pack_id)
     return d
-
-def prepare_image_link(p):
-    if settings.SOUNDS_URL.startswith('/'):
-        return prepend_base(settings.SOUNDS_URL)+p
-    else:
-        return settings.SOUNDS_URL + p
 
 def prepare_minimal_user(user):
     return {'username': user.username,
@@ -279,8 +266,9 @@ class SoundServeHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp = 'There is no sound with id %s' % sound_id
             return resp
-        sound_path = sound.paths()["sound_path"] if file_or_preview == 'serve' else sound.paths()['preview_path']
-        
+        sound_path = sound.locations("path") if file_or_
+         == 'serve' else sound.locations("preview.LQ.mp3.path")
+        sound_url = sound.friendly_filename()
         if settings.DEBUG:
             file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
             wrapper = FileWrapper(file(file_path, "rb"))
@@ -290,7 +278,7 @@ class SoundServeHandler(BaseHandler):
         else:
             response = HttpResponse()
             response['Content-Type']="application/octet-stream"
-            response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_path)
+            response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_url) #TODO:correct serve URL
             return response
 
 class UserHandler(BaseHandler):

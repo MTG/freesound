@@ -38,6 +38,3 @@ class CreateTickets(TestCase):
         ticket.content.save()
         self.assertEqual(User.objects.get(username='test_admin').id, 
                          ticket.content.object_id)
-        
-#    def __do_request(self, args):
-#        return self.client.post(reverse('api-twobbles'), args)

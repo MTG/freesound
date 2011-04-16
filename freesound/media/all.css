@@ -1703,3 +1703,28 @@ ul.messages {
 	background-color: #F7F8E0;
 	margin: 20px 70px 20px 70px;
 }
+
+/* Moderation interface 
+------------------------------------------------------*/
+
+ul.moderation-user-list {
+	list-style-type: none;
+}
+ul.moderation-user-list li{
+	height: 48px;
+}
+.moderation-user-list-user p,
+.moderation-user-list-user img {
+	float: left;
+	margin-right: 6px;
+}
+#moderation-delete-form,
+#moderation-defer-form {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+#moderation-message-form-wrapper {
+	position: relative;
+	height: 300px;
+}

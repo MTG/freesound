@@ -558,15 +558,31 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     return dict(duration=duration, channels=channels, samplerate=samplerate, bitrate=bitrate, bitdepth=bitdepth)
 
 
-def convert_to_mp3(input_filename, output_filename):
+def convert_to_mp3(input_filename, output_filename, quality=70):
     """
-    converts the incoming wave file to a lofi mp3 file
+    converts the incoming wave file to a mp3 file
     """
     
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
 
-    command = ["lame", "--silent", "--abr", "70", input_filename, output_filename]
+    command = ["lame", "--silent", "--abr", str(quality), input_filename, output_filename]
+
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = process.communicate()
+
+    if process.returncode != 0 or not os.path.exists(output_filename):
+        raise AudioProcessingException, stdout
+
+def convert_to_ogg(input_filename, output_filename, quality=1):
+    """
+    converts the incoming wave file to n ogg file
+    """
+    
+    if not os.path.exists(input_filename):
+        raise AudioProcessingException, "file %s does not exist" % input_filename
+
+    command = ["oggenc", "-q", str(quality), input_filename, output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()

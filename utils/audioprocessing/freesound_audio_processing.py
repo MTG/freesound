@@ -49,7 +49,6 @@ def process(sound, do_cleanup=True):
     sound.processing_log = "" 
     sound.processing_date = datetime.now()
     sound.save()
-    paths = sound.paths()
 
     if not os.path.exists(sound.original_path):
         failure("the file to be processed (%s) isn't there" % sound.original_path)
@@ -100,27 +99,45 @@ def process(sound, do_cleanup=True):
     sound.duration = info["duration"]
     sound.save()
     
-    # create preview
-    mp3_path = os.path.join(settings.SOUNDS_PATH, paths["preview_path"])
-    try:
-        os.makedirs(os.path.dirname(mp3_path))
-    except OSError:
-        pass
-    
-    try:
-        audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path)
-    except AudioProcessingException, e:
-        cleanup(to_cleanup)
-        failure("conversion to mp3 (preview) has failed", e)
-        return False
-    except:
-        cleanup(to_cleanup)
-        raise
-    success("created mp3: " + mp3_path)
-    
+    for mp3_path, quality in [(sound.locations("preview.LQ.mp3.path"),70), (sound.locations("preview.HQ.mp3.path"), 192)]:
+        # create preview
+        try:
+            os.makedirs(os.path.dirname(mp3_path))
+        except OSError:
+            pass
+        
+        try:
+            audioprocessing.convert_to_mp3(tmp_wavefile2, mp3_path, quality)
+        except AudioProcessingException, e:
+            cleanup(to_cleanup)
+            failure("conversion to mp3 (preview) has failed", e)
+            return False
+        except:
+            cleanup(to_cleanup)
+            raise
+        success("created mp3: " + mp3_path)
+
+    for ogg_path, quality in [(sound.locations("preview.LQ.ogg.path"),1), (sound.locations("preview.HQ.mp3.path"), 6)]:
+        # create preview
+        try:
+            os.makedirs(os.path.dirname(ogg_path))
+        except OSError:
+            pass
+        
+        try:
+            audioprocessing.convert_to_ogg(tmp_wavefile2, ogg_path, quality)
+        except AudioProcessingException, e:
+            cleanup(to_cleanup)
+            failure("conversion to ogg (preview) has failed", e)
+            return False
+        except:
+            cleanup(to_cleanup)
+            raise
+        success("created mp3 LQ: " + ogg_path)
+
     # create waveform images M
-    waveform_path_m = os.path.join(settings.SOUNDS_PATH, paths["waveform_path_m"])
-    spectral_path_m = os.path.join(settings.SOUNDS_PATH, paths["spectral_path_m"])
+    waveform_path_m = sound.locations("display.wave.M.path")
+    spectral_path_m = sound.locations("display.spectral.M.path")
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048)
     except AudioProcessingException, e:
@@ -133,8 +150,8 @@ def process(sound, do_cleanup=True):
     success("created png, medium size: " + waveform_path_m)
 
     # create waveform images L
-    waveform_path_l = os.path.join(settings.SOUNDS_PATH, paths["waveform_path_l"])
-    spectral_path_l = os.path.join(settings.SOUNDS_PATH, paths["spectral_path_l"])
+    waveform_path_l = sound.locations("display.wave.L.path")
+    spectral_path_l = sound.locations("display.wave.L.path")
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048)
     except AudioProcessingException, e:

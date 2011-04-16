@@ -5,9 +5,7 @@ from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
 from sounds.models import Sound, Pack
 from utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
-import logging, os
-from django.core.servers.basehttp import FileWrapper
-from django.http import HttpResponse
+import logging
 from django.contrib.auth.models import User
 from utils.search.search import add_all_sounds_to_solr
 from django.contrib.sites.models import Site

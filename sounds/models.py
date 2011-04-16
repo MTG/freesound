@@ -289,11 +289,6 @@ class Pack(SocialModel):
     
     def __unicode__(self):
         return u"%s by %s" % (self.name, self.user)
-
-    def friendly_filename(self):
-        name_slug = slugify(self.name)
-        username_slug =  slugify(self.user.username)
-        return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
     
     @models.permalink
     def get_absolute_url(self):
@@ -305,10 +300,7 @@ class Pack(SocialModel):
         
     @locations_decorator
     def locations(self):
-        return dict(
-                    sendfile_url = settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,
-                    path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
-                )
+        return dict(path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id))
 
     def create_zip(self):
         import zipfile

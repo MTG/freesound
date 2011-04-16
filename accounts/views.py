@@ -10,7 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
-    HttpResponseBadRequest, HttpResponseNotFound, Http404,\
+    HttpResponseBadRequest, HttpResponseNotFound, Http404, \
     HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
@@ -30,9 +30,10 @@ from utils.text import slugify
 from geotags.models import GeoTag
 from django.contrib import messages
 from settings import SOUNDS_PER_DESCRIBE_ROUND
-from tickets.models import Ticket, Queue, LinkedContent, Message
+from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW
+import utils.audioprocessing.processing as audioprocessing
 
 
 def activate_user(request, activation_key):
@@ -118,7 +119,7 @@ def home(request):
 
 def handle_uploaded_image(profile, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
-    directory = os.path.join(settings.PROFILE_IMAGES_PATH, str(profile.user.id/1000))
+    directory = os.path.join(settings.PROFILE_IMAGES_PATH, str(profile.user.id / 1000))
     
     logger.info("\thandling profile image upload")
     
@@ -260,7 +261,7 @@ def describe_pack(request):
 def describe_sounds(request):
     sounds = request.session.get('describe_sounds', False)
     selected_license = request.session.get('describe_license', False)
-    selected_pack    = request.session.get('describe_pack', False)
+    selected_pack = request.session.get('describe_pack', False)
     
     # This is to prevent people browsing to the /home/describe/sounds page 
     # without going through the necessary steps.
@@ -285,13 +286,13 @@ def describe_sounds(request):
     if request.method == 'POST':
         # first get all the data
         for i in range(len(sounds_to_describe)):
-            prefix=str(i)
+            prefix = str(i)
             forms.append({})
             forms[i]['sound'] = sounds_to_describe[i]
             forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix)
             forms[i]['geotag'] = GeotaggingForm(request.POST, prefix=prefix)
             forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
-                                        request.POST, 
+                                        request.POST,
                                         prefix=prefix)
             forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
         # validate each form
@@ -299,8 +300,8 @@ def describe_sounds(request):
             for f in ['description', 'geotag', 'pack', 'license']:
                 if not forms[i][f].is_valid():
                     # if not valid return to the same form!
-                    return render_to_response('accounts/describe_sounds.html', 
-                                              locals(), 
+                    return render_to_response('accounts/describe_sounds.html',
+                                              locals(),
                                               context_instance=RequestContext(request))
         # all valid, then create sounds and moderation tickets
         for i in range(len(sounds_to_describe)):
@@ -309,6 +310,7 @@ def describe_sounds(request):
             sound.original_filename = forms[i]['sound'].name
             sound.original_path = forms[i]['sound'].full_path
             sound.md5 = md5file(forms[i]['sound'].full_path)
+            sound.type = audioprocessing.get_sound_type(sound.original_path)
             # check if file exists or not
             try:
                 existing_sound = Sound.objects.get(md5=sound.md5)
@@ -395,17 +397,17 @@ def describe_sounds(request):
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
         for i in range(len(sounds_to_describe)):
-            prefix=str(i)
+            prefix = str(i)
             forms.append({})
             forms[i]['sound'] = sounds_to_describe[i]
             forms[i]['description'] = SoundDescriptionForm(prefix=prefix)
             forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
             if selected_pack:
-                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user), 
+                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
                                             prefix=prefix,
                                             initial={'pack': selected_pack.id})
             else:
-                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user), 
+                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
                                             prefix=prefix)
             if request.session['describe_license']:
                 forms[i]['license'] = NewLicenseForm(prefix=prefix,
@@ -434,36 +436,36 @@ def accounts(request):
     post_weight = 1
     comment_weight = 1
 
-    latest_uploaders =  Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by()
+    latest_uploaders = Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by()
     latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by()
     latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by()
     
     for user in latest_uploaders:
-        active_users[user['user']] = {'uploads':user['id__count'],'posts':0,'comments':0}
+        active_users[user['user']] = {'uploads':user['id__count'], 'posts':0, 'comments':0}
 
     for user in latest_posters:
         if user['author_id'] in active_users.keys():
             active_users[user['author_id']]['posts'] = user['id__count']
         else:
-            active_users[user['author_id']] = {'uploads':0,'posts':user['id__count'],'comments':0}
+            active_users[user['author_id']] = {'uploads':0, 'posts':user['id__count'], 'comments':0}
 
     for user in latest_commenters:
         if user['user_id'] in active_users.keys():
             active_users[user['user_id']]['comments'] = user['id__count']
         else:
-            active_users[user['user_id']] = {'uploads':0,'posts':0,'comments':user['id__count']}
+            active_users[user['user_id']] = {'uploads':0, 'posts':0, 'comments':user['id__count']}
 
-    for user,scores in active_users.items()[:num_active_users]:
+    for user, scores in active_users.items()[:num_active_users]:
         user_name = User.objects.get(pk=user).username
-        user_cloud.append( {'name': user_name,
+        user_cloud.append({'name': user_name,
     	                    'count': scores['uploads'] * upload_weight + \
                                      scores['posts'] * post_weight + \
                                      scores['comments'] * comment_weight})
     
     new_uploaders_qs = Sound.objects.filter(user__date_joined__gte=last_time).values("user__username").annotate(Count('id')).order_by()
-    new_uploaders = [{'name':s['user__username'],'count':s['id__count']} for s in new_uploaders_qs] 
+    new_uploaders = [{'name':s['user__username'], 'count':s['id__count']} for s in new_uploaders_qs] 
 
-    return render_to_response('accounts/accounts.html', dict(most_active_users=user_cloud,num_days = num_days,new_uploaders=new_uploaders), context_instance=RequestContext(request))
+    return render_to_response('accounts/accounts.html', dict(most_active_users=user_cloud, num_days=num_days, new_uploaders=new_uploaders), context_instance=RequestContext(request))
 
 
 def account(request, username):

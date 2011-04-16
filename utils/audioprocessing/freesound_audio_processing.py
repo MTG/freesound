@@ -56,7 +56,6 @@ def process(sound, do_cleanup=True):
         return False
     success("found the file %s" % sound.original_path)
     
-    sound.type = audioprocessing.get_sound_type(sound.original_path)
     sound.save()
 
     

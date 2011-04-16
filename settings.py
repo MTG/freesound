@@ -150,9 +150,9 @@ SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 
 DATA_URL = "/data/"
-AVATARS_URL = DATA_URL + "/avatars/"
-PREVIEWS_URL = DATA_URL + "/previews/"
-DISPLAYS_URL = DATA_URL + "/displays/"
+AVATARS_URL = DATA_URL + "avatars/"
+PREVIEWS_URL = DATA_URL + "previews/"
+DISPLAYS_URL = DATA_URL + "displays/"
 
 #-------------------------------------------------------------------------------
 

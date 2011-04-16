@@ -10,6 +10,8 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 import logging
+from utils.locations import locations_decorator
+import os
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -142,39 +144,64 @@ class Sound(SocialModel):
     def __unicode__(self):
         return u"%s by %s" % (self.base_filename_slug, self.user)
     
-    def paths(self):
-        if hasattr(self, '_paths_cache'):
-            return self._paths_cache
-
-        id_folder = self.id/1000
-        
-        sound_folder = u"%d/sounds/" % id_folder
-        sound_base = u"%s.%s" % (self.base_filename_slug, self.type)
-        sound_path = sound_folder + sound_base 
-        
-        preview_folder = u"%d/previews/" % id_folder
-        preview_base = u"%s.mp3" % self.base_filename_slug
-        preview_path = preview_folder + preview_base
-        
-        waveform_folder = preview_folder
-        waveform_base_m = u"%s_m.png" % self.base_filename_slug
-        waveform_path_m = waveform_folder + waveform_base_m
-        waveform_base_l = u"%s_l.png" % self.base_filename_slug
-        waveform_path_l = waveform_folder + waveform_base_l
-        
-        spectral_folder = preview_folder
-        spectral_base_m = u"%s_m.jpg" % self.base_filename_slug
-        spectral_path_m = spectral_folder + spectral_base_m
-        spectral_base_l = u"%s_l.jpg" % self.base_filename_slug
-        spectral_path_l = spectral_folder + spectral_base_l
-        
-        paths = locals().copy()
-        paths.pop("self")
-        paths.pop("id_folder")
-        
-        self._paths_cache = paths
-
-        return paths
+    @locations_decorator
+    def locations(self):
+        id_folder = str(self.id/1000)
+        return dict(
+            path = os.path.join(settings.SOUNDS_PATH, id_folder, "%d_%d.%s" % (self.id, self.user.id, self.type)),
+            preview = dict(
+                HQ = dict(
+                    mp3 = dict(
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.mp3" % (self.id, self.user.id)),
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.mp3" % (id_folder, self.id, self.user.id)
+                    ),
+                    ogg = dict(
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.ogg" % (self.id, self.user.id)),
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.ogg" % (id_folder, self.id, self.user.id)
+                    )
+                ),
+                LQ = dict(
+                    mp3 = dict(
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, self.user.id)),
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, self.user.id)
+                    ),
+                    ogg = dict(
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, self.user.id)),
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, self.user.id)
+                    )
+                )
+            ),
+            display = dict(
+                spectral = dict(
+                    S = dict(
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_S.jpg" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_S.jpg" % (id_folder, self.id, self.user.id)
+                    ),
+                    M = dict(
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, self.user.id)
+                    ),
+                    L = dict(
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, self.user.id)
+                    )
+                ),
+                wave = dict(
+                    S = dict(
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_S.jpg" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_S.jpg" % (id_folder, self.id, self.user.id)
+                    ),
+                    M = dict(
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.jpg" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_M.jpg" % (id_folder, self.id, self.user.id)
+                    ),
+                    L = dict(
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.jpg" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_L.jpg" % (id_folder, self.id, self.user.id)
+                    )
+                )
+            )
+        )
     
     def get_channels_display(self):
         if self.channels == 1:
@@ -265,20 +292,19 @@ class Pack(SocialModel):
         unique_together = ('user', 'name')
         ordering = ("-created",)
         
-    def get_filename(self):
-        return "%d__%s__%s.zip" % (self.id, slugify(self.user.username), slugify(self.name))
+    @locations_decorator
+    def locations(self):
+        return dict(path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id))
 
     def create_zip(self):
         import zipfile
         from django.template.loader import render_to_string
-        import os
         
         logger = logging.getLogger("audio")
 
         logger.info("creating pack zip for pack %d" % self.id)
-        filename = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
-        logger.info("\twill save in %s" % os.path.normpath(filename))
-        zip_file = zipfile.ZipFile(filename, "w", zipfile.ZIP_STORED, True)
+        logger.info("\twill save in %s" % self.locations("path"))
+        zip_file = zipfile.ZipFile(self.locations("path"), "w", zipfile.ZIP_STORED, True)
         
         logger.info("\tadding attribution")
         licenses = License.objects.all()
@@ -287,7 +313,7 @@ class Pack(SocialModel):
         
         logger.info("\tadding sounds")
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
-            path = os.path.join(settings.SOUNDS_PATH, sound.paths()["sound_path"])
+            path = sound.locations("path")
             logger.info("\t- %s" % os.path.normpath(path))
             zip_file.write(path, os.path.basename(path).encode("utf-8"))
         

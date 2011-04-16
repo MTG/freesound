@@ -326,8 +326,7 @@ def describe_sounds(request):
             # now move the original
             orig = os.path.splitext(os.path.basename(sound.original_filename))[0]
             sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
-            paths = sound.paths()
-            new_original_path = os.path.normpath(os.path.join(settings.SOUNDS_PATH, paths["sound_path"]))
+            new_original_path = sound.locations("path")
             if sound.original_path != new_original_path:
                 try:
                     os.makedirs(os.path.dirname(new_original_path))

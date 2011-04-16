@@ -144,11 +144,17 @@ class Sound(SocialModel):
     def __unicode__(self):
         return u"%s by %s" % (self.base_filename_slug, self.user)
     
+    def friendly_filename(self):
+        filename_slug = slugify(os.path.splitext(self.original_filename)[0])
+        username_slug =  slugify(self.user.username)
+        return "%d__%s__%s.%s" % (self.id, username_slug, filename_slug, self.type)
+    
     @locations_decorator
     def locations(self):
         id_folder = str(self.id/1000)
         return dict(
             path = os.path.join(settings.SOUNDS_PATH, id_folder, "%d_%d.%s" % (self.id, self.user.id, self.type)),
+            sendfile_url = settings.SOUNDS_SENDFILE_URL + "%d/%d_%d.%s" % (id_folder, self.id, self.user.id, self.type),
             preview = dict(
                 HQ = dict(
                     mp3 = dict(

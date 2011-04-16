@@ -28,6 +28,7 @@ from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
+from utils.nginxsendfile import sendfile
 import datetime
 import os
 
@@ -125,49 +126,14 @@ def sound(request, username, sound_id):
 @login_required
 def sound_download(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    sound_path = sound.paths()["sound_path"] # 34/sounds/123_something.wav
-    
-    if not os.path.exists(os.path.join(settings.SOUNDS_PATH, sound_path)):
-        raise Http404
-
-    attachment_name = os.path.basename(sound_path)
-    
     Download.objects.get_or_create(user=request.user, sound=sound)
-    if settings.DEBUG:
-        file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
-        response = HttpResponse(FileWrapper(file(file_path, "rb")))
-        response['Content-Length'] = os.path.getsize(file_path)
-    else:
-        response = HttpResponse()
-        response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_path)
-
-    response['Content-Type']="application/octet-stream"
-    response['Content-Disposition'] = "attachment; filename=\"%s\"" % attachment_name
-    
-    return response
+    return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 @login_required
 def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
-    pack_path = '%d.zip' % pack.id
-
-    if not os.path.exists(os.path.join(settings.PACKS_PATH, pack_path)):
-        raise Http404
-    
     Download.objects.get_or_create(user=request.user, pack=pack)
-    
-    if settings.DEBUG:
-        file_path = os.path.join(settings.PACKS_PATH, pack_path)
-        response = HttpResponse(FileWrapper(file(file_path, "rb")))
-        response['Content-Length'] = os.path.getsize(file_path)
-    else:
-        response = HttpResponse()
-        response['X-Accel-Redirect'] = os.path.join("downloads/packs/", pack_path)
-    
-    response['Content-Type'] = "application/octet-stream"
-    response['Content-Disposition'] = "attachment; filename=\"%s\"" % pack.get_filename()
-
-    return response
+    return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
         
 @login_required
 def sound_edit(request, username, sound_id):

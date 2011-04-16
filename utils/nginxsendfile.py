@@ -4,34 +4,18 @@ from django.conf import settings
 
 import os
 
-def basic_sendfile(fname, download_name=None):
-    if not os.path.exists(fname):
+def sendfile(path, attachment_name, secret_url = None):
+    if not os.path.exists(path):
         raise Http404
+    
+    if settings.DEBUG:
+        response = HttpResponse(FileWrapper(file(path, "rb")))
+        response['Content-Length'] = os.path.getsize(path)
+    else:
+        response = HttpResponse()
+        response['X-Accel-Redirect'] = secret_url
 
-    wrapper = FileWrapper(open(fname,"r"))
-
-    response = HttpResponse(wrapper, content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(fname)
-
-    if download_name:
-        response['Content-Disposition'] = "attachment; filename=%s" % download_name
-
+    response['Content-Type']="application/octet-stream"
+    response['Content-Disposition'] = "attachment; filename=\"%s\"" % attachment_name
+    
     return response
-
-def x_sendfile(fname, download_name=None):
-    if not os.path.exists(fname):
-        raise Http404
-
-    response = HttpResponse('', content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(fname)
-    response['X-Accel-Redirect'] = fname
-
-    if download_name:
-        response['Content-Disposition'] = "attachment; filename=%s" % download_name
-
-    return response
-
-if getattr(settings,'SENDFILE',False) == 'x_sendfile':
-    sendfile = x_sendfile
-else:
-    sendfile = basic_sendfile

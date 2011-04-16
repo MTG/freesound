@@ -25,7 +25,7 @@ def locations_decorator(locations_function):
 def pretty_print_locations(locations, indent=0):
     for (key, value) in locations.iteritems():
         if isinstance(value, dict):
-            print "  "*indent, key
+            print "  "*indent, "*", key
             pretty_print_locations(value, indent+1)
         else:
-            print "  "*indent, key, "=", value
+            print "  "*indent, "*", key

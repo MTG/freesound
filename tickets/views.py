@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
-from models import Ticket, Queue, Message
+from models import Ticket, Queue, TicketComment
 from forms import *
 from tickets import *
 from django.db import connection, transaction

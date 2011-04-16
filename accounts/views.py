@@ -118,12 +118,9 @@ def home(request):
 
 def handle_uploaded_image(profile, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
-    directory = os.path.join(settings.PROFILE_IMAGES_PATH, str(profile.user.id/1000))
-    
     logger.info("\thandling profile image upload")
-    
     try:
-        os.mkdir(directory)
+        os.mkdir(os.path.dirname(profile.locations("avatar.L.path")))
     except:
         logger.info("\tfailed creating directory, probably already exist")
         pass
@@ -141,9 +138,9 @@ def handle_uploaded_image(profile, f):
     except Exception, e:
         logger.error("\tfailed writing file error: %s", str(e))
 
-    path_s = os.path.join(directory, str(profile.user.id) + "_s.jpg")
-    path_m = os.path.join(directory, str(profile.user.id) + "_m.jpg")
-    path_l = os.path.join(directory, str(profile.user.id) + "_l.jpg")
+    path_s = profile.locations("avatar.S.path")
+    path_m = profile.locations("avatar.M.path")
+    path_l = profile.locations("avatar.L.path")
     
     logger.info("\tcreating thumbnails")
     try:

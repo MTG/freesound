@@ -13,6 +13,7 @@ from utils.search.search import add_all_sounds_to_solr
 from django.contrib.sites.models import Site
 from utils.pagination import paginate
 from django.core.urlresolvers import reverse
+from utils.nginxsendfile import sendfile
 
 logger = logging.getLogger("api")
 
@@ -64,14 +65,20 @@ def get_pack_sounds_api_url(pack_id):
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)
     
-    d = {'ref': ref,
-         'url': get_sound_web_url(sound.user.username, sound.id),
-         'serve': ref+'/serve',
-         'preview'   : prepend_base(sound.locations("preview.LQ.mp3.url")), 
-         'waveform_m': prepend_base(sound.locations("display.wave.M.url")),
-         'waveform_l': prepend_base(sound.locations("display.wave.L.url")),
-         'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
-         'spectral_l': prepend_base(sound.locations("display.spectral.L.url")),}
+    d = {
+        'ref': ref,
+        'url': get_sound_web_url(sound.user.username, sound.id),
+        'serve': ref+'/serve',
+        'preview'   : prepend_base(sound.locations("preview.LQ.mp3.url")), 
+        'preview-hq-mp3'   : prepend_base(sound.locations("preview.HQ.mp3.url")), 
+        'preview-hq-ogg'   : prepend_base(sound.locations("preview.HQ.ogg.url")), 
+        'preview-lq-mp3'   : prepend_base(sound.locations("preview.LQ.mp3.url")), 
+        'preview-lq-ogg'   : prepend_base(sound.locations("preview.LQ.ogg.url")), 
+        'waveform_m': prepend_base(sound.locations("display.wave.M.url")),
+        'waveform_l': prepend_base(sound.locations("display.wave.L.url")),
+        'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
+        'spectral_l': prepend_base(sound.locations("display.spectral.L.url"))
+         }
     if sound.pack_id:
         d['pack'] = get_pack_api_url(sound.pack_id)
     return d
@@ -266,20 +273,9 @@ class SoundServeHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp = 'There is no sound with id %s' % sound_id
             return resp
-        sound_path = sound.locations("path") if file_or_
-         == 'serve' else sound.locations("preview.LQ.mp3.path")
-        sound_url = sound.friendly_filename()
-        if settings.DEBUG:
-            file_path = os.path.join(settings.SOUNDS_PATH, sound_path)
-            wrapper = FileWrapper(file(file_path, "rb"))
-            response = HttpResponse(wrapper, content_type='application/octet-stream')
-            response['Content-Length'] = os.path.getsize(file_path)
-            return response
-        else:
-            response = HttpResponse()
-            response['Content-Type']="application/octet-stream"
-            response['X-Accel-Redirect'] = os.path.join("/downloads/sounds/", sound_url) #TODO:correct serve URL
-            return response
+
+        return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
 
 class UserHandler(BaseHandler):
     '''

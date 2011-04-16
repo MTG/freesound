@@ -10,20 +10,20 @@
 	<p>
 	<div class="moderation-user-list-wrapper">
 		<div class="moderation-user-list">
-			{% for user, new_count in users.items %}
+		{% for user, new_count in users.items %}
 			<div class="moderation-user-list-user">
 				<div class="moderation-user-list-user-left">
-					<img src="{{ user.profile.get_avatar_path.path_l }}"/>
+				<img src="{{ user.profile.locations.avatar.L.url }}"/>
 				</div>
 				<div class="moderation-user-list-user-right">
-					<p>{{ user.username }}
-					<br>{{ new_count }} new sounds
+				<p>{{ user.username }} 
+				<br>{{ new_count }} new sounds
 					<br><a href="{% url tickets-moderation-sounds-asign-user user.id %}">
 						<img src="{{media_url}}images/moderation_plus.png"/>Add to queue
 					</a>
 				</div>
 			</div>
-			{% endfor %}
+		{% endfor %}
 		</div>
 	</div>
 	

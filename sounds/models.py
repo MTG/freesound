@@ -298,6 +298,11 @@ class Pack(SocialModel):
         unique_together = ('user', 'name')
         ordering = ("-created",)
         
+    def friendly_filename(self):
+        name_slug = slugify(self.name)
+        username_slug =  slugify(self.user.username)
+        return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
+
     @locations_decorator
     def locations(self):
         return dict(path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id))

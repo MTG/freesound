@@ -6,6 +6,8 @@ from general.models import SocialModel
 from geotags.models import GeoTag
 from utils.sql import DelayedQueryExecuter
 from django.conf import settings
+from utils.locations import locations_decorator
+import os
 
 class ProfileManager(models.Manager):
     def random_uploader(self):
@@ -45,17 +47,25 @@ class Profile(SocialModel):
     def get_absolute_url(self):
         return ('account', (smart_unicode(self.user.username),))
     
-    def get_avatar_path(self):
-        if self.has_avatar:
-            path_s = "%s%d/%d_%s.jpg" % (settings.PROFILE_IMAGES_URL, self.user.id/1000, self.user.id, "s")
-            path_m = "%s%d/%d_%s.jpg" % (settings.PROFILE_IMAGES_URL, self.user.id/1000, self.user.id, "m")
-            path_l = "%s%d/%d_%s.jpg" % (settings.PROFILE_IMAGES_URL, self.user.id/1000, self.user.id, "l")
-        else:
-            path_s = settings.MEDIA_URL + "images/32x32_avatar.png"
-            path_m = settings.MEDIA_URL + "images/40x40_avatar.png"
-            path_l = settings.MEDIA_URL + "images/40x40_avatar.png"
-            
-        return dict(path_s=path_s, path_m=path_m, path_l=path_l)
+    @locations_decorator
+    def locations(self):
+        id_folder = str(self.user.id/1000)
+        return dict(
+            avatar = dict(
+                S = dict(
+                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % self.user.id),
+                    url = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, self.user.id)
+                ),
+                M = dict(
+                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % self.user.id),
+                    url = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, self.user.id)
+                ),
+                L = dict(
+                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % self.user.id),
+                    url = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, self.user.id)
+                )
+            )
+        )
     
     def get_tagcloud(self):
         return DelayedQueryExecuter("""

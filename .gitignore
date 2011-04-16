@@ -6,3 +6,6 @@
 \#*\#
 *.settings*
 freesound/utils/search/config*/data
+.amateras
+local_settings.py
+logger.ini

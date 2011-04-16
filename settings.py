@@ -2,6 +2,7 @@
 
 # Django settings for freesound project.
 import os
+import logging.config
 
 DEBUG = False
 
@@ -111,6 +112,11 @@ INTERNAL_IPS = ['localhost', '127.0.0.1']
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
+MEDIA_URL = "/media/"
+
+# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
+ADMIN_MEDIA_PREFIX = '/media/admin_media/'
+
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
@@ -128,28 +134,33 @@ PACKS_PER_PAGE = 50
 SOUNDS_PER_API_RESPONSE = 30
 SOUNDS_PER_DESCRIBE_ROUND = 4
 
-import logging.config
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
-# data path, where all files should go to
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'media/data/')
+#-------------------------------------------------------------------------------
+# freesound paths and urls:
+
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/'))
+AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
+PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
+DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum views
+
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
-PROFILE_IMAGES_PATH = os.path.join(DATA_PATH, "images/")
-PACKS_PATH = os.path.join(DATA_PATH, 'packs/')
+PACKS_PATH = os.path.join(DATA_PATH, "packs/")
+
+DATA_URL = "/data/"
+AVATARS_URL = DATA_URL + "avatars/"
+PREVIEWS_URL = DATA_URL + "previews/"
+DISPLAYS_URL = DATA_URL + "displays/"
+
+#-------------------------------------------------------------------------------
 
 # leave at bottom starting here!
 from local_settings import * #@UnusedWildImport
 
 TEMPLATE_DEBUG = DEBUG
 MANAGERS = ADMINS
-
-# data URL, hosted via lighttpd or something similar
-DATA_URL = MEDIA_URL + 'data/'
-SOUNDS_URL = DATA_URL + "sounds/"
-PROFILE_IMAGES_URL = DATA_URL + 'images/'
-PACKS_URL = DATA_URL + 'packs/'
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)

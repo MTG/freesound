@@ -582,7 +582,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
 
-    command = ["oggenc", "-q", str(quality), input_filename, output_filename]
+    command = ["oggenc", "-q", str(quality), input_filename, "-o", output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()

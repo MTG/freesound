@@ -3,7 +3,6 @@ from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
 import logging
 import os
-import shutil
 import tempfile
 import utils.audioprocessing.processing as audioprocessing
 
@@ -138,6 +137,12 @@ def process(sound, do_cleanup=True):
     # create waveform images M
     waveform_path_m = sound.locations("display.wave.M.path")
     spectral_path_m = sound.locations("display.spectral.M.path")
+        
+    try:
+        os.makedirs(os.path.dirname(waveform_path_m))
+    except OSError:
+        pass
+    
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048)
     except AudioProcessingException, e:

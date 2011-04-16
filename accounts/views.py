@@ -377,12 +377,12 @@ def describe_sounds(request):
             lc.save()
             ticket.content = lc
             ticket.save()
-            message = Message()
-            message.sender = request.user
-            message.text = '%s uploaded %s on %s. Awaiting moderation.' % \
+            tc = TicketComment()
+            tc.sender = request.user
+            tc.text = '%s uploaded %s on %s. Awaiting moderation.' % \
                 (request.user.username, sound.original_filename, datetime.datetime.now())
-            message.ticket = ticket
-            message.save()
+            tc.ticket = ticket
+            tc.save()
             # add notification that the file was described successfully
             messages.add_message(request, messages.INFO, 'File %s has been described and is awaiting moderation.' % forms[i]['sound'].name)
         # remove the files we described from the session and redirect to this page

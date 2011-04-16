@@ -49,11 +49,12 @@ class Ticket(models.Model):
         ordering = ("-created",)
         
 
-class Message(models.Model):
+class TicketComment(models.Model):
     sender          = models.ForeignKey(User, null=True)
     text            = models.TextField()
     created         = models.DateTimeField(auto_now_add=True)
     ticket          = models.ForeignKey(Ticket, related_name='messages')
+    moderator_only  = models.BooleanField(required=False)
     
     def __unicode__(self):
         return u"<# Message - ticket_id: %s, ticket_key: %s>" % \

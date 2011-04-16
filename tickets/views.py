@@ -14,7 +14,7 @@ from django.contrib import messages
 def __get_contact_form(request, use_post=True):
     return __get_anon_or_user_form(request, AnonymousContactForm, UserContactForm, use_post)
     
-def __get_message_form(request, use_post=True):
+def __get_tc_form(request, use_post=True):
     return __get_anon_or_user_form(request, AnonymousMessageForm, UserMessageForm, use_post)
 
 def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
@@ -30,16 +30,16 @@ def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
 def ticket(request, ticket_key):
     ticket = get_object_or_404(Ticket, key=ticket_key)
     if request.method == 'POST':
-        form = __get_message_form(request)
+        form = __get_tc_form(request)
         if form.is_valid():
-            message = Message()
-            message.text = form.cleaned_data['message']
+            tc = TicketComment()
+            tc.text = form.cleaned_data['tc']
             if request.user.is_authenticated():
-                message.sender = request.user
-            message.ticket = ticket
-            message.save()
+                tc.sender = request.user
+            tc.ticket = ticket
+            tc.save()
     else:
-        form = __get_message_form(request, False)
+        form = __get_tc_form(request, False)
     return render_to_response('tickets/ticket.html', 
                               locals(), context_instance=RequestContext(request))
     
@@ -78,16 +78,16 @@ def new_contact_ticket(request):
             ticket.source = TICKET_SOURCE_CONTACT_FORM
             ticket.status = TICKET_STATUS_NEW
             ticket.queue  = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
-            message = Message()
+            tc = TicketComment()
             if request.user.is_authenticated():
                 ticket.sender = request.user
-                message.sender = request.user
+                tc.sender = request.user
             else:
                 ticket.sender_email = form.cleaned_data['email']
-            message.text = form.cleaned_data['message']
+            tc.text = form.cleaned_data['message']
             ticket.save()
-            message.ticket = ticket
-            message.save()
+            tc.ticket = ticket
+            tc.save()
             ticket_created = True
             # TODO: send email
     else:

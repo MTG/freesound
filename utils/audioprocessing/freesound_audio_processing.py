@@ -155,7 +155,7 @@ def process(sound, do_cleanup=True):
 
     # create waveform images L
     waveform_path_l = sound.locations("display.wave.L.path")
-    spectral_path_l = sound.locations("display.wave.L.path")
+    spectral_path_l = sound.locations("display.spectral.L.path")
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048)
     except AudioProcessingException, e:

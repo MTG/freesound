@@ -194,16 +194,16 @@ class Sound(SocialModel):
                 ),
                 wave = dict(
                     S = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_S.jpg" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_S.jpg" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_S.png" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_S.png" % (id_folder, self.id, self.user.id)
                     ),
                     M = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.jpg" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_M.jpg" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_M.png" % (id_folder, self.id, self.user.id)
                     ),
                     L = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.jpg" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_L.jpg" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id, self.user.id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, self.user.id)
                     )
                 )
             )
@@ -305,7 +305,10 @@ class Pack(SocialModel):
 
     @locations_decorator
     def locations(self):
-        return dict(path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id))
+        return dict(
+                    sendfile_url = settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,
+                    path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
+                   )
 
     def create_zip(self):
         import zipfile

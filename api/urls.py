@@ -22,6 +22,7 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/packs/?$',                    AR(UserPacksHandler),   name='api-user-packs'),
     # packs
     url(r'^packs/(?P<pack_id>\d+)/?$',                               AR(PackHandler),        name='api-single-pack'),
+    url(r'^packs/(?P<pack_id>\d+)/serve/?$',                         AR(PackServeHandler),   name='api-pack-serve'),
     url(r'^packs/(?P<pack_id>\d+)/sounds/?$',                        AR(PackSoundsHandler),  name='api-pack-sounds'),
 
    # website

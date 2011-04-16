@@ -145,7 +145,9 @@ class Sound(SocialModel):
         return u"%s by %s" % (self.base_filename_slug, self.user)
     
     def friendly_filename(self):
-        return "%d__%s__%s.%s" % (self.id, slugify(self.user.username), self.base_filename_slug, self.type)
+        filename_slug = slugify(os.path.splitext(self.original_filename)[0])
+        username_slug =  slugify(self.user.username)
+        return "%d__%s__%s.%s" % (self.id, username_slug, filename_slug, self.type)
     
     @locations_decorator
     def locations(self):

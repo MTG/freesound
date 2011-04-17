@@ -6,23 +6,27 @@
 
 {% block content %}
 	<h1>Users with new sounds</h1>
-	<!-- include permission checks here -->
 	<p>
 	<div class="moderation-user-list">
 		{% for user, new_count in users.items %}
 			<div class="moderation-user-list-user">
 				<div class="moderation-user-list-user-left">
-				<img src="{% if user.has_avatar %}{{user.profile.locations.avatar.L.url}}{% else %}{{media_url}}images/32x32_avatar.png{% endif %}"/>
+				<img src="{{user.profile.locations.avatar.L.url}}"/>
 				</div>
 				<div class="moderation-user-list-user-right">
 					<p>{{ user.username }} 
 					<br>{{ new_count }} new sounds
 					<br><a href="{% url tickets-moderation-sounds-asign-user user.id %}">
-						<img src="{{media_url}}images/moderation_plus.png"/>Add to queue</a>
+						<img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
 				</div>
 			</div>
 		{% endfor %}
 		<div style="clear: both;"></div>
 	</div>
+	<!-- TODO: url change here -->
+	<a href="{% url tickets-moderation-sounds %}"<h4>Moderate tickets</h4></a>
+	
+	<h1>Deferred</h1>
+	
 		
 {% endblock content %}

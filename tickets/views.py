@@ -122,6 +122,7 @@ def __get_new_uploaders_by_ticket():
 @login_required
 def moderation_sounds(request):
     users = __get_new_uploaders_by_ticket()
+    print users.keys()[0].profile.has_avatar
     return render_to_response('tickets/moderation_sounds.html', locals(), context_instance=RequestContext(request))
 
 

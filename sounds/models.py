@@ -329,7 +329,7 @@ class Pack(SocialModel):
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
             path = sound.locations("path")
             logger.info("\t- %s" % os.path.normpath(path))
-            zip_file.write(path, os.path.basename(path).encode("utf-8"))
+            zip_file.write(path, sound.friendly_filename().encode("utf-8"))
         
         zip_file.close()
         

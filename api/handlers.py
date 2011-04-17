@@ -260,11 +260,8 @@ class SoundServeHandler(BaseHandler):
     output:       binary file
     curl:         curl http://www.freesound.org/api/sounds/2/serve
     '''
-    def read(self, request, sound_id, file_or_preview):
+    def read(self, request, sound_id):
         
-        if not file_or_preview in ['serve', 'preview']:
-            resp = rc.NOT_FOUND
-            return resp
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable

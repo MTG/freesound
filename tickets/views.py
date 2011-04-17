@@ -33,7 +33,7 @@ def ticket(request, ticket_key):
         form = __get_tc_form(request)
         if form.is_valid():
             tc = TicketComment()
-            tc.text = form.cleaned_data['tc']
+            tc.text = form.cleaned_data['message']
             if request.user.is_authenticated():
                 tc.sender = request.user
             tc.ticket = ticket
@@ -106,9 +106,12 @@ def moderation_home(request):
 
 def __get_new_uploaders_by_ticket():
     cursor = connection.cursor()
-    cursor.execute("select sender_id, count(*) from tickets_ticket " +
-                   "where source = 'new sound' " +
-                   "and assignee_id is Null group by sender_id")
+    cursor.execute("""
+SELECT sender_id, count(*) from tickets_ticket 
+WHERE source = 'new sound' 
+AND assignee_id is Null 
+AND status = '%s'
+GROUP BY sender_id""" % TICKET_STATUS_NEW)
     user_ids_plus_new_count = dict(cursor.fetchall())
     user_objects = User.objects.filter(id__in=user_ids_plus_new_count.keys())
     users_plus_new_count = {}
@@ -119,10 +122,51 @@ def __get_new_uploaders_by_ticket():
     #        for id,count in user_ids_plus_new_count.items()]
     return users_plus_new_count
 
+def __get_unsure_sound_tickets():
+    return Ticket.objects.filter(source=TICKET_SOURCE_NEW_SOUND, 
+                                 assignee=None, 
+                                 status=TICKET_STATUS_ACCEPTED)
+
+def __get_tardy_moderator_tickets():
+    """Get tickets for moderators that haven't responded in the last 2 days"""
+    return Ticket.objects.raw("""
+SELECT
+ticket.id
+FROM 
+tickets_ticketcomment AS comment,
+tickets_ticket AS ticket
+WHERE comment.id in (   SELECT MAX(id)
+                        FROM tickets_ticketcomment
+                        GROUP BY ticket_id    )
+AND ticket.assignee_id is Not Null
+AND comment.ticket_id = ticket.id
+AND comment.sender_id = ticket.sender_id
+AND now() - comment.created > INTERVAL '2 days'
+    """)
+    
+def __get_tardy_user_tickets():
+    """Get tickets for users that haven't responded in the last 2 days"""
+    return Ticket.objects.raw("""
+SELECT
+ticket.id
+FROM 
+tickets_ticketcomment AS comment,
+tickets_ticket AS ticket
+WHERE comment.id in (   SELECT MAX(id)
+                        FROM tickets_ticketcomment
+                        GROUP BY ticket_id    )
+AND ticket.assignee_id is Not Null
+AND comment.ticket_id = ticket.id
+AND comment.sender_id != ticket.sender_id
+AND now() - comment.created > INTERVAL '2 days'
+""")
+
 @login_required
 def moderation_sounds(request):
-    users = __get_new_uploaders_by_ticket()
-    print users.keys()[0].profile.has_avatar
+    new_sounds_users = __get_new_uploaders_by_ticket()
+    unsure_tickets = __get_unsure_sound_tickets()
+    tardy_moderator_tickets = __get_tardy_moderator_tickets()
+    tardy_user_tickets = __get_tardy_user_tickets()
     return render_to_response('tickets/moderation_sounds.html', locals(), context_instance=RequestContext(request))
 
 
@@ -130,7 +174,7 @@ def moderation_sounds(request):
 def moderation_sounds_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
     Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
-        .update(assignee=request.user)
+        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect(reverse("tickets-moderation-sounds"))

@@ -22,7 +22,7 @@ class ProfileManager(models.Manager):
             return None
 
 class Profile(SocialModel):
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, related_name="profile")
     
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
@@ -47,22 +47,30 @@ class Profile(SocialModel):
     def get_absolute_url(self):
         return ('account', (smart_unicode(self.user.username),))
     
-    @locations_decorator
+    @locations_decorator(cache=False)
     def locations(self):
         id_folder = str(self.user.id/1000)
+        if self.has_avatar:
+            s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, self.user.id)
+            m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, self.user.id)
+            l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, self.user.id)
+        else:
+            s_avatar = settings.MEDIA_URL + "images/32x32_avatar.png"
+            m_avatar = settings.MEDIA_URL + "images/40x40_avatar.png"
+            l_avatar = settings.MEDIA_URL + "images/70x70_avatar.png"
         return dict(
             avatar = dict(
                 S = dict(
                     path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % self.user.id),
-                    url = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, self.user.id)
+                    url = s_avatar
                 ),
                 M = dict(
                     path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % self.user.id),
-                    url = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, self.user.id)
+                    url = m_avatar
                 ),
                 L = dict(
                     path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % self.user.id),
-                    url = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, self.user.id)
+                    url = l_avatar
                 )
             )
         )

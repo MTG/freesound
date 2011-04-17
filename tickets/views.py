@@ -106,7 +106,6 @@ def moderation_home(request):
     users = __get_new_uploaders_by_ticket()
     return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
-
 @login_required
 def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)

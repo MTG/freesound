@@ -260,11 +260,8 @@ class SoundServeHandler(BaseHandler):
     output:       binary file
     curl:         curl http://www.freesound.org/api/sounds/2/serve
     '''
-    def read(self, request, sound_id, file_or_preview):
+    def read(self, request, sound_id):
         
-        if not file_or_preview in ['serve', 'preview']:
-            resp = rc.NOT_FOUND
-            return resp
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
@@ -273,6 +270,7 @@ class SoundServeHandler(BaseHandler):
             return resp
 
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
 
 
 class UserHandler(BaseHandler):
@@ -434,6 +432,28 @@ class PackSoundsHandler(BaseHandler):
 
     def __construct_pagination_link(self, pack_id, p):
         return get_pack_sounds_api_url(pack_id)+'?p=%s' % p
+
+
+class PackServeHandler(BaseHandler):
+    '''
+    api endpoint:    /packs/id/serve
+    '''
+    allowed_methods = ('GET',)
+
+    '''
+    input:        n.a.
+    output:       binary file
+    curl:         curl http://www.freesound.org/api/packs/2/serve
+    '''
+    def read(self, request, pack_id):
+        try:
+            pack = Pack.objects.get(id=pack_id)
+        except Pack.DoesNotExist:
+            resp = rc.NOT_FOUND
+            resp.content = 'There is no pack with this identifier (%s).' % pack_id
+            return resp
+
+        return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
 
 
 # N.B. don't add this to a production environment!

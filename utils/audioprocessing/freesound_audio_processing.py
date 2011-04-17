@@ -3,7 +3,6 @@ from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
 import logging
 import os
-import shutil
 import tempfile
 import utils.audioprocessing.processing as audioprocessing
 
@@ -116,7 +115,7 @@ def process(sound, do_cleanup=True):
             raise
         success("created mp3: " + mp3_path)
 
-    for ogg_path, quality in [(sound.locations("preview.LQ.ogg.path"),1), (sound.locations("preview.HQ.mp3.path"), 6)]:
+    for ogg_path, quality in [(sound.locations("preview.LQ.ogg.path"),1), (sound.locations("preview.HQ.ogg.path"), 6)]:
         # create preview
         try:
             os.makedirs(os.path.dirname(ogg_path))
@@ -132,11 +131,17 @@ def process(sound, do_cleanup=True):
         except:
             cleanup(to_cleanup)
             raise
-        success("created mp3 LQ: " + ogg_path)
+        success("created ogg: " + ogg_path)
 
     # create waveform images M
     waveform_path_m = sound.locations("display.wave.M.path")
     spectral_path_m = sound.locations("display.spectral.M.path")
+        
+    try:
+        os.makedirs(os.path.dirname(waveform_path_m))
+    except OSError:
+        pass
+    
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_m, spectral_path_m, 120, 71, 2048)
     except AudioProcessingException, e:
@@ -146,11 +151,11 @@ def process(sound, do_cleanup=True):
     except:
         cleanup(to_cleanup)
         raise
-    success("created png, medium size: " + waveform_path_m)
+    success("created previews, medium")
 
     # create waveform images L
     waveform_path_l = sound.locations("display.wave.L.path")
-    spectral_path_l = sound.locations("display.wave.L.path")
+    spectral_path_l = sound.locations("display.spectral.L.path")
     try:
         audioprocessing.create_wave_images(tmp_wavefile2, waveform_path_l, spectral_path_l, 900, 201, 2048)
     except AudioProcessingException, e:
@@ -160,7 +165,7 @@ def process(sound, do_cleanup=True):
     except:
         cleanup(to_cleanup)
         raise
-    success("created png, large size: " + waveform_path_l)
+    success("created previews, large")
         
     cleanup(to_cleanup)
     sound.processing_state = "OK"

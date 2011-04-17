@@ -48,11 +48,7 @@
 </div>
 
 <div id="single_sample_content">
-    {% if sound.user.profile.has_avatar %}
 	<img src="{{sound.user.profile.locations.avatar.M.url}}" alt="avatar" id="sound_author_avatar" />
-	{% else %}
-	<img src="{{media_url}}images/40x40_avatar.png" alt="avatar" id="sound_author_avatar" />
-	{% endif %}
 
 	<div id="sound_author_box">
 		<div id="sound_author"><a href="{% url account sound.user.username %}">{{sound.user.username}}</a></div>
@@ -81,11 +77,7 @@
 		<ul id="comments">
 			{% for comment in page.object_list %}
 			<li>
-			    {% if comment.user.profile.has_avatar %}
 				<img src="{{comment.user.profile.locations.avatar.S.url}}" alt="avatar" class="comment_avatar" />
-				{% else %}
-				<img src="{{media_url}}images/32x32_avatar.png" alt="avatar" class="comment_avatar" />
-				{% endif %}
 				<div class="comment_info">
 					<span class="comment_author"><a href="{% url account comment.user.username %}">{{comment.user.username}}</a></span>
 					<span class="comment_date">{{comment.created|timesince}} ago</span>
@@ -116,7 +108,7 @@
 
 <div id="single_sample_sidebar">
 	<div id="download">
-		<a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" id="download_button" title="download sound"></a>
+		<a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);" id="download_button" title="download sound"></a>
 		<div id="download_text">Downloaded<br /><b>{{sound.num_downloads}}</b> times</div>
 	</div>
 

@@ -15,7 +15,7 @@ urlpatterns = patterns('',
     # sounds
     url(r'^sounds/search/?$',                                        AR(SoundSearchHandler), name='api-search'),
     url(r'^sounds/(?P<sound_id>\d+)/?$',                             AR(SoundHandler),       name='api-single-sound'),
-    url(r'^sounds/(?P<sound_id>\d+)/(?P<file_or_preview>\w+)/?$',    AR(SoundServeHandler),  name='api-sound-serve'),
+    url(r'^sounds/(?P<sound_id>\d+)/serve/?$',                       AR(SoundServeHandler),  name='api-sound-serve'),
     # users
     url(r'^people/(?P<username>[^//]+)/?$',                          AR(UserHandler),        name='api-single-user'),
     url(r'^people/(?P<username>[^//]+)/sounds/?$',                   AR(UserSoundsHandler),  name='api-user-sounds'),

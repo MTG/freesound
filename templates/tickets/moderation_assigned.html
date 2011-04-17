@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load util %}
+{% block head %}
+{{ block.super }}
+<style type="text/css" media="all"> 
+ 
+</style>
+<script type="text/javascript">
+    function moderate(url){
+        $("#current_sound").load(url);
+    }
+   
+
+    var switch_visibility = function(del_or_defer) {
+    	if(del_or_defer == 'defer') {
+    		var del_form = "hidden";
+    		var def_form = "visible";
+    	} else {
+    		var del_form = "visible";
+    		var def_form = "hidden"; 
+    	}
+    	return function() {
+    			$("#moderation-defer-form").get(0).style.visibility = def_form;
+    			$("#moderation-delete-form").get(0).style.visibility = del_form;
+    		}
+    }
+
+    var attach = function(elem, func) {
+    	if(window.addEventListener){
+       		elem.addEventListener('click', func, false);
+    	} else if (window.attachEvent){
+       		elem.attachEvent('onclick', func);
+    	} else {
+       		elem.onclick = func;
+    	}
+    }
+
+    $(document).ready(function() {
+    	attach($("#moderation-decision-form input").filter( "[value='Approve']" ).get(0),
+        		   switch_visibility('defer'));
+       	attach($("#moderation-decision-form input").filter( "[value='Defer']" ).get(0),
+        		   switch_visibility('defer'));
+        attach($("#moderation-decision-form input").filter( "[value='Delete']" ).get(0),
+        		   switch_visibility('delete'));
+    });
+
+
+</script>
+{% endblock head %}
+
+
+{% block title %}
+	Moderation
+{% endblock title %}
+
+{% block content %}
+	<h1>Assigned tickets</h1>
+	<!-- include permission checks here -->
+
+		<div style="float:left;width=500px;">
+		<table >
+		{% for ticket in moderator_tickets %}
+		<tr><td><a onclick="
+		    moderate('{% url tickets-sound-display ticket.content.object_id%}');
+		    $('#id_ticket').get(0).value={{ticket.id}}">
+		    {{ticket.content.content_object.original_filename|truncate_string:28}}</a></td>
+		    <td>{{ticket.sender.username}}</td>
+		    <td>{{ticket.created|date:"d/m/Y" }}</td>
+		    <td>{{ticket.status}}</td>
+		    </tr>
+		{% endfor %}
+		</table>
+		</div>
+		
+	    <div id="moderation_formw" style="float:right;width:440px" >
+	        	<div class="sample_player_small"  id="current_sound" style="width:440px"></div>
+	        	
+	        	<div style="width:440px;">
+	        	<form action="." method="post">{% csrf_token %}
+                    
+            		<div id="moderation-decision-form">
+            			<h4>Moderation action</h4>
+            			{{ mod_sound_form.as_p }}
+            		</div>
+
+            		<div id="moderation-message-form-wrapper">
+
+            			<div style="visibility: hidden;" id="moderation-delete-form">
+            				<h4>Delete messages</h4>
+            				<br>
+            				{{ delete_msg_form.as_p }}
+            			</div>
+
+            			<div style="visibility: visible;" id="moderation-defer-form">
+            				<h4>Defer messages</h4>
+            				<br>
+            				{{ defer_msg_form.as_p }}
+            			</div>
+
+            		</div>
+
+            		<input type="submit" value="send" />
+
+            	</form>
+            	</div>
+	    </div>
+	    <div style="clear:both"></div>
+	
+	
+	
+{% endblock content %}

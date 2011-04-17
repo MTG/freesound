@@ -30,3 +30,5 @@ GOOGLE_API_KEY = ''
 GOOGLE_ANALYTICS_KEY = ''
 
 SOLR_URL = "http://localhost:8983/solr/"
+
+GEARMAN_JOB_SERVERS = ["localhost:4730"]

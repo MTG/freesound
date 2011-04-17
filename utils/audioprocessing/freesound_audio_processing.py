@@ -1,21 +1,20 @@
 from datetime import datetime
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
-import logging
 import os
 import tempfile
 import utils.audioprocessing.processing as audioprocessing
 
-logger = logging.getLogger("audio")
-
-def process_pending():
-    from sounds.models import Sound
-    for sound in Sound.objects.filter(processing_state="PE").exclude(original_path=None):
-        process(sound)
+def process_sound_via_gearman(sound, gm_client=None):
+    if not gm_client:
+        import gearman
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+    sound.processing_date = datetime.now()
+    sound.processing_state = "PR" # processing
+    sound.save()
+    gm_client.submit_job("process_sound", str(sound.id), wait_until_complete=False, background=True)
         
-def process(sound, do_cleanup=True):
-    logger.info("processing audio file %d" % sound.id)
-    
+def process(sound):
     def failure(message, error=None):
         logging_message = "Failed to process audio file: %d\n" % sound.id + message
         sound.processing_log += "failed:" + message + "\n"
@@ -23,26 +22,20 @@ def process(sound, do_cleanup=True):
         if error:
             logging_message += "\n" + str(error)
             sound.processing_log += str(error) + "\n"
-        
-        logger.error(logging_message)
 
         sound.processing_state = "FA"
         sound.save()
         
     def success(message):
         sound.processing_log += message + "\n"
-        logger.info(message)
     
     def cleanup(files):
-        if do_cleanup:
-            success("cleaning up files after processing: " + ", ".join(files))
-            for filename in files:
-                try:
-                    os.unlink(filename)
-                except:
-                    pass
-        else:
-            success("leaving temporary files..." + ", ".join(files))
+        success("cleaning up files after processing: " + ", ".join(files))
+        for filename in files:
+            try:
+                os.unlink(filename)
+            except:
+                pass
     
     # only keep the last processing attempt
     sound.processing_log = "" 
@@ -71,9 +64,10 @@ def process(sound, do_cleanup=True):
     except AudioProcessingException, e:
         failure("conversion to pcm has failed", e)
         return False
-    except:
+    except Exception, e:
+        failure("unhandled exception", e)
         cleanup(to_cleanup)
-        raise
+        return False
     
     tmp_wavefile2 = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
     
@@ -84,9 +78,10 @@ def process(sound, do_cleanup=True):
         cleanup(to_cleanup)
         failure("stereofy has failed", e)
         return False
-    except:
+    except Exception, e:
+        failure("unhandled exception", e)
         cleanup(to_cleanup)
-        raise
+        return False
     
     success("got sound info and stereofied: " + tmp_wavefile2)
 
@@ -110,9 +105,10 @@ def process(sound, do_cleanup=True):
             cleanup(to_cleanup)
             failure("conversion to mp3 (preview) has failed", e)
             return False
-        except:
+        except Exception, e:
+            failure("unhandled exception", e)
             cleanup(to_cleanup)
-            raise
+            return False
         success("created mp3: " + mp3_path)
 
     for ogg_path, quality in [(sound.locations("preview.LQ.ogg.path"),1), (sound.locations("preview.HQ.ogg.path"), 6)]:
@@ -128,9 +124,10 @@ def process(sound, do_cleanup=True):
             cleanup(to_cleanup)
             failure("conversion to ogg (preview) has failed", e)
             return False
-        except:
+        except Exception, e:
+            failure("unhandled exception", e)
             cleanup(to_cleanup)
-            raise
+            return False
         success("created ogg: " + ogg_path)
 
     # create waveform images M
@@ -148,9 +145,10 @@ def process(sound, do_cleanup=True):
         cleanup(to_cleanup)
         failure("creation of images (M) has failed", e)
         return False
-    except:
+    except Exception, e:
+        failure("unhandled exception", e)
         cleanup(to_cleanup)
-        raise
+        return False
     success("created previews, medium")
 
     # create waveform images L
@@ -162,13 +160,15 @@ def process(sound, do_cleanup=True):
         cleanup(to_cleanup)
         failure("creation of images (L) has failed", e)
         return False
-    except:
+    except Exception, e:
+        failure("unhandled exception", e)
         cleanup(to_cleanup)
-        raise
+        return False
     success("created previews, large")
         
     cleanup(to_cleanup)
     sound.processing_state = "OK"
+    sound.processing_date = datetime.now()
     sound.save()
     
     return True

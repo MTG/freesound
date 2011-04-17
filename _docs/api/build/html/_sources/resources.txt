@@ -206,6 +206,10 @@ __ sound-get-response_
             "duration": 48.548956916100003, 
             "waveform_l": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.png", 
             "preview": "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3", 
+            "preview-hq-mp3" : "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3", 
+            "preview-hq-ogg" : "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3",
+            "preview-lq-mp3" : "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3",
+            "preview-lq-ogg" : "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3",
             "ref": "http://tabasco.upf.edu/api/sounds/83295", 
             "pack": "http://tabasco.upf.edu/api/packs/2090"
         },
@@ -312,8 +316,6 @@ waveform_l	      URI      A visualization of the sounds waveform, png file (larg
         "psykick"
     ], 
     "serve": "http://tabasco.upf.edu/api/sounds/83257/serve", 
-    "spectral_m": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.jpg", 
-    "spectral_l": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.jpg", 
     "user": {
         "username": "zgump", 
         "url": "http://tabasco.upf.edu/people/zgump/", 
@@ -328,6 +330,8 @@ waveform_l	      URI      A visualization of the sounds waveform, png file (larg
     "type": "wav", 
     "avg_rating": 0.0, 
     "original_filename": "CLUB KICK 0304.wav", 
+    "spectral_m": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.jpg", 
+    "spectral_l": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.jpg", 
     "waveform_l": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.png", 
     "waveform_m": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.png", 
     "channels": 2, 

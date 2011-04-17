@@ -124,6 +124,7 @@ class Sound(SocialModel):
     # processing
     PROCESSING_STATE_CHOICES = (
         ("PE",_('Pending')),
+        ("PR",_('Processing')),
         ("OK",_('OK')),
         ("FA",_('Failed')),
     )
@@ -246,10 +247,10 @@ class Sound(SocialModel):
     def rating_percent(self):
         return int(self.avg_rating*10)
     
-    def process(self, force=False, do_cleanup=True):
+    def process(self, force=False):
         if force or self.processing_state != "OK":
             from utils.audioprocessing.freesound_audio_processing import process
-            return process(self, do_cleanup)
+            return process(self)
         else:
             return True
             
@@ -328,7 +329,7 @@ class Pack(SocialModel):
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
             path = sound.locations("path")
             logger.info("\t- %s" % os.path.normpath(path))
-            zip_file.write(path, os.path.basename(path).encode("utf-8"))
+            zip_file.write(path, sound.friendly_filename().encode("utf-8"))
         
         zip_file.close()
         

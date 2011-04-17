@@ -1708,12 +1708,12 @@ ul.messages {
 ------------------------------------------------------*/
 
 .moderation-user-list-wrapper {
-	float: left;
-	width: 100%;
+	position: relative;
+	/*overflow: hidden;*/
 }
-.moderation-user-list {
-	position: absolute;
-	float: left;
+.moderation-user-list img {
+	position: relative;
+	top: 5px;
 }
 .moderation-user-list-user {
 	height: 64px;

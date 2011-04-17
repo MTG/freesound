@@ -8,24 +8,21 @@
 	<h1>Users with new sounds</h1>
 	<!-- include permission checks here -->
 	<p>
-	<div class="moderation-user-list-wrapper">
-		<div class="moderation-user-list">
+	<div class="moderation-user-list">
 		{% for user, new_count in users.items %}
 			<div class="moderation-user-list-user">
 				<div class="moderation-user-list-user-left">
-				<img src="{{ user.profile.locations.avatar.L.url }}"/>
+				<img src="{% if user.has_avatar %}{{user.profile.locations.avatar.L.url}}{% else %}{{media_url}}images/32x32_avatar.png{% endif %}"/>
 				</div>
 				<div class="moderation-user-list-user-right">
-				<p>{{ user.username }} 
-				<br>{{ new_count }} new sounds
+					<p>{{ user.username }} 
+					<br>{{ new_count }} new sounds
 					<br><a href="{% url tickets-moderation-sounds-asign-user user.id %}">
-						<img src="{{media_url}}images/moderation_plus.png"/>Add to queue
-					</a>
+						<img src="{{media_url}}images/moderation_plus.png"/>Add to queue</a>
 				</div>
 			</div>
 		{% endfor %}
-		</div>
+		<div style="clear: both;"></div>
 	</div>
-	
-	
+		
 {% endblock content %}

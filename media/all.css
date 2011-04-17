@@ -604,6 +604,18 @@ body#home h3 {
      display:none;
 }
 
+.sound_list_moderation .sound_stars {
+    display:none;
+}
+.sound_list_moderation .sample_information {
+    display:none;
+}
+.sound_list_moderation .sample_player_small{
+  /*  height:100px;*/
+}
+
+
+
 /* Single Sample Page
 ------------------------------------------------------*/
 

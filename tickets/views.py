@@ -48,25 +48,7 @@ def tickets(request):
     tickets = Ticket.objects.all()
     return render_to_response('tickets/tickets.html', 
                               locals(), context_instance=RequestContext(request))
-    
-'''
-@login_required
-def new_ticket(request):
-    print 'blaat'
-    if request.method == 'POST':
-        print 'POST'
-        form = TicketForm(request.POST)
-        if form.is_valid():
-            # TODO: save ticket
-            return redirect(reverse('tickets-ticket', args=[2]))
-    else:
-        print 'blaat2'
-        form = TicketForm()
-        print form
-        
-    return render_to_response('tickets/new_ticket.html', 
-                              locals(), context_instance=RequestContext(request))
-'''
+
 
 def new_contact_ticket(request):
     ticket_created = False
@@ -96,12 +78,12 @@ def new_contact_ticket(request):
 
 #TODO: check for right permissions (all moderation functions)
 @login_required
-def moderation_home(request):
+def tickets_home(request):
     new_upload_count = Ticket.objects.filter(assignee=None,
                                              source=TICKET_SOURCE_NEW_SOUND).count()
     new_support_count = Ticket.objects.filter(assignee=None,
                                               source=TICKET_SOURCE_CONTACT_FORM).count()
-    return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
+    return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
 
 
 def __get_new_uploaders_by_ticket():
@@ -120,22 +102,50 @@ def __get_new_uploaders_by_ticket():
     return users_plus_new_count
 
 @login_required
-def moderation_sounds(request):
+def moderation_home(request):
     users = __get_new_uploaders_by_ticket()
-    return render_to_response('tickets/moderation_sounds.html', locals(), context_instance=RequestContext(request))
+    return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
 
 @login_required
-def moderation_sounds_assign_user(request, user_id):
+def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
     Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
         .update(assignee=request.user)
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
-    return HttpResponseRedirect(reverse("tickets-moderation-sounds"))
+    return HttpResponseRedirect(reverse("tickets-moderation-home"))
+    
+@login_required
+def moderation_assigned(request, user_id):
+    if request.method == 'POST':
+        mod_sound_form = SoundModerationForm(request.POST)
+        delete_msg_form = ModerationDeleteMessageForm(request.POST)
+        defer_msg_form = ModerationDeferMessageForm(request.POST) 
+        if mod_sound_form.is_valid() and \
+            delete_msg_form.is_valid() and \
+            defer_msg_form.is_valid:
+            ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket",False))
+            action = mod_sound_form.cleaned_data.get("action")
+            if action=="Approve":
+                ticket.content.content_object.moderation_state="OK"
+                ticket.status=TICKET_STATUS_CLOSED
+            elif action=="Defer":
+                ticket.status=TICKET_STATUS_DEFERRED
+            elif action=="Delete":
+                ticket.status=TICKET_STATUS_CLOSED
+                pass
+            ticket.save()
+    else:
+        
+        mod_sound_form = SoundModerationForm()
+        delete_msg_form = ModerationDeleteMessageForm()
+        defer_msg_form = ModerationDeferMessageForm()
+    moderator_tickets=Ticket.objects.select_related().filter(assignee=user_id).exclude(status=TICKET_STATUS_CLOSED)
+    return render_to_response('tickets/moderation_assigned.html',locals(),context_instance=RequestContext(request))
 
 @login_required
-def moderation_support(request):
+def support_home(request):
     return HttpResponse('support')
 
 

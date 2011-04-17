@@ -28,6 +28,7 @@ class SoundModerationForm(forms.Form):
                                     required=True, 
                                     widget=forms.RadioSelect(),
                                     label='')
+    ticket      = forms.IntegerField(widget=forms.widgets.HiddenInput)
     
 def __define_moderation_message_class(name, choices):
     return type(name,

@@ -17,12 +17,10 @@ def display_sound(context, sound):
                 'sound_tags':ti.objects.select_related().filter(object_id=sound.id, content_type=ContentType.objects.get_for_model(Sound)).all(),
                 'media_url': context['media_url']
                 }        
-    elif isinstance(sound, int):
+    else:
         return {
-                'sound_id': sound,
+                'sound_id': int(sound),
                 'sound': Sound.objects.select_related('user').filter(id=sound), # need to use filter here because we don't want the query to be evaluated already!
                 'sound_tags':ti.objects.select_related().filter(object_id=sound, content_type=ContentType.objects.get_for_model(Sound)).all(),
                 'media_url': context['media_url']
                 }
-    else:
-        raise template.TemplateSyntaxError, "the display_sound tag needs either a sound id or an actual sound object"

@@ -45,13 +45,12 @@ def convert_to_solr_document(sound):
     document["comment"] = [comment.comment for comment in sound.comments.all()]
     document["comments"] = sound.comments.count()
 
-    paths = sound.paths()
     
-    document["waveform_path_m"] = paths["waveform_path_m"]
-    document["waveform_path_l"] = paths["waveform_path_l"]
-    document["spectral_path_m"] = paths["spectral_path_m"]
-    document["spectral_path_l"] = paths["spectral_path_l"]
-    document["preview_path"] = paths["preview_path"]
+    document["waveform_path_m"] = sound.locations("display.wave.M.path") 
+    document["waveform_path_l"] = sound.locations("display.wave.L.path")
+    document["spectral_path_m"] = sound.locations("display.spectral.M.path")
+    document["spectral_path_l"] = sound.locations("display.spectral.L.path")
+    document["preview_path"] = sound.locations("preview.LQ.mp3.path")
     
     return document
 

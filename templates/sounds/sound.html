@@ -35,10 +35,10 @@
 <div id="single_sample_player">
 	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="900" height="201" id="player_{{sound.id}}">
     	<param name="movie" value="{{media_url}}swf/LargePlayer.swf" />
-        <param name="flashvars" value="baseUrl=/&amp;soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
+        <param name="flashvars" value="soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
         <!--[if !IE]>-->
         <object type="application/x-shockwave-flash" data="{{media_url}}swf/LargePlayer.swf" width="900" height="201">
-        	<param name="flashvars" value="baseUrl=/&amp;soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
+        	<param name="flashvars" value="soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
 	        <!--<![endif]-->
 	        <a href="http://www.adobe.com/go/getflashplayer"><img src="{{media_url}}images/get_flash_player.png" alt="Get Adobe Flash player" /></a>
 	        <!--[if !IE]>-->

@@ -1744,7 +1744,7 @@ ul.messages {
 }
 #moderation-message-form-wrapper {
 	position: relative;
-	height: 300px;
+	height: 210px;
 }
 .moderation-unsure-ticket-player,
 .moderation-unsure-ticket-info {
@@ -1757,4 +1757,8 @@ ul.messages {
 .moderation-unsure-ticket {
 	font-size: 0.8em;
 	height: 80px;
+}
+
+#moderation_form textarea{
+    height:80px;   
 }

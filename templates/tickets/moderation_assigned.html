@@ -3,7 +3,7 @@
 {% block head %}
 {{ block.super }}
 <style type="text/css" media="all"> 
- 
+
 </style>
 <script type="text/javascript">
     function moderate(url){
@@ -11,17 +11,24 @@
     }
    
 
-    var switch_visibility = function(del_or_defer) {
-    	if(del_or_defer == 'defer') {
+    var switch_visibility = function(del_or_defer_or_return) {
+    	if(del_or_defer_or_return == 'defer') {
     		var del_form = "hidden";
     		var def_form = "visible";
-    	} else {
+    		var ret_form = "hidden";
+    	} else if(del_or_defer_or_return == 'delete') {
     		var del_form = "visible";
     		var def_form = "hidden"; 
+    		var ret_form = "hidden";
+    	} else {
+    		var del_form = "hidden";
+    		var def_form = "hidden"; 
+    		var ret_form = "visible";
     	}
     	return function() {
     			$("#moderation-defer-form").get(0).style.visibility = def_form;
     			$("#moderation-delete-form").get(0).style.visibility = del_form;
+    			$("#moderation-return-form").get(0).style.visibility = ret_form;
     		}
     }
 
@@ -42,9 +49,15 @@
         		   switch_visibility('defer'));
         attach($("#moderation-decision-form input").filter( "[value='Delete']" ).get(0),
         		   switch_visibility('delete'));
+        attach($("#moderation-decision-form input").filter( "[value='Return']" ).get(0),
+                   switch_visibility('return'));
     });
 
-
+    $(function()
+    {
+        moderate('{% url tickets-sound-display moderator_tickets.0.content.object_id%}');
+        $('#id_ticket').get(0).value={{moderator_tickets.0.id}}
+    });
 </script>
 {% endblock head %}
 
@@ -72,7 +85,7 @@
 		</table>
 		</div>
 		
-	    <div id="moderation_formw" style="float:right;width:440px" >
+	    <div id="moderation_form" style="float:right;width:440px" >
 	        	<div class="sample_player_small"  id="current_sound" style="width:440px"></div>
 	        	
 	        	<div style="width:440px;">
@@ -96,6 +109,14 @@
             				<br>
             				{{ defer_msg_form.as_p }}
             			</div>
+            			
+            			
+            				<div style="visibility: hidden;" id="moderation-return-form">
+                				<h4>Return message</h4>
+                				<br>
+                				{{ return_msg_form.as_p }}
+                			</div>
+                        
 
             		</div>
 

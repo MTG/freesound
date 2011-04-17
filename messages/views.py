@@ -12,6 +12,7 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from BeautifulSoup import BeautifulSoup
 
+
 @login_required
 def messages_change_state(request):
     if request.method == "POST":

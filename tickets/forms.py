@@ -21,7 +21,8 @@ class AnonymousContactForm(AnonymousMessageForm):
 # Sound moderation forms
 MODERATION_CHOICES = [('Approve', 'Approve'),
                       ('Delete', 'Delete'),
-                      ('Defer', 'Defer')]
+                      ('Defer', 'Defer'),
+                      ('Return', 'Return')]
 
 class SoundModerationForm(forms.Form):
     action      = forms.ChoiceField(choices=MODERATION_CHOICES,
@@ -29,6 +30,13 @@ class SoundModerationForm(forms.Form):
                                     widget=forms.RadioSelect(),
                                     label='')
     ticket      = forms.IntegerField(widget=forms.widgets.HiddenInput)
+
+
+class ModerationReturnMessageForm(forms.Form):
+    custom      = forms.CharField(widget=forms.Textarea,
+                                  required=False,
+                                  label='Custom message')
+    
     
 def __define_moderation_message_class(name, choices):
     return type(name,

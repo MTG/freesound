@@ -9,9 +9,8 @@ from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
-import logging
 from utils.locations import locations_decorator
-import os
+import os, logging
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -149,7 +148,7 @@ class Sound(SocialModel):
         username_slug =  slugify(self.user.username)
         return "%d__%s__%s.%s" % (self.id, username_slug, filename_slug, self.type)
     
-    @locations_decorator
+    @locations_decorator()
     def locations(self):
         id_folder = str(self.id/1000)
         return dict(
@@ -303,7 +302,7 @@ class Pack(SocialModel):
         username_slug =  slugify(self.user.username)
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
-    @locations_decorator
+    @locations_decorator()
     def locations(self):
         return dict(
                     sendfile_url = settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,

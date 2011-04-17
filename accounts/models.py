@@ -47,7 +47,7 @@ class Profile(SocialModel):
     def get_absolute_url(self):
         return ('account', (smart_unicode(self.user.username),))
     
-    @locations_decorator
+    @locations_decorator(cache=False)
     def locations(self):
         id_folder = str(self.user.id/1000)
         return dict(

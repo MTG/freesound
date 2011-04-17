@@ -164,6 +164,8 @@ PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
 
 STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '_sandbox/stereofy/stereofy'))
 
+SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
+
 # leave at bottom starting here!
 from local_settings import * #@UnusedWildImport
 

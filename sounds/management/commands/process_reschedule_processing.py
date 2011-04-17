@@ -1,13 +1,11 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import NoArgsCommand
 from sounds.models import Sound
-from datetime import datetime
 
-class Command(BaseCommand):
+class Command(NoArgsCommand):
     args = '<num_days>'
-    help = 'Take all sounds that have been sitting the processing queue marked as "being processed" and reschedule them'
+    help = 'Take all sounds that are sitting the processing queue marked as "being processed" and reschedule them'
 
-    def handle(self, *args, **options):
-        num_days = int(args[0])
-        for sound in Sound.objects.filter(processing_state="PR", processing_date__lt=datetime.now()-datetime.timedelta(num_days)):
+    def handle(self, **options):
+        for sound in Sound.objects.filter(processing_state="PR"):
             sound.processing_state = "PE"
             sound.save()

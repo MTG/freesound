@@ -1,6 +1,7 @@
 from django import forms
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
+from utils.mail import send_mail_template
 import re
 
 class GeotaggingForm(forms.Form):
@@ -31,7 +32,7 @@ class SoundDescriptionForm(forms.Form):
 
 
 class RemixForm(forms.Form):
-    sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput())
+    sources = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(), required=False)
     
     def __init__(self, sound, *args, **kwargs):
         self.sound = sound
@@ -42,11 +43,10 @@ class RemixForm(forms.Form):
         sources = re.sub(",+", ",", sources)
         sources = re.sub("^,+", "", sources)
         sources = re.sub(",+$", "", sources)
-        
-        sources = set([int(source) for source in sources.split(",")])
-        
-        if len(sources) == 0:
-            raise forms.ValidationError('You did not specify any sources')
+        if len(sources) > 0: 
+            sources = set([int(source) for source in sources.split(",")])
+        else:
+            sources = set()
         
         return sources
         
@@ -64,12 +64,34 @@ class RemixForm(forms.Form):
         
         for id in old_sources - new_sources: # in old but not in new
             try:
-                self.sound.sources.remove(Sound.objects.get(id=id))
+                source = Sound.objects.get(id=id)
+                self.sound.sources.remove(source)
+                send_mail_template(
+                    u'Sound removed as remix source', 'sounds/email_remix_update.txt',
+                    {'source': source, 'action': 'removed', 'remix': self.sound},
+                    None, source.user.email
+                )
             except Sound.DoesNotExist:
                 pass
+            except Exception, e:
+                # Report any other type of exception and fail silently
+                print ("Problem removing source from remix or sending mail: %s" \
+                     % e)
              
         for id in new_sources - old_sources: # in new but not in old
-            self.sound.sources.add(Sound.objects.get(id=id))
+            source = Sound.objects.get(id=id)
+            self.sound.sources.add(source)
+            try:
+                send_mail_template(
+                    u'Sound added as remix source', 'sounds/email_remix_update.txt',
+                    {'source': source, 'action': 'added', 'remix': self.sound},
+                    None, source.user.email
+                )
+            except Exception, e:
+                # Report any exception but fail silently
+                print ("Problem sending mail about source added to remix: %s" \
+                     % e)
+
 
         #print "after save", ",".join([str(source.id) for source in self.sound.sources.all()])
         

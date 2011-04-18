@@ -110,10 +110,23 @@ def sound(request, username, sound_id):
     if request.method == "POST":
         form = CommentForm(request, request.POST)
         if form.is_valid():
-            sound.comments.add(Comment(content_object=sound, user=request.user, comment=form.cleaned_data["comment"]))
+            comment_text=form.cleaned_data["comment"]
+            sound.comments.add(Comment(content_object=sound, user=request.user, comment=comment_text))
 
             sound.num_comments = sound.num_comments + 1
-            sound.save() 
+            sound.save()
+            try:
+                # send the user an email to notify him of the new comment!
+                print "Gonna send a mail to this user: %s" % request.user.email 
+                send_mail_template(
+                    u'You have a new comment.', 'sounds/email_new_comment.txt', 
+                    {'sound': sound, 'user': request.user, 'comment': comment_text}, 
+                    None, sound.user.email
+                )
+            except Exception, e:
+                # if the email sending fails, ignore...
+                print ("Problem sending email to '%s' about new comment: %s" \
+                    % (request.user.email, e))
             
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -242,10 +255,14 @@ def sound_edit_sources(request, username, sound_id):
     current_sources = sound.sources.all()
     sources_string = ",".join(map(str, [source.id for source in current_sources])) 
     
-    form = RemixForm(sound, request.POST or None, initial=dict(sources=sources_string))
-    if form.is_valid():
-        form.save()
-    
+    if request.method == 'POST':
+        form = RemixForm(sound, request.POST)
+        if form.is_valid():
+            form.save()
+        else:
+           print ("Form is not valid!!!!!!! %s" % ( form.errors))
+    else:
+        form = RemixForm(sound,initial=dict(sources=sources_string))    
     return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
    
     

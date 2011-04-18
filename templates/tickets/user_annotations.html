@@ -9,10 +9,11 @@
 	<h2>User annotations</h2>
 	{% for annotation in annotations %}
 		<div class="user-annotation">
-			<p>{{ annotation.sender }} wrote:
-			<p>{{ annotation.text }}
+			<p><a href="{% url account annotation.sender.username %}">{{ annotation.sender }}</a> wrote:
+			<p class="message-list-message">{{ annotation.text|safe }}
 		</div>
 	{% endfor %}
+	<form>
 	{{ form.as_p }}
 	<input type="button" 
 		   value="submit" 
@@ -22,4 +23,5 @@
     		$.post('{% url tickets-user-annotations user.id %}', 
     			   { text: text },
     			   function(data) { $('#user-annotations-section').html(data); });">
+    </form>
 </div>

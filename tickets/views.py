@@ -41,13 +41,24 @@ def ticket(request, ticket_key):
     else:
         form = __get_tc_form(request, False)
     return render_to_response('tickets/ticket.html', 
-                              locals(), context_instance=RequestContext(request))
+                              locals(), 
+                              context_instance=RequestContext(request))
+    
+    
+@login_required
+def sound_ticket_messages(request, ticket_key):
+    ticket = get_object_or_404(Ticket, key=ticket_key)
+    return render_to_response('tickets/message_list.html', 
+                              locals(), 
+                              context_instance=RequestContext(request))
+    
     
 @login_required
 def tickets(request):
     tickets = Ticket.objects.all()
     return render_to_response('tickets/tickets.html', 
-                              locals(), context_instance=RequestContext(request))
+                              locals(), 
+                              context_instance=RequestContext(request))
 
 
 def new_contact_ticket(request):
@@ -171,7 +182,7 @@ def moderation_assigned(request, user_id):
             
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket",False))
             action = mod_sound_form.cleaned_data.get("action")
-            msg = msg_form.cleaned_data.get("message", False)
+            msg = msg_form.cleaned_data.get("message", False).replace('\n', '<br>')
             
             if msg:
                 tc = TicketComment(sender=ticket.assignee, 
@@ -219,7 +230,7 @@ def user_annotations(request, user_id):
         if form.is_valid():
             ua = UserAnnotation(sender=request.user, 
                                 user=user,
-                                text=form.cleaned_data['text'])
+                                text=form.cleaned_data['text'].replace('\n', '<br>'))
             ua.save()
     else:
         form = UserAnnotationForm()

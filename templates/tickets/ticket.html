@@ -41,12 +41,7 @@
 		{% endif %}
 	
 	
-	{% for message in ticket.messages.all reversed %}
-		<p>{{ message.created }} - 
-			{% if message.sender %} <a href="{% url account message.sender.username %}">{{ message.sender.username }}</a>
-		    {% else %} Anonymous {% endif %} wrote: 
-		<p>{{ message.text }}
-	{% endfor %}
+	{% include 'tickets/message_list.html' %}
 	
 	<h3>Add new message to the ticket</h3>
 	<form method="post" action=".">

@@ -1767,3 +1767,31 @@ ul.messages {
 .user-annotations-info img {
 	padding-right: 4px;
 }
+.alternate-row-even td {
+	background-color: #fafafa;
+}
+.alternate-row-odd td {
+	background-color: #fff;
+}
+#moderation-queue-left,
+#moderation-queue-right {
+	width: 450px;
+	float: left;
+}
+#moderation-queue-left {
+	margin-right: 20px;
+}
+#moderation-queue textarea {
+	height: 80px;
+	width: 400px;	
+}
+.message-list-message {
+	margin-left: 30px;
+	background-color: #fafafa;
+	padding: 5px;	
+}
+#assigned-tickets-table-wrapper {
+	height: 400px;	
+	overflow-x: hidden;
+	overflow-y: auto;
+}

@@ -31,7 +31,8 @@ class SoundModerationForm(forms.Form):
 
 class ModerationMessageForm(forms.Form):
     message      = forms.CharField(widget=forms.Textarea,
-                                   required=False)
+                                   required=False,
+                                   label='')
 
 class UserAnnotationForm(forms.Form):
     text = forms.CharField(widget=forms.Textarea,

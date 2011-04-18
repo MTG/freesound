@@ -34,6 +34,14 @@
        		elem.onclick = func;
     	}
     }
+    
+    var uploader_id = 0;
+    
+    var set_uploader_id = function(upldr_id) {
+    	uploader_id = upldr_id;
+    	loadUrl = '{% url tickets-user-annotations 0 %}'.replace('0', ''+upldr_id);
+    	$('#user-annotations-section').load(loadUrl);
+    }
 
     $(document).ready(function() {
     	attach($("#moderation-decision-form input").filter( "[value='Approve']" ).get(0),
@@ -43,7 +51,31 @@
         attach($("#moderation-decision-form input").filter( "[value='Delete']" ).get(0),
         		   switch_visibility('delete'));
     });
-
+    
+    // Implementation of CSRF for ajax post requests
+	$.ajaxSetup({ 
+		beforeSend: function(xhr, settings) {
+		    function getCookie(name) {
+		        var cookieValue = null;
+		        if (document.cookie && document.cookie != '') {
+		            var cookies = document.cookie.split(';');
+		            for (var i = 0; i < cookies.length; i++) {
+		                var cookie = jQuery.trim(cookies[i]);
+		                // Does this cookie string begin with the name we want?
+		            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+		                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+		                break;
+		            }
+		        }
+		    }
+		    return cookieValue;
+		    }
+		    if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+		        // Only send the token to relative URLs i.e. locally.
+		        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+		    }
+		} 
+	});
 
 </script>
 {% endblock head %}
@@ -62,7 +94,8 @@
 		{% for ticket in moderator_tickets %}
 		<tr><td><a onclick="
 		    moderate('{% url tickets-sound-display ticket.content.object_id%}');
-		    $('#id_ticket').get(0).value={{ticket.id}}">
+		    $('#id_ticket').get(0).value={{ticket.id}};
+		    set_uploader_id({{ticket.sender.id}});">
 		    {{ticket.content.content_object.original_filename|truncate_string:28}}</a></td>
 		    <td>{{ticket.sender.username}}</td>
 		    <td>{{ticket.created|date:"d/m/Y" }}</td>
@@ -107,5 +140,9 @@
 	    <div style="clear:both"></div>
 	
 	
+
+
+
+<div id="user-annotations-section"></div>
 	
 {% endblock content %}

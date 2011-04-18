@@ -1,5 +1,5 @@
 from django import forms
-from models import Ticket
+from models import UserAnnotation
 from utils.forms import RecaptchaForm
 
 class UserMessageForm(forms.Form):
@@ -39,7 +39,7 @@ def __define_moderation_message_class(name, choices):
                      custom     = forms.CharField(widget=forms.Textarea,
                                                   required=False,
                                                   label='Custom message')))
-        
+
 ModerationDeleteMessageForm = \
     __define_moderation_message_class('ModerationDeleteMessageForm',
 [("""The sound has an incompatible format and can't be processed by
@@ -65,3 +65,10 @@ can and add as many details as you can think of.""",
 descriptive as you can and add as many details as you can think of.""",
 'Insufficient tags and description')])
 
+
+class UserAnnotationForm(forms.Form):
+    text = forms.CharField(widget=forms.Textarea,
+                           required=True,
+                           label='')
+    
+        

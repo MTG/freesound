@@ -62,4 +62,10 @@ class TicketComment(models.Model):
 
     class Meta:
         ordering = ("-created",)
+        
+
+class UserAnnotation(models.Model):
+    sender          = models.ForeignKey(User, related_name='sent_annotations')
+    user            = models.ForeignKey(User, related_name='annotations')
+    text            = models.TextField()
     

@@ -24,11 +24,11 @@ urlpatterns = patterns('',
         
     url(r'^moderation/assign/(?P<user_id>\d+)/$',
         moderation_assign_user,
-        name='tickets-moderation-asign-user'),
+        name='tickets-moderation-assign-user'),
         
     url(r'^moderation/assigned/(?P<user_id>\d+)/$',
         moderation_assigned,
-        name='tickets-moderation-asigned'),
+        name='tickets-moderation-assigned'),
         
     url(r'^moderation/sounds/(?P<sound_id>\d+)/display$', 
         direct_to_template, 
@@ -39,8 +39,9 @@ urlpatterns = patterns('',
         support_home,
         name='tickets-support-home'),
             
-    url(r'^moderation/testpanel/$',
-        test_moderation_panel),
+    url(r'^moderation/annotations/(?P<user_id>\d+)/$',
+        user_annotations,
+        name='tickets-user-annotations'),
         
     url(r'^(?P<ticket_key>[\w\d]+)/$', 
         ticket, 

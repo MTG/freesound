@@ -9,7 +9,7 @@ from forms import *
 from tickets import *
 from django.db import connection, transaction
 from django.contrib import messages
-
+from sounds.models import Sound
 
 def __get_contact_form(request, use_post=True):
     return __get_anon_or_user_form(request, AnonymousContactForm, UserContactForm, use_post)
@@ -149,7 +149,7 @@ def moderation_home(request):
     unsure_tickets = __get_unsure_sound_tickets()
     tardy_moderator_tickets = __get_tardy_moderator_tickets()
     tardy_user_tickets = __get_tardy_user_tickets()
-    return render_to_response('tickets/moderation_sounds.html', locals(), context_instance=RequestContext(request))
+    return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
 @login_required
 def moderation_assign_user(request, user_id):
@@ -188,18 +188,35 @@ def moderation_assigned(request, user_id):
     moderator_tickets=Ticket.objects.select_related().filter(assignee=user_id).exclude(status=TICKET_STATUS_CLOSED)
     return render_to_response('tickets/moderation_assigned.html',locals(),context_instance=RequestContext(request))
 
+
+@login_required
+def user_annotations(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    num_sounds_ok = Sound.objects.filter(user=user, moderation_state="OK").count()
+    num_sounds_pending = Sound.objects.filter(user=user).exclude(moderation_state="OK").count()
+    if request.method == 'POST':
+        form = UserAnnotationForm(request.POST)
+        if form.is_valid():
+            ua = UserAnnotation(sender=request.user, 
+                                user=user,
+                                text=form.cleaned_data['text'])
+            ua.save()
+    else:
+        form = UserAnnotationForm()
+    annotations = UserAnnotation.objects.filter(user=user)
+    return render_to_response('tickets/user_annotations.html', 
+                              locals(),
+                              context_instance=RequestContext(request))
+
 @login_required
 def support_home(request):
-    return HttpResponse('support')
-
+    return HttpResponse('TODO')
 
 @login_required
 def test_moderation_panel(request):
     mod_sound_form = SoundModerationForm()
     delete_msg_form = ModerationDeleteMessageForm()
     defer_msg_form = ModerationDeferMessageForm()
-    print delete_msg_form
-    print defer_msg_form
     return render_to_response('tickets/moderation_panel.html', 
                               locals(), 
                               context_instance=RequestContext(request))

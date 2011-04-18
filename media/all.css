@@ -1758,3 +1758,10 @@ ul.messages {
 	font-size: 0.8em;
 	height: 80px;
 }
+.user-annotations-info img,
+.user-annotations-info p {
+	float: left;
+}
+.user-annotations-info img {
+	padding-right: 4px;
+}

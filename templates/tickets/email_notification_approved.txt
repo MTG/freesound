@@ -1,0 +1,16 @@
+{% extends "email_base.txt" %}
+
+{% load absurl %}
+
+{% block salutation %}{% if user_to %}{{user_to.username}}{% else %}X{% endif %}{% endblock %}
+
+{% block body %}
+The sound {{ ticket.content.content_object.original_filename }} has been 
+approved by a Freesound moderator and is now available in Freesound.
+
+You can access the sound's page here:
+
+	{% absurl sound ticket.content.content_object.user ticket.content.object_id  %}
+
+Thank you for adding to Freesound!
+{% endblock %}

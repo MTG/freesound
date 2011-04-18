@@ -33,11 +33,12 @@ def ticket(request, ticket_key):
         form = __get_tc_form(request)
         if form.is_valid():
             tc = TicketComment()
-            tc.text = form.cleaned_data['message']
+            tc.text = form.cleaned_data['message'].replace('\n', '<br>')  
             if request.user.is_authenticated():
                 tc.sender = request.user
             tc.ticket = ticket
             tc.save()
+            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
     else:
         form = __get_tc_form(request, False)
     return render_to_response('tickets/ticket.html', 
@@ -182,7 +183,9 @@ def moderation_assigned(request, user_id):
             
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket",False))
             action = mod_sound_form.cleaned_data.get("action")
-            msg = msg_form.cleaned_data.get("message", False).replace('\n', '<br>')
+            msg = msg_form.cleaned_data.get("message", False)
+            if msg:
+                msg = msg.replace('\n', '<br>')
             
             if msg:
                 tc = TicketComment(sender=ticket.assignee, 
@@ -195,17 +198,28 @@ def moderation_assigned(request, user_id):
                 ticket.status=TICKET_STATUS_CLOSED
                 ticket.content.content_object.moderation_state="OK"
                 ticket.content.content_object.save()
+                ticket.save()
+                if msg:
+                    ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED_BUT)
+                else:
+                    ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED)
             elif action=="Defer":
                 ticket.status=TICKET_STATUS_DEFERRED
+                ticket.save()
+                # only send a notification if a message was added
+                if msg:
+                    ticket.send_notification_emails(Ticket.NOTIFICATION_QUESTION)
             elif action=="Return":
                 ticket.assignee=None
                 ticket.status=TICKET_STATUS_ACCEPTED
+                # no notification here
             elif action=="Delete":
                 ticket.content.content_object.delete()
                 ticket.content.delete()
                 ticket.content = None
                 ticket.status=TICKET_STATUS_CLOSED
-            ticket.save()
+                ticket.save()
+                ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED)
         else:
             clear_forms = False
     if clear_forms:

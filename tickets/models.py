@@ -4,8 +4,10 @@ from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.encoding import smart_unicode
-import uuid
+import uuid, logging
+from utils.mail import send_mail_template
 
+logger = logging.getLogger("web")
 
 class Queue(models.Model):
     name            = models.CharField(max_length=128)
@@ -37,6 +39,36 @@ class Ticket(models.Model):
     assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True)
     queue           = models.ForeignKey(Queue, related_name='tickets')
     content         = models.ForeignKey(LinkedContent, null=True)
+
+    NOTIFICATION_QUESTION     = 'tickets/email_notification_question.txt'
+    NOTIFICATION_APPROVED     = 'tickets/email_notification_approved.txt'
+    NOTIFICATION_APPROVED_BUT = 'tickets/email_notification_approved_but.txt'
+    NOTIFICATION_DELETED      = 'tickets/email_notification_deleted.txt'
+    NOTIFICATION_UPDATED      = 'tickets/email_notification_updated.txt'
+
+    def send_notification_emails(self, notification_type):
+        ticket = self
+        # last message from uploader (we assume self.sender is the uploader)
+        last_message = TicketComment.objects.filter(ticket=ticket).order_by('-id')[0]
+        if last_message.sender == None or last_message.sender == self.sender:
+            #send message to assigned moderator
+                # There is probably always a moderator assigned, but ok.. let's just check
+            email_addr = self.assignee.email if self.assignee else False
+            user_to = self.assignee if self.assignee else False
+        # last message by someone who didn't start the ticket
+        else:
+            # send message to user
+            email_addr = self.sender.email if self.sender else self.sender_email
+            user_to = self.sender if self.sender else False
+        if not email_addr:
+            logger.error('E-mail address to send notifications could not be determined. What gives?')
+            return
+        send_mail_template(u'A freesound moderator handled your upload.', 
+                           notification_type, 
+                           locals(), 
+                           'no-reply@freesound.org', 
+                           email_addr)
+        
 
     @models.permalink
     def get_absolute_url(self):

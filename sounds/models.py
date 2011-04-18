@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, connection
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
 from general.models import OrderedModel, SocialModel
@@ -10,7 +10,8 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging
+import os, logging, random
+        
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -48,22 +49,13 @@ class SoundManager(models.Manager):
                 ) as X order by created desc limit %d;""" % (period, num_sounds))
     
     def random(self):
-        from django.db import connection
-        import random
         
-        if settings.DEBUG:
-            sound_count = self.all().count()
-        else:
-            sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
+        sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
         
-
         if sound_count:
             offset = random.randint(0, sound_count - 1)
             cursor = connection.cursor() #@UndefinedVariable
-            if settings.DEBUG:
-                cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
-            else:
-                cursor.execute("select id from sounds_sound where processing_state = 'OK' and moderation_state = 'OK' offset %d limit 1" % offset)
+            cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
             
             return cursor.fetchone()[0]
         else:

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from django.conf.urls.defaults import patterns, url
-from views import ticket, tickets, new_contact_ticket, \
-    moderation_home, moderation_sounds, moderation_support, \
-    moderation_sounds_assign_user, test_moderation_panel
+from django.views.generic.simple import direct_to_template
+from views import *
 
 urlpatterns = patterns('',
 
@@ -15,28 +14,42 @@ urlpatterns = patterns('',
         new_contact_ticket, 
         name='tickets-contact'),
         
+    url(r'^$',
+        tickets_home,
+        name='tickets-home'),
+        
     url(r'^moderation/$',
         moderation_home,
-        name='tickets-moderation'),
+        name='tickets-moderation-home'),
         
-    url(r'^moderation/sounds/$',
-        moderation_sounds,
-        name='tickets-moderation-sounds'),
+    url(r'^moderation/assign/(?P<user_id>\d+)/$',
+        moderation_assign_user,
+        name='tickets-moderation-assign-user'),
         
-    url(r'^moderation/sounds/assign/(?P<user_id>\d+)/$',
-        moderation_sounds_assign_user,
-        name='tickets-moderation-sounds-asign-user'),
+    url(r'^moderation/assigned/(?P<user_id>\d+)/$',
+        moderation_assigned,
+        name='tickets-moderation-assigned'),
         
-    url(r'^moderation/support/$',
-        moderation_support,
-        name='tickets-moderation-support'),
+    url(r'^moderation/sounds/(?P<sound_id>\d+)/display$', 
+        direct_to_template, 
+        {'template':'tickets/moderation_sound_display.html'}, 
+        name="tickets-sound-display"),
+        
+    url(r'^support/$',
+        support_home,
+        name='tickets-support-home'),
             
-    url(r'^moderation/testpanel/$',
-        test_moderation_panel),
+    url(r'^moderation/annotations/(?P<user_id>\d+)/$',
+        user_annotations,
+        name='tickets-user-annotations'),
         
     url(r'^(?P<ticket_key>[\w\d]+)/$', 
         ticket, 
         name='tickets-ticket'),
+    
+    url(r'^(?P<ticket_key>[\w\d]+)/messages/$', 
+        sound_ticket_messages, 
+        name='tickets-ticket-messages'),
         
     url(r'^$',
         tickets, 

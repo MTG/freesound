@@ -604,6 +604,18 @@ body#home h3 {
      display:none;
 }
 
+.sound_list_moderation .sound_stars {
+    display:none;
+}
+.sound_list_moderation .sample_information {
+    display:none;
+}
+.sound_list_moderation .sample_player_small{
+  /*  height:100px;*/
+}
+
+
+
 /* Single Sample Page
 ------------------------------------------------------*/
 
@@ -1707,10 +1719,6 @@ ul.messages {
 /* Moderation interface 
 ------------------------------------------------------*/
 
-.moderation-user-list-wrapper {
-	position: relative;
-	/*overflow: hidden;*/
-}
 .moderation-user-list img {
 	position: relative;
 	top: 5px;
@@ -1726,19 +1734,64 @@ ul.messages {
 	height: 75px;
 	width: 75px;
 }
-.moderation-user-list-user-left {
-	float: left;
-	height: 64px;
+#moderation_form textarea{
+    height:80px;  
 }
-
-
 #moderation-delete-form,
-#moderation-defer-form {
+#moderation-defer-form,
+#moderation-return-form {
 	position: absolute;
 	top: 0px;
 	left: 0px;
 }
 #moderation-message-form-wrapper {
 	position: relative;
-	height: 300px;
+	height: 230px;
+}
+.moderation-unsure-ticket-player,
+.moderation-unsure-ticket-info {
+	float: left;	
+}
+.moderation-unsure-ticket-info {
+	padding-left: 5px;
+	width: 700px;
+}
+.moderation-unsure-ticket {
+	font-size: 0.8em;
+	height: 80px;
+}
+.user-annotations-info img,
+.user-annotations-info p {
+	float: left;
+}
+.user-annotations-info img {
+	padding-right: 4px;
+}
+.alternate-row-even td {
+	background-color: #fafafa;
+}
+.alternate-row-odd td {
+	background-color: #fff;
+}
+#moderation-queue-left,
+#moderation-queue-right {
+	width: 450px;
+	float: left;
+}
+#moderation-queue-left {
+	margin-right: 20px;
+}
+#moderation-queue textarea {
+	height: 80px;
+	width: 400px;	
+}
+.message-list-message {
+	margin-left: 30px;
+	background-color: #fafafa;
+	padding: 5px;	
+}
+#assigned-tickets-table-wrapper {
+	height: 400px;	
+	overflow-x: hidden;
+	overflow-y: auto;
 }

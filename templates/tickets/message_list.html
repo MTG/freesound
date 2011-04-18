@@ -1,0 +1,7 @@
+{% for message in ticket.messages.all reversed %}
+	<p>{{ message.created }} - 
+		{% if message.sender %} <a href="{% url account message.sender.username %}">{{ message.sender.username }}</a>
+	    {% else %} Anonymous {% endif %} wrote: 
+	<p class="message-list-message">{{ message.text|safe }}</p>
+	<br>
+{% endfor %}

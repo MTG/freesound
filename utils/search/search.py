@@ -44,7 +44,6 @@ def convert_to_solr_document(sound):
 
     document["comment"] = [comment.comment for comment in sound.comments.all()]
     document["comments"] = sound.comments.count()
-
     
     document["waveform_path_m"] = sound.locations("display.wave.M.path") 
     document["waveform_path_l"] = sound.locations("display.wave.L.path")

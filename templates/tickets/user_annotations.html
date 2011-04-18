@@ -1,0 +1,27 @@
+<div class="user-annotations-wrapper">
+	<h2>User information</h2>
+	<div class="user-annotations-info">
+		<img src="{{ user.profile.locations.avatar.M.url }}"/>
+		<p><a href="{% url account user.username %}">{{ user.username }}</a>
+		<br>{{ num_sounds_ok }} sounds, {{ num_sounds_pending }} pending
+	</div>
+	<br style="clear: both;">
+	<h2>User annotations</h2>
+	{% for annotation in annotations %}
+		<div class="user-annotation">
+			<p><a href="{% url account annotation.sender.username %}">{{ annotation.sender }}</a> wrote:
+			<p class="message-list-message">{{ annotation.text|safe }}
+		</div>
+	{% endfor %}
+	<form>
+	{{ form.as_p }}
+	<input type="button" 
+		   value="submit" 
+		   onClick="
+		   	var text = $('#id_text').get(0).value;
+		   	console.debug(text); 
+    		$.post('{% url tickets-user-annotations user.id %}', 
+    			   { text: text },
+    			   function(data) { $('#user-annotations-section').html(data); });">
+    </form>
+</div>

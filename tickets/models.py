@@ -55,11 +55,17 @@ class TicketComment(models.Model):
     created         = models.DateTimeField(auto_now_add=True)
     ticket          = models.ForeignKey(Ticket, related_name='messages')
     moderator_only  = models.BooleanField()
-    
+
     def __unicode__(self):
         return u"<# Message - ticket_id: %s, ticket_key: %s>" % \
                     (self.ticket.id, self.ticket.key)
 
     class Meta:
         ordering = ("-created",)
+        
+
+class UserAnnotation(models.Model):
+    sender          = models.ForeignKey(User, related_name='sent_annotations')
+    user            = models.ForeignKey(User, related_name='annotations')
+    text            = models.TextField()
     

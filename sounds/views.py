@@ -255,10 +255,14 @@ def sound_edit_sources(request, username, sound_id):
     current_sources = sound.sources.all()
     sources_string = ",".join(map(str, [source.id for source in current_sources])) 
     
-    form = RemixForm(sound, request.POST or None, initial=dict(sources=sources_string))
-    if form.is_valid():
-        form.save()
-    
+    if request.method == 'POST':
+        form = RemixForm(sound, request.POST)
+        if form.is_valid():
+            form.save()
+        else:
+           print ("Form is not valid!!!!!!! %s" % ( form.errors))
+    else:
+        form = RemixForm(sound,initial=dict(sources=sources_string))    
     return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
    
     

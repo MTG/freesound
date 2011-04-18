@@ -89,6 +89,7 @@
     $(function() {
         moderate('{% url tickets-sound-display moderator_tickets.0.content.object_id %}');
         $('#id_ticket').get(0).value={{moderator_tickets.0.id}}
+        set_uploader_id({{moderator_tickets.0.sender.id}})
     });
     
 </script>
@@ -129,30 +130,9 @@
             			<h4>Moderation action</h4>
             			{{ mod_sound_form.as_p }}
             		</div>
-
-            		<div id="moderation-message-form-wrapper">
-
-            			<div style="visibility: hidden;" id="moderation-delete-form">
-            				<h4>Delete messages</h4>
-            				<br>
-            				{{ delete_msg_form.as_p }}
-            			</div>
-
-            			<div style="visibility: visible;" id="moderation-defer-form">
-            				<h4>Defer messages</h4>
-            				<br>
-            				{{ defer_msg_form.as_p }}
-            			</div>
-            			
-            			
-            				<div style="visibility: hidden;" id="moderation-return-form">
-                				<h4>Return message</h4>
-                				<br>
-                				{{ return_msg_form.as_p }}
-                			</div>
-                        
-
-            		</div>
+            		
+            		{% include 'tickets/moderation_options.html' %}
+       				{{ msg_form.as_p }}                        
 
             		<input type="submit" value="send" />
 

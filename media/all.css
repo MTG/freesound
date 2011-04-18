@@ -1734,15 +1734,19 @@ ul.messages {
 	height: 75px;
 	width: 75px;
 }
+#moderation_form textarea{
+    height:80px;  
+}
 #moderation-delete-form,
-#moderation-defer-form {
+#moderation-defer-form,
+#moderation-return-form {
 	position: absolute;
 	top: 0px;
 	left: 0px;
 }
 #moderation-message-form-wrapper {
 	position: relative;
-	height: 210px;
+	height: 230px;
 }
 .moderation-unsure-ticket-player,
 .moderation-unsure-ticket-info {
@@ -1762,7 +1766,4 @@ ul.messages {
 }
 .user-annotations-info img {
 	padding-right: 4px;
-}
-#moderation_form textarea{
-    height:80px;  
 }

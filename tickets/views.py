@@ -165,55 +165,48 @@ def moderation_assigned(request, user_id):
     clear_forms = True
     if request.method == 'POST':
         mod_sound_form = SoundModerationForm(request.POST)
-        delete_msg_form = ModerationDeleteMessageForm(request.POST)
-        defer_msg_form = ModerationDeferMessageForm(request.POST) 
-        return_msg_form = ModerationReturnMessageForm(request.POST) 
+        msg_form = ModerationMessageForm(request.POST) 
         
-        if mod_sound_form.is_valid() and \
-            delete_msg_form.is_valid() and \
-            defer_msg_form.is_valid() and\
-            return_msg_form.is_valid():
+        if mod_sound_form.is_valid() and msg_form.is_valid():
             
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket",False))
             action = mod_sound_form.cleaned_data.get("action")
+            msg = msg_form.cleaned_data.get("message", False)
+            
+            if msg:
+                tc = TicketComment(sender=ticket.assignee, 
+                                   text=msg, 
+                                   ticket=ticket, 
+                                   moderator_only=(True if action == 'Defer' else False))
+                tc.save()
+                    
             if action=="Approve":
-                ticket.content.content_object.moderation_state="OK"
-                msg = TicketComment(sender=ticket.assignee, \
-                    text=defer_msg_form.cleaned_data.get("predefined") ,ticket=ticket, moderator_only=False)
-                msg.save()
                 ticket.status=TICKET_STATUS_CLOSED
+                ticket.content.content_object.moderation_state="OK"
+                ticket.content.content_object.save()
             elif action=="Defer":
-                msg_text = defer_msg_form.cleaned_data.get("predefined") + " \n " + defer_msg_form.cleaned_data.get("custom")
-                msg = TicketComment(sender=ticket.assignee, \
-                    text=msg_text,ticket=ticket, moderator_only=False)
-                msg.save()
                 ticket.status=TICKET_STATUS_DEFERRED
             elif action=="Return":
-                msg_text = return_msg_form.cleaned_data.get("custom")
-                msg = TicketComment(sender=ticket.assignee, \
-                    text=msg_text,ticket=ticket, moderator_only=True)
-                msg.save()
                 ticket.assignee=None
-                ticket.status=TICKET_STATUS_DEFERRED
+                ticket.status=TICKET_STATUS_ACCEPTED
             elif action=="Delete":
-                msg = TicketComment(sender=ticket.assignee, \
-                    text=delete_msg_form.cleaned_data.get("predefined") ,ticket=ticket, moderator_only=False)
-                msg.save()
                 ticket.content.content_object.delete()
                 ticket.content.delete()
                 ticket.content = None
                 ticket.status=TICKET_STATUS_CLOSED
-                pass
             ticket.save()
         else:
             clear_forms = False
     if clear_forms:
         mod_sound_form = SoundModerationForm()
-        delete_msg_form = ModerationDeleteMessageForm()
-        defer_msg_form = ModerationDeferMessageForm()
-        return_msg_form = ModerationReturnMessageForm()
-    moderator_tickets=Ticket.objects.select_related().filter(assignee=user_id).exclude(status=TICKET_STATUS_CLOSED)
-    return render_to_response('tickets/moderation_assigned.html',locals(),context_instance=RequestContext(request))
+        msg_form = ModerationMessageForm()
+    moderator_tickets = Ticket.objects.select_related() \
+                            .filter(assignee=user_id) \
+                            .exclude(status=TICKET_STATUS_CLOSED)
+    moderation_texts = MODERATION_TEXTS
+    return render_to_response('tickets/moderation_assigned.html',
+                              locals(),
+                              context_instance=RequestContext(request))
 
 
 @login_required

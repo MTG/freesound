@@ -265,7 +265,10 @@ class Sound(SocialModel):
             if self.tags.filter(tag__name=tag).count() == 0:
                 (tag_object, created) = Tag.objects.get_or_create(name=tag) #@UnusedVariable
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
-                tagged_object.save()        
+                tagged_object.save()     
+                
+    def is_sound(self):
+        return True   
     
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

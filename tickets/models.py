@@ -49,8 +49,9 @@ class Ticket(models.Model):
     def send_notification_emails(self, notification_type):
         ticket = self
         # last message from uploader (we assume self.sender is the uploader)
-        last_message = TicketComment.objects.filter(ticket=ticket).order_by('-id')[0]
-        if last_message.sender == None or last_message.sender == self.sender:
+        messages = TicketComment.objects.filter(ticket=ticket).order_by('-id')
+        last_message = messages[0] if messages else False
+        if last_message and (last_message.sender == None or last_message.sender == self.sender):
             #send message to assigned moderator
                 # There is probably always a moderator assigned, but ok.. let's just check
             email_addr = self.assignee.email if self.assignee else False

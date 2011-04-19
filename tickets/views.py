@@ -28,19 +28,64 @@ def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
         
 
 def ticket(request, ticket_key):
+    clean_status_forms = True
+    clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
     if request.method == 'POST':
-        form = __get_tc_form(request)
-        if form.is_valid():
+        tc_form = __get_tc_form(request)
+        if tc_form.is_valid():
             tc = TicketComment()
-            tc.text = form.cleaned_data['message'].replace('\n', '<br>')  
-            if request.user.is_authenticated():
-                tc.sender = request.user
-            tc.ticket = ticket
-            tc.save()
-            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
-    else:
-        form = __get_tc_form(request, False)
+            tc_text = tc_form.cleaned_data.get('message', False)
+            if tc_text:
+                tc.text = tc_text.replace('\n', '<br>')  
+                if request.user.is_authenticated():
+                    tc.sender = request.user
+                tc.ticket = ticket
+                tc.save()
+                ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
+        else:
+            clean_comment_form = False
+            ticket_form = TicketModerationForm(request.POST)
+            sound_form = SoundStateForm(request.POST)
+            if ticket_form.is_valid() and sound_form.is_valid():
+                clean_status_forms = True
+                clean_comment_form = True
+                sound_state = sound_form.cleaned_data.get('state')
+                if sound_state == 'DE':
+                    if ticket.content:
+                        ticket.content.content_object.delete()
+                        ticket.content.delete()
+                        ticket.content = None
+                    ticket.status = TICKET_STATUS_CLOSED
+                    tc = TicketComment(sender=ticket.assignee, 
+                                       text="Moderator %s deleted the sound and closed the ticket" % request.user, 
+                                       ticket=ticket, 
+                                       moderator_only=False)
+                    tc.save()
+                    ticket.send_notification_emails(ticket.NOTIFICATION_DELETED)
+                else:
+                    if ticket.content:
+                        ticket.content.content_object.moderation_state = sound_state
+                        ticket.content.content_object.save()
+                    ticket.status = ticket_form.cleaned_data.get('status')
+                    tc = TicketComment(sender=ticket.assignee, 
+                                       text="Moderator %s set the sound to %s and the ticket to %s." % \
+                                                (request.user, 
+                                                 'pending' if sound_state == 'PE' else sound_state, 
+                                                 ticket.status), 
+                                       ticket=ticket, 
+                                       moderator_only=False)
+                    tc.save()
+                    ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
+                ticket.save()
+                
+    if clean_status_forms:
+        ticket_form = TicketModerationForm(initial={'status': ticket.status})
+        sound_form = SoundStateForm(initial={'state': 
+                                             ticket.content.content_object.moderation_state \
+                                             if ticket.content else 'DE'})
+    if clean_comment_form:
+        tc_form = __get_tc_form(request, False)
     return render_to_response('tickets/ticket.html', 
                               locals(), 
                               context_instance=RequestContext(request))
@@ -184,6 +229,7 @@ def moderation_assigned(request, user_id):
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket",False))
             action = mod_sound_form.cleaned_data.get("action")
             msg = msg_form.cleaned_data.get("message", False)
+            moderator_only = msg_form.cleaned_data.get("moderator_only", False)
             if msg:
                 msg = msg.replace('\n', '<br>')
             
@@ -191,7 +237,7 @@ def moderation_assigned(request, user_id):
                 tc = TicketComment(sender=ticket.assignee, 
                                    text=msg, 
                                    ticket=ticket, 
-                                   moderator_only=(True if action == 'Defer' else False))
+                                   moderator_only=moderator_only)
                 tc.save()
                     
             if action=="Approve":
@@ -214,12 +260,14 @@ def moderation_assigned(request, user_id):
                 ticket.status=TICKET_STATUS_ACCEPTED
                 # no notification here
             elif action=="Delete":
-                ticket.content.content_object.delete()
-                ticket.content.delete()
-                ticket.content = None
+                ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED)
+                # to prevent a crash if the form is resubmitted
+                if ticket.content:
+                    ticket.content.content_object.delete()
+                    ticket.content.delete()
+                    ticket.content = None
                 ticket.status=TICKET_STATUS_CLOSED
                 ticket.save()
-                ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED)
         else:
             clear_forms = False
     if clear_forms:

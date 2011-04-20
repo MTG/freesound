@@ -29,6 +29,7 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
+from utils.search.search import add_sound_to_solr
 import datetime
 import os
 
@@ -168,7 +169,7 @@ def sound_edit(request, username, sound_id):
             data = description_form.cleaned_data
             sound.set_tags(data["tags"])
             sound.description = data["description"]
-            sound.save()
+            __save_and_add_to_solr(sound)
             invalidate_template_cache("sound_header", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -185,7 +186,7 @@ def sound_edit(request, username, sound_id):
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
                 if sound.pack:
                     sound.pack.is_dirty = True
-                    sound.pack.save()
+                    __save_and_add_to_solr(sound)
                 sound.pack = pack
             else:
                 new_pack = data["pack"]
@@ -198,7 +199,7 @@ def sound_edit(request, username, sound_id):
                         new_pack.is_dirty = True
                         new_pack.save()
                     sound.pack = new_pack
-            sound.save()
+            __save_and_add_to_solr(sound)
             invalidate_template_cache("sound_header", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -212,7 +213,7 @@ def sound_edit(request, username, sound_id):
                 if sound.geotag:
                     geotag = sound.geotag.delete()
                     sound.geotag = None
-                    sound.save()
+                    __save_and_add_to_solr(sound)
             else:
                 if sound.geotag:
                     sound.geotag.lat = data["lat"]
@@ -220,7 +221,7 @@ def sound_edit(request, username, sound_id):
                     sound.geotag.zoom = data["zoom"]
                 else:
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
-                    sound.save()
+                    __save_and_add_to_solr(sound)
             
             invalidate_template_cache("sound_footer", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())    
@@ -234,7 +235,7 @@ def sound_edit(request, username, sound_id):
         license_form = LicenseForm(request.POST, prefix="license")
         if license_form.is_valid():
             sound.license = license_form.cleaned_data["license"]
-            sound.save()
+            __save_and_add_to_solr(sound)
             invalidate_template_cache("sound_footer", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -244,6 +245,9 @@ def sound_edit(request, username, sound_id):
     
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
 
+def __save_and_add_to_solr(sound):
+    sound.save()
+    add_sound_to_solr(sound)
 
 @login_required
 def sound_edit_sources(request, username, sound_id):

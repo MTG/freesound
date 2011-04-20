@@ -10,6 +10,7 @@ from tickets import *
 from django.db import connection, transaction
 from django.contrib import messages
 from sounds.models import Sound
+from utils.search.search import add_sound_to_solr
 
 def __get_contact_form(request, use_post=True):
     return __get_anon_or_user_form(request, AnonymousContactForm, UserContactForm, use_post)

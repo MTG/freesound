@@ -70,6 +70,9 @@ def ticket(request, ticket_key):
                 else:
                     if ticket.content:
                         ticket.content.content_object.moderation_state = sound_state
+                        if sound_state == "OK":
+                            add_sound_to_solr(ticket.content.content_object)
+                            
                         ticket.content.content_object.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
                     tc = TicketComment(sender=ticket.assignee,
@@ -247,6 +250,7 @@ def moderation_assigned(request, user_id):
                 ticket.content.content_object.moderation_state="OK"
                 ticket.content.content_object.save()
                 ticket.save()
+                add_sound_to_solr(ticket.content.content_object)
                 if msg:
                     ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED_BUT)
                 else:

@@ -2,90 +2,93 @@
 {% load display_sound %}
 
 {% block title %}
-	Ticket {{ ticket.key }}
+    Ticket {{ ticket.key }}
 {% endblock title %}
 
 {% block content %}
-	<h1>Ticket #{{ ticket.id }} - {{ ticket.title }}</h1>
-	
-	<h3>Ticket details</h3>
-	<div id="ticket-details">
-		<ul id="ticket-details-left">
-			<li><em>created by</em>
-				 {% if ticket.sender %}
-			   	     <a href="{% url account ticket.sender.username %}">{{ ticket.sender.username }}</a>
-	             {% else %}
-				     anonymous
-			     {% endif %}</li>
-			<li><em>assigned to</em> 
-				 {% if ticket.assignee %}
-					 {{ ticket.assignee.username }}
-				 {% else %}
-				     no one
-				 {% endif %}</li>
-			<li><em>status is</em> {{ ticket.status|capfirst }}</li>
-			<li><em>queue is</em> {{ ticket.queue.name }}</li>
-		</ul>
-		<ul id="ticket-details-right">
-			<li><em>created on</em> {{ ticket.created }}</li>
-			<li><em>last modified on</em> {{ ticket.modified }}</li>
-			{% if ticket.content %}
-				<li><em>related to</em> {{ ticket.content.content_type }} {{ ticket.content.object_id }}  </li>
-			{% endif %}
-		</ul>
-		<br style="clear: both;">
-	</div>
-	
-	<div id="ticket-wrapper">
-		<div id="ticket-left">
-		
-			<h3>Messages</h3>
-			
-			{% include 'tickets/message_list.html' %}
-			
-			<h3>Add new message to the ticket</h3>
-			<div id="ticket-page-form">
-				<form method="post" action=".">
-					{% csrf_token %}
-					{{tc_form.as_p}}
-					<input type="submit" value="send" />
-				</form>
-			</div>
-		</div> <!-- /#ticket-left -->
-			
-		<div id="ticket-right">
-			
-			<h3>Ticket linked content</h3>
-			{% if ticket.content %}
-				{% if ticket.content.content_object.is_sound %}
-					<div class="sound_list_moderation">
-						<div class="sample_player_small">
-							{% display_sound ticket.content.content_object %}
-						</div>
-					</div>
-					<p>Sound's moderation state is set to <b>{% if ticket.content.content_object.moderation_state == 'PE' %}
-																Pending {% else %} OK {% endif %}</b>
-					<br>Sound's processing state is set to <b>{% if ticket.content.content_object.processing_state == 'PE' %}
-																Pending {% else %} OK {% endif %}</b>
-				{% else %}
-					<p>Don't know how to display this content type. 
-					(type: {{ ticket.content.content_type }}, 
-					 id: {{ ticket.content.object_id }})
-				{% endif %}
-			{% else %}
-				<p>No linked content
-			{% endif %}
-			
-			
-			<h3>Ticket controls</h3>
-			<form action="." method="post">{% csrf_token %}
-				{{ ticket_form.as_p }}
-				{% if ticket.content and ticket.content.content_object.is_sound %}
-					{{ sound_form.as_p }}
-				{% endif %}
-				<input type="submit" value="send" />
-			</form>
-		</div> <!-- /#ticket-right -->
-		<br style="clear: both;">
-	</div> <!-- /#ticket-wrapper -->
+    <h1>Ticket #{{ ticket.id }} - {{ ticket.title }}</h1>
+
+    <h3>Ticket details</h3>
+    <div id="ticket-details">
+        <ul id="ticket-details-left">
+            <li><em>created by</em>
+                 {% if ticket.sender %}
+                        <a href="{% url account ticket.sender.username %}">{{ ticket.sender.username }}</a>
+                 {% else %}
+                     anonymous
+                 {% endif %}</li>
+            <li><em>assigned to</em>
+                 {% if ticket.assignee %}
+                     {{ ticket.assignee.username }}
+                 {% else %}
+                     no one
+                 {% endif %}</li>
+            <li><em>status is</em> {{ ticket.status|capfirst }}</li>
+            <li><em>queue is</em> {{ ticket.queue.name }}</li>
+        </ul>
+        <ul id="ticket-details-right">
+            <li><em>created on</em> {{ ticket.created }}</li>
+            <li><em>last modified on</em> {{ ticket.modified }}</li>
+            {% if ticket.content %}
+                <li><em>related to</em> {{ ticket.content.content_type }} {{ ticket.content.object_id }}  </li>
+            {% endif %}
+        </ul>
+        <br style="clear: both;">
+    </div>
+
+    <div id="ticket-wrapper">
+        <div id="ticket-left">
+
+            <h3>Messages</h3>
+
+            {% include 'tickets/message_list.html' %}
+
+            <h3>Add new message to the ticket</h3>
+            <div id="ticket-page-form">
+                <form method="post" action=".">
+                    {% csrf_token %}
+                    {{tc_form.as_p}}
+                    <input type="submit" value="send" />
+                </form>
+            </div>
+        </div> <!-- /#ticket-left -->
+
+        <div id="ticket-right">
+
+            <h3>Ticket linked content</h3>
+            {% if ticket.content %}
+                {% if ticket.content.content_object.is_sound %}
+                    <div class="sound_list_moderation">
+                        <div class="sample_player_small">
+                            {% display_sound ticket.content.content_object %}
+                        </div>
+                    </div>
+                    <p>Sound's moderation state is set to <b>{% if ticket.content.content_object.moderation_state == 'PE' %}
+                                                                Pending {% else %} OK {% endif %}</b>
+                    <br>Sound's processing state is set to <b>{% if ticket.content.content_object.processing_state == 'PE' %}
+                                                                Pending {% else %} OK {% endif %}</b>
+                {% else %}
+                    <p>Don't know how to display this content type.
+                    (type: {{ ticket.content.content_type }},
+                     id: {{ ticket.content.object_id }})
+                {% endif %}
+            {% else %}
+                <p>No linked content
+            {% endif %}
+
+            {% if perms.tickets.can_moderate %}
+            <h3>Ticket controls</h3>
+            <form action="." method="post">{% csrf_token %}
+                {{ ticket_form.as_p }}
+                {% if ticket.content and ticket.content.content_object.is_sound %}
+                    {{ sound_form.as_p }}
+                {% endif %}
+                <input type="submit" value="send" />
+            </form>
+            {% endif %}
+
+
+        </div> <!-- /#ticket-right -->
+        <br style="clear: both;">
+    </div> <!-- /#ticket-wrapper -->
 {% endblock content %}

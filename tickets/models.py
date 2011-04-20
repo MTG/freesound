@@ -13,10 +13,10 @@ class Queue(models.Model):
     name            = models.CharField(max_length=128)
     groups          = models.ManyToManyField(Group)
     notify_by_email = models.BooleanField()
-    
+
     def __unicode__(self):
         return self.name
-    
+
 
 class LinkedContent(models.Model):
     content_type    = models.ForeignKey(ContentType)
@@ -64,23 +64,28 @@ class Ticket(models.Model):
         if not email_addr:
             logger.error('E-mail address to send notifications could not be determined. What gives?')
             return
-        send_mail_template(u'A freesound moderator handled your upload.', 
-                           notification_type, 
-                           locals(), 
-                           'no-reply@freesound.org', 
+        send_mail_template(u'A freesound moderator handled your upload.',
+                           notification_type,
+                           locals(),
+                           'no-reply@freesound.org',
                            email_addr)
-        
+
 
     @models.permalink
     def get_absolute_url(self):
         return ('ticket', (smart_unicode(self.key),))
-    
+
     def __unicode__(self):
         return u"<# Ticket - pk: %s, key: %s>" % (self.id, self.key)
 
     class Meta:
         ordering = ("-created",)
-        
+        permissions = (
+            ("can_change_status", "Can change the status of the ticket."),
+            ("can_change_queue", "Can change the queue of the ticket."),
+            ("can_moderate", "Can moderate stuff.")
+        )
+
 
 class TicketComment(models.Model):
     sender          = models.ForeignKey(User, null=True)
@@ -95,10 +100,12 @@ class TicketComment(models.Model):
 
     class Meta:
         ordering = ("-created",)
-        
+        permissions = (
+            ("can_add_moderator_only_message", "Can add read-by-moderator-only messages."),
+        )
+
 
 class UserAnnotation(models.Model):
     sender          = models.ForeignKey(User, related_name='sent_annotations')
     user            = models.ForeignKey(User, related_name='annotations')
     text            = models.TextField()
-    

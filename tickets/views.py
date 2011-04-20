@@ -1,6 +1,6 @@
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
@@ -11,11 +11,14 @@ from django.db import connection, transaction
 from django.contrib import messages
 from sounds.models import Sound
 
+
 def __get_contact_form(request, use_post=True):
     return __get_anon_or_user_form(request, AnonymousContactForm, UserContactForm, use_post)
-    
+
+
 def __get_tc_form(request, use_post=True):
     return __get_anon_or_user_form(request, AnonymousMessageForm, UserMessageForm, use_post)
+
 
 def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
     if len(request.POST.keys()) > 0 and use_post:
@@ -25,7 +28,7 @@ def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
             return anonymous_form(request, request.POST)
     else:
         return user_form() if request.user.is_authenticated() else anonymous_form(request)
-        
+
 
 def ticket(request, ticket_key):
     clean_status_forms = True
@@ -37,7 +40,7 @@ def ticket(request, ticket_key):
             tc = TicketComment()
             tc_text = tc_form.cleaned_data.get('message', False)
             if tc_text:
-                tc.text = tc_text.replace('\n', '<br>')  
+                tc.text = tc_text.replace('\n', '<br>')
                 if request.user.is_authenticated():
                     tc.sender = request.user
                 tc.ticket = ticket
@@ -57,9 +60,9 @@ def ticket(request, ticket_key):
                         ticket.content.delete()
                         ticket.content = None
                     ticket.status = TICKET_STATUS_CLOSED
-                    tc = TicketComment(sender=ticket.assignee, 
-                                       text="Moderator %s deleted the sound and closed the ticket" % request.user, 
-                                       ticket=ticket, 
+                    tc = TicketComment(sender=ticket.assignee,
+                                       text="Moderator %s deleted the sound and closed the ticket" % request.user,
+                                       ticket=ticket,
                                        moderator_only=False)
                     tc.save()
                     ticket.send_notification_emails(ticket.NOTIFICATION_DELETED)
@@ -68,48 +71,40 @@ def ticket(request, ticket_key):
                         ticket.content.content_object.moderation_state = sound_state
                         ticket.content.content_object.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
-                    tc = TicketComment(sender=ticket.assignee, 
+                    tc = TicketComment(sender=ticket.assignee,
                                        text="Moderator %s set the sound to %s and the ticket to %s." % \
-                                                (request.user, 
-                                                 'pending' if sound_state == 'PE' else sound_state, 
-                                                 ticket.status), 
-                                       ticket=ticket, 
+                                                (request.user,
+                                                 'pending' if sound_state == 'PE' else sound_state,
+                                                 ticket.status),
+                                       ticket=ticket,
                                        moderator_only=False)
                     tc.save()
                     ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
                 ticket.save()
-                
+
     if clean_status_forms:
         ticket_form = TicketModerationForm(initial={'status': ticket.status})
-        sound_form = SoundStateForm(initial={'state': 
+        sound_form = SoundStateForm(initial={'state':
                                              ticket.content.content_object.moderation_state \
                                              if ticket.content else 'DE'})
     if clean_comment_form:
         tc_form = __get_tc_form(request, False)
-    return render_to_response('tickets/ticket.html', 
-                              locals(), 
+    return render_to_response('tickets/ticket.html',
+                              locals(),
                               context_instance=RequestContext(request))
-    
-    
+
+
 @login_required
 def sound_ticket_messages(request, ticket_key):
     ticket = get_object_or_404(Ticket, key=ticket_key)
-    return render_to_response('tickets/message_list.html', 
-                              locals(), 
-                              context_instance=RequestContext(request))
-    
-    
-@login_required
-def tickets(request):
-    tickets = Ticket.objects.all()
-    return render_to_response('tickets/tickets.html', 
-                              locals(), 
+    return render_to_response('tickets/message_list.html',
+                              locals(),
                               context_instance=RequestContext(request))
 
 
 def new_contact_ticket(request):
     ticket_created = False
-    if request.POST:    
+    if request.POST:
         form = __get_contact_form(request)
         if form.is_valid():
             ticket = Ticket()
@@ -133,8 +128,8 @@ def new_contact_ticket(request):
         form = __get_contact_form(request, False)
     return render_to_response('tickets/contact.html', locals(), context_instance=RequestContext(request))
 
-#TODO: check for right permissions (all moderation functions)
-@login_required
+
+@permission_required('tickets.can_moderate')
 def tickets_home(request):
     new_upload_count = Ticket.objects.filter(assignee=None,
                                              source=TICKET_SOURCE_NEW_SOUND).count()
@@ -146,9 +141,9 @@ def tickets_home(request):
 def __get_new_uploaders_by_ticket():
     cursor = connection.cursor()
     cursor.execute("""
-SELECT sender_id, count(*) from tickets_ticket 
-WHERE source = 'new sound' 
-AND assignee_id is Null 
+SELECT sender_id, count(*) from tickets_ticket
+WHERE source = 'new sound'
+AND assignee_id is Null
 AND status = '%s'
 GROUP BY sender_id""" % TICKET_STATUS_NEW)
     user_ids_plus_new_count = dict(cursor.fetchall())
@@ -161,17 +156,19 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
     #        for id,count in user_ids_plus_new_count.items()]
     return users_plus_new_count
 
+
 def __get_unsure_sound_tickets():
-    return Ticket.objects.filter(source=TICKET_SOURCE_NEW_SOUND, 
-                                 assignee=None, 
+    return Ticket.objects.filter(source=TICKET_SOURCE_NEW_SOUND,
+                                 assignee=None,
                                  status=TICKET_STATUS_ACCEPTED)
+
 
 def __get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
 ticket.id
-FROM 
+FROM
 tickets_ticketcomment AS comment,
 tickets_ticket AS ticket
 WHERE comment.id in (   SELECT MAX(id)
@@ -182,13 +179,14 @@ AND comment.ticket_id = ticket.id
 AND comment.sender_id = ticket.sender_id
 AND now() - comment.created > INTERVAL '2 days'
     """)
-    
+
+
 def __get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
 ticket.id
-FROM 
+FROM
 tickets_ticketcomment AS comment,
 tickets_ticket AS ticket
 WHERE comment.id in (   SELECT MAX(id)
@@ -200,7 +198,8 @@ AND comment.sender_id != ticket.sender_id
 AND now() - comment.created > INTERVAL '2 days'
 """)
 
-@login_required
+
+@permission_required('tickets.can_moderate')
 def moderation_home(request):
     new_sounds_users = __get_new_uploaders_by_ticket()
     unsure_tickets = __get_unsure_sound_tickets()
@@ -208,7 +207,8 @@ def moderation_home(request):
     tardy_user_tickets = __get_tardy_user_tickets()
     return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
-@login_required
+
+@permission_required('tickets.can_moderate')
 def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
     Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
@@ -216,30 +216,31 @@ def moderation_assign_user(request, user_id):
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect(reverse("tickets-moderation-home"))
-    
-@login_required
+
+
+@permission_required('tickets.can_moderate')
 def moderation_assigned(request, user_id):
     clear_forms = True
     if request.method == 'POST':
         mod_sound_form = SoundModerationForm(request.POST)
-        msg_form = ModerationMessageForm(request.POST) 
-        
+        msg_form = ModerationMessageForm(request.POST)
+
         if mod_sound_form.is_valid() and msg_form.is_valid():
-            
+
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket",False))
             action = mod_sound_form.cleaned_data.get("action")
             msg = msg_form.cleaned_data.get("message", False)
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
             if msg:
                 msg = msg.replace('\n', '<br>')
-            
+
             if msg:
-                tc = TicketComment(sender=ticket.assignee, 
-                                   text=msg, 
-                                   ticket=ticket, 
+                tc = TicketComment(sender=ticket.assignee,
+                                   text=msg,
+                                   ticket=ticket,
                                    moderator_only=moderator_only)
                 tc.save()
-                    
+
             if action=="Approve":
                 ticket.status=TICKET_STATUS_CLOSED
                 ticket.content.content_object.moderation_state="OK"
@@ -282,7 +283,7 @@ def moderation_assigned(request, user_id):
                               context_instance=RequestContext(request))
 
 
-@login_required
+@permission_required('tickets.can_moderate')
 def user_annotations(request, user_id):
     user = get_object_or_404(User, id=user_id)
     num_sounds_ok = Sound.objects.filter(user=user, moderation_state="OK").count()
@@ -290,17 +291,18 @@ def user_annotations(request, user_id):
     if request.method == 'POST':
         form = UserAnnotationForm(request.POST)
         if form.is_valid():
-            ua = UserAnnotation(sender=request.user, 
+            ua = UserAnnotation(sender=request.user,
                                 user=user,
                                 text=form.cleaned_data['text'].replace('\n', '<br>'))
             ua.save()
     else:
         form = UserAnnotationForm()
     annotations = UserAnnotation.objects.filter(user=user)
-    return render_to_response('tickets/user_annotations.html', 
+    return render_to_response('tickets/user_annotations.html',
                               locals(),
                               context_instance=RequestContext(request))
 
-@login_required
+
+@permission_required('tickets.can_moderate')
 def support_home(request):
     return HttpResponse('TODO')

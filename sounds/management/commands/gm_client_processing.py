@@ -49,15 +49,15 @@ class Command(BaseCommand):
         # Parse command-line options.
         if options['all']:
             # All sounds in the database.
-            sounds = Sound.objects.all().exclude(original_path=None)
+            sounds = Sound.objects.select_related().all().exclude(original_path=None)
         elif options['pending']:
             # Every sound marked as 'pending'.
-            sounds = Sound.objects.filter(processing_state="PE"
+            sounds = Sound.objects.select_related().filter(processing_state="PE"
                 ).exclude(original_path=None)
         else:
             # The sound_ids passed as arguments in command-line.
             ids = [ int(arg) for arg in args ]
-            sounds = Sound.objects.filter(pk__in=ids)
+            sounds = Sound.objects.select_related().filter(pk__in=ids)
 
         # Connect to the Gearman job server.
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
@@ -69,7 +69,5 @@ class Command(BaseCommand):
                 queue_sound_processing(sound, gm_client, options['queue'])
             except Sound.DoesNotExist:
                 raise CommandError('Sound "%s" does not exist' % sound_id)
-                self.stdout.write('Posting sound to gearman "%s"\n' % sound.id)
-                sound = Sound.objects.get(pk=int(sound_id))
 
 

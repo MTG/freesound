@@ -12,7 +12,7 @@ import os
 class ProfileManager(models.Manager):
     def random_uploader(self):
         import random
-        
+
         user_count = User.objects.filter(profile__num_sounds__gte=1).count()
 
         if user_count:
@@ -23,7 +23,7 @@ class ProfileManager(models.Manager):
 
 class Profile(SocialModel):
     user = models.OneToOneField(User, related_name="profile")
-    
+
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
@@ -32,21 +32,21 @@ class Profile(SocialModel):
 
     wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
-    
+
     last_action_time = models.DateTimeField(null=True, blank=True, default=None)
-    
+
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
-    
+
     objects = ProfileManager()
-    
+
     def __unicode__(self):
         return self.user.username
-    
+
     @models.permalink
     def get_absolute_url(self):
         return ('account', (smart_unicode(self.user.username),))
-    
+
     @locations_decorator(cache=False)
     def locations(self):
         id_folder = str(self.user.id/1000)
@@ -74,7 +74,7 @@ class Profile(SocialModel):
                 )
             )
         )
-    
+
     def get_tagcloud(self):
         return DelayedQueryExecuter("""
             select

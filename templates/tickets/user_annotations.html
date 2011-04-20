@@ -1,12 +1,21 @@
 <div class="user-annotations-wrapper">
-	<h2>User information</h2>
+	<br>
+	<h4>User information</h4>
+	<br>
 	<div class="user-annotations-info">
-		<img src="{{ user.profile.locations.avatar.M.url }}"/>
+		<img src="{{ user.profile.locations.avatar.L.url }}"/>
 		<p><a href="{% url account user.username %}">{{ user.username }}</a>
 		<br>{{ num_sounds_ok }} sounds, {{ num_sounds_pending }} pending
+		{% if user.profile.home_page %}
+            <br>home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a>
+        {% endif %}
+        <br>Has a been a user for {{user.date_joined|timesince}}
+        <br>Number of forum posts: {{user.profile.num_posts}}
 	</div>
 	<br style="clear: both;">
-	<h2>User annotations</h2>
+	<br>
+	<h4>User annotations</h4>
+	<br>
 	{% for annotation in annotations %}
 		<div class="user-annotation">
 			<p><a href="{% url account annotation.sender.username %}">{{ annotation.sender }}</a> wrote:

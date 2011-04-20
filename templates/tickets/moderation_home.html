@@ -3,12 +3,11 @@
 {% load display_sound %}
 
 {% block title %}
-	Support
+	Sound Moderation
 {% endblock title %}
 
 {% block content %}
 	<h1>Users with new sounds</h1>
-	<p>TODO: add 'assign 15 to me'
 	<p><div class="moderation-user-list">
 		{% for user, new_count in new_sounds_users.items %}
 			<div class="moderation-user-list-user">

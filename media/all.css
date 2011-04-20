@@ -1748,6 +1748,9 @@ ul.messages {
 	position: relative;
 	height: 230px;
 }
+#moderation-form form {
+	padding-bottom: 10px;	
+}
 .moderation-unsure-ticket-player,
 .moderation-unsure-ticket-info {
 	float: left;	
@@ -1755,6 +1758,12 @@ ul.messages {
 .moderation-unsure-ticket-info {
 	padding-left: 5px;
 	width: 700px;
+}
+.moderation-unsure-ticket-last {
+	margin: 5px 20px 0 20px;
+	padding: 3px;
+	background-color: #fafafa;
+	width: 100%;
 }
 .moderation-unsure-ticket {
 	font-size: 0.8em;
@@ -1765,7 +1774,15 @@ ul.messages {
 	float: left;
 }
 .user-annotations-info img {
-	padding-right: 4px;
+	padding-right: 8px;
+	padding-top: 4px;
+}
+.user-annotations-wrapper form {
+	margin-top: 15px;
+}
+.user-annotations-wrapper p {
+	margin-bottom: 3px;
+	margin-top: 3px;
 }
 .alternate-row-even td {
 	background-color: #fafafa;
@@ -1786,12 +1803,86 @@ ul.messages {
 	width: 400px;	
 }
 .message-list-message {
-	margin-left: 30px;
-	background-color: #fafafa;
+	margin: 0 40px 0 30px;
 	padding: 5px;	
+}
+.message-list-message-nomod {
+	background-color: #fffafa;
+}
+.message-list-message-mod {
+	background-color: #fafafa;
+}
+.message-list-message-header p {
+	margin: 0;
+}
+.message-list-message-date {
+	font-size: 0.6em;
+	float: left;
+	margin-left: 10px;
+	margin-top: 3px;
+	/*min-width: 200px;*/	
+}
+.message-list-message-sender {
+	margin: 0 0 5px 0;
+	float: left;
+	/*min-width: 300px;*/
 }
 #assigned-tickets-table-wrapper {
 	height: 400px;	
 	overflow-x: hidden;
 	overflow-y: auto;
 }
+#moderation-decision-form li {
+	list-style-type: none;
+	float: left;
+	margin-right: 20px;
+}
+#moderation-decision-form {
+	padding-top: 3px;
+	padding-bottom: 10px;	
+}
+#ticket-details {
+	position: relative;	
+}
+#ticket-details li {
+	list-style-type: none;
+	border-bottom: 1px solid #eee;
+}
+#ticket-details em {
+	min-width: 170px;
+	float: left;
+	color: #666;
+}
+#ticket-details ul {
+	width: 400px;
+	float: left;
+}
+#ticket-details-left {
+	margin-right: 20px;
+}
+#ticket-page-form textarea {
+	height: 80px;
+}
+#ticket-page-form form {
+	margin-right: 20px;
+}
+#ticket-left,
+#ticket-right {
+	width: 450px;
+	float: left;
+}
+#ticket-left {
+	margin-right: 20px;
+}
+#id_moderator_only {
+	float: left;
+	width: 140px;
+	font-size: 0.8em;
+}
+#moderation-form label {
+	float: left;	
+}
+#moderation-form p {
+	margin-bottom: 5px;
+}
+	

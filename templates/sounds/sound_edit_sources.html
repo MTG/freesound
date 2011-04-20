@@ -3,7 +3,7 @@
 {% load display_sound %}
 {% block head %}
 {{ block.super }}
-<style type="text/css" media="all"> 
+<style type="text/css" media="all">
     #current-sources
     {
         width: 450px;
@@ -12,12 +12,12 @@
         float:right;
         padding: 5px;
     }
-    
+
     #current-sources .add
     {
         display: none;
     }
-    
+
     #current-sources .remove
     {
         display: inline;
@@ -36,7 +36,7 @@
     {
         display: inline;
     }
-    
+
     #search-results .remove
     {
         display: none;
@@ -44,11 +44,11 @@
 </style>
 <script type="text/javascript">
     var sources = [];
-    
+
     function saveSources()
     {
         $("#save-button").attr("disabled", "disabled");
-        
+
         $("#id_sources").val(sources.join(","))
 
         $.post("{% url sound-edit-sources sound.user.username sound.id %}", $("#save-form").serialize(), function ()
@@ -64,11 +64,11 @@
             sources.push(soundId);
 
             $(element).closest("#search-results > div").clone().appendTo("#current-sources");
-            
+
             $("#id_sources").val(sources.join(","));
         }
     }
-    
+
     function removeSound(element, soundId)
     {
         var index = $.inArray(soundId, sources);
@@ -76,23 +76,23 @@
         if (index != -1)
         {
             sources.splice(index, 1);
-        
+
             $(element).closest("#current-sources > div").remove();
 
             $("#id_sources").val(sources.join(","));
         }
     }
-        
+
     $(function()
     {
         sources = $.map($("#id_sources").val().split(","), function (soundId) { return parseInt(soundId) });
-        
+
         $("#save-button").click(function ()
         {
             saveSources();
             return false;
         });
-        
+
         $("#search-button").click(function ()
         {
             $("#search-results").load("{% url sounds-search %}", $.param({"q": $("#search-q").val(), "ajax": 1}));
@@ -125,9 +125,11 @@
     <h3>Current sources:</h3>
     {% for source in current_sources %}
     <div>
-        <div class="sample_player_small">
-            {% display_sound source.id %} 
-        </div>    
+        <div class="sound_list_moderation">
+            <div class="sample_player_small">
+                {% display_sound source.id %}
+            </div>
+        </div>
         <div>
             <a class="add" onclick="addSound(this, {{source.id}})">Add</a>
             <a class="remove" onclick="removeSound(this, {{source.id}})">Remove</a>

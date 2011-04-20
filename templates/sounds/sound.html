@@ -9,147 +9,147 @@
 
 {% block head %}
 {{ block.super }}
-	<script type="text/javascript">
-		swfobject.registerObject("player_{{sound.id}}", "10");
-	</script>
+    <script type="text/javascript">
+        swfobject.registerObject("player_{{sound.id}}", "10");
+    </script>
 {% endblock head %}
 
 {% block section_content %}
 
 {% cache 3600 sound_header sound.id %}
 <div id="single_sample_header">
-	{% if sound.pack %}<a href="{% url pack username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
-	<div class="stars">
-		<ul class="star-rating">
-			<li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
-			<li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star">1</a></li>
-			<li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars">2</a></li>
-			<li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars">3</a></li>
-			<li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars">4</a></li>
-			<li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
-		</ul>
-		<span class="numratings">({{sound.num_ratings}})</span>
-	</div>
+    {% if sound.pack %}<a href="{% url pack username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
+    <div class="stars">
+        <ul class="star-rating">
+            <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
+            <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star">1</a></li>
+            <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars">2</a></li>
+            <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars">3</a></li>
+            <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars">4</a></li>
+            <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
+        </ul>
+        <span class="numratings">({{sound.num_ratings}})</span>
+    </div>
 </div>
 
 <div id="single_sample_player">
-	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="900" height="201" id="player_{{sound.id}}">
-    	<param name="movie" value="{{media_url}}swf/LargePlayer.swf" />
+    <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="900" height="201" id="player_{{sound.id}}">
+        <param name="movie" value="{{media_url}}swf/LargePlayer.swf" />
         <param name="flashvars" value="soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
         <!--[if !IE]>-->
         <object type="application/x-shockwave-flash" data="{{media_url}}swf/LargePlayer.swf" width="900" height="201">
-        	<param name="flashvars" value="soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
-	        <!--<![endif]-->
-	        <a href="http://www.adobe.com/go/getflashplayer"><img src="{{media_url}}images/get_flash_player.png" alt="Get Adobe Flash player" /></a>
-	        <!--[if !IE]>-->
+            <param name="flashvars" value="soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
+            <!--<![endif]-->
+            <a href="http://www.adobe.com/go/getflashplayer"><img src="{{media_url}}images/get_flash_player.png" alt="Get Adobe Flash player" /></a>
+            <!--[if !IE]>-->
         </object>
         <!--<![endif]-->
     </object>
 </div>
 
 <div id="single_sample_content">
-	<img src="{{sound.user.profile.locations.avatar.M.url}}" alt="avatar" id="sound_author_avatar" />
+    <img src="{{sound.user.profile.locations.avatar.M.url}}" alt="avatar" id="sound_author_avatar" />
 
-	<div id="sound_author_box">
-		<div id="sound_author"><a href="{% url account sound.user.username %}">{{sound.user.username}}</a></div>
-		<div id="sound_date">{{sound.created|date:"F jS, Y"}}</div>
-	</div>
-	<div id="sound_description">
-		{{sound.description|safe|linebreaks}}
-	</div>
-	
-	<ul id="tags">
-		{% for tag_link in tags %}
-			<li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
-		{% endfor %}
-	</ul>
+    <div id="sound_author_box">
+        <div id="sound_author"><a href="{% url account sound.user.username %}">{{sound.user.username}}</a></div>
+        <div id="sound_date">{{sound.created|date:"F jS, Y"}}</div>
+    </div>
+    <div id="sound_description">
+        {{sound.description|safe|linebreaks}}
+    </div>
+
+    <ul id="tags">
+        {% for tag_link in tags %}
+            <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+        {% endfor %}
+    </ul>
 {% endcache %}
-	
+
     <div id="sound-edit">
         {% if perms.sound.can_edit or sound.user == request.user %}
-		<a href="{% url sound-edit sound.user.username sound.id %}" id="edit_button" title="edit sound">edit sound</a>
+        <a href="{% url sound-edit sound.user.username sound.id %}" id="edit_button" title="edit sound">edit sound</a>
         {% endif %}
     </div>
 
-	<div id="comments_container">
-		<h4 id="comments_heading">Comments</h4>
-		<a name="comments"></a>
-		<ul id="comments">
-			{% for comment in page.object_list %}
-			<li>
-				<img src="{{comment.user.profile.locations.avatar.S.url}}" alt="avatar" class="comment_avatar" />
-				<div class="comment_info">
-					<span class="comment_author"><a href="{% url account comment.user.username %}">{{comment.user.username}}</a></span>
-					<span class="comment_date">{{comment.created|timesince}} ago</span>
-                    {% if perms.sound.can_edit or sound.user == request.user %}
-            		<span class="comment_delete"><a href="{% url comment-delete comment.id %}" id="delete_button" title="delete comment">delete comment</a>
+    <div id="comments_container">
+        <h4 id="comments_heading">Comments</h4>
+        <a name="comments"></a>
+        <ul id="comments">
+            {% for comment in page.object_list %}
+            <li>
+                <img src="{{comment.user.profile.locations.avatar.S.url}}" alt="avatar" class="comment_avatar" />
+                <div class="comment_info">
+                    <span class="comment_author"><a href="{% url account comment.user.username %}">{{comment.user.username}}</a></span>
+                    <span class="comment_date">{{comment.created|timesince}} ago</span>
+                    {% if perms.comments.delete_comment or sound.user == request.user %}
+                    <span class="comment_delete"><a href="{% url comment-delete comment.id %}" id="delete_button" title="delete comment">delete comment</a>
                     {% endif %}
-				</div>
-				{{comment.comment|safe|linebreaks}}
-			</li>		
-			{% endfor %}
-		</ul>
-		
-		<div id="comments_pagination">
-			{% show_paginator paginator page current_page request "comments" %}
-		</div>
-	</div> <!-- comments_container -->
-	
-	<form method="POST" action=".#comments" id="sound_comment_form">{% csrf_token %}
-		<fieldset>
-			<h4 id="leave_a_comment">Leave a comment:</h4>
-			{{form.as_p}}
-			<input id="sound_comment_submit" type="submit" value="Post comment" />
-		</fieldset>
-	</form>
+                </div>
+                {{comment.comment|safe|linebreaks}}
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div id="comments_pagination">
+            {% show_paginator paginator page current_page request "comments" %}
+        </div>
+    </div> <!-- comments_container -->
+
+    <form method="POST" action=".#comments" id="sound_comment_form">{% csrf_token %}
+        <fieldset>
+            <h4 id="leave_a_comment">Leave a comment:</h4>
+            {{form.as_p}}
+            <input id="sound_comment_submit" type="submit" value="Post comment" />
+        </fieldset>
+    </form>
 </div> <!-- single_sample_content -->
 
 {% cache 3600 sound_footer sound.id %}
 
 <div id="single_sample_sidebar">
-	<div id="download">
-		<a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);" id="download_button" title="download sound"></a>
-		<div id="download_text">Downloaded<br /><b>{{sound.num_downloads}}</b> times</div>
-	</div>
+    <div id="download">
+        <a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);" id="download_button" title="download sound"></a>
+        <div id="download_text">Downloaded<br /><b>{{sound.num_downloads}}</b> times</div>
+    </div>
 
-	<dl id="sound_information_box">
-		<dt><a href="{% url wiki-page "soundinfo/type" %}#{{sound.type}}"><img src="{{media_url}}images/info{% if sound.type_warning %}_red{% endif %}.png" width="12" height="12" /></a>Type</dt><dd>{{sound.get_type_display}} (.{{sound.type}})</dd>
-		<dt><a href="{% url wiki-page "soundinfo/duration" %}"><img src="{{media_url}}images/info{% if sound.duration_warning %}_red{% endif %}.png" width="12" height="12" /></a>Duration</dt><dd>{{sound.duration|duration}}</dd>
-		<dt><a href="{% url wiki-page "soundinfo/filesize" %}"><img src="{{media_url}}images/info{% if sound.filesize_warning %}_red{% endif %}.png" width="12" height="12" /></a>Filesize</dt><dd>{{sound.filesize|filesizeformat}}</dd>
-		
-		{% if sound.bitdepth %}
-		<dt><a href="{% url wiki-page "soundinfo/samplerate" %}"><img src="{{media_url}}images/info{% if sound.samplerate_warning %}_red{% endif %}.png" width="12" height="12" /></a>Samplerate</dt><dd>{{sound.samplerate}} Hz</dd>
-		<dt><a href="{% url wiki-page "soundinfo/bitdepth" %}"><img src="{{media_url}}images/info{% if sound.bitdepth_warning %}_red{% endif %}.png" width="12" height="12" /></a>Bitdepth</dt><dd>{{sound.bitdepth}} bit</dd>
-		{% else %}
-		<dt><a href="{% url wiki-page "soundinfo/bitrate" %}"><img src="{{media_url}}images/info{% if sound.bitrate_warning %}_red{% endif %}.png" width="12" height="12" /></a>Bitrate</dt><dd>{{sound.bitrate}} kbps</dd>
-		{% endif %}        
-		<dt><a href="{% url wiki-page "soundinfo/channels" %}"><img src="{{media_url}}images/info{% if sound.channels_warning %}_red{% endif %}.png" width="12" height="12" /></a>Channels</dt><dd>{{sound.get_channels_display}}</dd>
-	</dl>
+    <dl id="sound_information_box">
+        <dt><a href="{% url wiki-page "soundinfo/type" %}#{{sound.type}}"><img src="{{media_url}}images/info{% if sound.type_warning %}_red{% endif %}.png" width="12" height="12" /></a>Type</dt><dd>{{sound.get_type_display}} (.{{sound.type}})</dd>
+        <dt><a href="{% url wiki-page "soundinfo/duration" %}"><img src="{{media_url}}images/info{% if sound.duration_warning %}_red{% endif %}.png" width="12" height="12" /></a>Duration</dt><dd>{{sound.duration|duration}}</dd>
+        <dt><a href="{% url wiki-page "soundinfo/filesize" %}"><img src="{{media_url}}images/info{% if sound.filesize_warning %}_red{% endif %}.png" width="12" height="12" /></a>Filesize</dt><dd>{{sound.filesize|filesizeformat}}</dd>
 
-	<ul id="sound_links">
-		{% if sound.geotag %}
-		<li><img src="{{media_url}}images/geotag.png" width="16" height="16" /><a href="{% url sound-geotag sound.user.username sound.id %}">Geotag</a></li>
-		{% endif %}
-		{% comment %}
-		<li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
-		{% endcomment %}
-		{% if sound.remixes.all.count %}
-		<li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
-		{% endif %}
-		
-		{% if sound.sources.all.count %}
-		<li><img src="{{media_url}}images/sources.png" width="16" height="16" /><a href="{% url sound-sources sound.user.username sound.id %}">Sources</a></li>
-		{% endif %}
-	</ul>
+        {% if sound.bitdepth %}
+        <dt><a href="{% url wiki-page "soundinfo/samplerate" %}"><img src="{{media_url}}images/info{% if sound.samplerate_warning %}_red{% endif %}.png" width="12" height="12" /></a>Samplerate</dt><dd>{{sound.samplerate}} Hz</dd>
+        <dt><a href="{% url wiki-page "soundinfo/bitdepth" %}"><img src="{{media_url}}images/info{% if sound.bitdepth_warning %}_red{% endif %}.png" width="12" height="12" /></a>Bitdepth</dt><dd>{{sound.bitdepth}} bit</dd>
+        {% else %}
+        <dt><a href="{% url wiki-page "soundinfo/bitrate" %}"><img src="{{media_url}}images/info{% if sound.bitrate_warning %}_red{% endif %}.png" width="12" height="12" /></a>Bitrate</dt><dd>{{sound.bitrate}} kbps</dd>
+        {% endif %}
+        <dt><a href="{% url wiki-page "soundinfo/channels" %}"><img src="{{media_url}}images/info{% if sound.channels_warning %}_red{% endif %}.png" width="12" height="12" /></a>Channels</dt><dd>{{sound.get_channels_display}}</dd>
+    </dl>
 
-	<div id="flag_sound">
-		Sound illegal or offensive? <a href="{% url sound-flag sound.user.username sound.id %}" title="flag this sound as ilegal, offensive or other...">Flag it!</a>
-	</div>
+    <ul id="sound_links">
+        {% if sound.geotag %}
+        <li><img src="{{media_url}}images/geotag.png" width="16" height="16" /><a href="{% url sound-geotag sound.user.username sound.id %}">Geotag</a></li>
+        {% endif %}
+        {% comment %}
+        <li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
+        {% endcomment %}
+        {% if sound.remixes.all.count %}
+        <li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
+        {% endif %}
 
-	<div id="sound_license">
-		<img src="{{media_url}}images/creative_commons.png" with="95" height="23" alt="Creative Commons" />
-		<a href="{{sound.license.deed_url}}">This work is licensed under the {{sound.license.name}} License.</a>
-	</div>
+        {% if sound.sources.all.count %}
+        <li><img src="{{media_url}}images/sources.png" width="16" height="16" /><a href="{% url sound-sources sound.user.username sound.id %}">Sources</a></li>
+        {% endif %}
+    </ul>
+
+    <div id="flag_sound">
+        Sound illegal or offensive? <a href="{% url sound-flag sound.user.username sound.id %}" title="flag this sound as ilegal, offensive or other...">Flag it!</a>
+    </div>
+
+    <div id="sound_license">
+        <img src="{{media_url}}images/creative_commons.png" with="95" height="23" alt="Creative Commons" />
+        <a href="{{sound.license.deed_url}}">This work is licensed under the {{sound.license.name}} License.</a>
+    </div>
 </div> <!-- single_sample_sidebar -->
 {% endcache %}
 

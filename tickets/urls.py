@@ -50,8 +50,5 @@ urlpatterns = patterns('',
     url(r'^(?P<ticket_key>[\w\d]+)/messages/$', 
         sound_ticket_messages, 
         name='tickets-ticket-messages'),
-        
-    url(r'^$',
-        tickets, 
-        name='tickets-tickets'),
+
 )

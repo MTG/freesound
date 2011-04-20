@@ -1,7 +1,9 @@
 {% for message in ticket.messages.all reversed %}
-	<p>{{ message.created }} - 
-		{% if message.sender %} <a href="{% url account message.sender.username %}">{{ message.sender.username }}</a>
-	    {% else %} Anonymous {% endif %} wrote: 
-	<p class="message-list-message">{{ message.text|safe }}</p>
+	<div class="message-list-message-header">
+		<div class="message-list-message-sender"><p>{% if message.sender %} <a href="{% url account message.sender.username %}">{{ message.sender.username }}</a> {% else %} Anonymous {% endif %} </div>
+		<div class="message-list-message-date">({{ message.created }})</div>
+		<br style="clear: both;">
+	</div> 
+	<p class="message-list-message message-list-message{% if message.moderator_only %}-mod{% else %}-nomod{%endif%}">{{ message.text|safe }}</p>
 	<br>
 {% endfor %}

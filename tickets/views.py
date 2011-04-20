@@ -72,7 +72,7 @@ def ticket(request, ticket_key):
                         ticket.content.content_object.moderation_state = sound_state
                         if sound_state == "OK":
                             add_sound_to_solr(ticket.content.content_object)
-                            
+
                         ticket.content.content_object.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
                     tc = TicketComment(sender=ticket.assignee,

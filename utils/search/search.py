@@ -84,3 +84,7 @@ def add_all_sounds_to_solr(slice_size=4000):
     num_sounds = qs.count()
     for i in range(0, num_sounds, slice_size):
         add_sounds_to_solr(qs[i:i+slice_size])
+        
+def delete_sound_from_solr(sound):
+    logger.info("deleting sound with id %d" % sound.id)
+    Solr(settings.SOLR_URL).delete_by_id(sound.id)

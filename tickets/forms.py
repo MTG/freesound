@@ -1,6 +1,7 @@
 from django import forms
 from models import UserAnnotation
 from utils.forms import RecaptchaForm
+from tickets import *
 
 class UserMessageForm(forms.Form):
     message     = forms.CharField(widget=forms.Textarea)
@@ -30,13 +31,31 @@ class SoundModerationForm(forms.Form):
     ticket      = forms.IntegerField(widget=forms.widgets.HiddenInput)
 
 class ModerationMessageForm(forms.Form):
-    message      = forms.CharField(widget=forms.Textarea,
-                                   required=False,
-                                   label='')
+    message     = forms.CharField(widget=forms.Textarea,
+                                  required=False,
+                                  label='')
+    moderator_only = forms.BooleanField(required=False)
 
 class UserAnnotationForm(forms.Form):
     text = forms.CharField(widget=forms.Textarea,
                            required=True,
                            label='')
     
-        
+
+TICKET_STATUS_CHOICES = [(x,x.capitalize()) for x in \
+                         [TICKET_STATUS_ACCEPTED,
+                          TICKET_STATUS_CLOSED,
+                          TICKET_STATUS_DEFERRED,
+                          TICKET_STATUS_NEW]]
+
+class TicketModerationForm(forms.Form):
+    status      = forms.ChoiceField(choices=TICKET_STATUS_CHOICES,
+                                    required=False,
+                                    label='Ticket status')
+
+class SoundStateForm(forms.Form):
+    state       = forms.ChoiceField(choices=[("OK", "OK"), 
+                                             ("PE", "Pending"),
+                                             ("DE", "Delete")],
+                                    required=False,
+                                    label='Sound state')

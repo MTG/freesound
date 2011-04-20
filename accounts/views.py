@@ -382,8 +382,7 @@ def describe_sounds(request):
             ticket.save()
             tc = TicketComment()
             tc.sender = request.user
-            tc.text = '%s uploaded %s on %s. Awaiting moderation.' % \
-                (request.user.username, sound.original_filename, datetime.datetime.now())
+            tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
             tc.ticket = ticket
             tc.save()
             # add notification that the file was described successfully

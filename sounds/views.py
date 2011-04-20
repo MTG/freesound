@@ -22,6 +22,8 @@ from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
     LicenseForm, FlagForm, RemixForm
 from accounts.models import Profile
 from sounds.models import Sound, Pack, Download
+from tickets.models import Ticket, TicketComment
+from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
 from utils.cache import invalidate_template_cache
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
@@ -170,6 +172,18 @@ def sound_edit(request, username, sound_id):
             sound.description = data["description"]
             sound.save()
             invalidate_template_cache("sound_header", sound.id)
+            # also update any possible related sound ticket
+            tickets = Ticket.objects.filter(content__object_id=sound.id,
+                                           source=TICKET_SOURCE_NEW_SOUND) \
+                                   .exclude(status=TICKET_STATUS_CLOSED)
+            if tickets:
+                ticket = tickets[0]
+                tc = TicketComment(sender=request.user,
+                                   ticket=ticket.id,
+                                   moderator_only=False,
+                                   text='%s updated the sound description and/or tags.' % request.user.username)
+                tc.save()
+                ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
@@ -260,7 +274,7 @@ def sound_edit_sources(request, username, sound_id):
         if form.is_valid():
             form.save()
         else:
-           print ("Form is not valid!!!!!!! %s" % ( form.errors))
+            print ("Form is not valid!!!!!!! %s" % ( form.errors))
     else:
         form = RemixForm(sound,initial=dict(sources=sources_string))    
     return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))

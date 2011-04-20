@@ -6,8 +6,9 @@
  			<div class="moderation-unsure-ticket-info">
  				<a href="{% url tickets-ticket ticket.key %}">{{ ticket.title }}</a> <em>by</em> {{ ticket.content.content_object.user.username }}
  				<br>assigned to {% if ticket.assignee %}{{ticket.assignee}}{% else %}no one{% endif %} | {{ num_messages }} message{{ num_messages|pluralize }} | last by {% if last_message.sender %}{{last_message.sender.username}}{% else %}anonymous{% endif %}
- 				<div style="height: 1px; background-color: #ccc;"></div>
- 				<em>"{{ last_message.text }}"</em>
+ 				<div class="moderation-unsure-ticket-last">
+ 					<em>"{{ last_message.text }}"</em>
+ 				</div>
  			</div>
  			<div style="clear: both;"></div>
 </div>

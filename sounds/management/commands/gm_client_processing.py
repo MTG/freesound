@@ -66,7 +66,7 @@ class Command(BaseCommand):
         for sound in sounds:
             try:
                 self.stdout.write('Posting sound to gearman "%s"\n' % sound.id)
-                queue_sound_processing(sound, gm_client, queue)
+                queue_sound_processing(sound, gm_client, options['queue'])
             except Sound.DoesNotExist:
                 raise CommandError('Sound "%s" does not exist' % sound_id)
                 self.stdout.write('Posting sound to gearman "%s"\n' % sound.id)

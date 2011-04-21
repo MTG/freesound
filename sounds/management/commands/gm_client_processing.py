@@ -47,6 +47,8 @@ class Command(BaseCommand):
         gearman_task = options['queue']
         jobs = [{'task': gearman_task, 'data': str(sound["id"])} for sound in sounds.values("id")]
         
+        #self.stdout.write(str(jobs))
+        
         self.stdout.write('Sending %d sound(s) to the gearman queue\n' % len(jobs))
         
         # update all sounds to reflect we are processing them...

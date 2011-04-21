@@ -16,8 +16,11 @@ def task_process_sound(gearman_worker, gearman_job):
     """
     sound_id = gearman_job.data
     print "Processing sound with id", sound_id
-    result = process(Sound.objects.select_related().get(id=sound_id))
-    print "\tsound: ", sound_id, "processing", "ok" if result else "failed"
+    try:
+        result = process(Sound.objects.select_related().get(id=sound_id))
+        print "\tsound: ", sound_id, "processing", "ok" if result else "failed"
+    except Sound.DoesNotExist:
+        print "\tdid not find sound with id: ", sound_id
     return str(result) 
 
 

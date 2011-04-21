@@ -31,7 +31,7 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
-from utils.search.search import add_sound_to_solr
+from utils.search.search import add_sound_to_solr, delete_sound_from_solr
 import datetime
 import os
 
@@ -332,7 +332,7 @@ def for_user(request, username):
 def delete(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     
-    if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
+    if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
         raise PermissionDenied
 
     import time
@@ -351,6 +351,7 @@ def delete(request, username, sound_id):
                 raise PermissionDenied
             
             if abs(time.time() - link_generated_time) < 10:
+                delete_sound_from_solr(sound)
                 sound.delete()
                 return HttpResponseRedirect(reverse("accounts-home"))
             else:

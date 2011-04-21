@@ -7,8 +7,8 @@ class UserMessageForm(forms.Form):
     message     = forms.CharField(widget=forms.Textarea)
 
 class UserContactForm(UserMessageForm):
-    title       = forms.CharField() 
-    
+    title       = forms.CharField()
+
 class AnonymousMessageForm(RecaptchaForm):
     message     = forms.CharField(widget=forms.Textarea)
 
@@ -18,14 +18,15 @@ class AnonymousContactForm(AnonymousMessageForm):
 
 # Sound moderation forms
 MODERATION_CHOICES = [(x,x) for x in \
-                      ['Approve', 
-                       'Delete', 
-                       'Defer', 
-                       'Return']]
+                      ['Approve',
+                       'Delete',
+                       'Defer',
+                       'Return',
+                       'Whitelist']]
 
 class SoundModerationForm(forms.Form):
     action      = forms.ChoiceField(choices=MODERATION_CHOICES,
-                                    required=True, 
+                                    required=True,
                                     widget=forms.RadioSelect(),
                                     label='')
     ticket      = forms.IntegerField(widget=forms.widgets.HiddenInput)
@@ -40,7 +41,7 @@ class UserAnnotationForm(forms.Form):
     text = forms.CharField(widget=forms.Textarea,
                            required=True,
                            label='')
-    
+
 
 TICKET_STATUS_CHOICES = [(x,x.capitalize()) for x in \
                          [TICKET_STATUS_ACCEPTED,
@@ -54,7 +55,7 @@ class TicketModerationForm(forms.Form):
                                     label='Ticket status')
 
 class SoundStateForm(forms.Form):
-    state       = forms.ChoiceField(choices=[("OK", "OK"), 
+    state       = forms.ChoiceField(choices=[("OK", "OK"),
                                              ("PE", "Pending"),
                                              ("DE", "Delete")],
                                     required=False,

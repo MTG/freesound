@@ -45,6 +45,7 @@ class Ticket(models.Model):
     NOTIFICATION_APPROVED_BUT = 'tickets/email_notification_approved_but.txt'
     NOTIFICATION_DELETED      = 'tickets/email_notification_deleted.txt'
     NOTIFICATION_UPDATED      = 'tickets/email_notification_updated.txt'
+    NOTIFICATION_WHITELISTED  = 'tickets/email_notification_whitelisted.txt'
 
     def send_notification_emails(self, notification_type):
         ticket = self

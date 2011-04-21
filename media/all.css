@@ -10,487 +10,487 @@ q:before, q:after { content:''; }
 ------------------------------------------------------*/
 
 body {
-	background: url(images/body.png) repeat-x top #CECECE;
-	font-family: Verdana, sans-serif;
-	font-size: 100%;
-	margin-top: 7px;
+    background: url(images/body.png) repeat-x top #CECECE;
+    font-family: Verdana, sans-serif;
+    font-size: 100%;
+    margin-top: 7px;
 }
 a {
-	color: #2C74C9;
-	text-decoration: none;
+    color: #2C74C9;
+    text-decoration: none;
 }
 a:hover {
-	color: #19507E;
-	text-decoration: underline;
+    color: #19507E;
+    text-decoration: underline;
 }
 .clear {
-	clear: both;
+    clear: both;
 }
 a.external_link {
-	background: url(images/external_link_button.png) no-repeat top;
-	display: block;
-	width: 146px;
-	height: 31px;
-	line-height: 31px;
-	font-size: 11px;
-	color: #fff;
-	font-weight: bold;
-	white-space: nowrap;
-	padding: 0 0 0 13px;
-	margin: 3px 0 0 166px;
+    background: url(images/external_link_button.png) no-repeat top;
+    display: block;
+    width: 146px;
+    height: 31px;
+    line-height: 31px;
+    font-size: 11px;
+    color: #fff;
+    font-weight: bold;
+    white-space: nowrap;
+    padding: 0 0 0 13px;
+    margin: 3px 0 0 166px;
 }
 a.external_link:hover {
-	background: url(images/external_link_button.png) no-repeat bottom;
+    background: url(images/external_link_button.png) no-repeat bottom;
 }
 
 /* General Mark-up Styling
 ------------------------------------------------------*/
 
 h1 {
-	font-family: Arial, sans-serif;
-	font-size: 32px;
-	font-weight: bold;
-	line-height: 1em;
-	margin-bottom: 18px;
-	width: 100%;
+    font-family: Arial, sans-serif;
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 1em;
+    margin-bottom: 18px;
+    width: 100%;
 }
 h2 {
-	font-family: Arial, sans-serif;
-	font-size: 22px;
-	font-weight: bold;
-	line-height: 1em;
-	color: #333;
-	margin-bottom: 16px;
+    font-family: Arial, sans-serif;
+    font-size: 22px;
+    font-weight: bold;
+    line-height: 1em;
+    color: #333;
+    margin-bottom: 16px;
 }
 h3 {
-	font-size: 14px;
-	font-weight: bold;
-	line-height: 1em;
-	color: #AB4646;
-	margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1em;
+    color: #AB4646;
+    margin-bottom: 16px;
 }
 p {
-	font-size: 12px;
-	line-height: 18px;
-	margin-bottom: 18px;
+    font-size: 12px;
+    line-height: 18px;
+    margin-bottom: 18px;
 }
 ul {
-	list-style-type: disc;
-	padding-left: 18px;
-	padding-bottom: 18px;
-	font-size: 13px;
-	line-height: 18px;
+    list-style-type: disc;
+    padding-left: 18px;
+    padding-bottom: 18px;
+    font-size: 13px;
+    line-height: 18px;
 }
 ol {
-	list-style-type: decimal;
-	padding-left: 24px;
-	padding-bottom: 18px;
-	font-size: 13px;
-	line-height: 18px;
+    list-style-type: decimal;
+    padding-left: 24px;
+    padding-bottom: 18px;
+    font-size: 13px;
+    line-height: 18px;
 }
 em {
-	font-style: italic;
+    font-style: italic;
 }
 strong {
-	font-weight: bold;
+    font-weight: bold;
 }
 blockquote {
-	margin-left: 1px;
-	padding: 16px 18px;
-	font-style: italic;
-	border-left: 2px solid #eee;
-	background: #fafafa;
+    margin-left: 1px;
+    padding: 16px 18px;
+    font-style: italic;
+    border-left: 2px solid #eee;
+    background: #fafafa;
 }
 blockquote p {
-	font-size: 15px;
-	line-height: 20px;
-	color: #333;
+    font-size: 15px;
+    line-height: 20px;
+    color: #333;
 }
 blockquote blockquote {
-	padding: 0;
-	border: 0;
+    padding: 0;
+    border: 0;
 }
 hr {
-	border-top: 1px solid #eee;
-	border-bottom: 1px solid #eee;
-	border-left: none;
-	margin: 16px 0;
-	height: 5px;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    border-left: none;
+    margin: 16px 0;
+    height: 5px;
 }
 table {
-	border-collapse: collapse;
-	font-size: 12px;
-	margin-bottom: 18px;
-	padding: 4px;
-	border: 6px solid #f6f6f6;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 18px;
+    padding: 4px;
+    border: 6px solid #f6f6f6;
 }
 th {
-	font-family: Arial, sans-serif;
-	font-size: 15px;
-	color: #666;
-	border-right: 1px solid #ddd;
-	border-bottom: 1px solid #ddd;
-	border-top: 1px solid #ddd;
-	text-align: left;
-	padding: 6px 6px 6px 12px;
-	background: #f8f8f8;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    color: #666;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    text-align: left;
+    padding: 6px 6px 6px 12px;
+    background: #f8f8f8;
 }
 td {
-	font: Verdana, sans-serif;
-	border-right: 1px solid #dadada;
-	border-bottom: 1px solid #dadada;
-	background: #fff;
-	padding: 6px 6px 6px 12px;
-	color: #333;
+    font: Verdana, sans-serif;
+    border-right: 1px solid #dadada;
+    border-bottom: 1px solid #dadada;
+    background: #fff;
+    padding: 6px 6px 6px 12px;
+    color: #333;
 }
 form {
-	margin-left: 1px;
-	padding: 16px 18px;
-	border-left: 2px solid #eee;
-	background: #fafafa;
-	margin-bottom: 10px;
+    margin-left: 1px;
+    padding: 16px 18px;
+    border-left: 2px solid #eee;
+    background: #fafafa;
+    margin-bottom: 10px;
 }
 form label {
-	display: block;
+    display: block;
 }
 form input, form textarea {
-	padding: 3px;
-	font-size: 13px;
+    padding: 3px;
+    font-size: 13px;
 }
 form #id_subscribe {
-	margin-top: 6px;
+    margin-top: 6px;
 }
 ul.errorlist {
-	list-style-type: none;
-	padding: 0 0 4px 0;
-	color: #bd2d33;
-	font-style: italic;
+    list-style-type: none;
+    padding: 0 0 4px 0;
+    color: #bd2d33;
+    font-style: italic;
 }
 
 div.infowindow {
-	font-size: 12px;
-	line-height: 18px;
-	margin-bottom: 18px;
-	width: 200px;
-	color: red;
+    font-size: 12px;
+    line-height: 18px;
+    margin-bottom: 18px;
+    width: 200px;
+    color: red;
 }
 
 /* Formatting Elements
 ------------------------------------------------------*/
 
 .signature ul {
-	list-style-type: disc;
-	padding-left: 18px;
-	padding-bottom: 18px;
+    list-style-type: disc;
+    padding-left: 18px;
+    padding-bottom: 18px;
 }
 .signature ol {
-	list-style-type: decimal;
-	padding-left: 24px;
-	padding-bottom: 18px;
+    list-style-type: decimal;
+    padding-left: 24px;
+    padding-bottom: 18px;
 }
 .signature ul li, ol li {
-	float: none;
+    float: none;
 }
 
 /* Header and Navigation
 ------------------------------------------------------*/
 
 #header {
-	height: 115px;
-	width: 980px;
-	margin: 0 auto;
-	background: url(images/header.png) repeat-x bottom #F8F8F8;
-	position: relative;
+    height: 115px;
+    width: 980px;
+    margin: 0 auto;
+    background: url(images/header.png) repeat-x bottom #F8F8F8;
+    position: relative;
 }
 #logo {
-	display: block;
-	width: 239px;
-	height: 62px;
-	background: url(images/logo.png) no-repeat;
-	position: relative;
-	left: 10px;
-	top: 5px;
+    display: block;
+    width: 239px;
+    height: 62px;
+    background: url(images/logo.png) no-repeat;
+    position: relative;
+    left: 10px;
+    top: 5px;
 }
 #account_nav {
-	float: right;
-	height: 38px;
-	position: relative;
-	top: -2px;
-	margin-right: 20px;
-	padding-right: 6px;
-	background: url(images/account_nav_right.png) no-repeat right;
-	font-size: 11px;
-	font-weight: bold;
-	line-height: 32px;
-	color: #A1ABB1;
+    float: right;
+    height: 38px;
+    position: relative;
+    top: -2px;
+    margin-right: 20px;
+    padding-right: 6px;
+    background: url(images/account_nav_right.png) no-repeat right;
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 32px;
+    color: #A1ABB1;
 }
 #account_nav a {
-	margin-left: 15px;
-	position: relative;
-	display: block;
-	float: left;
+    margin-left: 15px;
+    position: relative;
+    display: block;
+    float: left;
 }
 #account_user {
-	float: left;
-	height: 38px;
-	margin-left: -6px;
-	padding-left: 15px;
-	background: url(images/account_nav_left.png) no-repeat left;
+    float: left;
+    height: 38px;
+    margin-left: -6px;
+    padding-left: 15px;
+    background: url(images/account_nav_left.png) no-repeat left;
 }
 #account_user img {
-	position: relative;
-	padding-left: 3px;
-	left: -5px;
-	top: 2px;
+    position: relative;
+    padding-left: 3px;
+    left: -5px;
+    top: 2px;
 }
 #messages_count {
-	float: left;
-	background: url(images/messages_count_bg.png) no-repeat left;
-	color: #FFF;
-	margin: 10px 0 0 5px;
-	line-height: 15px;
-	font-size: 10px;
-	padding-left: 5px;
+    float: left;
+    background: url(images/messages_count_bg.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
 }
 #messages_count div {
-	background: url(images/messages_count_bg.png) no-repeat right;
-	height: 15px;
-	padding-right: 6px;
-	line-height: 14px;
+    background: url(images/messages_count_bg.png) no-repeat right;
+    height: 15px;
+    padding-right: 6px;
+    line-height: 14px;
 }
 #upload_button {
-	display: block;
-	float: right;
-	width: 144px;
-	height: 31px;
-	background: url(images/upload_button.png);
+    display: block;
+    float: right;
+    width: 144px;
+    height: 31px;
+    background: url(images/upload_button.png);
 }
 
 /* Site Navigation
 ------------------------------------------------------*/
 
 #site_nav {
-	position: absolute;
-	left: 18px;
-	bottom: 0;
-	padding: 0;
+    position: absolute;
+    left: 18px;
+    bottom: 0;
+    padding: 0;
 }
 #site_nav ul {
-	padding: 0;
-	margin: 0;
+    padding: 0;
+    margin: 0;
 }
 #site_nav li {
-	display: inline;
-	float: left;
-	background: url(images/tab_left.png) no-repeat left;
-	margin-right: 3px;
+    display: inline;
+    float: left;
+    background: url(images/tab_left.png) no-repeat left;
+    margin-right: 3px;
 }
 #site_nav li a {
-	display: block;
-	height: 36px;
-	padding: 0 13px 0 8px;
-	margin-left: 5px;
-	background: #FFF;
-	font-size: 12px;
-	font-weight: bold;
-	color: #222;
-	background: url(images/tab_right.png) no-repeat right;
-	line-height: 36px;
+    display: block;
+    height: 36px;
+    padding: 0 13px 0 8px;
+    margin-left: 5px;
+    background: #FFF;
+    font-size: 12px;
+    font-weight: bold;
+    color: #222;
+    background: url(images/tab_right.png) no-repeat right;
+    line-height: 36px;
 }
 #site_nav .active_tab {
-	background: url(images/tab_left_active.png) no-repeat left;
+    background: url(images/tab_left_active.png) no-repeat left;
 }
 #site_nav .active_tab a {
-	background: url(images/tab_right_active.png) no-repeat right;
-	color: #CB3D44;
+    background: url(images/tab_right_active.png) no-repeat right;
+    color: #CB3D44;
 }
 #site_nav .active_tab a:hover {
-	text-decoration: none;
+    text-decoration: none;
 }
 .site_nav_icon {
-	display: block;
-	width: 16px;
-	height: 16px;
-	float: left;
-	position: relative;
-	top: 10px;
-	left: -5px;
+    display: block;
+    width: 16px;
+    height: 16px;
+    float: left;
+    position: relative;
+    top: 10px;
+    left: -5px;
 }
 #site_nav_home .site_nav_icon {
-	background: url(images/site_nav_icons.png) no-repeat 0 0;
+    background: url(images/site_nav_icons.png) no-repeat 0 0;
 }
 .active_tab #site_nav_home .site_nav_icon {
-	background: url(images/site_nav_icons.png) no-repeat -16px 0;
+    background: url(images/site_nav_icons.png) no-repeat -16px 0;
 }
 #site_nav_sounds .site_nav_icon {
-	background: url(images/site_nav_icons.png) no-repeat 0 -15px;
+    background: url(images/site_nav_icons.png) no-repeat 0 -15px;
 }
 .active_tab #site_nav_sounds .site_nav_icon {
-	background: url(images/site_nav_icons.png) no-repeat -16px -15px;
+    background: url(images/site_nav_icons.png) no-repeat -16px -15px;
 }
 #site_nav_forums .site_nav_icon {
-	background: url(images/site_nav_icons.png) no-repeat 0 -30px;
+    background: url(images/site_nav_icons.png) no-repeat 0 -30px;
 }
 .active_tab #site_nav_forums .site_nav_icon {
-	background: url(images/site_nav_icons.png) no-repeat -16px -30px;
+    background: url(images/site_nav_icons.png) no-repeat -16px -30px;
 }
 #site_nav_help .site_nav_icon {
-	background: url(images/site_nav_icons.png) no-repeat 0 -47px;
+    background: url(images/site_nav_icons.png) no-repeat 0 -47px;
 }
 .active_tab #site_nav_help .site_nav_icon {
-	background: url(images/site_nav_icons.png) no-repeat -16px -47px;
+    background: url(images/site_nav_icons.png) no-repeat -16px -47px;
 }
 
 /* Search
 ------------------------------------------------------*/
 
 #search {
-	position: absolute;
-	top: 54px;
-	right: 20px;
-	width: 281px;
-	height: 42px;
-	background: url(images/search.png);
+    position: absolute;
+    top: 54px;
+    right: 20px;
+    width: 281px;
+    height: 42px;
+    background: url(images/search.png);
 }
 #search form {
-	padding: 0;
-	margin: 0;
+    padding: 0;
+    margin: 0;
 }
 #search input {
-	position: absolute;
-	left: 7px;
-	top: 7px;
-	width: 226px;
-	font-size: 13px;
-	padding: 6px 5px;
-	border: 0;
-	background: transparent;
+    position: absolute;
+    left: 7px;
+    top: 7px;
+    width: 226px;
+    font-size: 13px;
+    padding: 6px 5px;
+    border: 0;
+    background: transparent;
 }
 #search #search_submit {
-	position: absolute;
-	left: 249px;
-	top: 10px;
-	height: 22px;
-	width: 22px;
-	border: 0;
-	background: transparent;
+    position: absolute;
+    left: 249px;
+    top: 10px;
+    height: 22px;
+    width: 22px;
+    border: 0;
+    background: transparent;
 }
 
 /* Content Wrappers
 ------------------------------------------------------*/
 
 #wrapper {
-	background-color: #F9F9F9;
+    background-color: #F9F9F9;
 }
 #container {
-	width: 944px;
-	margin: 0 auto;
-	border-left: solid 1px #F0EEF1;
-	border-right: solid 1px #F0EEF1;
-	background-color: #FFF;
-	padding: 18px;
+    width: 944px;
+    margin: 0 auto;
+    border-left: solid 1px #F0EEF1;
+    border-right: solid 1px #F0EEF1;
+    background-color: #FFF;
+    padding: 18px;
 }
 #content {
-	width: 577px;
-	float: left;
+    width: 577px;
+    float: left;
 }
 #content_full {
-	width: 100%;
+    width: 100%;
 }
 .content_box {
-	width: 539px;
-	min-height: 92px;
-	padding: 0 19px;
-	background: url(images/sub_header_bg.png) no-repeat top;
+    width: 539px;
+    min-height: 92px;
+    padding: 0 19px;
+    background: url(images/sub_header_bg.png) no-repeat top;
 }
 
 /* Home Page Styles
 ------------------------------------------------------*/
 
 body#home h2 {
-	font-family: Arial, sans-serif;
-	font-size: 22px;
-	font-weight: bold;
-	line-height: 30px;
-	line-height: 1em;
+    font-family: Arial, sans-serif;
+    font-size: 22px;
+    font-weight: bold;
+    line-height: 30px;
+    line-height: 1em;
 }
 body#home h3 {
-	font-size: 11px;
-	font-weight: bold;
-	margin-bottom: 16px;
-	margin-left: -6px;
-	padding-top: 1px;
-	line-height: 30px;
-	color: #AB4646;
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    margin-left: -6px;
+    padding-top: 1px;
+    line-height: 30px;
+    color: #AB4646;
 }
 
 /* Latest News
 ------------------------------------------------------*/
 
 #latest_news {
-	margin-bottom: 15px;
+    margin-bottom: 15px;
 }
 #latest_news h2 {
-	margin-bottom: 4px;
-	margin-top: 12px;
+    margin-bottom: 4px;
+    margin-top: 12px;
 }
 #latest_news .post_date, #latest_news .post_author {
-	position: relative;
-	top: -8px;
-	line-height: 30px;
-	font-size: 11px;
-	color: #888;
+    position: relative;
+    top: -8px;
+    line-height: 30px;
+    font-size: 11px;
+    color: #888;
 }
 #latest_news .post_author {
-	font-weight: bold;
+    font-weight: bold;
 }
 #latest_news .read_more_link {
-	display: inline;
-	position: relative;
-	top: -5px;
-	font-weight: bold;
-	font-size: 13px;
-	background: url(images/right_arrow.png) no-repeat right 0.45em;
-	padding-right: 12px;
+    display: inline;
+    position: relative;
+    top: -5px;
+    font-weight: bold;
+    font-size: 13px;
+    background: url(images/right_arrow.png) no-repeat right 0.45em;
+    padding-right: 12px;
 }
 .blog_post {
-	margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 .blog_post p {
-	font-size: 12px;
-	margin-bottom: 18px;
-	line-height: 18px;
-	color: #333;
+    font-size: 12px;
+    margin-bottom: 18px;
+    line-height: 18px;
+    color: #333;
 }
 
 /* Sample Player : Small
 ------------------------------------------------------*/
 
 .sample_player_small {
-	width: 540px;
-	height:150px;
-	margin: 0px 0px;
-	margin-top:10px;
-	margin-bottom:10px;
-	overflow: hidden;
+    width: 540px;
+    height:150px;
+    margin: 0px 0px;
+    margin-top:10px;
+    margin-bottom:10px;
+    overflow: hidden;
 }
 .sample_player_small .sample_player {
-	width: 410px;
-	float: left;
-	left:0px;
+    width: 410px;
+    float: left;
+    left:0px;
 }
 .sample_player_small div.small_player {
-	float: left;
-	width:120px;
-	height:71px;
+    float: left;
+    width:120px;
+    height:71px;
 }
 .sample_player_small div.sound_title {
     position: relative;
 }
 .sample_player_small .title {
     font-size: 14px;
-	margin-left:10px;
-	font-weight: bold;
+    margin-left:10px;
+    font-weight: bold;
 }
 .sample_player_small div.sound_tags {
     width:300px;
@@ -499,81 +499,81 @@ body#home h3 {
 }
 /* Overriding regular tags list*/
 .sample_player_small div.sound_tags ul#tags {
-	line-height: 12px;
-	max-height:50px;
-	overflow: hidden;
-	margin-bottom: 2px;
+    line-height: 12px;
+    max-height:50px;
+    overflow: hidden;
+    margin-bottom: 2px;
 }
 .sample_player_small div.sound_tags #tags li {
-	height: 12px;
-	background-color: #FFFFFF;
-	border-bottom:none;
+    height: 12px;
+    background-color: #FFFFFF;
+    border-bottom:none;
 }
 .sample_player_small div.sound_tags #tags li a {
-	padding: 0px 3px 0 0px;
-	min-height: 12px;
-	font-size: 10px;
-	font-weight: bold;
-	background: none;
+    padding: 0px 3px 0 0px;
+    min-height: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    background: none;
 }
 .sample_player_small div.sound_stars {
-    position: relative; 
-    top: 0px; 
-    float:right; 
-    vertical-align: top; 
-    margin-right: 0px; 
+    position: relative;
+    top: 0px;
+    float:right;
+    vertical-align: top;
+    margin-right: 0px;
 }
 .stars {
-	text-align: right;
-	margin: -18px 0px 0 0;
+    text-align: right;
+    margin: -18px 0px 0 0;
 }
 .stars img {
-	margin-right: -3px;
+    margin-right: -3px;
 }
 .sample_player_small .sound_description {
     width:300px;
     margin-left:130px;
 }
 .sample_player_small .description {
-	margin-right: 2px;
-	margin-top: 2px;
-	margin-bottom: 5px;
-	font-size: 12px;
-	line-height: 16px;
-	color: #333;
+    margin-right: 2px;
+    margin-top: 2px;
+    margin-bottom: 5px;
+    font-size: 12px;
+    line-height: 16px;
+    color: #333;
 }
 .sample_player_small .sample_information {
-	float: right;
-	width: 100px;
-	padding: 1px 1px 1px 5px;
-	border-left: 1px solid #d6d6d6;
-	line-height: 15px;
-	font-size: 11px;
-	color: #757575;
+    float: right;
+    width: 100px;
+    padding: 1px 1px 1px 5px;
+    border-left: 1px solid #d6d6d6;
+    line-height: 15px;
+    font-size: 11px;
+    color: #757575;
 }
 .sample_player_small .user {
-	position: relative;
-	top: -3px;
-	font-family: Arial, sans-serif;
-	font-size: 13px;
-	font-weight: bold;
+    position: relative;
+    top: -3px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
 }
 .sample_more {
-	color: #444;
-	clear: both;
-	font-size: 11px;
-	padding: 14px 0 2px 0;
+    color: #444;
+    clear: both;
+    font-size: 11px;
+    padding: 14px 0 2px 0;
 }
 .sample_more a {
-	font-weight: bold;
+    font-weight: bold;
 }
 .sample_more img {
-	position: relative;
-	top: -1px;
+    position: relative;
+    top: -1px;
 }
 #recent_additions .sample_player_small {
-	border-bottom: solid 1px #DCDCDC;
-	padding-bottom: 8px;
+    border-bottom: solid 1px #DCDCDC;
+    padding-bottom: 8px;
 }
 
 /* Displayed portions of sound player depending on the container */
@@ -620,801 +620,801 @@ body#home h3 {
 ------------------------------------------------------*/
 
 #single_sample_header {
-	margin: 0 6px 10px 10px;
-	color: #CECECE;
-	font-weight: bold;
-	font-size: 18px;
-	font-family: Arial, sans-serif;
+    margin: 0 6px 10px 10px;
+    color: #CECECE;
+    font-weight: bold;
+    font-size: 18px;
+    font-family: Arial, sans-serif;
 }
 #single_sample_player {
-	clear: both;
-	padding: 12px 10px 7px 10px;
-	margin-left: 10px;
-	background: url(images/single_sample_player_bg.png) no-repeat top #F3F3F3;
-	border-bottom: solid 1px #D2D2D2;
-	float: left;
+    clear: both;
+    padding: 12px 10px 7px 10px;
+    margin-left: 10px;
+    background: url(images/single_sample_player_bg.png) no-repeat top #F3F3F3;
+    border-bottom: solid 1px #D2D2D2;
+    float: left;
 }
 #single_sample_content {
-	position: relative;
-	float: left;
-	width: 590px;
-	margin-left: 10px;
+    position: relative;
+    float: left;
+    width: 590px;
+    margin-left: 10px;
 }
 #single_sample_sidebar {
-	float: right;
-	width: 300px;
-	margin-right: 15px;
+    float: right;
+    width: 300px;
+    margin-right: 15px;
 }
 #sound_author_box {
-	position: relative;
-	padding: 20px 20px 0 55px;
+    position: relative;
+    padding: 20px 20px 0 55px;
 }
 #sound_author_avatar {
-	position: absolute;
-	left: 0;
-	top: 20px;
+    position: absolute;
+    left: 0;
+    top: 20px;
 }
 #sound_author {
-	font-weight: bold;
+    font-weight: bold;
 }
 #sound_date {
-	padding-top: 2px;
-	font-size: 12px;
-	color: #929292;
+    padding-top: 2px;
+    font-size: 12px;
+    color: #929292;
 }
 #sound_description {
-	color: #333;
-	margin: 15px 0 20px 0;
+    color: #333;
+    margin: 15px 0 20px 0;
 }
 #sound_description p {
-	font-size: 13px;
-	line-height: 16px;
+    font-size: 13px;
+    line-height: 16px;
 }
 ul#tags {
-	padding: 0;
-	margin: 0;
-	line-height: 16px;
-	overflow: auto;
-	margin-bottom: 20px;
+    padding: 0;
+    margin: 0;
+    line-height: 16px;
+    overflow: auto;
+    margin-bottom: 20px;
 }
 #tags li {
-	display: block;
-	float: left;
-	margin: 2px;
-	height: 23px;
-	background-color: #F7F5D9;
-	border-bottom: solid 1px #D3C9AA;
+    display: block;
+    float: left;
+    margin: 2px;
+    height: 23px;
+    background-color: #F7F5D9;
+    border-bottom: solid 1px #D3C9AA;
 }
 #tags li a {
-	display: block;
-	padding: 3px 6px 0 12px;
-	min-height: 21px;
-	font-size: 11px;
-	font-weight: bold;
-	background: url(images/tag_edge.png) no-repeat left top;
+    display: block;
+    padding: 3px 6px 0 12px;
+    min-height: 21px;
+    font-size: 11px;
+    font-weight: bold;
+    background: url(images/tag_edge.png) no-repeat left top;
 }
 #tags li a:hover {
-	color: #000;
+    color: #000;
 }
 #comments_container {
-	clear: both;
-	background: url(images/single_sample_comments_bg.png) no-repeat;
-	padding: 0 20px;
+    clear: both;
+    background: url(images/single_sample_comments_bg.png) no-repeat;
+    padding: 0 20px;
 }
 #comments_heading {
-	padding: 8px 0 5px 0;
-	font-size: 11px;
-	color: #AB4646;
+    padding: 8px 0 5px 0;
+    font-size: 11px;
+    color: #AB4646;
 }
 ul#comments {
-	padding: 0;
-	line-height: 16px;
-	list-style-type: none;
+    padding: 0;
+    line-height: 16px;
+    list-style-type: none;
 }
 #comments li {
-	position: relative;
-	padding: 15px 0 15px 55px;
-	font-size: 13px;
-	border-bottom: dotted 1px #DCDCDC;
-	min-height: 45px;
-	line-height: 1.3em;
-	color: #333;
+    position: relative;
+    padding: 15px 0 15px 55px;
+    font-size: 13px;
+    border-bottom: dotted 1px #DCDCDC;
+    min-height: 45px;
+    line-height: 1.3em;
+    color: #333;
 }
 #comments li:last-child {
-	border-bottom: none;
+    border-bottom: none;
 }
 #comments li .comment_info {
-	margin-bottom: 10px;
+    margin-bottom: 10px;
 }
 #comments li .comment_avatar {
-	position: absolute;
-	left: 0;
-	top: 20px;
+    position: absolute;
+    left: 0;
+    top: 20px;
 }
 #comments li .comment_author {
-	font-weight: bold;
+    font-weight: bold;
 }
 #comments li .comment_date {
-	color: #AFAFAF;
-	font-size: 11px;
+    color: #AFAFAF;
+    font-size: 11px;
 }
 #comments li p {
-	padding: 0;
-	margin: 0;
-	font-size: 13px;
-	line-height: 16px;
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
+    line-height: 16px;
 }
 #comments_pagination {
-	overflow: auto;
-	border-top: solid 1px #DEDEDE;
-	padding-top: 8px;
+    overflow: auto;
+    border-top: solid 1px #DEDEDE;
+    padding-top: 8px;
 }
 #comments_pagination .pagination {
-	float: right;
+    float: right;
 }
 #comments_pagination .pagination li {
-	margin: 2px;
+    margin: 2px;
 }
 #comments_pagination .pagination .current-page {
-	background-color: #3B89EB;
-	border-top: none;
-	color: #FFF;
-	font-weight: normal;
+    background-color: #3B89EB;
+    border-top: none;
+    color: #FFF;
+    font-weight: normal;
 }
 #leave_a_comment {
-	margin-bottom: 15px;
+    margin-bottom: 15px;
 }
 #sound_comment_form #id_comment {
-	width: 530px;
-	height: 120px;
-	margin-bottom: 10px;
+    width: 530px;
+    height: 120px;
+    margin-bottom: 10px;
 }
 #download {
-	padding: 20px 0 20px 25px;
+    padding: 20px 0 20px 25px;
 }
 #download_text {
-	padding-right: 170px;
-	color: #999;
-	font-size: 11px;
-	text-align: right;
-	line-height: 1.4em;
+    padding-right: 170px;
+    color: #999;
+    font-size: 11px;
+    text-align: right;
+    line-height: 1.4em;
 }
 #download_text b {
-	color: #555;
+    color: #555;
 }
 #download_button {
-	display: block;
-	float: right;
-	width: 144px;
-	height: 31px;
-	background: url(images/download_button.png);
+    display: block;
+    float: right;
+    width: 144px;
+    height: 31px;
+    background: url(images/download_button.png);
 }
 #sound_information_box {
-	padding: 20px 30px;
-	background: url(images/single_sample_sidebar_bg.png) no-repeat top #F3F3F3;
-	font-size: 12px;
-	border-bottom: solid 1px #D2D2D2;
-	line-height: 1.7em;
+    padding: 20px 30px;
+    background: url(images/single_sample_sidebar_bg.png) no-repeat top #F3F3F3;
+    font-size: 12px;
+    border-bottom: solid 1px #D2D2D2;
+    line-height: 1.7em;
 }
 #sound_information_box dt {
-	width: 125px;
-	float: left;
-	color: #888;
+    width: 125px;
+    float: left;
+    color: #888;
 }
 #sound_information_box dt img {
-	position: relative;
-	top: 1px;
-	left: -5px;
+    position: relative;
+    top: 1px;
+    left: -5px;
 }
 #sound_links {
-	padding: 20px 30px;
-	font-size: 13px;
-	font-weight: bold;
-	background: url(images/single_sample_links_bg.png) no-repeat top;
+    padding: 20px 30px;
+    font-size: 13px;
+    font-weight: bold;
+    background: url(images/single_sample_links_bg.png) no-repeat top;
 }
 ul#sound_links {
-	padding: 20px 30px;
-	line-height: 21px;
-	list-style-type: none;
+    padding: 20px 30px;
+    line-height: 21px;
+    list-style-type: none;
 }
 #sound_links li img {
-	position: relative;
-	top: 2px;
-	left: -6px;
+    position: relative;
+    top: 2px;
+    left: -6px;
 }
 #flag_sound {
-	padding: 20px 30px 18px 30px;
-	background: url(images/single_sample_sidebar_bg.png) no-repeat top #F3F3F3;
-	font-size: 12px;
-	border-bottom: solid 1px #D2D2D2;
-	color: #555;
+    padding: 20px 30px 18px 30px;
+    background: url(images/single_sample_sidebar_bg.png) no-repeat top #F3F3F3;
+    font-size: 12px;
+    border-bottom: solid 1px #D2D2D2;
+    color: #555;
 }
 #flag_sound a {
-	font-weight: bold;
+    font-weight: bold;
 }
 #sound_license {
-	position: relative;
-	padding: 20px 10px 20px 120px;
-	font-size: 11px;
-	line-height: 1.4em;
-	color: #999;
+    position: relative;
+    padding: 20px 10px 20px 120px;
+    font-size: 11px;
+    line-height: 1.4em;
+    color: #999;
 }
 #sound_license img {
-	position: absolute;
-	left: 8px;
-	top: 25px;
+    position: absolute;
+    left: 8px;
+    top: 25px;
 }
 
 /* Messages
 ------------------------------------------------------*/
 
 #messages_header {
-	margin-bottom: -5px;
+    margin-bottom: -5px;
 }
 #messages_header h2 {
-	float: left;
-	margin: 4px 0 0 4px;
+    float: left;
+    margin: 4px 0 0 4px;
 }
 #messages_header .messages_pagination .pagination {
-	margin: 14px 28px 0 0;
+    margin: 14px 28px 0 0;
 }
 .messages_form .messages_pagination {
-	position: absolute;
-	bottom: 2px;
-	right: 25px;
+    position: absolute;
+    bottom: 2px;
+    right: 25px;
 }
 .messages_form {
-	position: relative;
-	padding: 8px 15px 15px 15px;
-	border: none;
-	margin: 0 5px;
-	background: url(images/content_full_header_bg.png) no-repeat top;
+    position: relative;
+    padding: 8px 15px 15px 15px;
+    border: none;
+    margin: 0 5px;
+    background: url(images/content_full_header_bg.png) no-repeat top;
 }
 .messages_table {
-	width: 100%;
-	border: none;
+    width: 100%;
+    border: none;
 }
 .messages_table #messages_table_header_checkbox {
-	width: 10px;
+    width: 10px;
 }
 .messages_table #messages_table_header_from {
-	width: 120px;
+    width: 120px;
 }
 .messages_table #messages_table_header_to {
-	width: 120px;
+    width: 120px;
 }
 .messages_table #messages_table_header_date {
-	width: 130px;
+    width: 130px;
 }
 .messages_table .unread {
-	font-weight: bold;
-	background-color: #F5F2FF;
+    font-weight: bold;
+    background-color: #F5F2FF;
 }
 .messages_table td {
-	border: none;
-	border-bottom: solid 1px #D8DBE4;
-	background: transparent;
-	padding: 6px 12px;
+    border: none;
+    border-bottom: solid 1px #D8DBE4;
+    background: transparent;
+    padding: 6px 12px;
 }
 .messages_table th {
-	background: transparent;
-	border: none;
-	font-size: 13px;
-	padding: 0 12px 15px 12px;
-	font-weight: bold;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    padding: 0 12px 15px 12px;
+    font-weight: bold;
 }
 .messages_pagination {
-	overflow: auto;
+    overflow: auto;
 }
 .messages_pagination .pagination {
-	float: right;
+    float: right;
 }
 .messages_pagination .pagination li {
-	margin: 2px;
+    margin: 2px;
 }
 .messages_pagination .pagination .current-page {
-	background-color: #3B89EB;
-	border-top: none;
-	color: #FFF;
-	font-weight: normal;
-	padding-bottom: 2px;
+    background-color: #3B89EB;
+    border-top: none;
+    color: #FFF;
+    font-weight: normal;
+    padding-bottom: 2px;
 }
 #message_tabs {
-	float: left;
+    float: left;
 }
 #message_tabs li {
-	float: left;
-	list-style-type: none;
-	background: url(images/button_bg.png) no-repeat -2px 0;
-	max-height: 31px;
-	border-left: solid 1px #FFF;
-	border-right: solid 1px #D3D3D3;
+    float: left;
+    list-style-type: none;
+    background: url(images/button_bg.png) no-repeat -2px 0;
+    max-height: 31px;
+    border-left: solid 1px #FFF;
+    border-right: solid 1px #D3D3D3;
 }
 #message_tabs .active {
-	background: url(images/button_bg_active.png) no-repeat -2px 0;
-	border: none;
+    background: url(images/button_bg_active.png) no-repeat -2px 0;
+    border: none;
 }
 #message_tabs li:first-child {
-	background: url(images/button_bg.png) no-repeat left top;
-	border-left: none;
+    background: url(images/button_bg.png) no-repeat left top;
+    border-left: none;
 }
 #message_tabs .active:first-child {
-	background: url(images/button_bg_active.png) no-repeat left top;
+    background: url(images/button_bg_active.png) no-repeat left top;
 }
 #message_tabs li:last-child {
-	background: url(images/button_bg.png) no-repeat right top;
-	border-right: none;
+    background: url(images/button_bg.png) no-repeat right top;
+    border-right: none;
 }
 #message_tabs .active:last-child {
-	background: url(images/button_bg_active.png) no-repeat right top;
+    background: url(images/button_bg_active.png) no-repeat right top;
 }
 #message_tabs li a {
-	font-size: 12px;
-	display: block;
-	float: left;
-	padding: 7px 10px 6px 10px;
-	font-weight: bold;
-	color: #222;
-	max-height: 31px;
+    font-size: 12px;
+    display: block;
+    float: left;
+    padding: 7px 10px 6px 10px;
+    font-weight: bold;
+    color: #222;
+    max-height: 31px;
 }
 .message_container {
-	clear: both;
-	margin: 0 5px;
+    clear: both;
+    margin: 0 5px;
 }
 .message_container .message_header {
-	background: url(images/content_full_header_bg_top.png) no-repeat top #F3F3F3;
-	padding: 18px 15px 15px 5px;
-	font-size: 13px;
-	line-height: 1.8em;
-	border-bottom: solid 1px #E4E4E4;
+    background: url(images/content_full_header_bg_top.png) no-repeat top #F3F3F3;
+    padding: 18px 15px 15px 5px;
+    font-size: 13px;
+    line-height: 1.8em;
+    border-bottom: solid 1px #E4E4E4;
 }
 .message_container .message_header dt {
-	float: left;
-	width: 80px;
-	text-align: right;
-	padding-right: 6px;
+    float: left;
+    width: 80px;
+    text-align: right;
+    padding-right: 6px;
 }
 .message_container .message_header dd {
-	font-weight: bold;
+    font-weight: bold;
 }
 .message_container .message-body {
-	padding: 18px 25px;
-	background: url(images/message_body_bg.png) no-repeat top;
+    padding: 18px 25px;
+    background: url(images/message_body_bg.png) no-repeat top;
 }
 
 /* Forums
 ------------------------------------------------------*/
 
 #breadcrumb {
-	font-weight: bold;
-	font-size: 14px;
-	background: url(images/breadcrumb.png) repeat-x bottom;
-	padding: 10px 15px;
-	border-bottom: solid 1px #E4E4E4;
-	color: #D3D3D3;
+    font-weight: bold;
+    font-size: 14px;
+    background: url(images/breadcrumb.png) repeat-x bottom;
+    padding: 10px 15px;
+    border-bottom: solid 1px #E4E4E4;
+    color: #D3D3D3;
 }
 #breadcrumb a {
-	color: #000;
+    color: #000;
 }
 ul#forums, ul#topics {
-	padding: 0;
-	line-height: 16px;
+    padding: 0;
+    line-height: 16px;
 }
 #forums li, #topics li {
-	padding: 10px 10px 10px 40px;
-	border-bottom: solid 1px #E4E4E4;
-	font-size: 11px;
-	color: #777;
-	position: relative;
-	list-style-type: none;
+    padding: 10px 10px 10px 40px;
+    border-bottom: solid 1px #E4E4E4;
+    font-size: 11px;
+    color: #777;
+    position: relative;
+    list-style-type: none;
 }
 #forums li img, #topics li img {
-	position: absolute;
-	left: 8px;
-	top: 16px;
+    position: absolute;
+    left: 8px;
+    top: 16px;
 }
 #forums li .forum_name {
-	font-size: 16px;
-	font-weight: normal;
+    font-size: 16px;
+    font-weight: normal;
 }
 #topics li .topic_subject {
-	font-size: 14px;
-	font-weight: normal;
+    font-size: 14px;
+    font-weight: normal;
 }
 #forums li a, #topics li a {
-	font-weight: bold;
+    font-weight: bold;
 }
 #forums .latest_post, #topics .latest_post {
-	float: right;
-	color: #444;
-	text-align: right;
+    float: right;
+    color: #444;
+    text-align: right;
 }
 #topics .highlighted .topic_subject {
-	font-weight: bold;
-	color: #CC4040;
+    font-weight: bold;
+    color: #CC4040;
 }
 #topics .highlighted .topic_subject:hover {
-	color: #9C3131;
+    color: #9C3131;
 }
 .forum_pagination {
-	position: relative;
-	padding: 8px 15px 8px 11px;
-	font-size: 12px;
-	background-color: #EBF4FD;
-	margin: 10px 0;
-	height: 15px;
+    position: relative;
+    padding: 8px 15px 8px 11px;
+    font-size: 12px;
+    background-color: #EBF4FD;
+    margin: 10px 0;
+    height: 15px;
 }
 .forum_pagination a {
-	text-decoration: underline;
-	font-weight: bold;
+    text-decoration: underline;
+    font-weight: bold;
 }
 ul.pagination {
-	line-height: 16px;
-	list-style-type: none;
+    line-height: 16px;
+    list-style-type: none;
 }
 .pagination li {
-	float: left;
+    float: left;
 }
 .pagination li a {
-	padding: 4px;
+    padding: 4px;
 }
 .pagination .current-page {
-	padding: 0 4px;
-	margin-top: -1px;
-	font-weight: bold;
-	background-color: #D2E2F9;
-	border-top: solid 1px #C3D4EA;
-	border-bottom: solid 1px #FFF;
-	color: #444;
+    padding: 0 4px;
+    margin-top: -1px;
+    font-weight: bold;
+    background-color: #D2E2F9;
+    border-top: solid 1px #C3D4EA;
+    border-bottom: solid 1px #FFF;
+    color: #444;
 }
 
 /* Posts formatting
 ------------------------------------------------------*/
 
 #posts {
-	font-size: 13px;
-	padding: 0;
+    font-size: 13px;
+    padding: 0;
 }
 #posts .post {
-	list-style-type: none;
-	position: relative;
-	padding: 15px 35px 15px 230px;
-	margin: 0 0 15px 0;
-	background: url(images/post_bg.png) repeat-y left;
-	border-top: solid 2px #E6E6E6;
-	min-height: 80px;
+    list-style-type: none;
+    position: relative;
+    padding: 15px 35px 15px 230px;
+    margin: 0 0 15px 0;
+    background: url(images/post_bg.png) repeat-y left;
+    border-top: solid 2px #E6E6E6;
+    min-height: 80px;
 }
 #posts .post .avatar {
-	position: absolute;
-	left: 15px;
-	top: 42px;
+    position: absolute;
+    left: 15px;
+    top: 42px;
 }
 #posts .post .post_author {
-	font-size: 14px;
-	font-weight: bold;
-	position: absolute;
-	width: 175px;
-	left: 15px;
-	top: 15px;
-	overflow: hidden;
+    font-size: 14px;
+    font-weight: bold;
+    position: absolute;
+    width: 175px;
+    left: 15px;
+    top: 15px;
+    overflow: hidden;
 }
-#posts .post .post_details { 
-	font-size: 11px;
-	color: #444;
-	position: absolute;
-	width: 145px;
-	left: 55px;
-	top: 42px;
-	line-height: 16px;
+#posts .post .post_details {
+    font-size: 11px;
+    color: #444;
+    position: absolute;
+    width: 145px;
+    left: 55px;
+    top: 42px;
+    line-height: 16px;
 }
 #posts .post .post_details .post_date {
-	color: #BABABA;
+    color: #BABABA;
 }
 #posts .post .subject {
-	padding-bottom: 15px;
-	font-size: 17px;
-	font-weight: bold;
+    padding-bottom: 15px;
+    font-size: 17px;
+    font-weight: bold;
 }
 #posts .post p, #posts .post blockquote {
-	font-size: 12px;
-	margin-bottom: 18px;
-	line-height: 18px;
-	color: #222;
+    font-size: 12px;
+    margin-bottom: 18px;
+    line-height: 18px;
+    color: #222;
 }
 #posts .post blockquote {
-	color: #666;
-	background-color: #F6F6F6;
-	padding: 15px;
-	border-left: solid 2px #eee;
+    color: #666;
+    background-color: #F6F6F6;
+    padding: 15px;
+    border-left: solid 2px #eee;
 }
 #posts .post blockquote em {
-	font-style: italic;
+    font-style: italic;
 }
 #posts .post .signature {
-	padding: 10px;
-	border-top: dashed 1px #C4C4C4;
-	font-size: 12px;
-	color: #777;
+    padding: 10px;
+    border-top: dashed 1px #C4C4C4;
+    font-size: 12px;
+    color: #777;
 }
 #posts .post .signature p {
-	color: #777;
+    color: #777;
 }
 .forum_button {
-	position: absolute;
-	right: 0;
-	top: 0;
-	height: 31px;
-	line-height: 31px;
-	padding-left: 3px;
-	background: url(images/read_more_bg.png) no-repeat left top;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 31px;
+    line-height: 31px;
+    padding-left: 3px;
+    background: url(images/read_more_bg.png) no-repeat left top;
 }
 .forum_button a {
-	display: block;
-	color: #FFF;
-	font-family: Arial, sans-serif;
-	font-size: 13px;
-	font-weight: bold;
-	text-decoration: none;
-	padding: 0 13px 0 10px;
-	background: url(images/read_more_bg.png) no-repeat right top;
+    display: block;
+    color: #FFF;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 0 13px 0 10px;
+    background: url(images/read_more_bg.png) no-repeat right top;
 }
 .forum_button a:hover {
-	color: #A9CAF1;
-	text-decoration: none;
+    color: #A9CAF1;
+    text-decoration: none;
 }
 .post_quote {
-	display: block;
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 46px;
-	height: 27px;
-	background: url(images/post_quote.png) top;
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 46px;
+    height: 27px;
+    background: url(images/post_quote.png) top;
 }
 .post_quote:hover {
-	background: url(images/post_quote.png) bottom;
+    background: url(images/post_quote.png) bottom;
 }
 
 /* Sidebar
 ------------------------------------------------------*/
 
 #sidebar {
-	width: 340px;
-	float: left;
-	margin-left: 19px;
+    width: 340px;
+    float: left;
+    margin-left: 19px;
 }
 .sidebar_box {
-	width: 310px;
-	min-height: 103px;
-	padding: 0 19px;
-	background: url(images/sub_sidebar_header_bg.png) no-repeat top;
-	margin-bottom: 20px;
+    width: 310px;
+    min-height: 103px;
+    padding: 0 19px;
+    background: url(images/sub_sidebar_header_bg.png) no-repeat top;
+    margin-bottom: 20px;
 }
 .continuous_sidebar_box {
-	background: url(images/continuous_sidebar_header_bg.png) no-repeat top;
-	width: 349px;
-	padding: 16px 0 0 0;
+    background: url(images/continuous_sidebar_header_bg.png) no-repeat top;
+    width: 349px;
+    padding: 16px 0 0 0;
 }
 .continuous_sidebar_box #support {
-	background: url(images/continuous_sidebar_header_bg.png) no-repeat bottom;
-	padding: 0 0 22px 0;
-	margin: 0 0 14px 0;
+    background: url(images/continuous_sidebar_header_bg.png) no-repeat bottom;
+    padding: 0 0 22px 0;
+    margin: 0 0 14px 0;
 }
 #post_it {
-	position: relative;
-	background: url(images/postit_bg.png) no-repeat bottom;
-	width: 280px;
-	padding: 22px 27px 34px 27px;
-	left: 7px;
+    position: relative;
+    background: url(images/postit_bg.png) no-repeat bottom;
+    width: 280px;
+    padding: 22px 27px 34px 27px;
+    left: 7px;
 }
 #post_it h2 {
-	margin: 0 0 10px 0;
-	color: #000;
+    margin: 0 0 10px 0;
+    color: #000;
 }
 #post_it p {
-	font-size: 13px;
-	margin: 0 20px 0 0;
-	line-height: 16px;
+    font-size: 13px;
+    margin: 0 20px 0 0;
+    line-height: 16px;
 }
 #support img {
-	float: left;
+    float: left;
 }
 body#home #support h3 {
-	font-family: Arial, Sans-serif;
-	font-size: 16px;
-	color: #3f3e43;
-	line-height: 22px;
-	margin: 8px 27px 16px 0;
+    font-family: Arial, Sans-serif;
+    font-size: 16px;
+    color: #3f3e43;
+    line-height: 22px;
+    margin: 8px 27px 16px 0;
 }
 #support p {
-	font-size: 12px;
-	margin-bottom: 8px;
-	line-height: 14px;
+    font-size: 12px;
+    margin-bottom: 8px;
+    line-height: 14px;
 }
 #donation_box {
-	background: url(images/donation_box_bg.png) no-repeat top left;
-	width: 291px;
-	height: 81px;
-	padding: 0 0 0 57px;
-	margin: 0 0 14px 0;
+    background: url(images/donation_box_bg.png) no-repeat top left;
+    width: 291px;
+    height: 81px;
+    padding: 0 0 0 57px;
+    margin: 0 0 14px 0;
 }
 #donation_box p {
-	position: relative;
-	top: 16px;
-	margin: 0;
-	color: #c01010;
-	font-size: 12px;
-	line-height: 12px;
+    position: relative;
+    top: 16px;
+    margin: 0;
+    color: #c01010;
+    font-size: 12px;
+    line-height: 12px;
 }
 #donation_box p #count_down {
-	font-size: 11px;
-	margin: 0 15px 0 27px;
-	color: #333;
-	text-align: right;
+    font-size: 11px;
+    margin: 0 15px 0 27px;
+    color: #333;
+    text-align: right;
 }
 a.donation_button {
-	float: left;
-	background: url(images/donation_button.png) no-repeat top left;
-	display: block;
-	width: 104px;
-	height: 30px;
-	line-height: 30px;
-	font-size: 11px;
-	color: #000;
-	font-weight: bold;
-	white-space: nowrap;
-	padding: 0 0 0 15px;
-	margin: 26px 0 0 0;
+    float: left;
+    background: url(images/donation_button.png) no-repeat top left;
+    display: block;
+    width: 104px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 11px;
+    color: #000;
+    font-weight: bold;
+    white-space: nowrap;
+    padding: 0 0 0 15px;
+    margin: 26px 0 0 0;
 }
 a.donation_button:hover {
-	background: url(images/donation_button.png) no-repeat bottom left;
+    background: url(images/donation_button.png) no-repeat bottom left;
 }
 #donation_meter_box {
-	background: url(images/donation_meter_box.png) no-repeat top left;
-	float: left;
-	margin: 26px 0 0 -5px;
-	width: 162px;
-	height: 30px;
+    background: url(images/donation_meter_box.png) no-repeat top left;
+    float: left;
+    margin: 26px 0 0 -5px;
+    width: 162px;
+    height: 30px;
 }
 #meter {
-	display: block;
-	background: url(images/donation_meter_bar.png) repeat-x top left;
-	border: 1px solid #565656;
-	line-height: 30px;
-	height: 27px;
-	/*width: 49%;*/
-	text-indent: -9999px;
+    display: block;
+    background: url(images/donation_meter_bar.png) repeat-x top left;
+    border: 1px solid #565656;
+    line-height: 30px;
+    height: 27px;
+    /*width: 49%;*/
+    text-indent: -9999px;
 }
 #latest_forum_posts {
-	width: 324px;
-	padding: 0 12px;
+    width: 324px;
+    padding: 0 12px;
 }
 #latest_forum_posts ul {
-	padding: 0;
-	line-height: 13px;
+    padding: 0;
+    line-height: 13px;
 }
 #latest_forum_posts h3 {
-	margin-left: 2px;
-	margin-bottom: 10px;
+    margin-left: 2px;
+    margin-bottom: 10px;
 }
 #latest_forum_posts li {
-	display: block;
-	padding: 13px 10px;
-	background-color: #F6F6F6;
-	border-bottom: solid 1px #CCC;
-	font-size: 11px;
-	color: #777;
+    display: block;
+    padding: 13px 10px;
+    background-color: #F6F6F6;
+    border-bottom: solid 1px #CCC;
+    font-size: 11px;
+    color: #777;
 }
 #latest_forum_posts li:last-child {
-	border-bottom: none;
+    border-bottom: none;
 }
 #latest_forum_posts .even {
-	background-color: #FFF;
+    background-color: #FFF;
 }
 #latest_forum_posts li a {
-	font-size: 12px;
-	font-weight: bold;
+    font-size: 12px;
+    font-weight: bold;
 }
 #latest_forum_posts a.more_posts_button {
-	display: block;
-	height: 31px;
-	margin-bottom: 15px;
-	line-height: 31px;
-	padding-right: 15px;
-	text-align: right;
-	font-family: Arial, sans-serif;
-	font-size: 13px;
-	font-weight: bold;
-	background: url(images/more_posts_button.png) no-repeat top right;
-	color: #FFF;
+    display: block;
+    height: 31px;
+    margin-bottom: 15px;
+    line-height: 31px;
+    padding-right: 15px;
+    text-align: right;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    background: url(images/more_posts_button.png) no-repeat top right;
+    color: #FFF;
 }
 #latest_forum_posts a.more_posts_button:hover {
-	color: #A9CAF1;
-	text-decoration: none;
+    color: #A9CAF1;
+    text-decoration: none;
 }
 #latest_forum_posts a.more_posts_button img {
-	position: relative;
-	left: -5px;
-	top: 1px;
+    position: relative;
+    left: -5px;
+    top: 1px;
 }
 
 /* Freesound Projects
 ------------------------------------------------------*/
 
 #freesoundradio {
-	position: relative;
-	left: 10px;
+    position: relative;
+    left: 10px;
 }
 #sonsdebarcelona {
-	position: relative;
-	top: -10px;
-	left: 34px;
+    position: relative;
+    top: -10px;
+    left: 34px;
 }
 
 /* Credits
 ------------------------------------------------------*/
 
 #credits {
-	clear: both;
-	color: #BD555A;
-	font-weight: bold;
-	font-size: 12px;
-	height: 64px;
-	text-align: right;
+    clear: both;
+    color: #BD555A;
+    font-weight: bold;
+    font-size: 12px;
+    height: 64px;
+    text-align: right;
 }
 #credits #mtg_link, #credits #google_link, #credits #letusa_link {
-	position: relative;
+    position: relative;
 }
 #credits #mtg_link {
-	top: 18px;
-	padding-right: 20px;
+    top: 18px;
+    padding-right: 20px;
 }
 #credits #google_link {
-	top: 22px;
-	padding-left: 6px;
-	padding-right: 10px;
+    top: 22px;
+    padding-left: 6px;
+    padding-right: 10px;
 }
 #credits #letusa_link {
-	top: 11px;
-	padding-right: 20px;
+    top: 11px;
+    padding-right: 20px;
 }
 
 /* Footer
 ------------------------------------------------------*/
 
 #footer_wrapper {
-	background: url(images/footer_wrapper.png) repeat-x top #FCFCFC;
-	height: 80px;
-	clear: both;
+    background: url(images/footer_wrapper.png) repeat-x top #FCFCFC;
+    height: 80px;
+    clear: both;
 }
 #footer {
-	height: 58px;
-	width: 980px;
-	margin: 0 auto;
-	background: url(images/footer.png) repeat-x bottom #F8F8F8;
+    height: 58px;
+    width: 980px;
+    margin: 0 auto;
+    background: url(images/footer.png) repeat-x bottom #F8F8F8;
 }
 #footer {
-	font-size: 0.7em;
-	color: #333333;
+    font-size: 0.7em;
+    color: #333333;
 }
 #footer a {
-	font-weight: bold;
+    font-weight: bold;
 }
 #footer_links {
-	float: left;
-	position: relative;
-	left: 27px;
-	top: 19px;
+    float: left;
+    position: relative;
+    left: 27px;
+    top: 19px;
 }
 #footer_links a {
-	font-size: 1.1em;
-	padding-right: 14px;
+    font-size: 1.1em;
+    padding-right: 14px;
 }
 #footer_credits {
-	float: right;
-	position: relative;
-	right: 27px;
-	top: 19px;
+    float: right;
+    position: relative;
+    right: 27px;
+    top: 19px;
 }
 
 /* Stars
@@ -1425,66 +1425,66 @@ a.donation_button:hover {
 .star-rating a:active,
 .star-rating a:focus,
 .star-rating .current-rating {
-	background: url(images/stars.gif) left -1000px repeat-x;
+    background: url(images/stars.gif) left -1000px repeat-x;
 }
 .star-rating {
-	display:-moz-inline-block;
-	display:-moz-inline-box;
-	display:inline-block;
-	vertical-align: middle;
-	font-size: 0;
-	position:relative;
-	width:65px;
-	height:13px;
-	overflow:hidden;
-	list-style:none;
-	margin:0;
-	padding:0;
-	background-position: left top;
+    display:-moz-inline-block;
+    display:-moz-inline-box;
+    display:inline-block;
+    vertical-align: middle;
+    font-size: 0;
+    position:relative;
+    width:65px;
+    height:13px;
+    overflow:hidden;
+    list-style:none;
+    margin:0;
+    padding:0;
+    background-position: left top;
 }
 .star-rating li {
-	display: inline;
+    display: inline;
 }
-.star-rating a, 
+.star-rating a,
 .star-rating .current-rating {
-	position:absolute;
-	top:0;
-	left:0;
-	text-indent:-1000em;
-	height:13px;
-	line-height:13px;
-	outline:none;
-	overflow:hidden;
-	border: none;
+    position:absolute;
+    top:0;
+    left:0;
+    text-indent:-1000em;
+    height:13px;
+    line-height:13px;
+    outline:none;
+    overflow:hidden;
+    border: none;
 }
 .star-rating a:hover,
 .star-rating a:active,
 .star-rating a:focus{
-	background-position: left bottom;
+    background-position: left bottom;
 }
 .star-rating a.one-star{
-	width:20%;
-	z-index:6;
+    width:20%;
+    z-index:6;
 }
 .star-rating a.two-stars{
-	width:40%;
-	z-index:5;
+    width:40%;
+    z-index:5;
 }
 .star-rating a.three-stars{
-	width:60%;
-	z-index:4;
+    width:60%;
+    z-index:4;
 }
 .star-rating a.four-stars{
-	width:80%;
-	z-index:3;
+    width:80%;
+    z-index:3;
 }
 .star-rating a.five-stars{
-	width:100%;
-	z-index:2;
+    width:100%;
+    z-index:2;
 }
 .star-rating .current-rating{
-	z-index:1;
-	background-position: left center;
+    z-index:1;
+    background-position: left center;
 }
 
 /* for an inline rater */
@@ -1496,18 +1496,18 @@ a.donation_button:hover {
 ------------------------------------------------------*/
 
 .list_order {
-	list-style:none;
+    list-style:none;
 }
 .list_order li {
-	display: inline;
+    display: inline;
 }
 .list_order li a {
-	border: 1px solid;
-	padding: 5px;
+    border: 1px solid;
+    padding: 5px;
 }
 .list_order li a.selected {
-	border: 2px solid;
-	padding: 5px;
+    border: 2px solid;
+    padding: 5px;
     font-weight: bold;
 }
 
@@ -1534,7 +1534,7 @@ p.about {
     text-decoration: none;
     margin: 1px;
 }
-#filter_query_display a:hover { 
+#filter_query_display a:hover {
     border: 2px solid #2C74C9;
     text-decoration: none;
 }
@@ -1598,7 +1598,7 @@ span.tag_addremove a:hover {
     background-repeat: no-repeat;
     float:right;
     top:1px;
-    right: 1px;   
+    right: 1px;
     position:relative;
     cursor:pointer;
 }
@@ -1607,282 +1607,284 @@ span.tag_addremove a:hover {
     background-repeat: no-repeat;
     float:right;
     top:1px;
-    right: 1px;   
+    right: 1px;
     position:relative;
-    cursor:pointer; 
+    cursor:pointer;
 }
 
 /* License form
 ------------------------------------------------------*/
 
 #license-form-wrapper {
-	max-height: 300px;
-	min-height: 300px;
+    max-height: 300px;
+    min-height: 300px;
 }
 #license-left, #license-arrow, #license-middle, #license-right {
-	height: 100%;
-	float: left;
-	margin: 10px;
+    height: 100%;
+    float: left;
+    margin: 10px;
 }
 .license-description {
-	float: left;
-	width: 100%;
-	/*margin-bottom: 30px;*/
-	height: 80px;
+    float: left;
+    width: 100%;
+    /*margin-bottom: 30px;*/
+    height: 80px;
 }
 #license-right {
-	padding-top: 20px;
-	overflow: hidden;
-	width: 400px;
+    padding-top: 20px;
+    overflow: hidden;
+    width: 400px;
 }
 #license-middle label {
-	visibility: hidden;
-	overflow: hidden;
+    visibility: hidden;
+    overflow: hidden;
 }
 #license-middle input {
-	visibility: visible;
+    visibility: visible;
 }
 #license-middle li {
-	list-style-type: none;
-	/*margin-bottom: 50px;*/	
-	height: 80px;
+    list-style-type: none;
+    /*margin-bottom: 50px;*/
+    height: 80px;
 }
 #license-middle {
-	width: 40px;
-	padding-top: 20px;
+    width: 40px;
+    padding-top: 20px;
 }
 .license {
-	height: 100px;
+    height: 100px;
 }
 #license-left-top {
-	position: relative;
-	top: 20px;
+    position: relative;
+    top: 20px;
 }
 #license-left-bottom {
-	position: relative;
-	top: 200px;
+    position: relative;
+    top: 200px;
 }
 .license-description h3 {
-	color: black;
+    color: black;
 }
 .license-option input {
-	position: relative;
-	top: 20px;
+    position: relative;
+    top: 20px;
 }
 
 /* Describe accordion
 ------------------------------------------------------*/
 
 .outer-accordion-div {
-	background: #dddddd;
-	padding: 10px;
-	height: 500px;
+    background: #dddddd;
+    padding: 10px;
+    height: 500px;
 }
 .outer-accordion-div h4 {
-	background: #eeeeee;
+    background: #eeeeee;
 }
 .inner-accordion-div {
-	background: #ffffff;
-	padding: 10px;
+    background: #ffffff;
+    padding: 10px;
 }
 .outer-accordion h3 {
-	background: #cccccc;
-	margin: 0px;
-	padding: 10px;
+    background: #cccccc;
+    margin: 0px;
+    padding: 10px;
 }
 
 .outer-accordion {
-	width: 900px;
+    width: 900px;
 }
 
-/* Describe google map 
+/* Describe google map
 ------------------------------------------------------*/
 
 .describe-geotag-form {
-	float: left;
-	/*width: 300px;*/
-	margin-left: 30px;
+    float: left;
+    /*width: 300px;*/
+    margin-left: 30px;
 }
 .describe-gmap {
-	float: left;
+    float: left;
 }
 
 /* Notification messages
 ------------------------------------------------------*/
 
 ul.messages {
-	border: 1px solid #ffff00;
-	background-color: #F7F8E0;
-	margin: 20px 70px 20px 70px;
+    border: 1px solid #ffff00;
+    background-color: #F7F8E0;
+    margin: 20px 70px 20px 70px;
 }
 
-/* Moderation interface 
+/* Moderation interface
 ------------------------------------------------------*/
 
 .moderation-user-list img {
-	position: relative;
-	top: 5px;
+    position: relative;
+    top: 5px;
 }
 .moderation-user-list-user {
-	height: 75px;
-	width: 300px;
-	float: left;
-	overflow: hidden;
+    height: 75px;
+    width: 300px;
+    float: left;
+    overflow: hidden;
 }
 .moderation-user-list-user-left {
-	float: left;
-	height: 75px;
-	width: 75px;
+    float: left;
+    height: 75px;
+    width: 75px;
 }
 #moderation_form textarea{
-    height:80px;  
+    height:80px;
 }
 #moderation-delete-form,
 #moderation-defer-form,
 #moderation-return-form {
-	position: absolute;
-	top: 0px;
-	left: 0px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
 }
 #moderation-message-form-wrapper {
-	position: relative;
-	height: 230px;
+    position: relative;
+    height: 230px;
 }
 #moderation-form form {
-	padding-bottom: 10px;	
+    padding-bottom: 10px;
 }
 .moderation-unsure-ticket-player,
 .moderation-unsure-ticket-info {
-	float: left;	
+    float: left;
 }
 .moderation-unsure-ticket-info {
-	padding-left: 5px;
-	width: 700px;
+    padding-left: 5px;
+    width: 700px;
 }
 .moderation-unsure-ticket-last {
-	margin: 5px 20px 0 20px;
-	padding: 3px;
-	background-color: #fafafa;
-	width: 100%;
+    margin: 5px 20px 0 20px;
+    padding: 3px;
+    background-color: #fafafa;
+    width: 100%;
 }
 .moderation-unsure-ticket {
-	font-size: 0.8em;
-	height: 80px;
+    font-size: 0.8em;
+    height: 80px;
 }
 .user-annotations-info img,
 .user-annotations-info p {
-	float: left;
+    float: left;
 }
 .user-annotations-info img {
-	padding-right: 8px;
-	padding-top: 4px;
+    padding-right: 8px;
+    padding-top: 4px;
 }
 .user-annotations-wrapper form {
-	margin-top: 15px;
+    margin-top: 15px;
 }
 .user-annotations-wrapper p {
-	margin-bottom: 3px;
-	margin-top: 3px;
+    margin-bottom: 3px;
+    margin-top: 3px;
 }
 .alternate-row-even td {
-	background-color: #fafafa;
+    background-color: #fafafa;
 }
 .alternate-row-odd td {
-	background-color: #fff;
+    background-color: #fff;
 }
 #moderation-queue-left,
 #moderation-queue-right {
-	width: 450px;
-	float: left;
+    width: 450px;
+    float: left;
 }
 #moderation-queue-left {
-	margin-right: 20px;
+    margin-right: 20px;
 }
 #moderation-queue textarea {
-	height: 80px;
-	width: 400px;	
+    height: 80px;
+    width: 400px;
 }
 .message-list-message {
-	margin: 0 40px 0 30px;
-	padding: 5px;	
+    margin: 0 40px 0 30px;
+    padding: 5px;
 }
 .message-list-message-nomod {
-	background-color: #fffafa;
+    background-color: #fafafa;
 }
 .message-list-message-mod {
-	background-color: #fafafa;
+    background-color: #ff8a8a;
 }
 .message-list-message-header p {
-	margin: 0;
+    margin: 0;
 }
 .message-list-message-date {
-	font-size: 0.6em;
-	float: left;
-	margin-left: 10px;
-	margin-top: 3px;
-	/*min-width: 200px;*/	
+    font-size: 0.6em;
+    float: left;
+    margin-left: 10px;
+    margin-top: 3px;
+    /*min-width: 200px;*/
 }
 .message-list-message-sender {
-	margin: 0 0 5px 0;
-	float: left;
-	/*min-width: 300px;*/
+    margin: 0 0 5px 0;
+    float: left;
+    /*min-width: 300px;*/
 }
 #assigned-tickets-table-wrapper {
-	height: 400px;	
-	overflow-x: hidden;
-	overflow-y: auto;
+    height: 400px;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 #moderation-decision-form li {
-	list-style-type: none;
-	float: left;
-	margin-right: 20px;
+    list-style-type: none;
+    float: left;
+    margin-right: 15px;
+}
+#moderation-decision-form ul {
+    padding-left: 0px;
 }
 #moderation-decision-form {
-	padding-top: 3px;
-	padding-bottom: 10px;	
+    padding-top: 3px;
+    padding-bottom: 10px;
 }
 #ticket-details {
-	position: relative;	
+    position: relative;
 }
 #ticket-details li {
-	list-style-type: none;
-	border-bottom: 1px solid #eee;
+    list-style-type: none;
+    border-bottom: 1px solid #eee;
 }
 #ticket-details em {
-	min-width: 170px;
-	float: left;
-	color: #666;
+    min-width: 170px;
+    float: left;
+    color: #666;
 }
 #ticket-details ul {
-	width: 400px;
-	float: left;
+    width: 400px;
+    float: left;
 }
 #ticket-details-left {
-	margin-right: 20px;
+    margin-right: 20px;
 }
 #ticket-page-form textarea {
-	height: 80px;
+    height: 80px;
 }
 #ticket-page-form form {
-	margin-right: 20px;
+    margin-right: 20px;
 }
 #ticket-left,
 #ticket-right {
-	width: 450px;
-	float: left;
+    width: 450px;
+    float: left;
 }
 #ticket-left {
-	margin-right: 20px;
+    margin-right: 20px;
 }
 #id_moderator_only {
-	float: left;
-	width: 140px;
-	font-size: 0.8em;
+    float: left;
+    width: 140px;
+    font-size: 0.8em;
 }
 #moderation-form label {
-	float: left;	
+    float: left;
 }
 #moderation-form p {
-	margin-bottom: 5px;
+    margin-bottom: 5px;
 }
-	

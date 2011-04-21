@@ -21,6 +21,8 @@ def task_process_sound(gearman_worker, gearman_job):
         print "\tsound: ", sound_id, "processing", "ok" if result else "failed"
     except Sound.DoesNotExist:
         print "\tdid not find sound with id: ", sound_id
+    except Exception, e:
+        print "\t something went terribly wrong:", e
     return str(result) 
 
 

@@ -27,6 +27,9 @@ class Command(BaseCommand):
         make_option('--queue', action='store', dest='queue',
             default='process_sound',
             help='Send job to this queue (default: process_sound)'),
+        make_option('--file', action='store', dest='file_input',
+            default=None,
+            help='Take ids from a file instead of via commands'),
     )
 
 
@@ -57,5 +60,5 @@ class Command(BaseCommand):
         self.stdout.write('Sending %d sound(s) to the gearman queue\n' % len(jobs))
         # send them to the queue!
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_multiple_jobs(jobs, background=True)
+        gm_client.submit_multiple_jobs(jobs, background=True, wait_until_complete=False)
         self.stdout.write('Sending sounds done')

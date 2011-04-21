@@ -286,6 +286,7 @@ def moderation_assigned(request, user_id):
                     if pending_ticket.content:
                         pending_ticket.content.content_object.moderation_state = "OK"
                         pending_ticket.content.content_object.save()
+                        add_sound_to_solr(pending_ticket.content.content_object)
                     # This could be done with a single update, but there's a chance
                     # we lose a sound that way (a newly created ticket who's sound
                     # is not set to OK, but the ticket is closed).

@@ -38,6 +38,10 @@ from utils.audioprocessing.freesound_audio_processing import process_sound_via_g
 from utils.search.search import add_sound_to_solr
 
 
+audio_logger = logging.getLogger("audioprocessing")
+search_logger = logging.getLogger("search")
+
+
 def activate_user(request, activation_key):
     if request.user.is_authenticated():
         return HttpResponseRedirect(reverse("accounts-home"))
@@ -370,8 +374,14 @@ def describe_sounds(request):
             sound.set_tags(data.get('tags'))
             sound.save()
             # process the sound
-            sound.process()
-            add_sound_to_solr(sound)
+            try:
+                sound.process()
+            except Exception, e:
+                audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, e))
+            try:
+                add_sound_to_solr(sound)
+            except Exception, e:
+                search_logger.error('Sound with id %s could not be added to Solr. (%s)' % (sound.id, e))
             # create moderation ticket!
             ticket = Ticket()
             ticket.title = 'Moderate sound %s' % sound.original_filename

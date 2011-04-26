@@ -378,10 +378,6 @@ def describe_sounds(request):
                 sound.process()
             except Exception, e:
                 audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, e))
-            try:
-                add_sound_to_solr(sound)
-            except Exception, e:
-                search_logger.error('Sound with id %s could not be added to Solr. (%s)' % (sound.id, e))
             # create moderation ticket!
             ticket = Ticket()
             ticket.title = 'Moderate sound %s' % sound.original_filename

@@ -10,7 +10,7 @@ q:before, q:after { content:''; }
 ------------------------------------------------------*/
 
 body {
-    background: url(images/body.png) repeat-x top #CECECE;
+    background: url(../images/body.png) repeat-x top #CECECE;
     font-family: Verdana, sans-serif;
     font-size: 100%;
     margin-top: 7px;
@@ -27,7 +27,7 @@ a:hover {
     clear: both;
 }
 a.external_link {
-    background: url(images/external_link_button.png) no-repeat top;
+    background: url(../images/external_link_button.png) no-repeat top;
     display: block;
     width: 146px;
     height: 31px;
@@ -40,7 +40,7 @@ a.external_link {
     margin: 3px 0 0 166px;
 }
 a.external_link:hover {
-    background: url(images/external_link_button.png) no-repeat bottom;
+    background: url(../images/external_link_button.png) no-repeat bottom;
 }
 
 /* General Mark-up Styling
@@ -199,14 +199,14 @@ div.infowindow {
     height: 115px;
     width: 980px;
     margin: 0 auto;
-    background: url(images/header.png) repeat-x bottom #F8F8F8;
+    background: url(../images/header.png) repeat-x bottom #F8F8F8;
     position: relative;
 }
 #logo {
     display: block;
     width: 239px;
     height: 62px;
-    background: url(images/logo.png) no-repeat;
+    background: url(../images/logo.png) no-repeat;
     position: relative;
     left: 10px;
     top: 5px;
@@ -218,7 +218,7 @@ div.infowindow {
     top: -2px;
     margin-right: 20px;
     padding-right: 6px;
-    background: url(images/account_nav_right.png) no-repeat right;
+    background: url(../images/account_nav_right.png) no-repeat right;
     font-size: 11px;
     font-weight: bold;
     line-height: 32px;
@@ -235,7 +235,7 @@ div.infowindow {
     height: 38px;
     margin-left: -6px;
     padding-left: 15px;
-    background: url(images/account_nav_left.png) no-repeat left;
+    background: url(../images/account_nav_left.png) no-repeat left;
 }
 #account_user img {
     position: relative;
@@ -245,7 +245,7 @@ div.infowindow {
 }
 #messages_count {
     float: left;
-    background: url(images/messages_count_bg.png) no-repeat left;
+    background: url(../images/messages_count_bg.png) no-repeat left;
     color: #FFF;
     margin: 10px 0 0 5px;
     line-height: 15px;
@@ -253,7 +253,7 @@ div.infowindow {
     padding-left: 5px;
 }
 #messages_count div {
-    background: url(images/messages_count_bg.png) no-repeat right;
+    background: url(../images/messages_count_bg.png) no-repeat right;
     height: 15px;
     padding-right: 6px;
     line-height: 14px;
@@ -263,7 +263,7 @@ div.infowindow {
     float: right;
     width: 144px;
     height: 31px;
-    background: url(images/upload_button.png);
+    background: url(../images/upload_button.png);
 }
 
 /* Site Navigation
@@ -282,7 +282,7 @@ div.infowindow {
 #site_nav li {
     display: inline;
     float: left;
-    background: url(images/tab_left.png) no-repeat left;
+    background: url(../images/tab_left.png) no-repeat left;
     margin-right: 3px;
 }
 #site_nav li a {
@@ -294,14 +294,14 @@ div.infowindow {
     font-size: 12px;
     font-weight: bold;
     color: #222;
-    background: url(images/tab_right.png) no-repeat right;
+    background: url(../images/tab_right.png) no-repeat right;
     line-height: 36px;
 }
 #site_nav .active_tab {
-    background: url(images/tab_left_active.png) no-repeat left;
+    background: url(../images/tab_left_active.png) no-repeat left;
 }
 #site_nav .active_tab a {
-    background: url(images/tab_right_active.png) no-repeat right;
+    background: url(../images/tab_right_active.png) no-repeat right;
     color: #CB3D44;
 }
 #site_nav .active_tab a:hover {
@@ -317,28 +317,28 @@ div.infowindow {
     left: -5px;
 }
 #site_nav_home .site_nav_icon {
-    background: url(images/site_nav_icons.png) no-repeat 0 0;
+    background: url(../images/site_nav_icons.png) no-repeat 0 0;
 }
 .active_tab #site_nav_home .site_nav_icon {
-    background: url(images/site_nav_icons.png) no-repeat -16px 0;
+    background: url(../images/site_nav_icons.png) no-repeat -16px 0;
 }
 #site_nav_sounds .site_nav_icon {
-    background: url(images/site_nav_icons.png) no-repeat 0 -15px;
+    background: url(../images/site_nav_icons.png) no-repeat 0 -15px;
 }
 .active_tab #site_nav_sounds .site_nav_icon {
-    background: url(images/site_nav_icons.png) no-repeat -16px -15px;
+    background: url(../images/site_nav_icons.png) no-repeat -16px -15px;
 }
 #site_nav_forums .site_nav_icon {
-    background: url(images/site_nav_icons.png) no-repeat 0 -30px;
+    background: url(../images/site_nav_icons.png) no-repeat 0 -30px;
 }
 .active_tab #site_nav_forums .site_nav_icon {
-    background: url(images/site_nav_icons.png) no-repeat -16px -30px;
+    background: url(../images/site_nav_icons.png) no-repeat -16px -30px;
 }
 #site_nav_help .site_nav_icon {
-    background: url(images/site_nav_icons.png) no-repeat 0 -47px;
+    background: url(../images/site_nav_icons.png) no-repeat 0 -47px;
 }
 .active_tab #site_nav_help .site_nav_icon {
-    background: url(images/site_nav_icons.png) no-repeat -16px -47px;
+    background: url(../images/site_nav_icons.png) no-repeat -16px -47px;
 }
 
 /* Search
@@ -350,7 +350,7 @@ div.infowindow {
     right: 20px;
     width: 281px;
     height: 42px;
-    background: url(images/search.png);
+    background: url(../images/search.png);
 }
 #search form {
     padding: 0;
@@ -401,7 +401,7 @@ div.infowindow {
     width: 539px;
     min-height: 92px;
     padding: 0 19px;
-    background: url(images/sub_header_bg.png) no-repeat top;
+    background: url(../images/sub_header_bg.png) no-repeat top;
 }
 
 /* Home Page Styles
@@ -450,7 +450,7 @@ body#home h3 {
     top: -5px;
     font-weight: bold;
     font-size: 13px;
-    background: url(images/right_arrow.png) no-repeat right 0.45em;
+    background: url(../images/right_arrow.png) no-repeat right 0.45em;
     padding-right: 12px;
 }
 .blog_post {
@@ -630,7 +630,7 @@ body#home h3 {
     clear: both;
     padding: 12px 10px 7px 10px;
     margin-left: 10px;
-    background: url(images/single_sample_player_bg.png) no-repeat top #F3F3F3;
+    background: url(../images/single_sample_player_bg.png) no-repeat top #F3F3F3;
     border-bottom: solid 1px #D2D2D2;
     float: left;
 }
@@ -691,14 +691,14 @@ ul#tags {
     min-height: 21px;
     font-size: 11px;
     font-weight: bold;
-    background: url(images/tag_edge.png) no-repeat left top;
+    background: url(../images/tag_edge.png) no-repeat left top;
 }
 #tags li a:hover {
     color: #000;
 }
 #comments_container {
     clear: both;
-    background: url(images/single_sample_comments_bg.png) no-repeat;
+    background: url(../images/single_sample_comments_bg.png) no-repeat;
     padding: 0 20px;
 }
 #comments_heading {
@@ -787,11 +787,11 @@ ul#comments {
     float: right;
     width: 144px;
     height: 31px;
-    background: url(images/download_button.png);
+    background: url(../images/download_button.png);
 }
 #sound_information_box {
     padding: 20px 30px;
-    background: url(images/single_sample_sidebar_bg.png) no-repeat top #F3F3F3;
+    background: url(../images/single_sample_sidebar_bg.png) no-repeat top #F3F3F3;
     font-size: 12px;
     border-bottom: solid 1px #D2D2D2;
     line-height: 1.7em;
@@ -810,7 +810,7 @@ ul#comments {
     padding: 20px 30px;
     font-size: 13px;
     font-weight: bold;
-    background: url(images/single_sample_links_bg.png) no-repeat top;
+    background: url(../images/single_sample_links_bg.png) no-repeat top;
 }
 ul#sound_links {
     padding: 20px 30px;
@@ -824,7 +824,7 @@ ul#sound_links {
 }
 #flag_sound {
     padding: 20px 30px 18px 30px;
-    background: url(images/single_sample_sidebar_bg.png) no-repeat top #F3F3F3;
+    background: url(../images/single_sample_sidebar_bg.png) no-repeat top #F3F3F3;
     font-size: 12px;
     border-bottom: solid 1px #D2D2D2;
     color: #555;
@@ -868,7 +868,7 @@ ul#sound_links {
     padding: 8px 15px 15px 15px;
     border: none;
     margin: 0 5px;
-    background: url(images/content_full_header_bg.png) no-repeat top;
+    background: url(../images/content_full_header_bg.png) no-repeat top;
 }
 .messages_table {
     width: 100%;
@@ -925,28 +925,28 @@ ul#sound_links {
 #message_tabs li {
     float: left;
     list-style-type: none;
-    background: url(images/button_bg.png) no-repeat -2px 0;
+    background: url(../images/button_bg.png) no-repeat -2px 0;
     max-height: 31px;
     border-left: solid 1px #FFF;
     border-right: solid 1px #D3D3D3;
 }
 #message_tabs .active {
-    background: url(images/button_bg_active.png) no-repeat -2px 0;
+    background: url(../images/button_bg_active.png) no-repeat -2px 0;
     border: none;
 }
 #message_tabs li:first-child {
-    background: url(images/button_bg.png) no-repeat left top;
+    background: url(../images/button_bg.png) no-repeat left top;
     border-left: none;
 }
 #message_tabs .active:first-child {
-    background: url(images/button_bg_active.png) no-repeat left top;
+    background: url(../images/button_bg_active.png) no-repeat left top;
 }
 #message_tabs li:last-child {
-    background: url(images/button_bg.png) no-repeat right top;
+    background: url(../images/button_bg.png) no-repeat right top;
     border-right: none;
 }
 #message_tabs .active:last-child {
-    background: url(images/button_bg_active.png) no-repeat right top;
+    background: url(../images/button_bg_active.png) no-repeat right top;
 }
 #message_tabs li a {
     font-size: 12px;
@@ -962,7 +962,7 @@ ul#sound_links {
     margin: 0 5px;
 }
 .message_container .message_header {
-    background: url(images/content_full_header_bg_top.png) no-repeat top #F3F3F3;
+    background: url(../images/content_full_header_bg_top.png) no-repeat top #F3F3F3;
     padding: 18px 15px 15px 5px;
     font-size: 13px;
     line-height: 1.8em;
@@ -979,7 +979,7 @@ ul#sound_links {
 }
 .message_container .message-body {
     padding: 18px 25px;
-    background: url(images/message_body_bg.png) no-repeat top;
+    background: url(../images/message_body_bg.png) no-repeat top;
 }
 
 /* Forums
@@ -988,7 +988,7 @@ ul#sound_links {
 #breadcrumb {
     font-weight: bold;
     font-size: 14px;
-    background: url(images/breadcrumb.png) repeat-x bottom;
+    background: url(../images/breadcrumb.png) repeat-x bottom;
     padding: 10px 15px;
     border-bottom: solid 1px #E4E4E4;
     color: #D3D3D3;
@@ -1080,7 +1080,7 @@ ul.pagination {
     position: relative;
     padding: 15px 35px 15px 230px;
     margin: 0 0 15px 0;
-    background: url(images/post_bg.png) repeat-y left;
+    background: url(../images/post_bg.png) repeat-y left;
     border-top: solid 2px #E6E6E6;
     min-height: 80px;
 }
@@ -1146,7 +1146,7 @@ ul.pagination {
     height: 31px;
     line-height: 31px;
     padding-left: 3px;
-    background: url(images/read_more_bg.png) no-repeat left top;
+    background: url(../images/read_more_bg.png) no-repeat left top;
 }
 .forum_button a {
     display: block;
@@ -1156,7 +1156,7 @@ ul.pagination {
     font-weight: bold;
     text-decoration: none;
     padding: 0 13px 0 10px;
-    background: url(images/read_more_bg.png) no-repeat right top;
+    background: url(../images/read_more_bg.png) no-repeat right top;
 }
 .forum_button a:hover {
     color: #A9CAF1;
@@ -1169,10 +1169,10 @@ ul.pagination {
     right: 0;
     width: 46px;
     height: 27px;
-    background: url(images/post_quote.png) top;
+    background: url(../images/post_quote.png) top;
 }
 .post_quote:hover {
-    background: url(images/post_quote.png) bottom;
+    background: url(../images/post_quote.png) bottom;
 }
 
 /* Sidebar
@@ -1187,22 +1187,22 @@ ul.pagination {
     width: 310px;
     min-height: 103px;
     padding: 0 19px;
-    background: url(images/sub_sidebar_header_bg.png) no-repeat top;
+    background: url(../images/sub_sidebar_header_bg.png) no-repeat top;
     margin-bottom: 20px;
 }
 .continuous_sidebar_box {
-    background: url(images/continuous_sidebar_header_bg.png) no-repeat top;
+    background: url(../images/continuous_sidebar_header_bg.png) no-repeat top;
     width: 349px;
     padding: 16px 0 0 0;
 }
 .continuous_sidebar_box #support {
-    background: url(images/continuous_sidebar_header_bg.png) no-repeat bottom;
+    background: url(../images/continuous_sidebar_header_bg.png) no-repeat bottom;
     padding: 0 0 22px 0;
     margin: 0 0 14px 0;
 }
 #post_it {
     position: relative;
-    background: url(images/postit_bg.png) no-repeat bottom;
+    background: url(../images/postit_bg.png) no-repeat bottom;
     width: 280px;
     padding: 22px 27px 34px 27px;
     left: 7px;
@@ -1232,7 +1232,7 @@ body#home #support h3 {
     line-height: 14px;
 }
 #donation_box {
-    background: url(images/donation_box_bg.png) no-repeat top left;
+    background: url(../images/donation_box_bg.png) no-repeat top left;
     width: 291px;
     height: 81px;
     padding: 0 0 0 57px;
@@ -1254,7 +1254,7 @@ body#home #support h3 {
 }
 a.donation_button {
     float: left;
-    background: url(images/donation_button.png) no-repeat top left;
+    background: url(../images/donation_button.png) no-repeat top left;
     display: block;
     width: 104px;
     height: 30px;
@@ -1267,10 +1267,10 @@ a.donation_button {
     margin: 26px 0 0 0;
 }
 a.donation_button:hover {
-    background: url(images/donation_button.png) no-repeat bottom left;
+    background: url(../images/donation_button.png) no-repeat bottom left;
 }
 #donation_meter_box {
-    background: url(images/donation_meter_box.png) no-repeat top left;
+    background: url(../images/donation_meter_box.png) no-repeat top left;
     float: left;
     margin: 26px 0 0 -5px;
     width: 162px;
@@ -1278,7 +1278,7 @@ a.donation_button:hover {
 }
 #meter {
     display: block;
-    background: url(images/donation_meter_bar.png) repeat-x top left;
+    background: url(../images/donation_meter_bar.png) repeat-x top left;
     border: 1px solid #565656;
     line-height: 30px;
     height: 27px;
@@ -1325,7 +1325,7 @@ a.donation_button:hover {
     font-family: Arial, sans-serif;
     font-size: 13px;
     font-weight: bold;
-    background: url(images/more_posts_button.png) no-repeat top right;
+    background: url(../images/more_posts_button.png) no-repeat top right;
     color: #FFF;
 }
 #latest_forum_posts a.more_posts_button:hover {
@@ -1383,6 +1383,7 @@ a.donation_button:hover {
 ------------------------------------------------------*/
 
 #footer_wrapper {
+<<<<<<< HEAD
     background: url(images/footer_wrapper.png) repeat-x top #FCFCFC;
     height: 80px;
     clear: both;
@@ -1392,6 +1393,17 @@ a.donation_button:hover {
     width: 980px;
     margin: 0 auto;
     background: url(images/footer.png) repeat-x bottom #F8F8F8;
+=======
+    background: url(../images/footer_wrapper.png) repeat-x top #FCFCFC;
+    height: 80px;
+    clear: both;
+}
+#footer {
+    height: 58px;
+    width: 980px;
+    margin: 0 auto;
+    background: url(../images/footer.png) repeat-x bottom #F8F8F8;
+>>>>>>> origin/master
 }
 #footer {
     font-size: 0.7em;
@@ -1425,7 +1437,11 @@ a.donation_button:hover {
 .star-rating a:active,
 .star-rating a:focus,
 .star-rating .current-rating {
+<<<<<<< HEAD
     background: url(images/stars.gif) left -1000px repeat-x;
+=======
+    background: url(../images/stars.gif) left -1000px repeat-x;
+>>>>>>> origin/master
 }
 .star-rating {
     display:-moz-inline-block;
@@ -1594,7 +1610,7 @@ span.tag_addremove a:hover {
     display:inline;
 }
 .remove_sound {
-    background-image: url(images/cancel.png);
+    background-image: url(../images/cancel.png);
     background-repeat: no-repeat;
     float:right;
     top:1px;
@@ -1603,7 +1619,7 @@ span.tag_addremove a:hover {
     cursor:pointer;
 }
 .add_sound {
-    background-image: url(images/plus.png);
+    background-image: url(../images/plus.png);
     background-repeat: no-repeat;
     float:right;
     top:1px;

@@ -1,11 +1,11 @@
----support email-----------------------------
+{% load absurl %}---support email-----------------------------
 {% block body %}
 {{message}}
 {% endblock %}
 ---------------------------------------------
 
 {% if user %}
--- 
+--
 user: {% absurl account user.username %}
 is_active: {{user.is_active|yesno}}
 joined: {{user.date_joined|date:"F jS, Y"}}

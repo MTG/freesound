@@ -72,7 +72,7 @@ def ticket(request, ticket_key):
                         ticket.content.content_object.moderation_state = sound_state
                         if sound_state == "OK":
                             add_sound_to_solr(ticket.content.content_object)
-                            
+
                         ticket.content.content_object.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
                     tc = TicketComment(sender=ticket.assignee,
@@ -235,10 +235,9 @@ def moderation_assigned(request, user_id):
             action = mod_sound_form.cleaned_data.get("action")
             msg = msg_form.cleaned_data.get("message", False)
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
-            if msg:
-                msg = msg.replace('\n', '<br>')
 
             if msg:
+                msg = msg.replace('\n', '<br>')
                 tc = TicketComment(sender=ticket.assignee,
                                    text=msg,
                                    ticket=ticket,
@@ -274,6 +273,36 @@ def moderation_assigned(request, user_id):
                     ticket.content = None
                 ticket.status=TICKET_STATUS_CLOSED
                 ticket.save()
+            elif action=="Whitelist":
+                # Get all currently pending sound tickets for user
+                whitelist_user = ticket.sender
+                whitelist_user.is_whitelisted = True
+                whitelist_user.save()
+                pending_tickets = Ticket.objects.filter(sender=whitelist_user,
+                                                        source='new sound') \
+                                                .exclude(status=TICKET_STATUS_CLOSED)
+                # Set all sounds to OK and the tickets to closed
+                for pending_ticket in pending_tickets:
+                    if pending_ticket.content:
+                        pending_ticket.content.content_object.moderation_state = "OK"
+                        pending_ticket.content.content_object.save()
+                        add_sound_to_solr(pending_ticket.content.content_object)
+                    # This could be done with a single update, but there's a chance
+                    # we lose a sound that way (a newly created ticket who's sound
+                    # is not set to OK, but the ticket is closed).
+                    pending_ticket.status = TICKET_STATUS_CLOSED
+                    pending_ticket.save()
+                ticket.send_notification_emails(Ticket.NOTIFICATION_WHITELISTED)
+
+            if msg:
+                tc = TicketComment(sender=ticket.assignee,
+                                   text=msg,
+                                   ticket=ticket,
+                                   moderator_only=moderator_only)
+                tc.save()
+
+
+
         else:
             clear_forms = False
     if clear_forms:

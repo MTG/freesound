@@ -370,7 +370,7 @@ def describe_sounds(request):
             sound.set_tags(data.get('tags'))
             sound.save()
             # process the sound
-            process_sound_via_gearman(sound)
+            sound.process()
             add_sound_to_solr(sound)
             # create moderation ticket!
             ticket = Ticket()

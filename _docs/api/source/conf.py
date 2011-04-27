@@ -38,7 +38,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Freesound API'
-copyright = u'2010, Bram de Jong, Vincent Akkermans'
+copyright = u'2010, Universitat Pompeu Fabra'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

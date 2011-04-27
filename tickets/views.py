@@ -292,13 +292,6 @@ def moderation_assigned(request, user_id):
                     pending_ticket.status = TICKET_STATUS_CLOSED
                     pending_ticket.save()
                 ticket.send_notification_emails(Ticket.NOTIFICATION_WHITELISTED)
-
-            if msg:
-                tc = TicketComment(sender=ticket.assignee,
-                                   text=msg,
-                                   ticket=ticket,
-                                   moderator_only=moderator_only)
-                tc.save()
         else:
             clear_forms = False
     if clear_forms:

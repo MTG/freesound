@@ -200,3 +200,31 @@ CREATE OR REPLACE FUNCTION sound_rating_delete() RETURNS TRIGGER AS $BODY$
 $BODY$ LANGUAGE plpgsql;
 DROP TRIGGER rating_post_delete ON ratings_rating;
 CREATE TRIGGER rating_post_delete AFTER DELETE ON ratings_rating FOR EACH ROW EXECUTE PROCEDURE sound_rating_delete();
+
+------------------------------------------------------------------------------------------------------------------------------------------
+-- on downloads
+CREATE OR REPLACE FUNCTION download_insert() RETURNS TRIGGER AS $BODY$
+    BEGIN
+        IF NEW.sound_id is null THEN
+            UPDATE sounds_pack SET num_downloads=num_downloads+1 WHERE sounds_pack.id=NEW.pack_id;
+        ELSE
+            UPDATE sounds_sound SET num_downloads=num_downloads+1 WHERE sounds_sound.id=NEW.sound_id;
+        END IF;
+        RETURN NEW;
+    END;
+$BODY$ LANGUAGE plpgsql;
+DROP TRIGGER download_post_insert ON sounds_download;
+CREATE TRIGGER download_post_insert AFTER INSERT ON sounds_download FOR EACH ROW EXECUTE PROCEDURE download_insert();
+
+CREATE OR REPLACE FUNCTION download_delete() RETURNS TRIGGER AS $BODY$
+    BEGIN
+        IF OLD.sound_id is null THEN
+            UPDATE sounds_pack SET num_downloads=num_downloads-1 WHERE sounds_pack.id=OLD.pack_id;
+        ELSE
+            UPDATE sounds_sound SET num_downloads=num_downloads-1 WHERE sounds_sound.id=OLD.sound_id;
+        END IF;
+        RETURN OLD;
+    END;
+$BODY$ LANGUAGE plpgsql;
+DROP TRIGGER download_post_delete ON sounds_download;
+CREATE TRIGGER download_post_delete AFTER DELETE ON sounds_download FOR EACH ROW EXECUTE PROCEDURE download_delete();

@@ -95,8 +95,22 @@ from (
 ) as d
 where d.pack_id = sounds_pack.id;
 
+-- unqueness for downloads with null of either field
+CREATE UNIQUE INDEX sounds_download_user_pack_unique
+    ON sounds_download
+    USING btree
+    (user_id, sound_id)
+    WHERE pack_id IS NULL;
+  
+CREATE UNIQUE INDEX sounds_download_user_sound_unique
+    ON sounds_download
+    USING btree
+    (user_id, pack_id)
+    WHERE sound_id IS NULL;
+
 vacuum analyze sounds_sound;
 vacuum analyze sounds_pack;
 vacuum analyze forum_thread;
 vacuum analyze forum_forum;
 vacuum analyze accounts_profile;
+vacuum analyze sounds_sound;

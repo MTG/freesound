@@ -3,13 +3,13 @@
 This django-admin command runs a Gearman worker for processing sounds.
 """
 
-import gearman
+import gearman, sys
 from django.core.management.base import BaseCommand
 from utils.audioprocessing.freesound_audio_processing import process
 from django.conf import settings
 from sounds.models import Sound
 from optparse import make_option
-import sys
+
 
 def task_process_sound(gearman_worker, gearman_job):
     """Run this for Gearman 'process_sound' jobs.
@@ -25,7 +25,7 @@ def task_process_sound(gearman_worker, gearman_job):
     except Exception, e:
         print "\t something went terribly wrong:", e
         sys.exit(255)
-    return str(result) 
+    return str(result)
 
 
 class Command(BaseCommand):

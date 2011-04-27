@@ -200,7 +200,7 @@ def sound_edit(request, username, sound_id):
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
                 if sound.pack:
                     sound.pack.is_dirty = True
-                    __save_and_add_to_solr(sound)
+                    sound.pack.save()
                 sound.pack = pack
             else:
                 new_pack = data["pack"]

@@ -352,7 +352,6 @@ def describe_sounds(request):
             new_pack = forms[i]['pack'].cleaned_data.get('new_pack', False)
             if not pack and new_pack:
                 pack, created = Pack.objects.get_or_create(user=request.user, name=new_pack)
-            print 'make sure this is a pack object:', pack
             if pack:
                 sound.pack = pack
                 sound.pack.is_dirty = True

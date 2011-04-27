@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest, HttpResponseNotFound, Http404, \
-    HttpResponsePermanentRedirect
+    HttpResponsePermanentRedirect, HttpResponseServerError
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
@@ -34,12 +34,9 @@ from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW
 import utils.audioprocessing.processing as audioprocessing
-from utils.audioprocessing.freesound_audio_processing import process_sound_via_gearman
-from utils.search.search import add_sound_to_solr
 
 
-audio_logger = logging.getLogger("audioprocessing")
-search_logger = logging.getLogger("search")
+audio_logger = logging.getLogger('audioprocessing')
 
 
 def activate_user(request, activation_key):
@@ -130,6 +127,7 @@ def handle_uploaded_image(profile, f):
         os.mkdir(os.path.dirname(profile.locations("avatar.L.path")))
     except:
         logger.info("\tfailed creating directory, probably already exist")
+        pass
 
     ext = os.path.splitext(os.path.basename(f.name))[1]
     tmp_image_path = tempfile.mktemp(suffix=ext, prefix=str(profile.user.id))
@@ -512,6 +510,9 @@ def handle_uploaded_file(user_id, f):
         logger.info("file upload done")
     except Exception, e:
         logger.warning("failed writing file error: %s", str(e))
+        return False
+
+    return True
 
 @csrf_exempt
 def upload_file(request):
@@ -544,8 +545,10 @@ def upload_file(request):
 
         if form.is_valid():
             logger.info("\tform data is valid")
-            handle_uploaded_file(user_id, request.FILES["file"])
-            return HttpResponse("File uploaded OK")
+            if handle_uploaded_file(user_id, request.FILES["file"]):
+                return HttpResponse("File uploaded OK")
+            else:
+                return HttpResponseServerError("Error in file upload")
         else:
             logger.warning("form data is invalid: %s", str(form.errors))
             return HttpResponseBadRequest("Form is not valid.")

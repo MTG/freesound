@@ -376,25 +376,34 @@ def describe_sounds(request):
                 sound.process()
             except Exception, e:
                 audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, e))
-            # create moderation ticket!
-            ticket = Ticket()
-            ticket.title = 'Moderate sound %s' % sound.original_filename
-            ticket.source = TICKET_SOURCE_NEW_SOUND
-            ticket.status = TICKET_STATUS_NEW
-            ticket.queue = Queue.objects.get(name='sound moderation')
-            ticket.sender = request.user
-            lc = LinkedContent()
-            lc.content_object = sound
-            lc.save()
-            ticket.content = lc
-            ticket.save()
-            tc = TicketComment()
-            tc.sender = request.user
-            tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
-            tc.ticket = ticket
-            tc.save()
-            # add notification that the file was described successfully
-            messages.add_message(request, messages.INFO, 'File %s has been described and is awaiting moderation.' % forms[i]['sound'].name)
+            if request.user.profile.is_whitelisted:
+                sound.moderation_state = 'OK'
+                sound.save()
+                messages.add_message(request, messages.INFO,
+                                     'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
+                                     (sound.get_absolute_url(), forms[i]['sound'].name))
+            else:
+                # create moderation ticket!
+                ticket = Ticket()
+                ticket.title = 'Moderate sound %s' % sound.original_filename
+                ticket.source = TICKET_SOURCE_NEW_SOUND
+                ticket.status = TICKET_STATUS_NEW
+                ticket.queue = Queue.objects.get(name='sound moderation')
+                ticket.sender = request.user
+                lc = LinkedContent()
+                lc.content_object = sound
+                lc.save()
+                ticket.content = lc
+                ticket.save()
+                tc = TicketComment()
+                tc.sender = request.user
+                tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
+                tc.ticket = ticket
+                tc.save()
+                # add notification that the file was described successfully
+                messages.add_message(request, messages.INFO,
+                                     'File <a href="%s">%s</a> has been described and is awaiting moderation.' % \
+                                     (sound.get_absolute_url(), forms[i]['sound'].name))
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
         if len(request.session['describe_sounds']) <= 0:

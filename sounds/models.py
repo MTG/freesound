@@ -12,6 +12,8 @@ from utils.text import slugify
 from utils.locations import locations_decorator
 import os, logging, random
 
+search_logger = logging.getLogger('search')
+
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -248,7 +250,12 @@ class Sound(SocialModel):
 
     def add_to_search_index(self):
         from utils.search.search import add_sound_to_solr
-        add_sound_to_solr(self)
+        try:
+            add_sound_to_solr(self)
+            search_logger.debug('Added sound with id %s to solr.' % self.id)
+        except Exception, e:
+            search_logger.error('Could not add sound with id %s to solr. (%s)' % \
+                                (self.id, str(e)))
 
     @models.permalink
     def get_absolute_url(self):

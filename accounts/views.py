@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest, HttpResponseNotFound, Http404, \
-    HttpResponsePermanentRedirect
+    HttpResponsePermanentRedirect, HttpResponseServerError
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
@@ -36,10 +36,13 @@ from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
 import utils.audioprocessing.processing as audioprocessing
 
 
+audio_logger = logging.getLogger('audioprocessing')
+
+
 def activate_user(request, activation_key):
     if request.user.is_authenticated():
         return HttpResponseRedirect(reverse("accounts-home"))
-    
+
     try:
         user_id = decrypt(activation_key)
         user = User.objects.get(id=int(user_id))
@@ -58,7 +61,7 @@ def send_activation(user):
 def registration(request):
     if request.user.is_authenticated():
         return HttpResponseRedirect(reverse("accounts-home"))
-    
+
     if request.method == "POST":
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
@@ -67,14 +70,14 @@ def registration(request):
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = RegistrationForm(request)
-        
+
     return render_to_response('accounts/registration.html', locals(), context_instance=RequestContext(request))
 
 
 def resend_activation(request):
     if request.user.is_authenticated():
         return HttpResponseRedirect(reverse("accounts-home"))
-    
+
     if request.method == "POST":
         form = ReactivationForm(request.POST)
         if form.is_valid():
@@ -83,14 +86,14 @@ def resend_activation(request):
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = ReactivationForm()
-        
+
     return render_to_response('accounts/resend_activation.html', locals(), context_instance=RequestContext(request))
 
 
 def username_reminder(request):
     if request.user.is_authenticated():
         return HttpResponseRedirect(reverse("accounts-home"))
-    
+
     if request.method == "POST":
         form = UsernameReminderForm(request.POST)
         if form.is_valid():
@@ -100,7 +103,7 @@ def username_reminder(request):
             return render_to_response('accounts/username_reminder.html', dict(form=form, sent=True), context_instance=RequestContext(request))
     else:
         form = UsernameReminderForm()
-        
+
     return render_to_response('accounts/username_reminder.html', dict(form=form, sent=False), context_instance=RequestContext(request))
 
 
@@ -142,7 +145,7 @@ def handle_uploaded_image(profile, f):
     path_s = profile.locations("avatar.S.path")
     path_m = profile.locations("avatar.M.path")
     path_l = profile.locations("avatar.L.path")
-    
+
     logger.info("\tcreating thumbnails")
     try:
         extract_square(tmp_image_path, path_s, 32)
@@ -152,7 +155,7 @@ def handle_uploaded_image(profile, f):
         logger.error("\tfailed creating small thumbnails: " + str(e))
 
     logger.info("\tcreated small thumbnail")
-    
+
     try:
         extract_square(tmp_image_path, path_m, 40)
     except Exception, e:
@@ -164,14 +167,14 @@ def handle_uploaded_image(profile, f):
         logger.error("\tfailed creating large thumbnails: " + str(e))
 
     logger.info("\tcreated medium thumbnail")
-    
+
     os.unlink(tmp_image_path)
 
 
 @login_required
 def edit(request):
     profile = request.user.profile
-    
+
     def is_selected(prefix):
         if request.method == "POST":
             for name in request.POST.keys():
@@ -182,7 +185,7 @@ def edit(request):
                     if name.startswith(prefix + '-'):
                         return True
         return False
-    
+
     if is_selected("profile"):
         profile_form = ProfileForm(request.POST, instance=profile, prefix="profile")
         if profile_form.is_valid():
@@ -190,7 +193,7 @@ def edit(request):
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
         profile_form = ProfileForm(instance=profile, prefix="profile")
-        
+
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
         if image_form.is_valid():
@@ -209,14 +212,14 @@ def edit(request):
 
 @login_required
 def describe(request):
-    
+
     file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
     file_structure.name = 'Your uploaded files'
-    
+
     if request.method == 'POST':
         form = FileChoiceForm(files, request.POST)
         if form.is_valid():
-            request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]] 
+            request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
             return HttpResponseRedirect(reverse('accounts-describe-license'))
     else:
         form = FileChoiceForm(files)
@@ -259,27 +262,27 @@ def describe_sounds(request):
     sounds = request.session.get('describe_sounds', False)
     selected_license = request.session.get('describe_license', False)
     selected_pack = request.session.get('describe_pack', False)
-    
-    # This is to prevent people browsing to the /home/describe/sounds page 
+
+    # This is to prevent people browsing to the /home/describe/sounds page
     # without going through the necessary steps.
     # selected_ack can be False, but license and sounds have to be picked at least
     if not (sounds and selected_license):
         msg = 'Please pick at least some sounds and a license.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
-    
+
     # So SOUNDS_PER_DESCRIBE_ROUND is available in the template
     sounds_per_round = SOUNDS_PER_DESCRIBE_ROUND
     sounds_to_describe = sounds[0:sounds_per_round]
     forms = []
     request.session['describe_sounds_number'] = len(request.session.get('describe_sounds'))
-    
+
     # If there are no files in the session redirect to the first describe page
     if len(sounds_to_describe) <= 0:
         msg = 'You have finished describing your sounds.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
-    
+
     if request.method == 'POST':
         # first get all the data
         for i in range(len(sounds_to_describe)):
@@ -316,13 +319,13 @@ def describe_sounds(request):
             try:
                 existing_sound = Sound.objects.get(md5=sound.md5)
                 msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>' % \
-                    (forms[i]['sound'].name, reverse('sound', args=[existing_sound.user.username, existing_sound.id]))  
+                    (forms[i]['sound'].name, reverse('sound', args=[existing_sound.user.username, existing_sound.id]))
                 messages.add_message(request, messages.WARNING, msg)
                 os.remove(forms[i]['sound'].full_path)
                 continue
             except Sound.DoesNotExist, e:
                 pass
-            
+
             # set the license
             sound.license = forms[i]['license'].cleaned_data['license']
             sound.save()
@@ -339,11 +342,11 @@ def describe_sounds(request):
                     shutil.move(sound.original_path, new_original_path)
                     #shutil.copy(sound.original_path, new_original_path)
                 except IOError, e:
-                    logger.info("failed to move file from %s to %s" % (sound.original_path, new_original_path), e) 
+                    logger.info("failed to move file from %s to %s" % (sound.original_path, new_original_path), e)
                 logger.info("moved original file from %s to %s" % (sound.original_path, new_original_path))
                 sound.original_path = new_original_path
                 sound.save()
-            
+
             # set the pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)
             new_pack = forms[i]['pack'].cleaned_data.get('new_pack', False)
@@ -356,7 +359,7 @@ def describe_sounds(request):
                 sound.pack.save()
             # set the geotag (if 'lat' is there, all fields are)
             data = forms[i]['geotag'].cleaned_data
-            if not data.get('remove_geotag') and data.get('lat'): 
+            if not data.get('remove_geotag') and data.get('lat'):
                 geotag = GeoTag(user=request.user,
                                 lat=data.get('lat'),
                                 lon=data.get('lon'),
@@ -368,25 +371,39 @@ def describe_sounds(request):
             sound.description = data.get('description', '')
             sound.set_tags(data.get('tags'))
             sound.save()
-            # create moderation ticket!
-            ticket = Ticket()
-            ticket.title = 'Moderate sound %s' % sound.original_filename
-            ticket.source = TICKET_SOURCE_NEW_SOUND
-            ticket.status = TICKET_STATUS_NEW
-            ticket.queue = Queue.objects.get(name='sound moderation')
-            ticket.sender = request.user
-            lc = LinkedContent()
-            lc.content_object = sound
-            lc.save()
-            ticket.content = lc
-            ticket.save()
-            tc = TicketComment()
-            tc.sender = request.user
-            tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
-            tc.ticket = ticket
-            tc.save()
-            # add notification that the file was described successfully
-            messages.add_message(request, messages.INFO, 'File %s has been described and is awaiting moderation.' % forms[i]['sound'].name)
+            # process the sound
+            try:
+                sound.process()
+            except Exception, e:
+                audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, e))
+            if request.user.profile.is_whitelisted:
+                sound.moderation_state = 'OK'
+                sound.save()
+                messages.add_message(request, messages.INFO,
+                                     'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
+                                     (sound.get_absolute_url(), forms[i]['sound'].name))
+            else:
+                # create moderation ticket!
+                ticket = Ticket()
+                ticket.title = 'Moderate sound %s' % sound.original_filename
+                ticket.source = TICKET_SOURCE_NEW_SOUND
+                ticket.status = TICKET_STATUS_NEW
+                ticket.queue = Queue.objects.get(name='sound moderation')
+                ticket.sender = request.user
+                lc = LinkedContent()
+                lc.content_object = sound
+                lc.save()
+                ticket.content = lc
+                ticket.save()
+                tc = TicketComment()
+                tc.sender = request.user
+                tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
+                tc.ticket = ticket
+                tc.save()
+                # add notification that the file was described successfully
+                messages.add_message(request, messages.INFO,
+                                     'File <a href="%s">%s</a> has been described and is awaiting moderation.' % \
+                                     (sound.get_absolute_url(), forms[i]['sound'].name))
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
         if len(request.session['describe_sounds']) <= 0:
@@ -439,7 +456,7 @@ def accounts(request):
     latest_uploaders = Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by()
     latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by()
     latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by()
-    
+
     for user in latest_uploaders:
         active_users[user['user']] = {'uploads':user['id__count'], 'posts':0, 'comments':0}
 
@@ -458,12 +475,12 @@ def accounts(request):
     for user, scores in active_users.items()[:num_active_users]:
         user_name = User.objects.get(pk=user).username
         user_cloud.append({'name': user_name,
-    	                    'count': scores['uploads'] * upload_weight + \
+                            'count': scores['uploads'] * upload_weight + \
                                      scores['posts'] * post_weight + \
                                      scores['comments'] * comment_weight})
-    
+
     new_uploaders_qs = Sound.objects.filter(user__date_joined__gte=last_time).values("user__username").annotate(Count('id')).order_by()
-    new_uploaders = [{'name':s['user__username'], 'count':s['id__count']} for s in new_uploaders_qs] 
+    new_uploaders = [{'name':s['user__username'], 'count':s['id__count']} for s in new_uploaders_qs]
 
     return render_to_response('accounts/accounts.html', dict(most_active_users=user_cloud, num_days=num_days, new_uploaders=new_uploaders), context_instance=RequestContext(request))
 
@@ -477,16 +494,16 @@ def account(request, username):
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = False
-    return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request)) 
+    return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 logger = logging.getLogger("upload")
 
 def handle_uploaded_file(user_id, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
     directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
-    
+
     logger.info("\thandling file upload")
-    
+
     try:
         os.mkdir(directory)
     except:
@@ -502,15 +519,18 @@ def handle_uploaded_file(user_id, f):
         logger.info("file upload done")
     except Exception, e:
         logger.warning("failed writing file error: %s", str(e))
-        
+        return False
+
+    return True
+
 @csrf_exempt
 def upload_file(request):
     """ upload a file. This function does something weird: it gets the session id from the
     POST variables. This is weird but... as far as we know it's not too bad as we only need
     the user login """
-    
+
     logger.info("start uploading file")
-    
+
     # get the current session engine
     engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])
     session_data = engine.SessionStore(request.POST.get('sessionid', ''))
@@ -521,7 +541,7 @@ def upload_file(request):
     except KeyError:
         logger.warning("failed to get user id from session")
         return HttpResponseBadRequest("user is not logged in a.k.a. failed session id")
-    
+
     try:
         request.user = User.objects.get(id=user_id)
         logger.info("\tfound user: %s", request.user.username)
@@ -531,11 +551,13 @@ def upload_file(request):
 
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
-    
+
         if form.is_valid():
             logger.info("\tform data is valid")
-            handle_uploaded_file(user_id, request.FILES["file"])
-            return HttpResponse("File uploaded OK")
+            if handle_uploaded_file(user_id, request.FILES["file"]):
+                return HttpResponse("File uploaded OK")
+            else:
+                return HttpResponseServerError("Error in file upload")
         else:
             logger.warning("form data is invalid: %s", str(form.errors))
             return HttpResponseBadRequest("Form is not valid.")
@@ -551,11 +573,11 @@ def upload(request):
 @login_required
 def delete(request):
     import time
-    
+
     encrypted_string = request.GET.get("user", None)
-     
+
     waited_too_long = False
-    
+
     if encrypted_string != None:
         try:
             user_id, now = decrypt(encrypted_string).split("\t")
@@ -572,9 +594,9 @@ def delete(request):
                 waited_too_long = True
         except:
             pass
-    
+
     encrypted_link = encrypt(u"%d\t%f" % (request.user.id, time.time()))
-            
+
     return render_to_response('accounts/delete.html', locals(), context_instance=RequestContext(request))
 
 def old_user_link_redirect(request):
@@ -587,6 +609,6 @@ def old_user_link_redirect(request):
             raise Http404
     else:
         raise Http404
-        
-    
-    
+
+
+

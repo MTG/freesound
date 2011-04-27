@@ -31,6 +31,7 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
+from utils.search.search import add_sound_to_solr, delete_sound_from_solr
 import datetime
 import os
 
@@ -57,13 +58,13 @@ def sounds(request):
 
     # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
     popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
-    
+
     # popular_packs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
     popular_packs = Pack.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    
+
     random_sound = get_random_sound()
     random_uploader = get_random_uploader()
-    return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request)) 
+    return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
 
 def remixed(request):
     pass
@@ -85,10 +86,10 @@ def front_page(request):
 
     latest_forum_posts = Post.objects.select_related('author', 'thread', 'thread__forum').all().order_by("-created")[0:10]
     latest_additions = Sound.objects.latest_additions(5)
-    
+
     random_sound = get_random_sound()
-    
-    return render_to_response('index.html', locals(), context_instance=RequestContext(request)) 
+
+    return render_to_response('index.html', locals(), context_instance=RequestContext(request))
 
 
 def sound(request, username, sound_id):
@@ -105,10 +106,10 @@ def sound(request, username, sound_id):
             sound = Sound.objects.select_related("license", "user", "pack").get(user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     except Sound.DoesNotExist: #@UndefinedVariable
         raise Http404
-    
+
     tags = sound.tags.select_related("tag").all()
     content_type = ContentType.objects.get_for_model(Sound)
-    
+
     if request.method == "POST":
         form = CommentForm(request, request.POST)
         if form.is_valid():
@@ -119,21 +120,21 @@ def sound(request, username, sound_id):
             sound.save()
             try:
                 # send the user an email to notify him of the new comment!
-                print "Gonna send a mail to this user: %s" % request.user.email 
+                print "Gonna send a mail to this user: %s" % request.user.email
                 send_mail_template(
-                    u'You have a new comment.', 'sounds/email_new_comment.txt', 
-                    {'sound': sound, 'user': request.user, 'comment': comment_text}, 
+                    u'You have a new comment.', 'sounds/email_new_comment.txt',
+                    {'sound': sound, 'user': request.user, 'comment': comment_text},
                     None, sound.user.email
                 )
             except Exception, e:
                 # if the email sending fails, ignore...
                 print ("Problem sending email to '%s' about new comment: %s" \
                     % (request.user.email, e))
-            
+
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         form = CommentForm(request)
-    
+
     qs = Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id)
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
@@ -149,28 +150,28 @@ def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
     return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
-        
+
 @login_required
 def sound_edit(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    
+
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
-    
+
     def is_selected(prefix):
         if request.method == "POST":
             for name in request.POST.keys():
                 if name.startswith(prefix + '-'):
                     return True
         return False
-    
+
     if is_selected("description"):
         description_form = SoundDescriptionForm(request.POST, prefix="description")
         if description_form.is_valid():
             data = description_form.cleaned_data
             sound.set_tags(data["tags"])
             sound.description = data["description"]
-            sound.save()
+            __save_and_add_to_solr(sound)
             invalidate_template_cache("sound_header", sound.id)
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
@@ -188,9 +189,9 @@ def sound_edit(request, username, sound_id):
     else:
         tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
         description_form = SoundDescriptionForm(prefix="description", initial=dict(tags=tags, description=sound.description))
-    
+
     packs = Pack.objects.filter(user=request.user)
-    
+
     if is_selected("pack"):
         pack_form = PackForm(packs, request.POST, prefix="pack")
         if pack_form.is_valid():
@@ -199,7 +200,7 @@ def sound_edit(request, username, sound_id):
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
                 if sound.pack:
                     sound.pack.is_dirty = True
-                    sound.pack.save()
+                    __save_and_add_to_solr(sound)
                 sound.pack = pack
             else:
                 new_pack = data["pack"]
@@ -212,7 +213,7 @@ def sound_edit(request, username, sound_id):
                         new_pack.is_dirty = True
                         new_pack.save()
                     sound.pack = new_pack
-            sound.save()
+            __save_and_add_to_solr(sound)
             invalidate_template_cache("sound_header", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -226,7 +227,7 @@ def sound_edit(request, username, sound_id):
                 if sound.geotag:
                     geotag = sound.geotag.delete()
                     sound.geotag = None
-                    sound.save()
+                    __save_and_add_to_solr(sound)
             else:
                 if sound.geotag:
                     sound.geotag.lat = data["lat"]
@@ -234,10 +235,10 @@ def sound_edit(request, username, sound_id):
                     sound.geotag.zoom = data["zoom"]
                 else:
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
-                    sound.save()
-            
+                    __save_and_add_to_solr(sound)
+
             invalidate_template_cache("sound_footer", sound.id)
-            return HttpResponseRedirect(sound.get_absolute_url())    
+            return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
             geotag_form = GeotaggingForm(prefix="geotag", initial=dict(lat=sound.geotag.lat, lon=sound.geotag.lon, zoom=sound.geotag.zoom))
@@ -248,27 +249,30 @@ def sound_edit(request, username, sound_id):
         license_form = LicenseForm(request.POST, prefix="license")
         if license_form.is_valid():
             sound.license = license_form.cleaned_data["license"]
-            sound.save()
+            __save_and_add_to_solr(sound)
             invalidate_template_cache("sound_footer", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
-     
+
     google_api_key = settings.GOOGLE_API_KEY
-    
+
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
 
+def __save_and_add_to_solr(sound):
+    sound.save()
+    sound.add_to_search_index()
 
 @login_required
 def sound_edit_sources(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    
+
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
-    
+
     current_sources = sound.sources.all()
-    sources_string = ",".join(map(str, [source.id for source in current_sources])) 
-    
+    sources_string = ",".join(map(str, [source.id for source in current_sources]))
+
     if request.method == 'POST':
         form = RemixForm(sound, request.POST)
         if form.is_valid():
@@ -276,10 +280,10 @@ def sound_edit_sources(request, username, sound_id):
         else:
             print ("Form is not valid!!!!!!! %s" % ( form.errors))
     else:
-        form = RemixForm(sound,initial=dict(sources=sources_string))    
+        form = RemixForm(sound,initial=dict(sources=sources_string))
     return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
-   
-    
+
+
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     qs = sound.remixes.filter(moderation_state="OK", processing_state="OK")
@@ -322,46 +326,47 @@ def for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Sound.public.filter(user=user)
     return render_to_response('sounds/for_user.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
-    
+
 
 @login_required
 def delete(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    
-    if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
+
+    if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
         raise PermissionDenied
 
     import time
-    
+
     encrypted_string = request.GET.get("sound", None)
-     
+
     waited_too_long = False
-    
+
     if encrypted_string != None:
         try:
             sound_id, now = decrypt(encrypted_string).split("\t")
             sound_id = int(sound_id)
             link_generated_time = float(now)
-            
+
             if sound_id != sound.id:
                 raise PermissionDenied
-            
+
             if abs(time.time() - link_generated_time) < 10:
+                delete_sound_from_solr(sound)
                 sound.delete()
                 return HttpResponseRedirect(reverse("accounts-home"))
             else:
                 waited_too_long = True
         except:
             pass
-    
+
     encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time()))
-            
-    return render_to_response('sounds/delete.html', locals(), context_instance=RequestContext(request))    
+
+    return render_to_response('sounds/delete.html', locals(), context_instance=RequestContext(request))
 
 
 def flag(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    
+
     user = None
     email = None
     if request.user.is_authenticated():
@@ -375,7 +380,7 @@ def flag(request, username, sound_id):
             flag.reporting_user=user
             flag.sound = sound
             flag.save()
-            
+
             send_mail_template(u"[flag] flagged file", "sounds/email_flag.txt", dict(flag=flag), flag.email)
 
             return HttpResponseRedirect(sound.get_absolute_url())
@@ -384,10 +389,10 @@ def flag(request, username, sound_id):
             flag_form = FlagForm(initial=dict(email=email))
         else:
             flag_form = FlagForm()
-    
+
     return render_to_response('sounds/sound_flag.html', locals(), context_instance=RequestContext(request))
-  
-    
+
+
 def __redirect_old_link(request, cls, url_name):
     obj_id = request.GET.get('id', False)
     if obj_id:
@@ -397,10 +402,10 @@ def __redirect_old_link(request, cls, url_name):
         except ValueError:
             raise Http404
     else:
-        raise Http404   
+        raise Http404
 
 def old_sound_link_redirect(request):
-    return __redirect_old_link(request, Sound, "sound")  
-    
+    return __redirect_old_link(request, Sound, "sound")
+
 def old_pack_link_redirect(request):
-    return __redirect_old_link(request, Pack, "pack")  
+    return __redirect_old_link(request, Pack, "pack")

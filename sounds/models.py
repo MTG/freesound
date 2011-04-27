@@ -11,7 +11,9 @@ from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
 import os, logging, random
-        
+
+search_logger = logging.getLogger('search')
+
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -47,16 +49,16 @@ class SoundManager(models.Manager):
                 group by
                     user_id
                 ) as X order by created desc limit %d;""" % (period, num_sounds))
-    
+
     def random(self):
-        
+
         sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
-        
+
         if sound_count:
             offset = random.randint(0, sound_count - 1)
             cursor = connection.cursor() #@UndefinedVariable
             cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
-            
+
             return cursor.fetchone()[0]
         else:
             return None
@@ -70,12 +72,12 @@ class PublicSoundManager(models.Manager):
 class Sound(SocialModel):
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+
     # filenames
     original_filename = models.CharField(max_length=512) # name of the file the user uploaded
     original_path = models.CharField(max_length=512, null=True, blank=True, default=None) # name of the file on disk before processing
     base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None) # base of the filename, this will be something like: id__username__filenameslug
-   
+
     # user defined fields
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
@@ -84,7 +86,7 @@ class Sound(SocialModel):
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
-    
+
     # file properties
     SOUND_TYPE_CHOICES = (
         ('wav', 'Wave'),
@@ -101,7 +103,7 @@ class Sound(SocialModel):
     filesize = models.IntegerField(default=0)
     channels = models.IntegerField(default=0)
     md5 = models.CharField(max_length=32, unique=True, db_index=True)
-    
+
     # moderation
     MODERATION_STATE_CHOICES = (
         ("PE",_('Pending')),
@@ -112,7 +114,7 @@ class Sound(SocialModel):
     moderation_date = models.DateTimeField(null=True, blank=True, default=None)
     moderation_note = models.TextField(null=True, blank=True, default=None)
     has_bad_description = models.BooleanField(default=False)
-    
+
     # processing
     PROCESSING_STATE_CHOICES = (
         ("PE",_('Pending')),
@@ -123,24 +125,24 @@ class Sound(SocialModel):
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
     processing_date = models.DateTimeField(null=True, blank=True, default=None)
     processing_log = models.TextField(null=True, blank=True, default=None)
-    
+
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
-    
+
     avg_rating = models.FloatField(default=0)
     num_ratings = models.PositiveIntegerField(default=0)
-    
+
     objects = SoundManager()
     public = PublicSoundManager()
-    
+
     def __unicode__(self):
         return u"%s by %s" % (self.base_filename_slug, self.user)
-    
+
     def friendly_filename(self):
         filename_slug = slugify(os.path.splitext(self.original_filename)[0])
         username_slug =  slugify(self.user.username)
         return "%d__%s__%s.%s" % (self.id, username_slug, filename_slug, self.type)
-    
+
     @locations_decorator()
     def locations(self):
         id_folder = str(self.id/1000)
@@ -200,22 +202,22 @@ class Sound(SocialModel):
                 )
             )
         )
-    
+
     def get_channels_display(self):
         if self.channels == 1:
-            return u"Mono" 
+            return u"Mono"
         elif self.channels == 2:
-            return u"Stereo" 
+            return u"Stereo"
         else:
             return self.channels
-    
+
     def type_warning(self):
-        return self.type == "ogg" or self.type == "flac" 
-    
+        return self.type == "ogg" or self.type == "flac"
+
     def duration_warning(self):
         # warn from 5 minutes and more
         return self.duration > 60*5
-    
+
     def filesize_warning(self):
         # warn for 50MB and up
         return self.filesize > 50 * 1024 * 1024
@@ -223,37 +225,42 @@ class Sound(SocialModel):
     def samplerate_warning(self):
         # warn anything special
         return self.samplerate not in [11025, 22050, 44100]
-    
+
     def bitdepth_warning(self):
         return self.bitdepth not in [8,16]
-        
+
     def bitrate_warning(self):
         return self.bitrate not in [32, 64, 96, 128, 160, 192, 224, 256, 320]
 
     def channels_warning(self):
         return self.channels not in [1,2]
-    
+
     def duration_ms(self):
         return self.duration * 1000
-    
+
     def rating_percent(self):
         return int(self.avg_rating*10)
-    
+
     def process(self, force=False):
         if force or self.processing_state != "OK":
-            from utils.audioprocessing.freesound_audio_processing import process
-            return process(self)
+            from utils.audioprocessing.freesound_audio_processing import process_sound_via_gearman
+            return process_sound_via_gearman(self)
         else:
             return True
-            
+
     def add_to_search_index(self):
         from utils.search.search import add_sound_to_solr
-        add_sound_to_solr(self)
+        try:
+            add_sound_to_solr(self)
+            search_logger.debug('Added sound with id %s to solr.' % self.id)
+        except Exception, e:
+            search_logger.error('Could not add sound with id %s to solr. (%s)' % \
+                                (self.id, str(e)))
 
     @models.permalink
     def get_absolute_url(self):
         return ('sound', (self.user.username, smart_unicode(self.id),))
-    
+
     def set_tags(self, tags):
         # remove tags that are not in the list
         for tagged_item in self.tags.all():
@@ -265,11 +272,11 @@ class Sound(SocialModel):
             if self.tags.filter(tag__name=tag).count() == 0:
                 (tag_object, created) = Tag.objects.get_or_create(name=tag) #@UnusedVariable
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
-                tagged_object.save()     
-                
+                tagged_object.save()
+
     def is_sound(self):
-        return True   
-    
+        return True
+
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 
@@ -281,18 +288,18 @@ class Pack(SocialModel):
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)
-    
+
     def __unicode__(self):
         return u"%s by %s" % (self.name, self.user)
-    
+
     @models.permalink
     def get_absolute_url(self):
-        return ('pack', (smart_unicode(self.id),))   
-    
+        return ('pack', (smart_unicode(self.id),))
+
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name')
         ordering = ("-created",)
-        
+
     def friendly_filename(self):
         name_slug = slugify(self.name)
         username_slug =  slugify(self.user.username)
@@ -308,29 +315,29 @@ class Pack(SocialModel):
     def create_zip(self):
         import zipfile
         from django.template.loader import render_to_string
-        
+
         logger = logging.getLogger("audio")
 
         logger.info("creating pack zip for pack %d" % self.id)
         logger.info("\twill save in %s" % self.locations("path"))
         zip_file = zipfile.ZipFile(self.locations("path"), "w", zipfile.ZIP_STORED, True)
-        
+
         logger.info("\tadding attribution")
         licenses = License.objects.all()
         attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
         zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
-        
+
         logger.info("\tadding sounds")
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
             path = sound.locations("path")
             logger.info("\t- %s" % os.path.normpath(path))
             zip_file.write(path, sound.friendly_filename().encode("utf-8"))
-        
+
         zip_file.close()
-        
+
         self.is_dirty = False
         self.save()
-        
+
         logger.info("\tall done")
 
 
@@ -345,12 +352,12 @@ class Flag(models.Model):
     )
     reason_type = models.CharField(max_length=1, choices=REASON_TYPE_CHOICES, default="I")
     reason = models.TextField()
-    
+
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+
     def __unicode__(self):
         return u"%s: %s" % (self.reason_type, self.reason[:100])
-    
+
     class Meta:
         ordering = ("-created",)
 
@@ -360,7 +367,7 @@ class Download(models.Model):
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
     pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+
     class Meta:
         unique_together = ('user', 'sound', 'pack')
         ordering = ("-created",)

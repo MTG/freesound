@@ -1,68 +1,68 @@
 {% load google_analytics %}{% load message_count %}{% load cache %}<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
-	<head>
-		{% block head %}
-		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-		<meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?" />
-		<meta name="keywords" content="free, sound" />
-		<link rel="stylesheet" type="text/css" href="{{media_url}}css/all.css" />
-		<!--[if IE 6]><link rel="stylesheet" type="text/css" href="{{media_url}}css/ie6.css" /><![endif]-->
-		<title>Freesound.org - {% block title %}{% endblock %}</title>
-		<script src="{{media_url}}js/jquery-1.5.2.min.js" type="text/javascript"></script>
-		<script src="{{media_url}}js/swfobject.js" type="text/javascript"></script>
-		<script type="text/javascript">
+    <head>
+        {% block head %}
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+        <meta name="description" content="Freesound: collaborative database of creative-commons licensed sound for musicians and sound lovers. Have you freed your sound today?" />
+        <meta name="keywords" content="free, sound" />
+        <link rel="stylesheet" type="text/css" href="{{media_url}}css/all.css" />
+        <!--[if IE 6]><link rel="stylesheet" type="text/css" href="{{media_url}}css/ie6.css" /><![endif]-->
+        <title>Freesound.org - {% block title %}{% endblock %}</title>
+        <script src="{{media_url}}js/jquery-1.5.2.min.js" type="text/javascript"></script>
+        <script src="{{media_url}}js/swfobject.js" type="text/javascript"></script>
+        <script type="text/javascript">
             var isLoggedIn = {{request.user.is_authenticated|yesno:"true,false"}};
             var loginUrl = "{% url accounts-login %}?next={{request.path}}";
-		</script>
-		<script src="{{media_url}}js/freesound.js" type="text/javascript"></script>
-		{% google_analytics %}
-		{% endblock %}
-	</head>
-	
-	<body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">
-		
-		<div id="header">
-			<div id="account_nav">
-				{% if request.user.is_authenticated %}
-            		{% cache 3600 user_header user.id %}
-					<div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />{{request.user.username}}</div>
-					<a href="{% url messages %}">Messages</a><div id="messages_count"><div>{% unread_message_count request.user %}</div></div>
-					<a href="{% url accounts-edit %}">Settings</a>
-					<a href="{% url accounts-logout %}?next=/">Log Out</a>
-					{% endcache %}
-				{% else %}
-					<a href="{% url accounts-register %}">Register</a>
-					<a href="{% url accounts-login %}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
-				{% endif %}
-				<a href="{% url accounts-upload %}" id="upload_button"></a>
-			</div>
-			
-			<a href="/" id="logo"></a>
-			
-			<div id="search">
-			<form method="get" action="{% url sounds-search %}">
-				<fieldset>
-			   	<input type="text" name="q" value="" size="30" />
-			   	<input type="submit" value="" id="search_submit" />
-				</fieldset>
-			</form>
-			</div>
-			
-			<ul id="site_nav">
-				{% if user.is_authenticated %}
-				<li class="{% block tab_home_active %}{% endblock %}"><a href="{% url accounts-home %}" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
-				{% endif %}
-				<li class="{% block tab_sounds_active %}{% endblock %}"><a href="{% url sounds %}" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
-				<li class="{% block tab_forums_active %}{% endblock %}"><a href="{% url forums-forums %}" id="site_nav_forums"><span class="site_nav_icon"></span>Forums</a></li>
-				<li class="{% block tab_help_active %}{% endblock %}"><a href="{% url wiki %}" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
-			</ul>
-		</div>
-		
-		<div id="wrapper">
-		<div id="container">
-		    
-	    {% if messages %}
+        </script>
+        <script src="{{media_url}}js/freesound.js" type="text/javascript"></script>
+        {% google_analytics %}
+        {% endblock %}
+    </head>
+
+    <body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">
+
+        <div id="header">
+            <div id="account_nav">
+                {% if request.user.is_authenticated %}
+                    {% cache 3600 user_header request.user.id %}
+                    <div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />{{request.user.username}}</div>
+                    <a href="{% url messages %}">Messages</a><div id="messages_count"><div>{% unread_message_count request.user %}</div></div>
+                    <a href="{% url accounts-edit %}">Settings</a>
+                    <a href="{% url accounts-logout %}?next=/">Log Out</a>
+                    {% endcache %}
+                {% else %}
+                    <a href="{% url accounts-register %}">Register</a>
+                    <a href="{% url accounts-login %}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
+                {% endif %}
+                <a href="{% url accounts-upload %}" id="upload_button"></a>
+            </div>
+
+            <a href="/" id="logo"></a>
+
+            <div id="search">
+            <form method="get" action="{% url sounds-search %}">
+                <fieldset>
+                   <input type="text" name="q" value="" size="30" />
+                   <input type="submit" value="" id="search_submit" />
+                </fieldset>
+            </form>
+            </div>
+
+            <ul id="site_nav">
+                {% if user.is_authenticated %}
+                <li class="{% block tab_home_active %}{% endblock %}"><a href="{% url accounts-home %}" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
+                {% endif %}
+                <li class="{% block tab_sounds_active %}{% endblock %}"><a href="{% url sounds %}" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
+                <li class="{% block tab_forums_active %}{% endblock %}"><a href="{% url forums-forums %}" id="site_nav_forums"><span class="site_nav_icon"></span>Forums</a></li>
+                <li class="{% block tab_help_active %}{% endblock %}"><a href="{% url wiki %}" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
+            </ul>
+        </div>
+
+        <div id="wrapper">
+        <div id="container">
+
+        {% if messages %}
         <ul class="messages">
             {% for message in messages %}
             <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|safe }}</li>
@@ -70,23 +70,23 @@
         </ul>
         {% endif %}
 
-		{% block content %}
-		{% endblock %}
-	
-		</div>
-		</div>
-		
-		<div id="footer_wrapper">
-			<div id="footer">
-				<div id="footer_links">
-					<a href="/developers/">Developers</a>	<a href="http://blog.freesound.org/">Blog</a>	<a href="/contact/">Contact</a>
-				</div>
-				<div id="footer_credits">
-					Design by <a href="http://www.pixelshell.com">Pixelshell</a>. Code by <a href="http://www.mtg.upf.edu/">MTG (UPF)</a>. Some Rights Reserved.
-				</div>
-			</div>
-		</div>
-		
-	</body>
-	
+        {% block content %}
+        {% endblock %}
+
+        </div>
+        </div>
+
+        <div id="footer_wrapper">
+            <div id="footer">
+                <div id="footer_links">
+                    <a href="/developers/">Developers</a>	<a href="http://blog.freesound.org/">Blog</a>	<a href="/contact/">Contact</a>
+                </div>
+                <div id="footer_credits">
+                    Design by <a href="http://www.pixelshell.com">Pixelshell</a>. Code by <a href="http://www.mtg.upf.edu/">MTG (UPF)</a>. Some Rights Reserved.
+                </div>
+            </div>
+        </div>
+
+    </body>
+
 </html>

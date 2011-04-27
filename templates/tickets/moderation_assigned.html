@@ -2,138 +2,138 @@
 {% load util %}
 {% block head %}
 {{ block.super }}
-<style type="text/css" media="all"> 
+<style type="text/css" media="all">
 
 </style>
 <script type="text/javascript">
     function moderate(url) {
         $("#current_sound").load(url);
     }
-    
+
     function load_messages(url) {
-    	$("#moderation-ticket-messages").load(url+'messages/');
-    	$("#moderation-ticket-link").get(0).innerHTML = '<p><a href="'+url+'">see full ticket</a>';
+        $("#moderation-ticket-messages").load(url+'messages/');
+        $("#moderation-ticket-link").get(0).innerHTML = '<p><a href="'+url+'">see full ticket</a>';
     }
-    
-    
+
+
     var set_uploader_id = function(uploader_id) {
-    	loadUrl = '{% url tickets-user-annotations 0 %}'.replace('0', ''+uploader_id);
-    	$('#user-annotations-section').load(loadUrl);
+        loadUrl = '{% url tickets-user-annotations 0 %}'.replace('0', ''+uploader_id);
+        $('#user-annotations-section').load(loadUrl);
     }
 
     $(document).ready(function() {
-    	{% if moderator_tickets %}
-	    	moderate('{% url tickets-sound-display moderator_tickets.0.content.object_id %}');
-	        load_messages('{% url tickets-ticket moderator_tickets.0.key %}');
-	        $('#id_ticket').get(0).value={{moderator_tickets.0.id}}
-	        set_uploader_id({{moderator_tickets.0.sender.id}})
-	    {% endif %}
+        {% if moderator_tickets %}
+            moderate('{% url tickets-sound-display moderator_tickets.0.content.object_id %}');
+            load_messages('{% url tickets-ticket moderator_tickets.0.key %}');
+            $('#id_ticket').get(0).value={{moderator_tickets.0.id}}
+            set_uploader_id({{moderator_tickets.0.sender.id}})
+        {% endif %}
     });
-    
+
     // Implementation of CSRF for ajax post requests
-	$.ajaxSetup({ 
-		beforeSend: function(xhr, settings) {
-		    function getCookie(name) {
-		        var cookieValue = null;
-		        if (document.cookie && document.cookie != '') {
-		            var cookies = document.cookie.split(';');
-		            for (var i = 0; i < cookies.length; i++) {
-		                var cookie = jQuery.trim(cookies[i]);
-		                // Does this cookie string begin with the name we want?
-		            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-		                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-		                break;
-		            }
-		        }
-		    }
-		    return cookieValue;
-		    }
-		    if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
-		        // Only send the token to relative URLs i.e. locally.
-		        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-		    }
-		} 
-	});
-    
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            function getCookie(name) {
+                var cookieValue = null;
+                if (document.cookie && document.cookie != '') {
+                    var cookies = document.cookie.split(';');
+                    for (var i = 0; i < cookies.length; i++) {
+                        var cookie = jQuery.trim(cookies[i]);
+                        // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+            }
+            if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                // Only send the token to relative URLs i.e. locally.
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
+        }
+    });
+
 </script>
 {% endblock head %}
 
 
 {% block title %}
-	Moderation
+    Moderation
 {% endblock title %}
 
 {% block content %}
-	
-	<!-- include permission checks here -->
 
-	<div id="moderation-queue">
+    <!-- include permission checks here -->
 
-		<div id="moderation-queue-left">
-			<h4>Assigned tickets</h4>
-			<br>
-			{% if not moderator_tickets %}
-				<p>You've finished all the sounds in your queue.
-				<p>Back to <a href="{% url tickets-moderation-home %}">moderation home</a>
-			{% endif %}
-			<div id="assigned-tickets-table-wrapper">
-				<table>
-				{% for ticket in moderator_tickets %}
-					<tr class="alternate-row-{% cycle 'odd' 'even' %}">
-						<td><a onclick="
-							    moderate('{% url tickets-sound-display ticket.content.object_id%}');
-							    load_messages('{% url tickets-ticket ticket.key %}');
-							    $('#id_ticket').get(0).value={{ticket.id}};
-							    set_uploader_id({{ticket.sender.id}});">
-					    	{{ticket.content.content_object.original_filename|truncate_string:28}}</a></td>
-					    <td>{{ticket.sender.username}}</td>
-					    <td>{{ticket.created|date:"d/m/Y" }}</td>
-					    <td>{{ticket.status|capfirst}}</td>
-				    </tr>
-				{% endfor %}
-				</table>
-			</div>
-			
-			<div id="user-annotations-section"></div>
-		
-		</div><!-- /#moderation-queue-left -->
-		
-		<div id="moderation-queue-right">
-		
-		    <div id="moderation-form-wrapper">
-		    	<h4>Selected sound</h4>
-	        	<div class="sample_player_small"  
-	        		 id="current_sound"></div>
-	        	
-	        	<h4>Messages for sound</h4>
-	        	<br>
-	        	<div id="moderation-ticket-messages"></div>
-	        	<div id="moderation-ticket-link"></div>
-	        	
-	        	<h4>Moderate</h4>
-	        	<br>
-	        	<div id="moderation-form">
-		        	<form action="." method="post">{% csrf_token %}
-		                   
-		           		<div id="moderation-decision-form">
-		           			{{ mod_sound_form.as_table }}
-		           		</div>
-		           		
-		           		{% include 'tickets/moderation_options.html' %}
-		           		<br>
-		      			<p>{{ msg_form.as_p }}                        
-						<br style="clear: both;">
-		           		<input type="submit" value="send" />
-		
-		           	</form>
-	            </div>
-		    </div>
-		    
-		    <div style="clear:both"></div>
-		    
-		</div><!-- /#moderation-queue-left -->
-	</div><!-- /#moderation-queue -->
-	<br style="clear: both;">
-	
-	
+    <div id="moderation-queue">
+
+        <div id="moderation-queue-left">
+            <h4>Assigned tickets</h4>
+            <br>
+            {% if not moderator_tickets %}
+                <p>You've finished all the sounds in your queue.
+                <p>Back to <a href="{% url tickets-moderation-home %}">moderation home</a>
+            {% endif %}
+            <div id="assigned-tickets-table-wrapper">
+                <table>
+                {% for ticket in moderator_tickets %}
+                    <tr class="alternate-row-{% cycle 'odd' 'even' %}">
+                        <td><a onclick="
+                                moderate('{% url tickets-sound-display ticket.content.object_id%}');
+                                load_messages('{% url tickets-ticket ticket.key %}');
+                                $('#id_ticket').get(0).value={{ticket.id}};
+                                set_uploader_id({{ticket.sender.id}});">
+                            {{ticket.content.content_object.original_filename|truncate_string:28}}</a></td>
+                        <td>{{ticket.sender.username}}</td>
+                        <td>{{ticket.created|date:"d/m/Y" }}</td>
+                        <td>{{ticket.status|capfirst}}</td>
+                    </tr>
+                {% endfor %}
+                </table>
+            </div>
+
+            <div id="user-annotations-section"></div>
+
+        </div><!-- /#moderation-queue-left -->
+
+        <div id="moderation-queue-right">
+
+            <div id="moderation-form-wrapper">
+                <h4>Selected sound</h4>
+                <div class="sample_player_small"
+                     id="current_sound"></div>
+
+                <h4>Messages for sound</h4>
+                <br>
+                <div id="moderation-ticket-messages"></div>
+                <div id="moderation-ticket-link"></div>
+
+                <h4>Moderate</h4>
+                <br>
+                <div id="moderation-form">
+                    <form action="." method="post">{% csrf_token %}
+
+                           <div id="moderation-decision-form">
+                               {{ mod_sound_form.as_table }}
+                           </div>
+                            <div style="clear:both;">
+                           {% include 'tickets/moderation_options.html' %}
+
+                          <p>{{ msg_form.as_p }}
+                        <br style="clear: both;">
+                           <input type="submit" value="send" />
+
+                       </form>
+                </div>
+            </div>
+
+            <div style="clear:both;"></div>
+
+        </div><!-- /#moderation-queue-left -->
+    </div><!-- /#moderation-queue -->
+    <br style="clear: both;">
+
+
 {% endblock content %}

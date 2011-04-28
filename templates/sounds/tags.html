@@ -31,12 +31,9 @@
 {% show_paginator paginator page current_page request %}
 
 {% for sound in page.object_list %}
-{% if sound %}
-{{ sound.id }}
 <div class="sample_player_small">
     {% display_sound sound.id %}
 </div>
-{% endif %}
 {% endfor %}
 
 {% show_paginator paginator page current_page request %}

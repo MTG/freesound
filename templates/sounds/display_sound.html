@@ -44,4 +44,6 @@
     <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 </div>
 {% endwith %}
+{% else %}
+bla
 {% endif %}

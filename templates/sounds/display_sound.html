@@ -3,6 +3,7 @@
 {% load ratings %}
 {% cache 3600 display_sound sound_id %}
 {% endcache %}
+{% if sound %}
 {% with sound.0 as sound %}
 <div class="sample_player">
     <div class="small_player">
@@ -22,7 +23,7 @@
                 {% endfor %}
             </ul>
             </div>
-          
+
             <div class="sound_stars">
                <ul class="star-rating">
                    <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
@@ -33,8 +34,8 @@
                    <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
                </ul>
             </div>
-      </div> 
-</div> 
+      </div>
+</div>
 
 <div class="sample_information">
     <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
@@ -43,3 +44,4 @@
     <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 </div>
 {% endwith %}
+{% endif %}

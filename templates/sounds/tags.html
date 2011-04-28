@@ -31,7 +31,6 @@
 {% show_paginator paginator page current_page request %}
 
 {% for sound in page.object_list %}
-blu
 <div class="sample_player_small">
     {% display_sound sound.id %}
 </div>

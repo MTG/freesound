@@ -5,8 +5,6 @@
 {% cache 3600 display_sound sound_id %}
 {% endcache %}
 {% endcomment %}
-{{ sound.id }}
-{% if sound %}
 {% with sound.0 as sound %}
 <div class="sample_player">
     <div class="small_player">
@@ -47,6 +45,3 @@
     <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 </div>
 {% endwith %}
-{% else %}
-bla
-{% endif %}

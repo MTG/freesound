@@ -32,6 +32,7 @@
 
 {% for sound in page.object_list %}
 {% if sound %}
+{{ sound.id }}
 <div class="sample_player_small">
     {% display_sound sound.id %}
 </div>

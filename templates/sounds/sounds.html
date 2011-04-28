@@ -15,39 +15,33 @@
     <li>{{random_uploader.profile.num_posts}} forum post{{random_uploader.profile.num_posts|pluralize}}</li>
 </ul>
 {% else %}
-	random uploader is none
-	{% endif %}
+    random uploader is none
+    {% endif %}
 <h2>Sound of the day</h2>
-<div class="sample_player_small">
     {% if random_sound != None %}
-	{% display_sound random_sound %}
-	{% else %}
-	random sound is none
-	{% endif %}
-</div>
+        {% display_sound random_sound "sample_player_small" %}
+    {% else %}
+        random sound is none
+    {% endif %}
 
 <h2>Latest sounds</h2>
 <div class="sound_list_normal">
 {% for latest_addition in latest_sounds %}
-	<div class="sample_player_small">
-		{% display_sound latest_addition.sound_id %}
-		{% if latest_addition.extra %}
-		<div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
-		{% endif %}
-	</div>
-	{% empty %}
-		<div class="sample_player_small">
-          No sounds in the database!
-        </div>
+    {% display_sound latest_addition.sound_id "sample_player_small" %}
+    {% if latest_addition.extra %}
+        <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
+    {% endif %}
+    {% empty %}
+    <p>No sounds in the database!
 {% endfor %}
 </div>
 
 <h2>Latest changed packs</h2>
 <ul>
 {% for pack in latest_packs %}
-	<li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
+    <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
 {% empty %}
-		<div class="sample_player_small">
+        <div class="sample_player_small">
           No packs in the database!
         </div>
 {% endfor %}
@@ -55,24 +49,18 @@
 
 <h2>Most downloaded sounds (in the last week)</h2>
 {% for sound in popular_sounds %}
-	<div class="sample_player_small">
-		{% display_sound sound.id %}
-		<div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads in the last week</div>
-	</div>
-{% empty %}
-		<div class="sample_player_small">
-          No sounds in the database!
-        </div>
+    {% display_sound sound.id "sample_player_small" %}
+    <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads in the last week</div>
+    {% empty %}
+    <p>No sounds in the database!
 {% endfor %}
 
 <h2>Most downloaded packs (in the last week)</h2>
 <ul>
 {% for pack in popular_packs %}
-	<li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_d}}</span> downloads)</li>
+    <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_d}}</span> downloads)</li>
 {% empty %}
-		<div class="sample_player_small">
-          No packs in the database!
-        </div>
+    <p>No packs in the database!
 {% endfor %}
 </ul>
 

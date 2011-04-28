@@ -1,49 +1,47 @@
 {% extends "base.html" %}
 
-{% load display_sound %}
-
 {% block title %}
-	Sound Moderation
+    Sound Moderation
 {% endblock title %}
 
 {% block content %}
-	<h1>Users with new sounds</h1>
-	<p><div class="moderation-user-list">
-		{% for user, new_count in new_sounds_users.items %}
-			<div class="moderation-user-list-user">
-				<div class="moderation-user-list-user-left">
-				<img src="{{user.profile.locations.avatar.L.url}}"/>
-				</div>
-				<div class="moderation-user-list-user-right">
-					<p>{{ user.username }} 
-					<br>{{ new_count }} new sounds
-					<br><a href="{% url tickets-moderation-assign-user user.id %}">
-						<img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
-				</div>
-			</div>
-		{% endfor %}
-		<div style="clear: both;"></div>
-	</div>
-	<!-- TODO: url change here -->
-	<br>
-	<a href="{% url tickets-moderation-assigned request.user.id %}"<h4>Moderate tickets</h4></a>
-	<br><br>
-	
-	<h1>Tardy moderators!</h1>
-	{% for ticket in tardy_moderator_tickets %}
-		{% include 'tickets/ticket_sound.html' %}
-	{% endfor %}
-	
-	<h1>Tardy users!</h1>
-	{% for ticket in tardy_user_tickets %}
-		{% include 'tickets/ticket_sound.html' %}
-	{% endfor %}
+    <h1>Users with new sounds</h1>
+    <p><div class="moderation-user-list">
+        {% for user, new_count in new_sounds_users.items %}
+            <div class="moderation-user-list-user">
+                <div class="moderation-user-list-user-left">
+                <img src="{{user.profile.locations.avatar.L.url}}"/>
+                </div>
+                <div class="moderation-user-list-user-right">
+                    <p>{{ user.username }}
+                    <br>{{ new_count }} new sounds
+                    <br><a href="{% url tickets-moderation-assign-user user.id %}">
+                        <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
+                </div>
+            </div>
+        {% endfor %}
+        <div style="clear: both;"></div>
+    </div>
+    <!-- TODO: url change here -->
+    <br>
+    <a href="{% url tickets-moderation-assigned request.user.id %}"<h4>Moderate tickets</h4></a>
+    <br><br>
 
-	<h1>Left by other moderators</h1>
-	<div class="moderation-unsure-list">
-		{% for ticket in unsure_tickets %}
-			{% include 'tickets/ticket_sound.html' %}
-		{% endfor %}
-	</div>
-		
+    <h1>Tardy moderators!</h1>
+    {% for ticket in tardy_moderator_tickets %}
+        {% include 'tickets/ticket_sound.html' %}
+    {% endfor %}
+
+    <h1>Tardy users!</h1>
+    {% for ticket in tardy_user_tickets %}
+        {% include 'tickets/ticket_sound.html' %}
+    {% endfor %}
+
+    <h1>Left by other moderators</h1>
+    <div class="moderation-unsure-list">
+        {% for ticket in unsure_tickets %}
+            {% include 'tickets/ticket_sound.html' %}
+        {% endfor %}
+    </div>
+
 {% endblock content %}

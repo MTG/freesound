@@ -9,16 +9,16 @@
 {% block section_content %}
 
 <form id="search_form" method="get" action="{% url sounds-search %}">
-	<fieldset>
-   	<input type="text" name="q" value="{{search_query}}" size="30" />
-   	<input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
-   	<select name="s">
-   	    {% for option in sort_options %}
+    <fieldset>
+       <input type="text" name="q" value="{{search_query}}" size="30" />
+       <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
+       <select name="s">
+           {% for option in sort_options %}
         <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
         {% endfor %}
      </select>
-   	<input type="submit" value="search" id="search_submit" />
-	</fieldset>
+       <input type="submit" value="search" id="search_submit" />
+    </fieldset>
 </form>
 
 <p id="filter_query_display">
@@ -27,8 +27,8 @@
 <script type="text/javascript">
     function removeFilter(tag)
     {
-    	var value = $("#filter_query").val();
-    	var cleaned = $.trim(value.replace(tag + " ", "").replace(tag, ""));
+        var value = $("#filter_query").val();
+        var cleaned = $.trim(value.replace(tag + " ", "").replace(tag, ""));
         $("#filter_query").val(cleaned);
     }
 
@@ -38,16 +38,16 @@
             filter = "\"" + filter + "\""
 
         var tag = name + ":" + filter;
-        
+
         if ($("#filter_query").val().search(tag) == -1)
         {
-        	var value = $("#filter_query").val();
-        	 
+            var value = $("#filter_query").val();
+
             if (value != "")
                 $("#filter_query").val(value + " " + tag);
             else
                 $("#filter_query").val(tag);
-    
+
             $("#search_form").submit();
         }
         else
@@ -55,11 +55,11 @@
             alert("you already added this filter");
         }
     }
-    
+
     function scan(value, pattern, callback)
     {
-		$.each(value.match(pattern) || [], callback);
-	}
+        $.each(value.match(pattern) || [], callback);
+    }
 
     function update_filter_display()
     {
@@ -68,20 +68,20 @@
         function add_filter(filter)
         {
             var filter_id = "filter_" + i++;
-       		var element = $("<a id=\"" + filter_id + "\" title=\"remove this filter\"></a>").html(filter);
-        	
-        	element.click(function (event) {
+               var element = $("<a id=\"" + filter_id + "\" title=\"remove this filter\"></a>").html(filter);
+
+            element.click(function (event) {
                 removeFilter(filter);
                 element.remove();
                 event.preventDefault();
                 $("#search_form").submit();
             });
-            
-        	$('#filter_query_display').append(element);
+
+            $('#filter_query_display').append(element);
         }
 
-		var value = $("#filter_query").val();
-		
+        var value = $("#filter_query").val();
+
         scan(value, /[\w-]+:[\w-]+/g, function (index, filter) {
             add_filter(filter);
         });
@@ -90,7 +90,7 @@
             add_filter(filter);
         });
     }
-    
+
     update_filter_display();
 </script>
 
@@ -103,7 +103,7 @@
             <h3>tags</h3>
             {% display_facet "tag" results.facets.tag "cloud" %}
         {% endif %}
-    
+
         {% if results.facets.type and results.facets.type|length > 1 %}
             <h3>type</h3>
             {% display_facet "type" results.facets.type "list" %}
@@ -113,7 +113,7 @@
             <h3>samplerate</h3>
             {% display_facet "samplerate" results.facets.samplerate "list" %}
         {% endif %}
-    
+
         {% if results.facets.bitdepth and results.facets.bitdepth|length > 1 %}
             <h3>bitdepth</h3>
             {% display_facet "bitdepth" results.facets.bitdepth "list" %}
@@ -140,9 +140,7 @@
     </div>
 
     {% for result in results.docs %}
-    <div class="sample_player_small">
-    	{% display_sound result.id %}
-    </div>
+        {% display_sound result.id "sample_player_small" %}
     {% endfor %}
 
     <div class="search_paginator">

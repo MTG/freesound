@@ -9,7 +9,7 @@
 <h1>Pack: {{pack.name}} by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></h1>
 {% if pack.description %}
 <p>
-	{{pack.description}}
+    {{pack.description}}
 </p>
 {% endif %}
 <p>
@@ -18,17 +18,15 @@
 
 {% if not pack.is_dirty %}
 <div id="download">
-	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
-	<div id="download_text">Downloaded<br /><b>{{pack.num_downloads}}</b> times</div>
+    <a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
+    <div id="download_text">Downloaded<br /><b>{{pack.num_downloads}}</b> times</div>
 </div>
 {% endif %}
 
 {% show_paginator paginator page current_page request %}
 
 {% for sound in page.object_list %}
-<div class="sample_player_small">
-	{% display_sound sound %}
-</div>
+    {% display_sound sound "sample_player_small" %}
 {% endfor %}
 
 {% show_paginator paginator page current_page request %}

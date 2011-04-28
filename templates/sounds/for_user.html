@@ -11,9 +11,7 @@
 {% show_paginator paginator page current_page request %}
 
 {% for sound in page.object_list %}
-<div class="sample_player_small">
-	{% display_sound sound %}
-</div>
+    {% display_sound sound "sample_player_small" %}
 {% endfor %}
 
 {% show_paginator paginator page current_page request %}

@@ -76,9 +76,7 @@
     {% if latest_sounds %}
     <h3>Latest sounds</h3>
     {% for sound in latest_sounds %}
-    <div class="sample_player_small">
-        {% display_sound sound %}
-    </div>
+        {% display_sound sound "sample_player_small" %}
     {% endfor %}
     <p><a href="{% url sounds-for-user user.username %}">more...</a></p>
     {% endif %}

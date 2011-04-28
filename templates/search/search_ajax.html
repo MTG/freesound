@@ -7,19 +7,17 @@
     <div>
         Failed searching! Please fix your query...
     </div>
-    {% else %} 
+    {% else %}
 
-	    {% for result in results.docs %}
+        {% for result in results.docs %}
         <div>
-    	    <div class="sample_player_small">
-    	        {% display_sound result.id %} 
-    	    </div>    
-    	    <div>
+            {% display_sound result.id "sample_player_small" %}
+            <div>
                 <a class="add" onclick="addSound(this, {{result.id}})">Add</a>
                 <a class="remove" onclick="removeSound(this, {{result.id}})">Remove</a>
             </div>
         </div>
-	    {% endfor %}
+        {% endfor %}
 
     {% endif %}
 {% else %}

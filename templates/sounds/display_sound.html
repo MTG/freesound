@@ -1,47 +1,47 @@
 {% load cache %}
 {% load util %}
 {% load ratings %}
-{% comment %}
 {% cache 3600 display_sound sound_id %}
 {% endcache %}
-{% endcomment %}
-{% with sound.0 as sound %}
-<div class="sample_player">
-    <div class="small_player">
-        {% include "sounds/player_medium.html" %}
-    </div>
-    <div class="sound_title">
-            <div class="sound_filename">
-               <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:28}}</a>
-            </div>
-            <div  class="sound_description">
-                <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
-            </div>
-            <div class="sound_tags">
-            <ul id="tags">
-                {% for tag_link in sound_tags %}
+{% if sound %}
+<div class="{{ player_class }}">
+    <div class="sample_player">
+        <div class="small_player">
+            {% include "sounds/player_medium.html" %}
+        </div>
+        <div class="sound_title">
+                <div class="sound_filename">
+                   <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:28}}</a>
+                </div>
+                <div  class="sound_description">
+                    <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
+                </div>
+                <div class="sound_tags">
+                <ul id="tags">
+                    {% for tag_link in sound_tags %}
                         <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
-                {% endfor %}
-            </ul>
-            </div>
+                    {% endfor %}
+                </ul>
+                </div>
 
-            <div class="sound_stars">
-               <ul class="star-rating">
-                   <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
-                   <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star">1</a></li>
-                   <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars">2</a></li>
-                   <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars">3</a></li>
-                   <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars">4</a></li>
-                   <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
-               </ul>
-            </div>
-      </div>
-</div>
+                <div class="sound_stars">
+                   <ul class="star-rating">
+                       <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
+                       <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star">1</a></li>
+                       <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars">2</a></li>
+                       <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars">3</a></li>
+                       <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars">4</a></li>
+                       <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
+                   </ul>
+                </div>
+          </div>
+    </div>
 
-<div class="sample_information">
-    <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
-    <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
-    <span class="download_count">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</span><br />
-    <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
+    <div class="sample_information">
+        <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
+        <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
+        <span class="download_count">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</span><br />
+        <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
+    </div>
 </div>
-{% endwith %}
+{% endif %}

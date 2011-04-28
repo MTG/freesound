@@ -12,116 +12,110 @@
 
 {% block content %}
 <div id="content">
-	<!-- featured sound -->
-	<div id="featured_sound" class="content_box">
-		<h3>Featured Sound</h3>
-		<div class="sample_player_small">
-		    {% ifnotequal random_sound None %}
-			{% display_sound random_sound %}
-			{% endifnotequal %}
-		</div>
-	</div>
+    <!-- featured sound -->
+    <div id="featured_sound" class="content_box">
+        <h3>Featured Sound</h3>
+            {% ifnotequal random_sound None %}
+                {% display_sound random_sound "sample_player_small" %}
+            {% endifnotequal %}
+    </div>
 
-	<!-- news -->
-	{% cache 3600 rss_cache %}
-	<div id="latest_news" class="content_box">
-		<h3><a href="/blog/">Latest News</a></h3>
-		{% get_rss rss_url as rss %}
-		{% for entry in rss.entries|slice:":5" %}
-			<div class="blog_post">
-			<h2><a href="{{entry.link}}">{{entry.title|truncatewords:10}}</a></h2>
-			<span class="post_date">{{entry.date_parsed|tuple_to_time|date:"F jS, Y"}}</span> <span class="post_author">{{entry.author}}</span>
-			<p>
-				{{entry.summary|safe|striptags|truncatewords:100}}
-			</p>
-			<div class="read_more_link"><a href="{{entry.link}}">Read Full Entry</a></div>
-			</div>
-		{% endfor %}
-	</div>
-	{% endcache %}
-	
-	<!-- recent additions -->
-	{% cache 300 latest_additions %}
-	<div id="recent_additions" class="content_box">
-		<h3>Recent Additions</h3>
-		{% for latest_addition in latest_additions %}
-			<div class="sample_player_small">
-				{% display_sound latest_addition.sound_id %}
-				{% if latest_addition.extra %}
-				<div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
-				{% endif %}
-			</div>
-		{% empty %}
-		<div class="sample_player_small">
-          No sounds in the database!
-        </div>
-		{% endfor %}
-	</div>
-	{% endcache %}	
-</div> 
+    <!-- news -->
+    {% cache 3600 rss_cache %}
+    <div id="latest_news" class="content_box">
+        <h3><a href="/blog/">Latest News</a></h3>
+        {% get_rss rss_url as rss %}
+        {% for entry in rss.entries|slice:":5" %}
+            <div class="blog_post">
+            <h2><a href="{{entry.link}}">{{entry.title|truncatewords:10}}</a></h2>
+            <span class="post_date">{{entry.date_parsed|tuple_to_time|date:"F jS, Y"}}</span> <span class="post_author">{{entry.author}}</span>
+            <p>
+                {{entry.summary|safe|striptags|truncatewords:100}}
+            </p>
+            <div class="read_more_link"><a href="{{entry.link}}">Read Full Entry</a></div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endcache %}
+
+    <!-- recent additions -->
+    {% cache 300 latest_additions %}
+    <div id="recent_additions" class="content_box">
+        <h3>Recent Additions</h3>
+        {% for latest_addition in latest_additions %}
+            {% display_sound latest_addition.sound_id "sample_player_small" %}
+            {% if latest_addition.extra %}
+            <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
+            {% endif %}
+        {% empty %}
+          <p>No sounds in the database!
+        {% endfor %}
+    </div>
+    {% endcache %}
+</div>
 
 <div id="sidebar">
-	
-	<!-- about and t-shirts -->
-	<div class="continuous_sidebar_box">
-		<div id="about">
-			<div id="post_it">
-			<h2>Welcome to Freesound</h2>
-			<p>Freesound is a collaborative database of Creative Commons Licensed sounds. Browse, download and share sounds.</p>
-			</div>
-		</div>
-		<div id="support">
-			<img src="{{media_url}}images/content/tshirt.png" alt="" width="166" height="167" />
-			<h3>Support Us. Get your Freesound T-Shirt!</h3>
-			<p>Select your store:</p>
 
-			<a href="http://freesound.spreadshirt.net/" class="external_link">Europe</a>
-			<a href="http://freesound.spreadshirt.com/" class="external_link">US Canada and Asia</a>
-		</div>
-	</div>
-	
-	<!-- pledgie -->
-	{% cache 900 pledgie_cache %}
-	{% get_pledgie_campaign_details pledgie_campaign as pledgie %}
-	{% if pledgie %}
-	<div id="donation_box">
-		<p><strong>Love Freesound?</strong> <span id="count_down">Only <strong>{{ pledgie.to_go }}&euro;</strong> to go!</span></p>
-		<a class="donation_button" href="{{pledgie.url}}">Donate Now</a>
-		<div id="donation_meter_box"><span id="meter" style="width:{{ pledgie.campaign.percent_towards_goal }}%">{{ pledgie.campaign.percent_towards_goal }}%</span></div>
-	</div>
-	{% endif %}
-	{% endcache %}
-	
-	<!-- latest forum posts -->
-	{% cache 300 latest_posts %}
-	<div id="latest_forum_posts" class="sidebar_box">
-		<h3>Latest Forum Posts</h3>
-		<ul>
-			{% for post in latest_forum_posts %}
-			<li class="{% cycle 'odd' 'even' %}">
-				<a href="{{post.get_absolute_url}}">{{post.thread.title}}</a><br />
-				in <a href="{{post.thread.forum.get_absolute_url}}">{{post.thread.forum}}</a><br />
-				by <a href="{% url account post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago
-			</li>
-			{% endfor %}
-		</ul>
-		<a class="more_posts_button" href="{% url forums-forums %}"><img src="{{media_url}}images/arrow_down.png" alt="arrow" />More Posts</a>
-	</div>
-	{% endcache %}
-	
-	<!-- subprojects -->
-	<div id="freesound_projects" class="sidebar_box">
-		<h3>Freesound Projects</h3>
-		<a href="http://radio.freesound.org/" id="freesoundradio"><img src="{{media_url}}images/freesoundradio.png" alt="Freesound Radio" /></a>
-		<a href="http://barcelona.freesound.org/" id="sonsdebarcelona"><img src="{{media_url}}images/sonsdebarcelona.png" alt="sonsdebarcelona" /></a>
-	</div>
-	
+    <!-- about and t-shirts -->
+    <div class="continuous_sidebar_box">
+        <div id="about">
+            <div id="post_it">
+            <h2>Welcome to Freesound</h2>
+            <p>Freesound is a collaborative database of Creative Commons Licensed sounds. Browse, download and share sounds.</p>
+            </div>
+        </div>
+        <div id="support">
+            <img src="{{media_url}}images/content/tshirt.png" alt="" width="166" height="167" />
+            <h3>Support Us. Get your Freesound T-Shirt!</h3>
+            <p>Select your store:</p>
+
+            <a href="http://freesound.spreadshirt.net/" class="external_link">Europe</a>
+            <a href="http://freesound.spreadshirt.com/" class="external_link">US Canada and Asia</a>
+        </div>
+    </div>
+
+    <!-- pledgie -->
+    {% cache 900 pledgie_cache %}
+    {% get_pledgie_campaign_details pledgie_campaign as pledgie %}
+    {% if pledgie %}
+    <div id="donation_box">
+        <p><strong>Love Freesound?</strong> <span id="count_down">Only <strong>{{ pledgie.to_go }}&euro;</strong> to go!</span></p>
+        <a class="donation_button" href="{{pledgie.url}}">Donate Now</a>
+        <div id="donation_meter_box"><span id="meter" style="width:{{ pledgie.campaign.percent_towards_goal }}%">{{ pledgie.campaign.percent_towards_goal }}%</span></div>
+    </div>
+    {% endif %}
+    {% endcache %}
+
+    <!-- latest forum posts -->
+    {% cache 300 latest_posts %}
+    <div id="latest_forum_posts" class="sidebar_box">
+        <h3>Latest Forum Posts</h3>
+        <ul>
+            {% for post in latest_forum_posts %}
+            <li class="{% cycle 'odd' 'even' %}">
+                <a href="{{post.get_absolute_url}}">{{post.thread.title}}</a><br />
+                in <a href="{{post.thread.forum.get_absolute_url}}">{{post.thread.forum}}</a><br />
+                by <a href="{% url account post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago
+            </li>
+            {% endfor %}
+        </ul>
+        <a class="more_posts_button" href="{% url forums-forums %}"><img src="{{media_url}}images/arrow_down.png" alt="arrow" />More Posts</a>
+    </div>
+    {% endcache %}
+
+    <!-- subprojects -->
+    <div id="freesound_projects" class="sidebar_box">
+        <h3>Freesound Projects</h3>
+        <a href="http://radio.freesound.org/" id="freesoundradio"><img src="{{media_url}}images/freesoundradio.png" alt="Freesound Radio" /></a>
+        <a href="http://barcelona.freesound.org/" id="sonsdebarcelona"><img src="{{media_url}}images/sonsdebarcelona.png" alt="sonsdebarcelona" /></a>
+    </div>
+
 </div>
 
 <!-- credits -->
 <div id="credits">
-	A Website by: <a href="http://www.mtg.upf.edu/" id="mtg_link"><img src="{{media_url}}images/credits/mtg.png" alt="Music Technology Group" /></a>
-	Supported by: <a href="http://www.google.com/" id="google_link"><img src="{{media_url}}images/credits/google.png" alt="Google" /></a> <a href="http://www.letusa.es/" id="letusa_link"><img src="{{media_url}}images/credits/letusa.png" alt="Letusa" /></a>
+    A Website by: <a href="http://www.mtg.upf.edu/" id="mtg_link"><img src="{{media_url}}images/credits/mtg.png" alt="Music Technology Group" /></a>
+    Supported by: <a href="http://www.google.com/" id="google_link"><img src="{{media_url}}images/credits/google.png" alt="Google" /></a> <a href="http://www.letusa.es/" id="letusa_link"><img src="{{media_url}}images/credits/letusa.png" alt="Letusa" /></a>
 </div>
 
 {% endblock %}

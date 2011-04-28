@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION forum_post_insert() RETURNS TRIGGER AS $BODY$
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER forum_post_insert ON forum_post;
+DROP TRIGGER IF EXISTS forum_post_insert ON forum_post;
 CREATE TRIGGER forum_post_insert AFTER INSERT ON forum_post FOR EACH ROW EXECUTE PROCEDURE forum_post_insert();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ CREATE OR REPLACE FUNCTION forum_post_delete() RETURNS TRIGGER AS $BODY$
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER forum_post_delete ON forum_post;
+DROP TRIGGER IF EXISTS forum_post_delete ON forum_post;
 CREATE TRIGGER forum_post_delete AFTER DELETE ON forum_post FOR EACH ROW EXECUTE PROCEDURE forum_post_delete();
 
 -- posts will never be changed from thread, so we don't need an update trigger for them
@@ -76,7 +76,7 @@ CREATE OR REPLACE FUNCTION forum_thread_insert() RETURNS TRIGGER AS $BODY$
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER forum_thread_insert ON forum_thread;
+DROP TRIGGER IF EXISTS forum_thread_insert ON forum_thread;
 CREATE TRIGGER forum_thread_insert AFTER INSERT ON forum_thread FOR EACH ROW EXECUTE PROCEDURE forum_thread_insert();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ CREATE OR REPLACE FUNCTION forum_thread_delete() RETURNS TRIGGER AS $BODY$
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER forum_thread_delete ON forum_thread;
+DROP TRIGGER IF EXISTS forum_thread_delete ON forum_thread;
 CREATE TRIGGER forum_thread_delete AFTER DELETE ON forum_thread FOR EACH ROW EXECUTE PROCEDURE forum_thread_delete();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ CREATE OR REPLACE FUNCTION forum_thread_update() RETURNS TRIGGER AS $BODY$
         RETURN NEW;
     END;
 $BODY$ LANGUAGE 'plpgsql';
-DROP TRIGGER forum_thread_update ON forum_thread;
+DROP TRIGGER IF EXISTS forum_thread_update ON forum_thread;
 CREATE TRIGGER forum_thread_update AFTER UPDATE ON forum_thread FOR EACH ROW EXECUTE PROCEDURE forum_thread_update();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -129,21 +129,21 @@ CREATE OR REPLACE FUNCTION sounds_sound_update() RETURNS TRIGGER AS $BODY$
         IF NEW.moderation_state = OLD.moderation_state AND NEW.processing_state = OLD.processing_state THEN
             RETURN NEW;
         END IF;
-        
+
         -- come from not all ok to all ok, increment!
         IF (OLD.moderation_state != 'OK' OR OLD.processing_state != 'OK') AND (NEW.moderation_state = 'OK' AND NEW.processing_state = 'OK') THEN
             UPDATE accounts_profile SET num_sounds = num_sounds + 1 WHERE user_id = NEW.user_id;
         END IF;
-    
+
         -- come from all ok, go to not all ok
         IF (NEW.moderation_state != 'OK' OR NEW.processing_state != 'OK') AND (OLD.moderation_state = 'OK' AND OLD.processing_state = 'OK') THEN
             UPDATE accounts_profile SET num_sounds = num_sounds - 1 WHERE user_id = NEW.user_id AND num_sounds > 0;
         END IF;
-    
+
         RETURN NEW;
     END;
 $BODY$ LANGUAGE 'plpgsql';
-DROP TRIGGER sounds_sound_update ON sounds_sound;
+DROP TRIGGER IF EXISTS sounds_sound_update ON sounds_sound;
 CREATE TRIGGER sounds_sound_update AFTER UPDATE ON sounds_sound FOR EACH ROW EXECUTE PROCEDURE sounds_sound_update();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -154,7 +154,7 @@ CREATE OR REPLACE FUNCTION sounds_sound_delete() RETURNS TRIGGER AS $BODY$
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER forum_post_delete ON forum_post;
+DROP TRIGGER IF EXISTS forum_post_delete ON forum_post;
 CREATE TRIGGER forum_post_delete AFTER DELETE ON forum_post FOR EACH ROW EXECUTE PROCEDURE forum_post_delete();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -163,42 +163,42 @@ CREATE OR REPLACE FUNCTION sound_rating_update() RETURNS TRIGGER AS $BODY$
     DECLARE
         sound_content_type_id INTEGER;
     BEGIN
-        SELECT id INTO sound_content_type_id FROM django_content_type WHERE app_label='sounds' AND model='sound';    
+        SELECT id INTO sound_content_type_id FROM django_content_type WHERE app_label='sounds' AND model='sound';
         IF sound_content_type_id = NEW.content_type_id THEN
            UPDATE sounds_sound SET avg_rating=(SELECT coalesce(avg(rating),0) FROM ratings_rating WHERE content_type_id=NEW.content_type_id AND object_id=NEW.object_id) WHERE sounds_sound.id=NEW.object_id;
         END IF;
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER rating_post_update ON ratings_rating;
+DROP TRIGGER IF EXISTS rating_post_update ON ratings_rating;
 CREATE TRIGGER rating_post_update AFTER UPDATE ON ratings_rating FOR EACH ROW EXECUTE PROCEDURE sound_rating_update();
 
 CREATE OR REPLACE FUNCTION sound_rating_insert() RETURNS TRIGGER AS $BODY$
     DECLARE
         sound_content_type_id INTEGER;
     BEGIN
-        SELECT id INTO sound_content_type_id FROM django_content_type WHERE app_label='sounds' AND model='sound';    
+        SELECT id INTO sound_content_type_id FROM django_content_type WHERE app_label='sounds' AND model='sound';
         IF sound_content_type_id = NEW.content_type_id THEN
            UPDATE sounds_sound SET num_ratings=num_ratings+1, avg_rating=(SELECT coalesce(avg(rating),0) FROM ratings_rating WHERE content_type_id=NEW.content_type_id AND object_id=NEW.object_id) WHERE sounds_sound.id=NEW.object_id;
         END IF;
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER rating_post_insert ON ratings_rating;
+DROP TRIGGER IF EXISTS rating_post_insert ON ratings_rating;
 CREATE TRIGGER rating_post_insert AFTER INSERT ON ratings_rating FOR EACH ROW EXECUTE PROCEDURE sound_rating_insert();
 
 CREATE OR REPLACE FUNCTION sound_rating_delete() RETURNS TRIGGER AS $BODY$
     DECLARE
         sound_content_type_id INTEGER;
     BEGIN
-        SELECT id INTO sound_content_type_id FROM django_content_type WHERE app_label='sounds' AND model='sound';    
+        SELECT id INTO sound_content_type_id FROM django_content_type WHERE app_label='sounds' AND model='sound';
         IF sound_content_type_id = OLD.content_type_id THEN
            UPDATE sounds_sound SET num_ratings=num_ratings-1, avg_rating=(SELECT coalesce(avg(rating),0) FROM ratings_rating WHERE content_type_id=OLD.content_type_id AND object_id=OLD.object_id) WHERE sounds_sound.id=OLD.object_id;
         END IF;
         RETURN OLD;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER rating_post_delete ON ratings_rating;
+DROP TRIGGER IF EXISTS rating_post_delete ON ratings_rating;
 CREATE TRIGGER rating_post_delete AFTER DELETE ON ratings_rating FOR EACH ROW EXECUTE PROCEDURE sound_rating_delete();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ CREATE OR REPLACE FUNCTION download_insert() RETURNS TRIGGER AS $BODY$
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER download_post_insert ON sounds_download;
+DROP TRIGGER IF EXISTS download_post_insert ON sounds_download;
 CREATE TRIGGER download_post_insert AFTER INSERT ON sounds_download FOR EACH ROW EXECUTE PROCEDURE download_insert();
 
 CREATE OR REPLACE FUNCTION download_delete() RETURNS TRIGGER AS $BODY$
@@ -226,5 +226,5 @@ CREATE OR REPLACE FUNCTION download_delete() RETURNS TRIGGER AS $BODY$
         RETURN OLD;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER download_post_delete ON sounds_download;
+DROP TRIGGER IF EXISTS download_post_delete ON sounds_download;
 CREATE TRIGGER download_post_delete AFTER DELETE ON sounds_download FOR EACH ROW EXECUTE PROCEDURE download_delete();

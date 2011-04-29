@@ -356,6 +356,8 @@ class Pack(SocialModel):
 
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
+        self.is_dirty = True
+        self.save()
 
     def delete(self):
         """ This deletes all sounds in the pack as well. """

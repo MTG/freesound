@@ -1614,17 +1614,7 @@ a.donation_button:hover {
 
 /* Footer
 ------------------------------------------------------*/
-#footer_wrapper { <<<<<<<
-    HEAD background: url(images/footer_wrapper.png) repeat-x top #FCFCFC;
-    height: 80px;
-    clear: both;
-}
-
-#footer {
-    height: 58px;
-    width: 980px;
-    margin: 0 auto;
-    background: url(images/footer.png) repeat-x bottom #F8F8F8; =======
+#footer_wrapper {
     background: url(../images/footer_wrapper.png) repeat-x top #FCFCFC;
     height: 80px;
     clear: both;
@@ -1635,12 +1625,6 @@ a.donation_button:hover {
     width: 980px;
     margin: 0 auto;
     background: url(../images/footer.png) repeat-x bottom #F8F8F8;
-    >>>>>>>
-    origin
-    /master
-}
-
-#footer {
     font-size: 0.7em;
     color: #333333;
 }
@@ -1670,13 +1654,12 @@ a.donation_button:hover {
 
 /* Stars
 ------------------------------------------------------*/
-.star-rating,.star-rating a:hover,.star-rating a:active,.star-rating a:focus,.star-rating .current-rating
-    { <<<<<<<
-    HEAD background: url(images/stars.gif) left -1000px repeat-x; =======
+.star-rating,
+.star-rating a:hover,
+.star-rating a:active,
+.star-rating a:focus,
+.star-rating .current-rating {
     background: url(../images/stars.gif) left -1000px repeat-x;
-    >>>>>>>
-    origin
-    /master
 }
 
 .star-rating {

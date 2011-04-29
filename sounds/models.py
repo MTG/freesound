@@ -354,6 +354,17 @@ class Pack(SocialModel):
 
         logger.info("\tall done")
 
+    def remove_sounds_from_pack(self):
+        Sound.objects.filter(pack_id=self.id).update(pack=None)
+
+    def delete(self):
+        """ This deletes all sounds in the pack as well. """
+        # TODO: remove from solr?
+        # delete files
+        delete_object_files(self, web_logger)
+        # super class delete
+        super(Sound, self).delete()
+
 
 class Flag(models.Model):
     sound = models.ForeignKey(Sound)

@@ -1,7 +1,6 @@
 from solr import Solr, SolrException
-from sounds.models import Sound
-import logging
 from django.conf import settings
+import logging
 
 logger = logging.getLogger("search")
 
@@ -16,15 +15,15 @@ def convert_to_solr_document(sound):
 
     document["description"] = sound.description
     document["tag"] = [taggeditem.tag.name for taggeditem in sound.tags.all()]
-    
+
     document["license"] = sound.license.name
-    
+
     document["is_remix"] = bool(sound.sources.count())
     document["was_remixed"] = bool(sound.remixes.count())
 
     if sound.pack:
         document["pack"] = sound.pack.name
-    
+
     document["is_geotagged"] = sound.geotag != None
 
     document["type"] = sound.type
@@ -44,13 +43,13 @@ def convert_to_solr_document(sound):
 
     document["comment"] = [comment.comment for comment in sound.comments.all()]
     document["comments"] = sound.comments.count()
-    
-    document["waveform_path_m"] = sound.locations("display.wave.M.path") 
+
+    document["waveform_path_m"] = sound.locations("display.wave.M.path")
     document["waveform_path_l"] = sound.locations("display.wave.L.path")
     document["spectral_path_m"] = sound.locations("display.spectral.M.path")
     document["spectral_path_l"] = sound.locations("display.spectral.L.path")
     document["preview_path"] = sound.locations("preview.LQ.mp3.path")
-    
+
     return document
 
 
@@ -73,18 +72,22 @@ def add_sounds_to_solr(sounds):
         solr.add(documents)
     except SolrException, e:
         logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
-    
+
     logger.info("optimizing solr index")
     solr.optimize()
     logger.info("done")
 
 
-def add_all_sounds_to_solr(slice_size=4000):
-    qs = Sound.objects.select_related("pack", "user", "license").filter(processing_state="OK", moderation_state="OK")
-    num_sounds = qs.count()
+def add_all_sounds_to_solr(sound_queryset, slice_size=4000):
+    # Pass in a queryset to avoid needing a reference to
+    # the Sound class, it causes circular imports.
+    num_sounds = sound_queryset.count()
     for i in range(0, num_sounds, slice_size):
-        add_sounds_to_solr(qs[i:i+slice_size])
-        
+        add_sounds_to_solr(sound_queryset[i:i+slice_size])
+
 def delete_sound_from_solr(sound):
     logger.info("deleting sound with id %d" % sound.id)
-    Solr(settings.SOLR_URL).delete_by_id(sound.id)
+    try:
+        Solr(settings.SOLR_URL).delete_by_id(sound.id)
+    except Exception, e:
+        logger.error('could not delete sound with id %s (%s).' % (sound.id, e))

@@ -11,9 +11,11 @@ from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
 import os, logging, random
+from utils.search.search import delete_sound_from_solr
+from utils.filesystem import delete_object_files
 
 search_logger = logging.getLogger('search')
-
+web_logger = logging.getLogger('web')
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -274,6 +276,18 @@ class Sound(SocialModel):
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
                 tagged_object.save()
 
+    def delete(self):
+        # remove from solr
+        delete_sound_from_solr(self)
+        # delete foreignkeys
+        if self.geotag:
+            self.geotag.delete()
+        # delete files
+        delete_object_files(self, web_logger)
+        # super class delete
+        super(Sound, self).delete()
+
+    # N.B. This is used in the ticket template (ugly, but a quick fix)
     def is_sound(self):
         return True
 

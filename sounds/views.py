@@ -31,9 +31,8 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
-from utils.search.search import add_sound_to_solr, delete_sound_from_solr
-import datetime
-import os
+from utils.search.search import add_sound_to_solr
+import datetime, os, time
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -335,29 +334,24 @@ def delete(request, username, sound_id):
     if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
         raise PermissionDenied
 
-    import time
-
     encrypted_string = request.GET.get("sound", None)
 
     waited_too_long = False
 
     if encrypted_string != None:
-        try:
-            sound_id, now = decrypt(encrypted_string).split("\t")
-            sound_id = int(sound_id)
-            link_generated_time = float(now)
+        sound_id, now = decrypt(encrypted_string).split("\t")
+        sound_id = int(sound_id)
+        link_generated_time = float(now)
 
-            if sound_id != sound.id:
-                raise PermissionDenied
+        if sound_id != sound.id:
+            raise PermissionDenied
 
-            if abs(time.time() - link_generated_time) < 10:
-                delete_sound_from_solr(sound)
-                sound.delete()
-                return HttpResponseRedirect(reverse("accounts-home"))
-            else:
-                waited_too_long = True
-        except:
-            pass
+        if abs(time.time() - link_generated_time) < 10:
+            sound.delete()
+            return HttpResponseRedirect(reverse("accounts-home"))
+        else:
+            waited_too_long = True
+
 
     encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time()))
 

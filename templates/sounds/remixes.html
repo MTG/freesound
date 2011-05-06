@@ -1,4 +1,16 @@
 {% extends "sounds/_section.html" %}
+{% load display_remix %}
+
+{% block head %}
+	{{ block.super }}
+	<script type="text/javascript" src="{{media_url}}js/protovis-r3.2.js"></script>
+	<style type="text/css">
+		#fig {
+		  width: 880px;
+		  height: 400px;
+		}
+	</style>
+{% endblock head %}
 
 {% load display_sound %}
 {% load paginator %}
@@ -12,6 +24,16 @@
 
 {% for sound in page.object_list %}
     {% display_sound sound "sample_player_small" %}
+{% endfor %}
+
+
+{% for sound in page.object_list %}
+    {% display_remix sound %}
+{% endfor %}
+
+{{ sound.id }}
+{% for sound in page.object_list %}
+    {{ sound.id }} <br />
 {% endfor %}
 
 {% show_paginator paginator page current_page request %}

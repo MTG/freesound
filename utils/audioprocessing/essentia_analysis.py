@@ -26,6 +26,6 @@ def analyze(sound):
         %s
 """ (sound.id, sound.original_path, p_result, output_std, output_err))
     else:
-        shutil.move('%s.yaml', statistics_path)
-        shutil.move('%s_frames.json', frames_path)
+        shutil.move('%s.yaml' % tmp_path, statistics_path)
+        shutil.move('%s_frames.json' % tmp_path, frames_path)
         return True

@@ -144,16 +144,16 @@ DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesoun
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
 DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum views
-
 SOUNDS_PATH = os.path.join(DATA_PATH, "sounds/")
 PACKS_PATH = os.path.join(DATA_PATH, "packs/")
-
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
+ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 
 DATA_URL = "/data/"
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
 DISPLAYS_URL = DATA_URL + "displays/"
+ANALYSIS_URL = DATA_URL + "analysis/"
 
 SENDFILE_SECRET_URL = "/secret/"
 SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
@@ -175,7 +175,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)
     INTERNAL_IPS = ('127.0.0.1', 'localhost')
-    
+
     DEBUG_TOOLBAR_PANELS = (
         'debug_toolbar.panels.version.VersionDebugPanel',
         'debug_toolbar.panels.timer.TimerDebugPanel',
@@ -188,9 +188,11 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
         'debug_toolbar.panels.logger.LoggingPanel',
         'debug_toolbar.panels.cache.CacheDebugPanel'
     )
-    
+
     DEBUG_TOOLBAR_CONFIG = {
         'INTERCEPT_REDIRECTS': False,
     }
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+ESSENTIA_EXECUTABLE = '/home/fsweb/essentia/essentia_1.2.2_extractor/streaming_extractor'

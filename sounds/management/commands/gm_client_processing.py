@@ -36,7 +36,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Parse command-line options.
         qs = Sound.objects.select_related()
-        
+
         if options['all']:
             # All sounds in the database.
             sounds = qs.all().exclude(original_path=None)
@@ -56,7 +56,7 @@ class Command(BaseCommand):
         # Connect to the Gearman job server.
         gearman_task = options['queue']
         jobs = [{'task': gearman_task, 'data': str(sound["id"])} for sound in sounds.values("id")]
-        
+
         self.stdout.write('Sending %d sound(s) to the gearman queue\n' % len(jobs))
         # send them to the queue!
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)

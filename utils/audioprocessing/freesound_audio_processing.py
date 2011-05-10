@@ -165,6 +165,14 @@ def process(sound):
         return False
     success("created previews, large")
 
+    # analyze sound
+    from essentia_analysis import analyze
+    try:
+        analyze(sound)
+    except Exception, e:
+        failure("analyzing sound failed", e)
+        # let's not make it fail the rest of the processing.
+
     cleanup(to_cleanup)
     sound.processing_state = "OK"
     sound.processing_date = datetime.now()

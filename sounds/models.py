@@ -202,6 +202,16 @@ class Sound(SocialModel):
                         url = settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, self.user.id)
                     )
                 )
+            ),
+            analysis = dict(
+                statistics = dict(
+                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id, self.user.id)),
+                    url = settings.ANALYSIS_URL + "%d_%d_statistics.yaml" % (self.id, self.user.id)
+                ),
+                frames = dict(
+                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.yaml" % (self.id, self.user.id)),
+                    url = settings.ANALYSIS_URL + "%d_%d_frames.yaml" % (self.id, self.user.id)
+                )
             )
         )
 

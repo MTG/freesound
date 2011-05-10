@@ -1,5 +1,5 @@
 from settings import ESSENTIA_EXECUTABLE
-import os, shutil
+import os, shutil, subprocess
 
 def analyze(sound):
     statistics_path = sound.locations("analysis.statistics.path")

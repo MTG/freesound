@@ -57,9 +57,11 @@ class Command(BaseCommand):
 
         # Connect to the Gearman job server.
         jobs = [{'task': gearman_task, 'data': str(sound["id"])} for sound in sounds.values("id")]
-
-        self.stdout.write('Sending %d sound(s) to the gearman queue (%s)\n' % (len(jobs), gearman_task))
-        # send them to the queue!
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_multiple_jobs(jobs, background=True, wait_until_complete=False)
-        self.stdout.write('Sending sounds done')
+        if len(jobs) > 0:
+            self.stdout.write('Sending %d sound(s) to the gearman queue (%s)\n' % (len(jobs), gearman_task))
+            # send them to the queue!
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_multiple_jobs(jobs, background=True, wait_until_complete=False)
+            self.stdout.write('Sending sounds done')
+        else:
+            self.stdout.write('no jobs to send')

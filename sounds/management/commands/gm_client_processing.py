@@ -47,17 +47,18 @@ class Command(BaseCommand):
             # The sound_ids passed as arguments in command-line.
             sounds = qs.filter(pk__in=args).exclude(original_path=None)
 
-        # update all sounds to reflect we are processing them...
-        self.stdout.write('Updating database\n')
-        sounds.update(processing_date=datetime.now(), processing_state="PR")
-        transaction.commit_unless_managed()
-        self.stdout.write('Updating database done\n')
+        # update all sounds to reflect we are processing them... (only for 'process_sound' queue)
+        gearman_task = options['queue']
+        if gearman_task == 'process_sound':
+            self.stdout.write('Updating database\n')
+            sounds.update(processing_date=datetime.now(), processing_state="PR")
+            transaction.commit_unless_managed()
+            self.stdout.write('Updating database done\n')
 
         # Connect to the Gearman job server.
-        gearman_task = options['queue']
         jobs = [{'task': gearman_task, 'data': str(sound["id"])} for sound in sounds.values("id")]
 
-        self.stdout.write('Sending %d sound(s) to the gearman queue\n' % len(jobs))
+        self.stdout.write('Sending %d sound(s) to the gearman queue (%s)\n' % (len(jobs), gearman_task))
         # send them to the queue!
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         gm_client.submit_multiple_jobs(jobs, background=True, wait_until_complete=False)

@@ -26,6 +26,15 @@ def analyze(sound):
         %s
 """ (sound.id, sound.original_path, p_result, output_std, output_err))
     else:
+        __create_dir(statistics_path)
+        __create_dir(frames_path)
         shutil.move('%s.yaml' % tmp_path, statistics_path)
         shutil.move('%s_frames.json' % tmp_path, frames_path)
         return True
+
+def __create_dir(path):
+    dir_path = os.path.dirname(os.path.abspath(path))
+    try:
+        os.makedirs(dir_path)
+    except:
+        pass

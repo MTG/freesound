@@ -209,8 +209,8 @@ class Sound(SocialModel):
                     url = settings.ANALYSIS_URL + "%d_%d_statistics.yaml" % (self.id, self.user.id)
                 ),
                 frames = dict(
-                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.yaml" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%d_%d_frames.yaml" % (self.id, self.user.id)
+                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id, self.user.id)),
+                    url = settings.ANALYSIS_URL + "%d_%d_frames.json" % (self.id, self.user.id)
                 )
             )
         )

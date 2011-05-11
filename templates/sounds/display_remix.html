@@ -1,0 +1,56 @@
+<div id="center">
+	<div id="fig">
+    	<script type="text/javascript+protovis">
+var data = {{ data|safe }};
+
+var vis = new pv.Panel()
+				.def("i", -1)
+    			.width(880)
+    			.height(310)
+    			.bottom(90);
+
+var arc = vis.add(pv.Layout.Arc)
+    .nodes(data.nodes)
+    .links(data.links)
+    .sort(function(a, b) a.group == b.group
+        ? b.linkDegree - a.linkDegree
+        : b.group - a.group);
+
+arc.link.add(pv.Line)
+   .strokeStyle(function(d, p)  connections(d,p));
+
+function connections(d, p) {
+	if (p.sourceNode.active == true) {
+		 $.get('http://localhost:8000/people/' + data.username + '/sounds/' + data.nodes[p.targetNode.index].id + '/display/', function(data) {displayDetails(data,'source');}, 'html');
+		return "orange";
+	} else if (p.targetNode.active == true) {	
+		 $.get('http://localhost:8000/people/' + data.username + '/sounds/' + data.nodes[p.sourceNode.index].id + '/display/', function(data) {displayDetails(data,'remix');}, 'html');
+		return "orange";
+	} else
+		return "#c7c7c7";
+}
+
+function displayDetails(data,type) { 
+	if (type == 'remix')
+		$("#details").append('Remix: <br />');
+	else if (type == 'source')
+		$("#details").append('Source: <br />');
+
+	$("#details").append(data);
+}
+
+arc.node.add(pv.Dot)
+    .size(function(d) d.linkDegree + 4)
+    .fillStyle(pv.Colors.category19().by(function(d) d.group))
+    .strokeStyle(function() this.fillStyle().darker())
+    .radius(function() vis.i() == this.index ? 10 : 5)
+    .event("mouseover", function(d) ( $("#details").empty(), $.get('http://localhost:8000/people/' + data.username + '/sounds/' + d.id + '/display/', function(data) {displayDetails(data,'remix');}, 'html'), d.active = true, arc, vis.i(this.index)))
+    .event("mouseout", function(d) (d.active = false, arc, vis.i(-1)));
+
+arc.label.add(pv.Label)
+
+vis.render();
+    	</script>
+  	</div>
+  	<div id="details" class="sample_information"></div>
+  </div>

@@ -119,6 +119,7 @@ class Sound(SocialModel):
 
     # processing
     PROCESSING_STATE_CHOICES = (
+        ("QU",_('Queued')),
         ("PE",_('Pending')),
         ("PR",_('Processing')),
         ("OK",_('OK')),
@@ -127,6 +128,8 @@ class Sound(SocialModel):
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
     processing_date = models.DateTimeField(null=True, blank=True, default=None)
     processing_log = models.TextField(null=True, blank=True, default=None)
+
+    similarity_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
 
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)

@@ -10,3 +10,5 @@ utils/search/config*/data
 local_settings.py
 logger.ini
 _docs/api/build/
+*.initial_data.json
+*.settings.py

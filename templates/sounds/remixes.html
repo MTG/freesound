@@ -12,7 +12,6 @@
 	</style>
 {% endblock head %}
 
-{% load display_sound %}
 {% load paginator %}
 
 {% block title %}Remixes of {{sound.original_filename}}{% endblock title %}
@@ -22,19 +21,7 @@
 
 {% show_paginator paginator page current_page request %}
 
-{% for sound in page.object_list %}
-    {% display_sound sound "sample_player_small" %}
-{% endfor %}
-
-
-{% for sound in page.object_list %}
-    {% display_remix sound %}
-{% endfor %}
-
-{{ sound.id }}
-{% for sound in page.object_list %}
-    {{ sound.id }} <br />
-{% endfor %}
+{% display_remix sound page.object_list %}
 
 {% show_paginator paginator page current_page request %}
 

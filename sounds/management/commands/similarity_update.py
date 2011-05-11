@@ -11,8 +11,6 @@ class Command(NoArgsCommand):
             try:
                 Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
                 sound.similarity_state = 'OK'
-                sound.save()
             except:
                 sound.similarity_state = 'FA'
-                sound.save()
-
+            sound.save()

@@ -30,6 +30,7 @@ def analyze(sound):
         __create_dir(frames_path)
         shutil.move('%s.yaml' % tmp_path, statistics_path)
         shutil.move('%s_frames.json' % tmp_path, frames_path)
+        os.remove('%s.json' % tmp_path)
         return True
 
 def __create_dir(path):

@@ -1,4 +1,7 @@
 <div id="center">
+	<div id="details" class="sample_information">
+	</div>
+
 	<div id="fig">
     	<script type="text/javascript+protovis">
 var data = {{ data|safe }};
@@ -11,11 +14,12 @@ var vis = new pv.Panel()
 
 var arc = vis.add(pv.Layout.Arc)
     .nodes(data.nodes)
-    .links(data.links)
+    .links(data.links);
+/*
     .sort(function(a, b) a.group == b.group
         ? b.linkDegree - a.linkDegree
         : b.group - a.group);
-
+*/
 arc.link.add(pv.Line)
    .strokeStyle(function(d, p)  connections(d,p));
 
@@ -31,12 +35,17 @@ function connections(d, p) {
 }
 
 function displayDetails(data,type) { 
+	/*
 	if (type == 'remix')
 		$("#details").append('Remix: <br />');
 	else if (type == 'source')
 		$("#details").append('Source: <br />');
-
-	$("#details").append(data);
+	*/
+	// FIXME: this doesn't slide... tried many variations, might have to to with 
+	// the call being ajax, check jquery FAQ or the slide exceeds page height(not so probable) 
+    $("#details").append('<div class="test" style="display: none;">'+data+'</div>');
+	$(".test").slideDown("normal");
+	
 }
 
 arc.node.add(pv.Dot)
@@ -52,5 +61,5 @@ arc.label.add(pv.Label)
 vis.render();
     	</script>
   	</div>
-  	<div id="details" class="sample_information"></div>
+  	
   </div>

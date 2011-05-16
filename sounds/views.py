@@ -293,7 +293,7 @@ def remixes(request, username, sound_id):
     # qs_sources = sound.sources.filter(moderation_state="OK", processing_state="OK")
     # FIXME: The below line creates a pretty massive SQL query, have a look to optimize it
     #        with raw SQL or split it in smaller queries.
-    qs = Sound.objects.filter(Q(sources=sound) | Q(remixes=sound) | Q(id=sound.id)).order_by('created').all()
+    qs = Sound.objects.filter(Q(sources=sound) | Q(remixes=sound) | Q(id=sound.id)).order_by('created').distinct().all()
     return render_to_response('sounds/remixes.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
 

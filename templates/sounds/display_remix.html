@@ -66,6 +66,7 @@ arc.node.add(pv.Dot)
     .radius(function() vis.i() == this.index ? 10 : 5)
     .event("mouseover", function(d) ( /* $("#details").empty(), $.get('http://localhost:8000/people/' + data.username + '/sounds/' + d.id + '/display/', function(data) {displayDetails(data,'remix');}, 'html'), */ d.active = true, arc, vis.i(this.index)))
     .event("mouseout", function(d) (d.active = false, arc, vis.i(-1), clearBackgrounds()));
+	// .event("dblclick", function(d) (goToSound(d.id)));
 
 arc.label.add(pv.Label)
 vis.render();

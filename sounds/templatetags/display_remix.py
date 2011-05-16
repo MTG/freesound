@@ -20,6 +20,7 @@ def display_remix(context, sound, objectlist):
 
     # get position in queryset related to ids
     for idx,val in enumerate(objectlist):
+        print(val.id)
         tempList.append({'id': val.id, 'pos': idx})
             
     for idx,val in enumerate(objectlist):

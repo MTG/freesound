@@ -59,7 +59,7 @@ INSTALLED_APPS = (
     'api',
     'django_extensions',
     'tickets',
-    'test_utils',
+    #'test_utils', # Don't use this in production!
 )
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)

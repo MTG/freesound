@@ -25,7 +25,7 @@ def analyze(sound):
     tmp_ana_path = '/tmp/analysis_%s' % sound.id
     essentia_dir = os.path.dirname(os.path.abspath(ESSENTIA_EXECUTABLE))
     os.chdir(essentia_dir)
-    exec_array = [ESSENTIA_EXECUTABLE, sound.original_path, tmp_ana_path]
+    exec_array = [ESSENTIA_EXECUTABLE, input_path, tmp_ana_path]
     p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p_result = p.wait()
     if p_result != 0:
@@ -38,7 +38,7 @@ def analyze(sound):
         %s
     STDERR:
         %s
-""" % (sound.id, sound.original_path, p_result, output_std, output_err))
+""" % (sound.id, input_path, p_result, output_std, output_err))
     else:
         __create_dir(statistics_path)
         __create_dir(frames_path)

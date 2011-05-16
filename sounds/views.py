@@ -31,8 +31,10 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
-from utils.search.search import add_sound_to_solr
 import datetime, os, time
+from utils.search.search import add_sound_to_solr, delete_sound_from_solr
+from sounds.templatetags import display_sound
+from django.db.models import Q
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -285,7 +287,11 @@ def sound_edit_sources(request, username, sound_id):
 
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    qs = sound.remixes.filter(moderation_state="OK", processing_state="OK")
+    # qs_remixes = sound.remixes.filter(moderation_state="OK", processing_state="OK")
+    # qs_sources = sound.sources.filter(moderation_state="OK", processing_state="OK")
+    # FIXME: The below line creates a pretty massive SQL query, have a look to optimize it
+    #        with raw SQL or split it in smaller queries.
+    qs = Sound.objects.filter(Q(sources=sound) | Q(remixes=sound) | Q(id=sound.id)).order_by('created').all()
     return render_to_response('sounds/remixes.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
 
@@ -403,3 +409,7 @@ def old_sound_link_redirect(request):
 
 def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
+
+def display_sound_wrapper(request, username, sound_id):
+    sound = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
+    return render_to_response('sounds/display_sound.html', display_sound.display_sound(RequestContext(request), sound, "sample_player_small"), context_instance=RequestContext(request))

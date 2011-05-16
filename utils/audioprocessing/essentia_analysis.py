@@ -11,7 +11,8 @@ def analyze(sound):
 
     input_path = sound.original_path
     tmp_conv = False
-    if os.path.splitext(input_path)[1] == '.wav':
+    ext = os.path.splitext(input_path)[1]
+    if ext in ['.wav', '.aiff', '.aifc', '.aif']:
         tmp_conv = True
         tmp_wav_path = '/tmp/conversion_%s.wav' % sound.id
         p = subprocess.Popen(['ffmpeg', '-y', '-i', input_path, '-acodec', 'pcm_s16le',

@@ -4,6 +4,7 @@
 {% block head %}
 	{{ block.super }}
 	<script type="text/javascript" src="{{media_url}}js/protovis-r3.2.js"></script>
+	<script type="text/javascript" src="{{media_url}}js/jquery-ui-1.8.11.custom.min.js"></script>
 	<style type="text/css">
 		#fig {
 		  width: 880px;
@@ -12,6 +13,7 @@
 	</style>
 {% endblock head %}
 
+{% load display_sound %}
 {% load paginator %}
 
 {% block title %}Remixes of {{sound.original_filename}}{% endblock title %}
@@ -22,6 +24,10 @@
 {% show_paginator paginator page current_page request %}
 
 {% display_remix sound page.object_list %}
+
+{% for sound in page.object_list %}
+    {% display_sound sound "sample_player_small" %}
+{% endfor %}
 
 {% show_paginator paginator page current_page request %}
 

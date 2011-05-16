@@ -1,10 +1,11 @@
 from __future__ import with_statement
 from gaia_wrapper import *
 from threading import Lock
-from similarity import logger
 from shared_lock import SharedLock
-import time, json, os
+import time, os
+import simplejson as json
 from settings import PRESETS
+from logger import logger
 
 UPDATE_TIMEOUT = 1
 READ_TIMEOUT   = 1

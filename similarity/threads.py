@@ -1,6 +1,7 @@
-import threading, zmq, traceback, time, json, os
+import threading, zmq, traceback, time, os
+import simplejson as json
 from global_indexer import indexer
-from similarity import logger
+from logger import logger
 
 
 class SimilarityThread(threading.Thread):

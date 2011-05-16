@@ -1,5 +1,6 @@
 from gaia_indexer import GaiaIndexer
-from similarity import logger
+from logger import logger
+
 
 global indexer
 try:

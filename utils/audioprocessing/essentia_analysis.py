@@ -27,7 +27,7 @@ def analyze(sound):
         %s
     STDERR:
         %s
-""" (sound.id, sound.original_path, p_result, output_std, output_err))
+""" % (sound.id, sound.original_path, p_result, output_std, output_err))
     else:
         __create_dir(statistics_path)
         __create_dir(frames_path)

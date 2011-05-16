@@ -4,6 +4,9 @@ import os, shutil, subprocess
 def analyze(sound):
     statistics_path = sound.locations("analysis.statistics.path")
     frames_path = sound.locations("analysis.frames.path")
+    # don't recalculate if the files are already there:
+    if os.path.exists(statistics_path) and os.path.exists(frames_path):
+        return True
     # the essentia extractor outputs 3 files
     # - /tmp/analysis_34627.json (statistics)
     # - /tmp/analysis_34627.yaml (statistics)

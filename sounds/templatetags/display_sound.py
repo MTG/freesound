@@ -9,7 +9,7 @@ register = template.Library()
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 
 def display_sound(context, sound, player_class):
-
+    
     if isinstance(sound, Sound):
         sound_id = sound.id
         sound_obj = sound

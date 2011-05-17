@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
- 
+
 # Copyright (c) 2008, Universitat Pompeu Fabra / Music Technology Group
 # All rights reserved.
 #
@@ -25,8 +25,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Author: bram de Jong <bram.dejong@domain.com> where domain is gmail 
- 
+# Author: bram de Jong <bram.dejong@domain.com> where domain is gmail
+
 from datetime import datetime, date
 from time import strptime
 from xml.etree import cElementTree as ET
@@ -38,10 +38,10 @@ class Multidict(dict):
     """A dictionary that represents a query string. If values in the dics are tuples, they are expanded.
     None values are skipped and all values are utf-encoded. We need this because in solr, we can have multiple
     fields with the same value, like facet.field
-    
+
     >>> [ (key, value) for (key,value) in Multidict({"a": 1, "b": (2,3,4), "c":None, "d":False}).items() ]
     [('a', 1), ('b', 2), ('b', 3), ('b', 4), ('d', 'false')]
-    """ 
+    """
     def items(self):
         # generator that retuns all items
         def all_items():
@@ -58,14 +58,14 @@ class Multidict(dict):
                 value = unicode(value).lower()
             else:
                 value = unicode(value).encode('utf-8')
-            
+
             yield (key, value)
 
 
 class SolrQuery(object):
     """A wrapper around a lot of Solr query funcionality.
     """
-    
+
     def __init__ (self, query_type=None, writer_type="json", indent=None, debug_query=None):
         """Creates a SolrQuery object
         query_type: Which handler to use when replying, default: default, dismax
@@ -80,7 +80,7 @@ class SolrQuery(object):
             'indent': indent,
             'debugQuery': debug_query
         }
- 
+
     def set_query(self, query):
         self.params['q'] = query
 
@@ -89,7 +89,7 @@ class SolrQuery(object):
         The DisMaxRequestHandler is designed to process simple user entered phrases (without heavy syntax) and search for the individual words
         across several fields using different weighting (boosts) based on the significance of each field. Additional options let you influence
         the score based on rules specific to each use case (independent of user input)
-        
+
         query_fields: List of fields and the "boosts" to associate with each of them when building DisjunctionMaxQueries from the user's query.
                         should be a list of fields: ["tag", "description", "username"]
                         with optional boosts:  with boosts [("tag", 2), "description", ("username", 3)]
@@ -97,11 +97,11 @@ class SolrQuery(object):
         phrase_fields: after the query, find (in these fields) fields that have all terms close together and boost them
         phrase_slop: amount of slop on phrase queries built for "pf" fields (affects boosting).
         query_phrase_slop: Amount of slop on phrase queries explicitly included in the user's query string (in qf fields; affects matching).
-        tie_breaker: see docs... 
+        tie_breaker: see docs...
         boost_query: see docs...
         boost_functions: see docs...
         """
-        self.params['qt'] = "dismax" 
+        self.params['qt'] = "dismax"
         self.params['q'] = query
         if query_fields:
             qf = []
@@ -110,7 +110,7 @@ class SolrQuery(object):
                     qf.append("^".join(map(str,f)))
                 else:
                     qf.append(f)
-            
+
             self.params['qf'] = " ".join(qf)
         else:
             self.params['qf'] = None
@@ -121,7 +121,7 @@ class SolrQuery(object):
         self.params['tie'] = tie_breaker
         self.params['bq'] = boost_query
         self.params['bf'] = boost_functions
-        
+
     def set_query_options(self, start=None, rows=None, sort=None, filter_query=None, field_list=None):
         """Set the options for the query.
         start: row where to start
@@ -144,12 +144,12 @@ class SolrQuery(object):
             self.params['facet.field'].extend(args)
         except KeyError:
             self.params['facet.field'] = list(args)
-        
+
     def set_facet_query(self, query):
         """Set additional query for faceting
         """
         self.params['facet.query'] = query
-    
+
     # set global faceting options for regular fields
     def set_facet_options_default(self, limit=None, offset=None, prefix=None, sort=None, mincount=None, count_missing=None, enum_cache_mindf=None):
         """Set default facet options: these will be applied to all facets, but overridden by particular options (see set_facet_options())
@@ -168,7 +168,7 @@ class SolrQuery(object):
         self.params['facet.mincount'] = mincount
         self.params['facet.missing'] = count_missing
         self.params['facet.enum.cache.minDf'] = enum_cache_mindf
-    
+
     # set faceting options for one particular field
     def set_facet_options(self, field, prefix=None, sort=None, limit=None, offset=None, mincount=None, count_missing=None):
         """Set facet options for one particular field... see set_facet_options_default() for parameter explanation
@@ -178,7 +178,7 @@ class SolrQuery(object):
                 raise SolrException, "setting facet options for field that doesn't exist"
         except KeyError:
             raise SolrException, "you haven't defined any facet fields yet"
-        
+
         self.params['f.%s.facet.limit' % field] = limit
         self.params['f.%s.facet.offset' % field] = offset
         self.params['f.%s.facet.prefix' % field] = prefix
@@ -194,7 +194,7 @@ class SolrQuery(object):
             self.params['facet.date'].extend(args)
         except KeyError:
             self.params['facet.date'] = list(args)
-    
+
     def set_date_facet_options_default(self, start=None, end=None, gap=None, hardened=None, count_other=None):
         """Set default date facet options: these will be applied to all date facets, but overridden by particular options (see set_date_facet_options())
             start: date start in DateMathParser syntax
@@ -223,7 +223,7 @@ class SolrQuery(object):
         self.params['f.%s.date.gap' % field] = gap
         self.params['f.%s.date.hardend' % field] = hardened
         self.params['f.%s.date.other' % field] = count_other
-        
+
     def set_highlighting_options_default(self, field_list=None, snippets=None, fragment_size=None, merge_contiguous=None, require_field_match=None, max_analyzed_chars=None, alternate_field=None, max_alternate_field_length=None, pre=None, post=None, fragmenter=None, use_phrase_highlighter=None, regex_slop=None, regex_pattern=None, regex_max_analyzed_chars=None):
         """Set default highlighting options: these will be applied to all highlighting, but overridden by particular options (see set_highlighting_options())
         field_list: list of fields to highlight space separated
@@ -275,7 +275,7 @@ class SolrQuery(object):
         self.params['f.%s.hl.alternateField' % field] = alternate_field
         self.params['f.%s.hl.simple.pre' % field] = pre
         self.params['f.%s.hl.simple.post' % field] = post
-        
+
     def __unicode__(self):
         return urllib.urlencode(Multidict(self.params))
 
@@ -283,17 +283,17 @@ class SolrQuery(object):
 class BaseSolrAddEncoder(object):
     """A Solr Add encoder has one method, called encode. This method will be called on whatever is
     passed to the Solr add() method. It should return an XML compatible with the installed Solr schema.
-    
+
     >>> encoder = BaseSolrAddEncoder()
     >>> encoder.encode([{"id": 5, "name": "guido", "tag":["python", "coder"], "status":"bdfl"}])
     '<add><doc><field name="status">bdfl</field><field name="tag">python</field><field name="tag">coder</field><field name="id">5</field><field name="name">guido</field></doc></add>'
-    """    
+    """
     def encode(self, docs):
         """Encodes a document as an XML tree. this particular one takes a dictionary and
         translates the key value pairs to <field name="key">value<f/field>
         """
         message = ET.Element('add')
-        
+
         def add_basic_type(element, name, value):
             """Converts python values to a form suitable for insertion into the xml
             we send to solr and adds it to the doc XML.
@@ -313,7 +313,7 @@ class BaseSolrAddEncoder(object):
             field = ET.Element('field', name=name)
             field.text = value
             element.append(field)
-        
+
         for doc in docs:
             d = ET.Element('doc')
             for key, value in doc.items():
@@ -328,7 +328,7 @@ class BaseSolrAddEncoder(object):
 
         return ET.tostring(message, "utf-8")
 
-        
+
 
 class SolrResponseDecoderException(Exception):
     pass
@@ -339,15 +339,15 @@ class BaseSolrResponseDecoder(object):
 
 
 class SolrJsonResponseDecoder(BaseSolrResponseDecoder):
-    
+
     def __init__(self):
         # matches returned dates in JSON strings
         self.date_match = re.compile("-?\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.?\d*[a-zA-Z]*")
-        
+
     def decode(self, response_object):
-        #return self._decode_dates(simplejson.load(response_object))
+        #return self._decode_dates(json.load(response_object))
         return self._decode_dates(cjson.decode(response_object.read())) #@UndefinedVariable
-    
+
     def _decode_dates(self, d):
         """Recursively decode date strings to datetime objects.
         """
@@ -373,7 +373,7 @@ class SolrException(Exception):
 class Solr(object):
     def __init__(self, url="http://localhost:8983/solr", auto_commit=True, verbose=False, persistent=False, encoder=BaseSolrAddEncoder(), decoder=SolrJsonResponseDecoder()):
         url_split = urlparse.urlparse(url)
-        
+
         self.host = url_split.hostname
         self.port = url_split.port
         self.path = url_split.path.rstrip('/')
@@ -382,9 +382,9 @@ class Solr(object):
         self.encoder = encoder
         self.verbose = verbose
         self.auto_commit = auto_commit
-        
+
         self.persistent = persistent
-        
+
         if self.persistent:
             self.conn = httplib.HTTPConnection(self.host, self.port)
 
@@ -393,41 +393,41 @@ class Solr(object):
             path = '%s/select/?%s' % (self.path, query_string)
         else:
             path = '%s/update' % self.path
-        
+
         if self.verbose:
             print "Connecting to Solr server: %s:%s" % (self.host, self.port)
             print "\tPath:", path
             print "\tSending data:", message
-        
+
         if self.persistent:
             conn = self.conn
         else:
             conn = httplib.HTTPConnection(self.host, self.port)
-        
+
         if query_string:
             conn.request('GET', path)
         elif message:
             conn.request('POST', path, message, {'Content-type': 'text/xml'})
-        
+
         response = conn.getresponse()
-        
+
         if response.status != 200:
             raise SolrException, response.reason
-        
+
         return response
-    
+
     def select(self, query_string, raw=False):
         if raw:
             return self._request(query_string=query_string).read()
         else:
             return self.decoder.decode(self._request(query_string=query_string))
-    
+
     def add(self, docs):
         encoded_docs = self.encoder.encode(docs)
         self._request(message=encoded_docs)
         if self.auto_commit:
             self.commit()
-            
+
     def delete_by_id(self, id):
         self._request(message=u'<delete><id>%s</id></delete>' % unicode(id))
         if self.auto_commit:
@@ -443,7 +443,7 @@ class Solr(object):
         message.set("waitFlush", str(wait_flush).lower())
         message.set("waitSearcher", str(wait_searcher).lower())
         self._request(message=ET.tostring(message, "utf-8"))
-        
+
     def optimize(self, wait_flush=True, wait_searcher=True):
         message = ET.Element('optimize')
         message.set("waitFlush", str(wait_flush).lower())
@@ -458,12 +458,12 @@ class SolrResponseInterpreter(object):
         self.num_rows = len(self.docs)
         self.num_found = response["response"]["numFound"]
         self.q_time = response["responseHeader"]["QTime"]
-    
+
         try:
             self.facets = response["facet_counts"]["facet_fields"]
         except KeyError:
             self.facets = {}
-            
+
         """Facets are given in a list: [facet, number, facet, number, None, number] where the last one
         is the mising field count. Converting all of them to a dict for easier usage:
         {facet:number, facet:number, ..., None:number}
@@ -475,7 +475,7 @@ class SolrResponseInterpreter(object):
             self.highlighting = response["highlighting"]
         except KeyError:
             self.highlighting = {}
-            
+
     def display(self):
         print "Solr response:"
         print "\tGlobal parameters:"
@@ -529,13 +529,13 @@ class SolrResponseInterpreterPaginator(object):
     def __init__(self, interpreter, num_per_page):
         self.num_per_page = num_per_page
         self.interpreter = interpreter
-        
+
         self.count = interpreter.num_found
 
-        self.num_pages = interpreter.num_found / num_per_page + int(interpreter.num_found % num_per_page != 0) 
-        
+        self.num_pages = interpreter.num_found / num_per_page + int(interpreter.num_found % num_per_page != 0)
+
         self.page_range = range(1, self.num_pages + 1)
-        
+
     def page(self, page_num):
         object_list = self.interpreter.docs
         has_next = page_num < self.num_pages

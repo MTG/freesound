@@ -1,5 +1,4 @@
-import zmq, time, sys
-import simplejson as json
+import zmq, time, sys, json
 
 
 class Messenger():

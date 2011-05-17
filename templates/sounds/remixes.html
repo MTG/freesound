@@ -7,8 +7,23 @@
 	<script type="text/javascript" src="{{media_url}}js/jquery-ui-1.8.11.custom.min.js"></script>
 	<style type="text/css">
 		#fig {
-		  width: 880px;
-		  height: 400px;
+		  overflow: auto;
+		  position: relative;
+		  float: left;
+		  width: 220px;
+		  margin-right: 10px;
+		}
+		.details {
+			position: relative;
+			float: left;
+			width: 540px;
+			margin-top: 30px;
+		}
+		.center {
+			overflow: auto;
+			position: relative;
+			float: left;
+			width: 220px;
 		}
 	</style>
 {% endblock head %}
@@ -23,11 +38,14 @@
 
 {% show_paginator paginator page current_page request %}
 
+<div class="remixes">
 {% display_remix sound page.object_list %}
-
+<div class="details">
 {% for sound in page.object_list %}
     {% display_sound sound "sample_player_small" %}
 {% endfor %}
+</div>
+</div>
 
 {% show_paginator paginator page current_page request %}
 

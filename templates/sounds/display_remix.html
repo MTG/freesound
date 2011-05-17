@@ -5,13 +5,16 @@ var data = {{ data|safe }};
 
 var vis = new pv.Panel()
 				.def("i", -1)
-    			.width(880)
-    			.height(310)
-    			.bottom(90);
+    			.width(205)
+    			.height(data.length * 160)
+				.bottom(0)
+				.top(0)
+				.right(15);
 
 var arc = vis.add(pv.Layout.Arc)
     .nodes(data.nodes)
-    .links(data.links);
+    .links(data.links)
+	.orient("right");
 /*
     .sort(function(a, b) a.group == b.group
         ? b.linkDegree - a.linkDegree
@@ -23,39 +26,15 @@ arc.link.add(pv.Line)
 function connections(d, p) {
 
 	if (p.sourceNode.active == true) {
-		 // $.get('http://localhost:8000/people/' + data.username + '/sounds/' + data.nodes[p.targetNode.index].id + '/display/', function(data) {displayDetails(data,'source');}, 'html');
 		$("#"+p.targetNode.id+"").animate({backgroundColor: "#"+p.targetNode.color+""});
 		$("#"+p.sourceNode.id+"").animate({backgroundColor: "#"+p.sourceNode.color+""});
 		return "orange";
 	} else if (p.targetNode.active == true) {	
-		 // $.get('http://localhost:8000/people/' + data.username + '/sounds/' + data.nodes[p.sourceNode.index].id + '/display/', function(data) {displayDetails(data,'remix');}, 'html');
 		$("#"+p.targetNode.id+"").animate({backgroundColor: "#"+p.targetNode.color+""});
 		$("#"+p.sourceNode.id+"").animate({backgroundColor: "#"+p.sourceNode.color+""});
 		return "orange";
-	
-/*
-	if (p.sourceNode.active == true || p.targetNode.active == true) {
-		$("#"+p.targetNode.id+"").effect("pulsate", { times:3 }, 1000);
-		$("#"+p.sourceNode.id+"").effect("pulsate", { times:3 }, 1000);
-		console.debug(d.nodeName);
-		return "orange";
-*/
 	} else
 		return "#c7c7c7";
-}
-
-function displayDetails(data,type) { 
-	/*
-	if (type == 'remix')
-		$("#details").append('Remix: <br />');
-	else if (type == 'source')
-		$("#details").append('Source: <br />');
-	*/
-	// FIXME: this doesn't slide... tried many variations, might have to to with 
-	// the call being ajax, check jquery FAQ or the slide exceeds page height(not so probable) 
-    $("#details").append('<div class="test" style="display: none;">'+data+'</div>');
-	$(".test").slideDown("slow");
-	
 }
 
 arc.node.add(pv.Dot)
@@ -64,11 +43,15 @@ arc.node.add(pv.Dot)
 	.fillStyle(function(d) d.color)
     .strokeStyle(function() this.fillStyle().darker())
     .radius(function() vis.i() == this.index ? 10 : 5)
-    .event("mouseover", function(d) ( /* $("#details").empty(), $.get('http://localhost:8000/people/' + data.username + '/sounds/' + d.id + '/display/', function(data) {displayDetails(data,'remix');}, 'html'), */ d.active = true, arc, vis.i(this.index)))
-    .event("mouseout", function(d) (d.active = false, arc, vis.i(-1), clearBackgrounds()));
-	// .event("dblclick", function(d) (goToSound(d.id)));
+    .event("mouseover", function(d) (d.active = true, arc, vis.i(this.index)))
+    .event("mouseout", function(d) (clearBackgrounds(), d.active = false, arc, vis.i(-1)))
+	.event("click", function(d) goToSound(d.id,d.username));
 
-arc.label.add(pv.Label)
+function goToSound(soundId, username) {
+	window.location.href("/people/"+username+"/sounds/"+soundId);
+}
+
+// arc.label.add(pv.Label)
 vis.render();
 
 function clearBackgrounds() {
@@ -78,8 +61,6 @@ function clearBackgrounds() {
 }
     	</script>
   	</div>
-  		<div id="details" class="sample_information">
-	</div>
-  	
-  </div>
+</div>  	
+
   

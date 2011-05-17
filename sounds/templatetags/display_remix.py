@@ -3,7 +3,7 @@ Created on May 6, 2011
 
 @author: stelios
 '''
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 #avoid namespace clash with 'tags' templatetag
 from django import template
 import json
@@ -25,11 +25,12 @@ def display_remix(context, sound, objectlist):
             
     for idx,val in enumerate(objectlist):
         nodes.append({
-                      'nodeName':val.original_filename, 
-                      'group':1, 
+                      'nodeName':val.original_filename,
+                      'group':1,
                       'id':val.id,
-                      'color': "rgb" + random_color(), 
-                      'pos':idx
+                      'color': "rgb" + random_color(),
+                      'pos':idx,
+                      'username': val.user.username
                       })
         
         # since we go forward in time, if a sound has sources you can assign its sources
@@ -39,16 +40,24 @@ def display_remix(context, sound, objectlist):
                           'source': str([t['pos'] for t in tempList if t['id']==src.id]).strip('[,]'),
                           'source_id': src.id, 
                           'target': idx,
-                          'target_id': val.id, 
+                          'target_id': val.id,
                           'value': 1
                           })
         
             
-    return  { 'data' :  json.dumps({'nodes' : nodes, 'links' : links, 'username' : sound.user.username}) }
+    return  { 'data' :  json.dumps({
+                                    'nodes' : nodes,
+                                    'links' : links,
+                                    'length': len(objectlist)
+                                    }) }
 
-# TODO: make somehow shades of a tone, it looks ugly now...
+# generates shades of green
 def random_color():
-    return str((randint(0, 255), randint(0, 255), randint(0, 255)))
-    
+    greenval = randint(100, 255)
+    redval = randint(20,(greenval - 60))
+    blueval = randint((redval - 20), (redval + 20))
+    color = (redval, greenval, blueval)
+
+    return str(color)
     
     

@@ -73,7 +73,11 @@ def remixed(request):
     pass
 
 def random(request):
-    pass
+    sound_id = Sound.objects.random()
+    if sound_id is None:
+        raise Http404
+    sound_obj = Sound.objects.get(pk=sound_id)
+    return sound(request, sound_obj.user.username, sound_id)
 
 def packs(request):
     order = request.GET.get("order", "name")

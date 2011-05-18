@@ -298,10 +298,7 @@ def remixes(request, username, sound_id):
 
 
 def sources(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    qs = sound.sources.filter(moderation_state="OK", processing_state="OK")
-    return render_to_response('sounds/sources.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
-
+    return remixes(request, username, sound_id)
 
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")

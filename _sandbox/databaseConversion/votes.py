@@ -29,25 +29,23 @@ ppsql_cur.execute("select id from django_content_type where app_label='sounds' a
 content_type_id = ppsql_cur.fetchall()[0][0]
 print "done"
 
-return;
-
 while True:
     print start
-    
+
     my_curs.execute("""SELECT afc.ID, afc.audioFileID, afc.userID, afc.vote, afc.date FROM audio_file_vote AS afc LIMIT %d, %d""" % (start, granularity))
 
     rows = my_curs.fetchall()
     start += len(rows)
-    
+
     if len(rows) == 0:
         break
-    
+
     for row in rows:
         id, object_id, user_id, rating, created = row
 
         if object_id not in valid_sound_ids or user_id not in valid_user_ids:
             continue
-        
+
         output_file.write(u"\t".join(map(unicode, [id, user_id, rating, content_type_id, object_id, created])) + "\n")
 
 print """

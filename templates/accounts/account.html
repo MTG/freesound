@@ -20,6 +20,7 @@
             <li><a href="{% url account user.username %}">View</a> your public profile</li>
             <li><a href="{% url accounts-edit %}">Edit</a> your public profile</li>
             <li><a href="{% url accounts-describe %}">Describe</a> your sounds</li>
+            <li><a href="{% url accounts-attribution %}">Attribution</a> - the sounds you downloaded</li>
         </ul>
     {% else %}
         <h1>{{user.username}}</h1>

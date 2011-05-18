@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
-import os, tempfile, gearman
+import os, tempfile, gearman, shutil
 import utils.audioprocessing.processing as audioprocessing
 
 def process_sound_via_gearman(sound, gm_client=None):
@@ -45,9 +45,15 @@ def process(sound):
         failure("the file to be processed (%s) isn't there" % sound.original_path)
         return False
     success("found the file %s" % sound.original_path)
-
     sound.save()
 
+    # move/copy the file from fs1 to fs2 location
+    if sound.original_path.startswith('/mnt/freesound-data/'):
+        new_path = sound.locations('path')
+        shutil.copy(sound.original_path, new_path)
+        sound.original_path = new_path
+        sound.save()
+        success("copied file from fs1 to fs2")
 
     # convert to pcm
     to_cleanup = []
@@ -164,6 +170,14 @@ def process(sound):
         cleanup(to_cleanup)
         return False
     success("created previews, large")
+
+    # analyze sound
+    from essentia_analysis import analyze
+    try:
+        analyze(sound)
+    except Exception, e:
+        failure("analyzing sound failed", e)
+        # let's not make it fail the rest of the processing.
 
     cleanup(to_cleanup)
     sound.processing_state = "OK"

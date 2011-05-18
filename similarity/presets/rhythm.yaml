@@ -1,0 +1,15 @@
+{
+    "presetdetails": "This is a test preset.",
+    "filter":{
+        "type":"select",
+        "parameters":{
+            "descriptorNames": "*rhythm*",
+        },
+    },
+    "distance":{
+        "type":"euclidean",
+        "parameters":{
+            "descriptorNames": "*",
+        },
+    }
+}

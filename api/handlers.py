@@ -62,16 +62,16 @@ def get_pack_sounds_api_url(pack_id):
 
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)
-    
+
     d = {
         'ref': ref,
         'url': get_sound_web_url(sound.user.username, sound.id),
         'serve': ref+'/serve',
-        'preview'   : prepend_base(sound.locations("preview.LQ.mp3.url")), 
-        'preview-hq-mp3'   : prepend_base(sound.locations("preview.HQ.mp3.url")), 
-        'preview-hq-ogg'   : prepend_base(sound.locations("preview.HQ.ogg.url")), 
-        'preview-lq-mp3'   : prepend_base(sound.locations("preview.LQ.mp3.url")), 
-        'preview-lq-ogg'   : prepend_base(sound.locations("preview.LQ.ogg.url")), 
+        'preview'   : prepend_base(sound.locations("preview.LQ.mp3.url")),
+        'preview-hq-mp3'   : prepend_base(sound.locations("preview.HQ.mp3.url")),
+        'preview-hq-ogg'   : prepend_base(sound.locations("preview.HQ.ogg.url")),
+        'preview-lq-mp3'   : prepend_base(sound.locations("preview.LQ.mp3.url")),
+        'preview-lq-ogg'   : prepend_base(sound.locations("preview.LQ.ogg.url")),
         'waveform_m': prepend_base(sound.locations("display.wave.M.url")),
         'waveform_l': prepend_base(sound.locations("display.wave.L.url")),
         'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
@@ -165,7 +165,7 @@ class SoundSearchHandler(BaseHandler):
     curl:           curl http://www.freesound.org/api/search/?q=hoelahoep
     '''
     def read(self, request):
-        
+
         form = SoundSearchForm(SEARCH_SORT_OPTIONS_API, request.GET)
         if not form.is_valid():
             resp = rc.BAD_REQUEST
@@ -190,7 +190,7 @@ class SoundSearchHandler(BaseHandler):
             sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) \
                       for object in page['object_list']]
             result = {'sounds': sounds, 'num_results': paginator.count, 'num_pages': paginator.num_pages}
-            
+
             # construct previous and next urls
             if page['has_other_pages']:
                 if page['has_previous']:
@@ -203,11 +203,11 @@ class SoundSearchHandler(BaseHandler):
                                                                       page['next_page_number'],
                                                                       cd['f'],
                                                                       find_api_option(cd['s']))
-            
+
             # Add request id to the result (in case user has specified one)
             if request.GET.get('request_id', '')!='':
                 result['request_id'] = request.GET.get('request_id', '')
-            
+
             return result
         except SolrException, e:
             error = "search error: search_query %s filter_query %s sort %s error %s" \
@@ -240,13 +240,13 @@ class SoundHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no sound with id %s' % sound_id
             return resp
-        
+
         result = prepare_single_sound(sound)
-        
+
         # Add request id to the result (in case user has specified one)
         if request.GET.get('request_id', '')!='':
             result['request_id'] = request.GET.get('request_id', '')
-        
+
         return result
 
 class SoundServeHandler(BaseHandler):
@@ -261,7 +261,7 @@ class SoundServeHandler(BaseHandler):
     curl:         curl http://www.freesound.org/api/sounds/2/serve
     '''
     def read(self, request, sound_id):
-        
+
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
@@ -291,13 +291,13 @@ class UserHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'This user (%s) does not exist.' % username
             return resp
-        
+
         result = prepare_single_user(user)
-        
+
         # Add request id to the result (in case user has specified one)
         if request.GET.get('request_id', '')!='':
             result['request_id'] = request.GET.get('request_id', '')
-        
+
         return result
 
 class UserSoundsHandler(BaseHandler):
@@ -318,22 +318,22 @@ class UserSoundsHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'This user (%s) does not exist.' % username
             return resp
-        
+
         paginator = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
-        
+
         if page.has_other_pages():
             if page.has_previous():
                 result['previous'] = self.__construct_pagination_link(username, page.previous_page_number())
             if page.has_next():
                 result['next'] = self.__construct_pagination_link(username, page.next_page_number())
-        
+
         # Add request id to the result (in case user has specified one)
         if request.GET.get('request_id', '')!='':
             result['request_id'] = request.GET.get('request_id', '')
-        
+
         return result
 
     def __construct_pagination_link(self, u, p):
@@ -357,14 +357,14 @@ class UserPacksHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'This user (%s) does not exist.' % username
             return resp
-        
+
         packs = [prepare_single_pack(pack, include_user=False) for pack in Pack.objects.filter(user=user)]
         result = {'packs': packs, 'num_results': len(packs)}
 
         # Add request id to the result (in case user has specified one)
         if request.GET.get('request_id', '')!='':
             result['request_id'] = request.GET.get('request_id', '')
-        
+
         return result
 
 class PackHandler(BaseHandler):
@@ -385,13 +385,13 @@ class PackHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no pack with this identifier (%s).' % pack_id
             return resp
-        
+
         result = prepare_single_pack(pack)
-        
+
         # Add request id to the result (in case user has specified one)
         if request.GET.get('request_id', '')!='':
             result['request_id'] = request.GET.get('request_id', '')
-        
+
         return result
 
 class PackSoundsHandler(BaseHandler):
@@ -412,22 +412,22 @@ class PackSoundsHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no pack with this identifier (%s).' % pack_id
             return resp
-            
+
         paginator = paginate(request, Sound.objects.filter(pack=pack.id), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]        
+        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
-        
+
         if page.has_other_pages():
             if page.has_previous():
                 result['previous'] = self.__construct_pagination_link(pack_id, page.previous_page_number())
             if page.has_next():
                 result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number())
-        
+
         # Add request id to the result (in case user has specified one)
         if request.GET.get('request_id', '')!='':
             result['request_id'] = request.GET.get('request_id', '')
-        
+
         return result
 
     def __construct_pagination_link(self, pack_id, p):
@@ -461,5 +461,7 @@ class UpdateSolrHandler(BaseHandler):
     allowed_methods = ('GET',)
 
     def read(self, request):
-        add_all_sounds_to_solr()
+        sound_qs = Sound.objects.select_related("pack", "user", "license") \
+                                .filter(processing_state="OK", moderation_state="OK")
+        add_all_sounds_to_solr(sound_qs)
         return rc.ALL_OK

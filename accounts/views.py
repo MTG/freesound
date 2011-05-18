@@ -33,7 +33,7 @@ from settings import SOUNDS_PER_DESCRIBE_ROUND
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW
-import utils.audioprocessing.processing as audioprocessing
+from utils.audioprocessing import get_sound_type
 
 
 audio_logger = logging.getLogger('audioprocessing')
@@ -314,7 +314,7 @@ def describe_sounds(request):
             except IOError:
                 messages.add_message(request, messages.ERROR, 'Something went wrong with accessing the file %s.' % sound.original_path)
                 continue
-            sound.type = audioprocessing.get_sound_type(sound.original_path)
+            sound.type = get_sound_type(sound.original_path)
             # check if file exists or not
             try:
                 existing_sound = Sound.objects.get(md5=sound.md5)

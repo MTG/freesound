@@ -1,7 +1,7 @@
 import MySQLdb as my
 import codecs
 import sys
-from text_utils import prepare_for_insert, smart_character_decoding
+from text_utils import prepare_for_insert, smart_character_decoding, decode_htmlentities
 from local_settings import *
 
 output_filename = '/tmp/importfile.dat'
@@ -18,26 +18,31 @@ while True:
     my_curs.execute("SELECT user_id, user_active, username, user_password, FROM_UNIXTIME(user_regdate), FROM_UNIXTIME(user_lastvisit), user_email FROM phpbb_users limit %d, %d" % (start, granularity))
     rows = my_curs.fetchall()
     start += len(rows)
-    
+
     if len(rows) == 0:
         break
-    
+
     cleaned_data = []
     for row in rows:
         user_id, user_active, username, user_password, user_regdate, user_lastvisit, user_email = row
-        
-        if user_id in (16967,1037753,1294123,99738,563934,697703,912954,960716,1401570,1404962,1414401,1437020,1453087,1488139,1533361,1567137,1574761,1626812,1665254,1677364,1700760,1712557,1717812,1741736,1770978,1840221,1840332):
+
+        if user_id in (16967, 1037753, 1294123, 99738, 563934,
+                       697703, 912954, 960716, 1401570, 1404962,
+                       1414401, 1437020, 1453087, 1488139, 1533361,
+                       1567137, 1574761, 1626812, 1665254, 1677364,
+                       1700760, 1712557, 1717812, 1741736, 1770978,
+                       1840221, 1840332, 694731, 1012633, 1009563):
             continue
-        
+
         username = smart_character_decoding(username)
         user_email = smart_character_decoding(user_email)
-        
+
         username = decode_htmlentities(username)
-        
+
         if len(user_email) > 75:
             # skip users with crazy email addresses
             continue
-        
+
         output_file.write(u"\t".join([unicode(user_id), unicode(user_active), username, user_password, unicode(user_regdate), unicode(user_lastvisit), user_email, u"", u"", "0", "0"]) + "\n")
 
 print """

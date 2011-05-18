@@ -17,6 +17,7 @@
     * posts
     * comments
     * votes
+    * downloads
 
 3. Run _sql/nightinggale_* scripts
 

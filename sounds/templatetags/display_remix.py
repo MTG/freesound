@@ -15,6 +15,8 @@ register = template.Library()
 # TODO: ***just a reminder***
 #       there is probably a more efficient way to prepare the data
 #       CHECK ===> documentation for v.Layout.Network.Link #sourceNode
+#
+# FIXME: pagination doesn't work with this, we're missing the source....
 def display_remix(context, sound, sounds):
     
     nodes = []
@@ -54,5 +56,19 @@ def display_remix(context, sound, sounds):
                                     'links' : links,
                                     'length': len(sounds),   # to calculate canvas height
                                     'color': '#F1D9FF',
+                                    'eccentricity' : __calculateEccentricity(len(sounds)) 
                                     }) }    
-    
+ 
+# Calculate eccentricity so the arcs don't get clipped
+# This is an approximation since the correct formula to find the eccentricity
+# doesn't seem to give the right diagram.    
+def __calculateEccentricity(sounds_length):
+    print(sounds_length)
+    ecc = 0
+    factor = 0.12
+    if sounds_length > 3:
+        print("in")
+        for i in range(3,sounds_length,2):
+            ecc += factor
+            
+    return ecc

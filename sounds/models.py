@@ -57,9 +57,9 @@ class SoundManager(models.Manager):
         if sound_count:
             offset = random.randint(0, sound_count - 1)
             cursor = connection.cursor() #@UndefinedVariable
-            cursor.execute("""select id from sounds_sound offset %d  
+            cursor.execute("""select id from sounds_sound 
                               where moderation_state='OK' 
-                              and processing_state='OK' limit 1""" % offset)
+                              and processing_state='OK' offset %d limit 1""" % offset)
 
             return cursor.fetchone()[0]
         else:

@@ -71,7 +71,11 @@ def remixed(request):
     pass
 
 def random(request):
-    pass
+    sound_id = Sound.objects.random()
+    if sound_id is None:
+        raise Http404
+    sound_obj = Sound.objects.get(pk=sound_id)
+    return sound(request, sound_obj.user.username, sound_id)
 
 def packs(request):
     order = request.GET.get("order", "name")
@@ -287,19 +291,14 @@ def sound_edit_sources(request, username, sound_id):
 
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    # qs_remixes = sound.remixes.filter(moderation_state="OK", processing_state="OK")
-    # qs_sources = sound.sources.filter(moderation_state="OK", processing_state="OK")
-    # FIXME: The below line creates a pretty massive SQL query, have a look to optimize it
+    # TODO: The below line creates a pretty massive SQL query, have a look to optimize it
     #        with raw SQL or split it in smaller queries.
     qs = Sound.objects.filter(Q(sources=sound) | Q(remixes=sound) | Q(id=sound.id)).order_by('created').distinct().all()
     return render_to_response('sounds/remixes.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
 
 def sources(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    qs = sound.sources.filter(moderation_state="OK", processing_state="OK")
-    return render_to_response('sounds/sources.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
-
+    return remixes(request, username, sound_id)
 
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")

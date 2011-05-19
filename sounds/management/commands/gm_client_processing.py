@@ -47,6 +47,8 @@ class Command(BaseCommand):
             # The sound_ids passed as arguments in command-line.
             sounds = qs.filter(pk__in=args).exclude(original_path=None)
 
+        print sounds.count()
+
         # update all sounds to reflect we are processing them... (only for 'process_sound' queue)
         gearman_task = options['queue']
         if gearman_task == 'process_sound':
@@ -55,9 +57,11 @@ class Command(BaseCommand):
             transaction.commit_unless_managed()
             self.stdout.write('Updating database done\n')
 
+        print sounds.count()
+
         # Connect to the Gearman job server.
         jobs = [{'task': gearman_task, 'data': str(sound["id"])} for sound in sounds.values("id")]
-        if len(jobs) > 0:
+        if sounds.count() > 0:
             self.stdout.write('Sending %d sound(s) to the gearman queue (%s)\n' % (len(jobs), gearman_task))
             # send them to the queue!
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)

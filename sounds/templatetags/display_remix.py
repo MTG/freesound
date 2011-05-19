@@ -14,6 +14,7 @@ register = template.Library()
 
 # TODO: ***just a reminder***
 #       there is probably a more efficient way to prepare the data
+#       CHECK ===> documentation for v.Layout.Network.Link #sourceNode
 def display_remix(context, sound, sounds):
     
     nodes = []
@@ -36,14 +37,17 @@ def display_remix(context, sound, sounds):
         # since we go forward in time, if a sound has sources you can assign its sources
         # the target will always be the current object
         for src in val.sources.all():
-            links.append({
-                          'source': str([t['pos'] for t in tempList if t['id']==src.id]).strip('[,]'),
-                          'source_id': src.id, 
-                          'target': idx,
-                          'target_id': val.id,
-                          'value': 1
-                          })
-        
+            # we don't want the sources of the first item 
+            # since that could give us the whole graph
+            if idx > 0:
+                links.append({
+                              'source': str([t['pos'] for t in tempList if t['id']==src.id]).strip('[,]'),
+                              'source_id': src.id, 
+                              'target': idx,
+                              'target_id': val.id,
+                              'value': 1
+                              })
+            
             
     return  { 'data' :  json.dumps({
                                     'nodes' : nodes,

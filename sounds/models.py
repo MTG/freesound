@@ -11,11 +11,9 @@ from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
 import os, logging, random
-from utils.search.search import delete_sound_from_solr
-from utils.filesystem import delete_object_files
 
 search_logger = logging.getLogger('search')
-web_logger = logging.getLogger('web')
+
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -59,7 +57,9 @@ class SoundManager(models.Manager):
         if sound_count:
             offset = random.randint(0, sound_count - 1)
             cursor = connection.cursor() #@UndefinedVariable
-            cursor.execute("select id from sounds_sound offset %d limit 1" % offset)
+            cursor.execute("""select id from sounds_sound offset %d  
+                              where moderation_state='OK' 
+                              and processing_state='OK' limit 1""" % offset)
 
             return cursor.fetchone()[0]
         else:
@@ -119,7 +119,6 @@ class Sound(SocialModel):
 
     # processing
     PROCESSING_STATE_CHOICES = (
-        ("QU",_('Queued')),
         ("PE",_('Pending')),
         ("PR",_('Processing')),
         ("OK",_('OK')),
@@ -128,8 +127,6 @@ class Sound(SocialModel):
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
     processing_date = models.DateTimeField(null=True, blank=True, default=None)
     processing_log = models.TextField(null=True, blank=True, default=None)
-
-    similarity_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
 
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
@@ -205,16 +202,6 @@ class Sound(SocialModel):
                         url = settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, self.user.id)
                     )
                 )
-            ),
-            analysis = dict(
-                statistics = dict(
-                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%d_%d_statistics.yaml" % (self.id, self.user.id)
-                ),
-                frames = dict(
-                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%d_%d_frames.json" % (self.id, self.user.id)
-                )
             )
         )
 
@@ -289,18 +276,6 @@ class Sound(SocialModel):
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
                 tagged_object.save()
 
-    def delete(self):
-        # remove from solr
-        delete_sound_from_solr(self)
-        # delete foreignkeys
-        if self.geotag:
-            self.geotag.delete()
-        # delete files
-        delete_object_files(self, web_logger)
-        # super class delete
-        super(Sound, self).delete()
-
-    # N.B. This is used in the ticket template (ugly, but a quick fix)
     def is_sound(self):
         return True
 
@@ -366,19 +341,6 @@ class Pack(SocialModel):
         self.save()
 
         logger.info("\tall done")
-
-    def remove_sounds_from_pack(self):
-        Sound.objects.filter(pack_id=self.id).update(pack=None)
-        self.is_dirty = True
-        self.save()
-
-    def delete(self):
-        """ This deletes all sounds in the pack as well. """
-        # TODO: remove from solr?
-        # delete files
-        delete_object_files(self, web_logger)
-        # super class delete
-        super(Sound, self).delete()
 
 
 class Flag(models.Model):

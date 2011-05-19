@@ -41,15 +41,17 @@ def process(sound):
     sound.processing_state = "PR"
     sound.save()
 
-    if not os.path.exists(sound.original_path):
+    new_path = sound.locations('path')
+    if not os.path.exists(new_path) \
+       and not os.path.exists(sound.original_path):
         failure("the file to be processed (%s) isn't there" % sound.original_path)
         return False
     success("found the file %s" % sound.original_path)
     sound.save()
 
     # move/copy the file from fs1 to fs2 location
-    if sound.original_path.startswith('/mnt/freesound-data/'):
-        new_path = sound.locations('path')
+    if not os.path.exists(new_path) \
+       and sound.original_path.startswith('/mnt/freesound-data/'):
         shutil.copy(sound.original_path, new_path)
         sound.original_path = new_path
         sound.save()

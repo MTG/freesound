@@ -30,7 +30,7 @@ class License(OrderedModel):
         return self.name
 
 class SoundManager(models.Manager):
-    def latest_additions(self, num_sounds, period='1 year'):
+    def latest_additions(self, num_sounds, period='2 weeks'):
         return DelayedQueryExecuter("""
                 select
                     username,

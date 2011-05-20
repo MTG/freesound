@@ -55,6 +55,13 @@ def process(sound):
                 failure("The file appears to be in a weird location and not in '/mnt/freesound-data/'!.")
                 return False
             success("Copying file from %s to %s" % (sound.original_path, new_path))
+            dest_dir = os.path.dirname(new_path)
+            if not os.path.exists(dest_dir):
+                try:
+                    os.makedirs(dest_dir)
+                except:
+                    failure("Could not create destination directory %s" % dest_dir)
+                    return False
             shutil.copy(sound.original_path, new_path)
             sound.original_path = new_path
             sound.save()

@@ -26,6 +26,7 @@ def process(sound):
 
     def success(message):
         sound.processing_log += message + "\n"
+        sound.save()
 
     def cleanup(files):
         success("cleaning up files after processing: " + ", ".join(files))

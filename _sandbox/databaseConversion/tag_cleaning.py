@@ -2,9 +2,9 @@ import psycopg2, operator, sys
 
 def get_google_results(string):
     try:
-        import urllib, simplejson
+        import urllib, json
         encoded = urllib.urlencode({"q": '"' + string + '"'})
-        return int(simplejson.loads(urllib.urlopen("http://ajax.googleapis.com/ajax/services/search/web?v=1.0&" + encoded).read())["responseData"]["cursor"]["estimatedResultCount"])
+        return int(json.loads(urllib.urlopen("http://ajax.googleapis.com/ajax/services/search/web?v=1.0&" + encoded).read())["responseData"]["cursor"]["estimatedResultCount"])
     except KeyError:
         return 0
 
@@ -57,15 +57,15 @@ for (tag, result) in results.iteritems():
     print tag, result["hits"]
     print " ".join(tag.split("-")), result["separate_parts"]
     print "".join(tag.split("-")), result["joined_parts"]
-    
+
     results_separate = get_google_results(tag)
     results_joined = get_google_results("".join(tag.split("-")))
-    
+
     print "google gets most results for:",
-    
+
     if results_separate > results_joined:
         print tag, "(", results_separate, "versus", results_joined, ")"
     else:
         print "".join(tag.split("-")), "(", results_joined, "versus", results_separate, ")"
 
-    print 
+    print

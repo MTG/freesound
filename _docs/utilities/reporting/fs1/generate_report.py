@@ -3,7 +3,7 @@
 from settings import *
 import MySQLdb, os, sys
 import mx.DateTime as dt
-import simplejson as json
+import json
 
 
 

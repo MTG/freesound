@@ -1,5 +1,4 @@
-import threading, zmq, traceback, time, os
-import simplejson as json
+import threading, zmq, traceback, time, os, json
 from global_indexer import indexer
 from logger import logger
 

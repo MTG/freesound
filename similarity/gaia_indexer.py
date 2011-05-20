@@ -2,8 +2,7 @@ from __future__ import with_statement
 from gaia_wrapper import *
 from threading import Lock
 from shared_lock import SharedLock
-import time, os
-import simplejson as json
+import time, os, json
 from settings import PRESETS
 from logger import logger
 

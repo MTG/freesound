@@ -26,6 +26,8 @@ import math
 import numpy
 import os
 import re
+from . import get_sound_type
+
 try:
     import scikits.audiolab as audiolab
 except ImportError:
@@ -56,7 +58,7 @@ class TestAudioFile(object):
         num_frames_left = self.num_frames - self.seekpoint
         will_read = num_frames_left if num_frames_left < frames_to_read else frames_to_read
         self.seekpoint += will_read
-        return numpy.random.random(will_read)*2 - 1 
+        return numpy.random.random(will_read)*2 - 1
 
 
 def get_max_level(filename):
@@ -64,7 +66,7 @@ def get_max_level(filename):
     buffer_size = 4096
     audio_file = audiolab.Sndfile(filename, 'r')
     n_samples_left = audio_file.nframes
-    
+
     while n_samples_left:
         to_read = min(buffer_size, n_samples_left)
 
@@ -77,13 +79,13 @@ def get_max_level(filename):
         # convert to mono by selecting left channel only
         if audio_file.channels > 1:
             samples = samples[:,0]
-        
+
         max_value = max(max_value, numpy.abs(samples).max())
-        
+
         n_samples_left -= to_read
-            
+
     audio_file.close()
-    
+
     return max_value
 
 class AudioProcessor(object):
@@ -93,7 +95,7 @@ class AudioProcessor(object):
     """
     def __init__(self, input_filename, fft_size, window_function=numpy.hanning):
         max_level = get_max_level(input_filename)
-        
+
         self.audio_file = audiolab.Sndfile(input_filename, 'r')
         self.fft_size = fft_size
         self.window = window_function(self.fft_size)
@@ -103,7 +105,7 @@ class AudioProcessor(object):
         self.lower_log = math.log10(self.lower)
         self.higher_log = math.log10(self.higher)
         self.clip = lambda val, low, high: min(high, max(low, val))
-        
+
         # figure out what the maximum value is for an FFT doing the FFT of a DC signal
         fft = numpy.fft.rfft(numpy.ones(fft_size) * self.window)
         max_fft = (numpy.abs(fft)).max()
@@ -113,11 +115,11 @@ class AudioProcessor(object):
     def read(self, start, size, resize_if_less=False):
         """ read size samples starting at start, if resize_if_less is True and less than size
         samples are read, resize the array to size and fill with zeros """
-        
+
         # number of zeros to add to start and end of the buffer
         add_to_start = 0
         add_to_end = 0
-        
+
         if start < 0:
             # the first FFT window starts centered around zero
             if size + start <= 0:
@@ -133,12 +135,12 @@ class AudioProcessor(object):
                     to_read = self.audio_file.nframes
         else:
             self.audio_file.seek(start)
-        
+
             to_read = size
             if start + to_read >= self.audio_file.nframes:
                 to_read = self.audio_file.nframes - start
                 add_to_end = size - to_read
-        
+
         try:
             samples = self.audio_file.read_frames(to_read)
         except RuntimeError:
@@ -152,41 +154,41 @@ class AudioProcessor(object):
         if resize_if_less and (add_to_start > 0 or add_to_end > 0):
             if add_to_start > 0:
                 samples = numpy.concatenate((numpy.zeros(add_to_start), samples), axis=1)
-            
+
             if add_to_end > 0:
                 samples = numpy.resize(samples, size)
                 samples[size - add_to_end:] = 0
-        
+
         return samples
 
 
     def spectral_centroid(self, seek_point, spec_range=110.0):
         """ starting at seek_point read fft_size samples, and calculate the spectral centroid """
-        
+
         samples = self.read(seek_point - self.fft_size/2, self.fft_size, True)
 
         samples *= self.window
         fft = numpy.fft.rfft(samples)
         spectrum = self.scale * numpy.abs(fft) # normalized abs(FFT) between 0 and 1
         length = numpy.float64(spectrum.shape[0])
-        
+
         # scale the db spectrum from [- spec_range db ... 0 db] > [0..1]
         db_spectrum = ((20*(numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range)/spec_range
-        
+
         energy = spectrum.sum()
         spectral_centroid = 0
-        
+
         if energy > 1e-60:
             # calculate the spectral centroid
-            
+
             if self.spectrum_range == None:
                 self.spectrum_range = numpy.arange(length)
-        
+
             spectral_centroid = (spectrum * self.spectrum_range).sum() / (energy * (length - 1)) * self.audio_file.samplerate * 0.5
-            
+
             # clip > log10 > scale between 0 and 1
             spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (self.higher_log - self.lower_log)
-        
+
         return (spectral_centroid, db_spectrum)
 
 
@@ -194,22 +196,22 @@ class AudioProcessor(object):
         """ read all samples between start_seek and end_seek, then find the minimum and maximum peak
         in that range. Returns that pair in the order they were found. So if min was found first,
         it returns (min, max) else the other way around. """
-        
+
         # larger blocksizes are faster but take more mem...
         # Aha, Watson, a clue, a tradeof!
         block_size = 4096
-    
+
         max_index = -1
         max_value = -1
         min_index = -1
         min_value = 1
-        
+
         if start_seek < 0:
             start_seek = 0
-    
+
         if end_seek > self.audio_file.nframes:
             end_seek = self.audio_file.nframes
-    
+
         if end_seek <= start_seek:
             samples = self.read(start_seek, 1)
             return (samples[0], samples[0])
@@ -219,21 +221,21 @@ class AudioProcessor(object):
 
         for i in range(start_seek, end_seek, block_size):
             samples = self.read(i, block_size)
-    
+
             local_max_index = numpy.argmax(samples)
             local_max_value = samples[local_max_index]
-    
+
             if local_max_value > max_value:
                 max_value = local_max_value
                 max_index = local_max_index
-    
+
             local_min_index = numpy.argmin(samples)
             local_min_value = samples[local_min_index]
-            
+
             if local_min_value < min_value:
                 min_value = local_min_value
                 min_index = local_min_index
-    
+
         return (min_value, max_value) if min_index < max_index else (max_value, min_value)
 
 
@@ -242,14 +244,14 @@ def interpolate_colors(colors, flat=False, num_colors=256):
     the first one. If flatten is True a list of numers will be returned. If
     False, a list of (r,g,b) tuples. num_colors is the number of colors wanted
     in the final list """
-    
+
     palette = []
-    
+
     for i in range(num_colors):
         index = (i * (len(colors) - 1))/(num_colors - 1.0)
         index_int = int(index)
         alpha = index - float(index_int)
-        
+
         if alpha > 0:
             r = (1.0 - alpha) * colors[index_int][0] + alpha * colors[index_int + 1][0]
             g = (1.0 - alpha) * colors[index_int][1] + alpha * colors[index_int + 1][1]
@@ -258,12 +260,12 @@ def interpolate_colors(colors, flat=False, num_colors=256):
             r = (1.0 - alpha) * colors[index_int][0]
             g = (1.0 - alpha) * colors[index_int][1]
             b = (1.0 - alpha) * colors[index_int][2]
-        
+
         if flat:
             palette.extend((int(r), int(g), int(b)))
         else:
             palette.append((int(r), int(g), int(b)))
-        
+
     return palette
 
 
@@ -309,15 +311,15 @@ class WaveformImage(object):
         elif palette == 4:
             background_color = (213, 217, 221)
             colors = map( partial(desaturate, amount=0.8), [self.color_from_value(value/29.0) for value in range(0,30)])
-            
+
         self.image = Image.new("RGB", (image_width, image_height), background_color)
-        
+
         self.image_width = image_width
         self.image_height = image_height
-        
+
         self.draw = ImageDraw.Draw(self.image)
         self.previous_x, self.previous_y = None, None
-        
+
         self.color_lookup = interpolate_colors(colors)
         self.pix = self.image.load()
 
@@ -325,62 +327,62 @@ class WaveformImage(object):
         """ given a value between 0 and 1, return an (r,g,b) tuple """
 
         return ImageColor.getrgb("hsl(%d,%d%%,%d%%)" % (int( (1.0 - value) * 360 ), 80, 50))
-        
+
     def draw_peaks(self, x, peaks, spectral_centroid):
         """ draw 2 peaks at x using the spectral_centroid for color """
 
         y1 = self.image_height * 0.5 - peaks[0] * (self.image_height - 4) * 0.5
         y2 = self.image_height * 0.5 - peaks[1] * (self.image_height - 4) * 0.5
-        
+
         line_color = self.color_lookup[int(spectral_centroid*255.0)]
-        
+
         if self.previous_y != None:
             self.draw.line([self.previous_x, self.previous_y, x, y1, x, y2], line_color)
         else:
             self.draw.line([x, y1, x, y2], line_color)
-    
+
         self.previous_x, self.previous_y = x, y2
-        
+
         self.draw_anti_aliased_pixels(x, y1, y2, line_color)
-    
+
     def draw_anti_aliased_pixels(self, x, y1, y2, color):
         """ vertical anti-aliasing at y1 and y2 """
 
         y_max = max(y1, y2)
         y_max_int = int(y_max)
         alpha = y_max - y_max_int
-        
+
         if alpha > 0.0 and alpha < 1.0 and y_max_int + 1 < self.image_height:
             current_pix = self.pix[x, y_max_int + 1]
-                
+
             r = int((1-alpha)*current_pix[0] + alpha*color[0])
             g = int((1-alpha)*current_pix[1] + alpha*color[1])
             b = int((1-alpha)*current_pix[2] + alpha*color[2])
-            
+
             self.pix[x, y_max_int + 1] = (r,g,b)
-            
+
         y_min = min(y1, y2)
         y_min_int = int(y_min)
         alpha = 1.0 - (y_min - y_min_int)
-        
+
         if alpha > 0.0 and alpha < 1.0 and y_min_int - 1 >= 0:
             current_pix = self.pix[x, y_min_int - 1]
-                
+
             r = int((1-alpha)*current_pix[0] + alpha*color[0])
             g = int((1-alpha)*current_pix[1] + alpha*color[1])
             b = int((1-alpha)*current_pix[2] + alpha*color[2])
-            
+
             self.pix[x, y_min_int - 1] = (r,g,b)
-            
+
     def save(self, filename):
         # draw a zero "zero" line
         a = 25
         for x in range(self.image_width):
             self.pix[x, self.image_height/2] = tuple(map(lambda p: p+a, self.pix[x, self.image_height/2]))
-        
+
         self.image.save(filename)
-        
-        
+
+
 class SpectrogramImage(object):
     """
     Given spectra from the AudioProcessor, this class will construct a wavefile image which
@@ -416,19 +418,19 @@ class SpectrogramImage(object):
 
             if bin < self.fft_size/2:
                 alpha = bin - int(bin)
-                
+
                 self.y_to_bin.append((int(bin), alpha * 255))
-           
+
         # this is a bit strange, but using image.load()[x,y] = ... is
         # a lot slower than using image.putadata and then rotating the image
         # so we store all the pixels in an array and then create the image when saving
         self.pixels = []
-            
+
     def draw_spectrum(self, x, spectrum):
         # for all frequencies, draw the pixels
         for (index, alpha) in self.y_to_bin:
             self.pixels.append( self.palette[int((255.0-alpha) * spectrum[index] + alpha * spectrum[index + 1])] )
-        
+
         # if the FFT is too small to fill up the image, fill with black to the top
         for y in range(len(self.y_to_bin), self.image_height): #@UnusedVariable
             self.pixels.append(self.palette[0])
@@ -445,40 +447,30 @@ def create_wave_images(input_filename, output_filename_w, output_filename_s, ima
     """
     processor = AudioProcessor(input_filename, fft_size, numpy.hanning)
     samples_per_pixel = processor.audio_file.nframes / float(image_width)
-    
+
     waveform = WaveformImage(image_width, image_height)
     spectrogram = SpectrogramImage(image_width, image_height, fft_size)
-    
+
     for x in range(image_width):
-        
+
         if progress_callback and x % (image_width/10) == 0:
             progress_callback((x*100)/image_width)
 
         seek_point = int(x * samples_per_pixel)
         next_seek_point = int((x + 1) * samples_per_pixel)
-        
+
         (spectral_centroid, db_spectrum) = processor.spectral_centroid(seek_point)
         peaks = processor.peaks(seek_point, next_seek_point)
-        
+
         waveform.draw_peaks(x, peaks, spectral_centroid)
         spectrogram.draw_spectrum(x, db_spectrum)
-    
+
     if progress_callback:
         progress_callback(100)
-        
+
     waveform.save(output_filename_w)
     spectrogram.save(output_filename_s)
 
-
-def get_sound_type(input_filename):
-    sound_type = os.path.splitext(input_filename.lower())[1].strip(".")
-
-    if sound_type == "fla":
-        sound_type = "flac"
-    elif sound_type == "aif":
-        sound_type = "aiff"
-        
-    return sound_type
 
 class NoSpaceLeftException(Exception):
     pass
@@ -487,12 +479,12 @@ def convert_to_pcm(input_filename, output_filename):
     """
     converts any audio file type to pcm audio
     """
-    
+
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
-    
+
     sound_type = get_sound_type(input_filename)
-    
+
     if sound_type == "mp3":
         cmd = ["lame", "--decode", input_filename, output_filename]
     elif sound_type == "ogg":
@@ -501,15 +493,15 @@ def convert_to_pcm(input_filename, output_filename):
         cmd = ["flac", "-f", "-d", "-s", "-o", output_filename, input_filename]
     else:
         return False
-    
+
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-    
+
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
-        raise AudioProcessingException, "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout  
-    
+        raise AudioProcessingException, "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout
+
     return True
 
 
@@ -520,41 +512,41 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
 
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
-    
+
     cmd = [stereofy_executble_path, "--input", input_filename, "--output", output_filename]
-    
+
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = process.communicate()
-    
+
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
-        raise AudioProcessingException, "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout 
-    
+        raise AudioProcessingException, "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout
+
     stdout = (stdout + " " + stderr).replace("\n", " ")
-    
+
     duration = 0
     m = re.match(r".*#duration (?P<duration>[\d\.]+).*",  stdout)
     if m != None:
         duration = float(m.group("duration"))
-    
+
     channels = 0
     m = re.match(r".*#channels (?P<channels>\d+).*", stdout)
     if m != None:
         channels = float(m.group("channels"))
-    
+
     samplerate = 0
     m = re.match(r".*#samplerate (?P<samplerate>\d+).*", stdout)
     if m != None:
         samplerate = float(m.group("samplerate"))
-    
+
     bitdepth = None
     m = re.match(r".*#bitdepth (?P<bitdepth>\d+).*", stdout)
     if m != None:
         bitdepth = float(m.group("bitdepth"))
 
     bitrate = (os.path.getsize(input_filename) * 8.0) / 1024.0 / duration if duration > 0 else 0
-                
+
     return dict(duration=duration, channels=channels, samplerate=samplerate, bitrate=bitrate, bitdepth=bitdepth)
 
 
@@ -562,7 +554,7 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
     """
     converts the incoming wave file to a mp3 file
     """
-    
+
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
 
@@ -578,7 +570,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     """
     converts the incoming wave file to n ogg file
     """
-    
+
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
 

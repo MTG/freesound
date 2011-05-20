@@ -1,6 +1,5 @@
 from django import template
-from django.utils import simplejson
-import urllib
+import urllib, json
 from django.conf import settings
 
 register = template.Library()
@@ -13,7 +12,7 @@ class PledgieParserNode(template.Node):
 
     def render(self, context):
         pledgie_id = None
-        
+
         if self.pledgie_id_var_name:
             try:
                 pledgie_id = int(context[self.pledgie_id_var_name])
@@ -26,18 +25,18 @@ class PledgieParserNode(template.Node):
 
         api_url = "http://pledgie.com/campaigns/%d.json" % pledgie_id
         pledge_url = "http://pledgie.com/campaigns/%d/" % pledgie_id
-        
+
         data = None
-        
+
         try:
-            data = simplejson.loads(urllib.urlopen(api_url, proxies=settings.PROXIES).read(), "utf-8")
+            data = json.loads(urllib.urlopen(api_url, proxies=settings.PROXIES).read(), "utf-8")
             data["to_go"] = int(data["campaign"]["goal"] - data["campaign"]["amount_raised"])
             data["url"] = pledge_url
         except UnicodeDecodeError:
             pass
 
         context[self.var_name] = data
-        
+
         return ''
 
 import re
@@ -50,18 +49,18 @@ def get_pledgie_campaign_details(parser, token):
         tag_name, arg = token.contents.split(None, 1)
     except ValueError:
         raise template.TemplateSyntaxError, "%r tag requires arguments" % token.contents.split()[0]
-    
+
     m = re.search(r'(.*?) as (\w+)', arg)
     if not m:
         raise template.TemplateSyntaxError, "%r tag had invalid arguments" % tag_name
     pledgie_id, var_name = m.groups()
-    
+
     if pledgie_id[0] == pledgie_id[-1] and pledgie_id[0] in ('"', "'"):
         try:
             pledgie_id = int(pledgie_id[1:-1])
         except ValueError:
-            raise template.TemplateSyntaxError, "the pledgie id should be an integer..." 
-        
+            raise template.TemplateSyntaxError, "the pledgie id should be an integer..."
+
         return PledgieParserNode(var_name, pledgie_id=pledgie_id)
     else:
         return PledgieParserNode(var_name, pledgie_id_var_name=pledgie_id)

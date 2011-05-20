@@ -57,7 +57,7 @@ class Command(BaseCommand):
             self.stdout.write('Updating database done\n')
 
         # Connect to the Gearman job server.
-        if sounds.count() > 0:
+        if len(jobs) > 0:
             self.stdout.write('Sending %d sound(s) to the gearman queue (%s)\n' % (len(jobs), gearman_task))
             # send them to the queue!
             gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)

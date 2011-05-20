@@ -1,8 +1,9 @@
 from datetime import datetime
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
-import os, tempfile, gearman, shutil
 import utils.audioprocessing.processing as audioprocessing
+import os, tempfile, gearman, shutil
+
 
 def process_sound_via_gearman(sound, gm_client=None):
     if not gm_client:

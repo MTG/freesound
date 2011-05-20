@@ -266,7 +266,8 @@ def sound_edit(request, username, sound_id):
 
 def __save_and_add_to_solr(sound):
     sound.save()
-    sound.add_to_search_index()
+    if sound.moderation_state == "OK" and sound.processing_state == "OK":
+        sound.add_to_search_index()
 
 @login_required
 def sound_edit_sources(request, username, sound_id):

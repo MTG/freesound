@@ -262,10 +262,13 @@ class Sound(SocialModel):
 
     def process(self, force=False):
         if force or self.processing_state != "OK":
-            from utils.audioprocessing.freesound_audio_processing import process_sound_via_gearman
-            return process_sound_via_gearman(self)
-        else:
-            return True
+            sound.processing_date = datetime.now()
+            sound.processing_state = "QU"
+            gm_client.submit_job("process_sound", str(sound.id), wait_until_complete=False, background=True)
+        if force or self.analysis_state != "OK":
+            sound.analysis_state = "QU"
+            gm_client.submit_job("analyze_sound", str(sound.id), wait_until_complete=False, background=True)
+        sound.save()
 
     def add_to_search_index(self):
         from utils.search.search import add_sound_to_solr

@@ -133,6 +133,7 @@ class Sound(SocialModel):
     processing_log = models.TextField(null=True, blank=True, default=None)
 
     similarity_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
+    analysis_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
 
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)

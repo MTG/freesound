@@ -59,7 +59,7 @@
             {% if ticket.content %}
                 {% if ticket.content.content_object.is_sound %}
                     <div class="sound_list_moderation">
-                        {% display_sound ticket.content.content_object "sample_player_small" %}
+                        {% display_sound ticket.content.content_object %}
                     </div>
                     <p>Sound's moderation state is set to <b>{% if ticket.content.content_object.moderation_state == 'PE' %}
                                                                 Pending {% else %} OK {% endif %}</b>

@@ -16,7 +16,7 @@
     <div id="featured_sound" class="content_box">
         <h3>Featured Sound</h3>
             {% ifnotequal random_sound None %}
-                {% display_sound random_sound "sample_player_small" %}
+                {% display_sound random_sound %}
             {% endifnotequal %}
     </div>
 
@@ -43,7 +43,7 @@
     <div id="recent_additions" class="content_box">
         <h3>Recent Additions</h3>
         {% for latest_addition in latest_additions %}
-            {% display_sound latest_addition.sound_id "sample_player_small" %}
+            {% display_sound latest_addition.sound_id %}
             {% if latest_addition.extra %}
             <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
             {% endif %}

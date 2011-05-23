@@ -13,7 +13,7 @@ def locations_decorator(cache=True):
             # cache the call to the locations function so it's only calculated once
             if not cache or not hasattr(self, '_locations_cache'):
                 self._locations_cache = locations_function(self)
-    
+
             if path:
                 lookup = self._locations_cache
                 for piece in path.split("."):

@@ -34,6 +34,10 @@ class PledgieParserNode(template.Node):
             data["url"] = pledge_url
         except UnicodeDecodeError:
             pass
+        except IOError:
+            data = {}
+            data['to_go'] = 0
+            data['url'] = 'unknown'
 
         context[self.var_name] = data
 

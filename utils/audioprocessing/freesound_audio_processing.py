@@ -1,8 +1,9 @@
 from datetime import datetime
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
-import os, tempfile, gearman, shutil
 import utils.audioprocessing.processing as audioprocessing
+import os, tempfile, gearman, shutil
+
 
 def process_sound_via_gearman(sound, gm_client=None):
     if not gm_client:
@@ -26,6 +27,7 @@ def process(sound):
 
     def success(message):
         sound.processing_log += message + "\n"
+        sound.save()
 
     def cleanup(files):
         success("cleaning up files after processing: " + ", ".join(files))
@@ -41,19 +43,35 @@ def process(sound):
     sound.processing_state = "PR"
     sound.save()
 
-    if not os.path.exists(sound.original_path):
-        failure("the file to be processed (%s) isn't there" % sound.original_path)
-        return False
-    success("found the file %s" % sound.original_path)
-    sound.save()
-
-    # move/copy the file from fs1 to fs2 location
-    if sound.original_path.startswith('/mnt/freesound-data/'):
-        new_path = sound.locations('path')
-        shutil.copy(sound.original_path, new_path)
-        sound.original_path = new_path
-        sound.save()
-        success("copied file from fs1 to fs2")
+    new_path = sound.locations('path')
+    # Is the file at its new location?
+    if not os.path.exists(new_path):
+        # Is the file at its old location?
+        if not os.path.exists(sound.original_path):
+            failure("The file to be processed can't be found at its FS1 nor at its FS2 location.")
+            return False
+        else:
+            success("Found the file at its FS1 location: %s" % sound.original_path)
+            if not sound.original_path.startswith('/mnt/freesound-data/'):
+                failure("The file appears to be in a weird location and not in '/mnt/freesound-data/'!.")
+                return False
+            success("Copying file from %s to %s" % (sound.original_path, new_path))
+            dest_dir = os.path.dirname(new_path)
+            if not os.path.exists(dest_dir):
+                try:
+                    os.makedirs(dest_dir)
+                except:
+                    failure("Could not create destination directory %s" % dest_dir)
+                    return False
+            shutil.copy(sound.original_path, new_path)
+            sound.original_path = new_path
+            sound.save()
+            success("Copied file from its FS1 to FS2 location.")
+    else:
+        success("Found the file at its FS2 location: %s" % new_path)
+        if sound.original_path != new_path:
+            sound.original_path = new_path
+            sound.save()
 
     # convert to pcm
     to_cleanup = []

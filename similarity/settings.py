@@ -1,6 +1,6 @@
 import os
 
-INDEX_DIR                   = '/home/fsweb/freesound-data/similarity/'
+INDEX_DIR                   = '/home/fsweb/freesound-similarity/'
 PRESET_DIR                  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'presets/')
 PRESETS                     = ['lowlevel', 'music', 'rhythm', 'timbre']
 SIMILARITY_MINIMUM_POINTS   = 10000

@@ -60,9 +60,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         task_name = 'task_%s' % options['queue']
-        if task_name not in locals():
+        if task_name not in globals():
             print "Wow.. That's crazy! Maybe try an existing queue?"
             sys.exit(1)
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        gm_worker.register_task(options['queue'], locals()[task_name])
+        gm_worker.register_task(options['queue'], globals()[task_name])
         gm_worker.work()

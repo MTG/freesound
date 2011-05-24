@@ -50,7 +50,6 @@ class SimilarityThread(threading.Thread):
             self.reply(res)
 
         elif msg['type'] == 'AddSound':
-            self.logger.error(msg)
             sound_id = msg.get('sound_id', False)
             yaml  = msg.get('yaml', False)
             if not sound_id or not yaml:

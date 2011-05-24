@@ -18,7 +18,8 @@ class Messenger():
             # create new context for thread
             ctx = zmq.Context()
             socket = False
-            cls.ctxs[t] = {'ctx': ctx, 'socket': socket}
+            tctx = {'ctx': ctx, 'socket': socket}
+            cls.ctxs[t] = tctx
             # clean up contexts for threads that are not running anymore
             for thr in cls.ctxs.keys():
                 if not thr.isAlive():

@@ -55,7 +55,7 @@ class SimilarityThread(threading.Thread):
             if not sound_id or not yaml:
                 raise Exception('The sound_id and yaml parameters should both be present.')
             if not os.path.exists(yaml):
-                raise Exception('The yaml path specified appears to not exist.')
+                raise Exception('The yaml path specified appears to not exist (%s).' % yaml)
             indexer.add_point(yaml, sound_id)
             self.empty_reply()
 

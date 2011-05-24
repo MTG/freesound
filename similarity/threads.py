@@ -41,9 +41,9 @@ class SimilarityThread(threading.Thread):
             raise Exception('The Gaia Indexer is starting up, please try again later.')
 
         elif msg['type'] == 'Search':
-            sound_id = getattr(msg, 'sound_id', False)
-            preset = getattr(msg, 'preset', False)
-            results = getattr(msg, 'num_results', 10)
+            sound_id = msg.get('sound_id', False)
+            preset = msg.get('preset', False)
+            results = msg.get('num_results', 10)
             if not point or not preset:
                 raise Exception("You should specify at least a sound_id and a preset.")
             res = indexer.search(str(sound_id), results, str(preset))
@@ -51,8 +51,8 @@ class SimilarityThread(threading.Thread):
 
         elif msg['type'] == 'AddSound':
             self.logger.error(msg)
-            sound_id = getattr(msg, 'sound_id', False)
-            yaml  = getattr(msg, 'yaml', False)
+            sound_id = msg.get('sound_id', False)
+            yaml  = msg.get('yaml', False)
             if not sound_id or not yaml:
                 raise Exception('The sound_id and yaml parameters should both be present.')
             if not os.path.exists(yaml):
@@ -61,7 +61,7 @@ class SimilarityThread(threading.Thread):
             self.empty_reply()
 
         elif msg['type'] == 'DeleteSound':
-            sound_id = getattr(msg, 'sound_id', False)
+            sound_id = msg.get('sound_id', False)
             if not sound_id:
                 raise Exception('The sound_id should be specified.')
             indexer.delete_point(str(sound_id))

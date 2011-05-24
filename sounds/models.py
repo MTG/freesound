@@ -108,6 +108,7 @@ class Sound(SocialModel):
     filesize = models.IntegerField(default=0)
     channels = models.IntegerField(default=0)
     md5 = models.CharField(max_length=32, unique=True, db_index=True)
+    is_index_dirty = models.BooleanField(null=False, default=True)
 
     # moderation
     MODERATION_STATE_CHOICES = (
@@ -266,14 +267,10 @@ class Sound(SocialModel):
         else:
             return True
 
-    def add_to_search_index(self):
-        from utils.search.search import add_sound_to_solr
-        try:
-            add_sound_to_solr(self)
-            search_logger.debug('Added sound with id %s to solr.' % self.id)
-        except Exception, e:
-            search_logger.error('Could not add sound with id %s to solr. (%s)' % \
-                                (self.id, str(e)))
+    def mark_index_dirty(self):
+        self.is_index_dirty = True
+        self.save()
+          
 
     @models.permalink
     def get_absolute_url(self):

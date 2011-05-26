@@ -6,6 +6,7 @@ from comments.models import Comment
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
@@ -29,7 +30,7 @@ from utils.pagination import paginate
 from utils.text import slugify
 from geotags.models import GeoTag
 from django.contrib import messages
-from settings import SOUNDS_PER_DESCRIBE_ROUND
+from settings import SOUNDS_PER_DESCRIBE_ROUND, FS2_LAUNCH_DATE
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW
@@ -38,6 +39,58 @@ from utils.audioprocessing import get_sound_type
 
 audio_logger = logging.getLogger('audioprocessing')
 
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+                # TODO: check if this is the way to do date comparisons in Python
+                # apply this only on 1st login to FS2 of old users
+                if str(user.last_login) >= FS2_LAUNCH_DATE and str(user.date_joined) < FS2_LAUNCH_DATE:
+                    # Redirect to a success page.
+                    return HttpResponseRedirect(reverse("account", args=[user.username]))
+                else:
+                    # Redirect user to change license
+                    form = NewLicenseForm()
+                    return HttpResponseRedirect(reverse("bulk-license-change", args=[user.username]))
+                    
+            else:
+                print('disabled account') # Return a 'disabled account' error message
+                # TODO: implement me!
+        else:
+            print('disabled account') # Return an 'invalid login' error message.
+            # TODO: implement me!
+    else:
+        from django.contrib.auth.forms import AuthenticationForm 
+        form = AuthenticationForm()
+        return render_to_response('accounts/login.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+def bulk_license_change(request, username):
+    if request.method == 'POST':
+        form = NewLicenseForm(request.POST)
+        if form.is_valid():
+            license = form.cleaned_data['license']
+            request.session['describe_license'] = license
+            try:
+                user = User.objects.filter(username__iexact=username)
+                # FIXME: why public? it's like this in other places...
+                qs_sounds = Sound.public.filter(user=user)
+                for sound in qs_sounds:
+                    sound.license = license
+                    sound.save()
+            except User.DoesNotExist:   # TODO: double check this exception
+                logger.log("User: " + user.id + " not found! Bulk license change failed!!!")
+                raise Http404
+                
+            return HttpResponseRedirect(reverse('accounts-home'))
+    else:
+        form = NewLicenseForm()
+    return render_to_response('accounts/choose_new_license.html', locals(), context_instance=RequestContext(request))
+        
 
 def activate_user(request, activation_key):
     if request.user.is_authenticated():

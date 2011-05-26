@@ -101,6 +101,9 @@ AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/home/login/'
 LOGOUT_URL = '/home/logout/'
 LOGIN_REDIRECT_URL = '/home/'
+# This will have to be set to the day we launch FS2
+# for the bulk license change to work
+FS2_LAUNCH_DATE='27/05/2011'    
 
 IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf', '/favicon')
 IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', 'similar')

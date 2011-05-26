@@ -5,14 +5,6 @@ import utils.audioprocessing.processing as audioprocessing
 import os, tempfile, gearman, shutil
 
 
-def process_sound_via_gearman(sound, gm_client=None):
-    if not gm_client:
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-    sound.processing_date = datetime.now()
-    sound.processing_state = "QU" # queued
-    sound.save()
-    gm_client.submit_job("process_sound", str(sound.id), wait_until_complete=False, background=True)
-
 def process(sound):
     def failure(message, error=None):
         logging_message = "Failed to process audio file: %d\n" % sound.id + message
@@ -188,14 +180,6 @@ def process(sound):
         cleanup(to_cleanup)
         return False
     success("created previews, large")
-
-    # analyze sound
-    from essentia_analysis import analyze
-    try:
-        analyze(sound)
-    except Exception, e:
-        failure("analyzing sound failed", e)
-        # let's not make it fail the rest of the processing.
 
     cleanup(to_cleanup)
     sound.processing_state = "OK"

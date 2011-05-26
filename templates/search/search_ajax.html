@@ -11,7 +11,7 @@
 
         {% for result in results.docs %}
         <div>
-            {% display_sound result.id "sample_player_small" %}
+            {% display_sound result.id %}
             <div>
                 <a class="add" onclick="addSound(this, {{result.id}})">Add</a>
                 <a class="remove" onclick="removeSound(this, {{result.id}})">Remove</a>

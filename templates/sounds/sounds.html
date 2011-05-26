@@ -19,7 +19,7 @@
     {% endif %}
 <h2>Sound of the day</h2>
     {% if random_sound != None %}
-        {% display_sound random_sound "sample_player_small" %}
+        {% display_sound random_sound %}
     {% else %}
         random sound is none
     {% endif %}
@@ -30,7 +30,7 @@
 <h2>Latest sounds</h2>
 <div class="sound_list_normal">
 {% for latest_addition in latest_sounds %}
-    {% display_sound latest_addition.sound_id "sample_player_small" %}
+    {% display_sound latest_addition.sound_id %}
     {% if latest_addition.extra %}
         <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
     {% endif %}
@@ -52,7 +52,7 @@
 
 <h2>Most downloaded sounds (in the last week)</h2>
 {% for sound in popular_sounds %}
-    {% display_sound sound.id "sample_player_small" %}
+    {% display_sound sound.id %}
     <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads in the last week</div>
     {% empty %}
     <p>No sounds in the database!

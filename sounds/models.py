@@ -134,6 +134,7 @@ class Sound(SocialModel):
     processing_log = models.TextField(null=True, blank=True, default=None)
 
     similarity_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
+    analysis_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
 
     num_comments = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
@@ -262,10 +263,13 @@ class Sound(SocialModel):
 
     def process(self, force=False):
         if force or self.processing_state != "OK":
-            from utils.audioprocessing.freesound_audio_processing import process_sound_via_gearman
-            return process_sound_via_gearman(self)
-        else:
-            return True
+            sound.processing_date = datetime.now()
+            sound.processing_state = "QU"
+            gm_client.submit_job("process_sound", str(sound.id), wait_until_complete=False, background=True)
+        if force or self.analysis_state != "OK":
+            sound.analysis_state = "QU"
+            gm_client.submit_job("analyze_sound", str(sound.id), wait_until_complete=False, background=True)
+        sound.save()
 
     def mark_index_dirty(self):
         self.is_index_dirty = True

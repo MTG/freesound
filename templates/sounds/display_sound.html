@@ -4,7 +4,7 @@
 {% cache 3600 display_sound sound_id %}
 {% endcache %}
 {% if sound %}
-<div class="{{ player_class }}" id="{{ sound_id }}">
+<div class="sample_player_small" id="{{ sound_id }}">
     <div class="sample_player">
         <div class="small_player">
             {% include "sounds/player_medium.html" %}

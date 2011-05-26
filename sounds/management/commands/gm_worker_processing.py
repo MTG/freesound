@@ -10,7 +10,9 @@ from utils.audioprocessing.essentia_analysis import analyze
 from django.conf import settings
 from sounds.models import Sound
 from optparse import make_option
+import traceback
 
+# TODO: DRY-out!
 
 def task_process_sound(gearman_worker, gearman_job):
     """Run this for Gearman 'process_sound' jobs.
@@ -25,6 +27,7 @@ def task_process_sound(gearman_worker, gearman_job):
         return False
     except Exception, e:
         print "\t something went terribly wrong:", e
+        traceback.print_tb()
         sys.exit(255)
     return str(result)
 
@@ -36,8 +39,12 @@ def task_analyze_sound(gearman_worker, gearman_job):
     print "Analyzing sound with id", sound_id
     try:
         result = analyze(Sound.objects.get(id=sound_id))
+    except Sound.DoesNotExist:
+        print "\t did not find sound with id: ", sound_id
+        return False
     except Exception, e:
         print "\t could not analyze sound:", e
+        traceback.print_tb()
         sys.exit(255)
     return str(result)
 
@@ -45,14 +52,17 @@ def task_analyze_sound(gearman_worker, gearman_job):
 class Command(BaseCommand):
     help = 'Run the sound processing worker'
 
-#    option_list = BaseCommand.option_list + (
-#        make_option('--queue', action='store', dest='queue',
-#            default='process_sound',
-#            help='Register this function (default: process_sound)'),
-#    )
+    option_list = BaseCommand.option_list + (
+        make_option('--queue', action='store', dest='queue',
+            default='process_sound',
+            help='Register this function (default: process_sound)'),
+    )
 
     def handle(self, *args, **options):
+        task_name = 'task_%s' % options['queue']
+        if task_name not in globals():
+            print "Wow.. That's crazy! Maybe try an existing queue?"
+            sys.exit(1)
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        gm_worker.register_task('process_sound', task_process_sound)
-        gm_worker.register_task('analyze_sound', task_analyze_sound)
+        gm_worker.register_task(options['queue'], globals()[task_name])
         gm_worker.work()

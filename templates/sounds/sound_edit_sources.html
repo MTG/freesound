@@ -126,7 +126,7 @@
     {% for source in current_sources %}
     <div>
         <div class="sound_list_moderation">
-            {% display_sound source.id "sample_player_small" %}
+            {% display_sound source.id %}
         </div>
         <div>
             <a class="add" onclick="addSound(this, {{source.id}})">Add</a>

@@ -6,11 +6,13 @@ the processing of sounds.
 
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
-import gearman
+import gearman, sys
 from django.conf import settings
 from optparse import make_option
 from datetime import datetime
 from django.db import transaction
+
+VALID_QUEUES = ['process_sound', 'analyze_sound']
 
 class Command(BaseCommand):
     """Sends jobs to the Gearman job server, scheduling the processing
@@ -25,7 +27,7 @@ class Command(BaseCommand):
         make_option('--pending', action='store_true', dest='pending',
             default=False, help='Process sounds marked as "pending"'),
         make_option('--queue', action='store', dest='queue',
-            default='process_sound',
+            default=None,
             help='Send job to this queue (default: process_sound)'),
         make_option('--file', action='store', dest='file_input',
             default=None,
@@ -37,24 +39,36 @@ class Command(BaseCommand):
         # Parse command-line options.
         qs = Sound.objects.select_related()
 
+        gearman_task = options['queue']
+        if gearman_task not in VALID_QUEUES:
+            print "Wow.. You're mad as a hatter! Are you sure that's the queue you want? Pick one from: %s." % ', '.join(VALID_QUEUES)
+            sys.exit(1)
+
         if options['all']:
             # All sounds in the database.
             sounds = qs.all().exclude(original_path=None)
         elif options['pending']:
             # Every sound marked as 'pending'.
-            sounds = qs.filter(processing_state="PE").exclude(original_path=None)
+            if gearman_task == 'process_sound':
+                sounds = qs.filter(processing_state="PE").exclude(original_path=None)
+            elif gearman_task == 'analyze_sound':
+                sounds = qs.filter(analysis_state="PE").exclude(original_path=None)
         else:
             # The sound_ids passed as arguments in command-line.
             sounds = qs.filter(pk__in=args).exclude(original_path=None)
 
-        # update all sounds to reflect we are processing them... (only for 'process_sound' queue)
-        gearman_task = options['queue']
+        # generate the job list before the queryset gets updated.
         jobs = [{'task': gearman_task, 'data': str(sound["id"])} for sound in sounds.values("id")]
+
+        # update all sounds to reflect we are processing them... (only for 'process_sound' queue)
+        self.stdout.write('Updating database\n')
         if gearman_task == 'process_sound':
-            self.stdout.write('Updating database\n')
             sounds.update(processing_date=datetime.now(), processing_state="QU")
             transaction.commit_unless_managed()
-            self.stdout.write('Updating database done\n')
+        elif gearman_task == 'analyze_sound':
+            sounds.update(processing_date=datetime.now(), analysis_state="QU")
+            transaction.commit_unless_managed()
+        self.stdout.write('Updating database done\n')
 
         # Connect to the Gearman job server.
         if len(jobs) > 0:

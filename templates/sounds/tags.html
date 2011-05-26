@@ -31,7 +31,7 @@
 {% show_paginator paginator page current_page request %}
 
 {% for sound in page.object_list %}
-    {% display_sound sound.id "sample_player_small" %}
+    {% display_sound sound.id %}
 {% endfor %}
 
 {% show_paginator paginator page current_page request %}

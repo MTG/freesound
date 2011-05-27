@@ -32,7 +32,6 @@ from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
 import datetime, os, time
-from utils.search.search import add_sound_to_solr, delete_sound_from_solr
 from sounds.templatetags import display_sound
 from django.db.models import Q
 

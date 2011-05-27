@@ -6,8 +6,7 @@ import messages.views as messages
 import accounts.views as accounts
 
 urlpatterns = patterns('accounts.views',
-    # url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html'}, name="accounts-login"),
-    url(r'^login/$', accounts.custom_login, name="accounts-login"),
+    url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html'}, name="accounts-login"),
     url(r'^logout/$', authviews.logout, {'template_name': 'accounts/logout.html'}, name="accounts-logout"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),
     url(r'^username/$', accounts.username_reminder, name="accounts-username-reminder"),

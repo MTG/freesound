@@ -20,12 +20,14 @@ class BulkChangeLicenseHandler:
         # check for authentication,
         # avoid infinite loop
         # allow user to logout (maybe a bit too much...)
-        # don't run it for media urls.
+        # don't run it for media URLs
+        # avoid users with no uploaded sounds
         # N.B. probably better just to check for login in the URL
         if request.user.is_authenticated() \
             and not 'bulklicensechange' in request.get_full_path() \
             and not 'logout' in request.get_full_path() \
-            and not request.get_full_path().startswith(settings.MEDIA_URL):
+            and not request.get_full_path().startswith(settings.MEDIA_URL) \
+            and request.user.profile.num_sounds > 0:
             
             user = request.user
             cache_key = "has-old-license-%s" % user.id

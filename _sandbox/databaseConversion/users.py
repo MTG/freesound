@@ -4,8 +4,7 @@ Don't really imports anything, just prints generated SQL on stdout.
 This SQL must be run before other migration steps because it generates
 the list of valid users needed later.
 """
-from db_utils import queryrunner, get_mysql_cursor
-import codecs
+from db_utils import get_mysql_cursor
 from text_utils import smart_character_decoding, decode_htmlentities
 
 
@@ -64,7 +63,12 @@ COPY auth_user (id, is_active, username, password, date_joined,
     # start at one, we don't want the anonymous user!
     ___ = curs.fetchone()
     
-    queryrunner(curs, query, transform_row_users)
+    while True:
+        row = curs.fetchone()
+        if not row:
+            break
+        transform_row_users(row)
+
     print """\."""  
 
     print """

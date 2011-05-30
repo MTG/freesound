@@ -40,13 +40,13 @@ class Messenger():
         # sending
         try:
             # relying on correct behaviour of zeromq's poll here, needs zeromq 2.1.6
-            socks = dict(poller.poll(timeout)) # this shouldn't time out!
+            socks = dict(poller.poll(timeout*1000)) # this shouldn't time out!
             assert socks.has_key(s)
             assert socks[s] == zmq.POLLOUT
             s.send(json.dumps(data))
             # receiving
             try:
-                socks = dict(poller.poll(timeout))
+                socks = dict(poller.poll(timeout*1000))
                 assert socks.has_key(s)
                 assert socks[s] == zmq.POLLIN
                 msg = s.recv()

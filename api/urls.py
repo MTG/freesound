@@ -18,7 +18,7 @@ urlpatterns = patterns('',
     url(r'^sounds/(?P<sound_id>\d+)/analysis/?$',                    AR(SoundAnalysisHandler),       name='api-sound-analysis'),
     url(r'^sounds/(?P<sound_id>\d+)/analysis(?P<filter>/[\w\/]+)/?$',AR(SoundAnalysisHandler),       name='api-sound-analysis'),
     url(r'^sounds/(?P<sound_id>\d+)/analysis_frames/?$',             AR(SoundAnalysisFramesHandler), name='api-sound-analysis-frames'),    
-    url(r'^sounds/(?P<sound_id>\d+)/serve/?$',                       AR(SoundServeHandler),     name='api-sound-serve'),
+    url(r'^sounds/(?P<sound_id>\d+)/serve/?$',                       AR(SoundServeHandler),          name='api-sound-serve'),
     # users
     url(r'^people/(?P<username>[^//]+)/?$',                          AR(UserHandler),           name='api-single-user'),
     url(r'^people/(?P<username>[^//]+)/sounds/?$',                   AR(UserSoundsHandler),     name='api-user-sounds'),

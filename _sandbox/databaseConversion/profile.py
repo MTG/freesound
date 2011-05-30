@@ -1,91 +1,115 @@
-import MySQLdb as my
-import psycopg2
+from db_utils import get_mysql_cursor, queryrunner, get_user_ids
 import codecs, sys, re
 import time
 from text_utils import prepare_for_insert, smart_character_decoding
 from HTMLParser import HTMLParseError
-from local_settings import *
 
-output_filename = '/tmp/importfile.dat'
-output_file = codecs.open(output_filename, 'w', 'utf-8', errors='strict')
 
-my_conn = my.connect(**MYSQL_CONNECT)
-my_curs = my_conn.cursor()
 
-ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
-ppsql_cur = ppsql_conn.cursor()
-print "getting all valid user ids"
-ppsql_cur.execute("SELECT id FROM auth_user")
-valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
-print "done"
+VALID_USER_IDS = get_user_ids()
 
-start = 0
-granularity = 100000
 
-insert_id = 0
+def queryrunner_profiles(curs, query, call_transform):
+    curs.execute(query)
 
-url_match = re.compile(r"^http:\/\/[\w_-]+\.[\.\w_-]+\/?[@\.\w/_\?=~;:%#&\+-]*$", re.IGNORECASE)
+    insert_id = 0
+    while True:
+        row = curs.fetchone()
+        if not row:
+            break
+        print u"\t".join(call_transform(insert_id, **row))
+        insert_id += 1
 
-while True:
-    print start
-    
-    my_curs.execute("""select
-                            user_id,
-                            user_website as home_page,
-                            user_sig as signature,
-                            (user_whitelist.userID is not null) as is_whitelisted,
-                            users.text as about,
-                            (email_ignore.userID is null) as wants_newsletter
-                        from phpbb_users
-                        left join user_whitelist on user_whitelist.userID=phpbb_users.user_id
-                        left join users on users.userID=phpbb_users.user_id
-                        left join email_ignore on email_ignore.userID=phpbb_users.user_id
-                        limit %d, %d""" % (start, granularity))
-    rows = my_curs.fetchall()
-    start += len(rows)
-    
-    if len(rows) == 0:
-        break
-    
-    for row in rows:
-        user_id, home_page, signature, is_whitelisted, about, wants_newsletter = row
+
+
+def transform_row_profile(row): 
         
-        if home_page:
-            home_page = smart_character_decoding(home_page)
-        if signature:
-            signature = smart_character_decoding(signature)
-        if about:
-            about = smart_character_decoding(about)
-                    
-        if user_id in valid_user_ids:
-            if home_page:
-                home_page = home_page.lower()
-                split = home_page.split()
-                if len(split) > 1:
-                    home_page = split[0]
+    insert_id, user_id, home_page, signature, is_whitelisted, about, \
+            wants_newsletter = row
+
+    if user_id not in VALID_USER_IDS:
+        return
+
+    url_match = re.compile(
+        r"^http:\/\/[\w_-]+\.[\.\w_-]+\/?[@\.\w/_\?=~;:%#&\+-]*$", 
+        re.IGNORECASE
+    )
+
+    if home_page:
+        home_page = smart_character_decoding(home_page)
+    if signature:
+        signature = smart_character_decoding(signature)
+    if about:
+        about = smart_character_decoding(about)
                 
-                if not url_match.match(home_page):
-                    home_page = None
-
-            if signature:
-                signature = prepare_for_insert(signature)
-            
-            if about:
-                try:
-                    about = prepare_for_insert(about)
-                except HTMLParseError:
-                    about = ""
-            
-            geotag = None
-            num_sounds = 0
-            num_posts = 0
-            has_avatar = 0
+    if home_page:
+        home_page = home_page.lower()
+        split = home_page.split()
+        if len(split) > 1:
+            home_page = split[0]
         
-            output_file.write(u"\t".join(map(unicode, [insert_id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter, geotag, num_sounds, num_posts, unicode(has_avatar)])) + u"\n")
-            insert_id += 1
+        if not url_match.match(home_page):
+            home_page = None
 
-print """
-copy accounts_profile (id, user_id, home_page, signature, is_whitelisted, about, wants_newsletter, geotag_id, num_sounds, num_posts, has_avatar) from '%s' null as 'None';
-select setval('accounts_profile_id_seq',(select max(id)+1 from accounts_profile));
-vacuum analyze accounts_profile;
-""" % output_filename        
+    if signature:
+        signature = prepare_for_insert(signature)
+    
+    if about:
+        try:
+            about = prepare_for_insert(about)
+        except HTMLParseError:
+            about = ""
+    
+    geotag = None
+    num_sounds = 0
+    num_posts = 0
+    has_avatar = 0
+
+    fields = [ insert_id, user_id, home_page, signature, is_whitelisted,
+        about, wants_newsletter, geotag, num_sounds, num_posts, 
+        unicode(has_avatar) ]
+
+    return map(unicode, fields)
+
+
+
+def migrate_profiles(curs):
+
+    print """
+--
+-- Profiles
+--
+COPY accounts_profile (id, user_id, home_page, signature, is_whitelisted, 
+    about, wants_newsletter, geotag_id, num_sounds, num_posts, has_avatar) 
+    FROM stdin null as 'None';"""
+
+
+    query = """SELECT
+            user_id,
+            user_website as home_page,
+            user_sig as signature,
+            (user_whitelist.userID is not null) as is_whitelisted,
+            users.text as about,
+            (email_ignore.userID is null) as wants_newsletter
+        FROM phpbb_users
+        LEFT JOIN user_whitelist on user_whitelist.userID=phpbb_users.user_id
+        LEFT JOIN users on users.userID=phpbb_users.user_id
+        LEFT JOIN email_ignore on email_ignore.userID=phpbb_users.user_id"""
+
+    queryrunner_profiles(curs, query, transform_row_profile)
+    print """\."""  
+
+
+    print """
+SELECT SETVAL('accounts_profile_id_seq',
+    (SELECT MAX(id)+1 FROM accounts_profile));
+VACUUM ANALYZE accounts_profile;
+"""
+
+
+def main():
+    curs = get_mysql_cursor()
+    migrate_profiles(curs)
+
+if __name__ == '__main__':
+    main()

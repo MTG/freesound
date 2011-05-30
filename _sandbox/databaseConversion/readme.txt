@@ -5,7 +5,7 @@
 2. Run scripts in the following order
 
     * users
-    * profile
+    * profiles
     * packs
     * sounds
     * tags

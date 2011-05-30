@@ -1,6 +1,5 @@
-from db_utils import get_mysql_cursor, queryrunner, get_user_ids
-import codecs, sys, re
-import time
+from db_utils import get_mysql_cursor, get_user_ids
+import re
 from text_utils import prepare_for_insert, smart_character_decoding
 from HTMLParser import HTMLParseError
 
@@ -17,14 +16,14 @@ def queryrunner_profiles(curs, query, call_transform):
         row = curs.fetchone()
         if not row:
             break
-        print u"\t".join(call_transform(insert_id, **row))
+        print u"\t".join(call_transform(insert_id, row))
         insert_id += 1
 
 
 
-def transform_row_profile(row): 
+def transform_row_profile(insert_id, row): 
         
-    insert_id, user_id, home_page, signature, is_whitelisted, about, \
+    user_id, home_page, signature, is_whitelisted, about, \
             wants_newsletter = row
 
     if user_id not in VALID_USER_IDS:

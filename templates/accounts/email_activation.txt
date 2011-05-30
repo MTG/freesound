@@ -6,6 +6,20 @@
 
 {% block body %}
 Thank you for signing up at Freesound.org!
+
+*** Please note!!! ********************************************************************
+     You have signed up for the BETA version of Freesound that is currently
+     running at http://tabasco.upf.edu/. Please be advised that these accounts
+     will be lost once we release the final version of Freesound 2. If you already
+     have a Freesound 1 account (that's not too new), please use that one
+     to log in to Freesound 2.
+
+     To all API hackers: API keys for accounts that existed in Freesound 1 will
+     be backported. API keys for accounts created in Freesound 2 will be lost in the
+     final release. We will however give you a heads up when this will happen
+     so you can prepare changing the API key in your application.
+***************************************************************************************
+
 In order to activate your Freesound account, please click this link:
 
 {% absurl accounts-activate encrypted_user_id %}

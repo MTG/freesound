@@ -74,4 +74,4 @@ class GaiaIndexer:
         try:
             return self.index.search_dataset(point, no_of_results, presetkey)
         finally:
-            self.__release_shared(index)
+            self.__release_shared()

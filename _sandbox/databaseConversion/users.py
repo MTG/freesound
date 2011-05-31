@@ -12,10 +12,7 @@ from text_utils import smart_character_decoding, decode_htmlentities
 import codecs
 
 
-OUT_FNAME= 'users.sql'
-out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
-
-
+OUT_FNAME = 'users.sql'
 BANNED_USER_IDS = (
     16967,1037753,1294123,99738,563934,697703,912954,960716,1401570,1404962,
     1414401,1437020,1453087,1488139,1533361,1567137,1574761,1626812,1665254,
@@ -47,15 +44,13 @@ def transform_row_users(row):
         unicode(user_regdate), unicode(user_lastvisit), user_email, 
         u"", u"", "0", "0",
     ]
-    try:
-        out.write(u"\t".join(fields) + "\n")
-    except UnicodeEncodeError:
-        print "### unicode error here"
-        print fields
+    return fields
 
 
 
 def migrate_users(curs):
+
+    out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
 
     sql_header = """
 -- 
@@ -80,7 +75,13 @@ COPY auth_user (id, is_active, username, password, date_joined,
         row = curs.fetchone()
         if not row:
             break
-        transform_row_users(row)
+        new_row = transform_row_users(row)
+        if new_row:
+            try:
+                out.write(u"\t".join(new_row) + "\n")
+            except UnicodeEncodeError:
+                print "### unicode error here"
+                print new_row
 
     sql_tail = """\.
 

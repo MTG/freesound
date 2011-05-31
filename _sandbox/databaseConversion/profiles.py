@@ -1,27 +1,20 @@
-from db_utils import get_mysql_cursor, get_user_ids
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from local_settings import *
+import codecs
+from db_utils import get_user_ids
 import re
 from text_utils import prepare_for_insert, smart_character_decoding
 from HTMLParser import HTMLParseError
 
 
-
+OUT_FNAME = 'profiles.sql'
 VALID_USER_IDS = get_user_ids()
 
 
-def queryrunner_profiles(curs, query, call_transform):
-    curs.execute(query)
 
-    insert_id = 0
-    while True:
-        row = curs.fetchone()
-        if not row:
-            break
-        print u"\t".join(call_transform(insert_id, row))
-        insert_id += 1
-
-
-
-def transform_row_profile(insert_id, row): 
+def transform_row(insert_id, row): 
         
     user_id, home_page, signature, is_whitelisted, about, \
             wants_newsletter = row
@@ -74,13 +67,17 @@ def transform_row_profile(insert_id, row):
 
 def migrate_profiles(curs):
 
-    print """
+    out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
+
+    sql_head = """
 --
 -- Profiles
 --
 COPY accounts_profile (id, user_id, home_page, signature, is_whitelisted, 
     about, wants_newsletter, geotag_id, num_sounds, num_posts, has_avatar) 
-    FROM stdin null as 'None';"""
+    FROM stdin null as 'None';
+    """
+    out.write(sql_head)
 
 
     query = """SELECT
@@ -95,19 +92,31 @@ COPY accounts_profile (id, user_id, home_page, signature, is_whitelisted,
         LEFT JOIN users on users.userID=phpbb_users.user_id
         LEFT JOIN email_ignore on email_ignore.userID=phpbb_users.user_id"""
 
-    queryrunner_profiles(curs, query, transform_row_profile)
-    print """\."""  
+    curs.execute(query)
 
+    insert_id = 0
+    while True:
+        row = curs.fetchone()
+        if not row:
+            break
+        new_row = transform_row(insert_id, row)
+        if new_row:
+            out.write( u"\t".join(new_row) + u"\n")
+        insert_id += 1
 
-    print """
+    sql_tail = """\.
+
 SELECT SETVAL('accounts_profile_id_seq',
     (SELECT MAX(id)+1 FROM accounts_profile));
 VACUUM ANALYZE accounts_profile;
 """
+    out.write(sql_tail)
+
 
 
 def main():
-    curs = get_mysql_cursor()
+    conn = MySQLdb.connect(**MYSQL_CONNECT)
+    curs = conn.cursor(DEFAULT_CURSORCLASS)
     migrate_profiles(curs)
 
 if __name__ == '__main__':

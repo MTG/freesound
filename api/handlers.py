@@ -3,7 +3,7 @@ from piston.handler import BaseHandler
 from piston.utils import rc
 from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
-from sounds.models import Sound, Pack
+from sounds.models import Sound, Pack, Download
 from utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import logging
 from django.contrib.auth.models import User
@@ -36,6 +36,9 @@ def prepend_base(rel):
 
 def get_sound_api_url(id):
     return prepend_base(reverse('api-single-sound', args=[id]))
+
+def get_sound_api_analysis_url(id):
+    return prepend_base(reverse('api-sound-analysis', args=[id]))
 
 def get_sound_web_url(username, id):
     return prepend_base(reverse('sound', args=[username, id]))
@@ -77,7 +80,8 @@ def get_sound_links(sound):
         'waveform_l': prepend_base(sound.locations("display.wave.L.url")),
         'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
         'spectral_l': prepend_base(sound.locations("display.spectral.L.url")),
-        'analysis_stats': prepend_base(sound.locations("analysis.statistics.url")),
+        'analysis_stats': get_sound_api_analysis_url(sound.id), 
+        #prepend_base(sound.locations("analysis.statistics.url")),
         'analysis_frames': prepend_base(sound.locations("analysis.frames.url"))
          }
     if sound.pack_id:
@@ -417,7 +421,8 @@ class SoundServeHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp = 'There is no sound with id %s' % sound_id
             return resp
-
+        
+        Download.objects.get_or_create(user=request.user, sound=sound)
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 class SoundAnalysisHandler(BaseHandler):
@@ -449,19 +454,19 @@ class SoundAnalysisHandler(BaseHandler):
 
         return result
 
-
-class SoundAnalysisFramesHandler(BaseHandler):
+# For future use (when we serve analysis files through autenthication)
+#class SoundAnalysisFramesHandler(BaseHandler):
     '''
     api endpoint:   /sounds/<sound_id>/analysis_frames
     '''
-    allowed_methods = ('GET',)
+    #allowed_methods = ('GET',)
 
     '''
-    input:          n.a.
-    output:         binary file
-    curl:           curl http://www.freesound.org/api/sounds/2/analysis_frames
+    #input:          n.a.
+    #output:         binary file
+    #curl:           curl http://www.freesound.org/api/sounds/2/analysis_frames
     '''
-    
+'''
     def read(self, request, sound_id, filter=False):
 
         try:
@@ -472,7 +477,7 @@ class SoundAnalysisFramesHandler(BaseHandler):
             return resp
         
         return sendfile(sound.locations('analysis.frames.path'), sound.friendly_filename().split('.')[0] + '.json', sound.locations("sendfile_url").split('.')[0] + '.json')
-        
+'''        
 
 class UserHandler(BaseHandler):
     '''

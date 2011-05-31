@@ -16,8 +16,9 @@ urlpatterns = patterns('',
     url(r'^sounds/search/?$',                                        AR(SoundSearchHandler),         name='api-search'),
     url(r'^sounds/(?P<sound_id>\d+)/?$',                             AR(SoundHandler),               name='api-single-sound'),
     url(r'^sounds/(?P<sound_id>\d+)/analysis/?$',                    AR(SoundAnalysisHandler),       name='api-sound-analysis'),
-    url(r'^sounds/(?P<sound_id>\d+)/analysis(?P<filter>/[\w\/]+)/?$',AR(SoundAnalysisHandler),       name='api-sound-analysis'),
-    url(r'^sounds/(?P<sound_id>\d+)/analysis_frames/?$',             AR(SoundAnalysisFramesHandler), name='api-sound-analysis-frames'),    
+    url(r'^sounds/(?P<sound_id>\d+)/analysis(?P<filter>/[\w\/]+)/?$',AR(SoundAnalysisHandler),       name='api-sound-analysis-filtered'),
+    # For future use (when we serve analysis files through autenthication)
+    #url(r'^sounds/(?P<sound_id>\d+)/analysis_frames/?$',             AR(SoundAnalysisFramesHandler), name='api-sound-analysis-frames'),    
     url(r'^sounds/(?P<sound_id>\d+)/serve/?$',                       AR(SoundServeHandler),          name='api-sound-serve'),
     # users
     url(r'^people/(?P<username>[^//]+)/?$',                          AR(UserHandler),           name='api-single-user'),

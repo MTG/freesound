@@ -56,14 +56,14 @@ class SimilarityThread(threading.Thread):
                 raise Exception('The sound_id and yaml parameters should both be present.')
             if not os.path.exists(yaml):
                 raise Exception('The yaml path specified appears to not exist (%s).' % yaml)
-            indexer.add_point(str(yaml), str(sound_id))
+            indexer.add(str(yaml), str(sound_id))
             self.empty_reply()
 
         elif msg['type'] == 'DeleteSound':
             sound_id = msg.get('sound_id', False)
             if not sound_id:
                 raise Exception('The sound_id should be specified.')
-            indexer.delete_point(str(sound_id))
+            indexer.delete(str(sound_id))
             self.empty_reply()
 
         return

@@ -46,7 +46,7 @@ class GaiaIndexer:
         raise Exception('The index is currently locked which probably means it is being updated.')
 
 
-    def add_point(self, yaml_path, sound_id):
+    def add(self, yaml_path, sound_id):
         logger.debug('Adding point with id %s' % sound_id)
         try:
             self.__acquire_exclusive(UPDATE_TIMEOUT)
@@ -55,7 +55,7 @@ class GaiaIndexer:
             self.__release_exclusive()
 
 
-    def delete_point(self, sound_id):
+    def delete(self, sound_id):
         logger.debug('Deleting point with id %s' % sound_id)
         try:
             self.__acquire_exclusive(UPDATE_TIMEOUT)
@@ -64,7 +64,7 @@ class GaiaIndexer:
             self.__release_exclusive()
 
 
-    def search_index(self, point, no_of_results, presetkey):
+    def search(self, point, no_of_results, presetkey):
         '''
         The 'point' argument can either be the name of an already present point
         or the location of a yaml file (has to have extension .yaml).

@@ -7,7 +7,17 @@
   		$(document).ready(function() {
   			$(".inner-accordion").accordion();
     		$(".outer-accordion").accordion();
+    		display_errors();
   		});
+  		function display_errors() {
+  	  		if ($(".inner-accordion-div").has(".errorlist")) {
+  	  	  		if ($("#errormessage").length == 0) {
+  	  	  			$(".outer-accordion").before("<div id='errormessage' style='color: red'>There has been some errors in the form data. Please review them</div>");
+  	  	  		}
+  	  	  		$(".inner-accordion-div").has(".errorlist").prev().children("a").append(" <----------- Error").css("color", "red");
+				$(".inner-accordion-div").has(".errorlist").prev().effect("pulsate", { times:3 }, 2000);
+  	  	  	}
+  		}
     </script>
     <script src="{{media_url}}/js/jquery-ui-1.8.11.custom.min.js" type="text/javascript"></script>
     <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{google_api_key}}" type="text/javascript"></script> 

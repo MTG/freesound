@@ -44,7 +44,7 @@ class SimilarityThread(threading.Thread):
             sound_id = msg.get('sound_id', False)
             preset = msg.get('preset', False)
             results = msg.get('num_results', 10)
-            if not point or not preset:
+            if not sound_id or not preset:
                 raise Exception("You should specify at least a sound_id and a preset.")
             res = indexer.search(str(sound_id), results, str(preset))
             self.reply(res)

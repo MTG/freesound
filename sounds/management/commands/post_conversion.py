@@ -1,9 +1,11 @@
 from django.core.management.base import NoArgsCommand
-from sounds.models import Sound
+from sounds.models import Sound, Pack
 import os
 
 class Command(NoArgsCommand):
-    help = "Determine which sounds have already been copied from FS1 and processed and set processing_state accordingly."
+    help = """ 1) Determine which sounds have already been copied from FS1 and processed and set processing_state accordingly.
+               2) Update the num_comments field on sound
+           """
 
     def handle(self, **options):
         print 'Getting sounds'
@@ -17,8 +19,8 @@ class Command(NoArgsCommand):
                os.path.exists(sound.locations('analysis.statistics.path')) and \
                os.path.exists(sound.locations('display.spectral.L.path')):
                 sound.processing_state = 'OK'
+                sound.num_comments = sound.comments.count()
                 sound.save()
             counter += 1
             if counter % 1000 == 0:
                 print 'Processed %s sounds' % counter
-

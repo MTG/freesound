@@ -25,11 +25,11 @@ class SimilarityService():
         context = zmq.Context(1)
 
         worker_address = 'inproc://workers'
-        logger.debug("Binding workers' socket to %s" % worker_address)
+        logger.info("Binding workers' socket to %s" % worker_address)
         workers = context.socket(zmq.XREP)
         workers.bind(worker_address)
 
-        logger.debug("Binding clients' socket to %s" % self.reqrep_address)
+        logger.info("Binding clients' socket to %s" % self.reqrep_address)
         clients = context.socket(zmq.XREP)
         clients.bind(self.reqrep_address)
 
@@ -40,6 +40,7 @@ class SimilarityService():
             self.threads.append(thread)
             thread.start()
 
+        logger.info('Starting LRU device')
         self.lru_device(clients, workers)
 
         '''
@@ -70,6 +71,7 @@ class SimilarityService():
         poller.register(xrep_clients, zmq.POLLIN)
         poller.register(xrep_workers, zmq.POLLIN)
 
+        logger.info('Starting LRU loop')
         while True:
             socks = dict(poller.poll())
 

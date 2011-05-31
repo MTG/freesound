@@ -6,12 +6,12 @@ from logger import logger
 class SimilarityThread(threading.Thread):
 
     def __init__(self, id, ctx):
+        logger.debug('Starting thread %s' % id)
         threading.Thread.__init__(self)
         self.id = id
         # set up zmq queue connection
         self.ctx = ctx
         self.__stop = False
-        self.logger = logger
         self.return_address = []
 
 
@@ -81,7 +81,6 @@ class SimilarityThread(threading.Thread):
 
                 while not self.__stop:
                     self.REPLIED = False
-                    #self.logger.debug('Thread %s waiting for message.' % self.id)
 
                     while True:
                         socks = dict(self.poller.poll(1000))
@@ -101,16 +100,16 @@ class SimilarityThread(threading.Thread):
                         self.handle_message(msg)
                         if not self.REPLIED:
                             warning = 'Thread %s: Nothing was replied, the message was not handled.' % self.id
-                            self.logger.warn(warning)
+                            logger.warn(warning)
                             raise Exception("This message wasn't understood: \n\t%s" % msg_received)
                     except Exception, e:
-                        self.logger.error('Thread %s: caught Exception: %s\n%s' % (self.id, str(e), traceback.format_exc()))
+                        logger.error('Thread %s: caught Exception: %s\n%s' % (self.id, str(e), traceback.format_exc()))
                         self.reply_exception(e)
 
             except AssertionError, e:
-                self.logger.error('Could not assert right socket state, creating new socket.')
+                logger.error('Could not assert right socket state, creating new socket.')
             except zmq.ZMQError, e:
-                self.logger.error('Could not send or receive message, creating new socket.')
+                logger.error('Could not send or receive message, creating new socket.')
             finally:
                 self.poller.unregister(self.socket)
                 self.socket.close()

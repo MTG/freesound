@@ -110,8 +110,12 @@ COPY auth_user (id, is_active, username, password, date_joined,
 
     UPDATE auth_user SET is_staff=true, is_superuser=true WHERE username='Bram';
 
-    CREATE UNIQUE INDEX auth_user_username_upper_key ON 
-        auth_user ((UPPER(username)));
+    --- Don't run this before removing all duplicate usernames.
+    --- Will fail.
+    --- CREATE UNIQUE INDEX auth_user_username_upper_key ON 
+    ---    auth_user ((UPPER(username)));
+    ---
+    ---
     VACUUM ANALYZE auth_user;
 
     --

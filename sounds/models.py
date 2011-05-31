@@ -10,7 +10,7 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random, datetime
+import os, logging, random, datetime, gearman
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 
@@ -262,6 +262,7 @@ class Sound(SocialModel):
         return int(self.avg_rating*10)
 
     def process(self, force=False):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
             self.processing_date = datetime.datetime.now()
             self.processing_state = "QU"

@@ -1,11 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Migrate Freesound1 users (Mysql) to Freesound2 (Postgres).
 
 Don't really imports anything, just prints generated SQL on stdout. 
 This SQL must be run before other migration steps because it generates
 the list of valid users needed later.
 """
-from db_utils import get_mysql_cursor
+
+from local_settings import *
 from text_utils import smart_character_decoding, decode_htmlentities
+import codecs
+
+
+OUT_FNAME= 'users.sql'
+out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
 
 
 BANNED_USER_IDS = (
@@ -39,21 +47,26 @@ def transform_row_users(row):
         unicode(user_regdate), unicode(user_lastvisit), user_email, 
         u"", u"", "0", "0",
     ]
-    print u"\t".join(fields) 
+    try:
+        out.write(u"\t".join(fields) + "\n")
+    except UnicodeEncodeError:
+        print "### unicode error here"
+        print fields
 
 
 
 def migrate_users(curs):
 
-    print """
+    sql_header = """
 -- 
 -- Table phpbb_users
 -- 
 ALTER TABLE auth_user DROP CONSTRAINT auth_user_username_key;
 COPY auth_user (id, is_active, username, password, date_joined, 
     last_login, email, first_name, last_name, is_staff, is_superuser) 
-    FROM stdin ;"""
-
+    FROM stdin ;
+"""
+    out.write(sql_header)
 
     query = """SELECT user_id, user_active, username, user_password, 
         FROM_UNIXTIME(user_regdate), FROM_UNIXTIME(user_lastvisit), 
@@ -69,9 +82,8 @@ COPY auth_user (id, is_active, username, password, date_joined,
             break
         transform_row_users(row)
 
-    print """\."""  
+    sql_tail = """\.
 
-    print """
     SELECT SETVAL('auth_user_id_seq',(select max(id)+1 from auth_user));
     VACUUM ANALYZE auth_user;
 
@@ -105,11 +117,13 @@ COPY auth_user (id, is_active, username, password, date_joined,
     -- End of phpbb_users
     --
     """
+    out.write(sql_tail)
 
 
 
 def main():
-    curs = get_mysql_cursor()
+    conn = MySQLdb.connect(**MYSQL_CONNECT)
+    curs = conn.cursor(DEFAULT_CURSORCLASS)
     migrate_users(curs)
 
 if __name__ == '__main__':

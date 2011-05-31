@@ -105,7 +105,7 @@ class GaiaWrapper:
         query_point = str(query_point)
         size = self.original_dataset.size()
         if (size < SIMILARITY_MINIMUM_POINTS):
-            raise Exception('Not enough datapoints in the dataset (%s < %s).' (size, SIMILARITY_MINIMUM_POINTS))
+            raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
         if not preset_name in self.presets:
             raise Exception('Invalid preset %s' % preset_name)
         if query_point.endswith('.yaml'):

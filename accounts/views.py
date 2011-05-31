@@ -40,38 +40,21 @@ from django.core.cache import cache
 audio_logger = logging.getLogger('audioprocessing')
 
 @login_required
-def bulk_license_change(request, username):
+def bulk_license_change(request):
     if request.method == 'POST':
         form = NewLicenseForm(request.POST)
         if form.is_valid():
             license = form.cleaned_data['license']
-            request.session['describe_license'] = license
-            try:
-                user = User.objects.get(username__iexact=username)
-                # FIXME: why public? it's like this in other places...
-                qs_sounds = Sound.public.filter(user=user)
-                # change license for all public sounds
-                for sound in qs_sounds:
-                    sound.license = license
-                    sound.save()
-                
-                # update old license flag
-                profile = Profile.objects.get(user=user)
-                profile.has_old_license = False
-                profile.save()
-                
-                # update cache
-                cache_key = "has-old-license-%s" % user.id
-                cache.set(cache_key, False, 2592000)
-            except User.DoesNotExist:   # TODO: double check this exception
-                logger.log("User: " + user.id + " not found! Bulk license change failed!!!")
-                raise Http404
-                
+            Sound.objects.filter(user=request.user).update(license=license)
+            # update old license flag
+            Profile.objects.filter(user=request.user).update(has_old_license=False)
+            # update cache
+            cache.set("has-old-license-%s" % request.user.id, False, 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = NewLicenseForm()
     return render_to_response('accounts/choose_new_license.html', locals(), context_instance=RequestContext(request))
-        
+
 
 def activate_user(request, activation_key):
     if request.user.is_authenticated():

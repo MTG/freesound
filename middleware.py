@@ -14,7 +14,7 @@ class PermissionDeniedHandler:
         if isinstance(exception, PermissionDenied):
             return render_to_response('permissiondenied.html')
         return None
-    
+
 class BulkChangeLicenseHandler:
     def process_request(self, request):
         # check for authentication,
@@ -26,16 +26,16 @@ class BulkChangeLicenseHandler:
             and not 'bulklicensechange' in request.get_full_path() \
             and not 'logout' in request.get_full_path() \
             and not request.get_full_path().startswith(settings.MEDIA_URL):
-            
+
             user = request.user
             cache_key = "has-old-license-%s" % user.id
             has_old_license = cache.get(cache_key)
-            
+
             if has_old_license == None:
                 has_old_license = user.profile.has_old_license
                 cache.set(cache_key, has_old_license, 2592000) # 30 days cache
 
             if has_old_license:
-                return HttpResponseRedirect(reverse("bulk-license-change", args=[request.user.username]))
-              
+                return HttpResponseRedirect(reverse("bulk-license-change"))
+
         return None

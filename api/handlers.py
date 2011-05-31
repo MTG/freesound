@@ -422,7 +422,7 @@ class SoundServeHandler(BaseHandler):
             resp = 'There is no sound with id %s' % sound_id
             return resp
         
-        Download.objects.get_or_create(user=request.user, sound=sound)
+        Download.objects.get_or_create(user=request.user, sound=sound, interface='A')
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 class SoundAnalysisHandler(BaseHandler):

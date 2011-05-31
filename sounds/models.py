@@ -263,13 +263,13 @@ class Sound(SocialModel):
 
     def process(self, force=False):
         if force or self.processing_state != "OK":
-            sound.processing_date = datetime.datetime.now()
-            sound.processing_state = "QU"
-            gm_client.submit_job("process_sound", str(sound.id), wait_until_complete=False, background=True)
+            self.processing_date = datetime.datetime.now()
+            self.processing_state = "QU"
+            gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
         if force or self.analysis_state != "OK":
-            sound.analysis_state = "QU"
-            gm_client.submit_job("analyze_sound", str(sound.id), wait_until_complete=False, background=True)
-        sound.save()
+            self.analysis_state = "QU"
+            gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
+        self.save()
 
     def mark_index_dirty(self):
         self.is_index_dirty = True

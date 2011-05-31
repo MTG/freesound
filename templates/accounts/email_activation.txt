@@ -16,8 +16,9 @@ Thank you for signing up at Freesound.org!
 
      To all API hackers: API keys for accounts that existed in Freesound 1 will
      be backported. API keys for accounts created in Freesound 2 will be lost in the
-     final release. We will however give you a heads up when this will happen
-     so you can prepare changing the API key in your application.
+     final release. We will however give you a heads up  through the mailing list or
+     by email when this will happen so you can prepare changing the API key in your
+     application.
 ***************************************************************************************
 
 In order to activate your Freesound account, please click this link:

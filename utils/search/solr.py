@@ -33,7 +33,7 @@ from xml.etree import cElementTree as ET
 import itertools, re, urllib
 import httplib, urlparse
 import cjson
-
+from socket import error
 class Multidict(dict):
     """A dictionary that represents a query string. If values in the dics are tuples, they are expanded.
     None values are skipped and all values are utf-encoded. We need this because in solr, we can have multiple
@@ -424,7 +424,10 @@ class Solr(object):
 
     def add(self, docs):
         encoded_docs = self.encoder.encode(docs)
-        self._request(message=encoded_docs)
+        try:
+            self._request(message=encoded_docs)
+        except error, e:
+            raise SolrException, e
         if self.auto_commit:
             self.commit()
 

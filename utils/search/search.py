@@ -64,26 +64,30 @@ def add_sound_to_solr(sound):
 def add_sounds_to_solr(sounds):
     logger.info("adding multiple sounds to solr index")
     solr = Solr(settings.SOLR_URL)
-
-    try:
-        logger.info("creating XML")
-        documents = map(convert_to_solr_document, sounds)
-        logger.info("posting to Solr")
-        solr.add(documents)
-    except SolrException, e:
-        logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
+    
+    
+    logger.info("creating XML")
+    documents = map(convert_to_solr_document, sounds)
+    logger.info("posting to Solr")
+    solr.add(documents)    
 
     logger.info("optimizing solr index")
     solr.optimize()
     logger.info("done")
 
 
-def add_all_sounds_to_solr(sound_queryset, slice_size=4000):
+def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=False):
     # Pass in a queryset to avoid needing a reference to
     # the Sound class, it causes circular imports.
     num_sounds = sound_queryset.count()
     for i in range(0, num_sounds, slice_size):
-        add_sounds_to_solr(sound_queryset[i:i+slice_size])
+        try:
+            add_sounds_to_solr(sound_queryset[i:i+slice_size])
+            if mark_index_clean:
+                map(set_index_clean, sound_queryset[i:i+slice_size])
+        except SolrException, e:
+            logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
+                
 
 def delete_sound_from_solr(sound):
     logger.info("deleting sound with id %d" % sound.id)
@@ -91,3 +95,7 @@ def delete_sound_from_solr(sound):
         Solr(settings.SOLR_URL).delete_by_id(sound.id)
     except Exception, e:
         logger.error('could not delete sound with id %s (%s).' % (sound.id, e))
+
+def set_index_clean(sound):
+    sound.is_index_dirty = False
+    sound.save()

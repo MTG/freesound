@@ -70,8 +70,7 @@ def ticket(request, ticket_key):
                     if ticket.content:
                         ticket.content.content_object.moderation_state = sound_state
                         if sound_state == "OK":
-                            ticket.content.content_object.add_to_search_index()
-
+                            ticket.content.content_object.mark_index_clemark_index_dirty
                         ticket.content.content_object.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
                     tc = TicketComment(sender=ticket.assignee,
@@ -248,7 +247,7 @@ def moderation_assigned(request, user_id):
                 ticket.content.content_object.moderation_state="OK"
                 ticket.content.content_object.save()
                 ticket.save()
-                ticket.content.content_object.add_to_search_index()
+                ticket.content.content_object.mark_index_dirty()
                 if msg:
                     ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED_BUT)
                 else:
@@ -285,7 +284,7 @@ def moderation_assigned(request, user_id):
                     if pending_ticket.content:
                         pending_ticket.content.content_object.moderation_state = "OK"
                         pending_ticket.content.content_object.save()
-                        pending_ticket.content.content_object.add_to_search_index()
+                        pending_ticket.content.content_object.mark_index_dirty()
                     # This could be done with a single update, but there's a chance
                     # we lose a sound that way (a newly created ticket who's sound
                     # is not set to OK, but the ticket is closed).

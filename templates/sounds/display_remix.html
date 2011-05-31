@@ -55,20 +55,6 @@ function clearBackgrounds() {
 		$("#"+data.nodes[i].id+"").animate({backgroundColor: "#ffffff"});
 	}
 }
-// FIXME: find the correct algorithm
-function calculateArcAngle(d, p) {
-	var ecc = 0;
-	var factor = 0.1;
-	console.debug(p.sourceNode.y);
-	console.debug(p.targetNode.y);
-	if (data.length > 3) {
-		for (var i=3; i<data.length; i++) {
-			ecc += factor;
-			factor = factor / 2;
-		}
-	}
-	return 0;
-}
     	</script>
   	</div>
 </div>  	

@@ -60,15 +60,12 @@ def display_remix(context, sound, sounds):
                                     }) }    
  
 # Calculate eccentricity so the arcs don't get clipped
-# This is an approximation since the correct formula to find the eccentricity
-# doesn't seem to give the right diagram.    
+# N.B. this is not the canonical way to calculate eccentricity but protovis uses this formula  
 def __calculateEccentricity(sounds_length):
-    print(sounds_length)
-    ecc = 0
-    factor = 0.12
+    eccentricity = 0
     if sounds_length > 3:
-        print("in")
-        for i in range(3,sounds_length,2):
-            ecc += factor
-            
-    return ecc
+        a = (sounds_length-2) * 80
+        b = 200
+        eccentricity = (1 - b/a) * (1 - b/a)
+    
+    return eccentricity

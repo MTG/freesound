@@ -23,7 +23,10 @@
     {% else %}
         random sound is none
     {% endif %}
-
+<h2>Pick a random sound</h2>
+<div id="random_sound">
+	<a id="random_sound_button" href="{% url sounds-random %}">Give me a random sound!</a>
+</div>
 <h2>Latest sounds</h2>
 <div class="sound_list_normal">
 {% for latest_addition in latest_sounds %}

@@ -8,6 +8,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         sound_qs = Sound.objects.select_related("pack", "user", "license") \
-                                .filter(is_index_dirty=True, moderation_state='OK', processing_state='OK')
-        
+                                .filter(is_index_dirty=True,
+                                        moderation_state='OK',
+                                        processing_state='OK')
+
         add_all_sounds_to_solr(sound_qs, mark_index_clean=True)

@@ -53,7 +53,7 @@ def get_random_uploader():
 
 def sounds(request):
     n_weeks_back = 1
-    latest_sounds = Sound.objects.latest_additions(5, '1 mark_index_dirty')
+    latest_sounds = Sound.objects.latest_additions(5, '%s weeks' % n_weeks_back)
     latest_packs = Pack.objects.annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
 
     # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]

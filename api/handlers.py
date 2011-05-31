@@ -16,19 +16,6 @@ import yaml
 
 logger = logging.getLogger("api")
 
-'''
-N.B.:
-- #x# and %x% aliases are defined in the Freesound API v1 google doc.
-- curl examples do not include authentication
-
-TODO:
-- check serving of files
-
-LATER:
-- throttling
-- download updates
-'''
-
 # UTILITY FUNCTIONS
 
 def prepend_base(rel):
@@ -80,8 +67,7 @@ def get_sound_links(sound):
         'waveform_l': prepend_base(sound.locations("display.wave.L.url")),
         'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
         'spectral_l': prepend_base(sound.locations("display.spectral.L.url")),
-        'analysis_stats': get_sound_api_analysis_url(sound.id), 
-        #prepend_base(sound.locations("analysis.statistics.url")),
+        'analysis_stats': get_sound_api_analysis_url(sound.id),
         'analysis_frames': prepend_base(sound.locations("analysis.frames.url"))
          }
     if sound.pack_id:
@@ -182,8 +168,8 @@ def prepare_single_sound_analysis(sound,request,filter):
         analysis['highlevel']['moods']['m'] = \
             analysis['highlevel']['mood']
         del analysis['highlevel']['mood']
-    
-            
+
+
     except Exception, e:
         raise e
         raise Exception('Could not load analysis data.')
@@ -192,7 +178,7 @@ def prepare_single_sound_analysis(sound,request,filter):
     print request.GET
     if not ('all' in request.GET and request.GET['all'] in ['1', 'true', 'True']):
         analysis = level_filter(analysis, RECOMMENDED_DESCRIPTORS)
-  
+
     if filter:
         filters = filter.split('/')
         filters = [str(x) for x in filters if x != u'']
@@ -207,8 +193,8 @@ def prepare_single_sound_analysis(sound,request,filter):
                 resp.status_code = 400
                 resp.content = "Invalid Request: Could not find this path in the analysis data."
                 return resp
-                
-  
+
+
     return analysis
 
 
@@ -421,7 +407,7 @@ class SoundServeHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp = 'There is no sound with id %s' % sound_id
             return resp
-        
+
         Download.objects.get_or_create(user=request.user, sound=sound)
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
@@ -436,7 +422,7 @@ class SoundAnalysisHandler(BaseHandler):
     output:         #single_sound_analysis#
     curl:           curl http://www.freesound.org/api/sounds/2/analysis
     '''
-    
+
     def read(self, request, sound_id, filter=False):
 
         try:
@@ -445,7 +431,7 @@ class SoundAnalysisHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no sound with id %s or analysis is not ready' % sound_id
             return resp
-        
+
         result = prepare_single_sound_analysis(sound,request,filter)
 
         # Add request id to the result (in case user has specified one)
@@ -475,9 +461,9 @@ class SoundAnalysisHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no sound with id %s or analysis is not ready' % sound_id
             return resp
-        
+
         return sendfile(sound.locations('analysis.frames.path'), sound.friendly_filename().split('.')[0] + '.json', sound.locations("sendfile_url").split('.')[0] + '.json')
-'''        
+'''
 
 class UserHandler(BaseHandler):
     '''

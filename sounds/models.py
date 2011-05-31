@@ -410,17 +410,17 @@ class Flag(models.Model):
 
 
 class Download(models.Model):
-    # download interface
-    DOWNLOAD_INTERFACE_CHOICES = (
-        ("W",_('Web')),
-        ("A",_('API')),
-    )
+    # download interface (UNUSED)
+    #DOWNLOAD_INTERFACE_CHOICES = (
+    #    ("W",_('Web')),
+    #    ("A",_('API')),
+    #)
     
     user = models.ForeignKey(User)
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
     pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    interface = models.CharField(db_index=True, max_length=1, choices=DOWNLOAD_INTERFACE_CHOICES, default="W")
+    #interface = models.CharField(db_index=True, max_length=1, choices=DOWNLOAD_INTERFACE_CHOICES, default="W")
     
     class Meta:
         unique_together = ('user', 'sound', 'pack')

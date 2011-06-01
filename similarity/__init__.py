@@ -18,3 +18,5 @@ logger.addHandler(handler)
 
 std_handler.setFormatter(formatter)
 logger.addHandler(std_handler)
+
+print logger

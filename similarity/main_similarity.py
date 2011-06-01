@@ -43,7 +43,6 @@ class SimilarityService():
         logger.info('Starting LRU device')
         self.lru_device(clients, workers)
 
-        '''
         def cleanup(*args):
             raise KeyboardInterrupt()
         for s in [signal.SIGQUIT, signal.SIGINT, signal.SIGTERM]:
@@ -54,15 +53,15 @@ class SimilarityService():
             while True:
                 for x in xrange(self.num_threads):
                     if not self.threads[x].isAlive():
-                        logger.warn('A thread ended.')
+                        logger.error('Thread %s is not alive, restarting.' % x)
                         self.threads[x] = self.threading_class(x, context, logger)
                         self.threads[x].start()
                 time.sleep(3)
         except KeyboardInterrupt:
-            logger.info('Shutting down')
+            logger.info('Shutting down.')
             self.stop()
+            logger.info('Waiting for threads to stop.')
             self.wait_till_done()
-        '''
 
     def lru_device(self, xrep_clients, xrep_workers):
         worker_queue = Queue.Queue()
@@ -99,5 +98,7 @@ class SimilarityService():
 
 if __name__ == '__main__':
     service = SimilarityService()
+    logger.info('Starting service.')
     service.start()
+    logger.info('Service stopped.')
 

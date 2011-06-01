@@ -19,7 +19,7 @@ class Command(NoArgsCommand):
                os.path.exists(sound.locations('analysis.statistics.path')) and \
                os.path.exists(sound.locations('display.spectral.L.path')):
                 sound.processing_state = 'OK'
-                sound.num_comments = sound.comments.count()
+                #sound.num_comments = sound.comments.count() # already implemented in nightingale_sql_setup.sql
                 sound.save()
             counter += 1
             if counter % 1000 == 0:

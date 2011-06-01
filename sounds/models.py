@@ -10,7 +10,7 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random
+import os, logging, random, datetime, gearman
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 
@@ -214,11 +214,11 @@ class Sound(SocialModel):
             analysis = dict(
                 statistics = dict(
                     path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%d_%d_statistics.yaml" % (self.id, self.user.id)
+                    url = settings.ANALYSIS_URL + "%s/%d_%d_statistics.yaml" % (id_folder, self.id, self.user.id)
                 ),
                 frames = dict(
                     path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%d_%d_frames.json" % (self.id, self.user.id)
+                    url = settings.ANALYSIS_URL + "%s/%d_%d_frames.json" % (id_folder, self.id, self.user.id)
                 )
             )
         )
@@ -262,19 +262,20 @@ class Sound(SocialModel):
         return int(self.avg_rating*10)
 
     def process(self, force=False):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
-            sound.processing_date = datetime.now()
-            sound.processing_state = "QU"
-            gm_client.submit_job("process_sound", str(sound.id), wait_until_complete=False, background=True)
+            self.processing_date = datetime.datetime.now()
+            self.processing_state = "QU"
+            gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
         if force or self.analysis_state != "OK":
-            sound.analysis_state = "QU"
-            gm_client.submit_job("analyze_sound", str(sound.id), wait_until_complete=False, background=True)
-        sound.save()
+            self.analysis_state = "QU"
+            gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
+        self.save()
 
     def mark_index_dirty(self):
         self.is_index_dirty = True
         self.save()
-          
+
 
     @models.permalink
     def get_absolute_url(self):

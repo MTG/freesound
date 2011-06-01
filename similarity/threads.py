@@ -6,12 +6,12 @@ from logger import logger
 class SimilarityThread(threading.Thread):
 
     def __init__(self, id, ctx):
+        logger.debug('Starting thread %s' % id)
         threading.Thread.__init__(self)
         self.id = id
         # set up zmq queue connection
         self.ctx = ctx
         self.__stop = False
-        self.logger = logger
         self.return_address = []
 
 
@@ -44,7 +44,7 @@ class SimilarityThread(threading.Thread):
             sound_id = msg.get('sound_id', False)
             preset = msg.get('preset', False)
             results = msg.get('num_results', 10)
-            if not point or not preset:
+            if not sound_id or not preset:
                 raise Exception("You should specify at least a sound_id and a preset.")
             res = indexer.search(str(sound_id), results, str(preset))
             self.reply(res)
@@ -56,14 +56,14 @@ class SimilarityThread(threading.Thread):
                 raise Exception('The sound_id and yaml parameters should both be present.')
             if not os.path.exists(yaml):
                 raise Exception('The yaml path specified appears to not exist (%s).' % yaml)
-            indexer.add_point(str(yaml), str(sound_id))
+            indexer.add(str(yaml), str(sound_id))
             self.empty_reply()
 
         elif msg['type'] == 'DeleteSound':
             sound_id = msg.get('sound_id', False)
             if not sound_id:
                 raise Exception('The sound_id should be specified.')
-            indexer.delete_point(str(sound_id))
+            indexer.delete(str(sound_id))
             self.empty_reply()
 
         return
@@ -81,7 +81,6 @@ class SimilarityThread(threading.Thread):
 
                 while not self.__stop:
                     self.REPLIED = False
-                    #self.logger.debug('Thread %s waiting for message.' % self.id)
 
                     while True:
                         socks = dict(self.poller.poll(1000))
@@ -101,16 +100,16 @@ class SimilarityThread(threading.Thread):
                         self.handle_message(msg)
                         if not self.REPLIED:
                             warning = 'Thread %s: Nothing was replied, the message was not handled.' % self.id
-                            self.logger.warn(warning)
+                            logger.warn(warning)
                             raise Exception("This message wasn't understood: \n\t%s" % msg_received)
                     except Exception, e:
-                        self.logger.error('Thread %s: caught Exception: %s\n%s' % (self.id, str(e), traceback.format_exc()))
+                        logger.error('Thread %s: caught Exception: %s\n%s' % (self.id, str(e), traceback.format_exc()))
                         self.reply_exception(e)
 
             except AssertionError, e:
-                self.logger.error('Could not assert right socket state, creating new socket.')
+                logger.error('Could not assert right socket state, creating new socket.')
             except zmq.ZMQError, e:
-                self.logger.error('Could not send or receive message, creating new socket.')
+                logger.error('Could not send or receive message, creating new socket.')
             finally:
                 self.poller.unregister(self.socket)
                 self.socket.close()

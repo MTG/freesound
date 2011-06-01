@@ -65,6 +65,7 @@ class GaiaWrapper:
 
 
     def __build_preset_dataset_and_save(self, preset_name):
+        logger.debug('Building the preset dataset and saving.')
         ds_path = self.__get_dataset_path(preset_name)
         self.preset_dataset_paths[preset_name] = ds_path
         ds = self.__build_preset_dataset(preset_name)
@@ -74,7 +75,7 @@ class GaiaWrapper:
 
 
     def __prepare_original_dataset(self):
-        # transform the original dataset!
+        logger.debug('Transforming the original dataset.')
         proc_ds1  = transform(self.original_dataset, 'RemoveVL')
         proc_ds2  = transform(proc_ds1,  'FixLength')
         self.original_dataset = transform(proc_ds2, 'Cleaner')
@@ -104,7 +105,7 @@ class GaiaWrapper:
         query_point = str(query_point)
         size = self.original_dataset.size()
         if (size < SIMILARITY_MINIMUM_POINTS):
-            raise Exception('Not enough datapoints in the dataset (%s < %s).' (size, SIMILARITY_MINIMUM_POINTS))
+            raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
         if not preset_name in self.presets:
             raise Exception('Invalid preset %s' % preset_name)
         if query_point.endswith('.yaml'):
@@ -145,6 +146,7 @@ class GaiaWrapper:
 
 
     def __build_preset_dataset(self, preset_name):
+        logger.debug('Building preset dataset %s.' % preset_name)
         preset = self.presets[preset_name]
         filter = preset['filter']
         filter_ds = transform(self.original_dataset, filter['type'], filter['parameters'])
@@ -159,6 +161,7 @@ class GaiaWrapper:
 
 
     def __build_view(self, preset_ds, preset_name):
+        logger.debug('Bulding view for preset %s' % preset_name)
         preset = self.presets[preset_name]
         distance = preset['distance']
         search_metric = DistanceFunctionFactory.create(distance['type'],

@@ -40,19 +40,19 @@ class Messenger():
         # sending
         try:
             # relying on correct behaviour of zeromq's poll here, needs zeromq 2.1.6
-            socks = dict(poller.poll(1000)) # this shouldn't time out!
+            socks = dict(poller.poll(timeout*1000)) # this shouldn't time out!
             assert socks.has_key(s)
             assert socks[s] == zmq.POLLOUT
             s.send(json.dumps(data))
             # receiving
             try:
-                socks = dict(poller.poll(timeout*60))
+                socks = dict(poller.poll(timeout*1000))
                 assert socks.has_key(s)
                 assert socks[s] == zmq.POLLIN
                 msg = s.recv()
             except AssertionError, e:
                 s.close()
-                error = 'Could not receive response from %s.' % address
+                error = 'Could not receive response from %s (%s).' % (address, str(e))
                 raise Exception(error)
         except AssertionError, e:
             s.close()

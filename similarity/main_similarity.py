@@ -1,10 +1,14 @@
 import time, os, subprocess, signal, uuid, traceback, zmq, Queue, logging
 from settings import REQREP_ADDRESS, NUM_THREADS, LOGFILE
 from threads import SimilarityThread
-from gaia_indexer import GaiaIndexer
+#from gaia_indexer import GaiaIndexer
 from logging.handlers import RotatingFileHandler
 
 logger = logging.getLogger('similarity')
+
+
+class InterruptedException(Exception):
+    pass
 
 class SimilarityService():
 
@@ -12,12 +16,19 @@ class SimilarityService():
         logger.info('Initializing similarity service')
         self.num_threads = NUM_THREADS
         self.reqrep_address = REQREP_ADDRESS
+        self.__stop = False
 
     def stop(self):
+        logger.info('Stopping service.')
+        self.__stop = True
+
+    def stop_threads(self):
+        logger.info('Stopping threads.')
         for x in xrange(self.num_threads):
             self.threads[x].stop()
 
     def wait_till_done(self):
+        logger.info('Waiting till threads are done.')
         for x in xrange(self.num_threads):
             self.threads[x].join()
 
@@ -41,33 +52,24 @@ class SimilarityService():
             self.threads.append(thread)
             thread.start()
 
-        logger.info('Starting LRU device')
-        self.lru_device(clients, workers)
-
         def cleanup(*args):
-            raise KeyboardInterrupt()
+            logger.warning('Caught interrupt!')
+            self.stop()
+
         for s in [signal.SIGQUIT,
                   signal.SIGINT,
                   signal.SIGTERM,
                   signal.SIGABRT,
-                  signal.SIGHUP,
-                  signal.CTRL_C_EVENT]:
+                  signal.SIGHUP]:
             signal.signal(s, cleanup)
 
-        # check if threads are alive
-        try:
-            while True:
-                for x in xrange(self.num_threads):
-                    if not self.threads[x].isAlive():
-                        logger.error('Thread %s is not alive, restarting.' % x)
-                        self.threads[x] = self.threading_class(x, context, logger)
-                        self.threads[x].start()
-                time.sleep(3)
-        except KeyboardInterrupt, SystemExit:
-            logger.info('Shutting down.')
-            self.stop()
-            logger.info('Waiting for threads to stop.')
-            self.wait_till_done()
+
+        logger.info('Starting LRU device')
+        self.lru_device(clients, workers)
+        self.stop_threads()
+        self.wait_till_done()
+        logger.info('Shutting down.')
+        logger.info('Waiting for threads to stop.')
 
     def lru_device(self, xrep_clients, xrep_workers):
         worker_queue = Queue.Queue()
@@ -77,12 +79,25 @@ class SimilarityService():
         poller.register(xrep_workers, zmq.POLLIN)
 
         logger.info('Starting LRU loop')
-        while True:
-            socks = dict(poller.poll())
+        while not self.__stop:
+            print 'outer loop'
+
+            try:
+                while not self.__stop:
+                    print 'polling'
+                    socks = dict(poller.poll(1000))
+                    if len(socks.keys()) > 0:
+                        break
+                    else:
+                        continue
+            except zmq.ZMQError:
+                self.stop()
+
+            if self.__stop:
+                break
 
             # handle worker activity on the backend
-            if socks.has_key(xrep_workers) \
-               and socks[xrep_workers] == zmq.POLLIN:
+            if socks.has_key(xrep_workers) and socks[xrep_workers] == zmq.POLLIN:
                 msg = xrep_workers.recv_multipart()
                 # add the worker address to the queue
                 worker_queue.put(msg[0])

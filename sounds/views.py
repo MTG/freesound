@@ -34,6 +34,7 @@ from utils.nginxsendfile import sendfile
 import datetime, os, time
 from sounds.templatetags import display_sound
 from django.db.models import Q
+from similarity.client import Similarity
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -303,8 +304,23 @@ def geotag(request, username, sound_id):
 
 
 def similar(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    pass
+    sound = get_object_or_404(Sound, user__username__iexact=username,
+                              id=sound_id,
+                              moderation_state="OK",
+                              processing_state="OK",
+                              similarity_state="OK")
+    cache_key = "similar-for-sound-%s" % sound.id
+    similar_sounds = cache.get(cache_key)
+    if not similar_sounds:
+        try:
+            similar_sounds = Similarity.search(sound.id, 'timbre', SOUNDS_PER_PAGE)
+            similar_found_p = True
+        except:
+            similar_sounds = []
+            similar_found_p = False
+        if similar_found_p:
+            cache.set(cache_key, similar_sounds, 60*60*24)
+    return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 
 def pack(request, username, pack_id):

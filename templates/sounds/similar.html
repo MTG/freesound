@@ -1,0 +1,17 @@
+{% extends "sounds/_section.html" %}
+
+{% load display_sound %}
+{% load paginator %}
+
+{% block title %}Sounds browse{% endblock title %}
+
+{% block section_content %}
+<h1>Similar sounds</h1>
+
+{% for sound in similar_sounds %}
+    {% display_sound sound.id %}
+{% empty %}
+    <p>Could not find similar sounds.
+{% endfor %}
+
+{% endblock %}

@@ -2,8 +2,8 @@ import time, os, subprocess, signal, uuid, traceback, zmq, Queue
 from settings import REQREP_ADDRESS, NUM_THREADS
 from threads import SimilarityThread
 from gaia_indexer import GaiaIndexer
-from logger import logger
 
+logger = logging.getLogger('similarity')
 
 class SimilarityService():
 

@@ -4,7 +4,8 @@ from threading import Lock
 from shared_lock import SharedLock
 import time, os, json
 from settings import PRESETS
-from logger import logger
+
+logger = logging.getLogger('similarity')
 
 UPDATE_TIMEOUT = 20
 READ_TIMEOUT   = 10

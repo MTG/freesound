@@ -1,7 +1,7 @@
 import threading, zmq, traceback, time, os, json
 from global_indexer import indexer
-from logger import logger
 
+logger = logging.getLogger('similarity')
 
 class SimilarityThread(threading.Thread):
 

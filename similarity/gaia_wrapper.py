@@ -1,8 +1,8 @@
 import os, yaml, shutil
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
 from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, PRESET_DIR, PRESETS
-from logger import logger
 
+logger = logging.getLogger('similarity')
 
 class GaiaWrapper:
     '''

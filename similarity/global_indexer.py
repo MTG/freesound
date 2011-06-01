@@ -1,6 +1,6 @@
 from gaia_indexer import GaiaIndexer
-from logger import logger
 
+logger = logging.getLogger('similarity')
 
 global indexer
 try:

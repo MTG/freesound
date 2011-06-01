@@ -80,11 +80,9 @@ class SimilarityService():
 
         logger.info('Starting LRU loop')
         while not self.__stop:
-            print 'outer loop'
 
             try:
                 while not self.__stop:
-                    print 'polling'
                     socks = dict(poller.poll(1000))
                     if len(socks.keys()) > 0:
                         break

@@ -9,7 +9,13 @@ handler     = RotatingFileHandler(LOGFILE,
                                   backupCount=5)
 handler.setLevel(LOGFILE_LEVEL)
 
+std_handler = logging.StreamHandler()
+std_handler.setLevel(LOGFILE_LEVEL)
+
 formatter   = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+std_handler.setFormatter(formatter)
+logger.addHandler(std_handler)

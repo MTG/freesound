@@ -310,7 +310,7 @@ def similar(request, username, sound_id):
                               processing_state="OK",
                               similarity_state="OK")
     cache_key = "similar-for-sound-%s" % sound.id
-    similar_sounds = cache.get(cache_key)
+    similar_sounds = False #cache.get(cache_key)
     if not similar_sounds:
         try:
             similar_sounds = [x[0] for x in Similarity.search(sound.id, 'timbre', SOUNDS_PER_PAGE)]

@@ -344,9 +344,14 @@ class SoundSearchHandler(BaseHandler):
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_API_RESPONSE)
             page = paginator.page(form.cleaned_data['p'])
-            sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) \
-                      for object in page['object_list']]
-            result = {'sounds': sounds, 'num_results': paginator.count, 'num_pages': paginator.num_pages}
+            sounds = []
+            bad_results = 0
+            for object in page['object_list'] :
+                try: 
+                    sounds.append( prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) )    
+                except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
+                    pass
+            result = {'sounds': sounds, 'num_results': paginator.count - bad_results, 'num_pages': paginator.num_pages}
 
             # construct previous and next urls
             if page['has_other_pages']:

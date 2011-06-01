@@ -1,7 +1,8 @@
 import time, os, subprocess, signal, uuid, traceback, zmq, Queue, logging
-from settings import REQREP_ADDRESS, NUM_THREADS
+from settings import REQREP_ADDRESS, NUM_THREADS, LOGFILE
 from threads import SimilarityThread
 from gaia_indexer import GaiaIndexer
+from logging.handlers import RotatingFileHandler
 
 logger = logging.getLogger('similarity')
 
@@ -97,9 +98,20 @@ class SimilarityService():
 
 
 if __name__ == '__main__':
-    print 'logger settings:'
-    for x in [logger.getEffectiveLevel(), logger.handlers]:
-        print '\t%s' % x
+    # set up logging
+    logger      = logging.getLogger('similarity')
+    handler     = RotatingFileHandler(LOGFILE,
+                                      maxBytes=2*1024*1024,
+                                      backupCount=5)
+    handler.setLevel(logging.DEBUG)
+    std_handler = logging.StreamHandler()
+    std_handler.setLevel(logging.DEBUG)
+    formatter   = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    std_handler.setFormatter(formatter)
+    logger.addHandler(std_handler)
+
     service = SimilarityService()
     logger.info('Starting service.')
     service.start()

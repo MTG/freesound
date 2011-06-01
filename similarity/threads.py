@@ -79,15 +79,18 @@ class SimilarityThread(threading.Thread):
                 self.poller = zmq.Poller()
                 self.poller.register(self.socket, zmq.POLLIN)
 
-                while not self.__stop:
+                while True:
                     self.REPLIED = False
 
-                    while True:
+                    while not self.__stop:
                         socks = dict(self.poller.poll(1000))
                         if len(socks.keys()) > 0:
                             break
                         else:
                             continue
+
+                    if self.__stop:
+                        return
 
                     assert(socks[self.socket] == zmq.POLLIN)
 

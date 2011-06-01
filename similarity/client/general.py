@@ -73,5 +73,5 @@ global messenger
 try:
     print messenger
 except:
-    messenger = 'This should never be printed!'
+    messenger = 'This should never be printed.'
     messenger = Messenger()

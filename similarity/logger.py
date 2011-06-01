@@ -6,7 +6,7 @@ except NameError:
     from logging.handlers import RotatingFileHandler
     from settings import LOGFILE
     #logger      = logging.getLogger('similarity')
-    logger      = multiprocessing.get_logger('similarity')
+    logger      = multiprocessing.get_logger()
 
     handler     = RotatingFileHandler(LOGFILE,
                                       maxBytes=2*1024*1024,

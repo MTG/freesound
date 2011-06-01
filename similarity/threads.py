@@ -105,13 +105,9 @@ class SimilarityThread(threading.Thread):
                             warning = 'Thread %s: Nothing was replied, the message was not handled.' % self.id
                             logger.warn(warning)
                             raise Exception("This message wasn't understood: \n\t%s" % msg_received)
-                    except (KeyboardInterrupt, SystemExit):
-                        raise
                     except Exception, e:
                         logger.error('Thread %s: caught Exception: %s\n%s' % (self.id, str(e), traceback.format_exc()))
                         self.reply_exception(e)
-            except (KeyboardInterrupt, SystemExit):
-                raise
             except AssertionError, e:
                 logger.error('Could not assert right socket state, creating new socket.')
             except zmq.ZMQError, e:

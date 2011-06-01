@@ -46,7 +46,12 @@ class SimilarityService():
 
         def cleanup(*args):
             raise KeyboardInterrupt()
-        for s in [signal.SIGQUIT, signal.SIGINT, signal.SIGTERM]:
+        for s in [signal.SIGQUIT,
+                  signal.SIGINT,
+                  signal.SIGTERM,
+                  signal.SIGABRT,
+                  signal.SIGHUP,
+                  signal.CTRL_C_EVENT]:
             signal.signal(s, cleanup)
 
         # check if threads are alive

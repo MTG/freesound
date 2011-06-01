@@ -52,8 +52,6 @@ class GaiaWrapper:
                     self.__build_view(ds, preset_name)
                     self.preset_datasets[preset_name] = ds
                     self.preset_dataset_paths[preset_name] = ds_path
-                except (KeyboardInterrupt, SystemExit):
-                    raise
                 except:
                     logger.error('Failed to load preset %s, should we reconstruct it?' % preset_name)
                     #self.__build_preset_dataset_and_save(preset_name)

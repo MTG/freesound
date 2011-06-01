@@ -8,7 +8,7 @@ class Messenger():
     initialized = False
 
     @classmethod
-    def call_service(cls, address, data, timeout=60):
+    def call_service(cls, address, data, timeout=3600):
         t = threading.currentThread()
         if t in cls.ctxs:
             tctx = cls.ctxs[t]

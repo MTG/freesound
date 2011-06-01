@@ -1,58 +1,79 @@
-import MySQLdb as my
-import psycopg2
-import codecs
-from text_utils import prepare_for_insert, smart_character_decoding
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Migrate 'posts' from Freesound1 to Freesound2.
+"""
+
 from local_settings import *
+import codecs
+from db_utils import get_user_ids, get_thread_ids
+from text_utils import prepare_for_insert, smart_character_decoding
 
-output_filename = '/tmp/importfile.dat'
-output_file = codecs.open(output_filename, 'wt', 'utf-8')
+OUT_FNAME = 'posts.sql'
 
-my_conn = my.connect(**MYSQL_CONNECT)
-my_curs = my_conn.cursor()
+CHECK_USER_IDS = True
 
-start = 0
-granularity = 1000
-
-check_user_ids = True
-
-if check_user_ids:
-    ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
-    ppsql_cur = ppsql_conn.cursor()
-
-    print "getting all valid user ids"
-    ppsql_cur.execute("SELECT id FROM auth_user")
-    valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
-    print "done"
-
-    print "getting all valid thread ids"
-    ppsql_cur.execute("SELECT id FROM forum_thread")
-    valid_thread_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
-    print "done"
+if CHECK_USER_IDS:
+    VALID_USER_IDS = get_user_ids()
+    VALID_THREAD_IDS = get_thread_ids()
 
 
-while True:
-    print start
-    my_curs.execute("select p.post_id, p.topic_id, p.poster_id, FROM_UNIXTIME(p.post_time), t.post_text from phpbb_posts p inner join phpbb_posts_text t on p.post_id = t.post_id limit %d, %d" % (start, granularity))
-    rows = my_curs.fetchall()
-    start += len(rows)
+def transform_row(row):
+    """Get a row (sequence), transform the values, return a sequence.
+
+    Returns None if the row shouldn't be migrated.
+    """
+
+    post_id, topic_id, poster_id, post_time, post_text = row
     
-    if len(rows) == 0:
-        break
+    if (CHECK_USER_IDS and poster_id not in VALID_USER_IDS) \
+            or (topic_id not in VALID_THREAD_IDS):
+        return
     
-    for row in rows:
-        post_id, topic_id, poster_id, post_time, post_text = row
-        
-        if (check_user_ids and poster_id not in valid_user_ids) or (topic_id not in valid_thread_ids):
-            continue
-        
-        post_text = prepare_for_insert(smart_character_decoding(post_text))
+    post_text = prepare_for_insert(smart_character_decoding(post_text))
 
-        all_vars = [post_id, topic_id, poster_id, post_text, post_time, post_time]
-        
-        output_file.write(u"\t".join(map(unicode, all_vars)) + u"\n")
- 
-print """
-copy forum_post (id, thread_id, author_id, body, created, modified) from '%s' null as 'None';
-select setval('forum_post_id_seq',(select max(id)+1 from forum_post));
-vacuum analyze forum_post;
-""" % output_filename
+    fields = [post_id, topic_id, poster_id, post_text, post_time, post_time]
+    return map(unicode, fields)
+
+
+
+def migrate_table(curs):
+
+    out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
+
+    sql = """copy forum_post (id, thread_id, author_id, body, created, 
+        modified) from stdin null as 'None';
+"""
+    out.write(sql)
+
+    query = """select p.post_id, p.topic_id, p.poster_id, 
+        FROM_UNIXTIME(p.post_time), t.post_text from phpbb_posts p 
+        inner join phpbb_posts_text t on p.post_id = t.post_id l ;
+"""
+    curs.execute(query)
+
+    while True:
+        row = curs.fetchone()
+        if not row:
+            break
+        new_row = transform_row(row)
+        if new_row:
+            out.write(u"\t".join(new_row) + u"\n" )
+
+    sql = """\.
+
+    select setval('forum_post_id_seq',(select max(id)+1 from forum_post));
+    vacuum analyze forum_post;
+    """
+    out.write(sql)
+
+
+
+
+def main():
+    """Run the main code."""
+    conn = MySQLdb.connect(**MYSQL_CONNECT)
+    curs = conn.cursor(DEFAULT_CURSORCLASS)
+    migrate_table(curs)
+
+if __name__ == '__main__':
+    main()

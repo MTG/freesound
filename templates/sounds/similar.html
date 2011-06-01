@@ -8,8 +8,8 @@
 {% block section_content %}
 <h1>Similar sounds</h1>
 
-{% for sound in similar_sounds %}
-    {% display_sound sound.id %}
+{% for sound_id in similar_sounds %}
+    {% display_sound sound_id %}
 {% empty %}
     <p>Could not find similar sounds.
 {% endfor %}

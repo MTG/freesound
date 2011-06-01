@@ -313,7 +313,7 @@ def similar(request, username, sound_id):
     similar_sounds = False #cache.get(cache_key)
     if not similar_sounds:
         try:
-            similar_sounds = [x[0] for x in Similarity.search(sound.id, 'timbre', SOUNDS_PER_PAGE)]
+            similar_sounds = [x[0] for x in Similarity.search(sound.id, 'timbre', settings.SOUNDS_PER_PAGE)]
             similar_found_p = True
         except:
             similar_sounds = []

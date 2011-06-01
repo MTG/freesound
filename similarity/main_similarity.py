@@ -100,6 +100,7 @@ class SimilarityService():
 if __name__ == '__main__':
     # set up logging
     logger      = logging.getLogger('similarity')
+    logger.setLevel(logging.DEBUG)
     handler     = RotatingFileHandler(LOGFILE,
                                       maxBytes=2*1024*1024,
                                       backupCount=5)

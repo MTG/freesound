@@ -97,7 +97,7 @@ class SimilarityService():
 
 
 if __name__ == '__main__':
-    print '?'
+    print '?', logger
     service = SimilarityService()
     logger.info('Starting service.')
     service.start()

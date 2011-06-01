@@ -98,7 +98,7 @@ class SimilarityService():
 
 if __name__ == '__main__':
     print 'logger settings:'
-    for x in [logger.getEffectiveLevel(), logger.handlers()]:
+    for x in [logger.getEffectiveLevel(), logger.handlers]:
         print '\t%s' % x
     service = SimilarityService()
     logger.info('Starting service.')

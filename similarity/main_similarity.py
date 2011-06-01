@@ -58,7 +58,7 @@ class SimilarityService():
                         self.threads[x] = self.threading_class(x, context, logger)
                         self.threads[x].start()
                 time.sleep(3)
-        except KeyboardInterrupt:
+        except KeyboardInterrupt, SystemExit:
             logger.info('Shutting down.')
             self.stop()
             logger.info('Waiting for threads to stop.')

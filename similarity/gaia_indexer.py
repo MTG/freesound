@@ -2,9 +2,10 @@ from __future__ import with_statement
 from gaia_wrapper import *
 from threading import Lock
 from shared_lock import SharedLock
-import time, os, json
+import time, os, json, logging
 from settings import PRESETS
-from logger import logger
+
+logger = logging.getLogger('similarity')
 
 UPDATE_TIMEOUT = 20
 READ_TIMEOUT   = 10
@@ -42,14 +43,14 @@ class GaiaIndexer:
 
 
     def __raise_locked(self):
-        logger.debug('Could not get lock.')
+        logger.error('Could not get lock.')
         raise Exception('The index is currently locked which probably means it is being updated.')
 
 
     def add(self, yaml_path, sound_id):
         logger.debug('Adding point with id %s' % sound_id)
+        self.__acquire_exclusive(UPDATE_TIMEOUT)
         try:
-            self.__acquire_exclusive(UPDATE_TIMEOUT)
             self.index.add_point(yaml_path, sound_id)
         finally:
             self.__release_exclusive()
@@ -57,8 +58,8 @@ class GaiaIndexer:
 
     def delete(self, sound_id):
         logger.debug('Deleting point with id %s' % sound_id)
+        self.__acquire_exclusive(UPDATE_TIMEOUT)
         try:
-            self.__acquire_exclusive(UPDATE_TIMEOUT)
             self.index.delete_point(sound_id)
         finally:
             self.__release_exclusive()
@@ -74,4 +75,4 @@ class GaiaIndexer:
         try:
             return self.index.search_dataset(point, no_of_results, presetkey)
         finally:
-            self.__release_shared(index)
+            self.__release_shared()

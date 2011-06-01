@@ -34,9 +34,26 @@ from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW
 from utils.audioprocessing import get_sound_type
+from django.core.cache import cache
 
 
 audio_logger = logging.getLogger('audioprocessing')
+
+@login_required
+def bulk_license_change(request):
+    if request.method == 'POST':
+        form = NewLicenseForm(request.POST)
+        if form.is_valid():
+            license = form.cleaned_data['license']
+            Sound.objects.filter(user=request.user).update(license=license)
+            # update old license flag
+            Profile.objects.filter(user=request.user).update(has_old_license=False)
+            # update cache
+            cache.set("has-old-license-%s" % request.user.id, False, 2592000)
+            return HttpResponseRedirect(reverse('accounts-home'))
+    else:
+        form = NewLicenseForm()
+    return render_to_response('accounts/choose_new_license.html', locals(), context_instance=RequestContext(request))
 
 
 def activate_user(request, activation_key):

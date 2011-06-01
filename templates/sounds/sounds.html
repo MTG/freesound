@@ -21,9 +21,12 @@
     {% if random_sound != None %}
         {% display_sound random_sound %}
     {% else %}
-        random sound is none
+        <p>Could not pick random sound.
     {% endif %}
-
+<h2>Pick a random sound</h2>
+<div id="random_sound">
+    <p><a id="random_sound_button" href="{% url sounds-random %}">Give me a random sound!</a>
+</div>
 <h2>Latest sounds</h2>
 <div class="sound_list_normal">
 {% for latest_addition in latest_sounds %}
@@ -50,15 +53,21 @@
 <h2>Most downloaded sounds (in the last week)</h2>
 {% for sound in popular_sounds %}
     {% display_sound sound.id %}
-    <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads in the last week</div>
-    {% empty %}
+    <div class="sample_more">
+        <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads
+        in the last week.
+    </div>
+{% empty %}
     <p>No sounds in the database!
 {% endfor %}
 
 <h2>Most downloaded packs (in the last week)</h2>
 <ul>
 {% for pack in popular_packs %}
-    <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_d}}</span> downloads)</li>
+    <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a>
+        by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
+        (<span class="pack_count">{{pack.num_d}}</span> downloads)
+    </li>
 {% empty %}
     <p>No packs in the database!
 {% endfor %}

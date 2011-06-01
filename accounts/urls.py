@@ -16,7 +16,8 @@ urlpatterns = patterns('accounts.views',
     url(r'^resetpassword/sent/$', authviews.password_reset_done, {'template_name':'accounts/password_reset_done.html'}),
     url(r'^resetpassword/confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', authviews.password_reset_confirm, {'template_name':'accounts/password_reset_confirm.html'}),
     url(r'^resetpassword/complete/$', authviews.password_reset_complete, {'template_name':'accounts/password_reset_complete.html'}),
-    
+    url(r'^bulklicensechange/$', accounts.bulk_license_change, name="bulk-license-change"),
+
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
     url(r'^delete/$', accounts.delete, name="accounts-delete"),

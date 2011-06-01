@@ -1,7 +1,7 @@
-import threading, zmq, traceback, time, os, json
+import threading, zmq, traceback, time, os, json, logging
 from global_indexer import indexer
-from logger import logger
 
+logger = logging.getLogger('similarity')
 
 class SimilarityThread(threading.Thread):
 
@@ -79,15 +79,18 @@ class SimilarityThread(threading.Thread):
                 self.poller = zmq.Poller()
                 self.poller.register(self.socket, zmq.POLLIN)
 
-                while not self.__stop:
+                while True:
                     self.REPLIED = False
 
-                    while True:
+                    while not self.__stop:
                         socks = dict(self.poller.poll(1000))
                         if len(socks.keys()) > 0:
                             break
                         else:
                             continue
+
+                    if self.__stop:
+                        return
 
                     assert(socks[self.socket] == zmq.POLLIN)
 
@@ -105,7 +108,6 @@ class SimilarityThread(threading.Thread):
                     except Exception, e:
                         logger.error('Thread %s: caught Exception: %s\n%s' % (self.id, str(e), traceback.format_exc()))
                         self.reply_exception(e)
-
             except AssertionError, e:
                 logger.error('Could not assert right socket state, creating new socket.')
             except zmq.ZMQError, e:

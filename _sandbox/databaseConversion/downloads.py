@@ -98,9 +98,6 @@ def migrate_table(curs):
     select setval('sounds_download_id_seq',(select max(id)+1 
         from sounds_download));
     vacuum analyze sounds_download;
-
-    -- don't forget to execute the queries in nightingale_sql_setup.sql
-    -- don't forget to create the triggers in nightingale_sql_triggers.sql
     """
     out.write(sql)
 

@@ -2,10 +2,11 @@ global logger
 try:
     print logger
 except NameError:
-    import logging
+    import logging, multiprocessing
     from logging.handlers import RotatingFileHandler
     from settings import LOGFILE
-    logger      = logging.getLogger('similarity')
+    #logger      = logging.getLogger('similarity')
+    logger      = multiprocessing.get_logger('similarity')
 
     handler     = RotatingFileHandler(LOGFILE,
                                       maxBytes=2*1024*1024,

@@ -1,4 +1,4 @@
-import threading, zmq, traceback, time, os, json
+import threading, zmq, traceback, time, os, json, logging
 from global_indexer import indexer
 
 logger = logging.getLogger('similarity')

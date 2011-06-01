@@ -2,7 +2,7 @@ from __future__ import with_statement
 from gaia_wrapper import *
 from threading import Lock
 from shared_lock import SharedLock
-import time, os, json
+import time, os, json, logging
 from settings import PRESETS
 
 logger = logging.getLogger('similarity')

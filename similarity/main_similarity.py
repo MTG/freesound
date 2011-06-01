@@ -1,4 +1,4 @@
-import time, os, subprocess, signal, uuid, traceback, zmq, Queue
+import time, os, subprocess, signal, uuid, traceback, zmq, Queue, logging
 from settings import REQREP_ADDRESS, NUM_THREADS
 from threads import SimilarityThread
 from gaia_indexer import GaiaIndexer

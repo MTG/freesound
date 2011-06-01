@@ -1,4 +1,5 @@
 from gaia_indexer import GaiaIndexer
+import logging
 
 logger = logging.getLogger('similarity')
 

@@ -7,9 +7,6 @@ from logging.handlers import RotatingFileHandler
 logger = logging.getLogger('similarity')
 
 
-class InterruptedException(Exception):
-    pass
-
 class SimilarityService():
 
     def __init__(self):

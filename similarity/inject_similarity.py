@@ -36,8 +36,13 @@ def handle_resource(path, name):
     global dataset
     p = gaia2.Point()
     p.load(path)
-    p.setName(name.split('_')[0])
-    dataset.addPoint(p)
+    sound_id = name.split('_')[0]
+    p.setName(sound_id)
+    try:
+        dataset.addPoint(p)
+    except:
+        # TODO: make this update the similarity_state of the database.
+        print 'Could not add sound with id %s' % sound_id
     if dataset.size() == SIMILARITY_MINIMUM_POINTS:
         dataset = GaiaWrapper.prepare_original_dataset_helper(dataset)
 

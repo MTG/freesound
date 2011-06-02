@@ -36,10 +36,10 @@ def walk_func(arg, dirname, names):
 def handle_resource(path, name):
     global dataset
     global bad_sounds
+    sound_id = name.split('_')[0]
     try:
         p = gaia2.Point()
         p.load(path)
-        sound_id = name.split('_')[0]
         p.setName(sound_id)
         dataset.addPoint(p)
     except:
@@ -52,5 +52,5 @@ def handle_resource(path, name):
 
 if __name__ == '__main__':
     prepare_dataset('/home/fsweb/freesound-data/analysis/', os.path.join(INDEX_DIR, 'orig.db'))
-    create_directory()
     gaia_wrapper = GaiaWrapper()
+    print 'Sounds with bad yamls:', ', '.join(bad_sounds)

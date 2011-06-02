@@ -66,9 +66,8 @@ INSTALLED_APPS = (
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
+    # Myles' template directory is here because it allows him to work on tabasco.
+    '/home/mdebastion/templates',
     os.path.join(os.path.dirname(__file__), 'templates'),
 )
 
@@ -101,7 +100,7 @@ ROOT_URLCONF = 'urls'
 AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/home/login/'
 LOGOUT_URL = '/home/logout/'
-LOGIN_REDIRECT_URL = '/home/'  
+LOGIN_REDIRECT_URL = '/home/'
 
 IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf', '/favicon')
 IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', 'similar')

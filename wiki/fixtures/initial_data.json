@@ -1,19 +1,37 @@
 [
     {
-        "pk": 1,
-        "model": "wiki.page",
+        "pk": 1, 
+        "model": "wiki.page", 
         "fields": {
             "name": "blank"
         }
-    },
+    }, 
     {
-        "pk": 1,
-        "model": "wiki.content",
+        "pk": 2, 
+        "model": "wiki.page", 
         "fields": {
-            "body": "# Blank page #\r\n\r\nThis page is blank because it wasn't edited by an administrator yet. If you are an administrator, you can create this page by clicking edit in the upper right corner.",
-            "title": "blank page",
-            "created": "2009-02-16 15:32:23",
-            "page": 1,
+            "name": "developers"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "wiki.content", 
+        "fields": {
+            "body": "#Developers Help Page#\r\n\r\n##Freesound API##\r\n\r\nWith the Freesound API you can browse, search, and retrieve information about Freesound users, packs, and the sounds themselves of course.\r\n\r\nIn order to use the Freesound API you need to be authenticated with an API key. You can manage your existing API keys or apply for a new one in the following url [http://tabasco.upf.edu/api/apply](http://tabasco.upf.edu/api/apply) (Freesound login is required).\r\n\r\nThe API documentation describing offered functionalities and examples can be found here [http://tabasco.upf.edu/docs/api/](http://tabasco.upf.edu/docs/api).\r\n\r\nIf you need more help after reading the documentation or want to stay up to date on any changes or future feaures of the Freesound API or if you would like to request more features for the API, please use our google group: [http://groups.google.com/group/freesound-api](http://groups.google.com/group/freesound-api).\r\n\r\n<center>\r\n\r\n##[Apply](http://tabasco.upf.edu/api/apply)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Docs](http://tabasco.upf.edu/docs/api)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Help](http://groups.google.com/group/freesound-api)##\r\n\r\n</center>\r\n\r\n<br>\r\n##Contribute to the development of Freesound##\r\n\r\nFreesound is an open-source project and we will be very happy to get more people involved in its development! We coordinate using an [Assembla public repository](https://www.assembla.com/spaces/freesound) to host the code, organize the work to do and discuss about specific implementation aspects. Furthermore, we also have a google group to discuss about more general ideas and future directions of Freesound ([http://groups.google.com/group/freesound-dev](http://groups.google.com/group/freesound-dev)). If you want to contribute, don't hesitate to contact us!\r\n", 
+            "title": "developers help page", 
+            "created": "2011-05-31 18:03:36", 
+            "page": 2, 
+            "author": 735175
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "wiki.content", 
+        "fields": {
+            "body": "# Blank page #\r\n\r\nThis page is blank because it wasn't edited by an administrator yet. If you are an administrator, you can create this page by clicking edit in the upper right corner.", 
+            "title": "blank page", 
+            "created": "2009-02-16 15:32:23", 
+            "page": 1, 
             "author": null
         }
     }

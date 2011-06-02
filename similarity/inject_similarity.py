@@ -8,6 +8,7 @@ import os, sys, gaia2
 from settings import INDEX_DIR
 from gaia_wrapper import GaiaWrapper
 
+counter = 0
 
 def prepare_dataset(dir, target):
     dataset = gaia2.DataSet()
@@ -16,7 +17,7 @@ def prepare_dataset(dir, target):
 
 
 def walk_func(dataset, dirname, names):
-    counter = 0
+    global counter
     for name in names:
         path = os.path.join(dirname, name)
         basename, ext = os.path.splitext(name)

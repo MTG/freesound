@@ -10,6 +10,7 @@ from gaia_wrapper import GaiaWrapper
 
 counter = 0
 dataset = False
+bad_sounds = []
 
 def prepare_dataset(dir, target):
     global dataset
@@ -34,15 +35,17 @@ def walk_func(arg, dirname, names):
 
 def handle_resource(path, name):
     global dataset
-    p = gaia2.Point()
-    p.load(path)
-    sound_id = name.split('_')[0]
-    p.setName(sound_id)
+    global bad_sounds
     try:
+        p = gaia2.Point()
+        p.load(path)
+        sound_id = name.split('_')[0]
+        p.setName(sound_id)
         dataset.addPoint(p)
     except:
         # TODO: make this update the similarity_state of the database.
         print 'Could not add sound with id %s' % sound_id
+        bad_sounds.append(sound_id)
     if dataset.size() == SIMILARITY_MINIMUM_POINTS:
         dataset = GaiaWrapper.prepare_original_dataset_helper(dataset)
 

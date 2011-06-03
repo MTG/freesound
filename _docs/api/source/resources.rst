@@ -659,7 +659,7 @@ Response
 
 **Properties**
 
-The response is an array. Each item in the array has the same format as the `pack resource format`__.
+The response is an array. Each item in the array follows a reduced version of the `pack resource format`__.
 
 __ pack-get-response_
 

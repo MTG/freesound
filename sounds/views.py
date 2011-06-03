@@ -303,17 +303,23 @@ def geotag(request, username, sound_id):
     return render_to_response('sounds/geotag.html', locals(), context_instance=RequestContext(request))
 
 
+DEFAULT_SIMILARITY_PRESET = 'lowlevel'
+
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username,
                               id=sound_id,
                               moderation_state="OK",
                               processing_state="OK",
                               similarity_state="OK")
-    cache_key = "similar-for-sound-%s" % sound.id
+
+    preset = request.GET.get('preset', DEFAULT_SIMILARITY_PRESET)
+    if preset not in ['lowlevel', 'music']:
+        preset = DEFAULT_SIMILARITY_PRESET
+    cache_key = "similar-for-sound-%s-%s" % (sound.id, preset)
     similar_sounds = False #cache.get(cache_key)
     if not similar_sounds:
         try:
-            similar_sounds = [x[0] for x in Similarity.search(sound.id, 'timbre', settings.SOUNDS_PER_PAGE)]
+            similar_sounds = [x[0] for x in Similarity.search(sound.id, preset, settings.SOUNDS_PER_PAGE)]
             similar_found_p = True
         except:
             similar_sounds = []

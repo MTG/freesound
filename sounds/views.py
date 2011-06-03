@@ -309,8 +309,10 @@ def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username,
                               id=sound_id,
                               moderation_state="OK",
-                              processing_state="OK",
-                              similarity_state="OK")
+                              processing_state="OK"
+                              )
+                            #TODO: similarity_state="OK"
+                            #TODO: this filter has to be added again, but first the db has to be updated
 
     preset = request.GET.get('preset', DEFAULT_SIMILARITY_PRESET)
     if preset not in ['lowlevel', 'music']:

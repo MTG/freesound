@@ -115,6 +115,9 @@
     <p><input type="text" name="q" id="search-q" size="45" /> <input type="submit" name="submit" value="search sources" id="search-button"/></p>
     <p>Hint: if you know the id of the file you are looking for, search for the id. The id of sounds can be found as the first part of the sound filename.</p>
     <p><input type="submit" name="save" value="save..." id="save-button"/></p>
+    <p>
+        <a href="{% url sound-edit sound.user.username sound.id %}">Go back to edit page</a>
+    </p>
 </form>
 
 <div id="search-results">

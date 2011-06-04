@@ -1877,7 +1877,7 @@ span.tag_addremove a:hover {
 .license-description {
     float: left;
     width: 100%;
-    /*margin-bottom: 30px;*/
+    margin-bottom: 20px;
     height: 80px;
 }
 
@@ -1898,7 +1898,7 @@ span.tag_addremove a:hover {
 
 #license-middle li {
     list-style-type: none;
-    /*margin-bottom: 50px;*/
+    margin-bottom: 20px;
     height: 80px;
 }
 

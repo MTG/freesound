@@ -10,10 +10,13 @@
     		display_errors();
   		});
   		function display_errors() {
-  	  		if ($(".inner-accordion-div").has(".errorlist")) {
+  	  		if ($(".errorlist").length > 0) {
   	  	  		if ($("#errormessage").length == 0) {
   	  	  			$(".outer-accordion").before("<div id='errormessage' style='color: red'>There has been some errors in the form data. Please review them.</div>");
   	  	  		}
+	  	  	  	$(".inner-accordion, outer-accordion-div").has(".errorlist").prev().append(" <----------- Error").css("color", "red");
+				$(".inner-accordion, outer-accordion-div").has(".errorlist").prev().effect("pulsate", { times:3 }, 2000);
+  	  	  		
   	  	  		$(".inner-accordion-div").has(".errorlist").prev().children("a").append(" <----------- Error").css("color", "red");
 				$(".inner-accordion-div").has(".errorlist").prev().effect("pulsate", { times:3 }, 2000);
   	  	  	}

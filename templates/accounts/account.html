@@ -15,6 +15,8 @@
 {% block section_content %}
     {% if home %}
         <h1>Home</h1>
+        
+        <h2>Greetings {{user.username}}! This is your personal Home page.</h2>
 
         <ul>
             <li><a href="{% url account user.username %}">View</a> your public profile</li>
@@ -40,55 +42,69 @@
         </ul>
     {% endif %}
 
-    {% if tags %}
-    <p class="user_tagcloud">
-    {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url tags tag.name %}">{{tag.name}}</a></span> {% endfor %}
-    </p>
-    {% endif %}
-
+<div id="content">
     {% if latest_geotags %}
-    <h3>Latest geotags</h3>
-    <div id="map_canvas" style="width: 400px; height: 300px; border: 1px solid black;"></div>
-    <script type="text/javascript">
-        var map = new GMap2(document.getElementById("map_canvas"));
-        map.setUIToDefault();
-        map.disableScrollWheelZoom();
-        map.setMapType(G_SATELLITE_MAP);
-
-        var bounds = new GLatLngBounds();
-
-        {% for geotaged_sound in latest_geotags %}
-        var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
-        bounds.extend(point);
-        var marker = new GMarker(point);
-        GEvent.addListener(marker, "click", function() {
-            GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
-                marker.openInfoWindowHtml(data);
+    <div id="latest_geotags" class="content_box">
+        <h3>Your latest geotags</h3>
+        <div id="map_canvas" style="width: 400px; height: 300px; border: 1px solid black;"></div>
+        <script type="text/javascript">
+            var map = new GMap2(document.getElementById("map_canvas"));
+            map.setUIToDefault();
+            map.disableScrollWheelZoom();
+            map.setMapType(G_SATELLITE_MAP);
+    
+            var bounds = new GLatLngBounds();
+    
+            {% for geotaged_sound in latest_geotags %}
+            var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
+            bounds.extend(point);
+            var marker = new GMarker(point);
+            GEvent.addListener(marker, "click", function() {
+                GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
+                    marker.openInfoWindowHtml(data);
+                });
             });
-        });
-        map.addOverlay(marker);
-
-        {% endfor %}
-        zoomToBounds(map, bounds);
-    </script>
-    <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
+            map.addOverlay(marker);
+    
+            {% endfor %}
+            zoomToBounds(map, bounds);
+        </script>
+        <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
+    </div><!-- #latest_geotags -->
     {% endif %}
 
     {% if latest_sounds %}
-    <h3>Latest sounds</h3>
-    {% for sound in latest_sounds %}
-        {% display_sound sound %}
-    {% endfor %}
-    <p><a href="{% url sounds-for-user user.username %}">more...</a></p>
+    <div id="latest_sounds" class="content_box">
+        <h3>Your latest sounds</h3>
+        {% for sound in latest_sounds %}
+            {% display_sound sound %}
+        {% endfor %}
+        <p><a href="{% url sounds-for-user user.username %}">more...</a></p>   
+    </div><!-- #latest_sounds -->
+    {% endif %}
+</div><!-- #content -->
+
+<div id="sidebar">
+    {% if tags %}
+    <div id="user_most_used_tags" class="content_box">
+        <h3>Your most used tags</h3>
+        <p class="user_tagcloud">
+        {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url tags tag.name %}">{{tag.name}}</a></span> {% endfor %}
+        </p>
+    </div><!-- #user_most_used_tags -->
     {% endif %}
 
-    {% if latest_packs %}
-    <h3>Latest packs</h3>
-    <ul>
-    {% for pack in latest_packs %}
-        <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
-    {% endfor %}
-    <ul>
-    <p><a href="{% url packs-for-user user.username %}">more...</a></p>
+    {% if latest_packs %}    
+    <div id="latest_packs" class="content_box">
+        <h3>Your latest packs</h3>
+        <ul>
+        {% for pack in latest_packs %}
+            <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
+        {% endfor %}
+        <ul>
+        <p><a href="{% url packs-for-user user.username %}">more...</a></p>  
+    </div><!-- #latest_packs -->
     {% endif %}
+</div><!-- #sidebar -->
+<br class="clear"/><!-- Need a clearing element for some reason here.. -->
 {% endblock %}

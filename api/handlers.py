@@ -16,19 +16,6 @@ import yaml
 
 logger = logging.getLogger("api")
 
-'''
-N.B.:
-- #x# and %x% aliases are defined in the Freesound API v1 google doc.
-- curl examples do not include authentication
-
-TODO:
-- check serving of files
-
-LATER:
-- throttling
-- download updates
-'''
-
 # UTILITY FUNCTIONS
 
 def prepend_base(rel):
@@ -71,7 +58,7 @@ def get_sound_links(sound):
         'ref': ref,
         'url': get_sound_web_url(sound.user.username, sound.id),
         'serve': ref+'/serve',
-        'preview'   : prepend_base(sound.locations("preview.LQ.mp3.url")),
+        #'preview'   : prepend_base(sound.locations("preview.LQ.mp3.url")),
         'preview-hq-mp3'   : prepend_base(sound.locations("preview.HQ.mp3.url")),
         'preview-hq-ogg'   : prepend_base(sound.locations("preview.HQ.ogg.url")),
         'preview-lq-mp3'   : prepend_base(sound.locations("preview.LQ.mp3.url")),
@@ -80,8 +67,7 @@ def get_sound_links(sound):
         'waveform_l': prepend_base(sound.locations("display.wave.L.url")),
         'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
         'spectral_l': prepend_base(sound.locations("display.spectral.L.url")),
-        'analysis_stats': get_sound_api_analysis_url(sound.id), 
-        #prepend_base(sound.locations("analysis.statistics.url")),
+        'analysis_stats': get_sound_api_analysis_url(sound.id),
         'analysis_frames': prepend_base(sound.locations("analysis.frames.url"))
          }
     if sound.pack_id:
@@ -98,7 +84,7 @@ def prepare_single_sound(sound):
     for field in ["num_downloads", "channels", "duration", "samplerate", "samplerate", \
                   "id", "num_comments", "num_ratings", "filesize", \
                   "type", "description", "bitdepth", "bitrate",  "created", \
-                  "avg_rating", "original_filename", "base_filename_slug"]:
+                  "avg_rating", "original_filename"]:#, "base_filename_slug"]:
         d[field] = getattr(sound, field)
     try:
         d['license'] = sound.license.deed_url
@@ -182,8 +168,8 @@ def prepare_single_sound_analysis(sound,request,filter):
         analysis['highlevel']['moods']['m'] = \
             analysis['highlevel']['mood']
         del analysis['highlevel']['mood']
-    
-            
+
+
     except Exception, e:
         raise e
         raise Exception('Could not load analysis data.')
@@ -192,7 +178,7 @@ def prepare_single_sound_analysis(sound,request,filter):
     print request.GET
     if not ('all' in request.GET and request.GET['all'] in ['1', 'true', 'True']):
         analysis = level_filter(analysis, RECOMMENDED_DESCRIPTORS)
-  
+
     if filter:
         filters = filter.split('/')
         filters = [str(x) for x in filters if x != u'']
@@ -207,8 +193,8 @@ def prepare_single_sound_analysis(sound,request,filter):
                 resp.status_code = 400
                 resp.content = "Invalid Request: Could not find this path in the analysis data."
                 return resp
-                
-  
+
+
     return analysis
 
 
@@ -264,7 +250,7 @@ def get_tags(sound):
 
 def prepare_collection_sound(sound, include_user=True):
     d = {}
-    for field in ["duration", "base_filename_slug", "type", "original_filename"]:
+    for field in ["duration", "type", "original_filename"]: #"base_filename_slug",
         d[field] = getattr(sound, field)
     if include_user:
         d['user'] = prepare_minimal_user(sound.user)
@@ -304,10 +290,6 @@ def find_api_option(cleaned_sort):
             return t[0]
     return None
 
-def add_request_id(request,result):
-    if request.GET.get('request_id', '')!='':
-            result['request_id'] = request.GET.get('request_id', '')
-
 # HANDLERS
 
 class SoundSearchHandler(BaseHandler):
@@ -344,14 +326,9 @@ class SoundSearchHandler(BaseHandler):
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_API_RESPONSE)
             page = paginator.page(form.cleaned_data['p'])
-            sounds = []
-            bad_results = 0
-            for object in page['object_list'] :
-                try: 
-                    sounds.append( prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) )    
-                except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
-                    pass
-            result = {'sounds': sounds, 'num_results': paginator.count - bad_results, 'num_pages': paginator.num_pages}
+            sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) \
+                      for object in page['object_list']]
+            result = {'sounds': sounds, 'num_results': paginator.count, 'num_pages': paginator.num_pages}
 
             # construct previous and next urls
             if page['has_other_pages']:
@@ -366,8 +343,10 @@ class SoundSearchHandler(BaseHandler):
                                                                       cd['f'],
                                                                       find_api_option(cd['s']))
 
-            
-            add_request_id(request,result)
+            # Add request id to the result (in case user has specified one)
+            if request.GET.get('request_id', '')!='':
+                result['request_id'] = request.GET.get('request_id', '')
+
             return result
         except SolrException, e:
             error = "search error: search_query %s filter_query %s sort %s error %s" \
@@ -403,7 +382,10 @@ class SoundHandler(BaseHandler):
 
         result = prepare_single_sound(sound)
 
-        add_request_id(request,result)
+        # Add request id to the result (in case user has specified one)
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
+
         return result
 
 class SoundServeHandler(BaseHandler):
@@ -425,10 +407,8 @@ class SoundServeHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp = 'There is no sound with id %s' % sound_id
             return resp
-        
-        # DISABLED (FOR THE MOMENT WE DON'T UPDATE DOWNLOADS TABLE THROUGH API)
-        #Download.objects.get_or_create(user=request.user, sound=sound, interface='A') 
-        
+
+        Download.objects.get_or_create(user=request.user, sound=sound)
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 class SoundAnalysisHandler(BaseHandler):
@@ -442,7 +422,7 @@ class SoundAnalysisHandler(BaseHandler):
     output:         #single_sound_analysis#
     curl:           curl http://www.freesound.org/api/sounds/2/analysis
     '''
-    
+
     def read(self, request, sound_id, filter=False):
 
         try:
@@ -451,10 +431,13 @@ class SoundAnalysisHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no sound with id %s or analysis is not ready' % sound_id
             return resp
-        
+
         result = prepare_single_sound_analysis(sound,request,filter)
 
-        add_request_id(request,result)
+        # Add request id to the result (in case user has specified one)
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
+
         return result
 
 # For future use (when we serve analysis files through autenthication)
@@ -478,9 +461,9 @@ class SoundAnalysisHandler(BaseHandler):
             resp = rc.NOT_FOUND
             resp.content = 'There is no sound with id %s or analysis is not ready' % sound_id
             return resp
-        
+
         return sendfile(sound.locations('analysis.frames.path'), sound.friendly_filename().split('.')[0] + '.json', sound.locations("sendfile_url").split('.')[0] + '.json')
-'''        
+'''
 
 class UserHandler(BaseHandler):
     '''
@@ -503,7 +486,10 @@ class UserHandler(BaseHandler):
 
         result = prepare_single_user(user)
 
-        add_request_id(request,result)
+        # Add request id to the result (in case user has specified one)
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
+
         return result
 
 class UserSoundsHandler(BaseHandler):
@@ -536,7 +522,10 @@ class UserSoundsHandler(BaseHandler):
             if page.has_next():
                 result['next'] = self.__construct_pagination_link(username, page.next_page_number())
 
-        add_request_id(request,result)
+        # Add request id to the result (in case user has specified one)
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
+
         return result
 
     def __construct_pagination_link(self, u, p):
@@ -564,7 +553,10 @@ class UserPacksHandler(BaseHandler):
         packs = [prepare_single_pack(pack, include_user=False) for pack in Pack.objects.filter(user=user)]
         result = {'packs': packs, 'num_results': len(packs)}
 
-        add_request_id(request,result)
+        # Add request id to the result (in case user has specified one)
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
+
         return result
 
 class PackHandler(BaseHandler):
@@ -588,7 +580,10 @@ class PackHandler(BaseHandler):
 
         result = prepare_single_pack(pack)
 
-        add_request_id(request,result)
+        # Add request id to the result (in case user has specified one)
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
+
         return result
 
 class PackSoundsHandler(BaseHandler):
@@ -621,7 +616,10 @@ class PackSoundsHandler(BaseHandler):
             if page.has_next():
                 result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number())
 
-        add_request_id(request,result)
+        # Add request id to the result (in case user has specified one)
+        if request.GET.get('request_id', '')!='':
+            result['request_id'] = request.GET.get('request_id', '')
+
         return result
 
     def __construct_pagination_link(self, pack_id, p):

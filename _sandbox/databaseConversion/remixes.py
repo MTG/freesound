@@ -1,48 +1,79 @@
-import MySQLdb as my
-import psycopg2
-import codecs
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Migrate 'remixes' from Freesound1 to Freesound2.
+"""
+
 from local_settings import *
+import codecs
+from db_utils import get_sound_ids
 
-output_filename = '/tmp/importfile.dat'
-output_file = codecs.open(output_filename, 'wt', 'utf-8')
+OUT_FNAME = 'remixes.sql'
 
-my_conn = my.connect(**MYSQL_CONNECT)
-my_curs = my_conn.cursor()
+VALID_SOUND_IDS = get_sound_ids()
 
-ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
-ppsql_cur = ppsql_conn.cursor()
-print "getting all valid sound ids"
-ppsql_cur.execute("SELECT id FROM sounds_sound")
-valid_sound_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
-print "done"
 
-start = 0
-granularity = 10000
-insert_id = 0
+INSERT_ID = 0
 
-while True:
-    print start
-    my_curs.execute("SELECT af1.ID, af1.parent FROM audio_file af1 WHERE af1.parent is not null and af1.parent != 0 and (select af2.ID from audio_file as af2 where af2.ID=af1.parent) is not null limit %d, %d" % (start, granularity))
-    rows = my_curs.fetchall()
-    start += len(rows)
+
+
+def transform_row(row):
+    """Get a row (sequence), transform the values, return a sequence.
+
+    Returns None if the row shouldn't be migrated.
+    """
+
+    sound_id, parent_id = row
     
-    if len(rows) == 0:
-        break
-    
-    for row in rows:
-        id, parentID = row
-        
-        if id not in valid_sound_ids or parentID not in valid_sound_ids:
-            continue
+    if sound_id not in VALID_SOUND_IDS or parent_id not in VALID_SOUND_IDS:
+        return
 
-        all_vars = [insert_id, id, parentID]
-        
-        insert_id += 1
-        
-        output_file.write(u"\t".join(map(unicode, all_vars)) + "\n")
+    INSERT_ID += 1
 
-print """
-copy sounds_sound_sources (id, from_sound_id, to_sound_id) from '%s' null as 'None';
-select setval('sounds_sound_sources_id_seq',(select max(id)+1 from sounds_sound_sources));
-vacuum analyze sounds_sound_sources;
-""" % output_filename
+    fields = [INSERT_ID, sound_id, parent_id]
+    return map(unicode, fields)
+
+
+
+def migrate_table(curs):
+
+    out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
+
+    sql = """copy sounds_sound_sources (id, from_sound_id, to_sound_id) 
+        from stdin null as 'None';"""
+    out.write(sql)
+
+    query = """SELECT af1.ID, af1.parent 
+        FROM audio_file af1 
+        WHERE af1.parent is not null 
+            and af1.parent != 0 
+            and (select af2.ID from audio_file as af2 where af2.ID=af1.parent) 
+                is not null ;"""
+    curs.execute(query)
+
+    while True:
+        row = curs.fetchone()
+        if not row:
+            break
+        new_row = transform_row(row)
+        if new_row:
+            out.write(u"\t".join(new_row) + u"\n" )
+
+    sql = """\.
+
+    select setval('sounds_sound_sources_id_seq',(select max(id)+1 
+        from sounds_sound_sources));
+    vacuum analyze sounds_sound_sources;
+    """
+    out.write(sql)
+
+
+
+
+def main():
+    conn = MySQLdb.connect(**MYSQL_CONNECT)
+    curs = conn.cursor(DEFAULT_CURSORCLASS)
+    migrate_table(curs)
+
+if __name__ == '__main__':
+    main()
+

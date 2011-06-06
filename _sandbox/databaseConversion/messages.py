@@ -1,114 +1,150 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from local_settings import *
-from text_utils import prepare_for_insert, smart_character_decoding, decode_htmlentities
-import MySQLdb as my
 import codecs
-import psycopg2
+from db_utils import get_user_ids
+from text_utils import prepare_for_insert, smart_character_decoding, \
+    decode_htmlentities
 
-output_filename = '/tmp/importfile.dat'
-output_file = codecs.open(output_filename, 'wt', 'utf-8')
+OUT_MSG_FNAME = 'messages.sql'
+OUT_BODY_FNAME = 'messagesbody.sql'
 
-output_filename2 = '/tmp/importfile2.dat'
-output_file2 = codecs.open(output_filename2, 'wt', 'utf-8')
+VALID_USER_IDS = get_user_ids()
 
-my_conn = my.connect(**MYSQL_CONNECT)
-my_curs = my_conn.cursor()
 
-start = 0
-granularity = 10000
+UNIQUE_TEXTS = {}
+CURRENT_TEXT_ID = 1
+N_MESSAGES = 0
+N_IGNORED = 0
+MESSAGE_ID = 0
 
-ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
-ppsql_cur = ppsql_conn.cursor()
-print "getting all valid user ids"
-ppsql_cur.execute("SELECT id FROM auth_user")
-valid_user_ids = dict((int(row[0]),1) for row in ppsql_cur.fetchall())
-print "done, gotten", len(valid_user_ids), "ids"
 
-unique_texts = {}
-current_text_id = 1
 
-n_messages = 0
-n_ignored = 0
-
-message_id = 0
-
-while True:
-    print start
-    my_curs.execute("""select privmsgs_id, privmsgs_type, privmsgs_subject, privmsgs_from_userid, privmsgs_to_userid, FROM_UNIXTIME(privmsgs_date), privmsgs_text from phpbb_privmsgs inner join phpbb_privmsgs_text on phpbb_privmsgs.privmsgs_id=phpbb_privmsgs_text.privmsgs_text_id limit %d, %d""" % (start, granularity))
-    rows = my_curs.fetchall()
-    start += len(rows)
+def transform_row(row):
+    ___, msgtype, subject, user_from_id, user_to_id, created, text = row
     
-    if len(rows) == 0:
-        break
+    if subject:
+        subject = decode_htmlentities(smart_character_decoding(subject))
+    if text:
+        text = smart_character_decoding(text)
     
-    for row in rows:
-        id, type, subject, user_from_id, user_to_id, created, text = row
+    N_MESSAGES += 1
+    
+    if user_from_id not in VALID_USER_IDS or \
+            user_to_id not in VALID_USER_IDS:
+        print "ignoring message from", user_from_id, "to", user_to_id
+        N_IGNORED += 1
+        return
+    
+    try:
+        text_id = UNIQUE_TEXTS[text]
+    except KeyError:
+        text_id = CURRENT_TEXT_ID
+        UNIQUE_TEXTS[text] = CURRENT_TEXT_ID
+        CURRENT_TEXT_ID += 1
         
-        if subject:
-            subject = decode_htmlentities(smart_character_decoding(subject))
-        if text:
-            text = smart_character_decoding(text)
-        
-        n_messages += 1
-        
-        if user_from_id not in valid_user_ids or user_to_id not in valid_user_ids:
-            print "ignoring message from", user_from_id, "to", user_to_id
-            n_ignored += 1
-            continue
-        
-        try:
-            text_id = unique_texts[text]
-        except KeyError:
-            text_id = current_text_id
-            unique_texts[text] = current_text_id
-            current_text_id += 1
+        text = prepare_for_insert( text, True )
+
+        messagebody = map(unicode, [text_id, text])
+    
+    subject = prepare_for_insert(subject, html_code=False, bb_code=False)
+    
+    body_id = text_id
+    
+    if msgtype in [1, 5]:
+        is_sent, is_archived, is_read = 1, 0, 0
             
-            text = prepare_for_insert( text, True )
+        # We store the message twice: once for the sender, once for
+        # the receiver. See messages/models.py.
+        message = map(unicode, [MESSAGE_ID, user_from_id, user_to_id, 
+            subject, body_id, is_sent, is_read, is_archived, created])
+        MESSAGE_ID += 1
+    
+        is_sent, is_archived, is_read = 0, 0, 0
+    elif msgtype == 0:
+        is_sent, is_archived, is_read = 0, 0, 1
+    elif msgtype == 2:
+        is_sent, is_archived, is_read = 1, 0, 0
+    elif msgtype == 3:
+        is_sent, is_archived, is_read = 0, 1, 1
+    elif msgtype == 4:
+        is_sent, is_archived, is_read = 1, 1, 1
+            
+    message = map(unicode, [MESSAGE_ID, user_from_id, user_to_id, 
+        subject, body_id, is_sent, is_read, is_archived, created])
+    MESSAGE_ID += 1
 
-            output_file.write(u"\t".join(map(unicode, [text_id, text])) + "\n")
-        
-        subject = prepare_for_insert(subject, html_code=False, bb_code=False)
-        
-        body_id = text_id
-        
-        if type in [1,5]:
-            is_sent = 1
-            is_archived = 0
-            is_read = 0
-                
-            output_file2.write(u"\t".join(map(unicode, [message_id, user_from_id, user_to_id, subject, body_id, is_sent, is_read, is_archived, created])) + "\n")
-            message_id += 1
-        
-            is_sent = 0
-            is_archived = 0
-            is_read = 0
-        elif type == 0:
-            is_sent = 0
-            is_archived = 0
-            is_read = 1
-        elif type == 2:
-            is_sent = 1
-            is_archived = 0
-            is_read = 0
-        elif type == 3:
-            is_sent = 0
-            is_archived = 1
-            is_read = 1
-        elif type == 4:
-            is_sent = 1
-            is_archived = 1
-            is_read = 1
-                
-        output_file2.write(u"\t".join(map(unicode, [message_id, user_from_id, user_to_id, subject, body_id, is_sent, is_read, is_archived, created])) + "\n")
-        message_id += 1
+    return messagebody, message
 
-print "messages", n_messages
-print "ignored", n_ignored
 
-print """
-copy messages_messagebody (id, body) from '%s';
-select setval('messages_messagebody_id_seq',(select max(id)+1 from messages_messagebody));
-vacuum analyze messages_messagebody;
-copy messages_message (id, user_from_id, user_to_id, subject, body_id, is_sent, is_read, is_archived, created) from '%s';
-select setval('messages_message_id_seq',(select max(id)+1 from messages_message));
-vacuum analyze messages_message;
-""" % (output_filename, output_filename2)
+
+
+
+
+
+
+def migrate_messages(curs):
+
+    # Use one file for every table.
+    out_body = codecs.open(OUT_BODY_FNAME, 'wt', 'utf-8')
+    out_msg = codecs.open(OUT_MSG_FNAME, 'wt', 'utf-8')
+
+    # Write headers for both files.
+    sql = """copy messages_messagebody (id, body) from stdin ;
+"""
+    out_body.write(sql)
+    sql = """copy messages_message (id, user_from_id, user_to_id, subject, 
+        body_id, is_sent, is_read, is_archived, created) from stdin ;
+"""
+    out_msg.write(sql)
+
+
+    query = """SELECT privmsgs_id, privmsgs_type, privmsgs_subject,
+        privmsgs_from_userid, privmsgs_to_userid, FROM_UNIXTIME(privmsgs_date),
+        privmsgs_text 
+    FROM phpbb_privmsgs 
+    INNER JOIN phpbb_privmsgs_text 
+    ON phpbb_privmsgs.privmsgs_id=phpbb_privmsgs_text.privmsgs_text_id
+    """
+    curs.execute(query)
+    
+    while True:
+        row = curs.fetchone()
+        if not row:
+            break
+        messagebody, message = transform_row(row)
+
+        if messagebody:
+            out_body.write(u"\t".join(messagebody) + u"\n" )
+        if message:
+            out_msg.write(u"\t".join(message) + u"\n" )
+
+    # Write tail for both files.
+    sql = """\.
+    select setval('messages_messagebody_id_seq',(select max(id)+1 
+    from messages_messagebody));
+    vacuum analyze messages_messagebody;
+    """
+    out_body.write(sql)
+    sql = """\.
+    select setval('messages_message_id_seq',(select max(id)+1 
+    from messages_message));
+    vacuum analyze messages_message;
+    """
+    out_msg.write(sql)
+
+    print "messages", N_MESSAGES
+    print "ignored", N_IGNORED
+
+
+
+
+
+def main():
+    conn = MySQLdb.connect(**MYSQL_CONNECT)
+    curs = conn.cursor(DEFAULT_CURSORCLASS)
+    migrate_messages(curs)
+
+if __name__ == '__main__':
+    main()

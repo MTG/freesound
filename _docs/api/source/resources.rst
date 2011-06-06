@@ -219,10 +219,8 @@ __ sound-get-response_
                 "ref": "http://tabasco.upf.edu/api/people/toiletrolltube"
             }, 
             "spectral_l": "http://tabasco.upf.edu/data/displays/116/116841_854810_spec_L.jpg", 
-            "base_filename_slug": "116841__toiletrolltube__falling_metal_3_20.3.11", 
             "duration": 5.6986699999999999, 
             "waveform_l": "http://tabasco.upf.edu/data/displays/116/116841_854810_wave_L.png", 
-            "preview": "http://tabasco.upf.edu/data/previews/116/116841_854810-lq.mp3", 
             "ref": "http://tabasco.upf.edu/api/sounds/116841", 
             "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/116/116841_854810-hq.mp3", 
             "pack": "http://tabasco.upf.edu/api/packs/7333"
@@ -255,10 +253,8 @@ __ sound-get-response_
                 "ref": "http://tabasco.upf.edu/api/people/Puniho"
             }, 
             "spectral_l": "http://tabasco.upf.edu/data/displays/113/113785_1956076_spec_L.jpg", 
-            "base_filename_slug": "113785__Puniho__Woof_Woof_Drum", 
             "duration": 2.6059399999999999, 
             "waveform_l": "http://tabasco.upf.edu/data/displays/113/113785_1956076_wave_L.png", 
-            "preview": "http://tabasco.upf.edu/data/previews/113/113785_1956076-lq.mp3", 
             "ref": "http://tabasco.upf.edu/api/sounds/113785", 
             "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/113/113785_1956076-lq.ogg"
         }
@@ -311,7 +307,6 @@ ref                   URI      The URI for this sound.
 url                   URI      The URI for this sound on the Freesound website.
 preview-hq-mp3        URI      The URI for retrieving a high quality (~128kbps) mp3 preview of the sound.
 preview-lq-mp3        URI      The URI for retrieving a low quality (~64kbps) mp3 preview of the sound.
-preview               URI      Alias URI for retrieving a low quality (~64kbps) mp3 preview of the sound.
 preview-hq-ogg        URI      The URI for retrieving a high quality (~192kbps) ogg preview of the sound.
 preview-lq-ogg        URI      The URI for retrieving a low quality (~80kbps) ogg of the sound.
 serve                 URI      The URI for retrieving the original sound.
@@ -355,7 +350,6 @@ analysis_frames       URI      The URI for retrieving a JSON file with analysis 
     "bitdepth": 16, 
     "num_comments": 0, 
     "filesize": 45934020, 
-    "base_filename_slug": "17185__reinsamba__Nightingale_song_3", 
     "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/17/17185_18799-hq.mp3", 
     "type": "wav", 
     "analysis_stats": "http://tabasco.upf.edu/api/sounds/17185/analysis", 
@@ -398,7 +392,6 @@ analysis_frames       URI      The URI for retrieving a JSON file with analysis 
     "num_downloads": 0, 
     "analysis_frames": "http://tabasco.upf.edu/data/analysis/17/17185_18799_frames.json", 
     "channels": 2, 
-    "preview": "http://tabasco.upf.edu/data/previews/17/17185_18799-lq.mp3", 
     "license": "http://creativecommons.org/licenses/sampling+/1.0/", 
     "created": "2006-03-19 23:53:37", 
     "url": "http://tabasco.upf.edu/people/reinsamba/sounds/17185/", 
@@ -659,7 +652,7 @@ Response
 
 **Properties**
 
-The response is an array. Each item in the array has the same format as the `pack resource format`__.
+The response is an array. Each item in the array follows a reduced version of the `pack resource format`__.
 
 __ pack-get-response_
 

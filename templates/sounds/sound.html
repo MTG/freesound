@@ -65,6 +65,8 @@
     </ul>
 {% endcache %}
 
+    <p><a class="similar" href="{% url sound-similar sound.user.username sound.id %}">similar sounds..</a>
+
     <div id="sound-edit">
         {% if perms.sound.can_edit or sound.user == request.user %}
         <a href="{% url sound-edit sound.user.username sound.id %}" id="edit_button" title="edit sound">edit sound</a>

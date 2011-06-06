@@ -9,7 +9,7 @@ admin.site.register(Queue, QueueAdmin)
 
 
 class TicketAdmin(admin.ModelAdmin):
-    #raw_id_fields = ('content__object_id', ) 
+    raw_id_fields = ('sender', 'assignee') 
     list_display = ('id', 'source', 'status', 'assignee', 'sender')
 
 admin.site.register(Ticket, TicketAdmin)

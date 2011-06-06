@@ -19,7 +19,7 @@ from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    LicenseForm, FlagForm, RemixForm
+    NewLicenseForm, FlagForm, RemixForm
 from accounts.models import Profile
 from sounds.models import Sound, Pack, Download
 from tickets.models import Ticket, TicketComment
@@ -251,14 +251,14 @@ def sound_edit(request, username, sound_id):
             geotag_form = GeotaggingForm(prefix="geotag")
 
     if is_selected("license"):
-        license_form = LicenseForm(request.POST, prefix="license")
+        license_form = NewLicenseForm(request.POST, prefix="license")
         if license_form.is_valid():
             sound.license = license_form.cleaned_data["license"]
             sound.mark_index_dirty()
             invalidate_template_cache("sound_footer", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
+        license_form = NewLicenseForm(prefix="license", initial=dict(license=sound.license.id))
 
     google_api_key = settings.GOOGLE_API_KEY
 

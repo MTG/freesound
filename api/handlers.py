@@ -348,7 +348,11 @@ class SoundSearchHandler(BaseHandler):
                                                                       page['next_page_number'],
                                                                       cd['f'],
                                                                       find_api_option(cd['s']))
-            add_request_id(request,result)
+
+            # Add request id to the result (in case user has specified one)
+            if request.GET.get('request_id', '')!='':
+                result['request_id'] = request.GET.get('request_id', '')
+
             return result
         except SolrException, e:
             error = "search error: search_query %s filter_query %s sort %s error %s" \

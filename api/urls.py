@@ -20,10 +20,13 @@ urlpatterns = patterns('',
     # For future use (when we serve analysis files through autenthication)
     #url(r'^sounds/(?P<sound_id>\d+)/analysis_frames/?$',             AR(SoundAnalysisFramesHandler), name='api-sound-analysis-frames'),    
     url(r'^sounds/(?P<sound_id>\d+)/serve/?$',                       AR(SoundServeHandler),          name='api-sound-serve'),
+    url(r'^sounds/(?P<sound_id>\d+)/similar/?$',                     AR(SoundSimilarityHandler),     name='api-sound-similarity'),
+    
     # users
     url(r'^people/(?P<username>[^//]+)/?$',                          AR(UserHandler),           name='api-single-user'),
     url(r'^people/(?P<username>[^//]+)/sounds/?$',                   AR(UserSoundsHandler),     name='api-user-sounds'),
     url(r'^people/(?P<username>[^//]+)/packs/?$',                    AR(UserPacksHandler),      name='api-user-packs'),
+    
     # packs
     url(r'^packs/(?P<pack_id>\d+)/?$',                               AR(PackHandler),           name='api-single-pack'),
     url(r'^packs/(?P<pack_id>\d+)/serve/?$',                         AR(PackServeHandler),      name='api-pack-serve'),

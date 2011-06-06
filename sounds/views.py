@@ -34,7 +34,8 @@ from utils.nginxsendfile import sendfile
 import datetime, os, time
 from sounds.templatetags import display_sound
 from django.db.models import Q
-from similarity.client import Similarity
+from utils.similarity_utilities import get_similar_sounds
+
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -314,20 +315,8 @@ def similar(request, username, sound_id):
                             #TODO: similarity_state="OK"
                             #TODO: this filter has to be added again, but first the db has to be updated
 
-    preset = request.GET.get('preset', DEFAULT_SIMILARITY_PRESET)
-    if preset not in ['lowlevel', 'music']:
-        preset = DEFAULT_SIMILARITY_PRESET
-    cache_key = "similar-for-sound-%s-%s" % (sound.id, preset)
-    similar_sounds = False #cache.get(cache_key)
-    if not similar_sounds:
-        try:
-            similar_sounds = [x[0] for x in Similarity.search(sound.id, preset, settings.SOUNDS_PER_PAGE)]
-            similar_found_p = True
-        except:
-            similar_sounds = []
-            similar_found_p = False
-        if similar_found_p:
-            cache.set(cache_key, similar_sounds, 60*60*24)
+    similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(settings.SOUNDS_PER_PAGE))
+    
     return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 

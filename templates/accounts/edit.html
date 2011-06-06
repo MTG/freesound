@@ -4,25 +4,37 @@
 
 {% block section_content %}
 
-<h1>Edit your avatar</h1>
-<form method="post" action="." enctype="multipart/form-data">{% csrf_token %}
-    {% if profile.has_avatar %}
-    <p>Current:<br/><img src="{{profile.locations.avatar.L.url}}" /></p>
-    {% endif %}
-    {{image_form.as_p}}
-    <input type="submit" value="Save" />
-</form>
+<h1>Settings</h1>
 
-<h1>Edit account</h1>
-<form method="post" action=".">{% csrf_token %}
-    {{profile_form.as_p}}
-    <input type="submit" value="Save" />
-</form>
+<div id="content">
+	<div id="edit_account" class="content_box">
+		<h3>Edit account</h3>
+		<form method="post" action=".">{% csrf_token %}
+		    {{profile_form.as_p}}
+		    <input type="submit" value="Save" />
+		</form>
+	</div><!-- #edit_account -->
+</div><!-- #content -->
 
+<div id="sidebar">
+	<div id="edit_avatar" class="content_box">
+		<h3>Edit your avatar</h3>
+		<form method="post" action="." enctype="multipart/form-data">{% csrf_token %}
+		    {% if profile.has_avatar %}
+		    <p>Current:<br/><img src="{{profile.locations.avatar.L.url}}" /></p>
+		    {% endif %}
+		    {{image_form.as_p}}
+		    <input type="submit" value="Save" />
+		</form>
+	</div><!-- #edit_avatar -->
+	
+	<div id="delete_account" class="continuous_sidebar_box">
+		<h3>Delete account</h3>
+		<p>
+		    To delete your account, please go <a href="{% url accounts-delete %}">here</a>.
+		</p>
+	</div><!-- #delete_account -->
+</div><!-- #sidebar -->
 
-<h1>Delete account</h1>
-<p>
-    To delete your account, please go <a href="{% url accounts-delete %}">here</a>.
-</p>
-
+<br class="clear" /><!-- Clearing Element -->
 {% endblock %}

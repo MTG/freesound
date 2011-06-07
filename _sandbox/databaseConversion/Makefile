@@ -48,7 +48,7 @@ help:
 	# make step3
 
 clean:
-	rm -f *.pyc *.sql
+	rm -f *.pyc *.sql *.sql.gz
 
 destroy:
 	sudo -u postgres dropdb freesound
@@ -100,6 +100,7 @@ step2:
 	${PSQL} < sounds.sql
 	./tags.py
 	${PSQL} < tags.sql
+	${PSQL} < tags_fs1tag.sql
 	${PSQL} < tags_taggeditem.sql
 	./geotags.py
 	${PSQL} < geotags.sql

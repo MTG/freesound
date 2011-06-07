@@ -8,16 +8,16 @@
 {% block section_content %}
 
 {% for sound in similar_sounds %}
-	{% if forloop.counter == 1 %}
-		<h1>Query sound</h1>		
-	{% endif %}
-	{% display_sound sound.0 %}
     {% if forloop.counter == 1 %}
-    	<h1>Similar sounds</h1>
+        <h1>Query sound</h1>
     {% endif %}
-    	
+    {% display_sound sound.0 %}
+    {% if forloop.counter == 1 %}
+        <h1>Similar sounds</h1>
+    {% endif %}
+
 {% empty %}
-	<h1>Similar sounds</h1>
+    <h1>Similar sounds</h1>
     <p>Could not find similar sounds.
 {% endfor %}
 

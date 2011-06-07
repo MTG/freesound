@@ -31,11 +31,12 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
-import datetime, os, time
+import datetime, os, time, logging
 from sounds.templatetags import display_sound
 from django.db.models import Q
 from utils.similarity_utilities import get_similar_sounds
 
+logger = logging.getLogger('web')
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -314,7 +315,7 @@ def similar(request, username, sound_id):
                             #TODO: this filter has to be added again, but first the db has to be updated
 
     similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(settings.SOUNDS_PER_PAGE))
-    
+    logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
     return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 

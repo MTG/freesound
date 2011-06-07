@@ -422,5 +422,4 @@ class Download(models.Model):
     #interface = models.CharField(db_index=True, max_length=1, choices=DOWNLOAD_INTERFACE_CHOICES, default="W")
 
     class Meta:
-        unique_together = ('user', 'sound', 'pack')
         ordering = ("-created",)

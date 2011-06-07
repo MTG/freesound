@@ -13,7 +13,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', sounds.views.front_page, name='front-page'),
-    
+
     url(r'^people/$', accounts.views.accounts, name="accounts"),
     url(r'^people/(?P<username>[^//]+)/$', accounts.views.account, name="account"),
     url(r'^people/(?P<username>[^//]+)/sounds/$', sounds.views.for_user, name="sounds-for-user"),
@@ -40,11 +40,11 @@ urlpatterns = patterns('',
     url(r'^browse/random/$', sounds.views.random, name="sounds-random"),
     url(r'^browse/remixed/$', sounds.views.remixed, name="sounds-remixed"),
     url(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
-    
+
     url(r'^contact/', support.views.contact, name="contact"),
-    
+
     url(r'^search/$', search.views.search, name='sounds-search'),
-    
+
     (r'^ratings/', include('ratings.urls')),
     (r'^comments/', include('comments.urls')),
     (r'^help/', include('wiki.urls')),
@@ -52,7 +52,7 @@ urlpatterns = patterns('',
     (r'^geotags/', include('geotags.urls')),
     (r'^home/', include('accounts.urls')),
     (r'^tickets/', include('tickets.urls')),
-    
+
     url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
     url(r'^crossdomain\.xml$', direct_to_template, kwargs={'template':'crossdomain.xml'}, name="crossdomain"),
 
@@ -60,10 +60,10 @@ urlpatterns = patterns('',
     url(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$', 'general.views.admin_move_ordered_model', name="admin-move"),
     (r'^admin/doc/', include('django.contrib.admindocs.urls')),
     (r'^admin/', admin.site.urls),
-    
+
     # api views
     (r'^api/', include('api.urls')),
-    
+
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
     url(r'^samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),

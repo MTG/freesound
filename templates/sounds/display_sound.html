@@ -11,19 +11,8 @@
         </div>
         <div class="sound_title">
                 <div class="sound_filename">
-                   <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:28}}</a>
+                   <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:25}}</a>
                 </div>
-                <div  class="sound_description">
-                    <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
-                </div>
-                <div class="sound_tags">
-                <ul id="tags">
-                    {% for tag_link in sound_tags %}
-                        <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
-                    {% endfor %}
-                </ul>
-                </div>
-
                 <div class="sound_stars">
                    <ul class="star-rating">
                        <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
@@ -34,6 +23,18 @@
                        <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
                    </ul>
                 </div>
+
+                <div class="sound_description">
+                    <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
+                </div>
+                <div class="sound_tags">
+                <ul id="tags">
+                    {% for tag_link in sound_tags %}
+                        <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                    {% endfor %}
+                </ul>
+                </div>
+
           </div>
     </div>
 

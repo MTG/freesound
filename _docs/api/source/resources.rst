@@ -210,6 +210,7 @@ __ sound-get-response_
             "url": "http://tabasco.upf.edu/people/toiletrolltube/sounds/116841/", 
             "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/116/116841_854810-hq.ogg", 
             "serve": "http://tabasco.upf.edu/api/sounds/116841/serve", 
+            "similarity": "http://tabasco.upf.edu/api/sounds/116841/similar", 
             "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/116/116841_854810-lq.ogg", 
             "spectral_m": "http://tabasco.upf.edu/data/displays/116/116841_854810_spec_M.jpg", 
             "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/116/116841_854810-lq.mp3", 
@@ -244,6 +245,7 @@ __ sound-get-response_
             "url": "http://tabasco.upf.edu/people/Puniho/sounds/113785/", 
             "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/113/113785_1956076-hq.ogg", 
             "serve": "http://tabasco.upf.edu/api/sounds/113785/serve", 
+            "similarity": "http://tabasco.upf.edu/api/sounds/113785/similar", 
             "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/113/113785_1956076-hq.mp3", 
             "spectral_m": "http://tabasco.upf.edu/data/displays/113/113785_1956076_spec_M.jpg", 
             "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/113/113785_1956076-lq.mp3", 
@@ -310,6 +312,7 @@ preview-lq-mp3        URI      The URI for retrieving a low quality (~64kbps) mp
 preview-hq-ogg        URI      The URI for retrieving a high quality (~192kbps) ogg preview of the sound.
 preview-lq-ogg        URI      The URI for retrieving a low quality (~80kbps) ogg of the sound.
 serve                 URI      The URI for retrieving the original sound.
+similarity            URI      URI pointing to the similarity resource (to get a list of similar sounds).
 type                  string   The type of sound (wav, aif, mp3, etc.).
 duration              number   The duration of the sound in seconds.
 samplerate            number   The samplerate of the sound.
@@ -332,7 +335,7 @@ spectral_m            URI      A visualization of the sounds spectrum over time,
 spectral_l            URI      A visualization of the sounds spectrum over time, jpeg file (large).
 waveform_m            URI      A visualization of the sounds waveform, png file (medium).
 waveform_l            URI      A visualization of the sounds waveform, png file (large).
-analysis              URI      URI pointing to the analysis results of the sound  (see :ref:`analysis-docs`).
+analysis              URI      URI pointing to the analysis results of the sound (see :ref:`analysis-docs`).
 analysis_frames       URI      The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
 ====================  =======  ====================================================================================
 
@@ -381,6 +384,7 @@ analysis_frames       URI      The URI for retrieving a JSON file with analysis 
         "field-recording"
     ], 
     "serve": "http://tabasco.upf.edu/api/sounds/17185/serve", 
+    "similarity": "http://tabasco.upf.edu/api/sounds/17185/similar", 
     "spectral_m": "http://tabasco.upf.edu/data/displays/17/17185_18799_spec_M.jpg", 
     "spectral_l": "http://tabasco.upf.edu/data/displays/17/17185_18799_spec_L.jpg", 
     "user": {
@@ -495,6 +499,190 @@ is given by the ``analysis_frames`` property of a sound resource. As an example:
 
   http://tabasco.upf.edu/data/analysis/17/17185_18799_frames.json
 
+
+
+Sound Similarity resource
+=========================
+
+URI
+---
+
+::
+
+  /sounds/<sound_id>/similar
+
+The only allowed method is GET.
+
+GET
+---
+
+This resource returns a list of similar sounds according to a given sound example (which is also returned as the first of the list).
+``preset`` parameter can be set to indicate which kind of similarity measure must be used when computing the distance.
+
+Request
+'''''''
+
+**Parameters**
+
+===========  ======  ========  ===================================================
+Name         Type    Required  Description
+===========  ======  ========  ===================================================
+num_results  number  no        The number of similar sounds to return (max = 100, default = 15)
+preset       string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``music``)
+===========  ======  ========  ===================================================
+
+**Curl Examples**
+
+::
+
+  # Get the most similar sound to 120597 with the preset for "musical" sounds (num_results equals 2 because original sound is also returned in the list)
+  curl http://tabasco.upf.edu/api/sounds/120597/similar?num_results=2&preset=music
+  # Get the 15 most similar sounds to 11 with the preset "lowlevel"
+  curl http://tabasco.upf.edu/api/sounds/11/similar?preset=lowlevel
+
+Response
+''''''''
+
+The response is the same as the `sound search response`__ but with the addition of a ``distance`` property (for each sound) resembling a numerical value of "dissimilarity" respect to the query sound (then, the first sound of the result will always have distance = 0.0).
+
+__ sound-search-response_
+
+**JSON Example**
+
+::
+
+  {
+    "sounds": [
+        {
+            "analysis_stats": "http://tabasco.upf.edu/api/sounds/11/analysis", 
+            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/0/11_2-lq.ogg", 
+            "tags": [
+                "generated", 
+                "sinusoid", 
+                "sweep", 
+                "clean"
+            ], 
+            "url": "http://tabasco.upf.edu/people/Bram/sounds/11/", 
+            "ref": "http://tabasco.upf.edu/api/sounds/11", 
+            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/0/11_2-lq.mp3", 
+            "serve": "http://tabasco.upf.edu/api/sounds/11/serve", 
+            "similarity": "http://tabasco.upf.edu/api/sounds/11/similar", 
+            "pack": "http://tabasco.upf.edu/api/packs/2", 
+            "distance": 0.0, 
+            "spectral_m": "http://tabasco.upf.edu/data/displays/0/11_2_spec_M.jpg", 
+            "spectral_l": "http://tabasco.upf.edu/data/displays/0/11_2_spec_L.jpg", 
+            "user": {
+                "username": "Bram", 
+                "url": "http://tabasco.upf.edu/people/Bram/", 
+                "ref": "http://tabasco.upf.edu/api/people/Bram"
+            }, 
+            "original_filename": "sweep_log.wav", 
+            "type": "wav", 
+            "duration": 2.0, 
+            "analysis_frames": "http://tabasco.upf.edu/data/analysis/0/11_2_frames.json", 
+            "waveform_l": "http://tabasco.upf.edu/data/displays/0/11_2_wave_L.png", 
+            "waveform_m": "http://tabasco.upf.edu/data/displays/0/11_2_wave_M.png", 
+            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/0/11_2-hq.ogg", 
+            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/0/11_2-hq.mp3"
+        }, 
+        {
+            "analysis_stats": "http://tabasco.upf.edu/api/sounds/104551/analysis", 
+            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/104/104551_420640-lq.ogg", 
+            "tags": [
+                "attack", 
+                "air", 
+                "falling", 
+                "war", 
+                "drop", 
+                "bomb", 
+                "whistle"
+            ], 
+            "url": "http://tabasco.upf.edu/people/club%20sound/sounds/104551/", 
+            "ref": "http://tabasco.upf.edu/api/sounds/104551", 
+            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/104/104551_420640-lq.mp3", 
+            "serve": "http://tabasco.upf.edu/api/sounds/104551/serve", 
+            "similarity": "http://tabasco.upf.edu/api/sounds/104551/similar", 
+            "pack": "http://tabasco.upf.edu/api/packs/6609", 
+            "distance": 7122293096448.0, 
+            "spectral_m": "http://tabasco.upf.edu/data/displays/104/104551_420640_spec_M.jpg", 
+            "spectral_l": "http://tabasco.upf.edu/data/displays/104/104551_420640_spec_L.jpg", 
+            "user": {
+                "username": "club sound", 
+                "url": "http://tabasco.upf.edu/people/club%20sound/", 
+                "ref": "http://tabasco.upf.edu/api/people/club%20sound"
+            }, 
+            "original_filename": "Bomb Whistle long.wav", 
+            "type": "wav", 
+            "duration": 30.036799999999999, 
+            "analysis_frames": "http://tabasco.upf.edu/data/analysis/104/104551_420640_frames.json", 
+            "waveform_l": "http://tabasco.upf.edu/data/displays/104/104551_420640_wave_L.png", 
+            "waveform_m": "http://tabasco.upf.edu/data/displays/104/104551_420640_wave_M.png", 
+            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/104/104551_420640-hq.ogg", 
+            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/104/104551_420640-hq.mp3"
+        }, 
+        {
+            "analysis_stats": "http://tabasco.upf.edu/api/sounds/17052/analysis", 
+            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/17/17052_4942-lq.ogg", 
+            "tags": [
+                "sweep", 
+                "electronic", 
+                "sound", 
+                "supercollider"
+            ], 
+            "url": "http://tabasco.upf.edu/people/schluppipuppie/sounds/17052/", 
+            "ref": "http://tabasco.upf.edu/api/sounds/17052", 
+            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/17/17052_4942-lq.mp3", 
+            "serve": "http://tabasco.upf.edu/api/sounds/17052/serve", 
+            "similarity": "http://tabasco.upf.edu/api/sounds/17052/similar", 
+            "pack": "http://tabasco.upf.edu/api/packs/954", 
+            "distance": 161591534288896.0, 
+            "spectral_m": "http://tabasco.upf.edu/data/displays/17/17052_4942_spec_M.jpg", 
+            "spectral_l": "http://tabasco.upf.edu/data/displays/17/17052_4942_spec_L.jpg", 
+            "user": {
+                "username": "schluppipuppie", 
+                "url": "http://tabasco.upf.edu/people/schluppipuppie/", 
+                "ref": "http://tabasco.upf.edu/api/people/schluppipuppie"
+            }, 
+            "original_filename": "sweep03_careful.aif", 
+            "type": "aif", 
+            "duration": 40.106299999999997, 
+            "analysis_frames": "http://tabasco.upf.edu/data/analysis/17/17052_4942_frames.json", 
+            "waveform_l": "http://tabasco.upf.edu/data/displays/17/17052_4942_wave_L.png", 
+            "waveform_m": "http://tabasco.upf.edu/data/displays/17/17052_4942_wave_M.png", 
+            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/17/17052_4942-hq.ogg", 
+            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/17/17052_4942-hq.mp3"
+        }, 
+        {
+            "analysis_stats": "http://tabasco.upf.edu/api/sounds/93063/analysis", 
+            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/93/93063_926020-lq.ogg", 
+            "tags": [
+                "impulse"
+            ], 
+            "url": "http://tabasco.upf.edu/people/simonbshelley/sounds/93063/", 
+            "ref": "http://tabasco.upf.edu/api/sounds/93063", 
+            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/93/93063_926020-lq.mp3", 
+            "serve": "http://tabasco.upf.edu/api/sounds/93063/serve", 
+            "similarity": "http://tabasco.upf.edu/api/sounds/93063/similar", 
+            "distance": 350841315786752.0, 
+            "spectral_m": "http://tabasco.upf.edu/data/displays/93/93063_926020_spec_M.jpg", 
+            "spectral_l": "http://tabasco.upf.edu/data/displays/93/93063_926020_spec_L.jpg", 
+            "user": {
+                "username": "simonbshelley", 
+                "url": "http://tabasco.upf.edu/people/simonbshelley/", 
+                "ref": "http://tabasco.upf.edu/api/people/simonbshelley"
+            }, 
+            "original_filename": "sound source.wav", 
+            "type": "wav", 
+            "duration": 25.0, 
+            "analysis_frames": "http://tabasco.upf.edu/data/analysis/93/93063_926020_frames.json", 
+            "waveform_l": "http://tabasco.upf.edu/data/displays/93/93063_926020_wave_L.png", 
+            "waveform_m": "http://tabasco.upf.edu/data/displays/93/93063_926020_wave_M.png", 
+            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/93/93063_926020-hq.ogg", 
+            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/93/93063_926020-hq.mp3"
+        }
+    ], 
+    "num_results": 4
+  }
 
 Users
 >>>>>
@@ -799,10 +987,4 @@ Response
 The response is the same as the `sound search response`__.
 
 __ sound-search-response_
-
-
-
-
-
-
 

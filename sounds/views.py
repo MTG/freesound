@@ -290,7 +290,7 @@ def remixes(request, username, sound_id):
     qs = RemixGroup.objects.filter(sounds=sound).select_related('sounds')
     if qs:
         data = qs[0].protovis_data
-        sounds = qs[0].sounds.all()
+        sounds = qs[0].sounds.all().order_by('created')
     else:
         raise Http404
     return render_to_response('sounds/remixes.html', locals(), context_instance=RequestContext(request))

@@ -74,6 +74,7 @@ class PublicSoundManager(models.Manager):
     def get_query_set(self):
         return super(PublicSoundManager, self).get_query_set().filter(moderation_state="OK", processing_state="OK")
 
+
 class Sound(SocialModel):
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -89,8 +90,8 @@ class Sound(SocialModel):
 
     license = models.ForeignKey(License)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
-    pack = models.ForeignKey('Pack', null=True, blank=True, default=None)
-    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
+    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # file properties
     SOUND_TYPE_CHOICES = (
@@ -408,11 +409,17 @@ class Flag(models.Model):
 
 
 class Download(models.Model):
+    # download interface (UNUSED)
+    #DOWNLOAD_INTERFACE_CHOICES = (
+    #    ("W",_('Web')),
+    #    ("A",_('API')),
+    #)
+
     user = models.ForeignKey(User)
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
     pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+    #interface = models.CharField(db_index=True, max_length=1, choices=DOWNLOAD_INTERFACE_CHOICES, default="W")
 
     class Meta:
-        unique_together = ('user', 'sound', 'pack')
         ordering = ("-created",)

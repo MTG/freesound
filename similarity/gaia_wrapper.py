@@ -76,9 +76,16 @@ class GaiaWrapper:
 
     def __prepare_original_dataset(self):
         logger.debug('Transforming the original dataset.')
-        proc_ds1  = transform(self.original_dataset, 'RemoveVL')
+        self.original_dataset = self.prepare_original_dataset_helper(self.original_dataset)
+
+    @staticmethod
+    def prepare_original_dataset_helper(ds):
+        """This function is used by the inject script as well."""
+        proc_ds1  = transform(ds, 'RemoveVL')
         proc_ds2  = transform(proc_ds1,  'FixLength')
-        self.original_dataset = transform(proc_ds2, 'Cleaner')
+        proc_ds1 = None
+        prepared_ds = transform(proc_ds2, 'Cleaner')
+        return prepared_ds
 
 
     def add_point(self, point_location, point_name):

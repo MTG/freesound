@@ -1,7 +1,6 @@
 from django_extensions.management.jobs import HourlyJob
 from sounds.models import Pack
 
-
 class Job(HourlyJob):
     help = "Find packs that need refreshing and create them"
 

@@ -42,6 +42,7 @@
         <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
         <span class="download_count">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</span><br />
         <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
+        <a class="similar" href="{% url sound-similar sound.user.username sound.id %}">similar sounds..</a>
     </div>
 </div>
 {% endif %}

@@ -1,4 +1,5 @@
 {% extends "sounds/_section.html" %}
+{% load display_license_form %}
 
 {% block title %}&quot;editing {{sound.original_filename}}{% endblock title %}
 
@@ -19,11 +20,17 @@
     <input type="submit" name="submit" value="submit" />
 </form>
 
+<h2>Sound sources</h2>
+<a id="edit_sources"></a>
+<p>
+    <a href="{% url sound-edit-sources sound.user.username sound.id %}">Edit sound sources</a>
+</p>
+
 <h2>Sound license</h2>
 
 <a id="license"></a>
 <form method="post" action="#license">{% csrf_token %}
-    {{license_form.as_p}}
+    {% display_license_form license_form %}
     <input type="submit" name="submit" value="submit" />
 </form>
 
@@ -40,7 +47,7 @@
 <a id="geotag"></a>
 <form method="post" action="#geotag">{% csrf_token %}
     {{geotag_form.as_p}}
-        <label for="map">Drag this map to set the geotag:</label> 
+        <label for="map">Drag this map to set the geotag:</label>
         <div id="map" style="width: 400px; height:400px; margin-bottom: 1em;"></div>
     <input type="submit" name="submit" value="submit" />
 </form>
@@ -53,30 +60,30 @@
 
 <script type="text/javascript">
     var map = new GMap2($("#map").get(0));
-    
+
     var initialCenter = new GLatLng(23.885837699862005,21.796875);
     var initialZoom = 2;
-    
+
     {% if sound.geotag %}
     initialCenter = new GLatLng({{sound.geotag.lat}},{{sound.geotag.lon}});
-    initialZoom = {{sound.geotag.zoom}}; 
+    initialZoom = {{sound.geotag.zoom}};
     {% endif %}
 
     map.setCenter(initialCenter, initialZoom);
-    
+
     map.setMapType( G_HYBRID_MAP );
- 	map.disableScrollWheelZoom();
+     map.disableScrollWheelZoom();
     map.enableContinuousZoom();
     map.addControl(new GSmallMapControl());
     map.addControl(new GMapTypeControl());
-    
+
     var centerIcon = new GIcon();
     centerIcon.image = "http://www.freesound.org/geotagging/arrow.png";
     centerIcon.iconSize = new GSize(25, 24);
     centerIcon.shadowSize = new GSize(0, 0);
     centerIcon.iconAnchor = new GPoint(0, 24);
     centerIcon.infoWindowAnchor = new GPoint(25, 0);
-    
+
     var centerMarker = new GMarker(initialCenter, centerIcon);
     map.addOverlay(centerMarker);
 
@@ -97,8 +104,8 @@
         }
         centerMarker.setLatLng(center);
     }
-    
-    
+
+
     $("#{{geotag_form.remove_geotag.auto_id}}").change(function (event) {
         if (this.checked)
         {

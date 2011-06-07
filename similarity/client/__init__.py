@@ -9,7 +9,7 @@ class Similarity():
                   'sound_id': sound_id,
                   'num_results': num_results,
                   'preset': preset}
-        return messenger.call_service(REQREP_ADDRESS, params)
+        return messenger.call_service(REQREP_ADDRESS, params, 5)
 
 
     @classmethod

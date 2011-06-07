@@ -200,6 +200,12 @@ form input,form textarea {
     padding: 3px;
     font-size: 13px;
 }
+#content textarea {
+	width: 530px;
+}
+#content .content_box textarea {
+	width: 500px;
+}
 
 form #id_subscribe {
     margin-top: 6px;
@@ -218,6 +224,28 @@ div.infowindow {
     margin-bottom: 18px;
     width: 200px;
     color: red;
+}
+
+/* Button Elements
+------------------------------------------------------*/
+.action_button {
+	display: inline-block;
+	background-color: #eee;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	padding: 8px 15px;
+	color: #333;
+	font-weight: bold;
+	border-bottom: solid 1px #ddd;
+	font-size: 15px;
+	text-shadow: 0 1px #fff;
+}
+.action_button:hover {
+	background-color: #ddd;
+	text-decoration: underline;
+	color: #111;
+	border-bottom: solid 1px #ccc;
 }
 
 /* Formatting Elements
@@ -478,7 +506,8 @@ div.infowindow {
 
 /* Home Page Styles
 ------------------------------------------------------*/
-body#home h2 {
+body#home h2,
+.content_box h2 {
     font-family: Arial, sans-serif;
     font-size: 22px;
     font-weight: bold;
@@ -486,7 +515,9 @@ body#home h2 {
     line-height: 1em;
 }
 
-body#home h3 {
+body#home h3,
+h3.header,
+.content_box h3 {
     font-size: 11px;
     font-weight: bold;
     margin-bottom: 16px;
@@ -544,44 +575,51 @@ body#home h3 {
 ------------------------------------------------------*/
 .sample_player_small {
     width: 540px;
-    height: 150px;
-    margin: 0px 0px;
+    margin: 0;
     margin-top: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     overflow: hidden;
 }
 
 .sample_player_small .sample_player {
-    width: 410px;
+    /*width: 410px;*/
     float: left;
-    left: 0px;
 }
 
 .sample_player_small div.small_player {
     float: left;
     width: 120px;
     height: 71px;
+    margin-right: 10px;
+    margin-bottom: 10px;
 }
 
 .sample_player_small div.sound_title {
-    position: relative;
+    float: left;
+    width: 295px;
+}
+
+.sample_player_small .sound_filename {
+	display: block;
+	width: 230px;
+	float: left;
+	line-height: 14px;
+	position: relative;
+	top: -2px;
 }
 
 .sample_player_small .title {
     font-size: 14px;
-    margin-left: 10px;
     font-weight: bold;
 }
 
 .sample_player_small div.sound_tags {
-    width: 300px;
-    margin-left: 130px;
+    clear: left;
 }
+
 /* Overriding regular tags list*/
 .sample_player_small div.sound_tags ul#tags {
     line-height: 12px;
-    max-height: 50px;
-    overflow: hidden;
     margin-bottom: 2px;
 }
 
@@ -601,10 +639,10 @@ body#home h3 {
 
 .sample_player_small div.sound_stars {
     position: relative;
-    top: 0px;
+    top: -6px;
     float: right;
     vertical-align: top;
-    margin-right: 0px;
+    margin-right: 0;
 }
 
 .stars {
@@ -617,13 +655,11 @@ body#home h3 {
 }
 
 .sample_player_small .sound_description {
-    width: 300px;
-    margin-left: 130px;
+    float: left;
 }
 
 .sample_player_small .description {
     margin-right: 2px;
-    margin-top: 2px;
     margin-bottom: 5px;
     font-size: 12px;
     line-height: 16px;
@@ -640,6 +676,10 @@ body#home h3 {
     color: #757575;
 }
 
+.sample_player_small #tags li {
+    margin-left: 0;
+}
+
 .sample_player_small .user {
     position: relative;
     top: -3px;
@@ -652,7 +692,9 @@ body#home h3 {
     color: #444;
     clear: both;
     font-size: 11px;
-    padding: 14px 0 2px 0;
+    padding: 0 0 15px 0;
+    margin-left: 128px;
+    margin-top: -10px;
 }
 
 .sample_more a {
@@ -714,6 +756,23 @@ body#home h3 {
 .sound_list_moderation .sample_player_small { /*  height:100px;*/
 
 }
+
+/* Browse Sounds Page
+------------------------------------------------------*/
+
+#uploader_of_the_day img {
+	float: left;
+	margin: 0 15px 15px 0;
+}
+
+#uploader_of_the_day h2 {
+	margin-bottom: 6px;
+}
+
+#uploader_of_the_day ul {
+	margin-left: 83px;
+}
+
 
 /* Single Sample Page
 ------------------------------------------------------*/
@@ -809,6 +868,110 @@ ul#tags {
     color: #000;
 }
 
+#download {
+    padding: 20px 0 20px 25px;
+}
+
+#download_text {
+    padding-right: 170px;
+    color: #999;
+    font-size: 11px;
+    text-align: right;
+    line-height: 1.4em;
+}
+
+#download_text b {
+    color: #555;
+}
+
+#download_button {
+    display: block;
+    float: right;
+    width: 144px;
+    height: 31px;
+    background: url(../images/download_button.png);
+}
+
+#sound-edit a {
+    display: block;
+    width: 144px;
+    height: 31px;
+    background: url(../images/edit_sound.png);
+    text-indent: -9999px;
+    margin-bottom: 20px;
+}
+
+
+#sound_information_box {
+    padding: 20px 30px;
+    background: url(../images/single_sample_sidebar_bg.png) no-repeat top
+        #F3F3F3;
+    font-size: 12px;
+    border-bottom: solid 1px #D2D2D2;
+    line-height: 1.7em;
+}
+
+#sound_information_box dt {
+    width: 125px;
+    float: left;
+    color: #888;
+}
+
+#sound_information_box dt img {
+    position: relative;
+    top: 1px;
+    left: -5px;
+}
+
+#sound_links {
+    padding: 20px 30px;
+    font-size: 13px;
+    font-weight: bold;
+    background: url(../images/single_sample_links_bg.png) no-repeat top;
+}
+
+ul#sound_links {
+    padding: 20px 30px;
+    line-height: 21px;
+    list-style-type: none;
+}
+
+#sound_links li img {
+    position: relative;
+    top: 2px;
+    left: -6px;
+}
+
+#flag_sound {
+    padding: 20px 30px 18px 30px;
+    background: url(../images/single_sample_sidebar_bg.png) no-repeat top
+        #F3F3F3;
+    font-size: 12px;
+    border-bottom: solid 1px #D2D2D2;
+    color: #555;
+}
+
+#flag_sound a {
+    font-weight: bold;
+}
+
+#sound_license {
+    position: relative;
+    padding: 20px 10px 20px 120px;
+    font-size: 11px;
+    line-height: 1.4em;
+    color: #999;
+}
+
+#sound_license img {
+    position: absolute;
+    left: 8px;
+    top: 25px;
+}
+
+
+/* Comments
+------------------------------------------------------*/
 #comments_container {
     clear: both;
     background: url(../images/single_sample_comments_bg.png) no-repeat;
@@ -898,95 +1061,19 @@ ul#comments {
     margin-bottom: 10px;
 }
 
-#download {
-    padding: 20px 0 20px 25px;
+.comment_delete {
+	float: right;
 }
 
-#download_text {
-    padding-right: 170px;
-    color: #999;
-    font-size: 11px;
-    text-align: right;
-    line-height: 1.4em;
+.comment_delete a#delete_button {
+	display: block;
+	width: 16px;
+	height: 17px;
+	text-indent: -9999px;
+	background: url(../images/delete_icon.png) no-repeat top left;
 }
-
-#download_text b {
-    color: #555;
-}
-
-#download_button {
-    display: block;
-    float: right;
-    width: 144px;
-    height: 31px;
-    background: url(../images/download_button.png);
-}
-
-#sound_information_box {
-    padding: 20px 30px;
-    background: url(../images/single_sample_sidebar_bg.png) no-repeat top
-        #F3F3F3;
-    font-size: 12px;
-    border-bottom: solid 1px #D2D2D2;
-    line-height: 1.7em;
-}
-
-#sound_information_box dt {
-    width: 125px;
-    float: left;
-    color: #888;
-}
-
-#sound_information_box dt img {
-    position: relative;
-    top: 1px;
-    left: -5px;
-}
-
-#sound_links {
-    padding: 20px 30px;
-    font-size: 13px;
-    font-weight: bold;
-    background: url(../images/single_sample_links_bg.png) no-repeat top;
-}
-
-ul#sound_links {
-    padding: 20px 30px;
-    line-height: 21px;
-    list-style-type: none;
-}
-
-#sound_links li img {
-    position: relative;
-    top: 2px;
-    left: -6px;
-}
-
-#flag_sound {
-    padding: 20px 30px 18px 30px;
-    background: url(../images/single_sample_sidebar_bg.png) no-repeat top
-        #F3F3F3;
-    font-size: 12px;
-    border-bottom: solid 1px #D2D2D2;
-    color: #555;
-}
-
-#flag_sound a {
-    font-weight: bold;
-}
-
-#sound_license {
-    position: relative;
-    padding: 20px 10px 20px 120px;
-    font-size: 11px;
-    line-height: 1.4em;
-    color: #999;
-}
-
-#sound_license img {
-    position: absolute;
-    left: 8px;
-    top: 25px;
+.comment_delete a#delete_button:hover {
+	background: url(../images/delete_icon.png) no-repeat top right;
 }
 
 /* Messages
@@ -1236,6 +1323,7 @@ ul#forums,ul#topics {
 ul.pagination {
     line-height: 16px;
     list-style-type: none;
+    padding-left: 0;
 }
 
 .pagination li {
@@ -1386,7 +1474,8 @@ ul.pagination {
     margin-left: 19px;
 }
 
-.sidebar_box {
+.sidebar_box,
+#sidebar .content_box {
     width: 310px;
     min-height: 103px;
     padding: 0 19px;
@@ -1567,6 +1656,12 @@ a.donation_button:hover {
     left: -5px;
     top: 1px;
 }
+
+#sidebar form,
+.content_box form {
+	background: none;
+	border: none;
+	}
 
 /* Freesound Projects
 ------------------------------------------------------*/
@@ -1785,9 +1880,9 @@ p.about {
 /* Tagclouds
 ------------------------------------------------------*/
 p.user_tagcloud {
-    padding: 20px;
-    width: 400px;
-    background-color: #F6F6F6;
+    padding: 10px;
+    /*width: 400px;
+    background-color: #F6F6F6;*/
 }
 
 p.user_tagcloud a {
@@ -1877,7 +1972,7 @@ span.tag_addremove a:hover {
 .license-description {
     float: left;
     width: 100%;
-    /*margin-bottom: 30px;*/
+    margin-bottom: 20px;
     height: 80px;
 }
 
@@ -1898,7 +1993,7 @@ span.tag_addremove a:hover {
 
 #license-middle li {
     list-style-type: none;
-    /*margin-bottom: 50px;*/
+    margin-bottom: 20px;
     height: 80px;
 }
 
@@ -1976,6 +2071,15 @@ ul.messages {
     background-color: #F7F8E0;
     margin: 20px 70px 20px 70px;
 }
+
+/* User Settings Page
+------------------------------------------------------*/
+#delete_account {
+	width: 329px;
+	padding-left: 20px;
+	padding-bottom: 10px;
+}
+
 
 /* Moderation interface
 ------------------------------------------------------*/

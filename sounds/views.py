@@ -19,7 +19,7 @@ from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    LicenseForm, FlagForm, RemixForm
+    NewLicenseForm, FlagForm, RemixForm
 from accounts.models import Profile
 from sounds.models import Sound, Pack, Download
 from tickets.models import Ticket, TicketComment
@@ -31,9 +31,12 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
-import datetime, os, time
+import datetime, os, time, logging
 from sounds.templatetags import display_sound
 from django.db.models import Q
+from utils.similarity_utilities import get_similar_sounds
+
+logger = logging.getLogger('web')
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -250,14 +253,14 @@ def sound_edit(request, username, sound_id):
             geotag_form = GeotaggingForm(prefix="geotag")
 
     if is_selected("license"):
-        license_form = LicenseForm(request.POST, prefix="license")
+        license_form = NewLicenseForm(request.POST, prefix="license")
         if license_form.is_valid():
             sound.license = license_form.cleaned_data["license"]
             sound.mark_index_dirty()
             invalidate_template_cache("sound_footer", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
+        license_form = NewLicenseForm(prefix="license", initial=dict(license=sound.license.id))
 
     google_api_key = settings.GOOGLE_API_KEY
 
@@ -303,8 +306,17 @@ def geotag(request, username, sound_id):
 
 
 def similar(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    pass
+    sound = get_object_or_404(Sound, user__username__iexact=username,
+                              id=sound_id,
+                              moderation_state="OK",
+                              processing_state="OK"
+                              )
+                            #TODO: similarity_state="OK"
+                            #TODO: this filter has to be added again, but first the db has to be updated
+
+    similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(settings.SOUNDS_PER_PAGE))
+    logger.info('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
+    return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 
 def pack(request, username, pack_id):

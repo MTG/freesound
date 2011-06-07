@@ -73,8 +73,7 @@ created: 		date
 original_filename: 	string, tokenized
 description: 		string, tokenized
 tag: 			string
-license: 		string (all the same for all
-freesound 		sounds for now)
+license: 		string
 is_remix: 		boolean
 was_remixed: 		boolean
 pack: 			string
@@ -118,7 +117,7 @@ dates can have ranges (and math) too (the "TO" needs to be upper case!)::
 Some examples::
     
   f=tag:bass tag:drum
-  f=tag:bass description:"really heavy"
+  f=tag:bass description:"heavy distortion"
   f=is_geotagged:true tag:field-recording duration:[60 TO 120]
   f=samplerate:44100 type:wav channels:2
   f=duration:[0.1 TO 0.3] avg_rating:[3 TO *]
@@ -152,7 +151,11 @@ rating_asc      Same as above, but lowest rated sounds first.
 
   # Get the third page with the query 'dogs', with the most downloaded sounds first.
   curl http://tabasco.upf.edu/api/sounds/search?p=3&q=dogs&s=downloads_desc
-  TODO: examples of the more exotic search features
+  # Get the most recent uploaded sounds with the tag 'synth' and querying for 'bass'
+  curl http://tabasco.upf.edu/api/sounds/search?q=bass&f=tag:synth&s=created_desc
+  # Get short kick sounds
+  curl http://tabasco.upf.edu/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]
+
 
 .. _sound-search-response:
 
@@ -164,7 +167,7 @@ Response
 ===========  =======  ===========================================================================================
 Name         Type     Description
 ===========  =======  ===========================================================================================
-sounds       array    Array of sounds. Each sound looks like the `response format of a single sound resource`__.
+sounds       array    Array of sounds. Each sound looks like a reduced version of the `response format of a single sound resource`__. (with less information)
 num_results  int      Number of sounds found that match your search
 num_pages    int      Number of pages (as the result is paginated)
 previous     URI      The URI to go back one page in the search results.
@@ -178,51 +181,88 @@ __ sound-get-response_
 ::
 
   {
+    "num_results": 810, 
     "sounds": [
         {
-            "waveform_m": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.png", 
-            "tags": [
-                "bird", 
-                "cheep", 
-                "chick", 
-                "manorina", 
-                "melanocephala", 
-                "miner", 
-                "nousy", 
-                "peep"
-            ], 
-            "url": "http://tabasco.upf.edu/people/digifishmusic/sounds/83295/", 
+            "analysis_stats": "http://tabasco.upf.edu/api/sounds/116841/analysis", 
+            "analysis_frames": "http://tabasco.upf.edu/data/analysis/116/116841_854810_frames.json", 
+            "waveform_m": "http://tabasco.upf.edu/data/displays/116/116841_854810_wave_M.png", 
             "type": "wav", 
-            "serve": "http://tabasco.upf.edu/api/sounds/83295/serve", 
-            "spectral_m": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_m.jpg", 
-            "spectral_l": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.jpg", 
+            "original_filename": "falling metal 3 - 20.3.11.wav", 
+            "tags": [
+                "voice", 
+                "siren", 
+                "metal", 
+                "bird", 
+                "industry", 
+                "trains", 
+                "police", 
+                "ambulance", 
+                "sunday", 
+                "dog", 
+                "barking", 
+                "ambience", 
+                "seagull", 
+                "car", 
+                "horn", 
+                "shouting"
+            ], 
+            "url": "http://tabasco.upf.edu/people/toiletrolltube/sounds/116841/", 
+            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/116/116841_854810-hq.ogg", 
+            "serve": "http://tabasco.upf.edu/api/sounds/116841/serve", 
+            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/116/116841_854810-lq.ogg", 
+            "spectral_m": "http://tabasco.upf.edu/data/displays/116/116841_854810_spec_M.jpg", 
+            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/116/116841_854810-lq.mp3", 
             "user": {
-                "username": "digifishmusic", 
-                "url": "http://tabasco.upf.edu/people/digifishmusic/", 
-                "ref": "http://tabasco.upf.edu/api/people/digifishmusic"
+                "username": "toiletrolltube", 
+                "url": "http://tabasco.upf.edu/people/toiletrolltube/", 
+                "ref": "http://tabasco.upf.edu/api/people/toiletrolltube"
             }, 
-            "original_filename": "Noisy_Miner_Chick_FeedMe.wav", 
-            "base_filename_slug": "83295__digifishmusic__Noisy_Miner_Chick_FeedMe", 
-            "duration": 48.548956916100003, 
-            "waveform_l": "http://tabasco.upf.edu/media/data/83/previews/83295__digifishmusic__Noisy_Miner_Chick_FeedMe_l.png", 
-            "preview": "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3", 
-            "preview-hq-mp3" : "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3", 
-            "preview-hq-ogg" : "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3",
-            "preview-lq-mp3" : "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3",
-            "preview-lq-ogg" : "http://tabasco.upf.edu/media/data/sounds/83/previews/83295__digifishmusic__noisy-miner-chick-feedme.mp3",
-            "ref": "http://tabasco.upf.edu/api/sounds/83295", 
-            "pack": "http://tabasco.upf.edu/api/packs/2090"
+            "spectral_l": "http://tabasco.upf.edu/data/displays/116/116841_854810_spec_L.jpg", 
+            "duration": 5.6986699999999999, 
+            "waveform_l": "http://tabasco.upf.edu/data/displays/116/116841_854810_wave_L.png", 
+            "ref": "http://tabasco.upf.edu/api/sounds/116841", 
+            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/116/116841_854810-hq.mp3", 
+            "pack": "http://tabasco.upf.edu/api/packs/7333"
         },
-	{'another_sound': 1},
-	{'and_another': 1}
-	],
-    "previous": "http://tabasco.upf.edu/api/sounds/search?q=&p=1&f=&s=downloads_desc", 
-    "next": "http://tabasco.upf.edu/api/sounds/search?q=&p=3&f=&s=downloads_desc",
-    "num_results": 1,
-    "num_pages": 1, 
+        [...more sounds...]
+        {
+            "analysis_stats": "http://tabasco.upf.edu/api/sounds/113785/analysis", 
+            "analysis_frames": "http://tabasco.upf.edu/data/analysis/113/113785_1956076_frames.json", 
+            "waveform_m": "http://tabasco.upf.edu/data/displays/113/113785_1956076_wave_M.png", 
+            "type": "wav", 
+            "original_filename": "Woof Woof Drum.wav", 
+            "tags": [
+                "drum", 
+                "bass", 
+                "dog", 
+                "woof", 
+                "bark", 
+                "canvas", 
+                "hit"
+            ], 
+            "url": "http://tabasco.upf.edu/people/Puniho/sounds/113785/", 
+            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/113/113785_1956076-hq.ogg", 
+            "serve": "http://tabasco.upf.edu/api/sounds/113785/serve", 
+            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/113/113785_1956076-hq.mp3", 
+            "spectral_m": "http://tabasco.upf.edu/data/displays/113/113785_1956076_spec_M.jpg", 
+            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/113/113785_1956076-lq.mp3", 
+            "user": {
+                "username": "Puniho", 
+                "url": "http://tabasco.upf.edu/people/Puniho/", 
+                "ref": "http://tabasco.upf.edu/api/people/Puniho"
+            }, 
+            "spectral_l": "http://tabasco.upf.edu/data/displays/113/113785_1956076_spec_L.jpg", 
+            "duration": 2.6059399999999999, 
+            "waveform_l": "http://tabasco.upf.edu/data/displays/113/113785_1956076_wave_L.png", 
+            "ref": "http://tabasco.upf.edu/api/sounds/113785", 
+            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/113/113785_1956076-lq.ogg"
+        }
+    ], 
+    "previous": "http://tabasco.upf.edu/api/sounds/search?q=dogs&p=1&f=&s=downloads_desc", 
+    "num_pages": 27, 
+    "next": "http://tabasco.upf.edu/api/sounds/search?q=dogs&p=3&f=&s=downloads_desc"
   }
-
-
 
 
 
@@ -263,32 +303,37 @@ Response
 Name                  Type     Description
 ====================  =======  ====================================================================================
 id                    number   The sound's unique identifier.
-ref		      URI      The URI for this sound.
-url		      URI      The URI for this sound on the Freesound website.
-preview		      URI      The URI for retrieving the mp3 preview of the sound.
-serve		      URI      The URI for retrieving the original sound.
-type		      string   The type of sound (wav, aif, mp3, etc.).
-duration	      number   The duration of the sound in seconds.
-samplerate	      number   The samplerate of the sound.
-bitdepth	      number   The bit depth of the sound.
-filesize	      number   The size of the file in bytes.
-bitrate		      number   The bit rate of the sound.
-channels	      number   The number of channels.
+ref                   URI      The URI for this sound.
+url                   URI      The URI for this sound on the Freesound website.
+preview-hq-mp3        URI      The URI for retrieving a high quality (~128kbps) mp3 preview of the sound.
+preview-lq-mp3        URI      The URI for retrieving a low quality (~64kbps) mp3 preview of the sound.
+preview-hq-ogg        URI      The URI for retrieving a high quality (~192kbps) ogg preview of the sound.
+preview-lq-ogg        URI      The URI for retrieving a low quality (~80kbps) ogg of the sound.
+serve                 URI      The URI for retrieving the original sound.
+type                  string   The type of sound (wav, aif, mp3, etc.).
+duration              number   The duration of the sound in seconds.
+samplerate            number   The samplerate of the sound.
+bitdepth              number   The bit depth of the sound.
+filesize              number   The size of the file in bytes.
+bitrate               number   The bit rate of the sound in kbps.
+channels              number   The number of channels.
 original_filename     string   The name of the sound file when it was uploaded.
-description	      string   The description the user gave the sound.
-tags		      array    An array of tags the user gave the sound.
-license		      string   The license under which the sound is available to you.
-created		      string   The date of when the sound was uploaded.
-num_comments	      number   The number of comments.
-num_downloads	      number   The number of times the sound was downloaded.
-num_ratings	      number   The number of times the sound was rated.
-avg_rating	      number   The average rating of the sound.
-pack		      URI      If the sound is part of a pack, this URI points to that pack's API resource.
-user		      object   A dictionary with the username, url, and ref for the user that uploaded the sound.
-spectral_m	      URI      A visualization of the sounds spectrum over time, jpeg file (medium).
-spectral_l	      URI      A visualization of the sounds spectrum over time, jpeg file (large).
-waveform_m	      URI      A visualization of the sounds waveform, png file (medium).
-waveform_l	      URI      A visualization of the sounds waveform, png file (large).
+description           string   The description the user gave the sound.
+tags                  array    An array of tags the user gave the sound.
+license               string   The license under which the sound is available to you.
+created               string   The date of when the sound was uploaded.
+num_comments          number   The number of comments.
+num_downloads         number   The number of times the sound was downloaded.
+num_ratings           number   The number of times the sound was rated.
+avg_rating            number   The average rating of the sound.
+pack                  URI      If the sound is part of a pack, this URI points to that pack's API resource.
+user                  object   A dictionary with the username, url, and ref for the user that uploaded the sound.
+spectral_m            URI      A visualization of the sounds spectrum over time, jpeg file (medium).
+spectral_l            URI      A visualization of the sounds spectrum over time, jpeg file (large).
+waveform_m            URI      A visualization of the sounds waveform, png file (medium).
+waveform_l            URI      A visualization of the sounds waveform, png file (large).
+analysis              URI      URI pointing to the analysis results of the sound  (see :ref:`analysis-docs`).
+analysis_frames       URI      The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
 ====================  =======  ====================================================================================
 
 **JSON Example**
@@ -296,53 +341,159 @@ waveform_l	      URI      A visualization of the sounds waveform, png file (larg
 ::
 
   {
-    "duration": 0.384172335601, 
-    "samplerate": 44100.0, 
-    "id": 83257, 
+    "num_ratings": 0, 
+    "duration": 260.98849999999999, 
+    "samplerate": 44000.0, 
+    "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/17/17185_18799-hq.ogg", 
+    "id": 17185, 
+    "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/17/17185_18799-lq.ogg", 
     "bitdepth": 16, 
     "num_comments": 0, 
-    "filesize": 67928, 
-    "preview": "http://tabasco.upf.edu/media/data/sounds/83/previews/83257__zgump__club-kick-0304.mp3", 
-    "ref": "http://tabasco.upf.edu/api/sounds/83257", 
-    "description": "kick bd drum goa goakick psy psykick kickdrum", 
-    "tags": [
-        "bd", 
-        "drum", 
-        "goa", 
-        "goakick", 
-        "kick", 
-        "kickdrum", 
-        "psy", 
-        "psykick"
-    ], 
-    "serve": "http://tabasco.upf.edu/api/sounds/83257/serve", 
-    "user": {
-        "username": "zgump", 
-        "url": "http://tabasco.upf.edu/people/zgump/", 
-        "ref": "http://tabasco.upf.edu/api/people/zgump"
-    }, 
-    "bitrate": 1411, 
-    "num_downloads": 0, 
-    "num_ratings": 0, 
-    "license": "http://creativecommons.org/licenses/sampling+/1.0/", 
-    "created": "2009-11-12 19:58:17", 
-    "url": "http://tabasco.upf.edu/people/zgump/sounds/83257/", 
+    "filesize": 45934020, 
+    "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/17/17185_18799-hq.mp3", 
     "type": "wav", 
-    "avg_rating": 0.0, 
-    "original_filename": "CLUB KICK 0304.wav", 
-    "spectral_m": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.jpg", 
-    "spectral_l": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.jpg", 
-    "waveform_l": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_l.png", 
-    "waveform_m": "http://tabasco.upf.edu/media/data/83/previews/83257__zgump__CLUB_KICK_0304_m.png", 
+    "analysis_stats": "http://tabasco.upf.edu/api/sounds/17185/analysis", 
+    "description": "The most beautiful nightingale recording I've ever made. Forest near Cologne, Germany,June 2004, Vivanco EM35 with preamp into Sony DAT-recorder.", 
+    "tags": [
+        "bulbul", 
+        "fulemule", 
+        "csalogany", 
+        "luscinia-megarhynchos", 
+        "etelansatakieli", 
+        "sornattergal", 
+        "sydnaktergal", 
+        "ruisenor-comun", 
+        "rossignol-philomele", 
+        "nachtigall", 
+        "sydlig-nattergal", 
+        "slowik-rdzawy", 
+        "rouxinol", 
+        "usignolo", 
+        "nachtegaal", 
+        "rossinyol", 
+        "rossignol", 
+        "spring", 
+        "nightingale", 
+        "forest", 
+        "bird", 
+        "birdsong", 
+        "nature", 
+        "field-recording"
+    ], 
+    "serve": "http://tabasco.upf.edu/api/sounds/17185/serve", 
+    "spectral_m": "http://tabasco.upf.edu/data/displays/17/17185_18799_spec_M.jpg", 
+    "spectral_l": "http://tabasco.upf.edu/data/displays/17/17185_18799_spec_L.jpg", 
+    "user": {
+        "username": "reinsamba", 
+        "url": "http://tabasco.upf.edu/people/reinsamba/", 
+        "ref": "http://tabasco.upf.edu/api/people/reinsamba"
+    }, 
+    "bitrate": 1408, 
+    "num_downloads": 0, 
+    "analysis_frames": "http://tabasco.upf.edu/data/analysis/17/17185_18799_frames.json", 
     "channels": 2, 
-    "pack": "http://tabasco.upf.edu/api/packs/5467"
+    "license": "http://creativecommons.org/licenses/sampling+/1.0/", 
+    "created": "2006-03-19 23:53:37", 
+    "url": "http://tabasco.upf.edu/people/reinsamba/sounds/17185/", 
+    "ref": "http://tabasco.upf.edu/api/sounds/17185", 
+    "avg_rating": 0.0, 
+    "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/17/17185_18799-lq.mp3", 
+    "original_filename": "Nightingale song 3.wav", 
+    "waveform_l": "http://tabasco.upf.edu/data/displays/17/17185_18799_wave_L.png", 
+    "waveform_m": "http://tabasco.upf.edu/data/displays/17/17185_18799_wave_M.png", 
+    "pack": "http://tabasco.upf.edu/api/packs/455"
   }
 
 
 
+Sound Analysis resource
+=======================
+
+When a file is uploaded in Freesound it is automatically analyzed. Several descriptors are
+extracted and the results can be retrieved through this URI. The analysis is
+done by the audio analysis tool Essentia, property of the MTG_ and
+exclusively licensed to BMAT_. For detailed documentation on all the
+descriptors see :ref:`analysis-docs`.
+
+.. _MTG: http://mtg.upf.edu/
+.. _BMAT: http://www.bmat.com/
 
 
+URI
+---
 
+::
+
+  /sounds/<sound_id>/analysis/<filter>
+
+The only allowed method is GET.
+
+The URI variable <file_key> should be replaced by a file's key. With the
+<filter> variable you can select and retrieve a part of the analysis data.
+When no <filter> is included the complete analysis data is returned.
+
+The analysis data is organized in a tree. With the filter you can traverse the
+tree and select a subset of it. With the ``lowlevel`` filter, you will
+retrieve all the lowlevel descriptors, and with the ``lowlevel/mfcc/mean``
+filter you will retrieve just an array of all twelve coefficients of the
+MFCC analysis. Have a look at the complete analysis data and it'll become
+apparent how filtering works.
+
+GET
+---
+
+Retrieve the analysis data for a file.
+
+Request
+'''''''
+
+**Parameters**
+
+=========  ======  ========  ===================================================
+Name       Type    Required  Description
+=========  ======  ========  ===================================================
+all        bool    no        If set to true, all the available analysis data
+                             will be returned. This might include unstable or
+                             unreliable data. For stable descriptors use the
+                             recommended ones. (default=False)
+=========  ======  ========  ===================================================
+
+**Curl Examples**
+
+::
+
+  # For the complete analysis result
+  curl http://tabasco.upf.edu/sounds/999/analysis
+  # For a filtered analysis result, in this case the analyzed average loudness
+  curl http://tabasco.upf.edu/api/sounds/999/analysis/lowlevel/average_loudness/
+  # Or for all the tonal data
+  curl http://tabasco.upf.edu/api/sounds/999/analysis/tonal
+
+Response
+''''''''
+
+The response consists of a JSON object. Some filters will return a JSON array.
+If you use a filter that doesn't match any analysis data you will bet a
+response with status code '400 Bad Request'.
+
+If the analysis data is not available yet a 409 error message
+is returned. When the analysis failed or isn't available for some other reason
+a 404 message is returned.
+
+
+Analysis information at the audio frame level
+'''''''''''''''''''''''''''''''''''''''''''''
+
+The analysis data described above is a summary of the analysis of all the frames 
+where each frame is usually 2048 samples long. Apart from this summary the analysis 
+results for each frame can be retrieved as well. This data can not be filtered and 
+will be served to you as one big JSON file. The data will also include the 
+configuration that was used, such as frame and hopsize. The URI to retrieve this file 
+is given by the ``analysis_frames`` property of a sound resource. As an example:
+
+::
+
+  http://tabasco.upf.edu/data/analysis/17/17185_18799_frames.json
 
 
 Users
@@ -364,6 +515,8 @@ The only allowed method is GET.
 
 GET
 ---
+
+A GET request to the user resource returns all the information about the user.
 
 Request
 '''''''
@@ -437,7 +590,7 @@ The only allowed method is GET.
 GET
 ---
 
-TODO: what's this resource?
+This resource returns the collection of sounds uploaded by the user.
 
 Request
 '''''''
@@ -499,7 +652,7 @@ Response
 
 **Properties**
 
-The response is an array. Each item in the array has the same format as the `pack resource format`__.
+The response is an array. Each item in the array follows a reduced version of the `pack resource format`__.
 
 __ pack-get-response_
 

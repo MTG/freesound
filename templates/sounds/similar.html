@@ -6,12 +6,20 @@
 {% block title %}Sounds browse{% endblock title %}
 
 {% block section_content %}
-<h1>Similar sounds</h1>
 
-{% for sound_id in similar_sounds %}
-    {% display_sound sound_id %}
+{% for sound in similar_sounds %}
+	{% if forloop.counter == 1 %}
+		<h1>Query sound</h1>		
+	{% endif %}
+	{% display_sound sound.0 %}
+    {% if forloop.counter == 1 %}
+    	<h1>Similar sounds</h1>
+    {% endif %}
+    	
 {% empty %}
+	<h1>Similar sounds</h1>
     <p>Could not find similar sounds.
 {% endfor %}
 
 {% endblock %}
+

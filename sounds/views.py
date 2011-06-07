@@ -304,8 +304,6 @@ def geotag(request, username, sound_id):
     return render_to_response('sounds/geotag.html', locals(), context_instance=RequestContext(request))
 
 
-DEFAULT_SIMILARITY_PRESET = 'lowlevel'
-
 def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username,
                               id=sound_id,

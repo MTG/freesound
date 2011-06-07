@@ -428,24 +428,30 @@ class SoundSimilarityHandler(BaseHandler):
     curl:         curl http://www.freesound.org/api/sounds/2/similar
     '''
     def read(self, request, sound_id):
-
+        
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
             #TODO: similarity_state="OK"
             #TODO: this filter has to be added again, but first the db has to be updated
-
+            
         except Sound.DoesNotExist: #@UndefinedVariable
             resp = rc.NOT_FOUND
             resp = 'There is no sound with id %s' % sound_id
             return resp
-
+        
         similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
-
-        sounds = [ prepare_collection_sound(Sound.objects.select_related('user').get(id=sound_id)) for sound_id in similar_sounds ]
+        
+        sounds = []
+        for similar_sound in similar_sounds :
+            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]))
+            sound['distance'] = similar_sound[1]
+            sounds.append( sound )
+                   
         result = {'sounds': sounds, 'num_results': len(similar_sounds)}
-
-        add_request_id(request,result)
+    
+        add_request_id(request,result)        
         return result
+
 
 
 class SoundAnalysisHandler(BaseHandler):

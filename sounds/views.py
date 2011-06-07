@@ -315,7 +315,7 @@ def similar(request, username, sound_id):
                             #TODO: this filter has to be added again, but first the db has to be updated
 
     similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(settings.SOUNDS_PER_PAGE))
-    logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
+    logger.info('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
     return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 

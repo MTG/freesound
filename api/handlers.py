@@ -68,7 +68,8 @@ def get_sound_links(sound):
         'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
         'spectral_l': prepend_base(sound.locations("display.spectral.L.url")),
         'analysis_stats': get_sound_api_analysis_url(sound.id),
-        'analysis_frames': prepend_base(sound.locations("analysis.frames.url"))
+        'analysis_frames': prepend_base(sound.locations("analysis.frames.url")),
+        'similarity': ref+'/similar',
          }
     if sound.pack_id:
         d['pack'] = get_pack_api_url(sound.pack_id)

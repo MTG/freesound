@@ -21,7 +21,7 @@ from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
     LicenseForm, FlagForm, RemixForm
 from accounts.models import Profile
-from sounds.models import Sound, Pack, Download
+from sounds.models import Sound, Pack, Download, RemixGroup
 from tickets.models import Ticket, TicketComment
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
 from utils.cache import invalidate_template_cache
@@ -287,10 +287,13 @@ def sound_edit_sources(request, username, sound_id):
 
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    # TODO: The below line creates a pretty massive SQL query, have a look to optimize it
-    #        with raw SQL or split it in smaller queries.
-    qs = Sound.objects.filter(Q(sources=sound) | Q(remixes=sound) | Q(id=sound.id)).order_by('created').distinct().all()
-    return render_to_response('sounds/remixes.html', combine_dicts(locals(), paginate(request, qs, 500)), context_instance=RequestContext(request))
+    qs = RemixGroup.objects.filter(sounds=sound).select_related('sounds')
+    if qs:
+        data = qs[0].protovis_data
+        sounds = qs[0].sounds.all()
+    else:
+        raise Http404
+    return render_to_response('sounds/remixes.html', locals(), context_instance=RequestContext(request))
 
 
 def sources(request, username, sound_id):

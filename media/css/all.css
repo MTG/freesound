@@ -201,10 +201,10 @@ form input,form textarea {
     font-size: 13px;
 }
 #content textarea {
-	width: 530px;
+    width: 530px;
 }
 #content .content_box textarea {
-	width: 500px;
+    width: 500px;
 }
 
 form #id_subscribe {
@@ -229,23 +229,23 @@ div.infowindow {
 /* Button Elements
 ------------------------------------------------------*/
 .action_button {
-	display: inline-block;
-	background-color: #eee;
-	-webkit-border-radius: 5px;
-	-moz-border-radius: 5px;
-	border-radius: 5px;
-	padding: 8px 15px;
-	color: #333;
-	font-weight: bold;
-	border-bottom: solid 1px #ddd;
-	font-size: 15px;
-	text-shadow: 0 1px #fff;
+    display: inline-block;
+    background-color: #eee;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    padding: 8px 15px;
+    color: #333;
+    font-weight: bold;
+    border-bottom: solid 1px #ddd;
+    font-size: 15px;
+    text-shadow: 0 1px #fff;
 }
 .action_button:hover {
-	background-color: #ddd;
-	text-decoration: underline;
-	color: #111;
-	border-bottom: solid 1px #ccc;
+    background-color: #ddd;
+    text-decoration: underline;
+    color: #111;
+    border-bottom: solid 1px #ccc;
 }
 
 /* Formatting Elements
@@ -600,12 +600,12 @@ h3.header,
 }
 
 .sample_player_small .sound_filename {
-	display: block;
-	width: 230px;
-	float: left;
-	line-height: 14px;
-	position: relative;
-	top: -2px;
+    display: block;
+    width: 230px;
+    float: left;
+    line-height: 14px;
+    position: relative;
+    top: -2px;
 }
 
 .sample_player_small .title {
@@ -761,16 +761,16 @@ h3.header,
 ------------------------------------------------------*/
 
 #uploader_of_the_day img {
-	float: left;
-	margin: 0 15px 15px 0;
+    float: left;
+    margin: 0 15px 15px 0;
 }
 
 #uploader_of_the_day h2 {
-	margin-bottom: 6px;
+    margin-bottom: 6px;
 }
 
 #uploader_of_the_day ul {
-	margin-left: 83px;
+    margin-left: 83px;
 }
 
 
@@ -1062,18 +1062,18 @@ ul#comments {
 }
 
 .comment_delete {
-	float: right;
+    float: right;
 }
 
 .comment_delete a#delete_button {
-	display: block;
-	width: 16px;
-	height: 17px;
-	text-indent: -9999px;
-	background: url(../images/delete_icon.png) no-repeat top left;
+    display: block;
+    width: 16px;
+    height: 17px;
+    text-indent: -9999px;
+    background: url(../images/delete_icon.png) no-repeat top left;
 }
 .comment_delete a#delete_button:hover {
-	background: url(../images/delete_icon.png) no-repeat top right;
+    background: url(../images/delete_icon.png) no-repeat top right;
 }
 
 /* Messages
@@ -1659,9 +1659,9 @@ a.donation_button:hover {
 
 #sidebar form,
 .content_box form {
-	background: none;
-	border: none;
-	}
+    background: none;
+    border: none;
+    }
 
 /* Freesound Projects
 ------------------------------------------------------*/
@@ -2075,9 +2075,9 @@ ul.messages {
 /* User Settings Page
 ------------------------------------------------------*/
 #delete_account {
-	width: 329px;
-	padding-left: 20px;
-	padding-bottom: 10px;
+    width: 329px;
+    padding-left: 20px;
+    padding-bottom: 10px;
 }
 
 

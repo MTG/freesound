@@ -41,7 +41,8 @@ def migrate_table(curs):
 """
     out.write(sql)
 
-    query = """
+    query = """SELECT afc.ID, afc.audioFileID, afc.userID, afc.vote, afc.date 
+    FROM audio_file_vote AS afc ;
 """
     curs.execute(query)
 

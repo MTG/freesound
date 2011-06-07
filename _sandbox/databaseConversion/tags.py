@@ -9,6 +9,7 @@ from sets import Set
 import re
 
 OUT_FNAME = 'tags.sql'
+OUT_TAGGEDITEM_FNAME = 'tags_taggeditem.sql'
 
 VALID_USER_IDS = get_user_ids()
 VALID_SOUND_IDS = get_sound_ids()
@@ -42,27 +43,18 @@ def tag_lookup(tag):
 
 unique_test = {}
 
-out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
+out_taggeditem = codecs.open(OUT_TAGGEDITEM_FNAME, 'wt', 'utf-8')
 conn = MySQLdb.connect(**MYSQL_CONNECT)
 my_curs = conn.cursor(DEFAULT_CURSORCLASS)
 
 
 
 
-sql = """copy tags_tag (name, id) from stdin;
+
+sql = """COPY tags_taggeditem (id, user_id, tag_id, content_type_id, 
+    object_id, created) FROM stdin ;
 """
-out.write(sql)
-
-lines = [u"\t".join(map(unicode, item)) for item in lookup_dict.items()]
-out.write(u"\n".join(lines))
-
-sql = """\.
-select setval('tags_tag_id_seq',(select max(id)+1 from tags_tag));
-vacuum analyze tags_tag;
-
-copy tags_taggeditem (id, user_id, tag_id, content_type_id, object_id, created) from stin;
-"""
-out.write(sql)
+out_taggeditem.write(sql)
 
 
 query = """select audio_file_tag.ID, AudioFileID, userID, tagID, date, tag
@@ -95,7 +87,7 @@ while True:
             else:
                 unique_test[hash] = 1
                 fields = [ID, userID, tid, CONTENT_TYPE_ID, AudioFileID, date]
-                out.write( u"\t".join(map(unicode, fields)) + u"\n" )
+                out_taggeditem.write( u"\t".join(map(unicode, fields)) + u"\n" )
     except TypeError:
         print tag
 
@@ -104,4 +96,28 @@ sql = """\.
 select setval('tags_taggeditem_id_seq',(select max(id)+1 from tags_taggeditem));
 vacuum analyze tags_taggeditem;
 """
+out_taggeditem.write(sql)
+
+
+
+
+# This file can't be generated until lookup_dict has been completed.
+# But this file MUST be imported before the other one.
+out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
+
+sql = """copy tags_tag (name, id) from stdin;
+"""
 out.write(sql)
+
+lines = [u"\t".join(map(unicode, item)) for item in lookup_dict.items()]
+out.write(u"\n".join(lines))
+
+sql = """\.
+select setval('tags_tag_id_seq',(select max(id)+1 from tags_tag));
+vacuum analyze tags_tag;
+"""
+out.write(sql)
+
+
+
+

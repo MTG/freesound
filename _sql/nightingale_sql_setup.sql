@@ -96,7 +96,7 @@ from (
 where d.pack_id = sounds_pack.id;
 
 -- set has_old_license true only for users with uploaded sounds
-update accounts_profile set has_old_license = (num_sounds > 0)
+update accounts_profile set has_old_license = (num_sounds > 0) ;
 	
 -- unqueness for downloads with null of either field
 CREATE UNIQUE INDEX sounds_download_user_pack_unique

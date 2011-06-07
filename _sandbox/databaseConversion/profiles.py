@@ -59,7 +59,7 @@ def transform_row(insert_id, row):
 
     fields = [ insert_id, user_id, home_page, signature, is_whitelisted,
         about, wants_newsletter, geotag, num_sounds, num_posts, 
-        unicode(has_avatar) ]
+        unicode(has_avatar), False ]
 
     return map(unicode, fields)
 
@@ -74,9 +74,10 @@ def migrate_profiles(curs):
 -- Profiles
 --
 COPY accounts_profile (id, user_id, home_page, signature, is_whitelisted, 
-    about, wants_newsletter, geotag_id, num_sounds, num_posts, has_avatar) 
+    about, wants_newsletter, geotag_id, num_sounds, num_posts, has_avatar,
+    has_old_license) 
     FROM stdin null as 'None';
-    """
+"""
     out.write(sql_head)
 
 

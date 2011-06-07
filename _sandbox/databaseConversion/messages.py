@@ -8,15 +8,20 @@ from text_utils import prepare_for_insert, smart_character_decoding, \
     decode_htmlentities
 
 OUT_MSG_FNAME = 'messages.sql'
-OUT_BODY_FNAME = 'messagesbody.sql'
+OUT_BODY_FNAME = 'messages_body.sql'
 
 VALID_USER_IDS = get_user_ids()
 
 
+# Dictionary of texts. Key: 'text' field; value: 'text_id' generated field.
 UNIQUE_TEXTS = {}
+# Incremental index for processed texts.
 CURRENT_TEXT_ID = 1
+# Counter.
 N_MESSAGES = 0
+# Counter.
 N_IGNORED = 0
+# 
 MESSAGE_ID = 0
 
 
@@ -24,6 +29,14 @@ MESSAGE_ID = 0
 def transform_row(row):
     ___, msgtype, subject, user_from_id, user_to_id, created, text = row
     
+    global UNIQUE_TEXTS 
+    global CURRENT_TEXT_ID 
+    global N_MESSAGES 
+    global N_IGNORED
+    global MESSAGE_ID
+
+    messagebody = None
+
     if subject:
         subject = decode_htmlentities(smart_character_decoding(subject))
     if text:
@@ -31,23 +44,28 @@ def transform_row(row):
     
     N_MESSAGES += 1
     
+    # Do nothing if sender or receiver is an invalid user.
     if user_from_id not in VALID_USER_IDS or \
             user_to_id not in VALID_USER_IDS:
         print "ignoring message from", user_from_id, "to", user_to_id
         N_IGNORED += 1
-        return
+        return None, None
     
+
     try:
         text_id = UNIQUE_TEXTS[text]
     except KeyError:
+        # This is the first time the text shows up.
+        # Assign a text_id and add to the global dict.
         text_id = CURRENT_TEXT_ID
         UNIQUE_TEXTS[text] = CURRENT_TEXT_ID
         CURRENT_TEXT_ID += 1
         
+        # Text must be inserted as 'messagebody'.
         text = prepare_for_insert( text, True )
-
         messagebody = map(unicode, [text_id, text])
     
+
     subject = prepare_for_insert(subject, html_code=False, bb_code=False)
     
     body_id = text_id
@@ -94,6 +112,7 @@ def migrate_messages(curs):
     sql = """copy messages_messagebody (id, body) from stdin ;
 """
     out_body.write(sql)
+    #
     sql = """copy messages_message (id, user_from_id, user_to_id, subject, 
         body_id, is_sent, is_read, is_archived, created) from stdin ;
 """

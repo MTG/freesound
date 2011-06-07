@@ -14,6 +14,7 @@ MD5S = {}
 
 
 def transform_row(row, curs_description):
+    global MD5S
 
     myid, original_filename, user_id, duration, bitrate, bitdepth, filesize, \
         created, samplerate, channels, pack_id, moderation_state, \
@@ -23,6 +24,9 @@ def transform_row(row, curs_description):
         return
     if myid in MISSING_FILES:
         return
+    if myid == 118853:
+        # Wrong packID on the original data.
+        pack_id = None
 
     if md5 in MD5S:
         return
@@ -32,7 +36,7 @@ def transform_row(row, curs_description):
     original_filename = smart_character_decoding(original_filename)
 
     query = """SELECT text FROM audio_file_text_description 
-        where audioFileId = %d"""
+        WHERE audioFileId = %s"""
     curs_description.execute(query, (myid,) )
 
     descriptions = []
@@ -46,6 +50,7 @@ def transform_row(row, curs_description):
     processing_date = created
     similarity_state = "PE"
     processing_state = "PE"
+    analysis_state = "PE"
     license_id = 1
     processing_log = None
 
@@ -66,6 +71,7 @@ def transform_row(row, curs_description):
     avg_rating = 0
     num_ratings = 0
     moderation_note = None
+    is_index_dirty = False
 
     all_vars = [myid,
         user_id,
@@ -96,7 +102,10 @@ def transform_row(row, curs_description):
         num_downloads,
         avg_rating,
         num_ratings,
-        similarity_state]
+        similarity_state,
+        analysis_state,
+        is_index_dirty,
+        ]
 
     return map(unicode, all_vars)
 
@@ -107,14 +116,16 @@ def migrate_sounds(curs, curs_description):
 
     out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
 
-    sql = """copy sounds_sound (id, user_id, created, original_path,
-    base_filename_slug, description, license_id, original_filename, pack_id,
-    type, duration, bitrate, bitdepth, samplerate, filesize, channels, md5,
-    moderation_state, moderation_date, moderation_note, has_bad_description,
-    processing_state, processing_date, processing_log, geotag_id, num_comments,
-    num_downloads, avg_rating, num_ratings, similarity_state) from stdin null
-    as 'None';
-    """
+    sql = """COPY sounds_sound (
+        id, user_id, created, original_path, base_filename_slug, description,
+        license_id, original_filename, pack_id, type, duration, bitrate,
+        bitdepth, samplerate, filesize, channels, md5, moderation_state,
+        moderation_date, moderation_note, has_bad_description,
+        processing_state, processing_date, processing_log, geotag_id,
+        num_comments, num_downloads, avg_rating, num_ratings, similarity_state,
+        analysis_state, is_index_dirty
+    ) FROM stdin null as 'None';
+"""
     out.write(sql)
 
     query = """SELECT ID, originalFilename, userID, duration, bitrate, 
@@ -146,7 +157,7 @@ def main():
     # We use two descriptors because two queries will run at the same time.
     # SSCursor class breaks if a new query is sent before all responses 
     # have been fetched.
-    curs = conn.cursor(DEFAULT_CURSORCLASS)
+    curs = conn.cursor()
     curs_description = conn.cursor()
 
     migrate_sounds(curs, curs_description)

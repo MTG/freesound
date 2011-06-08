@@ -191,12 +191,8 @@ def prepare_single_sound_analysis(sound,request,filter):
                     raise Exception('No data here')
                 filters = filters[1:]
             except:
-                resp = rc.ALL_OK
-                resp.status_code = 400
-                resp.content = "Invalid Request: Could not find this path in the analysis data."
-                return resp
-
-
+                raise ReturnError(400, 'InvalidRequest', {'explanation': 'Could not find this path in the analysis data.'})
+                
     return analysis
 
 
@@ -357,17 +353,16 @@ class SoundSearchHandler(BaseHandler):
                                                                       find_api_option(cd['s']))
             add_request_id(request,result)
             return result
-        except SolrException, e:
-            error = "search error: search_query %s filter_query %s sort %s error %s" \
-                        % (cd['s'], cd['f'], cd['s'], e)
-            logger.warning(error)
-            resp = rc.ALL_OK
-            resp.status_code = 500
-            resp.content = error
-            return resp
+        
+        except SolrException, e:                        
+            error = "search_query %s filter_query %s sort %s error %s" \
+                        % (cd['s'], cd['f'], cd['s'], e)                        
+            raise ReturnError(500, 'SearchError', {'explanation': error})
+            
 
     def __construct_pagination_link(self, q, p, f, s):
         return prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s))
+
 
 class SoundHandler(BaseHandler):
     '''
@@ -387,13 +382,7 @@ class SoundHandler(BaseHandler):
         try:
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
-            print "HEY HEY"
-            raise ReturnError(404, 'NotFound',
-                              {'explanation': 'Requested sound does not exist. Wrong id?'})
-
-            #resp = rc.NOT_FOUND
-            #resp.content = 'There is no sound with id %s' % sound_id
-            #return resp
+            raise ReturnError(404, 'NotFound', {'explanation': 'Sound with id %s does not exist.' % sound_id})
 
         result = prepare_single_sound(sound)
 
@@ -418,9 +407,7 @@ class SoundServeHandler(BaseHandler):
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
-            resp = rc.NOT_FOUND
-            resp = 'There is no sound with id %s' % sound_id
-            return resp
+            raise ReturnError(404, 'NotFound', {'explanation': 'Sound with id %s does not exist.' % sound_id})
 
         # DISABLED (FOR THE MOMENT WE DON'T UPDATE DOWNLOADS TABLE THROUGH API)
         #Download.objects.get_or_create(user=request.user, sound=sound, interface='A')
@@ -449,9 +436,7 @@ class SoundSimilarityHandler(BaseHandler):
             #TODO: this filter has to be added again, but first the db has to be updated
             
         except Sound.DoesNotExist: #@UndefinedVariable
-            resp = rc.NOT_FOUND
-            resp = 'There is no sound with id %s' % sound_id
-            return resp
+            raise ReturnError(404, 'NotFound', {'explanation': 'Sound with id %s does not exist.' % sound_id})
         
         similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
         
@@ -486,28 +471,27 @@ class SoundAnalysisHandler(BaseHandler):
         try:
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", analysis_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
-            resp = rc.NOT_FOUND
-            resp.content = 'There is no sound with id %s or analysis is not ready' % sound_id
-            return resp
+            raise ReturnError(404, 'NotFound', {'explanation': 'Sound with id %s does not exist or analysis is not ready.' % sound_id})
 
         result = prepare_single_sound_analysis(sound,request,filter)
 
         add_request_id(request,result)
         return result
 
+"""
 # For future use (when we serve analysis files through autenthication)
-#class SoundAnalysisFramesHandler(BaseHandler):
+class SoundAnalysisFramesHandler(BaseHandler):
     '''
     api endpoint:   /sounds/<sound_id>/analysis_frames
     '''
-    #allowed_methods = ('GET',)
+    allowed_methods = ('GET',)
 
     '''
     #input:          n.a.
     #output:         binary file
     #curl:           curl http://www.freesound.org/api/sounds/2/analysis_frames
     '''
-'''
+
     def read(self, request, sound_id, filter=False):
 
         try:
@@ -518,7 +502,7 @@ class SoundAnalysisHandler(BaseHandler):
             return resp
 
         return sendfile(sound.locations('analysis.frames.path'), sound.friendly_filename().split('.')[0] + '.json', sound.locations("sendfile_url").split('.')[0] + '.json')
-'''
+"""
 
 class UserHandler(BaseHandler):
     '''
@@ -537,10 +521,8 @@ class UserHandler(BaseHandler):
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            resp = rc.NOT_FOUND
-            resp.content = 'This user (%s) does not exist.' % username
-            return resp
-
+            raise ReturnError(404, 'NotFound', {'explanation': 'User (%s) does not exist.' % username})
+            
         result = prepare_single_user(user)
 
         add_request_id(request,result)
@@ -563,9 +545,7 @@ class UserSoundsHandler(BaseHandler):
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            resp = rc.NOT_FOUND
-            resp.content = 'This user (%s) does not exist.' % username
-            return resp
+            raise ReturnError(404, 'NotFound', {'explanation': 'User (%s) does not exist.' % username})
 
         paginator = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
@@ -602,9 +582,7 @@ class UserPacksHandler(BaseHandler):
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            resp = rc.NOT_FOUND
-            resp.content = 'This user (%s) does not exist.' % username
-            return resp
+            raise ReturnError(404, 'NotFound', {'explanation': 'User (%s) does not exist.' % username})
 
         packs = [prepare_single_pack(pack, include_user=False) for pack in Pack.objects.filter(user=user)]
         result = {'packs': packs, 'num_results': len(packs)}
@@ -629,10 +607,8 @@ class PackHandler(BaseHandler):
         try:
             pack = Pack.objects.get(id=pack_id)
         except Pack.DoesNotExist:
-            resp = rc.NOT_FOUND
-            resp.content = 'There is no pack with this identifier (%s).' % pack_id
-            return resp
-
+            raise ReturnError(404, 'NotFound', {'explanation': 'Pack with id %s does not exist.' % pack_id})
+            
         result = prepare_single_pack(pack)
 
         add_request_id(request,result)
@@ -655,9 +631,7 @@ class PackSoundsHandler(BaseHandler):
         try:
             pack = Pack.objects.get(id=pack_id)
         except User.DoesNotExist:
-            resp = rc.NOT_FOUND
-            resp.content = 'There is no pack with this identifier (%s).' % pack_id
-            return resp
+            raise ReturnError(404, 'NotFound', {'explanation': 'Pack with id %s does not exist.' % pack_id})
 
         paginator = paginate(request, Sound.objects.filter(pack=pack.id), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
@@ -694,9 +668,7 @@ class PackServeHandler(BaseHandler):
         try:
             pack = Pack.objects.get(id=pack_id)
         except Pack.DoesNotExist:
-            resp = rc.NOT_FOUND
-            resp.content = 'There is no pack with this identifier (%s).' % pack_id
-            return resp
+            raise ReturnError(404, 'NotFound', {'explanation': 'Pack with id %s does not exist.' % pack_id})
 
         return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
 

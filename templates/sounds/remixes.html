@@ -45,9 +45,10 @@ var data = {{ data|safe }};
 var vis = new pv.Panel()
 				.def("i", -1)
     			.width(205)
-    			.height(data.length * 160)
+// data.length * 102
+    			.height($('.details').height())
 				.bottom(0)
-				.top(0)
+				.top(25)
 				.right(15);
 
 var arc = vis.add(pv.Layout.Arc)

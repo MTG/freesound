@@ -1,5 +1,4 @@
 {% extends "sounds/_section.html" %}
-{% load display_remix %}
 
 {% block head %}
 	{{ block.super }}
@@ -29,24 +28,82 @@
 {% endblock head %}
 
 {% load display_sound %}
-{% load paginator %}
 
 {% block title %}Remixes of {{sound.original_filename}}{% endblock title %}
 
 {% block section_content %}
 <h1>Remixes of <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a></h1>
 
-{% show_paginator paginator page current_page request %}
-
 <div class="remixes">
-{% display_remix sound page.object_list %}
+<div id="center">
+	<div id="fig">
+    	<script type="text/javascript+protovis">
+// Graph DATA
+var data = {{ data|safe }};
+
+/* ======== PROTOVIS STUFF-START ======== */
+var vis = new pv.Panel()
+				.def("i", -1)
+    			.width(205)
+    			.height(data.length * 160)
+				.bottom(0)
+				.top(0)
+				.right(15);
+
+var arc = vis.add(pv.Layout.Arc)
+    .nodes(data.nodes)
+    .links(data.links)
+	.orient("right");
+
+arc.link.add(pv.Line)
+   		.strokeStyle(function(d, p)  connections(d,p))
+		.eccentricity(data.eccentricity);
+
+arc.node.add(pv.Dot)
+	.shape("triangle")
+	.angle(0.523598776)
+    .size(function(d) d.linkDegree + 4)
+	.fillStyle(function(d) vis.i() == this.index ? "#F1D9FF" : "#DBDBDB")
+    .strokeStyle(function() this.fillStyle().darker())
+    .radius(function() vis.i() == this.index ? 10 : 5)
+    .event("mouseover", function(d) (d.active = true, arc, vis.i(this.index)))
+    .event("mouseout", function(d) (clearBackgrounds(), d.active = false, arc, vis.i(-1)))
+	.event("click", function(d) goToSound(d.id,d.username));
+
+vis.render();
+/* ======== PROTOVIS STUFF-END ======== */
+
+/* ======== helper functions ========= */
+function connections(d, p) {
+	if (p.sourceNode.active == true) {
+		$("#"+p.targetNode.id+"").animate({backgroundColor: "#DBDBDB"});
+		$("#"+p.sourceNode.id+"").animate({backgroundColor: "#F1D9FF"});
+		return "orange";
+	} else if (p.targetNode.active == true) {	
+		$("#"+p.targetNode.id+"").animate({backgroundColor: "#F1D9FF"});
+		$("#"+p.sourceNode.id+"").animate({backgroundColor: "#DBDBDB"});
+		return "orange";
+	} else
+		return "#c7c7c7";
+}
+function goToSound(soundId, username) {
+	window.location.href = "/people/"+username+"/sounds/"+soundId+"/remixes";
+}
+function clearBackgrounds() {
+	for (var i=0; i<data.nodes.length; i++) {
+		$("#"+data.nodes[i].id+"").animate({backgroundColor: "#ffffff"});
+	}
+}
+    	</script>
+  	</div>
+</div>  	
+
+  
 <div class="details">
-{% for sound in page.object_list %}
+{% for sound in sounds %}
     {% display_sound sound %}
 {% endfor %}
 </div>
 </div>
-
-{% show_paginator paginator page current_page request %}
 
 {% endblock %}

@@ -12,8 +12,6 @@ from text_utils import smart_character_decoding, decode_htmlentities
 import codecs
 import hashlib
 import base64
-import sys
-import traceback
 
 
 OUT_FNAME = 'users.sql'
@@ -139,9 +137,7 @@ COPY auth_user (id, is_active, username, password, date_joined,
             try:
                 out.write(u"\t".join(new_row) + "\n")
             except:
-                traceback.print_exc()
-                traceback.print_stack()
-                print "### phantom unicode error here"
+                print "### unicode error here"
                 print new_row
 
     sql_tail = """\.

@@ -65,8 +65,6 @@
     </ul>
 {% endcache %}
 
-    <p><a class="similar" href="{% url sound-similar sound.user.username sound.id %}">similar sounds..</a>
-
     <div id="sound-edit">
         {% if perms.sound.can_edit or sound.user == request.user %}
         <a href="{% url sound-edit sound.user.username sound.id %}" id="edit_button" title="edit sound">edit sound</a>
@@ -135,13 +133,12 @@
         {% comment %}
         <li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
         {% endcomment %}
-        {% if sound.remixes.all.count %}
-        <li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
+        {% if sound.remix_groups.all.count %}
+        <li><img src="{{media_url}}images/sources.png" width="16" height="16" />
+            <img src="{{media_url}}images/remixes.png" width="16" height="16" />
+            <a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
         {% endif %}
-
-        {% if sound.sources.all.count %}
-        <li><img src="{{media_url}}images/sources.png" width="16" height="16" /><a href="{% url sound-sources sound.user.username sound.id %}">Sources</a></li>
-        {% endif %}
+        <li><a class="similar" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds..</a></li>
     </ul>
 
     <div id="flag_sound">

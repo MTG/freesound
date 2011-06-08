@@ -15,27 +15,35 @@ $(document).ready( function() {
     switchFormSubmits();
 });
 
+var voted = false;
+
 // set up the rating stars to use ajax
 function setupStarRatings()
 {
     $("ul.star-rating > li > a").click(function (event) {
         event.preventDefault();
 
-        if (!isLoggedIn)
-        {
-            this.href = loginUrl;
-            return;
-        }
-        
-        $.get(
-            this.href,
-            function (data)
+        if(!voted) {
+            if (!isLoggedIn)
             {
-                var numRatingsElement = $("div.stars > span.numratings");
-                if (numRatingsElement.length)
-                    numRatingsElement.html("(" + data + ")");
+                this.href = loginUrl;
+                return;
             }
-        );
+            this.style.zIndex = 11;
+            this.style.background = 'url(/media/images/stars.gif) left bottom repeat-x';
+            voted = true;
+            
+            $.get(
+                this.href,
+                function (data)
+                {
+                    var numRatingsElement = $("div.stars > span.numratings");
+                    if (numRatingsElement.length)
+                        numRatingsElement.html("(" + data + ")");
+                }
+                                
+            );
+        }
     });
 }
 

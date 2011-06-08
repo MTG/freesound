@@ -7,20 +7,20 @@ from utils.tags import clean_and_split_tags
 class HtmlCleaningCharField(forms.CharField):
     def clean(self, value):
         value = super(HtmlCleaningCharField, self).clean(value)
-        
+
         if is_shouting(value):
             raise forms.ValidationError('Please moderate the amount of upper case characters in your post...')
-        
+
         return clean_html(value)
 
 
 class TagField(forms.CharField):
     def clean(self, value):
         tags = clean_and_split_tags(value)
-        
+
         if len(tags) < 3:
             raise forms.ValidationError('Your should AT LEAST have 3 tags...')
-        
+
         return tags
 
 
@@ -43,7 +43,7 @@ class DummyWidget(forms.Widget):
 
 
 class RecaptchaForm(forms.Form):
-    """ 
+    """
     A form class which uses reCAPTCHA for user validation.
     If the captcha is not guessed correctly, a ValidationError is raised
     for the appropriate field
@@ -54,11 +54,11 @@ class RecaptchaForm(forms.Form):
     def __init__(self, request, *args, **kwargs):
         super(RecaptchaForm, self).__init__(*args, **kwargs)
         self._request = request
-        
+
         # move the captcha to the bottom of the list of fields
         recaptcha_fields = ['recaptcha_challenge_field', 'recaptcha_response_field']
         self.fields.keyOrder = [key for key in self.fields.keys() if key not in recaptcha_fields] + recaptcha_fields
-        
+
     def clean_recaptcha_response_field(self):
         if 'recaptcha_challenge_field' in self.cleaned_data:
             self.validate_captcha()

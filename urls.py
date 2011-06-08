@@ -24,7 +24,6 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/sources/$', sounds.views.sound_edit_sources, name="sound-edit-sources"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/edit/$', sounds.views.sound_edit, name="sound-edit"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/remixes/$', sounds.views.remixes, name="sound-remixes"),
-    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/sources/$', sounds.views.sources, name="sound-sources"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/geotag/$', sounds.views.geotag, name="sound-geotag"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/delete/$', sounds.views.delete, name="sound-delete"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/similar/$', sounds.views.similar, name="sound-similar"),
@@ -38,8 +37,17 @@ urlpatterns = patterns('',
     url(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.tags, name="tags"),
     url(r'^browse/packs/$', sounds.views.packs, name="packs"),
     url(r'^browse/random/$', sounds.views.random, name="sounds-random"),
-    url(r'^browse/remixed/$', sounds.views.remixed, name="sounds-remixed"),
     url(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
+
+    url(r'^browse/remixed/$',
+        sounds.views.remixed,
+        name="remix-groups"),
+
+    url(r'^browse/remixed/(?P<group_id>\d+)/$',
+        sounds.views.remix_group,
+        name="remix-group"),
+
+
 
     url(r'^contact/', support.views.contact, name="contact"),
 

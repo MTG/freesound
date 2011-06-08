@@ -282,7 +282,8 @@ def sound_edit_sources(request, username, sound_id):
         if form.is_valid():
             form.save()
         else:
-            print ("Form is not valid!!!!!!! %s" % ( form.errors))
+            # TODO: Don't use prints! Either use logging or return the error to the user. ~~ Vincent
+            pass #print ("Form is not valid!!!!!!! %s" % ( form.errors))
     else:
         form = RemixForm(sound,initial=dict(sources=sources_string))
     return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
@@ -290,17 +291,22 @@ def sound_edit_sources(request, username, sound_id):
 
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    qs = RemixGroup.objects.filter(sounds=sound).select_related('sounds')
-    if qs:
-        data = qs[0].protovis_data
-        sounds = qs[0].sounds.all().order_by('created')
-    else:
+    try:
+        remix_group = sound.remix_groups.all()[0]
+    except:
         raise Http404
-    return render_to_response('sounds/remixes.html', locals(), context_instance=RequestContext(request))
+    return HttpResponseRedirect(reverse("remix-group", args=[remix_group.id]))
+    #return render_to_response('sounds/remixes.html', locals(), context_instance=RequestContext(request))
 
+def remix_group(request, group_id):
+    group = get_object_or_404(RemixGroup, id=group_id)
+    data = group.protovis_data
+    sounds = group.sounds.all().order_by('created')
+    group_sound = sounds[0]
+    return render_to_response('sounds/remixes.html',
+                              locals(),
+                              context_instance=RequestContext(request))
 
-def sources(request, username, sound_id):
-    return remixes(request, username, sound_id)
 
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
@@ -312,8 +318,7 @@ def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username,
                               id=sound_id,
                               moderation_state="OK",
-                              processing_state="OK"
-                              )
+                              processing_state="OK")
                             #TODO: similarity_state="OK"
                             #TODO: this filter has to be added again, but first the db has to be updated
 

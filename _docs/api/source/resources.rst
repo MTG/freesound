@@ -544,6 +544,7 @@ Response
 ''''''''
 
 The response is the same as the `sound search response`__ but with the addition of a ``distance`` property (for each sound) resembling a numerical value of "dissimilarity" respect to the query sound (then, the first sound of the result will always have distance = 0.0).
+If the response is an empty list (0 results), this is because the query sound has been recently uploaded and it has not still been indexed in the similarity database.
 
 __ sound-search-response_
 

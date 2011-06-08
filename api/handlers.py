@@ -673,6 +673,7 @@ class PackServeHandler(BaseHandler):
         return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
 
 
+
 # N.B. don't add this to a production environment!
 class UpdateSolrHandler(BaseHandler):
     allowed_methods = ('GET',)

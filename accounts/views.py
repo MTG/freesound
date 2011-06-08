@@ -20,6 +20,7 @@ from operator import itemgetter
 from sounds.models import Sound, Pack, Download, License
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm, RemixForm
 from utils.dbtime import DBTime
+from utils.onlineusers import get_online_users
 from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree, md5file
 from utils.functional import combine_dicts
@@ -34,7 +35,6 @@ from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW
 from utils.audioprocessing import get_sound_type
-
 
 audio_logger = logging.getLogger('audioprocessing')
 
@@ -442,46 +442,58 @@ def attribution(request):
     format = request.GET.get("format", "regular")
     return render_to_response('accounts/attribution.html', combine_dicts(paginate(request, qs, 40), locals()), context_instance=RequestContext(request))
 
-def accounts(request):
-    num_days = 7
-    num_active_users = 50
-    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
-    active_users = {}
-    user_cloud = []
-    upload_weight = 1
-    post_weight = 1
-    comment_weight = 1
 
+def latest_content_type(scores):
+        if  scores['uploads']>=scores['posts']and scores['uploads']>=scores['comments']:
+            return 'sound'
+        elif scores['posts']>=scores['uploads'] and scores['posts']>scores['comments']:
+            return 'post'
+        elif scores['comments']>=scores['uploads'] and scores['comments']>scores['posts']:
+            return 'comment'
+
+def accounts(request):
+    num_days = 2
+    num_active_users = 20
+    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
+    user_rank = {}
+    upload_weight = 1
+    post_weight = 0.9
+    comment_weight = 0.8
+
+    # select active users last num_days
     latest_uploaders = Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by()
     latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by()
     latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by()
 
+    # create rank
     for user in latest_uploaders:
-        active_users[user['user']] = {'uploads':user['id__count'], 'posts':0, 'comments':0}
-
+        user_rank[user['user']] = {'uploads':user['id__count'], 'posts':0, 'comments':0, 'score':0}
     for user in latest_posters:
-        if user['author_id'] in active_users.keys():
-            active_users[user['author_id']]['posts'] = user['id__count']
+        if user['author_id'] in user_rank.keys():
+            user_rank[user['author_id']]['posts'] = user['id__count']
         else:
-            active_users[user['author_id']] = {'uploads':0, 'posts':user['id__count'], 'comments':0}
-
+             user_rank[user['author_id']] = {'uploads':0, 'posts':user['id__count'], 'comments':0, 'score':0}
     for user in latest_commenters:
-        if user['user_id'] in active_users.keys():
-            active_users[user['user_id']]['comments'] = user['id__count']
+        if user['user_id'] in user_rank.keys():
+            user_rank[user['user_id']]['comments'] = user['id__count']
         else:
-            active_users[user['user_id']] = {'uploads':0, 'posts':0, 'comments':user['id__count']}
+             user_rank[user['user_id']] = {'uploads':0, 'posts':0, 'comments':user['id__count'], 'score':0}
+    sort_list = []
+    for user in user_rank.keys():
+        user_rank[user]['score'] =  user_rank[user]['uploads'] * upload_weight + \
+            user_rank[user]['posts'] * post_weight + user_rank[user]['comments'] * comment_weight
+        sort_list.append([user_rank[user]['score'],user])
 
-    for user, scores in active_users.items()[:num_active_users]:
-        user_name = User.objects.get(pk=user).username
-        user_cloud.append({'name': user_name,
-                            'count': scores['uploads'] * upload_weight + \
-                                     scores['posts'] * post_weight + \
-                                     scores['comments'] * comment_weight})
+    #retrieve users lists
+    most_active_users = User.objects.select_related().filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_active_users]])
+    new_users = User.objects.select_related().filter(date_joined__gte=last_time).filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
+    logged_users = User.objects.select_related().filter(id__in=get_online_users())
 
-    new_uploaders_qs = Sound.objects.filter(user__date_joined__gte=last_time).values("user__username").annotate(Count('id')).order_by()
-    new_uploaders = [{'name':s['user__username'], 'count':s['id__count']} for s in new_uploaders_qs]
+    # prepare for view
+    most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
+    new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
-    return render_to_response('accounts/accounts.html', dict(most_active_users=user_cloud, num_days=num_days, new_uploaders=new_uploaders), context_instance=RequestContext(request))
+    return render_to_response('accounts/accounts.html', dict(most_active_users=most_active_users_display, new_users = new_users_display, logged_users = logged_users, user_rank=user_rank,num_days=num_days), context_instance=RequestContext(request))
 
 
 def account(request, username):

@@ -1763,6 +1763,31 @@ p.about {
     background-color: #F6F6F6;
 }
 
+/* People page
+------------------------------------------------------*/
+.people_column {
+    display:block;
+    width:450px;
+    float:left;
+}
+.people_clear{
+    clear:both;
+}
+.people_logged{
+    display:block;
+    width:900px;
+}
+.people_user_head{
+    display: inline-block;
+    height:50px
+
+}
+.people_user_info{
+    font-size: 10px;
+    color: #444;
+    line-height: 14px;
+}
+
 /* Search
 ------------------------------------------------------*/
 #filter_query_display {

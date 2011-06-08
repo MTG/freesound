@@ -2,13 +2,14 @@
 {% load util %}
 {% load ratings %}
 {% cache 3600 display_sound sound_id %}
-{% endcache %}
 {% if sound %}
+{% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
     <div class="sample_player">
         <div class="small_player">
             {% include "sounds/player_medium.html" %}
         </div>
+        
         <div class="sound_title">
                 <div class="sound_filename">
                    <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:28}}</a>
@@ -23,7 +24,6 @@
                     {% endfor %}
                 </ul>
                 </div>
-
                 <div class="sound_stars">
                    <ul class="star-rating">
                        <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
@@ -36,7 +36,6 @@
                 </div>
           </div>
     </div>
-
     <div class="sample_information">
         <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
         <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
@@ -44,4 +43,6 @@
         <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
     </div>
 </div>
+{% endwith %}
 {% endif %}
+{% endcache %}

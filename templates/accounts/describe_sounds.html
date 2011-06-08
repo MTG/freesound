@@ -6,13 +6,12 @@
 	<script>
   		$(document).ready(function() {
   			$(".inner-accordion").accordion();
-    		$(".outer-accordion").accordion();
     		display_errors();
   		});
   		function display_errors() {
   	  		if ($(".errorlist").length > 0) {
   	  	  		if ($("#errormessage").length == 0) {
-  	  	  			$(".outer-accordion").before("<div id='errormessage' class='errortag'>There are some errors or missing fields below. Please review your data...</div>");
+  	  	  			$("#describe_form").before("<div id='errormessage' class='errortag'>There are some errors or missing fields below. Please review your data...</div>");
   	  	  		}
 	  	  	  	$(".inner-accordion, outer-accordion-div").has(".errorlist").prev().addClass("errortag");
 				$(".inner-accordion, outer-accordion-div").has(".errorlist").prev().effect("pulsate", { times:2 }, 1000);
@@ -52,8 +51,7 @@
 <p>You are not required to specify a geolocation for each sound, but if the sound is a 
    field-recording it's probably a good idea to specify the location.  
 
-	<form action="." method="post">{% csrf_token %}
-	<div class="outer-accordion">
+	<form id="describe_form" action="." method="post">{% csrf_token %}
 	{% for form in forms %}
 		<h3>{{ form.sound.name }}</h3>
 		<div class="inner-accordion outer-accordion-div">
@@ -141,7 +139,6 @@
 	    	{% endcomment %}
 		</div>
 	{% endfor %}
-	</div>
 
 	<input type="submit" name="submit" value="submit and continue" id="submit-button"/>
 	

@@ -423,8 +423,11 @@ class Download(models.Model):
 
     class Meta:
         ordering = ("-created",)
-        
+
 
 class RemixGroup(models.Model):
     protovis_data = models.TextField(null=True, blank=True, default=None)
-    sounds = models.ManyToManyField(Sound, symmetrical=False, related_name='sounds', blank=True)
+    sounds = models.ManyToManyField(Sound,
+                                    symmetrical=False,
+                                    related_name='remix_groups',
+                                    blank=True)

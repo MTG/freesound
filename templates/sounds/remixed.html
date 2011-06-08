@@ -1,0 +1,110 @@
+{% extends "sounds/_section.html" %}
+
+{% load display_sound %}
+{% load paginator %}
+
+{% block head %}
+	{{ block.super }}
+	<script type="text/javascript" src="{{media_url}}js/protovis-r3.2.js"></script>
+	<script type="text/javascript" src="{{media_url}}js/jquery-ui-1.8.11.custom.min.js"></script>
+	<style type="text/css">
+		.fig {
+		  height: 310px;
+		  margin-bottom: 10px;
+		}
+	</style>
+	<script type="text/javascript">
+	/* ======== helper functions ========= */
+	function connections(d, p) {
+		if (p.sourceNode.active == true) {
+			$("#"+p.targetNode.id+"").animate({backgroundColor: "#DBDBDB"});
+			$("#"+p.sourceNode.id+"").animate({backgroundColor: "#F1D9FF"});
+			return "orange";
+		} else if (p.targetNode.active == true) {	
+			$("#"+p.targetNode.id+"").animate({backgroundColor: "#F1D9FF"});
+			$("#"+p.sourceNode.id+"").animate({backgroundColor: "#DBDBDB"});
+			return "orange";
+		} else
+			return "#c7c7c7";
+	}
+	function goToSound(soundId, username) {
+		window.location.href = "/people/"+username+"/sounds/"+soundId+"/remixes";
+	}
+	function clearBackgrounds(dataset) {
+		for (var i=0; i<dataset.nodes.length; i++) {
+			$("#"+dataset.nodes[i].id+"").animate({backgroundColor: "#ffffff"});
+		}
+	}
+	function calculateEccentricity(length, height) {
+		var eccentricity = 0;
+	    if (length > 3) {
+	    	var a = (length-2) * 80;
+	        var b = height;
+	        eccentricity = (1 - b/a) * (1 - b/a);
+	    }
+	    return eccentricity;
+	}
+	</script>
+{% endblock head %}
+
+{% block title %}Remixes browse{% endblock title %}
+
+{% block section_content %}
+<h1>Remixed</h1>
+
+{% show_paginator paginator page current_page request %}
+
+<ul>
+{% for remix_group in page.object_list %}
+	<li>
+	<div>
+		{{ remix_group.protovis_data.color | safe }}
+		Original sound: {{ remix_group.protovis_data.length|safe }}
+	</div>
+	<div class="fig">
+    	<script type="text/javascript+protovis">
+// Graph DATA
+var data{{ forloop.counter }} = {{ remix_group.protovis_data|safe }};
+
+
+/* ======== PROTOVIS STUFF-START ======== */
+var vis{{ forloop.counter }} = new pv.Panel()
+				.def("i", -1)
+    			.width(600)
+    			.height(300)
+				.bottom(10)
+				.top(0)
+				.right(0);
+
+var arc = vis{{ forloop.counter }}.add(pv.Layout.Arc)
+    .nodes(data{{ forloop.counter }}.nodes)
+    .links(data{{ forloop.counter }}.links);
+
+arc.link.add(pv.Line)
+   		.strokeStyle(function(d, p)  connections(d,p))
+		.eccentricity(function(d,p) calculateEccentricity(data{{ forloop.counter }}.length, 400));
+
+arc.node.add(pv.Dot)
+    .size(function(d) d.linkDegree + 4)
+	.fillStyle(function(d) vis{{ forloop.counter }}.i() == this.index ? "#F1D9FF" : "#DBDBDB")
+    .strokeStyle(function() this.fillStyle().darker())
+    .radius(function() vis{{ forloop.counter }}.i() == this.index ? 10 : 5)
+    .event("mouseover", function(d) (d.active = true, arc, vis{{ forloop.counter }}.i(this.index)))
+    .event("mouseout", function(d) (clearBackgrounds(data{{ forloop.counter }}), d.active = false, arc, vis{{ forloop.counter }}.i(-1)))
+	.event("click", function(d) goToSound(d.id,d.username));
+
+vis{{ forloop.counter }}.render();
+/* ======== PROTOVIS STUFF-END ======== */
+    	</script>
+	</div>
+	<div>
+	
+	</div>  
+	</li>
+	
+{% endfor %}
+</ul>
+
+{% show_paginator paginator page current_page request %}
+
+{% endblock %}

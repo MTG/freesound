@@ -14,6 +14,7 @@ from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
 from utils.similarity_utilities import get_similar_sounds
+from api.api_utils import auth, ReturnError
 
 logger = logging.getLogger("api")
 
@@ -308,6 +309,8 @@ class SoundSearchHandler(BaseHandler):
     output:         #paginated_search_results#
     curl:           curl http://www.freesound.org/api/search/?q=hoelahoep
     '''
+    
+    @auth()
     def read(self, request):
 
         form = SoundSearchForm(SEARCH_SORT_OPTIONS_API, request.GET)
@@ -377,14 +380,20 @@ class SoundHandler(BaseHandler):
     output:         #single_sound#
     curl:           curl http://www.freesound.org/api/sounds/2
     '''
+    
+    @auth()
     def read(self, request, sound_id):
 
         try:
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
-            resp = rc.NOT_FOUND
-            resp.content = 'There is no sound with id %s' % sound_id
-            return resp
+            print "HEY HEY"
+            raise ReturnError(404, 'NotFound',
+                              {'explanation': 'Requested sound does not exist. Wrong id?'})
+
+            #resp = rc.NOT_FOUND
+            #resp.content = 'There is no sound with id %s' % sound_id
+            #return resp
 
         result = prepare_single_sound(sound)
 
@@ -402,6 +411,8 @@ class SoundServeHandler(BaseHandler):
     output:       binary file
     curl:         curl http://www.freesound.org/api/sounds/2/serve
     '''
+    
+    @auth()
     def read(self, request, sound_id):
 
         try:
@@ -428,6 +439,8 @@ class SoundSimilarityHandler(BaseHandler):
     output:       #collection_of_similar_sounds#
     curl:         curl http://www.freesound.org/api/sounds/2/similar
     '''
+    
+    @auth()
     def read(self, request, sound_id):
         
         try:
@@ -467,6 +480,7 @@ class SoundAnalysisHandler(BaseHandler):
     curl:           curl http://www.freesound.org/api/sounds/2/analysis
     '''
 
+    @auth()
     def read(self, request, sound_id, filter=False):
 
         try:
@@ -517,6 +531,8 @@ class UserHandler(BaseHandler):
     output:         #single_user#
     curl:           curl http://www.freesound.org/api/people/vincent_akkermans
     '''
+    
+    @auth()
     def read(self, request, username):
         try:
             user = User.objects.get(username__iexact=username)
@@ -541,6 +557,8 @@ class UserSoundsHandler(BaseHandler):
     output:         #user_sounds#
     curl:           curl http://www.freesound.org/api/people/vincent_akkermans/sounds?p=5
     '''
+    
+    @auth()
     def read(self, request, username):
         try:
             user = User.objects.get(username__iexact=username)
@@ -563,6 +581,7 @@ class UserSoundsHandler(BaseHandler):
         add_request_id(request,result)
         return result
 
+    #TODO: auth() ?
     def __construct_pagination_link(self, u, p):
         return get_user_sounds_api_url(u)+'?p=%s' % p
 
@@ -577,6 +596,8 @@ class UserPacksHandler(BaseHandler):
     output:         #user_packs#
     curl:           curl http://www.freesound.org/api/people/vincent_akkermans/packs
     '''
+    
+    @auth()
     def read(self, request, username):
         try:
             user = User.objects.get(username__iexact=username)
@@ -602,6 +623,8 @@ class PackHandler(BaseHandler):
     output:         #user_packs#
     curl:           curl http://www.freesound.org/api/packs/<pack_id>
     '''
+    
+    @auth()
     def read(self, request, pack_id):
         try:
             pack = Pack.objects.get(id=pack_id)
@@ -626,6 +649,8 @@ class PackSoundsHandler(BaseHandler):
     output:         #pack_sounds#
     curl:           curl http://www.freesound.org/api/packs/<pack_id>/sounds
     '''
+    
+    @auth()
     def read(self, request, pack_id):
         try:
             pack = Pack.objects.get(id=pack_id)
@@ -663,6 +688,8 @@ class PackServeHandler(BaseHandler):
     output:       binary file
     curl:         curl http://www.freesound.org/api/packs/2/serve
     '''
+    
+    @auth()
     def read(self, request, pack_id):
         try:
             pack = Pack.objects.get(id=pack_id)
@@ -678,6 +705,7 @@ class PackServeHandler(BaseHandler):
 class UpdateSolrHandler(BaseHandler):
     allowed_methods = ('GET',)
 
+    @auth()
     def read(self, request):
         sound_qs = Sound.objects.select_related("pack", "user", "license") \
                                 .filter(processing_state="OK", moderation_state="OK")

@@ -24,16 +24,17 @@ class Command(NoArgsCommand):
                os.path.exists(sound.locations('preview.HQ.mp3.path')) and \
                os.path.exists(sound.locations('display.spectral.L.path')):
                 sound.processing_state = 'OK'
-                sound.save()
-
 
             if os.path.exists(sound.locations('analysis.statistics.path')) and \
                os.path.exists(sound.locations('analysis.frames.path')):
                 sound.analysis_state = 'OK'
 
+            sound.save()
+
             counter += 1
             if counter % 1000 == 0:
                 print 'Processed %s sounds' % counter
+
 
 #        print '-- replace bad username characters --'
 #        # construct filter

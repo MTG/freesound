@@ -89,8 +89,10 @@
 				
 				    GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
 				
-				    // updateAndAddCenter{{forloop.counter}}()
-				    
+				    $("#{{form.geotag.zoom.auto_id}}").change(function() {
+				    	map{{forloop.counter}}.setZoom(parseInt($(this).val()));
+				    });
+
 				    setAfterFormError{{forloop.counter}}(); 
 				    function setAfterFormError{{forloop.counter}}() {
 				        if ($("#{{form.geotag.lon.auto_id}}").val()

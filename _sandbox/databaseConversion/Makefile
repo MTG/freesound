@@ -138,6 +138,14 @@ step2:
 	#
 	# Next steps:
 	#
+	#  - Restore the existing api_apikey table from a recent dump.
+	#
+	#  - Reset the api_apikey index.
+	#  
+	#  	 $ psql freesound
+	#  	 freesound=# SELECT SETVAL('api_apikey_id_seq',(
+	#		SELECT MAX(id)+1 FROM api_apikey));
+	#
 	#  - Run script to determine where to start processing again.
 	#  		./manage.py post_conversion
 	#

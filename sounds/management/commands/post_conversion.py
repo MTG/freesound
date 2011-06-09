@@ -19,23 +19,21 @@ class Command(NoArgsCommand):
         counter = 0
         for sound in sounds:
 
-            print '-- setting processing_state --'
             # check some random paths
             if os.path.exists(sound.locations('path')) and \
                os.path.exists(sound.locations('preview.HQ.mp3.path')) and \
-               os.path.exists(sound.locations('analysis.statistics.path')) and \
                os.path.exists(sound.locations('display.spectral.L.path')):
                 sound.processing_state = 'OK'
                 sound.save()
+
+
+            if os.path.exists(sound.locations('analysis.statistics.path')) and \
+               os.path.exists(sound.locations('analysis.frames.path')):
+                sound.analysis_state = 'OK'
+
             counter += 1
             if counter % 1000 == 0:
                 print 'Processed %s sounds' % counter
-
-            print '-- setting analysis_state --'
-            # TODO
-
-            print '-- setting similarity_state --'
-            # TODO
 
 #        print '-- replace bad username characters --'
 #        # construct filter

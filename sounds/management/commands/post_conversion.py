@@ -20,12 +20,14 @@ class Command(NoArgsCommand):
         for sound in sounds:
 
             # check some random paths
-            if os.path.exists(sound.locations('path')) and \
+            if sound.processing_state != 'OK' and \
+               os.path.exists(sound.locations('path')) and \
                os.path.exists(sound.locations('preview.HQ.mp3.path')) and \
                os.path.exists(sound.locations('display.spectral.L.path')):
                 sound.processing_state = 'OK'
 
-            if os.path.exists(sound.locations('analysis.statistics.path')) and \
+            if sound.analysis_state != 'OK' and \
+               os.path.exists(sound.locations('analysis.statistics.path')) and \
                os.path.exists(sound.locations('analysis.frames.path')):
                 sound.analysis_state = 'OK'
 

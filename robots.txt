@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /browse/
+
+User-agent: *
+Disallow: /search/
+
+User-agent: *
+Disallow: /admin/
+
+User-agent: *
+Disallow: /api/

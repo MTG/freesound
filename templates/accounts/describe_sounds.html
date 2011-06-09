@@ -89,8 +89,22 @@
 				
 				    GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
 				
-				    //updateAndAddCenter{{forloop.counter}}()
-		
+				    // updateAndAddCenter{{forloop.counter}}()
+				    
+				    firstUpdate{{forloop.counter}}(); 
+				    function firstUpdate{{forloop.counter}}() {
+					    // if values are set
+				        if ($("#{{form.geotag.lon.auto_id}}").val()
+						        && !$("#{{form.geotag.remove_geotag.auto_id}}").checked) 
+				        {
+						    var lat = $("#{{form.geotag.lat.auto_id}}").val();
+						    var lng = $("#{{form.geotag.lon.auto_id}}").val();
+						    var latlng = new GLatLng(lat,lng);
+						    var zoom = parseInt($("#{{form.geotag.zoom.auto_id}}").val());
+						    centerMarker{{forloop.counter}}.setLatLng(latlng);
+						    map{{forloop.counter}}.setCenter(latlng, zoom);
+						}
+					}
 					function updateAndAddCenter{{forloop.counter}}()
 				    {
 				        var center = map{{forloop.counter}}.getCenter();
@@ -98,13 +112,12 @@
 				        // update form
 				        if (!$("#{{form.geotag.remove_geotag.auto_id}}").checked)
 				        {
-				            $("#{{form.geotag.lon.auto_id}}").val(center.lng());
-				            $("#{{form.geotag.lat.auto_id}}").val(center.lat());
-				            $("#{{form.geotag.zoom.auto_id}}").val(zoom);
+			            	$("#{{form.geotag.lon.auto_id}}").val(center.lng());
+					       	$("#{{form.geotag.lat.auto_id}}").val(center.lat());
+					       	$("#{{form.geotag.zoom.auto_id}}").val(zoom);
 				        }
 				        centerMarker{{forloop.counter}}.setLatLng(center);
 				    }
-			
 				    $("#{{form.geotag.remove_geotag.auto_id}}").change(function (event) {
 				        if (this.checked)
 				        {
@@ -121,6 +134,7 @@
 				        }
 				    });
 				</script>
+				<div id="test"></div>
 	    	</div>
 	    	<h4><a href="#">Pack</a></h4>
 	    	<div class="inner-accordion-div">

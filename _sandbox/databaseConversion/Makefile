@@ -45,7 +45,7 @@ help:
 	#  		local_settings.CUSTOM_BANNED_USERS (temporary)
 	#  		or users.BANNED_USER_IDS (permanent).
 	#
-	# make step3
+	# make step2
 
 clean:
 	rm -f *.pyc *.sql *.sql.gz
@@ -75,7 +75,7 @@ step1:
 	${PSQL} < users.sql
 	gzip users.sql
 	#
-	# Remove all duplicated usernames before running 'make step3'.
+	# Remove all duplicated usernames before running 'make step2'.
 	
 
 

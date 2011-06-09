@@ -33,7 +33,7 @@ urlpatterns = patterns('',
     url(r'^packs/(?P<pack_id>\d+)/sounds/$',                        Resource(PackSoundsHandler),     name='api-pack-sounds'),
 
     # website
-    url(r'^apply/?$', create_api_key),
+    url(r'^apply/$', create_api_key),
 )
 
 

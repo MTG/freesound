@@ -471,7 +471,7 @@ class SoundAnalysisHandler(BaseHandler):
         try:
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", analysis_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
-            raise ReturnError(404, 'NotFound', {'explanation': 'Sound with id %s does not exist or analysis is not ready.' % sound_id})
+            raise ReturnError(404, 'NotFound', {'explanation': 'Sound with id %s does not exist or analysis data is not ready.' % sound_id})
 
         result = prepare_single_sound_analysis(sound,request,filter)
 

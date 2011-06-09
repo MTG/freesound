@@ -1,22 +1,30 @@
 {% extends "accounts/_section.html" %}
-
+{% load display_sound %}
 {% load tags %}
-
+{% load smileys %}
 {% block title %} people {% endblock %}
-
 {% block section_content %}
+<div class="people_column">
 <h3> Most active users last {{num_days}} days</h3>
-    <div class="tagcloud">
-    {% for user in most_active_users|add_sizes:"False:1.1:2.5" %}
-    <span style="font-size:{{user.size}}em"><a href="{% url account user.name %}">{{user.name}}</a></span>
-    {% endfor %}
-    </div>
-<br />
-<h3> New Uploaders</h3>
-    <div class="tagcloud">
-    {% for user in new_uploaders|add_sizes:"False:1.1:2.5" %}
-    <span style="font-size:{{user.size}}em"><a href="{% url account user.name %}">{{user.name}}</a></span>
-    {% endfor %}
-    </div>
-{% endblock %}
+ {% for user in most_active_users %}
+    {% include "accounts/active_user.html" %}
+ {% endfor %}
+</div>
+<div class="people_column">
+<h3> Newest active users</h3>
+ {% for user in new_users %}
+    {% include "accounts/active_user.html" %}
+ {% endfor %}
+</div>
+<br/>
+<div class="people_clear"/>
+</div>
 
+
+<div class="people_logged">
+<h3> Users currently online</h3>
+ {% for user in logged_users %}
+    {{user.username}}<br>
+ {% endfor %}
+</div>
+{% endblock %}

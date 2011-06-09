@@ -70,7 +70,9 @@ def sounds(request):
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
 
 def remixed(request):
-    pass
+    qs = RemixGroup.objects.all().order_by('-group_size')
+    return render_to_response('sounds/remixed.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
+    
 
 def random(request):
     sound_id = Sound.objects.random()

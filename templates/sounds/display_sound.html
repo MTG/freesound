@@ -2,16 +2,27 @@
 {% load util %}
 {% load ratings %}
 {% cache 3600 display_sound sound_id %}
-{% endcache %}
 {% if sound %}
+{% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
     <div class="sample_player">
         <div class="small_player">
             {% include "sounds/player_medium.html" %}
         </div>
+        
         <div class="sound_title">
                 <div class="sound_filename">
                    <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:25}}</a>
+                </div>
+                <div  class="sound_description">
+                    <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
+                </div>
+                <div class="sound_tags">
+                <ul id="tags">
+                    {% for tag_link in sound_tags %}
+                        <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                    {% endfor %}
+                </ul>
                 </div>
                 <div class="sound_stars">
                    <ul class="star-rating">
@@ -37,7 +48,6 @@
 
           </div>
     </div>
-
     <div class="sample_information">
         <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
         <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
@@ -46,4 +56,6 @@
         <a class="similar" href="{% url sound-similar sound.user.username sound.id %}">similar sounds..</a>
     </div>
 </div>
+{% endwith %}
 {% endif %}
+{% endcache %}

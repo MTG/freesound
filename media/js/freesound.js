@@ -15,27 +15,38 @@ $(document).ready( function() {
     switchFormSubmits();
 });
 
+var voted = {};
+
 // set up the rating stars to use ajax
 function setupStarRatings()
 {
     $("ul.star-rating > li > a").click(function (event) {
         event.preventDefault();
 
-        if (!isLoggedIn)
-        {
-            this.href = loginUrl;
-            return;
-        }
-        
-        $.get(
-            this.href,
-            function (data)
+        // take the sound id from the voting url
+        var splitted_href = this.href.split('/');
+        var vote_key = splitted_href[splitted_href.length-3];
+        if(!voted[vote_key]) {
+            if (!isLoggedIn)
             {
-                var numRatingsElement = $("div.stars > span.numratings");
-                if (numRatingsElement.length)
-                    numRatingsElement.html("(" + data + ")");
+                this.href = loginUrl;
+                return;
             }
-        );
+            this.style.zIndex = 11;
+            this.style.background = 'url(/media/images/stars.gif) left bottom repeat-x';
+            voted[vote_key] = true;
+
+            $.get(
+                this.href,
+                function (data)
+                {
+                    var numRatingsElement = $("div.stars > span.numratings");
+                    if (numRatingsElement.length)
+                        numRatingsElement.html("(" + data + ")");
+                }
+
+            );
+        }
     });
 }
 
@@ -73,7 +84,7 @@ function zoomToBounds(map, bounds)
 function setMaxZoomCenter(map, lat, lng, zoom)
 {
     var latlng = new GLatLng(lat, lng);
-    
+
     map.getCurrentMapType().getMaxZoomAtLatLng(latlng, function(response)
     {
         if (response && response['status'] == G_GEO_SUCCESS)

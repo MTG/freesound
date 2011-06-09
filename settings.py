@@ -32,7 +32,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware'
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'middleware.OnlineUsersHandler'
 )
 
 INSTALLED_APPS = (
@@ -130,6 +131,7 @@ FORUM_THREADS_PER_PAGE = 40
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 50
+REMIXES_PER_PAGE = 10
 SOUNDS_PER_API_RESPONSE = 30
 SOUNDS_PER_DESCRIBE_ROUND = 4
 SIMILAR_SOUNDS_TO_CACHE = 100 # for the similarity service

@@ -1,5 +1,6 @@
 from django.shortcuts import render_to_response
 from freesound_exceptions import PermissionDenied
+from utils.onlineusers import cache_online_users
 from django.contrib.auth.models import User
 from accounts.models import Profile
 from django.http import HttpResponseRedirect
@@ -13,6 +14,11 @@ class PermissionDeniedHandler:
     def process_exception(self, request, exception):
         if isinstance(exception, PermissionDenied):
             return render_to_response('permissiondenied.html')
+        return None
+
+class OnlineUsersHandler:
+    def process_request(self,request):
+        cache_online_users(request)
         return None
 
 class BulkChangeLicenseHandler:
@@ -37,5 +43,3 @@ class BulkChangeLicenseHandler:
 
             if has_old_license:
                 return HttpResponseRedirect(reverse("bulk-license-change"))
-
-        return None

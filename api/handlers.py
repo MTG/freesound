@@ -248,7 +248,7 @@ def get_tags(sound):
 
 def prepare_collection_sound(sound, include_user=True):
     d = {}
-    for field in ["duration", "type", "original_filename"]:
+    for field in ["duration", "type", "original_filename", "id"]:
         d[field] = getattr(sound, field)
     if include_user:
         d['user'] = prepare_minimal_user(sound.user)

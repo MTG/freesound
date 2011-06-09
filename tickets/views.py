@@ -29,27 +29,37 @@ def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
     else:
         return user_form() if request.user.is_authenticated() else anonymous_form(request)
 
+# TODO: copied from sound_edit view,
+def is_selected(request, prefix):
+    for name in request.POST.keys():
+        if name.startswith(prefix):
+            return True
+    return False
 
 def ticket(request, ticket_key):
     clean_status_forms = True
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
     if request.method == 'POST':
-        tc_form = __get_tc_form(request)
-        if tc_form.is_valid():
-            tc = TicketComment()
-            tc_text = tc_form.cleaned_data.get('message', False)
-            if tc_text:
-                tc.text = tc_text.replace('\n', '<br>')
-                if request.user.is_authenticated():
-                    tc.sender = request.user
-                tc.ticket = ticket
-                tc.save()
-                ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
-        else:
-            clean_comment_form = False
-            ticket_form = TicketModerationForm(request.POST)
-            sound_form = SoundStateForm(request.POST)
+        if is_selected(request, 'recaptcha') or request.user.is_authenticated() and is_selected(request, 'message'):
+            print request.POST
+            tc_form = __get_tc_form(request)
+            if tc_form.is_valid():
+                print 5*'#', 'valid'
+                tc = TicketComment()
+                tc_text = tc_form.cleaned_data.get('message', False)
+                if tc_text:
+                    tc.text = tc_text.replace('\n', '<br>')
+                    if request.user.is_authenticated():
+                        tc.sender = request.user
+                    tc.ticket = ticket
+                    tc.save()
+                    ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
+            else:
+                clean_comment_form = False
+        elif is_selected(request, 'tm') or is_selected(request, 'ss'):
+            ticket_form = TicketModerationForm(request.POST, prefix="tm")
+            sound_form = SoundStateForm(request.POST, prefix="ss")
             if ticket_form.is_valid() and sound_form.is_valid():
                 clean_status_forms = True
                 clean_comment_form = True
@@ -70,8 +80,7 @@ def ticket(request, ticket_key):
                     if ticket.content:
                         ticket.content.content_object.moderation_state = sound_state
                         if sound_state == "OK":
-                            ticket.content.content_object.add_to_search_index()
-
+                            ticket.content.content_object.mark_index_clemark_index_dirty
                         ticket.content.content_object.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
                     tc = TicketComment(sender=ticket.assignee,
@@ -86,10 +95,11 @@ def ticket(request, ticket_key):
                 ticket.save()
 
     if clean_status_forms:
-        ticket_form = TicketModerationForm(initial={'status': ticket.status})
+        ticket_form = TicketModerationForm(initial={'status': ticket.status}, prefix="tm")
         sound_form = SoundStateForm(initial={'state':
                                              ticket.content.content_object.moderation_state \
-                                             if ticket.content else 'DE'})
+                                             if ticket.content else 'DE'},
+                                             prefix="ss")
     if clean_comment_form:
         tc_form = __get_tc_form(request, False)
     return render_to_response('tickets/ticket.html',
@@ -114,7 +124,7 @@ def new_contact_ticket(request):
             ticket.title = form.cleaned_data['title']
             ticket.source = TICKET_SOURCE_CONTACT_FORM
             ticket.status = TICKET_STATUS_NEW
-            ticket.queue  = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
+            ticket.queue = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
             tc = TicketComment()
             if request.user.is_authenticated():
                 ticket.sender = request.user
@@ -230,7 +240,7 @@ def moderation_assigned(request, user_id):
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
 
-            ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket",False))
+            ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket", False))
             action = mod_sound_form.cleaned_data.get("action")
             msg = msg_form.cleaned_data.get("message", False)
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
@@ -243,36 +253,36 @@ def moderation_assigned(request, user_id):
                                    moderator_only=moderator_only)
                 tc.save()
 
-            if action=="Approve":
-                ticket.status=TICKET_STATUS_CLOSED
-                ticket.content.content_object.moderation_state="OK"
+            if action == "Approve":
+                ticket.status = TICKET_STATUS_CLOSED
+                ticket.content.content_object.moderation_state = "OK"
                 ticket.content.content_object.save()
                 ticket.save()
-                ticket.content.content_object.add_to_search_index()
+                ticket.content.content_object.mark_index_dirty()
                 if msg:
                     ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED_BUT)
                 else:
                     ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED)
-            elif action=="Defer":
-                ticket.status=TICKET_STATUS_DEFERRED
+            elif action == "Defer":
+                ticket.status = TICKET_STATUS_DEFERRED
                 ticket.save()
                 # only send a notification if a message was added
                 if msg:
                     ticket.send_notification_emails(Ticket.NOTIFICATION_QUESTION)
-            elif action=="Return":
-                ticket.assignee=None
-                ticket.status=TICKET_STATUS_ACCEPTED
+            elif action == "Return":
+                ticket.assignee = None
+                ticket.status = TICKET_STATUS_ACCEPTED
                 # no notification here
-            elif action=="Delete":
+            elif action == "Delete":
                 ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED)
                 # to prevent a crash if the form is resubmitted
                 if ticket.content:
                     ticket.content.content_object.delete()
                     ticket.content.delete()
                     ticket.content = None
-                ticket.status=TICKET_STATUS_CLOSED
+                ticket.status = TICKET_STATUS_CLOSED
                 ticket.save()
-            elif action=="Whitelist":
+            elif action == "Whitelist":
                 # Get all currently pending sound tickets for user
                 whitelist_user = ticket.sender
                 whitelist_user.profile.is_whitelisted = True
@@ -285,7 +295,7 @@ def moderation_assigned(request, user_id):
                     if pending_ticket.content:
                         pending_ticket.content.content_object.moderation_state = "OK"
                         pending_ticket.content.content_object.save()
-                        pending_ticket.content.content_object.add_to_search_index()
+                        pending_ticket.content.content_object.mark_index_dirty()
                     # This could be done with a single update, but there's a chance
                     # we lose a sound that way (a newly created ticket who's sound
                     # is not set to OK, but the ticket is closed).

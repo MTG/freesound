@@ -133,13 +133,12 @@
         {% comment %}
         <li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
         {% endcomment %}
-        {% if sound.remixes.all.count %}
-        <li><img src="{{media_url}}images/remixes.png" width="16" height="16" /><a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
+        {% if sound.remix_groups.all.count %}
+        <li><img src="{{media_url}}images/sources.png" width="16" height="16" />
+            <img src="{{media_url}}images/remixes.png" width="16" height="16" />
+            <a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
         {% endif %}
-
-        {% if sound.sources.all.count %}
-        <li><img src="{{media_url}}images/sources.png" width="16" height="16" /><a href="{% url sound-sources sound.user.username sound.id %}">Sources</a></li>
-        {% endif %}
+        <li><a class="similar" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds..</a></li>
     </ul>
 
     <div id="flag_sound">

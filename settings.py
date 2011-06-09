@@ -26,6 +26,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'middleware.BulkChangeLicenseHandler',
     #'django.middleware.locale.LocaleMiddleware',
     'django.middleware.doc.XViewMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
@@ -66,9 +67,8 @@ INSTALLED_APPS = (
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
+    # Myles' template directory is here because it allows him to work on tabasco.
+    '/home/mdebastion/templates',
     os.path.join(os.path.dirname(__file__), 'templates'),
 )
 
@@ -133,6 +133,9 @@ SOUNDS_PER_PAGE = 15
 PACKS_PER_PAGE = 50
 SOUNDS_PER_API_RESPONSE = 30
 SOUNDS_PER_DESCRIBE_ROUND = 4
+SIMILAR_SOUNDS_TO_CACHE = 100 # for the similarity service
+SIMILARITY_CACHE_TIME = 60*60*1
+DEFAULT_SIMILARITY_PRESET = 'music'
 
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
 

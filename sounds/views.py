@@ -19,9 +19,9 @@ from forum.models import Post
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    LicenseForm, FlagForm, RemixForm
+    NewLicenseForm, FlagForm, RemixForm
 from accounts.models import Profile
-from sounds.models import Sound, Pack, Download
+from sounds.models import Sound, Pack, Download, RemixGroup
 from tickets.models import Ticket, TicketComment
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
 from utils.cache import invalidate_template_cache
@@ -31,10 +31,12 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from utils.nginxsendfile import sendfile
-import datetime, os, time
-from utils.search.search import add_sound_to_solr, delete_sound_from_solr
+import datetime, os, time, logging
 from sounds.templatetags import display_sound
 from django.db.models import Q
+from utils.similarity_utilities import get_similar_sounds
+
+logger = logging.getLogger('web')
 
 def get_random_sound():
     cache_key = "random_sound"
@@ -54,7 +56,7 @@ def get_random_uploader():
 
 def sounds(request):
     n_weeks_back = 1
-    latest_sounds = Sound.objects.latest_additions(5, '2 weeks')
+    latest_sounds = Sound.objects.latest_additions(5, '%s weeks' % n_weeks_back)
     latest_packs = Pack.objects.annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
 
     # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
@@ -176,7 +178,7 @@ def sound_edit(request, username, sound_id):
             data = description_form.cleaned_data
             sound.set_tags(data["tags"])
             sound.description = data["description"]
-            __save_and_add_to_solr(sound)
+            sound.mark_index_dirty()
             invalidate_template_cache("sound_header", sound.id)
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
@@ -218,7 +220,7 @@ def sound_edit(request, username, sound_id):
                         new_pack.is_dirty = True
                         new_pack.save()
                     sound.pack = new_pack
-            __save_and_add_to_solr(sound)
+            sound.mark_index_dirty()
             invalidate_template_cache("sound_header", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -232,7 +234,7 @@ def sound_edit(request, username, sound_id):
                 if sound.geotag:
                     geotag = sound.geotag.delete()
                     sound.geotag = None
-                    __save_and_add_to_solr(sound)
+                    sound.mark_index_dirty()
             else:
                 if sound.geotag:
                     sound.geotag.lat = data["lat"]
@@ -240,7 +242,7 @@ def sound_edit(request, username, sound_id):
                     sound.geotag.zoom = data["zoom"]
                 else:
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
-                    __save_and_add_to_solr(sound)
+                    sound.mark_index_dirty()
 
             invalidate_template_cache("sound_footer", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
@@ -251,22 +253,19 @@ def sound_edit(request, username, sound_id):
             geotag_form = GeotaggingForm(prefix="geotag")
 
     if is_selected("license"):
-        license_form = LicenseForm(request.POST, prefix="license")
+        license_form = NewLicenseForm(request.POST, prefix="license")
         if license_form.is_valid():
             sound.license = license_form.cleaned_data["license"]
-            __save_and_add_to_solr(sound)
+            sound.mark_index_dirty()
             invalidate_template_cache("sound_footer", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = LicenseForm(prefix="license", initial=dict(license=sound.license.id))
+        license_form = NewLicenseForm(prefix="license", initial=dict(license=sound.license.id))
 
     google_api_key = settings.GOOGLE_API_KEY
 
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
 
-def __save_and_add_to_solr(sound):
-    sound.save()
-    sound.add_to_search_index()
 
 @login_required
 def sound_edit_sources(request, username, sound_id):
@@ -283,7 +282,8 @@ def sound_edit_sources(request, username, sound_id):
         if form.is_valid():
             form.save()
         else:
-            print ("Form is not valid!!!!!!! %s" % ( form.errors))
+            # TODO: Don't use prints! Either use logging or return the error to the user. ~~ Vincent
+            pass #print ("Form is not valid!!!!!!! %s" % ( form.errors))
     else:
         form = RemixForm(sound,initial=dict(sources=sources_string))
     return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
@@ -291,14 +291,22 @@ def sound_edit_sources(request, username, sound_id):
 
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    # TODO: The below line creates a pretty massive SQL query, have a look to optimize it
-    #        with raw SQL or split it in smaller queries.
-    qs = Sound.objects.filter(Q(sources=sound) | Q(remixes=sound) | Q(id=sound.id)).order_by('created').distinct().all()
-    return render_to_response('sounds/remixes.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
+    try:
+        remix_group = sound.remix_groups.all()[0]
+    except:
+        raise Http404
+    return HttpResponseRedirect(reverse("remix-group", args=[remix_group.id]))
+    #return render_to_response('sounds/remixes.html', locals(), context_instance=RequestContext(request))
 
+def remix_group(request, group_id):
+    group = get_object_or_404(RemixGroup, id=group_id)
+    data = group.protovis_data
+    sounds = group.sounds.all().order_by('created')
+    group_sound = sounds[0]
+    return render_to_response('sounds/remixes.html',
+                              locals(),
+                              context_instance=RequestContext(request))
 
-def sources(request, username, sound_id):
-    return remixes(request, username, sound_id)
 
 def geotag(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
@@ -307,8 +315,16 @@ def geotag(request, username, sound_id):
 
 
 def similar(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
-    pass
+    sound = get_object_or_404(Sound, user__username__iexact=username,
+                              id=sound_id,
+                              moderation_state="OK",
+                              processing_state="OK")
+                            #TODO: similarity_state="OK"
+                            #TODO: this filter has to be added again, but first the db has to be updated
+
+    similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(settings.SOUNDS_PER_PAGE))
+    logger.info('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
+    return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 
 def pack(request, username, pack_id):

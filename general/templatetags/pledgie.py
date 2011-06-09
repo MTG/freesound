@@ -32,9 +32,9 @@ class PledgieParserNode(template.Node):
             data = json.loads(urllib.urlopen(api_url, proxies=settings.PROXIES).read(), "utf-8")
             data["to_go"] = int(data["campaign"]["goal"] - data["campaign"]["amount_raised"])
             data["url"] = pledge_url
-        except UnicodeDecodeError:
-            pass
-        except IOError:
+        #except UnicodeDecodeError:
+        #    pass
+        except:
             data = {}
             data['to_go'] = 0
             data['url'] = 'unknown'

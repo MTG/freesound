@@ -7,10 +7,10 @@ from django.utils.encoding import smart_unicode
 
 class Tag(models.Model):
     name = models.SlugField(unique=True, db_index=True, max_length=100)
-    
+
     def __unicode__(self):
         return self.name
-    
+
     class Meta:
         ordering = ("name",)
 
@@ -25,7 +25,7 @@ class TaggedItem(models.Model):
     content_object = generic.GenericForeignKey()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+
     def __unicode__(self):
         return u"%s tagged %s - %s: %s" % (self.user, self.content_type, self.content_type, self.tag)
 
@@ -36,13 +36,11 @@ class TaggedItem(models.Model):
     class Meta:
         ordering = ("-created",)
         unique_together = (('tag', 'content_type', 'object_id'),)
-        
+
 # Class to get old tags ids linked to new tag ids
-# The goal is to at some point deprecate the old tag ids completely        
+# The goal is to at some point deprecate the old tag ids completely
 class FS1Tag(models.Model):
     # The old id from FS1
     fs1_id = models.IntegerField(unique=True, db_index=True)
-    
+
     tag = models.ForeignKey(Tag)
-    
-            

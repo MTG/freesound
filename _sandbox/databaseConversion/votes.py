@@ -1,55 +1,75 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Migrate 'votes' from Freesound1 to Freesound2.
+"""
+
 from local_settings import *
-import MySQLdb as my
 import codecs
-import psycopg2
+from db_utils import get_user_ids, get_sound_ids, get_content_id
 
-output_filename = '/tmp/importfile.dat'
-output_file = codecs.open(output_filename, 'wt', 'utf-8')
+OUT_FNAME = 'votes.sql'
 
-my_conn = my.connect(**MYSQL_CONNECT)
-my_curs = my_conn.cursor()
+VALID_USER_IDS = get_user_ids()
+VALID_SOUND_IDS = get_sound_ids()
+CONTENT_TYPE_ID = get_content_id('sounds', 'sound')
 
-start = 0
-granularity = 100000
 
-ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
-ppsql_cur = ppsql_conn.cursor()
-print "getting all valid sound ids"
-ppsql_cur.execute("SELECT id FROM sounds_sound")
-valid_sound_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
-print "done"
+def transform_row(row):
+    """Get a row (sequence), transform the values, return a sequence.
 
-print "getting all valid user ids"
-ppsql_cur.execute("SELECT id FROM auth_user")
-valid_user_ids = dict((row[0],1) for row in ppsql_cur.fetchall())
-print "done"
+    Returns None if the row shouldn't be migrated.
+    """
 
-print "getting correct content_id"
-ppsql_cur.execute("select id from django_content_type where app_label='sounds' and model='sound'")
-content_type_id = ppsql_cur.fetchall()[0][0]
-print "done"
+    row_id, object_id, user_id, rating, created = row
 
-while True:
-    print start
+    if object_id not in VALID_SOUND_IDS or user_id not in VALID_USER_IDS:
+        return
+        
+    fields = [row_id, user_id, rating, CONTENT_TYPE_ID, object_id, created]
+    return map(unicode, fields)
 
-    my_curs.execute("""SELECT afc.ID, afc.audioFileID, afc.userID, afc.vote, afc.date FROM audio_file_vote AS afc LIMIT %d, %d""" % (start, granularity))
 
-    rows = my_curs.fetchall()
-    start += len(rows)
 
-    if len(rows) == 0:
-        break
+def migrate_table(curs):
+    """Generates SQL sentences for migrating the table. Output to file.
+    """
 
-    for row in rows:
-        id, object_id, user_id, rating, created = row
+    out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
 
-        if object_id not in valid_sound_ids or user_id not in valid_user_ids:
-            continue
+    sql = """copy ratings_rating (id, user_id, rating, content_type_id, 
+        object_id, created) from stdin ;
+"""
+    out.write(sql)
 
-        output_file.write(u"\t".join(map(unicode, [id, user_id, rating, content_type_id, object_id, created])) + "\n")
+    query = """
+"""
+    curs.execute(query)
 
-print """
-copy ratings_rating (id, user_id, rating, content_type_id, object_id, created) from '%s';
-select setval('ratings_rating_id_seq',(select max(id)+1 from ratings_rating));
-vacuum analyze ratings_rating;
-""" % output_filename
+    while True:
+        row = curs.fetchone()
+        if not row:
+            break
+        new_row = transform_row(row)
+        if new_row:
+            out.write(u"\t".join(new_row) + u"\n" )
+
+    sql = """\.
+
+    select setval('ratings_rating_id_seq',(select max(id)+1 
+        from ratings_rating));
+    vacuum analyze ratings_rating;
+    """
+    out.write(sql)
+
+
+
+
+def main():
+    """Run the main code."""
+    conn = MySQLdb.connect(**MYSQL_CONNECT)
+    curs = conn.cursor(DEFAULT_CURSORCLASS)
+    migrate_table(curs)
+
+if __name__ == '__main__':
+    main()
+

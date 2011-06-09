@@ -10,7 +10,7 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random
+import os, logging, random, datetime, gearman
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 
@@ -74,6 +74,7 @@ class PublicSoundManager(models.Manager):
     def get_query_set(self):
         return super(PublicSoundManager, self).get_query_set().filter(moderation_state="OK", processing_state="OK")
 
+
 class Sound(SocialModel):
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -89,8 +90,8 @@ class Sound(SocialModel):
 
     license = models.ForeignKey(License)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
-    pack = models.ForeignKey('Pack', null=True, blank=True, default=None)
-    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
+    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # file properties
     SOUND_TYPE_CHOICES = (
@@ -108,6 +109,7 @@ class Sound(SocialModel):
     filesize = models.IntegerField(default=0)
     channels = models.IntegerField(default=0)
     md5 = models.CharField(max_length=32, unique=True, db_index=True)
+    is_index_dirty = models.BooleanField(null=False, default=True)
 
     # moderation
     MODERATION_STATE_CHOICES = (
@@ -213,11 +215,11 @@ class Sound(SocialModel):
             analysis = dict(
                 statistics = dict(
                     path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%d_%d_statistics.yaml" % (self.id, self.user.id)
+                    url = settings.ANALYSIS_URL + "%s/%d_%d_statistics.yaml" % (id_folder, self.id, self.user.id)
                 ),
                 frames = dict(
                     path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%d_%d_frames.json" % (self.id, self.user.id)
+                    url = settings.ANALYSIS_URL + "%s/%d_%d_frames.json" % (id_folder, self.id, self.user.id)
                 )
             )
         )
@@ -261,23 +263,20 @@ class Sound(SocialModel):
         return int(self.avg_rating*10)
 
     def process(self, force=False):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
-            sound.processing_date = datetime.now()
-            sound.processing_state = "QU"
-            gm_client.submit_job("process_sound", str(sound.id), wait_until_complete=False, background=True)
+            self.processing_date = datetime.datetime.now()
+            self.processing_state = "QU"
+            gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
         if force or self.analysis_state != "OK":
-            sound.analysis_state = "QU"
-            gm_client.submit_job("analyze_sound", str(sound.id), wait_until_complete=False, background=True)
-        sound.save()
+            self.analysis_state = "QU"
+            gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
+        self.save()
 
-    def add_to_search_index(self):
-        from utils.search.search import add_sound_to_solr
-        try:
-            add_sound_to_solr(self)
-            search_logger.debug('Added sound with id %s to solr.' % self.id)
-        except Exception, e:
-            search_logger.error('Could not add sound with id %s to solr. (%s)' % \
-                                (self.id, str(e)))
+    def mark_index_dirty(self):
+        self.is_index_dirty = True
+        self.save()
+
 
     @models.permalink
     def get_absolute_url(self):
@@ -410,11 +409,25 @@ class Flag(models.Model):
 
 
 class Download(models.Model):
+    # download interface (UNUSED)
+    #DOWNLOAD_INTERFACE_CHOICES = (
+    #    ("W",_('Web')),
+    #    ("A",_('API')),
+    #)
+
     user = models.ForeignKey(User)
     sound = models.ForeignKey(Sound, null=True, blank=True, default=None)
     pack = models.ForeignKey(Pack, null=True, blank=True, default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
+    #interface = models.CharField(db_index=True, max_length=1, choices=DOWNLOAD_INTERFACE_CHOICES, default="W")
 
     class Meta:
-        unique_together = ('user', 'sound', 'pack')
         ordering = ("-created",)
+
+
+class RemixGroup(models.Model):
+    protovis_data = models.TextField(null=True, blank=True, default=None)
+    sounds = models.ManyToManyField(Sound,
+                                    symmetrical=False,
+                                    related_name='remix_groups',
+                                    blank=True)

@@ -1,8 +1,8 @@
-import os, yaml, shutil
+import os, yaml, shutil, logging
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
 from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, PRESET_DIR, PRESETS
-from logger import logger
 
+logger = logging.getLogger('similarity')
 
 class GaiaWrapper:
     '''
@@ -65,6 +65,7 @@ class GaiaWrapper:
 
 
     def __build_preset_dataset_and_save(self, preset_name):
+        logger.debug('Building the preset dataset and saving.')
         ds_path = self.__get_dataset_path(preset_name)
         self.preset_dataset_paths[preset_name] = ds_path
         ds = self.__build_preset_dataset(preset_name)
@@ -74,10 +75,17 @@ class GaiaWrapper:
 
 
     def __prepare_original_dataset(self):
-        # transform the original dataset!
-        proc_ds1  = transform(self.original_dataset, 'RemoveVL')
+        logger.debug('Transforming the original dataset.')
+        self.original_dataset = self.prepare_original_dataset_helper(self.original_dataset)
+
+    @staticmethod
+    def prepare_original_dataset_helper(ds):
+        """This function is used by the inject script as well."""
+        proc_ds1  = transform(ds, 'RemoveVL')
         proc_ds2  = transform(proc_ds1,  'FixLength')
-        self.original_dataset = transform(proc_ds2, 'Cleaner')
+        proc_ds1 = None
+        prepared_ds = transform(proc_ds2, 'Cleaner')
+        return prepared_ds
 
 
     def add_point(self, point_location, point_name):
@@ -104,7 +112,7 @@ class GaiaWrapper:
         query_point = str(query_point)
         size = self.original_dataset.size()
         if (size < SIMILARITY_MINIMUM_POINTS):
-            raise Exception('Not enough datapoints in the dataset (%s < %s).' (size, SIMILARITY_MINIMUM_POINTS))
+            raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
         if not preset_name in self.presets:
             raise Exception('Invalid preset %s' % preset_name)
         if query_point.endswith('.yaml'):
@@ -145,6 +153,7 @@ class GaiaWrapper:
 
 
     def __build_preset_dataset(self, preset_name):
+        logger.debug('Building preset dataset %s.' % preset_name)
         preset = self.presets[preset_name]
         filter = preset['filter']
         filter_ds = transform(self.original_dataset, filter['type'], filter['parameters'])
@@ -159,6 +168,7 @@ class GaiaWrapper:
 
 
     def __build_view(self, preset_ds, preset_name):
+        logger.debug('Bulding view for preset %s' % preset_name)
         preset = self.presets[preset_name]
         distance = preset['distance']
         search_metric = DistanceFunctionFactory.create(distance['type'],

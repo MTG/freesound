@@ -19,7 +19,6 @@
                 {% display_sound random_sound %}
             {% endifnotequal %}
     </div>
-
     <!-- news -->
     {% cache 3600 rss_cache %}
     <div id="latest_news" class="content_box">
@@ -75,7 +74,7 @@
     </div>
 
     <!-- pledgie -->
-    {% cache 900 pledgie_cache %}
+    {% cache 3609 pledgie_cache %}
     {% get_pledgie_campaign_details pledgie_campaign as pledgie %}
     {% if pledgie %}
     <div id="donation_box">

@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-from django_extensions.management.jobs import DailyJob
 from sounds.models import Sound
 from utils.search.search import add_all_sounds_to_solr
 

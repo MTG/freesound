@@ -35,8 +35,28 @@ from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW
 from utils.audioprocessing import get_sound_type
+from django.core.cache import cache
+import django.contrib.auth.views as authviews
+from django.contrib.auth.forms import AuthenticationForm
+import hashlib
 
 audio_logger = logging.getLogger('audioprocessing')
+
+@login_required
+def bulk_license_change(request):
+    if request.method == 'POST':
+        form = NewLicenseForm(request.POST)
+        if form.is_valid():
+            license = form.cleaned_data['license']
+            Sound.objects.filter(user=request.user).update(license=license)
+            # update old license flag
+            Profile.objects.filter(user=request.user).update(has_old_license=False)
+            # update cache
+            cache.set("has-old-license-%s" % request.user.id, False, 2592000)
+            return HttpResponseRedirect(reverse('accounts-home'))
+    else:
+        form = NewLicenseForm()
+    return render_to_response('accounts/choose_new_license.html', locals(), context_instance=RequestContext(request))
 
 
 def activate_user(request, activation_key):
@@ -620,6 +640,66 @@ def old_user_link_redirect(request):
             raise Http404
     else:
         raise Http404
+
+
+
+
+# got characters from rfc3986 (minus @, + which are valid for django usernames)
+BAD_USERNAME_CHARACTERS = {':': '_colon_',
+                           '/': '_slash_',
+                           '?': '_qmark_',
+                           '#': '_hash_',
+                           '[': '_lbrack1_',
+                           ']': '_rbrack1_',
+                           '!': '_emark_',
+                           '$': '_dollar_',
+                           '&': '_amper_',
+                           "'": '_quote_',
+                           '(': '_lbrack2_',
+                           ')': '_rbrack2_',
+                           '*': '_stardom_',
+                           ',': '_comma_',
+                           ';': '_scolon_',
+                           '=': '_equal_',
+                           '{': '_lbrack3_',
+                           '}': '_rbrack3_'
+                           }
+
+def transform_username_fs1fs2(fs1_name, fs2_append=''):
+    """ Returns a tuple (changed, name) where changed is a boolean
+        indicating the name was transformed and name a string
+        with the correct username for freesound 2
+    """
+    if any([x in fs1_name for x in BAD_USERNAME_CHARACTERS.keys()]):
+        fs2_name = fs1_name
+        for bad_char, replacement in BAD_USERNAME_CHARACTERS.items():
+            fs2_name = fs2_name.replace(bad_char, replacement)
+        fs2_name = '%s%s' % (fs2_name, fs2_append)
+        if len(fs2_name) > 30:
+            m = hashlib.md5()
+            m.update(fs2_name)
+            fs2_name = m.hexdigest()
+        return True, fs2_name
+    else:
+        return False, fs1_name
+
+
+def login_wrapper(request):
+    if request.method == "POST":
+        old_name = request.POST.get('username', False)
+        if old_name:
+            changed, new_name = transform_username_fs1fs2(old_name)
+            if changed:
+                try:
+                    # check if the new name actually exists
+                    _ = User.objects.get(username=new_name)
+                    msg = """Hi there! Your old username had some weird
+    characters in it and we had to change it. It is now <b>%s</b>. If you don't like
+    it, please contact us and we'll change it for you.""" % new_name
+                    messages.add_message(request, messages.WARNING, msg)
+                except User.DoesNotExist:
+                    pass
+    return authviews.login(request, template_name='accounts/login.html')
 
 
 

@@ -758,7 +758,7 @@ h3.header,
 }
 
 .remixes .sample_player_small {
-	height: 100px;
+    height: 100px;
 }
 
 /* Browse Sounds Page
@@ -1860,6 +1860,12 @@ p.about {
     padding: 20px;
     width: 400px;
     background-color: #F6F6F6;
+}
+
+.account_avatar {
+    float: left;
+    margin-right: 30px;
+    margin-left: 20px;
 }
 
 /* People page

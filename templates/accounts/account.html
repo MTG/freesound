@@ -21,8 +21,7 @@
     {% if home %}
         <h1>Home</h1>
 
-        <h2>Greetings {{user.username}}! This is your personal Home page.</h2>
-
+        <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
         <ul>
             <li><a href="{% url account user.username %}">View</a> your public profile</li>
             <li><a href="{% url accounts-edit %}">Edit</a> your public profile</li>
@@ -36,6 +35,8 @@
                 {{user.profile.about|safe}}
             </p>
         {% endif %}
+
+        <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
         <ul>
             <li><a href="{% url messages-new user.username %}">Send a private message to this user</a></li>
             {% if user.profile.home_page %}

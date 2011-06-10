@@ -25,3 +25,10 @@ class Similarity():
         params = {'type': 'DeleteSound',
                   'sound_id': sound_id}
         return messenger.call_service(REQREP_ADDRESS, params)
+
+
+    @classmethod
+    def contains(cls, sound_id):
+        params = {'type': 'Contains',
+                  'sound_id': sound_id}
+        return messenger.call_service(REQREP_ADDRESS, params)

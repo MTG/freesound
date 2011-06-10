@@ -76,3 +76,10 @@ class GaiaIndexer:
             return self.index.search_dataset(point, no_of_results, presetkey)
         finally:
             self.__release_shared()
+
+    def contains(self, point):
+        self.__acquire_shared(READ_TIMEOUT)
+        try:
+            return self.contains(point)
+        finally:
+            self.__release_shared()

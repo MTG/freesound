@@ -1,9 +1,8 @@
 from datetime import timedelta, datetime
 from django.core.cache import cache
-from django.contrib.sites.models import Site
 
 ONLINE_MINUTES = 10
-CACHE_KEY = '%s_online_user_ids' % Site.objects.get_current().domain
+CACHE_KEY = 'online_user_ids'
 
 _last_purged = datetime.now()
 

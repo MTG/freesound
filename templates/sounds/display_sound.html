@@ -9,20 +9,10 @@
         <div class="small_player">
             {% include "sounds/player_medium.html" %}
         </div>
-        
+
         <div class="sound_title">
                 <div class="sound_filename">
                    <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:25}}</a>
-                </div>
-                <div  class="sound_description">
-                    <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
-                </div>
-                <div class="sound_tags">
-                <ul id="tags">
-                    {% for tag_link in sound_tags %}
-                        <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
-                    {% endfor %}
-                </ul>
                 </div>
                 <div class="sound_stars">
                    <ul class="star-rating">

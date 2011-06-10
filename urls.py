@@ -47,10 +47,7 @@ urlpatterns = patterns('',
         sounds.views.remix_group,
         name="remix-group"),
 
-
-
     url(r'^contact/', support.views.contact, name="contact"),
-
     url(r'^search/$', search.views.search, name='sounds-search'),
 
     (r'^ratings/', include('ratings.urls')),

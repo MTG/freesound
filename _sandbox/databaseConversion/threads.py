@@ -6,7 +6,8 @@
 from local_settings import *
 import codecs
 from db_utils import get_user_ids
-from text_utils import prepare_for_insert, smart_character_decoding
+from text_utils import prepare_for_insert, smart_character_decoding, \
+        decode_htmlentities
 import sys
 
 
@@ -37,8 +38,8 @@ def transform_row(row):
             or (forum_id not in VALID_FORUM_IDS):
         return
     
-    topic_title = prepare_for_insert(smart_character_decoding(topic_title))
-
+    topic_title = decode_htmlentities(prepare_for_insert(
+        smart_character_decoding(topic_title)))
     status = REGULAR
     
     if topic_status == 3: # moved

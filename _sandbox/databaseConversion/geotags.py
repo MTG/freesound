@@ -16,8 +16,10 @@ UPDATE_SOUNDS = []
 
 
 def transform_row(row):
+    global UPDATE_SOUNDS
+
     myid, user_id, object_id, lon, lat, zoom, created = row
-    
+
     if (object_id not in VALID_SOUND_IDS) or \
         (user_id not in VALID_USER_IDS):
         return
@@ -25,9 +27,9 @@ def transform_row(row):
     # This must be run at the end of the sql file.
     sql = "update sounds_sound set geotag_id=%d where id=%d;" \
         % (myid, object_id)
-    UPDATE_SOUNDS += [sql,]
+    UPDATE_SOUNDS.append(sql)
 
-    return map(unicode, [id, user_id, lon, lat, int(zoom), created]) 
+    return map(unicode, [myid, user_id, lon, lat, int(zoom), created]) 
 
 
 
@@ -37,7 +39,7 @@ def migrate_geotags(curs):
 
     sql = """copy geotags_geotag (id, user_id, lon, lat, zoom, created) 
         from stdin;
-    """
+"""
     out.write(sql)
 
     query = """SELECT

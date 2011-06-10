@@ -30,8 +30,9 @@ class License(OrderedModel):
         return self.name
 
 class SoundManager(models.Manager):
-    def latest_additions(self, num_sounds, period='2 weeks'):
-        return DelayedQueryExecuter("""
+    def latest_additions(self, num_sounds, period='2 weeks', use_interval=True):
+        interval_query = ("and created > now() - interval '%s'" % period) if use_interval else ""
+        query = """
                 select
                     username,
                     sound_id,
@@ -46,11 +47,13 @@ class SoundManager(models.Manager):
                     sounds_sound
                 where
                     processing_state = 'OK' and
-                    moderation_state = 'OK' and
-                    created > now() - interval '%s'
+                    moderation_state = 'OK'
+                    %s
                 group by
                     user_id
-                ) as X order by created desc limit %d;""" % (period, num_sounds))
+                ) as X order by created desc limit %d;""" % (interval_query, num_sounds)
+        print query
+        return DelayedQueryExecuter(query)
 
     def random(self):
 

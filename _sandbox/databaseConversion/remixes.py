@@ -12,9 +12,6 @@ OUT_FNAME = 'remixes.sql'
 VALID_SOUND_IDS = get_sound_ids()
 
 
-INSERT_ID = 0
-
-
 
 def transform_row(row):
     """Get a row (sequence), transform the values, return a sequence.
@@ -27,19 +24,21 @@ def transform_row(row):
     if sound_id not in VALID_SOUND_IDS or parent_id not in VALID_SOUND_IDS:
         return
 
-    INSERT_ID += 1
-
-    fields = [INSERT_ID, sound_id, parent_id]
+    fields = [sound_id, parent_id]
     return map(unicode, fields)
 
 
 
 def migrate_table(curs):
 
+    # Incremental index.
+    insert_id = 0 
+
     out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
 
     sql = """copy sounds_sound_sources (id, from_sound_id, to_sound_id) 
-        from stdin null as 'None';"""
+        from stdin null as 'None';
+"""
     out.write(sql)
 
     query = """SELECT af1.ID, af1.parent 
@@ -55,8 +54,11 @@ def migrate_table(curs):
         if not row:
             break
         new_row = transform_row(row)
+
         if new_row:
-            out.write(u"\t".join(new_row) + u"\n" )
+            fields = [unicode(insert_id),] + new_row
+            out.write(u"\t".join(fields) + u"\n" )
+            insert_id += 1
 
     sql = """\.
 

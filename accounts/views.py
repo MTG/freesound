@@ -473,7 +473,7 @@ def latest_content_type(scores):
 
 def accounts(request):
     num_days = 2
-    num_active_users = 20
+    num_active_users = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
     user_rank = {}
     upload_weight = 1

@@ -80,6 +80,6 @@ class GaiaIndexer:
     def contains(self, point):
         self.__acquire_shared(READ_TIMEOUT)
         try:
-            return self.contains(point)
+            return self.index.contains(point)
         finally:
             self.__release_shared()

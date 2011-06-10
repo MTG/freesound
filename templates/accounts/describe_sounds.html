@@ -13,7 +13,7 @@
   	  	  		if ($("#errormessage").length == 0) {
   	  	  			$("#describe_form").before("<div id='errormessage' class='errortag'>There are some errors or missing fields below. Please review your data...</div>");
   	  	  		}
-	  	  	  	$(".inner-accordion, outer-accordion-div").has(".errorlist").prev().addClass("errortag");
+	  	  	  	// $(".inner-accordion, outer-accordion-div").has(".errorlist").prev().addClass("errortag");
 				$(".inner-accordion, outer-accordion-div").has(".errorlist").prev().effect("pulsate", { times:2 }, 1000);
   	  	  		
   	  	  		$(".inner-accordion-div").has(".errorlist").prev().children("a").addClass("errortag");
@@ -88,9 +88,21 @@
 				    map{{forloop.counter}}.addOverlay(centerMarker{{forloop.counter}});
 				
 				    GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
-				
-				    $("#{{form.geotag.zoom.auto_id}}").change(function() {
-				    	map{{forloop.counter}}.setZoom(parseInt($(this).val()));
+
+				    $("#{{form.geotag.lat.auto_id}}").keyup(function() {
+					    if ($(this).val()) {
+				    		map{{forloop.counter}}.setCenter(new GLatLng($(this).val(), $("#{{form.geotag.lon.auto_id}}").val()));
+					    }
+				    });
+				    $("#{{form.geotag.lon.auto_id}}").keyup(function() {
+				    	if ($(this).val()) {
+				    		map{{forloop.counter}}.setCenter(new GLatLng($("#{{form.geotag.lat.auto_id}}").val(), $(this).val()));
+				    	}
+				    });				
+				    $("#{{form.geotag.zoom.auto_id}}").keyup(function() {
+				    	if ($(this).val()) {
+				    		map{{forloop.counter}}.setZoom(parseInt($(this).val()));
+				    	}
 				    });
 
 				    setAfterFormError{{forloop.counter}}(); 
@@ -106,6 +118,7 @@
 						    map{{forloop.counter}}.setCenter(latlng, zoom);
 						}
 					}
+					
 					function updateAndAddCenter{{forloop.counter}}()
 				    {
 				        var center = map{{forloop.counter}}.getCenter();

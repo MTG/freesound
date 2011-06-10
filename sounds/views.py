@@ -56,7 +56,7 @@ def get_random_uploader():
 
 def sounds(request):
     n_weeks_back = 1
-    latest_sounds = Sound.objects.latest_additions(5, '%s weeks' % n_weeks_back)
+    latest_sounds = Sound.objects.latest_additions(5, use_interval=False)
     latest_packs = Pack.objects.annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
 
     # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
@@ -72,7 +72,7 @@ def sounds(request):
 def remixed(request):
     qs = RemixGroup.objects.all().order_by('-group_size')
     return render_to_response('sounds/remixed.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
-    
+
 
 def random(request):
     sound_id = Sound.objects.random()
@@ -80,6 +80,7 @@ def random(request):
         raise Http404
     sound_obj = Sound.objects.get(pk=sound_id)
     return sound(request, sound_obj.user.username, sound_id)
+
 
 def packs(request):
     order = request.GET.get("order", "name")
@@ -92,12 +93,9 @@ def packs(request):
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
     pledgie_campaign = settings.PLEDGIE_CAMPAIGN
-
     latest_forum_posts = Post.objects.select_related('author', 'thread', 'thread__forum').all().order_by("-created")[0:10]
-    latest_additions = Sound.objects.latest_additions(5)
-
+    latest_additions = Sound.objects.latest_additions(5, use_interval=False)
     random_sound = get_random_sound()
-
     return render_to_response('index.html', locals(), context_instance=RequestContext(request))
 
 

@@ -2,8 +2,6 @@
 {% cache 3600 active_user user.0.id %}
 {% load active_user_content %}
 
-{% block tab_people_active %}active_tab{% endblock %}
-
 <div>
     <div>
         <img src="{{user.0.profile.locations.avatar.M.url}}" alt="avatar" style="display: inline-block;"/>

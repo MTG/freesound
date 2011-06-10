@@ -1,8 +1,9 @@
-{% extends "accounts/_section.html" %}
+{% extends "accounts/_people.html" %}
 {% load display_sound %}
 {% load tags %}
 {% load smileys %}
 {% block title %} people {% endblock %}
+
 {% block section_content %}
 <div class="people_column">
 <h3> Most active users last {{num_days}} days</h3>
@@ -24,7 +25,7 @@
 <div class="people_logged">
 <h3> Users currently online</h3>
  {% for user in logged_users %}
-    <a href="{% url account user.username %}">{{user.username}}</a> 
+    <a href="{% url account user.username %}">{{user.username}}</a>
  {% endfor %}
 </div>
 {% endblock %}

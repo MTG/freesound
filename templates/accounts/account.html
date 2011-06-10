@@ -1,4 +1,4 @@
-{% extends "accounts/_section.html" %}
+{% extends "accounts/_notab.html" %}
 
 {% load display_sound %}
 {% load tags %}
@@ -12,10 +12,15 @@
     <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{google_api_key}}" type="text/javascript"></script>
 {% endblock head %}
 
+
+{% block tab_home_active %}{% if home %}active_tab{% endif %}{% endblock %}
+{% block tab_people_active %}{% if not home %}active_tab{% endif %}{% endblock %}
+
+
 {% block section_content %}
     {% if home %}
         <h1>Home</h1>
-        
+
         <h2>Greetings {{user.username}}! This is your personal Home page.</h2>
 
         <ul>
@@ -52,9 +57,9 @@
             map.setUIToDefault();
             map.disableScrollWheelZoom();
             map.setMapType(G_SATELLITE_MAP);
-    
+
             var bounds = new GLatLngBounds();
-    
+
             {% for geotaged_sound in latest_geotags %}
             var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
             bounds.extend(point);
@@ -65,7 +70,7 @@
                 });
             });
             map.addOverlay(marker);
-    
+
             {% endfor %}
             zoomToBounds(map, bounds);
         </script>
@@ -79,7 +84,7 @@
         {% for sound in latest_sounds %}
             {% display_sound sound %}
         {% endfor %}
-        <p><a href="{% url sounds-for-user user.username %}">more...</a></p>   
+        <p><a href="{% url sounds-for-user user.username %}">more...</a></p>
     </div><!-- #latest_sounds -->
     {% endif %}
 </div><!-- #content -->
@@ -94,7 +99,7 @@
     </div><!-- #user_most_used_tags -->
     {% endif %}
 
-    {% if latest_packs %}    
+    {% if latest_packs %}
     <div id="latest_packs" class="content_box">
         <h3>Your latest packs</h3>
         <ul>
@@ -102,7 +107,7 @@
             <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
         {% endfor %}
         <ul>
-        <p><a href="{% url packs-for-user user.username %}">more...</a></p>  
+        <p><a href="{% url packs-for-user user.username %}">more...</a></p>
     </div><!-- #latest_packs -->
     {% endif %}
 </div><!-- #sidebar -->

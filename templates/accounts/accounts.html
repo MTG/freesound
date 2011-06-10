@@ -24,7 +24,7 @@
 <div class="people_logged">
 <h3> Users currently online</h3>
  {% for user in logged_users %}
-    {{user.username}}<br>
+    <a href="{% url account user.username %}">{{user.username}}</a> 
  {% endfor %}
 </div>
 {% endblock %}

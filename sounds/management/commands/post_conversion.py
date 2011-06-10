@@ -2,6 +2,7 @@ from django.core.management.base import NoArgsCommand
 from sounds.models import Sound, Pack
 from django.db.models import Q
 from django.contrib.auth.models import User
+from similarity.client import Similarity
 import os
 
 
@@ -30,6 +31,10 @@ class Command(NoArgsCommand):
                os.path.exists(sound.locations('analysis.statistics.path')) and \
                os.path.exists(sound.locations('analysis.frames.path')):
                 sound.analysis_state = 'OK'
+
+            if sound.analysis_state == 'OK' and \
+               Similarity.contains(sound.id):
+                sound.similarity_state = 'OK'
 
             sound.save()
 

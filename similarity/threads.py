@@ -66,6 +66,13 @@ class SimilarityThread(threading.Thread):
             indexer.delete(str(sound_id))
             self.empty_reply()
 
+        elif msg['type'] == 'Contains':
+            sound_id = msg.get('sound_id', False)
+            if not sound_id:
+                raise Exception('The sound_id should be specified.')
+            res = indexer.contains(str(sound_id))
+            self.reply(res)
+
         return
 
 

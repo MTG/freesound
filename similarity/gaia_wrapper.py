@@ -105,7 +105,8 @@ class GaiaWrapper:
                 preset_ds.save(self.preset_dataset_paths[preset_name])
         self.original_dataset.save(self.original_dataset_path)
 
-
+    def contains(self, point_name):
+        return self.original_dataset.contains(point_name)
 
     def search_dataset(self, query_point, number_of_results, preset_name):
         preset_name = str(preset_name)

@@ -13,7 +13,6 @@ def build_error_response(e):
                'explanation': ''}
     content.update(e.extra)
     resp.content = content
-    print resp.status_code
     return resp
 
 class ReturnError(Exception):
@@ -49,7 +48,6 @@ class auth():
                 
                 # Try to get the api key
                 api_key = request.GET.get(self.get_parameter, False)
-                print "api key", api_key
                 if not api_key:
                     raise ReturnError(401, 'AuthenticationError',
                                           {'explanation':  'Please include your api key as the api_key GET parameter'})

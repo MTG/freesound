@@ -665,6 +665,7 @@ BAD_USERNAME_CHARACTERS = {':': '_colon_',
                            '}': '_rbrack3_'
                            }
 
+
 def transform_username_fs1fs2(fs1_name, fs2_append=''):
     """ Returns a tuple (changed, name) where changed is a boolean
         indicating the name was transformed and name a string
@@ -675,10 +676,16 @@ def transform_username_fs1fs2(fs1_name, fs2_append=''):
         for bad_char, replacement in BAD_USERNAME_CHARACTERS.items():
             fs2_name = fs2_name.replace(bad_char, replacement)
         fs2_name = '%s%s' % (fs2_name, fs2_append)
+
+        # If the transformed name is too long, create a hash.
         if len(fs2_name) > 30:
-            m = hashlib.md5()
-            m.update(fs2_name)
-            fs2_name = m.hexdigest()
+            try:
+                m = hashlib.md5()
+                m.update(fs2_name.encode('utf-8'))
+            except UnicodeEncodeError:
+                print 10*'#', fs1_name, fs2_name
+            # Hack: m.hexdigest() is too long.
+            fs2_name = base64.urlsafe_b64encode(m.digest())
         return True, fs2_name
     else:
         return False, fs1_name

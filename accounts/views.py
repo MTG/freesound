@@ -38,7 +38,7 @@ from utils.audioprocessing import get_sound_type
 from django.core.cache import cache
 import django.contrib.auth.views as authviews
 from django.contrib.auth.forms import AuthenticationForm
-import hashlib
+import hashlib, base64
 
 audio_logger = logging.getLogger('audioprocessing')
 

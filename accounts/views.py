@@ -472,7 +472,7 @@ def latest_content_type(scores):
             return 'comment'
 
 def accounts(request):
-    num_days = 2
+    num_days = 14
     num_active_users = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
     user_rank = {}

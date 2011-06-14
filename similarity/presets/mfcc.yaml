@@ -7,7 +7,7 @@
         }
     },
     "distance":{
-        "type":"euclidean",
+        "type":"cosine",
         "parameters":{
             "descriptorNames": "*"
         }

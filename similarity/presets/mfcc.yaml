@@ -3,11 +3,12 @@
     "filter":{
         "type":"select",
         "parameters":{
-            "descriptorNames": [".lowlevel.mfcc.mean"]
+            "descriptorNames": [".lowlevel.mfcc.mean",
+                                ".lowlevel.mfcc.cov"]
         }
     },
     "distance":{
-        "type":"cosine",
+        "type":"euclidean",
         "parameters":{
             "descriptorNames": "*"
         }

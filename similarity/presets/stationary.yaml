@@ -4,7 +4,7 @@
         "type":"select",
         "parameters":{
             "descriptorNames": [".lowlevel.mfcc.mean",
-				".lowlevel.mfcc.cov"]
+                                ".lowlevel.mfcc.cov"]
         }
     },
     "distance":{

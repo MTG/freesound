@@ -3,8 +3,7 @@
     "filter":{
         "type":"select",
         "parameters":{
-            "descriptorNames": [".lowlevel.mfcc.mean",
-                                ".lowlevel.mfcc.cov"]
+            "descriptorNames": [".lowlevel.mfcc.mean"]
         }
     },
     "distance":{

@@ -2,17 +2,17 @@ import settings
 from piston.utils import rc
 import traceback
 from models import ApiKey
-
+import json
 
 def build_error_response(e):
     resp = rc.BAD_REQUEST
     resp.status_code = e.status_code
-    content = {#"error": True,
+    content = {"error": True,
                "type": e.type,
                "status_code": e.status_code,
                "explanation": ""}
     content.update(e.extra)
-    resp.content = content
+    resp.content = json.dumps(content)
     return resp
 
 class ReturnError(Exception):

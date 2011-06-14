@@ -271,7 +271,7 @@ def prepare_single_user(user):
 
 def prepare_single_pack(pack, include_user=True):
     d = {}
-    for field in ["description", "name", "num_downloads", "created"]:
+    for field in ["name", "num_downloads", "created"]:
         d[field] = getattr(pack, field)
     user = User.objects.get(id=pack.user_id)
     if include_user:

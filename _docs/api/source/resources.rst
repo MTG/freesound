@@ -927,7 +927,6 @@ url		      URI      The URL for this pack's page on the Freesound website.
 sounds		      URI      The API URI for the pack's sound collection.
 user		      object   A JSON object with the user's username, url, and ref.
 name		      string   The pack's name.
-description	      string   The pack's description.
 created		      string   The date when the pack was created.
 num_downloads	      number   The number of times the pack was downloaded.
 ====================  =======  ========================================================
@@ -937,7 +936,6 @@ num_downloads	      number   The number of times the pack was downloaded.
 ::
 
   {
-    "description": "", 
     "created": "2009-09-01 19:56:15", 
     "url": "http://tabasco.upf.edu/people/dobroide/packs/5107/", 
     "user": {

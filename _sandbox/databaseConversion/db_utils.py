@@ -41,7 +41,7 @@ def get_content_id(app, model):
     ppsql_conn = psycopg2.connect(POSTGRES_CONNECT)
     ppsql_cur = ppsql_conn.cursor()
     query = "select id from django_content_type where app_label='%s' and model='%s'"
-    ppsql_cur.execute(query, (app, model))
+    ppsql_cur.execute(query % (app, model))
     return ppsql_cur.fetchall()[0][0]
 
 

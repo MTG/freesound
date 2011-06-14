@@ -428,6 +428,14 @@ div.infowindow {
     background: url(../images/site_nav_icons.png) no-repeat -16px -30px;
 }
 
+#site_nav_people .site_nav_icon {
+    background: url(../images/site_nav_icons.png) no-repeat 0 -64px;
+}
+
+.active_tab #site_nav_people .site_nav_icon {
+    background: url(../images/site_nav_icons.png) no-repeat -16px -64px;
+}
+
 #site_nav_help .site_nav_icon {
     background: url(../images/site_nav_icons.png) no-repeat 0 -47px;
 }
@@ -758,7 +766,7 @@ h3.header,
 }
 
 .remixes .sample_player_small {
-	height: 100px;
+    height: 100px;
 }
 
 /* Browse Sounds Page
@@ -1862,6 +1870,46 @@ p.about {
     background-color: #F6F6F6;
 }
 
+.account_avatar {
+    float: left;
+    margin-right: 30px;
+    margin-left: 20px;
+}
+
+/* People page
+------------------------------------------------------*/
+
+.people_logged {
+    display:block;
+    width:900px;
+}
+
+.active_user {
+	margin-bottom: 10px;
+}
+
+.people_user_info{
+    font-size: 10px;
+    color: #444;
+    line-height: 14px;
+}
+.active_user_info img {
+	float: left;
+	margin-right: 5px;
+}
+.active_user_info {
+	float: left;
+	display: block;
+	width: 300px;
+}
+.active_user_content {
+	display: block;
+	background: #eee;
+	width: 200px;
+	padding: 10px 15px;
+	float: right;
+}
+
 /* Search
 ------------------------------------------------------*/
 #filter_query_display {
@@ -2290,4 +2338,22 @@ ul.messages {
 
 #moderation-form p {
     margin-bottom: 5px;
+}
+
+
+/* Upload pages
+------------------------------------------------------*/
+
+#describe_page ul.upload ul {
+	list-style: none;
+	padding-left: 0;
+}
+#describe_page ul.upload ul li {
+	margin-top: 8px;
+}
+#describe_page ul.upload ul .filecheckbox {
+	margin-right: 6px;
+}
+#describe_page #fileform {
+	padding: 0;
 }

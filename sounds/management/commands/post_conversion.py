@@ -2,6 +2,7 @@ from django.core.management.base import NoArgsCommand
 from sounds.models import Sound, Pack
 from django.db.models import Q
 from django.contrib.auth.models import User
+from similarity.client import Similarity
 import os
 
 
@@ -18,24 +19,35 @@ class Command(NoArgsCommand):
         sounds = Sound.objects.all()
         counter = 0
         for sound in sounds:
+            changed = False
 
-            print '-- setting processing_state --'
             # check some random paths
-            if os.path.exists(sound.locations('path')) and \
+            if sound.processing_state != 'OK' and \
+               os.path.exists(sound.locations('path')) and \
                os.path.exists(sound.locations('preview.HQ.mp3.path')) and \
-               os.path.exists(sound.locations('analysis.statistics.path')) and \
                os.path.exists(sound.locations('display.spectral.L.path')):
                 sound.processing_state = 'OK'
+                changed = True
+
+
+            if sound.analysis_state != 'OK' and \
+               os.path.exists(sound.locations('analysis.statistics.path')) and \
+               os.path.exists(sound.locations('analysis.frames.path')):
+                sound.analysis_state = 'OK'
+                changed = True
+
+            if sound.analysis_state == 'OK' and \
+               Similarity.contains(sound.id):
+                sound.similarity_state = 'OK'
+                changed = True
+
+            if changed:
                 sound.save()
+
             counter += 1
             if counter % 1000 == 0:
                 print 'Processed %s sounds' % counter
 
-            print '-- setting analysis_state --'
-            # TODO
-
-            print '-- setting similarity_state --'
-            # TODO
 
 #        print '-- replace bad username characters --'
 #        # construct filter

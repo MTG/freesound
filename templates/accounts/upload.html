@@ -10,6 +10,8 @@
     {
         border: 1px solid #aaa;
         margin-top: 20px;
+        background: #eee;
+        padding: 5px;
     }
 
     div.queue-container
@@ -65,6 +67,7 @@
 
 {% block content %}
 
+<div id="upload_page">
 <h1>Upload files</h1>
 <p>
     Important:
@@ -75,6 +78,8 @@
     <li>All files are <strong>moderated</strong>, if you upload illegal files or files that don't follow the <a href="{% url wiki-page "what-is-legal" %}">guidelines</a> they will be removed in the moderation process...</li>
     <li>We prefer <strong>wav, aif and flac</strong> but we support ogg and mp3 too.</li>
 </ul>
+
+<a href="#"><img src="../../media/images/upload_sounds.png" width="160" height="31" alt="Upload Your Sounds Link" /></a>
 
 <script type="text/javascript">
 	swfobject.registerObject("uploader", "10.1");
@@ -148,6 +153,10 @@
 <br><br>
 <h1>Describe</h1>
 
+<a href="{% url accounts-describe %}"><img src="../../media/images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a>
+
 <p>Before your sounds show up on the web site you'll have to <a href="{% url accounts-describe %}">describe</a> them.
+
+</div><!-- #upload_page -->
 
 {% endblock %}

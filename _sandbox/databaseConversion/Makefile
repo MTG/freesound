@@ -30,16 +30,25 @@ help:
 	# Migration process
 	# -----------------
 	#
-	#  make step1
+	# make step1
 	#
-	#  Remove manually all duplicate users. Add them to 
+	# make show_duplicates
+	#
+	# 		Shows duplicated users. 
+	#
+	# Remove manually all duplicate users running:
+	#
+	# 		make deleteuser USERID=666
+	#
+	# To avoid those users being included in the next import, add to
+	#
 	#  		local_settings.CUSTOM_BANNED_USERS (temporary)
 	#  		or users.BANNED_USER_IDS (permanent).
 	#
-	#  make step2
+	# make step2
 
 clean:
-	rm -f *.pyc *.sql
+	rm -f *.pyc *.sql *.sql.gz
 
 destroy:
 	sudo -u postgres dropdb freesound
@@ -51,56 +60,91 @@ setup:
 	#
 	sudo -u postgres createuser -SRD -P freesoundpg
 	sudo -u postgres createdb -O freesoundpg freesound
+	sudo -u postgres createlang plpgsql freesound
 	### Running: manage.py syncdb
 	### Don't create a superuser.
 	../../manage.py syncdb
 
 
+deleteuser:
+	echo 'DELETE from auth_user WHERE id=${USERID} ;' | ${PSQL}
+
 
 step1:
 	./users.py
-	$(PSQL) < users.sql
+	${PSQL} < users.sql
+	gzip users.sql
 	#
 	# Remove all duplicated usernames before running 'make step2'.
 	
+
+
+SQL_DUPLICATES = 'SELECT id,username,email FROM auth_user \
+WHERE UPPER(username) IN ( \
+	SELECT upper(username) as u FROM auth_user \
+	GROUP BY u HAVING (COUNT(*) > 1) \
+) ORDER BY username ;'
+show_duplicates:
+	echo ${SQL_DUPLICATES} | ${PSQL}
+
+
 step2:
 	./users_reindex.py
-	$(PSQL) < users_reindex.sql
+	${PSQL} < users_reindex.sql
 	./profiles.py
-	$(PSQL) < profiles.sql
+	${PSQL} < profiles.sql
+	gzip profiles.sql 
 	./packs.py
-	$(PSQL) < packs.sql
+	${PSQL} < packs.sql
 	./sounds.py
-	$(PSQL) < sounds.sql
+	${PSQL} < sounds.sql
 	./tags.py
-	$(PSQL) < tags.sql
+	${PSQL} < tags.sql
+	${PSQL} < tags_fs1tag.sql
+	${PSQL} < tags_taggeditem.sql
 	./geotags.py
-	$(PSQL) < geotags.sql
+	${PSQL} < geotags.sql
 	./messages.py
-	$(PSQL) < messages.sql
-	$(PSQL) < messagesbody.sql
+	${PSQL} < messages_body.sql
+	${PSQL} < messages.sql
 	./remixes.py
-	$(PSQL) < remixes.sql
+	${PSQL} < remixes.sql
 	./forums.py
-	$(PSQL) < forums.sql
+	${PSQL} < forums.sql
 	./threads.py
-	$(PSQL) < threads.sql
-	#
+	${PSQL} < threads.sql
 	./posts.py
-	$(PSQL) < posts.sql
+	${PSQL} < posts.sql
 	./comments.py
-	$(PSQL) < comments.sql
+	${PSQL} < comments.sql
 	./votes.py
-	$(PSQL) < votes.sql
+	${PSQL} < votes.sql
 	./downloads.py
-	$(PSQL) < downloads.sql
+	gzip downloads.sql
+	gunzip -c downloads.sql.gz | ${PSQL}
+	# Two errors appear during DROP CONSTRAIN because the named relations
+	# do not exist yet. Probably those two sentences are not needed, but
+	# won't remove without verifying it.
 	#
-	$(PSQL) < ../../_sql/nightingale_sql_setup.sql
-	$(PSQL) < ../../_sql/nightingale_triggers.sql
+	#		ERROR:  constraint "sounds_download_pkey" of relation 
+	#		"sounds_download" does not exist
+	#		ERROR:  constraint "sounds_download_user_id_key" of relation 
+	#		"sounds_download" does not exist
+	#
+	${PSQL} < ../../_sql/nightingale_sql_setup.sql
+	${PSQL} < ../../_sql/nightingale_triggers.sql
 	#
 	#
 	#
 	# Next steps:
+	#
+	#  - Restore the existing api_apikey table from a recent dump.
+	#
+	#  - Reset the api_apikey index.
+	#  
+	#  	 $ psql freesound
+	#  	 freesound=# SELECT SETVAL('api_apikey_id_seq',(
+	#		SELECT MAX(id)+1 FROM api_apikey));
 	#
 	#  - Run script to determine where to start processing again.
 	#  		./manage.py post_conversion

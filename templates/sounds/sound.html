@@ -138,7 +138,7 @@
             <img src="{{media_url}}images/remixes.png" width="16" height="16" />
             <a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
         {% endif %}
-        <li><a class="similar" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds..</a></li>
+        <li><a class="similar action_button" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds..</a></li>
     </ul>
 
     <div id="flag_sound">

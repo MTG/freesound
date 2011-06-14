@@ -40,14 +40,15 @@ def migrate_table(curs):
 
     out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
 
-    sql = """copy forum_post (id, thread_id, author_id, body, created, 
-        modified) from stdin null as 'None';
+    sql = """COPY forum_post (id, thread_id, author_id, body, created, 
+        modified) FROM stdin null AS 'None';
 """
     out.write(sql)
 
-    query = """select p.post_id, p.topic_id, p.poster_id, 
-        FROM_UNIXTIME(p.post_time), t.post_text from phpbb_posts p 
-        inner join phpbb_posts_text t on p.post_id = t.post_id l ;
+    query = """SELECT p.post_id, p.topic_id, p.poster_id, 
+        FROM_UNIXTIME(p.post_time), t.post_text 
+        FROM phpbb_posts p INNER JOIN phpbb_posts_text t 
+        ON p.post_id = t.post_id ;
 """
     curs.execute(query)
 

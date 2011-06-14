@@ -1,12 +1,12 @@
 try:
     import zmq, time, sys, json, threading
-    
+
     class Messenger():
-    
+
         ctxs = {}
         resolver = False
         initialized = False
-    
+
         @classmethod
         def call_service(cls, address, data, timeout=3600):
             t = threading.currentThread()
@@ -32,7 +32,7 @@ try:
                 tctx['socket'] = socket
                 socket.connect(address)
                 time.sleep(0.5) # allow socket to connect
-    
+
             # socket is set up, let's use s as a shorthand
             s = socket
             poller = zmq.Poller()
@@ -58,12 +58,12 @@ try:
                 s.close()
                 error = 'Could not send message to %s.' % address
                 raise Exception(error)
-    
+
             if msg == '':
                 return None
-    
+
             msg_obj = json.loads(msg)
-            if 'exception' in msg_obj and msg_obj['exception'] == True:
+            if isinstance(msg_obj, dict) and 'exception' in msg_obj and msg_obj['exception'] == True:
                 raise Exception('Received an exception from service %s: \n\t%s' % (address, msg_obj['info']))
             else:
                 return msg_obj

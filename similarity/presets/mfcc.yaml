@@ -1,0 +1,20 @@
+{
+    "presetdetails": "Baseline similarity preset using only MFCC.",
+    "filter":{
+        "type":"select",
+        "parameters":{
+            "descriptorNames": [".lowlevel.mfcc.mean",
+                                ".lowlevel.mfcc.var",
+                                ".lowlevel.mfcc.dmean",
+                                ".lowlevel.mfcc.dvar",
+                                ".lowlevel.mfcc.dmean2",
+                                ".lowlevel.mfcc.dvar2"]
+        }
+    },
+    "distance":{
+        "type":"CosineAngleDistance",
+        "parameters":{
+            "descriptorNames": "*"
+        }
+    }
+}

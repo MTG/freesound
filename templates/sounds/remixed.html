@@ -19,12 +19,10 @@
 	 $(document).ready(function(){
 	      $("#jquery_jplayer_1").jPlayer({
 	        ready: function() {
-	          $(this).jPlayer("setMedia", {
-	            mp3: "http://www.jplayer.org/audio/mp3/Miaow-07-Bubble.mp3"
-	          }).jPlayer("play");
+	          
 	        },
 	        swfPath: "{{media_url}}swf",
-	        bla: alert("ready")
+	        supplied: "mp3, ogg"
 	      });
 	    });
 
@@ -43,7 +41,7 @@
 			return "#c7c7c7";
 	}
 	function goToSound(soundId, username) {
-		window.location.href = "/people/"+username+"/sounds/"+soundId+"/remixes";
+		window.location.href = "/people/"+username+"/sounds/"+soundId;
 	}
 	function clearBackgrounds(dataset) {
 		for (var i=0; i<dataset.nodes.length; i++) {
@@ -65,18 +63,20 @@
 	            oga: "http://tabasco.upd.edu" + d.sound_url_ogg
          }).jPlayer("play");
 	}
+	function stopPreview(d) {
+		$("#jquery_jplayer_1").jPlayer("stop");
+	}
 	</script>
 {% endblock head %}
 
 {% block title %}Remixes browse{% endblock title %}
-<div id="jquery_jplayer_1" style="display: none;"></div>
 
 {% block section_content %}
 <h1>Remixed</h1>
-
+<div id="jquery_jplayer_1" style="height: 0px; width: 0px;"></div>
 {% show_paginator paginator page current_page request %}
 
-<ul>
+<ul style="list-style: none;">
 {% for remix_group in page.object_list %}
 	<li>
 	<div class="fig">
@@ -101,16 +101,7 @@ var arc = vis{{ forloop.counter }}.add(pv.Layout.Arc)
 arc.link.add(pv.Line)
    		.strokeStyle(function(d, p)  connections(d,p))
 		.eccentricity(function(d,p) calculateEccentricity(data{{ forloop.counter }}.length, 400));
-/*
-arc.node.add(pv.Dot)
-    .size(function(d) d.linkDegree + 4)
-	.fillStyle(function(d) vis{{ forloop.counter }}.i() == this.index ? "#F1D9FF" : "#DBDBDB")
-    .strokeStyle(function() this.fillStyle().darker())
-    .radius(function() vis{{ forloop.counter }}.i() == this.index ? 10 : 5)
-    .event("mouseover", function(d) (d.active = true, arc, vis{{ forloop.counter }}.i(this.index)))
-    .event("mouseout", function(d) (clearBackgrounds(data{{ forloop.counter }}), d.active = false, arc, vis{{ forloop.counter }}.i(-1)))
-	.event("click", function(d) goToSound(d.id,d.username));
-*/
+
 arc.node.add(pv.Image)
 	.url(function(d) "http://tabasco.upf.edu" + d.waveform_url)
 	.imageHeight(function(d) 50)
@@ -119,8 +110,9 @@ arc.node.add(pv.Image)
     .height(50) 
 	.fillStyle(null)
     .strokeStyle(null)
-	.event("mouseover", function(d) (playPreview(d), d.active = true, arc, vis{{ forloop.counter }}.i(this.index)))
-	.event("mouseout", function(d) (clearBackgrounds(data{{ forloop.counter }}), d.active = false, arc, vis{{ forloop.counter }}.i(-1)));
+	.event("mouseover", function(d) ($("#message{{ forloop.counter }}").append("Click to go to sound page"), playPreview(d), d.active = true, arc, vis{{ forloop.counter }}.i(this.index)))
+	.event("mouseout", function(d) ($("#message{{ forloop.counter }}").empty(), stopPreview(), clearBackgrounds(data{{ forloop.counter }}), d.active = false, arc, vis{{ forloop.counter }}.i(-1)))
+	.event("click", function(d) goToSound(d.id,d.username));
 
 arc.label.add(pv.Label)
 	.text(function(d) {
@@ -137,10 +129,8 @@ vis{{ forloop.counter }}.render();
 /* ======== PROTOVIS STUFF-END ======== */
     	</script>
 	</div>
-	<div>
-	
-	</div>  
 	</li>
+	<div id="message{{ forloop.counter }}" style="height: 1em;"></div>
 	
 {% endfor %}
 </ul>

@@ -3,12 +3,7 @@
     "filter":{
         "type":"select",
         "parameters":{
-            "descriptorNames": [".lowlevel.mfcc.mean",
-                                ".lowlevel.mfcc.var",
-                                ".lowlevel.mfcc.dmean",
-                                ".lowlevel.mfcc.dvar",
-                                ".lowlevel.mfcc.dmean2",
-                                ".lowlevel.mfcc.dvar2"]
+            "descriptorNames": ".lowlevel.mfcc.mean"
         }
     },
     "distance":{

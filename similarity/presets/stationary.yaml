@@ -7,6 +7,13 @@
                                 ".lowlevel.mfcc.cov"]
         }
     },
+    "transform": {
+        "type":"normalize",
+        "parameters": {
+            "descriptorNames": "*",
+            "independent": true
+        }
+    },
     "distance":{
         "type":"euclidean",
         "parameters":{

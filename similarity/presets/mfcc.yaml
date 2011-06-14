@@ -6,6 +6,13 @@
             "descriptorNames": [".lowlevel.mfcc.mean"]
         }
     },
+    "transform": {
+        "type":"normalize",
+        "parameters": {
+            "descriptorNames": "*",
+            "independent": true
+        }
+    },
     "distance":{
         "type":"euclidean",
         "parameters":{

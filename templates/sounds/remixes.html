@@ -25,6 +25,17 @@
             width: 220px;
         }
     </style>
+    <script type="text/javascript">
+	function calculateEccentricity(length, height) {
+		var eccentricity = 0;
+	    if (length > 3) {
+	    	var a = (length-2) * 80;
+	        var b = height;
+	        eccentricity = (1 - b/a) * (1 - b/a);
+	    }
+	    return eccentricity;
+	}
+    </script>
 {% endblock head %}
 
 {% load display_sound %}
@@ -48,7 +59,6 @@ var data = {{ data|safe }};
 var vis = new pv.Panel()
                 .def("i", -1)
                 .width(205)
-// data.length * 102
                 .height($('.details').height())
                 .bottom(0)
                 .top(25)
@@ -60,8 +70,8 @@ var arc = vis.add(pv.Layout.Arc)
     .orient("right");
 
 arc.link.add(pv.Line)
-           .strokeStyle(function(d, p)  connections(d,p))
-        .eccentricity(data.eccentricity);
+        .strokeStyle(function(d, p)  connections(d,p))
+        .eccentricity(function(d, p) calculateEccentricity(data.length, 205));
 
 arc.node.add(pv.Dot)
     .shape("triangle")

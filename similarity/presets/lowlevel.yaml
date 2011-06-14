@@ -11,6 +11,15 @@
                                 "*lowlevel*dvar2"],
         },
     },
+    "transform":{
+        "type":"pca",
+        "parameters":{
+            "descriptorNames": "*",
+            "dimension": 13,
+            "resultName": "PCA.Result",
+            "descriptorNames": "*"
+        }
+    },
     "distance":{
         "type":"euclidean",
         "parameters":{

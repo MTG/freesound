@@ -3,15 +3,12 @@
     "filter":{
         "type":"select",
         "parameters":{
-            "descriptorNames": "*lowlevel*",
-        },
-    },
-    "transform":{
-        "type":"pca",
-        "parameters":{
-            "descriptorNames": "*",
-            "dimension": 30,
-            "resultName": "PCA.Result",
+            "descriptorNames": ["*lowlevel*mean",
+                                "*lowlevel*dmean",
+                                "*lowlevel*dmean2",
+                                "*lowlevel*var",
+                                "*lowlevel*dvar",
+                                "*lowlevel*dvar2"],
         },
     },
     "distance":{

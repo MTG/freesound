@@ -11,7 +11,7 @@
         "type":"normalize",
         "parameters": {
             "descriptorNames": "*",
-            "independent": true
+            "independent": false
         }
     },
     "distance":{

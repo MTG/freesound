@@ -19,19 +19,6 @@ class Command(BaseCommand):
     help = 'Create the groups used for rendering the global remix page'
 
     def handle(self, *args, **options):
-        # Calculate eccentricity so the arcs don't get clipped
-        # N.B. this is not the canonical way to calculate eccentricity but protovis's way
-        # TODO: remove this function, now done by javascript
-        #       pending for the remixes page
-        def __calculateEccentricity(sounds_length):
-            eccentricity = 0
-            if sounds_length > 3:
-                a = (sounds_length-2) * 80
-                b = 200
-                eccentricity = (1 - b/a) * (1 - b/a)
-
-            return str(eccentricity)
-
         # 1) Get all the sounds that have remixes
         cursor = connection.cursor()
         cursor.execute("""

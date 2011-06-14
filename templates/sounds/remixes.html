@@ -46,7 +46,17 @@
 <h1>Remix Group <em>{{ group_sound.original_filename }}</em></h1>
 
 
-<p>TODO: info here about group (contributers, number of sounds)
+<div id="remix_group_info" class="content_box">
+	<h3>Remix group info</h3>
+	<div class="sound_list_normal">
+		<ul>
+			<li>Original sound by: <b>{{ sounds.0.user.username }}</b></li>
+			<li>Original sound created on: <b>{{ sounds.0.created }}</b></li>
+			<li>Last remix done on: <b>{{ last_sound.created }}</b></li>
+			<li>Number of sounds in group: <b>{{ sounds|length }}</b></li>
+		</ul>
+	</div>
+</div><!-- #latest_sounds -->
 
 <div class="remixes">
 <div id="center">

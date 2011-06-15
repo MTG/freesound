@@ -1,7 +1,8 @@
-from django_extensions.management.jobs import HourlyJob
+from django.core.management.base import BaseCommand
 from sounds.models import Pack
 
-class Job(HourlyJob):
+class Command(BaseCommand):
+    args = ''
     help = "Find packs that need refreshing and create them"
 
     def execute(self):

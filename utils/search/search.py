@@ -64,12 +64,12 @@ def add_sound_to_solr(sound):
 def add_sounds_to_solr(sounds):
     logger.info("adding multiple sounds to solr index")
     solr = Solr(settings.SOLR_URL)
-    
-    
+
+
     logger.info("creating XML")
     documents = map(convert_to_solr_document, sounds)
     logger.info("posting to Solr")
-    solr.add(documents)    
+    solr.add(documents)
 
     logger.info("optimizing solr index")
     solr.optimize()
@@ -84,10 +84,13 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
         try:
             add_sounds_to_solr(sound_queryset[i:i+slice_size])
             if mark_index_clean:
-                map(set_index_clean, sound_queryset[i:i+slice_size])
+                logger.info("Marking sounds as clean.")
+                sound_queryset[i:i+slice_size].update(is_index_dirty=False)
         except SolrException, e:
             logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
-                
+
+
+
 
 def delete_sound_from_solr(sound):
     logger.info("deleting sound with id %d" % sound.id)
@@ -95,7 +98,3 @@ def delete_sound_from_solr(sound):
         Solr(settings.SOLR_URL).delete_by_id(sound.id)
     except Exception, e:
         logger.error('could not delete sound with id %s (%s).' % (sound.id, e))
-
-def set_index_clean(sound):
-    sound.is_index_dirty = False
-    sound.save()

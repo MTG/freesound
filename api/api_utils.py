@@ -3,6 +3,7 @@ from piston.utils import rc
 import traceback
 from models import ApiKey
 import json
+from django.http import HttpResponse
 
 def build_error_response(e):
     resp = rc.BAD_REQUEST
@@ -39,7 +40,7 @@ def build_invalid_url(e):
                                              }))
 
 class auth():
-    
+
     def __init__(self, get_parameter='api_key'): # FROM FREESOUND
         self.get_parameter = get_parameter
 
@@ -51,23 +52,22 @@ class auth():
         """
         def decorated_api_func(handler, request, *args, **kargs):
             try:
-                
+
                 # Try to get the api key
                 api_key = request.GET.get(self.get_parameter, False)
                 if not api_key:
                     raise ReturnError(401, "AuthenticationError",
                                           {"explanation":  "Please include your api key as the api_key GET parameter"})
-                
-                
+
+
                 try:
                     db_api_key = ApiKey.objects.get(key=api_key, status='OK')
                 except ApiKey.DoesNotExist:
                     raise ReturnError(401, "AuthenticationError",
                                           {"explanation":  "Supplied api_key does not exist"})
-                
-                request.user = db_api_key.user                
+
+                request.user = db_api_key.user
                 return f(handler, request, *args, **kargs)
-            
             except ReturnError, e:
                 return build_error_response(e)
             except Exception, e:

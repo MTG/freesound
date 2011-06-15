@@ -17,7 +17,7 @@
     div.queue-container
     {
         padding: 1px;
-        margin-left: 4px; 
+        margin-left: 4px;
     }
 
     div.progress-container
@@ -61,6 +61,23 @@
         font-size: 12px;
         margin-top: 2px;
     }
+    .please_note
+    {
+        width: 200px;
+        height: 150px;
+        background-color: #fefefe;
+        padding: 0 10px 0 10px;
+        margin: 5px;
+        float: left;
+        border: 1px solid #eee;
+        border-top: 0px;
+    }
+    .please_note h3 {
+        margin-left: 5px;
+    }
+    .upload_button_indent {
+        margin-left: 30px;
+    }
     </style>
 {% endblock %}
 
@@ -68,22 +85,35 @@
 {% block content %}
 
 <div id="upload_page">
-<h1>Upload files</h1>
+{% comment %}<h1>Upload files</h1>{% endcomment %}
 <p>
-    Important:
+    <em><h2>Please note before uploading..</h2></em>
 </p>
-<ul>
-    <li>Please only post <strong>legal files</strong>: sounds recorded recorded or created by you. For more details see the <a href="{% url wiki-page "what-is-legal" %}">help pages</a> on what you can and can't upload.</li>
-    <li>Freesound.org is for <strong>sounds</strong>, if your file is a song/composition upload it to <a href="http://www.ccmixter.org">http://www.ccmixter.org</a></li>
-    <li>All files are <strong>moderated</strong>, if you upload illegal files or files that don't follow the <a href="{% url wiki-page "what-is-legal" %}">guidelines</a> they will be removed in the moderation process...</li>
-    <li>We prefer <strong>wav, aif and flac</strong> but we support ogg and mp3 too.</li>
-</ul>
+<div>
+    <div class="please_note content_box">
+        <h3>Legality</h3>
+        <p>Only upload sounds created or recorded <strong>by you</strong>. <em><a href="{% url wiki-page "what-is-legal" %}">more details...</a></em>
+    </div>
+    <div class="please_note content_box">
+        <h3>Sounds only</h3>
+        <p>Freesound is for <strong>sounds</strong> only. If your file is a song/composition, upload it to for example <a href="http://www.ccmixter.org">ccMixter</a>.
+    </div>
+    <div class="please_note content_box">
+        <h3>Moderation</h3>
+        <p>All files are <strong>moderated</strong>. If you upload illegal files or files that don't follow the <a href="{% url wiki-page "what-is-legal" %}">guidelines</a> they will be removed.</div>
+    <div class="please_note content_box">
+        <h3>Formats</h3>
+        <p>We prefer <strong>wav, aif and flac</strong>, but we support ogg and mp3 too.
+    </div>
+    <br style="clear: both;">
+</div>
+<br>
+<br>
 
-<a href="#"><img src="../../media/images/upload_sounds.png" width="160" height="31" alt="Upload Your Sounds Link" /></a>
-
+<div class="upload_button_indent">
 <script type="text/javascript">
-	swfobject.registerObject("uploader", "10.1");
-	
+    swfobject.registerObject("uploader", "10.1");
+
     function uploadError(fileId, message)
     {
         if (fileId < 0)
@@ -91,15 +121,15 @@
         else
         {
             $('#file_' + fileId).find(".status").html("Failed: " + message);
-        	$('#file_' + fileId).find(".cancel-container").hide();
-        	$('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-failed').css("width", "100%");
-    	}
+            $('#file_' + fileId).find(".cancel-container").hide();
+            $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-failed').css("width", "100%");
+        }
     }
 
     function uploadAdd(fileId, filename)
     {
         $("#upload-progress-container").show().append(
-            	'<div id="file_' + fileId + '" class="queue-container">\
+                '<div id="file_' + fileId + '" class="queue-container">\
                     <div class="progress-container">\
                         <div class="progress"></div>\
                     </div>\
@@ -126,36 +156,41 @@
     }
 </script>
 
-<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="128" height="128" id="uploader">
-	<param name="movie" value="{{media_url}}swf/upload.swf" />
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
+    <param name="movie" value="{{media_url}}swf/upload.swf" />
     <param name="flashvars" value="sessionid={{request.session.session_key}}" />
     <param name="AllowScriptAccess" value="always" />
     <!--[if !IE]>-->
-    <object type="application/x-shockwave-flash" data="{{media_url}}swf/upload.swf" width="128" height="128">
-    	<param name="flashvars" value="sessionid={{request.session.session_key}}" />
-    	<param name="AllowScriptAccess" value="always" />
+    <object type="application/x-shockwave-flash" data="{{media_url}}swf/upload.swf" width="160" height="31">
+        <param name="flashvars" value="sessionid={{request.session.session_key}}" />
+        <param name="AllowScriptAccess" value="always" />
         <!--<![endif]-->
         <p>
             If you install <a href="http://www.adobe.com/go/getflashplayer">flash player 10</a> you will be able to upload multiple files in one go!<br/>
         </p>
-        <form method="POST" enctype="multipart/form-data" action="/home/upload/file/"> 
+        <form method="POST" enctype="multipart/form-data" action="/home/upload/file/">
             <input type="file" name="file" /><br/>
             <input type="submit" value="upload" />
-        </form> 
+        </form>
         <!--[if !IE]>-->
     </object>
     <!--<![endif]-->
 </object>
+</div>
 
 <div id="upload-progress-container" style="display:none">
 </div>
 
-<br><br>
-<h1>Describe</h1>
+<br>
+<p>
+    <em><h2>Describe after uploading...</h2></em>
+</p>
+<br>
+{% comment %}<p>Before your sounds show up on the web site you'll have to describe them.{% endcomment %}
 
-<a href="{% url accounts-describe %}"><img src="../../media/images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a>
-
-<p>Before your sounds show up on the web site you'll have to <a href="{% url accounts-describe %}">describe</a> them.
+<div class="upload_button_indent">
+<p><a href="{% url accounts-describe %}"><img src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
+</div>
 
 </div><!-- #upload_page -->
 

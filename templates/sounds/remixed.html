@@ -7,13 +7,26 @@
     {{ block.super }}
     <script type="text/javascript" src="{{media_url}}js/protovis-r3.2.js"></script>
     <script type="text/javascript" src="{{media_url}}js/jquery-ui-1.8.11.custom.min.js"></script>
+    <script type="text/javascript" src="{{media_url}}js/jquery.jplayer.min.js"></script>
+
     <style type="text/css">
         .fig {
-          height: 310px;
+          height: 320px;
           margin-bottom: 10px;
         }
     </style>
     <script type="text/javascript">
+     $(document).ready(function(){
+          $("#jquery_jplayer_1").jPlayer({
+            ready: function() {
+
+            },
+            swfPath: "{{media_url}}swf",
+            supplied: "mp3, ogg"
+          });
+        });
+
+
     /* ======== helper functions ========= */
     function connections(d, p) {
         if (p.sourceNode.active == true) {
@@ -28,7 +41,7 @@
             return "#c7c7c7";
     }
     function goToSound(soundId, username) {
-        window.location.href = "/people/"+username+"/sounds/"+soundId+"/remixes";
+        window.location.href = "/people/"+username+"/sounds/"+soundId;
     }
     function clearBackgrounds(dataset) {
         for (var i=0; i<dataset.nodes.length; i++) {
@@ -36,13 +49,22 @@
         }
     }
     function calculateEccentricity(length, height) {
-        var eccentricity = 0;
+        var eccentricity = 0.15;
         if (length > 3) {
-            var a = (length-2) * 80;
+            var a = (length-2) * 120;
             var b = height;
             eccentricity = (1 - b/a) * (1 - b/a);
         }
         return eccentricity;
+    }
+    function playPreview(d) {
+         $("#jquery_jplayer_1").jPlayer("setMedia", {
+                mp3: "http://tabasco.upf.edu" + d.sound_url_mp3,
+                oga: "http://tabasco.upd.edu" + d.sound_url_ogg
+         }).jPlayer("play");
+    }
+    function stopPreview(d) {
+        $("#jquery_jplayer_1").jPlayer("stop");
     }
     </script>
 {% endblock head %}
@@ -51,15 +73,26 @@
 
 {% block section_content %}
 <h1>Remixed</h1>
+<div id="jquery_jplayer_1" style="height: 0px; width: 0px;"></div>
 
+<div id="remix_group_info" class="content_box">
+    <h3>Remix group info</h3>
+    <div class="sound_list_normal">
+        <ul>
+            <li>Files are presented in chronological order. So the first sound is a source to subsequent sounds as indicated by the links.</li>
+            <li>Hover over a sound to listen to it.</li>
+            <li>Hover "out" to stop the playback.</li>
+            <li>Click on the sound to go to the sounds page.</li>
+        </ul>
+    </div>
+</div><!-- #remix_group_info -->
+
+<br>
 {% show_paginator paginator page current_page request %}
 
-<ul>
+<ul style="list-style: none;">
 {% for remix_group in page.object_list %}
     <li>
-    <div>
-        Original sound: {{ remix_group.protovis_data.length|safe }}
-    </div>
     <div class="fig">
         <script type="text/javascript+protovis">
 // Graph DATA
@@ -70,10 +103,10 @@ var data{{ forloop.counter }} = {{ remix_group.protovis_data|safe }};
 var vis{{ forloop.counter }} = new pv.Panel()
                 .def("i", -1)
                 .width(600)
-                .height(300)
-                .bottom(10)
+                .height(270)
+                .bottom(60)
                 .top(0)
-                .right(0);
+                .right(50);
 
 var arc = vis{{ forloop.counter }}.add(pv.Layout.Arc)
     .nodes(data{{ forloop.counter }}.nodes)
@@ -81,25 +114,40 @@ var arc = vis{{ forloop.counter }}.add(pv.Layout.Arc)
 
 arc.link.add(pv.Line)
            .strokeStyle(function(d, p)  connections(d,p))
-        .eccentricity(function(d,p) calculateEccentricity(data{{ forloop.counter }}.length, 400));
+        .eccentricity(function(d,p) calculateEccentricity(data{{ forloop.counter }}.length, 300));
 
-arc.node.add(pv.Dot)
-    .size(function(d) d.linkDegree + 4)
-    .fillStyle(function(d) vis{{ forloop.counter }}.i() == this.index ? "#F1D9FF" : "#DBDBDB")
-    .strokeStyle(function() this.fillStyle().darker())
-    .radius(function() vis{{ forloop.counter }}.i() == this.index ? 10 : 5)
-    .event("mouseover", function(d) (d.active = true, arc, vis{{ forloop.counter }}.i(this.index)))
-    .event("mouseout", function(d) (clearBackgrounds(data{{ forloop.counter }}), d.active = false, arc, vis{{ forloop.counter }}.i(-1)))
+arc.node.add(pv.Image)
+    .url(function(d) "http://tabasco.upf.edu" + d.waveform_url)
+    .imageHeight(function(d) 50)
+    .imageWidth(function(d) 552 / data{{ forloop.counter }}.length)
+    .width(function(d) 552 / data{{ forloop.counter }}.length)
+    .height(50)
+    .fillStyle(null)
+    .strokeStyle(null)
+    .event("mouseover", function(d) ($("#message{{ forloop.counter }}").append("Click to go to sound page"), playPreview(d), d.active = true, arc, vis{{ forloop.counter }}.i(this.index)))
+    .event("mouseout", function(d) ($("#message{{ forloop.counter }}").empty(), stopPreview(), clearBackgrounds(data{{ forloop.counter }}), d.active = false, arc, vis{{ forloop.counter }}.i(-1)))
     .event("click", function(d) goToSound(d.id,d.username));
+
+arc.label.add(pv.Label)
+    .text(function(d) {
+                        if(d.nodeName.length > 25) { return d.nodeName.substring(0,25) + "..."; }
+                        else { return d.nodeName; }
+                      })
+    .textAngle(0.959931089)	// 55 degrees
+    .textBaseline("bottom")
+    .textAlign("right")
+    .left(function(d) d.x + (552 / data{{ forloop.counter }}.length) / 2);
+
 
 vis{{ forloop.counter }}.render();
 /* ======== PROTOVIS STUFF-END ======== */
         </script>
     </div>
-    <div>
-
-    </div>
     </li>
+    <div id="remix_group_link" style="float: right; margin-right: 270px;">
+        <a href="/browse/remixed/{{ remix_group.id|safe }}">Go to this remix-group page.</a>
+    </div>
+    <div id="message{{ forloop.counter }}" style="height: 1em;"></div>
 
 {% endfor %}
 </ul>

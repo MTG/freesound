@@ -79,8 +79,6 @@
     <li>We prefer <strong>wav, aif and flac</strong> but we support ogg and mp3 too.</li>
 </ul>
 
-<a href="#"><img src="../../media/images/upload_sounds.png" width="160" height="31" alt="Upload Your Sounds Link" /></a>
-
 <script type="text/javascript">
 	swfobject.registerObject("uploader", "10.1");
 	
@@ -126,12 +124,12 @@
     }
 </script>
 
-<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="128" height="128" id="uploader">
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
 	<param name="movie" value="{{media_url}}swf/upload.swf" />
     <param name="flashvars" value="sessionid={{request.session.session_key}}" />
     <param name="AllowScriptAccess" value="always" />
     <!--[if !IE]>-->
-    <object type="application/x-shockwave-flash" data="{{media_url}}swf/upload.swf" width="128" height="128">
+    <object type="application/x-shockwave-flash" data="{{media_url}}swf/upload.swf" width="160" height="31">
     	<param name="flashvars" value="sessionid={{request.session.session_key}}" />
     	<param name="AllowScriptAccess" value="always" />
         <!--<![endif]-->
@@ -153,7 +151,7 @@
 <br><br>
 <h1>Describe</h1>
 
-<a href="{% url accounts-describe %}"><img src="../../media/images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a>
+<a href="{% url accounts-describe %}"><img src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a>
 
 <p>Before your sounds show up on the web site you'll have to <a href="{% url accounts-describe %}">describe</a> them.
 

@@ -8,6 +8,7 @@
         <meta name="keywords" content="free, sound" />
         <link rel="stylesheet" type="text/css" href="{{media_url}}css/all.css" />
         <!--[if IE 6]><link rel="stylesheet" type="text/css" href="{{media_url}}css/ie6.css" /><![endif]-->
+        <link rel="shortcut icon" href="{{media_url}}images/favicon.ico" />
         <title>Freesound.org - {% block title %}{% endblock %}</title>
         <script src="{{media_url}}js/jquery-1.5.2.min.js" type="text/javascript"></script>
         <script src="{{media_url}}js/swfobject.js" type="text/javascript"></script>
@@ -21,12 +22,12 @@
     </head>
 
     <body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">
-    
+
     <div id="banner_wrapper">
-    	<a href="mailto:fs2@freesound.org"><img id="warning_banner" src="{{media_url}}images/content/freesound-2-warning.png" width="728" height="90" alt="Hi! Careful, this is a test site:
+        <a href="mailto:fs2@freesound.org"><img id="warning_banner" src="{{media_url}}images/content/freesound-2-warning.png" width="728" height="90" alt="Hi! Careful, this is a test site:
 Everything you do here is temporary! Send bugs/feedback to fs2@freesound.org" />
-	</a>
-	</div>
+    </a>
+    </div>
 
         <div id="header">
             <div id="account_nav">

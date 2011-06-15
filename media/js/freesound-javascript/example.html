@@ -4,8 +4,10 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 		<title>fressound-javascript example</title>
 		<script type="text/javascript" src="jquery.js"></script>
-		<script type="text/javascript" src="jquery-jsonp.js"></script>
-		<script type="text/javascript" src="freesoundLib.js"></script>
+		<script type="text/javascript" src="jquery-jsonp.js"></script>		
+		<script type="text/javascript" src="http://tabasco.upf.edu/media/js/freesound-javascript/freesoundLib.js"></script>
+		<!-- Chrome and Firefox need "hosted" version of freesoundLib.js, Safari also works with local freesoundLib.js -->
+		<!-- script type="text/javascript" src="freesoundLib.js"></script -->
 		<script type="text/javascript" src="settings.js"></script>
 	</head>
 	<body>
@@ -52,16 +54,16 @@
 				snd = new Audio(sound.properties['preview-hq-mp3']);
 				$("#respSound").append('<br><button onclick="snd.play()">play</button><button onclick="snd.pause()">pause</button>')				
 
-				//sound.getAnalysis(0,"",displaySoundAnalysisInfo );
-				//sound.getSimilarSounds(10,"lowlevel",displaySimilarSounds);
+				sound.getAnalysis(1,"",displaySoundAnalysisInfo );
+				sound.getSimilarSounds(10,"lowlevel",displaySimilarSounds);
 			}
 			
 			function displaySoundAnalysisInfo(analysis) {
-				$("#respSound").append("<br><br>Analysis<br>********<br>");
-				$("#respSound").append("average loudness: " + analysis['lowlevel']['average_loudness']);
-				$("#respSound").append(", key: " + analysis['tonal']['key_key']);
-				$("#respSound").append(", scale: " + analysis['tonal']['key_scale'] + "<br>");
-				
+				$("#respSound").append("<br><br>Analysis<br>********");
+				$("#respSound").append("<br>- average loudness: " + analysis['lowlevel']['average_loudness']);
+				$("#respSound").append("<br>- mean mfcc: " + analysis['lowlevel']['mfcc']['mean']);
+				$("#respSound").append("<br>- key: " + analysis['tonal']['key_key']);
+				$("#respSound").append("<br>- scale: " + analysis['tonal']['key_scale'] + "<br>");
 			}
 			
 			function displaySimilarSounds(soundCollection) {

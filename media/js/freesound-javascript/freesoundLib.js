@@ -14,15 +14,15 @@
 var FS = new function()
 {
 		
-	this._URI_SOUND = '/sounds/<sound_id>/';
-	this._URI_SOUND_ANALYSIS = '/sounds/<sound_id>/analysis/<filter>/';
-	this._URI_SIMILAR_SOUNDS = '/sounds/<sound_id>/similar/';
-	this._URI_SEARCH = '/sounds/search/';
-	this._URI_USER = '/people/<user_name>/';
-	this._URI_USER_SOUNDS = '/people/<user_name>/sounds/';
-	this._URI_USER_PACKS = '/people/<user_name>/packs/';
-	this._URI_PACK = '/packs/<pack_id>/';
-	this._URI_PACK_SOUNDS = '/packs/<pack_id>/sounds/';
+	this._URI_SOUND = '/sounds/<sound_id>';
+	this._URI_SOUND_ANALYSIS = '/sounds/<sound_id>/analysis/<filter>';
+	this._URI_SIMILAR_SOUNDS = '/sounds/<sound_id>/similar';
+	this._URI_SEARCH = '/sounds/search';
+	this._URI_USER = '/people/<user_name>';
+	this._URI_USER_SOUNDS = '/people/<user_name>/sounds';
+	this._URI_USER_PACKS = '/people/<user_name>/packs';
+	this._URI_PACK = '/packs/<pack_id>';
+	this._URI_PACK_SOUNDS = '/packs/<pack_id>/sounds';
 	
  	/**
  	 * Method to create uri for request. 

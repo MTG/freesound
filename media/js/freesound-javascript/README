@@ -3,4 +3,3 @@ freesound-javascript
 
 Javascript library to access Freesound.org content.
 example.html provides a use example for most of the functionalities of the API.
-IMPORTANT: example.html has only been sucessfully tested in Safari. Both Chrome and Firefox give some problems that have to be corrected...

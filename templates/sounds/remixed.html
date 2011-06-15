@@ -11,7 +11,7 @@
 	
 	<style type="text/css">
 		.fig {
-		  height: 410px;
+		  height: 320px;
 		  margin-bottom: 10px;
 		}
 	</style>
@@ -49,12 +49,13 @@
 		}
 	}
 	function calculateEccentricity(length, height) {
-		var eccentricity = 0;
+		var eccentricity = 0.15;
 	    if (length > 3) {
-	    	var a = (length-2) * 80;
+	    	var a = (length-2) * 120;
 	        var b = height;
 	        eccentricity = (1 - b/a) * (1 - b/a);
 	    }
+	    console.log(eccentricity);
 	    return eccentricity;
 	}
 	function playPreview(d) {
@@ -89,7 +90,7 @@ var data{{ forloop.counter }} = {{ remix_group.protovis_data|safe }};
 var vis{{ forloop.counter }} = new pv.Panel()
 				.def("i", -1)
     			.width(600)
-    			.height(350)
+    			.height(270)
 				.bottom(60)
 				.top(0)
 				.right(50);
@@ -100,7 +101,7 @@ var arc = vis{{ forloop.counter }}.add(pv.Layout.Arc)
 
 arc.link.add(pv.Line)
    		.strokeStyle(function(d, p)  connections(d,p))
-		.eccentricity(function(d,p) calculateEccentricity(data{{ forloop.counter }}.length, 400));
+		.eccentricity(function(d,p) calculateEccentricity(data{{ forloop.counter }}.length, 300));
 
 arc.node.add(pv.Image)
 	.url(function(d) "http://tabasco.upf.edu" + d.waveform_url)
@@ -130,6 +131,9 @@ vis{{ forloop.counter }}.render();
     	</script>
 	</div>
 	</li>
+	<div id="remix_group_link" style="float: right; margin-right: 270px;">
+		<a href="/browse/remixed/{{ remix_group.id|safe }}">Remix Group page!</a>
+	</div>
 	<div id="message{{ forloop.counter }}" style="height: 1em;"></div>
 	
 {% endfor %}

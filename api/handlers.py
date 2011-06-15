@@ -111,6 +111,8 @@ def prepare_single_sound_analysis(sound,request,filter):
         del analysis['lowlevel']['silence_rate_30dB']
         del analysis['rhythm']['bpm_confidence']
         del analysis['rhythm']['perceptual_tempo']
+        del analysis['metadata']['tags']
+        
         # put the moods in one place
         moods = {'c': {}, 'm': {}}
         for m in ['happy', 'aggressive', 'sad', 'relaxed']:

@@ -24,7 +24,7 @@ def convert_to_solr_document(sound):
     if sound.pack:
         document["pack"] = sound.pack.name
 
-    document["is_geotagged"] = sound.geotag != None
+    document["is_geotagged"] = sound.geotag_id != None
 
     document["type"] = sound.type
 
@@ -44,11 +44,11 @@ def convert_to_solr_document(sound):
     document["comment"] = [comment.comment for comment in sound.comments.all()]
     document["comments"] = sound.comments.count()
 
-    document["waveform_path_m"] = sound.locations("display.wave.M.path")
-    document["waveform_path_l"] = sound.locations("display.wave.L.path")
-    document["spectral_path_m"] = sound.locations("display.spectral.M.path")
-    document["spectral_path_l"] = sound.locations("display.spectral.L.path")
-    document["preview_path"] = sound.locations("preview.LQ.mp3.path")
+    document["waveform_path_m"] = sound.locations()["display"]["wave"]["M"]["path"]
+    document["waveform_path_l"] = sound.locations()["display"]["wave"]["L"]["path"]
+    document["spectral_path_m"] = sound.locations()["display"]["spectral"]["M"]["path"]
+    document["spectral_path_l"] = sound.locations()["display"]["spectral"]["L"]["path"]
+    document["preview_path"] = sound.locations()["preview"]["LQ"]["mp3"]["path"]
 
     return document
 

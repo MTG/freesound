@@ -7,6 +7,6 @@ class Command(BaseCommand):
     help = 'Take all sounds and send them to Solr'
 
     def handle(self, *args, **options):
-        sound_qs = Sound.objects.select_related("pack", "user", "license") \
+        sound_qs = Sound.objects.select_related("pack", "user", "license", "comments__comment", "tags__tag", "sources", "license", "remixes") \
                                 .filter(processing_state="OK", moderation_state="OK")
         add_all_sounds_to_solr(sound_qs)

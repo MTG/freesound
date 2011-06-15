@@ -50,12 +50,12 @@
                 <img src="{{media_url}}images/similar_sounds.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
             </a>
             {% if sound.remix_groups.all.count %}
-             <a class="remixes" href="#">
+             <a class="remixes" href="{% url sound-remixes sound.user.username sound.id %}">
                 <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
             </a>
             {% endif %}
             {% if sound.geotag %}
-            <a class="geotag" href="#">
+            <a class="geotag" href="{% url sound-geotag sound.user.username sound.id %}">
                 <img src="{{media_url}}images/geotag.png" width="16" height="16" alt="Geotagged" title="This sound has a geotag" />
             </a>
             {% endif %}

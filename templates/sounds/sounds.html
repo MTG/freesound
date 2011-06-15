@@ -62,15 +62,13 @@
             {% endif %}
     </div><!-- #uploader_of_the_day -->
 
-    <div id="remixed_sounds" class="content_box">
-        <h3>See remixes</h3>
-        <p><a id="remix_sound_button" class="action_button" href="{% url remix-groups %}">See remixes!</a>
-    </div><!-- #random_sound -->
-
-    <div id="random_sound" class="content_box">
-        <h3>Pick a random sound</h3>
-        <p><a id="random_sound_button" class="action_button" href="{% url sounds-random %}">Give me a random sound!</a>
-    </div><!-- #random_sound -->
+    <div id="other_sounds" class="content_box">
+        <h3>Other Sounds</h3>
+        <ul>
+            <li><b><a href="{% url remix-groups %}">Browse remix-groups</a></b></li>
+            <li><b><a href="{% url sounds-random %}">Give me a random sound!</a></b></li>
+        </ul>
+    </div><!-- #other_sounds -->
 
     <div id="latest_changed_packs" class="content_box">
         <h3>Latest changed packs</h3>

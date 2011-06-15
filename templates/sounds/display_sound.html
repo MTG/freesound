@@ -1,7 +1,7 @@
 {% load cache %}
 {% load util %}
 {% load ratings %}
-{% cache 3 display_sound sound_id %}
+{% cache 3600 display_sound sound_id %}
 {% if sound %}
 {% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">

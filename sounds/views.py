@@ -296,12 +296,12 @@ def remixes(request, username, sound_id):
     except:
         raise Http404
     return HttpResponseRedirect(reverse("remix-group", args=[remix_group.id]))
-    #return render_to_response('sounds/remixes.html', locals(), context_instance=RequestContext(request))
 
 def remix_group(request, group_id):
     group = get_object_or_404(RemixGroup, id=group_id)
     data = group.protovis_data
     sounds = group.sounds.all().order_by('created')
+    last_sound = sounds[len(sounds)-1]
     group_sound = sounds[0]
     return render_to_response('sounds/remixes.html',
                               locals(),

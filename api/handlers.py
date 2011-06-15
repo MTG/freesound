@@ -223,25 +223,26 @@ def level_filter_get(d, levels):
         return level_filter_get(d[levels[0]], levels[1:])
 
 
-RECOMMENDED_DESCRIPTORS = ['metadata.audio_properties',
-                           'lowlevel.average_loudness',
-                           'rhythm.bpm',
-                           'tonal.key_key',
-                           'tonal.key_scale',
-                           'tonal.key_strength',
-                           'tonal.tuning_frequency',
-                           'highlevel.live_studio',
-                           'highlevel.voice_instrumental',
-                           'highlevel.culture',
-                           'highlevel.gender',
-                           'highlevel.timbre',
-                           'highlevel.genre',
-                           'highlevel.moods',
-                           'highlevel.party',
-                           'highlevel.acoustic',
-                           'highlevel.electronic',
-                           'highlevel.speech_music'
-                           ]
+RECOMMENDED_DESCRIPTORS = [ 'metadata.audio_properties',
+                            'highlevel.culture',
+                            'highlevel.gender',
+                            'highlevel.moods',
+                            'highlevel.timbre',
+                            'highlevel.voice_instrumental',
+                            'highlevel.acoustic',
+                            'highlevel.electronic',
+                            'tonal.key_key',
+                            'tonal.key_scale',
+                            'tonal.key_strength',
+                            'tonal.tuning_frequency',
+                            'rhythm.bpm',
+                            'lowlevel.average_loudness',
+                            'lowlevel.dissonance.mean',
+                            'lowlevel.pitch.mean',
+                            'lowlevel.pitch_salience.mean',
+                            'lowlevel.spectral_centroid.mean',
+                            'lowlevel.mfcc.mean'
+                            ]
 
 def get_tags(sound):
     return [tagged.tag.name for tagged in sound.tags.select_related("tag").all()]

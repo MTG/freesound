@@ -511,6 +511,7 @@ def accounts(request):
 
     # prepare for view
     most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
+    most_active_users_display=sorted(most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
     return render_to_response('accounts/accounts.html', dict(most_active_users=most_active_users_display, new_users = new_users_display, logged_users = logged_users, user_rank=user_rank,num_days=num_days), context_instance=RequestContext(request))

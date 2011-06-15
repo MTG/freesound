@@ -75,6 +75,9 @@
     .please_note h3 {
         margin-left: 5px;
     }
+    .upload_button_indent {
+        margin-left: 30px;
+    }
     </style>
 {% endblock %}
 
@@ -107,7 +110,7 @@
 <br>
 <br>
 
-<center>
+<div class="upload_button_indent">
 <script type="text/javascript">
     swfobject.registerObject("uploader", "10.1");
 
@@ -173,7 +176,7 @@
     </object>
     <!--<![endif]-->
 </object>
-</center>
+</div>
 
 <div id="upload-progress-container" style="display:none">
 </div>
@@ -185,9 +188,9 @@
 <br>
 {% comment %}<p>Before your sounds show up on the web site you'll have to describe them.{% endcomment %}
 
-<center>
-    <p><a href="{% url accounts-describe %}"><img src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a>
-</center>
+<div class="upload_button_indent">
+<p><a href="{% url accounts-describe %}"><img src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
+</div>
 
 </div><!-- #upload_page -->
 

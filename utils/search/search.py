@@ -14,7 +14,7 @@ def convert_to_solr_document(sound):
     document["original_filename"] = sound.original_filename
 
     document["description"] = sound.description
-    document["tag"] = [taggeditem.tag.name for taggeditem in sound.tags.all()]
+    document["tag"] = list(sound.tags.select_related("tag").values_list('tag__name', flat=True))
 
     document["license"] = sound.license.name
 
@@ -41,8 +41,8 @@ def convert_to_solr_document(sound):
     document["avg_rating"] = sound.avg_rating
     document["num_ratings"] = sound.num_ratings
 
-    document["comment"] = [comment.comment for comment in sound.comments.all()]
-    document["comments"] = sound.comments.count()
+    document["comment"] = list(sound.comments.values_list('comment', flat=True))
+    document["comments"] = sound.num_comments
 
     document["waveform_path_m"] = sound.locations()["display"]["wave"]["M"]["path"]
     document["waveform_path_l"] = sound.locations()["display"]["wave"]["L"]["path"]

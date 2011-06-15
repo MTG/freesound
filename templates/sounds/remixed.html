@@ -75,6 +75,7 @@
 {% block section_content %}
 <h1>Remixed</h1>
 <div id="jquery_jplayer_1" style="height: 0px; width: 0px;"></div>
+{% show_paginator paginator page current_page request %}
 
 <div id="remix_group_info" class="content_box">
     <h3>Remix group info</h3>
@@ -87,9 +88,6 @@
         </ul>
     </div>
 </div><!-- #remix_group_info -->
-
-<br>
-{% show_paginator paginator page current_page request %}
 
 <ul style="list-style: none;">
 {% for remix_group in page.object_list %}
@@ -146,7 +144,7 @@ vis{{ forloop.counter }}.render();
     </div>
     </li>
     <div id="remix_group_link" style="float: right; margin-right: 270px;">
-        <a href="/browse/remixed/{{ remix_group.id|safe }}">Go to this remix-group page.</a>
+        <a href="/browse/remixed/{{ remix_group.id|safe }}">Remix Group page!</a>
     </div>
     <div id="message{{ forloop.counter }}" style="height: 1em;"></div>
 

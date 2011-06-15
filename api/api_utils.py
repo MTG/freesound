@@ -3,6 +3,7 @@ from piston.utils import rc
 import traceback
 from models import ApiKey
 import json
+from django.http import HttpResponse
 
 def build_error_response(e):
     resp = rc.BAD_REQUEST
@@ -66,9 +67,7 @@ class auth():
                                           {"explanation":  "Supplied api_key does not exist"})
 
                 request.user = db_api_key.user
-                response = f(handler, request, *args, **kargs)
-                response['Access-Control-Allow-Origin'] = '*'
-                return response
+                return f(handler, request, *args, **kargs)
             except ReturnError, e:
                 return build_error_response(e)
             except Exception, e:

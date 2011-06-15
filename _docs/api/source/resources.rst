@@ -303,43 +303,43 @@ Response
 
 **Properties**
 
-====================  =======  ====================================================================================
-Name                  Type     Description
-====================  =======  ====================================================================================
-id                    number   The sound's unique identifier.
-ref                   URI      The URI for this sound.
-url                   URI      The URI for this sound on the Freesound website.
-preview-hq-mp3        URI      The URI for retrieving a high quality (~128kbps) mp3 preview of the sound.
-preview-lq-mp3        URI      The URI for retrieving a low quality (~64kbps) mp3 preview of the sound.
-preview-hq-ogg        URI      The URI for retrieving a high quality (~192kbps) ogg preview of the sound.
-preview-lq-ogg        URI      The URI for retrieving a low quality (~80kbps) ogg of the sound.
-serve                 URI      The URI for retrieving the original sound.
-similarity            URI      URI pointing to the similarity resource (to get a list of similar sounds).
-type                  string   The type of sound (wav, aif, mp3, etc.).
-duration              number   The duration of the sound in seconds.
-samplerate            number   The samplerate of the sound.
-bitdepth              number   The bit depth of the sound.
-filesize              number   The size of the file in bytes.
-bitrate               number   The bit rate of the sound in kbps.
-channels              number   The number of channels.
-original_filename     string   The name of the sound file when it was uploaded.
-description           string   The description the user gave the sound.
-tags                  array    An array of tags the user gave the sound.
-license               string   The license under which the sound is available to you.
-created               string   The date of when the sound was uploaded.
-num_comments          number   The number of comments.
-num_downloads         number   The number of times the sound was downloaded.
-num_ratings           number   The number of times the sound was rated.
-avg_rating            number   The average rating of the sound.
-pack                  URI      If the sound is part of a pack, this URI points to that pack's API resource.
-user                  object   A dictionary with the username, url, and ref for the user that uploaded the sound.
-spectral_m            URI      A visualization of the sounds spectrum over time, jpeg file (medium).
-spectral_l            URI      A visualization of the sounds spectrum over time, jpeg file (large).
-waveform_m            URI      A visualization of the sounds waveform, png file (medium).
-waveform_l            URI      A visualization of the sounds waveform, png file (large).
-analysis              URI      URI pointing to the analysis results of the sound (see :ref:`analysis-docs`).
-analysis_frames       URI      The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
-====================  =======  ====================================================================================
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+id                    number            The sound's unique identifier.
+ref                   URI               The URI for this sound.
+url                   URI               The URI for this sound on the Freesound website.
+preview-hq-mp3        URI               The URI for retrieving a high quality (~128kbps) mp3 preview of the sound.
+preview-lq-mp3        URI               The URI for retrieving a low quality (~64kbps) mp3 preview of the sound.
+preview-hq-ogg        URI               The URI for retrieving a high quality (~192kbps) ogg preview of the sound.
+preview-lq-ogg        URI               The URI for retrieving a low quality (~80kbps) ogg of the sound.
+serve                 URI               The URI for retrieving the original sound.
+similarity            URI               URI pointing to the similarity resource (to get a list of similar sounds).
+type                  string            The type of sound (wav, aif, mp3, etc.).
+duration              number            The duration of the sound in seconds.
+samplerate            number            The samplerate of the sound.
+bitdepth              number            The bit depth of the sound.
+filesize              number            The size of the file in bytes.
+bitrate               number            The bit rate of the sound in kbps.
+channels              number            The number of channels.
+original_filename     string            The name of the sound file when it was uploaded.
+description           string            The description the user gave the sound.
+tags                  array[strings]    An array of tags the user gave the sound.
+license               string            The license under which the sound is available to you.
+created               string            The date of when the sound was uploaded.
+num_comments          number            The number of comments.
+num_downloads         number            The number of times the sound was downloaded.
+num_ratings           number            The number of times the sound was rated.
+avg_rating            number            The average rating of the sound.
+pack                  URI               If the sound is part of a pack, this URI points to that pack's API resource.
+user                  object            A dictionary with the username, url, and ref for the user that uploaded the sound.
+spectral_m            URI               A visualization of the sounds spectrum over time, jpeg file (medium).
+spectral_l            URI               A visualization of the sounds spectrum over time, jpeg file (large).
+waveform_m            URI               A visualization of the sounds waveform, png file (medium).
+waveform_l            URI               A visualization of the sounds waveform, png file (large).
+analysis              URI               URI pointing to the analysis results of the sound (see :ref:`analysis-docs`).
+analysis_frames       URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
+====================  ================  ====================================================================================
 
 **JSON Example**
 
@@ -445,6 +445,14 @@ filter you will retrieve just an array of all twelve coefficients of the
 MFCC analysis. Have a look at the complete analysis data and it'll become
 apparent how filtering works.
 
+Although many descriptors are extracted using Essentia and they are all accessible through the API,
+by default we only return a list of recommended descriptors which are the following ones (check analysis
+documentation for details on the meaning of the descriptors and to see the complete list of available descriptors):
+``audio_properties`` (length, bitrate, samplerate...), ``culture`` (western, non western), ``gender`` (male, female), ``moods`` (happy, sad...),
+``timbre`` (bright, dark), ``voice_instrumental`` (whether if sound contains voice or instruments), ``acoustic`` (acoustic, not acoustic),
+``electronic`` (electronic, not electronic), ``key_key``, ``key_scale``, ``key_strength`` (tonality), ``tuning_frequency``, ``bpm``, ``loudness``, ``dissonance``, 
+``pitch``, ``pitch_salience``, ``spectral_centroid`` (brightness) and ``mfcc`` (timbre coefficients).
+
 GET
 ---
 
@@ -462,6 +470,7 @@ all        bool    no        If set to true, all the available analysis data
                              will be returned. This might include unstable or
                              unreliable data. For stable descriptors use the
                              recommended ones. (default=False)
+                             When retrieving non recommended features, all must be set to True.
 =========  ======  ========  ===================================================
 
 **Curl Examples**
@@ -474,6 +483,8 @@ all        bool    no        If set to true, all the available analysis data
   curl http://tabasco.upf.edu/api/sounds/999/analysis/lowlevel/average_loudness/
   # Or for all the tonal data
   curl http://tabasco.upf.edu/api/sounds/999/analysis/tonal
+  # Or for all the pitch of a sound
+  curl http://tabasco.upf.edu/api/sounds/999/lowlevel/pitch/mean
 
 Response
 ''''''''

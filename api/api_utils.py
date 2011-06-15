@@ -31,6 +31,12 @@ def build_unexpected(e):
                                              "really_really_sorry": True,
                                              "debug": debug}))
 
+def build_invalid_url(e):
+    return build_error_response(ReturnError(404,
+                                            "InvalidUrl",
+                                            {"explanation":
+                                             "The introduced url is invalid.",
+                                             }))
 
 class auth():
     

@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 from piston.resource import Resource
 from handlers import *
 from views import create_api_key
+from api_utils import build_invalid_url
 #from key_authentication import KeyAuthentication
 
 #auth = KeyAuthentication()
@@ -34,6 +35,9 @@ urlpatterns = patterns('',
 
     # website
     url(r'^apply/$', create_api_key),
+    
+    # anything else (invalid urls)
+    url(r'/$', build_invalid_url ),
 )
 
 

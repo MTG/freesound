@@ -77,6 +77,18 @@
 <div id="jquery_jplayer_1" style="height: 0px; width: 0px;"></div>
 {% show_paginator paginator page current_page request %}
 
+<div id="remix_group_info" class="content_box">
+	<h3>Remix group info</h3>
+	<div class="sound_list_normal">
+		<ul>
+			<li>Files are presented in chronological order. So the first sound is a source to subsequent sounds as indicated by the links.</li>
+			<li>Hover over a sound to listen to it.</li>
+			<li>Hover "out" to stop the playback.</li>
+			<li>Click on the sound to go to the sounds page.</li>
+		</ul>
+	</div>
+</div><!-- #remix_group_info -->
+
 <ul style="list-style: none;">
 {% for remix_group in page.object_list %}
 	<li>

@@ -136,7 +136,7 @@ SOUNDS_PER_API_RESPONSE = 30
 SOUNDS_PER_DESCRIBE_ROUND = 4
 SIMILAR_SOUNDS_TO_CACHE = 100 # for the similarity service
 SIMILARITY_CACHE_TIME = 60*60*1
-DEFAULT_SIMILARITY_PRESET = 'music'
+DEFAULT_SIMILARITY_PRESET = 'lowlevel'
 
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
 

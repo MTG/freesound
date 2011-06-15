@@ -223,6 +223,7 @@ __ sound-get-response_
             "duration": 5.6986699999999999, 
             "waveform_l": "http://tabasco.upf.edu/data/displays/116/116841_854810_wave_L.png", 
             "ref": "http://tabasco.upf.edu/api/sounds/116841", 
+            "id": 116841, 
             "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/116/116841_854810-hq.mp3", 
             "pack": "http://tabasco.upf.edu/api/packs/7333"
         },
@@ -258,6 +259,7 @@ __ sound-get-response_
             "duration": 2.6059399999999999, 
             "waveform_l": "http://tabasco.upf.edu/data/displays/113/113785_1956076_wave_L.png", 
             "ref": "http://tabasco.upf.edu/api/sounds/113785", 
+            "id": 113785, 
             "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/113/113785_1956076-lq.ogg"
         }
     ], 
@@ -564,7 +566,8 @@ __ sound-search-response_
                 "clean"
             ], 
             "url": "http://tabasco.upf.edu/people/Bram/sounds/11/", 
-            "ref": "http://tabasco.upf.edu/api/sounds/11", 
+            "ref": "http://tabasco.upf.edu/api/sounds/11",
+            "id": 11, 
             "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/0/11_2-lq.mp3", 
             "serve": "http://tabasco.upf.edu/api/sounds/11/serve", 
             "similarity": "http://tabasco.upf.edu/api/sounds/11/similar", 
@@ -600,6 +603,7 @@ __ sound-search-response_
             ], 
             "url": "http://tabasco.upf.edu/people/club%20sound/sounds/104551/", 
             "ref": "http://tabasco.upf.edu/api/sounds/104551", 
+            "id": 104551, 
             "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/104/104551_420640-lq.mp3", 
             "serve": "http://tabasco.upf.edu/api/sounds/104551/serve", 
             "similarity": "http://tabasco.upf.edu/api/sounds/104551/similar", 
@@ -631,7 +635,8 @@ __ sound-search-response_
                 "supercollider"
             ], 
             "url": "http://tabasco.upf.edu/people/schluppipuppie/sounds/17052/", 
-            "ref": "http://tabasco.upf.edu/api/sounds/17052", 
+            "ref": "http://tabasco.upf.edu/api/sounds/17052",
+            "id": 17052,  
             "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/17/17052_4942-lq.mp3", 
             "serve": "http://tabasco.upf.edu/api/sounds/17052/serve", 
             "similarity": "http://tabasco.upf.edu/api/sounds/17052/similar", 
@@ -660,7 +665,8 @@ __ sound-search-response_
                 "impulse"
             ], 
             "url": "http://tabasco.upf.edu/people/simonbshelley/sounds/93063/", 
-            "ref": "http://tabasco.upf.edu/api/sounds/93063", 
+            "ref": "http://tabasco.upf.edu/api/sounds/93063",
+            "id": 93063,  
             "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/93/93063_926020-lq.mp3", 
             "serve": "http://tabasco.upf.edu/api/sounds/93063/serve", 
             "similarity": "http://tabasco.upf.edu/api/sounds/93063/similar", 
@@ -921,7 +927,6 @@ url		      URI      The URL for this pack's page on the Freesound website.
 sounds		      URI      The API URI for the pack's sound collection.
 user		      object   A JSON object with the user's username, url, and ref.
 name		      string   The pack's name.
-description	      string   The pack's description.
 created		      string   The date when the pack was created.
 num_downloads	      number   The number of times the pack was downloaded.
 ====================  =======  ========================================================
@@ -931,7 +936,6 @@ num_downloads	      number   The number of times the pack was downloaded.
 ::
 
   {
-    "description": "", 
     "created": "2009-09-01 19:56:15", 
     "url": "http://tabasco.upf.edu/people/dobroide/packs/5107/", 
     "user": {

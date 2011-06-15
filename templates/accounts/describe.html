@@ -6,36 +6,38 @@
 {% block head %}
 {{ block.super }}
 <script type="text/javascript">
-	function select_ul(element)
-	{
-		$(element.parentNode).find("input").click();
-	}
-	
-	function checkboxChange(checkbox)
-	{
-		var option = $("#fileform").find("option[value=" + checkbox.name + "]").get(0);
-		
-		if (checkbox.checked)
-			option.selected = true;
-		else
-			option.selected = false;
-	}
+    function select_ul(element)
+    {
+        $(element.parentNode).find("input").click();
+    }
+
+    function checkboxChange(checkbox)
+    {
+        var option = $("#fileform").find("option[value=" + checkbox.name + "]").get(0);
+
+        if (checkbox.checked)
+            option.selected = true;
+        else
+            option.selected = false;
+    }
 </script>
 {% endblock %}
 
 {% block content %}
+<div id="describe_page">
 <h1>Describe</h1>
 <h3>Step 1 - pick files</h3>
-<p>You've uploaded these files, but they won't appear on the website 
-until you describe them. Select the files you want to describe and 
-follow the instructions on the following pages. 
+<p>You've uploaded these files, but they won't appear on the website
+until you describe them. Select the files you want to describe and
+follow the instructions on the following pages.
 <ul id="root_file" class="upload">
-	{% show_file file_structure %}
+    {% show_file file_structure %}
 </ul>
 <form action="." method="post" id="fileform">{% csrf_token %}
-	<div style="display:none">
-	{{form.as_p}}
-	</div>
-	<input type="submit" value="describe" name="describe">
+    <div style="display:none">
+    {{form.as_p}}
+    </div>
+    <input type="submit" value="describe" name="describe">
 </form>
+</div><!-- #describe_page -->
 {% endblock %}

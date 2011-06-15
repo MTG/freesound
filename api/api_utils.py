@@ -2,18 +2,18 @@ import settings
 from piston.utils import rc
 import traceback
 from models import ApiKey
-
+import json
+from django.http import HttpResponse
 
 def build_error_response(e):
     resp = rc.BAD_REQUEST
     resp.status_code = e.status_code
-    content = {'error': True,
-               'type': e.type,
-               'status_code': e.status_code,
-               'explanation': ''}
+    content = {"error": True,
+               "type": e.type,
+               "status_code": e.status_code,
+               "explanation": ""}
     content.update(e.extra)
-    resp.content = content
-    print resp.status_code
+    resp.content = json.dumps(content)
     return resp
 
 class ReturnError(Exception):
@@ -26,15 +26,21 @@ def build_unexpected(e):
     debug = traceback.format_exc() if settings.DEBUG else str(e)
     #TODO: logger
     return build_error_response(ReturnError(500,
-                                            'InternalError',
-                                            {'explanation':
-                                             'An internal Freesound error ocurred.',
-                                             'really_really_sorry': True,
-                                             'debug': debug}))
+                                            "InternalError",
+                                            {"explanation":
+                                             "An internal Freesound error ocurred.",
+                                             "really_really_sorry": True,
+                                             "debug": debug}))
 
+def build_invalid_url(e):
+    return build_error_response(ReturnError(404,
+                                            "InvalidUrl",
+                                            {"explanation":
+                                             "The introduced url is invalid.",
+                                             }))
 
 class auth():
-    
+
     def __init__(self, get_parameter='api_key'): # FROM FREESOUND
         self.get_parameter = get_parameter
 
@@ -46,24 +52,22 @@ class auth():
         """
         def decorated_api_func(handler, request, *args, **kargs):
             try:
-                
+
                 # Try to get the api key
                 api_key = request.GET.get(self.get_parameter, False)
-                print "api key", api_key
                 if not api_key:
-                    raise ReturnError(401, 'AuthenticationError',
-                                          {'explanation':  'Please include your api key as the api_key GET parameter'})
-                
-                
+                    raise ReturnError(401, "AuthenticationError",
+                                          {"explanation":  "Please include your api key as the api_key GET parameter"})
+
+
                 try:
                     db_api_key = ApiKey.objects.get(key=api_key, status='OK')
                 except ApiKey.DoesNotExist:
-                    raise ReturnError(401, 'AuthenticationError',
-                                          {'explanation':  'Supplied api_key does not exist'})
-                
-                request.user = db_api_key.user                
+                    raise ReturnError(401, "AuthenticationError",
+                                          {"explanation":  "Supplied api_key does not exist"})
+
+                request.user = db_api_key.user
                 return f(handler, request, *args, **kargs)
-            
             except ReturnError, e:
                 return build_error_response(e)
             except Exception, e:

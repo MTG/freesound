@@ -2,12 +2,13 @@ import settings, traceback, logging
 from sounds.models import Sound
 from django.core.cache import cache
 from similarity.client import Similarity
+from similarity.settings import PRESETS
 
 logger = logging.getLogger('web')
 
 def get_similar_sounds(sound, preset, num_results = settings.SOUNDS_PER_PAGE ):
 
-    if preset not in ['lowlevel', 'music']:
+    if preset not in PRESETS:
         preset = settings.DEFAULT_SIMILARITY_PRESET
 
     cache_key = "similar-for-sound-%s-%s" % (sound.id, preset)

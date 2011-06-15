@@ -12,6 +12,18 @@
     {{pack.description}}
 </p>
 {% endif %}
+
+<div id="pack_info" class="content_box">
+	<h3>Pack info</h3>
+	<div class="sound_list_normal">
+		<ul>
+			<li>Pack created on: <b>{{ pack.created }}</b></li>
+			<li>Number of sounds: <b>{{ pack.sound_set.count }}</b></li>
+			<li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
+		</ul>
+	</div>
+</div><!-- #pack_info -->
+
 <p>
     See <a href="{% url packs-for-user pack.user.username %}">more packs</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
 </p>

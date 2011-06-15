@@ -1,0 +1,22 @@
+{
+    "presetdetails": "Baseline similarity preset using only MFCC.",
+    "filter":{
+        "type":"select",
+        "parameters":{
+            "descriptorNames": [".lowlevel.mfcc.mean"]
+        }
+    },
+    "transform": {
+        "type":"normalize",
+        "parameters": {
+            "descriptorNames": "*",
+            "independent": true
+        }
+    },
+    "distance":{
+        "type":"euclidean",
+        "parameters":{
+            "descriptorNames": "*"
+        }
+    }
+}

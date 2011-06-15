@@ -38,7 +38,7 @@ from utils.audioprocessing import get_sound_type
 from django.core.cache import cache
 import django.contrib.auth.views as authviews
 from django.contrib.auth.forms import AuthenticationForm
-import hashlib
+import hashlib, base64
 
 audio_logger = logging.getLogger('audioprocessing')
 
@@ -472,7 +472,7 @@ def latest_content_type(scores):
             return 'comment'
 
 def accounts(request):
-    num_days = 2
+    num_days = 14
     num_active_users = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
     user_rank = {}

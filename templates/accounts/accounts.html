@@ -1,30 +1,42 @@
-{% extends "accounts/_section.html" %}
+{% extends "accounts/_people.html" %}
 {% load display_sound %}
 {% load tags %}
 {% load smileys %}
 {% block title %} people {% endblock %}
+
 {% block section_content %}
-<div class="people_column">
-<h3> Most active users last {{num_days}} days</h3>
- {% for user in most_active_users %}
-    {% include "accounts/active_user.html" %}
- {% endfor %}
-</div>
-<div class="people_column">
-<h3> Newest active users</h3>
- {% for user in new_users %}
-    {% include "accounts/active_user.html" %}
- {% endfor %}
-</div>
-<br/>
-<div class="people_clear"/>
-</div>
 
+<h1>People</h1>
+<div id="content">
 
-<div class="people_logged">
-<h3> Users currently online</h3>
- {% for user in logged_users %}
-    <a href="{% url account user.username %}">{{user.username}}</a> 
- {% endfor %}
-</div>
+	<div id="most_active_users" class="content_box">
+	<h3>Most active users in last {{num_days}} days</h3>
+	 {% for user in most_active_users %}
+	    {% include "accounts/active_user.html" %}
+	 {% endfor %} <br class="clear" /><!-- clear #most_active_users -->
+	</div><!-- #most_active_users -->
+	
+	<div id="newest_active_users" class="content_box">
+	<h3>Newest active users</h3>
+	 {% for user in new_users %}
+	    {% include "accounts/active_user.html" %}
+	 {% endfor %}
+	</div><!-- #newest_active_users -->
+
+</div><!-- #content -->
+	
+<div id="sidebar">
+	<div id="users_currently_online" class="content_box">	
+	<h3>Users currently online</h3>
+	 {% for user in logged_users %}
+	 	<div class="online_user">
+		 	<a href="{% url account user.username %}">
+		 		<img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" class="currently_online_avatar" title="{{user.username}}" />
+		    </a>
+	    </div><!-- .online_user -->
+	 {% endfor %} <br class="clear" />
+	</div><!-- #users_currently_online -->
+</div><!-- #sidebar -->
+
+<br class="clear" /><!-- Clearing element -->
 {% endblock %}

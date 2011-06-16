@@ -631,8 +631,6 @@ FS.User.prototype.getSounds = function(succesCallback, errorCallback){
 FS.User.prototype.getPacks = function(succesCallback, errorCallback){	
 	
 	var uName = this.properties['username'];
-	$("#resp").append(FS._uri(FS._URI_USER_PACKS, [uName]));
-	
 	
 	//call createGetReq and pass it file uri, file key and callback function
 	FS.RequestCreator.createGetReq(FS._uri(FS._URI_USER_PACKS, [uName]), 

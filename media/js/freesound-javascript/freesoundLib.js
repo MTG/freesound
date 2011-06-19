@@ -738,8 +738,8 @@ Freesound = function(aKey, useJson){
 			var getSoundsFromPack = function(pId, succesCallback, errorCallback)
 			{	FS.SoundCollection.getSoundsFromPack(pId, succesCallback, errorCallback); };
 			
-			var getSimilarSoundsFromSound = function(sId, succesCallback, errorCallback)
-			{	FS.SoundCollection.getSimilarSoundsFromSound(sId, succesCallback, errorCallback); };
+			var getSimilarSoundsFromSound = function(sId, numSounds, preset, succesCallback, errorCallback)
+			{	FS.SoundCollection.getSimilarSoundsFromSound(sId, numSounds, preset, succesCallback, errorCallback); };
 			
 			//create Freesound object, containing public variables and methods of Freesound Library						
 			var object = {

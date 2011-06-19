@@ -104,7 +104,10 @@ $(function()
                 $(this).append('<div class="controls"> \
                        <div class="toggle play"></div> \
                        <div class="toggle loop"></div> \
-                    </div>');
+                    </div> \
+                    <div class="background"></div> \
+                    <div class="loading-progress"></div> \
+                    <div class="position-indicator"></div>');
             }
         
             var urls = $(".metadata", this).html().split(" ");
@@ -116,7 +119,9 @@ $(function()
 
             var playerElement = $(this);
         
-            $(".background", this).css("background", "url(" + waveform + ")");
+            if (!$(this).hasClass("mini"))
+                $(".background", this).css("background", "url(" + waveform + ")");
+                
             $(".loading-progress", playerElement).hide();
             $(".time-indicator", playerElement).html(msToTime(0, duration, !$(".time-indicator-container", playerElement).hasClass("on")));
             

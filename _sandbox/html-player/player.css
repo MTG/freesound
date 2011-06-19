@@ -64,6 +64,9 @@
     color: white;
     font-size: 12px;
     text-align: right;
+    font-family: 'Inconsolata', arial, serif;
+    padding-top:10px;
+    padding-right: 10px;
 }
 
 .player .loading-progress
@@ -92,6 +95,13 @@
     color: white;
     font-size: 18px;
     text-align: right;
+}
+
+.player .time-indicator
+{
+    font-family: 'Inconsolata', arial, serif;
+    padding-top:10px;
+    padding-right: 10px;
 }
 
 /**************************/

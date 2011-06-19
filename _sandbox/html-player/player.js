@@ -1,3 +1,8 @@
+soundManager.url = '/fs-player/swf/';
+soundManager.flashVersion = 8; // optional: shiny features (default = 8)
+soundManager.useFlashBlock = false; // optionally, enable when you're ready to dive in
+soundManager.debugMode = false;
+
 function msToTime(position, durationEstimate, displayRemainingTime)
 {
     if (displayRemainingTime)
@@ -69,8 +74,6 @@ $(function()
     {
         $(".player").each( function ()
         {
-            console.log("playa");
-            
             if ($(this).hasClass("large"))
             {
                 $(this).append('<div class="controls"> \

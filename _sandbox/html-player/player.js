@@ -1,3 +1,8 @@
+soundManager.url = '/fs-player/swf/';
+soundManager.flashVersion = 8; // optional: shiny features (default = 8)
+soundManager.useFlashBlock = false; // optionally, enable when you're ready to dive in
+soundManager.debugMode = false;
+
 function msToTime(position, durationEstimate, displayRemainingTime)
 {
     if (displayRemainingTime)
@@ -69,8 +74,6 @@ $(function()
     {
         $(".player").each( function ()
         {
-            console.log("playa");
-            
             if ($(this).hasClass("large"))
             {
                 $(this).append('<div class="controls"> \
@@ -101,7 +104,10 @@ $(function()
                 $(this).append('<div class="controls"> \
                        <div class="toggle play"></div> \
                        <div class="toggle loop"></div> \
-                    </div>');
+                    </div> \
+                    <div class="background"></div> \
+                    <div class="loading-progress"></div> \
+                    <div class="position-indicator"></div>');
             }
         
             var urls = $(".metadata", this).html().split(" ");
@@ -113,7 +119,9 @@ $(function()
 
             var playerElement = $(this);
         
-            $(".background", this).css("background", "url(" + waveform + ")");
+            if (!$(this).hasClass("mini"))
+                $(".background", this).css("background", "url(" + waveform + ")");
+                
             $(".loading-progress", playerElement).hide();
             $(".time-indicator", playerElement).html(msToTime(0, duration, !$(".time-indicator-container", playerElement).hasClass("on")));
             

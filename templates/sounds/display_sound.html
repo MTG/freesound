@@ -49,6 +49,11 @@
             <a class="similar" href="{% url sound-similar sound.user.username sound.id %}">
                 <img src="{{media_url}}images/similar_sounds.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
             </a>
+            {% if sound.pack %}
+             <a class="pack" href="{% url pack sound.user.username sound.pack.id %}">
+                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Remixes" title="This sound belongs to a pack." />
+            </a>
+            {% endif %}
             {% if sound.remix_groups.all.count %}
              <a class="remixes" href="{% url sound-remixes sound.user.username sound.id %}">
                 <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />

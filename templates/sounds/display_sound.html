@@ -64,11 +64,21 @@
                 <img src="{{media_url}}images/geotag.png" width="16" height="16" alt="Geotagged" title="This sound has a geotag" />
             </a>
             {% endif %}
-            {% comment %}
-            <a class="cc_license" href="#">
-                <img src="{{media_url}}images/licenses/non_commercial.png" width="16" height="16" alt="Non Commercial License" title="This sound has a non-commercial license" />
-            </a>
-            {% endcomment %}
+            <!-- license icons -->
+            {% if sound.license.name == 'Sampling+' %}
+                <img class="cc_license" src="{{media_url}}images/licenses/sampling.png" width="16" height="16" alt="Sampling+ license" title="This sound is licensed under the sampling+ license." />
+            {% endif %}
+            {% if sound.license.name == 'Public Domain' %}
+                <img class="cc_license" src="{{media_url}}images/licenses/nolaw.png" width="16" height="16" alt="Public Domain license" title="This sound is public domain." />
+            {% endif %}
+            {% if sound.license.name == 'Attribution' %}
+                <img class="cc_license" src="{{media_url}}images/licenses/by.png" width="16" height="16" alt="Creative Commons Attribution license" title="This sound is licensed under the Creative Commons Attribution license." />
+            {% endif %}
+            {% if sound.license.name == 'Attribution Noncommercial' %}
+                <img class="cc_license" src="{{media_url}}images/licenses/by.png" width="16" height="16" alt="Creative Commons Attribution Non-Commercial license" title="This sound is licensed under the Creative Commons Attribution Non-Commercial license." />
+                <img class="cc_license" src="{{media_url}}images/licenses/nc.png" width="16" height="16" alt="Creative Commons Attribution Non-Commercial license" title="This sound is licensed under the Creative Commons Attribution Non-Commercial license." />
+            {% endif %}
+            <!-- /license icons -->
         </div><!-- .sound_attributes -->
 
     </div><!-- .sample_information -->

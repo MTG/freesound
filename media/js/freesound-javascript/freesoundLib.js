@@ -704,6 +704,8 @@ FS.Pack.prototype.getSounds = function(succesCallback, errorCallback){
  */
 Freesound = function(aKey, useJson){
 	
+	alert('You are seeing this alert because you are including "freesoundLib.js" file hosted in tabasco.upf.edu. In the following days this file will no longer be hosted in tabasco. Please, update to the last version of freesound-javascript library in github and do the include locally: <script type="text/javascript" src="freesoundLib.js"></script> instead of <script type="text/javascript" src="tabasco.upf.edu/media/js/freesound-javascript/freesoundLib.js"></script>')
+
 	//check if there already exist a object of Freesound class (singleton)
 	if(!Freesound.object)
 	{

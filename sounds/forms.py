@@ -132,7 +132,8 @@ class NewLicenseForm(forms.Form):
                                      required=True,
                                      empty_label=None,
                                      widget=forms.RadioSelect(),
-                                     label='')
+                                     label='',
+                                     initial=License.objects.get(name='Public Domain'))
 
 
 class FlagForm(forms.ModelForm):

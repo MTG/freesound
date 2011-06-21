@@ -18,6 +18,7 @@
 
 
 {% block section_content %}
+
     {% if home %}
         <h1>Home</h1>
 
@@ -51,7 +52,7 @@
 <div id="content">
     {% if latest_geotags %}
     <div id="latest_geotags" class="content_box">
-        <h3>Your latest geotags</h3>
+        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
         <div id="map_canvas" style="width: 400px; height: 300px; border: 1px solid black;"></div>
         <script type="text/javascript">
             var map = new GMap2(document.getElementById("map_canvas"));
@@ -81,7 +82,7 @@
 
     {% if latest_sounds %}
     <div id="latest_sounds" class="content_box">
-        <h3>Your latest sounds</h3>
+        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest sounds</h3>
         {% for sound in latest_sounds %}
             {% display_sound sound %}
         {% endfor %}
@@ -93,7 +94,7 @@
 <div id="sidebar">
     {% if tags %}
     <div id="user_most_used_tags" class="content_box">
-        <h3>Your most used tags</h3>
+        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
         <p class="user_tagcloud">
         {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url tags tag.name %}">{{tag.name}}</a></span> {% endfor %}
         </p>
@@ -102,7 +103,7 @@
 
     {% if latest_packs %}
     <div id="latest_packs" class="content_box">
-        <h3>Your latest packs</h3>
+        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest packs</h3>
         <ul>
         {% for pack in latest_packs %}
             <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>

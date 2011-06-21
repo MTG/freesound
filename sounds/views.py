@@ -160,7 +160,7 @@ def pack_download(request, username, pack_id):
 
 @login_required
 def sound_edit(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id)
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied

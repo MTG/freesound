@@ -180,7 +180,8 @@ def __get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
-ticket.id
+ticket.id,
+ticket.modified as modified
 FROM
 tickets_ticketcomment AS comment,
 tickets_ticket AS ticket
@@ -190,7 +191,8 @@ WHERE comment.id in (   SELECT MAX(id)
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND comment.sender_id = ticket.sender_id
-AND now() - comment.created > INTERVAL '2 days'
+AND now() - modified > INTERVAL '2 days'
+LIMIT 5
     """)
 
 

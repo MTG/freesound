@@ -23,7 +23,7 @@
 
     $(document).ready(function() {
         {% if moderator_tickets %}
-            moderate('{% url tickets-sound-display moderator_tickets.0.content.object_id %}');
+            moderate('{% url sound-display moderator_tickets.0.content.content_object.user.username moderator_tickets.0.content.object_id %}');
             load_messages('{% url tickets-ticket moderator_tickets.0.key %}');
             $('#id_ticket').get(0).value={{moderator_tickets.0.id}}
             set_uploader_id({{moderator_tickets.0.sender.id}})
@@ -81,7 +81,7 @@
                 {% for ticket in moderator_tickets %}
                     <tr class="alternate-row-{% cycle 'odd' 'even' %}">
                         <td><a onclick="
-                                moderate('{% url tickets-sound-display ticket.content.object_id%}');
+                                moderate('{% url sound-display ticket.content.content_object.user.username ticket.content.object_id %}');
                                 load_messages('{% url tickets-ticket ticket.key %}');
                                 $('#id_ticket').get(0).value={{ticket.id}};
                                 set_uploader_id({{ticket.sender.id}});">
@@ -102,8 +102,8 @@
 
             <div id="moderation-form-wrapper">
                 <h4>Selected sound</h4>
-                <div class="sample_player_small"
-                     id="current_sound"></div>
+                <div class="sample_player_small sound_list_moderation" id="current_sound">
+                </div>
 
                 <h4>Messages for sound</h4>
                 <br>

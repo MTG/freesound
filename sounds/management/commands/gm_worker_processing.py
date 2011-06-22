@@ -29,38 +29,43 @@ class Command(BaseCommand):
             help='Register this function (default: process_sound)'),
     )
 
+    def write_stdout(self, msg):
+        self.stdout.write(msg)
+        self.stdout.write('\n')
+        self.stdout.flush()
+
     def handle(self, *args, **options):
         # N.B. don't take out the print statements as they're
         # very very very very very very very very very very
         # helpful in debugging supervisor+worker+gearman
-        self.stdout.write('Starting worker\n')
+        self.write_stdout('Starting worker\n')
         task_name = 'task_%s' % options['queue']
-        self.stdout.write('Task: %s\n' % task_name)
+        self.write_stdout('Task: %s\n' % task_name)
         if task_name not in dir(self):
-            self.stdout.write("Wow.. That's crazy! Maybe try an existing queue?\n")
+            self.write_stdout("Wow.. That's crazy! Maybe try an existing queue?\n")
             sys.exit(1)
         task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
-        self.stdout.write('Initializing gm_worker\n')
+        self.write_stdout('Initializing gm_worker\n')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        self.stdout.write('Registering task %s, function %s\n' % (task_name, task_func))
+        self.write_stdout('Registering task %s, function %s\n' % (task_name, task_func))
         gm_worker.register_task(options['queue'], task_func)
-        self.stdout.write('Starting work\n')
+        self.write_stdout('Starting work\n')
         gm_worker.work()
-        self.stdout.write('Ended work\n')
+        self.write_stdout('Ended work\n')
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
         """Run this for Gearman essentia analysis jobs.
         """
         sound_id = gearman_job.data
-        self.stdout.write("Analyzing sound with id %s\n" % sound_id)
+        self.write_stdout("Analyzing sound with id %s\n" % sound_id)
         try:
             result = analyze(Sound.objects.get(id=sound_id))
         except Sound.DoesNotExist:
-            self.stdout.write("\t did not find sound with id: %s\n" % sound_id)
+            self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
             return False
         except Exception, e:
-            self.stdout.write("\t could not analyze sound: %s\n" % e)
-            self.stdout.write("\t%s\n" % traceback.format_tb())
+            self.write_stdout("\t could not analyze sound: %s\n" % e)
+            self.write_stdout("\t%s\n" % traceback.format_tb())
             sys.exit(255)
         return str(result)
 
@@ -68,16 +73,16 @@ class Command(BaseCommand):
         """Run this for Gearman 'process_sound' jobs.
         """
         sound_id = gearman_job.data
-        self.stdout.write("Processing sound with id %s\n" % sound_id)
+        self.write_stdout("Processing sound with id %s\n" % sound_id)
         try:
             result = process(Sound.objects.select_related().get(id=sound_id))
-            self.stdout.write("\t sound: %s, processing %s\n" % \
+            self.write_stdout("\t sound: %s, processing %s\n" % \
                               (sound_id, ("ok" if result else "failed")))
         except Sound.DoesNotExist:
-            self.stdout.write("\t did not find sound with id: %s\n" % sound_id)
+            self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
             return False
         except Exception, e:
-            self.stdout.write("\t something went terribly wrong: %s\n" % e)
-            traceback.print_tb()
+            self.write_stdout("\t something went terribly wrong: %s\n" % e)
+            self.write_stdout("\t%s\n" % traceback.format_tb())
             sys.exit(255)
         return str(result)

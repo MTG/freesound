@@ -3,21 +3,13 @@
 This django-admin command runs a Gearman worker for processing sounds.
 """
 
-import gearman, sys
+import gearman, sys, traceback, json
 from django.core.management.base import BaseCommand
 from utils.audioprocessing.freesound_audio_processing import process
 from utils.audioprocessing.essentia_analysis import analyze
 from django.conf import settings
 from sounds.models import Sound
 from optparse import make_option
-import traceback
-
-# TODO: DRY-out!
-
-
-
-
-
 
 
 class Command(BaseCommand):
@@ -61,14 +53,14 @@ class Command(BaseCommand):
             result = analyze(Sound.objects.get(id=sound_id))
             self.write_stdout("\t sound: %s, analyzing %s\n" % \
                               (sound_id, ("ok" if result else "failed")))
+            return 'true' if result else 'false'
         except Sound.DoesNotExist:
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
-            return False
+            return 'false'
         except Exception, e:
             self.write_stdout("\t could not analyze sound: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
             sys.exit(255)
-        return str(result)
 
     def task_process_sound(self, gearman_worker, gearman_job):
         """Run this for Gearman 'process_sound' jobs.
@@ -79,11 +71,12 @@ class Command(BaseCommand):
             result = process(Sound.objects.select_related().get(id=sound_id))
             self.write_stdout("\t sound: %s, processing %s\n" % \
                               (sound_id, ("ok" if result else "failed")))
+            return 'true' if result else 'false'
         except Sound.DoesNotExist:
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
-            return False
+            return 'false'
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
             sys.exit(255)
-        return str(result)
+

@@ -13,6 +13,7 @@ from utils.locations import locations_decorator
 import os, logging, random, datetime, gearman
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
+from django.db import connection, transaction
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -311,6 +312,42 @@ class Sound(SocialModel):
         delete_object_files(self, web_logger)
         # super class delete
         super(Sound, self).delete()
+
+
+    # N.B. These set functions are used in the distributed processing.
+    # They set a single field to prevent overwriting eachother's result in
+    # the database, which is what happens if you use Django's save() method.
+    def set_single_field(self, field, value, include_quotes=True):
+        self.set_fields([[field, value, include_quotes]])
+
+    def set_fields(self, fields):
+        query = "UPDATE sounds_sound SET "
+        query += ", ".join([('%s = %s' % (field[0], (field[1] if not field[2] else ("'%s'" % field[1])))) for field in fields])
+        query += " WHERE id = %s" % self.id
+        cursor = connection.cursor()
+        cursor.execute(query)
+        transaction.commit_unless_managed()
+
+    def set_processing_state(self, state):
+        self.set_single_field('processing_state', state)
+
+    def set_analysis_state(self, state):
+        self.set_single_field('analysis_state', state)
+
+    def set_similarity_state(self, state):
+        self.set_single_field('similarity_state', state)
+
+    def set_moderation_state(self, state):
+        self.set_single_field('moderation_state', state)
+
+    def set_moderation_state(self, state):
+        self.set_single_field('moderation_state', state)
+
+    def set_original_path(self, path):
+        self.set_single_field('original_path', path)
+
+    def set_audio_info_fields(self, info):
+        self.set_fields([[field, info[field], false] for field in ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']])
 
     # N.B. This is used in the ticket template (ugly, but a quick fix)
     def is_sound(self):

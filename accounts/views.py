@@ -279,6 +279,7 @@ def describe_pack(request):
 
 @login_required
 def describe_sounds(request):
+    sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)
     selected_license = request.session.get('describe_license', False)
     selected_pack = request.session.get('describe_pack', False)
@@ -390,11 +391,8 @@ def describe_sounds(request):
             sound.description = data.get('description', '')
             sound.set_tags(data.get('tags'))
             sound.save()
-            # process the sound
-            try:
-                sound.process()
-            except Exception, e:
-                audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
+            # remember to process the file
+            sounds_to_process.append(sound)
             if request.user.profile.is_whitelisted:
                 sound.moderation_state = 'OK'
                 sound.save()
@@ -453,6 +451,15 @@ def describe_sounds(request):
             # cannot include this right now because the remix sources form needs a sound object
             #forms[prefix]['remix'] = RemixForm(prefix=prefix)
         #request.session['describe_sounds'] = request.session['describe_sounds'][5:]
+    # Process the sound
+    # N.B. we do this at the end to avoid conflicts between django-web and django-workers
+    # If we're not careful django's save() functions will overwrite any processing we
+    # do on the workers.
+    try:
+        for sound in sounds_to_process:
+            sound.process()
+    except Exception, e:
+        audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
     return render_to_response('accounts/describe_sounds.html', locals(), context_instance=RequestContext(request))
 
 

@@ -6,10 +6,10 @@ def analyze(sound):
     try:
         statistics_path = sound.locations("analysis.statistics.path")
         frames_path = sound.locations("analysis.frames.path")
-        # don't recalculate if the files are already there:
 
-        if os.path.exists(statistics_path) and os.path.exists(frames_path):
-            return True
+        # don't recalculate if the files are already there:
+#        if os.path.exists(statistics_path) and os.path.exists(frames_path):
+#            return True
 
         input_path = sound.original_path
         tmp_conv = False
@@ -51,11 +51,9 @@ def analyze(sound):
         if tmp_conv:
             os.remove(tmp_wav_path)
     finally:
-        sound.analysis_state = 'FA'
-        sound.save()
+        sound.set_analysis_state('FA')
 
-    sound.analysis_state = 'OK'
-    sound.save()
+    sound.set_analysis_state('OK')
 
     return True
 

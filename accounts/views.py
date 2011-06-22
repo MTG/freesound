@@ -423,6 +423,15 @@ def describe_sounds(request):
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
+        # Process the sound
+        # N.B. we do this at the end to avoid conflicts between django-web and django-workers
+        # If we're not careful django's save() functions will overwrite any processing we
+        # do on the workers.
+        try:
+            for sound in sounds_to_process:
+                sound.process()
+        except Exception, e:
+            audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
         if len(request.session['describe_sounds']) <= 0:
             msg = 'You have described all the selected files.'
             messages.add_message(request, messages.WARNING, msg)
@@ -451,15 +460,6 @@ def describe_sounds(request):
             # cannot include this right now because the remix sources form needs a sound object
             #forms[prefix]['remix'] = RemixForm(prefix=prefix)
         #request.session['describe_sounds'] = request.session['describe_sounds'][5:]
-    # Process the sound
-    # N.B. we do this at the end to avoid conflicts between django-web and django-workers
-    # If we're not careful django's save() functions will overwrite any processing we
-    # do on the workers.
-    try:
-        for sound in sounds_to_process:
-            sound.process()
-    except Exception, e:
-        audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
     return render_to_response('accounts/describe_sounds.html', locals(), context_instance=RequestContext(request))
 
 

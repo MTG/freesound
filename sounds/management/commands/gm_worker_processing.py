@@ -66,7 +66,7 @@ class Command(BaseCommand):
             return False
         except Exception, e:
             self.write_stdout("\t could not analyze sound: %s\n" % e)
-            self.write_stdout("\t%s\n" % traceback.format_tb())
+            self.write_stdout("\t%s\n" % traceback.format_exc())
             sys.exit(255)
         return str(result)
 
@@ -84,6 +84,6 @@ class Command(BaseCommand):
             return False
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
-            self.write_stdout("\t%s\n" % traceback.format_tb())
+            self.write_stdout("\t%s\n" % traceback.format_exc())
             sys.exit(255)
         return str(result)

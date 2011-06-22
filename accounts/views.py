@@ -40,7 +40,7 @@ import django.contrib.auth.views as authviews
 from django.contrib.auth.forms import AuthenticationForm
 import hashlib, base64
 
-audio_logger = logging.getLogger('audioprocessing')
+audio_logger = logging.getLogger('audio')
 
 @login_required
 def bulk_license_change(request):

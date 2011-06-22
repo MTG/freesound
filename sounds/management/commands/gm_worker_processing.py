@@ -39,7 +39,7 @@ class Command(BaseCommand):
         if task_name not in dir(self):
             self.stdout.write("Wow.. That's crazy! Maybe try an existing queue?\n")
             sys.exit(1)
-        task_func = getattr(Command, task_name)
+        task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
         self.stdout.write('Initializing gm_worker\n')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
         self.stdout.write('Registering task %s, function %s\n' % (task_name, task_func))

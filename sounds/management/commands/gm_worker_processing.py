@@ -14,39 +14,10 @@ import traceback
 
 # TODO: DRY-out!
 
-def task_process_sound(gearman_worker, gearman_job):
-    """Run this for Gearman 'process_sound' jobs.
-    """
-    sound_id = gearman_job.data
-    print "Processing sound with id", sound_id
-    try:
-        result = process(Sound.objects.select_related().get(id=sound_id))
-        print "\t sound: ", sound_id, "processing", "ok" if result else "failed"
-    except Sound.DoesNotExist:
-        print "\t did not find sound with id: ", sound_id
-        return False
-    except Exception, e:
-        print "\t something went terribly wrong:", e
-        traceback.print_tb()
-        sys.exit(255)
-    return str(result)
 
 
-def task_analyze_sound(gearman_worker, gearman_job):
-    """Run this for Gearman essentia analysis jobs.
-    """
-    sound_id = gearman_job.data
-    print "Analyzing sound with id", sound_id
-    try:
-        result = analyze(Sound.objects.get(id=sound_id))
-    except Sound.DoesNotExist:
-        print "\t did not find sound with id: ", sound_id
-        return False
-    except Exception, e:
-        print "\t could not analyze sound:", e
-        traceback.print_tb()
-        sys.exit(255)
-    return str(result)
+
+
 
 
 class Command(BaseCommand):
@@ -62,16 +33,51 @@ class Command(BaseCommand):
         # N.B. don't take out the print statements as they're
         # very very very very very very very very very very
         # helpful in debugging supervisor+worker+gearman
-        print 'Starting worker'
+        self.stdout.write('Starting worker\n')
         task_name = 'task_%s' % options['queue']
-        print 'Task: %s' % task_name
-        if task_name not in globals():
-            print "Wow.. That's crazy! Maybe try an existing queue?"
+        self.stdout.write('Task: %s\n' % task_name)
+        if task_name not in dir(self):
+            self.stdout.write("Wow.. That's crazy! Maybe try an existing queue?\n")
             sys.exit(1)
-        print 'Initializing gm_worker'
+        task_func = getattr(Command, task_name)
+        self.stdout.write('Initializing gm_worker\n')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        print 'Registering task %s, function %s' % (task_name, globals()[task_name])
-        gm_worker.register_task(options['queue'], globals()[task_name])
-        print 'Starting work'
+        self.stdout.write('Registering task %s, function %s\n' % (task_name, task_func))
+        gm_worker.register_task(options['queue'], task_func)
+        self.stdout.write('Starting work\n')
         gm_worker.work()
-        print 'Ended work'
+        self.stdout.write('Ended work\n')
+
+    def task_analyze_sound(self, gearman_worker, gearman_job):
+        """Run this for Gearman essentia analysis jobs.
+        """
+        sound_id = gearman_job.data
+        self.stdout.write("Analyzing sound with id %s\n" % sound_id)
+        try:
+            result = analyze(Sound.objects.get(id=sound_id))
+        except Sound.DoesNotExist:
+            self.stdout.write("\t did not find sound with id: %s\n" % sound_id)
+            return False
+        except Exception, e:
+            self.stdout.write("\t could not analyze sound: %s\n" % e)
+            self.stdout.write("\t%s\n" % traceback.format_tb())
+            sys.exit(255)
+        return str(result)
+
+    def task_process_sound(self, gearman_worker, gearman_job):
+        """Run this for Gearman 'process_sound' jobs.
+        """
+        sound_id = gearman_job.data
+        self.stdout.write("Processing sound with id %s\n" % sound_id)
+        try:
+            result = process(Sound.objects.select_related().get(id=sound_id))
+            self.stdout.write("\t sound: %s, processing %s\n" % \
+                              (sound_id, ("ok" if result else "failed")))
+        except Sound.DoesNotExist:
+            self.stdout.write("\t did not find sound with id: %s\n" % sound_id)
+            return False
+        except Exception, e:
+            self.stdout.write("\t something went terribly wrong: %s\n" % e)
+            traceback.print_tb()
+            sys.exit(255)
+        return str(result)

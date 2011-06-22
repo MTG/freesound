@@ -16,6 +16,7 @@ from utils.filesystem import delete_object_files
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
+audio_logger = logging.getLogger('audio')
 
 class License(OrderedModel):
     """A creative commons license model"""
@@ -271,9 +272,11 @@ class Sound(SocialModel):
             self.processing_date = datetime.datetime.now()
             self.processing_state = "QU"
             gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
+            audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
         if force or self.analysis_state != "OK":
             self.analysis_state = "QU"
             gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
+            audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
         self.save()
 
     def mark_index_dirty(self):

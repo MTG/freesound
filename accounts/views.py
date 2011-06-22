@@ -394,7 +394,7 @@ def describe_sounds(request):
             try:
                 sound.process()
             except Exception, e:
-                audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, e))
+                audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
             if request.user.profile.is_whitelisted:
                 sound.moderation_state = 'OK'
                 sound.save()

@@ -59,10 +59,19 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        # N.B. don't take out the print statements as they're
+        # very very very very very very very very very very
+        # helpful in debugging supervisor+worker+gearman
+        print 'Starting worker'
         task_name = 'task_%s' % options['queue']
+        print 'Task: %s' % task_name
         if task_name not in globals():
             print "Wow.. That's crazy! Maybe try an existing queue?"
             sys.exit(1)
+        print 'Initializing gm_worker'
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
+        print 'Registering task %s, function %s' % (task_name, globals()[task_name])
         gm_worker.register_task(options['queue'], globals()[task_name])
+        print 'Starting work'
         gm_worker.work()
+        print 'Ended work'

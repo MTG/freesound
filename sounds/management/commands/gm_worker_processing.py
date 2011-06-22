@@ -31,7 +31,6 @@ class Command(BaseCommand):
 
     def write_stdout(self, msg):
         self.stdout.write(msg)
-        self.stdout.write('\n')
         self.stdout.flush()
 
     def handle(self, *args, **options):

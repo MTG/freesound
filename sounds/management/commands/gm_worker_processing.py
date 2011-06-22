@@ -59,6 +59,8 @@ class Command(BaseCommand):
         self.write_stdout("Analyzing sound with id %s\n" % sound_id)
         try:
             result = analyze(Sound.objects.get(id=sound_id))
+            self.write_stdout("\t sound: %s, analyzing %s\n" % \
+                              (sound_id, ("ok" if result else "failed")))
         except Sound.DoesNotExist:
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
             return False

@@ -27,7 +27,7 @@
     </style>
     <script type="text/javascript">
 	function calculateEccentricity(length, height) {
-		var eccentricity = 0;
+		var eccentricity = 0.15;
 	    if (length > 3) {
 	    	var a = (length-2) * 80;
 	        var b = height;
@@ -49,7 +49,7 @@
 	<h3>Remix group info</h3>
 	<div class="sound_list_normal">
 		<ul>
-			<li>Original sound by: <b>{{ sounds.0.user.username }}</b></li>
+			<li>Original sound by: <a href="/people/{{ sounds.0.user.username }}">{{ sounds.0.user.username }}</a></li>
 			<li>Original sound created on: <b>{{ sounds.0.created }}</b></li>
 			<li>Last remix done on: <b>{{ last_sound.created }}</b></li>
 			<li>Number of sounds in group: <b>{{ sounds|length }}</b></li>
@@ -64,14 +64,16 @@
 // Graph DATA
 var data = {{ data|safe }};
 
+var eccentricity{{ forloop.counter }} = calculateEccentricity(data{{ forloop.counter }}.length, 205);
+
 /* ======== PROTOVIS STUFF-START ======== */
 var vis = new pv.Panel()
                 .def("i", -1)
-                .width(205)
+                .width(190)
                 .height($('.details').height())
                 .bottom(0)
                 .top(25)
-                .right(15);
+                .right(30);
 
 var arc = vis.add(pv.Layout.Arc)
     .nodes(data.nodes)
@@ -80,18 +82,29 @@ var arc = vis.add(pv.Layout.Arc)
 
 arc.link.add(pv.Line)
         .strokeStyle(function(d, p)  connections(d,p))
-        .eccentricity(function(d, p) calculateEccentricity(data.length, 205));
+        .eccentricity(eccentricity)
+		.add(pv.Dot)
+		.shape("triangle")
+		.data(function(l) [{
+	   						x: l.targetNode.x - 1.5,
+	   						y: l.targetNode.y - 2
+		          		}])
+		.angle(function(d,p) Math.atan2(2, 1.5))
+        .shape("triangle")
+        .fillStyle(function(d, p)  connections(d,p))
+        .size(6);
 
 arc.node.add(pv.Dot)
-    .shape("triangle")
-    .angle(0.523598776)
+    //.shape("diamond")
+    //.angle(0.523598776)
     .size(function(d) d.linkDegree + 4)
+	.left(function (d) d.x + 10)
     .fillStyle(function(d) vis.i() == this.index ? "#F1D9FF" : "#DBDBDB")
     .strokeStyle(function() this.fillStyle().darker())
-    .radius(function() vis.i() == this.index ? 10 : 5)
+    .radius(function(d) vis.i() == this.index ? 10 : 5)
     .event("mouseover", function(d) (d.active = true, arc, vis.i(this.index)))
-    .event("mouseout", function(d) (clearBackgrounds(), d.active = false, arc, vis.i(-1)))
-    .event("click", function(d) goToSound(d.id,d.username));
+    .event("mouseout", function(d) (clearBackgrounds(), d.active = false, arc, vis.i(-1)));
+    //.event("click", function(d) goToSound(d.id,d.username));
 
 vis.render();
 /* ======== PROTOVIS STUFF-END ======== */
@@ -109,9 +122,11 @@ function connections(d, p) {
     } else
         return "#c7c7c7";
 }
+/*
 function goToSound(soundId, username) {
     window.location.href = "/people/"+username+"/sounds/"+soundId+"/remixes";
 }
+*/
 function clearBackgrounds() {
     for (var i=0; i<data.nodes.length; i++) {
         $("#"+data.nodes[i].id+"").animate({backgroundColor: "#ffffff"});

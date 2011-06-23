@@ -60,7 +60,7 @@ class Command(BaseCommand):
         except Exception, e:
             self.write_stdout("\t could not analyze sound: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
-            sys.exit(255)
+            return 'false'
 
     def task_process_sound(self, gearman_worker, gearman_job):
         """Run this for Gearman 'process_sound' jobs.
@@ -78,5 +78,5 @@ class Command(BaseCommand):
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
-            sys.exit(255)
+            return 'false'
 

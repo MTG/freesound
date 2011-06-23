@@ -276,6 +276,12 @@ def sound_edit_sources(request, username, sound_id):
 
     current_sources = sound.sources.all()
     sources_string = ",".join(map(str, [source.id for source in current_sources]))
+    
+    remix_group = RemixGroup.objects.filter(sounds=current_sources)
+    print ("======== remix group id following ===========")
+    print (remix_group[0].id)
+    
+
 
     if request.method == 'POST':
         form = RemixForm(sound, request.POST)

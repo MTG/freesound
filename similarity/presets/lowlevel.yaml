@@ -1,8 +1,8 @@
 {
     "presetdetails": "This is a test preset. Uses just the spectral features of a file and uses manhattan distance.",
-    "filter":{
+    "filter": {
         "type":"select",
-        "parameters":{
+        "parameters": {
             "descriptorNames": ["*lowlevel*mean",
                                 "*lowlevel*dmean",
                                 "*lowlevel*dmean2",
@@ -11,19 +11,17 @@
                                 "*lowlevel*dvar2"],
         },
     },
-    "transform":{
-        "type":"pca",
-        "parameters":{
+    "transform": {
+        "type":"normalize",
+        "parameters": {
             "descriptorNames": "*",
-            "dimension": 13,
-            "resultName": "PCA.Result",
-            "descriptorNames": "*"
+            "independent": true
         }
     },
-    "distance":{
+    "distance": {
         "type":"euclidean",
-        "parameters":{
-            "descriptorNames": "*",
+        "parameters": {
+            "descriptorNames": "*"
         },
     }
 }

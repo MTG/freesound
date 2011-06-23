@@ -16,7 +16,7 @@ package
 	import flash.net.FileReferenceList;
 	import flash.utils.Dictionary;
 
-	[SWF( backgroundColor='0xffffff', width='128', height='128', frameRate='20')]
+	[SWF( backgroundColor='0xffffff', width='160', height='31', frameRate='20')]
 
 	public class Upload extends Sprite 
 	{

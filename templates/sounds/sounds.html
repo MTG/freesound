@@ -9,90 +9,93 @@
 <h1>Sounds</h1>
 
 <div id="content">
-	<div id="sound_of_the_day" class="content_box">
-	    <h3>Sound of the day</h3>
-	        {% if random_sound != None %}
-	            {% display_sound random_sound %}
-	        {% else %}
-	            <p>Could not pick random sound.
-	        {% endif %}
-	</div><!-- #sound_of_the_day -->
-	
-	<div id="latest_sounds" class="content_box">
-		<h3>Latest sounds</h3>
-		<div class="sound_list_normal">
-		{% for latest_addition in latest_sounds %}
-		    {% display_sound latest_addition.sound_id %}
-		    {% if latest_addition.extra %}
-		        <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
-		    {% endif %}
-		    {% empty %}
-		    <p>No sounds in the database!
-		{% endfor %}
-		</div>
-	</div><!-- #latest_sounds -->
-	
-	<div id="most_downloaded_sounds" class="content_box">
-		<h3>Most downloaded sounds (in the last week)</h3>
-		{% for sound in popular_sounds %}
-		    {% display_sound sound.id %}
-		    <div class="sample_more">
-		        <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads
-		        in the last week.
-		    </div>
-		{% empty %}
-		    <p>No sounds in the database!
-		{% endfor %}
-	</div><!-- #most_downloaded_sounds -->
+    <div id="sound_of_the_day" class="content_box">
+        <h3>Sound of the day</h3>
+            {% if random_sound != None %}
+                {% display_sound random_sound %}
+            {% else %}
+                <p>Could not pick random sound.
+            {% endif %}
+    </div><!-- #sound_of_the_day -->
+
+    <div id="latest_sounds" class="content_box">
+        <h3>Latest sounds</h3>
+        <div class="sound_list_normal">
+        {% for latest_addition in latest_sounds %}
+            {% display_sound latest_addition.sound_id %}
+            {% if latest_addition.extra %}
+                <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
+            {% endif %}
+            {% empty %}
+            <p>No sounds in the database!
+        {% endfor %}
+        </div>
+    </div><!-- #latest_sounds -->
+
+    <div id="most_downloaded_sounds" class="content_box">
+        <h3>Most downloaded sounds (in the last week)</h3>
+        {% for sound in popular_sounds %}
+            {% display_sound sound.id %}
+            <div class="sample_more">
+                <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads
+                in the last week.
+            </div>
+        {% empty %}
+            <p>No sounds in the database!
+        {% endfor %}
+    </div><!-- #most_downloaded_sounds -->
 </div><!-- #content -->
 
 <div id="sidebar">
-	<div id="uploader_of_the_day" class="content_box">
-		{% if random_uploader != None %}
-	    <h3 class="header">Uploader of the day</h3>
-	    <img src="{{random_uploader.profile.locations.avatar.L.url}}" />
-	    <h2><a href="{% url account random_uploader.username %}">{{random_uploader.username}}</a></h2>
-	    <ul>
-	        <li>Has a been a user for {{random_uploader.date_joined|timesince}}</li>
-	        <li>{{random_uploader.profile.num_sounds}} sound{{random_uploader.profile.num_sounds|pluralize}} uploaded</li>
-	        <li>{{random_uploader.profile.num_posts}} forum post{{random_uploader.profile.num_posts|pluralize}}</li>
-	    </ul>
-	    {% else %}
-	        random uploader is none
-	        {% endif %}
-	</div><!-- #uploader_of_the_day -->
+    <div id="uploader_of_the_day" class="content_box">
+        {% if random_uploader != None %}
+        <h3 class="header">Uploader of the day</h3>
+        <img src="{{random_uploader.profile.locations.avatar.L.url}}" />
+        <h2><a href="{% url account random_uploader.username %}">{{random_uploader.username}}</a></h2>
+        <ul>
+            <li>Has a been a user for {{random_uploader.date_joined|timesince}}</li>
+            <li>{{random_uploader.profile.num_sounds}} sound{{random_uploader.profile.num_sounds|pluralize}} uploaded</li>
+            <li>{{random_uploader.profile.num_posts}} forum post{{random_uploader.profile.num_posts|pluralize}}</li>
+        </ul>
+        {% else %}
+            random uploader is none
+            {% endif %}
+    </div><!-- #uploader_of_the_day -->
 
-	<div id="random_sound" class="content_box">
-	    <h3>Pick a random sound</h3>
-	    <p><a id="random_sound_button" class="action_button" href="{% url sounds-random %}">Give me a random sound!</a>
-	</div><!-- #random_sound -->
-	
-	<div id="latest_changed_packs" class="content_box">
-		<h3>Latest changed packs</h3>
-		<ul>
-		{% for pack in latest_packs %}
-		    <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
-		{% empty %}
-		        <div class="sample_player_small">
-		          No packs in the database!
-		        </div>
-		{% endfor %}
-		</ul>
-	</div><!-- #latest_changed_packs -->
+    <div id="other_sounds" class="content_box">
+        <h3>Other Sounds</h3>
+        <ul>
+            <li><b><a href="{% url remix-groups %}">Browse remix-groups</a></b></li>
+            <li><b><a href="{% url sounds-random %}">Give me a random sound!</a></b></li>
+        </ul>
+    </div><!-- #other_sounds -->
 
-	<div id="most_downloaded_packs" class="content_box">
-		<h3>Most downloaded packs (in the last week)</h3>
-		<ul>
-		{% for pack in popular_packs %}
-		    <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a>
-		        by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
-		        (<span class="pack_count">{{pack.num_d}}</span> downloads)
-		    </li>
-		{% empty %}
-		    <p>No packs in the database!
-		{% endfor %}
-		</ul>
-	</div><!-- #most_downloaded_packs -->
+    <div id="latest_changed_packs" class="content_box">
+        <h3>Latest changed packs</h3>
+        <ul>
+        {% for pack in latest_packs %}
+            <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
+        {% empty %}
+                <div class="sample_player_small">
+                  No packs in the database!
+                </div>
+        {% endfor %}
+        </ul>
+    </div><!-- #latest_changed_packs -->
+
+    <div id="most_downloaded_packs" class="content_box">
+        <h3>Most downloaded packs (in the last week)</h3>
+        <ul>
+        {% for pack in popular_packs %}
+            <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a>
+                by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
+                (<span class="pack_count">{{pack.num_d}}</span> downloads)
+            </li>
+        {% empty %}
+            <p>No packs in the database!
+        {% endfor %}
+        </ul>
+    </div><!-- #most_downloaded_packs -->
 </div><!-- #sidebar -->
 
 {% endblock %}

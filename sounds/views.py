@@ -160,7 +160,7 @@ def pack_download(request, username, pack_id):
 
 @login_required
 def sound_edit(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id)
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
@@ -426,5 +426,5 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 def display_sound_wrapper(request, username, sound_id):
-    sound = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
-    return render_to_response('sounds/display_sound.html', display_sound.display_sound(RequestContext(request), sound, "sample_player_small"), context_instance=RequestContext(request))
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id) #TODO: test the 404 case
+    return render_to_response('sounds/display_sound.html', display_sound.display_sound(RequestContext(request), sound), context_instance=RequestContext(request))

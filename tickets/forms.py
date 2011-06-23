@@ -3,6 +3,10 @@ from models import UserAnnotation
 from utils.forms import RecaptchaForm
 from tickets import *
 
+class ModeratorMessageForm(forms.Form):
+    message     = forms.CharField(widget=forms.Textarea,)
+    moderator_only = forms.BooleanField(required=False)
+
 class UserMessageForm(forms.Form):
     message     = forms.CharField(widget=forms.Textarea)
 

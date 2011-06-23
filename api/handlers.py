@@ -111,6 +111,8 @@ def prepare_single_sound_analysis(sound,request,filter):
         del analysis['lowlevel']['silence_rate_30dB']
         del analysis['rhythm']['bpm_confidence']
         del analysis['rhythm']['perceptual_tempo']
+        del analysis['metadata']['tags']
+        
         # put the moods in one place
         moods = {'c': {}, 'm': {}}
         for m in ['happy', 'aggressive', 'sad', 'relaxed']:
@@ -223,25 +225,26 @@ def level_filter_get(d, levels):
         return level_filter_get(d[levels[0]], levels[1:])
 
 
-RECOMMENDED_DESCRIPTORS = ['metadata.audio_properties',
-                           'lowlevel.average_loudness',
-                           'rhythm.bpm',
-                           'tonal.key_key',
-                           'tonal.key_scale',
-                           'tonal.key_strength',
-                           'tonal.tuning_frequency',
-                           'highlevel.live_studio',
-                           'highlevel.voice_instrumental',
-                           'highlevel.culture',
-                           'highlevel.gender',
-                           'highlevel.timbre',
-                           'highlevel.genre',
-                           'highlevel.moods',
-                           'highlevel.party',
-                           'highlevel.acoustic',
-                           'highlevel.electronic',
-                           'highlevel.speech_music'
-                           ]
+RECOMMENDED_DESCRIPTORS = [ 'metadata.audio_properties',
+                            'highlevel.culture',
+                            'highlevel.gender',
+                            'highlevel.moods',
+                            'highlevel.timbre',
+                            'highlevel.voice_instrumental',
+                            'highlevel.acoustic',
+                            'highlevel.electronic',
+                            'tonal.key_key',
+                            'tonal.key_scale',
+                            'tonal.key_strength',
+                            'tonal.tuning_frequency',
+                            'rhythm.bpm',
+                            'lowlevel.average_loudness',
+                            'lowlevel.dissonance.mean',
+                            'lowlevel.pitch.mean',
+                            'lowlevel.pitch_salience.mean',
+                            'lowlevel.spectral_centroid.mean',
+                            'lowlevel.mfcc.mean'
+                            ]
 
 def get_tags(sound):
     return [tagged.tag.name for tagged in sound.tags.select_related("tag").all()]
@@ -271,7 +274,7 @@ def prepare_single_user(user):
 
 def prepare_single_pack(pack, include_user=True):
     d = {}
-    for field in ["description", "name", "num_downloads", "created"]:
+    for field in ["name", "num_downloads", "created"]:
         d[field] = getattr(pack, field)
     user = User.objects.get(id=pack.user_id)
     if include_user:

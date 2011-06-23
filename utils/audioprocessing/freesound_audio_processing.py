@@ -2,24 +2,25 @@ from datetime import datetime
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
 import utils.audioprocessing.processing as audioprocessing
-import os, tempfile, gearman, shutil
+import os, tempfile, gearman, shutil, sys
 
 
 def process(sound):
+
+    def write_log(message):
+        sys.stdout.write(message)
+        sys.stdout.flush()
+
     def failure(message, error=None):
-        logging_message = "Failed to process audio file: %d\n" % sound.id + message
-        sound.processing_log += "failed:" + message + "\n"
-
+        sound.set_processing_state("FA")
+        logging_message = "Failed to process sound with id %s\n" % sound.id
+        logging_message += "\tmessage: %s\n" % message
         if error:
-            logging_message += "\n" + str(error)
-            sound.processing_log += str(error) + "\n"
-
-        sound.processing_state = "FA"
-        sound.save()
+            logging_message += "\terror: %s\n" + str(error)
+        write_log(message)
 
     def success(message):
-        sound.processing_log += message + "\n"
-        sound.save()
+        write_log(message)
 
     def cleanup(files):
         success("cleaning up files after processing: " + ", ".join(files))
@@ -29,11 +30,8 @@ def process(sound):
             except:
                 pass
 
-    # only keep the last processing attempt
-    sound.processing_log = ""
-    sound.processing_date = datetime.now()
-    sound.processing_state = "PR"
-    sound.save()
+    # not saving the date of the processing attempt anymore
+    sound.set_processing_state("PR")
 
     new_path = sound.locations('path')
     # Is the file at its new location?
@@ -56,14 +54,12 @@ def process(sound):
                     failure("Could not create destination directory %s" % dest_dir)
                     return False
             shutil.copy(sound.original_path, new_path)
-            sound.original_path = new_path
-            sound.save()
+            sound.set_original_path(new_path)
             success("Copied file from its FS1 to FS2 location.")
     else:
         success("Found the file at its FS2 location: %s" % new_path)
         if sound.original_path != new_path:
-            sound.original_path = new_path
-            sound.save()
+            sound.set_original_path(new_path)
 
     # convert to pcm
     to_cleanup = []
@@ -99,13 +95,7 @@ def process(sound):
         return False
 
     success("got sound info and stereofied: " + tmp_wavefile2)
-
-    sound.samplerate = info["samplerate"]
-    sound.bitrate = info["bitrate"]
-    sound.bitdepth = info["bitdepth"]
-    sound.channels = info["channels"]
-    sound.duration = info["duration"]
-    sound.save()
+    sound.set_audio_info_fields(info)
 
     for mp3_path, quality in [(sound.locations("preview.LQ.mp3.path"),70), (sound.locations("preview.HQ.mp3.path"), 192)]:
         # create preview
@@ -182,8 +172,6 @@ def process(sound):
     success("created previews, large")
 
     cleanup(to_cleanup)
-    sound.processing_state = "OK"
-    sound.processing_date = datetime.now()
-    sound.save()
+    sound.set_processing_state("OK")
 
     return True

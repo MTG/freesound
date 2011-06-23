@@ -1,0 +1,539 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Frameset//EN""http://www.w3.org/TR/REC-html40/frameset.dtd">
+<html>
+<head>
+<title>
+ Overview
+</title>
+<link rel ="stylesheet" type="text/css" href="stylesheet.css" title="Style">
+<script>
+function asd() {
+	
+		parent.document.title=" Overview";
+	
+}
+</script>
+</head>
+<body bgcolor="white" onload="asd();">
+
+<center>
+	
+	   <h2>How To</h2>
+	
+</center>
+<BR/>
+<p id="canorisConstructor">
+<h4>Canoris constructor</h4>
+<p>
+	The library exists out of a few classes in the namespace CAN and the Canoris class. 
+	To start using the library call the Canoris class constructor. This constructor returns 
+	a Canoris object with all the necessary methods and objects to get Files, Collections and Pagers.
+	<br><br>
+	
+	
+	Canoris constructor:
+	<HR>
+	<br>
+<UL>
+
+	<PRE><B>Canoris</B>(&lt;String&gt; aKey, &lt;Boolean&gt; useJson, levelConsoleLog, &lt;String&gt; levelServerLog, &lt;String&gt; serverLogAddress)</PRE>
+	<UL>
+  	<B>Parameters:</B>
+	<UL><CODE>aKey</CODE> -  the api key that is going to be used.  
+   	</UL>
+    <UL><CODE>useJson</CODE> -  a boolean indicating the use of Json, otherwise Jsonp  
+    </UL>
+    <UL><CODE>levelServerLog</CODE> -  the level of the serverLogger, available levels see levelDebugLog  
+    </UL>
+    <UL><CODE>serverLogAddress</CODE> -  the addres to which the serverLogger makes calls  
+    </UL>
+    <UL><CODE>levelDebugLog</CODE> -  the level of the consoleLogger available levels are:   
+			ALL TRACE DEBUG INFO WARN ERROR FATAL OFF
+    </UL>
+  	</UL>
+	
+<!-- Constructor return value(s) -->
+   <UL>  <B>Returns:</B>   <UL>
+     { pagers, getFilesPager, getCollectionsPager, getCollectionFilesPager, files,  
+	 	getFile, collections, getCollection, text2phonemes, setTimeout }.     
+     </UL>
+   </UL>
+</UL>
+<BR>
+<!-- End constructor return value(s) -->
+<HR> 
+<BR/>
+The first parameter, aKey, is required, the others are optional. 
+<BR/>
+For the aKey parameter you use your api_key from canoris 
+(no api_key yet? See <a href="http://www.canoris.com/node/6" target="parent">Getting started</a>).
+<BR/>
+If you use the canorisLib script from Canoris server, you can use Json for XMLHttpRequests. 
+In this case enter true for the 'useJson' parameter of the Canoris constructor.
+<BR/>
+The 'levelConsoleLog' and 'levelServerLog' are used to set the levels of the logger the library contains. 
+This logger enables the user to send debug and error messages to a console window and/or to the server. 
+A different level can be set for both options at the instantiation of the Canoris object. 
+When no level is passed, the logger is unabled. The available levels are: 
+<BR/>ALL TRACE DEBUG INFO WARN ERROR FATAL OFF. 
+<BR/>The final optional parameter is 'serverLogAddress', with which the serverAddress can be set, 
+this is the address where the serverLogger will post logs to.
+ <BR/>
+ 
+<pre id="code">
+canoris = Canoris("12d6dc5486554e278e370cdc49935908");
+canoris = Canoris("12d6dc5486554e278e370cdc49935908",false, "ALL", "ERROR", "postLogs.php")
+</pre> 
+N.B. The keys shown on this page only serve as examples, they are unvaluable keys.
+<BR/><BR/>
+The constructor returns the Canoris object. This object contains all the necessary methods to get Files, Collections and Pagers. 
+The requested files, collections and pagers are saved in similar called objects in the Canoris object. 
+<BR/><BR/>
+
+ <!-- =========== object SUMMARY =========== -->
+
+   <A NAME="field_summary"><!-- --></A>
+      <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+         <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+            <TD COLSPAN=2><FONT SIZE="+1">
+               <B>Canoris object - object Summary</B></FONT></TD>
+         </TR>
+
+   <!-- This is one instance field summary -->
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#object">pagers</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+   Object to which pagers will be saved. </TD>
+   </TR>
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#object">files</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+   Object to which files will be saved.</TD>
+   </TR>
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#object">collections</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+   Object to which collections will be saved</TD>
+   </TR>
+   
+
+   </TABLE>
+   &nbsp;
+<!-- =========== END FIELD SUMMARY =========== -->
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TD COLSPAN=2><FONT SIZE="+1">
+<B>Canoris object - Method Summary</B></FONT></TD>
+</TR>
+
+
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&lt;static&gt;&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#getTotal">getFilesPager</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	 Creates a files Pager object, saves it with passed pager-save function
+      </TD>
+   </TR>
+
+     <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&lt;static&gt;&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#getTotal">getcollectionsPager</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	 Creates a collection Pager object, saves it with passed pager-save function
+      </TD>
+   </TR>
+
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&lt;static&gt;&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#getTotal">getCollectionFilesPager</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	 Creates a collection files Pager object, saves it with passed pager-save function
+      </TD>
+   </TR>
+
+      <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&lt;static&gt;&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#getTotal">getFile</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	Gets corresponding file properties and create a file object
+      </TD>
+   </TR>
+
+      <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&lt;static&gt;&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#getTotal">getCollection</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	Gets corresponding collection properties and create a collection object
+      </TD>
+   </TR>
+
+        <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&lt;static&gt;&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#getTotal">text2phonemes</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	Method to generate the phonemes that you need for the vocaloid processing operation.
+      </TD>
+   </TR>
+
+           <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&lt;static&gt;&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#getTotal">setTimeout</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		Set timeout for jsonp requests.
+      </TD>
+   </TR>
+
+ 
+
+
+</TABLE>
+
+
+</p>
+<!-- ========== END METHOD SUMMARY =========== -->
+
+<!-- ========== START getFile  =========== -->
+<BR/><BR/>
+<p id="getFile">
+<h4>Get a file</h4>
+To get a file, use the Canoris object getFile method.  
+
+<!-- __________ getFile __________ -->
+<HR>
+<ul>
+   <A NAME="!s!getFile"><!-- --></A>
+   <PRE>&lt;static&gt; void <B>getFile</B>(&lt;string&gt; fKey, &lt;string&gt; nameFile, &lt;function&gt; succesCallback, &lt;fucntion&gt; errorCallback)</PRE>
+   <UL>Gets corresponding file properties and create a file object</UL>
+   <UL>
+   <B>Parameters:</B>
+   <UL><CODE>fKey</CODE> -  Contains a file key.  </UL> 
+   <UL><CODE>nameFile</CODE> - The name to save the file to inside files object in Canoris </UL> 
+   <UL><CODE>succesCallback</CODE> -  Will be called when the request succeeds.  </UL> 
+     <UL><CODE>errorCallback</CODE> -  Will be called when the request fails    </UL> 
+    </UL>
+</ul>
+<HR>
+
+The string for the 'nameFile' parameter, will be used as the variable-name for the received file, saved in the files object. 
+See, for example, the following code. It first calls the getFile method and after a timeout (to get a response to a request takes time)
+it accesses a method in the received file. 
+<BR/>
+<pre id="code">
+canoris.getFile("e07119dea6b5453eb6ffd41403df52c2", "myFile");
+setTimeout( function(){ canoris.files.myFile.getVisualisationUrl("spectrum"); }, 1000); 
+</pre> 
+<BR/>
+The getFile method can be passed a succesCallback function. This function will be called when the request succeeds.
+<BR/>The getFile method also accepts a errorCallback function. 
+Depending on the use of json or jsonp, this method will be called when the request fails. See <a href="how_to.html#errorCallback">errorCallback</a>.
+<BR/><BR/>
+For information about the available methods of a file object, see <a href="CAN/File.html" target=_self>CAN.File</a>.
+<BR/><BR/>
+</p>
+<!-- ========== END getFile  =========== -->
+
+<!-- ========== START getCollection  =========== -->
+<BR/><BR/>
+<p id="getCollection">
+<h4>Get a collection</h4>
+To get a collection, use the Canoris object getCollection method.  
+
+<!-- __________ getCollection __________ -->
+<HR>
+<UL>
+   <PRE>&lt;static&gt; void <B>getCollection</B>(&lt;string&gt; cKey, &lt;string&gt; nameCollection, &lt;function&gt; succesCallback, &lt;fucntion&gt; errorCallback)</PRE>
+   <UL>Gets corresponding collection properties and create a collection object</UL>
+   <UL>  <B>Parameters:</B>
+   <UL><CODE>cKey</CODE> -  Contains a collection key.  </UL> 
+   <UL><CODE>nameCollection</CODE> - The name to save the collection to inside collections object in Canoris 
+	 										-> "myCollectionName" will be accesable at canorisObject.files.myCollectionName </UL> 
+   <UL><CODE>succesCallback</CODE> -  Will be called when the request succeeds.  </UL> 
+   <UL><CODE>errorCallback</CODE> -  Will be called when the request fails  (no XMLHttpRequest and specified error passed to errorCallback with use of jsonp)    
+   </UL> 
+   </UL>
+</UL>
+<HR>
+<BR/>
+The string for the 'nameCollection' parameter, will be used as the variable-name for the received collection, saved in the collections object. 
+See, for example, the following code. It first calls the getCollection method and after a timeout (to get a response to a request takes time)
+it accesses a method in the received collection. 
+<BR/>
+<pre id="code">
+canoris.getCollection("b3ee98a8bcca4d65891d46ccdbb419cc", "myCollection");
+setTimeout( function(){ canoris.collections.myFile.getSimilar("e07119dea6b5453eb6ffd41403df52c2", "rhythm"); }, 1000); 
+</pre> 
+<BR/>
+The getCollection method can be passed a succesCallback function. This function will be called when the request succeeds.
+<BR/>The getCollection method also accepts a errorCallback function. 
+Depending on the use of json or jsonp, this method will be called when the request fails. See <a href="how_to.html#errorCallback">errorCallback</a>.
+<BR/><BR/>
+For information about the available methods of a collection object, see <a href="CAN/File.html" target=_self>CAN.File</a>.
+<BR/><BR/><BR/>
+</p>
+
+<!-- ========== END getCollection  =========== -->
+
+
+<!-- ========== START similarity  =========== -->
+<BR/><BR/>
+<p id="similarity">
+<h4>Get similar</h4>
+An important method of a collection object is the getSimilar method.
+
+<!-- __________ getSimilar __________ -->
+<HR>
+<UL>
+    <PRE>void <B>getSimilar</B>(&lt;string&gt; fKey, &lt;string&gt; searchPreset, &lt;int&gt; nrResults, &lt;function&gt; succesCallback, &lt;fucntion&gt; errorCallback)</PRE>
+    <UL>Get similar files and similarity</UL>
+      <!-- METHOD PARAMETERS START -->
+   <UL>  <B>Parameters:</B>
+     <UL><CODE>fKey</CODE> -  Contains the file key of the file on which similarity search will be done.   </UL> 
+     <UL><CODE>searchPreset</CODE> -  Contains the type of preset for the similarity search. "music", "rhythm" or "lowlevel" </UL> 
+     <UL><CODE>nrResults</CODE> -  Contains the number of results that the response need to have.  </UL
+     <UL><CODE>succesCallback</CODE> -  Will be called when the request succeeds.  </UL>  
+     <UL><CODE>errorCallback</CODE> -  Will be called when the request fails  
+	 	(no XMLHttpRequest and specified error passed to errorCallback with use of jsonp) </UL> 
+   </UL>
+</UL>
+<HR>
+<BR/>
+With the getSimilar method, the user can get similar files and their similarity value. 
+<BR/>
+<pre id="code">
+canoris.collections.myFile.getSimilar("e07119dea6b5453eb6ffd41403df52c2", "music");</pre> 
+<BR/>
+For information about similarity search see 
+<a href="http://docs.canoris.com/reference.html#collection-file-similarity-resource" target="_parent">canoris_docs - similarity</a>.
+<BR/><BR/><BR/>
+</p>
+
+<!-- ========== END similarity  =========== -->
+
+<!-- ========== START getPager methods  =========== -->
+<BR/><BR/>
+<p id="getPager">
+<h4>Get a pager</h4>
+There are three different getPager methods, getFilesPager, getCollectionsPager, getCollectionFilesPager. 
+<BR/><BR/>
+The getFilesPager method returns a file pager, with this object you can handle paginating through your files. 
+
+<!-- __________ getFilesPager __________ -->
+<HR>
+<UL>
+   <PRE>&lt;static&gt; void <B>getFilesPager</B>(&lt;string&gt; namePager, &lt;number&gt; pageNr, &lt;function&gt; succesCallback, &lt;fucntion&gt; errorCallback)</PRE>
+   <UL>Creates a files Pager object, saves it with passed pager-save function</UL>
+   <UL><B>Parameters:</B> 
+    <UL><CODE>namePager</CODE> -  The name to save the pager to inside pagers object in Canoris 
+	 			-> "myPagerName" will be accesable at canorisObject.pagers.myPagerName </UL> 
+   <UL><CODE>pageNr</CODE> -  The nr of the page to letwhere the pager needs to point to.</UL> 
+     <UL><CODE>succesCallback</CODE> -  Will be called when the request succeeds.  </UL> 
+     <UL><CODE>errorCallback</CODE> -  Will be called when the request fails   (no XMLHttpRequest and specified error passed to errorCallback with use of jsonp)    
+      </UL> 
+ </UL>
+ </UL>
+<HR>
+<BR/>
+The string for the 'namePager' parameter, will be used as the variable-name for the received pager, saved in the pagers object. 
+See, for example, the following code. It first calls the getPager method and after a timeout (to get a response to a request takes time)
+it accesses a method in the received pager. 
+<BR/>
+<pre id="code">
+canoris.getFilesPager("myFilesPager");
+setTimeout( function(){ canoris.pagers.myFilesPager.getTotal(); }, 1000); 
+</pre> 
+<BR/>
+The getFilesPager method can be passed a succesCallback function. This function will be called when the request succeeds.
+<BR/>The getFilesPager method also accepts a errorCallback function. 
+Depending on the use of json or jsonp, this method will be called when the request fails. See <a href="how_to.html#errorCallback">errorCallback</a>.
+<BR/><BR/>
+The getCollectionsPager method works in the exact same way as the getFilesPager method,
+but returns a collections pager instead of a filespager.  With a collection pager you can handle paginating through your collections.
+<BR/><BR/>
+The getCollectionFilesPager method returns a collection files pager. 
+With this object you can handle paginating through your files in a specified collection.
+The getcollectionFilesPager method needs to be passed the collectionkey of the collection to paginate through.
+<HR><UL>
+	<PRE>&lt;static&gt; void <B>getCollectionFilesPager</B>(&lt;string&gt; cKey, &lt;Object&gt; savePager, &lt;Number&gt; pageNr, &lt;function&gt; succesCallback, &lt;fucntion&gt; errorCallback)</PRE>
+    <UL>Creates a collection files Pager object, saves it with passed pager-save function</UL>
+    <!-- METHOD PARAMETERS START -->
+    <UL>
+   	<B>Parameters:</B>
+    <UL><CODE>cKey</CODE> -  Contains a collection key.  </UL> 
+     <UL><CODE>savePager</CODE> -  Is used to save the created Pager object  </UL> 
+     <UL><CODE>pageNr</CODE> -  The nr of the page where the pager needs to point to.  </UL> 
+     <UL><CODE>succesCallback</CODE> -  Will be called when the request succeeds.  </UL>
+     <UL><CODE>errorCallback</CODE> -  Will be called when the request fails  
+	 (no XMLHttpRequest and specified error passed to errorCallback with use of jsonp) </UL> 
+   </UL>
+</UL> <HR>  
+
+<pre id="code">
+canoris.getCollectionFilesPager("b3ee98a8bcca4d65891d46ccdbb419cc", "myColFilesPager");
+setTimeout( function(){ canoris.pagers.myColFilesPager.getTotal(); }, 1000); 
+</pre> 
+<BR/>
+For information about the available methods of a pager object, see <a href="CAN/Pager.html" target=_self>CAN.Pager</a>.
+<BR/><BR/><BR/>
+</p>
+<!-- ========== END getPager methods  =========== -->
+
+<!-- ========== START text2phonemes method =========== -->
+<BR/><BR/>
+<p id="text2phonemes">
+<h4>Text2phonemes</h4>
+With the text2phonemes method, phonemes can be generated that are needed for the vocaloid processing operation.
+See <a href="docs.canoris.com/reference.html#language">canoris_docs - Language</a> for more information.
+<!-- __________ text2phonemes __________ -->
+<HR>
+<UL>
+   <PRE>&lt;static&gt; void <B>text2phonemes</B>(&lt;string&gt; text, &lt;function&gt; succesCallback, &lt;function&gt; errorCallback, &lt;string&gt; voice, &lt;string&gt; language)</PRE>
+      <UL>Method to generate the phonemes that you need for the vocaloid processing operation.</UL>
+   <!-- METHOD PARAMETERS START -->
+   <UL>   <B>Parameters:</B>    <UL><CODE>text</CODE> -  Contains the text to be translated to phonemes  </UL> 
+     <UL><CODE>succesCallback</CODE> -  Will be called when the request succeeds.  </UL>
+     <UL><CODE>errorCallback</CODE> -  Will be called when the request fails   </UL> 
+     <UL><CODE>voice</CODE> -  Contains the voice to adapt the possible output phonemes to the database for. 'arnau' or 'ona'  </UL> 
+     <UL><CODE>language</CODE> -  Contains the language the text is in. 'spanish' or 'english'      </UL> 
+   </UL>
+</UL>
+<HR>
+<BR>
+<pre id="code">
+canoris.text2phonemes("Hola que tal", callback); 
+</pre> 
+</p>
+<!-- ========== END text2phonemes method  =========== -->
+
+<!-- ========== START setTimeout method =========== -->
+<p id="setTimeout">
+<BR/><BR/>
+<h4>SetTimeout</h4>
+The setTimeout method is used to set the timeout for a jsonp request. 
+See below, <a href="how_to.html#errorCallback">errorCallback</a>.
+<!-- __________ setTimeout __________ -->
+
+<HR>
+<UL>
+   <PRE>&lt;static&gt; void <B>setTimeout</B>(&lt;number&gt; tOut)</PRE>
+      <UL>Set timeout method.</UL>
+   <!-- METHOD PARAMETERS START -->
+   <UL>   <B>Parameters:</B>   <UL><CODE>tOut</CODE> -  Used for jsonp requests timeout time. </UL> 
+   </UL>
+</UL>
+<HR>
+<pre id="code">
+canoris.setTimeout(30000); 
+</pre> 
+   
+</p>
+<!-- ========== END setTimeout method  =========== -->
+
+<p id="errorCallback">
+<BR/>
+<h4>ErrorCallback methods</h4>
+While using json, 
+the errorCallback function get passed the XMLHttpRequest object and the error returned from the server. when a XMLHttpRequest fails. 
+But while using jsonp, no specified error can be passed to the errorCallback function. 
+This is because the way jsonp requests are handled, it does not use a XMLHttpRequest. 
+The jsonp request can't fail, so the server can't return an error. 
+But it can be stopped by using a timeout, default time is 45000 mili seconds. 
+This value can be changed at the initialising of the <a href="how_to.html#canorisConstructor">Canoris constructor</a>,  
+or by calling the <a href="how_to.html#setTimeout">setTimeout method</a>.
+
+</p>
+
+
+
+
+
+ <BR/><BR/><BR/><BR/><BR/>
+ 
+
+
+
+<br/>
+<br/>
+
+
+<hr>
+<font size="-1">
+
+</font>
+<div class="jsdoc_ctime">Documentation generated by <a href="http://jsdoc.sourceforge.net/" target="_parent">JSDoc</a> on Mon Jan  3 13:17:59 2011</div>
+</body>
+</html>

@@ -2,7 +2,9 @@ Overview
 >>>>>>>>
 
 With the Freesound API you can browse, search, and retrieve information 
-about Freesound users, packs, and the sounds themselves of course.
+about Freesound users, packs, and the sounds themselves of course. You 
+can also find similar sounds to a given target (based on content analysis) 
+and retrieve automatically extracted features from audio files.
 Currently, the API is read only. We might add features for uploading
 sounds in the future.
 
@@ -13,9 +15,8 @@ If you need more help after reading these documents or want to stay up to
 date on any changes or future feaures of the freesound api or if you would
 like to request more features for the api, please use our google group:
 
-::
 
-  http://groups.google.com/group/freesound-api
+- http://groups.google.com/group/freesound-api
 
 RESTful
 -------
@@ -50,7 +51,16 @@ N.B. The URIs documented on these pages do not show the API keys, but they
 are definitely necessary.
 
 If authentication fails, you will get a response with status code
-'401 Unauthorized'.
+'401 Unauthorized' and the following content (indeed, all error responses have the same structure):
+
+::
+
+  {
+    "status_code": 401, 
+    "explanation": "Supplied api_key does not exist", 
+    "type": "AuthenticationError", 
+    "error": true
+  }
 
 You can apply for API keys at the following URL. Note that you will need 
 a Freesound account.

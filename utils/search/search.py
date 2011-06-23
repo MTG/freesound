@@ -14,7 +14,7 @@ def convert_to_solr_document(sound):
     document["original_filename"] = sound.original_filename
 
     document["description"] = sound.description
-    document["tag"] = [taggeditem.tag.name for taggeditem in sound.tags.all()]
+    document["tag"] = list(sound.tags.select_related("tag").values_list('tag__name', flat=True))
 
     document["license"] = sound.license.name
 
@@ -24,7 +24,7 @@ def convert_to_solr_document(sound):
     if sound.pack:
         document["pack"] = sound.pack.name
 
-    document["is_geotagged"] = sound.geotag != None
+    document["is_geotagged"] = sound.geotag_id != None
 
     document["type"] = sound.type
 
@@ -41,14 +41,14 @@ def convert_to_solr_document(sound):
     document["avg_rating"] = sound.avg_rating
     document["num_ratings"] = sound.num_ratings
 
-    document["comment"] = [comment.comment for comment in sound.comments.all()]
-    document["comments"] = sound.comments.count()
+    document["comment"] = list(sound.comments.values_list('comment', flat=True))
+    document["comments"] = sound.num_comments
 
-    document["waveform_path_m"] = sound.locations("display.wave.M.path")
-    document["waveform_path_l"] = sound.locations("display.wave.L.path")
-    document["spectral_path_m"] = sound.locations("display.spectral.M.path")
-    document["spectral_path_l"] = sound.locations("display.spectral.L.path")
-    document["preview_path"] = sound.locations("preview.LQ.mp3.path")
+    document["waveform_path_m"] = sound.locations()["display"]["wave"]["M"]["path"]
+    document["waveform_path_l"] = sound.locations()["display"]["wave"]["L"]["path"]
+    document["spectral_path_m"] = sound.locations()["display"]["spectral"]["M"]["path"]
+    document["spectral_path_l"] = sound.locations()["display"]["spectral"]["L"]["path"]
+    document["preview_path"] = sound.locations()["preview"]["LQ"]["mp3"]["path"]
 
     return document
 
@@ -64,12 +64,12 @@ def add_sound_to_solr(sound):
 def add_sounds_to_solr(sounds):
     logger.info("adding multiple sounds to solr index")
     solr = Solr(settings.SOLR_URL)
-    
-    
+
+
     logger.info("creating XML")
     documents = map(convert_to_solr_document, sounds)
     logger.info("posting to Solr")
-    solr.add(documents)    
+    solr.add(documents)
 
     logger.info("optimizing solr index")
     solr.optimize()
@@ -84,10 +84,13 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
         try:
             add_sounds_to_solr(sound_queryset[i:i+slice_size])
             if mark_index_clean:
-                map(set_index_clean, sound_queryset[i:i+slice_size])
+                logger.info("Marking sounds as clean.")
+                sound_queryset[i:i+slice_size].update(is_index_dirty=False)
         except SolrException, e:
             logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
-                
+
+
+
 
 def delete_sound_from_solr(sound):
     logger.info("deleting sound with id %d" % sound.id)
@@ -95,7 +98,3 @@ def delete_sound_from_solr(sound):
         Solr(settings.SOLR_URL).delete_by_id(sound.id)
     except Exception, e:
         logger.error('could not delete sound with id %s (%s).' % (sound.id, e))
-
-def set_index_clean(sound):
-    sound.is_index_dirty = False
-    sound.save()

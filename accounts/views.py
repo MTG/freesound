@@ -40,7 +40,7 @@ import django.contrib.auth.views as authviews
 from django.contrib.auth.forms import AuthenticationForm
 import hashlib, base64
 
-audio_logger = logging.getLogger('audioprocessing')
+audio_logger = logging.getLogger('audio')
 
 @login_required
 def bulk_license_change(request):
@@ -279,6 +279,7 @@ def describe_pack(request):
 
 @login_required
 def describe_sounds(request):
+    sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)
     selected_license = request.session.get('describe_license', False)
     selected_pack = request.session.get('describe_pack', False)
@@ -390,11 +391,8 @@ def describe_sounds(request):
             sound.description = data.get('description', '')
             sound.set_tags(data.get('tags'))
             sound.save()
-            # process the sound
-            try:
-                sound.process()
-            except Exception, e:
-                audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, e))
+            # remember to process the file
+            sounds_to_process.append(sound)
             if request.user.profile.is_whitelisted:
                 sound.moderation_state = 'OK'
                 sound.save()
@@ -425,6 +423,15 @@ def describe_sounds(request):
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
+        # Process the sound
+        # N.B. we do this at the end to avoid conflicts between django-web and django-workers
+        # If we're not careful django's save() functions will overwrite any processing we
+        # do on the workers.
+        try:
+            for sound in sounds_to_process:
+                sound.process()
+        except Exception, e:
+            audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
         if len(request.session['describe_sounds']) <= 0:
             msg = 'You have described all the selected files.'
             messages.add_message(request, messages.WARNING, msg)
@@ -511,6 +518,7 @@ def accounts(request):
 
     # prepare for view
     most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
+    most_active_users_display=sorted(most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
     return render_to_response('accounts/accounts.html', dict(most_active_users=most_active_users_display, new_users = new_users_display, logged_users = logged_users, user_rank=user_rank,num_days=num_days), context_instance=RequestContext(request))

@@ -3,50 +3,13 @@
 This django-admin command runs a Gearman worker for processing sounds.
 """
 
-import gearman, sys
+import gearman, sys, traceback, json
 from django.core.management.base import BaseCommand
 from utils.audioprocessing.freesound_audio_processing import process
 from utils.audioprocessing.essentia_analysis import analyze
 from django.conf import settings
 from sounds.models import Sound
 from optparse import make_option
-import traceback
-
-# TODO: DRY-out!
-
-def task_process_sound(gearman_worker, gearman_job):
-    """Run this for Gearman 'process_sound' jobs.
-    """
-    sound_id = gearman_job.data
-    print "Processing sound with id", sound_id
-    try:
-        result = process(Sound.objects.select_related().get(id=sound_id))
-        print "\t sound: ", sound_id, "processing", "ok" if result else "failed"
-    except Sound.DoesNotExist:
-        print "\t did not find sound with id: ", sound_id
-        return False
-    except Exception, e:
-        print "\t something went terribly wrong:", e
-        traceback.print_tb()
-        sys.exit(255)
-    return str(result)
-
-
-def task_analyze_sound(gearman_worker, gearman_job):
-    """Run this for Gearman essentia analysis jobs.
-    """
-    sound_id = gearman_job.data
-    print "Analyzing sound with id", sound_id
-    try:
-        result = analyze(Sound.objects.get(id=sound_id))
-    except Sound.DoesNotExist:
-        print "\t did not find sound with id: ", sound_id
-        return False
-    except Exception, e:
-        print "\t could not analyze sound:", e
-        traceback.print_tb()
-        sys.exit(255)
-    return str(result)
 
 
 class Command(BaseCommand):
@@ -58,11 +21,62 @@ class Command(BaseCommand):
             help='Register this function (default: process_sound)'),
     )
 
+    def write_stdout(self, msg):
+        self.stdout.write(msg)
+        self.stdout.flush()
+
     def handle(self, *args, **options):
+        # N.B. don't take out the print statements as they're
+        # very very very very very very very very very very
+        # helpful in debugging supervisor+worker+gearman
+        self.write_stdout('Starting worker\n')
         task_name = 'task_%s' % options['queue']
-        if task_name not in globals():
-            print "Wow.. That's crazy! Maybe try an existing queue?"
+        self.write_stdout('Task: %s\n' % task_name)
+        if task_name not in dir(self):
+            self.write_stdout("Wow.. That's crazy! Maybe try an existing queue?\n")
             sys.exit(1)
+        task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
+        self.write_stdout('Initializing gm_worker\n')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        gm_worker.register_task(options['queue'], globals()[task_name])
+        self.write_stdout('Registering task %s, function %s\n' % (task_name, task_func))
+        gm_worker.register_task(options['queue'], task_func)
+        self.write_stdout('Starting work\n')
         gm_worker.work()
+        self.write_stdout('Ended work\n')
+
+    def task_analyze_sound(self, gearman_worker, gearman_job):
+        """Run this for Gearman essentia analysis jobs.
+        """
+        sound_id = gearman_job.data
+        self.write_stdout("Analyzing sound with id %s\n" % sound_id)
+        try:
+            result = analyze(Sound.objects.get(id=sound_id))
+            self.write_stdout("\t sound: %s, analyzing %s\n" % \
+                              (sound_id, ("ok" if result else "failed")))
+            return 'true' if result else 'false'
+        except Sound.DoesNotExist:
+            self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
+            return 'false'
+        except Exception, e:
+            self.write_stdout("\t could not analyze sound: %s\n" % e)
+            self.write_stdout("\t%s\n" % traceback.format_exc())
+            return 'false'
+
+    def task_process_sound(self, gearman_worker, gearman_job):
+        """Run this for Gearman 'process_sound' jobs.
+        """
+        sound_id = gearman_job.data
+        self.write_stdout("Processing sound with id %s\n" % sound_id)
+        try:
+            result = process(Sound.objects.select_related().get(id=sound_id))
+            self.write_stdout("\t sound: %s, processing %s\n" % \
+                              (sound_id, ("ok" if result else "failed")))
+            return 'true' if result else 'false'
+        except Sound.DoesNotExist:
+            self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
+            return 'false'
+        except Exception, e:
+            self.write_stdout("\t something went terribly wrong: %s\n" % e)
+            self.write_stdout("\t%s\n" % traceback.format_exc())
+            return 'false'
+

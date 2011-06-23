@@ -93,53 +93,6 @@ Stable
 
 
 
-metadata.tags
--------------
-
-::
-
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/metadata/tags
-
-
-**Stats**::
-
-    /album
-    /artist
-    /comment
-    /genre
-    /title
-    /track
-    /year
-
-**Description**
-
-
-Outputs the metadata tags associated with audio files. Supported audio file types are mp3, flac, ogg.
-
-
-**Output**
-
-dict. tags (album, artist, comment, genre, title, track, year)
-
-
-**Application**
-
-
-
-
-
-**Quality Rating**
-
-
-Stable
-
-
-**References**
-
-
-
-
-
 metadata.version
 ----------------
 

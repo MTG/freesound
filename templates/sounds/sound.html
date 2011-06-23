@@ -126,19 +126,19 @@
         <dt><a href="{% url wiki-page "soundinfo/channels" %}"><img src="{{media_url}}images/info{% if sound.channels_warning %}_red{% endif %}.png" width="12" height="12" /></a>Channels</dt><dd>{{sound.get_channels_display}}</dd>
     </dl>
 
-    <ul id="sound_links">
+    <ul id="sound_links" style="padding-left: 23px">
+        {% if sound.pack %}
+        <li><a id="pack_link" class="icon" href="{% url pack sound.user.username sound.pack.id %}">Pack: {{ sound.pack.name }}</a></li>
+        {% endif %}
         {% if sound.geotag %}
-        <li><img src="{{media_url}}images/geotag.png" width="16" height="16" /><a href="{% url sound-geotag sound.user.username sound.id %}">Geotag</a></li>
+        <li><a id="geotag_link" class="icon" href="{% url sound-geotag sound.user.username sound.id %}">Geotag</a></li>
         {% endif %}
-        {% comment %}
-        <li><img src="{{media_url}}images/similar_sounds.png" width="16" height="16" /><a href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
-        {% endcomment %}
         {% if sound.remix_groups.all.count %}
-        <li><img src="{{media_url}}images/sources.png" width="16" height="16" />
-            <img src="{{media_url}}images/remixes.png" width="16" height="16" />
-            <a href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
+        <li><a id="remixes_link" class="icon" href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
         {% endif %}
-        <li><a class="similar action_button" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds..</a></li>
+        {% if sound.similarity_state == 'OK' %}
+        <li><a id="similar_sounds_link" class="icon" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
+        {% endif %}
     </ul>
 
     <div id="flag_sound">

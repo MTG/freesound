@@ -1,7 +1,7 @@
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from models import Ticket, Queue, TicketComment
@@ -17,10 +17,12 @@ def __get_contact_form(request, use_post=True):
 
 
 def __get_tc_form(request, use_post=True):
-    return __get_anon_or_user_form(request, AnonymousMessageForm, UserMessageForm, use_post)
+    return __get_anon_or_user_form(request, AnonymousMessageForm, UserMessageForm, use_post, True)
 
 
-def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
+def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, include_mod=False):
+    if __can_view_mod_msg(request):
+        user_form = ModeratorMessageForm
     if len(request.POST.keys()) > 0 and use_post:
         if request.user.is_authenticated():
             return user_form(request.POST)
@@ -28,6 +30,11 @@ def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
             return anonymous_form(request, request.POST)
     else:
         return user_form() if request.user.is_authenticated() else anonymous_form(request)
+
+def __can_view_mod_msg(request):
+    return request.user.is_authenticated() \
+            and (request.user.is_superuser or request.user.is_staff \
+                 or Group.objects.get(name='moderators') in request.user.groups)
 
 # TODO: copied from sound_edit view,
 def is_selected(request, prefix):
@@ -37,6 +44,7 @@ def is_selected(request, prefix):
     return False
 
 def ticket(request, ticket_key):
+    can_view_moderator_only_messages = __can_view_mod_msg(request)
     clean_status_forms = True
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
@@ -48,6 +56,7 @@ def ticket(request, ticket_key):
                 print 5*'#', 'valid'
                 tc = TicketComment()
                 tc_text = tc_form.cleaned_data.get('message', False)
+                tc.moderator_only = tc_form.cleaned_data.get('moderator_only', False)
                 if tc_text:
                     tc.text = tc_text.replace('\n', '<br>')
                     if request.user.is_authenticated():
@@ -109,6 +118,7 @@ def ticket(request, ticket_key):
 
 @login_required
 def sound_ticket_messages(request, ticket_key):
+    can_view_moderator_only_messages = __can_view_mod_msg(request)
     ticket = get_object_or_404(Ticket, key=ticket_key)
     return render_to_response('tickets/message_list.html',
                               locals(),
@@ -180,7 +190,8 @@ def __get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
-ticket.id
+ticket.id,
+ticket.modified as modified
 FROM
 tickets_ticketcomment AS comment,
 tickets_ticket AS ticket
@@ -190,7 +201,8 @@ WHERE comment.id in (   SELECT MAX(id)
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND comment.sender_id = ticket.sender_id
-AND now() - comment.created > INTERVAL '2 days'
+AND now() - modified > INTERVAL '2 days'
+LIMIT 5
     """)
 
 
@@ -233,6 +245,7 @@ def moderation_assign_user(request, user_id):
 
 @permission_required('tickets.can_moderate')
 def moderation_assigned(request, user_id):
+    can_view_moderator_only_messages = __can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
         mod_sound_form = SoundModerationForm(request.POST)

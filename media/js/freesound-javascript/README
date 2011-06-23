@@ -1,0 +1,5 @@
+freesound-javascript
+********************
+
+Javascript library to access Freesound.org content.
+example.html provides a use example for most of the functionalities of the API.

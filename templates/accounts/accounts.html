@@ -29,8 +29,12 @@
 	<div id="users_currently_online" class="content_box">	
 	<h3>Users currently online</h3>
 	 {% for user in logged_users %}
-	    <a href="{% url account user.username %}">{{user.username}}</a>
-	 {% endfor %}
+	 	<div class="online_user">
+		 	<a href="{% url account user.username %}">
+		 		<img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" class="currently_online_avatar" title="{{user.username}}" />
+		    </a>
+	    </div><!-- .online_user -->
+	 {% endfor %} <br class="clear" />
 	</div><!-- #users_currently_online -->
 </div><!-- #sidebar -->
 

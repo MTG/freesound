@@ -11,7 +11,11 @@ def analyze(sound):
 #        if os.path.exists(statistics_path) and os.path.exists(frames_path):
 #            return True
 
-        input_path = sound.original_path
+        input_path = sound.locations('path')
+        if not os.path.exists(input_path):
+            raise Exception('Processing file with id %s and path %s failed. Could not find file' \
+                            % (sound.id, input_path))
+
         tmp_conv = False
         ext = os.path.splitext(input_path)[1]
         if ext in ['.wav', '.aiff', '.aifc', '.aif']:

@@ -50,12 +50,14 @@
 	}
 	function calculateEccentricity(length, height) {
 		var eccentricity = 0.15;
+		// for length < 3 use fixed eccentricity
 	    if (length > 3) {
-	    	var a = (length-2) * 120;
+	    	var a = 600 - (552 / length);
+	    	// console.debug(a)
 	        var b = height;
 	        eccentricity = (1 - b/a) * (1 - b/a);
 	    }
-	    console.log(eccentricity);
+	    // console.debug(eccentricity);
 	    return eccentricity;
 	}
 	function playPreview(d) {
@@ -67,6 +69,29 @@
 	function stopPreview(d) {
 		$("#jquery_jplayer_1").jPlayer("stop");
 	}
+	// N.B. Not used at the moment since there is some error
+	//		offsetting the y progressively higher...
+	/*
+	function findArrowPos(src_x, trg_x, ecc) {
+		var a = (trg_x - src_x) / 2;
+		var x = a - 1.5; 
+		var b = a - a*Math.sqrt(ecc);
+		var y = Math.sqrt( Math.abs( (b*b) - ( (x*x)*(b*b) / (a*a)) ) );
+
+		console.debug(a);
+		console.debug(b);
+		console.debug(x);
+		console.debug(y);
+
+		return y/2;
+	}
+	function findAngle(xArrow, yArrow, xTarget, yTarget) {
+		// console.debug("xArrow: " + xArrow + "    xTarget: " + xTarget);
+		var angle = Math.atan2( (yTarget - yArrow), (xTarget - xArrow) ) - Math.PI/2;
+		// console.debug(angle);
+		return angle;
+	}
+	*/
 	</script>
 {% endblock head %}
 
@@ -97,6 +122,7 @@
 // Graph DATA
 var data{{ forloop.counter }} = {{ remix_group.protovis_data|safe }};
 
+var eccentricity{{ forloop.counter }} = calculateEccentricity(data{{ forloop.counter }}.length, 300);
 
 /* ======== PROTOVIS STUFF-START ======== */
 var vis{{ forloop.counter }} = new pv.Panel()
@@ -113,7 +139,17 @@ var arc = vis{{ forloop.counter }}.add(pv.Layout.Arc)
 
 arc.link.add(pv.Line)
    		.strokeStyle(function(d, p)  connections(d,p))
-		.eccentricity(function(d,p) calculateEccentricity(data{{ forloop.counter }}.length, 300));
+		.eccentricity(eccentricity{{ forloop.counter }})
+		.add(pv.Dot)
+		.shape("triangle")
+		.data(function(l) [{
+	   						x: l.targetNode.x - 1.5,
+	   						y: l.targetNode.y - 2
+		          		}])
+		.angle(function(d,p) Math.atan2(2, 1.5) - Math.PI/2)
+        .shape("triangle")
+        .fillStyle("#c7c7c7")
+        .size(6);
 
 arc.node.add(pv.Image)
 	.url(function(d) "http://tabasco.upf.edu" + d.waveform_url)

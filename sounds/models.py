@@ -270,15 +270,15 @@ class Sound(SocialModel):
     def process(self, force=False):
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
-            self.processing_date = datetime.datetime.now()
-            self.processing_state = "QU"
+            #self.processing_date = datetime.datetime.now()
+            self.set_processing_state("QU")
             gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
         if force or self.analysis_state != "OK":
-            self.analysis_state = "QU"
+            self.set_analysis_state("QU")
             gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
-        self.save()
+        #self.save()
 
     def mark_index_dirty(self):
         self.is_index_dirty = True

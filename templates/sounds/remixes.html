@@ -64,7 +64,7 @@
 // Graph DATA
 var data = {{ data|safe }};
 
-var eccentricity{{ forloop.counter }} = calculateEccentricity(data{{ forloop.counter }}.length, 205);
+var eccentricity{{ forloop.counter }} = calculateEccentricity(data{{ forloop.counter }}.length, 190);
 
 /* ======== PROTOVIS STUFF-START ======== */
 var vis = new pv.Panel()
@@ -104,7 +104,6 @@ arc.node.add(pv.Dot)
     .radius(function(d) vis.i() == this.index ? 10 : 5)
     .event("mouseover", function(d) (d.active = true, arc, vis.i(this.index)))
     .event("mouseout", function(d) (clearBackgrounds(), d.active = false, arc, vis.i(-1)));
-    //.event("click", function(d) goToSound(d.id,d.username));
 
 vis.render();
 /* ======== PROTOVIS STUFF-END ======== */
@@ -112,23 +111,23 @@ vis.render();
 /* ======== helper functions ========= */
 function connections(d, p) {
     if (p.sourceNode.active == true) {
+		$("#"+p.targetNode.id+"").stop();
+		$("#"+p.sourceNode.id+"").stop();
         $("#"+p.targetNode.id+"").animate({backgroundColor: "#DBDBDB"});
-        $("#"+p.sourceNode.id+"").animate({backgroundColor: "#F1D9FF"});
+      	$("#"+p.sourceNode.id+"").animate({backgroundColor: "#F1D9FF"});
         return "orange";
     } else if (p.targetNode.active == true) {
+		$("#"+p.targetNode.id+"").stop();
+		$("#"+p.sourceNode.id+"").stop();
         $("#"+p.targetNode.id+"").animate({backgroundColor: "#F1D9FF"});
         $("#"+p.sourceNode.id+"").animate({backgroundColor: "#DBDBDB"});
         return "orange";
     } else
         return "#c7c7c7";
 }
-/*
-function goToSound(soundId, username) {
-    window.location.href = "/people/"+username+"/sounds/"+soundId+"/remixes";
-}
-*/
 function clearBackgrounds() {
     for (var i=0; i<data.nodes.length; i++) {
+		$("#"+data.nodes[i].id+"").stop(true,true);
         $("#"+data.nodes[i].id+"").animate({backgroundColor: "#ffffff"});
     }
 }

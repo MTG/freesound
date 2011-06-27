@@ -81,7 +81,7 @@ class PublicSoundManager(models.Manager):
 
 
 class Sound(SocialModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, related_name='sounds')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     # filenames

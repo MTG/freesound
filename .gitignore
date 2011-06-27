@@ -12,3 +12,4 @@ logger.ini
 _docs/api/build/
 *.initial_data.json
 *.settings.py
+*beta_release_mails.json

@@ -11,7 +11,7 @@
                 <tr><td style="height: 20px;"></td></tr>
                 <tr><td style="padding: 10px;">
                     <p style="font-size: 16px;">
-                        Hi Jovica,
+                        Hi {{ username }},
                     </p>
                 </td></tr>
 
@@ -23,7 +23,7 @@
 
                 <tr><td style="padding: 10px;">
                     <p style="font-size: 14px;">
-                        Of course, Freesound would not be here today if it weren't for its community. In fact, the Freesound community <em>is</em> Freesound. Most of the sounds are uploaded by a relatively small core of dedicated Freesounders and with the 1027 sounds that you uploaded there's little doubt that you are on of them.
+                        Of course, Freesound would not be here today if it weren't for its community. In fact, the Freesound community <em>is</em> Freesound. Most of the sounds are uploaded by a relatively small core of dedicated Freesounders and with the {{ sounds }} sounds that you uploaded there's little doubt that you are on of them.
                     </p>
                 </td></tr>
 
@@ -58,7 +58,7 @@
               <center><em>New logo and new design</em></center>
       </td></tr>
       <tr><td style="padding: 20px;">
-              <center><em><img src="http://tabasco.upf.edu/media/email_pics/new%20design.png" />
+              <center><em><img src="http://tabasco.upf.edu/media/email_beta1/new%20design.png" />
       </td></tr>
 
 
@@ -66,7 +66,7 @@
               <center><em>Detailed list view in searches</em></center>
       </td></tr>
       <tr><td style="padding: 20px;">
-              <center><em><img src="http://tabasco.upf.edu/media/email_pics/sound%20display2.png" /></em></center>
+              <center><em><img src="http://tabasco.upf.edu/media/email_beta1/sound%20display2.png" /></em></center>
     </td></tr>
 
 
@@ -74,7 +74,7 @@
               <center><em>New powerful search and filtering</em></center>
       </td></tr>
       <tr><td style="padding: 20px;">
-              <center><em><img src="http://tabasco.upf.edu/media/email_pics/search.png" /></em></center>
+              <center><em><img src="http://tabasco.upf.edu/media/email_beta1/search.png" /></em></center>
     </td></tr>
 
 
@@ -82,7 +82,7 @@
               <center><em>Upload through the website</em></center>
       </td></tr>
       <tr><td style="padding: 20px;">
-              <center><em><img src="http://tabasco.upf.edu/media/email_pics/upload.png" /></em></center>
+              <center><em><img src="http://tabasco.upf.edu/media/email_beta1/upload.png" /></em></center>
     </td></tr>
 
 
@@ -90,7 +90,7 @@
               <center><em>Completely new way of listening, visualizing and browsing remixes</em></center>
       </td></tr>
       <tr><td style="padding: 20px;">
-              <center><em><img src="http://tabasco.upf.edu/media/email_pics/remixes.png" /></em></center>
+              <center><em><img src="http://tabasco.upf.edu/media/email_beta1/remixes.png" /></em></center>
     </td></tr>
 
 
@@ -98,7 +98,7 @@
               <center><em>New player and audio visualizations</em></center>
       </td></tr>
       <tr><td style="padding: 20px;">
-              <center><em><img src="http://tabasco.upf.edu/media/email_pics/visualizations.png" /></em></center>
+              <center><em><img src="http://tabasco.upf.edu/media/email_beta1/visualizations.png" /></em></center>
     </td></tr>
 
 
@@ -106,15 +106,17 @@
               <center><em>The 'People Tab' shows the latest activity</em></center>
       </td></tr>
       <tr><td style="padding: 20px;">
-              <center><em><img src="http://tabasco.upf.edu/media/email_pics/people.png" /></em></center>
+              <center><em><img src="http://tabasco.upf.edu/media/email_beta1/people.png" /></em></center>
     </td></tr>
 
 
     <tr><td style="color: #fff; font-size: 20px; padding-top: 20px;">
-              <center><em>The API opens up Freesound to new applications</em></center>
+              <center><em>The API opens up Freesound to new applications</em>
+                            <p style="color: #ddd; font-size: 12px;"><a style="font-size: 12px; color: #ddd;" href="http://www.tamats.com/apps/mhd/">Freesoundscape</a> by Tamat</center>
       </td></tr>
       <tr><td style="padding: 20px;">
-              <center><em><img src="http://tabasco.upf.edu/media/email_pics/api.png" /></em></center>
+              <center><em><img src="http://tabasco.upf.edu/media/email_beta1/api.png" /></em>
+            </center>
     </td></tr>
 
 

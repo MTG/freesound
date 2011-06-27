@@ -1,0 +1,122 @@
+<body lang="en" style="padding: 0; margin: 0; background-color:#EDEDED; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
+  <table cellspacing="0" cellpadding="0" border="0" width="100%" align="center">
+      <tr>
+          <td id="#left-column"></td>
+          <td id="#middle-column">
+              <table cellspacing="0" cellpadding="0" border="0" align="center" style="background-color: #FDFDFD; width: 500px;">
+                  <tr><td style="height: 40px; background-color:#EDEDED;"></td></tr>
+                  <tr><td style="padding: 10px;">
+                      <img src="../src/freesound/media/images/logo.png" width="239" height="62" />
+                  </td></tr>
+                <tr><td style="height: 20px;"></td></tr>
+                <tr><td style="padding: 10px;">
+                    <p style="font-size: 16px;">
+                        Hi Jovica,
+                    </p>
+                </td></tr>
+
+                <tr><td style="padding: 10px;">
+                    <p style="font-size: 14px;">
+                        Over the last 6 years Freesound has grown very big. The website that started in 2005 without a single sound is now the home of <strong style="color: #B1514E;">2.2 million users</strong> and <strong style="color: #B1514E;">115.000 sounds</strong>. Freesound has grown into the biggest source of free sounds on the web. Every day we serve over 300.000 previews and in total the Freesound sounds have been downloaded more than 26 million times.
+                    </p>
+                </td></tr>
+
+                <tr><td style="padding: 10px;">
+                    <p style="font-size: 14px;">
+                        Of course, Freesound would not be here today if it weren't for its community. In fact, the Freesound community <em>is</em> Freesound. Most of the sounds are uploaded by a relatively small core of dedicated Freesounders and with the 1027 sounds that you uploaded there's little doubt that you are on of them.
+                    </p>
+                </td></tr>
+
+                <tr><td style="padding: 10px;">
+                    <p style="font-size: 14px;">
+                        So why are we writing you? Since last year we have been working hard to develop a <strong style="color: #B1514E;">completely new version of Freesound</strong> and we are very close to releasing it. This new version will help Freesound to cope with its ever growing number of samples and users. We also hope it will make it possible for us to develop new cool features more quickly. However, before going public we wanted to ask the core of the community to try out the new website and give us some feedback.
+                    </p>
+                </td></tr>
+
+                <tr><td style="padding: 10px;">
+                    <p style="font-size: 14px;">
+                        We would appreciate it a lot if you could give the beta that is now online a try and send any feedback you might have to <a style="color: #2963B9;" href="mailto:fs2@freesound.org">fs2@freesound.org</a>. Although anything you do in this beta version will be lost once we go public with the new version, we would still like it if you tried to upload some sounds or use similarity search for example. We hope you like the new design and functionality and <strong style="color: #B1514E;">please write us with any criticism or thoughts</strong> you might have! Below the link we've included some information about the new features you will find in the beta.
+                    </p>
+                </td></tr>
+
+                <tr><td style="padding: 10px;" align="center">
+                    <p style="font-size: 20px;">
+                        <a style="color: #2963B9;" href="http://tabasco.upf.edu/">Freesound 2 Beta</a>
+                    </p>
+                </td></tr>
+                <tr><td style="height: 40px; background-color: #EDEDED;"></td></tr>
+
+              </table>
+          </td>
+          <td id="#right-column"></td>
+      </tr>
+  </table>
+
+  <table style="background-color: #000;" cellspacing="0" cellpadding="0" border="0" width="100%" align="center">
+
+    <tr><td style="color: #fff; font-size: 20px; padding-top: 100px;">
+              <center><em>New logo and new design</em></center>
+      </td></tr>
+      <tr><td style="padding: 20px;">
+              <center><em><img src="http://tabasco.upf.edu/media/email_pics/new%20design.png" />
+      </td></tr>
+
+
+      <tr><td style="color: #fff; font-size: 20px; padding-top: 20px;">
+              <center><em>Detailed list view in searches</em></center>
+      </td></tr>
+      <tr><td style="padding: 20px;">
+              <center><em><img src="http://tabasco.upf.edu/media/email_pics/sound%20display2.png" /></em></center>
+    </td></tr>
+
+
+      <tr><td style="color: #fff; font-size: 20px; padding-top: 20px;">
+              <center><em>New powerful search and filtering</em></center>
+      </td></tr>
+      <tr><td style="padding: 20px;">
+              <center><em><img src="http://tabasco.upf.edu/media/email_pics/search.png" /></em></center>
+    </td></tr>
+
+
+      <tr><td style="color: #fff; font-size: 20px; padding-top: 20px;">
+              <center><em>Upload through the website</em></center>
+      </td></tr>
+      <tr><td style="padding: 20px;">
+              <center><em><img src="http://tabasco.upf.edu/media/email_pics/upload.png" /></em></center>
+    </td></tr>
+
+
+    <tr><td style="color: #fff; font-size: 20px; padding-top: 20px;">
+              <center><em>Completely new way of listening, visualizing and browsing remixes</em></center>
+      </td></tr>
+      <tr><td style="padding: 20px;">
+              <center><em><img src="http://tabasco.upf.edu/media/email_pics/remixes.png" /></em></center>
+    </td></tr>
+
+
+    <tr><td style="color: #fff; font-size: 20px; padding-top: 20px;">
+              <center><em>New player and audio visualizations</em></center>
+      </td></tr>
+      <tr><td style="padding: 20px;">
+              <center><em><img src="http://tabasco.upf.edu/media/email_pics/visualizations.png" /></em></center>
+    </td></tr>
+
+
+    <tr><td style="color: #fff; font-size: 20px; padding-top: 20px;">
+              <center><em>The 'People Tab' shows the latest activity</em></center>
+      </td></tr>
+      <tr><td style="padding: 20px;">
+              <center><em><img src="http://tabasco.upf.edu/media/email_pics/people.png" /></em></center>
+    </td></tr>
+
+
+    <tr><td style="color: #fff; font-size: 20px; padding-top: 20px;">
+              <center><em>The API opens up Freesound to new applications</em></center>
+      </td></tr>
+      <tr><td style="padding: 20px;">
+              <center><em><img src="http://tabasco.upf.edu/media/email_pics/api.png" /></em></center>
+    </td></tr>
+
+
+  </table>
+</body>

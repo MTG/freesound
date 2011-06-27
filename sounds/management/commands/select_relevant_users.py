@@ -1,41 +1,18 @@
-"""gm_client_processing.py
-
-This django-admin command sends jobs to the Gearman job server, scheduling
-the processing of sounds.
-"""
-
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-import gearman, sys
 from django.conf import settings
 from optparse import make_option
 import time, json, os, sys
 from datetime import date
-from django.core import serializers
 
 settings.DEBUG = False
-
-'''
-# load the freesound settings so the script works in every deployment
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-PYTHONPATH = '/'.join(CURRENT_DIR.split('/')[:-1])
-sys.path.remove(CURRENT_DIR)
-sys.path.append(PYTHONPATH)
-os.environ['PYTHONPATH'] = PYTHONPATH
-print sys.path
-import settings
-from django.core.management import setup_environ
-setup_environ(settings)
-'''
-
-
 
 
 class Command(BaseCommand):
     """Select relevant active users and write a JSON list of these users to a file.
     """
     help = '''Select relevant active users and write a JSON list of these users to a file.'''
-    args = '''[<limit> <since> <sounds>]'''
+    args = '''[<limit> <since> <sounds> <output>]'''
 
     option_list = BaseCommand.option_list + (
         make_option('--limit', action='store', dest='limit', default=100,

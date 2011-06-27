@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from optparse import make_option
 import smtplib, json, sys
-from email.mime.text import MIMEText
+from email.mime.text import MIMEText, MIMEMultipart
 from django.template import loader, Context
 
 

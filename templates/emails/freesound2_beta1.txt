@@ -11,7 +11,7 @@
                 <tr><td style="height: 20px;"></td></tr>
                 <tr><td style="padding: 10px;">
                     <p style="font-size: 16px;">
-                        Hi {{ username }},
+                        Hi {{ username }}, <br>This is a test mail for the mail we're going to send tomorrow, it still needs work, but give me some feedback. Also, does it display correctly in your email client? ~~ Vincent
                     </p>
                 </td></tr>
 

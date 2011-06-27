@@ -20,9 +20,13 @@ def run():
     DB_NAME = settings.DATABASE_NAME
     DB_USER = settings.DATABASE_USER
     DB_PASS = settings.DATABASE_PASSWORD
+    DB_HOST = settings.DATABASE_HOST
 
     print "Connecting to " + DB_NAME + " database..." ,
-    conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS)
+    if DB_HOST:
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS)
+    else:
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
     cur = conn.cursor()
     print "done!\n\n"
 

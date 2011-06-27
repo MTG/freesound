@@ -43,7 +43,18 @@ class Command(BaseCommand):
 
         for user in users:
             c = Context(user)
-            msg = MIMEText(t.render(c))
+            msg = MIMEMultipart('alternative')
+            msg.attach(MIMEText(t.render(c), 'html'))
+            msg.attach(MIMEText('''Hi there,
+
+We wanted to send you an email, but it appears your email client does not support HTML.
+If you would still like to read this email try to open it in another client. Otherwise
+please ignore this message.
+
+Our apologies,
+
+The Freesound team
+''', 'plain'))
             msg['Subject'] = options['subject']
             msg['From'] = options['from']
             msg['To'] = user['email']

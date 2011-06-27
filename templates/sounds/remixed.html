@@ -151,7 +151,7 @@ arc.link.add(pv.Line)
                           }])
         .angle(function(d,p) Math.atan2(2, 1.5) - Math.PI/2)
         .shape("triangle")
-        .fillStyle("#c7c7c7")
+        .fillStyle(function(d, p)  connections(d,p))
         .size(6);
 
 arc.node.add(pv.Image)

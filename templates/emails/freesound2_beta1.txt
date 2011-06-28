@@ -8,7 +8,7 @@ users (and you are one of them) for feedback before we go live with the final
 version. You can help us out by testing the new web site and writing us with
 your feedback and any thoughts you might have. We would greatly appreciate it!
 
-    The beta is online at: http://tabasco.upf.edu
+The beta is online at: http://tabasco.upf.edu
 
 When you browse the site you will notice many changes:
 

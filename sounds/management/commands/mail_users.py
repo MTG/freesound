@@ -34,6 +34,8 @@ class Command(BaseCommand):
             self.stdout.flush()
             sys.exit(1)
 
+        use_html_p = options['template'].endswith('.html')
+
         with open(options['input'], mode='r') as f:
             users = json.load(f)
 
@@ -44,8 +46,10 @@ class Command(BaseCommand):
 
         for user in users:
             c = Context(user)
-            msg = MIMEMultipart('alternative')
-            msg.attach(MIMEText('''Hi there,
+
+            if use_html_p:
+                msg = MIMEMultipart('alternative')
+                msg.attach(MIMEText('''Hi there,
 
 We wanted to send you an email, but it appears your email client does not support HTML.
 If you would still like to read this email try to open it in another client. Otherwise
@@ -55,8 +59,10 @@ Our apologies,
 
 The Freesound team
 ''', 'plain'))
-            # attach HTML last, because Gmail favors the last alternative
-            msg.attach(MIMEText(t.render(c), 'html'))
+                # attach HTML last, because Gmail favors the last alternative
+                msg.attach(MIMEText(t.render(c), 'html'))
+            else:
+                msg = MIMEText(t.render(c))
 
             msg['Subject'] = options['subject']
             msg['From'] = options['from']

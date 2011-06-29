@@ -8,7 +8,7 @@ import os, tempfile, gearman, shutil, sys
 def process(sound):
 
     def write_log(message):
-        sys.stdout.write(message)
+        sys.stdout.write(str(message)+'\n')
         sys.stdout.flush()
 
     def failure(message, error=None):
@@ -37,7 +37,7 @@ def process(sound):
     # Is the file at its new location?
     if not os.path.exists(new_path):
         # Is the file at its old location?
-        if not os.path.exists(sound.original_path):
+        if not sound.original_path or not os.path.exists(sound.original_path):
             failure("The file to be processed can't be found at its FS1 nor at its FS2 location.")
             return False
         else:

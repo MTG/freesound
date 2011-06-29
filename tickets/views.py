@@ -286,6 +286,7 @@ def moderation_assigned(request, user_id):
                 ticket.assignee = None
                 ticket.status = TICKET_STATUS_ACCEPTED
                 # no notification here
+                ticket.save()
             elif action == "Delete":
                 ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED)
                 # to prevent a crash if the form is resubmitted

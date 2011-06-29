@@ -8,7 +8,7 @@ import os, tempfile, gearman, shutil, sys
 def process(sound):
 
     def write_log(message):
-        sys.stdout.write(message)
+        sys.stdout.write(str(message)+'\n')
         sys.stdout.flush()
 
     def failure(message, error=None):

@@ -104,6 +104,13 @@ int main(int argc, char* argv[])
 	}
 
 
+        double max_val ;
+        sf_command (fileIn, SFC_CALC_SIGNAL_MAX, &max_val, sizeof(max_val));
+        double normalizer = 1.0;
+        if (max_val > 1.0)
+            normalizer = 1 / max_val;
+
+
 	SNDFILE *fileOut = NULL;
 	SF_INFO sfinfoOut;
 
@@ -132,7 +139,7 @@ int main(int argc, char* argv[])
 		for(long i=0; i<readCount; i++)
 		{
 			if(i % sfinfoIn.channels < sfinfoOut.channels)
-				dataOut[j++] = dataIn[i];
+				dataOut[j++] = dataIn[i] * normalizer;
 		}
 
 		if(j != 0)

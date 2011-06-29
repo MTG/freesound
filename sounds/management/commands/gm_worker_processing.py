@@ -69,7 +69,8 @@ class Command(BaseCommand):
             return 'true' if result else 'false'
         except Sound.DoesNotExist:
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
-            success = False
+            if sound:
+                sound.set_processing_state('FA')
             return 'false'
         except InterfaceError:
             self.write_stdout("Problems while connecting to the database (1st time), will restart the worker.")
@@ -80,8 +81,7 @@ class Command(BaseCommand):
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
-            success = False
-            return 'false'
-        finally:
-            if sound and not success:
+            if sound:
                 sound.set_processing_state('FA')
+            return 'false'
+

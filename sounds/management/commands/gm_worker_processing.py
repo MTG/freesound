@@ -63,7 +63,7 @@ class Command(BaseCommand):
         try:
             sound = Sound.objects.select_related().get(id=sound_id)
             result = func(sound)
-            self.write_stdout("\t sound: %s, processing %s\n" % \
+            self.write_stdout("Finished, sound: %s, processing %s\n" % \
                               (sound_id, ("ok" if result else "failed")))
             success = result
             return 'true' if result else 'false'
@@ -72,10 +72,10 @@ class Command(BaseCommand):
             success = False
             return 'false'
         except InterfaceError:
-            self.write_stdout("Problems while connecting to the database (1st time), will restart the worker.")
+            self.write_stdout("Problems while connecting to the database (2nd time), will kill the worker.\n")
             sys.exit(255)
         except DatabaseError:
-            self.write_stdout("Problems while connecting to the database (2nd time), will restart the worker.")
+            self.write_stdout("Problems while connecting to the database (1st time), will kill the worker.\n")
             sys.exit(255)
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)

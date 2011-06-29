@@ -48,11 +48,11 @@ class Command(BaseCommand):
 
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
-        self.task_process_x(gearman_worker, gearman_job, analyze)
+        return self.task_process_x(gearman_worker, gearman_job, analyze)
 
 
     def task_process_sound(self, gearman_worker, gearman_job):
-        self.task_process_x(gearman_worker, gearman_job, process)
+        return self.task_process_x(gearman_worker, gearman_job, process)
 
 
     def task_process_x(self, gearman_worker, gearman_job, func):
@@ -69,8 +69,7 @@ class Command(BaseCommand):
             return 'true' if result else 'false'
         except Sound.DoesNotExist:
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
-            if sound:
-                sound.set_processing_state('FA')
+            success = False
             return 'false'
         except InterfaceError:
             self.write_stdout("Problems while connecting to the database (1st time), will restart the worker.")
@@ -81,7 +80,8 @@ class Command(BaseCommand):
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
-            if sound:
-                sound.set_processing_state('FA')
+            success = False
             return 'false'
-
+        finally:
+            if sound and not success:
+                sound.set_processing_state('FA')

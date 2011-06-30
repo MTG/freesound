@@ -145,9 +145,11 @@ def sound(request, username, sound_id):
     qs = Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id)
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
-
-@login_required
+# N.B. login is required but adapted to not return the user to the download link.
 def sound_download(request, username, sound_id):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+                                                    reverse("sound", args=[username, sound_id])))
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))

@@ -186,7 +186,7 @@ def sound_edit(request, username, sound_id):
                                    .exclude(status=TICKET_STATUS_CLOSED)
             for ticket in tickets:
                 tc = TicketComment(sender=request.user,
-                                   ticket=ticket.id,
+                                   ticket=ticket,
                                    moderator_only=False,
                                    text='%s updated the sound description and/or tags.' % request.user.username)
                 tc.save()

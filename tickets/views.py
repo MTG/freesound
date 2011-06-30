@@ -176,10 +176,18 @@ def tickets_home(request):
 def __get_new_uploaders_by_ticket():
     cursor = connection.cursor()
     cursor.execute("""
-SELECT sender_id, count(*) from tickets_ticket
-WHERE source = 'new sound'
-AND assignee_id is Null
-AND status = '%s'
+SELECT
+    tickets_ticket.sender_id, count(*)
+FROM
+    tickets_ticket, tickets_linkedcontent, sounds_sound
+WHERE
+    tickets_ticket.source = 'new sound'
+    AND sounds_sound.processing_state = 'OK'
+    AND sounds_sound.moderation_state = 'PE'
+    AND tickets_linkedcontent.object_id = sounds_sound.id
+    AND tickets_ticket.content_id = tickets_linkedcontent.id
+    AND tickets_ticket.assignee_id is Null
+    AND tickets_ticket.status = '%s'
 GROUP BY sender_id""" % TICKET_STATUS_NEW)
     user_ids_plus_new_count = dict(cursor.fetchall())
     user_objects = User.objects.filter(id__in=user_ids_plus_new_count.keys())

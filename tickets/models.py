@@ -47,30 +47,32 @@ class Ticket(models.Model):
     NOTIFICATION_UPDATED      = 'tickets/email_notification_updated.txt'
     NOTIFICATION_WHITELISTED  = 'tickets/email_notification_whitelisted.txt'
 
-    def send_notification_emails(self, notification_type):
-        ticket = self
-        # last message from uploader (we assume self.sender is the uploader)
-        messages = TicketComment.objects.filter(ticket=ticket).order_by('-id')
-        last_message = messages[0] if messages else False
-        if last_message and (last_message.sender == None or last_message.sender == self.sender):
-            #send message to assigned moderator
-                # There is probably always a moderator assigned, but ok.. let's just check
-            email_addr = self.assignee.email if self.assignee else False
-            user_to = self.assignee if self.assignee else False
-        # last message by someone who didn't start the ticket
-        else:
-            # send message to user
-            email_addr = self.sender.email if self.sender else self.sender_email
-            user_to = self.sender if self.sender else False
-        if not email_addr:
-            logger.error('E-mail address to send notifications could not be determined. What gives?')
-            return
-        send_mail_template(u'A freesound moderator handled your upload.',
-                           notification_type,
-                           locals(),
-                           'no-reply@freesound.org',
-                           email_addr)
+    MODERATOR_ONLY = 1
+    USER_ONLY = 2
+    USER_AND_MODERATOR = 3
 
+    def send_notification_emails(self, notification_type, sender_moderator):
+        ticket = self
+        send_to = []
+        #send message to assigned moderator
+        if sender_moderator in [Ticket.MODERATOR_ONLY, Ticket.USER_AND_MODERATOR]:
+            if self.assignee:
+                user_to = self.assignee if self.assignee else False
+                send_mail_template(u'A freesound moderator handled your upload.',
+                                   notification_type,
+                                   locals(),
+                                   'noreply@freesound.org',
+                                   self.assignee.email)
+        # send message to user
+        if sender_moderator in [Ticket.USER_ONLY, Ticket.USER_AND_MODERATOR]:
+            user_to = self.sender if self.sender else False
+            email_to = user_to.email if user_to else ticket.sender_email
+            if self.sender:
+                send_mail_template(u'A freesound moderator handled your upload.',
+                                   notification_type,
+                                   locals(),
+                                   'noreply@freesound.org',
+                                   email_to)
 
     @models.permalink
     def get_absolute_url(self):

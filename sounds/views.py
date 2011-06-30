@@ -184,14 +184,14 @@ def sound_edit(request, username, sound_id):
             tickets = Ticket.objects.filter(content__object_id=sound.id,
                                            source=TICKET_SOURCE_NEW_SOUND) \
                                    .exclude(status=TICKET_STATUS_CLOSED)
-            if tickets:
-                ticket = tickets[0]
+            for ticket in tickets:
                 tc = TicketComment(sender=request.user,
                                    ticket=ticket.id,
                                    moderator_only=False,
                                    text='%s updated the sound description and/or tags.' % request.user.username)
                 tc.save()
-                ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED)
+                ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED,
+                                                ticket.MODERATOR_ONLY)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])

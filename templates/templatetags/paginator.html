@@ -10,7 +10,12 @@
 	    <li class="other-page"><a href="{{ url }}{{ num }}{% if anchor %}#{{anchor}}{% endif %}" title="Page {{ num }}">{{ num }}</a></li>
 	  {% endifequal %}
 	{% endfor %}
+	
+	{% if show_last %}<li>...</li><li class="last-page"><a href="{{ url }}{{ paginator.num_pages }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page">{{paginator.num_pages}}</a></li>{% endif %}
+	{% comment %}
 	{% if show_last %}<li class="last-page"><a href="{{ url }}{{ paginator.num_pages }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page">last</a></li>{% endif %}
+	{% endcomment %}
+	
 	{% if page.has_next %}<li class="next-page"><a href="{{ url }}{{ page.next_page_number }}{% if anchor %}#{{anchor}}{% endif %}" title="Next Page">next</a></li>{% endif %}
 </ul>
 {% endspaceless %}

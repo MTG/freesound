@@ -2,7 +2,12 @@
 {% spaceless %}
 <ul class="pagination">
 	{% if page.has_previous %}<li class="previous-page"><a href="{{ url }}{{ page.previous_page_number }}{% if anchor %}#{{anchor}}{% endif %}" title="Previous Page">previous</a></li>{% endif %}
+	
+	{% if show_first %}<li class="first-page"><a href="{{ url }}1{% if anchor %}#{{anchor}}{% endif %}" title="First Page">1</a></li><li>...</li>{% endif %}
+	{% comment %}
 	{% if show_first %}<li class="first-page"><a href="{{ url }}1{% if anchor %}#{{anchor}}{% endif %}" title="First Page">first</a></li>{% endif %}
+	{% endcomment %}
+	
 	{% for num in page_numbers %}
 	  {% ifequal num current_page %}
 	    <li class="current-page">{{ num }}</li> 

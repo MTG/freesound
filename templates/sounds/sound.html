@@ -95,6 +95,7 @@
         </div>
     </div> <!-- comments_container -->
 
+    {% if request.user.is_authenticated %}
     <form method="POST" action=".#comments" id="sound_comment_form">{% csrf_token %}
         <fieldset>
             <h4 id="leave_a_comment">Leave a comment:</h4>
@@ -102,6 +103,9 @@
             <input id="sound_comment_submit" type="submit" value="Post comment" />
         </fieldset>
     </form>
+    {% else %}
+    <center><p>Please <a href="{% url accounts-login %}?next={% url sound sound.user.username sound.id %}">log in</a> to comment</center>
+    {% endif %}
 </div> <!-- single_sample_content -->
 
 {% cache 3600 sound_footer sound.id %}

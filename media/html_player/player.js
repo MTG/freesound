@@ -1,4 +1,4 @@
-soundManager.url = '/fs-player/swf/';
+soundManager.url = '/media/html_player/swf/';
 soundManager.flashVersion = 8; // optional: shiny features (default = 8)
 soundManager.useFlashBlock = false; // optionally, enable when you're ready to dive in
 soundManager.debugMode = false;
@@ -59,17 +59,17 @@ $(function()
 
         element.toggleClass("on");
     }
-    
+
     $(".toggle, .toggle-alt").live("click", function (event)
     {
         event.stopPropagation();
         switchToggle($(this));
         $(this).trigger("toggle", $(this).hasClass("on"));
     });
-    
+
     // enable HTML5 audio support, if you're feeling adventurous. iPad/iPhone will always get this.
     // soundManager.useHTML5Audio = true;
-    
+
     soundManager.onready(function()
     {
         $(".player").each( function ()
@@ -109,7 +109,7 @@ $(function()
                     <div class="loading-progress"></div> \
                     <div class="position-indicator"></div>');
             }
-        
+
             var urls = $(".metadata", this).html().split(" ");
 
             var mp3Preview = urls[0];
@@ -118,19 +118,19 @@ $(function()
             var duration = urls[3];
 
             var playerElement = $(this);
-        
+
             if (!$(this).hasClass("mini"))
                 $(".background", this).css("background", "url(" + waveform + ")");
-                
+
             $(".loading-progress", playerElement).hide();
             $(".time-indicator", playerElement).html(msToTime(0, duration, !$(".time-indicator-container", playerElement).hasClass("on")));
-            
+
             if ($(this).hasClass("large"))
             {
                 $(".controls", this).stop().fadeTo(10000, 0.2);
                 $(".measure-readout-container", this).stop().fadeTo(0, 0);
             }
-            
+
             // Ready to use; soundManager.createSound() etc. can now be called.
             var sound = soundManager.createSound(
             {
@@ -145,7 +145,7 @@ $(function()
                 whileloading: function()
                 {
                     $(".loading-progress", playerElement).show();
-                    
+
                     var loaded = this.bytesLoaded / this.bytesTotal * 100;
 
                     $(".loading-progress", playerElement).css("width", (100 - loaded) + "%");
@@ -169,7 +169,7 @@ $(function()
                             switchToggle($(".play", playerElement));
                     }
                 }
-                //,volume: 
+                //,volume:
             });
 
             $(".play", this).bind("toggle", function (event, on)
@@ -190,7 +190,7 @@ $(function()
                     $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on")));
                     switchToggle($(".play", playerElement));
                 }
-            });                    
+            });
 
             $(".display", this).bind("toggle", function (event, on)
             {
@@ -199,7 +199,7 @@ $(function()
                 else
                     $(".background", playerElement).css("background", "url(" + waveform + ")");
             });
-        
+
             $(".measure", this).bind("toggle", function (event, on)
             {
                 if (on)
@@ -224,20 +224,20 @@ $(function()
                 event.stopPropagation();
                 $(this).toggleClass("on");
             });
-        
+
             $(this).hover(function()
             {
                 if ($(this).hasClass("large"))
                 {
-                	$(".controls", playerElement).stop().fadeTo(50, 1.0);
-                	if ($(".measure", playerElement).hasClass("on"))
-                	    $(".measure-readout-container", playerElement).stop().fadeTo(50, 1.0);
-            	}
+                    $(".controls", playerElement).stop().fadeTo(50, 1.0);
+                    if ($(".measure", playerElement).hasClass("on"))
+                        $(".measure-readout-container", playerElement).stop().fadeTo(50, 1.0);
+                }
             },function(){
                 if ($(this).hasClass("large"))
                 {
                     $(".controls", playerElement).stop().fadeTo(2000, 0.2);
-                	if ($(".measure", playerElement).hasClass("on"))
+                    if ($(".measure", playerElement).hasClass("on"))
                         $(".measure-readout-container", playerElement).stop().fadeTo(2000, 0.2);
                 }
             });
@@ -248,18 +248,18 @@ $(function()
 
                 if ($(".display", playerElement).hasClass("on"))
                 {
-                	readout = _mapping[Math.floor(event.offsetY)].toFixed(2) + "hz";
+                    readout = _mapping[Math.floor(event.offsetY)].toFixed(2) + "hz";
                 }
                 else
                 {
                     var height2 = $(this).height()/2;
-                    
-                	if (event.offsetY == height2)
-                		readout = "-inf";
-                	else
-    	            	readout = (20 * Math.log( Math.abs(event.offsetY/height2 - 1) ) / Math.LN10).toFixed(2);
-    	            	
-    	            readout = readout + " dB";
+
+                    if (event.offsetY == height2)
+                        readout = "-inf";
+                    else
+                        readout = (20 * Math.log( Math.abs(event.offsetY/height2 - 1) ) / Math.LN10).toFixed(2);
+
+                    readout = readout + " dB";
                 }
 
                 $('.measure-readout', playerElement).html(readout);

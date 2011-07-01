@@ -70,7 +70,7 @@
                 GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
                     marker.openInfoWindowHtml(data);
                     setTimeout(function() {
-                        makePlayer('.player');
+                        makePlayer('.infowindow_player .player');
                     }, 500);
                 });
             });

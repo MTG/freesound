@@ -28,7 +28,7 @@
         GDownloadUrl( "{% url geotags-infowindow sound.id %}", function(data, responseCode) {
             marker.openInfoWindowHtml(data);
             setTimeout(function() {
-                makePlayer('.player');
+                makePlayer('.infowindow_player .player');
             }, 500);
         });
     });

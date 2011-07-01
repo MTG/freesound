@@ -1,9 +1,9 @@
-<div class="infowindow_player" style="display: inline; float: left; margin-right: 5px; height: 36px;">
+<div class="infowindow_player" style="display: inline; float: left; margin-right: 5px; height: 50px;">
     {% include "sounds/player_small.html" %}
 </div>
 
 <p style="margin-bottom: 0;"><a class="title" href="{% url sound sound.user.username sound.id %}">
-    {{sound.original_filename}}</a>
+    {{sound.original_filename}}</a><br>
     by <a class="user" href="{% url account sound.user.username %}">
     {{sound.user.username}}</a>
     {% comment %}

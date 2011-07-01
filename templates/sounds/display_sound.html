@@ -46,9 +46,11 @@
         <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 
         <div class="sound_attributes">
+            {% if sound.similarity_state == 'OK' %}
             <a class="similar" href="{% url sound-similar sound.user.username sound.id %}">
                 <img src="{{media_url}}images/similar_sounds.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
             </a>
+            {% endif %}
             {% if sound.pack %}
              <a class="pack" href="{% url pack sound.user.username sound.pack.id %}">
                 <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Remixes" title="This sound belongs to a pack." />

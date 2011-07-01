@@ -282,6 +282,12 @@ div.infowindow {
 #random_sound_button {
     background-image: url(../images/fugue-icons/icons/speaker-volume.png);
 }
+#tag_button {
+    background-image: url(../images/fugue-icons/icons/tag.png);
+}
+#pack_link {
+    background-image: url(../images/fugue-icons/icons/folder-open-document-music.png);
+}
 #geotag_link {
     background-image: url(../images/geotag.png);
 }

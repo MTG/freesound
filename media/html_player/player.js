@@ -57,9 +57,7 @@ function switchToggle(element) {
 
 
 function makePlayer(selector) {
-    console.debug('making players');
     $(selector).each( function () {
-        console.debug('making player: ' + $(this));
         if ($(this).hasClass("large")) {
             $(this).append('<div class="controls"> \
                    <div class="toggle play"></div> \

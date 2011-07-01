@@ -154,12 +154,6 @@ PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 
-DATA_URL = "/data/"
-AVATARS_URL = DATA_URL + "avatars/"
-PREVIEWS_URL = DATA_URL + "previews/"
-DISPLAYS_URL = DATA_URL + "displays/"
-ANALYSIS_URL = DATA_URL + "analysis/"
-
 SENDFILE_SECRET_URL = "/secret/"
 SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
 PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
@@ -178,9 +172,14 @@ MANAGERS = ADMINS
 
 # change the media url to tabasco to make the players work when testing
 if DEBUG:
-    HTML5_PLAYER_MEDIA_URL = 'http://tabasco.upf.edu/media/'
+    DATA_URL = "http://tabasco.upf.edu/data/"
 else:
-    HTML5_PLAYER_MEDIA_URL = '/media/'
+    DATA_URL = "/data/"
+
+AVATARS_URL = DATA_URL + "avatars/"
+PREVIEWS_URL = DATA_URL + "previews/"
+DISPLAYS_URL = DATA_URL + "displays/"
+ANALYSIS_URL = DATA_URL + "analysis/"
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)

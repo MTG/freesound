@@ -80,7 +80,7 @@
     opacity: 0.7;
 }
 
-.player .time-indicator-container
+.player.large .time-indicator-container
 {
     z-index: 5;
     position: absolute;
@@ -97,12 +97,37 @@
     text-align: right;
 }
 
-.player .time-indicator
+.player.large .time-indicator
 {
     font-family: 'Inconsolata', arial, serif;
     padding-top:10px;
     padding-right: 10px;
 }
+
+.player.small .time-indicator-container
+{
+    z-index: 5;
+    position: absolute;
+    /*background: url("img/time_background.png");
+    background-repeat: no-repeat;
+    background-position: 44px 0px; */
+    bottom: 1px;
+    right: -27px;
+    /*width: 150px;*/
+    height: 13px;
+    z-index: 6;
+    color: white;
+    font-size: 13px;
+    text-align: right;
+}
+
+.player.small .time-indicator
+{
+    font-family: 'Inconsolata', arial, serif;
+    padding-top: 0px;
+    padding-right: 0px;
+}
+
 
 /**************************/
 

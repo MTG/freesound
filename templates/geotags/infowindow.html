@@ -1,17 +1,19 @@
-<div class="infowindow_player">
-    {% include "sounds/player_medium.html" %}
+<div class="infowindow_player" style="display: inline; float: left; margin-right: 5px;">
+    {% include "sounds/player_small.html" %}
 </div>
-<script type="text/javascript">
 
-</script>
-<p>
-    <strong>Sound:</strong> <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a><br />
-    <strong>Author:</strong> <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
+<p style="margin-bottom: 0;"><a class="title" href="{% url sound sound.user.username sound.id %}">
+    {{sound.original_filename}}</a>
+    <br />
+    by <a class="user" href="{% url account sound.user.username %}">
+    {{sound.user.username}}</a>
+    {% comment %}
     <strong>Tags:</strong>
     {% for tag_link in sound.tags.all %}
         <a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a>{% if forloop.last %}{% else %} | {% endif %}
-    {% endfor %}<br/>
+    {% endfor %}
     <strong>Description:</strong> "{{sound.description|striptags|safe}}"<br/>
-    <a href="javascript:setMaxZoomCenter(map, {{sound.geotag.lat}}, {{sound.geotag.lon}}, {{sound.geotag.zoom}})">Zoom in!</a>
+    {% endcomment %}
+    (<a href="javascript:setMaxZoomCenter(map, {{sound.geotag.lat}}, {{sound.geotag.lon}}, {{sound.geotag.zoom}})">zoom in</a>)
 </p>
 <br class="clear />

@@ -425,7 +425,7 @@ class Pack(SocialModel):
     def get_random_sounds_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')
         
-        return pack_sounds[0:min(3,len(pack_sounds)-1)]
+        return pack_sounds[0:min(3,len(pack_sounds))]
 
     def get_pack_tags(self, max_tags = 50):
         pack_tags = get_pack_tags(self)

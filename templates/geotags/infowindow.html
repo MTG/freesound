@@ -2,7 +2,7 @@
     {% include "sounds/player_small.html" %}
 </div>
 
-<p style="width: 170px; margin-bottom: 0;"><a class="title" href="{% url sound sound.user.username sound.id %}">
+<p style="width: 190px; margin-bottom: 0;"><a class="title" href="{% url sound sound.user.username sound.id %}">
     {{sound.original_filename}}</a>
     by <a class="user" href="{% url account sound.user.username %}">
     {{sound.user.username}}</a>

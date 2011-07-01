@@ -1,0 +1,61 @@
+{% if pack %}
+{% with pack.0 as pack %}
+
+<div id="pack_result" style="width:620px;">
+<div id="pack_description" style="
+								float:left;		
+								width:430px; 
+								height: 120px;
+								padding-left: 0;
+								margin-left:0;
+								padding: 0px 0px 0px 5px;
+								">
+
+<h4><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> ({{pack.num_sounds}} sound/s) </h4>
+<p style="font-size:10px;">by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>.  
+Downloaded {{pack.num_downloads}} times.
+<br>Tags of sounds inside the pack:	
+{% with pack.get_pack_tags as tags %}   
+	{% if tags == -1 %}
+			Oops! it seems that tag information is not available at his moment. Try again later...
+	{% else %}
+		{% for tag in tags.tags %}
+			<a href="{% url tags tag %}"  style="
+							    			padding: 0px 3px 0 0px;
+										    min-height: 12px;
+										    font-size: 10px;
+										    font-weight: bold;
+										    background: none;
+											">{{ tag }}</a>
+		{% endfor %}  
+		{% if tags.num_tags == 20 %}
+			<span style="color:#888">...</span>
+		{% endif %}		
+	{% endif %}
+{% endwith %}
+</p>
+</div>
+
+<div style="height:125px">	
+<div id="sample_from_pack" style="
+float: right;
+width: 170px;
+margin-bottom: 30px;
+height: 90px;
+padding: 1px 1px 1px 5px;
+border-left: 1px solid #d6d6d6;
+line-height: 15px;
+font-size: 9px;
+color: #757575;
+">	 
+{% with pack.get_random_sound_from_pack as sound %}
+	{% include "sounds/player_medium.html" %}
+	<br><a href="{% url sound pack.user.username sound.id %}" style="color:#888; text-decoration:underline;">Random sound from pack</a>
+{% endwith %}
+</div>
+</div>
+</div>
+
+{% endwith %}
+{% endif %}
+

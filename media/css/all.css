@@ -297,7 +297,6 @@ div.infowindow {
 #similar_sounds_link,
 .similar {
     background-image: url(../images/fugue-icons/icons/headphone--plus.png);
-    background-image: url(../images/similar_sounds.png);
 }
 
 
@@ -765,11 +764,6 @@ h3.header,
 .sample_more img {
     position: relative;
     top: -1px;
-}
-
-#recent_additions .sample_player_small {
-    border-bottom: solid 1px #DCDCDC;
-    padding-bottom: 8px;
 }
 
 /* Displayed portions of sound player depending on the container */
@@ -2132,7 +2126,7 @@ span.tag_addremove a:hover {
 #license-left,#license-arrow,#license-middle,#license-right {
     height: 100%;
     float: left;
-    margin: 10px;
+    margin: 0 0 10px 10px;
 }
 
 .license-description {
@@ -2193,30 +2187,60 @@ span.tag_addremove a:hover {
 
 /* Describe accordion
 ------------------------------------------------------*/
-.outer-accordion-div {
-    background: #dddddd;
-    padding: 10px;
-    height: 500px;
+#describe_form {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+#describe_form #submit-button {
+    margin-top: 10px;
 }
 
-.outer-accordion-div h4 {
-    background: #eeeeee;
+#describe_form .ui-accordion-header {
+    display: block;
+    border: solid 1px #ccc;
+    padding: 15px;
+    background: #eee;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px; /* rounded corners */
+}
+#describe_form .ui-accordion-header.ui-state-active {
+    border-bottom: none;
+    margin-top: 10px;
+    background: #f1f1f1;
+    -webkit-border-bottom-right-radius: 0;
+    -webkit-border-bottom-left-radius: 0;
+    -moz-border-radius-bottomright: 0;
+    -moz-border-radius-bottomleft: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0; /* rounded bottom left and right corners */
 }
 
-.inner-accordion-div {
-    background: #ffffff;
-    padding: 10px;
+#describe_form .sound-accordion-sound {
+    display: block;
+    padding: 15px;
+    background: #f9f9f9;
+    border: solid 1px #ccc;
+    border-top: none;
+    margin: 10px 0;
+    -webkit-border-bottom-right-radius: 5px;
+    -webkit-border-bottom-left-radius: 5px;
+    -moz-border-radius-bottomright: 5px;
+    -moz-border-radius-bottomleft: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px; /* rounded bottom left and right corners */
 }
 
-.outer-accordion h3 {
-    background: #cccccc;
-    margin: 0px;
-    padding: 10px;
+#describe_form .sound-accordion-sound.ui-accordion-content-active {
+    margin-top: 0;
 }
 
-.outer-accordion {
-    width: 900px;
+.gmap-wrapper {
+    margin-bottom: 20px;
 }
+
 
 /* Describe google map
 ------------------------------------------------------*/

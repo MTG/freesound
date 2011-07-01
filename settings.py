@@ -176,6 +176,12 @@ from local_settings import * #@UnusedWildImport
 TEMPLATE_DEBUG = DEBUG
 MANAGERS = ADMINS
 
+# change the media url to tabasco to make the players work when testing
+if DEBUG:
+    HTML5_PLAYER_MEDIA_URL = 'http://tabasco.upf.edu/media/'
+else:
+    HTML5_PLAYER_MEDIA_URL = '/media/'
+
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
     INSTALLED_APPS += ('debug_toolbar',)

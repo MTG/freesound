@@ -35,7 +35,8 @@ def get_last_action_time(user):
 def context_extra(request):
     return_dict = {'media_url': settings.MEDIA_URL,
                    'request': request,
-                   'GOOGLE_API_KEY': settings.GOOGLE_API_KEY }
+                   'GOOGLE_API_KEY': settings.GOOGLE_API_KEY,
+                   'HTML5_PLAYER_MEDIA_URL': settings.HTML5_PLAYER_MEDIA_URL }
 
     if any(map(lambda s: request.get_full_path().startswith(s), settings.LAST_ACTION_TIME_URLS)):
         return_dict['last_action_time'] = get_last_action_time(request.user)

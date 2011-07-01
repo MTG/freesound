@@ -66,3 +66,31 @@ def search(request):
         return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
     else:
         return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
+    
+    
+def get_pack_tags(pack_obj):
+    query = SolrQuery()
+    query.set_dismax_query('')
+    #filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
+    filter_query = 'pack:\"%s\"' % (pack_obj.name,)
+    query.set_query_options(field_list=["id"], filter_query=filter_query)
+    query.add_facet_fields("tag")
+    query.set_facet_options("tag", limit=20, mincount=1)
+    solr = Solr(settings.SOLR_URL)
+    
+    try:
+        results = SolrResponseInterpreter(solr.select(unicode(query)))
+    except SolrException, e:
+        #logger.warning("search error: query: %s error %s" % (query, e))
+        #error = True
+        #error_text = 'There was an error while searching, is your query correct?'
+        return False
+    except Exception, e:
+        #logger.error("Could probably not connect to Solr - %s" % e)
+        #error = True
+        #error_text = 'The search server could not be reached, please try again later.' 
+        return False
+    
+    return results.facets
+
+

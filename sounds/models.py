@@ -14,6 +14,8 @@ import os, logging, random, datetime, gearman
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
+from search.views import get_pack_tags
+
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -415,6 +417,18 @@ class Pack(SocialModel):
         self.save()
 
         logger.info("\tall done")
+
+    def get_random_sound_from_pack(self):
+        pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')
+        return pack_sounds[0]
+
+    def get_pack_tags(self, max_tags = 50):
+        pack_tags = get_pack_tags(self)
+        if pack_tags != False :
+            tags = [t[0] for t in pack_tags['tag']]
+            return {'tags': tags, 'num_tags': len(tags)}
+        else :
+            return -1
 
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)

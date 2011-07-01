@@ -51,7 +51,7 @@
             </a>
             {% if sound.pack %}
              <a class="pack" href="{% url pack sound.user.username sound.pack.id %}">
-                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Remixes" title="This sound belongs to a pack." />
+                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to a pack." />
             </a>
             {% endif %}
             {% if sound.remix_groups.all.count %}

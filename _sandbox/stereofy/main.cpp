@@ -52,7 +52,9 @@ int main(int argc, char* argv[])
 
 	std::string inputFilename;
 	std::string outputFilename;
-	
+
+	int bitdepth;
+
 	if( opt->getValue("input") != NULL )
 	{
 		inputFilename = opt->getValue("input");
@@ -98,16 +100,17 @@ int main(int argc, char* argv[])
 		std::cout << "#channels " << sfinfoIn.channels << std::endl;
 		std::cout << "#samplerate " << sfinfoIn.samplerate << std::endl;
 		std::cout << "#duration " << double(sfinfoIn.frames)/double(sfinfoIn.samplerate) << std::endl;
-        int bitdepth = get_bitwidth(sfinfoIn.format);
-        if (bitdepth != 0)
-            std::cout << "#bitdepth " << get_bitwidth(sfinfoIn.format) << std::endl;
+        	bitdepth = get_bitwidth(sfinfoIn.format);
+        	if (bitdepth != 0)
+            		std::cout << "#bitdepth " << get_bitwidth(sfinfoIn.format) << std::endl;
 	}
 
 
         double max_val ;
         sf_command (fileIn, SFC_CALC_SIGNAL_MAX, &max_val, sizeof(max_val));
+
         double normalizer = 1.0;
-        if (max_val > 1.0)
+        if (bitdepth==32 && max_val > 1.0)
             normalizer = 1 / max_val;
 
 

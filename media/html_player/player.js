@@ -3,7 +3,7 @@ soundManager.flashVersion = 8; // optional: shiny features (default = 8)
 soundManager.useFlashBlock = false; // optionally, enable when you're ready to dive in
 soundManager.debugMode = false;
 
-function msToTime(position, durationEstimate, displayRemainingTime)
+function msToTime(position, durationEstimate, displayRemainingTime, showMs)
 {
     if (displayRemainingTime)
         position = durationEstimate - position;
@@ -29,7 +29,10 @@ function msToTime(position, durationEstimate, displayRemainingTime)
     else
         minutes = '' + minutes;
 
-    return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds + ':' + ms;
+    if (showMs)
+        return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds + ':' + ms;
+    else
+        return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds;
 }
 
 var uniqueId = 0;
@@ -61,6 +64,8 @@ function makePlayer(selector) {
 
         if ($(this).data("hasPlayer")) return true;
         else $(this).data("hasPlayer", true);
+
+        var showMs = $(this).hasClass("large");
 
         if ($(this).hasClass("large")) {
             $(this).append('<div class="controls"> \
@@ -107,7 +112,7 @@ function makePlayer(selector) {
             $(".background", this).css("background", "url(" + waveform + ")");
 
         $(".loading-progress", playerElement).hide();
-        $(".time-indicator", playerElement).html(msToTime(0, duration, !$(".time-indicator-container", playerElement).hasClass("on")));
+        $(".time-indicator", playerElement).html(msToTime(0, duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
 
         if ($(this).hasClass("large"))
         {
@@ -139,7 +144,7 @@ function makePlayer(selector) {
             {
                 var positionPercent = this.position / this.duration * 100;
                 $(".position-indicator", playerElement).css("left", positionPercent + "%");
-                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on")));
+                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
             },
             onfinish: function ()
             {
@@ -171,7 +176,7 @@ function makePlayer(selector) {
             {
                 sound.stop()
                 //sound.setPosition(0);
-                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on")));
+                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
                 switchToggle($(".play", playerElement));
             }
         });

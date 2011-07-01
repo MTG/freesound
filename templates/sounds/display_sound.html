@@ -46,12 +46,14 @@
         <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 
         <div class="sound_attributes">
+            {% if sound.similarity_state == 'OK' %}
             <a class="similar" href="{% url sound-similar sound.user.username sound.id %}">
-                <img src="{{media_url}}images/similar_sounds.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
+                <img src="{{media_url}}images/fugue-icons/icons/headphone--plus.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
             </a>
+            {% endif %}
             {% if sound.pack %}
              <a class="pack" href="{% url pack sound.user.username sound.pack.id %}">
-                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Remixes" title="This sound belongs to a pack." />
+                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to a pack." />
             </a>
             {% endif %}
             {% if sound.remix_groups.all.count %}
@@ -68,7 +70,7 @@
             {% if sound.license.name == 'Sampling+' %}
                 <img class="cc_license" src="{{media_url}}images/licenses/sampling.png" width="16" height="16" alt="Sampling+ license" title="This sound is licensed under the sampling+ license." />
             {% endif %}
-            {% if sound.license.name == 'Public Domain' %}
+            {% if sound.license.name == 'Creative Commons 0' %}
                 <img class="cc_license" src="{{media_url}}images/licenses/nolaw.png" width="16" height="16" alt="Public Domain license" title="This sound is public domain." />
             {% endif %}
             {% if sound.license.name == 'Attribution' %}

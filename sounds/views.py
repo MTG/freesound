@@ -84,7 +84,7 @@ def random(request):
 
 def packs(request):
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds"]:
+    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order)
     return render_to_response('sounds/browse_packs.html',combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
@@ -278,6 +278,12 @@ def sound_edit_sources(request, username, sound_id):
 
     current_sources = sound.sources.all()
     sources_string = ",".join(map(str, [source.id for source in current_sources]))
+    
+    remix_group = RemixGroup.objects.filter(sounds=current_sources)
+    print ("======== remix group id following ===========")
+    print (remix_group[0].id)
+    
+
 
     if request.method == 'POST':
         form = RemixForm(sound, request.POST)

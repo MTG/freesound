@@ -99,7 +99,7 @@
 {% block title %}Remixes browse{% endblock title %}
 
 {% block section_content %}
-<h1>Remixed</h1>
+<h1>Remix-groups</h1>
 <div id="jquery_jplayer_1" style="height: 0px; width: 0px;"></div>
 
 <div id="remix_group_info" class="content_box">
@@ -160,6 +160,7 @@ arc.node.add(pv.Image)
     .imageWidth(function(d) 552 / data{{ forloop.counter }}.length)
     .width(function(d) 552 / data{{ forloop.counter }}.length)
     .height(50)
+	.left(function(d) d.x - ( (552 / data{{ forloop.counter }}.length) / 2) )
     .fillStyle(null)
     .strokeStyle(null)
     .event("mouseover", function(d) ($("#message{{ forloop.counter }}").append("Click to go to sound page"), playPreview(d), d.active = true, arc, vis{{ forloop.counter }}.i(this.index)))
@@ -173,8 +174,7 @@ arc.label.add(pv.Label)
                       })
     .textAngle(0.959931089)	// 55 degrees
     .textBaseline("bottom")
-    .textAlign("right")
-    .left(function(d) d.x + (552 / data{{ forloop.counter }}.length) / 2);
+    .textAlign("right");
 
 
 vis{{ forloop.counter }}.render();

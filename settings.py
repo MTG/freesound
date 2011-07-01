@@ -130,7 +130,7 @@ FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
 SOUND_COMMENTS_PER_PAGE = 5
 SOUNDS_PER_PAGE = 15
-PACKS_PER_PAGE = 50
+PACKS_PER_PAGE = 15
 REMIXES_PER_PAGE = 10
 SOUNDS_PER_API_RESPONSE = 30
 SOUNDS_PER_DESCRIBE_ROUND = 4
@@ -154,12 +154,6 @@ PACKS_PATH = os.path.join(DATA_PATH, "packs/")
 UPLOADS_PATH = os.path.join(DATA_PATH, "uploads/")
 ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 
-DATA_URL = "/data/"
-AVATARS_URL = DATA_URL + "avatars/"
-PREVIEWS_URL = DATA_URL + "previews/"
-DISPLAYS_URL = DATA_URL + "displays/"
-ANALYSIS_URL = DATA_URL + "analysis/"
-
 SENDFILE_SECRET_URL = "/secret/"
 SOUNDS_SENDFILE_URL = SENDFILE_SECRET_URL + "sounds/"
 PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
@@ -175,6 +169,17 @@ from local_settings import * #@UnusedWildImport
 
 TEMPLATE_DEBUG = DEBUG
 MANAGERS = ADMINS
+
+# change the media url to tabasco to make the players work when testing
+if DEBUG:
+    DATA_URL = "http://tabasco.upf.edu/data/"
+else:
+    DATA_URL = "/data/"
+
+AVATARS_URL = DATA_URL + "avatars/"
+PREVIEWS_URL = DATA_URL + "previews/"
+DISPLAYS_URL = DATA_URL + "displays/"
+ANALYSIS_URL = DATA_URL + "analysis/"
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)

@@ -28,7 +28,7 @@ class GeotaggingForm(forms.Form):
 
 
 class SoundDescriptionForm(forms.Form):
-    tags = TagField(widget=forms.widgets.TextInput(attrs={"size":40}), help_text="Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
+    tags = TagField(widget=forms.Textarea(attrs={'cols': 40, 'rows': 1}), help_text="Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea)
 
 
@@ -128,12 +128,12 @@ class LicenseForm(forms.Form):
 
 
 class NewLicenseForm(forms.Form):
-    license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Public')),
+    license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')),
                                      required=True,
                                      empty_label=None,
                                      widget=forms.RadioSelect(),
                                      label='',
-                                     initial=License.objects.get(name='Public Domain'))
+                                     initial=License.objects.get(name='Attribution'))
 
 
 class FlagForm(forms.ModelForm):

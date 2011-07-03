@@ -99,7 +99,7 @@ function makePlayer(selector) {
                 <div class="position-indicator"></div>');
         }
 
-        var urls = $(".metadata", this).html().split(" ");
+        var urls = $(".metadata", this).text().split(" ");
 
         var mp3Preview = urls[0];
         var waveform = urls[1];
@@ -108,10 +108,13 @@ function makePlayer(selector) {
 
         var playerElement = $(this);
 
-        if (!$(this).hasClass("mini"))
-            $(".background", this).css("background", "url(" + waveform + ")");
+        if (!$(this).hasClass("mini")) {
+            $(".background", this).css("backgroundImage", 'url("' + waveform + '")');
+        }
+
 
         $(".loading-progress", playerElement).hide();
+
         $(".time-indicator", playerElement).html(msToTime(0, duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
 
         if ($(this).hasClass("large"))
@@ -253,6 +256,8 @@ function makePlayer(selector) {
 
             $('.measure-readout', playerElement).html(readout);
         });
+
+        return true;
     });
 }
 

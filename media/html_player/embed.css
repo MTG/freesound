@@ -105,8 +105,9 @@ body.medium {
 }
 
 .widget.medium .title img {
-    float: left;
-    margin-top: 5px;
+    float: right;
+    margin-top: 6px;
+    margin-right: 6px;
 }
 
 .widget.medium .title h3 {

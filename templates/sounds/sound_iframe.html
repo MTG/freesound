@@ -1,0 +1,169 @@
+{% load cache %}
+{% load util %}
+{% load absurl %}
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+    <head>
+        <script src="{{media_url}}js/jquery-1.5.2.min.js" type="text/javascript"></script>
+        <link href='http://fonts.googleapis.com/css?family=Inconsolata&v1' rel='stylesheet' type='text/css' />
+        <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/embed.css" />
+        <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/player.css" />
+        <script src="{{ media_url }}html_player/soundmanager2.js"></script>
+        <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
+    </head>
+
+<body class="{{ size }}">
+
+    {% if size == 'large' %}
+    <div class="widget large">
+        <div class="sample_info">
+            <nobr>
+                <img class="avatar" src="{{sound.user.profile.locations.avatar.S.url}}" alt="avatar" />
+                <h3>{{ sound.user.username }} - {{ sound.original_filename|truncate_string:120 }}</h3>
+                    {% include "sounds/widget_license.html" %}
+                    <a href="{% absurl sound sound.user.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
+            </nobr>
+            <br style="clear: both;" />
+        </div>
+        <div class="player large">
+            <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.L.url}} {{sound.locations.display.spectral.L.url}} {{sound.duration_ms}}</div>
+        </div>
+    </div>
+
+    {% endif %}
+
+
+
+    {% if size == 'medium' %}
+    <div class="widget medium">
+        <div class="player_wrapper">
+            <div class="player small">
+                <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.M.url}} {{sound.locations.display.spectral.M.url}} {{sound.duration_ms}}</div>
+            </div>
+        </div>
+
+        <div class="sample_info">
+            <span class="title">
+                <nobr><h3>{{ sound.original_filename|truncate_string:45 }}</h3>
+                      {% include "sounds/widget_license.html" %}
+                </nobr>
+            </span>
+            <div class="sample_info_left">
+                 <img class="avatar" src="{{sound.user.profile.locations.avatar.M.url}}" alt="avatar" />
+                 <span class="username">{{ sound.user.username|truncate_string:16 }}</span>
+                 <a href="{% absurl sound sound.user.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
+            </div>
+            <div class="sample_info_right">
+                <ul id="tags">
+                    {% for tag_link in sound.tags.all %}
+                        <li><span>{{tag_link.tag.name}}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <br style="clear: both;" />
+        </div>
+    </div>
+    {% endif %}
+
+
+
+    {% if size == 'small' %}
+    <div class="player small">
+        <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.M.url}} {{sound.locations.display.spectral.M.url}} {{sound.duration_ms}}</div>
+    </div>
+    {% endif %}
+
+    {% if size == 'mini' %}
+    <div class="player mini">
+        <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.S.url}} {{sound.locations.display.spectral.S.url}} {{sound.duration_ms}}</div>
+    </div>
+    {% endif %}
+
+
+
+</body>
+
+
+
+
+
+
+
+
+
+
+{% comment %}
+
+        <div class="sound_title">
+            <div class="sound_filename">
+               <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:27}}</a>
+            </div><!-- .sound_filename -->
+            <div class="sound_stars">
+               <ul class="star-rating">
+                   <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
+                   <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">1</a></li>
+                   <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">2</a></li>
+                   <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">3</a></li>
+                   <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">4</a></li>
+                   <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">5</a></li>
+               </ul>
+            </div><!-- .sound_stars -->
+
+            <div class="sound_description">
+                <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
+            </div><!-- .sound_description -->
+            <div class="sound_tags">
+            <ul id="tags">
+                {% for tag_link in sound_tags %}
+                    <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                {% endfor %}
+            </ul>
+            </div><!-- .sound_tags -->
+          </div><!-- .sound_title -->
+    </div><!-- .sample_player -->
+
+    <div class="sample_information">
+        <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
+        <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
+        <span class="download_count">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</span><br />
+        <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
+
+        <div class="sound_attributes">
+            {% if sound.similarity_state == 'OK' %}
+            <a class="similar" href="{% url sound-similar sound.user.username sound.id %}">
+                <img src="{{media_url}}images/fugue-icons/icons/headphone--plus.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
+            </a>
+            {% endif %}
+            {% if sound.pack %}
+             <a class="pack" href="{% url pack sound.user.username sound.pack.id %}">
+                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to a pack." />
+            </a>
+            {% endif %}
+            {% if sound.remix_groups.all.count %}
+             <a class="remixes" href="{% url sound-remixes sound.user.username sound.id %}">
+                <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
+            </a>
+            {% endif %}
+            {% if sound.geotag %}
+            <a class="geotag" href="{% url sound-geotag sound.user.username sound.id %}">
+                <img src="{{media_url}}images/geotag.png" width="16" height="16" alt="Geotagged" title="This sound has a geotag" />
+            </a>
+            {% endif %}
+            <!-- license icons -->
+            {% if sound.license.name == 'Sampling+' %}
+                <img class="cc_license" src="{{media_url}}images/licenses/sampling.png" width="16" height="16" alt="Sampling+ license" title="This sound is licensed under the sampling+ license." />
+            {% endif %}
+            {% if sound.license.name == 'Creative Commons 0' %}
+                <img class="cc_license" src="{{media_url}}images/licenses/nolaw.png" width="16" height="16" alt="Public Domain license" title="This sound is public domain." />
+            {% endif %}
+            {% if sound.license.name == 'Attribution' %}
+                <img class="cc_license" src="{{media_url}}images/licenses/by.png" width="16" height="16" alt="Creative Commons Attribution license" title="This sound is licensed under the Creative Commons Attribution license." />
+            {% endif %}
+            {% if sound.license.name == 'Attribution Noncommercial' %}
+                <img class="cc_license" src="{{media_url}}images/licenses/bync.png" height="16" alt="Creative Commons Attribution Non-Commercial license" title="This sound is licensed under the Creative Commons Attribution Non-Commercial license." />
+            {% endif %}
+            <!-- /license icons -->
+        </div><!-- .sound_attributes -->
+
+    </div><!-- .sample_information -->
+{% endcomment %}

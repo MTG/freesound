@@ -278,11 +278,11 @@ def sound_edit_sources(request, username, sound_id):
 
     current_sources = sound.sources.all()
     sources_string = ",".join(map(str, [source.id for source in current_sources]))
-    
+
     remix_group = RemixGroup.objects.filter(sounds=current_sources)
     print ("======== remix group id following ===========")
     print (remix_group[0].id)
-    
+
 
 
     if request.method == 'POST':
@@ -436,3 +436,12 @@ def old_pack_link_redirect(request):
 def display_sound_wrapper(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id) #TODO: test the 404 case
     return render_to_response('sounds/display_sound.html', display_sound.display_sound(RequestContext(request), sound), context_instance=RequestContext(request))
+
+
+def embed_iframe(request, sound_id, player_size):
+    if player_size not in ['mini', 'small', 'medium', 'large']:
+        raise Http404
+    size = player_size
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
+    return render_to_response('sounds/sound_iframe.html', locals(), context_instance=RequestContext(request))
+

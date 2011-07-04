@@ -55,7 +55,7 @@
 
             var point = new GLatLng(lat, lon);
             var marker = new GMarker(point);
-            bounds.extend(point);
+            //bounds.extend(point);
 
             GEvent.addListener(marker, "click", function()
             {
@@ -63,7 +63,7 @@
                 {
                     marker.openInfoWindowHtml(data);
                     setTimeout(function() {
-                        makePlayer('.player');
+                        makePlayer('.infowindow_player .player');
                     }, 500);
                 });
             });

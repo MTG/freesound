@@ -3,7 +3,7 @@ soundManager.flashVersion = 8; // optional: shiny features (default = 8)
 soundManager.useFlashBlock = false; // optionally, enable when you're ready to dive in
 soundManager.debugMode = false;
 
-function msToTime(position, durationEstimate, displayRemainingTime)
+function msToTime(position, durationEstimate, displayRemainingTime, showMs)
 {
     if (displayRemainingTime)
         position = durationEstimate - position;
@@ -29,7 +29,10 @@ function msToTime(position, durationEstimate, displayRemainingTime)
     else
         minutes = '' + minutes;
 
-    return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds + ':' + ms;
+    if (showMs)
+        return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds + ':' + ms;
+    else
+        return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds;
 }
 
 var uniqueId = 0;
@@ -58,6 +61,12 @@ function switchToggle(element) {
 
 function makePlayer(selector) {
     $(selector).each( function () {
+
+        if ($(this).data("hasPlayer")) return true;
+        else $(this).data("hasPlayer", true);
+
+        var showMs = $(this).hasClass("large");
+
         if ($(this).hasClass("large")) {
             $(this).append('<div class="controls"> \
                    <div class="toggle play"></div> \
@@ -90,7 +99,7 @@ function makePlayer(selector) {
                 <div class="position-indicator"></div>');
         }
 
-        var urls = $(".metadata", this).html().split(" ");
+        var urls = $(".metadata", this).text().split(" ");
 
         var mp3Preview = urls[0];
         var waveform = urls[1];
@@ -99,11 +108,14 @@ function makePlayer(selector) {
 
         var playerElement = $(this);
 
-        if (!$(this).hasClass("mini"))
-            $(".background", this).css("background", "url(" + waveform + ")");
+        if (!$(this).hasClass("mini")) {
+            $(".background", this).css("backgroundImage", 'url("' + waveform + '")');
+        }
+
 
         $(".loading-progress", playerElement).hide();
-        $(".time-indicator", playerElement).html(msToTime(0, duration, !$(".time-indicator-container", playerElement).hasClass("on")));
+
+        $(".time-indicator", playerElement).html(msToTime(0, duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
 
         if ($(this).hasClass("large"))
         {
@@ -135,7 +147,7 @@ function makePlayer(selector) {
             {
                 var positionPercent = this.position / this.duration * 100;
                 $(".position-indicator", playerElement).css("left", positionPercent + "%");
-                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on")));
+                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
             },
             onfinish: function ()
             {
@@ -167,7 +179,7 @@ function makePlayer(selector) {
             {
                 sound.stop()
                 //sound.setPosition(0);
-                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on")));
+                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
                 switchToggle($(".play", playerElement));
             }
         });
@@ -244,6 +256,8 @@ function makePlayer(selector) {
 
             $('.measure-readout', playerElement).html(readout);
         });
+
+        return true;
     });
 }
 

@@ -294,8 +294,7 @@ div.infowindow {
 #remixes_link {
     background-image: url(../images/remixes.png);
 }
-#similar_sounds_link,
-.similar {
+#similar_sounds_link {
     background-image: url(../images/fugue-icons/icons/headphone--plus.png);
 }
 
@@ -992,6 +991,92 @@ ul#tags {
     top: 1px;
     left: -5px;
 }
+
+#share_links {
+    padding: 10px 25px;
+    border-top: solid 1px #D2D2D2;
+    background: #fff url(../images/single_sample_links_bg.png) no-repeat top;
+}
+
+#share_links .social_link,
+.twitter-share-button {
+    float: left;
+    margin-right: 7px;
+}
+
+#share_links #show_button {
+    color: #2C74C9;
+    float: left;
+    display: block;
+    margin-left: 10px;
+}
+
+#share_links #show_button:hover {
+    text-decoration: underline;
+}
+
+#share_links #embed_links {
+    display: none;
+}
+
+#share_links .embed_link {
+    margin-bottom: 20px;
+}
+
+#share_links .embed_link p {
+    margin-bottom: 0px;
+    color: #aaa;
+}
+
+#share_links #embed_large .embed_example {
+    background: #ededed url(../images/widgets/embed_large_scaled_inactive.png);
+    width: 250px;
+    height: 66px;
+}
+#share_links #embed_large .embed_example:hover,
+#share_links #embed_large .embed_example.embed_active {
+    background: #ededed url(../images/widgets/embed_large_scaled_active_color.png);
+}
+
+
+#share_links #embed_medium .embed_example {
+    background: #ededed url(../images/widgets/embed_medium_scaled_inactive.png);
+    width: 220px;
+    height: 39px;
+}
+#share_links #embed_medium .embed_example:hover,
+#share_links #embed_medium .embed_example.embed_active  {
+    background: #ededed url(../images/widgets/embed_medium_scaled_active_color.png);
+}
+
+
+#share_links #embed_small .embed_example {
+    background: #ededed url(../images/widgets/embed_small_scaled_inactive.png) top left;
+    width: 190px;
+    height: 15px;
+}
+#share_links #embed_small .embed_example:hover,
+#share_links #embed_small .embed_example.embed_active {
+    background: #ededed url(../images/widgets/embed_small_scaled_active_color.png) top left;
+}
+
+#share_links .embed_example {
+    border: 1px #ffffff solid;
+}
+
+/*#share_links .embed_example:hover, */
+#share_links .embed_example.embed_active {
+    border: 1px #AB4646 solid;
+}
+
+
+
+#share_links #embed_code {
+    width: 250px;
+    heigth: 30px;
+}
+
+
 
 #sound_links {
     padding: 20px 30px;

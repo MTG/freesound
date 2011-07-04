@@ -69,6 +69,9 @@
             GEvent.addListener(marker, "click", function() {
                 GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
                     marker.openInfoWindowHtml(data);
+                    setTimeout(function() {
+                        makePlayer('.infowindow_player .player');
+                    }, 500);
                 });
             });
             map.addOverlay(marker);

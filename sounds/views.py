@@ -443,5 +443,6 @@ def embed_iframe(request, sound_id, player_size):
         raise Http404
     size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
+    username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
     return render_to_response('sounds/sound_iframe.html', locals(), context_instance=RequestContext(request))
 

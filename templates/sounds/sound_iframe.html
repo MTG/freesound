@@ -68,14 +68,25 @@
 
 
     {% if size == 'small' %}
-    <div class="player small">
-        <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.M.url}} {{sound.locations.display.spectral.M.url}} {{sound.duration_ms}}</div>
+    <div class="widget small">
+        <nobr>
+            <div class="player mini">
+                <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.S.url}} {{sound.locations.display.spectral.S.url}} {{sound.duration_ms}}</div>
+            </div>
+            <div class="sample_info">
+                <a href="{% absurl sound sound.user.username sound.id %}" target="_parent"><h3>{{ username_and_filename|truncate_string:53 }}</h3></a>
+                <img src="{{ media_url }}images/widgets/external.png" />
+            </div>
+        </nobr>
+        <br style="clear: both;" />
     </div>
     {% endif %}
 
     {% if size == 'mini' %}
-    <div class="player mini">
-        <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.S.url}} {{sound.locations.display.spectral.S.url}} {{sound.duration_ms}}</div>
+    <div class="widget mini">
+        <div class="player mini">
+            <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.S.url}} {{sound.locations.display.spectral.S.url}} {{sound.duration_ms}}</div>
+        </div>
     </div>
     {% endif %}
 

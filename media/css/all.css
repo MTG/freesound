@@ -1410,6 +1410,24 @@ ul.pagination {
     padding: 4px;
 }
 
+.pagination .disabled-previous-next {
+ 	padding: 0 4px;
+ 	color:#888;
+ 	margin-right: 10px;
+}
+
+.pagination .previous-page {
+ 	margin-right: 10px;
+}
+
+.pagination .next-page {
+ 	margin-right: 10px;
+}
+
+.pagination .dots {
+ 	color:#888;
+}
+
 .pagination .current-page {
     padding: 0 4px;
     margin-top: -1px;

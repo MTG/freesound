@@ -45,28 +45,30 @@ def search(request):
     sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
 
-    if search_query.strip() != "":
-        sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
+    # Allow to return ALL sounds when search has no q parameter
+    #if search_query.strip() != "": 
+    sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
-        solr = Solr(settings.SOLR_URL)
+    solr = Solr(settings.SOLR_URL)
 
-        query = search_prepare_query(search_query, filter_query, sort, current_page, settings.SOUNDS_PER_PAGE)
+    query = search_prepare_query(search_query, filter_query, sort, current_page, settings.SOUNDS_PER_PAGE)
 
-        try:
-            results = SolrResponseInterpreter(solr.select(unicode(query)))
-            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-            page = paginator.page(current_page)
-            error = False
-        except SolrException, e:
-            logger.warning("search error: query: %s error %s" % (query, e))
-            error = True
-            error_text = 'There was an error while searching, is your query correct?'
-        except Exception, e:
-            logger.error("Could probably not connect to Solr - %s" % e)
-            error = True
-            error_text = 'The search server could not be reached, please try again later.'
-    else:
-        results = []
+    try:
+        results = SolrResponseInterpreter(solr.select(unicode(query)))
+        paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+        num_results = paginator.count
+        page = paginator.page(current_page)
+        error = False
+    except SolrException, e:
+        logger.warning("search error: query: %s error %s" % (query, e))
+        error = True
+        error_text = 'There was an error while searching, is your query correct?'
+    except Exception, e:
+        logger.error("Could probably not connect to Solr - %s" % e)
+        error = True
+        error_text = 'The search server could not be reached, please try again later.'
+    #else:
+    #    results = []
 
     if request.GET.get("ajax", "") != "1":
         return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))

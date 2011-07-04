@@ -34,6 +34,13 @@
 		<li class="last-page"><a href="{{ url }}{{ paginator.num_pages }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page">{{paginator.num_pages}}</a></li>
 	{% endif %}
 	
+	<p class="number_of_results">
+	{% if paginator.count == 1 %}
+		&nbsp|&nbsp {{ paginator.count }} result
+	{% else %}
+		&nbsp|&nbsp {{ paginator.count }} results
+	{% endif %}
+	</p>
 	
 </ul>
 {% endspaceless %}

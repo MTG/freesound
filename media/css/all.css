@@ -1484,6 +1484,11 @@ ul.pagination {
  	margin-right: 10px;
 }
 
+.pagination .number_of_results {
+ 	margin-left: 200px;
+ 	color: #888;
+}
+
 .pagination .dots {
  	color:#888;
 }

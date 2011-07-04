@@ -145,7 +145,7 @@ def sound(request, username, sound_id):
         form = CommentForm(request)
 
     qs = Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id)
-    facebook_like_link = urllib.quote('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
+    facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
 # N.B. login is required but adapted to not return the user to the download link.

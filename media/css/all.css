@@ -1638,6 +1638,15 @@ ul.pagination {
     margin-bottom: 20px;
 }
 
+#sidebar #latest_geotags #map_canvas {
+    position: relative;
+    left: -20px;
+    top: -17px;
+    width: 348px;
+    height: 300px;
+    border: 1px solid #E6E6E6;
+}
+
 .continuous_sidebar_box {
     background: url(../images/continuous_sidebar_header_bg.png) no-repeat
         top;

@@ -832,6 +832,62 @@ h3.header,
     margin: 5px 0px 5px 0;
 }
 
+
+/* Pack display (pack lists)
+------------------------------------------------------*/
+
+.pack_display {
+	width:830px;
+	height:125px;
+}
+
+.pack_display .pack_description {
+	float:left;		
+	width:430px; 
+	height: 120px;
+	padding-left: 0;
+	margin-left:0;
+	padding: 0px 0px 0px 5px;
+}
+
+.pack_display .pack_description .text {
+	font-size:10px;
+}
+
+.pack_display .pack_description .dots {
+	color:#888;
+}
+
+.pack_display .pack_description .tags {
+	padding: 0px 3px 0 0px;
+	min-height: 12px;
+	font-size: 10px;
+	font-weight: bold;
+	background: none;
+}
+
+.pack_display .sounds_in_pack {
+	float: right;
+	width: 380px;
+	margin-bottom: 30px;
+	height: 90px;
+	padding: 1px 1px 1px 5px;
+	border-left: 1px solid #d6d6d6;
+	line-height: 15px;
+	font-size: 9px;
+	color: #757575;
+	display: inline; 
+}
+
+.pack_display .sounds_in_pack .text {
+	color:#888;
+}
+
+.pack_display .sounds_in_pack .sound {
+	float:left; width:125px;
+}
+
+
 /* Browse Sounds Page
 ------------------------------------------------------*/
 

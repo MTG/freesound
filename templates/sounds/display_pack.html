@@ -1,18 +1,11 @@
 {% if pack %}
 {% with pack.0 as pack %}
 
-<div id="pack_result" style="width:830px;">
-<div id="pack_description" style="
-								float:left;		
-								width:430px; 
-								height: 120px;
-								padding-left: 0;
-								margin-left:0;
-								padding: 0px 0px 0px 5px;
-								">
+<div class="pack_display" id="{{pack.id}}">
+<div class="pack_description">
 
 <h4><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> ({{pack.num_sounds}} sound/s) </h4>
-<p style="font-size:10px;">by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>.  
+<p class="text">by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>.  
 Downloaded {{pack.num_downloads}} times.
 <br>Tags of sounds inside the pack:	
 {% with pack.get_pack_tags as tags %}   
@@ -20,63 +13,41 @@ Downloaded {{pack.num_downloads}} times.
 			Tag information is not available right now.
 	{% else %}
 		{% for tag in tags.tags %}
-			<a href="{% url tags tag %}"  style="
-							    			padding: 0px 3px 0 0px;
-										    min-height: 12px;
-										    font-size: 10px;
-										    font-weight: bold;
-										    background: none;
-											">{{ tag }}</a>
+			<a href="{% url tags tag %}" class="tags" >{{ tag }}</a>
 		{% endfor %}  
 		{% if tags.num_tags == 20 %}
-			<span style="color:#888">...</span>
+			<span class="dots">...</span>
 		{% endif %}		
 	{% endif %}
 {% endwith %}
 </p>
 </div>
 
-<div style="height:125px">	
-<div id="sample_from_pack" style="
-float: right;
-width: 380px;
-margin-bottom: 30px;
-height: 90px;
-padding: 1px 1px 1px 5px;
-border-left: 1px solid #d6d6d6;
-line-height: 15px;
-font-size: 9px;
-color: #757575;
-display: inline; 
-">	 
+<div class="sounds_in_pack">	 
 {% with pack.get_random_sounds_from_pack as sounds %}
-	<span style="color:#888">Some random samples from the pack:</span><br>
-	
-	<div style="float:left; width:125px;">
+	<span class="text">Some random samples from the pack:</span><br>
+	<div class="sound">
 	{% with sounds.0 as sound %}
 		{% if sound %}
 			{% include "sounds/player_medium.html" %}
 		{% endif %}
 	{% endwith %}
 	</div>
-	
-	<div style="float:left; width:125px;">
+	<div class="sound">
 	{% with sounds.1 as sound %}
 		{% if sound %}
 			{% include "sounds/player_medium.html" %}
 		{% endif %}
 	{% endwith %}
 	</div>
-	<div style="float:left; width:125px;">
+	<div class="sound">
 	{% with sounds.2 as sound %}
 		{% if sound %}
 			{% include "sounds/player_medium.html" %}
 		{% endif %}
 	{% endwith %}
 	</div>
-		
 {% endwith %}
-</div>
 </div>
 </div>
 

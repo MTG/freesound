@@ -4,7 +4,7 @@
 <div class="pack_display" id="{{pack.id}}">
 <div class="pack_description">
 
-<h4><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> ({{pack.num_sounds}} sound/s) </h4>
+<h4><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> <span style="font-weight:normal;">({{pack.num_sounds}} sound/s) </span></h4>
 <p class="text">by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>.  
 Downloaded {{pack.num_downloads}} times.
 <br>Tags of sounds inside the pack:	

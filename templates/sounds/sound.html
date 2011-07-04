@@ -13,7 +13,7 @@
     <script type="text/javascript">
         swfobject.registerObject("player_{{sound.id}}", "10");
     </script>
-    <meta property="og:title" content="Freesound.org - {{ sound.original_filename }}" />
+    <meta property="og:title" content="{{ sound.original_filename }}" />
     <meta property="og:type" content="song" />
     <meta property="og:url" content="http://{{ request.get_host }}{{ sound.locations.preview.LQ.mp3.url }}" />
     <meta property="og:image" content="http://{{ request.get_host }}{{sound.locations.display.wave.L.url}}" />

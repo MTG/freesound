@@ -294,8 +294,7 @@ div.infowindow {
 #remixes_link {
     background-image: url(../images/remixes.png);
 }
-#similar_sounds_link,
-.similar {
+#similar_sounds_link {
     background-image: url(../images/fugue-icons/icons/headphone--plus.png);
 }
 

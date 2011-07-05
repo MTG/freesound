@@ -1,0 +1,12 @@
+{% load util %}
+<div>
+	<div class="thread_name">
+    	<a class="title" href="/forum/{{forum_name_slug}}/{{id}}/">{{thread_name|truncate_string:50}}</a>
+	</div><!-- .thread_name -->
+	<div class="post">
+		{{ post|truncatewords:50 }}
+	</div>
+	<div class="thread_info">
+		{{ thread_info }}
+	</div>
+</div>

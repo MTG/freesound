@@ -66,3 +66,49 @@ def search(request):
         return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
     else:
         return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
+
+
+def search_forum(request):
+    search_query = request.GET.get("q", "")
+    filter_query = request.GET.get("f", "")
+    current_page = int(request.GET.get("page", 1))
+    sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
+    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
+    print '=========='
+    print search_query
+    if search_query.strip() != "":
+        solr = Solr("http://localhost:8983/solr/forum/")
+        query = SolrQuery()
+        query.set_dismax_query(search_query, query_fields=[("thread_name", 4), ("post",3), ("username",3), ("forum_name",2)])
+        query.set_query_options(start=(current_page - 1) * 30, 
+                                rows=30, 
+                                field_list=["id", 
+                                            "forum_name", 
+                                            "thread_name", 
+                                            "username", 
+                                            "post", 
+                                            "created",
+                                            "num_posts"], 
+                                filter_query=filter_query, 
+                                sort=["created desc"])
+        
+        
+        try:
+            results = SolrResponseInterpreter(solr.select(unicode(query)))
+            print results
+            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+            page = paginator.page(current_page)
+            error = False
+        except SolrException, e:
+            logger.warning("search error: query: %s error %s" % (query, e))
+            error = True
+            error_text = 'There was an error while searching, is your query correct?'
+        except Exception, e:
+            logger.error("Could probably not connect to Solr - %s" % e)
+            error = True
+            error_text = 'The search server could not be reached, please try again later.' 
+    else:
+        results = []
+
+    return render_to_response('search/search_forum.html', locals(), context_instance=RequestContext(request))
+

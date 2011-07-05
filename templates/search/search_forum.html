@@ -1,0 +1,37 @@
+{% extends "forum/_section.html" %}
+
+{% load display_forum_result %}
+{% load search %}
+{% load paginator %}
+
+{% block title %}forum search{% endblock title %}
+
+{% block section_content %}
+
+<form id="search_forum_form" method="get" action="{% url forums-search %}">
+    <fieldset>
+       <input type="text" name="q" value="{{search_query}}" size="30" />
+       <input type="submit" value="search" id="search_submit" />
+    </fieldset>
+</form>
+
+</p>
+
+{% if error %}
+    {{ error_text }}
+{% else %}
+	<div class="search_paginator">
+    {% show_paginator paginator page current_page request %}
+    </div>
+
+    {% for result in results.docs %}
+        {% display_forum_result result %}
+    {% endfor %}
+
+    <div class="search_paginator">
+    {% show_paginator paginator page current_page request %}
+    </div>
+
+{% endif %}
+
+{% endblock %}

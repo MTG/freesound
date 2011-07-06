@@ -50,35 +50,6 @@
     {% endif %}
 
 <div id="content">
-    {% if latest_geotags %}
-    <div id="latest_geotags" class="content_box">
-        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
-        <div id="map_canvas" style="width: 400px; height: 300px; border: 1px solid black;"></div>
-        <script type="text/javascript">
-            var map = new GMap2(document.getElementById("map_canvas"));
-            map.setUIToDefault();
-            map.disableScrollWheelZoom();
-            map.setMapType(G_SATELLITE_MAP);
-
-            var bounds = new GLatLngBounds();
-
-            {% for geotaged_sound in latest_geotags %}
-            var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
-            bounds.extend(point);
-            var marker = new GMarker(point);
-            GEvent.addListener(marker, "click", function() {
-                GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
-                    marker.openInfoWindowHtml(data);
-                });
-            });
-            map.addOverlay(marker);
-
-            {% endfor %}
-            zoomToBounds(map, bounds);
-        </script>
-        <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
-    </div><!-- #latest_geotags -->
-    {% endif %}
 
     {% if latest_sounds %}
     <div id="latest_sounds" class="content_box">
@@ -99,6 +70,39 @@
         {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url tags tag.name %}">{{tag.name}}</a></span> {% endfor %}
         </p>
     </div><!-- #user_most_used_tags -->
+    {% endif %}
+
+    {% if latest_geotags %}
+    <div id="latest_geotags" class="content_box">
+        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
+        <div id="map_canvas"></div>
+        <script type="text/javascript">
+            var map = new GMap2(document.getElementById("map_canvas"));
+            map.setUIToDefault();
+            map.disableScrollWheelZoom();
+            map.setMapType(G_SATELLITE_MAP);
+
+            var bounds = new GLatLngBounds();
+
+            {% for geotaged_sound in latest_geotags %}
+            var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
+            bounds.extend(point);
+            var marker = new GMarker(point);
+            GEvent.addListener(marker, "click", function() {
+                GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
+                    marker.openInfoWindowHtml(data);
+                    setTimeout(function() {
+                        makePlayer('.infowindow_player .player');
+                    }, 500);
+                });
+            });
+            map.addOverlay(marker);
+
+            {% endfor %}
+            zoomToBounds(map, bounds);
+        </script>
+        <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
+    </div><!-- #latest_geotags -->
     {% endif %}
 
     {% if latest_packs %}

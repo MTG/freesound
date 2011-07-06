@@ -35,6 +35,8 @@ import datetime, os, time, logging
 from sounds.templatetags import display_sound
 from django.db.models import Q
 from utils.similarity_utilities import get_similar_sounds
+import urllib
+from django.contrib.sites.models import Site
 
 logger = logging.getLogger('web')
 
@@ -143,6 +145,7 @@ def sound(request, username, sound_id):
         form = CommentForm(request)
 
     qs = Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id)
+    facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
 # N.B. login is required but adapted to not return the user to the download link.
@@ -278,11 +281,11 @@ def sound_edit_sources(request, username, sound_id):
 
     current_sources = sound.sources.all()
     sources_string = ",".join(map(str, [source.id for source in current_sources]))
-    
+
     remix_group = RemixGroup.objects.filter(sounds=current_sources)
     print ("======== remix group id following ===========")
     print (remix_group[0].id)
-    
+
 
 
     if request.method == 'POST':
@@ -436,3 +439,13 @@ def old_pack_link_redirect(request):
 def display_sound_wrapper(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id) #TODO: test the 404 case
     return render_to_response('sounds/display_sound.html', display_sound.display_sound(RequestContext(request), sound), context_instance=RequestContext(request))
+
+
+def embed_iframe(request, sound_id, player_size):
+    if player_size not in ['mini', 'small', 'medium', 'large']:
+        raise Http404
+    size = player_size
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
+    username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
+    return render_to_response('sounds/sound_iframe.html', locals(), context_instance=RequestContext(request))
+

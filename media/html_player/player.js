@@ -1,7 +1,8 @@
 soundManager.url = '/media/html_player/swf/';
-soundManager.flashVersion = 8; // optional: shiny features (default = 8)
+soundManager.flashVersion = 9; // optional: shiny features (default = 8)
 soundManager.useFlashBlock = false; // optionally, enable when you're ready to dive in
 soundManager.debugMode = false;
+
 
 function msToTime(position, durationEstimate, displayRemainingTime, showMs)
 {

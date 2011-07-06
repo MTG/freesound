@@ -13,6 +13,9 @@
        
        <input type="text" name="q" value="{{search_query}}" size="30" />
        <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
+       {% comment %}
+       <span class="advanced_search_options">Sort results by </span>
+       {% endcomment %}
        <select name="s">
            {% for option in sort_options %}
         <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
@@ -72,7 +75,6 @@
  	  
     	// Remove existing previously existing advanced options filters (will be replaced by current ones)
     	existing_duration_filter = "duration:[" + getFilterValue("duration","min") + " TO " + getFilterValue("duration","max") + "]"
-    	console.log(existing_duration_filter)
     	removeFilter(existing_duration_filter)
     	removeFilter("is_geotagged:1")
     	

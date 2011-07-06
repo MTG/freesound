@@ -2126,6 +2126,26 @@ p.about {
     text-decoration: none;
 }
 
+.advanced_search_options {
+	font-size:10px;
+	line-height:30px;
+}
+
+.advanced_search_options .inputtext { 
+	width: 40px; 
+	height: 10px;
+	font-size: 10px;
+}
+
+.advanced_search_options .advanced_search_indication {
+	color: #888;
+	margin-left: 10px;
+}
+
+.advanced_search_options_button {
+	font-size:10px;
+}
+
 /* Tagclouds
 ------------------------------------------------------*/
 p.user_tagcloud {

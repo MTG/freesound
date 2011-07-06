@@ -1,74 +1,73 @@
 {% if advanced == "1" %}
-	<div id="advanced_search_options">
+	<div id="advanced_search_options" class="advanced_search_options">
 {% else %}
-	<div id="advanced_search_options" style="display:none">   
+	<div id="advanced_search_options" style="display:none" class="advanced_search_options">   
 {% endif %}   
-   	   
-	<span style="font-size:10px;">
-	
+   	   	
 {% if advanced == "1" %}
 	<input id="advanced_search_hidden" type="hidden" name="advanced" value="1" />
 {% else %}
 	<input id="advanced_search_hidden" type="hidden" name="advanced" value="0" />   
 {% endif %}
 
-Math query terms with: (if none is selected, all will be used)<br> 
+Match query terms with:&nbsp
    
 {% if a_tag %}
-	<input type="checkbox" name="a_tag" value="1" checked="checked"/> tags
+	<input type="checkbox" name="a_tag" value="1" checked="checked"/> Tags
 {% else %}
-	<input type="checkbox" name="a_tag" value="1"/> tags
+	<input type="checkbox" name="a_tag" value="1"/> Tags
 {% endif %}
 &nbsp&nbsp
    
 {% if a_filename %}
-	<input type="checkbox" name="a_filename" value="1" checked="checked"/> filenames
+	<input type="checkbox" name="a_filename" value="1" checked="checked"/> File names
 {% else %}
-	<input type="checkbox" name="a_filename" value="1" /> filenames
+	<input type="checkbox" name="a_filename" value="1" /> File names
 {% endif %}
 &nbsp&nbsp
    
 {% if a_description %}
-	<input type="checkbox" name="a_description" value="1" checked="checked"/> descriptions
+	<input type="checkbox" name="a_description" value="1" checked="checked"/> Descriptions
 {% else %}
-	<input type="checkbox" name="a_description" value="1" /> descriptions
+	<input type="checkbox" name="a_description" value="1" /> Descriptions
 {% endif %}
 &nbsp&nbsp
    
 {% if a_packname %}
-	<input type="checkbox" name="a_packname" value="1" checked="checked"/> pack names
+	<input type="checkbox" name="a_packname" value="1" checked="checked"/> Pack names
 {% else %}
-	<input type="checkbox" name="a_packname" value="1" /> pack names
+	<input type="checkbox" name="a_packname" value="1" /> Pack names
 {% endif %}
 &nbsp&nbsp
    
 {% if a_soundid %}
-	<input type="checkbox" name="a_soundid" value="1" checked="checked"/> sound ids
+	<input type="checkbox" name="a_soundid" value="1" checked="checked"/> Sound Ids
 {% else %}
-	<input type="checkbox" name="a_soundid" value="1" /> sound ids
+	<input type="checkbox" name="a_soundid" value="1" /> Sound Ids
 {% endif %}
 &nbsp&nbsp
    
 {% if a_username %}
-	<input type="checkbox" name="a_username" value="1" checked="checked"/> usernames
+	<input type="checkbox" name="a_username" value="1" checked="checked"/> User names
 {% else %}
-	<input type="checkbox" name="a_username" value="1" /> usernames
+	<input type="checkbox" name="a_username" value="1" /> User names
 {% endif %}
+<span class="advanced_search_indication">(if none is selected, all will be used)</span>
+<br>
 
-<br><br>
-<!-- LOAD DURATION VALUES FROM FILTER on documentReady -->
-Duration between <input id="filter_duration_min" type="text" value="" size="6" /> and <input id="filter_duration_max" type="text" value="" size="6" /> seconds 
-<br><input id="filter_is_geotagged" type="checkbox" value="1" /> Only sounds with geotags
-       
-</span>
-<br><br><a style="font-size:10px;" onclick='hideAdvancedSearchOptions();'>hide advanced search options</a>
+Duration between <input class="inputtext" id="filter_duration_min" type="text" value="" size="6" /> (min) and <input class="inputtext" id="filter_duration_max" type="text" value="" size="6" /> (max) seconds 
+<br>
+<input id="filter_is_geotagged" type="checkbox" value="1" /> Search only for sounds that have been geotagged
+
+<br>       
+<span class="advanced_search_options_button"><a onclick='hideAdvancedSearchOptions();'>hide advanced search options</a></span>
 </div>
  	      
 {% if advanced == "1" %}
-	<span id="enableShowButton" style="display:none">
+	<span id="enableShowButton" style="display:none" class="advanced_search_options_button">
 {% else %}
-	<span id="enableShowButton">   
+	<span id="enableShowButton" class="advanced_search_options_button">   
 {% endif %}
 
-<br><a style="font-size:10px;" onclick='showAdvancedSearchOptions();'>show advanced search options</a>
+<br><a onclick='showAdvancedSearchOptions();'>show advanced search options</a>
 </span>

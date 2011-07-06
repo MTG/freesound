@@ -1485,7 +1485,7 @@ ul.pagination {
 }
 
 .pagination .number_of_results {
- 	margin-left: 200px;
+ 	margin-left: 0px;
  	color: #888;
 }
 

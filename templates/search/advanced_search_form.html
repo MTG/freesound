@@ -1,0 +1,85 @@
+{% if advanced == "1" %}
+	<div id="advanced_search_options">
+{% else %}
+	<div id="advanced_search_options" style="display:none">   
+{% endif %}   
+   	   
+	<span style="font-size:10px;">
+	
+{% if advanced == "1" %}
+	<input id="advanced_search_hidden" type="hidden" name="advanced" value="1" />
+{% else %}
+	<input id="advanced_search_hidden" type="hidden" name="advanced" value="0" />   
+{% endif %}
+
+Math query terms with: (if none is selected, all will be used)<br> 
+   
+{% if a_tag %}
+	<input type="checkbox" name="a_tag" value="1" checked="checked"/> tags
+{% else %}
+	<input type="checkbox" name="a_tag" value="1"/> tags
+{% endif %}
+&nbsp&nbsp
+   
+{% if a_filename %}
+	<input type="checkbox" name="a_filename" value="1" checked="checked"/> filenames
+{% else %}
+	<input type="checkbox" name="a_filename" value="1" /> filenames
+{% endif %}
+&nbsp&nbsp
+   
+{% if a_description %}
+	<input type="checkbox" name="a_description" value="1" checked="checked"/> descriptions
+{% else %}
+	<input type="checkbox" name="a_description" value="1" /> descriptions
+{% endif %}
+&nbsp&nbsp
+   
+{% if a_packname %}
+	<input type="checkbox" name="a_packname" value="1" checked="checked"/> pack names
+{% else %}
+	<input type="checkbox" name="a_packname" value="1" /> pack names
+{% endif %}
+&nbsp&nbsp
+   
+{% if a_soundid %}
+	<input type="checkbox" name="a_soundid" value="1" checked="checked"/> sound ids
+{% else %}
+	<input type="checkbox" name="a_soundid" value="1" /> sound ids
+{% endif %}
+&nbsp&nbsp
+   
+{% if a_username %}
+	<input type="checkbox" name="a_username" value="1" checked="checked"/> usernames
+{% else %}
+	<input type="checkbox" name="a_username" value="1" /> usernames
+{% endif %}
+
+<br><br>
+<!-- LOAD DURATION VALUES FROM FILTER on documentReady -->
+Duration between <input id="filter_duration_min" type="text" value="" size="6" /> and <input id="filter_duration_max" type="text" value="" size="6" /> seconds 
+<br><input id="filter_is_geotagged" type="checkbox" value="1" /> Only sounds with geotags
+<br>License: (only listing new licenses)
+<br>
+<select id="filter_license">
+  <option value="Any">Any</option>
+  <option value="Public Domain">Public Domain</option>
+  <option value="Attribution">Attribution</option>
+  <option value="Attribution Noncommercial">Attribution Non-commercial</option>
+</select>
+
+
+
+       
+</span>
+<br><br><a style="font-size:10px;" onclick='hideAdvancedSearchOptions();'>hide advanced search options</a>
+</div>
+ 	      
+{% if advanced == "1" %}
+	<span id="enableShowButton" style="display:none">
+{% else %}
+	<span id="enableShowButton">   
+{% endif %}
+
+<br><a style="font-size:10px;" onclick='showAdvancedSearchOptions();'>show advanced search options</a>
+</span>

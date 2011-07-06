@@ -1640,7 +1640,7 @@ ul.pagination {
 
 #sidebar #latest_geotags #map_canvas {
     position: relative;
-    left: -20px;
+    left: -19px;
     top: -17px;
     width: 348px;
     height: 300px;

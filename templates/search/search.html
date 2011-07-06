@@ -50,9 +50,6 @@
     	if (getFilterValue("is_geotagged")==1)
     	   	$("#filter_is_geotagged").attr('checked','checked')
     	   	
-    	 // License
-    	 if (( getFilterValue("license") != "Any") && ( getFilterValue("license") != ""))
-    	 	$("#filter_license").val(getFilterValue("license").split("\"")[1])
 		 
     });
     
@@ -72,18 +69,12 @@
     
     function addAdvancedSearchOptionsFilters()
     {
-    	// For licenses
-    	// "Attribution"  "Attribution Noncommercial" "Public Domain"
-    	  
+ 	  
     	// Remove existing previously existing advanced options filters (will be replaced by current ones)
     	existing_duration_filter = "duration:[" + getFilterValue("duration","min") + " TO " + getFilterValue("duration","max") + "]"
     	console.log(existing_duration_filter)
     	removeFilter(existing_duration_filter)
     	removeFilter("is_geotagged:1")
-    	removeFilter("license:\"Attribution\"")
-    	removeFilter("license:\"Attribution Noncommercial\"")
-    	removeFilter("license:\"Public Domain\"")
-    	
     	
     	// if advanced options is activated add all updated filters
     	if ($("#advanced_search_hidden").val() == 1)
@@ -131,13 +122,6 @@
 	    			filter = filter + " "
 	    		filter = filter + "is_geotagged:1"
 	    	}
-	    	
-	    	// License filter
-	    	if ($("#filter_license").val() != "Any"){
-	    		if (filter != "")
-	    			filter = filter + " "
-	    		filter = filter + "license:\"" + $("#filter_license").val() + "\""
-			}
 				    	         
 	   		// Update general filter with the advanced options filter
 	    	value = $("#filter_query").val();
@@ -244,7 +228,7 @@
         {
         	// prevent advanced options filters to appear in this line
         	filter_name = filter.split(":")[0]
-        	if ((filter_name != "duration") && (filter_name != "is_geotagged") && (filter_name != "license"))
+        	if ((filter_name != "duration") && (filter_name != "is_geotagged"))
         	{
 	            var filter_id = "filter_" + i++;
 	               var element = $("<a id=\"" + filter_id + "\" title=\"remove this filter\"></a>").html(filter);
@@ -279,6 +263,11 @@
 {% else %}
     {% if results %}
     <div id="sidebar" style="float:right">
+        {% if results.facets.license and results.facets.license|length > 1 %}
+            <h3>licenses</h3>
+            {% display_facet "license" results.facets.license "list" %}
+        {% endif %}
+        
         {% if results.facets.tag and results.facets.tag|length > 1 %}
             <h3>tags</h3>
             {% display_facet "tag" results.facets.tag "cloud" %}
@@ -313,6 +302,7 @@
             <h3>users</h3>
             {% display_facet "username" results.facets.username "cloud" %}
         {% endif %}
+        
     </div>
 
 		{% if num_results > 0 %}

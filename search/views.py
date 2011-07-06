@@ -60,11 +60,12 @@ def search_prepare_query(search_query,
     query.set_dismax_query(search_query,
                            query_fields=field_weights)
     query.set_query_options(start=(current_page - 1) * sounds_per_page, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
-    query.add_facet_fields("samplerate", "pack", "username", "tag", "bitrate", "bitdepth", "type", "channels")
+    query.add_facet_fields("samplerate", "pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
     query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
     query.set_facet_options("tag", limit=30)
     query.set_facet_options("username", limit=30)
     query.set_facet_options("pack", limit=10)
+    query.set_facet_options("license", limit=10)
     return query
 
 def search(request):

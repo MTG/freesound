@@ -181,8 +181,6 @@
 		}
     }
     
-   
-    
     // Remove a filter given the full tag ex: type:aiff, pack:"pack name"
     function removeFilter(tag)
     {
@@ -246,7 +244,8 @@
 
         var value = $("#filter_query").val();
 
-        scan(value, /[\w-]+:[\w-]+/g, function (index, filter) {
+        
+        scan(value, /[\w-]+:[\w-\.]+/g, function (index, filter) {
             add_filter(filter);
         });
 

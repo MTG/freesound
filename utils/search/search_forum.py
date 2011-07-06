@@ -36,14 +36,14 @@ def convert_to_solr_document(thread):
 def add_thread_to_solr(thread):
     logger.info("adding single forum thread to solr index")
     try:
-        Solr("http://localhost:8983/solr/forum/").add([convert_to_solr_document(thread)])
+        Solr(settings.SOLR_FORUM_URL).add([convert_to_solr_document(thread)])
     except SolrException, e:
         logger.error("failed to add forum thread %d to solr index, reason: %s" % (thread.id, str(e)))
 
 
 def add_threads_to_solr(threads):
     logger.info("adding multiple forum threads to solr index")
-    solr = Solr(settings.SOLR_URL)
+    solr = Solr(settings.SOLR_FORUM_URL)
 
 
     logger.info("creating XML")
@@ -58,6 +58,6 @@ def add_threads_to_solr(threads):
 def delete_thread_from_solr(thread):
     logger.info("deleting thread with id %d" % thread.id)
     try:
-        Solr("http://localhost:8983/solr/forum/").delete_by_id(thread.id)
+        Solr(settings.SOLR_FORUM_URL).delete_by_id(thread.id)
     except Exception, e:
         logger.error('could not delete thread with id %s (%s).' % (thread.id, e))

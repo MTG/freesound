@@ -9,18 +9,25 @@ from django import template
 register = template.Library()
 
 @register.inclusion_tag('forum/display_forum_result.html', takes_context=True)
-def display_forum_result(context, thread):
+def display_forum_result(context, thread, highlight):
+    # TODO: refactor this uglyness...
     print "**************** forum result ********************"
-    post = thread['post'][0] if thread['post'] else False  
-    # print post
-    post = __get_post_body(post)
-    return {
-            'id': thread['id'],
-            'thread_name': thread['thread_name'],
-            'forum_name': thread['forum_name'],
-            'post': post,
-            'thread_info': ' - '.join([thread['username'], str(thread['num_posts']), str(thread['created'])]),
-            }
+    results = []
+    for thd, hl in zip(thread, highlight):
+        post = highlight[hl]['post'][0] if highlight[hl]['post'] else False   
+        post = __get_post_body(post)
+        results.append({
+                        'id': thd['id'],
+                        'thread_name': highlight[hl]['thread_name'][0],
+                        'forum_name': thd['forum_name'],
+                        'forum_name_slug': thd['forum_name_slug'],
+                        'post': post,
+                        'thread_info': ' - '.join(['User: ' + thd['username'], 
+                                                   'Posts: ' + str(thd['num_posts']), 
+                                                   'Date: ' + str(thd['created'])]),
+                        }) 
+    
+    return { 'results': results }
 
 def __get_post_body(post):
     ret = post.split(',', 3)

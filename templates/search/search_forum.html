@@ -24,10 +24,9 @@
     {% show_paginator paginator page current_page request %}
     </div>
 
-    {% for result in results.docs %}
-        {% display_forum_result result %}
-    {% endfor %}
-
+    <p>
+    {% display_forum_result results.docs results.highlighting %}
+	</p>
     <div class="search_paginator">
     {% show_paginator paginator page current_page request %}
     </div>

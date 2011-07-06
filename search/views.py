@@ -77,25 +77,35 @@ def search_forum(request):
     print '=========='
     print search_query
     if search_query.strip() != "":
-        solr = Solr("http://localhost:8983/solr/forum/")
+        solr = Solr(settings.SOLR_FORUM_URL)
         query = SolrQuery()
         query.set_dismax_query(search_query, query_fields=[("thread_name", 4), ("post",3), ("username",3), ("forum_name",2)])
-        query.set_query_options(start=(current_page - 1) * 30, 
+        # FIXME: is the highlighting ok?
+        query.set_highlighting_options_default(field_list=["thread_name", 
+                                                           "username", 
+                                                           "post"],
+                                               fragment_size=200, 
+                                               alternate_field="thread_name",
+                                               require_field_match=True, 
+                                               max_alternate_field_length=100, 
+                                               pre="<strong>", 
+                                               post="</strong>")
+        query.set_query_options(start=(current_page - 1) * 30,
                                 rows=30, 
                                 field_list=["id", 
-                                            "forum_name", 
+                                            "forum_name",
+                                            "forum_name_slug", 
                                             "thread_name", 
                                             "username", 
                                             "post", 
                                             "created",
-                                            "num_posts"], 
+                                            "num_posts"],
                                 filter_query=filter_query, 
                                 sort=["created desc"])
         
         
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
-            print results
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
             page = paginator.page(current_page)
             error = False

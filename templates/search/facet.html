@@ -1,6 +1,8 @@
 {% ifequal type "list" %}
  <ul>
+    {% filter force_escape %}
     {% for f in facet %}<li class="facet_item"><a href="javascript:addFilter('{{filter}}', '{{f.name}}')">{{f.name}}</a> ({{f.count}})</li>{% endfor %}
+    {% endfilter %}
 </ul>
 {% endifequal %}
 {% ifequal type "cloud" %}

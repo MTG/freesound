@@ -8,23 +8,182 @@
 
 {% block section_content %}
 
-<form id="search_form" method="get" action="{% url sounds-search %}">
+<form id="search_form" method="get" onsubmit="return addAdvancedSearchOptionsFilters()"  action="{% url sounds-search %}">
     <fieldset>
+
        <input type="text" name="q" value="{{search_query}}" size="30" />
        <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
+       {% comment %}
+       <span class="advanced_search_options">Sort results by </span>
+       {% endcomment %}
        <select name="s">
            {% for option in sort_options %}
         <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
         {% endfor %}
-     </select>
-       <input type="submit" value="search" id="search_submit" />
+       </select>
+
+       <input type="submit" value="search" id="search_submit"/>
+
+       {% include "search/advanced_search_form.html" %}
+
     </fieldset>
 </form>
+
 
 <p id="filter_query_display">
 </p>
 
 <script type="text/javascript">
+
+    $(document).ready(function(){
+
+        // Fill advanced search fields that were passen on the f parameter
+        // Duration
+        if (getFilterValue("duration","min") == "*")
+            $("#filter_duration_min").val("");
+        else
+            $("#filter_duration_min").val(getFilterValue("duration","min"));
+
+        if (getFilterValue("duration","max") == "*")
+            $("#filter_duration_max").val("");
+        else
+            $("#filter_duration_max").val(getFilterValue("duration","max"));
+
+        // Geotagged
+        if (getFilterValue("is_geotagged")==1)
+               $("#filter_is_geotagged").attr('checked','checked')
+
+
+    });
+
+    function showAdvancedSearchOptions()
+    {
+        $("#advanced_search_hidden").val(1);
+        $("#advanced_search_options").show('blind', {}, 500, function() {});
+        $("#enableShowButton").hide();
+    }
+
+    function hideAdvancedSearchOptions()
+    {
+        $("#advanced_search_hidden").val(0);
+        $("#advanced_search_options").hide('blind', {}, 500, function() {});
+        $("#enableShowButton").show();
+    }
+
+    function addAdvancedSearchOptionsFilters()
+    {
+
+        // Remove existing previously existing advanced options filters (will be replaced by current ones)
+        existing_duration_filter = "duration:[" + getFilterValue("duration","min") + " TO " + getFilterValue("duration","max") + "]"
+        removeFilter(existing_duration_filter)
+        removeFilter("is_geotagged:1")
+
+        // if advanced options is activated add all updated filters
+        if ($("#advanced_search_hidden").val() == 1)
+        {
+
+            // Create and add new filter with all the advanced options
+            filter = ""
+
+            // Duration filter
+            duration_min = parseFloat($("#filter_duration_min").val())
+            duration_max = parseFloat($("#filter_duration_max").val())
+
+            if ((duration_min >= 0.0) || (duration_max >= 0.0))
+            {
+                duration_filter = ""
+
+                if ((duration_min >= 0.0) && (duration_max >= 0.0)) // Both min and max have been set
+                {
+                    if (duration_max < duration_min)
+                    {
+                        // interchange values if duration_min > duration_max
+                        duration_aux = duration_min
+                        duration_min = duration_max
+                        duration_max = duration_aux
+                    }
+
+                    duration_filter = "duration:[" + duration_min + " TO " + duration_max + "]"
+
+                }
+                else if (duration_min >= 0.0) // Only minimum has been set
+                {
+                    duration_filter = "duration:[" + duration_min + " TO *]"
+                }
+                else if (duration_max >= 0.0) // Only maximum has been set
+                {
+                    duration_filter = "duration:[* TO " + duration_max + "]"
+                }
+
+                filter = filter + duration_filter
+            }
+
+            // Is geotagged filter
+            if ($("#filter_is_geotagged").attr('checked')){
+                if (filter != "")
+                    filter = filter + " "
+                filter = filter + "is_geotagged:1"
+            }
+
+               // Update general filter with the advanced options filter
+            value = $("#filter_query").val();
+            if (value != "")
+                $("#filter_query").val(value + " " + filter);
+            else
+                $("#filter_query").val(filter);
+        }
+
+        return true
+    }
+
+    // Return the value of a filter given its name
+    // If filter has a range, optional "range" parameter must be set to "min or "max"
+    function getFilterValue(name, range)
+    {
+        if (!range) { range = "min"};
+
+        var value = $("#filter_query").val();
+        position_name = value.search(name)
+        position_value = value.search(name) + (name + ":").length
+        if (value.search((name + ":")) != -1)
+        {
+            if (value[position_value] == "[") // Is range (with spaces)
+            {
+                aux_value = value.substring(position_value + 1)
+                position_end = position_value + aux_value.search("]") + 2
+
+                range_string = value.substring(position_value + 1, position_end -1) // Without [ ]
+                parts = range_string.split(" ")
+                if (range == "min")
+                    return parts[0]
+                else if (range == "max")
+                    return parts[2]
+            }
+            else if (value[position_value] == "\"") // Is string (with spaces)
+            {
+                aux_value = value.substring(position_value + 1)
+                position_end = position_value + aux_value.search("\"") + 2
+                return value.substring(position_value, position_end)
+
+            }
+            else // Is number or normal text (without spaces)
+            {
+                aux_value = value.substring(position_value + 1)
+                if (aux_value.search(" ") != -1)
+                    position_end = position_value + aux_value.search(" ") + 1
+                else
+                    position_end = value.length
+
+                return value.substring(position_value, position_end)
+            }
+        }
+        else
+        {
+            return ""
+        }
+    }
+
+    // Remove a filter given the full tag ex: type:aiff, pack:"pack name"
     function removeFilter(tag)
     {
         var value = $("#filter_query").val();
@@ -52,7 +211,7 @@
         }
         else
         {
-            alert("you already added this filter");
+            alert("You already added this filter");
         }
     }
 
@@ -67,22 +226,28 @@
 
         function add_filter(filter)
         {
-            var filter_id = "filter_" + i++;
-               var element = $("<a id=\"" + filter_id + "\" title=\"remove this filter\"></a>").html(filter);
+            // prevent advanced options filters to appear in this line
+            filter_name = filter.split(":")[0]
+            if ((filter_name != "duration") && (filter_name != "is_geotagged"))
+            {
+                var filter_id = "filter_" + i++;
+                   var element = $("<a id=\"" + filter_id + "\" title=\"remove this filter\"></a>").html(filter);
 
-            element.click(function (event) {
-                removeFilter(filter);
-                element.remove();
-                event.preventDefault();
-                $("#search_form").submit();
-            });
+                element.click(function (event) {
+                    removeFilter(filter);
+                    element.remove();
+                    event.preventDefault();
+                    $("#search_form").submit();
+                });
 
-            $('#filter_query_display').append(element);
+                $('#filter_query_display').append(element);
+            }
         }
 
         var value = $("#filter_query").val();
 
-        scan(value, /[\w-]+:[\w-]+/g, function (index, filter) {
+
+        scan(value, /[\w-]+:[\w-\.]+/g, function (index, filter) {
             add_filter(filter);
         });
 
@@ -99,6 +264,11 @@
 {% else %}
     {% if results %}
     <div id="sidebar" style="float:right">
+        {% if results.facets.license and results.facets.license|length > 1 %}
+            <h3>licenses</h3>
+            {% display_facet "license" results.facets.license "list" %}
+        {% endif %}
+
         {% if results.facets.tag and results.facets.tag|length > 1 %}
             <h3>tags</h3>
             {% display_facet "tag" results.facets.tag "cloud" %}
@@ -133,19 +303,25 @@
             <h3>users</h3>
             {% display_facet "username" results.facets.username "cloud" %}
         {% endif %}
+
     </div>
 
-    <div class="search_paginator">
-    {% show_paginator paginator page current_page request %}
-    </div>
+        {% if num_results > 0 %}
+            <div class="search_paginator">
+                {% show_paginator paginator page current_page request %}
+               </div>
 
-    {% for result in results.docs %}
-        {% display_sound result.id %}
-    {% endfor %}
+            {% for result in results.docs %}
+                {% display_sound result.id %}
+            {% endfor %}
 
-    <div class="search_paginator">
-    {% show_paginator paginator page current_page request %}
-    </div>
+            <div class="search_paginator">
+                {% show_paginator paginator page current_page request %}
+            </div>
+        {% else %}
+            <p>Search returned no results...</p>
+        {% endif %}
+
 
     {% endif %}
 {% endif %}

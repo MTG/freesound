@@ -29,6 +29,7 @@
             {% empty %}
             <p>No sounds in the database!
         {% endfor %}
+        <p class="more_button" ><a href="{% url sounds-search %}?q=&f=&s=created+desc">more...</a></p>
         </div>
     </div><!-- #latest_sounds -->
 
@@ -43,6 +44,9 @@
         {% empty %}
             <p>No sounds in the database!
         {% endfor %}
+        <p class="more_button"><a href="{% url sounds-search %}?q=&f=&s=num_downloads+desc">more...</a></p>
+        
+        
     </div><!-- #most_downloaded_sounds -->
 </div><!-- #content -->
 
@@ -86,6 +90,8 @@
                 </div>
         {% endfor %}
         </ul>
+        <p class="more_button" ><a href="{% url packs %}?order=-last_update">more...</a></p>
+        
     </div><!-- #latest_changed_packs -->
 
     <div id="most_downloaded_packs" class="content_box">
@@ -100,6 +106,8 @@
             <p>No packs in the database!
         {% endfor %}
         </ul>
+		<p class="more_button"><a href="{% url packs %}?order=-num_downloads">more...</a></p>
+                
     </div><!-- #most_downloaded_packs -->
 </div><!-- #sidebar -->
 

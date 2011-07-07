@@ -39,16 +39,17 @@
 
         // Fill advanced search fields that were passen on the f parameter
         // Duration
-        if (getFilterValue("duration","min") == "*")
-            $("#filter_duration_min").val("");
+        
+        if (getFilterValue("duration","min") == "")
+            $("#filter_duration_min").val("0");
         else
             $("#filter_duration_min").val(getFilterValue("duration","min"));
 
-        if (getFilterValue("duration","max") == "*")
-            $("#filter_duration_max").val("");
+        if (getFilterValue("duration","max") == "")
+            $("#filter_duration_max").val("*");
         else
-            $("#filter_duration_max").val(getFilterValue("duration","max"));
-
+            $("#filter_duration_max").val(getFilterValue("duration","max")); 
+        
         // Geotagged
         if (getFilterValue("is_geotagged")==1)
                $("#filter_is_geotagged").attr('checked','checked')

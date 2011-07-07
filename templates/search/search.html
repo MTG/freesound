@@ -59,8 +59,9 @@
     function showAdvancedSearchOptions()
     {
         $("#advanced_search_hidden").val(1);
-        $("#advanced_search_options").show('blind', {}, 500, function() {});
         $("#enableShowButton").hide();
+        $("#advanced_search_options").show('blind', {}, 500, function() {});
+        
     }
 
     function hideAdvancedSearchOptions()
@@ -308,7 +309,7 @@
 
         {% if num_results > 0 %}
             <div class="search_paginator">
-                {% show_paginator paginator page current_page request %}
+                {% show_paginator paginator page current_page request "sounds" %}
                </div>
 
             {% for result in results.docs %}
@@ -316,7 +317,7 @@
             {% endfor %}
 
             <div class="search_paginator">
-                {% show_paginator paginator page current_page request %}
+                {% show_paginator paginator page current_page request "sounds" %}
             </div>
         {% else %}
             <p>Search returned no results...</p>

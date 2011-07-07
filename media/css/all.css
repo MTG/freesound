@@ -1252,7 +1252,7 @@ ul#comments {
 }
 
 #comments_pagination .pagination {
-    float: right;
+    /*float: right;*/
 }
 
 #comments_pagination .pagination li {

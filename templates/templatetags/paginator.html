@@ -1,4 +1,3 @@
-
 {% spaceless %}
 <ul class="pagination">
 	
@@ -35,21 +34,18 @@
 			<li class="last-page"><a href="{{ url }}{{ paginator.num_pages }}{% if anchor %}#{{anchor}}{% endif %}" title="Last Page">{{paginator.num_pages}}</a></li>
 		{% endif %}
 	
+	
 		<p class="number_of_results">
-		{% if paginator.count == 1 %}
-			&nbsp|&nbsp {{ paginator.count }} result
-		{% else %}
-			&nbsp|&nbsp {{ paginator.count }} results
-		{% endif %}
+		&nbsp|&nbsp {{ paginator.count }} {{ anchor }}
 		</p>
 	
 	{% else %}
 	
 		<p class="number_of_results">
 			{% if paginator.count == 1 %}
-				{{ paginator.count }} result
+				{{ paginator.count }} {{ anchor_singular }}
 			{% else %}
-				{{ paginator.count }} results
+				{{ paginator.count }} {{ anchor }}
 			{% endif %}
 		</p>
 	

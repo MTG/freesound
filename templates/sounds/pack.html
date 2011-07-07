@@ -35,12 +35,12 @@
 </div>
 {% endif %}
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "sounds" %}
 
 {% for sound in page.object_list %}
     {% display_sound sound %}
 {% endfor %}
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "sounds" %}
 
 {% endblock %}

@@ -16,12 +16,12 @@
 <li><a href="?order=-num_downloads" {% ifequal order "-num_downloads" %}class="selected"{% endifequal %}>number of downloads</a></li>
 </ul>
 
-<p>{% show_paginator paginator page current_page request "packs"%}</p>
+<p>{% show_paginator paginator page current_page request "pack"%}</p>
 
 {% for pack in page.object_list %}
 	{% display_pack pack %}	
 {% endfor %}
 
-{% show_paginator paginator page current_page request "packs"%}
+{% show_paginator paginator page current_page request "pack"%}
 
 {% endblock %}

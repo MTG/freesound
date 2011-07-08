@@ -13,7 +13,7 @@
 	There are 3 flavors of this list: <a href="?format=regular">regular</a>, <a href="?format=html">html</a> or <a href="?format=plaintext">plain text</a>.
 </p>
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "download" %}
 
 {% regroup page.object_list by created|date:"F jS, Y" as downloads %}
 
@@ -79,6 +79,6 @@
 </p>
 {% endifequal %}
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "download" %}
 
 {% endblock %}

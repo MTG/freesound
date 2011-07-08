@@ -310,7 +310,7 @@
 
         {% if num_results > 0 %}
             <div class="search_paginator">
-                {% show_paginator paginator page current_page request "sounds" %}
+                {% show_paginator paginator page current_page request "sound" %}
                </div>
 
             {% for result in results.docs %}
@@ -318,7 +318,7 @@
             {% endfor %}
 
             <div class="search_paginator">
-                {% show_paginator paginator page current_page request "sounds" %}
+                {% show_paginator paginator page current_page request "sound" %}
             </div>
         {% else %}
             <p>Search returned no results...</p>

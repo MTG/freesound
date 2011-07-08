@@ -36,18 +36,14 @@
 	
 	
 		<p class="number_of_results">
-		&nbsp|&nbsp {{ paginator.count }} {{ anchor }}
+		&nbsp|&nbsp {{ paginator.count }} {{ anchor }}s
 		</p>
 	
 	{% else %}
 	
 		<p class="number_of_results">
 			{% if paginator.count > 0 %}
-				{% if paginator.count == 1 %}
-					{{ paginator.count }} {{ anchor_singular }}
-				{% else %}
-					{{ paginator.count }} {{ anchor }}	
-				{% endif %}
+				{{ paginator.count }} {{ anchor }}{{ paginator.count|pluralize }}
 			{% endif %}
 		</p>
 	

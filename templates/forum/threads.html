@@ -12,7 +12,7 @@
 {% block section_content %}
 <div class="forum_pagination">
 	<div class="forum_button"><a href="{% url forums-new-thread forum.name_slug %}">New Topic</a></div>
-	{% show_paginator paginator page current_page request %} 
+	{% show_paginator paginator page current_page request "thread"%} 
 </div>
 
 <ul id="topics">
@@ -40,6 +40,6 @@
 
 <div class="forum_pagination">
 	<div class="forum_button"><a href="{% url forums-new-thread forum.name_slug %}">New Topic</a></div>
-	{% show_paginator paginator page current_page request %} 
+	{% show_paginator paginator page current_page request "thread" %} 
 </div>
 {% endblock %}

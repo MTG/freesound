@@ -115,7 +115,7 @@
 </div><!-- #remix_group_info -->
 
 <br>
-{% show_paginator paginator page current_page request "remix groups" %}
+{% show_paginator paginator page current_page request "remix group" %}
 
 <ul style="list-style: none;">
 {% for remix_group in page.object_list %}
@@ -190,6 +190,6 @@ vis{{ forloop.counter }}.render();
 {% endfor %}
 </ul>
 
-{% show_paginator paginator page current_page request "remix groups" %}
+{% show_paginator paginator page current_page request "remix group" %}
 
 {% endblock %}

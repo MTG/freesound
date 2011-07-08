@@ -33,4 +33,4 @@ def stop_servers():
 @roles('master')
 def run_test():
     with cd('load_testing'):
-        run('jmeter -rn -p jmeter.properties -t test_plan.jmx -l jmeter.jtl')
+        run('jmeter -rn -p jmeter.properties -t test_plan_2.jmx -l jmeter.jtl')

@@ -42,10 +42,12 @@
 	{% else %}
 	
 		<p class="number_of_results">
-			{% if paginator.count == 1 %}
-				{{ paginator.count }} {{ anchor_singular }}
-			{% else %}
-				{{ paginator.count }} {{ anchor }}
+			{% if paginator.count > 0 %}
+				{% if paginator.count == 1 %}
+					{{ paginator.count }} {{ anchor_singular }}
+				{% else %}
+					{{ paginator.count }} {{ anchor }}	
+				{% endif %}
 			{% endif %}
 		</p>
 	

@@ -9,27 +9,22 @@ from django import template
 register = template.Library()
 
 @register.inclusion_tag('forum/display_forum_result.html', takes_context=True)
-def display_forum_result(context, thread, highlight):
-    # TODO: refactor this uglyness...
-    print "**************** forum result ********************"
+def display_forum_result(context, post, highlight):
     results = []
-    for thd, hl in zip(thread, highlight):
-        post = highlight[hl]['post'][0] if highlight[hl]['post'] else False   
-        post = __get_post_body(post)
+    for thd, hl in zip(post, highlight):
+        print thd
+        print highlight[hl]
+        post = highlight[hl]['post_body']   
         results.append({
-                        'id': thd['id'],
-                        'thread_name': highlight[hl]['thread_name'][0],
-                        'forum_name': thd['forum_name'],
-                        'forum_name_slug': thd['forum_name_slug'],
-                        'post': post,
-                        'thread_info': ' - '.join(['User: ' + thd['username'], 
-                                                   'Posts: ' + str(thd['num_posts']), 
-                                                   'Date: ' + str(thd['created'])]),
+                        'thread_id': thd['doclist']['docs'][0]["thread_id"],
+                        'thread_title': thd['doclist']['docs'][0]['thread_title'],
+                        'forum_name': thd['doclist']['docs'][0]['forum_name'],
+                        'forum_name_slug': thd['doclist']['docs'][0]['forum_name_slug'],
+                        'post_id': thd['doclist']['docs'][0]["id"],
+                        'post': post[0],
+                        'thread_info': ' - '.join(['User: ' + thd['doclist']['docs'][0]['thread_author'], 
+                                                   'Posts: ' + str(thd['doclist']['docs'][0]['num_posts']), 
+                                                   'Date: ' + str(thd['doclist']['docs'][0]['thread_created'])]),
                         }) 
     
     return { 'results': results }
-
-def __get_post_body(post):
-    ret = post.split(',', 3)
-    ret = ret[3].rsplit('datetime.datetime')
-    return ret[0]

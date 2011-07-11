@@ -279,6 +279,13 @@ class SolrQuery(object):
     def __unicode__(self):
         return urllib.urlencode(Multidict(self.params))
 
+    def set_group_field(self, group_field=None):
+        self.params['group.field'] = group_field
+
+    def set_group_options(self, group_limit=1):
+        self.params['group'] = True
+        self.params['group.limit'] = group_limit
+
 
 class BaseSolrAddEncoder(object):
     """A Solr Add encoder has one method, called encode. This method will be called on whatever is
@@ -456,12 +463,18 @@ class Solr(object):
 
 class SolrResponseInterpreter(object):
     def __init__(self, response):
-        self.docs = response["response"]["docs"]
-        self.start = response["response"]["start"]
-        self.num_rows = len(self.docs)
-        self.num_found = response["response"]["numFound"]
+        if "grouped" in response:
+            self.docs = response["grouped"]["thread_title"]["groups"]
+            self.start = response["responseHeader"]["params"]["start"]
+            self.num_rows = response["responseHeader"]["params"]["rows"]
+            self.num_found = response["grouped"]["thread_title"]["matches"]
+        else:
+            self.docs = response["response"]["docs"]
+            self.start = response["response"]["start"]
+            self.num_rows = len(self.docs)
+            self.num_found = response["response"]["numFound"]
+        
         self.q_time = response["responseHeader"]["QTime"]
-
         try:
             self.facets = response["facet_counts"]["facet_fields"]
         except KeyError:
@@ -473,7 +486,7 @@ class SolrResponseInterpreter(object):
         """
         for facet, fields in self.facets.items():
             self.facets[facet] = [(fields[index], fields[index+1]) for index in range(0, len(fields), 2)]
-
+        
         try:
             self.highlighting = response["highlighting"]
         except KeyError:

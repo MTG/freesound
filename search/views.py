@@ -67,42 +67,41 @@ def search(request):
     else:
         return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
 
-
+# TODO: refactor to 1 function (search) choose type on params
 def search_forum(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     current_page = int(request.GET.get("page", 1))
-    sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
-    sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-    print '=========='
-    print search_query
+    sort = ["thread_created asc"]
+    
     if search_query.strip() != "":
         solr = Solr(settings.SOLR_FORUM_URL)
         query = SolrQuery()
-        query.set_dismax_query(search_query, query_fields=[("thread_name", 4), ("post",3), ("username",3), ("forum_name",2)])
-        # FIXME: is the highlighting ok?
-        query.set_highlighting_options_default(field_list=["thread_name", 
-                                                           "username", 
-                                                           "post"],
+        # TODO: refactor to function
+        query.set_dismax_query(search_query, query_fields=[("thread_title", 4), ("post_body",3), ("thread_author",3), ("forum_name",2)])
+        query.set_highlighting_options_default(field_list=["post_body"],
                                                fragment_size=200, 
-                                               alternate_field="thread_name",
-                                               require_field_match=True, 
-                                               max_alternate_field_length=100, 
+                                               alternate_field="post_body",
+                                               require_field_match=False, 
                                                pre="<strong>", 
                                                post="</strong>")
         query.set_query_options(start=(current_page - 1) * 30,
                                 rows=30, 
                                 field_list=["id", 
                                             "forum_name",
-                                            "forum_name_slug", 
-                                            "thread_name", 
-                                            "username", 
-                                            "post", 
-                                            "created",
+                                            "forum_name_slug",
+                                            "thread_id", 
+                                            "thread_title", 
+                                            "thread_author", 
+                                            "post_body",
+                                            "post_username", 
+                                            "thread_created",
                                             "num_posts"],
                                 filter_query=filter_query, 
-                                sort=["created desc"])
+                                sort=sort)
         
+        query.set_group_field("thread_title")
+        query.set_group_options(group_limit=2)
         
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))

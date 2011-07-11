@@ -10,44 +10,47 @@ from forum.models import Post
 
 logger = logging.getLogger("search")
 
-def convert_to_solr_document(thread):
-    logger.info("creating solr XML from forum thread %d" % thread.id)
+def convert_to_solr_document(post):
+    logger.info("creating solr XML from forum post %d" % post.id)
     document = {}
 
-    document["id"] = thread.forum.id
-    document["forum_name"] = thread.forum.name
-    document["forum_name_slug"] = thread.forum.name_slug
+    document["id"] = post.id
     
-    document["username"] = thread.author.username
+    document["thread_id"] = post.thread.id
+    document["thread_title"] = post.thread.title
+    document["thread_author"] = post.thread.author
+    document["thread_created"] = post.thread.created
     
-    document["thread_name"] = thread.title
-    document["created"] = thread.created
-    document["num_posts"] = thread.num_posts
+    document["forum_name"] = post.thread.forum.name
+    document["forum_name_slug"] = post.thread.forum.name_slug
     
-    # TODO: revise the below and choose fields
-    document["post"] =  list(Post.objects.filter(thread=thread).values_list(flat=True))
-    document["has_posts"] = False if thread.num_posts == 0 else True 
+    document["post_author"] = post.author
+    document["post_created"] = post.created
+    document["post_body"] = post.body
+    
+    document["num_posts"] = post.thread.num_posts
+    document["has_posts"] = False if post.thread.num_posts == 0 else True 
     
     logger.info(document)
 
     return document
 
 
-def add_thread_to_solr(thread):
-    logger.info("adding single forum thread to solr index")
+def add_post_to_solr(post):
+    logger.info("adding single forum post to solr index")
     try:
-        Solr(settings.SOLR_FORUM_URL).add([convert_to_solr_document(thread)])
+        Solr(settings.SOLR_FORUM_URL).add([convert_to_solr_document(post)])
     except SolrException, e:
-        logger.error("failed to add forum thread %d to solr index, reason: %s" % (thread.id, str(e)))
+        logger.error("failed to add forum post %d to solr index, reason: %s" % (post.id, str(e)))
 
 
-def add_threads_to_solr(threads):
-    logger.info("adding multiple forum threads to solr index")
+def add_posts_to_solr(posts):
+    logger.info("adding multiple forum posts to solr index")
     solr = Solr(settings.SOLR_FORUM_URL)
 
 
     logger.info("creating XML")
-    documents = map(convert_to_solr_document, threads)
+    documents = map(convert_to_solr_document, posts)
     logger.info("posting to Solr")
     solr.add(documents)
 
@@ -55,9 +58,9 @@ def add_threads_to_solr(threads):
     solr.optimize()
     logger.info("done")
     
-def delete_thread_from_solr(thread):
-    logger.info("deleting thread with id %d" % thread.id)
+def delete_post_from_solr(post):
+    logger.info("deleting post with id %d" % post.id)
     try:
-        Solr(settings.SOLR_FORUM_URL).delete_by_id(thread.id)
+        Solr(settings.SOLR_FORUM_URL).delete_by_id(post.id)
     except Exception, e:
-        logger.error('could not delete thread with id %s (%s).' % (thread.id, e))
+        logger.error('could not delete post with id %s (%s).' % (post.id, e))

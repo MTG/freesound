@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 
+{% block head %}
+	{{ block.super }}
+<script type="text/javascript">
+	function showSearch() {
+		$("#forum_search").toggle("medium");
+	}
+</script>
+{% endblock head %}
+
 {% block tab_forums_active %}active_tab{% endblock %}
 
 {% block content %}
@@ -7,6 +16,15 @@
 
 <div id="breadcrumb">
 <a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
+<a href="#" onclick="showSearch()" >search</a>
+</div>
+<div style="display:none" id="forum_search">
+	<form method="get" action="{% url forums-search %}">
+    	<fieldset>
+        	<input type="text" name="q" value="" size="30" />
+            <input type="submit" value="search!" id="search_submit" />
+		</fieldset>
+	</form>
 </div>
 
 {% block section_content %}

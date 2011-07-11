@@ -1,10 +1,10 @@
 {% extends "forum/_section.html" %}
 
 {% load display_forum_result %}
-{% load search %}
 {% load paginator %}
+{% load search %}
 
-{% block title %}forum search{% endblock title %}
+{% block title %}Forum Search{% endblock title %}
 
 {% block section_content %}
 
@@ -20,17 +20,18 @@
 {% if error %}
     {{ error_text }}
 {% else %}
-	<div class="search_paginator">
-    {% show_paginator paginator page current_page request %}
-    </div>
-
-    <p>
-    {% display_forum_result results.docs results.highlighting %}
-	</p>
-    <div class="search_paginator">
-    {% show_paginator paginator page current_page request %}
-    </div>
-
+	{% if results %}
+		<div class="search_paginator">
+	    {% show_paginator paginator page current_page request %}
+	    </div>
+	
+	    <p>
+	    {% display_forum_result results.docs results.highlighting %}
+		</p>
+	    <div class="search_paginator">
+	    {% show_paginator paginator page current_page request %}
+	    </div>
+	{% endif %}	
 {% endif %}
 
 {% endblock %}

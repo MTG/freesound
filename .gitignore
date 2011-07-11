@@ -14,3 +14,5 @@ _docs/api/build/
 *.settings.py
 *beta_release_mails.json
 *usernames_passwords.csv
+*jmeter.log
+*jmeter.jtl

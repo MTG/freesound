@@ -16,3 +16,4 @@ _docs/api/build/
 *usernames_passwords.csv
 *jmeter.log
 *jmeter.jtl
+_sandbox/load_testing/results/

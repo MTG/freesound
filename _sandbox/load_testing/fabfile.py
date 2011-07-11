@@ -17,12 +17,11 @@ def deploy():
 
 @roles('servers')
 def start_servers():
-    with cd('load_testing'):
-        # No need to make the pidfile, as per description below.
-        #run('''/sbin/start-stop-daemon \
-        #           --start --exec /usr/bin/jmeter-server  --background \
-        #           --make-pidfile --pidfile /home/fsweb/jmeter-server.pid''')
-        run('/sbin/start-stop-daemon --start --exec /usr/bin/jmeter-server  --background')
+    # No need to make the pidfile, as per description below.
+    #run('''/sbin/start-stop-daemon \
+    #           --start --exec /usr/bin/jmeter-server  --background \
+    #           --make-pidfile --pidfile /home/fsweb/jmeter-server.pid''')
+    run('/sbin/start-stop-daemon --start --exec /usr/bin/jmeter-server --chdir /home/fsweb/load_testing --background')
         
 @roles('servers')
 def stop_servers():

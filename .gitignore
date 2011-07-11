@@ -13,3 +13,6 @@ _docs/api/build/
 *.initial_data.json
 *.settings.py
 *beta_release_mails.json
+*usernames_passwords.csv
+*jmeter.log
+*jmeter.jtl

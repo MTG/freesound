@@ -187,7 +187,7 @@
         //$('#file_' + fileId).select("span.cancel-container").hide();
         $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-done').css("width", "100%");
         removeFromQueue(fileId);
-       
+
     }
 </script>
 <p>
@@ -204,6 +204,7 @@
             If you install <a href="http://www.adobe.com/go/getflashplayer">flash player 10</a> you will be able to upload multiple files in one go!<br/>
         </p>
         <form method="POST" enctype="multipart/form-data" action="/home/upload/file/">
+            <input type="hidden" name="sessionid" value="{{ request.session.session_key }}" />
             <input type="file" name="file" /><br/>
             <input type="submit" value="upload" />
         </form>

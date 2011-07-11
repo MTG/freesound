@@ -133,6 +133,9 @@
     </dl>
 
     <ul id="sound_links" style="padding-left: 23px">
+        {% if display_random_link %}
+        <li><b><a class="icon" id ="random_sound_button" href="{% url sounds-random %}">Give me a random sound!</a></b></li>
+        {% endif %}
         {% if sound.pack %}
         <li><a id="pack_link" class="icon" href="{% url pack sound.user.username sound.pack.id %}">Pack: {{ sound.pack.name }}</a></li>
         {% endif %}

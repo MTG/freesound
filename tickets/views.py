@@ -87,7 +87,7 @@ def ticket(request, ticket_key):
                         ticket.content.delete()
                         ticket.content = None
                     ticket.status = TICKET_STATUS_CLOSED
-                    tc = TicketComment(sender=ticket.assignee,
+                    tc = TicketComment(sender=request.user,
                                        text="Moderator %s deleted the sound and closed the ticket" % request.user,
                                        ticket=ticket,
                                        moderator_only=False)
@@ -103,7 +103,7 @@ def ticket(request, ticket_key):
                             ticket.content.content_object.mark_index_dirty()
                         ticket.content.content_object.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
-                    tc = TicketComment(sender=ticket.assignee,
+                    tc = TicketComment(sender=request.user,
                                        text="Moderator %s set the sound to %s and the ticket to %s." % \
                                                 (request.user,
                                                  'pending' if sound_state == 'PE' else sound_state,
@@ -214,7 +214,9 @@ ticket.id,
 ticket.modified as modified
 FROM
 tickets_ticketcomment AS comment,
-tickets_ticket AS ticket
+tickets_ticket AS ticket,
+sounds_sound AS sound,
+tickets_linkedcontent AS content
 WHERE comment.id in (   SELECT MAX(id)
                         FROM tickets_ticketcomment
                         GROUP BY ticket_id    )
@@ -222,8 +224,11 @@ AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND comment.sender_id = ticket.sender_id
 AND now() - modified > INTERVAL '2 days'
+AND content.object_id = sound.id
+AND sound.moderation_state != 'OK'
+AND ticket.status != '%s'
 LIMIT 5
-    """)
+""" % TICKET_STATUS_CLOSED)
 
 
 def __get_tardy_user_tickets():
@@ -241,6 +246,7 @@ AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
 AND now() - comment.created > INTERVAL '2 days'
+LIMIT 5
 """)
 
 

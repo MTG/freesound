@@ -10,8 +10,10 @@ class HtmlCleaningCharField(forms.CharField):
 
         if is_shouting(value):
             raise forms.ValidationError('Please moderate the amount of upper case characters in your post...')
-
-        return clean_html(value)
+        try:
+            return clean_html(value)
+        except HTMLParseError:
+            raise forms.ValidationError('The text you submitted is badly formed HTML, please fix it')
 
 
 class TagField(forms.CharField):

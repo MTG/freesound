@@ -81,7 +81,7 @@ def random(request):
     if sound_id is None:
         raise Http404
     sound_obj = Sound.objects.get(pk=sound_id)
-    return sound(request, sound_obj.user.username, sound_id)
+    return HttpResponseRedirect(reverse("sound",args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
 
 
 def packs(request):
@@ -145,6 +145,7 @@ def sound(request, username, sound_id):
         form = CommentForm(request)
 
     qs = Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id)
+    display_random_link = request.GET.get('random_browsing')
     facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 

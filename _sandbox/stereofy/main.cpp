@@ -106,12 +106,12 @@ int main(int argc, char* argv[])
 	}
 
 
-        double max_val ;
-        sf_command (fileIn, SFC_CALC_SIGNAL_MAX, &max_val, sizeof(max_val));
+        //double max_val ;
+        //sf_command (fileIn, SFC_CALC_SIGNAL_MAX, &max_val, sizeof(max_val));
 
-        double normalizer = 1.0;
-        if (bitdepth==32 && max_val > 1.0)
-            normalizer = 1 / max_val;
+        //double normalizer = 1.0;
+        //if (bitdepth==32 && max_val > 1.0)
+        //    normalizer = 1 / max_val;
 
 
 	SNDFILE *fileOut = NULL;
@@ -141,8 +141,11 @@ int main(int argc, char* argv[])
 		
 		for(long i=0; i<readCount; i++)
 		{
-			if(i % sfinfoIn.channels < sfinfoOut.channels)
-				dataOut[j++] = dataIn[i] * normalizer;
+			if(i % sfinfoIn.channels < sfinfoOut.channels){
+                                if(dataIn[i] > 1.0) dataOut[j++] = 1.0;
+                                else if(dataIn[i] < -1.0)  dataOut[j++] = -1.0;
+                                else dataOut[j++] = dataIn[i];
+                        }
 		}
 
 		if(j != 0)

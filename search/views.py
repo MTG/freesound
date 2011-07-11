@@ -30,11 +30,11 @@ DEFAULT_SEARCH_WEIGHTS = {
                         'original_filename' : 2
                         }
 
-def search_prepare_query(search_query, 
-                         filter_query, 
-                         sort, 
-                         current_page, 
-                         sounds_per_page, 
+def search_prepare_query(search_query,
+                         filter_query,
+                         sort,
+                         current_page,
+                         sounds_per_page,
                          id_weight = DEFAULT_SEARCH_WEIGHTS['id'],
                          tag_weight = DEFAULT_SEARCH_WEIGHTS['tag'],
                          description_weight = DEFAULT_SEARCH_WEIGHTS['description'],
@@ -42,7 +42,7 @@ def search_prepare_query(search_query,
                          pack_tokenized_weight = DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
                          original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename']):
     query = SolrQuery()
-    
+
     field_weights = []
     if id_weight != 0 :
         field_weights.append(("id", id_weight))
@@ -55,8 +55,8 @@ def search_prepare_query(search_query,
     if pack_tokenized_weight != 0 :
         field_weights.append(("pack_tokenized", pack_tokenized_weight))
     if original_filename_weight != 0 :
-        field_weights.append(("original_filename", original_filename_weight))    
-    
+        field_weights.append(("original_filename", original_filename_weight))
+
     query.set_dismax_query(search_query,
                            query_fields=field_weights)
     query.set_query_options(start=(current_page - 1) * sounds_per_page, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
@@ -74,8 +74,8 @@ def search(request):
     current_page = int(request.GET.get("page", 1))
     sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
-    
-    # Set default values    
+
+    # Set default values
     id_weight = DEFAULT_SEARCH_WEIGHTS['id']
     tag_weight = DEFAULT_SEARCH_WEIGHTS['tag']
     description_weight = DEFAULT_SEARCH_WEIGHTS['description']
@@ -94,10 +94,10 @@ def search(request):
         a_packname = request.GET.get("a_packname", "")
         a_soundid = request.GET.get("a_soundid", "")
         a_username = request.GET.get("a_username", "")
-        
+
         # If none is selected use all (so other filter can be appleid)
         if a_tag or a_filename or a_description or a_packname or a_soundid or a_username != "" :
-        
+
             # Initialize all weights to 0
             id_weight = 0
             tag_weight = 0
@@ -105,7 +105,7 @@ def search(request):
             username_weight = 0
             pack_tokenized_weight = 0
             original_filename_weight = 0
-            
+
             # Set the weights of selected checkboxes
             if a_soundid != "" :
                 id_weight = DEFAULT_SEARCH_WEIGHTS['id']
@@ -121,15 +121,15 @@ def search(request):
                 original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename']
 
     # Allow to return ALL sounds when search has no q parameter
-    #if search_query.strip() != "": 
+    #if search_query.strip() != "":
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
     solr = Solr(settings.SOLR_URL)
 
-    query = search_prepare_query(search_query, 
-                                 filter_query, 
-                                 sort, 
-                                 current_page, 
+    query = search_prepare_query(search_query,
+                                 filter_query,
+                                 sort,
+                                 current_page,
                                  settings.SOUNDS_PER_PAGE,
                                  id_weight,
                                  tag_weight,
@@ -160,7 +160,7 @@ def search(request):
         return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
     else:
         return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
-    
+
 def get_pack_tags(pack_obj):
     query = SolrQuery()
     query.set_dismax_query('')
@@ -170,7 +170,7 @@ def get_pack_tags(pack_obj):
     query.add_facet_fields("tag")
     query.set_facet_options("tag", limit=20, mincount=1)
     solr = Solr(settings.SOLR_URL)
-    
+
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))
     except SolrException, e:
@@ -181,9 +181,9 @@ def get_pack_tags(pack_obj):
     except Exception, e:
         #logger.error("Could probably not connect to Solr - %s" % e)
         #error = True
-        #error_text = 'The search server could not be reached, please try again later.' 
+        #error_text = 'The search server could not be reached, please try again later.'
         return False
-    
+
     return results.facets
 
 

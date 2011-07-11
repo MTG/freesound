@@ -4,10 +4,10 @@ from fabric.contrib.files import put, exists
 import os
 
 env.user = 'fsweb'
-env.roledefs = {'servers': ['hidalgo.s.upf.edu',
-                            'xalapa.s.upf.edu',
-                            'toluca.s.upf.edu',
-                            'pachuca.s.upf.edu'],
+env.roledefs = {'servers': ['toluca.s.upf.edu'],
+                            #'xalapa.s.upf.edu',
+                            #'hidalgo.s.upf.edu',
+                            #'pachuca.s.upf.edu'],
                 'master': ['cuernavaca.s.upf.edu']}
 
 @roles('servers', 'master')

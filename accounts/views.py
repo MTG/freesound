@@ -579,7 +579,7 @@ def upload_file(request):
         logger.info("\tuser id %s", str(user_id))
     except KeyError:
         logger.warning("failed to get user id from session")
-        return HttpResponseBadRequest("user is not logged in a.k.a. failed session id")
+        return HttpResponseBadRequest("You're not logged in. Log in and try again.")
 
     try:
         request.user = User.objects.get(id=user_id)

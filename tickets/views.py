@@ -87,7 +87,7 @@ def ticket(request, ticket_key):
                         ticket.content.delete()
                         ticket.content = None
                     ticket.status = TICKET_STATUS_CLOSED
-                    tc = TicketComment(sender=ticket.assignee,
+                    tc = TicketComment(sender=request.user,
                                        text="Moderator %s deleted the sound and closed the ticket" % request.user,
                                        ticket=ticket,
                                        moderator_only=False)
@@ -103,7 +103,7 @@ def ticket(request, ticket_key):
                             ticket.content.content_object.mark_index_dirty()
                         ticket.content.content_object.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
-                    tc = TicketComment(sender=ticket.assignee,
+                    tc = TicketComment(sender=request.user,
                                        text="Moderator %s set the sound to %s and the ticket to %s." % \
                                                 (request.user,
                                                  'pending' if sound_state == 'PE' else sound_state,

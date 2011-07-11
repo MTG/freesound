@@ -134,7 +134,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">53000</stringProp>
+            <stringProp name="ConstantTimer.delay">212000</stringProp>
             <stringProp name="RandomTimer.range">30000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -176,7 +176,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">50000</stringProp>
+            <stringProp name="ConstantTimer.delay">200000</stringProp>
             <stringProp name="RandomTimer.range">20000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -218,7 +218,7 @@
         </HTTPSampler>
         <hashTree>
           <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Constant Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">31</stringProp>
+            <stringProp name="ConstantTimer.delay">120000</stringProp>
           </ConstantTimer>
           <hashTree/>
         </hashTree>
@@ -259,7 +259,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">39000</stringProp>
+            <stringProp name="ConstantTimer.delay">160000</stringProp>
             <stringProp name="RandomTimer.range">20000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -319,7 +319,7 @@
           </RegexExtractor>
           <hashTree/>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">8000</stringProp>
+            <stringProp name="ConstantTimer.delay">32000</stringProp>
             <stringProp name="RandomTimer.range">3000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -374,7 +374,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">8000</stringProp>
+            <stringProp name="ConstantTimer.delay">32000</stringProp>
             <stringProp name="RandomTimer.range">3000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -416,7 +416,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">28000</stringProp>
+            <stringProp name="ConstantTimer.delay">112000</stringProp>
             <stringProp name="RandomTimer.range">15000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -458,7 +458,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">50000</stringProp>
+            <stringProp name="ConstantTimer.delay">200000</stringProp>
             <stringProp name="RandomTimer.range">15000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -500,7 +500,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">88000</stringProp>
+            <stringProp name="ConstantTimer.delay">440000</stringProp>
             <stringProp name="RandomTimer.range">40000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -542,7 +542,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">55000</stringProp>
+            <stringProp name="ConstantTimer.delay">220000</stringProp>
             <stringProp name="RandomTimer.range">20000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -584,7 +584,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">50000</stringProp>
+            <stringProp name="ConstantTimer.delay">200000</stringProp>
             <stringProp name="RandomTimer.range">20000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>
@@ -626,7 +626,7 @@
         </HTTPSampler>
         <hashTree>
           <GaussianRandomTimer guiclass="GaussianRandomTimerGui" testclass="GaussianRandomTimer" testname="Gaussian Random Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">46000</stringProp>
+            <stringProp name="ConstantTimer.delay">184000</stringProp>
             <stringProp name="RandomTimer.range">15000</stringProp>
           </GaussianRandomTimer>
           <hashTree/>

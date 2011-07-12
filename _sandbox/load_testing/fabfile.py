@@ -1,7 +1,8 @@
 from __future__ import with_statement
 from fabric.api import *
-from fabric.contrib.files import put, exists
+from fabric.contrib.files import put, exists, get
 import os
+import datetime
 
 env.user = 'fsweb'
 env.roledefs = {'servers': ['toluca.s.upf.edu'],
@@ -34,4 +35,11 @@ def run_test():
     with cd('load_testing'):
         if exists('jmeter.jtl'):
             run('rm jmeter.jtl')
-        run('jmeter -rn -p jmeter.properties -t test_plan_2.jmx -l jmeter.jtl')
+        run('jmeter -rn -p jmeter.properties -t at_25_percent.jmx -l jmeter.jtl')
+
+@roles('master')
+def get_results():
+    now = datetime.datetime.now()
+    with cd('load_testing'):
+        get('jmeter.jtl', 'results/data_%s.jtl' % now.strftime('%Y%m%d%H%M'))
+    

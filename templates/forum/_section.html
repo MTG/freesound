@@ -16,7 +16,7 @@
 
 <div id="breadcrumb">
 <a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
-<a href="#" onclick="showSearch()" >search</a>
+<a style="float:right" href="#" onclick="showSearch()" >search forums</a>
 </div>
 <div style="display:none" id="forum_search">
 	<form method="get" action="{% url forums-search %}">

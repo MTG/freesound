@@ -40,34 +40,14 @@ def search(request):
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
     
     if search_query.strip() != "":
-        sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
-    
-        solr = Solr(settings.SOLR_URL)
+        sort = search_prepare_sort(sort, sort_options)
         
         query = search_prepare_query(search_query, filter_query, sort, current_page, settings.SOUNDS_PER_PAGE)
         
-        try:
-            results = SolrResponseInterpreter(solr.select(unicode(query)))
-            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
-            page = paginator.page(current_page)
-            error = False
-        except SolrException, e:
-            logger.warning("search error: query: %s error %s" % (query, e))
-            error = True
-            error_text = 'There was an error while searching, is your query correct?'
-        except Exception, e:
-            logger.error("Could probably not connect to Solr - %s" % e)
-            error = True
-            error_text = 'The search server could not be reached, please try again later.' 
+        return __search(request, query, sort_options, current_page)
     else:
-        results = []
+        return __search(request, None, sort_options, current_page)        
     
-    if request.GET.get("ajax", "") != "1":
-        return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
-    else:
-        return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
-
-# TODO: refactor to 1 function (search) choose type on params
 def search_forum(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
@@ -75,13 +55,12 @@ def search_forum(request):
     sort = ["thread_created asc"]
     
     if search_query.strip() != "":
-        solr = Solr(settings.SOLR_FORUM_URL)
         query = SolrQuery()
-        # TODO: refactor to function
+        # TODO: refactor this (extend search_prepare_query function)
         query.set_dismax_query(search_query, query_fields=[("thread_title", 4), ("post_body",3), ("thread_author",3), ("forum_name",2)])
         query.set_highlighting_options_default(field_list=["post_body"],
                                                fragment_size=200, 
-                                               alternate_field="post_body",
+                                               alternate_field="post_body", # TODO: revise this param
                                                require_field_match=False, 
                                                pre="<strong>", 
                                                post="</strong>")
@@ -103,6 +82,15 @@ def search_forum(request):
         query.set_group_field("thread_title")
         query.set_group_options(group_limit=2)
         
+        return __search(request, query, None, current_page, "forum")
+    else:
+        return __search(request, None, None, None, "forum")
+        
+def __search(request, query, sort_options, current_page, type="fs2"):
+    
+    if query:
+        solr = Solr(settings.SOLR_URL) if type=="fs2" else Solr(settings.SOLR_FORUM_URL) 
+        
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
@@ -118,6 +106,12 @@ def search_forum(request):
             error_text = 'The search server could not be reached, please try again later.' 
     else:
         results = []
-
-    return render_to_response('search/search_forum.html', locals(), context_instance=RequestContext(request))
-
+    
+    if type == "forum":
+        return render_to_response('search/search_forum.html', locals(), context_instance=RequestContext(request))
+    
+    if request.GET.get("ajax", "") != "1":
+        return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
+    else:
+        return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
+    

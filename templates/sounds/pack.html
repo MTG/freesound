@@ -14,14 +14,14 @@
 {% endif %}
 
 <div id="pack_info" class="content_box">
-	<h3>Pack info</h3>
-	<div class="sound_list_normal">
-		<ul>
-			<li>Pack created on: <b>{{ pack.created }}</b></li>
-			<li>Number of sounds: <b>{{ pack.sound_set.count }}</b></li>
-			<li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
-		</ul>
-	</div>
+    <h3>Pack info</h3>
+    <div class="sound_list_normal">
+        <ul>
+            <li>Pack created on: <b>{{ pack.created }}</b></li>
+            <li>Number of sounds: <b>{{ pack.sound_set.count }}</b></li>
+            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
+        </ul>
+    </div>
 </div><!-- #pack_info -->
 
 <p>
@@ -35,12 +35,12 @@
 </div>
 {% endif %}
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "sounds" %}
 
 {% for sound in page.object_list %}
     {% display_sound sound %}
 {% endfor %}
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "sound" %}
 
 {% endblock %}

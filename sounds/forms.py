@@ -28,7 +28,7 @@ class GeotaggingForm(forms.Form):
 
 
 class SoundDescriptionForm(forms.Form):
-    tags = TagField(widget=forms.widgets.TextInput(attrs={"size":40}), help_text="Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
+    tags = TagField(widget=forms.Textarea(attrs={'cols': 40, 'rows': 1}), help_text="Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea)
 
 
@@ -67,6 +67,10 @@ class RemixForm(forms.Form):
             try:
                 source = Sound.objects.get(id=id)
                 self.sound.sources.remove(source)
+                
+                # modify remix_group
+                
+                
                 send_mail_template(
                     u'Sound removed as remix source', 'sounds/email_remix_update.txt',
                     {'source': source, 'action': 'removed', 'remix': self.sound},
@@ -128,12 +132,12 @@ class LicenseForm(forms.Form):
 
 
 class NewLicenseForm(forms.Form):
-    license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Public')),
+    license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')),
                                      required=True,
                                      empty_label=None,
                                      widget=forms.RadioSelect(),
                                      label='',
-                                     initial=License.objects.get(name='Public Domain'))
+                                     initial=License.objects.get(name='Attribution'))
 
 
 class FlagForm(forms.ModelForm):

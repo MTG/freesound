@@ -4,6 +4,7 @@
 {% load util %}
 {% load ratings %}
 {% load cache %}
+{% load absurl %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
 
@@ -12,39 +13,40 @@
     <script type="text/javascript">
         swfobject.registerObject("player_{{sound.id}}", "10");
     </script>
+    <meta property="og:title" content="{{ sound.original_filename }} by {{ sound.user.username }}" />
+    <meta property="og:type" content="song" />
+    <meta property="og:audio" content="http://{{ request.get_host }}{{ sound.locations.preview.LQ.mp3.url }}" />
+    <meta property="og:audio:artist" content="{{ sound.user.username }}" />
+    <meta property="og:audio:title" content="{{ sound.original_filename }}" />
+    <meta property="og:url" content="{% absurl sound sound.user.username sound.id %}" />
+    <meta property="og:audio:type" content="application/mp3" />
+    <meta property="og:image" content="http://{{ request.get_host }}{{sound.locations.display.wave.M.url}}" />
+    <meta property="og:site_name" content="Freesound.org" />
+    <meta property="fb:admins" content="100002130282170" />
 {% endblock head %}
 
 {% block section_content %}
 
-{% cache 3600 sound_header sound.id %}
+{% cache 3600 sound_header sound.id request.user.is_authenticated %}
 <div id="single_sample_header">
     {% if sound.pack %}<a href="{% url pack username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
     <div class="stars">
         <ul class="star-rating">
             <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
-            <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star">1</a></li>
-            <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars">2</a></li>
-            <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars">3</a></li>
-            <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars">4</a></li>
-            <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
+            <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">1</a></li>
+            <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">2</a></li>
+            <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">3</a></li>
+            <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">4</a></li>
+            <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">5</a></li>
         </ul>
         <span class="numratings">({{sound.num_ratings}})</span>
     </div>
 </div>
 
 <div id="single_sample_player">
-    <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="900" height="201" id="player_{{sound.id}}">
-        <param name="movie" value="{{media_url}}swf/LargePlayer.swf" />
-        <param name="flashvars" value="soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
-        <!--[if !IE]>-->
-        <object type="application/x-shockwave-flash" data="{{media_url}}swf/LargePlayer.swf" width="900" height="201">
-            <param name="flashvars" value="soundUrl={{sound.locations.preview.LQ.mp3.url}}&amp;waveformUrl={{sound.locations.display.wave.L.url}}&amp;spectralUrl={{sound.locations.display.spectral.L.url}}&amp;duration={{sound.duration_ms}}" />
-            <!--<![endif]-->
-            <a href="http://www.adobe.com/go/getflashplayer"><img src="{{media_url}}images/get_flash_player.png" alt="Get Adobe Flash player" /></a>
-            <!--[if !IE]>-->
-        </object>
-        <!--<![endif]-->
-    </object>
+    <div class="player large">
+        <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.L.url}} {{sound.locations.display.spectral.L.url}} {{sound.duration_ms}}</div>
+    </div>
 </div>
 
 <div id="single_sample_content">
@@ -91,10 +93,11 @@
         </ul>
 
         <div id="comments_pagination">
-            {% show_paginator paginator page current_page request "comments" %}
+            {% show_paginator paginator page current_page request "comment" %}
         </div>
     </div> <!-- comments_container -->
 
+    {% if request.user.is_authenticated %}
     <form method="POST" action=".#comments" id="sound_comment_form">{% csrf_token %}
         <fieldset>
             <h4 id="leave_a_comment">Leave a comment:</h4>
@@ -102,6 +105,9 @@
             <input id="sound_comment_submit" type="submit" value="Post comment" />
         </fieldset>
     </form>
+    {% else %}
+    <center><p>Please <a href="{% url accounts-login %}?next={% url sound sound.user.username sound.id %}">log in</a> to comment</center>
+    {% endif %}
 </div> <!-- single_sample_content -->
 
 {% cache 3600 sound_footer sound.id %}
@@ -127,6 +133,9 @@
     </dl>
 
     <ul id="sound_links" style="padding-left: 23px">
+        {% if display_random_link %}
+        <li><b><a class="icon" id ="random_sound_button" href="{% url sounds-random %}">Give me a random sound!</a></b></li>
+        {% endif %}
         {% if sound.pack %}
         <li><a id="pack_link" class="icon" href="{% url pack sound.user.username sound.pack.id %}">Pack: {{ sound.pack.name }}</a></li>
         {% endif %}
@@ -149,7 +158,70 @@
         <img src="{{media_url}}images/creative_commons.png" with="95" height="23" alt="Creative Commons" />
         <a href="{{sound.license.deed_url}}">This work is licensed under the {{sound.license.name}} License.</a>
     </div>
+
+    <div id="share_links">
+        <div id="social_links">
+            <div class="social_link" style="width: 50px; overflow: hidden;"><div id="fb-root" style="float: left;"></div><script src="http://connect.facebook.net/en_US/all.js#xfbml=1"></script><fb:like href="{% absurl sound sound.user.username sound.id %}" send="false" layout="button_count" width="55" show_faces="false" font="arial"></fb:like></div>
+            <a href="http://twitter.com/share" class="twitter-share-button" data-count="none">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+            <span id="tumblr_button_abc123" class="social_link"></span>
+
+            <p id="show_button" onclick="$('#embed_links').toggle(500);">embed</p>
+            <br style="clear: both;" />
+        </div>
+        <div id="embed_links">
+            <div id="embed_large" class="embed_link">
+                <p>920 x 245</p>
+                <div class="embed_example embed_large" onclick="selectEmbedSize('large');"></div>
+            </div>
+            <div id="embed_medium" class="embed_link">
+                <p>481 x 86</p>
+                <div class="embed_example embed_medium" onclick="selectEmbedSize('medium');"></div>
+            </div>
+            <div id="embed_small" class="embed_link">
+                <p>375 x 30</p>
+                <div class="embed_example embed_small" onclick="selectEmbedSize('small');"></div>
+            </div>
+
+             <textarea id="embed_code" rows="4"></textarea>
+
+             <script type="text/javascript">
+
+                var tumblr_link_url = "{% absurl sound sound.user.username sound.id %}";
+                var tumblr_link_name = "{{ sound.user.username }} - {{ sound.original_filename }}";
+                var tumblr_link_description = "http://www.freesound.org";
+
+                function selectEmbedSize(size) {
+                    $('.embed_example').removeClass('embed_active');
+                    $('.embed_example.embed_'+size).addClass('embed_active');
+                    var sizes;
+                    if(size == 'large') sizes = [920, 245];
+                    if(size == 'medium') sizes = [481, 86];
+                    if(size == 'small') sizes = [375, 30];
+                    var embed_text = '<iframe frameborder="0" scrolling="no" src="{% absurl embed-simple-sound-iframe sound.id 'SIZE' %}" width="WIDTH" height="HEIGHT"></iframe>';
+                    embed_text = embed_text.replace('SIZE', size);
+                    embed_text = embed_text.replace('WIDTH', sizes[0]);
+                    embed_text = embed_text.replace('HEIGHT', sizes[1]);
+                    $('#embed_code').text(embed_text);
+                }
+             </script>
+        </div>
+        <!--
+
+        <div id="share_content" style="display: none;">
+            <p>bla
+        </div> -->
+    </div>
+
 </div> <!-- single_sample_sidebar -->
 {% endcache %}
+
+<script type="text/javascript">
+    var tumblr_button = document.createElement("a");
+    tumblr_button.setAttribute("href", "http://www.tumblr.com/share/link?url=" + encodeURIComponent(tumblr_link_url) + "&name=" + encodeURIComponent(tumblr_link_name) + "&description=" + encodeURIComponent(tumblr_link_description));
+    tumblr_button.setAttribute("title", "Share on Tumblr");
+    tumblr_button.setAttribute("style", "display:inline-block; text-indent:-9999px; overflow:hidden; width:61px; height:20px; background:url('http://platform.tumblr.com/v1/share_2.png') top left no-repeat transparent;");
+    tumblr_button.innerHTML = "Share on Tumblr";
+    document.getElementById("tumblr_button_abc123").appendChild(tumblr_button);
+</script>
 
 {% endblock section_content %}

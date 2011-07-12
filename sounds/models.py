@@ -14,6 +14,8 @@ import os, logging, random, datetime, gearman
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
+from search.views import get_pack_tags
+
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -81,7 +83,7 @@ class PublicSoundManager(models.Manager):
 
 
 class Sound(SocialModel):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, related_name='sounds')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     # filenames
@@ -416,6 +418,23 @@ class Pack(SocialModel):
 
         logger.info("\tall done")
 
+    def get_random_sound_from_pack(self):
+        pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')
+        return pack_sounds[0]
+
+    def get_random_sounds_from_pack(self):
+        pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')
+        
+        return pack_sounds[0:min(3,len(pack_sounds))]
+
+    def get_pack_tags(self, max_tags = 50):
+        pack_tags = get_pack_tags(self)
+        if pack_tags != False :
+            tags = [t[0] for t in pack_tags['tag']]
+            return {'tags': tags, 'num_tags': len(tags)}
+        else :
+            return -1
+
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
         self.is_dirty = True
@@ -478,4 +497,3 @@ class RemixGroup(models.Model):
 
     # facilitate ordering according to group size
     group_size = models.PositiveIntegerField(null=False, default=0)
-

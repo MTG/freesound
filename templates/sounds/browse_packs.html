@@ -1,26 +1,27 @@
 {% extends "sounds/_section.html" %}
 
 {% load paginator %}
+{% load display_pack %}
 
 {% block title %}Packs{% endblock title %}
 
 {% block section_content %}
 
-<h3>Orderer by</h3>
-<ul class="list_order">
+<h1>Packs</h1>
+<h3>Sort by</h3>
+<ul class="list_order" id="filter_query_display">
 <li><a href="?order=name" {% ifequal order "name" %}class="selected"{% endifequal %}>name</a></li>
 <li><a href="?order=-last_update" {% ifequal order "-last_update" %}class="selected"{% endifequal %}>last update</a></li>
 <li><a href="?order=-num_sounds" {% ifequal order "-num_sounds" %}class="selected"{% endifequal %}>number of sounds</a></li>
+<li><a href="?order=-num_downloads" {% ifequal order "-num_downloads" %}class="selected"{% endifequal %}>number of downloads</a></li>
 </ul>
 
-{% show_paginator paginator page current_page request %}
+<p>{% show_paginator paginator page current_page request "pack" %}</p>
 
-<ul>
 {% for pack in page.object_list %}
-	<li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
+	{% display_pack pack %}	
 {% endfor %}
-</ul>
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "pack" %}
 
 {% endblock %}

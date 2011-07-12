@@ -1,7 +1,7 @@
 {% load cache %}
 {% load util %}
 {% load ratings %}
-{% cache 3600 display_sound sound_id %}
+{% cache 3600 display_sound sound_id request.user.is_authenticated %}
 {% if sound %}
 {% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
@@ -13,16 +13,16 @@
 
         <div class="sound_title">
             <div class="sound_filename">
-               <a class="title" href="{% url sound sound.user.username sound.id %}">{{sound.original_filename|truncate_string:27}}</a>
+               <a class="title" href="{% url sound sound.user.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
             </div><!-- .sound_filename -->
             <div class="sound_stars">
                <ul class="star-rating">
                    <li class="current-rating" style="width:{{sound.rating_percent}}%;">Currently {{sound.avg_rating|stringformat:"%.1f"}}/5 Stars.</li>
-                   <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star">1</a></li>
-                   <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars">2</a></li>
-                   <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars">3</a></li>
-                   <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars">4</a></li>
-                   <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars">5</a></li>
+                   <li><a href="{{sound|rating_url:"1"}}" title="pretty bad :-(" class="one-star{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">1</a></li>
+                   <li><a href="{{sound|rating_url:"2"}}" title="quite good" class="two-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">2</a></li>
+                   <li><a href="{{sound|rating_url:"3"}}" title="good :-)" class="three-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">3</a></li>
+                   <li><a href="{{sound|rating_url:"4"}}" title="very good" class="four-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">4</a></li>
+                   <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">5</a></li>
                </ul>
             </div><!-- .sound_stars -->
 
@@ -46,12 +46,14 @@
         <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 
         <div class="sound_attributes">
+            {% if sound.similarity_state == 'OK' %}
             <a class="similar" href="{% url sound-similar sound.user.username sound.id %}">
-                <img src="{{media_url}}images/similar_sounds.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
+                <img src="{{media_url}}images/fugue-icons/icons/headphone--plus.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
             </a>
+            {% endif %}
             {% if sound.pack %}
              <a class="pack" href="{% url pack sound.user.username sound.pack.id %}">
-                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Remixes" title="This sound belongs to a pack." />
+                <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to the pack: {{ sound.pack.name }}" />
             </a>
             {% endif %}
             {% if sound.remix_groups.all.count %}
@@ -68,7 +70,7 @@
             {% if sound.license.name == 'Sampling+' %}
                 <img class="cc_license" src="{{media_url}}images/licenses/sampling.png" width="16" height="16" alt="Sampling+ license" title="This sound is licensed under the sampling+ license." />
             {% endif %}
-            {% if sound.license.name == 'Public Domain' %}
+            {% if sound.license.name == 'Creative Commons 0' %}
                 <img class="cc_license" src="{{media_url}}images/licenses/nolaw.png" width="16" height="16" alt="Public Domain license" title="This sound is public domain." />
             {% endif %}
             {% if sound.license.name == 'Attribution' %}

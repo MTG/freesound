@@ -28,13 +28,13 @@
 
 {% if multiple_tags %}
 <h1>Sounds with these tags</h1>
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "sound" %}
 
 {% for sound in page.object_list %}
     {% display_sound sound.id %}
 {% endfor %}
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "sound" %}
 {% endif %}
 
 {% endblock %}

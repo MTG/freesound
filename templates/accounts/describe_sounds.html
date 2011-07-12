@@ -5,7 +5,8 @@
     {{ block.super }}
     <script>
           $(document).ready(function() {
-              $(".inner-accordion").accordion();
+	      $('.gmap-wrapper').hide();
+              $("#sound-accordion").accordion();
             display_errors();
           });
           function display_errors() {
@@ -20,6 +21,19 @@
                 $(".inner-accordion-div").has(".errorlist").prev().effect("pulsate", { times:2 }, 1000);
                   }
           }
+	  function toggleMapVisibility(n) {
+	      var wrapper = $('#gmap-wrapper-'+n);
+	      var pane = $('#sound-accordion-sound-'+n);
+              if(wrapper.is(':visible')) {
+    	          $('#gmap-header-'+n).removeClass('.active-gmap');
+		  wrapper.hide(500);
+    	          pane.animate({height:pane.height()-wrapper.height()},500);
+	      } else {
+	          $('#gmap-header-'+n).addClass('.active-gmap');
+    	          pane.animate({height:pane.height()+wrapper.height()},500);
+		  wrapper.show(500);
+	      }
+	  }
     </script>
     <style type="text/css">
     <!--
@@ -27,7 +41,7 @@
     -->
     </style>
     <script src="{{media_url}}/js/jquery-ui-1.8.11.custom.min.js" type="text/javascript"></script>
-    <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{google_api_key}}" type="text/javascript"></script>
+    <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{GOOGLE_API_KEY}}" type="text/javascript"></script>
 {% endblock head %}
 
 
@@ -50,17 +64,23 @@
    field-recording it's probably a good idea to specify the location.
 
     <form id="describe_form" action="." method="post">{% csrf_token %}
+    <div id="sound-accordion">
     {% for form in forms %}
-        <h3>{{ form.sound.name }}</h3>
-        <div class="inner-accordion outer-accordion-div">
-            <h4><a href="#">Tags and Description</a></h4>
-            <div class="inner-accordion-div">
+
+        
+	<h4><a href="#">{{ form.sound.name }}</a></h4>
+	<div class="sound-accordion-sound"id="sound-accordion-sound-{{ forloop.counter }}">
+            <h3>Tags and Description</h3>
+            
                 {{ form.description.as_p }}
-            </div>
-            <h4><a href="#">Geotag</a></h4>
-            <div class="inner-accordion-div">
+           
+            <p id="gmap-header-{{forloop.counter}}">
+	        <a onclick="toggleMapVisibility({{forloop.counter}});">
+		Click here to add a Geotag</a>
+	    </p>
+	    <div class="gmap-wrapper" id="gmap-wrapper-{{forloop.counter}}">
                 <div class="describe-gmap" id="gmap{{forloop.counter}}" style="width: 400px; height:300px;"></div>
-                <div class="describe-geotag-form">{{ form.geotag.as_p }}</div>
+                <div class="describe-geotag-form">{{ form.geotag.as_p }}
                 <script type="text/javascript">
                     var map{{forloop.counter}} = new GMap2($("#gmap{{forloop.counter}}").get(0));
 
@@ -119,24 +139,23 @@
                         }
                     });
                 </script>
-            </div>
-            <h4><a href="#">Pack</a></h4>
-            <div class="inner-accordion-div">
+		</div><br style="clear: both" />
+	    </div>
+	    
+            <h3>Pack</h3>
                 {{ form.pack.as_p }}
-            </div>
-            <h4><a href="#">License</a></h4>
-            <div class="inner-accordion-div">
+            <h3>License</h3>
                 {% display_license_form form.license %}
-            </div>
             {% comment %}
             <!-- cannot include this right now because the remix sources form needs a sound object -->
-            <h4><a href="#">Remix Sources</a></h4>
-            <div class="inner-accordion-div">
+            <h3>Remix Sources</h3>
                 {{ form.remix.as_p }}
-            </div>
             {% endcomment %}
-        </div>
+	    <br style="clear: both;" />
+	    </div><!-- .sound-accordion-sound -->
     {% endfor %}
+    </div><!-- #sound-accordion -->
+	    
 
     <input type="submit" name="submit" value="submit and continue" id="submit-button"/>
 

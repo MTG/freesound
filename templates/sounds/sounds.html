@@ -10,7 +10,7 @@
 
 <div id="content">
     <div id="sound_of_the_day" class="content_box">
-        <h3>Sound of the day</h3>
+        <h3>Random sound of the day</h3>
             {% if random_sound != None %}
                 {% display_sound random_sound %}
             {% else %}
@@ -29,6 +29,7 @@
             {% empty %}
             <p>No sounds in the database!
         {% endfor %}
+        <p class="more_button" ><a href="{% url sounds-search %}?q=&f=&s=created+desc">more...</a></p>
         </div>
     </div><!-- #latest_sounds -->
 
@@ -43,10 +44,14 @@
         {% empty %}
             <p>No sounds in the database!
         {% endfor %}
+        <p class="more_button"><a href="{% url sounds-search %}?q=&f=&s=num_downloads+desc">more...</a></p>
+        
+        
     </div><!-- #most_downloaded_sounds -->
 </div><!-- #content -->
 
 <div id="sidebar">
+	{% comment %}
     <div id="uploader_of_the_day" class="content_box">
         {% if random_uploader != None %}
         <h3 class="header">Uploader of the day</h3>
@@ -61,12 +66,16 @@
             random uploader is none
             {% endif %}
     </div><!-- #uploader_of_the_day -->
+	{% endcomment %}
 
     <div id="other_sounds" class="content_box">
-        <h3>Other Sounds</h3>
-        <ul>
-            <li><b><a href="{% url remix-groups %}">Browse remix-groups</a></b></li>
-            <li><b><a href="{% url sounds-random %}">Give me a random sound!</a></b></li>
+        <h3>More Sounds</h3>
+        <ul style="margin-left: 0; padding-left: 0; list-style: none;">
+            <li><b><a class="icon" id ="tag_button" href="{% url tags %}">Browse tags</a></b></li>
+            <li><b><a class="icon" id ="geotag_link" href="{% url geotags %}">Browse geotags</a></b></li>
+            <li><b><a class="icon" id ="pack_link" href="{% url packs %}">Browse packs</a></b></li>
+            <li><b><a class="icon" id ="remixes_link" href="{% url remix-groups %}">Browse remix-groups</a></b></li>
+            <li><b><a class="icon" id ="random_sound_button" href="{% url sounds-random %}">Give me a random sound!</a></b></li>
         </ul>
     </div><!-- #other_sounds -->
 
@@ -81,6 +90,8 @@
                 </div>
         {% endfor %}
         </ul>
+        <p class="more_button" ><a href="{% url packs %}?order=-last_update">more...</a></p>
+        
     </div><!-- #latest_changed_packs -->
 
     <div id="most_downloaded_packs" class="content_box">
@@ -95,6 +106,8 @@
             <p>No packs in the database!
         {% endfor %}
         </ul>
+		<p class="more_button"><a href="{% url packs %}?order=-num_downloads">more...</a></p>
+                
     </div><!-- #most_downloaded_packs -->
 </div><!-- #sidebar -->
 

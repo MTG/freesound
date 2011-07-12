@@ -8,12 +8,12 @@
 {% block section_content %}
 <h1>Sounds by <a href="{% url account user.username %}">{{user.username}}</a></h1>
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "sound" %}
 
 {% for sound in page.object_list %}
     {% display_sound sound %}
 {% endfor %}
 
-{% show_paginator paginator page current_page request %}
+{% show_paginator paginator page current_page request "sound" %}
 
 {% endblock %}

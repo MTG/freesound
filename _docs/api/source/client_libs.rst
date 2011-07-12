@@ -9,3 +9,6 @@ As3 (Flash, Flex)
 
 Javscript
   http://github.com/ffont/freesound-javascript
+
+Supercollider 
+  Download through the Quarks system from within supercollider

@@ -9,9 +9,11 @@
     #upload-progress-container
     {
         border: 1px solid #aaa;
-        margin-top: 20px;
+        margin-top: 100px;
+        float:left;
         background: #eee;
         padding: 5px;
+        width:650px;
     }
 
     div.queue-container
@@ -22,6 +24,7 @@
 
     div.progress-container
     {
+        clear:both;
         float: left;
         border: 1px solid #aaa;
         width: 250px;
@@ -75,12 +78,25 @@
     .please_note h3 {
         margin-left: 5px;
     }
-    .upload_button_indent {
-        margin-left: 30px;
+
+    #describe_button_block{
+        display:block;
+        text-align:center;
+        float:right;
+        margin-right:120px;
+        width:320px;
+        color:gray;
+    }
+    #upload_button_block{
+        display:block;
+        text-align:center;
+        float:left;
+        margin-left:120px;
+        width:320px;
+        color:gray;
     }
     </style>
 {% endblock %}
-
 
 {% block content %}
 
@@ -92,7 +108,7 @@
 <div>
     <div class="please_note content_box">
         <h3>Legality</h3>
-        <p>Only upload sounds created or recorded <strong>by you</strong>. <em><a href="{% url wiki-page "what-is-legal" %}">more details...</a></em>
+        <p>Only upload sounds created or recorded <strong>by you</strong>. <em><a href="{% url wiki-page "what-is-legal" %}">More details...</a></em>
     </div>
     <div class="please_note content_box">
         <h3>Sounds only</h3>
@@ -109,10 +125,22 @@
 </div>
 <br>
 <br>
+<div id="buttons_container">
+<div id="upload_button_block">
 
-<div class="upload_button_indent">
 <script type="text/javascript">
+    var queue = Array();
+
     swfobject.registerObject("uploader", "10.1");
+
+    function removeFromQueue(fileId){
+        queue.splice(queue.indexOf(fileId),1)
+        if(queue.length==0){
+            $("#describe_img").attr("src", "{{media_url}}images/describe_sounds.png");
+            $("#describe_a").mouseover(function () {$(this).css('cursor', 'pointer')});
+            $("#describe_a").attr("href", "{% url accounts-describe %}");
+        }
+    }
 
     function uploadError(fileId, message)
     {
@@ -123,6 +151,7 @@
             $('#file_' + fileId).find(".status").html("Failed: " + message);
             $('#file_' + fileId).find(".cancel-container").hide();
             $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-failed').css("width", "100%");
+            removeFromQueue(fileId);
         }
     }
 
@@ -136,6 +165,10 @@
                     <!-- <span class="cancel-container"><img src="{{media_url}}images/cancel.png" /></span> -->\
                     <span class="filename"><strong class="status">queued</strong>: ' + filename + '</span>\
                 </div>');
+        queue.push(fileId);
+        $("#describe_img").attr("src", "{{media_url}}images/describe_sounds_disabled.png");
+        $("#describe_a").mouseover(function () {$(this).css('cursor', 'default');});
+        $("#describe_a").attr("href", "#");
 
         /*$('#file_' + fileId).select('span.cancel-container img').click(function (event) {
             swfu.cancelUpload(file.id);
@@ -153,9 +186,11 @@
         $('#file_' + fileId).find(".status").html('done');
         //$('#file_' + fileId).select("span.cancel-container").hide();
         $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-done').css("width", "100%");
+        removeFromQueue(fileId);
+
     }
 </script>
-
+<p>
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
     <param name="movie" value="{{media_url}}swf/upload.swf" />
     <param name="flashvars" value="sessionid={{request.session.session_key}}" />
@@ -169,6 +204,7 @@
             If you install <a href="http://www.adobe.com/go/getflashplayer">flash player 10</a> you will be able to upload multiple files in one go!<br/>
         </p>
         <form method="POST" enctype="multipart/form-data" action="/home/upload/file/">
+            <input type="hidden" name="sessionid" value="{{ request.session.session_key }}" />
             <input type="file" name="file" /><br/>
             <input type="submit" value="upload" />
         </form>
@@ -176,22 +212,20 @@
     </object>
     <!--<![endif]-->
 </object>
+</p><p>
+<img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
+Hint: you can upload multiple files at once</p>
+</ul>
 </div>
 
+<div id="describe_button_block">
+
+<p><a id="describe_a" href="{% url accounts-describe %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
+<p>Before your sounds show up on the web site you'll have to describe them</p>
+</div>
+</div>
 <div id="upload-progress-container" style="display:none">
 </div>
 
-<br>
-<p>
-    <em><h2>Describe after uploading...</h2></em>
-</p>
-<br>
-{% comment %}<p>Before your sounds show up on the web site you'll have to describe them.{% endcomment %}
-
-<div class="upload_button_indent">
-<p><a href="{% url accounts-describe %}"><img src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
-</div>
-
 </div><!-- #upload_page -->
-
 {% endblock %}

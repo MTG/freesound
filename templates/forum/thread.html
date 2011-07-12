@@ -11,7 +11,7 @@
 
 <div class="forum_pagination">
 	<div class="forum_button"><a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a></div>
-	{% show_paginator paginator page current_page request %} 
+	{% show_paginator paginator page current_page request "post" %} 
 </div>
 
 <ul id="posts">
@@ -46,6 +46,6 @@
 
 <div class="forum_pagination">
 	<div class="forum_button"><a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a></div>
-	{% show_paginator paginator page current_page request %} 
+	{% show_paginator paginator page current_page request "post" %} 
 </div>
 {% endblock %}

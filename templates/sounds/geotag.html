@@ -12,23 +12,26 @@
 {% block section_content %}
 <h1>Geotag</h1>
 <p>
-	This map displays the geotag of the sound <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a>.<br />
-	For the full map of all geotags see our <a href="{% url geotags %}">global geotag map</a>	
+    This map displays the geotag of the sound <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a>.<br />
+    For the full map of all geotags see our <a href="{% url geotags %}">global geotag map</a>
 </p>
 <div id="map_canvas" style="width: 800px; height: 600px; border: 1px solid black;"></div>
 <script type="text/javascript">
-	var map = new GMap2(document.getElementById("map_canvas"));
-	map.setCenter(new GLatLng({{sound.geotag.lat}}, {{sound.geotag.lon}}), {{sound.geotag.zoom}});
-	map.setUIToDefault();
-	map.disableScrollWheelZoom();
-	map.setMapType(G_SATELLITE_MAP);
+    var map = new GMap2(document.getElementById("map_canvas"));
+    map.setCenter(new GLatLng({{sound.geotag.lat}}, {{sound.geotag.lon}}), {{sound.geotag.zoom}});
+    map.setUIToDefault();
+    map.disableScrollWheelZoom();
+    map.setMapType(G_SATELLITE_MAP);
     var point = new GLatLng({{sound.geotag.lat}}, {{sound.geotag.lon}});
     var marker = new GMarker(point);
     GEvent.addListener(marker, "click", function() {
-		GDownloadUrl( "{% url geotags-infowindow sound.id %}", function(data, responseCode) {
-			marker.openInfoWindowHtml(data);
-		});
-	});
+        GDownloadUrl( "{% url geotags-infowindow sound.id %}", function(data, responseCode) {
+            marker.openInfoWindowHtml(data);
+            setTimeout(function() {
+                makePlayer('.infowindow_player .player');
+            }, 500);
+        });
+    });
     map.addOverlay(marker);
 </script>
 {% endblock %}

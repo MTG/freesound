@@ -1,5 +1,5 @@
 {% load cache %}
-{% cache 3600 active_user user.0.id %}
+{% cache 3600 active_user_no_content user.0.id %}
 {% load active_user_content %}
 
 <div class="active_user">
@@ -23,13 +23,6 @@
             {%endif%}
         </div><!-- .people_user_info -->
     </div><!-- .active_user_info -->
-
-    <div class="balloon_wrapper">
-        <div class="active_user_content">
-        {% active_user_content user.0 user.1 %}
-        </div><!-- .active_user_content -->
-    </div><!-- .balloon_wrapper -->
-
 <br class="clear" /><!-- clear .active_user -->
 </div><!-- .active_user -->
 

@@ -10,6 +10,8 @@ from utils.audioprocessing.essentia_analysis import analyze
 from django.conf import settings
 from sounds.models import Sound
 from optparse import make_option
+from psycopg2 import InterfaceError
+from django.db.utils import DatabaseError
 
 
 class Command(BaseCommand):
@@ -44,39 +46,42 @@ class Command(BaseCommand):
         gm_worker.work()
         self.write_stdout('Ended work\n')
 
+
     def task_analyze_sound(self, gearman_worker, gearman_job):
-        """Run this for Gearman essentia analysis jobs.
-        """
-        sound_id = gearman_job.data
-        self.write_stdout("Analyzing sound with id %s\n" % sound_id)
-        try:
-            result = analyze(Sound.objects.get(id=sound_id))
-            self.write_stdout("\t sound: %s, analyzing %s\n" % \
-                              (sound_id, ("ok" if result else "failed")))
-            return 'true' if result else 'false'
-        except Sound.DoesNotExist:
-            self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
-            return 'false'
-        except Exception, e:
-            self.write_stdout("\t could not analyze sound: %s\n" % e)
-            self.write_stdout("\t%s\n" % traceback.format_exc())
-            return 'false'
+        return self.task_process_x(gearman_worker, gearman_job, analyze)
+
 
     def task_process_sound(self, gearman_worker, gearman_job):
-        """Run this for Gearman 'process_sound' jobs.
-        """
+        return self.task_process_x(gearman_worker, gearman_job, process)
+
+
+    def task_process_x(self, gearman_worker, gearman_job, func):
         sound_id = gearman_job.data
         self.write_stdout("Processing sound with id %s\n" % sound_id)
+        success = True
+        sound = False
         try:
-            result = process(Sound.objects.select_related().get(id=sound_id))
-            self.write_stdout("\t sound: %s, processing %s\n" % \
+            sound = Sound.objects.select_related().get(id=sound_id)
+            result = func(sound)
+            self.write_stdout("Finished, sound: %s, processing %s\n" % \
                               (sound_id, ("ok" if result else "failed")))
+            success = result
             return 'true' if result else 'false'
         except Sound.DoesNotExist:
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
+            success = False
             return 'false'
+        except InterfaceError:
+            self.write_stdout("Problems while connecting to the database (2nd time), will kill the worker.\n")
+            sys.exit(255)
+        except DatabaseError:
+            self.write_stdout("Problems while connecting to the database (1st time), will kill the worker.\n")
+            sys.exit(255)
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
+            success = False
             return 'false'
-
+        finally:
+            if sound and not success:
+                sound.set_processing_state('FA')

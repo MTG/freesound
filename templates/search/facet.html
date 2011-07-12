@@ -1,6 +1,7 @@
 {% ifequal type "list" %}
  <ul>
-    {% for f in facet %}<li class="facet_item"><a href="javascript:addFilter('{{filter}}', '{{f.name}}')">{{f.name}}</a> ({{f.count}})</li>{% endfor %}
+     {% for f in facet %}<li class="facet_item"><a href='javascript:addFilter("{{filter}}", "{{f.name}}")'>{{f.name}}</a> ({{f.count}})</li>{% endfor %}
+    <!-- {% for f in facet %}<li class="facet_item"><a href="javascript:addFilter('{{filter}}', '{{f.name}}')">{{f.name}}</a> ({{f.count}})</li>{% endfor %} -->
 </ul>
 {% endifequal %}
 {% ifequal type "cloud" %}

@@ -10,7 +10,7 @@ def show_paginator(context, paginator, page, current_page, request, anchor=""):
     last page links in addition to those created by the object_list generic
     view.
     """
-
+ 
     adjacent_pages = 3
     total_wanted = adjacent_pages * 2 + 1
     min_page_num = max(current_page - adjacent_pages, 1)

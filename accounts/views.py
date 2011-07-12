@@ -478,29 +478,20 @@ def latest_content_type(scores):
         elif scores['comments']>=scores['uploads'] and scores['comments']>scores['posts']:
             return 'comment'
 
-def accounts(request):
-    num_days = 14
-    num_active_users = 10
-    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
-    user_rank = {}
+def create_user_rank(uploaders, posters, commenters):
     upload_weight = 1
-    post_weight = 0.9
-    comment_weight = 0.8
+    post_weight = 0.7
+    comment_weight = 0.0
 
-    # select active users last num_days
-    latest_uploaders = Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by()
-    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by()
-    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by()
-
-    # create rank
-    for user in latest_uploaders:
+    user_rank = {}
+    for user in uploaders:
         user_rank[user['user']] = {'uploads':user['id__count'], 'posts':0, 'comments':0, 'score':0}
-    for user in latest_posters:
+    for user in posters:
         if user['author_id'] in user_rank.keys():
             user_rank[user['author_id']]['posts'] = user['id__count']
         else:
              user_rank[user['author_id']] = {'uploads':0, 'posts':user['id__count'], 'comments':0, 'score':0}
-    for user in latest_commenters:
+    for user in commenters:
         if user['user_id'] in user_rank.keys():
             user_rank[user['user_id']]['comments'] = user['id__count']
         else:
@@ -510,6 +501,20 @@ def accounts(request):
         user_rank[user]['score'] =  user_rank[user]['uploads'] * upload_weight + \
             user_rank[user]['posts'] * post_weight + user_rank[user]['comments'] * comment_weight
         sort_list.append([user_rank[user]['score'],user])
+    return user_rank, sort_list
+
+def accounts(request):
+    num_days = 14
+    num_active_users = 10
+    num_all_time_active_users = 10
+    last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
+    
+    # select active users last num_days
+    latest_uploaders = Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by("-id__count")
+    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by("-id__count")
+    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by("-id__count")
+    # rank
+    user_rank,sort_list = create_user_rank(latest_uploaders,latest_posters,latest_commenters)
 
     #retrieve users lists
     most_active_users = User.objects.select_related().filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_active_users]])
@@ -521,7 +526,20 @@ def accounts(request):
     most_active_users_display=sorted(most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
-    return render_to_response('accounts/accounts.html', dict(most_active_users=most_active_users_display, new_users = new_users_display, logged_users = logged_users, user_rank=user_rank,num_days=num_days), context_instance=RequestContext(request))
+    # select all time active users
+    all_time_uploaders = Sound.objects.all().values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+    all_time_posters = Post.objects.all().values("author_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+    all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+
+    # rank
+    user_rank,sort_list = create_user_rank(all_time_uploaders,all_time_posters,all_time_commenters)
+    #retrieve users list
+    all_time_most_active_users = User.objects.select_related().filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_all_time_active_users]])
+    all_time_most_active_users_display = [[u, user_rank[u.id]] for u in all_time_most_active_users]
+    all_time_most_active_users_display=sorted(all_time_most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
+
+    return render_to_response('accounts/accounts.html', dict(most_active_users=most_active_users_display, all_time_most_active_users= all_time_most_active_users_display, new_users = new_users_display, logged_users = logged_users, user_rank=user_rank,num_days=num_days), context_instance=RequestContext(request))
+
 
 
 def account(request, username):
@@ -579,7 +597,7 @@ def upload_file(request):
         logger.info("\tuser id %s", str(user_id))
     except KeyError:
         logger.warning("failed to get user id from session")
-        return HttpResponseBadRequest("user is not logged in a.k.a. failed session id")
+        return HttpResponseBadRequest("You're not logged in. Log in and try again.")
 
     try:
         request.user = User.objects.get(id=user_id)

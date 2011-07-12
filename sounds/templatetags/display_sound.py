@@ -28,4 +28,5 @@ def display_sound(context, sound):
                                         content_type=ContentType.objects.get_for_model(Sound)) \
                                 .all(),
              'media_url':    context['media_url'],
+             'request':      context['request']
            }

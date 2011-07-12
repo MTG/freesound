@@ -282,16 +282,20 @@ div.infowindow {
 #random_sound_button {
     background-image: url(../images/fugue-icons/icons/speaker-volume.png);
 }
+#tag_button {
+    background-image: url(../images/fugue-icons/icons/tag.png);
+}
+#pack_link {
+    background-image: url(../images/fugue-icons/icons/folder-open-document-music.png);
+}
 #geotag_link {
     background-image: url(../images/geotag.png);
 }
 #remixes_link {
     background-image: url(../images/remixes.png);
 }
-#similar_sounds_link,
-.similar {
+#similar_sounds_link {
     background-image: url(../images/fugue-icons/icons/headphone--plus.png);
-    background-image: url(../images/similar_sounds.png);
 }
 
 
@@ -761,11 +765,6 @@ h3.header,
     top: -1px;
 }
 
-#recent_additions .sample_player_small {
-    border-bottom: solid 1px #DCDCDC;
-    padding-bottom: 8px;
-}
-
 /* Displayed portions of sound player depending on the container */
 /* No wrapper needed for full view */
 .sound_list_minimal .sound_description {
@@ -826,6 +825,62 @@ h3.header,
     margin: 5px 0px 5px 0;
 }
 
+
+/* Pack display (pack lists)
+------------------------------------------------------*/
+
+.pack_display {
+    width:830px;
+    height:125px;
+}
+
+.pack_display .pack_description {
+    float:left;
+    width:430px;
+    height: 120px;
+    padding-left: 0;
+    margin-left:0;
+    padding: 0px 0px 0px 5px;
+}
+
+.pack_display .pack_description .text {
+    font-size:10px;
+}
+
+.pack_display .pack_description .dots {
+    color:#888;
+}
+
+.pack_display .pack_description .tags {
+    padding: 0px 3px 0 0px;
+    min-height: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    background: none;
+}
+
+.pack_display .sounds_in_pack {
+    float: right;
+    width: 380px;
+    margin-bottom: 30px;
+    height: 90px;
+    padding: 1px 1px 1px 5px;
+    border-left: 1px solid #d6d6d6;
+    line-height: 15px;
+    font-size: 9px;
+    color: #757575;
+    display: inline;
+}
+
+.pack_display .sounds_in_pack .text {
+    color:#888;
+}
+
+.pack_display .sounds_in_pack .sound {
+    float:left; width:125px;
+}
+
+
 /* Browse Sounds Page
 ------------------------------------------------------*/
 
@@ -841,6 +896,10 @@ h3.header,
 
 #uploader_of_the_day ul {
     margin-left: 83px;
+}
+
+.more_button {
+    font-size: 10px;
 }
 
 
@@ -993,6 +1052,92 @@ ul#tags {
     left: -5px;
 }
 
+#share_links {
+    padding: 10px 25px;
+    border-top: solid 1px #D2D2D2;
+    background: #fff url(../images/single_sample_links_bg.png) no-repeat top;
+}
+
+#share_links .social_link,
+.twitter-share-button {
+    float: left;
+    margin-right: 7px;
+}
+
+#share_links #show_button {
+    color: #2C74C9;
+    float: left;
+    display: block;
+    margin-left: 10px;
+}
+
+#share_links #show_button:hover {
+    text-decoration: underline;
+}
+
+#share_links #embed_links {
+    display: none;
+}
+
+#share_links .embed_link {
+    margin-bottom: 20px;
+}
+
+#share_links .embed_link p {
+    margin-bottom: 0px;
+    color: #aaa;
+}
+
+#share_links #embed_large .embed_example {
+    background: #ededed url(../images/widgets/embed_large_scaled_inactive.png);
+    width: 250px;
+    height: 66px;
+}
+#share_links #embed_large .embed_example:hover,
+#share_links #embed_large .embed_example.embed_active {
+    background: #ededed url(../images/widgets/embed_large_scaled_active_color.png);
+}
+
+
+#share_links #embed_medium .embed_example {
+    background: #ededed url(../images/widgets/embed_medium_scaled_inactive.png);
+    width: 220px;
+    height: 39px;
+}
+#share_links #embed_medium .embed_example:hover,
+#share_links #embed_medium .embed_example.embed_active  {
+    background: #ededed url(../images/widgets/embed_medium_scaled_active_color.png);
+}
+
+
+#share_links #embed_small .embed_example {
+    background: #ededed url(../images/widgets/embed_small_scaled_inactive.png) top left;
+    width: 190px;
+    height: 15px;
+}
+#share_links #embed_small .embed_example:hover,
+#share_links #embed_small .embed_example.embed_active {
+    background: #ededed url(../images/widgets/embed_small_scaled_active_color.png) top left;
+}
+
+#share_links .embed_example {
+    border: 1px #ffffff solid;
+}
+
+/*#share_links .embed_example:hover, */
+#share_links .embed_example.embed_active {
+    border: 1px #AB4646 solid;
+}
+
+
+
+#share_links #embed_code {
+    width: 250px;
+    heigth: 30px;
+}
+
+
+
 #sound_links {
     padding: 20px 30px;
     font-size: 13px;
@@ -1107,7 +1252,7 @@ ul#comments {
 }
 
 #comments_pagination .pagination {
-    float: right;
+    /*float: right;*/
 }
 
 #comments_pagination .pagination li {
@@ -1404,6 +1549,29 @@ ul.pagination {
     padding: 4px;
 }
 
+.pagination .disabled-previous-next {
+     padding: 0 4px;
+     color:#888;
+     margin-right: 10px;
+}
+
+.pagination .previous-page {
+     margin-right: 10px;
+}
+
+.pagination .next-page {
+     margin-right: 10px;
+}
+
+.pagination .number_of_results {
+     margin-left: 0px;
+     color: #888;
+}
+
+.pagination .dots {
+     color:#888;
+}
+
 .pagination .current-page {
     padding: 0 4px;
     margin-top: -1px;
@@ -1551,6 +1719,15 @@ ul.pagination {
     padding: 0 19px;
     background: url(../images/sub_sidebar_header_bg.png) no-repeat top;
     margin-bottom: 20px;
+}
+
+#sidebar #latest_geotags #map_canvas {
+    position: relative;
+    left: -19px;
+    top: -17px;
+    width: 348px;
+    height: 300px;
+/*     border: 1px solid #E6E6E6; */
 }
 
 .continuous_sidebar_box {
@@ -2037,6 +2214,26 @@ p.about {
     text-decoration: none;
 }
 
+.advanced_search_options {
+    font-size:10px;
+    line-height:30px;
+}
+
+.advanced_search_options .inputtext {
+    width: 40px;
+    height: 10px;
+    font-size: 10px;
+}
+
+.advanced_search_options .advanced_search_indication {
+    color: #888;
+    margin-left: 10px;
+}
+
+.advanced_search_options_button {
+    font-size:10px;
+}
+
 /* Tagclouds
 ------------------------------------------------------*/
 p.user_tagcloud {
@@ -2126,8 +2323,13 @@ span.tag_addremove a:hover {
 #license-left,#license-arrow,#license-middle,#license-right {
     height: 100%;
     float: left;
-    margin: 10px;
+    margin: 0 0 10px 10px;
 }
+
+#license-arrow {
+    margin-top: 10px;
+}
+
 
 .license-description {
     float: left;
@@ -2137,29 +2339,9 @@ span.tag_addremove a:hover {
 }
 
 #license-right {
-    padding-top: 20px;
+    padding-top: 0;
     overflow: hidden;
-    width: 500px;
-}
-
-#license-middle label {
-    visibility: hidden;
-    overflow: hidden;
-}
-
-#license-middle input {
-    visibility: visible;
-}
-
-#license-middle li {
-    list-style-type: none;
-    margin-bottom: 20px;
-    height: 80px;
-}
-
-#license-middle {
-    width: 40px;
-    padding-top: 20px;
+    width: 650px;
 }
 
 .license {
@@ -2185,32 +2367,70 @@ span.tag_addremove a:hover {
     top: 20px;
 }
 
+#license-right input {
+    width: 20px;
+    height: 60px;
+    margin-top: 0;
+    margin-right: 30px;
+    float: left;
+}
+
 /* Describe accordion
 ------------------------------------------------------*/
-.outer-accordion-div {
-    background: #dddddd;
-    padding: 10px;
-    height: 500px;
+#describe_form {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+#describe_form #submit-button {
+    margin-top: 10px;
 }
 
-.outer-accordion-div h4 {
-    background: #eeeeee;
+#describe_form .ui-accordion-header {
+    display: block;
+    border: solid 1px #ccc;
+    padding: 15px;
+    background: #eee;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px; /* rounded corners */
+}
+#describe_form .ui-accordion-header.ui-state-active {
+    border-bottom: none;
+    margin-top: 10px;
+    background: #f1f1f1;
+    -webkit-border-bottom-right-radius: 0;
+    -webkit-border-bottom-left-radius: 0;
+    -moz-border-radius-bottomright: 0;
+    -moz-border-radius-bottomleft: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0; /* rounded bottom left and right corners */
 }
 
-.inner-accordion-div {
-    background: #ffffff;
-    padding: 10px;
+#describe_form .sound-accordion-sound {
+    display: block;
+    padding: 15px;
+    background: #f9f9f9;
+    border: solid 1px #ccc;
+    border-top: none;
+    margin: 10px 0;
+    -webkit-border-bottom-right-radius: 5px;
+    -webkit-border-bottom-left-radius: 5px;
+    -moz-border-radius-bottomright: 5px;
+    -moz-border-radius-bottomleft: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px; /* rounded bottom left and right corners */
 }
 
-.outer-accordion h3 {
-    background: #cccccc;
-    margin: 0px;
-    padding: 10px;
+#describe_form .sound-accordion-sound.ui-accordion-content-active {
+    margin-top: 0;
 }
 
-.outer-accordion {
-    width: 900px;
+.gmap-wrapper {
+    margin-bottom: 20px;
 }
+
 
 /* Describe google map
 ------------------------------------------------------*/

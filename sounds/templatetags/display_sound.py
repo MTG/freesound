@@ -6,6 +6,7 @@ from sounds.models import Sound
 from django import template
 
 register = template.Library()
+sound_content_type = ContentType.objects.get_for_model(Sound)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound(context, sound):
@@ -23,10 +24,8 @@ def display_sound(context, sound):
 
     return { 'sound_id':     sound_id,
              'sound':        sound_obj,
-             'sound_tags':   ti.objects.select_related() \
-                                .filter(object_id=sound_id,
-                                        content_type=ContentType.objects.get_for_model(Sound)) \
-                                .all(),
+             'sound_tags':   ti.objects.select_related('tag__name') \
+                                .filter(object_id=sound_id,content_type=sound_content_type),
              'media_url':    context['media_url'],
              'request':      context['request']
            }

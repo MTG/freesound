@@ -165,6 +165,7 @@ def search(request):
 def search_forum(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
+    print request.GET.get("f_forum_name", "").strip()
     current_page = int(request.GET.get("page", 1))
     sort = ["thread_created asc"]
     
@@ -194,7 +195,7 @@ def search_forum(request):
                                 sort=sort)
         
         query.set_group_field("thread_title")
-        query.set_group_options(group_limit=2)
+        query.set_group_options(group_limit=1)
         
         return __search(request, query, None, current_page, "forum")
     else:

@@ -467,7 +467,7 @@ class SolrResponseInterpreter(object):
             self.docs = response["grouped"]["thread_title"]["groups"]
             self.start = response["responseHeader"]["params"]["start"]
             self.num_rows = response["responseHeader"]["params"]["rows"]
-            self.num_found = response["grouped"]["thread_title"]["matches"]
+            self.num_found = response["grouped"]["thread_title"]["matches"] # TODO: might be wrong...
         else:
             self.docs = response["response"]["docs"]
             self.start = response["response"]["start"]

@@ -16,10 +16,13 @@
 
 <div id="breadcrumb">
 <a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
-<a style="float:right" href="#" onclick="showSearch()" >search forums</a>
+{% if not 'forums-search' in request.get_full_path %}
+	<a style="float:right" href="#" onclick="showSearch()" >search forums</a>
+{% endif %}
 </div>
 <div style="display:none" id="forum_search">
 	<form method="get" action="{% url forums-search %}">
+	<input type="hidden" name="f_forum_name" value="{% if forum %} {{forum.name_slug}} {% endif %}"/>
     	<fieldset>
         	<input type="text" name="q" value="" size="30" />
             <input type="submit" value="search!" id="search_submit" />

@@ -14,15 +14,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'context_processor.context_extra',
 )
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    ('django.template.loaders.cached.Loader', (
-        'django.template.loaders.filesystem.load_template_source',
-        'django.template.loaders.app_directories.load_template_source',
-        #'django.template.loaders.eggs.load_template_source',
-    )),
-)
-
 MIDDLEWARE_CLASSES = (
     'middleware.PermissionDeniedHandler',
     'django.middleware.common.CommonMiddleware',
@@ -171,6 +162,21 @@ from local_settings import * #@UnusedWildImport
 
 TEMPLATE_DEBUG = DEBUG
 MANAGERS = ADMINS
+
+# Only cache templates in production
+if DEBUG:
+    TEMPLATE_LOADERS = (
+        'django.template.loaders.filesystem.load_template_source',
+        'django.template.loaders.app_directories.load_template_source',
+    )
+else:
+    TEMPLATE_LOADERS = (
+        ('django.template.loaders.cached.Loader', (
+            'django.template.loaders.filesystem.load_template_source',
+            'django.template.loaders.app_directories.load_template_source',
+            #'django.template.loaders.eggs.load_template_source',
+        )),
+    )
 
 # change the media url to tabasco to make the players work when testing
 if DEBUG:

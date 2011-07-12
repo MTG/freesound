@@ -830,54 +830,54 @@ h3.header,
 ------------------------------------------------------*/
 
 .pack_display {
-	width:830px;
-	height:125px;
+    width:830px;
+    height:125px;
 }
 
 .pack_display .pack_description {
-	float:left;		
-	width:430px; 
-	height: 120px;
-	padding-left: 0;
-	margin-left:0;
-	padding: 0px 0px 0px 5px;
+    float:left;
+    width:430px;
+    height: 120px;
+    padding-left: 0;
+    margin-left:0;
+    padding: 0px 0px 0px 5px;
 }
 
 .pack_display .pack_description .text {
-	font-size:10px;
+    font-size:10px;
 }
 
 .pack_display .pack_description .dots {
-	color:#888;
+    color:#888;
 }
 
 .pack_display .pack_description .tags {
-	padding: 0px 3px 0 0px;
-	min-height: 12px;
-	font-size: 10px;
-	font-weight: bold;
-	background: none;
+    padding: 0px 3px 0 0px;
+    min-height: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    background: none;
 }
 
 .pack_display .sounds_in_pack {
-	float: right;
-	width: 380px;
-	margin-bottom: 30px;
-	height: 90px;
-	padding: 1px 1px 1px 5px;
-	border-left: 1px solid #d6d6d6;
-	line-height: 15px;
-	font-size: 9px;
-	color: #757575;
-	display: inline; 
+    float: right;
+    width: 380px;
+    margin-bottom: 30px;
+    height: 90px;
+    padding: 1px 1px 1px 5px;
+    border-left: 1px solid #d6d6d6;
+    line-height: 15px;
+    font-size: 9px;
+    color: #757575;
+    display: inline;
 }
 
 .pack_display .sounds_in_pack .text {
-	color:#888;
+    color:#888;
 }
 
 .pack_display .sounds_in_pack .sound {
-	float:left; width:125px;
+    float:left; width:125px;
 }
 
 
@@ -1550,26 +1550,26 @@ ul.pagination {
 }
 
 .pagination .disabled-previous-next {
- 	padding: 0 4px;
- 	color:#888;
- 	margin-right: 10px;
+     padding: 0 4px;
+     color:#888;
+     margin-right: 10px;
 }
 
 .pagination .previous-page {
- 	margin-right: 10px;
+     margin-right: 10px;
 }
 
 .pagination .next-page {
- 	margin-right: 10px;
+     margin-right: 10px;
 }
 
 .pagination .number_of_results {
- 	margin-left: 0px;
- 	color: #888;
+     margin-left: 0px;
+     color: #888;
 }
 
 .pagination .dots {
- 	color:#888;
+     color:#888;
 }
 
 .pagination .current-page {
@@ -2215,23 +2215,23 @@ p.about {
 }
 
 .advanced_search_options {
-	font-size:10px;
-	line-height:30px;
+    font-size:10px;
+    line-height:30px;
 }
 
-.advanced_search_options .inputtext { 
-	width: 40px; 
-	height: 10px;
-	font-size: 10px;
+.advanced_search_options .inputtext {
+    width: 40px;
+    height: 10px;
+    font-size: 10px;
 }
 
 .advanced_search_options .advanced_search_indication {
-	color: #888;
-	margin-left: 10px;
+    color: #888;
+    margin-left: 10px;
 }
 
 .advanced_search_options_button {
-	font-size:10px;
+    font-size:10px;
 }
 
 /* Tagclouds
@@ -2326,6 +2326,10 @@ span.tag_addremove a:hover {
     margin: 0 0 10px 10px;
 }
 
+#license-arrow {
+    margin-top: 10px;
+}
+
 .license-description {
     float: left;
     width: 100%;
@@ -2334,29 +2338,9 @@ span.tag_addremove a:hover {
 }
 
 #license-right {
-    padding-top: 20px;
+    padding-top: 0;
     overflow: hidden;
-    width: 500px;
-}
-
-#license-middle label {
-    visibility: hidden;
-    overflow: hidden;
-}
-
-#license-middle input {
-    visibility: visible;
-}
-
-#license-middle li {
-    list-style-type: none;
-    margin-bottom: 20px;
-    height: 80px;
-}
-
-#license-middle {
-    width: 40px;
-    padding-top: 20px;
+    width: 650px;
 }
 
 .license {
@@ -2380,6 +2364,14 @@ span.tag_addremove a:hover {
 .license-option input {
     position: relative;
     top: 20px;
+}
+
+#license-right input {
+    width: 20px;
+    height: 60px;
+    margin-top: 0;
+    margin-right: 30px;
+    float: left;
 }
 
 /* Describe accordion

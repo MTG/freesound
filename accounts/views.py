@@ -132,8 +132,8 @@ def home(request):
     user = request.user
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    latest_sounds = Sound.public.filter(user=user)[0:5]
-    latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
+    latest_sounds = Sound.public.select_related().filter(user=user)[0:5]
+    latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = True
@@ -508,7 +508,7 @@ def accounts(request):
     num_active_users = 10
     num_all_time_active_users = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
-    
+
     # select active users last num_days
     latest_uploaders = Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by("-id__count")
     latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by("-id__count")
@@ -543,12 +543,15 @@ def accounts(request):
 
 
 def account(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    try:
+        user = User.objects.select_related('profile').get(username__iexact=username)
+    except User.DoesNotExist:
+        raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    latest_sounds = Sound.public.filter(user=user)[0:settings.SOUNDS_PER_PAGE]
-    latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
-    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
+    latest_sounds = Sound.objects.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user)[0:settings.SOUNDS_PER_PAGE]
+    latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
+    latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = False
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))

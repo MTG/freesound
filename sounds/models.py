@@ -56,13 +56,10 @@ class SoundManager(models.Manager):
                 group by
                     user_id
                 ) as X order by created desc limit %d;""" % (interval_query, num_sounds)
-        print query
         return DelayedQueryExecuter(query)
 
     def random(self):
-
         sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
-
         if sound_count:
             offset = random.randint(0, sound_count - 1)
             cursor = connection.cursor() #@UndefinedVariable
@@ -70,7 +67,6 @@ class SoundManager(models.Manager):
                               where moderation_state='OK'
                               and processing_state='OK'
                               offset %d limit 1""" % offset)
-
             return cursor.fetchone()[0]
         else:
             return None
@@ -424,7 +420,7 @@ class Pack(SocialModel):
 
     def get_random_sounds_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')
-        
+
         return pack_sounds[0:min(3,len(pack_sounds))]
 
     def get_pack_tags(self, max_tags = 50):
@@ -492,7 +488,7 @@ class RemixGroup(models.Model):
 
     sounds = models.ManyToManyField(Sound,
                                     symmetrical=False,
-                                    related_name='remix_groups',
+                                    related_name='remix_group',
                                     blank=True)
 
     # facilitate ordering according to group size

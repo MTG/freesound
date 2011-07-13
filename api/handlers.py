@@ -411,7 +411,9 @@ class SoundServeHandler(BaseHandler):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist." % sound_id})
-
+        
+        # TODO: check that file actually existis in the hard disk 
+        
         # DISABLED (FOR THE MOMENT WE DON'T UPDATE DOWNLOADS TABLE THROUGH API)
         #Download.objects.get_or_create(user=request.user, sound=sound, interface='A')
 
@@ -434,12 +436,12 @@ class SoundSimilarityHandler(BaseHandler):
     def read(self, request, sound_id):
 
         try:
-            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK", similarity_state="OK")
             #TODO: similarity_state="OK"
             #TODO: this filter has to be added again, but first the db has to be updated
 
         except Sound.DoesNotExist: #@UndefinedVariable
-            raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist." % sound_id})
+            raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or similarity data is not ready." % sound_id})
 
         similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
 

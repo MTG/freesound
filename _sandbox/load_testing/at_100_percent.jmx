@@ -90,7 +90,7 @@
         <longProp name="ThreadGroup.start_time">1278844287000</longProp>
         <longProp name="ThreadGroup.end_time">1278844287000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -151,7 +151,7 @@
         <longProp name="ThreadGroup.start_time">1278602446000</longProp>
         <longProp name="ThreadGroup.end_time">1278602446000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -193,7 +193,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -234,7 +234,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -276,7 +276,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -391,7 +391,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -433,7 +433,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -475,7 +475,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -517,7 +517,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -559,7 +559,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
@@ -601,7 +601,7 @@
         <longProp name="ThreadGroup.start_time">1278603024000</longProp>
         <longProp name="ThreadGroup.end_time">1278603024000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">3600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>

@@ -27,7 +27,7 @@
 
 {% block section_content %}
 
-{% cache 1 sound_header sound.id request.user.is_authenticated %}
+{% cache 3600 sound_header sound.id request.user.is_authenticated %}
 <div id="single_sample_header">
     {% if sound.pack %}<a href="{% url pack username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
     <div class="stars">
@@ -110,7 +110,7 @@
     {% endif %}
 </div> <!-- single_sample_content -->
 
-{% cache 1 sound_footer sound.id %}
+{% cache 3600 sound_footer sound.id %}
 
 <div id="single_sample_sidebar">
     <div id="download">

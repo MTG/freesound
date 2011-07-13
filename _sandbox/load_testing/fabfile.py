@@ -35,7 +35,7 @@ def run_test():
     with cd('load_testing'):
         if exists('jmeter.jtl'):
             run('rm jmeter.jtl')
-        run('jmeter -rn -p jmeter.properties -t at_25_percent.jmx -l jmeter.jtl')
+        run('jmeter -rn -p jmeter.properties -t at_100_percent.jmx -l jmeter.jtl')
 
 @roles('master')
 def get_results():

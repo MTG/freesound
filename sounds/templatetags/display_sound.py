@@ -6,6 +6,7 @@ from sounds.models import Sound
 from django import template
 
 register = template.Library()
+sound_content_type = ContentType.objects.get_for_model(Sound)
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound(context, sound):

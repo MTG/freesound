@@ -3,6 +3,11 @@
 {% block head %}
 	{{ block.super }}
 <script type="text/javascript">
+	$(document).ready(function(){
+		if ($("#forum_search").length) {
+			$("#show_search").show();
+		}
+	});
 	function showSearch() {
 		$("#forum_search").toggle("medium");
 	}
@@ -16,19 +21,23 @@
 
 <div id="breadcrumb">
 <a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
-{% if not 'forums-search' in request.get_full_path %}
-	<a style="float:right" href="#" onclick="showSearch()" >search forums</a>
+{% if forum  or forums %}
+	<a id="show_search" style="display:none;float:right" href="#" onclick="showSearch()" >search forum</a>
 {% endif %}
 </div>
-<div style="display:none" id="forum_search">
+
+{% block forum_search %}
+<div {% if forum or forums %}style="display:none"{% endif %} id="forum_search">
 	<form method="get" action="{% url forums-search %}">
-	<input type="hidden" name="f_forum_name" value="{% if forum %} {{forum.name_slug}} {% endif %}"/>
+	<input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
+	<input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
     	<fieldset>
         	<input type="text" name="q" value="" size="30" />
             <input type="submit" value="search!" id="search_submit" />
 		</fieldset>
 	</form>
 </div>
+{% endblock %}
 
 {% block section_content %}
 {% endblock %}

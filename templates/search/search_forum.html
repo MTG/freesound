@@ -6,16 +6,13 @@
 
 {% block title %}Forum Search{% endblock title %}
 
+{% block breadcrumb %}
+	{% if current_forum_name_slug and current_forum_name_slug.strip %}
+		&#187; <a href="{% url forums-forum current_forum_name_slug %}">{{current_forum_name}}</a>
+	{% endif %}
+{%  endblock %}
+
 {% block section_content %}
-
-<form id="search_forum_form" method="get" action="{% url forums-search %}">
-    <fieldset>
-       <input type="text" name="q" value="{{search_query}}" size="30" />
-       <input type="submit" value="search" id="search_submit" />
-    </fieldset>
-</form>
-
-</p>
 
 {% if error %}
     {{ error_text }}

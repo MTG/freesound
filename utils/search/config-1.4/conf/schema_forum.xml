@@ -259,27 +259,32 @@
 
 
     <fields>
-    	<!-- forum id -->
+    	<!-- post id -->
         <field name="id" type="integer" indexed="true" stored="true" required="true" />
-        <field name="forum_name" type="text" indexed="true" stored="true" required="true" />
-        <field name="forum_name_slug" type="text" indexed="true" stored="true" required="true" />
-        
-        <field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
 
-        <field name="thread_name" type="text" indexed="true" stored="true" required="false" />
-        <field name="created" type="date" indexed="true" stored="true" required="true" />
+        <field name="thread_id" type="integer" indexed="true" stored="true" required="true" />
+        <field name="thread_title" type="text" indexed="true" stored="true" required="true" />
+        <field name="thread_title_grouped" type="string" indexed="true" stored="true" required="false" />
+        <field name="thread_author" type="alphaOnlySort" indexed="true" stored="true" required="true" />
+		<field name="thread_created" type="date" indexed="true" stored="true" required="true" />		
+				
+        <field name="forum_name" type="text" indexed="true" stored="true" required="true" />
+        <field name="forum_name_slug" type="text" indexed="true" stored="true" required="true" />        
+
+        <field name="post_author" type="alphaOnlySort" indexed="true" stored="true" required="true" />
+        <field name="post_body" type="text" indexed="true" stored="true" required="true" />               
+		<field name="post_created" type="date" indexed="true" stored="true" required="true" />		
+		        
         <field name="num_posts" type="integer" indexed="true" stored="true" required="true" />
-        
-        <!-- required true is ok? -->
-        <field name="post" type="text" indexed="true" stored="true" required="true" multiValued="true"/>
         <field name="has_posts" type="boolean" indexed="true" stored="true" required="true" />
+        
     </fields>
-	<!-- use forum_name? thread_name? 
-    <copyField source="pack" dest="pack_tokenized" />
-	-->
+	
+    <copyField source="thread_title" dest="thread_title_grouped" />
+
     <uniqueKey>id</uniqueKey>
 
-    <defaultSearchField>thread_name</defaultSearchField>
+    <defaultSearchField>thread_title</defaultSearchField>
 
     <solrQueryParser defaultOperator="AND"/>
 

@@ -108,7 +108,7 @@ class PackForm(forms.Form):
 
     def __init__(self, pack_choices, *args, **kwargs):
         super(PackForm, self).__init__(*args, **kwargs)
-        self.fields['pack'].queryset = pack_choices
+        self.fields['pack'].queryset = pack_choices.order_by('name')
 
     def clean_new_pack(self):
         try:

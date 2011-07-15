@@ -7,6 +7,22 @@ soundManager.preferFlash = true;
 //if you have a stricter test than 'maybe' SM will switch back to flash.
 soundManager.html5Test = /^maybe$/i
 
+if (!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function(elt /*, from*/) {
+        var len = this.length >>> 0;
+        var from = Number(arguments[1]) || 0;
+        from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+        if (from < 0)
+            from += len;
+
+        for (; from < len; from++) {
+            if (from in this && this[from] === elt)
+                return from;
+        }
+        return -1;
+    };
+}
+
 
 function msToTime(position, durationEstimate, displayRemainingTime, showMs) {
     if (displayRemainingTime)
@@ -82,6 +98,16 @@ function getPlayerPosition(element) {
          el != null;
          lx += el.offsetLeft, ly += el.offsetTop, el = el.offsetParent);
     return [lx, ly];
+}
+
+
+function stopAll(exclude) {
+    ids = soundManager.soundIDs;
+    if (exclude) ids = ids.splice(ids.indexOf(exclude), 1);
+    switchOff($(".player .play"));
+    for(var i=0; i<ids.length; i++) {
+        soundManager.pause(ids[i]);
+    }
 }
 
 
@@ -173,12 +199,10 @@ function makePlayer(selector) {
             url: mp3Preview,
             autoLoad: false,
             autoPlay: false,
-            onload: function()
-            {
+            onload: function() {
                 $(".loading-progress", playerElement).remove();
             },
-            whileloading: function()
-            {
+            whileloading: function() {
                 $(".loading-progress", playerElement).show();
 
                 var loaded = this.bytesLoaded / this.bytesTotal * 100;
@@ -186,32 +210,30 @@ function makePlayer(selector) {
                 $(".loading-progress", playerElement).css("width", (100 - loaded) + "%");
                 $(".loading-progress", playerElement).css("left", loaded + "%");
             },
-            whileplaying: function()
-            {
+            whileplaying: function() {
                 var positionPercent = this.position / this.duration * 100;
                 $(".position-indicator", playerElement).css("left", positionPercent + "%");
                 $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
             },
             onfinish: function ()
             {
-                if ($(".loop", playerElement).hasClass("on"))
-                {
+                if ($(".loop", playerElement).hasClass("on")) {
                     sound.play()
-                }
-                else
-                {
+                } else {
                     if ($(".play", playerElement).hasClass("on"))
                         switchToggle($(".play", playerElement));
                 }
             }
-            //,volume:
         });
 
         $(".play", this).bind("toggle", function (event, on) {
+            stopAll();
+            switchOn($(".play", playerElement));
             if (on)
                 sound.play()
             else
                 sound.pause()
+
             mouseDown = 0;
         });
 
@@ -244,6 +266,7 @@ function makePlayer(selector) {
         });
 
         $(".background", this).click(function(event) {
+            stopAll();
             event.stopPropagation();
             pos = getMousePosition(event, $(this));
             if (pos[0] < 20) {

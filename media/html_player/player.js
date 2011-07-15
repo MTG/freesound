@@ -168,12 +168,13 @@ function makePlayer(selector) {
                 <div class="position-indicator"></div>');
         }
 
-        var urls = $(".metadata", this).text().split(" ");
+        //var urls = $(".metadata", this).text().split(" ");
 
-        var mp3Preview = urls[0];
-        var waveform = urls[1];
-        var spectrum = urls[2];
-        var duration = urls[3];
+        var mp3Preview = $(".metadata .mp3_file", this).attr('href');
+        var oggPreview = $(".metadata .ogg_file", this).attr('href');
+        var waveform = $(".metadata .waveform", this).attr('href');
+        var spectrum = $(".metadata .spectrum", this).attr('href');
+        var duration = $(".metadata .duration", this).text();
 
         var playerElement = $(this);
 
@@ -203,9 +204,9 @@ function makePlayer(selector) {
                 $(".loading-progress", playerElement).remove();
             },
             whileloading: function() {
-                $(".loading-progress", playerElement).show();
 
                 var loaded = this.bytesLoaded / this.bytesTotal * 100;
+                if(loaded > 0) $(".loading-progress", playerElement).show();
 
                 $(".loading-progress", playerElement).css("width", (100 - loaded) + "%");
                 $(".loading-progress", playerElement).css("left", loaded + "%");
@@ -228,12 +229,14 @@ function makePlayer(selector) {
 
         $(".play", this).bind("toggle", function (event, on) {
             stopAll();
-            switchOn($(".play", playerElement));
-            if (on)
-                sound.play()
-            else
-                sound.pause()
-
+            if (on) {
+                switchOn($(".play", playerElement));
+                sound.play();
+            }
+            else {
+                switchOff($(".play", playerElement));
+                sound.pause();
+            }
             mouseDown = 0;
         });
 

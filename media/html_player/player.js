@@ -59,6 +59,44 @@ function switchToggle(element) {
     element.toggleClass("on");
 }
 
+function switchOff(element) {
+    element.addClass("toggle");
+    element.removeClass("toggle-alt");
+    element.removeClass("on");
+}
+
+function switchOn(element) {
+    element.removeClass("toggle");
+    element.addClass("toggle-alt");
+    element.addClass("on");
+}
+
+
+function getPlayerPosition(element) {
+    el = element[0];
+    for (var lx=0, ly=0;
+         el != null;
+         lx += el.offsetLeft, ly += el.offsetTop, el = el.offsetParent);
+    return [lx, ly];
+}
+
+
+function getMousePosition(event, playerElement) {
+    var posx = 0;
+    var posy = 0;
+    if (!event) var event = window.event;
+    if (event.pageX || event.pageY) {
+        posx = event.pageX;
+        posy = event.pageY;
+    }
+    else if (event.clientX || event.clientY) {
+        posx = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+        posx = event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+    }
+    ppos = getPlayerPosition(playerElement);
+    return [posx-ppos[0], posy-ppos[1]];
+}
+
 
 function makePlayer(selector) {
     $(selector).each( function () {
@@ -165,92 +203,100 @@ function makePlayer(selector) {
             //,volume:
         });
 
-        $(".play", this).bind("toggle", function (event, on)
-        {
+        $(".play", this).bind("toggle", function (event, on) {
             if (on)
                 sound.play()
             else
                 sound.pause()
+            mouseDown = 0;
         });
 
-        $(".stop", this).click(function (event)
-        {
+        $(".stop", this).click(function (event) {
             event.stopPropagation();
-            if (sound.playState)
-            {
-                sound.stop()
-                //sound.setPosition(0);
-                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
+            if (sound.playState) {
+                sound.stop();
+                $(".time-indicator", playerElement).html(
+                        msToTime(sound.position,
+                                sound.duration,
+                                !$(".time-indicator-container", playerElement).hasClass("on"),
+                                showMs));
                 switchToggle($(".play", playerElement));
             }
+            mouseDown = 0;
         });
 
-        $(".display", this).bind("toggle", function (event, on)
-        {
+        $(".display", this).bind("toggle", function (event, on) {
             if (on)
                 $(".background", playerElement).css("background", "url(" + spectrum + ")");
             else
                 $(".background", playerElement).css("background", "url(" + waveform + ")");
         });
 
-        $(".measure", this).bind("toggle", function (event, on)
-        {
+        $(".measure", this).bind("toggle", function (event, on) {
             if (on)
                 $(".measure-readout-container", playerElement).stop().fadeTo(100, 1.0);
             else
                 $(".measure-readout-container", playerElement).stop().fadeTo(100, 0);
         });
 
-        $(".background", this).click(function(event)
-        {
+        $(".background", this).click(function(event) {
             event.stopPropagation();
-            sound.setPosition(sound.duration * event.offsetX / $(this).width())
-            if (!sound.playState)
-            {
-                switchToggle($(".play", playerElement));
-                sound.play();
+            pos = getMousePosition(event, $(this));
+            if (pos[0] < 20) {
+                sound.stop()
+            } else {
+                sound.setPosition(sound.duration * pos[0] / $(this).width());
             }
+            switchOn($(".play", playerElement));
+            if (!sound.playState){
+                sound.play();
+            } else if (sound.paused)
+                sound.resume();
+            mouseDown = 0;
+
         });
 
-        $(".time-indicator-container", this).click(function(event)
-        {
+        $(".time-indicator-container", this).click(function(event) {
             event.stopPropagation();
             $(this).toggleClass("on");
         });
 
-        $(this).hover(function()
-        {
-            if ($(this).hasClass("large"))
-            {
+        $(this).hover(function() {
+            if ($(this).hasClass("large")) {
                 $(".controls", playerElement).stop().fadeTo(50, 1.0);
                 if ($(".measure", playerElement).hasClass("on"))
                     $(".measure-readout-container", playerElement).stop().fadeTo(50, 1.0);
             }
-        },function(){
-            if ($(this).hasClass("large"))
-            {
+        },function() {
+            if ($(this).hasClass("large")) {
                 $(".controls", playerElement).stop().fadeTo(2000, 0.2);
                 if ($(".measure", playerElement).hasClass("on"))
                     $(".measure-readout-container", playerElement).stop().fadeTo(2000, 0.2);
             }
         });
 
-        $(this).mousemove(function (event)
-        {
-            var readout = "";
-
-            if ($(".display", playerElement).hasClass("on"))
-            {
-                readout = _mapping[Math.floor(event.offsetY)].toFixed(2) + "hz";
+        $(this).mousemove(function (event) {
+            if(mouseDown) {
+                if (sound.playState) {
+                    switchOff($(".play", playerElement));
+                    sound.pause();
+                }
+                pos = getMousePosition(event, $(this));
+                sound.setPosition(sound.duration * pos[0] / $(this).width());
             }
-            else
-            {
+
+            var readout = "";
+            pos = getMousePosition(event, $(this));
+
+            if ($(".display", playerElement).hasClass("on")) {
+                readout = _mapping[Math.floor(pos[1])].toFixed(2) + "hz";
+            } else {
                 var height2 = $(this).height()/2;
 
-                if (event.offsetY == height2)
+                if (pos[1] == height2)
                     readout = "-inf";
                 else
-                    readout = (20 * Math.log( Math.abs(event.offsetY/height2 - 1) ) / Math.LN10).toFixed(2);
+                    readout = (20 * Math.log( Math.abs(pos[1]/height2 - 1) ) / Math.LN10).toFixed(2);
 
                 readout = readout + " dB";
             }
@@ -258,10 +304,25 @@ function makePlayer(selector) {
             $('.measure-readout', playerElement).html(readout);
         });
 
+        // when dragging the pointer and it goes out of the player, set the
+        // player position to zero, but only if you're at the beginning of the sound.
+        $(this).mouseout(function (event) {
+            if(mouseDown) {
+                pos = getMousePosition(event, $(this));
+                if (pos[0] < 20) {
+                    sound.setPosition(0.000001)
+                    sound.stop();
+                    sound.play();
+                    switchOn($(".play", playerElement));
+                }
+            }
+        });
+
         return true;
     });
 }
 
+var mouseDown = 0;
 
 $(function() {
     $(".toggle, .toggle-alt").live("click", function (event) {
@@ -276,4 +337,11 @@ $(function() {
     soundManager.onready(function() {
         makePlayer('.player');
     });
+
+    document.body.onmousedown = function() {
+      ++mouseDown;
+    }
+    document.body.onmouseup = function() {
+      --mouseDown;
+    }
 });

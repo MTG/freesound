@@ -1,11 +1,14 @@
+//soundManager.useHTML5Audio = true;
 soundManager.url = '/media/html_player/swf/';
-soundManager.flashVersion = 9; // optional: shiny features (default = 8)
-soundManager.useFlashBlock = false; // optionally, enable when you're ready to dive in
+//flash 9 doesn't have weird artifacts at the beginning of sounds.
+soundManager.flashVersion = 9;
 soundManager.debugMode = false;
+soundManager.preferFlash = true;
+//if you have a stricter test than 'maybe' SM will switch back to flash.
+soundManager.html5Test = /^maybe$/i
 
 
-function msToTime(position, durationEstimate, displayRemainingTime, showMs)
-{
+function msToTime(position, durationEstimate, displayRemainingTime, showMs) {
     if (displayRemainingTime)
         position = durationEstimate - position;
 
@@ -36,10 +39,9 @@ function msToTime(position, durationEstimate, displayRemainingTime, showMs)
         return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds;
 }
 
+var mouseDown = 0;
 var uniqueId = 0;
-
 var _mapping = [];
-
 var y_min = Math.log(100.0) / Math.LN10;
 var y_max = Math.log(22050.0) / Math.LN10;
 
@@ -59,11 +61,13 @@ function switchToggle(element) {
     element.toggleClass("on");
 }
 
+
 function switchOff(element) {
     element.addClass("toggle");
     element.removeClass("toggle-alt");
     element.removeClass("on");
 }
+
 
 function switchOn(element) {
     element.removeClass("toggle");
@@ -322,7 +326,6 @@ function makePlayer(selector) {
     });
 }
 
-var mouseDown = 0;
 
 $(function() {
     $(".toggle, .toggle-alt").live("click", function (event) {
@@ -331,17 +334,14 @@ $(function() {
         $(this).trigger("toggle", $(this).hasClass("on"));
     });
 
-    // enable HTML5 audio support, if you're feeling adventurous. iPad/iPhone will always get this.
-    // soundManager.useHTML5Audio = true;
-
     soundManager.onready(function() {
         makePlayer('.player');
     });
 
     document.body.onmousedown = function() {
-      ++mouseDown;
+        ++mouseDown;
     }
     document.body.onmouseup = function() {
-      --mouseDown;
+        --mouseDown;
     }
 });

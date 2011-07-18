@@ -37,7 +37,7 @@ class Profile(SocialModel):
 
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
-    
+
     has_old_license = models.BooleanField(null=False, default=False)
 
     objects = ProfileManager()
@@ -51,11 +51,11 @@ class Profile(SocialModel):
 
     @locations_decorator(cache=False)
     def locations(self):
-        id_folder = str(self.user.id/1000)
+        id_folder = str(self.user_id/1000)
         if self.has_avatar:
-            s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, self.user.id)
-            m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, self.user.id)
-            l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, self.user.id)
+            s_avatar = settings.AVATARS_URL + "%s/%d_S.jpg" % (id_folder, self.user_id)
+            m_avatar = settings.AVATARS_URL + "%s/%d_M.jpg" % (id_folder, self.user_id)
+            l_avatar = settings.AVATARS_URL + "%s/%d_L.jpg" % (id_folder, self.user_id)
         else:
             s_avatar = settings.MEDIA_URL + "images/32x32_avatar.png"
             m_avatar = settings.MEDIA_URL + "images/40x40_avatar.png"
@@ -63,15 +63,15 @@ class Profile(SocialModel):
         return dict(
             avatar = dict(
                 S = dict(
-                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % self.user.id),
+                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_S.jpg" % self.user_id),
                     url = s_avatar
                 ),
                 M = dict(
-                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % self.user.id),
+                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_M.jpg" % self.user_id),
                     url = m_avatar
                 ),
                 L = dict(
-                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % self.user.id),
+                    path = os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % self.user_id),
                     url = l_avatar
                 )
             )
@@ -93,7 +93,7 @@ class Profile(SocialModel):
                 desc limit 10
             ) as X
             left join tags_tag on tags_tag.id=X.tag_id
-            order by tags_tag.name;""" % self.user.id)
+            order by tags_tag.name;""" % self.user_id)
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

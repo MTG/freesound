@@ -18,14 +18,16 @@ def display_sound(context, sound):
         sound_id = int(sound)
         try:
             #sound_obj = Sound.objects.get(id=sound_id)
-            sound_obj = Sound.objects.select_related('user').filter(id=sound) # need to use filter here because we don't want the query to be evaluated already!
+            sound_obj = Sound.objects.select_related().filter(id=sound) # need to use filter here because we don't want the query to be evaluated already!
         except Sound.DoesNotExist:
             sound_obj = []
 
+
     return { 'sound_id':     sound_id,
              'sound':        sound_obj,
-             'sound_tags':   ti.objects.select_related('tag__name') \
-                                .filter(object_id=sound_id,content_type=sound_content_type),
+             'sound_tags':   ti.objects.select_related() \
+                                .filter(object_id=sound_id, content_type=sound_content_type) \
+                                .all(),
              'media_url':    context['media_url'],
              'request':      context['request']
            }

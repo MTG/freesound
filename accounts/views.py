@@ -290,7 +290,7 @@ def describe_sounds(request):
 
     # This is to prevent people browsing to the /home/describe/sounds page
     # without going through the necessary steps.
-    # selected_ack can be False, but license and sounds have to be picked at least
+    # selected_pack can be False, but license and sounds have to be picked at least
     if not (sounds and selected_license):
         msg = 'Please pick at least some sounds and a license.'
         messages.add_message(request, messages.WARNING, msg)
@@ -456,9 +456,9 @@ def describe_sounds(request):
             else:
                 forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
                                             prefix=prefix)
-            if request.session['describe_license']:
-                forms[i]['license'] = NewLicenseForm(prefix=prefix,
-                                                     initial={'license': str(selected_license.id)})
+            if selected_license:
+                forms[i]['license'] = NewLicenseForm({'license': selected_license},
+                                                     prefix=prefix)
             else:
                 forms[i]['license'] = NewLicenseForm(prefix=prefix)
             # cannot include this right now because the remix sources form needs a sound object

@@ -7,7 +7,7 @@
 </style>
 <script type="text/javascript">
     function moderate(url) {
-        $("#current_sound").load(url);
+        $("#current_sound").load(url, function() { makePlayer('.player') });
     }
 
     function load_messages(url) {

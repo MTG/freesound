@@ -130,9 +130,9 @@ class LicenseForm(forms.Form):
 class NewLicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')),
                                      required=True,
-                                     empty_label=None,
+                                     #empty_label=None,
                                      widget=forms.RadioSelect(),
-                                     label='',
+                                     #label='',
                                      initial=License.objects.get(name='Attribution'))
 
 

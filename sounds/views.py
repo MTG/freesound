@@ -267,13 +267,13 @@ def sound_edit(request, username, sound_id):
             geotag_form = GeotaggingForm(prefix="geotag")
 
     license_form = NewLicenseForm(request.POST)
-    if license_form.is_valid():
+    if request.POST and license_form.is_valid():
         sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
         invalidate_template_cache("sound_footer", sound.id)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = NewLicenseForm(initial=dict(license=sound.license.id))
+        license_form = NewLicenseForm({'license': sound.license})
 
     google_api_key = settings.GOOGLE_API_KEY
 
@@ -291,10 +291,9 @@ def sound_edit_sources(request, username, sound_id):
     sources_string = ",".join(map(str, [source.id for source in current_sources]))
 
     remix_group = RemixGroup.objects.filter(sounds=current_sources)
-    print ("======== remix group id following ===========")
-    print (remix_group[0].id)
-
-
+    # No prints in production code!
+    #print ("======== remix group id following ===========")
+    #print (remix_group[0].id)
 
     if request.method == 'POST':
         form = RemixForm(sound, request.POST)

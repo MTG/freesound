@@ -41,7 +41,6 @@ def migrate_table(curs):
     out = codecs.open(OUT_FNAME, 'wt', 'utf-8')
 
     sql = """
-    -- Those indexs doesn't exist in a brand new database.
     DROP INDEX sounds_download_created;
     DROP INDEX sounds_download_pack_id;
     DROP INDEX sounds_download_sound_id;
@@ -53,7 +52,7 @@ def migrate_table(curs):
     ALTER TABLE sounds_download DROP CONSTRAINT sounds_download_user_id_fkey;
 
     -- Key not existing in a brand new database.
-    ALTER TABLE sounds_download DROP CONSTRAINT sounds_download_user_id_key;
+    -- ALTER TABLE sounds_download DROP CONSTRAINT sounds_download_user_id_key;
       
     copy sounds_download (user_id, sound_id, pack_id, created) 
         from stdin null as 'None';

@@ -358,7 +358,7 @@ def pack(request, username, pack_id):
 def packs_for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds"]:
+    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order)
     return render_to_response('sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))

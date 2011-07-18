@@ -45,7 +45,11 @@
 
 <div id="single_sample_player">
     <div class="player large">
-        <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.L.url}} {{sound.locations.display.spectral.L.url}} {{sound.duration_ms}}</div>
+        <div class="metadata">
+            {% with 'L' as size %}
+                {% include 'sounds/metadata.html' %}
+            {% endwith %}
+        </div>
     </div>
 </div>
 

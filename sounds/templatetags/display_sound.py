@@ -22,9 +22,12 @@ def display_sound(context, sound):
         except Sound.DoesNotExist:
             sound_obj = []
 
+
     return { 'sound_id':     sound_id,
              'sound':        sound_obj,
-             'sound_tags':   sound_obj[0].tags.select_related().all(),
+             'sound_tags':   ti.objects.select_related() \
+                                .filter(object_id=sound_id, content_type=sound_content_type) \
+                                .all(),
              'media_url':    context['media_url'],
              'request':      context['request']
            }

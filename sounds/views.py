@@ -40,6 +40,8 @@ from django.contrib.sites.models import Site
 
 logger = logging.getLogger('web')
 
+sound_content_type = ContentType.objects.get_for_model(Sound)
+
 def get_random_sound():
     cache_key = "random_sound"
     random_sound = cache.get(cache_key)
@@ -88,8 +90,14 @@ def packs(request):
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
-    qs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order)
-    return render_to_response('sounds/browse_packs.html',combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
+    qs = Pack.objects.select_related() \
+                     .filter(sound__moderation_state="OK", sound__processing_state="OK") \
+                     .annotate(num_sounds=Count('sound'), last_update=Max('sound__created')) \
+                     .filter(num_sounds__gt=0) \
+                     .order_by(order)
+    return render_to_response('sounds/browse_packs.html',
+                              combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()),
+                              context_instance=RequestContext(request))
 
 
 def front_page(request):
@@ -103,21 +111,21 @@ def front_page(request):
 
 def sound(request, username, sound_id):
     try:
+        sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(user__username__iexact=username, id=sound_id)
+        user_is_owner = request.user.is_authenticated() and sound.user == request.user
         # If the user is authenticated and this file is his, don't worry about moderation_state and processing_state
-        if request.user.is_authenticated() \
-            and Sound.objects.raw("SELECT id FROM sounds_sound WHERE user_id = %s AND id = %s" % (request.user.id, sound_id)):
-            sound = Sound.objects.select_related("license", "user", "pack").get(user__username__iexact=username, id=sound_id)
+        if user_is_owner:
             if sound.moderation_state != "OK":
                 messages.add_message(request, messages.INFO, 'Be advised, this file has <b>not been moderated</b> yet.')
             if sound.processing_state != "OK":
                 messages.add_message(request, messages.INFO, 'Be advised, this file has <b>not been processed</b> yet.')
         else:
-            sound = Sound.objects.select_related("license", "user", "pack").get(user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+            if sound.moderation_state != 'OK' or sound.processing_state != 'OK':
+                raise Http404
     except Sound.DoesNotExist: #@UndefinedVariable
         raise Http404
 
-    tags = sound.tags.select_related("tag").all()
-    content_type = ContentType.objects.get_for_model(Sound)
+    tags = sound.tags.select_related("tag__name")
 
     if request.method == "POST":
         form = CommentForm(request, request.POST)
@@ -144,9 +152,9 @@ def sound(request, username, sound_id):
     else:
         form = CommentForm(request)
 
-    qs = Comment.objects.select_related("user").filter(content_type=content_type, object_id=sound_id)
+    qs = Comment.objects.select_related("user", "user__profile").filter(content_type=sound_content_type, object_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
-    facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
+    #facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
 # N.B. login is required but adapted to not return the user to the download link.
@@ -339,8 +347,11 @@ def similar(request, username, sound_id):
 
 
 def pack(request, username, pack_id):
-    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
-    qs = Sound.objects.select_related('user').filter(pack=pack, moderation_state="OK", processing_state="OK")
+    try:
+        pack = Pack.objects.select_related().annotate(num_sounds=Count('sound')).get(user__username__iexact=username, id=pack_id)
+    except Pack.DoesNotExist:
+        raise Http404
+    qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
 
@@ -349,7 +360,7 @@ def packs_for_user(request, username):
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
-    qs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order)
+    qs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order)
     return render_to_response('sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 

@@ -20,7 +20,7 @@ class TaggedItem(models.Model):
 
     tag = models.ForeignKey(Tag)
 
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, related_name='tags')
     object_id = models.PositiveIntegerField(db_index=True)
     content_object = generic.GenericForeignKey()
 

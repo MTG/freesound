@@ -161,7 +161,7 @@ def migrate_tags_mapping():
     out.write(u"\n".join(lines) + u"\n")
 
     sql = """\.
-    SELECT SETVAL('tags_fs1tag_fs1_id_seq',
+    SELECT SETVAL('tags_fs1tag_id_seq',
         (SELECT MAX(id)+1 FROM tags_fs1tag));
     VACUUM ANALYZE tags_tag;
     """

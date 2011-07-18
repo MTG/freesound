@@ -2114,6 +2114,7 @@ p.about {
     float: left;
     margin-right: 30px;
     margin-left: 20px;
+    margin-bottom: 30px;
 }
 
 /* People page
@@ -2668,6 +2669,27 @@ ul.messages {
     margin-bottom: 5px;
 }
 
+#ticket_menu {
+    background-color: #ededed;
+    margin-bottom: 30px;
+    padding: 10px;
+}
+
+#ticket_menu li {
+    display: inline;
+    float: left;
+    margin-right: 50px;
+}
+
+#ticket_menu ul li a:active {
+    text-decoration: underline;
+    color: #333;
+}
+
+/* #ticket_menu li {
+    display: inline;
+}
+ */
 
 /* Upload pages
 ------------------------------------------------------*/

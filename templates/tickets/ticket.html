@@ -1,12 +1,12 @@
-{% extends "base.html" %}
+{% extends "tickets/_section.html" %}
 {% load display_sound %}
 
 {% block title %}
     Ticket {{ ticket.key }}
 {% endblock title %}
 
-{% block content %}
-    <h1>Ticket #{{ ticket.id }} - {{ ticket.title }}</h1>
+{% block section_content %}
+    <h2>Ticket #{{ ticket.id }} - {{ ticket.title }}</h2>
 
     <h3>Ticket details</h3>
     <div id="ticket-details">
@@ -89,4 +89,4 @@
         </div> <!-- /#ticket-right -->
         <br style="clear: both;">
     </div> <!-- /#ticket-wrapper -->
-{% endblock content %}
+{% endblock section_content %}

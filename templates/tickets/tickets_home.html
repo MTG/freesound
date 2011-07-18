@@ -1,20 +1,21 @@
-{% extends "base.html" %}
+{% extends "tickets/_section.html" %}
 
 {% block title %}
-	Moderation
+    Moderation
 {% endblock title %}
 
-{% block content %}
-	<h1>Moderation</h1>
-	<!-- include permission checks here -->
-	<ul>
-		<li>
-			<a href="{% url tickets-moderation-home %}">moderate sounds</a> 
-				- ({{new_upload_count}} new sounds)
-		</li>
-		<li>
-			<a href="{% url tickets-support-home %}">moderate support requests</a> 
-				- ({{new_support_count}} new requests)
-		</li>
-	</ul>
-{% endblock content %}
+{% block section_content %}
+
+    <h2>Moderation home</h2>
+    <!-- include permission checks here -->
+    <ul>
+        <li>
+            <a href="{% url tickets-moderation-home %}">moderate sounds</a>
+                - ({{new_upload_count}} new sounds)
+        </li>
+        <li>
+            <a href="{% url tickets-support-home %}">moderate support requests</a>
+                - ({{new_support_count}} new requests)
+        </li>
+    </ul>
+{% endblock section_content %}

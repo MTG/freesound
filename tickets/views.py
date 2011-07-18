@@ -21,7 +21,7 @@ def __get_tc_form(request, use_post=True):
 
 
 def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, include_mod=False):
-    if __can_view_mod_msg(request):
+    if __can_view_mod_msg(request) and anonymous_form != AnonymousContactForm:
         user_form = ModeratorMessageForm
     if len(request.POST.keys()) > 0 and use_post:
         if request.user.is_authenticated():
@@ -164,12 +164,20 @@ def new_contact_ticket(request):
     return render_to_response('tickets/contact.html', locals(), context_instance=RequestContext(request))
 
 
+# In the next 2 functions we return a queryset os the evaluation is lazy.
+# N.B. these functions are used in the home page as well.
+def new_sound_tickets_qs():
+    return Ticket.objects.filter(status=TICKET_STATUS_NEW,
+                                 source=TICKET_SOURCE_NEW_SOUND)
+
+def new_support_tickets_qs():
+    return Ticket.objects.filter(assignee=None,
+                                 source=TICKET_SOURCE_CONTACT_FORM)
+
 @permission_required('tickets.can_moderate')
 def tickets_home(request):
-    new_upload_count = Ticket.objects.filter(assignee=None,
-                                             source=TICKET_SOURCE_NEW_SOUND).count()
-    new_support_count = Ticket.objects.filter(assignee=None,
-                                              source=TICKET_SOURCE_CONTACT_FORM).count()
+    new_upload_count = new_sound_tickets_qs().count()
+    new_support_count = new_support_tickets_qs().count()
     return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
 
 

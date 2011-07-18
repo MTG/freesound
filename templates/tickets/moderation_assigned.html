@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "tickets/_section.html" %}
 {% load util %}
 {% block head %}
 {{ block.super }}
@@ -63,7 +63,7 @@
     Moderation
 {% endblock title %}
 
-{% block content %}
+{% block section_content %}
 
     <!-- include permission checks here -->
 
@@ -136,4 +136,4 @@
     <br style="clear: both;">
 
 
-{% endblock content %}
+{% endblock section_content %}

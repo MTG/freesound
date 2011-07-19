@@ -1,7 +1,7 @@
 {% load cache %}
 {% load util %}
 {% load ratings %}
-{% cache 3600 display_sound sound_id request.user.is_authenticated %}
+{% cache 3600 display_sound sound_id request.user.is_authenticated sound.0.processing_state %}
 {% if sound %}
 {% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
@@ -36,6 +36,9 @@
                 {% endfor %}
             </ul>
             </div><!-- .sound_tags -->
+            {% if sound.processing_state != 'OK' %}
+                <p>N.B. This sound has not been processed ({{sound.processing_state}}).
+            {% endif %}
           </div><!-- .sound_title -->
     </div><!-- .sample_player -->
 

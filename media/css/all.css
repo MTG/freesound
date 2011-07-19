@@ -1690,18 +1690,52 @@ ul.pagination {
     text-decoration: none;
 }
 
-.post_quote {
+.post_buttons {
     display: block;
     position: absolute;
     top: 0;
     right: 0;
+    width: 148px;
+    height: 27px;
+}
+
+.post_button {
+    float: right;
+    display: block;
+    display: block;
     width: 46px;
     height: 27px;
+}
+
+.post_quote {
     background: url(../images/post_quote.png) top;
 }
 
+.post_delete {
+    background: url(../images/post_delete.png) top;
+}
+
+.post_edit {
+    background: url(../images/post_edit.png) top;
+}
+
+
 .post_quote:hover {
     background: url(../images/post_quote.png) bottom;
+}
+
+.post_edit:hover {
+    background: url(../images/post_edit.png) bottom;
+}
+
+.post_delete:hover {
+    background: url(../images/post_delete.png) bottom;
+}
+
+#confirm_deletion h4 {
+    margin-left: 50px;
+    display: block;
+    float: left;
 }
 
 /* Sidebar

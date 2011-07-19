@@ -28,6 +28,9 @@
             <li><a href="{% url accounts-edit %}">Edit</a> your public profile</li>
             <li><a href="{% url accounts-describe %}">Describe</a> your sounds</li>
             <li><a href="{% url accounts-attribution %}">Attribution</a> - the sounds you downloaded</li>
+            {% if perms.tickets.can_moderate %}
+            <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds_qs.count }} sounds, {{ new_support_qs.count }} support requests</li>
+            {% endif %}
         </ul>
     {% else %}
         <h1>{{user.username}}</h1>

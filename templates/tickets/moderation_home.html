@@ -1,47 +1,62 @@
-{% extends "base.html" %}
+{% extends "tickets/_section.html" %}
 
 {% block title %}
     Sound Moderation
 {% endblock title %}
 
-{% block content %}
-    <h1>Users with new sounds</h1>
-    <p><div class="moderation-user-list">
-        {% for user, new_count in new_sounds_users.items %}
-            <div class="moderation-user-list-user">
-                <div class="moderation-user-list-user-left">
-                <img src="{{user.profile.locations.avatar.L.url}}"/>
+{% block section_content %}
+
+    <h2>Sounds</h2>
+
+    {% if new_sounds_users %}
+        <h3>Users with new sounds</h3>
+        <p><div class="moderation-user-list">
+            {% for user, new_count in new_sounds_users.items %}
+                <div class="moderation-user-list-user">
+                    <div class="moderation-user-list-user-left">
+                    <img src="{{user.profile.locations.avatar.L.url}}"/>
+                    </div>
+                    <div class="moderation-user-list-user-right">
+                        <p>{{ user.username }}
+                        <br>{{ new_count }} new sounds
+                        <br><a href="{% url tickets-moderation-assign-user user.id %}">
+                            <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
+                    </div>
                 </div>
-                <div class="moderation-user-list-user-right">
-                    <p>{{ user.username }}
-                    <br>{{ new_count }} new sounds
-                    <br><a href="{% url tickets-moderation-assign-user user.id %}">
-                        <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
-                </div>
-            </div>
+            {% endfor %}
+            <div style="clear: both;"></div>
+        </div>
+        <br>
+    {% else %}
+       <h3>No new sounds</h3>
+       <p>There are currently no new sounds to be moderated.
+    {% endif %}
+
+    {% if tardy_moderator_tickets.all %}
+        <h3>Tardy moderators</h3>
+        {% for ticket in tardy_moderator_tickets %}
+            {% include 'tickets/ticket_sound.html' %}
         {% endfor %}
-        <div style="clear: both;"></div>
-    </div>
-    <!-- TODO: url change here -->
-    <br>
-    <a href="{% url tickets-moderation-assigned request.user.id %}"<h4>Moderate tickets</h4></a>
-    <br><br>
+    {% endif %}
 
-    <h1>Tardy moderators!</h1>
-    {% for ticket in tardy_moderator_tickets %}
-        {% include 'tickets/ticket_sound.html' %}
-    {% endfor %}
+    {% if tardy_user_tickets.all %}
+        <h3>Tardy users</h3>
+        {% for ticket in tardy_user_tickets %}
+            {% include 'tickets/ticket_sound.html' %}<br>
+        {% endfor %}
+    {% endif %}
 
-    <h1>Tardy users!</h1>
-    {% for ticket in tardy_user_tickets %}
-        {% include 'tickets/ticket_sound.html' %}<br>
-    {% endfor %}
-
-    <h1>Left by other moderators</h1>
+    {% if unsure_tickets %}
+    <h3>Returned</h3>
     <div class="moderation-unsure-list">
         {% for ticket in unsure_tickets %}
             {% include 'tickets/ticket_sound.html' %}
         {% endfor %}
     </div>
+    {% endif %}
 
-{% endblock content %}
+    <h3>Moderate your assigned sounds</h3>
+    <p>After assigning new sounds to yourself, go to
+    <a href="{% url tickets-moderation-assigned request.user.id %}">your sound queue</a>
+    to start moderating.</p>
+{% endblock section_content %}

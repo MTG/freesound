@@ -13,12 +13,20 @@ class UserMessageForm(forms.Form):
 class UserContactForm(UserMessageForm):
     title       = forms.CharField()
 
+    def __init__(self, *args, **kwargs):
+        super(UserContactForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder = ['title', 'message']
+
 class AnonymousMessageForm(RecaptchaForm):
     message     = forms.CharField(widget=forms.Textarea)
 
 class AnonymousContactForm(AnonymousMessageForm):
     title       = forms.CharField()
     email       = forms.EmailField()
+
+    def __init__(self, *args, **kwargs):
+        super(AnonymousContactForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder = ['email', 'title', 'message']
 
 # Sound moderation forms
 MODERATION_CHOICES = [(x,x) for x in \

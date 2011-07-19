@@ -47,6 +47,8 @@ from django.template import loader
 from django.utils.http import int_to_base36
 from django.contrib.sites.models import get_current_site
 from utils.mail import send_mail
+from tickets.views import new_sound_tickets_qs, new_support_tickets_qs
+
 
 audio_logger = logging.getLogger('audio')
 
@@ -145,6 +147,9 @@ def home(request):
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = True
+    if home:
+        new_sounds_qs = new_sound_tickets_qs()
+        new_support_qs = new_support_tickets_qs()
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 
@@ -262,7 +267,7 @@ def describe_license(request):
             request.session['describe_license'] = form.cleaned_data['license']
             return HttpResponseRedirect(reverse('accounts-describe-pack'))
     else:
-        form = NewLicenseForm()
+        form = NewLicenseForm({'license': License.objects.get(name='Attribution')})
     return render_to_response('accounts/describe_license.html', locals(), context_instance=RequestContext(request))
 
 @login_required
@@ -294,7 +299,7 @@ def describe_sounds(request):
 
     # This is to prevent people browsing to the /home/describe/sounds page
     # without going through the necessary steps.
-    # selected_ack can be False, but license and sounds have to be picked at least
+    # selected_pack can be False, but license and sounds have to be picked at least
     if not (sounds and selected_license):
         msg = 'Please pick at least some sounds and a license.'
         messages.add_message(request, messages.WARNING, msg)
@@ -460,9 +465,9 @@ def describe_sounds(request):
             else:
                 forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
                                             prefix=prefix)
-            if request.session['describe_license']:
-                forms[i]['license'] = NewLicenseForm(prefix=prefix,
-                                                     initial={'license': str(selected_license.id)})
+            if selected_license:
+                forms[i]['license'] = NewLicenseForm({'license': selected_license},
+                                                     prefix=prefix)
             else:
                 forms[i]['license'] = NewLicenseForm(prefix=prefix)
             # cannot include this right now because the remix sources form needs a sound object
@@ -778,7 +783,7 @@ def email_reset(request):
                 'token': default_token_generator.make_token(user),
                 'protocol': 'http',
             }
-            
+     
             subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
             subject = ''.join(subject.splitlines())
             email_body = loader.render_to_string('accounts/email_reset_email.html', c)

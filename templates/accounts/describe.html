@@ -6,9 +6,13 @@
 {% block head %}
 {{ block.super }}
 <script type="text/javascript">
+    var checkedAll = false;
+
     function select_ul(element)
     {
-        $(element.parentNode).find("input").click();
+        checkedAll = !checkedAll;
+        $(element.parentNode).find("input").attr('checked', checkedAll);
+        $('#select_all').text(checkedAll ? 'deselect all' : 'select all');
     }
 
     function checkboxChange(checkbox)
@@ -28,7 +32,7 @@
 <h1>Describe</h1>
 <h3>Step 1 - pick files</h3>
 <p>You've uploaded these files, but they won't appear on the website
-until you describe them. Select the files you want to describe and
+until you've described them. Select the files you want to describe and
 follow the instructions on the following pages.
 <ul id="root_file" class="upload">
     {% show_file file_structure %}

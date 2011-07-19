@@ -73,7 +73,12 @@
 
     <div id="sound-edit">
         {% if perms.sound.can_edit or sound.user == request.user %}
-        <a href="{% url sound-edit sound.user.username sound.id %}" id="edit_button" title="edit sound">edit sound</a>
+            {% if sound.processing_state == 'OK' %}
+                <a href="{% url sound-edit sound.user.username sound.id %}" id="edit_button" title="edit sound">edit sound</a>
+            {% else %}
+                <p><em>Sound is processing, cannot edit.</em>
+            {% endif %}
+
         {% endif %}
     </div>
 

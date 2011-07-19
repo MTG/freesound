@@ -1,4 +1,5 @@
 from solr import Solr, SolrException
+import sounds
 from django.conf import settings
 import logging
 
@@ -82,10 +83,11 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
     num_sounds = sound_queryset.count()
     for i in range(0, num_sounds, slice_size):
         try:
-            add_sounds_to_solr(sound_queryset[i:i+slice_size])
+            sounds_to_update = sound_queryset[i:i+slice_size]
+            add_sounds_to_solr(sounds_to_update)
             if mark_index_clean:
                 logger.info("Marking sounds as clean.")
-                sound_queryset[i:i+slice_size].update(is_index_dirty=False)
+                sounds.models.Sound.objects.filter(pk__in=[snd.id for snd in sounds_to_update]).update(is_index_dirty=False)
         except SolrException, e:
             logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
 

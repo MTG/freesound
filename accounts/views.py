@@ -1,4 +1,4 @@
-import datetime, logging, os, tempfile, uuid, shutil
+import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
 from accounts.models import Profile, ResetEmailRequest
@@ -38,7 +38,7 @@ from utils.audioprocessing import get_sound_type
 from django.core.cache import cache
 import django.contrib.auth.views as authviews
 from django.contrib.auth.forms import AuthenticationForm
-import hashlib, base64
+from tickets.views import new_sound_tickets_count, new_support_tickets_count
 from django.contrib.auth.tokens import default_token_generator
 from accounts.forms import EmailResetForm
 from django.views.decorators.cache import never_cache
@@ -47,7 +47,6 @@ from django.template import loader
 from django.utils.http import int_to_base36
 from django.contrib.sites.models import get_current_site
 from utils.mail import send_mail
-from tickets.views import new_sound_tickets_qs, new_support_tickets_qs
 
 
 audio_logger = logging.getLogger('audio')
@@ -147,9 +146,9 @@ def home(request):
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = True
-    if home:
-        new_sounds_qs = new_sound_tickets_qs()
-        new_support_qs = new_support_tickets_qs()
+    if home and request.user.has_perm('tickets.can_moderate'):
+        new_sounds = new_sound_tickets_count()
+        new_support = new_support_tickets_count()
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 
@@ -753,7 +752,7 @@ def login_wrapper(request):
 
 @login_required
 def email_reset(request):
-    
+
     if request.method == "POST":
         form = EmailResetForm(request.POST, user = request.user)
         if form.is_valid():
@@ -763,9 +762,10 @@ def email_reset(request):
                 rer = ResetEmailRequest.objects.get(user=request.user)
                 rer.email = form.cleaned_data['email']
             except ResetEmailRequest.DoesNotExist:
-                rer = ResetEmailRequest(user=request.user, email=form.cleaned_data['email']) 
-            
+                rer = ResetEmailRequest(user=request.user, email=form.cleaned_data['email'])
+
             rer.save()
+
             
             # send email to the new address
             user = request.user
@@ -773,7 +773,7 @@ def email_reset(request):
             current_site = get_current_site(request)
             site_name = current_site.name
             domain = current_site.domain
-            
+
             c = {
                 'email': email,
                 'domain': domain,
@@ -783,19 +783,19 @@ def email_reset(request):
                 'token': default_token_generator.make_token(user),
                 'protocol': 'http',
             }
-     
+
             subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
             subject = ''.join(subject.splitlines())
             email_body = loader.render_to_string('accounts/email_reset_email.html', c)
             send_mail(subject=subject, email_body=email_body, email_to=[email])
-            
+
             return HttpResponseRedirect(reverse('accounts.views.email_reset_done'))
     else:
         form = EmailResetForm(user = request.user)
-           
+
     return render_to_response('accounts/email_reset_form.html',locals(),context_instance=RequestContext(request))
 
-    
+
 def email_reset_done(request):
     return render_to_response('accounts/email_reset_done.html',locals(),context_instance=RequestContext(request))
 
@@ -810,8 +810,7 @@ def email_reset_complete(request, uidb36=None, token=None):
         user = User.objects.get(id=uid_int)
     except (ValueError, User.DoesNotExist):
         raise Http404
-    
-    
+
     # Retreive the new mail from the DB 
     try:
         rer = ResetEmailRequest.objects.get(user=user)
@@ -825,5 +824,5 @@ def email_reset_complete(request, uidb36=None, token=None):
     
     # Remove temporal mail change information ftom the DB
     ResetEmailRequest.objects.get(user=user).delete()
-        
+
     return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))

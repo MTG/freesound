@@ -282,9 +282,10 @@ class SolrQuery(object):
     def set_group_field(self, group_field=None):
         self.params['group.field'] = group_field
 
-    def set_group_options(self, group_limit=1):
+    def set_group_options(self, group_limit=1, group_num_groups=True):
         self.params['group'] = True
         self.params['group.limit'] = group_limit
+        self.params['group.ngroups'] = group_num_groups
 
 
 class BaseSolrAddEncoder(object):
@@ -463,11 +464,12 @@ class Solr(object):
 
 class SolrResponseInterpreter(object):
     def __init__(self, response):
+        # TODO: check group.main=true, probably can remove this code  
         if "grouped" in response:
-            self.docs = response["grouped"]["thread_title"]["groups"]
+            self.docs = response["grouped"]["thread_title_grouped"]["groups"]
             self.start = response["responseHeader"]["params"]["start"]
-            self.num_rows = response["responseHeader"]["params"]["rows"]
-            self.num_found = response["grouped"]["thread_title"]["matches"] # TODO: might be wrong...
+            self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
+            self.num_found = response["grouped"]["thread_title_grouped"]["ngroups"]
         else:
             self.docs = response["response"]["docs"]
             self.start = response["response"]["start"]

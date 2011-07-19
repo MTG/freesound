@@ -29,7 +29,7 @@
             <li><a href="{% url accounts-describe %}">Describe</a> your sounds</li>
             <li><a href="{% url accounts-attribution %}">Attribution</a> - the sounds you downloaded</li>
             {% if perms.tickets.can_moderate %}
-            <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds_qs.count }} sounds, {{ new_support_qs.count }} support requests</li>
+            <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} sounds, {{ new_support }} support requests</li>
             {% endif %}
         </ul>
     {% else %}

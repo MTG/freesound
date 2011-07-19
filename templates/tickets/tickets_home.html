@@ -8,6 +8,7 @@
 
     <h2>Moderation home</h2>
     <!-- include permission checks here -->
+    <h3>Sounds and support requests</h3>
     <ul>
         <li>
             <a href="{% url tickets-moderation-home %}">moderate sounds</a>
@@ -17,5 +18,12 @@
             <a href="{% url tickets-support-home %}">moderate support requests</a>
                 - ({{new_support_count}} new requests)
         </li>
+    </ul>
+
+    <h3>Processing system status</h3>
+    <ul>
+        <li>{{ sounds_queued_count }} sounds are queued for processing</li>
+        <li>{{ sounds_processing_count }} sounds currently processing</li>
+        <li>{{ sounds_failed_count }} sounds failed processing</li>
     </ul>
 {% endblock section_content %}

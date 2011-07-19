@@ -39,7 +39,7 @@ from django.core.cache import cache
 import django.contrib.auth.views as authviews
 from django.contrib.auth.forms import AuthenticationForm
 import hashlib, base64
-from tickets.views import new_sound_tickets_qs, new_support_tickets_qs
+from tickets.views import new_sound_tickets_count, new_support_tickets_count
 
 audio_logger = logging.getLogger('audio')
 
@@ -138,9 +138,9 @@ def home(request):
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = True
-    if home:
-        new_sounds_qs = new_sound_tickets_qs()
-        new_support_qs = new_support_tickets_qs()
+    if home and request.user.has_perm('tickets.can_moderate'):
+        new_sounds = new_sound_tickets_count()
+        new_support = new_support_tickets_count()
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 

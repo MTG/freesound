@@ -166,18 +166,35 @@ def new_contact_ticket(request):
 
 # In the next 2 functions we return a queryset os the evaluation is lazy.
 # N.B. these functions are used in the home page as well.
-def new_sound_tickets_qs():
-    return Ticket.objects.filter(status=TICKET_STATUS_NEW,
-                                 source=TICKET_SOURCE_NEW_SOUND)
+def new_sound_tickets_count():
+#    return Ticket.objects.filter(status=TICKET_STATUS_NEW,
+#                                 source=TICKET_SOURCE_NEW_SOUND)
+    return len(list(Ticket.objects.raw("""
+SELECT
+ticket.id
+FROM
+tickets_ticket AS ticket,
+sounds_sound AS sound,
+tickets_linkedcontent AS content
+WHERE
+    ticket.assignee_id = Null
+AND content.object_id = sound.id
+AND sound.processing_state = 'OK'
+AND ticket.status != '%s'
+LIMIT 5
+""" % TICKET_STATUS_NEW)))
 
-def new_support_tickets_qs():
+def new_support_tickets_count():
     return Ticket.objects.filter(assignee=None,
-                                 source=TICKET_SOURCE_CONTACT_FORM)
+                                 source=TICKET_SOURCE_CONTACT_FORM).count()
 
 @permission_required('tickets.can_moderate')
 def tickets_home(request):
-    new_upload_count = new_sound_tickets_qs().count()
-    new_support_count = new_support_tickets_qs().count()
+    new_upload_count = new_sound_tickets_count()
+    new_support_count = new_support_tickets_count()
+    sounds_queued_count = Sound.objects.filter(processing_state='QU').count()
+    sounds_processing_count = Sound.objects.filter(processing_state='PR').count()
+    sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
     return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
 
 

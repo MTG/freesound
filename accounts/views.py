@@ -488,6 +488,14 @@ def downloaded_sounds(request, username):
     num_results = len(qs)
     return render_to_response('accounts/downloaded_sounds.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
+def downloaded_packs(request, username):
+    user = User.objects.get(username=username)
+    # Retrieve all sounds downloaded by the user (for the moment we are not diplaying downloaded packs...)
+    qs = Download.objects.filter(user=user.id, pack__isnull=False)
+    num_results = len(qs)
+    print "PACKS"  + str(num_results)
+    return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
+
 
 def latest_content_type(scores):
         if  scores['uploads']>=scores['posts']and scores['uploads']>=scores['comments']:

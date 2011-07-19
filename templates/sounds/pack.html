@@ -20,6 +20,10 @@
             <li>Pack created on: <b>{{ pack.created }}</b></li>
             <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
             <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
+            {% if pack.num_downloads > 0 %}
+            	<li><a href="{% url pack-downloaders pack.user.username pack.id %}">Users that downloaded this pack</a></li>
+            {% endif %}
+            
         </ul>
     </div>
 </div><!-- #pack_info -->
@@ -35,7 +39,7 @@
 </div>
 {% endif %}
 
-{% show_paginator paginator page current_page request "sounds" %}
+{% show_paginator paginator page current_page request "sound" %}
 
 {% for sound in page.object_list %}
     {% display_sound sound %}

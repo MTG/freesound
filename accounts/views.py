@@ -758,7 +758,7 @@ def email_reset(request):
         form = EmailResetForm(request.POST, user = request.user)
         if form.is_valid():
            
-            # SAVE NEW EMAIL INFO
+            # save new email info to DB (temporal)
             try:
                 rer = ResetEmailRequest.objects.get(user=request.user)
                 rer.email = form.cleaned_data['email']
@@ -767,7 +767,7 @@ def email_reset(request):
             
             rer.save()
             
-            # SEND EMAIL
+            # send email to the new address
             user = request.user
             email = form.cleaned_data["email"]
             current_site = get_current_site(request)
@@ -803,7 +803,7 @@ def email_reset_done(request):
 @never_cache
 def email_reset_complete(request, uidb36=None, token=None):
     
-    # CHECK THAT LINK IS VALID AND BELONGS TO A USER ID
+    # Check that the link is valid and the base36 corresponds to a user id
     assert uidb36 is not None and token is not None # checked by URLconf
     try:
         uid_int = base36_to_int(uidb36)
@@ -812,18 +812,18 @@ def email_reset_complete(request, uidb36=None, token=None):
         raise Http404
     
     
-    # RETRIEVE THE NEW MAIL FROM THE TEMP DATABASE
+    # Retreive the new mail from the DB 
     try:
         rer = ResetEmailRequest.objects.get(user=user)
     except ResetEmailRequest.DoesNotExist:
         raise Http404
     
-    # CHANGE THE MAIL
+    # Change the mail in the DB
     old_email = user.email
     user.email = rer.email
     user.save()
     
-    # REMOVE ROW IN THE TEMP DATABASE
+    # Remove temporal mail change information ftom the DB
     ResetEmailRequest.objects.get(user=user).delete()
         
     return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))

@@ -44,6 +44,7 @@ class Profile(SocialModel):
     num_posts = models.PositiveIntegerField(editable=False, default=0)
 
     has_old_license = models.BooleanField(null=False, default=False)
+    not_shown_in_online_users_list = models.BooleanField(null=False, default=False)
 
     objects = ProfileManager()
 

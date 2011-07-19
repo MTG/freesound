@@ -50,6 +50,19 @@ urlpatterns = patterns('accounts.views',
         authviews.password_reset_complete,
         {'template_name':'accounts/password_reset_complete.html'}),
 
+    # RESET EMAIL
+    url(r'^resetemail/$',
+        accounts.email_reset,
+        name="accounts-email-reset"),
+
+    url(r'^resetemail/sent/$',
+        accounts.email_reset_done),
+
+    url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$',
+        accounts.email_reset_complete),
+
+    # END RESET EMAIL
+    
     url(r'^bulklicensechange/$',
         accounts.bulk_license_change,
         name="bulk-license-change"),

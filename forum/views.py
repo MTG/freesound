@@ -7,6 +7,7 @@ from django.template import RequestContext, loader
 from utils.mail import send_mail_template
 from forum.models import Forum, Thread, Post, Subscription
 from forum.forms import PostReplyForm, NewThreadForm
+from utils.search.search_forum import add_post_to_solr
 import logging
 
 logger = logging.getLogger("web")
@@ -90,6 +91,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         form = PostReplyForm(request, quote, request.POST)
         if form.is_valid():
             post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
+            add_post_to_solr(post)
             
             if form.cleaned_data["subscribe"]:
                 subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
@@ -127,6 +129,7 @@ def new_thread(request, forum_name_slug):
         if form.is_valid():
             thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
             post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+            add_post_to_solr(post)
             
             if form.cleaned_data["subscribe"]:
                 Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)

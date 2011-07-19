@@ -13,7 +13,8 @@ def display_forum_result(context, post, highlight):
     results = []
     for thd in post:
         # highlight is dict, so not ordered. below we much results to highlighted results
-        # TODO: find an efficient way to do this...
+        # TODO: find an efficient way to do this... maybe try except keyerror will be faster
+        #       use group.main=true in the query to resolve this
         if str(thd['doclist']['docs'][0]["id"]) in highlight:
             post = highlight[str(thd['doclist']['docs'][0]["id"])]['post_body'][0]
         else:

@@ -2104,9 +2104,9 @@ a.donation_button:hover {
 /* Account page
 ------------------------------------------------------*/
 p.about {
-    font-style: italic;
+    /* font-style: italic; */
     padding: 20px;
-    width: 400px;
+    width: 904px;
     background-color: #F6F6F6;
 }
 

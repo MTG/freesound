@@ -34,11 +34,6 @@
         </ul>
     {% else %}
         <h1>{{user.username}}</h1>
-        {% if user.profile.about %}
-            <p class="about">
-                {{user.profile.about|safe}}
-            </p>
-        {% endif %}
 
         <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
         <ul>
@@ -50,6 +45,13 @@
             <li>Number of sounds: {{user.profile.num_sounds}}</li>
             <li>Number of forum posts: {{user.profile.num_posts}}</li>
         </ul>
+
+        {% if user.profile.about %}
+            <p class="about">
+                {{user.profile.about|safe|linebreaksbr }}
+            </p>
+        {% endif %}
+
     {% endif %}
 
 <div id="content">

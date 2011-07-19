@@ -177,11 +177,11 @@ tickets_ticket AS ticket,
 sounds_sound AS sound,
 tickets_linkedcontent AS content
 WHERE
-    ticket.assignee_id = Null
+    ticket.content_id = content.id
+AND ticket.assignee_id is NULL
 AND content.object_id = sound.id
-AND sound.processing_state = 'OK'
-AND ticket.status != '%s'
-LIMIT 5
+AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
+AND ticket.status = '%s'
 """ % TICKET_STATUS_NEW)))
 
 def new_support_tickets_count():
@@ -207,11 +207,11 @@ FROM
     tickets_ticket, tickets_linkedcontent, sounds_sound
 WHERE
     tickets_ticket.source = 'new sound'
-    AND sounds_sound.processing_state = 'OK'
+    AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     AND sounds_sound.moderation_state = 'PE'
     AND tickets_linkedcontent.object_id = sounds_sound.id
     AND tickets_ticket.content_id = tickets_linkedcontent.id
-    AND tickets_ticket.assignee_id is Null
+    AND tickets_ticket.assignee_id is NULL
     AND tickets_ticket.status = '%s'
 GROUP BY sender_id""" % TICKET_STATUS_NEW)
     user_ids_plus_new_count = dict(cursor.fetchall())
@@ -226,6 +226,8 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
 
 
 def __get_unsure_sound_tickets():
+    '''Query to get tickets that were returned to the queue by moderators that
+    didn't know what to do with the sound.'''
     return Ticket.objects.filter(source=TICKET_SOURCE_NEW_SOUND,
                                  assignee=None,
                                  status=TICKET_STATUS_ACCEPTED)
@@ -379,7 +381,8 @@ def moderation_assigned(request, user_id):
         msg_form = ModerationMessageForm()
     moderator_tickets = Ticket.objects.select_related() \
                             .filter(assignee=user_id) \
-                            .exclude(status=TICKET_STATUS_CLOSED)
+                            .exclude(status=TICKET_STATUS_CLOSED) \
+                            .order_by('status')
     moderation_texts = MODERATION_TEXTS
     return render_to_response('tickets/moderation_assigned.html',
                               locals(),

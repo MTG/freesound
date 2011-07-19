@@ -112,7 +112,7 @@ def front_page(request):
 def sound(request, username, sound_id):
     try:
         sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(user__username__iexact=username, id=sound_id)
-        user_is_owner = request.user.is_authenticated() and sound.user == request.user
+        user_is_owner = request.user.is_authenticated() and (sound.user == request.user or request.user.is_superuser or request.user.is_staff)
         # If the user is authenticated and this file is his, don't worry about moderation_state and processing_state
         if user_is_owner:
             if sound.moderation_state != "OK":
@@ -174,7 +174,7 @@ def pack_download(request, username, pack_id):
 
 @login_required
 def sound_edit(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id)
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, processing_state='OK')
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied

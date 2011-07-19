@@ -116,3 +116,18 @@ class ProfileForm(forms.ModelForm):
         model = Profile
         fields = ('home_page', 'wants_newsletter', 'about', 'signature')
         
+
+class EmailResetForm(forms.Form):   
+    email = forms.EmailField(label=_("New e-mail address"), max_length=75)
+    password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
+    
+    # Using init function to pass user variable so later we can perform check_password in clean_password function
+    def __init__(self, *args, **kwargs):    
+        self.user = kwargs.pop('user', None)
+        super(EmailResetForm, self).__init__(*args, **kwargs)
+ 
+    def clean_password(self):
+        if not self.user.check_password(self.cleaned_data["password"]) :
+            raise forms.ValidationError(_("Incorrect password."))    
+        
+    

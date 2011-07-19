@@ -9,6 +9,11 @@ from django.conf import settings
 from utils.locations import locations_decorator
 import os
 
+class ResetEmailRequest(models.Model):
+    email = models.EmailField()
+    user = models.OneToOneField(User, db_index=True)
+    
+    
 class ProfileManager(models.Manager):
     def random_uploader(self):
         import random

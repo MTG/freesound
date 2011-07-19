@@ -1,7 +1,7 @@
 import datetime, logging, os, tempfile, uuid, shutil
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
-from accounts.models import Profile
+from accounts.models import Profile, ResetEmailRequest
 from comments.models import Comment
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -39,6 +39,14 @@ from django.core.cache import cache
 import django.contrib.auth.views as authviews
 from django.contrib.auth.forms import AuthenticationForm
 import hashlib, base64
+from django.contrib.auth.tokens import default_token_generator
+from accounts.forms import EmailResetForm
+from django.views.decorators.cache import never_cache
+from django.utils.http import base36_to_int
+from django.template import loader
+from django.utils.http import int_to_base36
+from django.contrib.sites.models import get_current_site
+from utils.mail import send_mail
 
 audio_logger = logging.getLogger('audio')
 
@@ -738,4 +746,79 @@ def login_wrapper(request):
     return authviews.login(request, template_name='accounts/login.html')
 
 
+@login_required
+def email_reset(request):
+    
+    if request.method == "POST":
+        form = EmailResetForm(request.POST, user = request.user)
+        if form.is_valid():
+           
+            # SAVE NEW EMAIL INFO
+            try:
+                rer = ResetEmailRequest.objects.get(user=request.user)
+                rer.email = form.cleaned_data['email']
+            except ResetEmailRequest.DoesNotExist:
+                rer = ResetEmailRequest(user=request.user, email=form.cleaned_data['email']) 
+            
+            rer.save()
+            
+            # SEND EMAIL
+            user = request.user
+            email = form.cleaned_data["email"]
+            current_site = get_current_site(request)
+            site_name = current_site.name
+            domain = current_site.domain
+            
+            c = {
+                'email': email,
+                'domain': domain,
+                'site_name': site_name,
+                'uid': int_to_base36(user.id),
+                'user': user,
+                'token': default_token_generator.make_token(user),
+                'protocol': 'http',
+            }
+            
+            subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
+            subject = ''.join(subject.splitlines())
+            email_body = loader.render_to_string('accounts/email_reset_email.html', c)
+            send_mail(subject=subject, email_body=email_body, email_to=[email])
+            
+            return HttpResponseRedirect(reverse('accounts.views.email_reset_done'))
+    else:
+        form = EmailResetForm(user = request.user)
+           
+    return render_to_response('accounts/email_reset_form.html',locals(),context_instance=RequestContext(request))
 
+    
+def email_reset_done(request):
+    return render_to_response('accounts/email_reset_done.html',locals(),context_instance=RequestContext(request))
+
+
+@never_cache
+def email_reset_complete(request, uidb36=None, token=None):
+    
+    # CHECK THAT LINK IS VALID AND BELONGS TO A USER ID
+    assert uidb36 is not None and token is not None # checked by URLconf
+    try:
+        uid_int = base36_to_int(uidb36)
+        user = User.objects.get(id=uid_int)
+    except (ValueError, User.DoesNotExist):
+        raise Http404
+    
+    
+    # RETRIEVE THE NEW MAIL FROM THE TEMP DATABASE
+    try:
+        rer = ResetEmailRequest.objects.get(user=user)
+    except ResetEmailRequest.DoesNotExist:
+        raise Http404
+    
+    # CHANGE THE MAIL
+    old_email = user.email
+    user.email = rer.email
+    user.save()
+    
+    # REMOVE ROW IN THE TEMP DATABASE
+    ResetEmailRequest.objects.get(user=user).delete()
+        
+    return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))

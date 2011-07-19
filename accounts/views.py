@@ -25,7 +25,6 @@ from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree, md5file
 from utils.functional import combine_dicts
 from utils.images import extract_square
-from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from geotags.models import GeoTag
@@ -480,6 +479,14 @@ def attribution(request):
     qs = Download.objects.filter(user=request.user)
     format = request.GET.get("format", "regular")
     return render_to_response('accounts/attribution.html', combine_dicts(paginate(request, qs, 40), locals()), context_instance=RequestContext(request))
+
+
+def downloaded_sounds(request, username):
+    user = User.objects.get(username=username)
+    # Retrieve all sounds downloaded by the user (for the moment we are not diplaying downloaded packs...)
+    qs = Download.objects.filter(user=user.id, sound__isnull=False)
+    num_results = len(qs)
+    return render_to_response('accounts/downloaded_sounds.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 
 def latest_content_type(scores):

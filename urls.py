@@ -31,6 +31,7 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', sounds.views.pack, name="pack"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/display/$', sounds.views.display_sound_wrapper, name="sound-display"),
+    url(r'^people/(?P<username>[^//]+)/downloaded_sounds/$', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
 
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
 

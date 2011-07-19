@@ -49,6 +49,7 @@
             <li>Has a been a user for {{user.date_joined|timesince}}</li>
             <li>Number of sounds: {{user.profile.num_sounds}}</li>
             <li>Number of forum posts: {{user.profile.num_posts}}</li>
+            <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
         </ul>
     {% endif %}
 

@@ -58,6 +58,16 @@ def add_posts_to_solr(posts):
     solr.optimize()
     logger.info("done")
     
+def add_all_posts_to_solr(post_queryset, slice_size=4000, mark_index_clean=False):
+    # Pass in a queryset to avoid needing a reference to
+    # the Post class, it causes circular imports.
+    num_posts = post_queryset.count()
+    for i in range(0, num_posts, slice_size):
+        try:
+            add_posts_to_solr(post_queryset[i:i+slice_size])
+        except SolrException, e:
+            logger.error("failed to add post batch to solr index, reason: %s" % str(e))    
+    
 def delete_post_from_solr(post):
     logger.info("deleting post with id %d" % post.id)
     try:

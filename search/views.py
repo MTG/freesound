@@ -3,8 +3,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-import logging
+from datetime import datetime
 import forms
+import logging
 
 logger = logging.getLogger("search")
 
@@ -167,10 +168,20 @@ def search_forum(request):
     current_forum_name = request.GET.get("current_forum_name", "").strip()              # used in breadcrumb  
     sort = ["thread_created asc"]
     
+    # Parse advanced search options
+    advanced_search = request.GET.get("advanced_search", "")
+    date_from = request.GET.get("dt_from", "")
+    date_to = request.GET.get("dt_to", "")
+    
     if search_query.strip() != "":
+        # add current forum
         if current_forum_name_slug.strip() != "":
             filter_query =  "forum_name_slug:" + current_forum_name_slug
-
+            
+        # add date range
+        if advanced_search == "1" and date_from != "" or date_to != "":
+            filter_query = __add_date_range(filter_query, date_from, date_to)
+        
         query = SolrQuery()
         query.set_dismax_query(search_query, query_fields=[("thread_title", 4), ("post_body",3), ("thread_author",3), ("forum_name",2)])
         query.set_highlighting_options_default(field_list=["post_body"],
@@ -179,8 +190,8 @@ def search_forum(request):
                                                require_field_match=False, 
                                                pre="<strong>", 
                                                post="</strong>")
-        query.set_query_options(start=(current_page - 1) * 30,
-                                rows=30, 
+        query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE,
+                                rows=settings.SOUNDS_PER_PAGE, 
                                 field_list=["id", 
                                             "forum_name",
                                             "forum_name_slug",
@@ -194,7 +205,7 @@ def search_forum(request):
                                 filter_query=filter_query, 
                                 sort=sort)
         
-        query.set_group_field("thread_title")
+        query.set_group_field("thread_title_grouped")
         query.set_group_options(group_limit=1)
         
         solr = Solr(settings.SOLR_FORUM_URL) 
@@ -244,4 +255,12 @@ def get_pack_tags(pack_obj):
 
     return results.facets
 
-
+def __add_date_range(filter_query, date_from, date_to):
+    if filter_query != "":
+        filter_query += " "
+    
+    filter_query += "thread_created:["
+    date_from = date_from + "T00:00:00Z" if date_from != "" else "*"
+    date_to = date_to + "T00:00:00Z]" if date_to != "" else "*]"
+    
+    return filter_query + date_from + " TO " + date_to

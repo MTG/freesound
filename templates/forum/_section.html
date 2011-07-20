@@ -44,9 +44,7 @@
 
 <div id="breadcrumb">
 <a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
-{% if forum  or forums %}
-	<a id="show_search" style="display:none;float:right" href="#" onclick="showSearch()" >search forum</a>
-{% endif %}
+<a id="show_search" style="display:none;float:right" href="#" onclick="showSearch()" >search forum</a>
 </div>
 
 {% block forum_search %}

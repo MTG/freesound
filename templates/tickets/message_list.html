@@ -5,7 +5,7 @@
         <div class="message-list-message-date">({{ message.created }})</div>
         <br style="clear: both;">
     </div>
-    <p class="message-list-message message-list-message{% if message.moderator_only %}-mod{% else %}-nomod{%endif%}">{{ message.text|safe }}</p>
+    <p class="message-list-message message-list-message{% if message.moderator_only %}-mod{% else %}-nomod{%endif%}">{{ message.text|safe|linebreaksbr }}</p>
     <br>
     {% endif %}
 {% endfor %}

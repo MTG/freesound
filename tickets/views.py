@@ -57,7 +57,6 @@ def ticket(request, ticket_key):
                 tc_text = tc_form.cleaned_data.get('message', '')
                 tc.moderator_only = tc_form.cleaned_data.get('moderator_only', False)
                 if tc_text:
-                    tc.text = tc_text.replace('\n', '<br>')
                     if request.user.is_authenticated():
                         tc.sender = request.user
                     tc.ticket = ticket
@@ -312,7 +311,6 @@ def moderation_assigned(request, user_id):
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
 
             if msg:
-                msg = msg.replace('\n', '<br>')
                 tc = TicketComment(sender=ticket.assignee,
                                    text=msg,
                                    ticket=ticket,
@@ -399,7 +397,7 @@ def user_annotations(request, user_id):
         if form.is_valid():
             ua = UserAnnotation(sender=request.user,
                                 user=user,
-                                text=form.cleaned_data['text'].replace('\n', '<br>'))
+                                text=form.cleaned_data['text'])
             ua.save()
     else:
         form = UserAnnotationForm()

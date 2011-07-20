@@ -88,13 +88,13 @@
     <!-- latest forum posts -->
     {% cache 300 latest_posts %}
     <div id="latest_forum_posts" class="sidebar_box">
-        <h3>Latest Forum Posts</h3>
+        <h3>Active Forum Threads</h3>
         <ul>
-            {% for post in latest_forum_posts %}
+            {% for thread in current_forum_threads %}
             <li class="{% cycle 'odd' 'even' %}">
-                <a class="post_title" href="{{post.get_absolute_url}}">{{post.thread.title}}</a><br />
-                in <a href="{{post.thread.forum.get_absolute_url}}">{{post.thread.forum}}</a><br />
-                by <a href="{% url account post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago
+                <a class="post_title" href="{{thread.last_post.get_absolute_url}}">{{thread.title}}</a><br />
+                in <a href="{{thread.forum.get_absolute_url}}">{{thread.forum}}</a><br />
+                by <a href="{% url account thread.last_post.author.username %}">{{thread.last_post.author.username}}</a>, {{thread.last_post.created|timesince}} ago
             </li>
             {% endfor %}
         </ul>

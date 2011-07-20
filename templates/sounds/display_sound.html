@@ -1,7 +1,7 @@
 {% load cache %}
 {% load util %}
 {% load ratings %}
-{% cache 3600 display_sound sound_id request.user.is_authenticated %}
+{% cache 3600 display_sound sound_id request.user.is_authenticated sound.0.processing_state %}
 {% if sound %}
 {% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
@@ -30,20 +30,18 @@
                 <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
             </div><!-- .sound_description -->
             <div class="sound_tags">
-            <ul id="tags">
-                {% for tag_link in sound_tags %}
-                    {% with 10 as max_num_tags %}
-	                    {% if forloop.counter0 < max_num_tags %}
-	                    	<li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
-		                {% else %}
-		                    {% if forloop.counter0 == max_num_tags %}
-		                    	<p class="description">...</p>
-		                    {% endif %}
-	                    {% endif %}
-                    {% endwith %}
-                {% endfor %}
-            </ul>
+
+                <ul class="tags">
+                    {% for tag_link in sound_tags %}
+                        <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                    {% endfor %}
+                </ul>
+                <br style="clear: both;"/>
+
             </div><!-- .sound_tags -->
+            {% if sound.processing_state != 'OK' %}
+                <p>N.B. This sound has not been processed ({{sound.processing_state}}).
+            {% endif %}
           </div><!-- .sound_title -->
     </div><!-- .sample_player -->
 

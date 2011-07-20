@@ -297,6 +297,9 @@ div.infowindow {
 #similar_sounds_link {
     background-image: url(../images/fugue-icons/icons/headphone--plus.png);
 }
+#edit_link {
+    background-image: url(../images/fugue-icons/icons/quill.png);
+}
 
 
 /* Formatting Elements
@@ -674,21 +677,23 @@ h3.header,
 
 .sample_player_small div.sound_tags {
     clear: left;
+    height: 2em;
+    overflow: hidden;
 }
 
 /* Overriding regular tags list*/
-.sample_player_small div.sound_tags ul#tags {
+.sample_player_small div.sound_tags ul {
     line-height: 12px;
     margin-bottom: 2px;
 }
 
-.sample_player_small div.sound_tags #tags li {
+.sample_player_small div.sound_tags ul li {
     height: 12px;
     background-color: #FFFFFF;
     border-bottom: none;
 }
 
-.sample_player_small div.sound_tags #tags li a {
+.sample_player_small div.sound_tags ul li a {
     padding: 0px 3px 0 0px;
     min-height: 12px;
     font-size: 10px;
@@ -735,7 +740,7 @@ h3.header,
     color: #757575;
 }
 
-.sample_player_small #tags li {
+.sample_player_small ul li {
     margin-left: 0;
 }
 
@@ -967,7 +972,7 @@ h3.header,
     line-height: 16px;
 }
 
-ul#tags {
+ul.tags {
     padding: 0;
     margin: 0;
     line-height: 16px;
@@ -975,7 +980,7 @@ ul#tags {
     margin-bottom: 20px;
 }
 
-#tags li {
+.tags li {
     display: block;
     float: left;
     margin: 2px;
@@ -984,7 +989,7 @@ ul#tags {
     border-bottom: solid 1px #D3C9AA;
 }
 
-#tags li a {
+.tags li a {
     display: block;
     padding: 3px 6px 0 12px;
     min-height: 21px;
@@ -993,7 +998,7 @@ ul#tags {
     background: url(../images/tag_edge.png) no-repeat left top;
 }
 
-#tags li a:hover {
+.tags li a:hover {
     color: #000;
 }
 
@@ -1019,6 +1024,14 @@ ul#tags {
     width: 144px;
     height: 31px;
     background: url(../images/download_button.png);
+}
+
+#download_login_button {
+    display: block;
+    float: right;
+    width: 144px;
+    height: 31px;
+    background: url(../images/download_login_button.png);
 }
 
 #sound-edit a {
@@ -1140,8 +1153,8 @@ ul#tags {
 
 #sound_links {
     padding: 20px 30px;
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 12px;
+    /* font-weight: bold; */
     background: url(../images/single_sample_links_bg.png) no-repeat top;
 }
 
@@ -1690,18 +1703,52 @@ ul.pagination {
     text-decoration: none;
 }
 
-.post_quote {
+.post_buttons {
     display: block;
     position: absolute;
     top: 0;
     right: 0;
+    width: 148px;
+    height: 27px;
+}
+
+.post_button {
+    float: right;
+    display: block;
+    display: block;
     width: 46px;
     height: 27px;
+}
+
+.post_quote {
     background: url(../images/post_quote.png) top;
 }
 
+.post_delete {
+    background: url(../images/post_delete.png) top;
+}
+
+.post_edit {
+    background: url(../images/post_edit.png) top;
+}
+
+
 .post_quote:hover {
     background: url(../images/post_quote.png) bottom;
+}
+
+.post_edit:hover {
+    background: url(../images/post_edit.png) bottom;
+}
+
+.post_delete:hover {
+    background: url(../images/post_delete.png) bottom;
+}
+
+#confirm_deletion h4 {
+    margin-left: 50px;
+    display: block;
+    float: left;
 }
 
 /* Sidebar
@@ -2104,9 +2151,9 @@ a.donation_button:hover {
 /* Account page
 ------------------------------------------------------*/
 p.about {
-    font-style: italic;
+    /* font-style: italic; */
     padding: 20px;
-    width: 400px;
+    width: 904px;
     background-color: #F6F6F6;
 }
 

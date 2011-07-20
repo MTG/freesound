@@ -34,11 +34,6 @@
         </ul>
     {% else %}
         <h1>{{user.username}}</h1>
-        {% if user.profile.about %}
-            <p class="about">
-                {{user.profile.about|safe}}
-            </p>
-        {% endif %}
 
         <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
         <ul>
@@ -53,6 +48,13 @@
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
             
         </ul>
+
+        {% if user.profile.about %}
+            <p class="about">
+                {{user.profile.about|safe|linebreaksbr }}
+            </p>
+        {% endif %}
+
     {% endif %}
 
 <div id="content">

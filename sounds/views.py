@@ -15,7 +15,7 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse, \
     HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from forum.models import Post
+from forum.models import Post, Thread
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
@@ -37,6 +37,7 @@ from django.db.models import Q
 from utils.similarity_utilities import get_similar_sounds
 import urllib
 from django.contrib.sites.models import Site
+from django.db import connection, transaction
 
 logger = logging.getLogger('web')
 
@@ -100,10 +101,25 @@ def packs(request):
                               context_instance=RequestContext(request))
 
 
+def get_current_thread_ids():
+    cursor = connection.cursor()
+    cursor.execute("""
+SELECT forum_thread.id
+FROM forum_thread, forum_post
+WHERE forum_thread.last_post_id = forum_post.id
+ORDER BY forum_post.id DESC
+LIMIT 10
+""")
+    return [x[0] for x in cursor.fetchall()]
+
+
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
     pledgie_campaign = settings.PLEDGIE_CAMPAIGN
-    latest_forum_posts = Post.objects.select_related('author', 'thread', 'thread__forum').all().order_by("-created")[0:10]
+    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids()).select_related('author',
+                                                                                                  'thread',
+                                                                                                  'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
+                                                                                                  'forum', 'forum__name_slug')
     latest_additions = Sound.objects.latest_additions(5, use_interval=False)
     random_sound = get_random_sound()
     return render_to_response('index.html', locals(), context_instance=RequestContext(request))

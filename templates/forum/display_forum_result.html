@@ -4,13 +4,27 @@
 <p>
 <div>
 	<div class="thread_name">
-    	<a class="title" href="/forum/{{result.forum_name_slug}}/{{result.thread_id}}/{{result.post_id}}">{{result.thread_title|truncate_string:50}}</a>
+    	<a class="title" href="/forum/{{result.forum_name_slug}}/{{result.thread_id}}/{{result.post_id}}">
+    		{{result.thread_title|truncate_string:50}}
+    	</a>
+    	<div class="thread_info" style="font-size: 90%; color: #9E9E9E; float:right;">
+			{{ result.thread_info }}
+		</div>
 	</div><!-- .thread_name -->
 	<div class="post">
-		{{ result.post|truncatewords:50 }}
-	</div>
-	<div class="thread_info">
-		{{ result.thread_info }}
+		<div>
+			{% for p in result.post %}
+				<div class="multipost" style="margin: 10px 0px 10px 25px;">
+					<p>
+						{{ p.post_body|truncatewords:70 }} <br />
+						<span style="font-size: 85%; color: #A3A3A3;">
+							{{ p.post_info }} | 
+							<a href="/forum/{{result.forum_name_slug}}/{{result.thread_id}}/{{post.post_id}}">Go to post</a>
+						</span>
+					</p>
+				</div>
+			{% endfor %}
+		</div>
 	</div>
 </div>
 </p>

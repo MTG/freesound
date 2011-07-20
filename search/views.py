@@ -197,16 +197,17 @@ def search_forum(request):
                                             "forum_name_slug",
                                             "thread_id", 
                                             "thread_title", 
-                                            "thread_author", 
+                                            "thread_author",
+                                            "thread_created", 
                                             "post_body",
-                                            "post_username", 
-                                            "thread_created",
+                                            "post_author",
+                                            "post_created", 
                                             "num_posts"],
                                 filter_query=filter_query, 
                                 sort=sort)
         
         query.set_group_field("thread_title_grouped")
-        query.set_group_options(group_limit=1)
+        query.set_group_options(group_limit=3)
         
         solr = Solr(settings.SOLR_FORUM_URL) 
         

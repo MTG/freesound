@@ -674,21 +674,23 @@ h3.header,
 
 .sample_player_small div.sound_tags {
     clear: left;
+    height: 2em;
+    overflow: hidden;
 }
 
 /* Overriding regular tags list*/
-.sample_player_small div.sound_tags ul#tags {
+.sample_player_small div.sound_tags ul {
     line-height: 12px;
     margin-bottom: 2px;
 }
 
-.sample_player_small div.sound_tags #tags li {
+.sample_player_small div.sound_tags ul li {
     height: 12px;
     background-color: #FFFFFF;
     border-bottom: none;
 }
 
-.sample_player_small div.sound_tags #tags li a {
+.sample_player_small div.sound_tags ul li a {
     padding: 0px 3px 0 0px;
     min-height: 12px;
     font-size: 10px;
@@ -735,7 +737,7 @@ h3.header,
     color: #757575;
 }
 
-.sample_player_small #tags li {
+.sample_player_small ul li {
     margin-left: 0;
 }
 
@@ -967,7 +969,7 @@ h3.header,
     line-height: 16px;
 }
 
-ul#tags {
+ul.tags {
     padding: 0;
     margin: 0;
     line-height: 16px;
@@ -975,7 +977,7 @@ ul#tags {
     margin-bottom: 20px;
 }
 
-#tags li {
+.tags li {
     display: block;
     float: left;
     margin: 2px;
@@ -984,7 +986,7 @@ ul#tags {
     border-bottom: solid 1px #D3C9AA;
 }
 
-#tags li a {
+.tags li a {
     display: block;
     padding: 3px 6px 0 12px;
     min-height: 21px;
@@ -993,7 +995,7 @@ ul#tags {
     background: url(../images/tag_edge.png) no-repeat left top;
 }
 
-#tags li a:hover {
+.tags li a:hover {
     color: #000;
 }
 

@@ -64,7 +64,7 @@
         {{sound.description|safe|linebreaks}}
     </div>
 
-    <ul id="tags">
+    <ul class="tags">
         {% for tag_link in tags %}
             <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
         {% endfor %}

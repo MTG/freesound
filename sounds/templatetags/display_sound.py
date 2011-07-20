@@ -26,8 +26,7 @@ def display_sound(context, sound):
     return { 'sound_id':     sound_id,
              'sound':        sound_obj,
              'sound_tags':   ti.objects.select_related() \
-                                .filter(object_id=sound_id, content_type=sound_content_type) \
-                                .all(),
+                                .filter(object_id=sound_id, content_type=sound_content_type)[0:12],
              'media_url':    context['media_url'],
              'request':      context['request']
            }

@@ -522,7 +522,7 @@ def accounts(request):
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
 
     # select active users last num_days
-    latest_uploaders = Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by("-id__count")
+    latest_uploaders = Sound.objects.filter(created__gte=last_time, processing_state='OK', moderation_state='OK').values("user").annotate(Count('id')).order_by("-id__count")
     latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by("-id__count")
     latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by("-id__count")
     # rank
@@ -539,7 +539,7 @@ def accounts(request):
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
     # select all time active users
-    all_time_uploaders = Sound.objects.all().values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+    all_time_uploaders = Sound.objects.filter(processing_state='OK', moderation_state='OK').values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
     all_time_posters = Post.objects.all().values("author_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
     all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
 
@@ -671,6 +671,7 @@ def delete(request):
 
     return render_to_response('accounts/delete.html', locals(), context_instance=RequestContext(request))
 
+
 def old_user_link_redirect(request):
     user_id = request.GET.get('id', False)
     if user_id:
@@ -681,8 +682,6 @@ def old_user_link_redirect(request):
             raise Http404
     else:
         raise Http404
-
-
 
 
 # got characters from rfc3986 (minus @, + which are valid for django usernames)
@@ -720,11 +719,8 @@ def transform_username_fs1fs2(fs1_name, fs2_append=''):
 
         # If the transformed name is too long, create a hash.
         if len(fs2_name) > 30:
-            try:
-                m = hashlib.md5()
-                m.update(fs2_name.encode('utf-8'))
-            except UnicodeEncodeError:
-                print 10*'#', fs1_name, fs2_name
+            m = hashlib.md5()
+            m.update(fs2_name.encode('utf-8'))
             # Hack: m.hexdigest() is too long.
             fs2_name = base64.urlsafe_b64encode(m.digest())
         return True, fs2_name

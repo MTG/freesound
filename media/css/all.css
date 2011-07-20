@@ -297,6 +297,9 @@ div.infowindow {
 #similar_sounds_link {
     background-image: url(../images/fugue-icons/icons/headphone--plus.png);
 }
+#edit_link {
+    background-image: url(../images/fugue-icons/icons/quill.png);
+}
 
 
 /* Formatting Elements
@@ -1023,6 +1026,14 @@ ul.tags {
     background: url(../images/download_button.png);
 }
 
+#download_login_button {
+    display: block;
+    float: right;
+    width: 144px;
+    height: 31px;
+    background: url(../images/download_login_button.png);
+}
+
 #sound-edit a {
     display: block;
     width: 144px;
@@ -1142,8 +1153,8 @@ ul.tags {
 
 #sound_links {
     padding: 20px 30px;
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 12px;
+    /* font-weight: bold; */
     background: url(../images/single_sample_links_bg.png) no-repeat top;
 }
 

@@ -84,4 +84,5 @@ urlpatterns = patterns('accounts.views',
     url(r'^messages/(?P<message_id>\d+)/reply/$', messages.new_message, name='message-reply', kwargs=dict(username=None)),
     url(r'^messages/new/$', messages.new_message, name='messages-new'),
     url(r'^messages/new/(?P<username>[^//]+)/$', messages.new_message, name='messages-new', kwargs=dict(message_id=None)),
+    url(r'^messages/new/username_lookup$', messages.username_lookup, name='messages-username_lookup'),
 )

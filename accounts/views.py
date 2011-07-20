@@ -841,3 +841,4 @@ def email_reset_complete(request, uidb36=None, token=None):
     ResetEmailRequest.objects.get(user=user).delete()
 
     return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))
+

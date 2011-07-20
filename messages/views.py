@@ -121,3 +121,27 @@ def new_message(request, username=None, message_id=None):
             form = MessageReplyForm(initial=dict(to=username))
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))
+
+import simplejson
+from accounts.models import User
+from django.http import HttpResponse
+
+def username_lookup(request):
+    results = []
+    value = ""
+    if request.method == "GET":
+        if request.GET.has_key(u'q'):            
+            value = request.GET[u'q']
+
+            # Ignore queries shorter than length 3
+            if len(value) > 2:
+                print "looking for results..."
+                model_results = User.objects.filter(username__icontains=value).order_by('username')#[0:30]
+                index = 0
+                for r in model_results:
+                    results.append( (r.username,index) )
+                    index = index + 1
+
+    json = simplejson.dumps(results)
+    return HttpResponse(json, mimetype='application/json')
+

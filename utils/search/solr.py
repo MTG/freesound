@@ -282,10 +282,21 @@ class SolrQuery(object):
     def set_group_field(self, group_field=None):
         self.params['group.field'] = group_field
 
-    def set_group_options(self, group_limit=1, group_num_groups=True):
+    def set_group_options(self, group_func=None, group_query=None, group_rows=10, group_start=0, group_limit=1, group_offset=0, group_sort=None, group_sort_ingroup=None, group_format='grouped', group_main=False, group_num_groups=True, group_cache_percent=0):
         self.params['group'] = True
+        self.params['group.func'] = group_func
+        self.params['group.query'] = group_query
+        self.params['group.rows'] = group_rows
+        self.params['group.start'] = group_start
         self.params['group.limit'] = group_limit
+        self.params['group.offset'] = group_offset
+        self.params['group.sort'] = group_sort
+        self.params['group.sort.ingroup']  = group_sort_ingroup
+        self.params['group.format'] = group_format
+        self.params['group.main'] = group_main        
         self.params['group.ngroups'] = group_num_groups
+        self.params['group.cache.percent'] = group_cache_percent
+        
 
 
 class BaseSolrAddEncoder(object):

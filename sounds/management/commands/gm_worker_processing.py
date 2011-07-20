@@ -102,6 +102,3 @@ class Command(BaseCommand):
             self.write_stdout("\t%s\n" % traceback.format_exc())
             success = False
             return 'false'
-        finally:
-            if sound and not success:
-                sound.set_processing_state('FA')

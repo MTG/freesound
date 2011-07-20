@@ -15,7 +15,6 @@ def display_forum_result(context, post, highlight):
     for thd in post:
         # highlight is dict, so not ordered. below we much results to highlighted results
         # TODO: find an efficient way to do this... maybe try except keyerror will be faster
-        #       use group.main=true in the query to resolve this
         post = []
         first_doc = thd['doclist']['docs'][0]
         # highlighted result

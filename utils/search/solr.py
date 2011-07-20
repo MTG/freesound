@@ -475,7 +475,6 @@ class Solr(object):
 
 class SolrResponseInterpreter(object):
     def __init__(self, response):
-        # TODO: check group.main=true, probably can remove this code  
         if "grouped" in response:
             self.docs = response["grouped"]["thread_title_grouped"]["groups"]
             self.start = response["responseHeader"]["params"]["start"]

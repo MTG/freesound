@@ -50,7 +50,6 @@ urlpatterns = patterns('accounts.views',
         authviews.password_reset_complete,
         {'template_name':'accounts/password_reset_complete.html'}),
 
-    # RESET EMAIL
     url(r'^resetemail/$',
         accounts.email_reset,
         name="accounts-email-reset"),
@@ -60,13 +59,10 @@ urlpatterns = patterns('accounts.views',
 
     url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$',
         accounts.email_reset_complete),
-
-    # END RESET EMAIL
-    
+ 
     url(r'^bulklicensechange/$',
         accounts.bulk_license_change,
         name="bulk-license-change"),
-
 
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
@@ -79,7 +75,6 @@ urlpatterns = patterns('accounts.views',
     url(r'^describe/pack/', accounts.describe_pack, name="accounts-describe-pack"),
     url(r'^describe/sounds/', accounts.describe_sounds, name="accounts-describe-sounds"),
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),
-
 
     url(r'^messages/$', messages.inbox, name='messages'),
     url(r'^messages/sent/$', messages.sent_messages, name='messages-sent'),

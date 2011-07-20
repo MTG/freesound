@@ -16,8 +16,13 @@ def cache_online_users(request):
         user_dict = cache.get(CACHE_KEY)
         if not user_dict:
             user_dict = {}
+        
         now = datetime.now()
-        user_dict[request.user.id] = now
+        
+        # Check if user has marked the option for not being shown in online users list
+        if not request.user.profile.not_shown_in_online_users_list :
+            user_dict[request.user.id] = now
+            
         # purge
         global _last_purged
         if _last_purged + timedelta(minutes=ONLINE_MINUTES) < now:

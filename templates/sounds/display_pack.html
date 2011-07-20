@@ -9,7 +9,7 @@
 
 <h4><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> <span style="font-weight:normal;">({{pack.num_sounds}} sound/s) </span></h4>
 <p class="text">by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>.
-Downloaded {{pack.num_downloads}} times.
+<a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded {{pack.num_downloads}} times.</a>
 <br>Tags of sounds inside the pack:
 {% with pack.get_pack_tags as tags %}
     {% if tags == -1 %}

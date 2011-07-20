@@ -2177,6 +2177,16 @@ p.about {
     width:900px;
 }
 
+.user_downloaders_page {
+    width:230px; 
+    height:50px;
+    float:left;
+    margin-bottom:3px;
+    margin-right:3px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 .active_user {
     margin-bottom: 15px;
 }

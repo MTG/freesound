@@ -109,12 +109,14 @@ class UsernameReminderForm(forms.Form):
             raise forms.ValidationError(_("No user with such an email exists."))
 
 class ProfileForm(forms.ModelForm):
-    about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)))
-    signature = HtmlCleaningCharField(label="Forum signature", widget=forms.Textarea(attrs=dict(rows=20, cols=70)))
+    about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
+    signature = HtmlCleaningCharField(label="Forum signature", widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     wants_newsletter = forms.BooleanField(label="Subscribed to newsletter", required=False)
+    not_shown_in_online_users_list = forms.BooleanField(label="Hide from \"users currently online\" list in the People page", required=False)
+    
     class Meta:
         model = Profile
-        fields = ('home_page', 'wants_newsletter', 'about', 'signature')
+        fields = ('home_page', 'wants_newsletter', 'about', 'signature', 'not_shown_in_online_users_list')
         
 
 class EmailResetForm(forms.Form):   

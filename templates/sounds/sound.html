@@ -115,7 +115,7 @@
     {% else %}
         <a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" id="download_login_button" title="download sound"></a>
     {% endif %}
-        <div id="download_text">Downloaded<br /><b>{{sound.num_downloads}}</b> times</div>
+        <div id="download_text"><a href="{% url sound-downloaders sound.user.username sound.id %}">Downloaded<br /><b>{{sound.num_downloads}}</b> times</a></div>
     </div>
 
     {% cache 3600 sound_footer_top sound.id %}

@@ -27,12 +27,20 @@
             </div><!-- .sound_stars -->
 
             <div class="sound_description">
-                <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
+                <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
             </div><!-- .sound_description -->
             <div class="sound_tags">
             <ul id="tags">
                 {% for tag_link in sound_tags %}
-                    <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                    {% with 10 as max_num_tags %}
+	                    {% if forloop.counter0 < max_num_tags %}
+	                    	<li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+		                {% else %}
+		                    {% if forloop.counter0 == max_num_tags %}
+		                    	<p class="description">...</p>
+		                    {% endif %}
+	                    {% endif %}
+                    {% endwith %}
                 {% endfor %}
             </ul>
             </div><!-- .sound_tags -->

@@ -13,7 +13,7 @@
 
         <div class="sound_title">
             <div class="sound_filename">
-               <a class="title" href="{% url sound sound.user.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
+               <a class="title" href="{% url sound sound.user.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:24}}</a>
             </div><!-- .sound_filename -->
             <div class="sound_stars">
                <ul class="star-rating">
@@ -27,12 +27,20 @@
             </div><!-- .sound_stars -->
 
             <div class="sound_description">
-                <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
+                <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
             </div><!-- .sound_description -->
             <div class="sound_tags">
             <ul id="tags">
                 {% for tag_link in sound_tags %}
-                    <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                    {% with 10 as max_num_tags %}
+	                    {% if forloop.counter0 < max_num_tags %}
+	                    	<li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+		                {% else %}
+		                    {% if forloop.counter0 == max_num_tags %}
+		                    	<p class="description">...</p>
+		                    {% endif %}
+	                    {% endif %}
+                    {% endwith %}
                 {% endfor %}
             </ul>
             </div><!-- .sound_tags -->
@@ -42,7 +50,7 @@
     <div class="sample_information">
         <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
         <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
-        <span class="download_count">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</span><br />
+        <span class="download_count"><a href="{% url sound-downloaders sound.user.username sound.id %}">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</a></span><br />
         <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 
         <div class="sound_attributes">

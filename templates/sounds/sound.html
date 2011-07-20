@@ -124,7 +124,7 @@
 <div id="single_sample_sidebar">
     <div id="download">
         <a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);" id="download_button" title="download sound"></a>
-        <div id="download_text">Downloaded<br /><b>{{sound.num_downloads}}</b> times</div>
+        <div id="download_text"><a href="{% url sound-downloaders sound.user.username sound.id %}">Downloaded<br /><b>{{sound.num_downloads}}</b> times</a></div>
     </div>
 
     <dl id="sound_information_box">

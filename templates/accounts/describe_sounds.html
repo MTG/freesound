@@ -144,7 +144,7 @@
             <h3>Pack</h3>
                 {{ form.pack.as_p }}
             <h3>License</h3>
-                {% display_license_form form.license %}
+                {{ form.license.as_p }}
             {% comment %}
             <!-- cannot include this right now because the remix sources form needs a sound object -->
             <h3>Remix Sources</h3>

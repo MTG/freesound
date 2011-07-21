@@ -329,9 +329,8 @@ def describe_sounds(request):
             forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
         # validate each form
         for i in range(len(sounds_to_describe)):
-            for f in ['description', 'geotag', 'pack', 'license']:
+            for f in ['license', 'geotag', 'pack', 'description']:
                 if not forms[i][f].is_valid():
-                    # if not valid return to the same form!
                     return render_to_response('accounts/describe_sounds.html',
                                               locals(),
                                               context_instance=RequestContext(request))
@@ -464,7 +463,7 @@ def describe_sounds(request):
                 forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
                                             prefix=prefix)
             if selected_license:
-                forms[i]['license'] = NewLicenseForm({'license': selected_license},
+                forms[i]['license'] = NewLicenseForm(initial={'license': selected_license},
                                                      prefix=prefix)
             else:
                 forms[i]['license'] = NewLicenseForm(prefix=prefix)
@@ -493,7 +492,6 @@ def downloaded_packs(request, username):
     # Retrieve all sounds downloaded by the user (for the moment we are not diplaying downloaded packs...)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
     num_results = len(qs)
-    print "PACKS"  + str(num_results)
     return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 

@@ -5,9 +5,9 @@
     {{ block.super }}
     <script>
           $(document).ready(function() {
-          $('.gmap-wrapper').hide();
+          	  //$('.gmap-wrapper').hide();
               $("#sound-accordion").accordion();
-            display_errors();
+              display_errors();
           });
           function display_errors() {
                 if ($(".errorlist").length > 0) {
@@ -74,13 +74,17 @@
 
                 {{ form.description.as_p }}
 
+			<h3>Geotag</h3>
+			<p>Drag this map to set a geotag:</p>
+			<!-- 
             <p id="gmap-header-{{forloop.counter}}">
             <a onclick="toggleMapVisibility({{forloop.counter}});">Click here to add a Geotag</a>
-        </p>
+        </p> -->
         <div class="gmap-wrapper" id="gmap-wrapper-{{forloop.counter}}">
                 <div class="describe-gmap" id="gmap{{forloop.counter}}" style="width: 400px; height:300px;"></div>
                 <div class="describe-geotag-form">{{ form.geotag.as_p }}
                 <script type="text/javascript">
+                    
                     var map{{forloop.counter}} = new GMap2($("#gmap{{forloop.counter}}").get(0));
 
                     var initialCenter = new GLatLng(23.885837699862005,21.796875);
@@ -89,7 +93,7 @@
                     map{{forloop.counter}}.setCenter(initialCenter, initialZoom);
 
                     map{{forloop.counter}}.setMapType( G_HYBRID_MAP );
-                     map{{forloop.counter}}.disableScrollWheelZoom();
+                    map{{forloop.counter}}.disableScrollWheelZoom();
                     map{{forloop.counter}}.enableContinuousZoom();
                     map{{forloop.counter}}.addControl(new GSmallMapControl());
                     map{{forloop.counter}}.addControl(new GMapTypeControl());
@@ -137,6 +141,7 @@
                             updateAndAddCenter{{forloop.counter}}();
                         }
                     });
+                      	                
                 </script>
         </div><br style="clear: both" />
         </div>

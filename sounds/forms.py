@@ -9,7 +9,7 @@ class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
     lat = forms.FloatField(min_value=-180, max_value=180, required=False)
     lon = forms.FloatField(min_value=-90, max_value=90, required=False)
-    zoom = forms.IntegerField(min_value=11, error_messages={'min_value': "You should zoom in more until you reach at least zoom 11"}, required=False)
+    zoom = forms.IntegerField(min_value=11, error_messages={'min_value': "You should zoom in more until you reach at least zoom 11."}, required=False)
 
     def clean(self):
         data = self.cleaned_data
@@ -22,7 +22,7 @@ class GeotaggingForm(forms.Form):
             # second clause is to detect when no values were submitted.
             # otherwise doesn't work in the describe workflow
             if (not (lat and lon and zoom)) and (not (not lat and not lon and not zoom)):
-                raise forms.ValidationError('Required fields not present.')
+                raise forms.ValidationError('There are missing fields or zoom level is not enough.')
 
         return data
 

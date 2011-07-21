@@ -140,7 +140,7 @@ def home(request):
     user = request.user
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    latest_sounds = Sound.public.select_related().filter(user=user)[0:5]
+    latest_sounds = Sound.objects.select_related().filter(user=user)[0:5]
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
@@ -329,9 +329,8 @@ def describe_sounds(request):
             forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
         # validate each form
         for i in range(len(sounds_to_describe)):
-            for f in ['description', 'geotag', 'pack', 'license']:
+            for f in ['license', 'geotag', 'pack', 'description']:
                 if not forms[i][f].is_valid():
-                    # if not valid return to the same form!
                     return render_to_response('accounts/describe_sounds.html',
                                               locals(),
                                               context_instance=RequestContext(request))
@@ -339,7 +338,7 @@ def describe_sounds(request):
         for i in range(len(sounds_to_describe)):
             sound = Sound()
             sound.user = request.user
-            sound.original_filename = forms[i]['sound'].name
+            sound.original_filename = forms[i]['description'].cleaned_data['name']
             sound.original_path = forms[i]['sound'].full_path
             try:
                 sound.md5 = md5file(forms[i]['sound'].full_path)
@@ -454,7 +453,7 @@ def describe_sounds(request):
             prefix = str(i)
             forms.append({})
             forms[i]['sound'] = sounds_to_describe[i]
-            forms[i]['description'] = SoundDescriptionForm(prefix=prefix)
+            forms[i]['description'] = SoundDescriptionForm(initial={'name': forms[i]['sound'].name}, prefix=prefix)
             forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
             if selected_pack:
                 forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
@@ -464,7 +463,7 @@ def describe_sounds(request):
                 forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
                                             prefix=prefix)
             if selected_license:
-                forms[i]['license'] = NewLicenseForm({'license': selected_license},
+                forms[i]['license'] = NewLicenseForm(initial={'license': selected_license},
                                                      prefix=prefix)
             else:
                 forms[i]['license'] = NewLicenseForm(prefix=prefix)
@@ -493,7 +492,6 @@ def downloaded_packs(request, username):
     # Retrieve all sounds downloaded by the user (for the moment we are not diplaying downloaded packs...)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
     num_results = len(qs)
-    print "PACKS"  + str(num_results)
     return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 
@@ -576,7 +574,7 @@ def account(request, username):
         raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    latest_sounds = Sound.objects.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user)[0:settings.SOUNDS_PER_PAGE]
+    latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
@@ -767,7 +765,7 @@ def email_reset(request):
     if request.method == "POST":
         form = EmailResetForm(request.POST, user = request.user)
         if form.is_valid():
-           
+
             # save new email info to DB (temporal)
             try:
                 rer = ResetEmailRequest.objects.get(user=request.user)
@@ -777,7 +775,7 @@ def email_reset(request):
 
             rer.save()
 
-            
+
             # send email to the new address
             user = request.user
             email = form.cleaned_data["email"]
@@ -813,7 +811,7 @@ def email_reset_done(request):
 
 @never_cache
 def email_reset_complete(request, uidb36=None, token=None):
-    
+
     # Check that the link is valid and the base36 corresponds to a user id
     assert uidb36 is not None and token is not None # checked by URLconf
     try:
@@ -822,17 +820,17 @@ def email_reset_complete(request, uidb36=None, token=None):
     except (ValueError, User.DoesNotExist):
         raise Http404
 
-    # Retreive the new mail from the DB 
+    # Retreive the new mail from the DB
     try:
         rer = ResetEmailRequest.objects.get(user=user)
     except ResetEmailRequest.DoesNotExist:
         raise Http404
-    
+
     # Change the mail in the DB
     old_email = user.email
     user.email = rer.email
     user.save()
-    
+
     # Remove temporal mail change information ftom the DB
     ResetEmailRequest.objects.get(user=user).delete()
 

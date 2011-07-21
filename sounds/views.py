@@ -362,12 +362,12 @@ def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username,
                               id=sound_id,
                               moderation_state="OK",
-                              processing_state="OK")
-                            #TODO: similarity_state="OK"
-                            #TODO: this filter has to be added again, but first the db has to be updated
+                              processing_state="OK",
+                              analysis_state="OK",
+                              similarity_state="OK")
 
     similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(settings.SOUNDS_PER_PAGE))
-    logger.info('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
+    logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
     return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 

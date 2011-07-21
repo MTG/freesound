@@ -2685,3 +2685,15 @@ ul.messages {
 #describe_page #fileform {
     padding: 0;
 }
+
+/* Forum Search
+------------------------------------------------------*/
+.multipost {
+    font-size: 12px;
+    line-height: 18px;
+    margin-bottom: 18px;
+}
+
+.forum_search_result {
+	margin-bottom: 20px;
+}

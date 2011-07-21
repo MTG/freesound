@@ -1,8 +1,7 @@
 {% load util %}
 {% autoescape off %}
 {% for result in results %}
-<p>
-<div>
+<div class="forum_search_result">
 	<div class="thread_name">
     	<a class="title" href="/forum/{{result.forum_name_slug}}/{{result.thread_id}}/{{result.post_id}}">
     		{{result.thread_title|truncate_string:50}}
@@ -13,20 +12,18 @@
 	</div><!-- .thread_name -->
 	<div class="post">
 		<div>
-			{% for p in result.post %}
+			{% for p in result.posts %}
 				<div class="multipost" style="margin: 10px 0px 10px 25px;">
-					<p>
-						{{ p.post_body|truncatewords:70 }} <br />
-						<span style="font-size: 85%; color: #A3A3A3;">
-							{{ p.post_info }} | 
-							<a href="/forum/{{result.forum_name_slug}}/{{result.thread_id}}/{{post.post_id}}">read...</a>
-						</span>
-					</p>
+					{{ p.post_body|truncatewords_html:70 }} <br />
+					<span style="font-size: 85%; color: #A3A3A3;">
+						{{ p.post_info }} | 
+						<a href="/forum/{{result.forum_name_slug}}/{{result.thread_id}}/{{p.post_id}}">read...</a>
+					</span>
+					<br style="clear:both;" />
 				</div>
 			{% endfor %}
 		</div>
 	</div>
 </div>
-</p>
 {% endfor %}
 {% endautoescape %}

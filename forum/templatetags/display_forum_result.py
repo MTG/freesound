@@ -20,15 +20,11 @@ def display_forum_result(context, post, highlight):
         for p in first_doc:
             # highlighted result
             if str(p['id']) in highlight:
-                print '================ HIGHILIGHT ===================='
-                print str(p['id'])
                 posts.append({'post_id': p['id'],
                              'post_body': highlight[str(p['id'])]['post_body'][0],
                              'post_info': ' - '.join(['Post by: ' + p['post_author'],
                                                       'Date: ' + str(p['post_created'])])})
             else:
-                print '================ NORMAL ===================='
-                print str(p['id'])
                 posts.append({'post_id': p['id'], 
                              'post_body': p['post_body'],
                              'post_info': ' - '.join(['Post by: ' + p['post_author'],

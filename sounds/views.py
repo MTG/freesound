@@ -208,8 +208,10 @@ def sound_edit(request, username, sound_id):
             data = description_form.cleaned_data
             sound.set_tags(data["tags"])
             sound.description = data["description"]
+            sound.original_filename = data["name"]
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id)
+            invalidate_template_cache("sound_header", sound.id, True)
+            invalidate_template_cache("sound_header", sound.id, False)
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
                                            source=TICKET_SOURCE_NEW_SOUND) \
@@ -225,7 +227,10 @@ def sound_edit(request, username, sound_id):
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
-        description_form = SoundDescriptionForm(prefix="description", initial=dict(tags=tags, description=sound.description))
+        description_form = SoundDescriptionForm(prefix="description",
+                                                initial=dict(tags=tags,
+                                                             description=sound.description,
+                                                             name=sound.original_filename))
 
     packs = Pack.objects.filter(user=request.user)
 

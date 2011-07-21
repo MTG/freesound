@@ -8,7 +8,6 @@ class CachedCountProxy(object):
     '''
 
     def __init__(self, queryset):
-        print 'CachedCountProxy'
         self._queryset = queryset
         self._queryset._original_count = self._queryset.count
         self._sql = self._queryset.query.get_compiler(self._queryset.db).as_sql()
@@ -21,7 +20,6 @@ class CachedCountProxy(object):
             4. Cache that for X seconds
         '''
         key = "paginator_count_%s" % hashlib.sha224(self._sql).hexdigest()
-        print key
         count = cache.get(key)
         if count is None:
             count = self._queryset._original_count()

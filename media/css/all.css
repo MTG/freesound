@@ -1270,7 +1270,7 @@ ul#comments {
 }
 
 #comments_pagination .pagination li {
-    margin: 2px;
+    /*margin: 1px;*/
 }
 
 #comments_pagination .pagination .current-page {
@@ -2817,4 +2817,25 @@ ul.messages {
 }
 #describe_page #fileform {
     padding: 0;
+}
+
+/* Wiki pages
+------------------------------------------------------*/
+
+#wiki-edit a {
+    display: block;
+    width: 144px;
+    height: 31px;
+    background: url(../images/edit_wiki_page.png);
+    text-indent: -9999px;
+    margin-bottom: 20px;
+    float: right;
+}
+
+/* Pack page
+------------------------------------------------------*/
+#single_pack_sidebar {
+    float: right;
+    width: 300px;
+    margin-right: 8px;
 }

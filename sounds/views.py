@@ -256,7 +256,10 @@ def sound_edit(request, username, sound_id):
                         new_pack.save()
                     sound.pack = new_pack
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id)
+            invalidate_template_cache("sound_header", sound.id, True)
+            invalidate_template_cache("sound_header", sound.id, False)
+            invalidate_template_cache("sound_footer_top", sound.id)
+            invalidate_template_cache("sound_footer_bottom", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
@@ -279,7 +282,8 @@ def sound_edit(request, username, sound_id):
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
                     sound.mark_index_dirty()
 
-            invalidate_template_cache("sound_footer", sound.id)
+            invalidate_template_cache("sound_footer_top", sound.id)
+            invalidate_template_cache("sound_footer_bottom", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -291,10 +295,11 @@ def sound_edit(request, username, sound_id):
     if request.POST and license_form.is_valid():
         sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
-        invalidate_template_cache("sound_footer", sound.id)
+        invalidate_template_cache("sound_footer_top", sound.id)
+        invalidate_template_cache("sound_footer_bottom", sound.id)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = NewLicenseForm({'license': sound.license})
+        license_form = NewLicenseForm(initial={'license': sound.license})
 
     google_api_key = settings.GOOGLE_API_KEY
 

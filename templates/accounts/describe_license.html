@@ -9,6 +9,7 @@
 <p>This license will be applied to all the files you've selected, but don't worry, you can always change this later.
 <form action="." method="post" class="license-form">{% csrf_token %}
     {% display_license_form form %}
+    <br style="clear: both;" />
     <input type="submit" name="submit" value="submit" id="submit-button"/>
 </form>
 {% endblock %}

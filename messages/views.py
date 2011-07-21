@@ -11,7 +11,9 @@ from utils.functional import exceptional
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from BeautifulSoup import BeautifulSoup
-
+import json
+from accounts.models import User
+from django.http import HttpResponse
 
 @login_required
 def messages_change_state(request):
@@ -122,10 +124,6 @@ def new_message(request, username=None, message_id=None):
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))
 
-import simplejson
-from accounts.models import User
-from django.http import HttpResponse
-
 def username_lookup(request):
     results = []
     value = ""
@@ -142,6 +140,6 @@ def username_lookup(request):
                     results.append( (r.username,index) )
                     index = index + 1
 
-    json = simplejson.dumps(results)
-    return HttpResponse(json, mimetype='application/json')
+    json_resp = json.dumps(results)
+    return HttpResponse(json_resp, mimetype='application/json')
 

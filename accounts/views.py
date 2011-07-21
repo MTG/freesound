@@ -45,7 +45,7 @@ from django.utils.http import base36_to_int
 from django.template import loader
 from django.utils.http import int_to_base36
 from django.contrib.sites.models import get_current_site
-from utils.mail import send_mail
+from utils.mail import send_mail, send_mail_template
 
 
 audio_logger = logging.getLogger('audio')

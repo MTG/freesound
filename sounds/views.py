@@ -314,9 +314,13 @@ def __recalc_remixgroup(remixgroup, sound):
     # recreate remixgroup
     dg = nx.DiGraph()
     data = json.loads(remixgroup.networkx_data)
+    print data
     dg.add_nodes_from(data['nodes'])
     dg.add_edges_from(data['edges'])
-    
+    print "========= NODES =========="
+    dg.nodes()
+    print "========= EDGES =========="
+    dg.edges()
     
     # add new nodes/edges
     for source in sound.sources.all():

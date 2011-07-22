@@ -156,9 +156,10 @@ def old_topic_link_redirect(request):
     if post_id:
         post = get_object_or_404(Post, id=post_id)
         return HttpResponsePermanentRedirect(reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
-    elif request.GET.get("t", False):
-        thread_id = request.GET.get("t")
+    
+    thread_id = request.GET.get("t")
+    if thread_id:
         thread = get_object_or_404(Thread, id=thread_id)
         return HttpResponsePermanentRedirect(reverse('forums-thread', args=[thread.forum.name_slug, thread.id]))
-    else:
-        raise Http404
+    
+    raise Http404

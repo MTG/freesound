@@ -28,7 +28,8 @@ class CachedCountProxy(object):
 
 def paginate(request, qs, items_per_page=20, page_get_name='page'):
     # monkeypatch solution to cache the count for performance
-    qs.count = CachedCountProxy(qs)
+    # disabled for now, causes problems on comments.
+    #qs.count = CachedCountProxy(qs)
     paginator = Paginator(qs, items_per_page)
 
     try:

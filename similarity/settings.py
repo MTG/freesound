@@ -9,3 +9,4 @@ NUM_THREADS                 = 5
 LOGFILE                     = '/var/log/freesound/similarity.log'
 READ_TIMEOUT                = 10
 UPDATE_TIMEOUT              = 20
+SAVE_ON_CHANGE              = False

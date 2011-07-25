@@ -179,6 +179,7 @@ WHERE
     ticket.content_id = content.id
 AND ticket.assignee_id is NULL
 AND content.object_id = sound.id
+AND sound.moderation_state = 'PE'
 AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
 AND ticket.status = '%s'
 """ % TICKET_STATUS_NEW)))
@@ -380,6 +381,7 @@ def moderation_assigned(request, user_id):
     moderator_tickets = Ticket.objects.select_related() \
                             .filter(assignee=user_id) \
                             .exclude(status=TICKET_STATUS_CLOSED) \
+                            .exclude(content=None) \
                             .order_by('status')
     moderation_texts = MODERATION_TEXTS
     return render_to_response('tickets/moderation_assigned.html',

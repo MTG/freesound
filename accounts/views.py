@@ -46,6 +46,7 @@ from django.template import loader
 from django.utils.http import int_to_base36
 from django.contrib.sites.models import get_current_site
 from utils.mail import send_mail, send_mail_template
+from django.db import transaction
 
 
 audio_logger = logging.getLogger('audio')
@@ -289,6 +290,7 @@ def describe_pack(request):
 
 
 @login_required
+@transaction.autocommit
 def describe_sounds(request):
     sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)

@@ -12,6 +12,7 @@
     {
         checkedAll = !checkedAll;
         $(element.parentNode).find("input").attr('checked', checkedAll);
+        $("#fileform").find("option").attr('selected', checkedAll);
         $('#select_all').text(checkedAll ? 'deselect all' : 'select all');
     }
 

@@ -1008,6 +1008,13 @@ ul.tags {
     padding: 20px 0 20px 25px;
 }
 
+#not_yet_downloadable {
+    float: right;
+    font-size: 11px;
+    width: 144px;
+    margin-bottom: 5px;
+}
+
 #download_text {
     padding-right: 170px;
     color: #999;

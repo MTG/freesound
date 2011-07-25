@@ -147,22 +147,21 @@ def sound(request, username, sound_id):
         form = CommentForm(request, request.POST)
         if form.is_valid():
             comment_text=form.cleaned_data["comment"]
-            sound.comments.add(Comment(content_object=sound, user=request.user, comment=comment_text))
-
+            sound.comments.add(Comment(content_object=sound,
+                                       user=request.user,
+                                       comment=comment_text))
             sound.num_comments = sound.num_comments + 1
             sound.save()
             try:
                 # send the user an email to notify him of the new comment!
-                print "Gonna send a mail to this user: %s" % request.user.email
-                send_mail_template(
-                    u'You have a new comment.', 'sounds/email_new_comment.txt',
-                    {'sound': sound, 'user': request.user, 'comment': comment_text},
-                    None, sound.user.email
-                )
+                logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username, request.user.username))
+                send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
+                                   {'sound': sound, 'user': request.user, 'comment': comment_text},
+                                   None, sound.user.email)
             except Exception, e:
                 # if the email sending fails, ignore...
-                print ("Problem sending email to '%s' about new comment: %s" \
-                    % (request.user.email, e))
+                logger.error("Problem sending email to '%s' about new comment: %s" \
+                             % (request.user.email, e))
 
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -214,7 +213,7 @@ def sound_edit(request, username, sound_id):
             invalidate_template_cache("sound_header", sound.id, False)
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
-                                           source=TICKET_SOURCE_NEW_SOUND) \
+                                            source=TICKET_SOURCE_NEW_SOUND) \
                                    .exclude(status=TICKET_STATUS_CLOSED)
             for ticket in tickets:
                 tc = TicketComment(sender=request.user,

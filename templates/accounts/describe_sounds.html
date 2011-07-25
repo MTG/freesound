@@ -5,6 +5,7 @@
     {{ block.super }}
     <script>
           $(document).ready(function() {
+			  //$(".gmap-wrapper").hide();
               $("#sound-accordion").accordion();
               display_errors();
           });
@@ -27,11 +28,13 @@
                   $('#gmap-header-'+n).removeClass('.active-gmap');
                   $('#gmap-header-text-'+n).text('Show Geotag map');
           		  wrapper.hide(500);
-                  pane.animate({height:pane.height()-wrapper.height()},500);
+                  //pane.animate({height:pane.height()-wrapper.height()},500);
+                  pane.animate({height:770},500);
           	  } else {
                   $('#gmap-header-'+n).addClass('.active-gmap');
                   $('#gmap-header-text-'+n).text('Hide Geotag map');
-                  pane.animate({height:pane.height()+wrapper.height()},500);
+                  //pane.animate({height:pane.height()+wrapper.height()},500);
+                  pane.animate({height:1140},500);
           	      wrapper.show(500);
               }
       }
@@ -91,6 +94,8 @@
 
                     var initialCenter = new GLatLng(23.885837699862005,21.796875);
                     var initialZoom = 2;
+                    
+                    initMap()
 
                     map{{forloop.counter}}.setCenter(initialCenter, initialZoom);
 
@@ -113,6 +118,15 @@
                     GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
 
                     //updateAndAddCenter{{forloop.counter}}()
+
+					function initMap()
+                    {
+                    	if ( ($("#{{form.geotag.zoom.auto_id}}").val() != "") & ($("#{{form.geotag.lon.auto_id}}").val() != "") & ($("#{{form.geotag.lat.auto_id}}").val() != ""))
+                    	{
+                    		initialCenter = new GLatLng( $("#{{form.geotag.lat.auto_id}}").val() , $("#{{form.geotag.lon.auto_id}}").val())
+                    		initialZoom = parseInt($("#{{form.geotag.zoom.auto_id}}").val())
+                    	}	
+					}
 
                     function updateAndAddCenter{{forloop.counter}}()
                     {
@@ -144,12 +158,12 @@
                         }
                     });
                     
+                    
                     if ($("#{{form.geotag.zoom.auto_id}}").val() != ""){
-                    	$('#gmap-wrapper-{{forloop.counter}}').show();
                     }else{
-                    	$('#gmap-wrapper-{{forloop.counter}}').hide();
+                    	toggleMapVisibility({{forloop.counter}})
                     }
-
+					
                                     
                 </script>
         </div><br style="clear: both" />

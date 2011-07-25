@@ -416,11 +416,11 @@ class Pack(SocialModel):
         logger.info("\tall done")
 
     def get_random_sound_from_pack(self):
-        pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')[0:1]
+        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:1]
         return pack_sounds[0]
 
     def get_random_sounds_from_pack(self):
-        pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')[0:3]
+        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:3]
         return pack_sounds[0:min(3,len(pack_sounds))]
 
     def get_pack_tags(self, max_tags = 50):

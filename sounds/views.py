@@ -256,7 +256,10 @@ def sound_edit(request, username, sound_id):
                         new_pack.save()
                     sound.pack = new_pack
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id)
+            invalidate_template_cache("sound_header", sound.id, True)
+            invalidate_template_cache("sound_header", sound.id, False)
+            invalidate_template_cache("sound_footer_top", sound.id)
+            invalidate_template_cache("sound_footer_bottom", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
@@ -279,7 +282,8 @@ def sound_edit(request, username, sound_id):
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
                     sound.mark_index_dirty()
 
-            invalidate_template_cache("sound_footer", sound.id)
+            invalidate_template_cache("sound_footer_top", sound.id)
+            invalidate_template_cache("sound_footer_bottom", sound.id)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -291,10 +295,11 @@ def sound_edit(request, username, sound_id):
     if request.POST and license_form.is_valid():
         sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
-        invalidate_template_cache("sound_footer", sound.id)
+        invalidate_template_cache("sound_footer_top", sound.id)
+        invalidate_template_cache("sound_footer_bottom", sound.id)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
-        license_form = NewLicenseForm({'license': sound.license})
+        license_form = NewLicenseForm(initial={'license': sound.license})
 
     google_api_key = settings.GOOGLE_API_KEY
 
@@ -357,12 +362,12 @@ def similar(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username,
                               id=sound_id,
                               moderation_state="OK",
-                              processing_state="OK")
-                            #TODO: similarity_state="OK"
-                            #TODO: this filter has to be added again, but first the db has to be updated
+                              processing_state="OK",
+                              analysis_state="OK",
+                              similarity_state="OK")
 
     similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(settings.SOUNDS_PER_PAGE))
-    logger.info('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
+    logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
     return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 

@@ -179,6 +179,7 @@ WHERE
     ticket.content_id = content.id
 AND ticket.assignee_id is NULL
 AND content.object_id = sound.id
+AND sound.moderation_state = 'PE'
 AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
 AND ticket.status = '%s'
 """ % TICKET_STATUS_NEW)))

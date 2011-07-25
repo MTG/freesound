@@ -214,7 +214,7 @@ def sound_edit(request, username, sound_id):
             invalidate_template_cache("sound_header", sound.id, False)
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
-                                           source=TICKET_SOURCE_NEW_SOUND) \
+                                            source=TICKET_SOURCE_NEW_SOUND) \
                                    .exclude(status=TICKET_STATUS_CLOSED)
             for ticket in tickets:
                 tc = TicketComment(sender=request.user,

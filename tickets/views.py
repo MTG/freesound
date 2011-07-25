@@ -54,9 +54,9 @@ def ticket(request, ticket_key):
             tc_form = __get_tc_form(request)
             if tc_form.is_valid():
                 tc = TicketComment()
-                tc_text = tc_form.cleaned_data.get('message', '')
+                tc.text = tc_form.cleaned_data['message']
                 tc.moderator_only = tc_form.cleaned_data.get('moderator_only', False)
-                if tc_text:
+                if tc.text:
                     if request.user.is_authenticated():
                         tc.sender = request.user
                     tc.ticket = ticket
@@ -289,8 +289,23 @@ def moderation_home(request):
 @permission_required('tickets.can_moderate')
 def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
-    Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
-        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
+#    Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
+#        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
+    Ticket.objects.raw("""
+SELECT
+    tickets_ticket.id
+FROM
+    tickets_ticket, tickets_linkedcontent, sounds_sound
+WHERE
+    tickets_ticket.source = 'new sound'
+AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
+AND sounds_sound.moderation_state = 'PE'
+AND tickets_linkedcontent.object_id = sounds_sound.id
+AND tickets_ticket.content_id = tickets_linkedcontent.id
+AND tickets_ticket.assignee_id is NULL
+AND tickets_ticket.status = '%s'
+AND sounds_sound.user_id = %s""" % (TICKET_STATUS_NEW, sender.id)) \
+    .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect(reverse("tickets-moderation-home"))

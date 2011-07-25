@@ -160,6 +160,7 @@
                     
                     
                     if ($("#{{form.geotag.zoom.auto_id}}").val() != ""){
+                    	$('#gmap-header-text-{{forloop.counter}}').text('Hide Geotag map');
                     }else{
                     	toggleMapVisibility({{forloop.counter}})
                     }

@@ -291,11 +291,16 @@ def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
 #    Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
 #        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
-    Ticket.objects.raw("""
-SELECT
-    tickets_ticket.id
+    cursor = connection.cursor()
+    cursor.execute("""
+UPDATE
+    tickets_ticket
+SET
+    assignee_id = %s,
+    status = '%s'
 FROM
-    tickets_ticket, tickets_linkedcontent, sounds_sound
+    sounds_sound,
+    tickets_linkedcontent
 WHERE
     tickets_ticket.source = 'new sound'
 AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
@@ -304,8 +309,9 @@ AND tickets_linkedcontent.object_id = sounds_sound.id
 AND tickets_ticket.content_id = tickets_linkedcontent.id
 AND tickets_ticket.assignee_id is NULL
 AND tickets_ticket.status = '%s'
-AND sounds_sound.user_id = %s""" % (TICKET_STATUS_NEW, sender.id)) \
-    .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
+AND sounds_sound.user_id = %s""" % \
+(request.user.id, TICKET_STATUS_ACCEPTED, TICKET_STATUS_NEW, sender.id))
+    transaction.commit_unless_managed()
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect(reverse("tickets-moderation-home"))
@@ -397,7 +403,7 @@ def moderation_assigned(request, user_id):
                             .filter(assignee=user_id) \
                             .exclude(status=TICKET_STATUS_CLOSED) \
                             .exclude(content=None) \
-                            .order_by('status')
+                            .order_by('status', '-created')
     moderation_texts = MODERATION_TEXTS
     return render_to_response('tickets/moderation_assigned.html',
                               locals(),

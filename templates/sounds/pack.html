@@ -13,17 +13,23 @@
 </p>
 {% endif %}
 
+{% if not pack.is_dirty %}
+<div id="single_pack_sidebar">
+<div id="download">
+    <a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
+    <div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
+</div>
+</div>
+{% endif %}
+
+
 <div id="pack_info" class="content_box">
     <h3>Pack info</h3>
     <div class="sound_list_normal">
         <ul>
             <li>Pack created on: <b>{{ pack.created }}</b></li>
             <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
-            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
-            {% if pack.num_downloads > 0 %}
-            	<li><a href="{% url pack-downloaders pack.user.username pack.id %}">Users that downloaded this pack</a></li>
-            {% endif %}
-            
+            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>            
         </ul>
     </div>
 </div><!-- #pack_info -->
@@ -32,12 +38,6 @@
     See <a href="{% url packs-for-user pack.user.username %}">more packs</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
 </p>
 
-{% if not pack.is_dirty %}
-<div id="download">
-    <a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
-    <div id="download_text">Downloaded<br /><b>{{pack.num_downloads}}</b> times</div>
-</div>
-{% endif %}
 
 {% show_paginator paginator page current_page request "sound" %}
 

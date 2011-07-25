@@ -9,7 +9,7 @@ class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
     lat = forms.FloatField(min_value=-180, max_value=180, required=False)
     lon = forms.FloatField(min_value=-90, max_value=90, required=False)
-    zoom = forms.IntegerField(min_value=11, error_messages={'min_value': "You should zoom in more until you reach at least zoom 11"}, required=False)
+    zoom = forms.IntegerField(min_value=11, error_messages={'min_value': "You should zoom in more until you reach at least zoom 11."}, required=False)
 
     def clean(self):
         data = self.cleaned_data
@@ -22,7 +22,7 @@ class GeotaggingForm(forms.Form):
             # second clause is to detect when no values were submitted.
             # otherwise doesn't work in the describe workflow
             if (not (lat and lon and zoom)) and (not (not lat and not lon and not zoom)):
-                raise forms.ValidationError('Required fields not present.')
+                raise forms.ValidationError('There are missing fields or zoom level is not enough.')
 
         return data
 
@@ -31,7 +31,7 @@ class SoundDescriptionForm(forms.Form):
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 52, 'class':'inputText'}))
     tags = TagField(widget=forms.Textarea(attrs={'cols': 40, 'rows': 2}),
-                    help_text="Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
+                    help_text="<br>Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea)
 
 

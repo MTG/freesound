@@ -11,8 +11,9 @@
 {% endblock head %}
 
 {% block section_content %}
+<h1>Edit Sound</h1>
 
-<h2>Sound description</h2>
+<h3>Sound description</h3>
 
 <a id="description"></a>
 <form method="post" action="#description">{% csrf_token %}
@@ -20,7 +21,7 @@
     <input type="submit" name="submit" value="submit" />
 </form>
 
-<h2>Sound sources</h2>
+<h3>Sound sources</h3>
 <a id="edit_sources"></a>
 <p>
     If you used other Freesound sounds in the process of creating
@@ -31,15 +32,16 @@
     <a href="{% url sound-edit-sources sound.user.username sound.id %}">Edit sound sources</a>
 </p>
 
-<h2>Sound license</h2>
+<h3>Sound license</h3>
 
 <a id="license"></a>
 <form method="post" action="#license">{% csrf_token %}
     {{ license_form.as_p }}
     <input type="submit" name="submit" value="submit" />
 </form>
+<br style="clear: both;" />
 
-<h2>Pack</h2>
+<h3>Pack</h3>
 
 <a id="pack"></a>
 <form method="post" action="#pack">{% csrf_token %}
@@ -47,18 +49,19 @@
     <input type="submit" name="submit" value="submit" />
 </form>
 
-<h2>Geotag</h2>
+<h3>Geotag</h3>
 
 <a id="geotag"></a>
 <form method="post" action="#geotag">{% csrf_token %}
-    {{geotag_form.as_p}}
-        <label for="map">Drag this map to set the geotag:</label>
-        <div id="map" style="width: 400px; height:400px; margin-bottom: 1em;"></div>
+ <p>Drag this map to set the geotag:</p>
+    	<div id="map" style="width: 400px; height:400px; margin-bottom: 1em; float:left"></div>
+    	<div style="float:ledt;margin-left:430px;">{{geotag_form.as_p}}</div>
+        <br style="clear: both;" />
     <input type="submit" name="submit" value="submit" />
 </form>
 
 {% comment %}
-<h2>Delete</h2>
+<h3>Delete</h3>
 <a id="delete"></a>
 <p>
     <a href="{% url sound-delete sound.user.username sound.id %}">Delete this sound</a>

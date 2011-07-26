@@ -131,12 +131,8 @@ def new_thread(request, forum_name_slug):
         if form.is_valid():
             thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
             post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
-<<<<<<< HEAD
             add_post_to_solr(post)
             
-=======
-
->>>>>>> master
             if form.cleaned_data["subscribe"]:
                 Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
 
@@ -155,7 +151,6 @@ def unsubscribe_from_thread(request, forum_name_slug, thread_id):
     return render_to_response('forum/unsubscribe_from_thread.html', locals(), context_instance=RequestContext(request))
 
 
-<<<<<<< HEAD
 def old_topic_link_redirect(request):
     post_id = request.GET.get("p", False)
     if post_id:
@@ -168,7 +163,6 @@ def old_topic_link_redirect(request):
         return HttpResponsePermanentRedirect(reverse('forums-thread', args=[thread.forum.name_slug, thread.id]))
     
     raise Http404
-=======
 @login_required
 def post_delete(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -207,4 +201,3 @@ def post_edit(request, post_id):
                                   context_instance=RequestContext(request))
     else:
         raise Http404
->>>>>>> master

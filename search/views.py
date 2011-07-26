@@ -3,8 +3,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-import logging
+from datetime import datetime
 import forms
+import logging
 
 logger = logging.getLogger("search")
 
@@ -124,8 +125,6 @@ def search(request):
     #if search_query.strip() != "":
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
-    solr = Solr(settings.SOLR_URL)
-
     query = search_prepare_query(search_query,
                                  filter_query,
                                  sort,
@@ -138,7 +137,9 @@ def search(request):
                                  pack_tokenized_weight,
                                  original_filename_weight
                                  )
-
+    
+    solr = Solr(settings.SOLR_URL) 
+        
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
@@ -153,13 +154,82 @@ def search(request):
         logger.error("Could probably not connect to Solr - %s" % e)
         error = True
         error_text = 'The search server could not be reached, please try again later.'
-    #else:
-    #    results = []
 
     if request.GET.get("ajax", "") != "1":
         return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
     else:
         return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
+
+def search_forum(request):
+    search_query = request.GET.get("q", "")
+    filter_query = request.GET.get("f", "")
+    current_page = int(request.GET.get("page", 1))
+    current_forum_name_slug = request.GET.get("current_forum_name_slug", "").strip()    # for context sensitive search
+    current_forum_name = request.GET.get("current_forum_name", "").strip()              # used in breadcrumb  
+    sort = ["thread_created asc"]
+    
+    # Parse advanced search options
+    advanced_search = request.GET.get("advanced_search", "")
+    date_from = request.GET.get("dt_from", "")
+    date_to = request.GET.get("dt_to", "")
+    
+    if search_query.strip() != "":
+        # add current forum
+        if current_forum_name_slug.strip() != "":
+            filter_query =  "forum_name_slug:" + current_forum_name_slug
+            
+        # add date range
+        if advanced_search == "1" and date_from != "" or date_to != "":
+            filter_query = __add_date_range(filter_query, date_from, date_to)
+        
+        query = SolrQuery()
+        query.set_dismax_query(search_query, query_fields=[("thread_title", 4), ("post_body",3), ("thread_author",3), ("forum_name",2)])
+        query.set_highlighting_options_default(field_list=["post_body"],
+                                               fragment_size=200, 
+                                               alternate_field="post_body", # TODO: revise this param
+                                               require_field_match=False, 
+                                               pre="<strong>", 
+                                               post="</strong>")
+        query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE,
+                                rows=settings.SOUNDS_PER_PAGE, 
+                                field_list=["id", 
+                                            "forum_name",
+                                            "forum_name_slug",
+                                            "thread_id", 
+                                            "thread_title", 
+                                            "thread_author",
+                                            "thread_created", 
+                                            "post_body",
+                                            "post_author",
+                                            "post_created", 
+                                            "num_posts"],
+                                filter_query=filter_query, 
+                                sort=sort)
+        
+        query.set_group_field("thread_title_grouped")
+        query.set_group_options(group_limit=3)
+        
+        solr = Solr(settings.SOLR_FORUM_URL) 
+        
+        try:
+            results = SolrResponseInterpreter(solr.select(unicode(query)))
+            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+            num_results = paginator.count
+            page = paginator.page(current_page)
+            error = False
+        except SolrException, e:
+            logger.warning("search error: query: %s error %s" % (query, e))
+            error = True
+            error_text = 'There was an error while searching, is your query correct?'
+        except Exception, e:
+            logger.error("Could probably not connect to Solr - %s" % e)
+            error = True
+            error_text = 'The search server could not be reached, please try again later.'
+    else:
+        results = []
+    
+    return render_to_response('search/search_forum.html', locals(), context_instance=RequestContext(request))
+
 
 def get_pack_tags(pack_obj):
     query = SolrQuery()
@@ -186,4 +256,12 @@ def get_pack_tags(pack_obj):
 
     return results.facets
 
-
+def __add_date_range(filter_query, date_from, date_to):
+    if filter_query != "":
+        filter_query += " "
+    
+    filter_query += "thread_created:["
+    date_from = date_from + "T00:00:00Z" if date_from != "" else "*"
+    date_to = date_to + "T00:00:00Z]" if date_to != "" else "*]"
+    
+    return filter_query + date_from + " TO " + date_to

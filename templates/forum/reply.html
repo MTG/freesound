@@ -4,8 +4,10 @@
 
 {% block breadcrumb %} &#187; <a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a>{% endblock %}
 
-{% block section_content %}
+{% block forum_search %}{% endblock %}
 
+{% block section_content %}
+ 
 <form method="post" action=".">{% csrf_token %}
 {% include 'forum/html_explanation.html' %}
 

@@ -1,0 +1,6 @@
+<solr persistent="true">
+ <cores adminPath="/admin/cores">
+  <core name="fs2" instanceDir="fs2" />
+  <core name="forum" instanceDir="forum" />
+ </cores>
+</solr>

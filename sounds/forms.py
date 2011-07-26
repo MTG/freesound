@@ -70,6 +70,10 @@ class RemixForm(forms.Form):
             try:
                 source = Sound.objects.get(id=id)
                 self.sound.sources.remove(source)
+                
+                # modify remix_group
+                
+                
                 send_mail_template(
                     u'Sound removed as remix source', 'sounds/email_remix_update.txt',
                     {'source': source, 'action': 'removed', 'remix': self.sound},

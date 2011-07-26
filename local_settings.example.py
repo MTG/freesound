@@ -29,7 +29,8 @@ AKISMET_KEY = ''
 GOOGLE_API_KEY = ''
 GOOGLE_ANALYTICS_KEY = ''
 
-SOLR_URL = "http://localhost:8983/solr/"
+SOLR_URL = "http://localhost:8983/solr/fs2/"
+SOLR_FORUM_URL = "http://localhost:8983/solr/forum/"
 
 GEARMAN_JOB_SERVERS = ["localhost:4730"]
 

@@ -4,6 +4,8 @@
 
 {% block breadcrumb %}&#187; <a href="{% url forums-new-thread forum.name_slug %}">New thread</a>{% endblock %}
 
+{% block forum_search %}{% endblock %}
+
 {% block section_content %}
 
 <form method="post" action=".">{% csrf_token %}

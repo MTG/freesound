@@ -16,10 +16,10 @@
  limitations under the License.
 -->
 
-<!--
+<!--  
  This is the Solr schema file. This file should be named "schema.xml" and
  should be in the conf directory under the solr home
- (i.e. ./solr/conf/schema.xml by default)
+ (i.e. ./solr/conf/schema.xml by default) 
  or located where the classloader for the Solr webapp can find it.
 
  This example schema is the recommended starting point for users.
@@ -46,7 +46,7 @@
        org.apache.solr.analysis package.
     -->
 
-    <!-- The StrField type is not analyzed, but indexed/stored verbatim.
+    <!-- The StrField type is not analyzed, but indexed/stored verbatim.  
        - StrField and TextField support an optional compressThreshold which
        limits compression (if enabled in the derived fields) to values which
        exceed a certain size (in characters).
@@ -67,7 +67,7 @@
        - If sortMissingLast="false" and sortMissingFirst="false" (the default),
          then default lucene sorting will be used which places docs without the
          field first in an ascending sort and last in a descending sort.
-    -->
+    -->    
 
 
     <!-- numeric field types that store and index the text
@@ -91,7 +91,7 @@
 
     <!-- The format for this date field is of the form 1995-12-31T23:59:59Z, and
          is a more restricted form of the canonical representation of dateTime
-         http://www.w3.org/TR/xmlschema-2/#dateTime
+         http://www.w3.org/TR/xmlschema-2/#dateTime    
          The trailing "Z" designates UTC time and is mandatory.
          Optional fractional seconds are allowed: 1995-12-31T23:59:59.999Z
          All other components are mandatory.
@@ -106,7 +106,7 @@
                NOW/DAY+6MONTHS+3DAYS
                   ... 6 months and 3 days in the future from the start of
                       the current day
-
+                      
          Consult the DateField javadocs for more information.
       -->
     <fieldType name="date" class="solr.DateField" sortMissingLast="true" omitNorms="true"/>
@@ -114,11 +114,11 @@
 
     <!-- The "RandomSortField" is not used to store or search any
          data.  You can declare fields of this type it in your schema
-         to generate psuedo-random orderings of your docs for sorting
-         purposes.  The ordering is generated based on the field name
+         to generate psuedo-random orderings of your docs for sorting 
+         purposes.  The ordering is generated based on the field name 
          and the version of the index, As long as the index version
          remains unchanged, and the same field name is reused,
-         the ordering of the docs will be consistent.
+         the ordering of the docs will be consistent.  
          If you want differend psuedo-random orderings of documents,
          for the same version of the index, use a dynamicField and
          change the name
@@ -160,7 +160,7 @@
         -->
     <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
-        <charFilter class="solr.HTMLStripCharFilterFactory"/>
+	<charFilter class="solr.HTMLStripCharFilterFactory"/>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
         <!-- in this example, we will only use synonyms at query time
         <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
@@ -180,7 +180,7 @@
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
       </analyzer>
       <analyzer type="query">
-        <charFilter class="solr.HTMLStripCharFilterFactory"/>
+	<charFilter class="solr.HTMLStripCharFilterFactory"/>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
         <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
@@ -235,13 +235,13 @@
         <filter class="solr.TrimFilterFactory" />
         <!-- The PatternReplaceFilter gives you the flexibility to use
              Java Regular expression to replace any sequence of characters
-             matching a pattern with an arbitrary replacement string,
+             matching a pattern with an arbitrary replacement string, 
              which may include back refrences to portions of the orriginal
              string matched by the pattern.
-
+             
              See the Java Regular Expression documentation for more
              infomation on pattern and replacement string syntax.
-
+             
              http://java.sun.com/j2se/1.5.0/docs/api/java/util/regex/package-summary.html
           -->
         <!-- <filter class="solr.PatternReplaceFilterFactory"
@@ -250,65 +250,65 @@
       </analyzer>
     </fieldType>
 
-    <!-- since fields of this type are by default not stored or indexed, any data added to
-         them will be ignored outright
-     -->
-    <fieldtype name="ignored" stored="false" indexed="false" class="solr.StrField" />
+    <!-- since fields of this type are by default not stored or indexed, any data added to 
+         them will be ignored outright 
+     --> 
+    <fieldtype name="ignored" stored="false" indexed="false" class="solr.StrField" /> 
 
  </types>
 
 
-    <fields>
-        <field name="id" type="integer" indexed="true" stored="true" required="true" />
-        <field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
+	<fields>
+		<field name="id" type="integer" indexed="true" stored="true" required="true" />
+		<field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
 
-        <field name="created" type="date" indexed="true" stored="true" required="true" />
+		<field name="created" type="date" indexed="true" stored="true" required="true" />
 
-        <field name="original_filename" type="text" indexed="true" stored="true" required="true" />
+		<field name="original_filename" type="text" indexed="true" stored="true" required="true" />
 
-        <field name="description" type="text" indexed="true" stored="true" required="false" />
-        <field name="tag" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/>
+		<field name="description" type="text" indexed="true" stored="true" required="false" />
+		<field name="tag" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/>
 
-        <field name="license" type="string" indexed="true" stored="true" />
+		<field name="license" type="string" indexed="true" stored="true" />
 
-        <field name="is_remix" type="boolean" indexed="true" stored="true" required="true" />
-        <field name="was_remixed" type="boolean" indexed="true" stored="true" required="true" />
+		<field name="is_remix" type="boolean" indexed="true" stored="true" required="true" />
+		<field name="was_remixed" type="boolean" indexed="true" stored="true" required="true" />
 
-        <field name="pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal -->
-        <field name="pack_tokenized" type="text" indexed="true" stored="true" required="false" /> <!-- parsed -->
+		<field name="pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal -->
+		<field name="pack_tokenized" type="text" indexed="true" stored="true" required="false" /> <!-- parsed -->
 
-        <field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
+		<field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
 
-        <field name="type" type="alphaOnlySort" indexed="true" stored="true" required="true" />
-        <field name="duration" type="sdouble" indexed="true" stored="true" required="true" />
-        <field name="bitdepth" type="sint" indexed="true" stored="true" required="true" />
-        <field name="bitrate" type="sint" indexed="true" stored="true" required="true" />
-        <field name="samplerate" type="sint" indexed="true" stored="true" required="true" />
-        <field name="filesize" type="slong" indexed="true" stored="true" required="true" />
-        <field name="channels" type="sint" indexed="true" stored="true" required="true" />
-        <field name="md5" type="string" indexed="true" stored="true" />
+		<field name="type" type="alphaOnlySort" indexed="true" stored="true" required="true" />
+		<field name="duration" type="sdouble" indexed="true" stored="true" required="true" />
+		<field name="bitdepth" type="sint" indexed="true" stored="true" required="true" />
+		<field name="bitrate" type="sint" indexed="true" stored="true" required="true" />
+		<field name="samplerate" type="sint" indexed="true" stored="true" required="true" />
+		<field name="filesize" type="slong" indexed="true" stored="true" required="true" />
+		<field name="channels" type="sint" indexed="true" stored="true" required="true" />
+		<field name="md5" type="string" indexed="true" stored="true" />
 
-        <field name="num_downloads" type="slong" indexed="true" stored="true" required="true" /> <!-- num downloads -->
+		<field name="num_downloads" type="slong" indexed="true" stored="true" required="true" /> <!-- num downloads -->
 
-        <field name="avg_rating" type="sfloat" indexed="true" stored="true" required="true" /> <!-- avg ratings -->
-        <field name="num_ratings" type="slong" indexed="true" stored="true" required="true" /> <!-- num rating -->
+		<field name="avg_rating" type="sfloat" indexed="true" stored="true" required="true" /> <!-- avg ratings -->
+		<field name="num_ratings" type="slong" indexed="true" stored="true" required="true" /> <!-- num rating -->
+		
+		<field name="comment" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
+		<field name="comments" type="slong" indexed="true" stored="true" required="true" /> <!-- num comments -->
 
-        <field name="comment" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
-        <field name="comments" type="slong" indexed="true" stored="true" required="true" /> <!-- num comments -->
-
-        <field name="waveform_path_m" type="string" indexed="false" stored="true" required="true" />
-        <field name="waveform_path_l" type="string" indexed="false" stored="true" required="true" />
-        <field name="spectral_path_m" type="string" indexed="false" stored="true" required="true" />
-        <field name="spectral_path_l" type="string" indexed="false" stored="true" required="true" />
-        <field name="preview_path" type="string" indexed="false" stored="true" required="true" />
-    </fields>
-
-    <copyField source="pack" dest="pack_tokenized" />
-
-    <uniqueKey>id</uniqueKey>
-
-    <defaultSearchField>description</defaultSearchField>
-
-    <solrQueryParser defaultOperator="AND"/>
+		<field name="waveform_path_m" type="string" indexed="false" stored="true" required="true" />
+		<field name="waveform_path_l" type="string" indexed="false" stored="true" required="true" />
+		<field name="spectral_path_m" type="string" indexed="false" stored="true" required="true" />
+		<field name="spectral_path_l" type="string" indexed="false" stored="true" required="true" />
+		<field name="preview_path" type="string" indexed="false" stored="true" required="true" />
+	</fields>
+	
+	<copyField source="pack" dest="pack_tokenized" />
+	
+	<uniqueKey>id</uniqueKey>
+	
+	<defaultSearchField>description</defaultSearchField>
+	
+	<solrQueryParser defaultOperator="AND"/>
 
 </schema>

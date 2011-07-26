@@ -1,6 +1,6 @@
 import os, yaml, shutil, logging
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
-from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, PRESET_DIR, PRESETS
+from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, PRESET_DIR, PRESETS, SAVE_ON_CHANGE
 
 logger = logging.getLogger('similarity')
 
@@ -101,9 +101,11 @@ class GaiaWrapper:
             for preset_name in self.presets.keys():
                 self.__build_preset_dataset_and_save(preset_name)
         else:
-            for preset_name, preset_ds in self.preset_datasets.items():
-                preset_ds.save(self.preset_dataset_paths[preset_name])
-        self.original_dataset.save(self.original_dataset_path)
+            if SAVE_ON_CHANGE:
+                for preset_name, preset_ds in self.preset_datasets.items():
+                    preset_ds.save(self.preset_dataset_paths[preset_name])
+        if SAVE_ON_CHANGE:
+            self.original_dataset.save(self.original_dataset_path)
 
     def contains(self, point_name):
         return self.original_dataset.contains(point_name)
@@ -135,9 +137,10 @@ class GaiaWrapper:
         pointname = str(pointname)
         if self.original_dataset.contains(pointname):
             self.original_dataset.removePoint(pointname)
-        for preset_name, preset_ds in self.preset_datasets.items():
-            preset_ds.save(self.preset_dataset_paths[preset_name])
-        self.original_dataset.save(self.original_dataset_path)
+        if SAVE_ON_CHANGE:
+            for preset_name, preset_ds in self.preset_datasets.items():
+                preset_ds.save(self.preset_dataset_paths[preset_name])
+            self.original_dataset.save(self.original_dataset_path)
 
 
     def __load_preset_files(self):

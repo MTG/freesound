@@ -51,6 +51,6 @@ def handle_resource(path, name):
 
 
 if __name__ == '__main__':
-    #prepare_dataset('/home/fsweb/freesound-data/analysis/', os.path.join(INDEX_DIR, 'orig.db'))
-    gaia_wrapper = GaiaWrapper()
+    prepare_dataset('/home/fsweb/freesound-data/analysis/', os.path.join(INDEX_DIR, 'orig.db.new'))
+    #gaia_wrapper = GaiaWrapper()
     print 'Sounds with bad yamls:', ', '.join(bad_sounds)

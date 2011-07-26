@@ -12,6 +12,7 @@ from sounds.models import Sound
 from optparse import make_option
 from psycopg2 import InterfaceError
 from django.db.utils import DatabaseError
+from django.db import connection
 
 
 class Command(BaseCommand):
@@ -61,7 +62,29 @@ class Command(BaseCommand):
         success = True
         sound = False
         try:
-            sound = Sound.objects.select_related().get(id=sound_id)
+            # If the database connection has become invalid, try to reset the
+            # connection (max of 'intent' times)
+            intent = 3
+            while intent > 0:
+                try:
+                    # Try to get the sound, and if we succeed continue as normal
+                    sound = Sound.objects.select_related().get(id=sound_id)
+                    break
+                except (InterfaceError, DatabaseError):
+                    # Try to close the current connection (it probably already is closed)
+                    try:
+                        connection.connection.close()
+                    except:
+                        pass
+                    # Trick Django into creating a fresh connection on the next db use attempt
+                    connection.connection = None
+                    intent -= 1
+
+            # if we didn't succeed in resetting the connection, quit the worker
+            if intent <= 0:
+                self.write_stdout("Problems while connecting to the database, could not reset the connection and will kill the worker.\n")
+                sys.exit(255)
+
             result = func(sound)
             self.write_stdout("Finished, sound: %s, processing %s\n" % \
                               (sound_id, ("ok" if result else "failed")))
@@ -71,17 +94,11 @@ class Command(BaseCommand):
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
             success = False
             return 'false'
-        except InterfaceError:
-            self.write_stdout("Problems while connecting to the database (2nd time), will kill the worker.\n")
-            sys.exit(255)
-        except DatabaseError:
-            self.write_stdout("Problems while connecting to the database (1st time), will kill the worker.\n")
+        except (DatabaseError, InterfaceError):
+            self.write_stdout("Problems while connecting to the database, will kill the worker.\n")
             sys.exit(255)
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())
             success = False
             return 'false'
-        finally:
-            if sound and not success:
-                sound.set_processing_state('FA')

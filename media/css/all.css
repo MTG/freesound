@@ -297,6 +297,9 @@ div.infowindow {
 #similar_sounds_link {
     background-image: url(../images/fugue-icons/icons/headphone--plus.png);
 }
+#edit_link {
+    background-image: url(../images/fugue-icons/icons/quill.png);
+}
 
 
 /* Formatting Elements
@@ -674,21 +677,23 @@ h3.header,
 
 .sample_player_small div.sound_tags {
     clear: left;
+    height: 2em;
+    overflow: hidden;
 }
 
 /* Overriding regular tags list*/
-.sample_player_small div.sound_tags ul#tags {
+.sample_player_small div.sound_tags ul {
     line-height: 12px;
     margin-bottom: 2px;
 }
 
-.sample_player_small div.sound_tags #tags li {
+.sample_player_small div.sound_tags ul li {
     height: 12px;
     background-color: #FFFFFF;
     border-bottom: none;
 }
 
-.sample_player_small div.sound_tags #tags li a {
+.sample_player_small div.sound_tags ul li a {
     padding: 0px 3px 0 0px;
     min-height: 12px;
     font-size: 10px;
@@ -702,6 +707,7 @@ h3.header,
     float: right;
     vertical-align: top;
     margin-right: 0;
+    background-color:white;
 }
 
 .stars {
@@ -723,6 +729,7 @@ h3.header,
     font-size: 12px;
     line-height: 16px;
     color: #333;
+    overflow: hidden;
 }
 
 .sample_player_small .sample_information {
@@ -735,7 +742,7 @@ h3.header,
     color: #757575;
 }
 
-.sample_player_small #tags li {
+.sample_player_small ul li {
     margin-left: 0;
 }
 
@@ -967,7 +974,7 @@ h3.header,
     line-height: 16px;
 }
 
-ul#tags {
+ul.tags {
     padding: 0;
     margin: 0;
     line-height: 16px;
@@ -975,7 +982,7 @@ ul#tags {
     margin-bottom: 20px;
 }
 
-#tags li {
+.tags li {
     display: block;
     float: left;
     margin: 2px;
@@ -984,7 +991,7 @@ ul#tags {
     border-bottom: solid 1px #D3C9AA;
 }
 
-#tags li a {
+.tags li a {
     display: block;
     padding: 3px 6px 0 12px;
     min-height: 21px;
@@ -993,12 +1000,19 @@ ul#tags {
     background: url(../images/tag_edge.png) no-repeat left top;
 }
 
-#tags li a:hover {
+.tags li a:hover {
     color: #000;
 }
 
 #download {
     padding: 20px 0 20px 25px;
+}
+
+#not_yet_downloadable {
+    float: right;
+    font-size: 11px;
+    width: 144px;
+    margin-bottom: 5px;
 }
 
 #download_text {
@@ -1019,6 +1033,14 @@ ul#tags {
     width: 144px;
     height: 31px;
     background: url(../images/download_button.png);
+}
+
+#download_login_button {
+    display: block;
+    float: right;
+    width: 144px;
+    height: 31px;
+    background: url(../images/download_login_button.png);
 }
 
 #sound-edit a {
@@ -1140,8 +1162,8 @@ ul#tags {
 
 #sound_links {
     padding: 20px 30px;
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 12px;
+    /* font-weight: bold; */
     background: url(../images/single_sample_links_bg.png) no-repeat top;
 }
 
@@ -1256,7 +1278,7 @@ ul#comments {
 }
 
 #comments_pagination .pagination li {
-    margin: 2px;
+    /*margin: 1px;*/
 }
 
 #comments_pagination .pagination .current-page {
@@ -1456,6 +1478,59 @@ ul#comments {
     padding: 18px 25px;
     background: url(../images/message_body_bg.png) no-repeat top;
 }
+
+/* username lookup in new message */
+
+.ac_results {
+    padding: 0px;
+    border: 1px solid grey;
+    background-color: white;
+    overflow: hidden;
+    z-index: 99999;
+    margin-left: 2px;
+}
+
+.ac_results ul {
+    width: 100%;
+    list-style-position: outside;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ac_results li {
+    margin: 0px;
+    padding: 2px 5px;
+    cursor: default;
+    display: block;
+    /*
+    if width will be 100% horizontal scrollbar will apear
+    when scroll mode will be used
+    */
+    /*width: 100%;*/
+    font: menu;
+    font-size: 12px;
+    /*
+    it is very important, if line-height not setted or setted
+    in relative units scroll will be broken in firefox
+    */
+    line-height: 16px;
+    overflow: hidden;
+}
+
+.ac_loading {
+    background: white url('../images/indicator.gif') right center no-repeat;
+}
+
+.ac_odd {
+    background-color: #eee;
+}
+
+.ac_over {
+    background-color: #B94343;
+    color: white;
+}
+
 
 /* Forums
 ------------------------------------------------------*/
@@ -1690,18 +1765,52 @@ ul.pagination {
     text-decoration: none;
 }
 
-.post_quote {
+.post_buttons {
     display: block;
     position: absolute;
     top: 0;
     right: 0;
+    width: 148px;
+    height: 27px;
+}
+
+.post_button {
+    float: right;
+    display: block;
+    display: block;
     width: 46px;
     height: 27px;
+}
+
+.post_quote {
     background: url(../images/post_quote.png) top;
 }
 
+.post_delete {
+    background: url(../images/post_delete.png) top;
+}
+
+.post_edit {
+    background: url(../images/post_edit.png) top;
+}
+
+
 .post_quote:hover {
     background: url(../images/post_quote.png) bottom;
+}
+
+.post_edit:hover {
+    background: url(../images/post_edit.png) bottom;
+}
+
+.post_delete:hover {
+    background: url(../images/post_delete.png) bottom;
+}
+
+#confirm_deletion h4 {
+    margin-left: 50px;
+    display: block;
+    float: left;
 }
 
 /* Sidebar
@@ -2104,9 +2213,9 @@ a.donation_button:hover {
 /* Account page
 ------------------------------------------------------*/
 p.about {
-    font-style: italic;
+    /* font-style: italic; */
     padding: 20px;
-    width: 400px;
+    width: 904px;
     background-color: #F6F6F6;
 }
 
@@ -2114,6 +2223,43 @@ p.about {
     float: left;
     margin-right: 30px;
     margin-left: 20px;
+    margin-bottom: 30px;
+}
+
+#unprocessed_sounds {
+	font-size: 10px;
+}
+
+#unprocessed_sounds li {
+    padding: 5px;
+}
+
+#unprocessed_sounds .failed{
+	color: red;
+	font-weight: bold;
+}
+
+#unprocessed_sounds .processing{
+	color: green;
+	font-weight: bold;
+}
+
+#unprocessed_sounds .pending{
+	color: orange;
+	font-weight: bold;
+}
+
+#unprocessed_sounds .queued{
+	color: orange;
+	font-weight: bold;
+}
+
+#unprocessed_sounds .filename{
+	font-weight: bold;
+}
+
+#unprocessed_sounds .date{
+	color: gray;
 }
 
 /* People page
@@ -2127,6 +2273,16 @@ p.about {
 .people_logged {
     display:block;
     width:900px;
+}
+
+.user_downloaders_page {
+    width:230px;
+    height:50px;
+    float:left;
+    margin-bottom:3px;
+    margin-right:3px;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .active_user {
@@ -2159,6 +2315,7 @@ p.about {
     -moz-border-radius: 9px;
     border-radius: 9px;
     border-bottom: #ccc 1px solid;
+    overflow: hidden;
 }
 
 .active_user .sound_list_minimal .sample_player_small {
@@ -2668,6 +2825,27 @@ ul.messages {
     margin-bottom: 5px;
 }
 
+#ticket_menu {
+    background-color: #ededed;
+    margin-bottom: 30px;
+    padding: 10px;
+}
+
+#ticket_menu li {
+    display: inline;
+    float: left;
+    margin-right: 50px;
+}
+
+#ticket_menu ul li a:active {
+    text-decoration: underline;
+    color: #333;
+}
+
+/* #ticket_menu li {
+    display: inline;
+}
+ */
 
 /* Upload pages
 ------------------------------------------------------*/
@@ -2696,4 +2874,23 @@ ul.messages {
 
 .forum_search_result {
 	margin-bottom: 20px;
+/* Wiki pages
+------------------------------------------------------*/
+
+#wiki-edit a {
+    display: block;
+    width: 144px;
+    height: 31px;
+    background: url(../images/edit_wiki_page.png);
+    text-indent: -9999px;
+    margin-bottom: 20px;
+    float: right;
+}
+
+/* Pack page
+------------------------------------------------------*/
+#single_pack_sidebar {
+    float: right;
+    width: 300px;
+    margin-right: 8px;
 }

@@ -79,7 +79,7 @@ def migrate_table(curs):
     out.write(sql)
 
     query = """select topic_id, forum_id, topic_title, topic_poster, 
-        FROM_UNIXTIME(topic_time), topic_status, topic_type from phpbb_topics ;
+        FROM_UNIXTIME(topic_time), topic_status, topic_type from phpbb_topics where topic_moved_id=0;
 """
     curs.execute(query)
 

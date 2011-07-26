@@ -15,6 +15,7 @@ from utils.nginxsendfile import sendfile
 import yaml
 from utils.similarity_utilities import get_similar_sounds
 from api.api_utils import auth, ReturnError
+import os
 
 logger = logging.getLogger("api")
 
@@ -408,10 +409,14 @@ class SoundServeHandler(BaseHandler):
     def read(self, request, sound_id):
 
         try:
-            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")            
         except Sound.DoesNotExist: #@UndefinedVariable
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist." % sound_id})
-
+        
+        # Check if file actually exists in the hard drive
+        if not os.path.exists(sound.locations('path')) :
+            raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s is not available for download." % sound_id})
+        
         # DISABLED (FOR THE MOMENT WE DON'T UPDATE DOWNLOADS TABLE THROUGH API)
         #Download.objects.get_or_create(user=request.user, sound=sound, interface='A')
 
@@ -434,12 +439,12 @@ class SoundSimilarityHandler(BaseHandler):
     def read(self, request, sound_id):
 
         try:
-            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK", similarity_state="OK")
             #TODO: similarity_state="OK"
             #TODO: this filter has to be added again, but first the db has to be updated
 
         except Sound.DoesNotExist: #@UndefinedVariable
-            raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist." % sound_id})
+            raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or similarity data is not ready." % sound_id})
 
         similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
 
@@ -475,6 +480,8 @@ class SoundAnalysisHandler(BaseHandler):
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", analysis_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or analysis data is not ready." % sound_id})
+        
+        # TODO: check 404 in http://tabasco.upf.edu/api/sounds/52749/analysis/?api_key=*
 
         result = prepare_single_sound_analysis(sound,request,filter)
 

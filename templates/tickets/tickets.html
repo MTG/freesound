@@ -1,12 +1,12 @@
-{% extends "base.html" %}
+{% extends "tickets/_section.html" %}
 
 {% block title %}
-	Tickets
+    Tickets
 {% endblock title %}
 
-{% block content %}
-	<h2>All tickets</h2>
-	{% for ticket in tickets %}
-		{{ticket.id}} - {{ticket.title}}<br>
-	{% endfor %}
-{% endblock content %}
+{% block section_content %}
+    <h2>All tickets</h2>
+    {% for ticket in tickets %}
+        {{ticket.id}} - {{ticket.title}}<br>
+    {% endfor %}
+{% endblock section_content %}

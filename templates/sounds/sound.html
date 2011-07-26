@@ -20,7 +20,7 @@
     <meta property="og:audio:title" content="{{ sound.original_filename }}" />
     <meta property="og:url" content="{% absurl sound sound.user.username sound.id %}" />
     <meta property="og:audio:type" content="application/mp3" />
-    <meta property="og:image" content="http://{{ request.get_host }}{{sound.locations.display.wave.M.url}}" />
+<!--     <meta property="og:image" content="http://{{ request.get_host }}{{sound.locations.display.wave.M.url}}" /> -->
     <meta property="og:site_name" content="Freesound.org" />
     <meta property="fb:admins" content="100002130282170" />
 {% endblock head %}
@@ -45,7 +45,11 @@
 
 <div id="single_sample_player">
     <div class="player large">
-        <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.L.url}} {{sound.locations.display.spectral.L.url}} {{sound.duration_ms}}</div>
+        <div class="metadata">
+            {% with 'L' as size %}
+                {% include 'sounds/metadata.html' %}
+            {% endwith %}
+        </div>
     </div>
 </div>
 
@@ -60,18 +64,12 @@
         {{sound.description|safe|linebreaks}}
     </div>
 
-    <ul id="tags">
+    <ul class="tags">
         {% for tag_link in tags %}
             <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
         {% endfor %}
     </ul>
 {% endcache %}
-
-    <div id="sound-edit">
-        {% if perms.sound.can_edit or sound.user == request.user %}
-        <a href="{% url sound-edit sound.user.username sound.id %}" id="edit_button" title="edit sound">edit sound</a>
-        {% endif %}
-    </div>
 
     <div id="comments_container">
         <h4 id="comments_heading">Comments</h4>
@@ -91,7 +89,7 @@
             </li>
             {% endfor %}
         </ul>
-
+		
         <div id="comments_pagination">
             {% show_paginator paginator page current_page request "comment" %}
         </div>
@@ -110,13 +108,22 @@
     {% endif %}
 </div> <!-- single_sample_content -->
 
-{% cache 3600 sound_footer sound.id %}
-
 <div id="single_sample_sidebar">
     <div id="download">
-        <a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);" id="download_button" title="download sound"></a>
-        <div id="download_text">Downloaded<br /><b>{{sound.num_downloads}}</b> times</div>
+    {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
+        {% if request.user.is_authenticated %}
+            <a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);" id="download_button" title="download sound"></a>
+        {% else %}
+            <a href="{% url sound-download sound.user.username sound.id %}{{ sound.friendly_filename }}" id="download_login_button" title="login to download"></a>
+        {% endif %}
+    {% else %}
+        <p id="not_yet_downloadable">Download unavailable, sound not yet processed or moderated.</p>
+    {% endif %}
+        <div id="download_text"><a href="{% url sound-downloaders sound.user.username sound.id %}">Downloaded<br /><b>{{sound.num_downloads}}</b> times</a></div>
+        <br style="clear: both;">
     </div>
+
+    {% cache 3600 sound_footer_top sound.id %}
 
     <dl id="sound_information_box">
         <dt><a href="{% url wiki-page "soundinfo/type" %}#{{sound.type}}"><img src="{{media_url}}images/info{% if sound.type_warning %}_red{% endif %}.png" width="12" height="12" /></a>Type</dt><dd>{{sound.get_type_display}} (.{{sound.type}})</dd>
@@ -148,6 +155,19 @@
         {% if sound.similarity_state == 'OK' %}
         <li><a id="similar_sounds_link" class="icon" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
         {% endif %}
+
+    {% endcache %}
+
+        {% if perms.sound.can_edit or sound.user == request.user %}
+            {% if sound.processing_state == 'OK' %}
+                <li><a href="{% url sound-edit sound.user.username sound.id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a></li>
+            {% else %}
+                <li><em>Sound is processing, cannot edit.</em></li>
+            {% endif %}
+        {% endif %}
+
+    {% cache 3600 sound_footer_bottom sound.id %}
+
     </ul>
 
     <div id="flag_sound">
@@ -212,8 +232,10 @@
         </div> -->
     </div>
 
+    {% endcache %}
+
 </div> <!-- single_sample_sidebar -->
-{% endcache %}
+
 
 <script type="text/javascript">
     var tumblr_button = document.createElement("a");

@@ -63,8 +63,8 @@
     }
     function playPreview(d) {
          $("#jquery_jplayer_1").jPlayer("setMedia", {
-                mp3: "http://tabasco.upf.edu" + d.sound_url_mp3,
-                oga: "http://tabasco.upd.edu" + d.sound_url_ogg
+                mp3: d.sound_url_mp3,
+                oga: d.sound_url_ogg
          }).jPlayer("play");
     }
     function stopPreview(d) {
@@ -155,12 +155,12 @@ arc.link.add(pv.Line)
         .size(6);
 
 arc.node.add(pv.Image)
-    .url(function(d) "http://tabasco.upf.edu" + d.waveform_url)
+    .url(function(d) d.waveform_url)
     .imageHeight(function(d) 50)
     .imageWidth(function(d) 552 / data{{ forloop.counter }}.length)
     .width(function(d) 552 / data{{ forloop.counter }}.length)
     .height(50)
-	.left(function(d) d.x - ( (552 / data{{ forloop.counter }}.length) / 2) )
+    .left(function(d) d.x - ( (552 / data{{ forloop.counter }}.length) / 2) )
     .fillStyle(null)
     .strokeStyle(null)
     .event("mouseover", function(d) ($("#message{{ forloop.counter }}").append("Click to go to sound page"), playPreview(d), d.active = true, arc, vis{{ forloop.counter }}.i(this.index)))

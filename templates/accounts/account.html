@@ -28,25 +28,33 @@
             <li><a href="{% url accounts-edit %}">Edit</a> your public profile</li>
             <li><a href="{% url accounts-describe %}">Describe</a> your sounds</li>
             <li><a href="{% url accounts-attribution %}">Attribution</a> - the sounds you downloaded</li>
+            {% if perms.tickets.can_moderate %}
+            <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} sounds, {{ new_support }} support requests</li>
+            {% endif %}
         </ul>
     {% else %}
         <h1>{{user.username}}</h1>
-        {% if user.profile.about %}
-            <p class="about">
-                {{user.profile.about|safe}}
-            </p>
-        {% endif %}
 
         <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
         <ul>
             <li><a href="{% url messages-new user.username %}">Send a private message to this user</a></li>
             {% if user.profile.home_page %}
-            <li>home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
+            <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
             {% endif %}
             <li>Has a been a user for {{user.date_joined|timesince}}</li>
             <li>Number of sounds: {{user.profile.num_sounds}}</li>
             <li>Number of forum posts: {{user.profile.num_posts}}</li>
+            <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
+            <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
+            
         </ul>
+
+        {% if user.profile.about %}
+            <p class="about">
+                {{user.profile.about|safe|linebreaksbr }}
+            </p>
+        {% endif %}
+
     {% endif %}
 
 <div id="content">
@@ -60,6 +68,53 @@
         <p><a href="{% url sounds-for-user user.username %}">more...</a></p>
     </div><!-- #latest_sounds -->
     {% endif %}
+    
+    {% if home %}
+	    {% if unmoderated_sounds %}
+	    <div id="unmoderated_sounds" class="content_box">
+	        <h3>Sounds waiting for moderation</h3>
+	        {% for sound in unmoderated_sounds %}
+	            {% display_sound sound %}
+	        {% endfor %}
+	    </div><!-- #unmoderated_sounds -->
+	    {% endif %}
+	    
+	    
+	    {% if unprocessed_sounds %}
+	    <div id="unprocessed_sounds" class="content_box">
+	        <h3>Sounds that have still not been processed</h3>
+	        {% comment %}
+	        <p>
+	        Once a sound is uploaded it is automatically processed in our server. 
+	        Sounds that appear in this area are those that have not still been processed.
+	        If you oberve that a sound is permanently listed in this area this might indicate that we are having some trouble processing it. Please, notify us in this case. </p>
+	        {% endcomment %}
+	        
+	        {% for sound in unprocessed_sounds %}
+	        	<li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span>
+                {% if sound.processing_state == 'PE' %}
+                	<span class="pending">Processing state: Pending</span>
+                {% else %}
+                	{% if sound.processing_state == 'QU' %}
+                		<span class="queued">Processing state: Queued</span>
+                	{% else %}
+                		{% if sound.processing_state == 'FA' %}
+	                		<span class="failed">Processing state: Failed</span>
+	                	{% else %}
+	                		{% if sound.processing_state == 'PR' %}
+		                		<span class="processing">Processing state: Processing</span>
+		                	{% else %}
+		                		Processing state: {{sound.processing_state}}
+		                	{% endif %}
+	                	{% endif %}
+                	{% endif %}
+                {% endif %}
+	        	</li>
+	        {% endfor %}
+	    </div><!-- #unprocessed_sounds -->
+	    {% endif %}
+    {% endif %}
+    
 </div><!-- #content -->
 
 <div id="sidebar">

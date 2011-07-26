@@ -18,24 +18,29 @@ def deploy():
 
 @roles('servers')
 def start_servers():
-    # No need to make the pidfile, as per description below.
-    #run('''/sbin/start-stop-daemon \
-    #           --start --exec /usr/bin/jmeter-server  --background \
-    #           --make-pidfile --pidfile /home/fsweb/jmeter-server.pid''')
     run('/sbin/start-stop-daemon --start --exec /usr/bin/jmeter-server --chdir /home/fsweb/load_testing --background')
         
 @roles('servers')
 def stop_servers():
-    # This doesn't work because the actual jmeter process doesn't have the pid that's saved to the pidfile
-    #run('/sbin/start-stop-daemon --stop --pidfile /home/fsweb/jmeter-server.pid')
-    run("kill $(ps aux | grep '[J]Meter' | awk '{print $2}')")
+    stop_jmeter()
 
 @roles('master')
-def run_test():
+def start_test():
     with cd('load_testing'):
         if exists('jmeter.jtl'):
             run('rm jmeter.jtl')
-        run('jmeter -rn -p jmeter.properties -t at_25_percent.jmx -l jmeter.jtl')
+        run('/sbin/start-stop-daemon --start --chdir /home/fsweb/load_testing --background --exec /usr/bin/jmeter -- -rn -p jmeter.properties -t at_100_percent.jmx -l jmeter.jtl')
+
+@roles('master')
+def stop_test():
+    stop_jmeter()
+
+def stop_jmeter():
+    run("kill $(ps aux | grep '[J]Meter' | awk '{print $2}')")
+
+@roles('master', 'servers')
+def stop_all():
+    stop_jmeter()
 
 @roles('master')
 def get_results():
@@ -43,3 +48,6 @@ def get_results():
     with cd('load_testing'):
         get('jmeter.jtl', 'results/data_%s.jtl' % now.strftime('%Y%m%d%H%M'))
     
+@roles('master', 'servers')
+def check_jmeter():
+    run("if [ \"`ps auxw | grep '[J]Meter'`\" == \"\" ]; then echo 'JMeter running'; else echo 'JMeter NOT running'; fi;")

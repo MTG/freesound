@@ -20,7 +20,7 @@ def editpage(request, name):
 
     # the class for editing...
     class ContentForm(forms.ModelForm):
-        title = forms.CharField(widget=forms.TextInput(attrs={'size': '100'}))
+        title = forms.CharField(label='Page name',widget=forms.TextInput(attrs={'size': '100'}))
         body = forms.CharField(widget=forms.Textarea(attrs={'rows':'40', 'cols':'100'}))
         class Meta:
             model = Content

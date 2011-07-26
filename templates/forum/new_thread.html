@@ -9,6 +9,10 @@
 {% block section_content %}
 
 <form method="post" action=".">{% csrf_token %}
+
+{% include 'forum/html_explanation.html' %}
+
+
 <table>
 {{form.as_p}}
 </table>

@@ -10,16 +10,16 @@ class PostReplyForm(forms.Form):
         self.request = request
         self.quote = quote
         super(PostReplyForm, self).__init__(*args, **kwargs)
-    
+
     def clean_body(self):
         body = self.cleaned_data['body']
 
         if self.quote and body.strip() == self.quote:
             raise forms.ValidationError("You should type something...")
-        
+
         if is_spam(self.request, body):
             raise forms.ValidationError("Your post was considered spam, please edit and repost. If it keeps failing please contact the admins.")
-        
+
         return body
 
 class NewThreadForm(forms.Form):

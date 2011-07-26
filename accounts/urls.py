@@ -50,10 +50,19 @@ urlpatterns = patterns('accounts.views',
         authviews.password_reset_complete,
         {'template_name':'accounts/password_reset_complete.html'}),
 
+    url(r'^resetemail/$',
+        accounts.email_reset,
+        name="accounts-email-reset"),
+
+    url(r'^resetemail/sent/$',
+        accounts.email_reset_done),
+
+    url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$',
+        accounts.email_reset_complete),
+ 
     url(r'^bulklicensechange/$',
         accounts.bulk_license_change,
         name="bulk-license-change"),
-
 
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
@@ -67,7 +76,6 @@ urlpatterns = patterns('accounts.views',
     url(r'^describe/sounds/', accounts.describe_sounds, name="accounts-describe-sounds"),
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),
 
-
     url(r'^messages/$', messages.inbox, name='messages'),
     url(r'^messages/sent/$', messages.sent_messages, name='messages-sent'),
     url(r'^messages/archived/$', messages.archived_messages, name='messages-archived'),
@@ -76,4 +84,5 @@ urlpatterns = patterns('accounts.views',
     url(r'^messages/(?P<message_id>\d+)/reply/$', messages.new_message, name='message-reply', kwargs=dict(username=None)),
     url(r'^messages/new/$', messages.new_message, name='messages-new'),
     url(r'^messages/new/(?P<username>[^//]+)/$', messages.new_message, name='messages-new', kwargs=dict(message_id=None)),
+    url(r'^messages/new/username_lookup$', messages.username_lookup, name='messages-username_lookup'),
 )

@@ -79,7 +79,7 @@ class Ticket(models.Model):
         return ('ticket', (smart_unicode(self.key),))
 
     def __unicode__(self):
-        return u"<# Ticket - pk: %s, key: %s>" % (self.id, self.key)
+        return u"pk %s, key %s" % (self.id, self.key)
 
     class Meta:
         ordering = ("-created",)

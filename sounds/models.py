@@ -15,7 +15,10 @@ from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
 from search.views import get_pack_tags
-
+from django.db.models import Count
+from django.db.models.signals import post_delete
+from django.contrib.contenttypes import generic
+from similarity.client import Similarity
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -56,13 +59,10 @@ class SoundManager(models.Manager):
                 group by
                     user_id
                 ) as X order by created desc limit %d;""" % (interval_query, num_sounds)
-        print query
         return DelayedQueryExecuter(query)
 
     def random(self):
-
         sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
-
         if sound_count:
             offset = random.randint(0, sound_count - 1)
             cursor = connection.cursor() #@UndefinedVariable
@@ -70,7 +70,6 @@ class SoundManager(models.Manager):
                               where moderation_state='OK'
                               and processing_state='OK'
                               offset %d limit 1""" % offset)
-
             return cursor.fetchone()[0]
         else:
             return None
@@ -164,69 +163,70 @@ class Sound(SocialModel):
     @locations_decorator()
     def locations(self):
         id_folder = str(self.id/1000)
+        sound_user_id = self.user_id
         return dict(
-            path = os.path.join(settings.SOUNDS_PATH, id_folder, "%d_%d.%s" % (self.id, self.user.id, self.type)),
-            sendfile_url = settings.SOUNDS_SENDFILE_URL + "%s/%d_%d.%s" % (id_folder, self.id, self.user.id, self.type),
+            path = os.path.join(settings.SOUNDS_PATH, id_folder, "%d_%d.%s" % (self.id, sound_user_id, self.type)),
+            sendfile_url = settings.SOUNDS_SENDFILE_URL + "%s/%d_%d.%s" % (id_folder, self.id, sound_user_id, self.type),
             preview = dict(
                 HQ = dict(
                     mp3 = dict(
-                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.mp3" % (self.id, self.user.id)),
-                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.mp3" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.mp3" % (self.id, sound_user_id)),
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.mp3" % (id_folder, self.id, sound_user_id)
                     ),
                     ogg = dict(
-                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.ogg" % (self.id, self.user.id)),
-                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.ogg" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.ogg" % (self.id, sound_user_id)),
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.ogg" % (id_folder, self.id, sound_user_id)
                     )
                 ),
                 LQ = dict(
                     mp3 = dict(
-                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, self.user.id)),
-                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, sound_user_id)),
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id)
                     ),
                     ogg = dict(
-                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, self.user.id)),
-                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id)
                     )
                 )
             ),
             display = dict(
                 spectral = dict(
                     S = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_S.jpg" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_S.jpg" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_S.jpg" % (self.id, sound_user_id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_S.jpg" % (id_folder, self.id, sound_user_id)
                     ),
                     M = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id, sound_user_id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id)
                     ),
                     L = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_L.jpg" % (self.id, sound_user_id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_L.jpg" % (id_folder, self.id, sound_user_id)
                     )
                 ),
                 wave = dict(
                     S = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_S.png" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_S.png" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_S.png" % (self.id, sound_user_id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_S.png" % (id_folder, self.id, sound_user_id)
                     ),
                     M = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_M.png" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id, sound_user_id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id)
                     ),
                     L = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id, self.user.id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, self.user.id)
+                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_L.png" % (self.id, sound_user_id)),
+                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_L.png" % (id_folder, self.id, sound_user_id)
                     )
                 )
             ),
             analysis = dict(
                 statistics = dict(
-                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%s/%d_%d_statistics.yaml" % (id_folder, self.id, self.user.id)
+                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_statistics.yaml" % (self.id, sound_user_id)),
+                    url = settings.ANALYSIS_URL + "%s/%d_%d_statistics.yaml" % (id_folder, self.id, sound_user_id)
                 ),
                 frames = dict(
-                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id, self.user.id)),
-                    url = settings.ANALYSIS_URL + "%s/%d_%d_frames.json" % (id_folder, self.id, self.user.id)
+                    path = os.path.join(settings.ANALYSIS_PATH, id_folder, "%d_%d_frames.json" % (self.id, sound_user_id)),
+                    url = settings.ANALYSIS_URL + "%s/%d_%d_frames.json" % (id_folder, self.id, sound_user_id)
                 )
             )
         )
@@ -306,12 +306,12 @@ class Sound(SocialModel):
 
     def delete(self):
         # remove from solr
-        delete_sound_from_solr(self)
+        #delete_sound_from_solr(self)
         # delete foreignkeys
-        if self.geotag:
-            self.geotag.delete()
+        #if self.geotag:
+        #    self.geotag.delete()
         # delete files
-        delete_object_files(self, web_logger)
+        #delete_object_files(self, web_logger)
         # super class delete
         super(Sound, self).delete()
 
@@ -357,6 +357,15 @@ class Sound(SocialModel):
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
+
+def delete_from_external_indexes(sender,instance, **kwargs):
+        if instance.geotag:
+            instance.geotag.delete()
+        delete_sound_from_solr(instance)
+        Similarity.delete(instance.id)
+        delete_object_files(instance, web_logger)
+post_delete.connect(delete_from_external_indexes, sender=Sound)
+
 
 class Pack(SocialModel):
     user = models.ForeignKey(User)
@@ -419,12 +428,11 @@ class Pack(SocialModel):
         logger.info("\tall done")
 
     def get_random_sound_from_pack(self):
-        pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')
+        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:1]
         return pack_sounds[0]
 
     def get_random_sounds_from_pack(self):
-        pack_sounds = Sound.objects.filter(pack=self.id).order_by('?')
-        
+        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:3]
         return pack_sounds[0:min(3,len(pack_sounds))]
 
     def get_pack_tags(self, max_tags = 50):
@@ -492,7 +500,7 @@ class RemixGroup(models.Model):
 
     sounds = models.ManyToManyField(Sound,
                                     symmetrical=False,
-                                    related_name='remix_groups',
+                                    related_name='remix_group',
                                     blank=True)
 
     # facilitate ordering according to group size

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block tab_home_active %}active_tab{% endblock %}
+
+{% block content %}
+
+<h1>Moderation</h1>
+
+{% if perms.tickets.can_moderate %}
+<div id="ticket_menu">
+    <ul>
+        <li><a href="{% url tickets-home %}">Moderation home</a></li>
+        <li><a href="{% url tickets-moderation-home %}">Sounds</a></li>
+        <!-- <li><a href="{% url tickets-support-home %}">Support</a></li>  -->
+        <li><a href="{% url tickets-moderation-assigned request.user.id %}">Your sound queue</a></li>
+    </ul>
+</div>
+{% endif %}
+
+{% block section_content %}
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "accounts/_section.html" %}
+
+{% load display_sound %}
+{% load paginator %}
+
+{% block title %}Sounds downloaded by {{ username }}{% endblock %}
+
+{% block content %}
+
+<h1>Sounds downloaded by <a href="{% url account username %}">{{ username }}</a></h1>
+
+{% if num_results > 0 %}
+    
+    <div class="search_paginator">
+        {% show_paginator paginator page current_page request "sound" %}
+    </div>
+
+	{% for download_item in page.object_list %}
+		{% if download_item.sound %}
+			{% with download_item.sound as sound %}
+        		{% display_sound sound %}
+        	{% endwith %}
+        {% endif %}
+    {% endfor %}
+    
+	{% comment %}
+	{% regroup page.object_list by created|date:"F jS, Y" as downloads %}
+	{% for group in downloads %}
+
+		<h3>Downloaded on {{group.grouper}}</h3>
+		{% for download_item in group.list %}
+			{% if download_item.sound %}
+				{% with download_item.sound as sound %}
+	        		{% display_sound sound %}
+	        	{% endwith %}
+	        {% endif %}
+		{% endfor %}
+	{% endfor %}
+	{% endcomment %}
+	
+	<br>
+    <div class="search_paginator">
+        {% show_paginator paginator page current_page request "sound" %}
+    </div>
+    
+{% else %}
+    <p>{{ username }} hasn't downloaded any sounds yet...</p>
+{% endif %}
+
+{% endblock %}

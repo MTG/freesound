@@ -5,9 +5,9 @@
     {{ block.super }}
     <script>
           $(document).ready(function() {
-	      $('.gmap-wrapper').hide();
+			  //$(".gmap-wrapper").hide();
               $("#sound-accordion").accordion();
-            display_errors();
+              display_errors();
           });
           function display_errors() {
                 if ($(".errorlist").length > 0) {
@@ -21,19 +21,23 @@
                 $(".inner-accordion-div").has(".errorlist").prev().effect("pulsate", { times:2 }, 1000);
                   }
           }
-	  function toggleMapVisibility(n) {
-	      var wrapper = $('#gmap-wrapper-'+n);
-	      var pane = $('#sound-accordion-sound-'+n);
+      function toggleMapVisibility(n) {
+          var wrapper = $('#gmap-wrapper-'+n);
+          var pane = $('#sound-accordion-sound-'+n);
               if(wrapper.is(':visible')) {
-    	          $('#gmap-header-'+n).removeClass('.active-gmap');
-		  wrapper.hide(500);
-    	          pane.animate({height:pane.height()-wrapper.height()},500);
-	      } else {
-	          $('#gmap-header-'+n).addClass('.active-gmap');
-    	          pane.animate({height:pane.height()+wrapper.height()},500);
-		  wrapper.show(500);
-	      }
-	  }
+                  $('#gmap-header-'+n).removeClass('.active-gmap');
+                  $('#gmap-header-text-'+n).text('Show Geotag map');
+          		  wrapper.hide(500);
+                  //pane.animate({height:pane.height()-wrapper.height()},500);
+                  pane.animate({height:770},500);
+          	  } else {
+                  $('#gmap-header-'+n).addClass('.active-gmap');
+                  $('#gmap-header-text-'+n).text('Hide Geotag map');
+                  //pane.animate({height:pane.height()+wrapper.height()},500);
+                  pane.animate({height:1140},500);
+          	      wrapper.show(500);
+              }
+      }
     </script>
     <style type="text/css">
     <!--
@@ -46,11 +50,11 @@
 
 
 
-{% block title %}{{ block.super }}Describe - choose pack{% endblock %}
+{% block title %}{{ block.super }}Describe - describe individual sounds{% endblock %}
 
 {% block content %}
 <h1>Describe</h1>
-<h3>Step 4 - describe individual sounds ({{request.session.describe_sounds_number}} left)</h3>
+<h3>Describe individual sounds ({{request.session.describe_sounds_number}} left)</h3>
 <p>This is the last step in the describe process. If you've selected
    more than {{ sounds_per_round }} you will be asked to describe {{ sounds_per_round }}
    sounds until all are done. In the accordion below you'll have to at least specify tags and
@@ -67,30 +71,36 @@
     <div id="sound-accordion">
     {% for form in forms %}
 
-        
-	<h4><a href="#">{{ form.sound.name }}</a></h4>
-	<div class="sound-accordion-sound"id="sound-accordion-sound-{{ forloop.counter }}">
+    <h4><a href="#">{{ form.sound.name }}</a></h4>
+    <div class="sound-accordion-sound"id="sound-accordion-sound-{{ forloop.counter }}">
             <h3>Tags and Description</h3>
-            
+
                 {{ form.description.as_p }}
-           
-            <p id="gmap-header-{{forloop.counter}}">
-	        <a onclick="toggleMapVisibility({{forloop.counter}});">
-		Click here to add a Geotag</a>
-	    </p>
-	    <div class="gmap-wrapper" id="gmap-wrapper-{{forloop.counter}}">
+
+			<h3>Geotag</h3>
+			
+
+			<p id="gmap-header-{{forloop.counter}}">
+            <a onclick="toggleMapVisibility({{forloop.counter}});"><span id="gmap-header-text-{{forloop.counter}}">Show Geotag map</span></a>
+        	</p>
+			
+        <div class="gmap-wrapper" id="gmap-wrapper-{{forloop.counter}}">
+                <p>Drag this map to set a geotag:</p>
                 <div class="describe-gmap" id="gmap{{forloop.counter}}" style="width: 400px; height:300px;"></div>
                 <div class="describe-geotag-form">{{ form.geotag.as_p }}
                 <script type="text/javascript">
+                    
                     var map{{forloop.counter}} = new GMap2($("#gmap{{forloop.counter}}").get(0));
 
                     var initialCenter = new GLatLng(23.885837699862005,21.796875);
                     var initialZoom = 2;
+                    
+                    initMap()
 
                     map{{forloop.counter}}.setCenter(initialCenter, initialZoom);
 
                     map{{forloop.counter}}.setMapType( G_HYBRID_MAP );
-                     map{{forloop.counter}}.disableScrollWheelZoom();
+                    map{{forloop.counter}}.disableScrollWheelZoom();
                     map{{forloop.counter}}.enableContinuousZoom();
                     map{{forloop.counter}}.addControl(new GSmallMapControl());
                     map{{forloop.counter}}.addControl(new GMapTypeControl());
@@ -108,6 +118,15 @@
                     GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
 
                     //updateAndAddCenter{{forloop.counter}}()
+
+					function initMap()
+                    {
+                    	if ( ($("#{{form.geotag.zoom.auto_id}}").val() != "") & ($("#{{form.geotag.lon.auto_id}}").val() != "") & ($("#{{form.geotag.lat.auto_id}}").val() != ""))
+                    	{
+                    		initialCenter = new GLatLng( $("#{{form.geotag.lat.auto_id}}").val() , $("#{{form.geotag.lon.auto_id}}").val())
+                    		initialZoom = parseInt($("#{{form.geotag.zoom.auto_id}}").val())
+                    	}	
+					}
 
                     function updateAndAddCenter{{forloop.counter}}()
                     {
@@ -138,24 +157,33 @@
                             updateAndAddCenter{{forloop.counter}}();
                         }
                     });
+                    
+                    
+                    if ($("#{{form.geotag.zoom.auto_id}}").val() != ""){
+                    	$('#gmap-header-text-{{forloop.counter}}').text('Hide Geotag map');
+                    }else{
+                    	toggleMapVisibility({{forloop.counter}})
+                    }
+					
+                                    
                 </script>
-		</div><br style="clear: both" />
-	    </div>
-	    
+        </div><br style="clear: both" />
+        </div>
+
             <h3>Pack</h3>
                 {{ form.pack.as_p }}
             <h3>License</h3>
-                {% display_license_form form.license %}
+                {{ form.license.as_p }}
             {% comment %}
             <!-- cannot include this right now because the remix sources form needs a sound object -->
             <h3>Remix Sources</h3>
                 {{ form.remix.as_p }}
             {% endcomment %}
-	    <br style="clear: both;" />
-	    </div><!-- .sound-accordion-sound -->
+        <br style="clear: both;" />
+        </div><!-- .sound-accordion-sound -->
     {% endfor %}
     </div><!-- #sound-accordion -->
-	    
+
 
     <input type="submit" name="submit" value="submit and continue" id="submit-button"/>
 

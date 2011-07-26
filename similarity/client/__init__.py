@@ -1,4 +1,4 @@
-from similarity.settings import REQREP_ADDRESS
+from similarity.settings import REQREP_ADDRESS, READ_TIMEOUT
 from general import messenger
 
 class Similarity():
@@ -9,7 +9,7 @@ class Similarity():
                   'sound_id': sound_id,
                   'num_results': num_results,
                   'preset': preset}
-        return messenger.call_service(REQREP_ADDRESS, params, 5)
+        return messenger.call_service(REQREP_ADDRESS, params)
 
 
     @classmethod

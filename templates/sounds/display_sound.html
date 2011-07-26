@@ -3,9 +3,7 @@
 {% load ratings %}
 {% if sound %}
 
-{% comment %}
 {% cache 3600 display_sound sound_id request.user.is_authenticated sound.0.processing_state %}
-{% endcomment %}
 
 {% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
@@ -131,9 +129,6 @@
 </div><!-- .sample_player_small -->
 {% endwith %}
 
-{% comment %}
 {% endcache %}
-{% endcomment %}
-
 
 {% endif %}

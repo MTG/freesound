@@ -29,7 +29,7 @@
   <!-- Used to specify an alternate directory to hold all index data
        other than the default ./data under the Solr home.
        If replication is in use, this should match the replication configuration. -->
-  <dataDir>/home/stelios/devel/temp/solr/data/forum</dataDir>
+  <dataDir>/var/lib/solr/forum/data</dataDir>
 
 
   <indexDefaults>

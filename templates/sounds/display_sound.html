@@ -1,8 +1,10 @@
 {% load cache %}
 {% load util %}
 {% load ratings %}
-{% cache 3600 display_sound sound_id request.user.is_authenticated %}
 {% if sound %}
+
+{% cache 3600 display_sound sound_id request.user.is_authenticated sound.0.processing_state %}
+
 {% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
 
@@ -27,22 +29,63 @@
             </div><!-- .sound_stars -->
 
             <div class="sound_description">
-                <p class="description">{{sound.description|striptags|safe|truncatewords:30}}</p>
+                <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
             </div><!-- .sound_description -->
             <div class="sound_tags">
-            <ul id="tags">
-                {% for tag_link in sound_tags %}
-                    <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
-                {% endfor %}
-            </ul>
+
+                <ul class="tags">
+                    {% for tag_link in sound_tags %}
+                        <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                    {% endfor %}
+                </ul>
+                <br style="clear: both;"/>
+
             </div><!-- .sound_tags -->
+            {% if sound.moderation_state != 'OK' or sound.processing_state != 'OK' %}
+	            <p style="font-size:10px; color:gray">
+	            {% if sound.processing_state != 'OK' %}
+	                Processing state:  
+	                {% if sound.processing_state == 'PE' %}
+	                	Pending
+	                {% else %}
+	                	{% if sound.processing_state == 'QU' %}
+	                		Queued
+	                	{% else %}
+	                		{% if sound.processing_state == 'FA' %}
+		                		Failed
+		                	{% else %}
+		                		{% if sound.processing_state == 'PR' %}
+			                		Processing
+			                	{% else %}
+			                		{{sound.processing_state}}
+			                	{% endif %}
+		                	{% endif %}
+	                	{% endif %}
+	                {% endif %}
+	             <br>
+	            {% endif %}
+	            
+	            {% if sound.moderation_state != 'OK' %}
+	                Moderation state: 
+	                {% if sound.moderation_state == 'PE' %}
+	                	Pending
+	                {% else %}
+	                	{% if sound.moderation_state == 'DE' %}
+		                	Deferred
+		                {% else %}
+		                	{{sound.moderation_state}}
+		                {% endif %}
+	                {% endif %}
+	            {% endif %}
+            {% endif %}
+            
           </div><!-- .sound_title -->
     </div><!-- .sample_player -->
 
     <div class="sample_information">
         <a class="user" href="{% url account sound.user.username %}">{{sound.user.username}}</a><br />
         <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
-        <span class="download_count">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</span><br />
+        <span class="download_count"><a href="{% url sound-downloaders sound.user.username sound.id %}">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</a></span><br />
         <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 
         <div class="sound_attributes">
@@ -85,5 +128,7 @@
     </div><!-- .sample_information -->
 </div><!-- .sample_player_small -->
 {% endwith %}
-{% endif %}
+
 {% endcache %}
+
+{% endif %}

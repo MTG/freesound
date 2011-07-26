@@ -10,8 +10,10 @@ class Command(NoArgsCommand):
         for sound in to_be_added:
             try:
                 Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
-                sound.similarity_state = 'OK'
+                #sound.similarity_state = 'OK'
+                sound.set_similarity_state('OK')
             except Exception, e:
                 print 'Sound could not be added: \n\t%s' % str(e)
-                sound.similarity_state = 'FA'
-            sound.save()
+                #sound.similarity_state = 'FA'
+                sound.set_similarity_state('FA')
+            #sound.save()

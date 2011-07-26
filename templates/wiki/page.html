@@ -11,8 +11,8 @@
 
 {% block section_content %}
 
-{% if perms.wiki.edit_page %}<div class="wiki-edit"><a href="{% url wiki-page-edit name %}">edit</a><div>{% endif %}
-
 {{content.body|markdown:"wikilinks,codehilite"}}
+
+{% if perms.wiki.edit_page %}<div id="wiki-edit"><a href="{% url wiki-page-edit name %}"><p>edit this page</p></a><br><div>{% endif %}
 
 {% endblock %}

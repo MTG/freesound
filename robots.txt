@@ -10,3 +10,4 @@ Disallow: /tagsViewSingle
 Disallow: /ratings/
 Disallow: /geotags/
 Disallow: /tickets/
+Disallow: /embed/

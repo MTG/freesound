@@ -541,7 +541,7 @@ Request
 Name         Type    Required  Description
 ===========  ======  ========  ===================================================
 num_results  number  no        The number of similar sounds to return (max = 100, default = 15)
-preset       string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``music``)
+preset       string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``lowlevel``)
 ===========  ======  ========  ===================================================
 
 **Curl Examples**

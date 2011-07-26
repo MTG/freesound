@@ -11,6 +11,9 @@
         <h3>Edit account</h3>
         <form method="post" action=".">{% csrf_token %}
             {{profile_form.as_p}}
+            {% include 'forum/html_explanation.html' %}
+            <p>This formatting is supported for your about text and signature.
+            <br><br>
             <input type="submit" value="Save" />
         </form>
     </div><!-- #edit_account -->
@@ -29,14 +32,14 @@
     </div><!-- #edit_avatar -->
 
 
-	<div id="reset_password_and_email" class="content_box">
+    <div id="reset_password_and_email" class="content_box">
         <h3>Password and email addres</h3>
-		<ul>
-    		<li>Change your email address</li>
-    		<li><a href="{% url accounts-password-reset %}">Reset your password</a></li>
-		</ul>
+        <ul>
+            <li><a href="{% url accounts-email-reset %}">Change your email address</a></li>
+            <li><a href="{% url accounts-password-reset %}">Reset your password</a></li>
+        </ul>
     </div><!-- #reset_password_and_email -->
-    
+
     {% comment %}
     <div id="delete_account" class="continuous_sidebar_box">
         <h3>Delete account</h3>

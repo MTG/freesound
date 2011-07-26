@@ -10,42 +10,50 @@
 {% block section_content %}
 
 <div class="forum_pagination">
-	<div class="forum_button"><a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a></div>
-	{% show_paginator paginator page current_page request "post" %} 
+    <div class="forum_button"><a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a></div>
+    {% show_paginator paginator page current_page request "post" %}
 </div>
 
 <ul id="posts">
 {% for post in page.object_list %}
-	<li class="post">
-		<a name="post{{post.id}}"></a>
-		<a href="{% url account post.author.username %}"><img src="{{post.author.profile.locations.avatar.S.url}}" width="32" height="32" alt="avatar" class="avatar" /></a>
-		<div class="post_author"><a href="{% url account post.author.username %}">{{post.author.username}}</a></div>
-		<div class="post_details">
-			{{post.author.profile.num_sounds}} sound{{post.author.profile.num_sounds|pluralize}}<br/>
-			{{post.author.profile.num_posts}} post{{post.author.profile.num_posts|pluralize}}<br>
-			<!-- Joined: {{post.author.date_joined|date:"d M Y"}}<br/> -->
-			<div class="post_date">{{post.created|timesince}} ago</div>
-		</div>
+    <li class="post">
+        <a name="post{{post.id}}"></a>
+        <a href="{% url account post.author.username %}"><img src="{{post.author.profile.locations.avatar.S.url}}" width="32" height="32" alt="avatar" class="avatar" /></a>
+        <div class="post_author"><a href="{% url account post.author.username %}">{{post.author.username}}</a></div>
+        <div class="post_details">
+            {{post.author.profile.num_sounds}} sound{{post.author.profile.num_sounds|pluralize}}<br/>
+            {{post.author.profile.num_posts}} post{{post.author.profile.num_posts|pluralize}}<br>
+            <!-- Joined: {{post.author.date_joined|date:"d M Y"}}<br/> -->
+            <div class="post_date">{{post.created|timesince}} ago</div>
+        </div>
 
-		<a href="{% url forums-reply-quote forum.name_slug thread.id post.id %}" class="post_quote"></a>
-		
-		{% if forloop.first and not page.has_previous %}
-		<div class="subject">
-			{{thread.title}}
-		</div>
-		{% endif %}
-		
-		{{post.body|smileys|safe|linebreaks}}
-		
-		{% if post.author.profile.signature %}
-		<div class="signature">{{post.author.profile.signature|smileys|safe}}</div>
-		{% endif %}
-	</li>
+        <div class="post_buttons">
+          <a href="{% url forums-reply-quote forum.name_slug thread.id post.id %}" class="post_quote post_button" title="quote and reply"></a>
+          {% if post.author == request.user or perms.forums.change_post %}
+              <a href="{% url forums-post-edit post.id %}" class="post_edit post_button" title="edit post"></a>
+          {% endif %}
+          {% if post.author == request.user or perms.forums.delete_post %}
+              <a href="{% url forums-post-delete post.id %}" class="post_delete post_button" title="delete post"></a>
+          {% endif %}
+        </div>
+
+        {% if forloop.first and not page.has_previous %}
+        <div class="subject">
+            {{thread.title}}
+        </div>
+        {% endif %}
+        <br><br>
+        {{post.body|smileys|safe|linebreaks}}
+
+        {% if post.author.profile.signature %}
+        <div class="signature">{{post.author.profile.signature|smileys|safe}}</div>
+        {% endif %}
+    </li>
 {% endfor %}
 </ul>
 
 <div class="forum_pagination">
-	<div class="forum_button"><a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a></div>
-	{% show_paginator paginator page current_page request "post" %} 
+    <div class="forum_button"><a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a></div>
+    {% show_paginator paginator page current_page request "post" %}
 </div>
 {% endblock %}

@@ -3,12 +3,9 @@ from gaia_wrapper import *
 from threading import Lock
 from shared_lock import SharedLock
 import time, os, json, logging
-from settings import PRESETS
+from settings import PRESETS, READ_TIMEOUT, UPDATE_TIMEOUT
 
 logger = logging.getLogger('similarity')
-
-UPDATE_TIMEOUT = 20
-READ_TIMEOUT   = 10
 
 class GaiaIndexer:
 

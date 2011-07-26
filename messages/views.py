@@ -11,7 +11,9 @@ from utils.functional import exceptional
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from BeautifulSoup import BeautifulSoup
-
+import json
+from accounts.models import User
+from django.http import HttpResponse
 
 @login_required
 def messages_change_state(request):
@@ -121,3 +123,23 @@ def new_message(request, username=None, message_id=None):
             form = MessageReplyForm(initial=dict(to=username))
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))
+
+def username_lookup(request):
+    results = []
+    value = ""
+    if request.method == "GET":
+        if request.GET.has_key(u'q'):            
+            value = request.GET[u'q']
+
+            # Ignore queries shorter than length 3
+            if len(value) > 2:
+                print "looking for results..."
+                model_results = User.objects.filter(username__icontains=value).order_by('username')#[0:30]
+                index = 0
+                for r in model_results:
+                    results.append( (r.username,index) )
+                    index = index + 1
+
+    json_resp = json.dumps(results)
+    return HttpResponse(json_resp, mimetype='application/json')
+

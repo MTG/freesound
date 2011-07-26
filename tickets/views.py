@@ -21,7 +21,7 @@ def __get_tc_form(request, use_post=True):
 
 
 def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, include_mod=False):
-    if __can_view_mod_msg(request):
+    if __can_view_mod_msg(request) and anonymous_form != AnonymousContactForm:
         user_form = ModeratorMessageForm
     if len(request.POST.keys()) > 0 and use_post:
         if request.user.is_authenticated():
@@ -54,10 +54,9 @@ def ticket(request, ticket_key):
             tc_form = __get_tc_form(request)
             if tc_form.is_valid():
                 tc = TicketComment()
-                tc_text = tc_form.cleaned_data.get('message', '')
+                tc.text = tc_form.cleaned_data['message']
                 tc.moderator_only = tc_form.cleaned_data.get('moderator_only', False)
-                if tc_text:
-                    tc.text = tc_text.replace('\n', '<br>')
+                if tc.text:
                     if request.user.is_authenticated():
                         tc.sender = request.user
                     tc.ticket = ticket
@@ -164,12 +163,38 @@ def new_contact_ticket(request):
     return render_to_response('tickets/contact.html', locals(), context_instance=RequestContext(request))
 
 
+# In the next 2 functions we return a queryset os the evaluation is lazy.
+# N.B. these functions are used in the home page as well.
+def new_sound_tickets_count():
+#    return Ticket.objects.filter(status=TICKET_STATUS_NEW,
+#                                 source=TICKET_SOURCE_NEW_SOUND)
+    return len(list(Ticket.objects.raw("""
+SELECT
+ticket.id
+FROM
+tickets_ticket AS ticket,
+sounds_sound AS sound,
+tickets_linkedcontent AS content
+WHERE
+    ticket.content_id = content.id
+AND ticket.assignee_id is NULL
+AND content.object_id = sound.id
+AND sound.moderation_state = 'PE'
+AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
+AND ticket.status = '%s'
+""" % TICKET_STATUS_NEW)))
+
+def new_support_tickets_count():
+    return Ticket.objects.filter(assignee=None,
+                                 source=TICKET_SOURCE_CONTACT_FORM).count()
+
 @permission_required('tickets.can_moderate')
 def tickets_home(request):
-    new_upload_count = Ticket.objects.filter(assignee=None,
-                                             source=TICKET_SOURCE_NEW_SOUND).count()
-    new_support_count = Ticket.objects.filter(assignee=None,
-                                              source=TICKET_SOURCE_CONTACT_FORM).count()
+    new_upload_count = new_sound_tickets_count()
+    new_support_count = new_support_tickets_count()
+    sounds_queued_count = Sound.objects.filter(processing_state='QU').count()
+    sounds_processing_count = Sound.objects.filter(processing_state='PR').count()
+    sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
     return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
 
 
@@ -182,11 +207,11 @@ FROM
     tickets_ticket, tickets_linkedcontent, sounds_sound
 WHERE
     tickets_ticket.source = 'new sound'
-    AND sounds_sound.processing_state = 'OK'
+    AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     AND sounds_sound.moderation_state = 'PE'
     AND tickets_linkedcontent.object_id = sounds_sound.id
     AND tickets_ticket.content_id = tickets_linkedcontent.id
-    AND tickets_ticket.assignee_id is Null
+    AND tickets_ticket.assignee_id is NULL
     AND tickets_ticket.status = '%s'
 GROUP BY sender_id""" % TICKET_STATUS_NEW)
     user_ids_plus_new_count = dict(cursor.fetchall())
@@ -201,6 +226,8 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
 
 
 def __get_unsure_sound_tickets():
+    '''Query to get tickets that were returned to the queue by moderators that
+    didn't know what to do with the sound.'''
     return Ticket.objects.filter(source=TICKET_SOURCE_NEW_SOUND,
                                  assignee=None,
                                  status=TICKET_STATUS_ACCEPTED)
@@ -262,8 +289,29 @@ def moderation_home(request):
 @permission_required('tickets.can_moderate')
 def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
-    Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
-        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
+#    Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
+#        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
+    cursor = connection.cursor()
+    cursor.execute("""
+UPDATE
+    tickets_ticket
+SET
+    assignee_id = %s,
+    status = '%s'
+FROM
+    sounds_sound,
+    tickets_linkedcontent
+WHERE
+    tickets_ticket.source = 'new sound'
+AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
+AND sounds_sound.moderation_state = 'PE'
+AND tickets_linkedcontent.object_id = sounds_sound.id
+AND tickets_ticket.content_id = tickets_linkedcontent.id
+AND tickets_ticket.assignee_id is NULL
+AND tickets_ticket.status = '%s'
+AND sounds_sound.user_id = %s""" % \
+(request.user.id, TICKET_STATUS_ACCEPTED, TICKET_STATUS_NEW, sender.id))
+    transaction.commit_unless_managed()
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect(reverse("tickets-moderation-home"))
@@ -285,7 +333,6 @@ def moderation_assigned(request, user_id):
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
 
             if msg:
-                msg = msg.replace('\n', '<br>')
                 tc = TicketComment(sender=ticket.assignee,
                                    text=msg,
                                    ticket=ticket,
@@ -354,7 +401,9 @@ def moderation_assigned(request, user_id):
         msg_form = ModerationMessageForm()
     moderator_tickets = Ticket.objects.select_related() \
                             .filter(assignee=user_id) \
-                            .exclude(status=TICKET_STATUS_CLOSED)
+                            .exclude(status=TICKET_STATUS_CLOSED) \
+                            .exclude(content=None) \
+                            .order_by('status', '-created')
     moderation_texts = MODERATION_TEXTS
     return render_to_response('tickets/moderation_assigned.html',
                               locals(),
@@ -371,7 +420,7 @@ def user_annotations(request, user_id):
         if form.is_valid():
             ua = UserAnnotation(sender=request.user,
                                 user=user,
-                                text=form.cleaned_data['text'].replace('\n', '<br>'))
+                                text=form.cleaned_data['text'])
             ua.save()
     else:
         form = UserAnnotationForm()

@@ -1,7 +1,7 @@
-import datetime, logging, os, tempfile, uuid, shutil
+import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
-from accounts.models import Profile
+from accounts.models import Profile, ResetEmailRequest
 from comments.models import Comment
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -25,7 +25,6 @@ from utils.encryption import decrypt, encrypt
 from utils.filesystem import generate_tree, md5file
 from utils.functional import combine_dicts
 from utils.images import extract_square
-from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.text import slugify
 from geotags.models import GeoTag
@@ -38,7 +37,17 @@ from utils.audioprocessing import get_sound_type
 from django.core.cache import cache
 import django.contrib.auth.views as authviews
 from django.contrib.auth.forms import AuthenticationForm
-import hashlib, base64
+from tickets.views import new_sound_tickets_count, new_support_tickets_count
+from django.contrib.auth.tokens import default_token_generator
+from accounts.forms import EmailResetForm
+from django.views.decorators.cache import never_cache
+from django.utils.http import base36_to_int
+from django.template import loader
+from django.utils.http import int_to_base36
+from django.contrib.sites.models import get_current_site
+from utils.mail import send_mail, send_mail_template
+from django.db import transaction
+
 
 audio_logger = logging.getLogger('audio')
 
@@ -132,11 +141,17 @@ def home(request):
     user = request.user
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    latest_sounds = Sound.public.filter(user=user)[0:5]
-    latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
+    latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
+    unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
+    unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
+    
+    latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = True
+    if home and request.user.has_perm('tickets.can_moderate'):
+        new_sounds = new_sound_tickets_count()
+        new_support = new_support_tickets_count()
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 
@@ -239,8 +254,13 @@ def describe(request):
     if request.method == 'POST':
         form = FileChoiceForm(files, request.POST)
         if form.is_valid():
-            request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-            return HttpResponseRedirect(reverse('accounts-describe-license'))
+            # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
+            if len(form.cleaned_data["files"]) > 1 :
+                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                return HttpResponseRedirect(reverse('accounts-describe-license'))
+            else :
+                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
         form = FileChoiceForm(files)
     return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
@@ -254,7 +274,7 @@ def describe_license(request):
             request.session['describe_license'] = form.cleaned_data['license']
             return HttpResponseRedirect(reverse('accounts-describe-pack'))
     else:
-        form = NewLicenseForm()
+        form = NewLicenseForm({'license': License.objects.get(name='Attribution')})
     return render_to_response('accounts/describe_license.html', locals(), context_instance=RequestContext(request))
 
 @login_required
@@ -278,6 +298,7 @@ def describe_pack(request):
 
 
 @login_required
+@transaction.autocommit
 def describe_sounds(request):
     sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)
@@ -286,9 +307,9 @@ def describe_sounds(request):
 
     # This is to prevent people browsing to the /home/describe/sounds page
     # without going through the necessary steps.
-    # selected_ack can be False, but license and sounds have to be picked at least
-    if not (sounds and selected_license):
-        msg = 'Please pick at least some sounds and a license.'
+    # selected_pack can be False, but license and sounds have to be picked at least
+    if not (sounds):
+        msg = 'Please pick at least one sound.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
 
@@ -318,9 +339,8 @@ def describe_sounds(request):
             forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
         # validate each form
         for i in range(len(sounds_to_describe)):
-            for f in ['description', 'geotag', 'pack', 'license']:
+            for f in ['license', 'geotag', 'pack', 'description']:
                 if not forms[i][f].is_valid():
-                    # if not valid return to the same form!
                     return render_to_response('accounts/describe_sounds.html',
                                               locals(),
                                               context_instance=RequestContext(request))
@@ -328,7 +348,7 @@ def describe_sounds(request):
         for i in range(len(sounds_to_describe)):
             sound = Sound()
             sound.user = request.user
-            sound.original_filename = forms[i]['sound'].name
+            sound.original_filename = forms[i]['description'].cleaned_data['name']
             sound.original_path = forms[i]['sound'].full_path
             try:
                 sound.md5 = md5file(forms[i]['sound'].full_path)
@@ -443,7 +463,7 @@ def describe_sounds(request):
             prefix = str(i)
             forms.append({})
             forms[i]['sound'] = sounds_to_describe[i]
-            forms[i]['description'] = SoundDescriptionForm(prefix=prefix)
+            forms[i]['description'] = SoundDescriptionForm(initial={'name': forms[i]['sound'].name}, prefix=prefix)
             forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
             if selected_pack:
                 forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
@@ -452,9 +472,9 @@ def describe_sounds(request):
             else:
                 forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
                                             prefix=prefix)
-            if request.session['describe_license']:
-                forms[i]['license'] = NewLicenseForm(prefix=prefix,
-                                                     initial={'license': str(selected_license.id)})
+            if selected_license:
+                forms[i]['license'] = NewLicenseForm(initial={'license': selected_license},
+                                                     prefix=prefix)
             else:
                 forms[i]['license'] = NewLicenseForm(prefix=prefix)
             # cannot include this right now because the remix sources form needs a sound object
@@ -468,6 +488,21 @@ def attribution(request):
     qs = Download.objects.filter(user=request.user)
     format = request.GET.get("format", "regular")
     return render_to_response('accounts/attribution.html', combine_dicts(paginate(request, qs, 40), locals()), context_instance=RequestContext(request))
+
+
+def downloaded_sounds(request, username):
+    user = User.objects.get(username=username)
+    # Retrieve all sounds downloaded by the user (for the moment we are not diplaying downloaded packs...)
+    qs = Download.objects.filter(user=user.id, sound__isnull=False)
+    num_results = len(qs)
+    return render_to_response('accounts/downloaded_sounds.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
+
+def downloaded_packs(request, username):
+    user = User.objects.get(username=username)
+    # Retrieve all sounds downloaded by the user (for the moment we are not diplaying downloaded packs...)
+    qs = Download.objects.filter(user=user.id, pack__isnull=False)
+    num_results = len(qs)
+    return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 
 def latest_content_type(scores):
@@ -508,9 +543,9 @@ def accounts(request):
     num_active_users = 10
     num_all_time_active_users = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
-    
+
     # select active users last num_days
-    latest_uploaders = Sound.objects.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by("-id__count")
+    latest_uploaders = Sound.objects.filter(created__gte=last_time, processing_state='OK', moderation_state='OK').values("user").annotate(Count('id')).order_by("-id__count")
     latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by("-id__count")
     latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by("-id__count")
     # rank
@@ -527,7 +562,7 @@ def accounts(request):
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
     # select all time active users
-    all_time_uploaders = Sound.objects.all().values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+    all_time_uploaders = Sound.objects.filter(processing_state='OK', moderation_state='OK').values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
     all_time_posters = Post.objects.all().values("author_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
     all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
 
@@ -543,12 +578,15 @@ def accounts(request):
 
 
 def account(request, username):
-    user = get_object_or_404(User, username__iexact=username)
+    try:
+        user = User.objects.select_related('profile').get(username__iexact=username)
+    except User.DoesNotExist:
+        raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    latest_sounds = Sound.public.filter(user=user)[0:settings.SOUNDS_PER_PAGE]
-    latest_packs = Pack.objects.filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
-    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
+    latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
+    latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
+    latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = False
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
@@ -656,6 +694,7 @@ def delete(request):
 
     return render_to_response('accounts/delete.html', locals(), context_instance=RequestContext(request))
 
+
 def old_user_link_redirect(request):
     user_id = request.GET.get('id', False)
     if user_id:
@@ -666,8 +705,6 @@ def old_user_link_redirect(request):
             raise Http404
     else:
         raise Http404
-
-
 
 
 # got characters from rfc3986 (minus @, + which are valid for django usernames)
@@ -705,11 +742,8 @@ def transform_username_fs1fs2(fs1_name, fs2_append=''):
 
         # If the transformed name is too long, create a hash.
         if len(fs2_name) > 30:
-            try:
-                m = hashlib.md5()
-                m.update(fs2_name.encode('utf-8'))
-            except UnicodeEncodeError:
-                print 10*'#', fs1_name, fs2_name
+            m = hashlib.md5()
+            m.update(fs2_name.encode('utf-8'))
             # Hack: m.hexdigest() is too long.
             fs2_name = base64.urlsafe_b64encode(m.digest())
         return True, fs2_name
@@ -735,4 +769,80 @@ def login_wrapper(request):
     return authviews.login(request, template_name='accounts/login.html')
 
 
+@login_required
+def email_reset(request):
+
+    if request.method == "POST":
+        form = EmailResetForm(request.POST, user = request.user)
+        if form.is_valid():
+
+            # save new email info to DB (temporal)
+            try:
+                rer = ResetEmailRequest.objects.get(user=request.user)
+                rer.email = form.cleaned_data['email']
+            except ResetEmailRequest.DoesNotExist:
+                rer = ResetEmailRequest(user=request.user, email=form.cleaned_data['email'])
+
+            rer.save()
+
+
+            # send email to the new address
+            user = request.user
+            email = form.cleaned_data["email"]
+            current_site = get_current_site(request)
+            site_name = current_site.name
+            domain = current_site.domain
+
+            c = {
+                'email': email,
+                'domain': domain,
+                'site_name': site_name,
+                'uid': int_to_base36(user.id),
+                'user': user,
+                'token': default_token_generator.make_token(user),
+                'protocol': 'http',
+            }
+
+            subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
+            subject = ''.join(subject.splitlines())
+            email_body = loader.render_to_string('accounts/email_reset_email.html', c)
+            send_mail(subject=subject, email_body=email_body, email_to=[email])
+
+            return HttpResponseRedirect(reverse('accounts.views.email_reset_done'))
+    else:
+        form = EmailResetForm(user = request.user)
+
+    return render_to_response('accounts/email_reset_form.html',locals(),context_instance=RequestContext(request))
+
+
+def email_reset_done(request):
+    return render_to_response('accounts/email_reset_done.html',locals(),context_instance=RequestContext(request))
+
+
+@never_cache
+def email_reset_complete(request, uidb36=None, token=None):
+
+    # Check that the link is valid and the base36 corresponds to a user id
+    assert uidb36 is not None and token is not None # checked by URLconf
+    try:
+        uid_int = base36_to_int(uidb36)
+        user = User.objects.get(id=uid_int)
+    except (ValueError, User.DoesNotExist):
+        raise Http404
+
+    # Retreive the new mail from the DB
+    try:
+        rer = ResetEmailRequest.objects.get(user=user)
+    except ResetEmailRequest.DoesNotExist:
+        raise Http404
+
+    # Change the mail in the DB
+    old_email = user.email
+    user.email = rer.email
+    user.save()
+
+    # Remove temporal mail change information ftom the DB
+    ResetEmailRequest.objects.get(user=user).delete()
+
+    return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))
 

@@ -20,7 +20,7 @@
 
     <div id="latest_sounds" class="content_box">
         <h3>Latest sounds</h3>
-        <div class="sound_list_normal">
+        <div>
         {% for latest_addition in latest_sounds %}
             {% display_sound latest_addition.sound_id %}
             {% if latest_addition.extra %}
@@ -45,13 +45,13 @@
             <p>No sounds in the database!
         {% endfor %}
         <p class="more_button"><a href="{% url sounds-search %}?q=&f=&s=num_downloads+desc">more...</a></p>
-        
-        
+
+
     </div><!-- #most_downloaded_sounds -->
 </div><!-- #content -->
 
 <div id="sidebar">
-	{% comment %}
+    {% comment %}
     <div id="uploader_of_the_day" class="content_box">
         {% if random_uploader != None %}
         <h3 class="header">Uploader of the day</h3>
@@ -66,7 +66,7 @@
             random uploader is none
             {% endif %}
     </div><!-- #uploader_of_the_day -->
-	{% endcomment %}
+    {% endcomment %}
 
     <div id="other_sounds" class="content_box">
         <h3>More Sounds</h3>
@@ -91,7 +91,7 @@
         {% endfor %}
         </ul>
         <p class="more_button" ><a href="{% url packs %}?order=-last_update">more...</a></p>
-        
+
     </div><!-- #latest_changed_packs -->
 
     <div id="most_downloaded_packs" class="content_box">
@@ -106,8 +106,8 @@
             <p>No packs in the database!
         {% endfor %}
         </ul>
-		<p class="more_button"><a href="{% url packs %}?order=-num_downloads">more...</a></p>
-                
+        <p class="more_button"><a href="{% url packs %}?order=-num_downloads">more...</a></p>
+
     </div><!-- #most_downloaded_packs -->
 </div><!-- #sidebar -->
 

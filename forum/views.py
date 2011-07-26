@@ -11,6 +11,7 @@ from forum.models import Forum, Thread, Post, Subscription
 from utils.mail import send_mail_template
 from utils.search.search_forum import add_post_to_solr
 import logging
+from django.core.urlresolvers import reverse
 
 logger = logging.getLogger("web")
 
@@ -24,7 +25,7 @@ def forum(request, forum_name_slug):
         forum = Forum.objects.get(name_slug=forum_name_slug)
     except Forum.DoesNotExist: #@UndefinedVariable
         raise Http404
-    
+
     paginator = Paginator(Thread.objects.filter(forum=forum).select_related('last_post', 'last_post__author'), settings.FORUM_THREADS_PER_PAGE)
 
     try:
@@ -46,7 +47,7 @@ def thread(request, forum_name_slug, thread_id):
     thread = get_object_or_404(Thread, forum=forum, id=thread_id)
 
     paginator = Paginator(Post.objects.select_related('author', 'author__profile').filter(thread=thread), settings.FORUM_POSTS_PER_PAGE)
-    
+
     # a logged in user watching a thread can activate his subscription to that thread!
     # we assume the user has seen the latest post if he is browsing the thread
     # this is not entirely correct, but should be close enough
@@ -81,26 +82,25 @@ def post(request, forum_name_slug, thread_id, post_id):
 def reply(request, forum_name_slug, thread_id, post_id=None):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, id=thread_id, forum=forum)
-    
+
     if post_id:
         post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)
         quote = loader.render_to_string('forum/quote_style.html', {'post':post})
     else:
         post = None
         quote = ""
-    
+
     if request.method == 'POST':
         form = PostReplyForm(request, quote, request.POST)
         if form.is_valid():
             post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
             add_post_to_solr(post)
-            
             if form.cleaned_data["subscribe"]:
                 subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
                 if not subscription.is_active:
                     subscription.is_active = True
                     subscription.save()
-                
+
             # figure out if there are active subscriptions in this thread
             emails_to_notify = []
             for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
@@ -108,17 +108,17 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                 logger.info("NOTIFY %s" % subscription.subscriber.email)
                 subscription.is_active = False
                 subscription.save()
-            
+
             if emails_to_notify:
                 send_mail_template(u"topic reply notification - " + thread.title, "forum/email_new_post_notification.txt", dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify)
-            
+
             return HttpResponseRedirect(post.get_absolute_url())
     else:
         if quote:
             form = PostReplyForm(request, quote, {'body':quote})
         else:
             form = PostReplyForm(request, quote)
-        
+
     return render_to_response('forum/reply.html', locals(), context_instance=RequestContext(request))
 
 
@@ -131,15 +131,19 @@ def new_thread(request, forum_name_slug):
         if form.is_valid():
             thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
             post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+<<<<<<< HEAD
             add_post_to_solr(post)
             
+=======
+
+>>>>>>> master
             if form.cleaned_data["subscribe"]:
                 Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
-            
+
             return HttpResponseRedirect(post.get_absolute_url())
     else:
         form = NewThreadForm()
-        
+
     return render_to_response('forum/new_thread.html', locals(), context_instance=RequestContext(request))
 
 
@@ -151,6 +155,7 @@ def unsubscribe_from_thread(request, forum_name_slug, thread_id):
     return render_to_response('forum/unsubscribe_from_thread.html', locals(), context_instance=RequestContext(request))
 
 
+<<<<<<< HEAD
 def old_topic_link_redirect(request):
     post_id = request.GET.get("p", False)
     if post_id:
@@ -163,3 +168,43 @@ def old_topic_link_redirect(request):
         return HttpResponsePermanentRedirect(reverse('forums-thread', args=[thread.forum.name_slug, thread.id]))
     
     raise Http404
+=======
+@login_required
+def post_delete(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if post.author == request.user or request.user.has_perm('forum.delete_post'):
+        return render_to_response('forum/confirm_deletion.html',
+                                  locals(),
+                                  context_instance=RequestContext(request))
+    else:
+        raise Http404
+
+
+@login_required
+def post_delete_confirm(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if post.author == request.user or request.user.has_perm('forum.delete_post'):
+        thread = post.thread
+        post.delete()
+        return HttpResponseRedirect(reverse('forums-post', args=[thread.forum.name_slug, thread.id, thread.last_post.id]))
+    else:
+        raise Http404
+
+@login_required
+def post_edit(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if post.author == request.user or request.user.has_perm('forum.change_post'):
+        if request.method == 'POST':
+            form = PostReplyForm(request, '', request.POST)
+            if form.is_valid():
+                post.body = form.cleaned_data['body']
+                post.save()
+                return HttpResponseRedirect(reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
+        else:
+            form = PostReplyForm(request, '', {'body': post.body})
+        return render_to_response('forum/post_edit.html',
+                                  locals(),
+                                  context_instance=RequestContext(request))
+    else:
+        raise Http404
+>>>>>>> master

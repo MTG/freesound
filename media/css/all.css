@@ -2226,6 +2226,42 @@ p.about {
     margin-bottom: 30px;
 }
 
+#unprocessed_sounds {
+	font-size: 10px;
+}
+
+#unprocessed_sounds li {
+    padding: 5px;
+}
+
+#unprocessed_sounds .failed{
+	color: red;
+	font-weight: bold;
+}
+
+#unprocessed_sounds .processing{
+	color: green;
+	font-weight: bold;
+}
+
+#unprocessed_sounds .pending{
+	color: orange;
+	font-weight: bold;
+}
+
+#unprocessed_sounds .queued{
+	color: orange;
+	font-weight: bold;
+}
+
+#unprocessed_sounds .filename{
+	font-weight: bold;
+}
+
+#unprocessed_sounds .date{
+	color: gray;
+}
+
 /* People page
 ------------------------------------------------------*/
 

@@ -2,7 +2,11 @@
 {% load util %}
 {% load ratings %}
 {% if sound %}
+
+{% comment %}
 {% cache 3600 display_sound sound_id request.user.is_authenticated sound.0.processing_state %}
+{% endcomment %}
+
 {% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
 
@@ -39,9 +43,44 @@
                 <br style="clear: both;"/>
 
             </div><!-- .sound_tags -->
-            {% if sound.processing_state != 'OK' %}
-                <p>N.B. This sound has not been processed ({{sound.processing_state}}).
+            {% if sound.moderation_state != 'OK' or sound.processing_state != 'OK' %}
+	            <p style="font-size:10px; color:gray">
+	            {% if sound.processing_state != 'OK' %}
+	                Processing state:  
+	                {% if sound.processing_state == 'PE' %}
+	                	Pending
+	                {% else %}
+	                	{% if sound.processing_state == 'QU' %}
+	                		Queued
+	                	{% else %}
+	                		{% if sound.processing_state == 'FA' %}
+		                		Failed
+		                	{% else %}
+		                		{% if sound.processing_state == 'PR' %}
+			                		Processing
+			                	{% else %}
+			                		{{sound.processing_state}}
+			                	{% endif %}
+		                	{% endif %}
+	                	{% endif %}
+	                {% endif %}
+	             <br>
+	            {% endif %}
+	            
+	            {% if sound.moderation_state != 'OK' %}
+	                Moderation state: 
+	                {% if sound.moderation_state == 'PE' %}
+	                	Pending
+	                {% else %}
+	                	{% if sound.moderation_state == 'DE' %}
+		                	Deferred
+		                {% else %}
+		                	{{sound.moderation_state}}
+		                {% endif %}
+	                {% endif %}
+	            {% endif %}
             {% endif %}
+            
           </div><!-- .sound_title -->
     </div><!-- .sample_player -->
 
@@ -91,5 +130,10 @@
     </div><!-- .sample_information -->
 </div><!-- .sample_player_small -->
 {% endwith %}
+
+{% comment %}
 {% endcache %}
+{% endcomment %}
+
+
 {% endif %}

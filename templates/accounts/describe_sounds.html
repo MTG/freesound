@@ -50,11 +50,11 @@
 
 
 
-{% block title %}{{ block.super }}Describe - choose pack{% endblock %}
+{% block title %}{{ block.super }}Describe - describe individual sounds{% endblock %}
 
 {% block content %}
 <h1>Describe</h1>
-<h3>Step 4 - describe individual sounds ({{request.session.describe_sounds_number}} left)</h3>
+<h3>Describe individual sounds ({{request.session.describe_sounds_number}} left)</h3>
 <p>This is the last step in the describe process. If you've selected
    more than {{ sounds_per_round }} you will be asked to describe {{ sounds_per_round }}
    sounds until all are done. In the accordion below you'll have to at least specify tags and

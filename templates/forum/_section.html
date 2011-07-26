@@ -44,7 +44,7 @@
 
 <div id="breadcrumb">
 <a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
-<a id="show_search" style="display:none;float:right" onclick="showSearch()" ><span class="forum_search_button">search in the forum</span></a>
+<a id="show_search" style="display:none;" onclick="showSearch()" ><span class="forum_search_button">search in the forum</span></a>
 </div>
 
 {% block forum_search %}
@@ -64,6 +64,7 @@
 				<input class="input_date_field"  type="text" value="Choose a Date" id="date_to_forum_search" />
 				<input type="hidden" value="" name="dt_to" id="dt_to" />
 				
+				<br>
 				<span class="advanced_search_options_button"><a onclick='hideAdvancedForumSearch();'>hide advanced search options</a></span>
 			</div>		
 				{% if advanced_search == "1" %}
@@ -71,7 +72,6 @@
 				{% else %}
 				    <span id="enableShowButton" class="advanced_search_options_button">
 				{% endif %}
-				
 				
 				<div style="margin-top:4px;"></div>
 				<a onclick='showAdvancedForumSearch();'>show advanced search options</a>

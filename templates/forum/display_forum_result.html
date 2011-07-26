@@ -1,0 +1,28 @@
+{% load util %}
+{% autoescape off %}
+{% for result in results %}
+<div class="forum_search_result">
+	<div class="thread_name">
+    	<a class="title" href="/forum/{{result.forum_name_slug}}/{{result.thread_id}}/{{result.post_id}}">
+    		{{result.thread_title|truncate_string:50}}
+    	</a>
+    	<div class="thread_info" style="font-size: 85%; color: #9E9E9E; float:right;">
+			{{ result.thread_info }}
+		</div>
+	</div><!-- .thread_name -->
+	<div class="post">
+		<div>
+			{% for p in result.posts %}
+				<div class="multipost" style="margin: 10px 0px 10px 25px;">
+					{{ p.post_body|truncatewords_html:70 }} <br />
+					<span style="font-size: 85%; color: #A3A3A3;">
+						{{ p.post_info }} | 
+						<a href="/forum/{{result.forum_name_slug}}/{{result.thread_id}}/{{p.post_id}}">read...</a>
+					</span>
+				</div>
+			{% endfor %}
+		</div>
+	</div>
+</div>
+{% endfor %}
+{% endautoescape %}

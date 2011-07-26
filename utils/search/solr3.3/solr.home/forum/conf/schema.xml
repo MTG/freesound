@@ -29,7 +29,7 @@
  http://wiki.apache.org/solr/SchemaXml
 -->
 
-<schema name="freesound" version="1.1">
+<schema name="freesound_forum" version="1.1">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.1" is Solr's version number for the schema syntax and semantics.  It should
@@ -259,55 +259,32 @@
 
 
     <fields>
+    	<!-- post id -->
         <field name="id" type="integer" indexed="true" stored="true" required="true" />
-        <field name="username" type="alphaOnlySort" indexed="true" stored="true" required="true" />
 
-        <field name="created" type="date" indexed="true" stored="true" required="true" />
+        <field name="thread_id" type="integer" indexed="true" stored="true" required="true" />
+        <field name="thread_title" type="text" indexed="true" stored="true" required="true" />
+        <field name="thread_title_grouped" type="string" indexed="true" stored="true" required="false" />
+        <field name="thread_author" type="alphaOnlySort" indexed="true" stored="true" required="true" />
+		<field name="thread_created" type="date" indexed="true" stored="true" required="true" />		
+				
+        <field name="forum_name" type="text" indexed="true" stored="true" required="true" />
+        <field name="forum_name_slug" type="text" indexed="true" stored="true" required="true" />        
 
-        <field name="original_filename" type="text" indexed="true" stored="true" required="true" />
-
-        <field name="description" type="text" indexed="true" stored="true" required="false" />
-        <field name="tag" type="alphaOnlySort" indexed="true" stored="true" required="false" multiValued="true"/>
-
-        <field name="license" type="string" indexed="true" stored="true" />
-
-        <field name="is_remix" type="boolean" indexed="true" stored="true" required="true" />
-        <field name="was_remixed" type="boolean" indexed="true" stored="true" required="true" />
-
-        <field name="pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal -->
-        <field name="pack_tokenized" type="text" indexed="true" stored="true" required="false" /> <!-- parsed -->
-
-        <field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
-
-        <field name="type" type="alphaOnlySort" indexed="true" stored="true" required="true" />
-        <field name="duration" type="sdouble" indexed="true" stored="true" required="true" />
-        <field name="bitdepth" type="sint" indexed="true" stored="true" required="true" />
-        <field name="bitrate" type="sint" indexed="true" stored="true" required="true" />
-        <field name="samplerate" type="sint" indexed="true" stored="true" required="true" />
-        <field name="filesize" type="slong" indexed="true" stored="true" required="true" />
-        <field name="channels" type="sint" indexed="true" stored="true" required="true" />
-        <field name="md5" type="string" indexed="true" stored="true" />
-
-        <field name="num_downloads" type="slong" indexed="true" stored="true" required="true" /> <!-- num downloads -->
-
-        <field name="avg_rating" type="sfloat" indexed="true" stored="true" required="true" /> <!-- avg ratings -->
-        <field name="num_ratings" type="slong" indexed="true" stored="true" required="true" /> <!-- num rating -->
-
-        <field name="comment" type="text" indexed="true" stored="true" required="false" multiValued="true"/>
-        <field name="comments" type="slong" indexed="true" stored="true" required="true" /> <!-- num comments -->
-
-        <field name="waveform_path_m" type="string" indexed="false" stored="true" required="true" />
-        <field name="waveform_path_l" type="string" indexed="false" stored="true" required="true" />
-        <field name="spectral_path_m" type="string" indexed="false" stored="true" required="true" />
-        <field name="spectral_path_l" type="string" indexed="false" stored="true" required="true" />
-        <field name="preview_path" type="string" indexed="false" stored="true" required="true" />
+        <field name="post_author" type="alphaOnlySort" indexed="true" stored="true" required="true" />
+        <field name="post_body" type="text" indexed="true" stored="true" required="true" />               
+		<field name="post_created" type="date" indexed="true" stored="true" required="true" />		
+		        
+        <field name="num_posts" type="integer" indexed="true" stored="true" required="true" />
+        <field name="has_posts" type="boolean" indexed="true" stored="true" required="true" />
+        
     </fields>
-
-    <copyField source="pack" dest="pack_tokenized" />
+	
+    <copyField source="thread_title" dest="thread_title_grouped" />
 
     <uniqueKey>id</uniqueKey>
 
-    <defaultSearchField>description</defaultSearchField>
+    <defaultSearchField>thread_title</defaultSearchField>
 
     <solrQueryParser defaultOperator="AND"/>
 

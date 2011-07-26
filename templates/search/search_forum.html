@@ -1,0 +1,34 @@
+{% extends "forum/_section.html" %}
+
+{% load display_forum_result %}
+{% load paginator %}
+{% load search %}
+
+{% block title %}Forum Search{% endblock title %}
+
+{% block breadcrumb %}
+	{% if current_forum_name_slug and current_forum_name_slug.strip %}
+		&#187; <a href="{% url forums-forum current_forum_name_slug %}">{{current_forum_name}}</a>
+	{% endif %}
+{%  endblock %}
+
+{% block section_content %}
+
+{% if error %}
+    {{ error_text }}
+{% else %}
+	{% if results %}
+		<div class="search_paginator">
+	    {% show_paginator paginator page current_page request %}
+	    </div>
+	
+	    <p>
+	    {% display_forum_result results.docs results.highlighting %}
+		</p>
+	    <div class="search_paginator">
+	    {% show_paginator paginator page current_page request %}
+	    </div>
+	{% endif %}	
+{% endif %}
+
+{% endblock %}

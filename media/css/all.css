@@ -831,7 +831,7 @@ h3.header,
 }
 
 .remixes .sample_player_small {
-    height: 100px;
+    height: 115px;
 }
 
 .sound_attributes a {
@@ -2876,6 +2876,16 @@ ul.messages {
     padding: 0;
 }
 
+/* Forum Search
+------------------------------------------------------*/
+.multipost {
+    font-size: 12px;
+    line-height: 18px;
+    margin-bottom: 18px;
+}
+
+.forum_search_result {
+	margin-bottom: 20px;
 /* Wiki pages
 ------------------------------------------------------*/
 

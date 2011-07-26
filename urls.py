@@ -8,6 +8,7 @@ import search.views
 import sounds.views
 import support.views
 import tags.views
+import forum.views
 
 admin.autodiscover()
 
@@ -80,6 +81,7 @@ urlpatterns = patterns('',
     url(r'^samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),
     url(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
     url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
+    url(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
 )
 
 #if you need django to host the admin files...

@@ -37,6 +37,7 @@ from django.db.models import Q
 from utils.similarity_utilities import get_similar_sounds
 import urllib
 from django.contrib.sites.models import Site
+from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from django.db import connection, transaction
 
 logger = logging.getLogger('web')
@@ -75,6 +76,7 @@ def sounds(request):
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
 
 def remixed(request):
+    # TODO: this doesn't return the right results after remix_group merge
     qs = RemixGroup.objects.all().order_by('-group_size')
     return render_to_response('sounds/remixed.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
@@ -84,12 +86,12 @@ def random(request):
     if sound_id is None:
         raise Http404
     sound_obj = Sound.objects.get(pk=sound_id)
-    return HttpResponseRedirect(reverse("sound",args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
+    return sound(request, sound_obj.user.username, sound_id)
 
 
 def packs(request):
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
+    if order not in ["name", "-last_update", "-created", "-num_sounds"]:
         order = "name"
     qs = Pack.objects.select_related() \
                      .filter(sound__moderation_state="OK", sound__processing_state="OK") \
@@ -172,7 +174,8 @@ def sound(request, username, sound_id):
     #facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
-# N.B. login is required but adapted to not return the user to the download link.
+
+@login_required
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
@@ -324,6 +327,9 @@ def sound_edit_sources(request, username, sound_id):
         form = RemixForm(sound, request.POST)
         if form.is_valid():
             form.save()
+            remix_group = RemixGroup.objects.filter(sounds=sound)
+            if remix_group:
+                __recalc_remixgroup(remix_group[0], sound)
         else:
             # TODO: Don't use prints! Either use logging or return the error to the user. ~~ Vincent
             pass #print ("Form is not valid!!!!!!! %s" % ( form.errors))
@@ -331,6 +337,62 @@ def sound_edit_sources(request, username, sound_id):
         form = RemixForm(sound,initial=dict(sources=sources_string))
     return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
 
+# TODO: handle case were added/removed sound is part of remixgroup
+def __recalc_remixgroup(remixgroup, sound):
+    from networkx import nx
+    import simplejson as json
+    
+    # recreate remixgroup
+    dg = nx.DiGraph()
+    data = json.loads(remixgroup.networkx_data)
+    print data
+    dg.add_nodes_from(data['nodes'])
+    dg.add_edges_from(data['edges'])
+    print "========= NODES =========="
+    dg.nodes()
+    print "========= EDGES =========="
+    dg.edges()
+    
+    # add new nodes/edges
+    for source in sound.sources.all():
+        if source.id not in dg.successors(sound.id):
+            dg.add_node(source.id)
+            dg.add_edge(sound.id, source.id)
+            
+            remix_group = RemixGroup.objects.filter(sounds=source)
+            if remix_group:
+                dg = __nested_remixgroup(dg, remix_group[0])
+            
+    
+    # remove old nodes/edges
+    for source in dg.successors(sound.id):
+        if source not in [s.id for s in sound.sources.all()]:
+            dg.remove_node(source) # TODO: check if edges are removed automatically
+    
+    print "============ NODES AND EDGES =============="
+    print dg.nodes()
+    print dg.edges()
+    # create and save the modified remixgroup
+    dg = _create_nodes(dg)
+    _create_and_save_remixgroup(dg, remixgroup)       
+
+def __nested_remixgroup(dg1, remix_group):
+    print "============= nested remix_group ================ \n"
+    from networkx import nx
+    import simplejson as json
+    
+    # recreate remixgroup
+    dg2 = nx.DiGraph()
+    data = json.loads(remix_group.networkx_data)
+    dg2.add_nodes_from(data['nodes'])
+    dg2.add_edges_from(data['edges'])
+    
+    # FIXME: this combines the graphs correctly
+    #        recheck the time-bound concept
+    dg1 = nx.compose(dg1, dg2) 
+    print dg1.nodes()
+    
+    return dg1
 
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")

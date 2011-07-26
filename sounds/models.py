@@ -505,4 +505,3 @@ class RemixGroup(models.Model):
 
     # facilitate ordering according to group size
     group_size = models.PositiveIntegerField(null=False, default=0)
-

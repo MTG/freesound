@@ -141,7 +141,10 @@ def home(request):
     user = request.user
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
-    latest_sounds = Sound.objects.select_related().filter(user=user)[0:5]
+    latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
+    unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
+    unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
+    
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
@@ -251,8 +254,13 @@ def describe(request):
     if request.method == 'POST':
         form = FileChoiceForm(files, request.POST)
         if form.is_valid():
-            request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-            return HttpResponseRedirect(reverse('accounts-describe-license'))
+            # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
+            if len(form.cleaned_data["files"]) > 1 :
+                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                return HttpResponseRedirect(reverse('accounts-describe-license'))
+            else :
+                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
         form = FileChoiceForm(files)
     return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
@@ -300,8 +308,8 @@ def describe_sounds(request):
     # This is to prevent people browsing to the /home/describe/sounds page
     # without going through the necessary steps.
     # selected_pack can be False, but license and sounds have to be picked at least
-    if not (sounds and selected_license):
-        msg = 'Please pick at least some sounds and a license.'
+    if not (sounds):
+        msg = 'Please pick at least one sound.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
 

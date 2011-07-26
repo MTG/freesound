@@ -376,7 +376,7 @@ div.infowindow {
     top: 2px;
 }
 
-.messages_count {
+#messages_count {
     float: left;
     background: url(../images/messages_count_bg.png) no-repeat left;
     color: #FFF;
@@ -384,18 +384,6 @@ div.infowindow {
     line-height: 15px;
     font-size: 10px;
     padding-left: 5px;
-    padding-right: 5px;
-}
-
-#message_indicator_0 {
-    float: left;
-    background: url(../images/messages_count_bg_zero.png) no-repeat left;
-    color: #FFF;
-    margin: 10px 0 0 5px;
-    line-height: 15px;
-    font-size: 10px;
-    padding-left: 5px;
-    padding-right: 5px;
 }
 
 #messages_count div {
@@ -2886,6 +2874,26 @@ ul.messages {
 
 .forum_search_result {
 	margin-bottom: 20px;
+}
+	
+.advanced_forum_search_options{
+	font-size:10px;
+    line-height:30px;
+}
+
+.advanced_forum_search_options .input_date_field {
+    width: 70px;
+    height: 10px;
+    font-size: 10px;
+}
+
+
+.forum_search_button {
+	font-size:10px;
+	color:red;
+}
+
+
 /* Wiki pages
 ------------------------------------------------------*/
 

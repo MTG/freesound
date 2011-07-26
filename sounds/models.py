@@ -16,6 +16,9 @@ from utils.filesystem import delete_object_files
 from django.db import connection, transaction
 from search.views import get_pack_tags
 from django.db.models import Count
+from django.db.models.signals import post_delete
+from django.contrib.contenttypes import generic
+from similarity.client import Similarity
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -303,12 +306,12 @@ class Sound(SocialModel):
 
     def delete(self):
         # remove from solr
-        delete_sound_from_solr(self)
+        #delete_sound_from_solr(self)
         # delete foreignkeys
-        if self.geotag:
-            self.geotag.delete()
+        #if self.geotag:
+        #    self.geotag.delete()
         # delete files
-        delete_object_files(self, web_logger)
+        #delete_object_files(self, web_logger)
         # super class delete
         super(Sound, self).delete()
 
@@ -354,6 +357,15 @@ class Sound(SocialModel):
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
+
+def delete_from_external_indexes(sender,instance, **kwargs):
+        if instance.geotag:
+            instance.geotag.delete()
+        delete_sound_from_solr(instance)
+        Similarity.delete(instance.id)
+        delete_object_files(instance, web_logger)
+post_delete.connect(delete_from_external_indexes, sender=Sound)
+
 
 class Pack(SocialModel):
     user = models.ForeignKey(User)

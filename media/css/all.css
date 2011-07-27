@@ -1087,7 +1087,7 @@ ul.tags {
 }
 
 #share_links {
-    padding: 10px 25px;
+    padding: 10px 15px;
     border-top: solid 1px #D2D2D2;
     background: #fff url(../images/single_sample_links_bg.png) no-repeat top;
 }
@@ -1102,7 +1102,7 @@ ul.tags {
     color: #2C74C9;
     float: left;
     display: block;
-    margin-left: 10px;
+    margin-left: 0;
 }
 
 #share_links #show_button:hover {

@@ -19,14 +19,14 @@
 {% else %}
 	{% if results %}
 		<div class="search_paginator">
-	    {% show_paginator paginator page current_page request %}
+	    {% show_paginator paginator page current_page request "post" %}
 	    </div>
 	
-	    <p>
+	    
 	    {% display_forum_result results.docs results.highlighting %}
-		</p>
+		
 	    <div class="search_paginator">
-	    {% show_paginator paginator page current_page request %}
+	    {% show_paginator paginator page current_page request "post" %}
 	    </div>
 	{% else %}
             <p>Search returned no results...</p>

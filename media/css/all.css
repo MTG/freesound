@@ -2902,10 +2902,38 @@ ul.messages {
     font-size: 12px;
     line-height: 18px;
     margin-bottom: 18px;
+    padding:16px;
+	background-color:#F9F9F9;
+	border-radius: 6px;
+	border: 1px solid #F0EEF1;
+	margin: 10px 0px 10px 25px;
 }
 
-.forum_search_result {
-	margin-bottom: 20px;
+.forum_search_result {	
+	padding:16px;
+	/*background-color:#F9F9F9;
+	border-radius: 6px;
+	border: 1px solid #F0EEF1;; */
+	border-bottom: solid 1px #E4E4E4;
+}
+
+.thread_info{
+	font-size: 10px; 
+	color: #9E9E9E; 
+	float:right;
+}
+
+.thread_title{
+	background: url(../images/forum_nonew.png) no-repeat top left;
+	padding-left: 28px;
+	font-size: 14px;
+    font-weight: normal;
+    font-weight: bold;
+    color: #CC4040;
+}
+
+.thread_title:hover {
+    color: #9C3131;
 }
 	
 .advanced_forum_search_options{

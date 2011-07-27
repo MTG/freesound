@@ -14,12 +14,14 @@
 {% endif %}
 
 {% if not pack.is_dirty %}
-<div id="single_pack_sidebar">
-<div id="download">
-    <a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
-    <div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
-</div>
-</div>
+	{% if num_sounds_ok > 0 %}
+		<div id="single_pack_sidebar">
+		<div id="download">
+		    <a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
+		    <div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
+		</div>
+		</div>
+	{% endif %}
 {% endif %}
 
 

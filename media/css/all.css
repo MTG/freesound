@@ -733,6 +733,7 @@ h3.header,
 
 .sample_player_small .sound_description {
     float: left;
+    width: 295px;
 }
 
 .sample_player_small .description {

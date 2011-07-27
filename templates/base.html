@@ -40,7 +40,7 @@ Everything you do here is temporary! Send bugs/feedback to fs2@freesound.org" />
                 {% if request.user.is_authenticated %}
                     {% cache 3600 user_header request.user.id %}
                     <div id="account_user"><img src="{{media_url}}images/user_icon.png" alt="user icon" />{{request.user.username}}</div>
-                    <a href="{% url messages %}">Messages</a><div id="messages_count"><div>{% unread_message_count request.user %}</div></div>
+                    <a href="{% url messages %}">Messages</a><div class="messages_count" id="message_indicator_{% unread_message_count request.user %}"><div>{% unread_message_count request.user %}</div></div>
                     <a href="{% url accounts-edit %}">Settings</a>
                     <a href="{% url accounts-logout %}?next=/">Log Out</a>
                     {% endcache %}

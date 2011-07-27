@@ -63,8 +63,8 @@ def get_random_uploader():
 def sounds(request):
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, use_interval=False)
-    latest_packs = Pack.objects.annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
-
+    latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
+    
     # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
     popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
 
@@ -440,6 +440,16 @@ def pack(request, username, pack_id):
     except Pack.DoesNotExist:
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
+    num_sounds_ok = len(qs)
+    
+    if num_sounds_ok == 0 and pack.num_sounds != 0:
+        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
+    else :
+        if num_sounds_ok < pack.num_sounds :
+            messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
+    
+    
+    
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
 

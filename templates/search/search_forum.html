@@ -28,7 +28,10 @@
 	    <div class="search_paginator">
 	    {% show_paginator paginator page current_page request %}
 	    </div>
+	{% else %}
+            <p>Search returned no results...</p>
 	{% endif %}	
+	
 {% endif %}
 
 {% endblock %}

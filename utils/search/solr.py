@@ -365,7 +365,7 @@ class SolrJsonResponseDecoder(BaseSolrResponseDecoder):
 
     def decode(self, response_object):
         #return self._decode_dates(json.load(response_object))
-        return self._decode_dates(cjson.decode(response_object.read())) #@UndefinedVariable
+        return self._decode_dates(cjson.decode(unicode(response_object.read(),'utf-8'))) #@UndefinedVariable
 
     def _decode_dates(self, d):
         """Recursively decode date strings to datetime objects.
@@ -432,12 +432,12 @@ class Solr(object):
 
         if response.status != 200:
             raise SolrException, response.reason
-
+        
         return response
 
     def select(self, query_string, raw=False):
         if raw:
-            return self._request(query_string=query_string).read()
+            return unicode(self._request(query_string=query_string).read())
         else:
             return self.decoder.decode(self._request(query_string=query_string))
 

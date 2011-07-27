@@ -7,23 +7,6 @@ soundManager.preferFlash = true;
 //if you have a stricter test than 'maybe' SM will switch back to flash.
 soundManager.html5Test = /^maybe$/i
 
-if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function(elt /*, from*/) {
-        var len = this.length >>> 0;
-        var from = Number(arguments[1]) || 0;
-        from = (from < 0) ? Math.ceil(from) : Math.floor(from);
-        if (from < 0)
-            from += len;
-
-        for (; from < len; from++) {
-            if (from in this && this[from] === elt)
-                return from;
-        }
-        return -1;
-    };
-}
-
-
 function msToTime(position, durationEstimate, displayRemainingTime, showMs) {
     if (displayRemainingTime)
         position = durationEstimate - position;
@@ -103,7 +86,9 @@ function getPlayerPosition(element) {
 
 function stopAll(exclude) {
     ids = soundManager.soundIDs;
-    if (exclude) ids = ids.splice(ids.indexOf(exclude), 1);
+    ids = jQuery.grep(ids, function(value) {
+        return value != exclude.sID;
+    });
     switchOff($(".player .play"));
     for(var i=0; i<ids.length; i++) {
         soundManager.pause(ids[i]);
@@ -228,8 +213,6 @@ function makePlayer(selector) {
         });
 
         $(".play", this).bind("toggle", function (event, on) {
-            // To stop all sounds when a new sound is started uncomment the next line.
-            //stopAll();
             if (on) {
                 switchOn($(".play", playerElement));
                 sound.play();
@@ -269,22 +252,39 @@ function makePlayer(selector) {
                 $(".measure-readout-container", playerElement).stop().fadeTo(100, 0);
         });
 
+        var clicks = 0;
         $(".background", this).click(function(event) {
-            stopAll();
             event.stopPropagation();
-            pos = getMousePosition(event, $(this));
-            if (pos[0] < 20) {
-                sound.stop()
-            } else {
-                sound.setPosition(sound.duration * pos[0] / $(this).width());
-            }
+            var evt = event;
+            var elem = $(this);
+            clicks++;
+            setTimeout(function() {
+                if(clicks == 1) {
+                    pos = getMousePosition(evt, elem);
+                    if (pos[0] < 20) {
+                        sound.stop()
+                    } else {
+                        sound.setPosition(sound.duration * pos[0] / elem.width());
+                    }
+                    switchOn($(".play", playerElement));
+                    if (!sound.playState){
+                        sound.play();
+                    } else if (sound.paused)
+                        sound.resume();
+                    mouseDown = 0;
+                }
+                clicks = 0;
+            }, 300);
+        });
+
+        $(".background", this).bind('dblclick', function (event) {
+            // Stop all sounds if the right mouse button was used
+            stopAll(sound);
             switchOn($(".play", playerElement));
             if (!sound.playState){
                 sound.play();
             } else if (sound.paused)
                 sound.resume();
-            mouseDown = 0;
-
         });
 
         $(".time-indicator-container", this).click(function(event) {

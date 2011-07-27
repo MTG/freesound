@@ -2243,7 +2243,7 @@ p.about {
 }
 
 #unprocessed_sounds li {
-    padding: 5px;
+    padding: 4px;
 }
 
 #unprocessed_sounds .failed{
@@ -2279,7 +2279,6 @@ p.about {
 }
 
 #unmoderated_packs li {
-    padding: 5px;
     font-size: 10px;
 }
 

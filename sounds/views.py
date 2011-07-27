@@ -440,7 +440,7 @@ def pack(request, username, pack_id):
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
     num_sounds_ok = len(qs)
     
-    if num_sounds_ok == 0:
+    if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
         if num_sounds_ok < pack.num_sounds :

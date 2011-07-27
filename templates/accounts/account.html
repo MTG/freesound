@@ -23,6 +23,7 @@
         <h1>Home</h1>
 
         <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
+        <div class="account_information_and_home_options">
         <ul>
             <li><a href="{% url account user.username %}">View</a> your public profile</li>
             <li><a href="{% url accounts-edit %}">Edit</a> your public profile</li>
@@ -32,10 +33,13 @@
             <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} sounds, {{ new_support }} support requests</li>
             {% endif %}
         </ul>
+        </div>
+        <br>
     {% else %}
         <h1>{{user.username}}</h1>
 
         <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
+        <div class="account_information_and_home_options">
         <ul>
             <li><a href="{% url messages-new user.username %}">Send a private message to this user</a></li>
             {% if user.profile.home_page %}
@@ -48,13 +52,13 @@
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
             
         </ul>
-
+		</div>
         {% if user.profile.about %}
             <p class="about">
                 {{user.profile.about|safe|linebreaksbr }}
             </p>
         {% endif %}
-
+		<br>
     {% endif %}
 
 <div id="content">

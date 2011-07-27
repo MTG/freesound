@@ -2238,6 +2238,11 @@ p.about {
     margin-bottom: 30px;
 }
 
+.account_information_and_home_options{
+	float:left;
+	display:inline;
+}
+
 #unprocessed_sounds {
 	font-size: 10px;
 }

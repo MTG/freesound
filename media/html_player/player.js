@@ -228,7 +228,8 @@ function makePlayer(selector) {
         });
 
         $(".play", this).bind("toggle", function (event, on) {
-            stopAll();
+            // To stop all sounds when a new sound is started uncomment the next line.
+            //stopAll();
             if (on) {
                 switchOn($(".play", playerElement));
                 sound.play();

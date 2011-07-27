@@ -19,7 +19,7 @@
 	}
 	function hideAdvancedForumSearch() {
 		$("#advanced_search").val(0);
-		$("#advanced_forum_search").show('blind', {}, 500, function() {});
+		$("#advanced_forum_search").hide('blind', {}, 500, function() {});
 		$("#enableShowButton").show();
 	}
 	$(function(){
@@ -44,11 +44,11 @@
 
 <div id="breadcrumb">
 <a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
-<a id="show_search" style="display:none;float:right" onclick="showSearch()" >search forum</a>
+<a id="show_search" style="display:none;" onclick="showSearch()" ><span class="forum_search_button">search in the forum</span></a>
 </div>
 
 {% block forum_search %}
-<div {% if forum or forums %}style="display:none"{% endif %} id="forum_search">
+<div {% if forum or forums %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
 	<form method="get" action="{% url forums-search %}">
 	<input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
 	<input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
@@ -58,12 +58,13 @@
             <input type="submit" value="search!" id="search_submit" />
             <div id="advanced_forum_search" style="display:none" >
             	<label for="date_from_forum_search">From Date:</label>
-				<input type="text" value="Choose a Date" id="date_from_forum_search" />
+				<input class="input_date_field" type="text" value="Choose a Date" id="date_from_forum_search" />
 				<input type="hidden" value="" name="dt_from" id="dt_from" />
 				<label for="date_to_forum_search">To Date:</label>
-				<input type="text" value="Choose a Date" id="date_to_forum_search" />
+				<input class="input_date_field"  type="text" value="Choose a Date" id="date_to_forum_search" />
 				<input type="hidden" value="" name="dt_to" id="dt_to" />
 				
+				<br>
 				<span class="advanced_search_options_button"><a onclick='hideAdvancedForumSearch();'>hide advanced search options</a></span>
 			</div>		
 				{% if advanced_search == "1" %}
@@ -71,7 +72,6 @@
 				{% else %}
 				    <span id="enableShowButton" class="advanced_search_options_button">
 				{% endif %}
-				
 				
 				<div style="margin-top:4px;"></div>
 				<a onclick='showAdvancedForumSearch();'>show advanced search options</a>

@@ -22,7 +22,10 @@ class Command(NoArgsCommand):
         for sound_id in xrange(max_sound_id+1):
 
             changed = False
-            sound = Sound.objects.get(id=sound_id)
+            try:
+                sound = Sound.objects.get(id=sound_id)
+            except Sound.DoesNotExist:
+                continue
 
             # check some random paths
             if sound.processing_state != 'OK' and \

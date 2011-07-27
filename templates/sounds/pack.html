@@ -38,13 +38,19 @@
     See <a href="{% url packs-for-user pack.user.username %}">more packs</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
 </p>
 
+{% if pack.num_sounds > 0 %}
+	{% show_paginator paginator page current_page request "sound" %}
+	
+	{% for sound in page.object_list %}
+    	{% display_sound sound %}
+	{% endfor %}
+	
+	{% show_paginator paginator page current_page request "sound" %}
 
-{% show_paginator paginator page current_page request "sound" %}
+{% else %}
+	<p>This pack does not contain any sound.</p>
+{% endif %}
 
-{% for sound in page.object_list %}
-    {% display_sound sound %}
-{% endfor %}
 
-{% show_paginator paginator page current_page request "sound" %}
 
 {% endblock %}

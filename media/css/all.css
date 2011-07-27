@@ -2274,6 +2274,23 @@ p.about {
 	color: gray;
 }
 
+#unmoderated_packs {
+	font-size: 10px;
+}
+
+#unmoderated_packs li {
+    padding: 5px;
+    font-size: 10px;
+}
+
+#unmoderated_packs .packname{
+	font-weight: bold;
+}
+
+#unmoderated_packs .date{
+	color: gray;
+}
+
 /* People page
 ------------------------------------------------------*/
 

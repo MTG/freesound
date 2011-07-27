@@ -1088,7 +1088,7 @@ ul.tags {
 }
 
 #share_links {
-    padding: 10px 25px;
+    padding: 10px 15px;
     border-top: solid 1px #D2D2D2;
     background: #fff url(../images/single_sample_links_bg.png) no-repeat top;
 }
@@ -1103,7 +1103,7 @@ ul.tags {
     color: #2C74C9;
     float: left;
     display: block;
-    margin-left: 10px;
+    margin-left: 0;
 }
 
 #share_links #show_button:hover {
@@ -2240,7 +2240,7 @@ p.about {
 }
 
 #unprocessed_sounds {
-	font-size: 10px;
+    font-size: 10px;
 }
 
 #unprocessed_sounds li {
@@ -2248,31 +2248,31 @@ p.about {
 }
 
 #unprocessed_sounds .failed{
-	color: red;
-	font-weight: bold;
+    color: red;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .processing{
-	color: green;
-	font-weight: bold;
+    color: green;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .pending{
-	color: orange;
-	font-weight: bold;
+    color: orange;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .queued{
-	color: orange;
-	font-weight: bold;
+    color: orange;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .filename{
-	font-weight: bold;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .date{
-	color: gray;
+    color: gray;
 }
 
 #unmoderated_packs {
@@ -2901,11 +2901,11 @@ ul.messages {
 }
 
 .forum_search_result {
-	margin-bottom: 20px;
+    margin-bottom: 20px;
 }
-	
+
 .advanced_forum_search_options{
-	font-size:10px;
+    font-size:10px;
     line-height:30px;
 }
 
@@ -2917,8 +2917,8 @@ ul.messages {
 
 
 .forum_search_button {
-	background: url(../images/search_in_forum.png);
-	width: 160px;
+    background: url(../images/search_in_forum.png);
+    width: 160px;
     height: 31px;
     display: block;
     text-indent: -9999px;
@@ -2928,7 +2928,7 @@ ul.messages {
 }
 
 .ui-datepicker{
-	font-size:10px;
+    font-size:10px;
 }
 
 /* Wiki pages
@@ -2953,6 +2953,19 @@ ul.messages {
 }
 
 
+
+#moderation_guide img {
+    margin: 20px 0 10px 50px;
+    padding: 1px;
+    border: 1px solid #ccc;
+}
+
+
+#player_controls {
+    margin-left: 40px;
+}
+
+
 /*
  * jQuery UI Datepicker 1.8.14
  *
@@ -2974,7 +2987,7 @@ ul.messages {
 .ui-datepicker .ui-datepicker-title { margin: 0 2.3em; line-height: 1.8em; text-align: center; }
 .ui-datepicker .ui-datepicker-title select { font-size:1em; margin:1px 0;}
 .ui-datepicker select.ui-datepicker-month-year {width: 100%;}
-.ui-datepicker select.ui-datepicker-month, 
+.ui-datepicker select.ui-datepicker-month,
 .ui-datepicker select.ui-datepicker-year { width: 49%;}
 .ui-datepicker table {width: 100%; font-size: .9em; border-collapse: collapse; margin:0 0 .4em; }
 .ui-datepicker th { padding: .7em .3em; text-align: center; font-weight: bold; border: 1; font-size:10px; }

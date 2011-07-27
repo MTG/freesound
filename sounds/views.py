@@ -118,10 +118,12 @@ LIMIT 10
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
     pledgie_campaign = settings.PLEDGIE_CAMPAIGN
-    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids()).select_related('author',
-                                                                                                  'thread',
-                                                                                                  'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
-                                                                                                  'forum', 'forum__name_slug')
+    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids()) \
+                                          .order_by('-last_post__created') \
+                                          .select_related('author',
+                                                          'thread',
+                                                          'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
+                                                          'forum', 'forum__name_slug')
     latest_additions = Sound.objects.latest_additions(5, use_interval=False)
     random_sound = get_random_sound()
     return render_to_response('index.html', locals(), context_instance=RequestContext(request))

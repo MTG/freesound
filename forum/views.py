@@ -132,7 +132,7 @@ def new_thread(request, forum_name_slug):
             thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
             post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
             add_post_to_solr(post)
-            
+
             if form.cleaned_data["subscribe"]:
                 Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
 
@@ -156,12 +156,12 @@ def old_topic_link_redirect(request):
     if post_id:
         post = get_object_or_404(Post, id=post_id)
         return HttpResponsePermanentRedirect(reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
-    
+
     thread_id = request.GET.get("t")
     if thread_id:
         thread = get_object_or_404(Thread, id=thread_id)
         return HttpResponsePermanentRedirect(reverse('forums-thread', args=[thread.forum.name_slug, thread.id]))
-    
+
     raise Http404
 @login_required
 def post_delete(request, post_id):
@@ -180,7 +180,10 @@ def post_delete_confirm(request, post_id):
     if post.author == request.user or request.user.has_perm('forum.delete_post'):
         thread = post.thread
         post.delete()
-        return HttpResponseRedirect(reverse('forums-post', args=[thread.forum.name_slug, thread.id, thread.last_post.id]))
+        try:
+            return HttpResponseRedirect(reverse('forums-post', args=[thread.forum.name_slug, thread.id, thread.last_post.id]))
+        except (Post.DoesNotExist, Thread.DoesNotExist, AttributeError), e:
+            return HttpResponseRedirect(reverse('forums-forums'))
     else:
         raise Http404
 

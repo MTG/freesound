@@ -55,7 +55,30 @@
 
     });
     
-    // Parse url parameters
+    function checkEmptyDates()
+	{
+		if ( $("#date_from_forum_search").val() == "" ){
+			$("#dt_from").val("")
+		}
+		
+		if ( $("#date_to_forum_search").val() == "" ){
+			$("#dt_to").val("")
+		}
+	}
+	
+	function clearDate(date)
+	{
+		if (date == 0){
+			$("#date_from_forum_search").val("Choose a Date")
+			$("#dt_from").val("")
+		}
+		else if (date==1){
+			$("#date_to_forum_search").val("Choose a Date")		
+			$("#dt_to").val("")
+		}
+	}    
+    
+    // Util to parse url parameters
     function gup( name )
 	{
 	  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
@@ -87,7 +110,7 @@
 
 {% block forum_search %}
 <div {% if forum or forums %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
-    <form method="get" action="{% url forums-search %}" >
+    <form method="get" action="{% url forums-search %}" onsubmit="checkEmptyDates()">
     <input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
     <input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
 
@@ -112,12 +135,12 @@
                 <label for="date_from_forum_search">From Date:</label>
                 <input class="input_date_field" type="text" value="Choose a Date" id="date_from_forum_search" />
                 <input type="hidden" value="" name="dt_from" id="dt_from" />
-
+				<a onclick='clearDate(0);'>clear</a>
 
                 <label for="date_to_forum_search">To Date:</label>
                 <input class="input_date_field"  type="text" value="Choose a Date" id="date_to_forum_search" />
                 <input type="hidden" value="" name="dt_to" id="dt_to" />
-
+				<a onclick='clearDate(1);'>clear</a>
                 <br>
                 <span class="advanced_search_options_button"><a onclick='hideAdvancedForumSearch();'>hide advanced search options</a></span>
             </div>

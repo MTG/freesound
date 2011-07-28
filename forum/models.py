@@ -5,6 +5,7 @@ from django.utils.encoding import smart_unicode
 from general.models import OrderedModel
 from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
+from utils.cache import invalidate_template_cache
 import logging
 
 logger = logging.getLogger('web')
@@ -116,6 +117,7 @@ def update_last_post_on_post_delete(**kwargs):
         # to update the thread, but it would be nice to get to the forum object
         # somehow and update that one....
         logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
+    invalidate_template_cache('latest_posts')
 
 
 class Subscription(models.Model):

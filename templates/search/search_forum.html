@@ -14,10 +14,11 @@
 
 {% block section_content %}
 
+<br style="padding-top:10px">
 {% if error %}
     {{ error_text }}
 {% else %}
-	{% if results %}
+	{% if paginator.count > 0 %}
 		<div class="search_paginator">
 	    {% show_paginator paginator page current_page request "post" %}
 	    </div>
@@ -25,11 +26,12 @@
 	    
 	    {% display_forum_result results.docs results.highlighting %}
 		
+		<br style="padding-top:10px">
 	    <div class="search_paginator">
 	    {% show_paginator paginator page current_page request "post" %}
 	    </div>
 	{% else %}
-            <p>Search returned no results...</p>
+        <p>Search returned no results...</p>
 	{% endif %}	
 	
 {% endif %}

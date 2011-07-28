@@ -2994,7 +2994,15 @@ ul.messages {
  *
  * http://docs.jquery.com/UI/Datepicker#theming
  */
-.ui-datepicker { width: 19em; padding: .2em .2em 0; display: none; font-size:11px;  background-color:#CCCCCC; }
+.ui-datepicker { 
+				width: 19em; 
+				padding: .2em .2em 0; 
+				display: none; 
+				font-size:11px;  
+				background-color:#E9E9E9;
+				border-radius: 6px;
+				border: 1px solid #E0DEE1;
+			   }
 .ui-datepicker .ui-datepicker-header { position:relative; padding:.2em 0;}
 .ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next { position:absolute; top: 2px; width: 1.8em; height: 1.8em; }
 .ui-datepicker .ui-datepicker-prev-hover, .ui-datepicker .ui-datepicker-next-hover { top: 1px; }
@@ -3012,6 +3020,7 @@ ul.messages {
 .ui-datepicker th { padding: .7em .3em; text-align: center; font-weight: bold; border: 1; font-size:10px; }
 .ui-datepicker td { border: 1; padding: 1px; }
 .ui-datepicker td span, .ui-datepicker td a { display: block; padding: .2em; text-align: right; text-decoration: none; }
+.ui-datepicker td span, .ui-datepicker td a:hover{ display: block; padding: .2em; text-align: right; text-decoration: none; background-color:#E9E9E9; }
 .ui-datepicker .ui-datepicker-buttonpane { background-image: none; margin: .7em 0 0 0; padding:0 .2em; border-left: 0; border-right: 0; border-bottom: 0; }
 .ui-datepicker .ui-datepicker-buttonpane button { float: right; margin: .5em .2em .4em; cursor: pointer; padding: .2em .6em .3em .6em; width:auto; overflow:visible; }
 .ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current { float:left; }

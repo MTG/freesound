@@ -20,15 +20,14 @@
 {% else %}
     {% if paginator.count > 0 %}
         <div class="search_paginator">
-        {% show_paginator paginator page current_page request "post" %}
+        {% show_paginator paginator page current_page request "thread" %}
         </div>
-
 
         {% display_forum_result results.docs results.highlighting %}
 
         <br style="padding-top:10px">
         <div class="search_paginator">
-        {% show_paginator paginator page current_page request "post" %}
+        {% show_paginator paginator page current_page request "thread" %}
         </div>
     {% else %}
         <p>Search returned no results...</p>

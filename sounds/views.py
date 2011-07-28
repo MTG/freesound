@@ -187,11 +187,15 @@ def sound_download(request, username, sound_id):
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
-@login_required
+
 def pack_download(request, username, pack_id):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+                                                    reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
     return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
+
 
 @login_required
 def sound_edit(request, username, sound_id):

@@ -1,40 +1,43 @@
 {% extends "base.html" %}
 
 {% block head %}
-	{{ block.super }}
-		
-<script type="text/javascript">	
-	$(document).ready(function(){
-		if ($("#forum_search").length) {
-			$("#show_search").show();
-		}
-	});
-	function showSearch() {
-		$("#forum_search").toggle("medium");
-	}
-	function showAdvancedForumSearch() {
-		$("#advanced_search").val(1);
-		$("#enableShowButton").hide();
-		$("#advanced_forum_search").show('blind', {}, 500, function() {});
-	}
-	function hideAdvancedForumSearch() {
-		$("#advanced_search").val(0);
-		$("#advanced_forum_search").hide('blind', {}, 500, function() {});
-		$("#enableShowButton").show();
-	}
-	
-	$(function(){
-		$("#date_from_forum_search").datepicker({ 
-												dateFormat: 'dd-mm-yy', 
-												altField: "#dt_from",
-												altFormat: "yy-mm-dd"
-												});
-		$("#date_to_forum_search").datepicker({ 
-											  dateFormat: 'dd-mm-yy', 
-											  altField: "#dt_to",
-											  altFormat: "yy-mm-dd"
-											  })
-	});
+    {{ block.super }}
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        if ($("#forum_search").length) {
+            $("#show_search").show();
+        }
+    });
+    function showSearch() {
+        $("#forum_search").toggle("medium");
+    }
+    function showAdvancedForumSearch() {
+        $("#advanced_search").val(1);
+        $("#enableShowButton").hide();
+        $("#advanced_forum_search").show('blind', {}, 500, function() {});
+    }
+    function hideAdvancedForumSearch() {
+        $("#advanced_search").val(0);
+        $("#advanced_forum_search").hide('blind', {}, 500, function() {});
+        $("#enableShowButton").show();
+    }
+
+    $(function(){
+        $("#date_from_forum_search").datepicker({
+                                                dateFormat: 'dd-mm-yy',
+                                                altField: "#dt_from",
+                                                altFormat: "yy-mm-dd"
+                                                });
+        $("#date_to_forum_search").datepicker({
+                                              dateFormat: 'dd-mm-yy',
+                                              altField: "#dt_to",
+                                              altFormat: "yy-mm-dd"
+                                              })
+
+        $("#forum_search input[name=q]").Watermark("search in {% if forum %}forum '{{forum.name}}'{% else %}all forums{% endif %}");
+
+    });
 </script>
 {% endblock head %}
 
@@ -50,60 +53,56 @@
 
 {% block forum_search %}
 <div {% if forum or forums %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
-	<form method="get" action="{% url forums-search %}">
-	<input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
-	<input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
-	
-	{% if advanced_search == "1" %}
-		<input type="hidden" name="advanced_search" id="advanced_search" value="1"/>
-	{% else %}
-		<input type="hidden" name="advanced_search" id="advanced_search" value="0"/>
-	{% endif %}
-	
-    	<fieldset>
-        	{% if request.GET.q %}
-        		<input type="text" name="q" value="{{request.GET.q}}" size="30" />
-        	{% else %}
-        		<input type="text" name="q" value="" size="30" />
-        	{% endif %}
-        	
+    <form method="get" action="{% url forums-search %}">
+    <input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
+    <input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
+
+        <input type="hidden"
+               name="advanced_search"
+               id="advanced_search"
+               value="{% if advanced_search == '1' %}1{% else %}0{% endif %}"/>
+
+        <fieldset>
+
+            <input type="text"
+                   name="q"
+                   value="{% if request.GET.q %}{{request.GET.q}}{% endif %}"
+                   size="60" />
+
             <input type="submit" value="search!" id="search_submit" />
-            
-            {% if advanced_search == "1" %}
-				<div id="advanced_forum_search" >
-			{% else %}
-				<div id="advanced_forum_search" style="display:none" >
-			{% endif %}
-            	
-            	<label for="date_from_forum_search">From Date:</label>
-				<input class="input_date_field" type="text" value="Choose a Date" id="date_from_forum_search" />
-				<input type="hidden" value="" name="dt_from" id="dt_from" />
-				
-				
-				<label for="date_to_forum_search">To Date:</label>
-				<input class="input_date_field"  type="text" value="Choose a Date" id="date_to_forum_search" />
-				<input type="hidden" value="" name="dt_to" id="dt_to" />
-				
-				<br>
-				<span class="advanced_search_options_button"><a onclick='hideAdvancedForumSearch();'>hide advanced search options</a></span>
-			</div>	
-					
-				{% if advanced_search == "1" %}
-				    <span id="enableShowButton" style="display:none" class="advanced_search_options_button">
-				{% else %}
-				    <span id="enableShowButton" class="advanced_search_options_button">
-				{% endif %}
-				<div style="margin-top:4px;"></div>
-				<a onclick='showAdvancedForumSearch();'>show advanced search options</a>
-				</span>
-				
-		</fieldset>
-	</form>
+
+            <div id="advanced_forum_search"{% if advanced_search != "1" %} style="display:none"{% endif %}>
+
+
+                <label for="date_from_forum_search">From Date:</label>
+                <input class="input_date_field" type="text" value="Choose a Date" id="date_from_forum_search" />
+                <input type="hidden" value="" name="dt_from" id="dt_from" />
+
+
+                <label for="date_to_forum_search">To Date:</label>
+                <input class="input_date_field"  type="text" value="Choose a Date" id="date_to_forum_search" />
+                <input type="hidden" value="" name="dt_to" id="dt_to" />
+
+                <br>
+                <span class="advanced_search_options_button"><a onclick='hideAdvancedForumSearch();'>hide advanced search options</a></span>
+            </div>
+
+
+            <span id="enableShowButton"
+                  class="advanced_search_options_button"
+                  {% if advanced_search == "1" %}style="display:none"{% endif%}>
+
+                <div style="margin-top:4px;"></div>
+                <a onclick='showAdvancedForumSearch();'>show advanced search options</a>
+            </span>
+
+        </fieldset>
+    </form>
 </div>
 {% endblock %}
 
 <div id="advanced_forum_search" {% if forum or forums %}style="display:none"{% endif %} >
-	
+
 </div>
 
 

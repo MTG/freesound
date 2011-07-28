@@ -7,33 +7,33 @@
 {% block title %}Forum Search{% endblock title %}
 
 {% block breadcrumb %}
-	{% if current_forum_name_slug and current_forum_name_slug.strip %}
-		&#187; <a href="{% url forums-forum current_forum_name_slug %}">{{current_forum_name}}</a>
-	{% endif %}
+    {% if current_forum_name_slug and current_forum_name_slug.strip %}
+        &#187; <a href="{% url forums-forum current_forum_name_slug %}">{{current_forum_name}}</a>
+    {% endif %}
 {%  endblock %}
 
 {% block section_content %}
 
 <br style="padding-top:10px">
 {% if error %}
-    {{ error_text }}
+    <p>{{ error_text }}</p>
 {% else %}
-	{% if paginator.count > 0 %}
-		<div class="search_paginator">
-	    {% show_paginator paginator page current_page request "post" %}
-	    </div>
-	
-	    
-	    {% display_forum_result results.docs results.highlighting %}
-		
-		<br style="padding-top:10px">
-	    <div class="search_paginator">
-	    {% show_paginator paginator page current_page request "post" %}
-	    </div>
-	{% else %}
+    {% if paginator.count > 0 %}
+        <div class="search_paginator">
+        {% show_paginator paginator page current_page request "post" %}
+        </div>
+
+
+        {% display_forum_result results.docs results.highlighting %}
+
+        <br style="padding-top:10px">
+        <div class="search_paginator">
+        {% show_paginator paginator page current_page request "post" %}
+        </div>
+    {% else %}
         <p>Search returned no results...</p>
-	{% endif %}	
-	
+    {% endif %}
+
 {% endif %}
 
 {% endblock %}

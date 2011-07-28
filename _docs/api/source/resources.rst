@@ -150,11 +150,11 @@ rating_asc      Same as above, but lowest rated sounds first.
 ::
 
   # Get the third page with the query 'dogs', with the most downloaded sounds first.
-  curl http://tabasco.upf.edu/api/sounds/search?p=3&q=dogs&s=downloads_desc
+  curl http://beta.freesound.org/api/sounds/search?p=3&q=dogs&s=downloads_desc
   # Get the most recent uploaded sounds with the tag 'synth' and querying for 'bass'
-  curl http://tabasco.upf.edu/api/sounds/search?q=bass&f=tag:synth&s=created_desc
+  curl http://beta.freesound.org/api/sounds/search?q=bass&f=tag:synth&s=created_desc
   # Get short kick sounds
-  curl http://tabasco.upf.edu/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]
+  curl http://beta.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]
 
 
 .. _sound-search-response:
@@ -184,9 +184,9 @@ __ sound-get-response_
     "num_results": 810, 
     "sounds": [
         {
-            "analysis_stats": "http://tabasco.upf.edu/api/sounds/116841/analysis", 
-            "analysis_frames": "http://tabasco.upf.edu/data/analysis/116/116841_854810_frames.json", 
-            "waveform_m": "http://tabasco.upf.edu/data/displays/116/116841_854810_wave_M.png", 
+            "analysis_stats": "http://beta.freesound.org/api/sounds/116841/analysis", 
+            "analysis_frames": "http://beta.freesound.org/data/analysis/116/116841_854810_frames.json", 
+            "waveform_m": "http://beta.freesound.org/data/displays/116/116841_854810_wave_M.png", 
             "type": "wav", 
             "original_filename": "falling metal 3 - 20.3.11.wav", 
             "tags": [
@@ -207,31 +207,31 @@ __ sound-get-response_
                 "horn", 
                 "shouting"
             ], 
-            "url": "http://tabasco.upf.edu/people/toiletrolltube/sounds/116841/", 
-            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/116/116841_854810-hq.ogg", 
-            "serve": "http://tabasco.upf.edu/api/sounds/116841/serve", 
-            "similarity": "http://tabasco.upf.edu/api/sounds/116841/similar", 
-            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/116/116841_854810-lq.ogg", 
-            "spectral_m": "http://tabasco.upf.edu/data/displays/116/116841_854810_spec_M.jpg", 
-            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/116/116841_854810-lq.mp3", 
+            "url": "http://beta.freesound.org/people/toiletrolltube/sounds/116841/", 
+            "preview-hq-ogg": "http://beta.freesound.org/data/previews/116/116841_854810-hq.ogg", 
+            "serve": "http://beta.freesound.org/api/sounds/116841/serve", 
+            "similarity": "http://beta.freesound.org/api/sounds/116841/similar", 
+            "preview-lq-ogg": "http://beta.freesound.org/data/previews/116/116841_854810-lq.ogg", 
+            "spectral_m": "http://beta.freesound.org/data/displays/116/116841_854810_spec_M.jpg", 
+            "preview-lq-mp3": "http://beta.freesound.org/data/previews/116/116841_854810-lq.mp3", 
             "user": {
                 "username": "toiletrolltube", 
-                "url": "http://tabasco.upf.edu/people/toiletrolltube/", 
-                "ref": "http://tabasco.upf.edu/api/people/toiletrolltube"
+                "url": "http://beta.freesound.org/people/toiletrolltube/", 
+                "ref": "http://beta.freesound.org/api/people/toiletrolltube"
             }, 
-            "spectral_l": "http://tabasco.upf.edu/data/displays/116/116841_854810_spec_L.jpg", 
+            "spectral_l": "http://beta.freesound.org/data/displays/116/116841_854810_spec_L.jpg", 
             "duration": 5.6986699999999999, 
-            "waveform_l": "http://tabasco.upf.edu/data/displays/116/116841_854810_wave_L.png", 
-            "ref": "http://tabasco.upf.edu/api/sounds/116841", 
+            "waveform_l": "http://beta.freesound.org/data/displays/116/116841_854810_wave_L.png", 
+            "ref": "http://beta.freesound.org/api/sounds/116841", 
             "id": 116841, 
-            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/116/116841_854810-hq.mp3", 
-            "pack": "http://tabasco.upf.edu/api/packs/7333"
+            "preview-hq-mp3": "http://beta.freesound.org/data/previews/116/116841_854810-hq.mp3", 
+            "pack": "http://beta.freesound.org/api/packs/7333"
         },
         [...more sounds...]
         {
-            "analysis_stats": "http://tabasco.upf.edu/api/sounds/113785/analysis", 
-            "analysis_frames": "http://tabasco.upf.edu/data/analysis/113/113785_1956076_frames.json", 
-            "waveform_m": "http://tabasco.upf.edu/data/displays/113/113785_1956076_wave_M.png", 
+            "analysis_stats": "http://beta.freesound.org/api/sounds/113785/analysis", 
+            "analysis_frames": "http://beta.freesound.org/data/analysis/113/113785_1956076_frames.json", 
+            "waveform_m": "http://beta.freesound.org/data/displays/113/113785_1956076_wave_M.png", 
             "type": "wav", 
             "original_filename": "Woof Woof Drum.wav", 
             "tags": [
@@ -243,29 +243,29 @@ __ sound-get-response_
                 "canvas", 
                 "hit"
             ], 
-            "url": "http://tabasco.upf.edu/people/Puniho/sounds/113785/", 
-            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/113/113785_1956076-hq.ogg", 
-            "serve": "http://tabasco.upf.edu/api/sounds/113785/serve", 
-            "similarity": "http://tabasco.upf.edu/api/sounds/113785/similar", 
-            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/113/113785_1956076-hq.mp3", 
-            "spectral_m": "http://tabasco.upf.edu/data/displays/113/113785_1956076_spec_M.jpg", 
-            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/113/113785_1956076-lq.mp3", 
+            "url": "http://beta.freesound.org/people/Puniho/sounds/113785/", 
+            "preview-hq-ogg": "http://beta.freesound.org/data/previews/113/113785_1956076-hq.ogg", 
+            "serve": "http://beta.freesound.org/api/sounds/113785/serve", 
+            "similarity": "http://beta.freesound.org/api/sounds/113785/similar", 
+            "preview-hq-mp3": "http://beta.freesound.org/data/previews/113/113785_1956076-hq.mp3", 
+            "spectral_m": "http://beta.freesound.org/data/displays/113/113785_1956076_spec_M.jpg", 
+            "preview-lq-mp3": "http://beta.freesound.org/data/previews/113/113785_1956076-lq.mp3", 
             "user": {
                 "username": "Puniho", 
-                "url": "http://tabasco.upf.edu/people/Puniho/", 
-                "ref": "http://tabasco.upf.edu/api/people/Puniho"
+                "url": "http://beta.freesound.org/people/Puniho/", 
+                "ref": "http://beta.freesound.org/api/people/Puniho"
             }, 
-            "spectral_l": "http://tabasco.upf.edu/data/displays/113/113785_1956076_spec_L.jpg", 
+            "spectral_l": "http://beta.freesound.org/data/displays/113/113785_1956076_spec_L.jpg", 
             "duration": 2.6059399999999999, 
-            "waveform_l": "http://tabasco.upf.edu/data/displays/113/113785_1956076_wave_L.png", 
-            "ref": "http://tabasco.upf.edu/api/sounds/113785", 
+            "waveform_l": "http://beta.freesound.org/data/displays/113/113785_1956076_wave_L.png", 
+            "ref": "http://beta.freesound.org/api/sounds/113785", 
             "id": 113785, 
-            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/113/113785_1956076-lq.ogg"
+            "preview-lq-ogg": "http://beta.freesound.org/data/previews/113/113785_1956076-lq.ogg"
         }
     ], 
-    "previous": "http://tabasco.upf.edu/api/sounds/search?q=dogs&p=1&f=&s=downloads_desc", 
+    "previous": "http://beta.freesound.org/api/sounds/search?q=dogs&p=1&f=&s=downloads_desc", 
     "num_pages": 27, 
-    "next": "http://tabasco.upf.edu/api/sounds/search?q=dogs&p=3&f=&s=downloads_desc"
+    "next": "http://beta.freesound.org/api/sounds/search?q=dogs&p=3&f=&s=downloads_desc"
   }
 
 
@@ -294,7 +294,7 @@ Request
 
 ::
 
-  curl http://tabasco.upf.edu/api/sounds/83295
+  curl http://beta.freesound.org/api/sounds/83295
 
 .. _sound-get-response:
 
@@ -349,15 +349,15 @@ analysis_frames       URI               The URI for retrieving a JSON file with 
     "num_ratings": 0, 
     "duration": 260.98849999999999, 
     "samplerate": 44000.0, 
-    "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/17/17185_18799-hq.ogg", 
+    "preview-hq-ogg": "http://beta.freesound.org/data/previews/17/17185_18799-hq.ogg", 
     "id": 17185, 
-    "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/17/17185_18799-lq.ogg", 
+    "preview-lq-ogg": "http://beta.freesound.org/data/previews/17/17185_18799-lq.ogg", 
     "bitdepth": 16, 
     "num_comments": 0, 
     "filesize": 45934020, 
-    "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/17/17185_18799-hq.mp3", 
+    "preview-hq-mp3": "http://beta.freesound.org/data/previews/17/17185_18799-hq.mp3", 
     "type": "wav", 
-    "analysis_stats": "http://tabasco.upf.edu/api/sounds/17185/analysis", 
+    "analysis_stats": "http://beta.freesound.org/api/sounds/17185/analysis", 
     "description": "The most beautiful nightingale recording I've ever made. Forest near Cologne, Germany,June 2004, Vivanco EM35 with preamp into Sony DAT-recorder.", 
     "tags": [
         "bulbul", 
@@ -385,29 +385,29 @@ analysis_frames       URI               The URI for retrieving a JSON file with 
         "nature", 
         "field-recording"
     ], 
-    "serve": "http://tabasco.upf.edu/api/sounds/17185/serve", 
-    "similarity": "http://tabasco.upf.edu/api/sounds/17185/similar", 
-    "spectral_m": "http://tabasco.upf.edu/data/displays/17/17185_18799_spec_M.jpg", 
-    "spectral_l": "http://tabasco.upf.edu/data/displays/17/17185_18799_spec_L.jpg", 
+    "serve": "http://beta.freesound.org/api/sounds/17185/serve", 
+    "similarity": "http://beta.freesound.org/api/sounds/17185/similar", 
+    "spectral_m": "http://beta.freesound.org/data/displays/17/17185_18799_spec_M.jpg", 
+    "spectral_l": "http://beta.freesound.org/data/displays/17/17185_18799_spec_L.jpg", 
     "user": {
         "username": "reinsamba", 
-        "url": "http://tabasco.upf.edu/people/reinsamba/", 
-        "ref": "http://tabasco.upf.edu/api/people/reinsamba"
+        "url": "http://beta.freesound.org/people/reinsamba/", 
+        "ref": "http://beta.freesound.org/api/people/reinsamba"
     }, 
     "bitrate": 1408, 
     "num_downloads": 0, 
-    "analysis_frames": "http://tabasco.upf.edu/data/analysis/17/17185_18799_frames.json", 
+    "analysis_frames": "http://beta.freesound.org/data/analysis/17/17185_18799_frames.json", 
     "channels": 2, 
     "license": "http://creativecommons.org/licenses/sampling+/1.0/", 
     "created": "2006-03-19 23:53:37", 
-    "url": "http://tabasco.upf.edu/people/reinsamba/sounds/17185/", 
-    "ref": "http://tabasco.upf.edu/api/sounds/17185", 
+    "url": "http://beta.freesound.org/people/reinsamba/sounds/17185/", 
+    "ref": "http://beta.freesound.org/api/sounds/17185", 
     "avg_rating": 0.0, 
-    "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/17/17185_18799-lq.mp3", 
+    "preview-lq-mp3": "http://beta.freesound.org/data/previews/17/17185_18799-lq.mp3", 
     "original_filename": "Nightingale song 3.wav", 
-    "waveform_l": "http://tabasco.upf.edu/data/displays/17/17185_18799_wave_L.png", 
-    "waveform_m": "http://tabasco.upf.edu/data/displays/17/17185_18799_wave_M.png", 
-    "pack": "http://tabasco.upf.edu/api/packs/455"
+    "waveform_l": "http://beta.freesound.org/data/displays/17/17185_18799_wave_L.png", 
+    "waveform_m": "http://beta.freesound.org/data/displays/17/17185_18799_wave_M.png", 
+    "pack": "http://beta.freesound.org/api/packs/455"
   }
 
 
@@ -478,13 +478,13 @@ all        bool    no        If set to true, all the available analysis data
 ::
 
   # For the complete analysis result
-  curl http://tabasco.upf.edu/sounds/999/analysis
+  curl http://beta.freesound.org/sounds/999/analysis
   # For a filtered analysis result, in this case the analyzed average loudness
-  curl http://tabasco.upf.edu/api/sounds/999/analysis/lowlevel/average_loudness/
+  curl http://beta.freesound.org/api/sounds/999/analysis/lowlevel/average_loudness/
   # Or for all the tonal data
-  curl http://tabasco.upf.edu/api/sounds/999/analysis/tonal
+  curl http://beta.freesound.org/api/sounds/999/analysis/tonal
   # Or for all the pitch of a sound
-  curl http://tabasco.upf.edu/api/sounds/999/lowlevel/pitch/mean
+  curl http://beta.freesound.org/api/sounds/999/lowlevel/pitch/mean
 
 Response
 ''''''''
@@ -510,7 +510,7 @@ is given by the ``analysis_frames`` property of a sound resource. As an example:
 
 ::
 
-  http://tabasco.upf.edu/data/analysis/17/17185_18799_frames.json
+  http://beta.freesound.org/data/analysis/17/17185_18799_frames.json
 
 
 
@@ -549,9 +549,9 @@ preset       string  no        The similarity measure to use when retrieving sim
 ::
 
   # Get the most similar sound to 120597 with the preset for "musical" sounds (num_results equals 2 because original sound is also returned in the list)
-  curl http://tabasco.upf.edu/api/sounds/120597/similar?num_results=2&preset=music
+  curl http://beta.freesound.org/api/sounds/120597/similar?num_results=2&preset=music
   # Get the 15 most similar sounds to 11 with the preset "lowlevel"
-  curl http://tabasco.upf.edu/api/sounds/11/similar?preset=lowlevel
+  curl http://beta.freesound.org/api/sounds/11/similar?preset=lowlevel
 
 Response
 ''''''''
@@ -568,41 +568,41 @@ __ sound-search-response_
   {
     "sounds": [
         {
-            "analysis_stats": "http://tabasco.upf.edu/api/sounds/11/analysis", 
-            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/0/11_2-lq.ogg", 
+            "analysis_stats": "http://beta.freesound.org/api/sounds/11/analysis", 
+            "preview-lq-ogg": "http://beta.freesound.org/data/previews/0/11_2-lq.ogg", 
             "tags": [
                 "generated", 
                 "sinusoid", 
                 "sweep", 
                 "clean"
             ], 
-            "url": "http://tabasco.upf.edu/people/Bram/sounds/11/", 
-            "ref": "http://tabasco.upf.edu/api/sounds/11",
+            "url": "http://beta.freesound.org/people/Bram/sounds/11/", 
+            "ref": "http://beta.freesound.org/api/sounds/11",
             "id": 11, 
-            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/0/11_2-lq.mp3", 
-            "serve": "http://tabasco.upf.edu/api/sounds/11/serve", 
-            "similarity": "http://tabasco.upf.edu/api/sounds/11/similar", 
-            "pack": "http://tabasco.upf.edu/api/packs/2", 
+            "preview-lq-mp3": "http://beta.freesound.org/data/previews/0/11_2-lq.mp3", 
+            "serve": "http://beta.freesound.org/api/sounds/11/serve", 
+            "similarity": "http://beta.freesound.org/api/sounds/11/similar", 
+            "pack": "http://beta.freesound.org/api/packs/2", 
             "distance": 0.0, 
-            "spectral_m": "http://tabasco.upf.edu/data/displays/0/11_2_spec_M.jpg", 
-            "spectral_l": "http://tabasco.upf.edu/data/displays/0/11_2_spec_L.jpg", 
+            "spectral_m": "http://beta.freesound.org/data/displays/0/11_2_spec_M.jpg", 
+            "spectral_l": "http://beta.freesound.org/data/displays/0/11_2_spec_L.jpg", 
             "user": {
                 "username": "Bram", 
-                "url": "http://tabasco.upf.edu/people/Bram/", 
-                "ref": "http://tabasco.upf.edu/api/people/Bram"
+                "url": "http://beta.freesound.org/people/Bram/", 
+                "ref": "http://beta.freesound.org/api/people/Bram"
             }, 
             "original_filename": "sweep_log.wav", 
             "type": "wav", 
             "duration": 2.0, 
-            "analysis_frames": "http://tabasco.upf.edu/data/analysis/0/11_2_frames.json", 
-            "waveform_l": "http://tabasco.upf.edu/data/displays/0/11_2_wave_L.png", 
-            "waveform_m": "http://tabasco.upf.edu/data/displays/0/11_2_wave_M.png", 
-            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/0/11_2-hq.ogg", 
-            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/0/11_2-hq.mp3"
+            "analysis_frames": "http://beta.freesound.org/data/analysis/0/11_2_frames.json", 
+            "waveform_l": "http://beta.freesound.org/data/displays/0/11_2_wave_L.png", 
+            "waveform_m": "http://beta.freesound.org/data/displays/0/11_2_wave_M.png", 
+            "preview-hq-ogg": "http://beta.freesound.org/data/previews/0/11_2-hq.ogg", 
+            "preview-hq-mp3": "http://beta.freesound.org/data/previews/0/11_2-hq.mp3"
         }, 
         {
-            "analysis_stats": "http://tabasco.upf.edu/api/sounds/104551/analysis", 
-            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/104/104551_420640-lq.ogg", 
+            "analysis_stats": "http://beta.freesound.org/api/sounds/104551/analysis", 
+            "preview-lq-ogg": "http://beta.freesound.org/data/previews/104/104551_420640-lq.ogg", 
             "tags": [
                 "attack", 
                 "air", 
@@ -612,91 +612,91 @@ __ sound-search-response_
                 "bomb", 
                 "whistle"
             ], 
-            "url": "http://tabasco.upf.edu/people/club%20sound/sounds/104551/", 
-            "ref": "http://tabasco.upf.edu/api/sounds/104551", 
+            "url": "http://beta.freesound.org/people/club%20sound/sounds/104551/", 
+            "ref": "http://beta.freesound.org/api/sounds/104551", 
             "id": 104551, 
-            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/104/104551_420640-lq.mp3", 
-            "serve": "http://tabasco.upf.edu/api/sounds/104551/serve", 
-            "similarity": "http://tabasco.upf.edu/api/sounds/104551/similar", 
-            "pack": "http://tabasco.upf.edu/api/packs/6609", 
+            "preview-lq-mp3": "http://beta.freesound.org/data/previews/104/104551_420640-lq.mp3", 
+            "serve": "http://beta.freesound.org/api/sounds/104551/serve", 
+            "similarity": "http://beta.freesound.org/api/sounds/104551/similar", 
+            "pack": "http://beta.freesound.org/api/packs/6609", 
             "distance": 7122293096448.0, 
-            "spectral_m": "http://tabasco.upf.edu/data/displays/104/104551_420640_spec_M.jpg", 
-            "spectral_l": "http://tabasco.upf.edu/data/displays/104/104551_420640_spec_L.jpg", 
+            "spectral_m": "http://beta.freesound.org/data/displays/104/104551_420640_spec_M.jpg", 
+            "spectral_l": "http://beta.freesound.org/data/displays/104/104551_420640_spec_L.jpg", 
             "user": {
                 "username": "club sound", 
-                "url": "http://tabasco.upf.edu/people/club%20sound/", 
-                "ref": "http://tabasco.upf.edu/api/people/club%20sound"
+                "url": "http://beta.freesound.org/people/club%20sound/", 
+                "ref": "http://beta.freesound.org/api/people/club%20sound"
             }, 
             "original_filename": "Bomb Whistle long.wav", 
             "type": "wav", 
             "duration": 30.036799999999999, 
-            "analysis_frames": "http://tabasco.upf.edu/data/analysis/104/104551_420640_frames.json", 
-            "waveform_l": "http://tabasco.upf.edu/data/displays/104/104551_420640_wave_L.png", 
-            "waveform_m": "http://tabasco.upf.edu/data/displays/104/104551_420640_wave_M.png", 
-            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/104/104551_420640-hq.ogg", 
-            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/104/104551_420640-hq.mp3"
+            "analysis_frames": "http://beta.freesound.org/data/analysis/104/104551_420640_frames.json", 
+            "waveform_l": "http://beta.freesound.org/data/displays/104/104551_420640_wave_L.png", 
+            "waveform_m": "http://beta.freesound.org/data/displays/104/104551_420640_wave_M.png", 
+            "preview-hq-ogg": "http://beta.freesound.org/data/previews/104/104551_420640-hq.ogg", 
+            "preview-hq-mp3": "http://beta.freesound.org/data/previews/104/104551_420640-hq.mp3"
         }, 
         {
-            "analysis_stats": "http://tabasco.upf.edu/api/sounds/17052/analysis", 
-            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/17/17052_4942-lq.ogg", 
+            "analysis_stats": "http://beta.freesound.org/api/sounds/17052/analysis", 
+            "preview-lq-ogg": "http://beta.freesound.org/data/previews/17/17052_4942-lq.ogg", 
             "tags": [
                 "sweep", 
                 "electronic", 
                 "sound", 
                 "supercollider"
             ], 
-            "url": "http://tabasco.upf.edu/people/schluppipuppie/sounds/17052/", 
-            "ref": "http://tabasco.upf.edu/api/sounds/17052",
+            "url": "http://beta.freesound.org/people/schluppipuppie/sounds/17052/", 
+            "ref": "http://beta.freesound.org/api/sounds/17052",
             "id": 17052,  
-            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/17/17052_4942-lq.mp3", 
-            "serve": "http://tabasco.upf.edu/api/sounds/17052/serve", 
-            "similarity": "http://tabasco.upf.edu/api/sounds/17052/similar", 
-            "pack": "http://tabasco.upf.edu/api/packs/954", 
+            "preview-lq-mp3": "http://beta.freesound.org/data/previews/17/17052_4942-lq.mp3", 
+            "serve": "http://beta.freesound.org/api/sounds/17052/serve", 
+            "similarity": "http://beta.freesound.org/api/sounds/17052/similar", 
+            "pack": "http://beta.freesound.org/api/packs/954", 
             "distance": 161591534288896.0, 
-            "spectral_m": "http://tabasco.upf.edu/data/displays/17/17052_4942_spec_M.jpg", 
-            "spectral_l": "http://tabasco.upf.edu/data/displays/17/17052_4942_spec_L.jpg", 
+            "spectral_m": "http://beta.freesound.org/data/displays/17/17052_4942_spec_M.jpg", 
+            "spectral_l": "http://beta.freesound.org/data/displays/17/17052_4942_spec_L.jpg", 
             "user": {
                 "username": "schluppipuppie", 
-                "url": "http://tabasco.upf.edu/people/schluppipuppie/", 
-                "ref": "http://tabasco.upf.edu/api/people/schluppipuppie"
+                "url": "http://beta.freesound.org/people/schluppipuppie/", 
+                "ref": "http://beta.freesound.org/api/people/schluppipuppie"
             }, 
             "original_filename": "sweep03_careful.aif", 
             "type": "aif", 
             "duration": 40.106299999999997, 
-            "analysis_frames": "http://tabasco.upf.edu/data/analysis/17/17052_4942_frames.json", 
-            "waveform_l": "http://tabasco.upf.edu/data/displays/17/17052_4942_wave_L.png", 
-            "waveform_m": "http://tabasco.upf.edu/data/displays/17/17052_4942_wave_M.png", 
-            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/17/17052_4942-hq.ogg", 
-            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/17/17052_4942-hq.mp3"
+            "analysis_frames": "http://beta.freesound.org/data/analysis/17/17052_4942_frames.json", 
+            "waveform_l": "http://beta.freesound.org/data/displays/17/17052_4942_wave_L.png", 
+            "waveform_m": "http://beta.freesound.org/data/displays/17/17052_4942_wave_M.png", 
+            "preview-hq-ogg": "http://beta.freesound.org/data/previews/17/17052_4942-hq.ogg", 
+            "preview-hq-mp3": "http://beta.freesound.org/data/previews/17/17052_4942-hq.mp3"
         }, 
         {
-            "analysis_stats": "http://tabasco.upf.edu/api/sounds/93063/analysis", 
-            "preview-lq-ogg": "http://tabasco.upf.edu/data/previews/93/93063_926020-lq.ogg", 
+            "analysis_stats": "http://beta.freesound.org/api/sounds/93063/analysis", 
+            "preview-lq-ogg": "http://beta.freesound.org/data/previews/93/93063_926020-lq.ogg", 
             "tags": [
                 "impulse"
             ], 
-            "url": "http://tabasco.upf.edu/people/simonbshelley/sounds/93063/", 
-            "ref": "http://tabasco.upf.edu/api/sounds/93063",
+            "url": "http://beta.freesound.org/people/simonbshelley/sounds/93063/", 
+            "ref": "http://beta.freesound.org/api/sounds/93063",
             "id": 93063,  
-            "preview-lq-mp3": "http://tabasco.upf.edu/data/previews/93/93063_926020-lq.mp3", 
-            "serve": "http://tabasco.upf.edu/api/sounds/93063/serve", 
-            "similarity": "http://tabasco.upf.edu/api/sounds/93063/similar", 
+            "preview-lq-mp3": "http://beta.freesound.org/data/previews/93/93063_926020-lq.mp3", 
+            "serve": "http://beta.freesound.org/api/sounds/93063/serve", 
+            "similarity": "http://beta.freesound.org/api/sounds/93063/similar", 
             "distance": 350841315786752.0, 
-            "spectral_m": "http://tabasco.upf.edu/data/displays/93/93063_926020_spec_M.jpg", 
-            "spectral_l": "http://tabasco.upf.edu/data/displays/93/93063_926020_spec_L.jpg", 
+            "spectral_m": "http://beta.freesound.org/data/displays/93/93063_926020_spec_M.jpg", 
+            "spectral_l": "http://beta.freesound.org/data/displays/93/93063_926020_spec_L.jpg", 
             "user": {
                 "username": "simonbshelley", 
-                "url": "http://tabasco.upf.edu/people/simonbshelley/", 
-                "ref": "http://tabasco.upf.edu/api/people/simonbshelley"
+                "url": "http://beta.freesound.org/people/simonbshelley/", 
+                "ref": "http://beta.freesound.org/api/people/simonbshelley"
             }, 
             "original_filename": "sound source.wav", 
             "type": "wav", 
             "duration": 25.0, 
-            "analysis_frames": "http://tabasco.upf.edu/data/analysis/93/93063_926020_frames.json", 
-            "waveform_l": "http://tabasco.upf.edu/data/displays/93/93063_926020_wave_L.png", 
-            "waveform_m": "http://tabasco.upf.edu/data/displays/93/93063_926020_wave_M.png", 
-            "preview-hq-ogg": "http://tabasco.upf.edu/data/previews/93/93063_926020-hq.ogg", 
-            "preview-hq-mp3": "http://tabasco.upf.edu/data/previews/93/93063_926020-hq.mp3"
+            "analysis_frames": "http://beta.freesound.org/data/analysis/93/93063_926020_frames.json", 
+            "waveform_l": "http://beta.freesound.org/data/displays/93/93063_926020_wave_L.png", 
+            "waveform_m": "http://beta.freesound.org/data/displays/93/93063_926020_wave_M.png", 
+            "preview-hq-ogg": "http://beta.freesound.org/data/previews/93/93063_926020-hq.ogg", 
+            "preview-hq-mp3": "http://beta.freesound.org/data/previews/93/93063_926020-hq.mp3"
         }
     ], 
     "num_results": 4
@@ -731,8 +731,8 @@ Request
 
 ::
 
-  curl http://tabasco.upf.edu/api/people/Jovica
-  curl http://tabasco.upf.edu/api/people/klankschap
+  curl http://beta.freesound.org/api/people/Jovica
+  curl http://beta.freesound.org/api/people/klankschap
 
 
 Response
@@ -765,13 +765,13 @@ date_joined	      string   The date the user joined Freesound.
     "username": "Jovica", 
     "first_name": "", 
     "last_name": "", 
-    "packs": "http://tabasco.upf.edu/api/people/Jovica/packs", 
-    "url": "http://tabasco.upf.edu/people/Jovica/", 
+    "packs": "http://beta.freesound.org/api/people/Jovica/packs", 
+    "url": "http://beta.freesound.org/people/Jovica/", 
     "about": "Policy of use: you must state somewhere somehow (credit lines, web page, whatever) that the Freesound Project served this sounds. It is irrelevant to me whether you mention or not my authorship. Can't credit? Send me a personal message. (Thanks to dobroide for these words!)\r\n\r\nIf possible, I would also like to hear where the sounds are used, so if you can send me a link or something else, please do so. Thanks!\r\n\r\nCurrently adding LAYERS & DISTOPIA sample packs!\r\n\r\nFor some more information about me, click on the links below:\r\n<a href=\"http://www.myspace.com/jovicastorer\" rel=\"nofollow\">http://www.myspace.com/jovicastorer</a>\r\n\r\nAnd this is an experimental droney label for which I do some producing, engineering, mixing and mastering:\r\n<a href=\"http://www.plaguerecordings.com/index.htm\" rel=\"nofollow\">http://www.plaguerecordings.com/index.htm</a>\r\n\r\nCurrently me and a good friend of mine are working on a new <strong>c-o-l-o-u-r-s</strong> website. \r\n\r\nThe first release, <strong>'gekarameliseerd'</strong> by <strong>Jovica Storer</strong>, is available on:\r\n- emusic: <a href=\"http://www.emusic.com/album/Jovica-Storer-Gekarameliseerd-MP3-Download/11666781.html\" rel=\"nofollow\">http://www.emusic.com/album/Jovica-Storer-Gekarameliseerd-MP3-Download/11666781.html</a>\r\n- iTunes: <a href=\"http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=333466000&id;=333464878&s;=143443&uo;=6\" rel=\"nofollow\">http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=333466000&id;=333464878&s;=143443&uo;=6</a>\r\n- Napster: <a href=\"http://free.napster.com/view/album/index.html?id=13373722\" rel=\"nofollow\">http://free.napster.com/view/album/index.html?id=13373722</a>\r\nPlease check it out and if you want to support me, buy some tracks. Many thanks! \r\n\r\nNamaste!\r\nJovica Storer", 
     "home_page": "http://www.ampcast.com/music/25765/artist.php", 
     "signature": "Namaste!\r\nJovica Storer\r\n<a href=\"http://www.c-o-l-o-u-r-s.com\" rel=\"nofollow\">http://www.c-o-l-o-u-r-s.com</a>", 
-    "sounds": "http://tabasco.upf.edu/api/people/Jovica/sounds", 
-    "ref": "http://tabasco.upf.edu/api/people/Jovica", 
+    "sounds": "http://beta.freesound.org/api/people/Jovica/sounds", 
+    "ref": "http://beta.freesound.org/api/people/Jovica", 
     "date_joined": "2005-05-07 17:49:39"
   }
 
@@ -813,8 +813,8 @@ p          number  no        The page of the sound collection to get.
 
 ::
 
-  curl http://tabasco.upf.edu/api/people/thanvannispen/sounds
-  curl http://tabasco.upf.edu/api/people/inchadney/sounds?p=5
+  curl http://beta.freesound.org/api/people/thanvannispen/sounds
+  curl http://beta.freesound.org/api/people/inchadney/sounds?p=5
 
 Response
 ''''''''
@@ -851,7 +851,7 @@ Request
 
 ::
 
-  curl http://tabasco.upf.edu/api/people/dobroide/packs
+  curl http://beta.freesound.org/api/people/dobroide/packs
 
 Response
 ''''''''
@@ -873,19 +873,19 @@ __ pack-get-response_
         {
             "description": "", 
             "created": "2009-09-28 09:50:08", 
-            "url": "http://tabasco.upf.edu/people/dobroide/packs/5266/", 
-            "sounds": "http://tabasco.upf.edu/api/packs/5266/sounds", 
+            "url": "http://beta.freesound.org/people/dobroide/packs/5266/", 
+            "sounds": "http://beta.freesound.org/api/packs/5266/sounds", 
             "num_downloads": 0, 
-            "ref": "http://tabasco.upf.edu/api/packs/5266", 
+            "ref": "http://beta.freesound.org/api/packs/5266", 
             "name": "scrub"
         }, 
         {
             "description": "", 
             "created": "2009-09-20 10:55:32", 
-            "url": "http://tabasco.upf.edu/people/dobroide/packs/5230/", 
-            "sounds": "http://tabasco.upf.edu/api/packs/5230/sounds", 
+            "url": "http://beta.freesound.org/people/dobroide/packs/5230/", 
+            "sounds": "http://beta.freesound.org/api/packs/5230/sounds", 
             "num_downloads": 0, 
-            "ref": "http://tabasco.upf.edu/api/packs/5230", 
+            "ref": "http://beta.freesound.org/api/packs/5230", 
             "name": "granada"
         }
     ]
@@ -921,7 +921,7 @@ Request
 
 ::
 
-  curl http://tabasco.upf.edu/api/packs/5107
+  curl http://beta.freesound.org/api/packs/5107
 
 .. _pack-get-response:
 
@@ -948,15 +948,15 @@ num_downloads	      number   The number of times the pack was downloaded.
 
   {
     "created": "2009-09-01 19:56:15", 
-    "url": "http://tabasco.upf.edu/people/dobroide/packs/5107/", 
+    "url": "http://beta.freesound.org/people/dobroide/packs/5107/", 
     "user": {
         "username": "dobroide", 
-        "url": "http://tabasco.upf.edu/people/dobroide/", 
-        "ref": "http://tabasco.upf.edu/api/people/dobroide"
+        "url": "http://beta.freesound.org/people/dobroide/", 
+        "ref": "http://beta.freesound.org/api/people/dobroide"
     }, 
-    "sounds": "http://tabasco.upf.edu/api/packs/5107/sounds", 
+    "sounds": "http://beta.freesound.org/api/packs/5107/sounds", 
     "num_downloads": 0, 
-    "ref": "http://tabasco.upf.edu/api/packs/5107", 
+    "ref": "http://beta.freesound.org/api/packs/5107", 
     "name": "Iceland"
   }
 
@@ -995,7 +995,7 @@ p          number  no        The page of the pack's sounds to get
 
 ::
 
-  curl http://tabasco.upf.edu/api/packs/5107/sounds
+  curl http://beta.freesound.org/api/packs/5107/sounds
 
 Response
 ''''''''

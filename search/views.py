@@ -173,6 +173,10 @@ def search_forum(request):
     date_from = request.GET.get("dt_from", "")
     date_to = request.GET.get("dt_to", "")
     
+    # TEMPORAL WORKAROUND!!! to prevent using watermark as the query for forum search.. (in only happens in some situations)
+    if "search in " in search_query :
+        invalid = 1
+    
     if search_query.strip() != "":
         # add current forum
         if current_forum_name_slug.strip() != "":

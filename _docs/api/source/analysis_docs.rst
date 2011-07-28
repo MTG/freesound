@@ -46,7 +46,7 @@ metadata.audio_properties
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/metadata/audio_properties
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/metadata/audio_properties
 
 
 **Stats**::
@@ -98,7 +98,7 @@ metadata.version
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/metadata/version
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/metadata/version
 
 
 **Stats**::
@@ -143,7 +143,7 @@ highlevel.acoustic
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/acoustic
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/acoustic
 
 
 **Stats**::
@@ -188,7 +188,7 @@ highlevel.ballroom
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/ballroom
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/ballroom
 
 
 **Stats**::
@@ -241,7 +241,7 @@ highlevel.culture
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/culture
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/culture
 
 
 **Stats**::
@@ -286,7 +286,7 @@ highlevel.electronic
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/electronic
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/electronic
 
 
 **Stats**::
@@ -331,7 +331,7 @@ highlevel.gender
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/gender
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/gender
 
 
 **Stats**::
@@ -376,7 +376,7 @@ highlevel.genre
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/genre
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/genre
 
 
 **Stats**::
@@ -464,7 +464,7 @@ highlevel.live_studio
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/live_studio
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/live_studio
 
 
 **Stats**::
@@ -509,7 +509,7 @@ highlevel.moods
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/moods
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/moods
 
 
 **Stats**::
@@ -583,7 +583,7 @@ highlevel.party
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/party
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/party
 
 
 **Stats**::
@@ -628,7 +628,7 @@ highlevel.rhythm
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/rhythm
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/rhythm
 
 
 **Stats**::
@@ -674,7 +674,7 @@ highlevel.timbre
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/timbre
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/timbre
 
 
 **Stats**::
@@ -719,7 +719,7 @@ highlevel.voice_instrumental
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/highlevel/voice_instrumental
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/highlevel/voice_instrumental
 
 
 **Stats**::
@@ -768,7 +768,7 @@ lowlevel.average_loudness
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/average_loudness
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/average_loudness
 
 
 **Description**
@@ -812,7 +812,7 @@ lowlevel.barkbands
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/barkbands
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands
 
 
 **Stats**::
@@ -860,7 +860,7 @@ lowlevel.barkbands_kurtosis
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/barkbands_kurtosis
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_kurtosis
 
 
 **Stats**::
@@ -922,7 +922,7 @@ lowlevel.barkbands_skewness
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/barkbands_skewness
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_skewness
 
 
 **Stats**::
@@ -984,7 +984,7 @@ lowlevel.barkbands_spread
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/barkbands_spread
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/barkbands_spread
 
 
 **Stats**::
@@ -1046,7 +1046,7 @@ lowlevel.dissonance
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/dissonance
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/dissonance
 
 
 **Stats**::
@@ -1106,7 +1106,7 @@ lowlevel.hfc
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/hfc
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/hfc
 
 
 **Stats**::
@@ -1164,7 +1164,7 @@ lowlevel.mfcc
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/mfcc
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/mfcc
 
 
 **Stats**::
@@ -1217,7 +1217,7 @@ lowlevel.pitch
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/pitch
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch
 
 
 **Stats**::
@@ -1275,7 +1275,7 @@ lowlevel.pitch_instantaneous_confidence
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/pitch_instantaneous_confidence
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch_instantaneous_confidence
 
 
 **Stats**::
@@ -1333,7 +1333,7 @@ lowlevel.pitch_salience
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/pitch_salience
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch_salience
 
 
 **Stats**::
@@ -1388,7 +1388,7 @@ lowlevel.silence_rate_60dB
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_60dB
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/silence_rate_60dB
 
 
 **Stats**::
@@ -1443,7 +1443,7 @@ lowlevel.spectral_centroid
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_centroid
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_centroid
 
 
 **Stats**::
@@ -1498,7 +1498,7 @@ lowlevel.spectral_complexity
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_complexity
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_complexity
 
 
 **Stats**::
@@ -1553,7 +1553,7 @@ lowlevel.spectral_contrast
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_contrast
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_contrast
 
 
 **Stats**::
@@ -1598,7 +1598,7 @@ lowlevel.spectral_crest
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_crest
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_crest
 
 
 **Stats**::
@@ -1653,7 +1653,7 @@ lowlevel.spectral_decrease
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_decrease
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_decrease
 
 
 **Stats**::
@@ -1708,7 +1708,7 @@ lowlevel.spectral_energy
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_energy
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energy
 
 
 **Stats**::
@@ -1763,7 +1763,7 @@ lowlevel.spectral_energyband_high
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_high
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_high
 
 
 **Stats**::
@@ -1818,7 +1818,7 @@ lowlevel.spectral_energyband_low
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_low
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_low
 
 
 **Stats**::
@@ -1873,7 +1873,7 @@ lowlevel.spectral_energyband_middle_high
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_high
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_high
 
 
 **Stats**::
@@ -1928,7 +1928,7 @@ lowlevel.spectral_energyband_middle_low
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_low
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_energyband_middle_low
 
 
 **Stats**::
@@ -1983,7 +1983,7 @@ lowlevel.spectral_flatness_db
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_flatness_db
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_flatness_db
 
 
 **Stats**::
@@ -2038,7 +2038,7 @@ lowlevel.spectral_flux
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_flux
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_flux
 
 
 **Stats**::
@@ -2093,7 +2093,7 @@ lowlevel.spectral_kurtosis
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_kurtosis
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_kurtosis
 
 
 **Stats**::
@@ -2155,7 +2155,7 @@ lowlevel.spectral_rms
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_rms
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rms
 
 
 **Stats**::
@@ -2210,7 +2210,7 @@ lowlevel.spectral_rolloff
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_rolloff
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rolloff
 
 
 **Stats**::
@@ -2265,7 +2265,7 @@ lowlevel.spectral_skewness
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_skewness
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_skewness
 
 
 **Stats**::
@@ -2327,7 +2327,7 @@ lowlevel.spectral_spread
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_spread
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_spread
 
 
 **Stats**::
@@ -2389,7 +2389,7 @@ lowlevel.spectral_strongpeak
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/spectral_strongpeak
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_strongpeak
 
 
 **Stats**::
@@ -2444,7 +2444,7 @@ lowlevel.zerocrossingrate
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/lowlevel/zerocrossingrate
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/zerocrossingrate
 
 
 **Stats**::
@@ -2503,7 +2503,7 @@ rhythm.beats_loudness
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/beats_loudness
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_loudness
 
 
 **Stats**::
@@ -2558,7 +2558,7 @@ rhythm.beats_loudness_bass
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/beats_loudness_bass
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_loudness_bass
 
 
 **Stats**::
@@ -2613,7 +2613,7 @@ rhythm.beats_position
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/beats_position
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/beats_position
 
 
 **Description**
@@ -2653,7 +2653,7 @@ rhythm.bpm
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/bpm
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm
 
 
 **Description**
@@ -2700,7 +2700,7 @@ rhythm.bpm_estimates
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/bpm_estimates
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm_estimates
 
 
 **Description**
@@ -2740,7 +2740,7 @@ rhythm.bpm_intervals
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/bpm_intervals
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/bpm_intervals
 
 
 **Description**
@@ -2780,7 +2780,7 @@ rhythm.first_peak_bpm
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/first_peak_bpm
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_bpm
 
 
 **Description**
@@ -2824,7 +2824,7 @@ rhythm.first_peak_spread
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/first_peak_spread
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_spread
 
 
 **Description**
@@ -2868,7 +2868,7 @@ rhythm.first_peak_weight
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/first_peak_weight
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_weight
 
 
 **Description**
@@ -2912,7 +2912,7 @@ rhythm.onset_rate
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/onset_rate
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_rate
 
 
 **Description**
@@ -2956,7 +2956,7 @@ rhythm.onset_times
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/onset_times
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_times
 
 
 **Description**
@@ -2993,7 +2993,7 @@ rhythm.rubato_start
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/rubato_start
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/rubato_start
 
 
 **Description**
@@ -3030,7 +3030,7 @@ rhythm.rubato_stop
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/rubato_stop
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/rubato_stop
 
 
 **Description**
@@ -3067,7 +3067,7 @@ rhythm.second_peak_bpm
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/second_peak_bpm
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_bpm
 
 
 **Description**
@@ -3111,7 +3111,7 @@ rhythm.second_peak_spread
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/second_peak_spread
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_spread
 
 
 **Description**
@@ -3155,7 +3155,7 @@ rhythm.second_peak_weight
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/rhythm/second_peak_weight
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_weight
 
 
 **Description**
@@ -3203,7 +3203,7 @@ sfx.inharmonicity
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/sfx/inharmonicity
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/sfx/inharmonicity
 
 
 **Stats**::
@@ -3258,7 +3258,7 @@ sfx.oddtoevenharmonicenergyratio
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/sfx/oddtoevenharmonicenergyratio
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/sfx/oddtoevenharmonicenergyratio
 
 
 **Stats**::
@@ -3316,7 +3316,7 @@ sfx.pitch_after_max_to_before_max_energy_ratio
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/sfx/pitch_after_max_to_before_max_energy_ratio
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_after_max_to_before_max_energy_ratio
 
 
 **Description**
@@ -3360,7 +3360,7 @@ sfx.pitch_centroid
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/sfx/pitch_centroid
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_centroid
 
 
 **Description**
@@ -3404,7 +3404,7 @@ sfx.pitch_max_to_total
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/sfx/pitch_max_to_total
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_max_to_total
 
 
 **Description**
@@ -3448,7 +3448,7 @@ sfx.pitch_min_to_total
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/sfx/pitch_min_to_total
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_min_to_total
 
 
 **Description**
@@ -3492,7 +3492,7 @@ sfx.tristimulus
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/sfx/tristimulus
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/sfx/tristimulus
 
 
 **Stats**::
@@ -3544,7 +3544,7 @@ tonal.chords_changes_rate
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/chords_changes_rate
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_changes_rate
 
 
 **Description**
@@ -3591,7 +3591,7 @@ tonal.chords_histogram
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/chords_histogram
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_histogram
 
 
 **Description**
@@ -3634,7 +3634,7 @@ tonal.chords_key
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/chords_key
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_key
 
 
 **Description**
@@ -3686,7 +3686,7 @@ tonal.chords_number_rate
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/chords_number_rate
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_number_rate
 
 
 **Description**
@@ -3733,7 +3733,7 @@ tonal.chords_progression
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/chords_progression
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_progression
 
 
 **Description**
@@ -3780,7 +3780,7 @@ tonal.chords_scale
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/chords_scale
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_scale
 
 
 **Description**
@@ -3832,7 +3832,7 @@ tonal.chords_strength
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/chords_strength
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_strength
 
 
 **Stats**::
@@ -3899,7 +3899,7 @@ tonal.hpcp
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/hpcp
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp
 
 
 **Stats**::
@@ -3950,7 +3950,7 @@ tonal.key_key
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/key_key
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/key_key
 
 
 **Description**
@@ -3997,7 +3997,7 @@ tonal.key_scale
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/key_scale
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/key_scale
 
 
 **Description**
@@ -4044,7 +4044,7 @@ tonal.key_strength
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/key_strength
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/key_strength
 
 
 **Description**
@@ -4091,7 +4091,7 @@ tonal.thpcp
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/thpcp
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/thpcp
 
 
 **Description**
@@ -4140,7 +4140,7 @@ tonal.tuning_diatonic_strength
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/tuning_diatonic_strength
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/tuning_diatonic_strength
 
 
 **Description**
@@ -4187,7 +4187,7 @@ tonal.tuning_equal_tempered_deviation
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/tuning_equal_tempered_deviation
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/tuning_equal_tempered_deviation
 
 
 **Description**
@@ -4231,7 +4231,7 @@ tonal.tuning_frequency
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/tuning_frequency
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/tuning_frequency
 
 
 **Description**
@@ -4275,7 +4275,7 @@ tonal.tuning_nontempered_energy_ratio
 
 ::
 
-    curl http://tabasco.upf.edu/api/sounds/<sound_id>/analysis/tonal/tuning_nontempered_energy_ratio
+    curl http://beta.freesound.org/api/sounds/<sound_id>/analysis/tonal/tuning_nontempered_energy_ratio
 
 
 **Description**

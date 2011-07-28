@@ -9,6 +9,7 @@
             $("#show_search").show();
         }
     });
+    
     function showSearch() {
         $("#forum_search").toggle("medium");
     }
@@ -35,9 +36,11 @@
                                               altFormat: "yy-mm-dd"
                                               })
 
-        $("#forum_search input[name=q]").Watermark("search in {% if forum %}forum '{{forum.name}}'{% else %}all forums{% endif %}");
+        $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name}}'{%else%}all forums{% endif %} {% endif %}");
 
     });
+    
+    
 </script>
 {% endblock head %}
 
@@ -58,7 +61,7 @@
 
 {% block forum_search %}
 <div {% if forum or forums %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
-    <form method="get" action="{% url forums-search %}">
+    <form method="get" action="{% url forums-search %}" >
     <input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
     <input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
 
@@ -70,8 +73,9 @@
         <fieldset>
 
             <input type="text"
+            	   id="forum_search_box"
                    name="q"
-                   value="{% if request.GET.q %}{{request.GET.q}}{% endif %}"
+                   value="{% if not invalid %}{% if request.GET.q %}{{request.GET.q}}{% endif %}{% endif %}"
                    size="60" />
 
             <input type="submit" value="search!" id="search_submit" />

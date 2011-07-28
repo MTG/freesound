@@ -52,13 +52,14 @@
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
 
         </ul>
-		</div>
+        </div>
+        <br style="clear: both;" />
         {% if user.profile.about %}
             <p class="about">
                 {{user.profile.about|safe|linebreaksbr }}
             </p>
         {% endif %}
-		<br>
+        <br>
     {% endif %}
 
 <div id="content">
@@ -69,31 +70,31 @@
         {% for sound in latest_sounds %}
             {% display_sound sound %}
         {% endfor %}
-        <p><a href="{% url sounds-for-user user.username %}">more...</a></p>
+        <p><a href="{% url sounds-for-user user.username %}?page=2">more...</a></p>
     </div><!-- #latest_sounds -->
     {% endif %}
 
     {% if home %}
-	    {% if unmoderated_sounds %}
-	    <div id="unmoderated_sounds" class="content_box">
-	        <h3>Sounds waiting for moderation</h3>
-	        {% for sound in unmoderated_sounds %}
-	            {% display_sound sound %}
-	        {% endfor %}
-	    </div><!-- #unmoderated_sounds -->
-	    {% endif %}
-	    
-	    
-	    {% if unprocessed_sounds %}
-	    <div id="unprocessed_sounds" class="content_box">
-	        <h3>Sounds that have not been processed yet</h3>
-	        
-	        {% comment %}
-	        <p>Sounds in this list have not been processed yet and thus can't be moderated. This might be because they are still pending to process or because processing has failed.</p>
-	        {% endcomment %}
-	        
-	        {% for sound in unprocessed_sounds %}
-	        	<li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span>
+        {% if unmoderated_sounds %}
+        <div id="unmoderated_sounds" class="content_box">
+            <h3>Sounds waiting for moderation</h3>
+            {% for sound in unmoderated_sounds %}
+                {% display_sound sound %}
+            {% endfor %}
+        </div><!-- #unmoderated_sounds -->
+        {% endif %}
+
+
+        {% if unprocessed_sounds %}
+        <div id="unprocessed_sounds" class="content_box">
+            <h3>Sounds that have not been processed yet</h3>
+
+            {% comment %}
+            <p>Sounds in this list have not been processed yet and thus can't be moderated. This might be because they are still pending to process or because processing has failed.</p>
+            {% endcomment %}
+
+            {% for sound in unprocessed_sounds %}
+                <li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span>
                 {% if sound.processing_state == 'PE' %}
                     <span class="pending">Processing state: Pending</span>
                 {% else %}
@@ -120,7 +121,7 @@
 </div><!-- #content -->
 
 <div id="sidebar">
-    {% if tags %}
+    {% if tags.count %}
     <div id="user_most_used_tags" class="content_box">
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
         <p class="user_tagcloud">
@@ -176,30 +177,30 @@
         <p><a href="{% url packs-for-user user.username %}">more...</a></p>
     </div><!-- #latest_packs -->
     {% endif %}
-    
+
     {% if home %}
-	    {% if unmoderated_packs %}
-	    <div id="unmoderated_packs" class="content_box">
-	        <h3>"Uncomplete" Packs</h3>
-	        <p>Packs in this list won't be visible because none of their sounds has been moderated yet.</p>
-	        <ul>
-	        {% for pack in unmoderated_packs %}
-	            <li><span class="packname">{{pack.name}}</span>, created on <span class="date">{{pack.created}}</span></li>
-	        {% endfor %}
-	        <ul>
-	    </div><!-- #unmoderated_packs -->
-	    {% endif %}
-	    
-	    {% if packs_without_sounds %}
-	    <div id="unmoderated_packs" class="content_box">
-	        <h3>Packs without sounds</h3>
-	        <ul>
-	        {% for pack in packs_without_sounds %}
-	            <li><span class="packname">{{pack.name}}</span>, created on <span class="date">{{pack.created}}</span></li>
-	        {% endfor %}
-	        <ul>
-	    </div><!-- #unmoderated_packs -->
-	    {% endif %}
+        {% if unmoderated_packs %}
+        <div id="unmoderated_packs" class="content_box">
+            <h3>"Uncomplete" Packs</h3>
+            <p>Packs in this list won't be visible because none of their sounds has been moderated yet.</p>
+            <ul>
+            {% for pack in unmoderated_packs %}
+                <li><span class="packname">{{pack.name}}</span>, created on <span class="date">{{pack.created}}</span></li>
+            {% endfor %}
+            <ul>
+        </div><!-- #unmoderated_packs -->
+        {% endif %}
+
+        {% if packs_without_sounds %}
+        <div id="unmoderated_packs" class="content_box">
+            <h3>Packs without sounds</h3>
+            <ul>
+            {% for pack in packs_without_sounds %}
+                <li><span class="packname">{{pack.name}}</span>, created on <span class="date">{{pack.created}}</span></li>
+            {% endfor %}
+            <ul>
+        </div><!-- #unmoderated_packs -->
+        {% endif %}
     {% endif %}
 </div><!-- #sidebar -->
 <br class="clear"/><!-- Need a clearing element for some reason here.. -->

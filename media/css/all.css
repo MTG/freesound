@@ -1547,7 +1547,7 @@ ul#comments {
 
 /* Forums
 ------------------------------------------------------*/
-#breadcrumb {
+#breadcrumb_outer {
     font-weight: bold;
     font-size: 14px;
     background: url(../images/breadcrumb.png) repeat-x bottom;
@@ -1556,7 +1556,17 @@ ul#comments {
     color: #D3D3D3;
 }
 
-#breadcrumb a {
+#breadcrumb_outer #show_search {
+    float: right;
+    margin-top: 5px;
+}
+
+#breadcrumb_inner {
+    width: 730px;
+    float: left;
+}
+
+#breadcrumb_outer a {
     color: #000;
 }
 
@@ -1719,6 +1729,7 @@ ul.pagination {
 
 #posts .post .subject {
     padding-bottom: 15px;
+    margin-top: 20px;
     font-size: 17px;
     font-weight: bold;
 }
@@ -1733,7 +1744,7 @@ ul.pagination {
 #posts .post blockquote {
     color: #666;
     background-color: #F6F6F6;
-    padding: 15px;
+    padding: 20px;
     border-left: solid 2px #eee;
 }
 
@@ -2240,8 +2251,8 @@ p.about {
 }
 
 .account_information_and_home_options{
-	float:left;
-	display:inline;
+    float:left;
+    display:inline;
 }
 
 #unprocessed_sounds {
@@ -2281,7 +2292,7 @@ p.about {
 }
 
 #unmoderated_packs {
-	font-size: 10px;
+    font-size: 10px;
 }
 
 #unmoderated_packs li {
@@ -2289,11 +2300,11 @@ p.about {
 }
 
 #unmoderated_packs .packname{
-	font-weight: bold;
+    font-weight: bold;
 }
 
 #unmoderated_packs .date{
-	color: gray;
+    color: gray;
 }
 
 /* People page
@@ -2904,30 +2915,32 @@ ul.messages {
     line-height: 18px;
     margin-bottom: 18px;
     padding:16px;
-	background-color:#F9F9F9;
-	border-radius: 6px;
-	border: 1px solid #F0EEF1;
-	margin: 10px 0px 10px 25px;
+    background-color:#F9F9F9;
+    border-radius: 6px;
+    border: 1px solid #F0EEF1;
+    margin: 10px 0px 10px 25px;
 }
 
-.forum_search_result {	
-	padding:16px;
-	/*background-color:#F9F9F9;
-	border-radius: 6px;
-	border: 1px solid #F0EEF1;; */
-	border-bottom: solid 1px #E4E4E4;
+.forum_search_result {
+    padding:16px;
+    /*background-color:#F9F9F9;
+    border-radius: 6px;
+    border: 1px solid #F0EEF1;; */
+    border-bottom: solid 1px #E4E4E4;
 }
 
 .thread_info{
-	font-size: 10px; 
-	color: #9E9E9E; 
-	float:right;
+    font-size: 10px;
+    color: #9E9E9E;
+    padding-left: 28px;
+    margin-top:5px;
+    /*float:right;*/
 }
 
 .thread_title{
-	background: url(../images/forum_nonew.png) no-repeat top left;
-	padding-left: 28px;
-	font-size: 14px;
+    background: url(../images/forum_nonew.png) no-repeat top left;
+    padding-left: 28px;
+    font-size: 14px;
     font-weight: normal;
     font-weight: bold;
     color: #CC4040;
@@ -3012,15 +3025,15 @@ ul.messages {
  *
  * http://docs.jquery.com/UI/Datepicker#theming
  */
-.ui-datepicker { 
-				width: 19em; 
-				padding: .2em .2em 0; 
-				display: none; 
-				font-size:11px;  
-				background-color:#E9E9E9;
-				border-radius: 6px;
-				border: 1px solid #E0DEE1;
-			   }
+.ui-datepicker {
+                width: 19em;
+                padding: .2em .2em 0;
+                display: none;
+                font-size:11px;
+                background-color:#E9E9E9;
+                border-radius: 6px;
+                border: 1px solid #E0DEE1;
+               }
 .ui-datepicker .ui-datepicker-header { position:relative; padding:.2em 0;}
 .ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next { position:absolute; top: 2px; width: 1.8em; height: 1.8em; }
 .ui-datepicker .ui-datepicker-prev-hover, .ui-datepicker .ui-datepicker-next-hover { top: 1px; }

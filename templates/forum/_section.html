@@ -35,11 +35,38 @@
                                               altField: "#dt_to",
                                               altFormat: "yy-mm-dd"
                                               })
-
+		
+		// Set the date in datepicker objects (if it exists in the parameters)
+		from_date = gup('dt_from')
+		if ( from_date != "" ){
+			dateParts = from_date.match(/(\d+)/g)
+    		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
+    		$('#date_from_forum_search').datepicker('setDate', realDate);
+		}
+		
+		to_date = gup('dt_to')
+		if ( to_date != "" ){
+			dateParts = to_date.match(/(\d+)/g)
+    		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
+    		$('#date_to_forum_search').datepicker('setDate', realDate);
+		}
+		
         $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name}}'{%else%}all forums{% endif %} {% endif %}");
 
     });
     
+    // Parse url parameters
+    function gup( name )
+	{
+	  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+	  var regexS = "[\\?&]"+name+"=([^&#]*)";
+	  var regex = new RegExp( regexS );
+	  var results = regex.exec( window.location.href );
+	  if( results == null )
+	    return "";
+	  else
+	    return results[1];
+	}
     
 </script>
 {% endblock head %}
@@ -48,7 +75,6 @@
 
 {% block content %}
 <div id="content_full"> <!-- START of Content area -->
-
 
 <div id="breadcrumb_outer">
     <div id="breadcrumb_inner">

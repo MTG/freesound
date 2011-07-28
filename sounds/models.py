@@ -191,10 +191,10 @@ class Sound(SocialModel):
             ),
             display = dict(
                 spectral = dict(
-                    S = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_S.jpg" % (self.id, sound_user_id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_S.jpg" % (id_folder, self.id, sound_user_id)
-                    ),
+#                    S = dict(
+#                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_S.jpg" % (self.id, sound_user_id)),
+#                        url = settings.DISPLAYS_URL + "%s/%d_%d_spec_S.jpg" % (id_folder, self.id, sound_user_id)
+#                    ),
                     M = dict(
                         path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_spec_M.jpg" % (self.id, sound_user_id)),
                         url = settings.DISPLAYS_URL + "%s/%d_%d_spec_M.jpg" % (id_folder, self.id, sound_user_id)
@@ -205,10 +205,10 @@ class Sound(SocialModel):
                     )
                 ),
                 wave = dict(
-                    S = dict(
-                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_S.png" % (self.id, sound_user_id)),
-                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_S.png" % (id_folder, self.id, sound_user_id)
-                    ),
+#                    S = dict(
+#                        path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_S.png" % (self.id, sound_user_id)),
+#                        url = settings.DISPLAYS_URL + "%s/%d_%d_wave_S.png" % (id_folder, self.id, sound_user_id)
+#                    ),
                     M = dict(
                         path = os.path.join(settings.DISPLAYS_PATH, id_folder, "%d_%d_wave_M.png" % (self.id, sound_user_id)),
                         url = settings.DISPLAYS_URL + "%s/%d_%d_wave_M.png" % (id_folder, self.id, sound_user_id)
@@ -304,7 +304,7 @@ class Sound(SocialModel):
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
                 tagged_object.save()
 
-    def delete(self):
+    #def delete(self):
         # remove from solr
         #delete_sound_from_solr(self)
         # delete foreignkeys
@@ -313,7 +313,7 @@ class Sound(SocialModel):
         # delete files
         #delete_object_files(self, web_logger)
         # super class delete
-        super(Sound, self).delete()
+        #super(Sound, self).delete()
 
 
     # N.B. These set functions are used in the distributed processing.
@@ -342,9 +342,6 @@ class Sound(SocialModel):
     def set_moderation_state(self, state):
         self.set_single_field('moderation_state', state)
 
-    def set_moderation_state(self, state):
-        self.set_single_field('moderation_state', state)
-
     def set_original_path(self, path):
         self.set_single_field('original_path', path)
 
@@ -359,11 +356,12 @@ class Sound(SocialModel):
         ordering = ("-created", )
 
 def delete_from_external_indexes(sender,instance, **kwargs):
-        if instance.geotag:
-            instance.geotag.delete()
-        delete_sound_from_solr(instance)
-        Similarity.delete(instance.id)
-        delete_object_files(instance, web_logger)
+    if instance.geotag:
+        instance.geotag.delete()
+    delete_sound_from_solr(instance)
+    # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
+    Similarity.delete(instance.id)
+    delete_object_files(instance, web_logger)
 post_delete.connect(delete_from_external_indexes, sender=Sound)
 
 

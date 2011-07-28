@@ -46,9 +46,12 @@
 {% block content %}
 <div id="content_full"> <!-- START of Content area -->
 
-<div id="breadcrumb">
-<a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
-<a id="show_search" style="display:none;" onclick="showSearch()" ><span class="forum_search_button">search in the forum</span></a>
+<div id="breadcrumb_outer">
+    <div id="breadcrumb_inner">
+        <a href="{% url forums-forums %}">Freesound Forums</a> {% block breadcrumb %}{% endblock %}
+    </div>
+    <a id="show_search" style="display:none;" onclick="showSearch()" ><span class="forum_search_button">search in the forum</span></a>
+    <br style="clear: both;" />
 </div>
 
 {% block forum_search %}

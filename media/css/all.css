@@ -1547,7 +1547,7 @@ ul#comments {
 
 /* Forums
 ------------------------------------------------------*/
-#breadcrumb {
+#breadcrumb_outer {
     font-weight: bold;
     font-size: 14px;
     background: url(../images/breadcrumb.png) repeat-x bottom;
@@ -1556,7 +1556,17 @@ ul#comments {
     color: #D3D3D3;
 }
 
-#breadcrumb a {
+#breadcrumb_outer #show_search {
+    float: right;
+    margin-top: 5px;
+}
+
+#breadcrumb_inner {
+    width: 730px;
+    float: left;
+}
+
+#breadcrumb_outer a {
     color: #000;
 }
 
@@ -1719,6 +1729,7 @@ ul.pagination {
 
 #posts .post .subject {
     padding-bottom: 15px;
+    margin-top: 20px;
     font-size: 17px;
     font-weight: bold;
 }
@@ -1733,7 +1744,7 @@ ul.pagination {
 #posts .post blockquote {
     color: #666;
     background-color: #F6F6F6;
-    padding: 15px;
+    padding: 20px;
     border-left: solid 2px #eee;
 }
 

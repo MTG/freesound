@@ -9,6 +9,7 @@
             $("#show_search").show();
         }
     });
+    
     function showSearch() {
         $("#forum_search").toggle("medium");
     }
@@ -34,10 +35,39 @@
                                               altField: "#dt_to",
                                               altFormat: "yy-mm-dd"
                                               })
-
-        $("#forum_search input[name=q]").Watermark("search in {% if forum %}forum '{{forum.name}}'{% else %}all forums{% endif %}");
+		
+		// Set the date in datepicker objects (if it exists in the parameters)
+		from_date = gup('dt_from')
+		if ( from_date != "" ){
+			dateParts = from_date.match(/(\d+)/g)
+    		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
+    		$('#date_from_forum_search').datepicker('setDate', realDate);
+		}
+		
+		to_date = gup('dt_to')
+		if ( to_date != "" ){
+			dateParts = to_date.match(/(\d+)/g)
+    		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
+    		$('#date_to_forum_search').datepicker('setDate', realDate);
+		}
+		
+        $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name}}'{%else%}all forums{% endif %} {% endif %}");
 
     });
+    
+    // Parse url parameters
+    function gup( name )
+	{
+	  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+	  var regexS = "[\\?&]"+name+"=([^&#]*)";
+	  var regex = new RegExp( regexS );
+	  var results = regex.exec( window.location.href );
+	  if( results == null )
+	    return "";
+	  else
+	    return results[1];
+	}
+    
 </script>
 {% endblock head %}
 
@@ -52,11 +82,12 @@
     </div>
     <a id="show_search" style="display:none;" onclick="showSearch()" ><span class="forum_search_button">search in the forum</span></a>
     <br style="clear: both;" />
+
 </div>
 
 {% block forum_search %}
 <div {% if forum or forums %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
-    <form method="get" action="{% url forums-search %}">
+    <form method="get" action="{% url forums-search %}" >
     <input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
     <input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
 
@@ -68,8 +99,9 @@
         <fieldset>
 
             <input type="text"
+            	   id="forum_search_box"
                    name="q"
-                   value="{% if request.GET.q %}{{request.GET.q}}{% endif %}"
+                   value="{% if not invalid %}{% if request.GET.q %}{{request.GET.q}}{% endif %}{% endif %}"
                    size="60" />
 
             <input type="submit" value="search!" id="search_submit" />

@@ -2932,7 +2932,9 @@ ul.messages {
 .thread_info{
     font-size: 10px;
     color: #9E9E9E;
-    float:right;
+    padding-left: 28px;
+    margin-top:5px;
+    /*float:right;*/
 }
 
 .thread_title{
@@ -3032,6 +3034,12 @@ ul.messages {
                 border-radius: 6px;
                 border: 1px solid #E0DEE1;
                }
+
+.ui-state-active, .ui-widget-content .ui-state-active 
+{
+    background-color:#E0E0E0;
+}
+
 .ui-datepicker .ui-datepicker-header { position:relative; padding:.2em 0;}
 .ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next { position:absolute; top: 2px; width: 1.8em; height: 1.8em; }
 .ui-datepicker .ui-datepicker-prev-hover, .ui-datepicker .ui-datepicker-next-hover { top: 1px; }

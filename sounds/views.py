@@ -448,6 +448,9 @@ def pack(request, username, pack_id):
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
+        if pack.is_dirty :
+            messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
+        
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 

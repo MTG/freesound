@@ -62,7 +62,6 @@ def get_random_uploader():
 
 def sounds(request):
     n_weeks_back = 1
-    #latest_sounds = Sound.objects.latest_additions(5, use_interval=False)
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
 
@@ -125,8 +124,7 @@ def front_page(request):
                                                           'thread',
                                                           'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
                                                           'forum', 'forum__name_slug')
-    #latest_additions = Sound.objects.latest_additions(5, use_interval=False)
-    latest_sounds = Sound.objects.latest_additions(5, '2 days')
+    latest_additions = Sound.objects.latest_additions(5, '2 days')
     random_sound = get_random_sound()
     return render_to_response('index.html', locals(), context_instance=RequestContext(request))
 

@@ -359,9 +359,9 @@ def delete_from_external_indexes(sender,instance, **kwargs):
     if instance.geotag:
         instance.geotag.delete()
     delete_sound_from_solr(instance)
+    delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
     Similarity.delete(instance.id)
-    delete_object_files(instance, web_logger)
 post_delete.connect(delete_from_external_indexes, sender=Sound)
 
 

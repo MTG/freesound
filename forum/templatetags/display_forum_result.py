@@ -41,5 +41,5 @@ def display_forum_result(context, post, highlight):
                                                    'Posts: ' + str(first_doc[0]['num_posts']), 
                                                    'Date: ' + str(first_doc[0]['thread_created'])]),
                         }) 
-    
+            
     return { 'results': results }

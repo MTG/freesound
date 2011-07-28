@@ -22,6 +22,7 @@
 		$("#advanced_forum_search").hide('blind', {}, 500, function() {});
 		$("#enableShowButton").show();
 	}
+	
 	$(function(){
 		$("#date_from_forum_search").datepicker({ 
 												dateFormat: 'dd-mm-yy', 
@@ -32,7 +33,7 @@
 											  dateFormat: 'dd-mm-yy', 
 											  altField: "#dt_to",
 											  altFormat: "yy-mm-dd"
-											  });
+											  })
 	});
 </script>
 {% endblock head %}
@@ -52,30 +53,50 @@
 	<form method="get" action="{% url forums-search %}">
 	<input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
 	<input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>
-	<input type="hidden" name="advanced_search" id="advanced_search" value="0"/>
+	
+	{% if advanced_search == "1" %}
+		<input type="hidden" name="advanced_search" id="advanced_search" value="1"/>
+	{% else %}
+		<input type="hidden" name="advanced_search" id="advanced_search" value="0"/>
+	{% endif %}
+	
     	<fieldset>
-        	<input type="text" name="q" value="" size="30" />
+        	{% if request.GET.q %}
+        		<input type="text" name="q" value="{{request.GET.q}}" size="30" />
+        	{% else %}
+        		<input type="text" name="q" value="" size="30" />
+        	{% endif %}
+        	
             <input type="submit" value="search!" id="search_submit" />
-            <div id="advanced_forum_search" style="display:none" >
+            
+            {% if advanced_search == "1" %}
+				<div id="advanced_forum_search" >
+			{% else %}
+				<div id="advanced_forum_search" style="display:none" >
+			{% endif %}
+            	
             	<label for="date_from_forum_search">From Date:</label>
 				<input class="input_date_field" type="text" value="Choose a Date" id="date_from_forum_search" />
 				<input type="hidden" value="" name="dt_from" id="dt_from" />
+				
+				
 				<label for="date_to_forum_search">To Date:</label>
 				<input class="input_date_field"  type="text" value="Choose a Date" id="date_to_forum_search" />
 				<input type="hidden" value="" name="dt_to" id="dt_to" />
 				
 				<br>
 				<span class="advanced_search_options_button"><a onclick='hideAdvancedForumSearch();'>hide advanced search options</a></span>
-			</div>		
+			</div>	
+					
 				{% if advanced_search == "1" %}
 				    <span id="enableShowButton" style="display:none" class="advanced_search_options_button">
 				{% else %}
 				    <span id="enableShowButton" class="advanced_search_options_button">
 				{% endif %}
-				
 				<div style="margin-top:4px;"></div>
 				<a onclick='showAdvancedForumSearch();'>show advanced search options</a>
 				</span>
+				
 		</fieldset>
 	</form>
 </div>

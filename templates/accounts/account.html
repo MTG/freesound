@@ -52,13 +52,13 @@
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
 
         </ul>
-		</div>
+        </div>
         {% if user.profile.about %}
             <p class="about">
                 {{user.profile.about|safe|linebreaksbr }}
             </p>
         {% endif %}
-		<br>
+        <br>
     {% endif %}
 
 <div id="content">
@@ -69,7 +69,7 @@
         {% for sound in latest_sounds %}
             {% display_sound sound %}
         {% endfor %}
-        <p><a href="{% url sounds-for-user user.username %}">more...</a></p>
+        <p><a href="{% url sounds-for-user user.username %}?page=2">more...</a></p>
     </div><!-- #latest_sounds -->
     {% endif %}
 

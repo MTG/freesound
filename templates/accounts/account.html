@@ -50,7 +50,7 @@
             <li>Number of forum posts: {{user.profile.num_posts}}</li>
             <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
-            
+
         </ul>
 		</div>
         {% if user.profile.about %}
@@ -72,7 +72,7 @@
         <p><a href="{% url sounds-for-user user.username %}">more...</a></p>
     </div><!-- #latest_sounds -->
     {% endif %}
-    
+
     {% if home %}
 	    {% if unmoderated_sounds %}
 	    <div id="unmoderated_sounds" class="content_box">
@@ -95,28 +95,28 @@
 	        {% for sound in unprocessed_sounds %}
 	        	<li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span>
                 {% if sound.processing_state == 'PE' %}
-                	<span class="pending">Processing state: Pending</span>
+                    <span class="pending">Processing state: Pending</span>
                 {% else %}
-                	{% if sound.processing_state == 'QU' %}
-                		<span class="queued">Processing state: Queued</span>
-                	{% else %}
-                		{% if sound.processing_state == 'FA' %}
-	                		<span class="failed">Processing state: Failed</span>
-	                	{% else %}
-	                		{% if sound.processing_state == 'PR' %}
-		                		<span class="processing">Processing state: Processing</span>
-		                	{% else %}
-		                		Processing state: {{sound.processing_state}}
-		                	{% endif %}
-	                	{% endif %}
-                	{% endif %}
+                    {% if sound.processing_state == 'QU' %}
+                        <span class="queued">Processing state: Queued</span>
+                    {% else %}
+                        {% if sound.processing_state == 'FA' %}
+                            <span class="failed">Processing state: Failed</span>
+                        {% else %}
+                            {% if sound.processing_state == 'PR' %}
+                                <span class="processing">Processing state: Processing</span>
+                            {% else %}
+                                Processing state: {{sound.processing_state}}
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
                 {% endif %}
-	        	</li>
-	        {% endfor %}
-	    </div><!-- #unprocessed_sounds -->
-	    {% endif %}
+                </li>
+            {% endfor %}
+        </div><!-- #unprocessed_sounds -->
+        {% endif %}
     {% endif %}
-    
+
 </div><!-- #content -->
 
 <div id="sidebar">
@@ -135,6 +135,9 @@
         <div id="map_canvas"></div>
         <script type="text/javascript">
             var map = new GMap2(document.getElementById("map_canvas"));
+            GEvent.addListener(map, 'infowindowclose', function() {
+                stopAll();
+            });
             map.setUIToDefault();
             map.disableScrollWheelZoom();
             map.setMapType(G_SATELLITE_MAP);

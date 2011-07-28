@@ -1,0 +1,229 @@
+{% extends "tickets/_section.html" %}
+
+{% block title %}
+    Moderation Guide
+{% endblock title %}
+
+{% block section_content %}
+<div id="moderation_guide">
+    <h2>Moderation Guide</h2>
+
+    <p>Because we want Freesound to be full of sounds that have good names,
+    descriptions and tags, the sounds that are uploaded to Freesound have to be
+    approved by the moderator team before they show up on the website. If you
+    are part of the moderator team or the staff you can help to moderate the
+    sounds.
+
+    <p>This short guide will teach you how the moderation pages work and
+    what to take into account when you are moderating.
+
+    <h3>Moderation pages</h3>
+
+    <p>In short the moderation workflow is consists of two steps: 1) assigning
+    new sounds to your moderation queue and 2) going through your queue and
+    moderating each sound in it. We'll walk you through the different pages.
+
+    <p><b>1 - Getting to the moderation pages</b></p>
+
+    <p>If you have the permission to moderate sounds a new link will appear on
+    your home page. Clicking this link will take you to the moderation home.
+
+    <img src="{{ media_url }}images/moderation_guide/moderation_link_location.png" alt="screen shot of link to moderation pages"/>
+
+    <p><b>2 - The moderation home</b></p>
+
+    <p>In the moderation home you'll see a little menu at the top, and the
+    headers 'Sounds and support requests' and 'Processing system status'.
+
+    <img src="{{ media_url }}images/moderation_guide/moderation_home.png" alt="screen shot of moderation home"/>
+
+    <p>The menu item 'Moderation home' obviously takes you back to the
+    moderation home. The 'Sounds' menu item, as well as the 'moderate sounds'
+    link below, brings you to the page where you assign newly uploaded sounds
+    to your moderation queue. We see that there are 7 new sounds awaiting
+    moderation, so let's moderate them by clicking 'Moderate sounds'.
+
+    <p><b>3 - Assigning sounds to your moderation queue</b></p>
+
+    <img src="{{ media_url }}images/moderation_guide/moderation_sounds.png" alt="screen shot of sounds assignation page"/>
+
+    <p>We now see that there are two users with newly uploaded sounds.
+    User DobbleWobble has uploaded 4 new sounds and another user uploaded 3 new
+    sounds. Both users have a link that says 'Assign to me'. Clicking this link
+    will assign all the new sounds from that user to your moderation queue.
+    Don't start assigning all the sounds to yourself at once, because it doesn't
+    leave anything for other moderators who might be working at the same time.
+    If later your moderation queue is empty and you would like to moderate more
+    sounds, go back to this page and assign the rest.
+
+    <p>Once you have assigned a user's new sounds to your queue a message will
+    appear notifying you of this and the user will disappear from the list. The
+    sounds are now in your queue and you are responsible for moderating them.
+
+    <p><b>4 - Your sound moderation queue</b></p>
+
+    <p>To get to your personal sound moderation queue click 'Your sound queue' and
+    you will see the following page.</p>
+
+    <img src="{{ media_url }}images/moderation_guide/moderation_queue.png" alt="screen shot of moderation queue"/>
+
+    <p>The moderation queue has several sections. The first section called
+    'Assigned tickets' shows a list of all the sounds in your queue. It shows
+    the name, the uploader, the date of the upload and lastly the ticket status
+    (we'll explain this later).
+
+    <p>You can click any sound in this list and the other sections will load the
+    information for that sound.
+
+    <p>The sections in the right column show information for the sound that you
+    have selected in the left column. You can listen to the sound, and see the
+    description and tags.
+
+    <p>Under 'Messages for sound' you can see the discussion
+    between the moderators and the uploader. Most of the time you will not need
+    to discuss anything and just approve the sound, but if you would like to
+    ask the user for a better description or ask about the legality of the sound
+    you can do this by leaving a message here.
+
+    <p>You leave messages and change the moderation state of the sound under the
+    'Moderate' section. The top row of radio buttons determine what will happen
+    to the sound. The bottom row of square boxes can be used to select standard
+    responses. Let's walk through the different options.
+
+    <p><ul>
+        <li><b>Approve</b> - The sound will be approved and will show up on Freesound and the user will be notified</li>
+        <li><b>Delete</b> - The sound will be deleted and the user will be notified.</li>
+        <li><b>Defer</b> - The sound will not be approved just yet and it will stay in
+        your sound queue. This gives you the possibility to ask the user for
+        more information about the sound.</li>
+        <li><b>Return</b> - If you're not sure about what to do with the sound you can
+        return the sound to the sounds page. Other moderators can have a look at
+        the sound and discuss what should be done.
+        <li><b>Whitelist</b> - The user will be whitelisted, which means that all of
+        his sounds currently in the queue will be directly approved and all of
+        his future uploads as well. Use with caution and check the
+        'user information' section and the 'user annotations'.
+    </ul></p>
+
+    <p>The 'insufficient tags', 'insufficient description', incompatible,
+    illegal and 'not a sound' buttons will add a standard text to the text box.
+    This is just to save you some time but you can always write your own message
+    or edit the standard text. If you leave a message in the text box the user
+    will be notified of this message. However, if you check the 'Moderator only'
+    check box the user will not be notified and the message can only be read
+    by other moderators. This is useful if you want to return the message to the
+    sounds page to be handled by other moderators and you want to leave a
+    message for them.</p>
+
+    <p>The 'User annotations' message is to leave messages about the user to
+    other moderators. This is useful e.g. if a user uploads music or illegal
+    files. You can leave a message for other moderators informing them that the
+    user has uploaded illegal sounds and they should be careful the next time
+    a user uploads sounds.</p>
+
+    <p>When a user replies to one of your questions you'll receive an email
+    notification of this. All communication is done through these messages so
+    you will never have to use your own email account to communicate with the
+    users.</p>
+
+    <h3>Tickets</h3>
+
+    <p>Earlier we said we would come back to the sound's status as you see it in
+    the list of sounds. This is in fact the status of the moderation ticket and
+    not of the sound. In the new moderation system all actions by users that
+    require a response from the moderation team are converted into tickets.
+    A ticket is basically a way to keep track of tasks that need to be done by
+    the moderators and the programmers of Freesound. An example is when a user
+    uploads a sound. This creates a ticket for the moderators so they know that
+    they have a task to do. Later on this ticket system will also be used for
+    support requests, when files are flagged, etc.</p>
+
+    <p>A ticket has a state that indicates whether it is active or not. A state
+    of 'new' indicates that nobody has looked at the ticket and nobody is taking
+    care of it yet. Accepted means that the ticket, and therefore the task, has
+    been assigned to someone. The 'Accepted' state that you see in your sound
+    queue is in fact the state of the ticket. This state can become 'Deferred'
+    as well, indicating that you are waiting for a user to respond. Lastly,
+    when you finally delete or approve the sound, or whitelist the uploader, the
+    ticket status will be set to closed and it will not appear anymore in your
+    queue.</p>
+
+    <p>Try clicking the 'see full ticket' link in your sound queue if you are
+    curious about tickets. It'll show you some more details.</p>
+
+    <h3>Moderation tips</h3>
+
+    <p>Here is some advice to help you make decisions when moderating files.
+    Please feel free to add your own advice here.</p>
+
+    <p><b>Spotting illegal content</b></p>
+
+    <p>Identifying content which may infringe on someone's copyrights is
+    probably the hardest part of the job. If you can clearly recognize the
+    sample as being taken from a popular song or movie, you should of course
+    delete the sound, click 'Illegal' and be done with it. However, it is not
+    often so clear-cut, although there are certain signs you should look for.
+
+    <p>If you suspect a sample is illegal, check the format, bitrate, and sample
+    rate of the file. Low bitrates (usually 8 bit) or with varying bitrates
+    (VBR) indicate that the file was downloaded from the web. Users uploading
+    samples with widely different bitrates between individual files are also
+    suspicious. You may want to note common web formats like mp3 and wav, though
+    keep in mind that many legitimate uploaders make use of these formats.</p>
+
+    <p>It may also be helpful to do a web search for terms the uploader entered
+    in the file description or tags.</p>
+
+    <p>If you have doubts about the legality of a sound, defer the sound and
+    contact the user. Most users will tell you if they made sounds themselves or
+    if they "found it on a website".</p>
+
+    <p>Sounds that come from websites that say that the sounds are "free" most
+    of the time are NOT compatible with the creative commons licenses.</p>
+
+    <p><b>Good description standards</b></p>
+
+    <p>Deciding what constitutes a good description is largely a matter of your
+    own judgement, but here are a few guidelines.
+
+    <p>For synthesized sounds, a brief description may be sufficient, i.e.
+    "jazzy glissando, synthesized." If the uploader states the program or
+    language they used to create the sound, even better.</p>
+
+    <p>For field recordings, a more detailed description is expected. Where it
+    was recorded, what kind of mic/recorder setup was used, etc. make for a good
+    description. The bare minimum would be something like "nightingales recorded
+    in my backyard in Slough, UK." Something even less descriptive, such as
+    "birds in the yard" may constitute a description poor enough to be marked as
+    "Approved", but with an added message of "insufficient tags/description".
+
+    <p><b>No waveform in player</b></p>
+
+    <p>If the picture of a sound doesn't appear this means the sound has not been
+    processed correctly. Usually this means the file is not an audio file, that
+    it is an unsupported format, or that it is broken. You should delete the
+    sound, but inform the user that the file could not be read by Freesound and
+    ask him to upload it in a supported format.</p>
+
+    <p><b>Some final words from Bram</b></p>
+
+    <p>If it's a good sound, always scale your opinion upwards. I very
+    frequently just choose "ok, bad description" ;)</p>
+
+    <h3>Some final notes</h3>
+
+    <p>In the future the moderation task will include not just the moderation of
+    sounds, but also giving support to the community.</p>
+
+    <p>Only sounds that have passed through the processing system will show up
+    in the moderation system. It's possible that some sounds fail to process
+    correctly. These sounds will still show up in the moderation system, but
+    the sound player will be left white and a small text will indicate the
+    processing has failed.</p>
+</div>
+
+{% endblock section_content %}
+
+
+
+

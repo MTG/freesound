@@ -28,6 +28,9 @@
 {% endif %}
 <script type="text/javascript">
     var map = new GMap2($("#map_canvas").get(0));
+    GEvent.addListener(map, 'infowindowclose', function() {
+        stopAll();
+    });
     map.setUIToDefault();
     map.disableScrollWheelZoom();
 

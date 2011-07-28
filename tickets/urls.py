@@ -18,6 +18,11 @@ urlpatterns = patterns('',
         tickets_home,
         name='tickets-home'),
 
+    url(r'^guide/$',
+        direct_to_template,
+        {'template': 'tickets/guide.html'},
+        name='tickets-moderation-home'),
+
     url(r'^moderation/$',
         moderation_home,
         name='tickets-moderation-home'),

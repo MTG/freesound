@@ -126,7 +126,7 @@ def front_page(request):
                                                           'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
                                                           'forum', 'forum__name_slug')
     #latest_additions = Sound.objects.latest_additions(5, use_interval=False)
-    latest_sounds = Sound.objects.latest_additions(5, '2 days')
+    latest_additions = Sound.objects.latest_additions(5, '2 days')
     random_sound = get_random_sound()
     return render_to_response('index.html', locals(), context_instance=RequestContext(request))
 

@@ -18,8 +18,11 @@ def add(request, content_type_id, object_id, rating):
             # make sure the rating is seen on the next page load by invalidating the cache for it.
             ct = ContentType.objects.get(id=content_type_id)
             if ct.name == 'sound':
-                invalidate_template_cache("sound_header", object_id)
-                invalidate_template_cache("display_sound", object_id)
+                # invalidate for logged in/not logged in, only for 'OK' sounds
+                invalidate_template_cache("sound_header", object_id, True)
+                invalidate_template_cache("sound_header", object_id, False)
+                invalidate_template_cache("display_sound", object_id, True, 'OK')
+                invalidate_template_cache("display_sound", object_id, False, 'OK')
             # if you want to invalidate some other caches for other content types add them here
         except Rating.DoesNotExist: #@UndefinedVariable
             rating_object = Rating.objects.create(user=request.user, object_id=object_id, content_type=content_type, rating=rating)

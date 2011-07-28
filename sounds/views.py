@@ -62,9 +62,10 @@ def get_random_uploader():
 
 def sounds(request):
     n_weeks_back = 1
-    latest_sounds = Sound.objects.latest_additions(5, use_interval=False)
+    #latest_sounds = Sound.objects.latest_additions(5, use_interval=False)
+    latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
-    
+
     # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
     popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
 
@@ -124,7 +125,8 @@ def front_page(request):
                                                           'thread',
                                                           'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
                                                           'forum', 'forum__name_slug')
-    latest_additions = Sound.objects.latest_additions(5, use_interval=False)
+    #latest_additions = Sound.objects.latest_additions(5, use_interval=False)
+    latest_sounds = Sound.objects.latest_additions(5, '2 days')
     random_sound = get_random_sound()
     return render_to_response('index.html', locals(), context_instance=RequestContext(request))
 
@@ -343,7 +345,7 @@ def sound_edit_sources(request, username, sound_id):
 def __recalc_remixgroup(remixgroup, sound):
     from networkx import nx
     import simplejson as json
-    
+
     # recreate remixgroup
     dg = nx.DiGraph()
     data = json.loads(remixgroup.networkx_data)
@@ -354,46 +356,46 @@ def __recalc_remixgroup(remixgroup, sound):
     dg.nodes()
     print "========= EDGES =========="
     dg.edges()
-    
+
     # add new nodes/edges
     for source in sound.sources.all():
         if source.id not in dg.successors(sound.id):
             dg.add_node(source.id)
             dg.add_edge(sound.id, source.id)
-            
+
             remix_group = RemixGroup.objects.filter(sounds=source)
             if remix_group:
                 dg = __nested_remixgroup(dg, remix_group[0])
-            
-    
+
+
     # remove old nodes/edges
     for source in dg.successors(sound.id):
         if source not in [s.id for s in sound.sources.all()]:
             dg.remove_node(source) # TODO: check if edges are removed automatically
-    
+
     print "============ NODES AND EDGES =============="
     print dg.nodes()
     print dg.edges()
     # create and save the modified remixgroup
     dg = _create_nodes(dg)
-    _create_and_save_remixgroup(dg, remixgroup)       
+    _create_and_save_remixgroup(dg, remixgroup)
 
 def __nested_remixgroup(dg1, remix_group):
     print "============= nested remix_group ================ \n"
     from networkx import nx
     import simplejson as json
-    
+
     # recreate remixgroup
     dg2 = nx.DiGraph()
     data = json.loads(remix_group.networkx_data)
     dg2.add_nodes_from(data['nodes'])
     dg2.add_edges_from(data['edges'])
-    
+
     # FIXME: this combines the graphs correctly
     #        recheck the time-bound concept
-    dg1 = nx.compose(dg1, dg2) 
+    dg1 = nx.compose(dg1, dg2)
     print dg1.nodes()
-    
+
     return dg1
 
 def remixes(request, username, sound_id):
@@ -441,15 +443,15 @@ def pack(request, username, pack_id):
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
     num_sounds_ok = len(qs)
-    
+
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
-    
-    
-    
+
+
+
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
 

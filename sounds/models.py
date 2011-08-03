@@ -505,5 +505,4 @@ class RemixGroup(models.Model):
                                     blank=True)
 
     # facilitate ordering according to group size
-    # FIXME: temp commented to not fuckup the deployment in tabasco
-    # group_size = models.PositiveIntegerField(null=False, default=0)
+    group_size = models.PositiveIntegerField(null=False, default=0)

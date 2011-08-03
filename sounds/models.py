@@ -496,7 +496,8 @@ class Download(models.Model):
 class RemixGroup(models.Model):
     protovis_data = models.TextField(null=True, blank=True, default=None)
     # facilitate recreating the remixgroup
-    networkx_data = models.TextField(null=True, blank=True, default=None)   
+    # FIXME: temp commented to not fuckup the deployment in tabasco
+    # networkx_data = models.TextField(null=True, blank=True, default=None)   
 
     sounds = models.ManyToManyField(Sound,
                                     symmetrical=False,
@@ -504,4 +505,5 @@ class RemixGroup(models.Model):
                                     blank=True)
 
     # facilitate ordering according to group size
-    group_size = models.PositiveIntegerField(null=False, default=0)
+    # FIXME: temp commented to not fuckup the deployment in tabasco
+    # group_size = models.PositiveIntegerField(null=False, default=0)

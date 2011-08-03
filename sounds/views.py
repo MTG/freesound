@@ -40,7 +40,7 @@ from django.contrib.sites.models import Site
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from django.db import connection, transaction
 from networkx import nx
-import simplejson as json
+import json
 
 logger = logging.getLogger('web')
 
@@ -64,8 +64,8 @@ def get_random_uploader():
 
 def sounds(request):
     n_weeks_back = 1
-    latest_sounds = Sound.objects.latest_additions(5, use_interval=False)
-    latest_packs = Pack.objects.annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
+    latest_sounds = Sound.objects.latest_additions(5, '2 days')
+    latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
 
     # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
     popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
@@ -88,7 +88,7 @@ def random(request):
     if sound_id is None:
         raise Http404
     sound_obj = Sound.objects.get(pk=sound_id)
-    return sound(request, sound_obj.user.username, sound_id)
+    return HttpResponseRedirect(reverse("sound",args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
 
 
 def packs(request):
@@ -120,11 +120,13 @@ LIMIT 10
 def front_page(request):
     rss_url = settings.FREESOUND_RSS
     pledgie_campaign = settings.PLEDGIE_CAMPAIGN
-    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids()).select_related('author',
-                                                                                                  'thread',
-                                                                                                  'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
-                                                                                                  'forum', 'forum__name_slug')
-    latest_additions = Sound.objects.latest_additions(5, use_interval=False)
+    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids()) \
+                                          .order_by('-last_post__created') \
+                                          .select_related('author',
+                                                          'thread',
+                                                          'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
+                                                          'forum', 'forum__name_slug')
+    latest_additions = Sound.objects.latest_additions(5, '2 days')
     random_sound = get_random_sound()
     return render_to_response('index.html', locals(), context_instance=RequestContext(request))
 
@@ -177,7 +179,6 @@ def sound(request, username, sound_id):
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
 
-@login_required
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
@@ -186,11 +187,15 @@ def sound_download(request, username, sound_id):
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
-@login_required
+
 def pack_download(request, username, pack_id):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
+                                                    reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
     return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
+
 
 @login_required
 def sound_edit(request, username, sound_id):
@@ -330,9 +335,10 @@ def sound_edit_sources(request, username, sound_id):
         form = RemixForm(sound, request.POST)
         if form.is_valid():
             form.save()
-            remix_group = RemixGroup.objects.filter(sounds=sound)
-            if remix_group:
-                __recalc_remixgroup(remix_group[0], sound)
+            # FIXME: temp solution to not fuckup the deployment in tabasco
+            # remix_group = RemixGroup.objects.filter(sounds=sound) 
+            # if remix_group:
+            #     __recalc_remixgroup(remix_group[0], sound)
         else:
             # TODO: Don't use prints! Either use logging or return the error to the user. ~~ Vincent
             pass #print ("Form is not valid!!!!!!! %s" % ( form.errors))
@@ -342,6 +348,7 @@ def sound_edit_sources(request, username, sound_id):
 
 # TODO: handle case were added/removed sound is part of remixgroup
 def __recalc_remixgroup(remixgroup, sound):
+
     # recreate remixgroup
     dg = nx.DiGraph()
     data = json.loads(remixgroup.networkx_data)
@@ -380,18 +387,18 @@ def __recalc_remixgroup(remixgroup, sound):
 
 def __nested_remixgroup(dg1, remix_group):
     print "============= nested remix_group ================ \n"
-    print "========== REMIXGROUP_ID: " + str(remix_group.id)
-    # recreate remixgroup
     dg2 = nx.DiGraph()
     data = json.loads(remix_group.networkx_data)
     dg2.add_nodes_from(data['nodes'])
     dg2.add_edges_from(data['edges'])
         
+    print "========== MERGED GROUP NODES: " + str(dg1.nodes())
+
     # FIXME: this combines the graphs correctly
     #        recheck the time-bound concept
-    dg1 = nx.compose(dg1, dg2) 
-    print "========== MERGED GROUP NODES: " + str(dg1.nodes())
-    
+    dg1 = nx.compose(dg1, dg2)
+    print dg1.nodes()
+
     return dg1
 
 def remixes(request, username, sound_id):
@@ -438,6 +445,19 @@ def pack(request, username, pack_id):
     except Pack.DoesNotExist:
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
+    num_sounds_ok = len(qs)
+
+    if num_sounds_ok == 0 and pack.num_sounds != 0:
+        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
+    else :
+        if pack.is_dirty :
+            messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
+        
+        if num_sounds_ok < pack.num_sounds :
+            messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
+
+
+
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
 

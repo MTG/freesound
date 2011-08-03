@@ -133,4 +133,5 @@ def _create_and_save_remixgroup(sg, remixgroup):
                                
     remixgroup.networkx_data = json.dumps(dict(nodes=sg.nodes(), edges=sg.edges()))                         
     remixgroup.save()   
-    
+    print remixgroup.id
+    print remixgroup.networkx_data

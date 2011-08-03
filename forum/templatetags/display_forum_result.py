@@ -25,7 +25,7 @@ def display_forum_result(context, post, highlight):
                              'post_info': ' - '.join(['Post by: ' + p['post_author'],
                                                       'Date: ' + str(p['post_created'])])})
             else:
-                posts.append({'post_id': p['id'], 
+                posts.append({'post_id': p['id'],
                              'post_body': p['post_body'],
                              'post_info': ' - '.join(['Post by: ' + p['post_author'],
                                                       'Date: ' + str(p['post_created'])])})
@@ -37,9 +37,10 @@ def display_forum_result(context, post, highlight):
                         'forum_name_slug': first_doc[0]['forum_name_slug'],
                         'post_id': first_doc[0]['id'],
                         'posts': posts,
-                        'thread_info': ' - '.join(['Thread by: ' + first_doc[0]['thread_author'], 
-                                                   'Posts: ' + str(first_doc[0]['num_posts']), 
+                        'thread_info': ' - '.join(['Forum: ' + first_doc[0]['forum_name'],
+                                                   'Thread by: ' + first_doc[0]['thread_author'],
+                                                   'Posts: ' + str(first_doc[0]['num_posts']),
                                                    'Date: ' + str(first_doc[0]['thread_created'])]),
-                        }) 
-    
+                        })
+
     return { 'results': results }

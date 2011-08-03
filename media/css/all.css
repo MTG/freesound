@@ -1088,7 +1088,7 @@ ul.tags {
 }
 
 #share_links {
-    padding: 10px 25px;
+    padding: 10px 15px;
     border-top: solid 1px #D2D2D2;
     background: #fff url(../images/single_sample_links_bg.png) no-repeat top;
 }
@@ -1103,7 +1103,7 @@ ul.tags {
     color: #2C74C9;
     float: left;
     display: block;
-    margin-left: 10px;
+    margin-left: 0;
 }
 
 #share_links #show_button:hover {
@@ -1547,7 +1547,7 @@ ul#comments {
 
 /* Forums
 ------------------------------------------------------*/
-#breadcrumb {
+#breadcrumb_outer {
     font-weight: bold;
     font-size: 14px;
     background: url(../images/breadcrumb.png) repeat-x bottom;
@@ -1556,7 +1556,17 @@ ul#comments {
     color: #D3D3D3;
 }
 
-#breadcrumb a {
+#breadcrumb_outer #show_search {
+    float: right;
+    margin-top: 5px;
+}
+
+#breadcrumb_inner {
+    width: 730px;
+    float: left;
+}
+
+#breadcrumb_outer a {
     color: #000;
 }
 
@@ -1719,6 +1729,7 @@ ul.pagination {
 
 #posts .post .subject {
     padding-bottom: 15px;
+    margin-top: 20px;
     font-size: 17px;
     font-weight: bold;
 }
@@ -1733,7 +1744,7 @@ ul.pagination {
 #posts .post blockquote {
     color: #666;
     background-color: #F6F6F6;
-    padding: 15px;
+    padding: 20px;
     border-left: solid 2px #eee;
 }
 
@@ -2239,40 +2250,61 @@ p.about {
     margin-bottom: 30px;
 }
 
+.account_information_and_home_options{
+    float:left;
+    display:inline;
+}
+
 #unprocessed_sounds {
-	font-size: 10px;
+    font-size: 10px;
 }
 
 #unprocessed_sounds li {
-    padding: 5px;
+    padding: 4px;
 }
 
 #unprocessed_sounds .failed{
-	color: red;
-	font-weight: bold;
+    color: red;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .processing{
-	color: green;
-	font-weight: bold;
+    color: green;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .pending{
-	color: orange;
-	font-weight: bold;
+    color: orange;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .queued{
-	color: orange;
-	font-weight: bold;
+    color: orange;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .filename{
-	font-weight: bold;
+    font-weight: bold;
 }
 
 #unprocessed_sounds .date{
-	color: gray;
+    color: gray;
+}
+
+#unmoderated_packs {
+    font-size: 10px;
+}
+
+#unmoderated_packs li {
+    font-size: 10px;
+}
+
+#unmoderated_packs .packname{
+    font-weight: bold;
+}
+
+#unmoderated_packs .date{
+    color: gray;
 }
 
 /* People page
@@ -2882,14 +2914,48 @@ ul.messages {
     font-size: 12px;
     line-height: 18px;
     margin-bottom: 18px;
+    padding:16px;
+    background-color:#F9F9F9;
+    border-radius: 6px;
+    border: 1px solid #F0EEF1;
+    margin: 10px 0px 10px 25px;
 }
 
 .forum_search_result {
-	margin-bottom: 20px;
+    padding:16px;
+    /*background-color:#F9F9F9;
+    border-radius: 6px;
+    border: 1px solid #F0EEF1;; */
+    border-bottom: solid 1px #E4E4E4;
 }
-	
+
+.thread_info{
+    font-size: 10px;
+    color: #9E9E9E;
+    padding-left: 28px;
+    margin-top:5px;
+    /*float:right;*/
+}
+
+.thread_title{
+    background: url(../images/forum_nonew.png) no-repeat top left;
+    padding-left: 28px;
+    font-size: 14px;
+    font-weight: normal;
+    font-weight: bold;
+    color: #CC4040;
+}
+
+.thread_title:hover {
+    color: #9C3131;
+}
+
+.forum_search_result {
+    margin-bottom: 20px;
+}
+
 .advanced_forum_search_options{
-	font-size:10px;
+    font-size:10px;
     line-height:30px;
 }
 
@@ -2901,8 +2967,8 @@ ul.messages {
 
 
 .forum_search_button {
-	background: url(../images/search_in_forum.png);
-	width: 160px;
+    background: url(../images/search_in_forum.png);
+    width: 160px;
     height: 31px;
     display: block;
     text-indent: -9999px;
@@ -2912,7 +2978,7 @@ ul.messages {
 }
 
 .ui-datepicker{
-	font-size:10px;
+    font-size:10px;
 }
 
 /* Wiki pages
@@ -2937,6 +3003,19 @@ ul.messages {
 }
 
 
+
+#moderation_guide img {
+    margin: 20px 0 10px 50px;
+    padding: 1px;
+    border: 1px solid #ccc;
+}
+
+
+#player_controls {
+    margin-left: 40px;
+}
+
+
 /*
  * jQuery UI Datepicker 1.8.14
  *
@@ -2946,7 +3025,21 @@ ul.messages {
  *
  * http://docs.jquery.com/UI/Datepicker#theming
  */
-.ui-datepicker { width: 19em; padding: .2em .2em 0; display: none; font-size:11px;  background-color:#CCCCCC; }
+.ui-datepicker {
+                width: 19em;
+                padding: .2em .2em 0;
+                display: none;
+                font-size:11px;
+                background-color:#E9E9E9;
+                border-radius: 6px;
+                border: 1px solid #E0DEE1;
+               }
+
+.ui-state-active, .ui-widget-content .ui-state-active 
+{
+    background-color:#E0E0E0;
+}
+
 .ui-datepicker .ui-datepicker-header { position:relative; padding:.2em 0;}
 .ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next { position:absolute; top: 2px; width: 1.8em; height: 1.8em; }
 .ui-datepicker .ui-datepicker-prev-hover, .ui-datepicker .ui-datepicker-next-hover { top: 1px; }
@@ -2958,12 +3051,13 @@ ul.messages {
 .ui-datepicker .ui-datepicker-title { margin: 0 2.3em; line-height: 1.8em; text-align: center; }
 .ui-datepicker .ui-datepicker-title select { font-size:1em; margin:1px 0;}
 .ui-datepicker select.ui-datepicker-month-year {width: 100%;}
-.ui-datepicker select.ui-datepicker-month, 
+.ui-datepicker select.ui-datepicker-month,
 .ui-datepicker select.ui-datepicker-year { width: 49%;}
 .ui-datepicker table {width: 100%; font-size: .9em; border-collapse: collapse; margin:0 0 .4em; }
 .ui-datepicker th { padding: .7em .3em; text-align: center; font-weight: bold; border: 1; font-size:10px; }
 .ui-datepicker td { border: 1; padding: 1px; }
 .ui-datepicker td span, .ui-datepicker td a { display: block; padding: .2em; text-align: right; text-decoration: none; }
+.ui-datepicker td span, .ui-datepicker td a:hover{ display: block; padding: .2em; text-align: right; text-decoration: none; background-color:#E9E9E9; }
 .ui-datepicker .ui-datepicker-buttonpane { background-image: none; margin: .7em 0 0 0; padding:0 .2em; border-left: 0; border-right: 0; border-bottom: 0; }
 .ui-datepicker .ui-datepicker-buttonpane button { float: right; margin: .5em .2em .4em; cursor: pointer; padding: .2em .6em .3em .6em; width:auto; overflow:visible; }
 .ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current { float:left; }

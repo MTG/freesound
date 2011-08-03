@@ -117,13 +117,16 @@ class PackForm(forms.Form):
         super(PackForm, self).__init__(*args, **kwargs)
         self.fields['pack'].queryset = pack_choices.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
 
+    # Uncomment the following code to not allow duplicate names in packs (if they belong to different users)
+    # What has to be unique is the pair username-packname
+    '''
     def clean_new_pack(self):
         try:
             Pack.objects.get(name=self.cleaned_data['new_pack'])
             raise forms.ValidationError('This pack name already exists!')
         except Pack.DoesNotExist: #@UndefinedVariable
             return self.cleaned_data['new_pack']
-
+    '''
 
 class LicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(is_public=True), required=True, empty_label=None)

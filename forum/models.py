@@ -5,6 +5,7 @@ from django.utils.encoding import smart_unicode
 from general.models import OrderedModel
 from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
+from utils.cache import invalidate_template_cache
 import logging
 
 logger = logging.getLogger('web')
@@ -22,10 +23,12 @@ class Forum(OrderedModel):
                                      related_name="latest_in_forum",
                                      on_delete=models.SET_NULL)
 
-    def set_last_post(self, post=False):
+    def set_last_post(self):
         qs = Post.objects.filter(thread__forum=self)
-        if post:
-            qs = qs.exclude(id=post.id)
+#        if exclude_post:
+#            qs = qs.exclude(id=exclude_post.id)
+#        if exclude_thread:
+#            qs = qs.exclude(thread=exclude_thread)
         qs = qs.order_by('-created')
         if qs.count() > 0:
             self.last_post = qs[0]
@@ -58,12 +61,14 @@ class Thread(models.Model):
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
-    def set_last_post(self, post):
-        qs = Post.objects.filter(thread=self).exclude(id=post.id).order_by('-created')
+    def set_last_post(self):
+        qs = Post.objects.filter(thread=self).order_by('-created')
         if qs.count() > 0:
             self.last_post = qs[0]
             self.save()
-        self.forum.set_last_post(post)
+            self.forum.set_last_post()
+        else:
+            self.delete()
 
     @models.permalink
     def get_absolute_url(self):
@@ -77,7 +82,7 @@ class Thread(models.Model):
 
 
 @receiver(post_delete, sender=Thread)
-def update_last_posts_on_thread_delete(**kwargs):
+def update_last_post_on_thread_delete(**kwargs):
     thread = kwargs['instance']
     thread.forum.set_last_post()
 
@@ -101,17 +106,18 @@ class Post(models.Model):
         return ("forums-post", (smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id))
 
 
-@receiver(pre_delete, sender=Post)
-def update_last_posts_on_post_delete(**kwargs):
+@receiver(post_delete, sender=Post)
+def update_last_post_on_post_delete(**kwargs):
     post = kwargs['instance']
     try:
-        post.thread.set_last_post(post)
+        post.thread.set_last_post()
     except Thread.DoesNotExist:
         # This happens when the thread has already been deleted, for example
         # when a user is deleted through the admin interface. We don't need
         # to update the thread, but it would be nice to get to the forum object
         # somehow and update that one....
         logger.info('Tried setting last posts for thread and forum, but the thread has already been deleted?')
+    invalidate_template_cache('latest_posts')
 
 
 class Subscription(models.Model):

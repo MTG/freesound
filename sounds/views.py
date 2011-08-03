@@ -101,7 +101,7 @@ def packs(request):
                      .filter(num_sounds__gt=0) \
                      .order_by(order)
     return render_to_response('sounds/browse_packs.html',
-                              combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()),
+                              combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE, cache_count=True), locals()),
                               context_instance=RequestContext(request))
 
 

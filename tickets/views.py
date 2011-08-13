@@ -360,7 +360,7 @@ def moderation_assigned(request, user_id):
                                                     Ticket.USER_ONLY)
             elif action == "Return":
                 ticket.assignee = None
-                ticket.status = TICKET_STATUS_ACCEPTED
+                ticket.status = TICKET_STATUS_NEW
                 # no notification here
                 ticket.save()
             elif action == "Delete":

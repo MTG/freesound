@@ -360,7 +360,7 @@ def moderation_assigned(request, user_id):
                                                     Ticket.USER_ONLY)
             elif action == "Return":
                 ticket.assignee = None
-                ticket.status = TICKET_STATUS_ACCEPTED
+                ticket.status = TICKET_STATUS_NEW
                 # no notification here
                 ticket.save()
             elif action == "Delete":
@@ -397,7 +397,7 @@ def moderation_assigned(request, user_id):
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationForm()
+        mod_sound_form = SoundModerationForm(initial={'action':'Approve'})
         msg_form = ModerationMessageForm()
     moderator_tickets = Ticket.objects.select_related() \
                             .filter(assignee=user_id) \

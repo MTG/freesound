@@ -34,7 +34,7 @@ def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, i
 def __can_view_mod_msg(request):
     return request.user.is_authenticated() \
             and (request.user.is_superuser or request.user.is_staff \
-                 or Group.objects.get(name='moderators') in request.user.groups)
+                 or Group.objects.get(name='moderators') in request.user.groups.all())
 
 # TODO: copied from sound_edit view,
 def is_selected(request, prefix):

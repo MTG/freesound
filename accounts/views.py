@@ -225,12 +225,12 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        profile_form = ProfileForm(request.POST, instance=profile, prefix="profile")
+        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         if profile_form.is_valid():
             profile_form.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
-        profile_form = ProfileForm(instance=profile, prefix="profile")
+        profile_form = ProfileForm(request,instance=profile, prefix="profile")
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 from accounts.models import Profile
 from utils.forms import RecaptchaForm, HtmlCleaningCharField
+from utils.spam import is_spam
 
 class UploadFileForm(forms.Form):
     file = forms.FileField()
@@ -114,6 +115,20 @@ class ProfileForm(forms.ModelForm):
     wants_newsletter = forms.BooleanField(label="Subscribed to newsletter", required=False)
     not_shown_in_online_users_list = forms.BooleanField(label="Hide from \"users currently online\" list in the People page", required=False)
     
+    def __init__(self, request, *args, **kwargs):
+        self.request = request
+        super(ProfileForm, self).__init__(*args, **kwargs)
+
+    def clean_about(self):
+        about = self.cleaned_data['about']
+        if is_spam(self.request, about):
+            raise forms.ValidationError("Your 'about' text was considered spam, please edit and resubmit. If it keeps failing please contact the admins.")
+
+    def clean_signature(self):
+        signature = self.cleaned_data['signature']
+        if is_spam(self.request, signature):
+            raise forms.ValidationError("Your signature was considered spam, please edit and resubmit. If it keeps failing please contact the admins.")
+
     class Meta:
         model = Profile
         fields = ('home_page', 'wants_newsletter', 'about', 'signature', 'not_shown_in_online_users_list')

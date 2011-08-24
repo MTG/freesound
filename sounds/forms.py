@@ -3,7 +3,7 @@ from django.db.models import Q
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
-import re
+from utils.forms import RecaptchaForm
 
 class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
@@ -141,9 +141,16 @@ class NewLicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')),
                                      required=True)
 
-
-class FlagForm(forms.ModelForm):
+class FlagForm(RecaptchaForm):
     email = forms.EmailField(label="Your email")
-    class Meta:
-        model = Flag
-        exclude = ('sound', 'reporting_user', 'created')
+    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES,required=True , label='Reason type')
+    reason = forms.CharField(widget=forms.Textarea)
+
+    def save(self):
+        f = Flag()
+        f.reason_type = self.cleaned_data['reason_type']
+        f.reason = self.cleaned_data['reason']
+        return f #sound and user are set in view
+
+
+

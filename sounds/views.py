@@ -517,9 +517,9 @@ def flag(request, username, sound_id):
         email = request.user.email
 
     if request.method == "POST":
-        flag_form = FlagForm(request.POST)
+        flag_form = FlagForm(request, request.POST)
         if flag_form.is_valid():
-            flag = flag_form.save(commit=False)
+            flag = flag_form.save()
             flag.reporting_user=user
             flag.sound = sound
             flag.save()
@@ -529,9 +529,9 @@ def flag(request, username, sound_id):
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if user:
-            flag_form = FlagForm(initial=dict(email=email))
+            flag_form = FlagForm(request,initial=dict(email=email))
         else:
-            flag_form = FlagForm()
+            flag_form = FlagForm(request)
 
     return render_to_response('sounds/sound_flag.html', locals(), context_instance=RequestContext(request))
 

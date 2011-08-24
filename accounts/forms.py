@@ -123,11 +123,13 @@ class ProfileForm(forms.ModelForm):
         about = self.cleaned_data['about']
         if is_spam(self.request, about):
             raise forms.ValidationError("Your 'about' text was considered spam, please edit and resubmit. If it keeps failing please contact the admins.")
+        return about
 
     def clean_signature(self):
         signature = self.cleaned_data['signature']
         if is_spam(self.request, signature):
             raise forms.ValidationError("Your signature was considered spam, please edit and resubmit. If it keeps failing please contact the admins.")
+        return signature
 
     class Meta:
         model = Profile

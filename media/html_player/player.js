@@ -87,7 +87,8 @@ function getPlayerPosition(element) {
 function stopAll(exclude) {
     ids = soundManager.soundIDs;
     ids = jQuery.grep(ids, function(value) {
-        return value != exclude.sID;
+        if(exclude)return value != exclude.sID;
+        else return true;
     });
     switchOff($(".player .play"));
     for(var i=0; i<ids.length; i++) {

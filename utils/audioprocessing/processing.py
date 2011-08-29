@@ -584,7 +584,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
 
 def convert_using_ffmpeg(input_filename, output_filename):
     """
-    converts the incoming wave file to n ogg file
+    converts the incoming wave file to stereo pcm using fffmpeg
     """
 
     if not os.path.exists(input_filename):

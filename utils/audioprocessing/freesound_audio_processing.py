@@ -73,8 +73,14 @@ def process(sound):
             to_cleanup.append(tmp_wavefile)
             success("converted to pcm: " + tmp_wavefile)
     except AudioProcessingException, e:
-        failure("conversion to pcm has failed", e)
-        return False
+        failure("conversion to pcm has failed, trying ffmpeg", e)
+        try:
+            audioprocessing.convert_using_ffmpeg(sound.original_path, tmp_wavefile)
+            to_cleanup.append(tmp_wavefile)
+            success("converted to pcm: " + tmp_wavefile)
+        except AudioProcessingException, e:
+            failure("conversion to pcm with ffmpeg failed", e)
+            return False
     except Exception, e:
         failure("unhandled exception", e)
         cleanup(to_cleanup)
@@ -86,9 +92,16 @@ def process(sound):
         info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
         to_cleanup.append(tmp_wavefile2)
     except AudioProcessingException, e:
-        cleanup(to_cleanup)
-        failure("stereofy has failed", e)
-        return False
+        failure("stereofy has failed, trying ffmpeg first", e)
+        try:
+            audioprocessing.convert_using_ffmpeg(sound.original_path, tmp_wavefile)
+            info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
+            if tmp_wavefile not in to_cleanup: to_cleanup.append(tmp_wavefile)
+            to_cleanup.append(tmp_wavefile2)
+        except AudioProcessingException, e:
+            failure("ffmpeg + stereofy failed", e)
+            cleanup(to_cleanup)
+            return False
     except Exception, e:
         failure("unhandled exception", e)
         cleanup(to_cleanup)

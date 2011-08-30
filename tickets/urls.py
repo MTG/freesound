@@ -21,7 +21,7 @@ urlpatterns = patterns('',
     url(r'^guide/$',
         direct_to_template,
         {'template': 'tickets/guide.html'},
-        name='tickets-moderation-home'),
+        name='tickets-moderation-guide'),
 
     url(r'^moderation/$',
         moderation_home,

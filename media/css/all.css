@@ -3138,8 +3138,8 @@ ul.messages {
 }
     
 #submit_button_for_edit_sources{
-	display:inline;
-	float:right;
+	/*display:inline;*/
+	/*float:right;*/
 	text-align: right;
 }
 

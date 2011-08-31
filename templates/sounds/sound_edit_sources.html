@@ -3,57 +3,7 @@
 {% load display_sound %}
 {% block head %}
 {{ block.super }}
-<style type="text/css" media="all">
-    #current-sources
-    {
-        width: 430px;
-        overflow: hidden;
-        float:right;
-        padding: 5px;
-    }
 
-    #current-sources .add
-    {
-        display: none;
-        font-size:10px;
-    }
-
-    #current-sources .remove
-    {
-        display: inline;
-        font-size:10px;
-        
-    }
-
-    #search-results-title
-    {
-        width: 430px;
-        overflow: hidden;
-        float:left;
-        padding: 5px;
-    }
-    
-   
-    #search-results .add
-    {
-        display: inline;
-        font-size:10px;
-    }
-
-    #search-results .remove
-    {
-        display: none;
-        font-size:10px;
-    }
-    
-    #submit_button_for_edit_sources
-    {
-    	display:inline;
-    	float:right;
-    	text-align: right;
-    }
-    
-</style>
 <script type="text/javascript">
     var sources = [];
 
@@ -126,12 +76,17 @@
     {{form.as_p}}
     <p><input type="text" name="q" id="search-q" size="45" /> <input type="submit" name="submit" value="search sources" id="search-button"/></p>
     <p>Hint: if you know the id of the file you are looking for, search for the id. The id of sounds can be found as the first part of the sound filename.
-    <br>When you are ready click the "done!" button to save your sources and go back to the sound edit page.
+    <br>When you are ready click the "save..." button to save your sources and then go back to the sound edit page.
     </p>
+
+	<div id="submit_button_for_edit_sources" >
+		<p><input type="submit" name="save" value="save..." id="save-button"/></p>
+    	<p><a href="{% url sound-edit sound.user.username sound.id %}">Go back to edit page</a></p>
+	</div>
 
 	<div id="search-results-title" class="sound_list_minimal">
 	    <h3>Search results:</h3>
-		<div id="search-results" style="min-height:280px" class="sound_list_minimal">
+		<div id="search-results" class="sound_list_minimal">
 		</div>
 	    
 	</div>
@@ -151,10 +106,7 @@
 	    {% endfor %}
 	</div>
 
-	<div id="submit_button_for_edit_sources" >
-	<p><input type="submit" name="save" value="done!" id="save-button"/></p>
-    <p><a href="{% url sound-edit sound.user.username sound.id %}">Go back to edit page</a></p>
-	</div>
+	
 		
 	<br style="clear:both;"/>
 

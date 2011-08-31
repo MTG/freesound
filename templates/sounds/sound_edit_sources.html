@@ -6,9 +6,8 @@
 <style type="text/css" media="all">
     #current-sources
     {
-        width: 450px;
+        width: 430px;
         overflow: hidden;
-        border: 1px solid black;
         float:right;
         padding: 5px;
     }
@@ -16,31 +15,44 @@
     #current-sources .add
     {
         display: none;
+        font-size:10px;
     }
 
     #current-sources .remove
     {
         display: inline;
+        font-size:10px;
+        
     }
 
-    #search-results
+    #search-results-title
     {
-        width: 450px;
+        width: 430px;
         overflow: hidden;
-        border: 1px solid black;
         float:left;
         padding: 5px;
     }
-
+    
+   
     #search-results .add
     {
         display: inline;
+        font-size:10px;
     }
 
     #search-results .remove
     {
         display: none;
+        font-size:10px;
     }
+    
+    #submit_button_for_edit_sources
+    {
+    	display:inline;
+    	float:right;
+    	text-align: right;
+    }
+    
 </style>
 <script type="text/javascript">
     var sources = [];
@@ -113,30 +125,40 @@
 <form id="save-form">{% csrf_token %}
     {{form.as_p}}
     <p><input type="text" name="q" id="search-q" size="45" /> <input type="submit" name="submit" value="search sources" id="search-button"/></p>
-    <p>Hint: if you know the id of the file you are looking for, search for the id. The id of sounds can be found as the first part of the sound filename.</p>
-    <p><input type="submit" name="save" value="save..." id="save-button"/></p>
-    <p>
-        <a href="{% url sound-edit sound.user.username sound.id %}">Go back to edit page</a>
+    <p>Hint: if you know the id of the file you are looking for, search for the id. The id of sounds can be found as the first part of the sound filename.
+    <br>When you are ready click the "done!" button to save your sources and go back to the sound edit page.
     </p>
-</form>
 
-<div id="search-results" class="sound_list_minimal">
-    <h3>Search results:</h3>
-</div>
+	<div id="search-results-title" class="sound_list_minimal">
+	    <h3>Search results:</h3>
+		<div id="search-results" style="min-height:280px" class="sound_list_minimal">
+		</div>
+	    
+	</div>
+	
+	<div id="current-sources" class="sound_list_minimal">
+	    <h3>Current sources:</h3>
+	    {% for source in current_sources %}
+	    <div class="sound_list_edit_sources">
+	        <div>
+	            {% display_sound source.id %}
+	        </div>
+	        <div class="add_remove_buttons">
+	            <a class="add" onclick="addSound(this, {{source.id}})">Add source</a>
+	            <a class="remove" onclick="removeSound(this, {{source.id}})">Remove source</a>
+	        </div>
+	    </div>
+	    {% endfor %}
+	</div>
 
-<div id="current-sources" class="sound_list_minimal">
-    <h3>Current sources:</h3>
-    {% for source in current_sources %}
-    <div>
-        <div class="sound_list_moderation">
-            {% display_sound source.id %}
-        </div>
-        <div>
-            <a class="add" onclick="addSound(this, {{source.id}})">Add</a>
-            <a class="remove" onclick="removeSound(this, {{source.id}})">Remove</a>
-        </div>
+	<div id="submit_button_for_edit_sources" >
+	<p><input type="submit" name="save" value="done!" id="save-button"/></p>
+    <p><a href="{% url sound-edit sound.user.username sound.id %}">Go back to edit page</a></p>
+	</div>
+		
+	<br style="clear:both;"/>
+
     </div>
-    {% endfor %}
-</div>
+</form>
 
 {% endblock section_content %}

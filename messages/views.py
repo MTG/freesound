@@ -131,10 +131,11 @@ def username_lookup(request):
         if request.GET.has_key(u'q'):            
             value = request.GET[u'q']
 
-            # Ignore queries shorter than length 3
-            if len(value) > 2:
-                print "looking for results..."
-                model_results = User.objects.filter(username__icontains=value).order_by('username')#[0:30]
+            # When there is at least one character, start searching usernames (only among users previously contacted)
+            if len(value) > 0:
+                # Only autocompleting for previously contacted users 
+                previously_contacted_user_ids = Message.objects.filter(user_from = request.user.id).values_list('user_to', flat='True').distinct()
+                model_results = User.objects.filter(username__istartswith = value, id__in = previously_contacted_user_ids).order_by('username')#[0:30]
                 index = 0
                 for r in model_results:
                     results.append( (r.username,index) )

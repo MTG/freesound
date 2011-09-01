@@ -43,7 +43,7 @@ def analyze(sound):
                                   '-ac', '1', '-ar', '44100', tmp_wav_path])
                 signal.alarm(FFMPEG_TIMEOUT)
                 p.wait()
-            except Exception e:
+            except Exception, e:
                 failure("ffmpeg conversion failed ",e)
                 return False
             input_path = tmp_wav_path
@@ -59,7 +59,7 @@ def analyze(sound):
                 output_std, output_err = p.communicate()
                 failure( "Essentia extractor returned an error (%s) stdout:%s stderr: %s"%(p_result, output_std, output_err))
                 return False
-        except Exception e:
+        except Exception, e:
             failure("Essentia extractor failed ",e)
             return False
 

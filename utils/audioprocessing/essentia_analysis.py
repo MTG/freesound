@@ -1,8 +1,11 @@
 from settings import ESSENTIA_EXECUTABLE
-import os, shutil, subprocess
+import os, shutil, subprocess, signal
 
 def analyze(sound):
+     FFMPEG_TIMEOUT = 3 * 60
 
+    def  alarm_handler(signum, frame):
+        raise Exception("timeout while waiting for ffmpeg")
     try:
         statistics_path = sound.locations("analysis.statistics.path")
         frames_path = sound.locations("analysis.frames.path")
@@ -15,7 +18,8 @@ def analyze(sound):
         if not os.path.exists(input_path):
             raise Exception('Processing file with id %s and path %s failed. Could not find file' \
                             % (sound.id, input_path))
-
+        if os.path.getsize(input_path) >50 * 1024 * 1024: #same as filesize_warning in sound model
+            raise Exception('File is larger than 50MB so it won\'t be analyzed')
         tmp_conv = False
         ext = os.path.splitext(input_path)[1]
         if ext in ['.wav', '.aiff', '.aifc', '.aif']:
@@ -23,6 +27,7 @@ def analyze(sound):
             tmp_wav_path = '/tmp/conversion_%s.wav' % sound.id
             p = subprocess.Popen(['ffmpeg', '-y', '-i', input_path, '-acodec', 'pcm_s16le',
                                   '-ac', '1', '-ar', '44100', tmp_wav_path])
+            signal.alarm(FFMPEG_TIMEOUT)
             p.wait()
             input_path = tmp_wav_path
         # the essentia extractor outputs 3 files

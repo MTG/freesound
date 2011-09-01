@@ -136,7 +136,7 @@ def username_lookup(request):
                 # Only autocompleting for previously contacted users 
                 previously_contacted_user_ids1 = list(Message.objects.filter(user_from = request.user.id, ).values_list('user_to', flat='True').distinct())
                 previously_contacted_user_ids2 = list(Message.objects.filter(user_to = request.user.id, ).values_list('user_from', flat='True').distinct())
-                previously_contacted_user_ids = set(list1+list2)
+                previously_contacted_user_ids = set(previously_contacted_user_ids1+previously_contacted_user_ids2)
                 model_results = User.objects.filter(username__istartswith = value, id__in = previously_contacted_user_ids).order_by('username')#[0:30]
                 index = 0
                 for r in model_results:

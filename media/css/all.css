@@ -1338,13 +1338,31 @@ ul#comments {
 }
 
 #messages_header .messages_pagination .pagination {
-    margin: 14px 28px 0 0;
+    /*margin: 14px 28px 0 0;*/
 }
 
-.messages_form .messages_pagination {
-    position: absolute;
+.messages_pagination {
+    overflow: auto;    
     bottom: 2px;
     right: 25px;
+    
+}
+
+.messages_actions_box{
+	float:right;
+}
+
+.messages_pagination_box{
+	white-space: nowrap;
+	float:left;	
+	/*margin-right:95px;*/
+}
+
+.messages_pagination_box .pagination .current-page {
+    background-color: #3B89EB;
+    border-top: none;
+    color: #FFF;
+    font-weight: normal;
 }
 
 .messages_form {
@@ -1394,26 +1412,6 @@ ul#comments {
     font-size: 13px;
     padding: 0 12px 15px 12px;
     font-weight: bold;
-}
-
-.messages_pagination {
-    overflow: auto;
-}
-
-.messages_pagination .pagination {
-    float: right;
-}
-
-.messages_pagination .pagination li {
-    margin: 2px;
-}
-
-.messages_pagination .pagination .current-page {
-    background-color: #3B89EB;
-    border-top: none;
-    color: #FFF;
-    font-weight: normal;
-    padding-bottom: 2px;
 }
 
 #message_tabs {
@@ -3098,4 +3096,70 @@ ul.messages {
     left: -4px; /*must have*/
     width: 200px; /*must have*/
     height: 200px; /*must have*/
+}
+
+/* Edit sound sources page
+------------------------------------------------------*/
+
+#current-sources{
+	width: 430px;
+	overflow: hidden;
+	float:right;
+	padding: 5px;
+}
+
+#current-sources .add{
+	display: none;
+	font-size:10px;
+}
+
+#current-sources .remove{
+	display: inline;
+	font-size:10px;
+}
+
+#search-results-title{
+	width: 430px;
+	overflow: hidden;
+	float:left;
+	padding: 5px;
+}
+       
+#search-results .add{
+	display: inline;
+	font-size:10px;
+}
+
+#search-results .remove{
+	display: none;
+	font-size:10px;
+}
+    
+#submit_button_for_edit_sources{
+	/*display:inline;*/
+	/*float:right;*/
+	text-align: right;
+}
+
+.sound_list_edit_sources {
+	border-radius:5px;
+    background-color:#FFFFFF;
+    padding:5px;
+    margin-bottom:5px;
+}
+
+/*.sound_list_edit_sources:hover{
+    background-color:#EAEAEA;
+}*/
+
+.sound_list_edit_sources .sound_stars {
+    display: none;
+}
+
+.sound_list_edit_sources .sample_information {
+    display: none;
+}
+
+.sound_list_edit_sources .add_remove_buttons {
+	margin-top:-20px;
 }

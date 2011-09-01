@@ -4,8 +4,7 @@ from utils.spam import is_spam
 
 class PostReplyForm(forms.Form):
     body = HtmlCleaningCharField(widget=forms.Textarea)
-    subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False, initial=True)
-
+    subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
     def __init__(self, request, quote, *args, **kwargs):
         self.request = request
         self.quote = quote
@@ -25,4 +24,4 @@ class PostReplyForm(forms.Form):
 class NewThreadForm(forms.Form):
     title = forms.CharField()
     body = HtmlCleaningCharField(widget=forms.Textarea)
-    subscribe = forms.BooleanField(help_text="Subscribe to this thread", required=False, initial=True)
+    subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)

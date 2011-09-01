@@ -1338,13 +1338,31 @@ ul#comments {
 }
 
 #messages_header .messages_pagination .pagination {
-    margin: 14px 28px 0 0;
+    /*margin: 14px 28px 0 0;*/
 }
 
-.messages_form .messages_pagination {
-    position: absolute;
+.messages_pagination {
+    overflow: auto;    
     bottom: 2px;
     right: 25px;
+    
+}
+
+.messages_actions_box{
+	float:right;
+}
+
+.messages_pagination_box{
+	white-space: nowrap;
+	float:left;	
+	/*margin-right:95px;*/
+}
+
+.messages_pagination_box .pagination .current-page {
+    background-color: #3B89EB;
+    border-top: none;
+    color: #FFF;
+    font-weight: normal;
 }
 
 .messages_form {
@@ -1394,26 +1412,6 @@ ul#comments {
     font-size: 13px;
     padding: 0 12px 15px 12px;
     font-weight: bold;
-}
-
-.messages_pagination {
-    overflow: auto;
-}
-
-.messages_pagination .pagination {
-    float: right;
-}
-
-.messages_pagination .pagination li {
-    margin: 2px;
-}
-
-.messages_pagination .pagination .current-page {
-    background-color: #3B89EB;
-    border-top: none;
-    color: #FFF;
-    font-weight: normal;
-    padding-bottom: 2px;
 }
 
 #message_tabs {

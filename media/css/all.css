@@ -1465,6 +1465,17 @@ ul#comments {
     margin: 0 5px;
 }
 
+.message_container h4 {
+    margin-right: 15px;
+    margin-bottom: 15px;
+    display: block;
+    float: left;
+    padding:5px;
+    background-color:#F9F9F9;
+    border-radius: 3px;
+    border: 1px solid #F0EEF1;
+}
+
 .message_container .message_header {
     background: url(../images/content_full_header_bg_top.png) no-repeat top
         #F3F3F3;

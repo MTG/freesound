@@ -10,6 +10,7 @@ from utils.cache import invalidate_template_cache
 from utils.functional import exceptional
 from utils.mail import send_mail_template
 from utils.pagination import paginate
+from utils.textwrap import wrap
 from BeautifulSoup import BeautifulSoup
 import json
 from accounts.models import User
@@ -108,9 +109,10 @@ def new_message(request, username=None, message_id=None):
                 if message.user_from != request.user and message.user_to != request.user:
                     raise Http404
 
+                
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
                 body = ''.join(BeautifulSoup(body).findAll(text=True))
-                body = "\n".join([(">" if line.startswith(">") else "> ") + line.strip() for line in body.split("\n")])
+                body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(),60)) for line in body.split("\n")])
                 body = "> --- " + message.user_from.username + " wrote:\n>\n" + body
                 
                 subject = "re: " + message.subject

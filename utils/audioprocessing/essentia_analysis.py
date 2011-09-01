@@ -2,7 +2,7 @@ from settings import ESSENTIA_EXECUTABLE
 import os, shutil, subprocess, signal
 
 def analyze(sound):
-     FFMPEG_TIMEOUT = 3 * 60
+    FFMPEG_TIMEOUT = 3 * 60
 
     def  alarm_handler(signum, frame):
         raise Exception("timeout while waiting for ffmpeg")

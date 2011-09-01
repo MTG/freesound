@@ -124,11 +124,11 @@ function makePlayer(selector) {
 
         if ($(this).hasClass("large")) {
             $(this).append('<div class="controls"> \
-                   <div class="toggle play"></div> \
-                   <div class="button stop"></div> \
-                   <div class="toggle display"></div> \
-                   <div class="toggle loop"></div> \
-                   <div class="toggle measure"></div> \
+                   <a title="play / pause" class="toggle play">play / pause</a> \
+                   <a title="stop" class="button stop">stop</a> \
+                   <a title="change display" class="toggle display">change display</a> \
+                   <a title="loop" class="toggle loop">loop</a> \
+                   <a title="toggle measure" class="toggle measure">toggle measure</a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="measure-readout-container"><div class="measure-readout"></div></div> \
@@ -137,8 +137,8 @@ function makePlayer(selector) {
                 <div class="time-indicator-container"><div class="time-indicator"></div></div>');
         } else if ($(this).hasClass("small")) {
             $(this).append('<div class="controls"> \
-                   <div class="toggle play"></div> \
-                   <div class="toggle loop"></div> \
+                    <a title="play / pause" class="toggle play">play / pause</a> \
+                    <a title="loop" class="toggle loop">loop</a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="loading-progress"></div> \
@@ -146,8 +146,8 @@ function makePlayer(selector) {
                 <div class="time-indicator-container"><div class="time-indicator"></div></div>');
         } else if ($(this).hasClass("mini")) {
             $(this).append('<div class="controls"> \
-                   <div class="toggle play"></div> \
-                   <div class="toggle loop"></div> \
+                   <a title="play class="toggle play">play</a> \
+                   <a title="loop" class="toggle loop"></a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="loading-progress"></div> \
@@ -234,7 +234,7 @@ function makePlayer(selector) {
                                 sound.duration,
                                 !$(".time-indicator-container", playerElement).hasClass("on"),
                                 showMs));
-                switchToggle($(".play", playerElement));
+                switchOff($(".play", playerElement));
             }
             mouseDown = 0;
         });

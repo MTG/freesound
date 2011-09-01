@@ -134,7 +134,9 @@ def username_lookup(request):
             # When there is at least one character, start searching usernames (only among users previously contacted)
             if len(value) > 0:
                 # Only autocompleting for previously contacted users 
-                previously_contacted_user_ids = Message.objects.filter(user_from = request.user.id).values_list('user_to', flat='True').distinct()
+                previously_contacted_user_ids1 = Message.objects.filter(user_from = request.user.id, ).values_list('user_to', flat='True').distinct()
+                previously_contacted_user_ids2 = Message.objects.filter(user_to = request.user.id, ).values_list('user_from', flat='True').distinct()
+                previously_contacted_user_ids = set([u for u in previously_contacted_user_ids1] + [u for u in previously_contacted_user_ids2])
                 model_results = User.objects.filter(username__istartswith = value, id__in = previously_contacted_user_ids).order_by('username')#[0:30]
                 index = 0
                 for r in model_results:

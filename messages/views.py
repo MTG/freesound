@@ -10,9 +10,9 @@ from utils.cache import invalidate_template_cache
 from utils.functional import exceptional
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from utils.textwrap import wrap
 from BeautifulSoup import BeautifulSoup
 import json
+from textwrap import wrap
 from accounts.models import User
 from django.http import HttpResponse
 

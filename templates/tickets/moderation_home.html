@@ -31,18 +31,15 @@
        <h3>No new sounds</h3>
        <p>There are currently no new sounds to be moderated.
     {% endif %}
-{% comment %}
-    {% if tardy_moderator_tickets.all %}
-{% endcomment %}
+
+    {% if tardy_moderator_tickets %}
         <h3>Tardy moderators</h3>
         {% for ticket in tardy_moderator_tickets %}
             {% include 'tickets/ticket_sound.html' %}
         {% endfor %}
-{% comment %}
     {% endif %}
-{% endcomment %}
 
-    {% if tardy_user_tickets.all %}
+    {% if tardy_user_tickets %}
         <h3>Tardy users</h3>
         {% for ticket in tardy_user_tickets %}
             {% include 'tickets/ticket_sound.html' %}<br>

@@ -41,8 +41,10 @@ def analyze(sound):
             try:
                 p = subprocess.Popen(['ffmpeg', '-y', '-i', input_path, '-acodec', 'pcm_s16le',
                                   '-ac', '1', '-ar', '44100', tmp_wav_path])
+                signal.signal(signal.SIGALRM, alarm_handler)
                 signal.alarm(FFMPEG_TIMEOUT)
                 p.wait()
+                signal.alarm(0)
             except Exception, e:
                 failure("ffmpeg conversion failed ",e)
                 return False

@@ -125,6 +125,11 @@
 
     {% cache 3600 sound_footer_top sound.id %}
 
+	<div id="sound_license">
+        <img src="{{media_url}}images/creative_commons.png" with="95" height="23" alt="Creative Commons" />
+        <a href="{{sound.license.deed_url}}">This work is licensed under the {{sound.license.name}} License.</a>
+    </div>
+
     <dl id="sound_information_box">
         <dt><a href="{% url wiki-page "soundinfo/type" %}#{{sound.type}}"><img src="{{media_url}}images/info{% if sound.type_warning %}_red{% endif %}.png" width="12" height="12" /></a>Type</dt><dd>{{sound.get_type_display}} (.{{sound.type}})</dd>
         <dt><a href="{% url wiki-page "soundinfo/duration" %}"><img src="{{media_url}}images/info{% if sound.duration_warning %}_red{% endif %}.png" width="12" height="12" /></a>Duration</dt><dd>{{sound.duration|duration}}</dd>
@@ -141,7 +146,7 @@
 
     <ul id="sound_links" style="padding-left: 23px">
         {% if display_random_link %}
-        <li><b><a class="icon" id ="random_sound_button" href="{% url sounds-random %}">Give me a random sound!</a></b></li>
+        <li><a class="icon" id ="random_sound_button" href="{% url sounds-random %}">Give me another random sound!</a></li>
         {% endif %}
         {% if sound.pack %}
         <li><a id="pack_link" class="icon" href="{% url pack sound.user.username sound.pack.id %}">Pack: {{ sound.pack.name }}</a></li>
@@ -173,12 +178,7 @@
     <div id="flag_sound">
         Sound illegal or offensive? <a href="{% url sound-flag sound.user.username sound.id %}" title="flag this sound as ilegal, offensive or other...">Flag it!</a>
     </div>
-
-    <div id="sound_license">
-        <img src="{{media_url}}images/creative_commons.png" with="95" height="23" alt="Creative Commons" />
-        <a href="{{sound.license.deed_url}}">This work is licensed under the {{sound.license.name}} License.</a>
-    </div>
-
+	
     <div id="share_links">
         <div id="social_links">
             <div class="social_link" style="width: 50px; overflow: hidden;"><div id="fb-root" style="float: left;"></div><script src="http://connect.facebook.net/en_US/all.js#xfbml=1"></script><fb:like href="{% absurl sound sound.user.username sound.id %}" send="false" layout="button_count" width="55" show_faces="false" font="arial"></fb:like></div>

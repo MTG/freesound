@@ -10,6 +10,7 @@ from utils.cache import invalidate_template_cache
 from utils.functional import exceptional
 from utils.mail import send_mail_template
 from utils.pagination import paginate
+from utils.textwrap import wrap
 from BeautifulSoup import BeautifulSoup
 import json
 from accounts.models import User
@@ -108,9 +109,10 @@ def new_message(request, username=None, message_id=None):
                 if message.user_from != request.user and message.user_to != request.user:
                     raise Http404
 
+                
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
                 body = ''.join(BeautifulSoup(body).findAll(text=True))
-                body = "\n".join([(">" if line.startswith(">") else "> ") + line.strip() for line in body.split("\n")])
+                body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(),60)) for line in body.split("\n")])
                 body = "> --- " + message.user_from.username + " wrote:\n>\n" + body
                 
                 subject = "re: " + message.subject
@@ -136,7 +138,7 @@ def username_lookup(request):
                 # Only autocompleting for previously contacted users 
                 previously_contacted_user_ids1 = list(Message.objects.filter(user_from = request.user.id, ).values_list('user_to', flat='True').distinct())
                 previously_contacted_user_ids2 = list(Message.objects.filter(user_to = request.user.id, ).values_list('user_from', flat='True').distinct())
-                previously_contacted_user_ids = set(list1+list2)
+                previously_contacted_user_ids = set(previously_contacted_user_ids1+previously_contacted_user_ids2)
                 model_results = User.objects.filter(username__istartswith = value, id__in = previously_contacted_user_ids).order_by('username')#[0:30]
                 index = 0
                 for r in model_results:

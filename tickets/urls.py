@@ -31,6 +31,10 @@ urlpatterns = patterns('',
         moderation_assign_user,
         name='tickets-moderation-assign-user'),
 
+    url(r'^moderation/assign/ticket/(?P<user_id>\d+)/(?P<ticket_id>\d+)/$',
+        moderation_assign_single_ticket,
+        name='tickets-moderation-assign-signle-ticket'),
+
     url(r'^moderation/assigned/(?P<user_id>\d+)/$',
         moderation_assigned,
         name='tickets-moderation-assigned'),

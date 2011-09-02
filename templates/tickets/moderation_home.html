@@ -33,9 +33,12 @@
     {% endif %}
 
     {% if tardy_moderator_tickets %}
-        <h3>Tardy moderators</h3>
+        <h3>Sounds by tardy moderators</h3>
         {% for ticket in tardy_moderator_tickets %}
             {% include 'tickets/ticket_sound.html' %}
+            <a style="font-size:10px" href="{% url tickets-moderation-assign-signle-ticket user.id ticket.id %}">
+            <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
+            <br>
         {% endfor %}
     {% endif %}
 

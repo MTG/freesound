@@ -166,6 +166,7 @@ def new_contact_ticket(request):
 # In the next 2 functions we return a queryset os the evaluation is lazy.
 # N.B. these functions are used in the home page as well.
 def new_sound_tickets_count():
+#AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
 #    return Ticket.objects.filter(status=TICKET_STATUS_NEW,
 #                                 source=TICKET_SOURCE_NEW_SOUND)
     return len(list(Ticket.objects.raw("""
@@ -180,7 +181,7 @@ WHERE
 AND ticket.assignee_id is NULL
 AND content.object_id = sound.id
 AND sound.moderation_state = 'PE'
-AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
+AND sound.processing_state = 'OK'
 AND ticket.status = '%s'
 """ % TICKET_STATUS_NEW)))
 
@@ -199,6 +200,7 @@ def tickets_home(request):
 
 
 def __get_new_uploaders_by_ticket():
+#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     cursor = connection.cursor()
     cursor.execute("""
 SELECT
@@ -207,7 +209,7 @@ FROM
     tickets_ticket, tickets_linkedcontent, sounds_sound
 WHERE
     tickets_ticket.source = 'new sound'
-    AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
+    AND sounds_sound.processing_state = 'OK'
     AND sounds_sound.moderation_state = 'PE'
     AND tickets_linkedcontent.object_id = sounds_sound.id
     AND tickets_ticket.content_id = tickets_linkedcontent.id
@@ -262,7 +264,7 @@ def __get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
-ticket.id
+distinct(ticket.id)
 FROM
 tickets_ticketcomment AS comment,
 tickets_ticket AS ticket
@@ -288,6 +290,7 @@ def moderation_home(request):
 
 @permission_required('tickets.can_moderate')
 def moderation_assign_user(request, user_id):
+#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     sender = User.objects.get(id=user_id)
 #    Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
 #        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
@@ -303,7 +306,7 @@ FROM
     tickets_linkedcontent
 WHERE
     tickets_ticket.source = 'new sound'
-AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
+AND sounds_sound.processing_state = 'OK'
 AND sounds_sound.moderation_state = 'PE'
 AND tickets_linkedcontent.object_id = sounds_sound.id
 AND tickets_ticket.content_id = tickets_linkedcontent.id
@@ -313,6 +316,31 @@ AND sounds_sound.user_id = %s""" % \
 (request.user.id, TICKET_STATUS_ACCEPTED, TICKET_STATUS_NEW, sender.id))
     transaction.commit_unless_managed()
     msg = 'You have been assigned all new sounds from %s.' % sender.username
+    messages.add_message(request, messages.INFO, msg)
+    return HttpResponseRedirect(reverse("tickets-moderation-home"))
+
+# TODO: ongoing work
+@permission_required('tickets.can_moderate')
+def moderation_assign_single_ticket(request, user_id, ticket_id):
+#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
+    
+    # REASSIGN SINGLE TICKET
+    ticket = Ticket.objects.get(id=ticket_id)
+    sender = User.objects.get(id=user_id)
+    
+    cursor = connection.cursor()
+    cursor.execute("""
+    UPDATE 
+        tickets_ticket 
+    SET 
+        assignee_id = %s
+    WHERE 
+        tickets_ticket.id = %s
+    """ % \
+    (request.user.id, ticket.id))
+    transaction.commit_unless_managed()
+ 
+    msg = 'You have been assigned ticket "%s".' % ticket.title
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect(reverse("tickets-moderation-home"))
 

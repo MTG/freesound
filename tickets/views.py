@@ -237,7 +237,7 @@ def __get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
-ticket.id,
+distinct(ticket.id),
 ticket.modified as modified
 FROM
 tickets_ticketcomment AS comment,

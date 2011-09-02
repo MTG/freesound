@@ -280,9 +280,9 @@ LIMIT 5
 @permission_required('tickets.can_moderate')
 def moderation_home(request):
     new_sounds_users = __get_new_uploaders_by_ticket()
-    unsure_tickets = __get_unsure_sound_tickets()
-    tardy_moderator_tickets = __get_tardy_moderator_tickets()
-    tardy_user_tickets = __get_tardy_user_tickets()
+    unsure_tickets = list(__get_unsure_sound_tickets()) #TODO: shouldn't appear
+    tardy_moderator_tickets = list(__get_tardy_moderator_tickets())
+    tardy_user_tickets = list(__get_tardy_user_tickets())
     return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
 

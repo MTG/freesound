@@ -161,6 +161,7 @@
     float: left;
     font-size:0px;
     line-height: 0;
+    text-indent:-9999px;
 }
 
 .player.large .controls > div, .player.large .controls > a

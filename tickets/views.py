@@ -10,6 +10,7 @@ from tickets import *
 from django.db import connection, transaction
 from django.contrib import messages
 from sounds.models import Sound
+import datetime
 
 
 def __get_contact_form(request, use_post=True):
@@ -340,6 +341,15 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
     (request.user.id, ticket.id))
     transaction.commit_unless_managed()
  
+    tc = TicketComment(sender=request.user,
+                       text="Reassigned ticket to moderator %s" % request.user.username,
+                       ticket=ticket,
+                       moderator_only=False)
+    tc.save()
+    # update modified date, so it doesn't appear in tardy moderator's sounds
+    ticket.modified = datetime.datetime.now()
+    ticket.save()
+    
     msg = 'You have been assigned ticket "%s".' % ticket.title
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect(reverse("tickets-moderation-home"))

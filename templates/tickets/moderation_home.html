@@ -35,11 +35,18 @@
     {% if tardy_moderator_tickets %}
         <h3>Sounds by tardy moderators</h3>
         {% for ticket in tardy_moderator_tickets %}
+            
+            <div style="height:90px;">
             {% include 'tickets/ticket_sound.html' %}
+            </div>
+            
+            <div style="margin-top:-17px;height:30px;width:100px;margin-bottom:20px">
             <a style="font-size:10px" href="{% url tickets-moderation-assign-signle-ticket user.id ticket.id %}">
             <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
-            <br>
+            </div>
+            
         {% endfor %}
+        <br>
     {% endif %}
 
     {% if tardy_user_tickets %}

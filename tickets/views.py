@@ -193,6 +193,8 @@ def new_support_tickets_count():
 @permission_required('tickets.can_moderate')
 def tickets_home(request):
     new_upload_count = new_sound_tickets_count()
+    tardy_moderator_sounds_count = len(list(__get_tardy_moderator_tickets_all()))
+    tardy_user_sounds_count = len(list(__get_tardy_user_tickets_all()))
     new_support_count = new_support_tickets_count()
     sounds_queued_count = Sound.objects.filter(processing_state='QU').count()
     sounds_processing_count = Sound.objects.filter(processing_state='PR').count()
@@ -237,7 +239,7 @@ def __get_unsure_sound_tickets():
 
 
 def __get_tardy_moderator_tickets():
-    """Get tickets for moderators that haven't responded in the last 2 days"""
+    """Get tickets for moderators that haven't responded in the last day"""
     return Ticket.objects.raw("""
 SELECT
 distinct(ticket.id),
@@ -252,12 +254,36 @@ WHERE comment.id in (   SELECT MAX(id)
                         GROUP BY ticket_id    )
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
-AND comment.sender_id = ticket.sender_id
+AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
 AND now() - modified > INTERVAL '2 minutes'
 AND content.object_id = sound.id
 AND sound.moderation_state != 'OK'
 AND ticket.status != '%s'
 LIMIT 5
+""" % TICKET_STATUS_CLOSED)
+
+
+def __get_tardy_moderator_tickets_all():
+    """Get tickets for moderators that haven't responded in the last day"""
+    return Ticket.objects.raw("""
+SELECT
+distinct(ticket.id),
+ticket.modified as modified
+FROM
+tickets_ticketcomment AS comment,
+tickets_ticket AS ticket,
+sounds_sound AS sound,
+tickets_linkedcontent AS content
+WHERE comment.id in (   SELECT MAX(id)
+                        FROM tickets_ticketcomment
+                        GROUP BY ticket_id    )
+AND ticket.assignee_id is Not Null
+AND comment.ticket_id = ticket.id
+AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
+AND now() - modified > INTERVAL '2 minutes'
+AND content.object_id = sound.id
+AND sound.moderation_state != 'OK'
+AND ticket.status != '%s'
 """ % TICKET_STATUS_CLOSED)
 
 
@@ -275,8 +301,25 @@ WHERE comment.id in (   SELECT MAX(id)
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
-AND now() - comment.created > INTERVAL '2 days'
+AND now() - comment.created > INTERVAL '4 minutes'
 LIMIT 5
+""")
+    
+def __get_tardy_user_tickets_all():
+    """Get tickets for users that haven't responded in the last 2 days"""
+    return Ticket.objects.raw("""
+SELECT
+distinct(ticket.id)
+FROM
+tickets_ticketcomment AS comment,
+tickets_ticket AS ticket
+WHERE comment.id in (   SELECT MAX(id)
+                        FROM tickets_ticketcomment
+                        GROUP BY ticket_id    )
+AND ticket.assignee_id is Not Null
+AND comment.ticket_id = ticket.id
+AND comment.sender_id != ticket.sender_id
+AND now() - comment.created > INTERVAL '4 minutes'
 """)
 
 
@@ -286,6 +329,10 @@ def moderation_home(request):
     unsure_tickets = list(__get_unsure_sound_tickets()) #TODO: shouldn't appear
     tardy_moderator_tickets = list(__get_tardy_moderator_tickets())
     tardy_user_tickets = list(__get_tardy_user_tickets())
+    
+    tardy_moderator_tickets_count = len(list(__get_tardy_moderator_tickets_all()))
+    tardy_user_tickets_count = len(list(__get_tardy_user_tickets_all()))
+    
     return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
 
@@ -328,7 +375,9 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
     # REASSIGN SINGLE TICKET
     ticket = Ticket.objects.get(id=ticket_id)
     sender = User.objects.get(id=user_id)
+    ticket.assignee = User.objects.get(id=request.user.id)
     
+    '''
     cursor = connection.cursor()
     cursor.execute("""
     UPDATE 
@@ -340,12 +389,14 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
     """ % \
     (request.user.id, ticket.id))
     transaction.commit_unless_managed()
- 
+    '''
+    '''
     tc = TicketComment(sender=request.user,
                        text="Reassigned ticket to moderator %s" % request.user.username,
                        ticket=ticket,
                        moderator_only=False)
     tc.save()
+    '''
     # update modified date, so it doesn't appear in tardy moderator's sounds
     ticket.modified = datetime.datetime.now()
     ticket.save()

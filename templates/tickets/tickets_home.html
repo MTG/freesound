@@ -8,12 +8,13 @@
 
     <h2>Moderation home</h2>
     <!-- include permission checks here -->
-    <h3>Sounds and support requests</h3>
+    <h3>Sound moderation status</h3>
     <ul>
-        <li>
-            <a href="{% url tickets-moderation-home %}">moderate sounds</a>
-                - ({{new_upload_count}} new sounds)
-        </li>
+        <li>{{new_upload_count}} new sound{{ new_upload_count|pluralize }}</li>
+        <li>{{tardy_moderator_sounds_count}} tardy moderators sound{{ tardy_moderator_sounds_count|pluralize }}</li>
+        <li>{{tardy_user_sounds_count}} tardy users sound{{ tardy_user_sounds_count|pluralize }}</li>
+        <a href="{% url tickets-moderation-home %}">Moderate sounds!</a>
+        
         <!-- <li>
             <a href="{% url tickets-support-home %}">moderate support requests</a>
                 - ({{new_support_count}} new requests)
@@ -22,8 +23,8 @@
 
     <h3>Processing system status</h3>
     <ul>
-        <li>{{ sounds_queued_count }} sounds are queued for processing</li>
-        <li>{{ sounds_processing_count }} sounds currently processing</li>
-        <li>{{ sounds_failed_count }} sounds failed processing</li>
+        <li>{{ sounds_queued_count }} sound{{ sounds_queued_count|pluralize }} are queued for processing</li>
+        <li>{{ sounds_processing_count }} sound{{ sounds_processing_count|pluralize }} currently processing</li>
+        <li>{{ sounds_failed_count }} sound{{ sounds_failed_count|pluralize }} failed processing</li>
     </ul>
 {% endblock section_content %}

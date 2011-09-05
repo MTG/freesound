@@ -299,11 +299,12 @@ WHERE comment.id in (   SELECT MAX(id)
                         FROM tickets_ticketcomment
                         GROUP BY ticket_id    )
 AND ticket.assignee_id is Not Null
+AND ticket.status != '%s'
 AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
 AND now() - comment.created > INTERVAL '4 minutes'
 LIMIT 5
-""")
+""" % TICKET_STATUS_CLOSED)
     
 def __get_tardy_user_tickets_all():
     """Get tickets for users that haven't responded in the last 2 days"""
@@ -317,10 +318,11 @@ WHERE comment.id in (   SELECT MAX(id)
                         FROM tickets_ticketcomment
                         GROUP BY ticket_id    )
 AND ticket.assignee_id is Not Null
+AND ticket.status != '%s'
 AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
 AND now() - comment.created > INTERVAL '4 minutes'
-""")
+""" % TICKET_STATUS_CLOSED)
 
 
 @permission_required('tickets.can_moderate')
@@ -348,7 +350,8 @@ UPDATE
     tickets_ticket
 SET
     assignee_id = %s,
-    status = '%s'
+    status = '%s',
+    modified = now()
 FROM
     sounds_sound,
     tickets_linkedcontent

@@ -255,7 +255,7 @@ WHERE comment.id in (   SELECT MAX(id)
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
-AND now() - modified > INTERVAL '2 minutes'
+AND now() - modified > INTERVAL '24 hours'
 AND content.object_id = sound.id
 AND sound.moderation_state != 'OK'
 AND ticket.status != '%s'
@@ -280,7 +280,7 @@ WHERE comment.id in (   SELECT MAX(id)
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
-AND now() - modified > INTERVAL '2 minutes'
+AND now() - modified > INTERVAL '24 hours'
 AND content.object_id = sound.id
 AND sound.moderation_state != 'OK'
 AND ticket.status != '%s'
@@ -302,7 +302,7 @@ AND ticket.assignee_id is Not Null
 AND ticket.status != '%s'
 AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
-AND now() - comment.created > INTERVAL '4 minutes'
+AND now() - comment.created > INTERVAL '2 days'
 LIMIT 5
 """ % TICKET_STATUS_CLOSED)
     
@@ -321,7 +321,7 @@ AND ticket.assignee_id is Not Null
 AND ticket.status != '%s'
 AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
-AND now() - comment.created > INTERVAL '4 minutes'
+AND now() - comment.created > INTERVAL '2 days'
 """ % TICKET_STATUS_CLOSED)
 
 

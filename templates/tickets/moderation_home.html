@@ -61,8 +61,10 @@
             </div>
             
             <div style="margin-top:-17px;height:30px;width:100px;margin-bottom:20px">
-            <a style="font-size:10px" href="{% url tickets-moderation-assign-signle-ticket user.id ticket.id %}">
-            <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
+            {% if ticket.assignee.id != request.user.id %}
+            	<a style="font-size:10px" href="{% url tickets-moderation-assign-signle-ticket user.id ticket.id %}">
+            	<img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
+            {% endif %}
             </div>
             
         {% endfor %}

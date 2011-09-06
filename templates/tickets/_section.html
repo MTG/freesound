@@ -12,7 +12,7 @@
         <li><a href="{% url tickets-home %}">Moderation home</a></li>
         <li><a href="{% url tickets-moderation-home %}">Sounds</a></li>
         <!-- <li><a href="{% url tickets-support-home %}">Support</a></li>  -->
-        <li><a href="{% url tickets-moderation-assigned request.user.id %}">Your sound queue</a></li>
+        <li><a href="{% url tickets-moderation-assigned request.user.id %}">Your sound queue {% if sounds_in_moderators_queue_count > -1 %} ({{sounds_in_moderators_queue_count}}){% endif %}</a></li>
         <li><a href="{% url tickets-moderation-guide %}">Moderation guide</a></li>
     </ul>
 </div>

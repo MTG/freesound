@@ -192,6 +192,12 @@ def new_support_tickets_count():
 
 @permission_required('tickets.can_moderate')
 def tickets_home(request):
+    
+    if request.user.id :
+        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+    else :
+        sounds_in_moderators_queue_count = -1
+        
     new_upload_count = new_sound_tickets_count()
     tardy_moderator_sounds_count = len(list(__get_tardy_moderator_tickets_all()))
     tardy_user_sounds_count = len(list(__get_tardy_user_tickets_all()))
@@ -327,6 +333,11 @@ AND now() - comment.created > INTERVAL '2 days'
 
 @permission_required('tickets.can_moderate')
 def moderation_home(request):
+    if request.user.id :
+        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+    else :
+        sounds_in_moderators_queue_count = -1
+    
     new_sounds_users = __get_new_uploaders_by_ticket()
     unsure_tickets = list(__get_unsure_sound_tickets()) #TODO: shouldn't appear
     tardy_moderator_tickets = list(__get_tardy_moderator_tickets())
@@ -411,6 +422,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
 
 @permission_required('tickets.can_moderate')
 def moderation_assigned(request, user_id):
+    
     can_view_moderator_only_messages = __can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
@@ -496,6 +508,7 @@ def moderation_assigned(request, user_id):
                             .exclude(status=TICKET_STATUS_CLOSED) \
                             .exclude(content=None) \
                             .order_by('status', '-created')
+    moderator_tickets_count = len(moderator_tickets)
     moderation_texts = MODERATION_TEXTS
     return render_to_response('tickets/moderation_assigned.html',
                               locals(),

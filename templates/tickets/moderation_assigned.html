@@ -72,7 +72,7 @@
     <div id="moderation-queue">
 
         <div id="moderation-queue-left">
-            <h4>Assigned tickets</h4>
+            <h4>Assigned tickets {% if moderator_tickets_count > 0 %} ({{moderator_tickets_count}}) {% endif %}</h4>
             <br>
             {% if not moderator_tickets %}
                 <p>You've finished all the sounds in your queue.

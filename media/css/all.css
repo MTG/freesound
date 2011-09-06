@@ -78,9 +78,9 @@ a.external_link:hover {
 ------------------------------------------------------*/
 
 body {
-    /* border-top: 100px solid #fff; */
-    background-position: 0 105px; /* remove or comment out when removing banners */
-    background-color: #fff; /* remove or comment out when removing banners */
+    /*border-top: 100px solid #fff;*/
+    /*background-position: 0 105px; */ /* remove or comment out when removing banners */
+    /*background-color: #fff; */ /* remove or comment out when removing banners */
 }
 #banner_wrapper {
     width: 728px;

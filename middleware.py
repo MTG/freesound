@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 # from django.template import RequestContext
 from django.conf import settings
 from django.core.cache import cache
+from sounds.models import Sound
 
 
 class PermissionDeniedHandler:
@@ -35,11 +36,15 @@ class BulkChangeLicenseHandler:
 
             user = request.user
             cache_key = "has-old-license-%s" % user.id
-            has_old_license = cache.get(cache_key)
-
-            if has_old_license == None:
+            cache_info = cache.get(cache_key)
+            
+            if cache_info == None or 0 or not isinstance(cache_info, (list, tuple)):
                 has_old_license = user.profile.has_old_license
-                cache.set(cache_key, has_old_license, 2592000) # 30 days cache
-
-            if has_old_license:
-                return HttpResponseRedirect(reverse("bulk-license-change"))
+                has_sounds = Sound.objects.filter(user=user).exists()
+                cache.set(cache_key, [has_old_license, has_sounds], 2592000) # 30 days cache
+            else :
+                has_old_license = cache_info[0] 
+                has_sounds = cache_info[1]
+                #print "CACHE LICENSE: has_old_license=" + str(has_old_license) + " has_sounds=" + str(has_sounds)
+                if has_old_license and has_sounds:
+                    return HttpResponseRedirect(reverse("bulk-license-change"))

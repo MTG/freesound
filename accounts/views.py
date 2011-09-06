@@ -61,7 +61,7 @@ def bulk_license_change(request):
             # update old license flag
             Profile.objects.filter(user=request.user).update(has_old_license=False)
             # update cache
-            cache.set("has-old-license-%s" % request.user.id, False, 2592000)
+            cache.set("has-old-license-%s" % request.user.id, [False,Sound.objects.filter(user=request.user).exists()], 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = NewLicenseForm()

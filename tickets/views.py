@@ -261,7 +261,7 @@ WHERE comment.id in (   SELECT MAX(id)
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
-AND now() - modified > INTERVAL '2 minutes'
+AND now() - modified > INTERVAL '24 hours'
 AND content.object_id = sound.id
 AND sound.moderation_state != 'OK'
 AND ticket.status != '%s'
@@ -286,7 +286,7 @@ WHERE comment.id in (   SELECT MAX(id)
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
-AND now() - modified > INTERVAL '2 minutes'
+AND now() - modified > INTERVAL '24 hours'
 AND content.object_id = sound.id
 AND sound.moderation_state != 'OK'
 AND ticket.status != '%s'

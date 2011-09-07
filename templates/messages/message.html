@@ -18,7 +18,7 @@
 	<div class="message-body">
 		{{message.body.body|smileys|safe|linebreaks}}
 	</div>
-	<h4><a href="{% url message-reply message.id %}">Reply</a><h4>
+	<span class="reply_button"><a href="{% url message-reply message.id %}">Reply</a></span>
 </div>
 
 {% endblock %}

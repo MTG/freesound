@@ -80,7 +80,7 @@ a.external_link:hover {
 body {
     /*border-top: 100px solid #fff;*/
     /*background-position: 0 105px; */ /* remove or comment out when removing banners */
-    /*background-color: #fff; */ /* remove or comment out when removing banners */
+    background-color: #fff;  /* remove or comment out when removing banners */
 }
 #banner_wrapper {
     width: 728px;
@@ -1350,11 +1350,12 @@ ul#comments {
 
 .messages_actions_box{
 	float:right;
+	
 }
 
 .messages_pagination_box{
 	white-space: nowrap;
-	float:left;	
+	/*float:left;*/
 	/*margin-right:95px;*/
 }
 
@@ -1465,11 +1466,11 @@ ul#comments {
     margin: 0 5px;
 }
 
-.message_container h4 {
+.reply_button {
     margin-right: 15px;
     margin-bottom: 15px;
     display: block;
-    float: left;
+    width: 48px;
     padding:5px;
     background-color:#F9F9F9;
     border-radius: 3px;

@@ -30,19 +30,18 @@
 		{% endfor %}
 	</table>
 
-	<div class="messages_pagination_box">
-		{% show_paginator paginator page current_page request "message" %} 
-	</div>
-	
 	<div class="messages_actions_box">
 		<select name="choice" id="id_choice">
-		{% block options %}
-		{% endblock %}
+			{% block options %}
+			{% endblock %}
 		</select>
 		<input type="hidden" name="next" value="{{request.path}}" />
 		<input type="submit" name="submit" value="go!" />
-	<div>
-	
+	</div>
+	<div class="messages_pagination_box">
+		{% show_paginator paginator page current_page request "message" %} 
+	</div>	
+
 </form>
 
 <script type="text/javascript">

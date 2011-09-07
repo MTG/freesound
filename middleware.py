@@ -42,6 +42,9 @@ class BulkChangeLicenseHandler:
                 has_old_license = user.profile.has_old_license
                 has_sounds = Sound.objects.filter(user=user).exists()
                 cache.set(cache_key, [has_old_license, has_sounds], 2592000) # 30 days cache
+                if has_old_license and has_sounds:
+                    return HttpResponseRedirect(reverse("bulk-license-change"))
+                
             else :
                 has_old_license = cache_info[0] 
                 has_sounds = cache_info[1]

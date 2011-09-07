@@ -2401,9 +2401,19 @@ p.about {
     background: #fff;
 }
 
+#users_currently_online_box{
+	width:308px; 
+}
+
 #users_currently_online .online_user {
+    
+    position:relative;
     float: left;
+    width:40px;
+    height:40px;
+    padding: 1px;
     margin-right: 2px;
+    margin-bottom: 2px;
 }
 
 #users_currently_online a:hover {

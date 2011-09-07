@@ -597,7 +597,7 @@ def convert_using_ffmpeg(input_filename, output_filename):
     command = ["ffmpeg", "-y", "-i", input_filename, "-ac","1","-sr","-acodec", "pcm_s16le", "-ar", "44100", output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    signal.signal(alarm_handler)
+    signal.signal(signal.SIGALRM,alarm_handler)
     signal.alarm(TIMEOUT)
     (stdout, stderr) = process.communicate()
     signal.alarm(0)

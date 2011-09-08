@@ -146,7 +146,7 @@ function makePlayer(selector) {
                 <div class="time-indicator-container"><div class="time-indicator"></div></div>');
         } else if ($(this).hasClass("mini")) {
             $(this).append('<div class="controls"> \
-                   <a title="play class="toggle play">play</a> \
+                   <a title="play / pause" class="toggle play">play / pause</a> \
                    <a title="loop" class="toggle loop"></a> \
                 </div> \
                 <div class="background"></div> \

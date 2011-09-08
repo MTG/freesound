@@ -203,6 +203,7 @@ def tickets_home(request):
     tardy_user_sounds_count = len(list(__get_tardy_user_tickets_all()))
     new_support_count = new_support_tickets_count()
     sounds_queued_count = Sound.objects.filter(processing_state='QU').count()
+    sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
     sounds_processing_count = Sound.objects.filter(processing_state='PR').count()
     sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
     return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))

@@ -103,7 +103,7 @@
                 <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to the pack: {{ sound.pack.name }}" />
             </a>
             {% endif %}
-            {% if sound.remix_groups.all.count %}
+            {% if sound.remix_group.all.count %}
              <a class="remixes" href="{% url sound-remixes sound.user.username sound.id %}">
                 <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
             </a>

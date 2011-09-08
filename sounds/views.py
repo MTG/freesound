@@ -404,7 +404,7 @@ def __nested_remixgroup(dg1, remix_group):
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     try:
-        remix_group = sound.remix_groups.all()[0]
+        remix_group = sound.remix_group.all()[0]
     except:
         raise Http404
     return HttpResponseRedirect(reverse("remix-group", args=[remix_group.id]))

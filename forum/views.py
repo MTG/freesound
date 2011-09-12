@@ -12,6 +12,7 @@ from utils.mail import send_mail_template
 from utils.search.search_forum import add_post_to_solr
 import logging
 from django.core.urlresolvers import reverse
+import re
 
 logger = logging.getLogger("web")
 
@@ -154,15 +155,24 @@ def unsubscribe_from_thread(request, forum_name_slug, thread_id):
 def old_topic_link_redirect(request):
     post_id = request.GET.get("p", False)
     if post_id:
-        post = get_object_or_404(Post, id=post_id)
+        post_id = re.sub("\D", "", post_id)
+        try:
+            post = get_object_or_404(Post, id=post_id)
+        except ValueError:
+            raise Http404
         return HttpResponsePermanentRedirect(reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
 
-    thread_id = request.GET.get("t")
+    thread_id = request.GET.get("t", False)
     if thread_id:
-        thread = get_object_or_404(Thread, id=thread_id)
+        thread_id = re.sub("\D", "", thread_id)
+        try:
+            thread = get_object_or_404(Thread, id=thread_id)
+        except ValueError:
+            raise Http404
         return HttpResponsePermanentRedirect(reverse('forums-thread', args=[thread.forum.name_slug, thread.id]))
 
     raise Http404
+
 @login_required
 def post_delete(request, post_id):
     post = get_object_or_404(Post, id=post_id)

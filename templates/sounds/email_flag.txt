@@ -14,6 +14,8 @@ Reporting user: {% absurl account flag.reporting_user.username %}
 {% endif %}
 Reason type: {{flag.get_reason_type_display}}
 
+Email: {{flag.email}}
+
 Reason:
 {{flag.reason}}
 {% endblock %}

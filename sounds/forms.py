@@ -143,7 +143,10 @@ class NewLicenseForm(forms.Form):
 
 
 class FlagForm(forms.ModelForm):
-    email = forms.EmailField(label="Your email")
+    email = forms.EmailField(label="Your email", required=True,
+                             help_text="Required.",
+                             error_messages={'required' : 'Required, please enter your email address.',
+                                            'invalid' : 'Your email address appears to be invalid, please check if it\'s correct.'})
     class Meta:
         model = Flag
         exclude = ('sound', 'reporting_user', 'created')

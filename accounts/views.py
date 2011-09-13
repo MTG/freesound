@@ -68,7 +68,7 @@ def bulk_license_change(request):
     return render_to_response('accounts/choose_new_license.html', locals(), context_instance=RequestContext(request))
 
 
-def activate_user(request, activation_key):
+def activate_user(request, activation_key, username):
     if request.user.is_authenticated():
         return HttpResponseRedirect(reverse("accounts-home"))
 
@@ -85,6 +85,7 @@ def activate_user(request, activation_key):
 
 def send_activation(user):
     encrypted_user_id = encrypt(str(user.id))
+    username = user.username
     send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
 
 def registration(request):

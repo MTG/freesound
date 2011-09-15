@@ -239,8 +239,9 @@ def edit(request):
                 profile.has_avatar = False
                 profile.save()
             else:
-                if request.FILES["image-file"]:
-                    handle_uploaded_image(profile, request.FILES["image-file"])
+                handle_uploaded_image(profile, image_form.cleaned_data["file"])
+                profile.has_avatar = True
+                profile.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
         image_form = AvatarForm(prefix="image")

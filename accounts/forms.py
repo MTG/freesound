@@ -12,6 +12,19 @@ class AvatarForm(forms.Form):
     file = forms.FileField(required=False)
     remove = forms.BooleanField(label="Remove avatar", required=False)
     
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        file_cleaned = cleaned_data.get("file", None)
+        remove_cleaned = cleaned_data.get("remove", False)
+
+        if remove_cleaned and file_cleaned:
+            raise forms.ValidationError("Either remove or select a new avatar, you can't do both at the same time.")
+        elif not remove_cleaned and not file_cleaned:
+            raise forms.ValidationError("You forgot to select a file.")
+
+        # Always return the full collection of cleaned data.
+        return cleaned_data
+    
 
 class FileChoiceForm(forms.Form):
     files = forms.MultipleChoiceField()

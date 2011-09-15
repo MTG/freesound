@@ -592,6 +592,9 @@ def account(request, username):
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = False
+    if not user.is_active:
+        messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
+
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 logger = logging.getLogger("upload")

@@ -353,6 +353,8 @@ def describe_sounds(request):
             sound.user = request.user
             sound.original_filename = forms[i]['description'].cleaned_data['name']
             sound.original_path = forms[i]['sound'].full_path
+            sound.filesize = os.path.getsize(sound.original_path)
+
             try:
                 sound.md5 = md5file(forms[i]['sound'].full_path)
             except IOError:

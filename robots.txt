@@ -11,3 +11,4 @@ Disallow: /ratings/
 Disallow: /geotags/
 Disallow: /tickets/
 Disallow: /embed/
+Disallow: /*similar/

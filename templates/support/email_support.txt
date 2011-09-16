@@ -1,7 +1,7 @@
 {% load absurl %}---support email-----------------------------
 {% block body %}
 
-{{message|removetags:"script"|safe}}
+{{message|striptags|safe}}
 
 {% endblock %}
 ---------------------------------------------

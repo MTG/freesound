@@ -8,7 +8,7 @@ def send_mail(subject, email_body, email_from=None, email_to=[]):
         email_from = settings.DEFAULT_FROM_EMAIL
     
     if not email_to:
-        email_to = [admin[1] for admin in settings.ADMINS]
+        email_to = [admin[1] for admin in settings.SUPPORT]
     elif not isinstance(email_to, tuple) and not isinstance(email_to, list):
         email_to = [email_to]
     

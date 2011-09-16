@@ -143,7 +143,9 @@ class NewLicenseForm(forms.Form):
                                      required=True)
 
 class FlagForm(RecaptchaForm):
-    email = forms.EmailField(label="Your email")
+    email = forms.EmailField(label="Your email", required=True, 
+            help_text="Required.", error_messages={'required' : 'Required, please enter your email address.',
+            'invalid' : 'Your email address appears to be invalid, please check if it\'s correct.'})
     reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES,required=True , label='Reason type')
     reason = forms.CharField(widget=forms.Textarea)
 
@@ -152,6 +154,3 @@ class FlagForm(RecaptchaForm):
         f.reason_type = self.cleaned_data['reason_type']
         f.reason = self.cleaned_data['reason']
         return f #sound and user are set in view
-
-
-

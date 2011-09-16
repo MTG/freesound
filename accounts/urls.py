@@ -24,7 +24,7 @@ urlpatterns = patterns('accounts.views',
         accounts.username_reminder,
         name="accounts-username-reminder"),
 
-    url(r'^activate/(?P<activation_key>[^//]+)/$',
+    url(r'^activate/(?P<activation_key>[^//]+)/(?P<username>\w+)/$',
         accounts.activate_user,
         name="accounts-activate"),
 

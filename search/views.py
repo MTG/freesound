@@ -72,7 +72,10 @@ def search_prepare_query(search_query,
 def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
-    current_page = int(request.GET.get("page", 1))
+    try:
+        current_page = int(request.GET.get("page", 1))
+    except ValueError:
+        current_page = 1
     sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
 
@@ -163,7 +166,10 @@ def search(request):
 def search_forum(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
-    current_page = int(request.GET.get("page", 1))
+    try:
+        current_page = int(request.GET.get("page", 1))
+    except ValueError:
+        current_page = 1
     current_forum_name_slug = request.GET.get("current_forum_name_slug", "").strip()    # for context sensitive search
     current_forum_name = request.GET.get("current_forum_name", "").strip()              # used in breadcrumb  
     sort = ["thread_created asc"]

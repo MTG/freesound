@@ -3,6 +3,7 @@ from utils.text import clean_html, is_shouting
 from django.conf import settings
 from recaptcha.client import captcha
 from utils.tags import clean_and_split_tags
+from HTMLParser import HTMLParseError
 
 class HtmlCleaningCharField(forms.CharField):
     def clean(self, value):

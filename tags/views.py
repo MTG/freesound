@@ -47,8 +47,8 @@ def tags(request, multiple_tags=None):
     except SolrException, e:
         error = True
         search_logger.error("SOLR ERROR - %s" % e)
-    except :
-        error = True
+    #except :
+    #    error = True
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
 
 

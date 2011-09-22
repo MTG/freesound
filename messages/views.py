@@ -80,7 +80,7 @@ def message(request, message_id):
 @login_required
 def new_message(request, username=None, message_id=None):
     if request.method == 'POST':
-        form = MessageReplyForm(request.POST)
+        form = MessageReplyForm(request,request.POST)
         if form.is_valid():
             user_from = request.user
             user_to = form.cleaned_data["to"]
@@ -101,7 +101,7 @@ def new_message(request, username=None, message_id=None):
             
             return HttpResponseRedirect(reverse("messages"))
     else:
-        form = MessageReplyForm()
+        form = MessageReplyForm(request)
         if message_id:
             try:
                 message = Message.objects.get(id=message_id)
@@ -118,11 +118,11 @@ def new_message(request, username=None, message_id=None):
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                form = MessageReplyForm(initial=dict(to=to, subject=subject, body=body))
+                form = MessageReplyForm(request,initial=dict(to=to, subject=subject, body=body))
             except Message.DoesNotExist:
                 pass
         elif username:
-            form = MessageReplyForm(initial=dict(to=username))
+            form = MessageReplyForm(request,initial=dict(to=username))
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))
 

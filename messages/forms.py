@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from utils.forms import HtmlCleaningCharField
+from utils.forms import RecaptchaForm, HtmlCleaningCharField
 
 class ManualUserField(forms.CharField):
     def clean(self, value):
@@ -11,7 +11,7 @@ class ManualUserField(forms.CharField):
         except User.DoesNotExist: #@UndefinedVariable
             raise forms.ValidationError("We are sorry, but this username does not exist...")
 
-class MessageReplyForm(forms.Form):
+class MessageReplyForm(RecaptchaForm):
     to = ManualUserField()
     subject = forms.CharField(min_length=3, max_length=128)
     body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))

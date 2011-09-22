@@ -1,6 +1,7 @@
 try:
-    import zmq, time, sys, json, threading
-
+    import zmq, time, sys, json, threading, logging
+    logger = logging.getLogger('similarity')
+    
     class Messenger():
 
         ctxs = {}
@@ -31,6 +32,7 @@ try:
                 socket = ctx.socket(zmq.REQ)
                 tctx['socket'] = socket
                 socket.connect(address)
+                logger.debug("reconnecting to similarity server")
                 time.sleep(0.5) # allow socket to connect
 
             # socket is set up, let's use s as a shorthand

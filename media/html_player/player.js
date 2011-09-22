@@ -163,11 +163,11 @@ function makePlayer(selector) {
         if ($(this).hasClass("large"))
         {
             $(this).append('<div class="controls"> \
-                   <a title="play / pause" class="toggle play">play / pause</a> \
-                   <a title="stop" class="button stop">stop</a> \
-                   <a title="change display" class="toggle display">change display</a> \
-                   <a title="loop" class="toggle loop">loop</a> \
-                   <a title="toggle measure" class="toggle measure">toggle measure</a> \
+                   <a href="javascript:void(0)" title="play / pause" class="toggle play">play / pause</a> \
+                   <a href="javascript:void(0)" title="stop" class="button stop">stop</a> \
+                   <a href="javascript:void(0)" title="change display" class="toggle display">change display</a> \
+                   <a href="javascript:void(0)" title="loop" class="toggle loop">loop</a> \
+                   <a href="javascript:void(0)" title="toggle measure" class="toggle measure">toggle measure</a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="measure-readout-container"><div class="measure-readout"></div></div> \
@@ -178,8 +178,8 @@ function makePlayer(selector) {
         else if ($(this).hasClass("small"))
         {
             $(this).append('<div class="controls"> \
-                    <a title="play / pause" class="toggle play">play / pause</a> \
-                    <a title="loop" class="toggle loop">loop</a> \
+                    <a href="javascript:void(0)" title="play / pause" class="toggle play">play / pause</a> \
+                    <a href="javascript:void(0)" title="loop" class="toggle loop">loop</a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="loading-progress"></div> \
@@ -188,8 +188,8 @@ function makePlayer(selector) {
         }
         else if ($(this).hasClass("mini")) {
             $(this).append('<div class="controls"> \
-                   <a title="play / pause" class="toggle play">play / pause</a> \
-                   <a title="loop" class="toggle loop"></a> \
+                   <a href="javascript:void(0)" title="play / pause" class="toggle play">play / pause</a> \
+                   <a href="javascript:void(0)" title="loop" class="toggle loop"></a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="loading-progress"></div> \

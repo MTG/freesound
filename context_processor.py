@@ -1,5 +1,5 @@
 from django.conf import settings
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.core.cache import cache
 from accounts.models import Profile
 
@@ -38,6 +38,6 @@ def context_extra(request):
                    'GOOGLE_API_KEY': settings.GOOGLE_API_KEY }
 
     if any(map(lambda s: request.get_full_path().startswith(s), settings.LAST_ACTION_TIME_URLS)):
-        return_dict['last_action_time'] = get_last_action_time(request.user)
-
+        return_dict['last_action_time'] = get_last_action_time(request.user) - timedelta(seconds=10*60)
+    
     return return_dict

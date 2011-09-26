@@ -23,7 +23,7 @@ def generate_tree(path):
     lookups = {path: File(counter, path, path, True)}
     files = {}
 
-    for (root, dirnames, filenames) in os.walk(path):
+    for (root, dirnames, filenames) in os.walk(unicode(path)):
         parent = lookups[root]
 
         for dirname in sorted(dirnames):

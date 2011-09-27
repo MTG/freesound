@@ -23,7 +23,8 @@ def generate_tree(path):
     lookups = {path: File(counter, path, path, True)}
     files = {}
 
-    for (root, dirnames, filenames) in os.walk(path):
+    # If passing a path in unicode - unicode(path) - os.walk returns unicode filenames nstead of ascii
+    for (root, dirnames, filenames) in os.walk(unicode(path)):
         parent = lookups[root]
 
         for dirname in sorted(dirnames):

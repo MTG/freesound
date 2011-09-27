@@ -42,7 +42,7 @@
             <h3>Messages</h3>
 
             {% include 'tickets/message_list.html' %}
-
+			{% if request.user.is_authenticated %}
             <h3>Add new message to the ticket</h3>
             <div id="ticket-page-form">
                 <form method="post" action=".">
@@ -51,6 +51,10 @@
                     <input type="submit" value="send" />
                 </form>
             </div>
+            {% else %}
+            <p>Please <a href="{% url accounts-login %}?next={% url tickets-ticket ticket.key %}">log in</a> to add messages</center>
+            {% endif %}
+            
         </div> <!-- /#ticket-left -->
 
         <div id="ticket-right">

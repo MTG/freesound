@@ -258,14 +258,26 @@ def describe(request):
 
     if request.method == 'POST':
         form = FileChoiceForm(files, request.POST)
+        
         if form.is_valid():
-            # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
-            if len(form.cleaned_data["files"]) > 1 :
-                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-                return HttpResponseRedirect(reverse('accounts-describe-license'))
-            else :
-                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-                return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+            if "delete" in request.POST: # If delete button is pressed
+                filenames = [files[x].name for x in form.cleaned_data["files"]]
+                return render_to_response('accounts/confirm_delete_undescribed_files.html', locals(), context_instance=RequestContext(request))
+            elif "delete_confirm" in request.POST: # If confirmation delete button is pressed
+                for file in form.cleaned_data["files"]:
+                    os.remove(files[file].full_path)
+                return HttpResponseRedirect(reverse('accounts-describe'))
+            elif "describe" in request.POST: # If describe button is pressed
+                # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
+                if len(form.cleaned_data["files"]) > 1 :
+                    request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                    return HttpResponseRedirect(reverse('accounts-describe-license'))
+                else :
+                    request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                    return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+            else:
+                form = FileChoiceForm(files) # Reset form
+                return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
     else:
         form = FileChoiceForm(files)
     return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))

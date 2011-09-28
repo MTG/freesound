@@ -18,10 +18,7 @@
 
     function checkboxChange(checkbox)
     {
-        console.log(checkbox.name)
         var option = $("#fileform").find("option[value=" + checkbox.name + "]").get(0);
-        console.log(option)
-
         if (checkbox.checked)
             option.selected = true;
         else

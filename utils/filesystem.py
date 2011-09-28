@@ -23,10 +23,10 @@ def generate_tree(path):
     lookups = {path: File(counter, path, path, True)}
     files = {}
 
-    # If passing a path in unicode - unicode(path) - os.walk returns unicode filenames nstead of ascii
+    # If passing a path in unicode - unicode(path) - os.walk returns unicode filenames instead of ascii
+    '''
     for (root, dirnames, filenames) in os.walk(unicode(path)):
         parent = lookups[root]
-
         for dirname in sorted(dirnames):
             full_path = os.path.join(root, dirname)
             file_object = File(counter, dirname, full_path, True)
@@ -40,7 +40,16 @@ def generate_tree(path):
             counter += 1
             files[file_object.id] = file_object
             parent.children.append(file_object)
-
+    '''
+    parent = lookups[path]
+    
+    for filename in os.listdir(unicode(path)):
+        full_path = os.path.join(path, filename)
+        file_object = File(counter, filename, full_path, False)
+        counter += 1
+        files[file_object.id] = file_object
+        parent.children.append(file_object)
+            
     return lookups[path], files
 
 def md5file(filename):

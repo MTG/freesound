@@ -15,17 +15,15 @@ class File:
             for child in self.children:
                 child.recursive_print(spacer + "  ")
 
-    def __unicode__(self):
-        return u'<File %s>' % self.full_path
+    #def __unicode__(self):
+    #    return u'<File %s>' % self.full_path
 
 def generate_tree(path):
     counter = 0
     lookups = {path: File(counter, path, path, True)}
     files = {}
 
-    # If passing a path in unicode - unicode(path) - os.walk returns unicode filenames instead of ascii
-    '''
-    for (root, dirnames, filenames) in os.walk(unicode(path)):
+    for (root, dirnames, filenames) in os.walk(path):
         parent = lookups[root]
         for dirname in sorted(dirnames):
             full_path = os.path.join(root, dirname)
@@ -40,15 +38,6 @@ def generate_tree(path):
             counter += 1
             files[file_object.id] = file_object
             parent.children.append(file_object)
-    '''
-    parent = lookups[path]
-    
-    for filename in os.listdir(unicode(path)):
-        full_path = os.path.join(path, filename)
-        file_object = File(counter, filename, full_path, False)
-        counter += 1
-        files[file_object.id] = file_object
-        parent.children.append(file_object)
             
     return lookups[path], files
 

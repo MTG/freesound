@@ -2248,6 +2248,20 @@ a.donation_button:hover {
     font-weight: bold;
 }
 
+.show_description_form_toggle{
+    font-size:12px;
+}
+
+#add_description_label{
+    font-size:12px;
+}
+
+p.about_pack {
+    /* font-style: italic; */
+    padding: 20px;
+    background-color: #F6F6F6;
+}
+
 /* Account page
 ------------------------------------------------------*/
 p.about {

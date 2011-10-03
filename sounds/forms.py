@@ -1,5 +1,6 @@
 from django import forms
 from django.db.models import Q
+from django.forms import ModelForm, Textarea
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
@@ -128,6 +129,15 @@ class PackForm(forms.Form):
         except Pack.DoesNotExist: #@UndefinedVariable
             return self.cleaned_data['new_pack']
     '''
+
+class PackDescriptionForm(ModelForm):
+    
+    class Meta:
+        model = Pack
+        fields = ('description',)
+        widgets = {
+            'description': Textarea(attrs={'rows': 5, 'cols':60}),
+        }
 
 class LicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(is_public=True), required=True, empty_label=None)

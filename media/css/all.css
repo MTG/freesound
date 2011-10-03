@@ -2256,6 +2256,12 @@ a.donation_button:hover {
     font-size:12px;
 }
 
+p.about_pack {
+    /* font-style: italic; */
+    padding: 20px;
+    background-color: #F6F6F6;
+}
+
 /* Account page
 ------------------------------------------------------*/
 p.about {

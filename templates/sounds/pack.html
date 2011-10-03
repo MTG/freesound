@@ -22,9 +22,9 @@
 
 <h1>Pack: {{pack.name}} by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></h1>
 
-<p>
-{% if pack.description %}
 
+{% if pack.description %}
+    <p class="about_pack">
     {{pack.description}}
     {% if enable_description_form %}
 	<br>
@@ -32,15 +32,18 @@
 	<a onclick='showDescriptionForm();'><span class="show_description_form_toggle">Edit current description...</span></a>
 	</div>
     {% endif %}
+    </p>
 {% else %}
+    <p>
     {% if enable_description_form %}
 	<div id="add_description_label">
 	This pack has no description.
 	<a onclick='showDescriptionForm();'><span class="show_description_form_toggle">Add a description...</span></a>
 	</div>
     {% endif %}
+    </p>
 {% endif %}
-</p>
+
 
 
 <p>

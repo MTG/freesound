@@ -5,6 +5,13 @@
 
 {% block title %}pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
 
+{% block onunload %}GUnload(){% endblock %}
+
+{% block head %}
+    {{ block.super }}
+    <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{GOOGLE_API_KEY}}" type="text/javascript"></script>
+{% endblock head %}
+
 {% block section_content %}
 
 <script type="text/javascript">
@@ -29,7 +36,7 @@
     {% if enable_description_form %}
 	<br>
 	<div id="add_description_label">
-	<a onclick='showDescriptionForm();'><span class="show_description_form_toggle">Edit current description...</span></a>
+	<a onclick='showDescriptionForm();'  class="icon" id="edit_link" title="edit pack description"><span class="show_description_form_toggle">Edit current description...</span></a>
 	</div>
     {% endif %}
     </p>
@@ -61,7 +68,7 @@
 
 
 
-
+{% comment %}
 {% if not pack.is_dirty %}
 	{% if num_sounds_ok > 0 %}
 		<div id="single_pack_sidebar">
@@ -74,12 +81,17 @@
 		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
 		    {% endif %}
 		</div>
+		
 		</div>
 	{% endif %}
 {% endif %}
+{% endcomment %}
 
 
-<div id="pack_info" class="content_box">
+
+
+<div id="content">
+    <div id="pack_info" class="content_box">
     <h3>Pack info</h3>
     <div class="sound_list_normal">
         <ul>
@@ -93,9 +105,8 @@
 <p>
     See <a href="{% url packs-for-user pack.user.username %}">more packs</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
 </p>
-
-
-
+    
+    
 {% if pack.num_sounds > 0 %}
 	{% show_paginator paginator page current_page request "sound" %}
 	
@@ -108,7 +119,65 @@
 {% else %}
 	<p>This pack does not contain any sound.</p>
 {% endif %}
+</div> <!-- end CONTENT -->
 
+<div id="sidebar">
+    
+    {% if pack_geotags %}
+    <div id="latest_geotags" class="content_box">
+        <h3>Geotags in this pack</h3>
+        <div id="map_canvas"></div>
+        <script type="text/javascript">
+            var map = new GMap2(document.getElementById("map_canvas"));
+            GEvent.addListener(map, 'infowindowclose', function() {
+                stopAll();
+            });
+            map.setUIToDefault();
+            map.disableScrollWheelZoom();
+            map.setMapType(G_SATELLITE_MAP);
 
+            var bounds = new GLatLngBounds();
+
+            {% for geotaged_sound in pack_geotags %}
+            var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
+            bounds.extend(point);
+            var marker = new GMarker(point);
+            GEvent.addListener(marker, "click", function() {
+                GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
+                    marker.openInfoWindowHtml(data);
+                    setTimeout(function() {
+                        makePlayer('.infowindow_player .player');
+                    }, 500);
+                });
+            });
+            map.addOverlay(marker);
+
+            {% endfor %}
+            zoomToBounds(map, bounds);
+        </script>
+    </div><!-- #pack_geotags -->
+    {% endif %}
+    
+    {% if not pack.is_dirty %}
+	{% if num_sounds_ok > 0 %}
+		<!--<div id="single_pack_sidebar">-->
+		{% if pack_geotags %}
+		    <div id="download" style="margin-top:-40px">
+		{% else %}
+		    <div id="download">
+		{% endif %}
+		    {% if request.user.is_authenticated %}
+		    	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
+		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
+		    {% else %}
+		    	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" id="download_login_button" title="download pack"></a>
+		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
+		    {% endif %}
+		</div>
+		
+		<!--</div>-->
+	{% endif %}
+    {% endif %}
+</div>
 
 {% endblock %}

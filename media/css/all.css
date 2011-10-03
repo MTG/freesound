@@ -2248,6 +2248,14 @@ a.donation_button:hover {
     font-weight: bold;
 }
 
+.show_description_form_toggle{
+    font-size:12px;
+}
+
+#add_description_label{
+    font-size:12px;
+}
+
 /* Account page
 ------------------------------------------------------*/
 p.about {

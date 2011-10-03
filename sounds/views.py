@@ -19,7 +19,7 @@ from forum.models import Post, Thread
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    NewLicenseForm, FlagForm, RemixForm
+    NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm
 from accounts.models import Profile
 from sounds.models import Sound, Pack, Download, RemixGroup
 from tickets.models import Ticket, TicketComment
@@ -447,7 +447,7 @@ def pack(request, username, pack_id):
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
     num_sounds_ok = len(qs)
-
+    
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
@@ -457,7 +457,20 @@ def pack(request, username, pack_id):
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 
+    # If user is owner of pack, display form to add description
+    enable_description_form = False
+    if request.user.username == username:
+        enable_description_form = True
+        form = PackDescriptionForm(instance = pack)
 
+    # Manage POST info (if adding a description)
+    if request.method == 'POST':
+        form = PackDescriptionForm(request.POST, pack)
+        if form.is_valid():
+            pack.description = form.cleaned_data['description']
+            pack.save()
+        else:
+            pass        
 
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 

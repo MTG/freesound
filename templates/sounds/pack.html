@@ -6,12 +6,58 @@
 {% block title %}pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
 
 {% block section_content %}
+
+<script type="text/javascript">
+    function showDescriptionForm()
+    {
+        $("#description_form").show('blind', {}, 500, function() {});
+	$("#add_description_label").hide();
+    }
+
+    //function hideDescriptionForm()
+    //{
+    //    $("#description_form").hide('blind', {}, 500, function() {});
+    //}
+</script>
+
 <h1>Pack: {{pack.name}} by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></h1>
-{% if pack.description %}
+
 <p>
+{% if pack.description %}
+
     {{pack.description}}
-</p>
+    {% if enable_description_form %}
+	<br>
+	<div id="add_description_label">
+	<a onclick='showDescriptionForm();'><span class="show_description_form_toggle">Edit current description...</span></a>
+	</div>
+    {% endif %}
+{% else %}
+    {% if enable_description_form %}
+	<div id="add_description_label">
+	This pack has no description.
+	<a onclick='showDescriptionForm();'><span class="show_description_form_toggle">Add a description...</span></a>
+	</div>
+    {% endif %}
 {% endif %}
+</p>
+
+
+<p>
+    
+    
+    <div id ="description_form" style="display:none">
+    {% if enable_description_form %}
+    <form action="" method="post">{% csrf_token %}
+	{{ form.as_p }}
+    <input type="submit" value="Save description" />
+    </form>
+    {% endif %}
+    </div>
+</p>
+
+
+
 
 {% if not pack.is_dirty %}
 	{% if num_sounds_ok > 0 %}
@@ -44,6 +90,8 @@
 <p>
     See <a href="{% url packs-for-user pack.user.username %}">more packs</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
 </p>
+
+
 
 {% if pack.num_sounds > 0 %}
 	{% show_paginator paginator page current_page request "sound" %}

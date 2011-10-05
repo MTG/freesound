@@ -7,6 +7,12 @@
 
 {% block section_content %}
 
+<h1>Similarity</h1>
+<p>
+Similarity service is currently disabled for maintenance. Try again later!
+<p>
+
+{% comment %}
 {% for sound in similar_sounds %}
     {% if forloop.counter == 1 %}
         <h1>Query sound</h1>
@@ -22,6 +28,7 @@
        the query sound has been uploaded recently and we haven't updated our similarity
        database yet. Try again later!
 {% endfor %}
+{% endcomment %}
 
 {% endblock %}
 

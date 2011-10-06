@@ -438,7 +438,6 @@ class SoundSimilarityHandler(BaseHandler):
     @auth()
     def read(self, request, sound_id):
         
-        '''
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK", similarity_state="OK")
             #TODO: similarity_state="OK"
@@ -456,8 +455,6 @@ class SoundSimilarityHandler(BaseHandler):
             sounds.append( sound )
 
         result = {'sounds': sounds, 'num_results': len(similar_sounds)}
-        '''
-        result = {'sounds': [], 'num_results': 0}
         add_request_id(request,result)
         return result
 

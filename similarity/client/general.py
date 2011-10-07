@@ -9,7 +9,7 @@ try:
         initialized = False
 
         @classmethod
-        def call_service(cls, address, data, timeout=1):
+        def call_service(cls, address, data, timeout=5):
             t = threading.currentThread()
             if t in cls.ctxs:
                 tctx = cls.ctxs[t]

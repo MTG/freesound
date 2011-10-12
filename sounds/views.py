@@ -447,6 +447,7 @@ def pack(request, username, pack_id):
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
     num_sounds_ok = len(qs)
+    # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
     pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None)
     google_api_key = settings.GOOGLE_API_KEY
     

@@ -136,24 +136,38 @@
             map.disableScrollWheelZoom();
             map.setMapType(G_SATELLITE_MAP);
 
-            var bounds = new GLatLngBounds();
+            GDownloadUrl('{% url geotags-for-pack-json pack.id %}', function(data, responseCode)
+            {
 
-            {% for geotaged_sound in pack_geotags %}
-            var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
-            bounds.extend(point);
-            var marker = new GMarker(point);
-            GEvent.addListener(marker, "click", function() {
-                GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
-                    marker.openInfoWindowHtml(data);
-                    setTimeout(function() {
-                        makePlayer('.infowindow_player .player');
-                    }, 500);
+                var bounds = new GLatLngBounds();
+    
+                $.each($.parseJSON(data), function(index, item)
+                {
+                    
+                    var id = item[0];
+                    var lat = item[1];
+                    var lon = item[2];
+                    
+                    var point = new GLatLng(lat, lon);
+                    bounds.extend(point);
+                    var marker = new GMarker(point);
+                    
+                    GEvent.addListener(marker, "click", function()
+                    {
+                        GDownloadUrl( "/geotags/infowindow/" + id, function(data, responseCode)
+                        {
+                            marker.openInfoWindowHtml(data);
+                            setTimeout(function() {
+                                makePlayer('.infowindow_player .player');
+                            }, 500);
+                        });
+                    });
+                    map.addOverlay(marker);
                 });
+                if (!bounds.isEmpty()) zoomToBounds(map, bounds);        
             });
-            map.addOverlay(marker);
-
-            {% endfor %}
-            zoomToBounds(map, bounds);
+            
+            //zoomToBounds(map, bounds);
         </script>
     </div><!-- #pack_geotags -->
     {% endif %}

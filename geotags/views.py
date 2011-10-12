@@ -31,6 +31,15 @@ def geotags_for_user_json(request, username):
     sounds = Sound.objects.select_related('user', 'geotag').filter(user__username__iexact=username).exclude(geotag=None)
     return generate_json(sounds)
 
+@cache_page(60 * 15)
+def geotags_for_user_latest_json(request, username):
+    sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
+    return generate_json(sounds)
+
+@cache_page(60 * 15)
+def geotags_for_pack_json(request, pack_id):
+    sounds = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack__id=pack_id).exclude(geotag=None)
+    return generate_json(sounds)
 
 def geotags(request, tag=None):
     google_api_key = settings.GOOGLE_API_KEY

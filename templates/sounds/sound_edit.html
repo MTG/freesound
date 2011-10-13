@@ -82,13 +82,13 @@
     map.setCenter(initialCenter, initialZoom);
 
     map.setMapType( G_HYBRID_MAP );
-     map.disableScrollWheelZoom();
+    map.disableScrollWheelZoom();
     map.enableContinuousZoom();
     map.addControl(new GSmallMapControl());
     map.addControl(new GMapTypeControl());
 
     var centerIcon = new GIcon();
-    centerIcon.image = "http://www.freesound.org/geotagging/arrow.png";
+    centerIcon.image = "http://www.freesound.org/media/images/arrow.png";
     centerIcon.iconSize = new GSize(25, 24);
     centerIcon.shadowSize = new GSize(0, 0);
     centerIcon.iconAnchor = new GPoint(0, 24);

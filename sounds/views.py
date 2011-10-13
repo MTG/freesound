@@ -287,8 +287,6 @@ def sound_edit(request, username, sound_id):
                     sound.mark_index_dirty()
             else:
                 if sound.geotag:
-                    
-                    
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]

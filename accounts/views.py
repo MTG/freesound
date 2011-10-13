@@ -142,6 +142,10 @@ def home(request):
     user = request.user
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
+    # we need to start an iterator to actually execute the query
+    for tag in tags:
+        display_tagcloud = True
+        break
     latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
     unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
@@ -602,6 +606,10 @@ def account(request, username):
         raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_tagcloud()
+    # we need to start an iterator to actually execute the query
+    for tag in tags:
+        display_tagcloud = True
+        break
     latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]

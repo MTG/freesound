@@ -276,8 +276,10 @@ def sound_edit(request, username, sound_id):
 
     if is_selected("geotag"):
         geotag_form = GeotaggingForm(request.POST, prefix="geotag")
+        
         if geotag_form.is_valid():
             data = geotag_form.cleaned_data
+            
             if data["remove_geotag"]:
                 if sound.geotag:
                     geotag = sound.geotag.delete()
@@ -285,9 +287,12 @@ def sound_edit(request, username, sound_id):
                     sound.mark_index_dirty()
             else:
                 if sound.geotag:
+                    
+                    
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]
+                    sound.geotag.save()
                 else:
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
                     sound.mark_index_dirty()

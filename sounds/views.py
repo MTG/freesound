@@ -222,6 +222,9 @@ def sound_edit(request, username, sound_id):
             sound.mark_index_dirty()
             invalidate_template_cache("sound_header", sound.id, True)
             invalidate_template_cache("sound_header", sound.id, False)
+            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+            
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
                                             source=TICKET_SOURCE_NEW_SOUND) \
@@ -270,6 +273,8 @@ def sound_edit(request, username, sound_id):
             invalidate_template_cache("sound_header", sound.id, False)
             invalidate_template_cache("sound_footer_top", sound.id)
             invalidate_template_cache("sound_footer_bottom", sound.id)
+            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
@@ -297,6 +302,8 @@ def sound_edit(request, username, sound_id):
 
             invalidate_template_cache("sound_footer_top", sound.id)
             invalidate_template_cache("sound_footer_bottom", sound.id)
+            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -310,10 +317,12 @@ def sound_edit(request, username, sound_id):
         sound.mark_index_dirty()
         invalidate_template_cache("sound_footer_top", sound.id)
         invalidate_template_cache("sound_footer_bottom", sound.id)
+        invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+        invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license})
-
+    
     google_api_key = settings.GOOGLE_API_KEY
 
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))

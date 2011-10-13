@@ -36,7 +36,7 @@
     {% if enable_description_form %}
 	<br>
 	<div id="add_description_label">
-	<a onclick='showDescriptionForm();'  class="icon" id="edit_link" title="edit pack description"><span class="show_description_form_toggle">Edit current description...</span></a>
+	<a onclick='showDescriptionForm();'  class="icon" id="edit_link" title="edit pack description"><span class="show_description_form_toggle">Edit current pack description...</span></a>
 	</div>
     {% endif %}
     </p>
@@ -44,8 +44,7 @@
     <p>
     {% if enable_description_form %}
 	<div id="add_description_label">
-	This pack has no description.
-	<a onclick='showDescriptionForm();'><span class="show_description_form_toggle">Add a description...</span></a>
+	<a onclick='showDescriptionForm();' class="icon" id="edit_link" title="add pack description"><span class="show_description_form_toggle">Add a description for the pack...</span></a>
 	</div>
     {% endif %}
     </p>

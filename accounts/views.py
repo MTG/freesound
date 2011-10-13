@@ -151,7 +151,7 @@ def home(request):
     packs_without_sounds = Pack.objects.select_related().filter(user=user).annotate(num_sounds=Count('sound')).filter(num_sounds=0)
     
     # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
-    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
+    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10].exists()
     google_api_key = settings.GOOGLE_API_KEY
     home = True
     if home and request.user.has_perm('tickets.can_moderate'):

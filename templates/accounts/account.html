@@ -143,20 +143,25 @@
             map.setUIToDefault();
             map.disableScrollWheelZoom();
             map.setMapType(G_SATELLITE_MAP);
-
+            
             GDownloadUrl('{% url geotags-for-user-latest-json user.username %}', function(data, responseCode)
             {
 
                 var bounds = new GLatLngBounds();
+                // We'll need to know the number of sounds to correctly display the map
+                // in case there is only one sound with geotag
+                var nSounds = 0;
+                var lastPoint;
     
                 $.each($.parseJSON(data), function(index, item)
                 {
-                    
+                    nSounds = nSounds + 1;
                     var id = item[0];
                     var lat = item[1];
                     var lon = item[2];
                     
                     var point = new GLatLng(lat, lon);
+                    lastPoint = point
                     bounds.extend(point);
                     var marker = new GMarker(point);
                     
@@ -172,7 +177,14 @@
                     });
                     map.addOverlay(marker);
                 });
-                if (!bounds.isEmpty()) zoomToBounds(map, bounds);        
+                
+                if (nSounds > 1){
+                    if (!bounds.isEmpty()) zoomToBounds(map, bounds);
+                }else{
+                    // Center the map in the geotag
+                    map.setCenter(lastPoint, 4);
+                }
+                
             });
             
             //zoomToBounds(map, bounds);

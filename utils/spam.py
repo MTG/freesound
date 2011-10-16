@@ -1,4 +1,4 @@
-from akismet import Akismet
+from akismet import Akismet, AkismetError
 from django.contrib.sites.models import Site
 from urllib2 import HTTPError, URLError
 from django.conf import settings
@@ -26,7 +26,9 @@ def is_spam(request, comment):
             return True
         else:
             return False
+    except AkismetError: # failed to contact akismet...
+        return False
     except HTTPError: # failed to contact akismet...
         return False
-    except URLError:
+    except URLError: # failed to contact akismet...
         return False

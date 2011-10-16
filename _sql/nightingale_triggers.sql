@@ -154,8 +154,8 @@ CREATE OR REPLACE FUNCTION sounds_sound_delete() RETURNS TRIGGER AS $BODY$
         RETURN NEW;
     END;
 $BODY$ LANGUAGE plpgsql;
-DROP TRIGGER IF EXISTS forum_post_delete ON forum_post;
-CREATE TRIGGER forum_post_delete AFTER DELETE ON forum_post FOR EACH ROW EXECUTE PROCEDURE forum_post_delete();
+DROP TRIGGER IF EXISTS sounds_sound_delete ON sounds_sound;
+CREATE TRIGGER sounds_sound_delete AFTER DELETE ON sounds_sound FOR EACH ROW EXECUTE PROCEDURE sounds_sound_delete();
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 -- on sound rating update

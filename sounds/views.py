@@ -118,8 +118,8 @@ LIMIT 10
 
 
 def front_page(request):
-    rss_url = settings.FREESOUND_RSS
-    pledgie_campaign = settings.PLEDGIE_CAMPAIGN
+    rss_cache = cache.get("rss_cache", None)
+    pledgie_cache = cache.get("pledgie_cache", None)
     current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids()) \
                                           .order_by('-last_post__created') \
                                           .select_related('author',

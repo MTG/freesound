@@ -80,7 +80,7 @@ def activate_user(request, activation_key, username):
         return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
     except User.DoesNotExist: #@UndefinedVariable
         return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
-    except TypeError:
+    except TypeError, ValueError:
         return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
 
 def send_activation(user):

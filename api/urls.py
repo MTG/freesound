@@ -34,6 +34,10 @@ urlpatterns = patterns('',
     url(r'^packs/(?P<pack_id>\d+)/serve/$',                         AR(PackServeHandler),      name='api-pack-serve'),
     url(r'^packs/(?P<pack_id>\d+)/sounds/$',                        AR(PackSoundsHandler),     name='api-pack-sounds'),
 
+    # cc-mixter pool
+    url(r'^pool/search/$',                                         SoundPoolSearchHandler(),   name='api-pool-search'),
+    url(r'^pool/info/$',                                           SoundPoolInfoHandler(),   name='api-pool-info'),
+    
     # website
     url(r'^apply/$', create_api_key),
 

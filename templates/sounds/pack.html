@@ -30,44 +30,6 @@
 <h1>Pack: {{pack.name}} by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></h1>
 
 
-{% if pack.description %}
-    <p class="about_pack">
-    {{pack.description}}
-    {% if enable_description_form %}
-	<br>
-	<div id="add_description_label">
-	<a onclick='showDescriptionForm();'  class="icon" id="edit_link" title="edit pack description"><span class="show_description_form_toggle">Edit current description...</span></a>
-	</div>
-    {% endif %}
-    </p>
-{% else %}
-    <p>
-    {% if enable_description_form %}
-	<div id="add_description_label">
-	This pack has no description.
-	<a onclick='showDescriptionForm();'><span class="show_description_form_toggle">Add a description...</span></a>
-	</div>
-    {% endif %}
-    </p>
-{% endif %}
-
-
-
-<p>
-    
-    
-    <div id ="description_form" style="display:none">
-    {% if enable_description_form %}
-    <form action="" method="post">{% csrf_token %}
-	{{ form.as_p }}
-    <input type="submit" value="Save description" />
-    </form>
-    {% endif %}
-    </div>
-</p>
-
-
-
 {% comment %}
 {% if not pack.is_dirty %}
 	{% if num_sounds_ok > 0 %}
@@ -94,11 +56,43 @@
     <div id="pack_info" class="content_box">
     <h3>Pack info</h3>
     <div class="sound_list_normal">
-        <ul>
+        
+	{% if pack.description %}
+	    <p>
+	    {{pack.description|safe|linebreaksbr}}
+	    {% if enable_description_form %}
+		
+		<div id="add_description_label">
+		<a onclick='showDescriptionForm();'  class="icon" id="edit_link" title="edit pack description"><span class="show_description_form_toggle">Edit current pack description...</span></a>
+		</div>
+	    {% endif %}
+	    </p>
+	{% else %}
+	    <p>
+	    {% if enable_description_form %}
+		<div id="add_description_label">
+		<a onclick='showDescriptionForm();' class="icon" id="edit_link" title="add pack description"><span class="show_description_form_toggle">Add a description for the pack...</span></a>
+		</div>
+	    {% endif %}
+	    </p>
+	{% endif %}
+	
+	<p> 
+	    <div id ="description_form" style="display:none">
+	    {% if enable_description_form %}
+	    <form action="" method="post">{% csrf_token %}
+		{{ form.as_p }}
+	    <input type="submit" value="Save description" />
+	    </form>
+	    {% endif %}
+	    </div>
+	</p>
+	
+	<ul>
             <li>Pack created on: <b>{{ pack.created }}</b></li>
             <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
-            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>            
-        </ul>
+            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
+	</ul>
     </div>
 </div><!-- #pack_info -->
 
@@ -136,24 +130,49 @@
             map.disableScrollWheelZoom();
             map.setMapType(G_SATELLITE_MAP);
 
-            var bounds = new GLatLngBounds();
+            GDownloadUrl('{% url geotags-for-pack-json pack.id %}', function(data, responseCode)
+            {
 
-            {% for geotaged_sound in pack_geotags %}
-            var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
-            bounds.extend(point);
-            var marker = new GMarker(point);
-            GEvent.addListener(marker, "click", function() {
-                GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
-                    marker.openInfoWindowHtml(data);
-                    setTimeout(function() {
-                        makePlayer('.infowindow_player .player');
-                    }, 500);
+                var bounds = new GLatLngBounds();
+                // We'll need to know the number of sounds to correctly display the map
+                // in case there is only one sound with geotag
+                var nSounds = 0;
+                var lastPoint;
+    
+                $.each($.parseJSON(data), function(index, item)
+                {
+                    nSounds = nSounds + 1;
+                    var id = item[0];
+                    var lat = item[1];
+                    var lon = item[2];
+                    
+                    var point = new GLatLng(lat, lon);
+                    lastPoint = point
+                    bounds.extend(point);
+                    var marker = new GMarker(point);
+                    
+                    GEvent.addListener(marker, "click", function()
+                    {
+                        GDownloadUrl( "/geotags/infowindow/" + id, function(data, responseCode)
+                        {
+                            marker.openInfoWindowHtml(data);
+                            setTimeout(function() {
+                                makePlayer('.infowindow_player .player');
+                            }, 500);
+                        });
+                    });
+                    map.addOverlay(marker);
                 });
+                
+                if (nSounds > 1){
+                    if (!bounds.isEmpty()) zoomToBounds(map, bounds);
+                }else{
+                    // Center the map in the geotag
+                    map.setCenter(lastPoint, 4);
+                }       
             });
-            map.addOverlay(marker);
-
-            {% endfor %}
-            zoomToBounds(map, bounds);
+            
+            //zoomToBounds(map, bounds);
         </script>
     </div><!-- #pack_geotags -->
     {% endif %}

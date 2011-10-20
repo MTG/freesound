@@ -118,8 +118,8 @@ LIMIT 10
 
 
 def front_page(request):
-    rss_url = settings.FREESOUND_RSS
-    pledgie_campaign = settings.PLEDGIE_CAMPAIGN
+    rss_cache = cache.get("rss_cache", None)
+    pledgie_cache = cache.get("pledgie_cache", None)
     current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids()) \
                                           .order_by('-last_post__created') \
                                           .select_related('author',
@@ -222,6 +222,9 @@ def sound_edit(request, username, sound_id):
             sound.mark_index_dirty()
             invalidate_template_cache("sound_header", sound.id, True)
             invalidate_template_cache("sound_header", sound.id, False)
+            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+            
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
                                             source=TICKET_SOURCE_NEW_SOUND) \
@@ -270,14 +273,18 @@ def sound_edit(request, username, sound_id):
             invalidate_template_cache("sound_header", sound.id, False)
             invalidate_template_cache("sound_footer_top", sound.id)
             invalidate_template_cache("sound_footer_bottom", sound.id)
+            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
 
     if is_selected("geotag"):
         geotag_form = GeotaggingForm(request.POST, prefix="geotag")
+        
         if geotag_form.is_valid():
             data = geotag_form.cleaned_data
+            
             if data["remove_geotag"]:
                 if sound.geotag:
                     geotag = sound.geotag.delete()
@@ -288,12 +295,15 @@ def sound_edit(request, username, sound_id):
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]
+                    sound.geotag.save()
                 else:
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
                     sound.mark_index_dirty()
 
             invalidate_template_cache("sound_footer_top", sound.id)
             invalidate_template_cache("sound_footer_bottom", sound.id)
+            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -307,10 +317,12 @@ def sound_edit(request, username, sound_id):
         sound.mark_index_dirty()
         invalidate_template_cache("sound_footer_top", sound.id)
         invalidate_template_cache("sound_footer_bottom", sound.id)
+        invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+        invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license})
-
+    
     google_api_key = settings.GOOGLE_API_KEY
 
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
@@ -447,7 +459,8 @@ def pack(request, username, pack_id):
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
     num_sounds_ok = len(qs)
-    pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None)
+    # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
+    pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None).exists()
     google_api_key = settings.GOOGLE_API_KEY
     
     
@@ -588,7 +601,6 @@ def downloaders(request, username, sound_id):
     
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(sound=sound_id)
-    num_results = len(qs)
     return render_to_response('sounds/downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
 
 def pack_downloaders(request, username, pack_id):
@@ -596,5 +608,4 @@ def pack_downloaders(request, username, pack_id):
     
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
-    num_results = len(qs)
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))

@@ -66,9 +66,13 @@ class Thread(models.Model):
         if qs.count() > 0:
             self.last_post = qs[0]
             self.save()
-            self.forum.set_last_post()
+            try:
+                self.forum.set_last_post()
+            except Forum.DoesNotExist:
+                pass
         else:
             self.delete()
+        
 
     @models.permalink
     def get_absolute_url(self):
@@ -84,7 +88,10 @@ class Thread(models.Model):
 @receiver(post_delete, sender=Thread)
 def update_last_post_on_thread_delete(**kwargs):
     thread = kwargs['instance']
-    thread.forum.set_last_post()
+    try:
+        thread.forum.set_last_post()
+    except Forum.DoesNotExist:
+        pass
 
 
 class Post(models.Model):

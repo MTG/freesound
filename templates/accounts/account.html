@@ -122,7 +122,7 @@
 </div><!-- #content -->
 
 <div id="sidebar">
-    {% if tags.count %}
+    {% if tags %}
     <div id="user_most_used_tags" class="content_box">
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
         <p class="user_tagcloud">
@@ -143,25 +143,51 @@
             map.setUIToDefault();
             map.disableScrollWheelZoom();
             map.setMapType(G_SATELLITE_MAP);
+            
+            GDownloadUrl('{% url geotags-for-user-latest-json user.username %}', function(data, responseCode)
+            {
 
-            var bounds = new GLatLngBounds();
-
-            {% for geotaged_sound in latest_geotags %}
-            var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
-            bounds.extend(point);
-            var marker = new GMarker(point);
-            GEvent.addListener(marker, "click", function() {
-                GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
-                    marker.openInfoWindowHtml(data);
-                    setTimeout(function() {
-                        makePlayer('.infowindow_player .player');
-                    }, 500);
+                var bounds = new GLatLngBounds();
+                // We'll need to know the number of sounds to correctly display the map
+                // in case there is only one sound with geotag
+                var nSounds = 0;
+                var lastPoint;
+    
+                $.each($.parseJSON(data), function(index, item)
+                {
+                    nSounds = nSounds + 1;
+                    var id = item[0];
+                    var lat = item[1];
+                    var lon = item[2];
+                    
+                    var point = new GLatLng(lat, lon);
+                    lastPoint = point
+                    bounds.extend(point);
+                    var marker = new GMarker(point);
+                    
+                    GEvent.addListener(marker, "click", function()
+                    {
+                        GDownloadUrl( "/geotags/infowindow/" + id, function(data, responseCode)
+                        {
+                            marker.openInfoWindowHtml(data);
+                            setTimeout(function() {
+                                makePlayer('.infowindow_player .player');
+                            }, 500);
+                        });
+                    });
+                    map.addOverlay(marker);
                 });
+                
+                if (nSounds > 1){
+                    if (!bounds.isEmpty()) zoomToBounds(map, bounds);
+                }else{
+                    // Center the map in the geotag
+                    map.setCenter(lastPoint, 4);
+                }
+                
             });
-            map.addOverlay(marker);
-
-            {% endfor %}
-            zoomToBounds(map, bounds);
+            
+            //zoomToBounds(map, bounds);
         </script>
         <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
     </div><!-- #latest_geotags -->

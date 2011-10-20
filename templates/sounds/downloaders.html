@@ -8,7 +8,7 @@
 
 <h1>Users that downloaded <a href="{% url sound username sound.id %}">{{ sound.original_filename }}</a></h1>
 
-{% if qs.count > 0 %}
+{% if paginator.count > 0 %}
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "user" %}
     </div>

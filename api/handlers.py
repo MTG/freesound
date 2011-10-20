@@ -723,14 +723,18 @@ class SoundPoolSearchHandler(Feed):
                         ('original_filename', 2),]
                 
                 
-                if obj['type'] == "exact":
+                if obj['type'] == "phrase":
                     query.set_dismax_query('"' + obj['query'] + '"',query_fields=fields) # EXACT (not 100%)    
                 elif obj['type'] == "any":
                     query.set_dismax_query(obj['query'],query_fields=[],minimum_match=0) # OR
                 else:
                     query.set_dismax_query(obj['query'],query_fields=[],minimum_match="100%") # AND
                 
-                query.set_query_options(start=obj['offset'], rows=obj['limit'], filter_query="", sort=['created desc'])
+                lim = obj['limit']
+                if lim > 100:
+                    lim = 100
+                    
+                query.set_query_options(start=obj['offset'], rows=lim, filter_query="", sort=['created desc'])
                 
                 try:
                     results = SolrResponseInterpreter(solr.select(unicode(query)))

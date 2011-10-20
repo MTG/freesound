@@ -535,13 +535,11 @@ def attribution(request):
 def downloaded_sounds(request, username):
     user=get_object_or_404(User, username=username)
     qs = Download.objects.filter(user=user.id, sound__isnull=False)
-    num_results = len(qs)
     return render_to_response('accounts/downloaded_sounds.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 def downloaded_packs(request, username):
     user=get_object_or_404(User, username=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
-    num_results = len(qs)
     return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 

@@ -601,7 +601,6 @@ def downloaders(request, username, sound_id):
     
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(sound=sound_id)
-    num_results = len(qs)
     return render_to_response('sounds/downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
 
 def pack_downloaders(request, username, pack_id):
@@ -609,5 +608,4 @@ def pack_downloaders(request, username, pack_id):
     
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
-    num_results = len(qs)
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))

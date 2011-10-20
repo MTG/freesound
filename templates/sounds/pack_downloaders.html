@@ -8,7 +8,7 @@
 
 <h1>Users that downloaded pack <a href="{% url pack username pack.id %}">{{ pack.name }}</a></h1>
 
-{% if num_results > 0 %}
+{% if qs.count > 0 %}
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "user" %}
     </div>

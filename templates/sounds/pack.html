@@ -30,43 +30,6 @@
 <h1>Pack: {{pack.name}} by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></h1>
 
 
-{% if pack.description %}
-    <p class="about_pack">
-    {{pack.description}}
-    {% if enable_description_form %}
-	<br>
-	<div id="add_description_label">
-	<a onclick='showDescriptionForm();'  class="icon" id="edit_link" title="edit pack description"><span class="show_description_form_toggle">Edit current pack description...</span></a>
-	</div>
-    {% endif %}
-    </p>
-{% else %}
-    <p>
-    {% if enable_description_form %}
-	<div id="add_description_label">
-	<a onclick='showDescriptionForm();' class="icon" id="edit_link" title="add pack description"><span class="show_description_form_toggle">Add a description for the pack...</span></a>
-	</div>
-    {% endif %}
-    </p>
-{% endif %}
-
-
-
-<p>
-    
-    
-    <div id ="description_form" style="display:none">
-    {% if enable_description_form %}
-    <form action="" method="post">{% csrf_token %}
-	{{ form.as_p }}
-    <input type="submit" value="Save description" />
-    </form>
-    {% endif %}
-    </div>
-</p>
-
-
-
 {% comment %}
 {% if not pack.is_dirty %}
 	{% if num_sounds_ok > 0 %}
@@ -93,11 +56,43 @@
     <div id="pack_info" class="content_box">
     <h3>Pack info</h3>
     <div class="sound_list_normal">
-        <ul>
+        
+	{% if pack.description %}
+	    <p>
+	    {{pack.description|safe|linebreaksbr}}
+	    {% if enable_description_form %}
+		
+		<div id="add_description_label">
+		<a onclick='showDescriptionForm();'  class="icon" id="edit_link" title="edit pack description"><span class="show_description_form_toggle">Edit current pack description...</span></a>
+		</div>
+	    {% endif %}
+	    </p>
+	{% else %}
+	    <p>
+	    {% if enable_description_form %}
+		<div id="add_description_label">
+		<a onclick='showDescriptionForm();' class="icon" id="edit_link" title="add pack description"><span class="show_description_form_toggle">Add a description for the pack...</span></a>
+		</div>
+	    {% endif %}
+	    </p>
+	{% endif %}
+	
+	<p> 
+	    <div id ="description_form" style="display:none">
+	    {% if enable_description_form %}
+	    <form action="" method="post">{% csrf_token %}
+		{{ form.as_p }}
+	    <input type="submit" value="Save description" />
+	    </form>
+	    {% endif %}
+	    </div>
+	</p>
+	
+	<ul>
             <li>Pack created on: <b>{{ pack.created }}</b></li>
             <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
-            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>            
-        </ul>
+            <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
+	</ul>
     </div>
 </div><!-- #pack_info -->
 

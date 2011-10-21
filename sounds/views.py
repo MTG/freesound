@@ -1,16 +1,18 @@
-from accounts.models import Profile
+from accounts.models import Profile, Profile
 from comments.forms import CommentForm
 from comments.models import Comment
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
-from django.contrib import messages
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.db.models import Count, Max
+from django.db import connection, transaction
+from django.db.models import Count, Max, Q
 from django.http import HttpResponseRedirect, Http404, HttpResponse, \
     HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
@@ -18,29 +20,29 @@ from django.template import RequestContext
 from forum.models import Post, Thread
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
+from networkx import nx
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
     NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm
-from accounts.models import Profile
+from sounds.management.commands.create_remix_groups import _create_nodes, \
+    _create_and_save_remixgroup
 from sounds.models import Sound, Pack, Download, RemixGroup
-from tickets.models import Ticket, TicketComment
+from sounds.templatetags import display_sound
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
+from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_template_cache
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
-from utils.pagination import paginate
-from utils.text import slugify
 from utils.nginxsendfile import sendfile
-import datetime, os, time, logging
-from sounds.templatetags import display_sound
-from django.db.models import Q
+from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
-import urllib
-from django.contrib.sites.models import Site
-from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from django.db import connection, transaction
-from networkx import nx
+from utils.text import slugify
+import datetime
+import os
+import time
+import logging
 import json
+import urllib
 
 logger = logging.getLogger('web')
 
@@ -68,14 +70,46 @@ def sounds(request):
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
 
     # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
-
+    # popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
+    
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
+    cursor = connection.cursor()
+    cursor.execute('''
+                    select sound_id as sound, count(id) as num_d
+                    from sounds_download 
+                    where created >= %s 
+                    and sound_id is not null
+                    group by sound_id
+                    order by num_d desc
+                    limit 5''', [last_week])
+    
+    popular_sounds = _dictfetchall(cursor)
+    
     # popular_packs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    popular_packs = Pack.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-
+    # popular_packs = Pack.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
+    cursor.execute('''
+                    select pack_id as sound, count(id) as num_d
+                    from sounds_download 
+                    where created >= %s 
+                    and pack_id is not null
+                    group by pack_id
+                    order by num_d desc
+                    limit 5''', [last_week])
+    
+    popular_packs = _dictfetchall(cursor)
+    
     random_sound = get_random_sound()
     random_uploader = get_random_uploader()
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
+
+# TODO: add this to the utils module
+def _dictfetchall(cursor):
+    "Returns all rows from a cursor as a dict"
+    desc = cursor.description
+    return [
+        dict(zip([col[0] for col in desc], row))
+        for row in cursor.fetchall()
+    ]
 
 def remixed(request):
     # TODO: this doesn't return the right results after remix_group merge

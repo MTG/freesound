@@ -40,7 +40,7 @@
     <div id="most_downloaded_sounds" class="content_box">
         <h3>Most downloaded sounds (in the last week)</h3>
         {% for sound in popular_sounds %}
-            {% display_sound sound.id %}
+            {% display_sound sound %}
             <div class="sample_more">
                 <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads
                 in the last week.

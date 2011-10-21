@@ -705,7 +705,7 @@ class SoundPoolSearchHandler(Feed):
     def get_object(self, request):
         type = request.GET.get('type', 'all')
         query = request.GET.get('query', '')
-        limit = request.GET.get('limit', '30')
+        limit = request.GET.get('limit', 20)
         offset = request.GET.get('offset', 0)
         
         return {'type':type,'query':query,'limit':limit,'offset':offset}
@@ -731,11 +731,9 @@ class SoundPoolSearchHandler(Feed):
                     query.set_dismax_query(obj['query'],query_fields=[],minimum_match="100%") # AND
                 
                 lim = obj['limit']
-                if lim != "":
-                    if lim > 100:
-                        lim = 100
-                else:
-                    lim = 20 # By default we return 20
+                if lim > 100:
+                    lim = 100
+                
                     
                 query.set_query_options(start=obj['offset'], rows=lim, filter_query="", sort=['created desc'])
                 

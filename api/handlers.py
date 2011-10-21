@@ -731,8 +731,11 @@ class SoundPoolSearchHandler(Feed):
                     query.set_dismax_query(obj['query'],query_fields=[],minimum_match="100%") # AND
                 
                 lim = obj['limit']
-                if lim > 100:
-                    lim = 100
+                if lim != "":
+                    if lim > 100:
+                        lim = 100
+                else:
+                    lim = 20 # By default we return 20
                     
                 query.set_query_options(start=obj['offset'], rows=lim, filter_query="", sort=['created desc'])
                 

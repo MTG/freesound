@@ -101,8 +101,8 @@
         <h3>Most downloaded packs (in the last week)</h3>
         <ul>
         {% for pack in popular_packs %}
-            <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a>
-                by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
+            <li><a href="{% url pack pack.pack.user.username pack.pack.id %}">{{pack.pack.name}}</a>
+                by <a href="{% url account pack.pack.user.username %}">{{pack.pack.user.username}}</a>
                 (<span class="pack_count">{{pack.num_d}}</span> downloads)
             </li>
         {% empty %}

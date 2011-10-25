@@ -87,7 +87,7 @@ def sounds(request):
     for pack in packs:
         pack_obj = Pack.objects.select_related().get(id=pack['pack_id'])
         popular_packs.append({'pack': pack_obj,
-                              'pack.num_d': pack['num_d']
+                              'num_d': pack['num_d']
                               })
     
     random_sound = get_random_sound()

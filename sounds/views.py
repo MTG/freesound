@@ -71,18 +71,24 @@ def sounds(request):
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
     
     # N.B. this two queries group by twice on sound id, if anyone ever find out why....
-    popular_sounds = Download.objects.filter(created__gte=last_week, 
-                                             sound__isnull=False)    \
-                                     .values('sound_id')             \
-                                     .annotate(num_d=Count('id'))    \
+    popular_sounds = Download.objects.filter(created__gte=last_week)  \
+                                     .exclude(sound=None)             \
+                                     .values('sound_id')              \
+                                     .annotate(num_d=Count('sound'))  \
                                      .order_by("-num_d")[0:5]
     
-    popular_packs = Pack.objects.filter(download__created__gte=last_week)   \
-                        .extra(select={'id': 'download__pack_id', 
-                                       'user.username': 'user__username'})  \
-                        .values('download__pack_id', 'user__username')      \
-                        .annotate(num_d=Count('id'))                        \
-                        .order_by("-num_d")[0:5]
+    packs = Download.objects.filter(created__gte=last_week)  \
+                            .exclude(pack=None)              \
+                            .values('pack_id')               \
+                            .annotate(num_d=Count('pack'))   \
+                            .order_by("-num_d")[0:5]
+    
+    popular_packs = []                              
+    for pack in packs:
+        pack_obj = Pack.objects.select_related().get(id=pack['pack_id'])
+        popular_packs.append({'pack': pack_obj,
+                              'pack.num_d': pack['num_d']
+                              })
     
     random_sound = get_random_sound()
     random_uploader = get_random_uploader()

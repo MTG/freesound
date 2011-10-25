@@ -68,54 +68,30 @@ def sounds(request):
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
-
-    # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    # popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
     
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
-    cursor = connection.cursor()
-    cursor.execute('''
-                    select sound_id as sound, count(id) as num_d
-                    from sounds_download 
-                    where created >= %s 
-                    and sound_id is not null
-                    group by sound_id
-                    order by num_d desc
-                    limit 5''', [last_week])
+    # N.B. this two queries group by twice on sound id, if anyone ever find out why....
+    popular_sounds = Download.objects.filter(created__gte=last_week, 
+                                             sound__isnull=False)    \
+                                     .values('sound_id')             \
+                                     .annotate(num_d=Count('id'))    \
+                                     .order_by("-num_d")[0:5]
     
-    popular_sounds = _dictfetchall(cursor)
-    
-    # popular_packs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    # popular_packs = Pack.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    cursor.execute('''
-                    select pack_id as sound, count(id) as num_d
-                    from sounds_download 
-                    where created >= %s 
-                    and pack_id is not null
-                    group by pack_id
-                    order by num_d desc
-                    limit 5''', [last_week])
-    
-    popular_packs = _dictfetchall(cursor)
+    popular_packs = Pack.objects.filter(download__created__gte=last_week)   \
+                        .extra(select={'id': 'download__pack_id', 
+                                       'user.username': 'user__username'})  \
+                        .values('download__pack_id', 'user__username')      \
+                        .annotate(num_d=Count('id'))                        \
+                        .order_by("-num_d")[0:5]
     
     random_sound = get_random_sound()
     random_uploader = get_random_uploader()
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
 
-# TODO: add this to the utils module
-def _dictfetchall(cursor):
-    "Returns all rows from a cursor as a dict"
-    desc = cursor.description
-    return [
-        dict(zip([col[0] for col in desc], row))
-        for row in cursor.fetchall()
-    ]
-
 def remixed(request):
     # TODO: this doesn't return the right results after remix_group merge
     qs = RemixGroup.objects.all().order_by('-group_size')
     return render_to_response('sounds/remixed.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
-
 
 def random(request):
     sound_id = Sound.objects.random()
@@ -364,7 +340,7 @@ def sound_edit(request, username, sound_id):
 
 @login_required
 def sound_edit_sources(request, username, sound_id):
-    print "=========== SOUND_ID: " + sound_id
+    # print "=========== SOUND_ID: " + sound_id
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
@@ -403,9 +379,9 @@ def __recalc_remixgroup(remixgroup, sound):
     dg.add_edges_from(data['edges'])
     
     # print "========= NODES =========="
-    print dg.nodes()
+    # print dg.nodes()
     # print "========= EDGES =========="
-    print dg.edges()
+    # print dg.edges()
     
     # add new nodes/edges (sources in this case)
     for source in sound.sources.all():
@@ -425,26 +401,26 @@ def __recalc_remixgroup(remixgroup, sound):
         
         # create and save the modified remixgroup
         dg = _create_nodes(dg)
-        print "============ NODES AND EDGES =============="
-        print dg.nodes()
-        print dg.edges()
+        # print "============ NODES AND EDGES =============="
+        # print dg.nodes()
+        # print dg.edges()
         _create_and_save_remixgroup(dg, remixgroup)
     except Exception, e:
         logger.warning(e)    
 
 def __nested_remixgroup(dg1, remix_group):
-    print "============= nested remix_group ================ \n"
+    # print "============= nested remix_group ================ \n"
     dg2 = nx.DiGraph()
     data = json.loads(remix_group.networkx_data)
     dg2.add_nodes_from(data['nodes'])
     dg2.add_edges_from(data['edges'])
         
-    print "========== MERGED GROUP NODES: " + str(dg1.nodes())
+    # print "========== MERGED GROUP NODES: " + str(dg1.nodes())
 
     # FIXME: this combines the graphs correctly
     #        recheck the time-bound concept
     dg1 = nx.compose(dg1, dg2)
-    print dg1.nodes()
+    # print dg1.nodes()
 
     return dg1
 

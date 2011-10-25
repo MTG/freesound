@@ -95,15 +95,6 @@ def sounds(request):
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
 
 
-# TODO: add this to the utils module
-def _dictfetchall(cursor):
-    "Returns all rows from a cursor as a dict"
-    desc = cursor.description
-    return [
-        dict(zip([col[0] for col in desc], row))
-        for row in cursor.fetchall()
-    ]
-
 def remixed(request):
     # TODO: this doesn't return the right results after remix_group merge
     qs = RemixGroup.objects.all().order_by('-group_size')

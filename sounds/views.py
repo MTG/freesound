@@ -68,39 +68,32 @@ def sounds(request):
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
-
-    # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    # popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
     
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
-    cursor = connection.cursor()
-    cursor.execute('''
-                    select sound_id as sound, count(id) as num_d
-                    from sounds_download 
-                    where created >= %s 
-                    and sound_id is not null
-                    group by sound_id
-                    order by num_d desc
-                    limit 5''', [last_week])
+    # N.B. this two queries group by twice on sound id, if anyone ever find out why....
+    popular_sounds = Download.objects.filter(created__gte=last_week)  \
+                                     .exclude(sound=None)             \
+                                     .values('sound_id')              \
+                                     .annotate(num_d=Count('sound'))  \
+                                     .order_by("-num_d")[0:5]
     
-    popular_sounds = _dictfetchall(cursor)
+    packs = Download.objects.filter(created__gte=last_week)  \
+                            .exclude(pack=None)              \
+                            .values('pack_id')               \
+                            .annotate(num_d=Count('pack'))   \
+                            .order_by("-num_d")[0:5]
     
-    # popular_packs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    # popular_packs = Pack.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    cursor.execute('''
-                    select pack_id as sound, count(id) as num_d
-                    from sounds_download 
-                    where created >= %s 
-                    and pack_id is not null
-                    group by pack_id
-                    order by num_d desc
-                    limit 5''', [last_week])
-    
-    popular_packs = _dictfetchall(cursor)
+    popular_packs = []                              
+    for pack in packs:
+        pack_obj = Pack.objects.select_related().get(id=pack['pack_id'])
+        popular_packs.append({'pack': pack_obj,
+                              'num_d': pack['num_d']
+                              })
     
     random_sound = get_random_sound()
     random_uploader = get_random_uploader()
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
+
 
 # TODO: add this to the utils module
 def _dictfetchall(cursor):

@@ -40,7 +40,7 @@
     <div id="most_downloaded_sounds" class="content_box">
         <h3>Most downloaded sounds (in the last week)</h3>
         {% for sound in popular_sounds %}
-            {% display_sound sound %}
+            {% display_sound sound.sound_id %}
             <div class="sample_more">
                 <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads
                 in the last week.
@@ -101,8 +101,8 @@
         <h3>Most downloaded packs (in the last week)</h3>
         <ul>
         {% for pack in popular_packs %}
-            <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a>
-                by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
+            <li><a href="{% url pack pack.pack.user.username pack.pack.id %}">{{pack.pack.name}}</a>
+                by <a href="{% url account pack.pack.user.username %}">{{pack.pack.user.username}}</a>
                 (<span class="pack_count">{{pack.num_d}}</span> downloads)
             </li>
         {% empty %}

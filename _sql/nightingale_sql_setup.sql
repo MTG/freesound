@@ -111,6 +111,9 @@ CREATE UNIQUE INDEX sounds_download_user_sound_unique
     (user_id, pack_id)
     WHERE sound_id IS NULL;
 
+-- update site object
+update django_site set domain = 'freesound.org', name = 'freesound.org';
+
 vacuum analyze sounds_sound;
 vacuum analyze sounds_pack;
 vacuum analyze forum_thread;

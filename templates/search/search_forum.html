@@ -19,7 +19,7 @@
     <p>{{ error_text }}</p>
 {% else %}
     {% if paginator.count > 0 %}
-        <div class="search_paginator">
+        <div class="search_paginator" style="height:30px">
         {% show_paginator paginator page current_page request "thread" %}
         </div>
 

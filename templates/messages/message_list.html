@@ -2,9 +2,11 @@
 
 {% load paginator %}
 
+{% comment %}
 {% block message_pagination %}
 	{% show_paginator paginator page current_page request "message" %} 
 {% endblock message_pagination %}
+{% endcomment %}
 
 {% block section_content %}
 
@@ -28,16 +30,18 @@
 		{% endfor %}
 	</table>
 
-	<select name="choice" id="id_choice">
-	{% block options %}
-	{% endblock %}
-	</select>
-	<input type="hidden" name="next" value="{{request.path}}" />
-	<input type="submit" name="submit" value="go!" />
-
-	<div class="messages_pagination">
-		{% show_paginator paginator page current_page request "message" %} 
+	<div class="messages_actions_box">
+		<select name="choice" id="id_choice">
+			{% block options %}
+			{% endblock %}
+		</select>
+		<input type="hidden" name="next" value="{{request.path}}" />
+		<input type="submit" name="submit" value="go!" />
 	</div>
+	<div class="messages_pagination_box">
+		{% show_paginator paginator page current_page request "message" %} 
+	</div>	
+
 </form>
 
 <script type="text/javascript">

@@ -7,7 +7,7 @@
     If you change this cache index, be sure to change the invalidation in
     ratings/views.py as well
 {% endcomment %}
-{% cache 3600 display_sound sound_id request.user.is_authenticated sound.0.processing_state %}
+{% cache 43200 display_sound sound_id request.user.is_authenticated sound.0.processing_state sound.0.moderation_state %}
 
 {% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
@@ -94,7 +94,7 @@
 
         <div class="sound_attributes">
             {% if sound.similarity_state == 'OK' %}
-            <a class="similar" href="{% url sound-similar sound.user.username sound.id %}">
+            <a class="similar" rel="nofollow" href="{% url sound-similar sound.user.username sound.id %}">
                 <img src="{{media_url}}images/fugue-icons/icons/headphone--plus.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
             </a>
             {% endif %}
@@ -103,7 +103,7 @@
                 <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to the pack: {{ sound.pack.name }}" />
             </a>
             {% endif %}
-            {% if sound.remix_groups.all.count %}
+            {% if sound.remix_group.all.count %}
              <a class="remixes" href="{% url sound-remixes sound.user.username sound.id %}">
                 <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
             </a>

@@ -78,9 +78,9 @@ a.external_link:hover {
 ------------------------------------------------------*/
 
 body {
-    /* border-top: 100px solid #fff; */
-    background-position: 0 105px; /* remove or comment out when removing banners */
-    background-color: #fff; /* remove or comment out when removing banners */
+    /*border-top: 100px solid #fff;*/
+    /*background-position: 0 105px; */ /* remove or comment out when removing banners */
+    background-color: #fff;  /* remove or comment out when removing banners */
 }
 #banner_wrapper {
     width: 728px;
@@ -1089,7 +1089,7 @@ ul.tags {
 
 #share_links {
     padding: 10px 15px;
-    border-top: solid 1px #D2D2D2;
+    /*border-top: solid 1px #D2D2D2;*/
     background: #fff url(../images/single_sample_links_bg.png) no-repeat top;
 }
 
@@ -1161,7 +1161,7 @@ ul.tags {
 
 /*#share_links .embed_example:hover, */
 #share_links .embed_example.embed_active {
-    border: 1px #AB4646 solid;
+    /*border: 1px #AB4646 solid;*/
 }
 
 
@@ -1207,7 +1207,7 @@ ul#sound_links {
 
 #sound_license {
     position: relative;
-    padding: 20px 10px 20px 120px;
+    padding: 0px 10px 20px 120px;
     font-size: 11px;
     line-height: 1.4em;
     color: #999;
@@ -1216,7 +1216,7 @@ ul#sound_links {
 #sound_license img {
     position: absolute;
     left: 8px;
-    top: 25px;
+    top: 5px;
 }
 
 
@@ -1338,13 +1338,32 @@ ul#comments {
 }
 
 #messages_header .messages_pagination .pagination {
-    margin: 14px 28px 0 0;
+    /*margin: 14px 28px 0 0;*/
 }
 
-.messages_form .messages_pagination {
-    position: absolute;
+.messages_pagination {
+    overflow: auto;    
     bottom: 2px;
     right: 25px;
+    
+}
+
+.messages_actions_box{
+	float:right;
+	
+}
+
+.messages_pagination_box{
+	white-space: nowrap;
+	/*float:left;*/
+	/*margin-right:95px;*/
+}
+
+.messages_pagination_box .pagination .current-page {
+    background-color: #3B89EB;
+    border-top: none;
+    color: #FFF;
+    font-weight: normal;
 }
 
 .messages_form {
@@ -1396,26 +1415,6 @@ ul#comments {
     font-weight: bold;
 }
 
-.messages_pagination {
-    overflow: auto;
-}
-
-.messages_pagination .pagination {
-    float: right;
-}
-
-.messages_pagination .pagination li {
-    margin: 2px;
-}
-
-.messages_pagination .pagination .current-page {
-    background-color: #3B89EB;
-    border-top: none;
-    color: #FFF;
-    font-weight: normal;
-    padding-bottom: 2px;
-}
-
 #message_tabs {
     float: left;
 }
@@ -1465,6 +1464,17 @@ ul#comments {
 .message_container {
     clear: both;
     margin: 0 5px;
+}
+
+.reply_button {
+    margin-right: 15px;
+    margin-bottom: 15px;
+    display: block;
+    width: 48px;
+    padding:5px;
+    background-color:#F9F9F9;
+    border-radius: 3px;
+    border: 1px solid #F0EEF1;
 }
 
 .message_container .message_header {
@@ -1832,9 +1842,13 @@ ul.pagination {
 }
 
 #confirm_deletion h4 {
-    margin-left: 50px;
+    margin-right: 15px;
     display: block;
     float: left;
+    padding:5px;
+    background-color:#F9F9F9;
+    border-radius: 3px;
+    border: 1px solid #F0EEF1;
 }
 
 /* Sidebar
@@ -2234,6 +2248,20 @@ a.donation_button:hover {
     font-weight: bold;
 }
 
+.show_description_form_toggle{
+    font-size:12px;
+}
+
+#add_description_label{
+    font-size:12px;
+}
+
+p.about_pack {
+    /* font-style: italic; */
+    padding: 20px;
+    background-color: #F6F6F6;
+}
+
 /* Account page
 ------------------------------------------------------*/
 p.about {
@@ -2388,9 +2416,19 @@ p.about {
     background: #fff;
 }
 
+#users_currently_online_box{
+	width:308px; 
+}
+
 #users_currently_online .online_user {
+    
+    position:relative;
     float: left;
+    width:40px;
+    height:40px;
+    padding: 1px;
     margin-right: 2px;
+    margin-bottom: 2px;
 }
 
 #users_currently_online a:hover {
@@ -3098,4 +3136,70 @@ ul.messages {
     left: -4px; /*must have*/
     width: 200px; /*must have*/
     height: 200px; /*must have*/
+}
+
+/* Edit sound sources page
+------------------------------------------------------*/
+
+#current-sources{
+	width: 430px;
+	overflow: hidden;
+	float:right;
+	padding: 5px;
+}
+
+#current-sources .add{
+	display: none;
+	font-size:10px;
+}
+
+#current-sources .remove{
+	display: inline;
+	font-size:10px;
+}
+
+#search-results-title{
+	width: 430px;
+	overflow: hidden;
+	float:left;
+	padding: 5px;
+}
+       
+#search-results .add{
+	display: inline;
+	font-size:10px;
+}
+
+#search-results .remove{
+	display: none;
+	font-size:10px;
+}
+    
+#submit_button_for_edit_sources{
+	/*display:inline;*/
+	/*float:right;*/
+	text-align: right;
+}
+
+.sound_list_edit_sources {
+	border-radius:5px;
+    background-color:#FFFFFF;
+    padding:5px;
+    margin-bottom:5px;
+}
+
+/*.sound_list_edit_sources:hover{
+    background-color:#EAEAEA;
+}*/
+
+.sound_list_edit_sources .sound_stars {
+    display: none;
+}
+
+.sound_list_edit_sources .sample_information {
+    display: none;
+}
+
+.sound_list_edit_sources .add_remove_buttons {
+	margin-top:-20px;
 }

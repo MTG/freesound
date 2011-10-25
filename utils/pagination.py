@@ -26,10 +26,12 @@ class CachedCountProxy(object):
             cache.set(key, count, 300)
         return count
 
-def paginate(request, qs, items_per_page=20, page_get_name='page'):
+def paginate(request, qs, items_per_page=20, page_get_name='page', cache_count=False):
     # monkeypatch solution to cache the count for performance
     # disabled for now, causes problems on comments.
-    #qs.count = CachedCountProxy(qs)
+    if cache_count:
+        qs.count = CachedCountProxy(qs)
+
     paginator = Paginator(qs, items_per_page)
 
     try:

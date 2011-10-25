@@ -21,7 +21,7 @@ from sounds.models import Sound, Pack, Download, License
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm, RemixForm
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
-from utils.encryption import decrypt, encrypt
+from utils.encryption import decrypt, encrypt, create_hash
 from utils.filesystem import generate_tree, md5file
 from utils.functional import combine_dicts
 from utils.images import extract_square
@@ -61,7 +61,7 @@ def bulk_license_change(request):
             # update old license flag
             Profile.objects.filter(user=request.user).update(has_old_license=False)
             # update cache
-            cache.set("has-old-license-%s" % request.user.id, False, 2592000)
+            cache.set("has-old-license-%s" % request.user.id, [False,Sound.objects.filter(user=request.user).exists()], 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = NewLicenseForm()
@@ -80,13 +80,35 @@ def activate_user(request, activation_key, username):
         return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
     except User.DoesNotExist: #@UndefinedVariable
         return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
-    except TypeError:
+    except TypeError, ValueError:
         return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
+
+def activate_user2(request, username, hash):
+    if request.user.is_authenticated():
+        return HttpResponseRedirect(reverse("accounts-home"))
+
+    try:
+        user = User.objects.get(username__iexact=username)
+    except User.DoesNotExist: #@UndefinedVariable
+        return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
+
+    new_hash = create_hash(user.id)
+    if new_hash != hash:
+        return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
+    user.is_active = True
+    user.save()
+    
+    return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
 
 def send_activation(user):
     encrypted_user_id = encrypt(str(user.id))
     username = user.username
     send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
+
+def send_activation2(user):
+    hash = create_hash(user.id)
+    username = user.username
+    send_mail_template(u'activation link.', 'accounts/email_activation2.txt', locals(), None, user.email)
 
 def registration(request):
     if request.user.is_authenticated():
@@ -96,7 +118,7 @@ def registration(request):
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
             user = form.save()
-            send_activation(user)
+            send_activation2(user)
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = RegistrationForm(request)
@@ -112,7 +134,7 @@ def resend_activation(request):
         form = ReactivationForm(request.POST)
         if form.is_valid():
             user = form.cleaned_data["user"]
-            send_activation(user)
+            send_activation2(user)
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = ReactivationForm()
@@ -141,7 +163,7 @@ def username_reminder(request):
 def home(request):
     user = request.user
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    tags = user.profile.get_tagcloud()
+    tags = list(user.profile.get_tagcloud())
     latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
     unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
@@ -150,7 +172,8 @@ def home(request):
     unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     packs_without_sounds = Pack.objects.select_related().filter(user=user).annotate(num_sounds=Count('sound')).filter(num_sounds=0)
     
-    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
+    # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
+    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10].exists()
     google_api_key = settings.GOOGLE_API_KEY
     home = True
     if home and request.user.has_perm('tickets.can_moderate'):
@@ -226,12 +249,12 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        profile_form = ProfileForm(request.POST, instance=profile, prefix="profile")
+        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         if profile_form.is_valid():
             profile_form.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
-        profile_form = ProfileForm(instance=profile, prefix="profile")
+        profile_form = ProfileForm(request,instance=profile, prefix="profile")
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")
@@ -240,8 +263,9 @@ def edit(request):
                 profile.has_avatar = False
                 profile.save()
             else:
-                if request.FILES["image-file"]:
-                    handle_uploaded_image(profile, request.FILES["image-file"])
+                handle_uploaded_image(profile, image_form.cleaned_data["file"])
+                profile.has_avatar = True
+                profile.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
         image_form = AvatarForm(prefix="image")
@@ -257,14 +281,26 @@ def describe(request):
 
     if request.method == 'POST':
         form = FileChoiceForm(files, request.POST)
+        
         if form.is_valid():
-            # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
-            if len(form.cleaned_data["files"]) > 1 :
-                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-                return HttpResponseRedirect(reverse('accounts-describe-license'))
-            else :
-                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-                return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+            if "delete" in request.POST: # If delete button is pressed
+                filenames = [files[x].name for x in form.cleaned_data["files"]]
+                return render_to_response('accounts/confirm_delete_undescribed_files.html', locals(), context_instance=RequestContext(request))
+            elif "delete_confirm" in request.POST: # If confirmation delete button is pressed
+                for file in form.cleaned_data["files"]:
+                    os.remove(files[file].full_path)
+                return HttpResponseRedirect(reverse('accounts-describe'))
+            elif "describe" in request.POST: # If describe button is pressed
+                # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
+                if len(form.cleaned_data["files"]) > 1 :
+                    request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                    return HttpResponseRedirect(reverse('accounts-describe-license'))
+                else :
+                    request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                    return HttpResponseRedirect(reverse('accounts-describe-sounds'))
+            else:
+                form = FileChoiceForm(files) # Reset form
+                return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
     else:
         form = FileChoiceForm(files)
     return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
@@ -354,6 +390,8 @@ def describe_sounds(request):
             sound.user = request.user
             sound.original_filename = forms[i]['description'].cleaned_data['name']
             sound.original_path = forms[i]['sound'].full_path
+            sound.filesize = os.path.getsize(sound.original_path)
+
             try:
                 sound.md5 = md5file(forms[i]['sound'].full_path)
             except IOError:
@@ -495,17 +533,13 @@ def attribution(request):
 
 
 def downloaded_sounds(request, username):
-    user = User.objects.get(username=username)
-    # Retrieve all sounds downloaded by the user (for the moment we are not diplaying downloaded packs...)
+    user=get_object_or_404(User, username=username)
     qs = Download.objects.filter(user=user.id, sound__isnull=False)
-    num_results = len(qs)
     return render_to_response('accounts/downloaded_sounds.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 def downloaded_packs(request, username):
-    user = User.objects.get(username=username)
-    # Retrieve all sounds downloaded by the user (for the moment we are not diplaying downloaded packs...)
+    user=get_object_or_404(User, username=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
-    num_results = len(qs)
     return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 
@@ -587,12 +621,15 @@ def account(request, username):
     except User.DoesNotExist:
         raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    tags = user.profile.get_tagcloud()
+    tags = list(user.profile.get_tagcloud())
     latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = False
+    if not user.is_active:
+        messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
+
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 logger = logging.getLogger("upload")

@@ -10,11 +10,13 @@
     {% else %}
 
         {% for result in results.docs %}
-        <div>
+        <div class="sound_list_edit_sources">
+        	<div>
             {% display_sound result.id %}
-            <div>
-                <a class="add" onclick="addSound(this, {{result.id}})">Add</a>
-                <a class="remove" onclick="removeSound(this, {{result.id}})">Remove</a>
+            </div>
+            <div class="add_remove_buttons">
+                <a class="add" onclick="addSound(this, {{result.id}})">Add source</a>
+                <a class="remove" onclick="removeSound(this, {{result.id}})">Remove source</a>
             </div>
         </div>
         {% endfor %}

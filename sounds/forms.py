@@ -1,14 +1,16 @@
 from django import forms
 from django.db.models import Q
+from django.forms import ModelForm, Textarea
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
+from utils.forms import RecaptchaForm
 import re
 
 class GeotaggingForm(forms.Form):
     remove_geotag = forms.BooleanField(required=False)
-    lat = forms.FloatField(min_value=-180, max_value=180, required=False)
-    lon = forms.FloatField(min_value=-90, max_value=90, required=False)
+    lat = forms.FloatField(min_value=-90, max_value=90, required=False)
+    lon = forms.FloatField(min_value=-180, max_value=180, required=False)
     zoom = forms.IntegerField(min_value=11, error_messages={'min_value': "You should zoom in more until you reach at least zoom 11."}, required=False)
 
     def clean(self):
@@ -128,6 +130,15 @@ class PackForm(forms.Form):
             return self.cleaned_data['new_pack']
     '''
 
+class PackDescriptionForm(ModelForm):
+    
+    class Meta:
+        model = Pack
+        fields = ('description',)
+        widgets = {
+            'description': Textarea(attrs={'rows': 5, 'cols':60}),
+        }
+
 class LicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(is_public=True), required=True, empty_label=None)
 
@@ -141,12 +152,15 @@ class NewLicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')),
                                      required=True)
 
+class FlagForm(RecaptchaForm):
+    email = forms.EmailField(label="Your email", required=True, 
+            help_text="Required.", error_messages={'required' : 'Required, please enter your email address.',
+            'invalid' : 'Your email address appears to be invalid, please check if it\'s correct.'})
+    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES,required=True , label='Reason type')
+    reason = forms.CharField(widget=forms.Textarea)
 
-class FlagForm(forms.ModelForm):
-    email = forms.EmailField(label="Your email", required=True,
-                             help_text="Required.",
-                             error_messages={'required' : 'Required, please enter your email address.',
-                                            'invalid' : 'Your email address appears to be invalid, please check if it\'s correct.'})
-    class Meta:
-        model = Flag
-        exclude = ('sound', 'reporting_user', 'created')
+    def save(self):
+        f = Flag()
+        f.reason_type = self.cleaned_data['reason_type']
+        f.reason = self.cleaned_data['reason']
+        return f #sound and user are set in view

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 from accounts.models import Profile
 from utils.forms import RecaptchaForm, HtmlCleaningCharField
+from utils.spam import is_spam
 
 class UploadFileForm(forms.Form):
     file = forms.FileField()
@@ -10,6 +11,19 @@ class UploadFileForm(forms.Form):
 class AvatarForm(forms.Form):
     file = forms.FileField(required=False)
     remove = forms.BooleanField(label="Remove avatar", required=False)
+    
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        file_cleaned = cleaned_data.get("file", None)
+        remove_cleaned = cleaned_data.get("remove", False)
+
+        if remove_cleaned and file_cleaned:
+            raise forms.ValidationError("Either remove or select a new avatar, you can't do both at the same time.")
+        elif not remove_cleaned and not file_cleaned:
+            raise forms.ValidationError("You forgot to select a file.")
+
+        # Always return the full collection of cleaned data.
+        return cleaned_data
     
 
 class FileChoiceForm(forms.Form):
@@ -58,6 +72,10 @@ class RegistrationForm(RecaptchaForm):
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist: #@UndefinedVariable
             pass
+        
+        if email2.lower().endswith("@aol.com"):
+            raise forms.ValidationError(_("We are sorry, but aol.com deletes all our emails before they reach you, please use a different provider."))
+        
         return email2
 
     def save(self):
@@ -114,6 +132,22 @@ class ProfileForm(forms.ModelForm):
     wants_newsletter = forms.BooleanField(label="Subscribed to newsletter", required=False)
     not_shown_in_online_users_list = forms.BooleanField(label="Hide from \"users currently online\" list in the People page", required=False)
     
+    def __init__(self, request, *args, **kwargs):
+        self.request = request
+        super(ProfileForm, self).__init__(*args, **kwargs)
+
+    def clean_about(self):
+        about = self.cleaned_data['about']
+        if is_spam(self.request, about):
+            raise forms.ValidationError("Your 'about' text was considered spam, please edit and resubmit. If it keeps failing please contact the admins.")
+        return about
+
+    def clean_signature(self):
+        signature = self.cleaned_data['signature']
+        if is_spam(self.request, signature):
+            raise forms.ValidationError("Your signature was considered spam, please edit and resubmit. If it keeps failing please contact the admins.")
+        return signature
+
     class Meta:
         model = Profile
         fields = ('home_page', 'wants_newsletter', 'about', 'signature', 'not_shown_in_online_users_list')

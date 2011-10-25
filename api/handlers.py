@@ -4,7 +4,7 @@ from piston.utils import rc
 from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
 from sounds.models import Sound, Pack, Download
-from utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import logging
 from django.contrib.auth.models import User
 from utils.search.search import add_all_sounds_to_solr
@@ -16,6 +16,9 @@ import yaml
 from utils.similarity_utilities import get_similar_sounds
 from api.api_utils import auth, ReturnError
 import os
+from django.contrib.syndication.views import Feed
+
+
 
 logger = logging.getLogger("api")
 
@@ -367,7 +370,6 @@ class SoundSearchHandler(BaseHandler):
     def __construct_pagination_link(self, q, p, f, s):
         return prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s))
 
-
 class SoundHandler(BaseHandler):
     '''
     api endpoint:   /sounds/<sound_id>
@@ -437,7 +439,7 @@ class SoundSimilarityHandler(BaseHandler):
 
     @auth()
     def read(self, request, sound_id):
-
+        
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK", similarity_state="OK")
             #TODO: similarity_state="OK"
@@ -455,7 +457,6 @@ class SoundSimilarityHandler(BaseHandler):
             sounds.append( sound )
 
         result = {'sounds': sounds, 'num_results': len(similar_sounds)}
-
         add_request_id(request,result)
         return result
 
@@ -694,3 +695,101 @@ class UpdateSolrHandler(BaseHandler):
                                 .filter(processing_state="OK", moderation_state="OK")
         add_all_sounds_to_solr(sound_qs)
         return rc.ALL_OK
+
+
+# Pool handlers (RSS)
+class SoundPoolSearchHandler(Feed):
+    title = "Freesound"
+    link = "http://freesound.org/"
+
+    def get_object(self, request):
+        type = request.GET.get('type', 'all')
+        query = request.GET.get('query', '')
+        limit = request.GET.get('limit', 20)
+        offset = request.GET.get('offset', 0)
+        
+        return {'type':type,'query':query,'limit':limit,'offset':offset}
+
+    def items(self, obj):
+        if obj['query'] != "": 
+            try:
+                solr = Solr(settings.SOLR_URL)
+                query = SolrQuery()
+                fields=[('id',4),
+                        ('tag', 3),
+                        ('description', 3),
+                        ('username', 2),
+                        ('pack_tokenized', 2),
+                        ('original_filename', 2),]
+                
+                
+                if obj['type'] == "phrase":
+                    query.set_dismax_query('"' + obj['query'] + '"',query_fields=fields) # EXACT (not 100%)    
+                elif obj['type'] == "any":
+                    query.set_dismax_query(obj['query'],query_fields=[],minimum_match=0) # OR
+                else:
+                    query.set_dismax_query(obj['query'],query_fields=[],minimum_match="100%") # AND
+                
+                lim = obj['limit']
+                if lim > 100:
+                    lim = 100
+                
+                    
+                query.set_query_options(start=obj['offset'], rows=lim, filter_query="", sort=['created desc'])
+                
+                try:
+                    results = SolrResponseInterpreter(solr.select(unicode(query)))
+                    
+                    sounds = []
+                    for object in results.docs :
+                        try:
+                            sounds.append(object)
+                        except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
+                            pass
+                    return sounds
+        
+                except SolrException, e:
+                    return []
+            except:
+                return []
+        else:
+            return []
+
+    def item_title(self, item):
+        return item['original_filename']
+
+    def item_description(self, item):
+        tags = item['tag']
+        s= "Tags: "
+        for t in tags:
+            s = s + t + " "
+        s = s + "<br>"
+        desc = item['description']
+        s = s + desc
+        return s
+        
+    def item_link(self, item):
+        return "http://freesound.org/people/" + str(item['username']) + "/sounds/" + str(item['id'])
+        
+    def item_author_name(self, item):
+        return item['username']
+        
+    def item_author_link(self, item):
+        return "http://freesound.org/people/" + str(item['username'])
+         
+    def item_pubdate(self, item):
+        return item['created']
+
+
+class SoundPoolInfoHandler(Feed):
+    title = "Freesound"
+    link = "http://freesound.org/"
+
+    def items(self):
+        return []
+
+    def item_title(self, item):
+        return ""
+
+    def item_description(self, item):
+        return ""

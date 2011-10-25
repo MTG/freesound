@@ -51,7 +51,7 @@
     		$('#date_to_forum_search').datepicker('setDate', realDate);
 		}
 		
-        $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name}}'{%else%}all forums{% endif %} {% endif %}");
+        $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name|escapejs}}'{%else%}all forums{% endif %} {% endif %}");
 
     });
     
@@ -97,6 +97,8 @@
 {% block tab_forums_active %}active_tab{% endblock %}
 
 {% block content %}
+<h1>Forums</h1>
+
 <div id="content_full"> <!-- START of Content area -->
 
 <div id="breadcrumb_outer">

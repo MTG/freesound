@@ -1,4 +1,4 @@
-from accounts.models import Profile, Profile
+from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
 from django.conf import settings

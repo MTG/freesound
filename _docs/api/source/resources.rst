@@ -410,7 +410,145 @@ analysis_frames       URI               The URI for retrieving a JSON file with 
     "pack": "http://www.freesound.org/api/packs/455"
   }
 
+Sound Geotags resource
+======================
 
+URI
+---
+
+::
+
+  /sounds/geotag/
+
+The only allowed method is GET.
+
+GET
+---
+
+A GET request to the sound resource returns a list of sounds that have been geotagged inside a space defined with url parameters.
+
+Request
+'''''''
+
+**Curl Example**
+
+::
+
+  curl http://www.freesound.org/api/sounds/83295
+
+.. _sound-get-response:
+
+Response
+''''''''
+
+**Properties**
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+id                    number            The sound's unique identifier.
+ref                   URI               The URI for this sound.
+url                   URI               The URI for this sound on the Freesound website.
+preview-hq-mp3        URI               The URI for retrieving a high quality (~128kbps) mp3 preview of the sound.
+preview-lq-mp3        URI               The URI for retrieving a low quality (~64kbps) mp3 preview of the sound.
+preview-hq-ogg        URI               The URI for retrieving a high quality (~192kbps) ogg preview of the sound.
+preview-lq-ogg        URI               The URI for retrieving a low quality (~80kbps) ogg of the sound.
+serve                 URI               The URI for retrieving the original sound.
+similarity            URI               URI pointing to the similarity resource (to get a list of similar sounds).
+type                  string            The type of sound (wav, aif, mp3, etc.).
+duration              number            The duration of the sound in seconds.
+samplerate            number            The samplerate of the sound.
+bitdepth              number            The bit depth of the sound.
+filesize              number            The size of the file in bytes.
+bitrate               number            The bit rate of the sound in kbps.
+channels              number            The number of channels.
+original_filename     string            The name of the sound file when it was uploaded.
+description           string            The description the user gave the sound.
+tags                  array[strings]    An array of tags the user gave the sound.
+license               string            The license under which the sound is available to you.
+created               string            The date of when the sound was uploaded.
+num_comments          number            The number of comments.
+num_downloads         number            The number of times the sound was downloaded.
+num_ratings           number            The number of times the sound was rated.
+avg_rating            number            The average rating of the sound.
+pack                  URI               If the sound is part of a pack, this URI points to that pack's API resource.
+user                  object            A dictionary with the username, url, and ref for the user that uploaded the sound.
+spectral_m            URI               A visualization of the sounds spectrum over time, jpeg file (medium).
+spectral_l            URI               A visualization of the sounds spectrum over time, jpeg file (large).
+waveform_m            URI               A visualization of the sounds waveform, png file (medium).
+waveform_l            URI               A visualization of the sounds waveform, png file (large).
+analysis              URI               URI pointing to the analysis results of the sound (see :ref:`analysis-docs`).
+analysis_frames       URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
+====================  ================  ====================================================================================
+
+**JSON Example**
+
+::
+
+  {
+    "num_ratings": 0, 
+    "duration": 260.98849999999999, 
+    "samplerate": 44000.0, 
+    "preview-hq-ogg": "http://www.freesound.org/data/previews/17/17185_18799-hq.ogg", 
+    "id": 17185, 
+    "preview-lq-ogg": "http://www.freesound.org/data/previews/17/17185_18799-lq.ogg", 
+    "bitdepth": 16, 
+    "num_comments": 0, 
+    "filesize": 45934020, 
+    "preview-hq-mp3": "http://www.freesound.org/data/previews/17/17185_18799-hq.mp3", 
+    "type": "wav", 
+    "analysis_stats": "http://www.freesound.org/api/sounds/17185/analysis", 
+    "description": "The most beautiful nightingale recording I've ever made. Forest near Cologne, Germany,June 2004, Vivanco EM35 with preamp into Sony DAT-recorder.", 
+    "tags": [
+        "bulbul", 
+        "fulemule", 
+        "csalogany", 
+        "luscinia-megarhynchos", 
+        "etelansatakieli", 
+        "sornattergal", 
+        "sydnaktergal", 
+        "ruisenor-comun", 
+        "rossignol-philomele", 
+        "nachtigall", 
+        "sydlig-nattergal", 
+        "slowik-rdzawy", 
+        "rouxinol", 
+        "usignolo", 
+        "nachtegaal", 
+        "rossinyol", 
+        "rossignol", 
+        "spring", 
+        "nightingale", 
+        "forest", 
+        "bird", 
+        "birdsong", 
+        "nature", 
+        "field-recording"
+    ], 
+    "serve": "http://www.freesound.org/api/sounds/17185/serve", 
+    "similarity": "http://www.freesound.org/api/sounds/17185/similar", 
+    "spectral_m": "http://www.freesound.org/data/displays/17/17185_18799_spec_M.jpg", 
+    "spectral_l": "http://www.freesound.org/data/displays/17/17185_18799_spec_L.jpg", 
+    "user": {
+        "username": "reinsamba", 
+        "url": "http://www.freesound.org/people/reinsamba/", 
+        "ref": "http://www.freesound.org/api/people/reinsamba"
+    }, 
+    "bitrate": 1408, 
+    "num_downloads": 0, 
+    "analysis_frames": "http://www.freesound.org/data/analysis/17/17185_18799_frames.json", 
+    "channels": 2, 
+    "license": "http://creativecommons.org/licenses/sampling+/1.0/", 
+    "created": "2006-03-19 23:53:37", 
+    "url": "http://www.freesound.org/people/reinsamba/sounds/17185/", 
+    "ref": "http://www.freesound.org/api/sounds/17185", 
+    "avg_rating": 0.0, 
+    "preview-lq-mp3": "http://www.freesound.org/data/previews/17/17185_18799-lq.mp3", 
+    "original_filename": "Nightingale song 3.wav", 
+    "waveform_l": "http://www.freesound.org/data/displays/17/17185_18799_wave_L.png", 
+    "waveform_m": "http://www.freesound.org/data/displays/17/17185_18799_wave_M.png", 
+    "pack": "http://www.freesound.org/api/packs/455"
+  }
 
 Sound Analysis resource
 =======================

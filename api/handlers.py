@@ -554,7 +554,7 @@ class SoundGeotagHandler(BaseHandler):
         
         paginator = paginate(request, raw_sounds, settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=True) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():

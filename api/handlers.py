@@ -97,7 +97,7 @@ def prepare_single_sound(sound):
     except:
         pass
     try:
-        d['geotag'] = [sound.geotag.lat,sound._geotag_cache.lon]
+        d['geotag'] = {'lat':sound.geotag.lat,'lon':sound._geotag_cache.lon}
     except:
         pass
     d['user'] = prepare_minimal_user(sound.user)
@@ -105,17 +105,19 @@ def prepare_single_sound(sound):
     d.update(get_sound_links(sound))
     return d
 
-def prepare_collection_sound(sound, include_user=True):
+def prepare_collection_sound(sound, include_user=True, include_geotag=False):
     d = {}
     for field in ["duration", "type", "original_filename", "id"]:
         d[field] = getattr(sound, field)
     if include_user:
         d['user'] = prepare_minimal_user(sound.user)
     d['tags'] = get_tags(sound)
-    try:
-        d['geotag'] = [sound.geotag.lat,sound._geotag_cache.lon]
-    except:
-        pass
+    
+    if include_geotag:
+        try:
+            d['geotag'] = {'lat':sound.geotag.lat,'lon':sound._geotag_cache.lon}
+        except:
+            pass
     d.update(get_sound_links(sound))
     return d
 
@@ -554,7 +556,7 @@ class SoundGeotagHandler(BaseHandler):
         
         paginator = paginate(request, raw_sounds, settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=True) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=True, include_geotag=True) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():

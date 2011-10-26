@@ -1,4 +1,4 @@
- .. _analysis-docs:
+.. _analysis-docs:
 
 Analysis Descriptor Documentation
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

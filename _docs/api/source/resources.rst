@@ -159,22 +159,22 @@ rating_asc      Same as above, but lowest rated sounds first.
 
 .. _sound-search-response:
 
-Response
-''''''''
+Sound search response
+'''''''''''''''''''''
 
 **Properties**
 
 ===========  =======  ===========================================================================================
 Name         Type     Description
 ===========  =======  ===========================================================================================
-sounds       array    Array of sounds. Each sound looks like a reduced version of the `response format of a single sound resource`__. (with less information)
+sounds       array    Array of sounds. Each sound looks like a reduced version of the :ref:`sound-get-response` (with less information).
 num_results  int      Number of sounds found that match your search
 num_pages    int      Number of pages (as the result is paginated)
 previous     URI      The URI to go back one page in the search results.
 next         URI      The URI to go forward one page in the search results.
 ===========  =======  ===========================================================================================
 
-__ sound-get-response_
+
 
 **JSON Example**
 
@@ -298,8 +298,8 @@ Request
 
 .. _sound-get-response:
 
-Response
-''''''''
+Sound response
+''''''''''''''
 
 **Properties**
 
@@ -430,125 +430,32 @@ A GET request to the sound resource returns a list of sounds that have been geot
 Request
 '''''''
 
+**Parameters**
+
+=========  ======  ========  =================================
+Name       Type    Required  Description
+=========  ======  ========  =================================
+min_lat	   number  no        Minimum latitude [-90 to 90]
+max_lat    number  no        Maximum latitude [-90 to 90]
+min_lom    number  no	     Minimum longitude [-180 to 180]
+max_lon	   number  no	     Maximum longitude [-180 to 180]
+p          number  no        The page of the search result to get
+=========  ======  ========  =================================
+
+**latitude and longitude parameters**
+
+Explanation of the latitude, longitude filters, with a nice picture if possible (TODO). 
+
 **Curl Example**
 
 ::
 
-  curl http://www.freesound.org/api/sounds/83295
+  curl http://www.freesound.org/api/sounds/geotag/?min_lon=2.005176544189453&max_lon=2.334766387939453&min_lat=41.3265528618605&max_lat=41.4504467428547
 
-.. _sound-get-response:
 
 Response
 ''''''''
-
-**Properties**
-
-====================  ================  ====================================================================================
-Name                  Type              Description
-====================  ================  ====================================================================================
-id                    number            The sound's unique identifier.
-ref                   URI               The URI for this sound.
-url                   URI               The URI for this sound on the Freesound website.
-preview-hq-mp3        URI               The URI for retrieving a high quality (~128kbps) mp3 preview of the sound.
-preview-lq-mp3        URI               The URI for retrieving a low quality (~64kbps) mp3 preview of the sound.
-preview-hq-ogg        URI               The URI for retrieving a high quality (~192kbps) ogg preview of the sound.
-preview-lq-ogg        URI               The URI for retrieving a low quality (~80kbps) ogg of the sound.
-serve                 URI               The URI for retrieving the original sound.
-similarity            URI               URI pointing to the similarity resource (to get a list of similar sounds).
-type                  string            The type of sound (wav, aif, mp3, etc.).
-duration              number            The duration of the sound in seconds.
-samplerate            number            The samplerate of the sound.
-bitdepth              number            The bit depth of the sound.
-filesize              number            The size of the file in bytes.
-bitrate               number            The bit rate of the sound in kbps.
-channels              number            The number of channels.
-original_filename     string            The name of the sound file when it was uploaded.
-description           string            The description the user gave the sound.
-tags                  array[strings]    An array of tags the user gave the sound.
-license               string            The license under which the sound is available to you.
-created               string            The date of when the sound was uploaded.
-num_comments          number            The number of comments.
-num_downloads         number            The number of times the sound was downloaded.
-num_ratings           number            The number of times the sound was rated.
-avg_rating            number            The average rating of the sound.
-pack                  URI               If the sound is part of a pack, this URI points to that pack's API resource.
-user                  object            A dictionary with the username, url, and ref for the user that uploaded the sound.
-spectral_m            URI               A visualization of the sounds spectrum over time, jpeg file (medium).
-spectral_l            URI               A visualization of the sounds spectrum over time, jpeg file (large).
-waveform_m            URI               A visualization of the sounds waveform, png file (medium).
-waveform_l            URI               A visualization of the sounds waveform, png file (large).
-analysis              URI               URI pointing to the analysis results of the sound (see :ref:`analysis-docs`).
-analysis_frames       URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
-====================  ================  ====================================================================================
-
-**JSON Example**
-
-::
-
-  {
-    "num_ratings": 0, 
-    "duration": 260.98849999999999, 
-    "samplerate": 44000.0, 
-    "preview-hq-ogg": "http://www.freesound.org/data/previews/17/17185_18799-hq.ogg", 
-    "id": 17185, 
-    "preview-lq-ogg": "http://www.freesound.org/data/previews/17/17185_18799-lq.ogg", 
-    "bitdepth": 16, 
-    "num_comments": 0, 
-    "filesize": 45934020, 
-    "preview-hq-mp3": "http://www.freesound.org/data/previews/17/17185_18799-hq.mp3", 
-    "type": "wav", 
-    "analysis_stats": "http://www.freesound.org/api/sounds/17185/analysis", 
-    "description": "The most beautiful nightingale recording I've ever made. Forest near Cologne, Germany,June 2004, Vivanco EM35 with preamp into Sony DAT-recorder.", 
-    "tags": [
-        "bulbul", 
-        "fulemule", 
-        "csalogany", 
-        "luscinia-megarhynchos", 
-        "etelansatakieli", 
-        "sornattergal", 
-        "sydnaktergal", 
-        "ruisenor-comun", 
-        "rossignol-philomele", 
-        "nachtigall", 
-        "sydlig-nattergal", 
-        "slowik-rdzawy", 
-        "rouxinol", 
-        "usignolo", 
-        "nachtegaal", 
-        "rossinyol", 
-        "rossignol", 
-        "spring", 
-        "nightingale", 
-        "forest", 
-        "bird", 
-        "birdsong", 
-        "nature", 
-        "field-recording"
-    ], 
-    "serve": "http://www.freesound.org/api/sounds/17185/serve", 
-    "similarity": "http://www.freesound.org/api/sounds/17185/similar", 
-    "spectral_m": "http://www.freesound.org/data/displays/17/17185_18799_spec_M.jpg", 
-    "spectral_l": "http://www.freesound.org/data/displays/17/17185_18799_spec_L.jpg", 
-    "user": {
-        "username": "reinsamba", 
-        "url": "http://www.freesound.org/people/reinsamba/", 
-        "ref": "http://www.freesound.org/api/people/reinsamba"
-    }, 
-    "bitrate": 1408, 
-    "num_downloads": 0, 
-    "analysis_frames": "http://www.freesound.org/data/analysis/17/17185_18799_frames.json", 
-    "channels": 2, 
-    "license": "http://creativecommons.org/licenses/sampling+/1.0/", 
-    "created": "2006-03-19 23:53:37", 
-    "url": "http://www.freesound.org/people/reinsamba/sounds/17185/", 
-    "ref": "http://www.freesound.org/api/sounds/17185", 
-    "avg_rating": 0.0, 
-    "preview-lq-mp3": "http://www.freesound.org/data/previews/17/17185_18799-lq.mp3", 
-    "original_filename": "Nightingale song 3.wav", 
-    "waveform_l": "http://www.freesound.org/data/displays/17/17185_18799_wave_L.png", 
-    "waveform_m": "http://www.freesound.org/data/displays/17/17185_18799_wave_M.png", 
-    "pack": "http://www.freesound.org/api/packs/455"
-  }
+A paginated sound list like in the :ref:`sound-search-response` with the addition of a ``geotag`` property which indicates the latitude (``lat``) and longitude (``lon``) values for each sound.
 
 Sound Analysis resource
 =======================
@@ -694,10 +601,9 @@ preset       string  no        The similarity measure to use when retrieving sim
 Response
 ''''''''
 
-The response is the same as the `sound search response`__ but with the addition of a ``distance`` property (for each sound) resembling a numerical value of "dissimilarity" respect to the query sound (then, the first sound of the result will always have distance = 0.0).
+The response is the same as the :ref:`sound-search-response` but with the addition of a ``distance`` property (for each sound) resembling a numerical value of "dissimilarity" respect to the query sound (then, the first sound of the result will always have distance = 0.0).
 If the response is an empty list (0 results), this is because the query sound has been recently uploaded and it has not still been indexed in the similarity database.
 
-__ sound-search-response_
 
 **JSON Example**
 
@@ -957,9 +863,8 @@ p          number  no        The page of the sound collection to get.
 Response
 ''''''''
 
-The response is the same as the `sound search response`__.
+The response is the same as the :ref:`sound-search-response`.
 
-__ sound-search-response_
 
 
 
@@ -996,7 +901,7 @@ Response
 
 **Properties**
 
-The response is an array. Each item in the array follows a reduced version of the `pack resource format`__.
+The response is an array. Each item in the array follows a reduced version of the :ref:`pack-get-response`.
 
 __ pack-get-response_
 
@@ -1063,8 +968,8 @@ Request
 
 .. _pack-get-response:
 
-Response
-''''''''
+Pack response
+'''''''''''''
 
 **Properties**
 
@@ -1138,7 +1043,5 @@ p          number  no        The page of the pack's sounds to get
 Response
 ''''''''
 
-The response is the same as the `sound search response`__.
-
-__ sound-search-response_
+The response is the same as the :ref:`sound-search-response`.
 

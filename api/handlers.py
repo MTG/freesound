@@ -544,11 +544,11 @@ class SoundGeotagHandler(BaseHandler):
         if min_lat <= max_lat and min_lon <= max_lon:
             raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
         elif min_lat > max_lat and min_lon <= max_lon:
-            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).filter(geotag__lon__range=(min_lon,max_lon))
         elif min_lat <= max_lat and min_lon > max_lon:
-            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(min_lon,max_lon))
+            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
         elif min_lat > max_lat and min_lon > max_lon:
-            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(min_lon,max_lon))
+            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
         else:
             return ReturnError(400, "BadRequest", {"explanation": "Parameters min_lat, max_lat, min_long and max_log are not correctly defined."})
         
@@ -559,15 +559,16 @@ class SoundGeotagHandler(BaseHandler):
 
         if page.has_other_pages():
             if page.has_previous():
-                result['previous'] = self.__construct_pagination_link(page.previous_page_number())
+                result['previous'] = self.__construct_pagination_link(page.previous_page_number(), min_lon, max_lon, min_lat, max_lat)
             if page.has_next():
-                result['next'] = self.__construct_pagination_link(page.next_page_number())
+                result['next'] = self.__construct_pagination_link(page.next_page_number(), min_lon, max_lon, min_lat, max_lat)
 
         add_request_id(request,result)
         return result
 
-    def __construct_pagination_link(self, p):
-        return prepend_base(reverse('api-sound-geotag')) + '?p=%s' % p
+    def __construct_pagination_link(self, p, min_lon, max_lon, min_lat, max_lat):
+        return prepend_base(reverse('api-sound-geotag')) + '?p=%s&min_lon=%s&max_lon=%s&min_lat=%s&max_lat=%s' % (p,min_lon,max_lon,min_lat,max_lat)
+
 
 class UserHandler(BaseHandler):
     '''

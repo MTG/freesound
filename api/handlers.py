@@ -35,7 +35,7 @@ def get_sound_api_analysis_url(id):
 
 def get_sound_web_url(username, id):
     return prepend_base(reverse('sound', args=[username, id]))
-
+    
 def get_user_api_url(username):
     return prepend_base(reverse('api-single-user', args=[username]))
 
@@ -102,6 +102,20 @@ def prepare_single_sound(sound):
         pass
     d['user'] = prepare_minimal_user(sound.user)
     d['tags'] = get_tags(sound)
+    d.update(get_sound_links(sound))
+    return d
+
+def prepare_collection_sound(sound, include_user=True):
+    d = {}
+    for field in ["duration", "type", "original_filename", "id"]:
+        d[field] = getattr(sound, field)
+    if include_user:
+        d['user'] = prepare_minimal_user(sound.user)
+    d['tags'] = get_tags(sound)
+    try:
+        d['geotag'] = [sound.geotag.lat,sound._geotag_cache.lon]
+    except:
+        pass
     d.update(get_sound_links(sound))
     return d
 
@@ -253,16 +267,6 @@ RECOMMENDED_DESCRIPTORS = [ 'metadata.audio_properties',
 def get_tags(sound):
     return [tagged.tag.name for tagged in sound.tags.select_related("tag").all()]
 
-def prepare_collection_sound(sound, include_user=True):
-    d = {}
-    for field in ["duration", "type", "original_filename", "id"]:
-        d[field] = getattr(sound, field)
-    if include_user:
-        d['user'] = prepare_minimal_user(sound.user)
-    d['tags'] = get_tags(sound)
-    d.update(get_sound_links(sound))
-    return d
-
 def prepare_single_user(user):
     d = {}
     for field in ["username", "first_name", "last_name", "date_joined"]:
@@ -310,7 +314,7 @@ class SoundSearchHandler(BaseHandler):
     '''
     input:          q, f, p, s
     output:         #paginated_search_results#
-    curl:           curl http://www.freesound.org/api/search/?q=hoelahoep
+    curl:           curl http://www.freesound.org/api/sounds/search/?q=hoelahoep
     '''
 
     @auth()
@@ -514,6 +518,56 @@ class SoundAnalysisFramesHandler(BaseHandler):
 
         return sendfile(sound.locations('analysis.frames.path'), sound.friendly_filename().split('.')[0] + '.json', sound.locations("sendfile_url").split('.')[0] + '.json')
 """
+
+class SoundGeotagHandler(BaseHandler):
+    '''
+    api endpoint:   /sounds/geotag/
+    '''
+    allowed_methods = ('GET',)
+
+    '''
+    input:          min_lat, max_lat, min_lon, max_lon, p
+    output:         #paginated_sound_results#
+    curl:           curl http://www.freesound.org/api/sounds/geotag/?min_lon=2.005176544189453&max_lon=2.334766387939453&min_lat=41.3265528618605&max_lat=41.4504467428547
+    
+    
+    '''
+
+    @auth()
+    def read(self, request):
+        
+        min_lat = request.GET.get('min_lat', 0.0)
+        max_lat = request.GET.get('max_lat', 0.0)
+        min_lon = request.GET.get('min_lon', 0.0)
+        max_lon = request.GET.get('max_lon', 0.0)
+        
+        if min_lat <= max_lat and min_lon <= max_lon:
+            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+        elif min_lat > max_lat and min_lon <= max_lon:
+            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+        elif min_lat <= max_lat and min_lon > max_lon:
+            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(min_lon,max_lon))
+        elif min_lat > max_lat and min_lon > max_lon:
+            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(min_lon,max_lon))
+        else:
+            return ReturnError(400, "BadRequest", {"explanation": "Parameters min_lat, max_lat, min_long and max_log are not correctly defined."})
+        
+        paginator = paginate(request, raw_sounds, settings.SOUNDS_PER_API_RESPONSE, 'p')
+        page = paginator['page']
+        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
+        result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
+
+        if page.has_other_pages():
+            if page.has_previous():
+                result['previous'] = self.__construct_pagination_link(page.previous_page_number())
+            if page.has_next():
+                result['next'] = self.__construct_pagination_link(page.next_page_number())
+
+        add_request_id(request,result)
+        return result
+
+    def __construct_pagination_link(self, p):
+        return prepend_base(reverse('api-sound-geotag')) + '?p=%s' % p
 
 class UserHandler(BaseHandler):
     '''

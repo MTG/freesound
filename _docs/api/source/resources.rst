@@ -444,7 +444,32 @@ p          number  no        The page of the search result to get
 
 **latitude and longitude parameters**
 
-Explanation of the latitude, longitude filters, with a nice picture if possible (TODO). 
+Geotags are represented as points defined by a latitude and a longitude parameters. Displying a world map as a rectangle, latitude is the x axis and ranges from -90 to 90, while longitude is the y axis and ranges from -180 to 180.
+
+"Sound Geotags resource" allows to define a rectangular space inside the "world map" rectangle and returns a list of all the sounds that have been geotagged inside the defined space.
+
+This rectangular space is specified with ``min_lat``, ``min_lon`` url parameters for the bottom-left corner and ``max_lat``, ``max_lon`` for the top-right corner. The following image shows an example. 
+
+    .. image:: _static/geotags/geotag_normal.png
+        :height: 300px
+
+The definition of the rectangle assumes that world map is a continuous space where latitude 90 = -90 and longitude 180 = -180. Thus, rectangles can wrap the edges of the map. This is achieved by using ``min_lat`` greater than ``max_lat`` or ``max_lon`` smaller than ``min_lon``.
+The following images show examples of these cases. If ``min_lon`` > ``max_lon``:
+
+    .. image:: _static/geotags/geotag_lon_changed.png
+        :height: 300px
+
+Example for ``min_lat`` > ``max_lat``:
+
+    .. image:: _static/geotags/geotag_lat_changed.png
+        :height: 300px
+
+Finally, an example for ``min_lat`` > ``max_lat`` and ``min_lon`` > ``max_lon``:
+
+    .. image:: _static/geotags/geotag_both_changed.png
+        :height: 300px
+
+
 
 **Curl Example**
 

@@ -544,13 +544,13 @@ class SoundGeotagHandler(BaseHandler):
         max_lon = request.GET.get('max_lon', 0.0)
         
         if min_lat <= max_lat and min_lon <= max_lon:
-            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+            raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
         elif min_lat > max_lat and min_lon <= max_lon:
-            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+            raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).filter(geotag__lon__range=(min_lon,max_lon))
         elif min_lat <= max_lat and min_lon > max_lon:
-            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
+            raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
         elif min_lat > max_lat and min_lon > max_lon:
-            raw_sounds = Sound.objects.exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
+            raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
         else:
             return ReturnError(400, "BadRequest", {"explanation": "Parameters min_lat, max_lat, min_long and max_log are not correctly defined."})
         

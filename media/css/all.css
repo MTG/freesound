@@ -300,6 +300,9 @@ div.infowindow {
 #edit_link {
     background-image: url(../images/fugue-icons/icons/quill.png);
 }
+#comments_link {
+    background-image: url(../images/fugue-icons/icons/pencil.png);
+}
 
 
 /* Formatting Elements

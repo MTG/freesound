@@ -36,7 +36,7 @@ q	   string  no        The query!
 p          number  no        The page of the search result to get
 f          string  no	     The filter
 s	   string  no	     How to sort the results
-c	   string  no	     Custom fields (see :ref:`custom fields explanation <custom-fields>`)
+fields	   string  no	     Fields
 =========  ======  ========  =================================
 
 **q for query**
@@ -149,7 +149,7 @@ rating_asc      Same as above, but lowest rated sounds first.
 
 .. _custom-fields:
 
-**c for custom fields**
+**fields for fields**
 
 The response of the search resource contains an array of sounds and each sound is
 represented with a number of pre-defined fields (see :ref:`sound-search-response` for more information).
@@ -157,11 +157,11 @@ Sometimes we only need specific information about sounds such as their id, their
 their name, but the array of sounds that is returned contains many more properties useless for us (thus we are using
 a lot of badwidth that we could save).
 
-In these cases, parameter ``c`` allows to define the exact list of fields that we want to obtain for each sound.
+In these cases, parameter ``fields`` allows to define the exact list of fields that we want to obtain for each sound.
 Fields are specified as a list of properties (choosen from any of those listed in :ref:`sound-get-response`) separated by commas.
-For example, if we perform a search and we only want to get sound ids and duration, we can user custom field parameter as ``c=id,duration``.
+For example, if we perform a search and we only want to get sound ids and duration, we can use fields parameter as ``fields=id,duration``.
 
-Custom fields parameter can be used in any resource that returns an array of sounds.
+This parameter can be used in any resource that returns an array of sounds.
 
 
 **Curl Examples**
@@ -175,7 +175,7 @@ Custom fields parameter can be used in any resource that returns an array of sou
   # Get short kick sounds
   curl http://www.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]
   # Get sound id and tags of short kick sounds
-  curl http://www.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]&c=id,tags
+  curl http://www.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]&fields=id,tags
 
 
 .. _sound-search-response:
@@ -462,7 +462,7 @@ max_lat    number  no        Maximum latitude [-90 to 90]
 min_lom    number  no	     Minimum longitude [-180 to 180]
 max_lon	   number  no	     Maximum longitude [-180 to 180]
 p          number  no        The page of the search result to get
-c	   string  no	     Custom fields (see :ref:`custom fields explanation <custom-fields>`)
+fields	   string  no	     Fields
 =========  ======  ========  =================================
 
 **latitude and longitude parameters**
@@ -635,7 +635,7 @@ Name         Type    Required  Description
 ===========  ======  ========  ===================================================
 num_results  number  no        The number of similar sounds to return (max = 100, default = 15)
 preset       string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``lowlevel``)
-c	     string  no	       Custom fields (see :ref:`custom fields explanation <custom-fields>`)
+fields	     string  no	       Fields
 ===========  ======  ========  ===================================================
 
 **Curl Examples**
@@ -900,7 +900,7 @@ Request
 Name       Type    Required  Description
 =========  ======  ========  ========================================
 p          number  no        The page of the sound collection to get.
-c	   string  no	     Custom fields (see :ref:`custom fields explanation <custom-fields>`)
+fields	   string  no	     Fields
 =========  ======  ========  ========================================
 
 **Curl Examples**
@@ -1080,7 +1080,7 @@ Request
 Name       Type    Required  Description
 =========  ======  ========  ====================================
 p          number  no        The page of the pack's sounds to get
-c	   string  no	     Custom fields (see :ref:`custom fields explanation <custom-fields>`)
+fields	   string  no	     Fields
 =========  ======  ========  ====================================
 
 **Curl Examples**

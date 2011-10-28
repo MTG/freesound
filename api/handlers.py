@@ -358,7 +358,7 @@ class SoundSearchHandler(BaseHandler):
             bad_results = 0
             for object in page['object_list'] :
                 try:
-                    sounds.append( prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id']), custom_fields = request.GET.get('c', False)) )
+                    sounds.append( prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id']), custom_fields = request.GET.get('fields', False)) )
                 except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
                     pass
             result = {'sounds': sounds, 'num_results': paginator.count - bad_results, 'num_pages': paginator.num_pages}
@@ -469,7 +469,7 @@ class SoundSimilarityHandler(BaseHandler):
 
         sounds = []
         for similar_sound in similar_sounds :
-            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('c', False))
+            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('fields', False))
             sound['distance'] = similar_sound[1]
             sounds.append( sound )
 
@@ -567,7 +567,7 @@ class SoundGeotagHandler(BaseHandler):
         
         paginator = paginate(request, raw_sounds, settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=True, include_geotag=True, custom_fields = request.GET.get('c', False)) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=True, include_geotag=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():
@@ -628,7 +628,7 @@ class UserSoundsHandler(BaseHandler):
 
         paginator = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('c', False)) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():
@@ -714,7 +714,7 @@ class PackSoundsHandler(BaseHandler):
 
         paginator = paginate(request, Sound.objects.filter(pack=pack.id), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('c', False)) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():

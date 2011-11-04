@@ -1,8 +1,5 @@
-
 <div id="map_canvas" style="width: 910px; height: 600px; border: 1px solid black;"></div>
-
-<script type="text/javascript">
-	
+<script type="text/javascript">	
 	
 	function updateHash(bounds){
 		document.location.hash=
@@ -27,7 +24,7 @@
     
     
     var box = document.location.hash.slice(5,document.location.hash.length);
-    var url = "/geotags/geotags_box_json/?box="+box // TODO: the template tag could use other URLs    
+    var url = "{{url}}?box="+box // TODO: the template tag could use other URLs    
     GDownloadUrl(url, function(data, responseCode)
     {
         var bounds = new GLatLngBounds();
@@ -55,7 +52,6 @@
         });		
        
         if (!bounds.isEmpty()) zoomToBounds(map, bounds);
-        
         var mcOptions = { gridSize: 50, maxZoom: 12 };
         var markerCluster = new MarkerClusterer(map, markers, mcOptions);
         updateHash(map.getBounds());

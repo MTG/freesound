@@ -27,7 +27,7 @@ def geotags_json(request, tag=None):
 
 def geotags_box_json(request):    
     
-    box = request.GET.get("box","41,2,42,2")
+    box = request.GET.get("box","-180,-90,180,90")
     print "geotags_box_json ", box
     try:
         min_lat, min_lon, max_lat, max_lon = box.split(",")  
@@ -66,7 +66,6 @@ def geotags(request, tag=None):
 
 def geotags_box(request):
     google_api_key = settings.GOOGLE_API_KEY
-    print "gotags box!"
     return render_to_response('geotags/geotags_box.html', locals(), context_instance=RequestContext(request))
 
 
@@ -87,3 +86,7 @@ def infowindow(request, sound_id):
         raise Http404
 
     return render_to_response('geotags/infowindow.html', locals(), context_instance=RequestContext(request))
+    
+def embed_iframe(request):
+    google_api_key = settings.GOOGLE_API_KEY
+    return render_to_response('geotags/geotags_box_iframe.html', locals(), context_instance=RequestContext(request))

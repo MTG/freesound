@@ -40,6 +40,7 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/downloaded_packs/$', accounts.views.downloaded_packs, name="user-downloaded-packs"),
 
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
+    url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
 
     url(r'^browse/$', sounds.views.sounds, name="sounds"),
     url(r'^browse/tags/$', tags.views.tags, name="tags"),

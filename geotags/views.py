@@ -25,7 +25,25 @@ def geotags_json(request, tag=None):
 
     return generate_json(sounds)
 
-
+def geotags_box_json(request):    
+    
+    box = request.GET.get("box","41,2,42,2")
+    print "geotags_box_json ", box
+    try:
+        min_lat, min_lon, max_lat, max_lon = box.split(",")  
+        qs = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK")        
+        if min_lat <= max_lat and min_lon <= max_lon:
+            sounds = qs.filter(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+        elif min_lat > max_lat and min_lon <= max_lon:
+            sounds = qs.exclude(geotag__lat__range=(max_lat,min_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+        elif min_lat <= max_lat and min_lon > max_lon:
+            sounds =qs.filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
+        elif min_lat > max_lat and min_lon > max_lon:
+            sounds = qs.exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))        
+        return generate_json(sounds)
+    except:
+        raise Http404
+    
 @cache_page(60 * 15)
 def geotags_for_user_json(request, username):
     sounds = Sound.objects.select_related('user', 'geotag').filter(user__username__iexact=username).exclude(geotag=None)
@@ -45,6 +63,11 @@ def geotags(request, tag=None):
     google_api_key = settings.GOOGLE_API_KEY
     for_user = None
     return render_to_response('geotags/geotags.html', locals(), context_instance=RequestContext(request))
+
+def geotags_box(request):
+    google_api_key = settings.GOOGLE_API_KEY
+    print "gotags box!"
+    return render_to_response('geotags/geotags_box.html', locals(), context_instance=RequestContext(request))
 
 
 def for_user(request, username):

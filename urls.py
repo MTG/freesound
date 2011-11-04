@@ -48,6 +48,7 @@ urlpatterns = patterns('',
     url(r'^browse/comments/$', comments.views.all, name="comments"),
     url(r'^browse/random/$', sounds.views.random, name="sounds-random"),
     url(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
+    url(r'^browse/geotags_box/$', geotags.views.geotags_box, name="geotags-box"),
 
     url(r'^browse/remixed/$',
         sounds.views.remixed,

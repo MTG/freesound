@@ -99,7 +99,10 @@
 
             var point = new GLatLng(lat, lon);
             var marker = new GMarker(point);
-            //bounds.extend(point);
+            
+            {% if tag or for_user %}
+                bounds.extend(point);
+            {% endif %}
 
             GEvent.addListener(marker, "click", function()
             {

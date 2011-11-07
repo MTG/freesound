@@ -36,6 +36,7 @@ q	   string  no        The query!
 p          number  no        The page of the search result to get
 f          string  no	     The filter
 s	   string  no	     How to sort the results
+fields	   string  no	     Fields
 =========  ======  ========  =================================
 
 **q for query**
@@ -145,6 +146,24 @@ rating_desc     Sort by the average rating given to the sounds, highest rated fi
 rating_asc      Same as above, but lowest rated sounds first.
 ==============  ====================================================================
 
+
+.. _custom-fields:
+
+**fields for fields**
+
+The response of the search resource contains an array of sounds and each sound is
+represented with a number of pre-defined fields (see :ref:`sound-search-response` for more information).
+Sometimes we only need specific information about sounds such as their id, their tagline or
+their name, but the array of sounds that is returned contains many more properties useless for us (thus we are using
+a lot of badwidth that we could save).
+
+In these cases, parameter ``fields`` allows to define the exact list of fields that we want to obtain for each sound.
+Fields are specified as a list of properties (choosen from any of those listed in :ref:`sound-get-response`) separated by commas.
+For example, if we perform a search and we only want to get sound ids and duration, we can use fields parameter as ``fields=id,duration``.
+
+This parameter can be used in any resource that returns an array of sounds.
+
+
 **Curl Examples**
 
 ::
@@ -155,26 +174,28 @@ rating_asc      Same as above, but lowest rated sounds first.
   curl http://www.freesound.org/api/sounds/search?q=bass&f=tag:synth&s=created_desc
   # Get short kick sounds
   curl http://www.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]
+  # Get sound id and tags of short kick sounds
+  curl http://www.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]&fields=id,tags
 
 
 .. _sound-search-response:
 
-Response
-''''''''
+Sound search response
+'''''''''''''''''''''
 
 **Properties**
 
 ===========  =======  ===========================================================================================
 Name         Type     Description
 ===========  =======  ===========================================================================================
-sounds       array    Array of sounds. Each sound looks like a reduced version of the `response format of a single sound resource`__. (with less information)
+sounds       array    Array of sounds. Each sound looks like a reduced version of the :ref:`sound-get-response` (with less information).
 num_results  int      Number of sounds found that match your search
 num_pages    int      Number of pages (as the result is paginated)
 previous     URI      The URI to go back one page in the search results.
 next         URI      The URI to go forward one page in the search results.
 ===========  =======  ===========================================================================================
 
-__ sound-get-response_
+
 
 **JSON Example**
 
@@ -298,8 +319,8 @@ Request
 
 .. _sound-get-response:
 
-Response
-''''''''
+Sound response
+''''''''''''''
 
 **Properties**
 
@@ -332,6 +353,7 @@ num_downloads         number            The number of times the sound was downlo
 num_ratings           number            The number of times the sound was rated.
 avg_rating            number            The average rating of the sound.
 pack                  URI               If the sound is part of a pack, this URI points to that pack's API resource.
+geotag                object            A dictionary with the latitude ('lat') and longitude ('lon') of the geotag (only for sounds that have been geotagged).
 user                  object            A dictionary with the username, url, and ref for the user that uploaded the sound.
 spectral_m            URI               A visualization of the sounds spectrum over time, jpeg file (medium).
 spectral_l            URI               A visualization of the sounds spectrum over time, jpeg file (large).
@@ -410,7 +432,78 @@ analysis_frames       URI               The URI for retrieving a JSON file with 
     "pack": "http://www.freesound.org/api/packs/455"
   }
 
+Sound Geotags resource
+======================
 
+URI
+---
+
+::
+
+  /sounds/geotag/
+
+The only allowed method is GET.
+
+GET
+---
+
+A GET request to the sound resource returns a list of sounds that have been geotagged inside a space defined with url parameters.
+
+Request
+'''''''
+
+**Parameters**
+
+=========  ======  ========  =================================
+Name       Type    Required  Description
+=========  ======  ========  =================================
+min_lat	   number  no        Minimum latitude [-90 to 90]
+max_lat    number  no        Maximum latitude [-90 to 90]
+min_lom    number  no	     Minimum longitude [-180 to 180]
+max_lon	   number  no	     Maximum longitude [-180 to 180]
+p          number  no        The page of the search result to get
+fields	   string  no	     Fields
+=========  ======  ========  =================================
+
+**latitude and longitude parameters**
+
+Geotags are represented as points defined by a latitude and a longitude parameters. Displying a world map as a rectangle, latitude is the x axis and ranges from -90 to 90, while longitude is the y axis and ranges from -180 to 180.
+
+"Sound Geotags resource" allows to define a rectangular space inside the "world map" rectangle and returns a list of all the sounds that have been geotagged inside the defined space.
+
+This rectangular space is specified with ``min_lat``, ``min_lon`` url parameters for the bottom-left corner and ``max_lat``, ``max_lon`` for the top-right corner. The following image shows an example. 
+
+    .. image:: _static/geotags/geotag_normal.png
+        :height: 300px
+
+The definition of the rectangle assumes that world map is a continuous space where latitude 90 = -90 and longitude 180 = -180. Thus, rectangles can wrap the edges of the map. This is achieved by using ``min_lat`` greater than ``max_lat`` or ``max_lon`` smaller than ``min_lon``.
+The following images show examples of these cases. If ``min_lon`` > ``max_lon``:
+
+    .. image:: _static/geotags/geotag_lon_changed.png
+        :height: 300px
+
+Example for ``min_lat`` > ``max_lat``:
+
+    .. image:: _static/geotags/geotag_lat_changed.png
+        :height: 300px
+
+Finally, an example for ``min_lat`` > ``max_lat`` and ``min_lon`` > ``max_lon``:
+
+    .. image:: _static/geotags/geotag_both_changed.png
+        :height: 300px
+
+
+
+**Curl Example**
+
+::
+
+  curl http://www.freesound.org/api/sounds/geotag/?min_lon=2.005176544189453&max_lon=2.334766387939453&min_lat=41.3265528618605&max_lat=41.4504467428547
+
+
+Response
+''''''''
+A paginated sound list like in the :ref:`sound-search-response` with the addition of a ``geotag`` property which indicates the latitude (``lat``) and longitude (``lon``) values for each sound.
 
 Sound Analysis resource
 =======================
@@ -542,6 +635,7 @@ Name         Type    Required  Description
 ===========  ======  ========  ===================================================
 num_results  number  no        The number of similar sounds to return (max = 100, default = 15)
 preset       string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``lowlevel``)
+fields	     string  no	       Fields
 ===========  ======  ========  ===================================================
 
 **Curl Examples**
@@ -556,10 +650,9 @@ preset       string  no        The similarity measure to use when retrieving sim
 Response
 ''''''''
 
-The response is the same as the `sound search response`__ but with the addition of a ``distance`` property (for each sound) resembling a numerical value of "dissimilarity" respect to the query sound (then, the first sound of the result will always have distance = 0.0).
+The response is the same as the :ref:`sound-search-response` but with the addition of a ``distance`` property (for each sound) resembling a numerical value of "dissimilarity" respect to the query sound (then, the first sound of the result will always have distance = 0.0).
 If the response is an empty list (0 results), this is because the query sound has been recently uploaded and it has not still been indexed in the similarity database.
 
-__ sound-search-response_
 
 **JSON Example**
 
@@ -807,6 +900,7 @@ Request
 Name       Type    Required  Description
 =========  ======  ========  ========================================
 p          number  no        The page of the sound collection to get.
+fields	   string  no	     Fields
 =========  ======  ========  ========================================
 
 **Curl Examples**
@@ -819,9 +913,8 @@ p          number  no        The page of the sound collection to get.
 Response
 ''''''''
 
-The response is the same as the `sound search response`__.
+The response is the same as the :ref:`sound-search-response`.
 
-__ sound-search-response_
 
 
 
@@ -858,9 +951,7 @@ Response
 
 **Properties**
 
-The response is an array. Each item in the array follows a reduced version of the `pack resource format`__.
-
-__ pack-get-response_
+The response is an array. Each item in the array follows a reduced version of the :ref:`pack-get-response`.
 
 
 **JSON Example**
@@ -925,8 +1016,8 @@ Request
 
 .. _pack-get-response:
 
-Response
-''''''''
+Pack response
+'''''''''''''
 
 **Properties**
 
@@ -989,6 +1080,7 @@ Request
 Name       Type    Required  Description
 =========  ======  ========  ====================================
 p          number  no        The page of the pack's sounds to get
+fields	   string  no	     Fields
 =========  ======  ========  ====================================
 
 **Curl Examples**
@@ -1000,7 +1092,5 @@ p          number  no        The page of the pack's sounds to get
 Response
 ''''''''
 
-The response is the same as the `sound search response`__.
-
-__ sound-search-response_
+The response is the same as the :ref:`sound-search-response`.
 

@@ -32,6 +32,7 @@
             {% if perms.tickets.can_moderate %}
             <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} new sound{{ new_sounds|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
             {% endif %}
+            <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
         </ul>
         </div>
         <br style="clear: both;" />
@@ -51,7 +52,7 @@
             <li>Number of forum posts: {{user.profile.num_posts}}</li>
             <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
-
+            <li><a href="{% url comments-for-user user.username %}">All comments</a> on this person's sounds</li>
         </ul>
         </div>
         <br style="clear: both;" />

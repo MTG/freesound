@@ -65,6 +65,13 @@ def geotags(request, tag=None):
     return render_to_response('geotags/geotags.html', locals(), context_instance=RequestContext(request))
 
 def geotags_box(request):
+    m_width = request.GET.get("w",900)
+    m_height = request.GET.get("h",600)
+    clusters = request.GET.get("c","on")
+    center_lat = request.GET.get("c_lat",None)
+    center_lon = request.GET.get("c_lon",None)
+    zoom = request.GET.get("z",None)
+    
     google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('geotags/geotags_box.html', locals(), context_instance=RequestContext(request))
 
@@ -88,5 +95,12 @@ def infowindow(request, sound_id):
     return render_to_response('geotags/infowindow.html', locals(), context_instance=RequestContext(request))
     
 def embed_iframe(request):
+    m_width = request.GET.get("w",900)
+    m_height = request.GET.get("h",600)
+    clusters = request.GET.get("c","on")
+    center_lat = request.GET.get("c_lat",None)
+    center_lon = request.GET.get("c_lon",None)
+    zoom = request.GET.get("z",None)
+    
     google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('geotags/geotags_box_iframe.html', locals(), context_instance=RequestContext(request))

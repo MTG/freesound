@@ -132,6 +132,7 @@
         <h3>Formats</h3>
         <p>We prefer <strong>wav, aif and flac</strong>, but we support ogg and mp3 too. For very large files please use some compressed format. Uploading more than 1G at once will fail.
     </div>
+    
     <br style="clear: both;">
 </div>
 <br>
@@ -203,6 +204,15 @@
     }
 </script>
 <p>
+{% if request.GET.noflash %}
+
+        <form method="POST" enctype="multipart/form-data" action="/home/upload/file/">
+            <input type="hidden" name="sessionid" value="{{ request.session.session_key }}" />
+            <input type="file" name="file" /><br/>
+            <input type="submit" value="upload" />
+        </form>
+
+{% else %}
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
     <param name="movie" value="{{media_url}}swf/upload.swf" />
     <param name="flashvars" value="sessionid={{request.session.session_key}}" />
@@ -224,6 +234,7 @@
     </object>
     <!--<![endif]-->
 </object>
+{% endif %}
 </p><p>
 <img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
 Hint: you can upload multiple files at once</p>

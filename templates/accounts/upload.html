@@ -104,6 +104,17 @@
         height: 130px;
     }
     
+    .html_upload_form{
+    	margin-left: 0px;
+		padding: 0px;
+		border-left: none;
+		background: white;
+		margin-bottom: 0px;  
+		text-align:left;  	
+    }
+    #html_switch{
+    	text-align:center;
+    }
     
     </style>
 {% endblock %}
@@ -204,14 +215,14 @@
     }
 </script>
 <p>
-{% if request.GET.noflash %}
-
-        <form method="POST" enctype="multipart/form-data" action="/home/upload/file/">
+  
+  {% if request.GET.noflash %}	 
+        <form method="POST" enctype="multipart/form-data" action="/home/upload/file/" class = "html_upload_form">
             <input type="hidden" name="sessionid" value="{{ request.session.session_key }}" />
-            <input type="file" name="file" /><br/>
-            <input type="submit" value="upload" />
-        </form>
-
+            1. <input type="file" name="file" /><br/>
+            2. <input type="submit"  value="upload" />
+        </form>	
+	<p>	
 {% else %}
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
     <param name="movie" value="{{media_url}}swf/upload.swf" />
@@ -235,6 +246,7 @@
     <!--<![endif]-->
 </object>
 {% endif %}
+  
 </p><p>
 <img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
 Hint: you can upload multiple files at once</p>
@@ -242,13 +254,22 @@ Hint: you can upload multiple files at once</p>
 </div>
 
 <div id="describe_button_block">
+
 <p><a id="describe_a" href="{% url accounts-describe %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
+<br/><br/>
 <p>Before your sounds show up on the web site you'll have to describe them</p>
 </div>
 </div>
 <div id="upload-progress-container" style="display:none">
 <span style="clear:both"/>
 </div>
-
+<br />
+<p id="html_switch">
+{% if request.GET.noflash %}
+<a href="{% url accounts-upload %}"> switch to flash version </a>
+{% else %}
+<a href="{% url accounts-upload %}?noflash=1"> switch to html version </a>
+{% endif %}
+</p>
 </div><!-- #upload_page -->
 {% endblock %}

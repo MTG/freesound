@@ -506,3 +506,6 @@ class RemixGroup(models.Model):
 
     # facilitate ordering according to group size
     group_size = models.PositiveIntegerField(null=False, default=0)
+    
+    # keep correct id to redirect to when merging groups
+    redirect_to = models.IntegerField(null=True, blank=True, default=None)

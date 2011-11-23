@@ -1,16 +1,14 @@
-
-<div id="map_canvas" style="width: 910px; height: 600px; border: 1px solid black;"></div>
-
-<script type="text/javascript">
+<div id="map_canvas" style="width: {{m_width}}px; height: {{m_height}}px; border: 1px solid black;"></div>
+<script type="text/javascript">	
 	
-	
-	function updateHash(bounds){
-		document.location.hash=
-        	"box="+bounds.getSouthWest().lat()+","+
-        	bounds.getSouthWest().lng()+","+
-        	bounds.getNorthEast().lat()+","+
-        	bounds.getNorthEast().lng();
-	}
+    function updateHash(bounds){
+	document.location.hash=
+	"box="+bounds.getSouthWest().lat()+","+
+	bounds.getSouthWest().lng()+","+
+	bounds.getNorthEast().lat()+","+
+	bounds.getNorthEast().lng();
+    }
+    
     var map = new GMap2($("#map_canvas").get(0));    
     GEvent.addListener(map, 'infowindowclose', function() {
         stopAll();
@@ -27,7 +25,7 @@
     
     
     var box = document.location.hash.slice(5,document.location.hash.length);
-    var url = "/geotags/geotags_box_json/?box="+box // TODO: the template tag could use other URLs    
+    var url = "{{url}}?box="+box // TODO: the template tag could use other URLs    
     GDownloadUrl(url, function(data, responseCode)
     {
         var bounds = new GLatLngBounds();
@@ -51,13 +49,25 @@
                     }, 500);
                 });
             });
-            markers.push(marker);
+	    
+	    {% if clusters == "on" %}
+		markers.push(marker);
+	    {% else %}
+		map.addOverlay(marker);
+	    {% endif %}
         });		
        
-        if (!bounds.isEmpty()) zoomToBounds(map, bounds);
-        
-        var mcOptions = { gridSize: 50, maxZoom: 12 };
-        var markerCluster = new MarkerClusterer(map, markers, mcOptions);
+	{% if borders == "automatic" %}
+		if (!bounds.isEmpty()) zoomToBounds(map, bounds);
+	{% else %}
+		// Set center and zoom
+		map.setCenter(new GLatLng({{center_lat}}, {{center_lon}}), {{zoom}});
+	{% endif %}
+	
+	{% if clusters == "on" %}
+		var mcOptions = { gridSize: 50, maxZoom: 12 };
+		var markerCluster = new MarkerClusterer(map, markers, mcOptions);
+	{% endif %}
         updateHash(map.getBounds());
         
     });

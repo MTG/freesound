@@ -1,0 +1,28 @@
+{% load display_geotags %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">  
+    <head>
+        <script src="{{media_url}}js/jquery-1.5.2.min.js" type="text/javascript"></script>
+        <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{google_api_key}}" type="text/javascript"></script>
+        <script src="{{media_url}}js/markerclusterer.js" type="text/javascript"></script>
+        
+        <link href='http://fonts.googleapis.com/css?family=Inconsolata&v1' rel='stylesheet' type='text/css' />
+        <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/embed.css" />
+        <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/player.css" />
+        <script src="{{ media_url }}html_player/soundmanager2.js"></script>
+        <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
+        
+        
+        <script src="{{media_url}}js/freesound.js" type="text/javascript"></script>
+        
+    </head>
+
+<body>   
+    {% display_geotags "/geotags/geotags_box_json/" m_width m_height clusters center_lat center_lon zoom %}
+</body>
+</html>
+
+<!--
+http://localhost:8000/embed/geotags_box/iframe/?w=900&h=400&c=offf&c_lat=41.38196080315538&c_lon=2.15520858764648&z=12#box=41.33016225633363,2.0005416870117188,41.43371812392132,2.3102188110351563
+-->
+

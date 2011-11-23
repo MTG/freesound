@@ -57,7 +57,8 @@ def bulk_license_change(request):
         form = NewLicenseForm(request.POST)
         if form.is_valid():
             license = form.cleaned_data['license']
-            Sound.objects.filter(user=request.user).update(license=license)
+            Sound.objects.filter(user=request.user).update(license=license, is_index_dirty=True)
+            
             # update old license flag
             Profile.objects.filter(user=request.user).update(has_old_license=False)
             # update cache

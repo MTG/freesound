@@ -222,7 +222,6 @@
             1. <input type="file" name="file" /><br/>
             2. <input type="submit"  value="upload" />
         </form>	
-	<p>	
 {% else %}
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
     <param name="movie" value="{{media_url}}swf/upload.swf" />
@@ -245,12 +244,12 @@
     </object>
     <!--<![endif]-->
 </object>
-{% endif %}
-  
 </p><p>
 <img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
 Hint: you can upload multiple files at once</p>
 </ul>
+{% endif %}
+  
 </div>
 
 <div id="describe_button_block">

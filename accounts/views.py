@@ -711,6 +711,7 @@ def upload(request, no_flash = False):
             form = UploadFileForm(request.POST, request.FILES)
             if form.is_valid():
                 if handle_uploaded_file(request.user.id, request.FILES["file"]):
+                    uploaded_file=request.FILES["file"]
                     success = True
                 else:
                     error = True

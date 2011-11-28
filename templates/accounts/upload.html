@@ -150,18 +150,7 @@
 <br>
 
 
-{% if success %}
-<p class = "centered">
-The file was uploaded successfully
-</p>
-{% endif %}
 
-
-{% if error %}
-<p class = "centered">
-There was an error uploading the file
-</p>
-{% endif %}
 
 <div id="buttons_container">
 <div id="upload_button_block">
@@ -227,12 +216,28 @@ There was an error uploading the file
         removeFromQueue(fileId);
 
     }
+    
+    
 </script>
   {% if no_flash %}
-        <form method="POST" enctype="multipart/form-data" action="/home/upload/html/" class="html_upload_form">{% csrf_token %}
+        <form method="POST" enctype="multipart/form-data" action="/home/upload/html/" class="html_upload_form"
+        onSubmit="$('#html_upload_button').attr('disabled', 'true');">{% csrf_token %}
         {{form.as_p}}
-         <input type="submit" value="Upload file" />
+         <input type="submit" value="Upload file" id="html_upload_button" />
         </form>
+        {% if success %}
+<p>
+<br/>
+<b>{{uploaded_file}} uploaded successfully</b>
+</p>
+{% endif %}
+
+
+{% if error %}
+<p>
+<b>There was an error uploading the file</b>
+</p>
+{% endif %}
 {% else %}
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
     <param name="movie" value="{{media_url}}swf/upload.swf" />
@@ -278,7 +283,7 @@ Hint: you can upload multiple files at once</p>
 {% if no_flash %}
 <a href="{% url accounts-upload %}"> switch to flash version </a>
 {% else %}
-<a href="{% url accounts-upload-html %}"> switch to html version </a>
+<a href="{% url accounts-upload-html %}"> switch to non-flash version </a>
 {% endif %}
 </p>
 </div><!-- #upload_page -->

@@ -74,6 +74,7 @@ urlpatterns = patterns('accounts.views',
 
     url(r'^upload/file/$', accounts.upload_file, name="accounts-upload-file"),
     url(r'^upload/$', accounts.upload, name="accounts-upload"),
+    url(r'^upload/html/$', accounts.upload, name="accounts-upload-html", kwargs=dict(no_flash=True)),    
     url(r'^describe/$', accounts.describe, name="accounts-describe"),
     url(r'^describe/license/$', accounts.describe_license, name="accounts-describe-license"),
     url(r'^describe/pack/', accounts.describe_pack, name="accounts-describe-pack"),

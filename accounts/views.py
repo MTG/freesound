@@ -702,7 +702,18 @@ def upload_file(request):
         return HttpResponseBadRequest("No POST data in request")
 
 @login_required
-def upload(request):
+def upload(request, no_flash = False):
+    form = UploadFileForm()
+    success = False
+    error = False
+    if no_flash:
+        if request.method == 'POST':
+            form = UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                if handle_uploaded_file(request.user.id, request.FILES["file"]):
+                    success = True
+                else:
+                    error = True
     return render_to_response('accounts/upload.html', locals(), context_instance=RequestContext(request))
 
 

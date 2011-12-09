@@ -170,6 +170,11 @@
                 <li><em>Sound is processing, cannot edit.</em></li>
             {% endif %}
         {% endif %}
+        
+        {% if request.user.is_staff %}
+            <li><a id="admin_link" class="icon" href="{% url admin:sounds_sound_change sound.id %}">Edit sound in the admin</a></li>
+        {% endif %}
+        
 
     {% cache 3600 sound_footer_bottom sound.id %}
 

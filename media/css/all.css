@@ -303,6 +303,10 @@ div.infowindow {
 #comments_link {
     background-image: url(../images/fugue-icons/icons/pencil.png);
 }
+#admin_link {
+    background-image: url(../images/fugue-icons/icons/application-detail.png);
+}
+
 
 
 /* Formatting Elements

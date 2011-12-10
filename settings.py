@@ -31,6 +31,7 @@ MIDDLEWARE_CLASSES = (
 )
 
 INSTALLED_APPS = (
+    'messages',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -44,7 +45,6 @@ INSTALLED_APPS = (
     'favorites',
     'geotags',
     'general',
-    'messages',
     'ratings',
     'sounds',
     'support',
@@ -56,6 +56,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'tickets',
     'gunicorn',
+    'south',
     #'test_utils', # Don't use this in production!
 )
 

@@ -8,7 +8,11 @@
 One of the sound moderators at Freesound has a question about one 
 of your uploads ({{ ticket.content.content_object.original_filename }}).
 
-Please go to {% absurl tickets-ticket ticket.key %} to see the message the moderator has
+Please go to:
+
+<{% absurl tickets-ticket ticket.key %}>
+
+ to see the message the moderator has
 left for you. Your upload will not be part of Freesound until the moderator
 is happy with the file and the descriptions.
 {% endblock %}

@@ -28,11 +28,48 @@ def deactivate_spammer(user_id):
     user.save()
 
 
+class last_action(object):
+    def __init__(self, view_func):
+        self.view_func = view_func
+        self.__name__ = view_func.__name__
+        self.__doc__ = view_func.__doc__
+    
+    def __call__(self, request, *args, **kwargs):
+        
+        if not request.user.is_authenticated():
+            return self.view_func(request, *args, **kwargs)
+
+        from datetime import datetime, timedelta
+        date_format = "%Y-%m-%d %H:%M:%S:%f"
+        date2string = lambda date: date.strftime(date_format)
+        string2date = lambda date_string: datetime.strptime(date_string, date_format)
+        
+        key = "forum-last-visited"
+        
+        now = datetime.now()
+        now_as_string = date2string(now)
+        
+        if key not in request.COOKIES or not request.session.get(key, False):
+            request.session[key] = now_as_string
+        elif now - string2date(request.COOKIES[key]) > timedelta(minutes=30):
+            request.session[key] = request.COOKIES[key]
+        
+        request.last_action_time = string2date(request.session.get(key, now_as_string))
+        
+        reply_object = self.view_func(request, *args, **kwargs)
+        
+        reply_object.set_cookie(key, now_as_string, 60*60*24*30) # 30 days
+        
+        return reply_object
+            
+
+@last_action
 def forums(request):
     forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
     return render_to_response('forum/index.html', locals(), context_instance=RequestContext(request))
 
 
+@last_action
 def forum(request, forum_name_slug):
     try:
         forum = Forum.objects.get(name_slug=forum_name_slug)
@@ -44,6 +81,7 @@ def forum(request, forum_name_slug):
     return render_to_response('forum/threads.html', combine_dicts(locals(), paginator), context_instance=RequestContext(request))
 
 
+@last_action
 def thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id)
@@ -58,13 +96,14 @@ def thread(request, forum_name_slug, thread_id):
 
     return render_to_response('forum/thread.html', combine_dicts(locals(), paginator), context_instance=RequestContext(request))
 
-
+@last_action
 def latest_posts(request):
     paginator = paginate(request, Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').all(), settings.FORUM_POSTS_PER_PAGE)
     hide_search = True
     return render_to_response('forum/latest_posts.html', combine_dicts(locals(), paginator), context_instance=RequestContext(request))
 
 
+@last_action
 def post(request, forum_name_slug, thread_id, post_id):
     post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)
 

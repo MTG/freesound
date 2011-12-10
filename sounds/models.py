@@ -398,6 +398,7 @@ class Pack(SocialModel):
                    )
 
     def process(self):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         gm_client.submit_job("create_pack_zip", str(self.id), wait_until_complete=False, background=True)
         audio_logger.info("Send pack with id %s to queue 'create_pack_zips'" % self.id)
         

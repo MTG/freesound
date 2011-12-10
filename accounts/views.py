@@ -386,6 +386,8 @@ def describe_sounds(request):
                                               locals(),
                                               context_instance=RequestContext(request))
         # all valid, then create sounds and moderation tickets
+                
+        dirty_packs = []
         for i in range(len(sounds_to_describe)):
             sound = Sound()
             sound.user = request.user
@@ -438,8 +440,7 @@ def describe_sounds(request):
                 pack, created = Pack.objects.get_or_create(user=request.user, name=new_pack)
             if pack:
                 sound.pack = pack
-                sound.pack.is_dirty = True
-                sound.pack.save()
+                dirty_packs.append(sound.pack)
             # set the geotag (if 'lat' is there, all fields are)
             data = forms[i]['geotag'].cleaned_data
             if not data.get('remove_geotag') and data.get('lat'):
@@ -495,6 +496,10 @@ def describe_sounds(request):
                 sound.process()
         except Exception, e:
             audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
+            
+        for pack in set(dirty_packs):
+            pack.process()
+                
         if len(request.session['describe_sounds']) <= 0:
             msg = 'You have described all the selected files.'
             messages.add_message(request, messages.WARNING, msg)

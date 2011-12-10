@@ -125,6 +125,8 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     else:
         post = None
         quote = ""
+    
+    latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').filter(thread=thread)[0:15]
 
     if request.method == 'POST':
         form = PostReplyForm(request, quote, request.POST)

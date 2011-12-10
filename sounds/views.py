@@ -36,13 +36,10 @@ from utils.mail import send_mail_template
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
-from utils.text import slugify
 import datetime
-import os
 import time
 import logging
 import json
-import urllib
 
 logger = logging.getLogger('web')
 

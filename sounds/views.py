@@ -220,6 +220,14 @@ def sound_edit(request, username, sound_id):
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
 
+    def invalidate_sound_cache(sound):
+        invalidate_template_cache("sound_header", sound.id, True)
+        invalidate_template_cache("sound_header", sound.id, False)
+        invalidate_template_cache("sound_footer_top", sound.id)
+        invalidate_template_cache("sound_footer_bottom", sound.id)
+        invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+        invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+
     def is_selected(prefix):
         if request.method == "POST":
             for name in request.POST.keys():
@@ -235,10 +243,7 @@ def sound_edit(request, username, sound_id):
             sound.description = data["description"]
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id, True)
-            invalidate_template_cache("sound_header", sound.id, False)
-            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+            invalidate_sound_cache(sound)
             
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
@@ -284,12 +289,7 @@ def sound_edit(request, username, sound_id):
                         new_pack.save()
                     sound.pack = new_pack
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id, True)
-            invalidate_template_cache("sound_header", sound.id, False)
-            invalidate_template_cache("sound_footer_top", sound.id)
-            invalidate_template_cache("sound_footer_bottom", sound.id)
-            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+            invalidate_sound_cache(sound)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
@@ -315,10 +315,8 @@ def sound_edit(request, username, sound_id):
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
                     sound.mark_index_dirty()
 
-            invalidate_template_cache("sound_footer_top", sound.id)
-            invalidate_template_cache("sound_footer_bottom", sound.id)
-            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+            invalidate_sound_cache(sound)
+            
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -330,10 +328,7 @@ def sound_edit(request, username, sound_id):
     if request.POST and license_form.is_valid():
         sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
-        invalidate_template_cache("sound_footer_top", sound.id)
-        invalidate_template_cache("sound_footer_bottom", sound.id)
-        invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-        invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+        invalidate_sound_cache(sound)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license})

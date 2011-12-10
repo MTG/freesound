@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from utils.audioprocessing.freesound_audio_processing import process
 from utils.audioprocessing.essentia_analysis import analyze
 from django.conf import settings
-from sounds.models import Sound
+from sounds.models import Sound, Pack
 from optparse import make_option
 from psycopg2 import InterfaceError
 from django.db.utils import DatabaseError

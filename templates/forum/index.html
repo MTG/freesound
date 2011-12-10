@@ -25,5 +25,8 @@
 		{{forum.num_threads}} thread{{forum.num_threads|pluralize}}, {{forum.num_posts}} post{{forum.num_posts|pluralize}}
 	</li>
 {% endfor %}
+<li>
+    <a href="{% url forums-latest-posts %}" class="forum_name">Latest posts</a>
+</li>
 </ul>
 {% endblock %}

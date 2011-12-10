@@ -10,7 +10,7 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random, datetime, gearman
+import os, logging, random, datetime, gearman, tempfile
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
@@ -369,7 +369,7 @@ class Pack(SocialModel):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True, default=None)
-    is_dirty = models.BooleanField(db_index=True, default=True)
+    is_dirty = models.BooleanField(db_index=True, default=False)
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)
@@ -397,6 +397,10 @@ class Pack(SocialModel):
                     path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
                    )
 
+    def process(self):
+        gm_client.submit_job("create_pack_zip", str(self.id), wait_until_complete=False, background=True)
+        audio_logger.info("Send pack with id %s to queue 'create_pack_zips'" % self.id)
+        
     def create_zip(self):
         import zipfile
         from django.template.loader import render_to_string
@@ -405,7 +409,8 @@ class Pack(SocialModel):
 
         logger.info("creating pack zip for pack %d" % self.id)
         logger.info("\twill save in %s" % self.locations("path"))
-        zip_file = zipfile.ZipFile(self.locations("path"), "w", zipfile.ZIP_STORED, True)
+        tmp_file = tempfile.mkstemp()
+        zip_file = zipfile.ZipFile(tmp_file, "w", zipfile.ZIP_STORED, True)
 
         logger.info("\tadding attribution")
         licenses = License.objects.all()
@@ -419,9 +424,8 @@ class Pack(SocialModel):
             zip_file.write(path, sound.friendly_filename().encode("utf-8"))
 
         zip_file.close()
-
-        self.is_dirty = False
-        self.save()
+        os.rename(tmp_file.name,self.locations("path"))
+        os.unlink(tmp_file.name)
 
         logger.info("\tall done")
 
@@ -443,9 +447,8 @@ class Pack(SocialModel):
 
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
-        self.is_dirty = True
-        self.save()
-
+        self.process()
+  
     def delete(self):
         """ This deletes all sounds in the pack as well. """
         # TODO: remove from solr?

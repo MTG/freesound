@@ -55,6 +55,10 @@ class Command(BaseCommand):
     def task_process_sound(self, gearman_worker, gearman_job):
         return self.task_process_x(gearman_worker, gearman_job, process)
 
+    def task_create_pack_zip(self, gearmanworker, gearman_job):
+        pack_id  = gearman_job.data
+        pack = Pack.objects.get(id=pack_id)
+        pack.create_zip()
 
     def task_process_x(self, gearman_worker, gearman_job, func):
         sound_id = gearman_job.data

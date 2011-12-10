@@ -1,9 +1,10 @@
-from Crypto.Cipher import AES
 from django.conf import settings
-import base64
-import urllib
 
 def encrypt(decrypted_string):
+    from Crypto.Cipher import AES
+    import base64
+    import urllib
+    
     encryptor = AES.new(settings.SECRET_KEY[0:16]) #@UndefinedVariable
     
     # encrypted strings need to be len() = multiple of 16
@@ -17,6 +18,10 @@ def encrypt(decrypted_string):
     return encoded_string
 
 def decrypt(quoted_string):
+    from Crypto.Cipher import AES
+    import base64
+    import urllib
+
     decryptor = AES.new(settings.SECRET_KEY[0:16]) #@UndefinedVariable
     
     encoded_string = urllib.unquote(quoted_string)
@@ -26,3 +31,9 @@ def decrypt(quoted_string):
     decrypted_string = decryptor.decrypt(encrypted_string).strip()
     
     return decrypted_string 
+
+def create_hash(data):
+    import hashlib
+    m = hashlib.md5()
+    m.update(str(data) + settings.SECRET_KEY)
+    return m.hexdigest()[0:8]

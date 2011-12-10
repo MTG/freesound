@@ -158,7 +158,7 @@
         <li><a id="remixes_link" class="icon" href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
         {% endif %}
         {% if sound.similarity_state == 'OK' %}
-        <li><a id="rel="nofollow" similar_sounds_link" rel="nofollow" class="icon" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
+        <li><a id="similar_sounds_link" rel="nofollow" class="icon" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
         {% endif %}
 
     {% endcache %}

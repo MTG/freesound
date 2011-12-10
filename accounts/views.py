@@ -21,7 +21,7 @@ from sounds.models import Sound, Pack, Download, License
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm, RemixForm
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
-from utils.encryption import decrypt, encrypt
+from utils.encryption import decrypt, encrypt, create_hash
 from utils.filesystem import generate_tree, md5file
 from utils.functional import combine_dicts
 from utils.images import extract_square
@@ -57,7 +57,8 @@ def bulk_license_change(request):
         form = NewLicenseForm(request.POST)
         if form.is_valid():
             license = form.cleaned_data['license']
-            Sound.objects.filter(user=request.user).update(license=license)
+            Sound.objects.filter(user=request.user).update(license=license, is_index_dirty=True)
+            
             # update old license flag
             Profile.objects.filter(user=request.user).update(has_old_license=False)
             # update cache
@@ -80,13 +81,35 @@ def activate_user(request, activation_key, username):
         return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
     except User.DoesNotExist: #@UndefinedVariable
         return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
-    except TypeError:
+    except TypeError, ValueError:
         return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
+
+def activate_user2(request, username, hash):
+    if request.user.is_authenticated():
+        return HttpResponseRedirect(reverse("accounts-home"))
+
+    try:
+        user = User.objects.get(username__iexact=username)
+    except User.DoesNotExist: #@UndefinedVariable
+        return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
+
+    new_hash = create_hash(user.id)
+    if new_hash != hash:
+        return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
+    user.is_active = True
+    user.save()
+    
+    return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
 
 def send_activation(user):
     encrypted_user_id = encrypt(str(user.id))
     username = user.username
     send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
+
+def send_activation2(user):
+    hash = create_hash(user.id)
+    username = user.username
+    send_mail_template(u'activation link.', 'accounts/email_activation2.txt', locals(), None, user.email)
 
 def registration(request):
     if request.user.is_authenticated():
@@ -96,7 +119,7 @@ def registration(request):
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
             user = form.save()
-            send_activation(user)
+            send_activation2(user)
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = RegistrationForm(request)
@@ -112,7 +135,7 @@ def resend_activation(request):
         form = ReactivationForm(request.POST)
         if form.is_valid():
             user = form.cleaned_data["user"]
-            send_activation(user)
+            send_activation2(user)
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = ReactivationForm()
@@ -141,7 +164,7 @@ def username_reminder(request):
 def home(request):
     user = request.user
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    tags = user.profile.get_tagcloud()
+    tags = list(user.profile.get_tagcloud())
     latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
     unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
@@ -150,7 +173,8 @@ def home(request):
     unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     packs_without_sounds = Pack.objects.select_related().filter(user=user).annotate(num_sounds=Count('sound')).filter(num_sounds=0)
     
-    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
+    # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
+    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10].exists()
     google_api_key = settings.GOOGLE_API_KEY
     home = True
     if home and request.user.has_perm('tickets.can_moderate'):
@@ -512,13 +536,11 @@ def attribution(request):
 def downloaded_sounds(request, username):
     user=get_object_or_404(User, username=username)
     qs = Download.objects.filter(user=user.id, sound__isnull=False)
-    num_results = len(qs)
     return render_to_response('accounts/downloaded_sounds.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 def downloaded_packs(request, username):
     user=get_object_or_404(User, username=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
-    num_results = len(qs)
     return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 
@@ -600,7 +622,7 @@ def account(request, username):
     except User.DoesNotExist:
         raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    tags = user.profile.get_tagcloud()
+    tags = list(user.profile.get_tagcloud())
     latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
@@ -681,7 +703,19 @@ def upload_file(request):
         return HttpResponseBadRequest("No POST data in request")
 
 @login_required
-def upload(request):
+def upload(request, no_flash = False):
+    form = UploadFileForm()
+    success = False
+    error = False
+    if no_flash:
+        if request.method == 'POST':
+            form = UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                if handle_uploaded_file(request.user.id, request.FILES["file"]):
+                    uploaded_file=request.FILES["file"]
+                    success = True
+                else:
+                    error = True
     return render_to_response('accounts/upload.html', locals(), context_instance=RequestContext(request))
 
 

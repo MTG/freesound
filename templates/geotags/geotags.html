@@ -1,4 +1,5 @@
 {% extends "sounds/_section.html" %}
+{% load absurl %}
 
 {% block title %}geotags{% endblock title %}
 
@@ -8,6 +9,18 @@
 {{ block.super }}
 <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{google_api_key}}" type="text/javascript"></script>
 <script src="{{media_url}}js/markerclusterer.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+    function toggleShareControls(){
+        console.log("aaa")
+        if ($("#share_controls").css('display') == 'none'){
+            $("#share_controls").show('blind', {}, 500, function() {});
+        }else{
+            $("#share_controls").hide('blind', {}, 500, function() {});
+        }
+    }
+</script>
+
 {% endblock head %}
 
 {% block section_content %}
@@ -26,7 +39,34 @@
 {% if for_user or tag %}
     <p>You can also view <a href="{% url geotags %}">all geotags</a></p>
 {% endif %}
+    
+    
+    <p><span id="share_control_link"><br><a onClick = "toggleShareControls()">Share this map</a><span></p>
+    <div id="share_controls" style="display:none">
+        
+        <table>
+        <tr>
+        <td width="320px">
+            Embed this map:<br>
+            <textarea id="embed_code" rows="4" cols="40">
+            </textarea>
+            
+        </td>
+        <td>
+            Link:<br>
+            <textarea id="link_code" rows="4" cols="40">
+            </textarea>
+            
+        </td>
+        </tr>
+        </table>
+    
+    </div>
+    
 <script type="text/javascript">
+    var width = 910;
+    var height = 600;
+    
     var map = new GMap2($("#map_canvas").get(0));
     GEvent.addListener(map, 'infowindowclose', function() {
         stopAll();
@@ -37,6 +77,7 @@
     map.setCenter(new GLatLng(24, 22), 2);
     map.setMapType( G_SATELLITE_MAP );
     map.enableContinuousZoom();
+    updateEmbedCode(map)
 
     {% if for_user %}
         GDownloadUrl('{% url geotags-for-user-json for_user.username %}', function(data, responseCode)
@@ -58,7 +99,10 @@
 
             var point = new GLatLng(lat, lon);
             var marker = new GMarker(point);
-            //bounds.extend(point);
+            
+            {% if tag or for_user %}
+                bounds.extend(point);
+            {% endif %}
 
             GEvent.addListener(marker, "click", function()
             {
@@ -77,5 +121,33 @@
         var mcOptions = { gridSize: 50, maxZoom: 12 };
         var markerCluster = new MarkerClusterer(map, markers, mcOptions);
     });
+    
+    GEvent.addListener( map, 'zoomend',   function() {updateEmbedCode(map)} );
+    GEvent.addListener( map, 'moveend', function() {updateEmbedCode(map)});
+    
+    function updateEmbedCode(map){
+            var bounds = map.getBounds()
+            var box = "#box="+bounds.getSouthWest().lat()+","+
+            bounds.getSouthWest().lng()+","+
+            bounds.getNorthEast().lat()+","+
+            bounds.getNorthEast().lng()
+            
+            var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl embed-geotags-box-iframe %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + 
+            box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>"
+            
+            var link_code = "{% absurl geotags-box %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + 
+            box
+            
+            if (map.getZoom() > 2){
+                $("#embed_code").text(embed_code)
+                $("#link_code").text(link_code)
+                $("#share_control_link").text("")
+                $("#share_control_link").append('<br><a onClick = "toggleShareControls()">Share this map</a>')
+            }else{
+                $("#embed_code").text("")
+                $("#link_code").text("")
+                $("#share_control_link").text("")
+            }
+	}
 </script>
 {% endblock %}

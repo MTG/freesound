@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from messages.forms import MessageReplyForm
+from messages.forms import MessageReplyForm, MessageReplyFormNoCaptcha
 from messages.models import Message, MessageBody
 from utils.cache import invalidate_template_cache
 from utils.functional import exceptional
@@ -79,8 +79,13 @@ def message(request, message_id):
 
 @login_required
 def new_message(request, username=None, message_id=None):
+    
     if request.method == 'POST':
-        form = MessageReplyForm(request,request.POST)
+        if request.user.profile.num_sounds:
+            form = MessageReplyFormNoCaptcha(request.POST)
+        else:
+            form = MessageReplyForm(request,request.POST)
+            
         if form.is_valid():
             user_from = request.user
             user_to = form.cleaned_data["to"]
@@ -101,14 +106,17 @@ def new_message(request, username=None, message_id=None):
             
             return HttpResponseRedirect(reverse("messages"))
     else:
-        form = MessageReplyForm(request)
+        if request.user.profile.num_sounds:
+            form = MessageReplyFormNoCaptcha()
+        else:
+            form = MessageReplyForm(request)
+
         if message_id:
             try:
                 message = Message.objects.get(id=message_id)
 
                 if message.user_from != request.user and message.user_to != request.user:
                     raise Http404
-
                 
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
                 body = ''.join(BeautifulSoup(body).findAll(text=True))
@@ -118,11 +126,17 @@ def new_message(request, username=None, message_id=None):
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                form = MessageReplyForm(request,initial=dict(to=to, subject=subject, body=body))
+                if request.user.profile.num_sounds:
+                    form = MessageReplyFormNoCaptcha(initial=dict(to=to, subject=subject, body=body))
+                else:
+                    form = MessageReplyForm(request,initial=dict(to=to, subject=subject, body=body))
             except Message.DoesNotExist:
                 pass
         elif username:
-            form = MessageReplyForm(request,initial=dict(to=username))
+            if request.user.profile.num_sounds:
+                form = MessageReplyFormNoCaptcha(initial=dict(to=username))
+            else:
+                form = MessageReplyForm(request, initial=dict(to=username))
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))
 

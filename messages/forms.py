@@ -11,7 +11,12 @@ class ManualUserField(forms.CharField):
         except User.DoesNotExist: #@UndefinedVariable
             raise forms.ValidationError("We are sorry, but this username does not exist...")
 
-class MessageReplyForm(RecaptchaForm):
-    to = ManualUserField()
-    subject = forms.CharField(min_length=3, max_length=128)
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
+def MessageReplyClassCreator(baseclass):
+    class MessageReplyForm(baseclass):
+        to = ManualUserField()
+        subject = forms.CharField(min_length=3, max_length=128)
+        body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
+    return MessageReplyForm
+
+MessageReplyForm = MessageReplyClassCreator(RecaptchaForm)
+MessageReplyFormNoCaptcha = MessageReplyClassCreator(forms.Form)

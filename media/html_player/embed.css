@@ -1,4 +1,12 @@
+a {
+    color: #2C74C9;
+    text-decoration: none;    
+}
 
+a:hover {
+    color: #19507E;
+    text-decoration: underline;  
+}
 
 h3 {
     line-height: 1em;
@@ -26,6 +34,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
+    font-size:12px;
 }
 
 /* Large */

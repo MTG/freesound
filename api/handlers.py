@@ -4,7 +4,7 @@ from piston.utils import rc
 from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
 from sounds.models import Sound, Pack, Download
-from utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import logging
 from django.contrib.auth.models import User
 from utils.search.search import add_all_sounds_to_solr
@@ -16,6 +16,9 @@ import yaml
 from utils.similarity_utilities import get_similar_sounds
 from api.api_utils import auth, ReturnError
 import os
+from django.contrib.syndication.views import Feed
+
+
 
 logger = logging.getLogger("api")
 
@@ -32,7 +35,7 @@ def get_sound_api_analysis_url(id):
 
 def get_sound_web_url(username, id):
     return prepend_base(reverse('sound', args=[username, id]))
-
+    
 def get_user_api_url(username):
     return prepend_base(reverse('api-single-user', args=[username]))
 
@@ -94,13 +97,40 @@ def prepare_single_sound(sound):
     except:
         pass
     try:
-        d['geotag'] = [sound.geotag.lat,sound._geotag_cache.lon]
+        d['geotag'] = {'lat':sound.geotag.lat,'lon':sound._geotag_cache.lon}
     except:
         pass
     d['user'] = prepare_minimal_user(sound.user)
     d['tags'] = get_tags(sound)
     d.update(get_sound_links(sound))
     return d
+
+def prepare_collection_sound(sound, include_user=True, include_geotag=False, custom_fields = False):
+    if not custom_fields:
+        d = {}
+        for field in ["duration", "type", "original_filename", "id"]:
+            d[field] = getattr(sound, field)
+        if include_user:
+            d['user'] = prepare_minimal_user(sound.user)
+        d['tags'] = get_tags(sound)
+        
+        if include_geotag:
+            try:
+                d['geotag'] = {'lat':sound.geotag.lat,'lon':sound._geotag_cache.lon}
+            except:
+                pass
+        d.update(get_sound_links(sound))
+        return d
+    else:
+        single_sound_prepared = prepare_single_sound(sound)
+        print single_sound_prepared.keys()
+        
+        custom_fields = custom_fields.split(",")
+        d = {}
+        for field in custom_fields:
+            if field in single_sound_prepared.keys():
+                d[field] = single_sound_prepared[field]
+        return d
 
 def prepare_single_sound_analysis(sound,request,filter):
 
@@ -250,16 +280,6 @@ RECOMMENDED_DESCRIPTORS = [ 'metadata.audio_properties',
 def get_tags(sound):
     return [tagged.tag.name for tagged in sound.tags.select_related("tag").all()]
 
-def prepare_collection_sound(sound, include_user=True):
-    d = {}
-    for field in ["duration", "type", "original_filename", "id"]:
-        d[field] = getattr(sound, field)
-    if include_user:
-        d['user'] = prepare_minimal_user(sound.user)
-    d['tags'] = get_tags(sound)
-    d.update(get_sound_links(sound))
-    return d
-
 def prepare_single_user(user):
     d = {}
     for field in ["username", "first_name", "last_name", "date_joined"]:
@@ -307,7 +327,7 @@ class SoundSearchHandler(BaseHandler):
     '''
     input:          q, f, p, s
     output:         #paginated_search_results#
-    curl:           curl http://www.freesound.org/api/search/?q=hoelahoep
+    curl:           curl http://www.freesound.org/api/sounds/search/?q=hoelahoep
     '''
 
     @auth()
@@ -338,7 +358,7 @@ class SoundSearchHandler(BaseHandler):
             bad_results = 0
             for object in page['object_list'] :
                 try:
-                    sounds.append( prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id'])) )
+                    sounds.append( prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id']), custom_fields = request.GET.get('fields', False)) )
                 except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
                     pass
             result = {'sounds': sounds, 'num_results': paginator.count - bad_results, 'num_pages': paginator.num_pages}
@@ -366,7 +386,6 @@ class SoundSearchHandler(BaseHandler):
 
     def __construct_pagination_link(self, q, p, f, s):
         return prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s))
-
 
 class SoundHandler(BaseHandler):
     '''
@@ -450,7 +469,7 @@ class SoundSimilarityHandler(BaseHandler):
 
         sounds = []
         for similar_sound in similar_sounds :
-            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]))
+            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('fields', False))
             sound['distance'] = similar_sound[1]
             sounds.append( sound )
 
@@ -513,6 +532,57 @@ class SoundAnalysisFramesHandler(BaseHandler):
         return sendfile(sound.locations('analysis.frames.path'), sound.friendly_filename().split('.')[0] + '.json', sound.locations("sendfile_url").split('.')[0] + '.json')
 """
 
+class SoundGeotagHandler(BaseHandler):
+    '''
+    api endpoint:   /sounds/geotag/
+    '''
+    allowed_methods = ('GET',)
+
+    '''
+    input:          min_lat, max_lat, min_lon, max_lon, p
+    output:         #paginated_sound_results#
+    curl:           curl http://www.freesound.org/api/sounds/geotag/?min_lon=2.005176544189453&max_lon=2.334766387939453&min_lat=41.3265528618605&max_lat=41.4504467428547
+    
+    
+    '''
+
+    @auth()
+    def read(self, request):
+        
+        min_lat = request.GET.get('min_lat', 0.0)
+        max_lat = request.GET.get('max_lat', 0.0)
+        min_lon = request.GET.get('min_lon', 0.0)
+        max_lon = request.GET.get('max_lon', 0.0)
+        
+        if min_lat <= max_lat and min_lon <= max_lon:
+            raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+        elif min_lat > max_lat and min_lon <= max_lon:
+            raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).filter(geotag__lon__range=(min_lon,max_lon))
+        elif min_lat <= max_lat and min_lon > max_lon:
+            raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
+        elif min_lat > max_lat and min_lon > max_lon:
+            raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
+        else:
+            return ReturnError(400, "BadRequest", {"explanation": "Parameters min_lat, max_lat, min_long and max_log are not correctly defined."})
+        
+        paginator = paginate(request, raw_sounds, settings.SOUNDS_PER_API_RESPONSE, 'p')
+        page = paginator['page']
+        sounds = [prepare_collection_sound(sound, include_user=True, include_geotag=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
+
+        if page.has_other_pages():
+            if page.has_previous():
+                result['previous'] = self.__construct_pagination_link(page.previous_page_number(), min_lon, max_lon, min_lat, max_lat)
+            if page.has_next():
+                result['next'] = self.__construct_pagination_link(page.next_page_number(), min_lon, max_lon, min_lat, max_lat)
+
+        add_request_id(request,result)
+        return result
+
+    def __construct_pagination_link(self, p, min_lon, max_lon, min_lat, max_lat):
+        return prepend_base(reverse('api-sound-geotag')) + '?p=%s&min_lon=%s&max_lon=%s&min_lat=%s&max_lat=%s' % (p,min_lon,max_lon,min_lat,max_lat)
+
+
 class UserHandler(BaseHandler):
     '''
     api endpoint:   /people/<username>
@@ -544,7 +614,7 @@ class UserSoundsHandler(BaseHandler):
     allowed_methods = ('GET',)
 
     '''
-    input:          p
+    input:          p, c
     output:         #user_sounds#
     curl:           curl http://www.freesound.org/api/people/vincent_akkermans/sounds?p=5
     '''
@@ -558,7 +628,7 @@ class UserSoundsHandler(BaseHandler):
 
         paginator = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():
@@ -644,7 +714,7 @@ class PackSoundsHandler(BaseHandler):
 
         paginator = paginate(request, Sound.objects.filter(pack=pack.id), settings.SOUNDS_PER_API_RESPONSE, 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=False) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():
@@ -693,3 +763,101 @@ class UpdateSolrHandler(BaseHandler):
                                 .filter(processing_state="OK", moderation_state="OK")
         add_all_sounds_to_solr(sound_qs)
         return rc.ALL_OK
+
+
+# Pool handlers (RSS)
+class SoundPoolSearchHandler(Feed):
+    title = "Freesound"
+    link = "http://freesound.org/"
+
+    def get_object(self, request):
+        type = request.GET.get('type', 'all')
+        query = request.GET.get('query', '')
+        limit = request.GET.get('limit', 20)
+        offset = request.GET.get('offset', 0)
+        
+        return {'type':type,'query':query,'limit':limit,'offset':offset}
+
+    def items(self, obj):
+        if obj['query'] != "": 
+            try:
+                solr = Solr(settings.SOLR_URL)
+                query = SolrQuery()
+                fields=[('id',4),
+                        ('tag', 3),
+                        ('description', 3),
+                        ('username', 2),
+                        ('pack_tokenized', 2),
+                        ('original_filename', 2),]
+                
+                
+                if obj['type'] == "phrase":
+                    query.set_dismax_query('"' + obj['query'] + '"',query_fields=fields) # EXACT (not 100%)    
+                elif obj['type'] == "any":
+                    query.set_dismax_query(obj['query'],query_fields=[],minimum_match=0) # OR
+                else:
+                    query.set_dismax_query(obj['query'],query_fields=[],minimum_match="100%") # AND
+                
+                lim = obj['limit']
+                if lim > 100:
+                    lim = 100
+                
+                    
+                query.set_query_options(start=obj['offset'], rows=lim, filter_query="", sort=['created desc'])
+                
+                try:
+                    results = SolrResponseInterpreter(solr.select(unicode(query)))
+                    
+                    sounds = []
+                    for object in results.docs :
+                        try:
+                            sounds.append(object)
+                        except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
+                            pass
+                    return sounds
+        
+                except SolrException, e:
+                    return []
+            except:
+                return []
+        else:
+            return []
+
+    def item_title(self, item):
+        return item['original_filename']
+
+    def item_description(self, item):
+        tags = item['tag']
+        s= "Tags: "
+        for t in tags:
+            s = s + t + " "
+        s = s + "<br>"
+        desc = item['description']
+        s = s + desc
+        return s
+        
+    def item_link(self, item):
+        return "http://freesound.org/people/" + str(item['username']) + "/sounds/" + str(item['id'])
+        
+    def item_author_name(self, item):
+        return item['username']
+        
+    def item_author_link(self, item):
+        return "http://freesound.org/people/" + str(item['username'])
+         
+    def item_pubdate(self, item):
+        return item['created']
+
+
+class SoundPoolInfoHandler(Feed):
+    title = "Freesound"
+    link = "http://freesound.org/"
+
+    def items(self):
+        return []
+
+    def item_title(self, item):
+        return ""
+
+    def item_description(self, item):
+        return ""

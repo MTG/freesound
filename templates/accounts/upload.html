@@ -104,6 +104,17 @@
         height: 130px;
     }
     
+    .html_upload_form{
+    	margin-left: 0px;
+		padding: 0px;
+		border-left: none;
+		background: white;
+		margin-bottom: 0px;  
+		text-align:left;  	
+    }
+    .centered{
+    	text-align:center;
+    }
     
     </style>
 {% endblock %}
@@ -132,10 +143,14 @@
         <h3>Formats</h3>
         <p>We prefer <strong>wav, aif and flac</strong>, but we support ogg and mp3 too. For very large files please use some compressed format. Uploading more than 1G at once will fail.
     </div>
+    
     <br style="clear: both;">
 </div>
 <br>
 <br>
+
+
+
 
 <div id="buttons_container">
 <div id="upload_button_block">
@@ -201,8 +216,29 @@
         removeFromQueue(fileId);
 
     }
+    
+    
 </script>
+  {% if no_flash %}
+        <form method="POST" enctype="multipart/form-data" action="/home/upload/html/" class="html_upload_form"
+        onSubmit="$('#html_upload_button').attr('disabled', 'true');">{% csrf_token %}
+        {{form.as_p}}
+         <input type="submit" value="Upload file" id="html_upload_button" />
+        </form>
+        {% if success %}
 <p>
+<br/>
+<b>{{uploaded_file}} uploaded successfully</b>
+</p>
+{% endif %}
+
+
+{% if error %}
+<p>
+<b>There was an error uploading the file</b>
+</p>
+{% endif %}
+{% else %}
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
     <param name="movie" value="{{media_url}}swf/upload.swf" />
     <param name="flashvars" value="sessionid={{request.session.session_key}}" />
@@ -224,13 +260,15 @@
     </object>
     <!--<![endif]-->
 </object>
-</p><p>
+<p>
 <img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
 Hint: you can upload multiple files at once</p>
-</ul>
+{% endif %}
+  
 </div>
 
 <div id="describe_button_block">
+
 <p><a id="describe_a" href="{% url accounts-describe %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
 <p>Before your sounds show up on the web site you'll have to describe them</p>
 </div>
@@ -238,6 +276,15 @@ Hint: you can upload multiple files at once</p>
 <div id="upload-progress-container" style="display:none">
 <span style="clear:both"/>
 </div>
+<br/>
 
+
+<p class="centered">
+{% if no_flash %}
+<a href="{% url accounts-upload %}"> switch to flash version </a>
+{% else %}
+<a href="{% url accounts-upload-html %}"> switch to non-flash version </a>
+{% endif %}
+</p>
 </div><!-- #upload_page -->
 {% endblock %}

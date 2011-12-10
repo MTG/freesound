@@ -4,7 +4,7 @@ from django.core.cache import cache
 from accounts.models import Profile
 
 def get_last_action_time(user):
-    now = datetime.now()
+    now = datetime.now() - timedelta(seconds=10*60)
 
     if not user.is_authenticated():
         return now
@@ -28,7 +28,7 @@ def get_last_action_time(user):
             profile.save()
 
         # give the user 10 minutes to read all threads before marking them
-        cache.set(cache_key, now, 5*60)
+        cache.set(cache_key, now, 10*60)
 
     return last_action_time
 
@@ -38,6 +38,6 @@ def context_extra(request):
                    'GOOGLE_API_KEY': settings.GOOGLE_API_KEY }
 
     if any(map(lambda s: request.get_full_path().startswith(s), settings.LAST_ACTION_TIME_URLS)):
-        return_dict['last_action_time'] = get_last_action_time(request.user) - timedelta(seconds=10*60)
+        return_dict['last_action_time'] = get_last_action_time(request.user)
     
     return return_dict

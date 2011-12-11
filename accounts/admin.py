@@ -3,9 +3,9 @@ from django.contrib import admin
 from accounts.models import Profile
 
 class ProfileAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user', ) 
+    raw_id_fields = ('user', 'geotag') 
     list_display = ('user', 'home_page', 'signature', 'is_whitelisted')
-    ordering = ('user__username', )
+    ordering = ('id', )
     list_filter = ('is_whitelisted', 'wants_newsletter', )
     search_fields = ('=user__username', )
 

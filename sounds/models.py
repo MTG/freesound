@@ -152,7 +152,7 @@ class Sound(SocialModel):
     public = PublicSoundManager()
 
     def __unicode__(self):
-        return u"%s by %s" % (self.base_filename_slug, self.user)
+        return self.base_filename_slug
 
     def friendly_filename(self):
         filename_slug = slugify(os.path.splitext(self.original_filename)[0])
@@ -367,7 +367,7 @@ class Pack(SocialModel):
     num_downloads = models.PositiveIntegerField(default=0)
 
     def __unicode__(self):
-        return u"%s by %s" % (self.name, self.user)
+        return self.name
 
     @models.permalink
     def get_absolute_url(self):

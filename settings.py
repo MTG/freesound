@@ -133,7 +133,7 @@ SIMILAR_SOUNDS_TO_CACHE = 100 # for the similarity service
 SIMILARITY_CACHE_TIME = 60*60*1
 DEFAULT_SIMILARITY_PRESET = 'lowlevel'
 
-logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
+# logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 

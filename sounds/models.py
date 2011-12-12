@@ -410,11 +410,13 @@ class Pack(SocialModel):
     def create_zip(self):
         import zipfile
         from django.template.loader import render_to_string
+        logger = logging.getLogger("audio")
         
         num_pending = self.sound_set.exclude(processing_state="OK", moderation_state="OK").count()
-        if num_pending > 0: return
         
-        logger = logging.getLogger("audio")
+        if num_pending > 0: 
+            logger.info("Omitting zip for pack %d due to unmoderated or unprocessed sounds" % self.id)
+            return
 
         logger.info("creating pack zip for pack %d" % self.id)
         logger.info("\twill save in %s" % self.locations("path"))

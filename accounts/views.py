@@ -496,10 +496,7 @@ def describe_sounds(request):
                 sound.process()
         except Exception, e:
             audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
-            
-        for pack in set(dirty_packs):
-            pack.process()
-                
+                            
         if len(request.session['describe_sounds']) <= 0:
             msg = 'You have described all the selected files.'
             messages.add_message(request, messages.WARNING, msg)

@@ -271,17 +271,11 @@ def sound_edit(request, username, sound_id):
             data = pack_form.cleaned_data
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
-                if sound.pack:
-                    sound.pack.process()
                 sound.pack = pack
             else:
                 new_pack = data["pack"]
                 old_pack = sound.pack
                 if new_pack != old_pack:
-                    if old_pack:
-                        old_pack.process()
-                    if new_pack:
-                        new_pack.process()
                     sound.pack = new_pack
             sound.mark_index_dirty()
             invalidate_template_cache("sound_header", sound.id, True)

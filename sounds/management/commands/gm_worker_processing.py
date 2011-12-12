@@ -59,7 +59,8 @@ class Command(BaseCommand):
         pack_id  = gearman_job.data
         pack = Pack.objects.get(id=pack_id)
         pack.create_zip()
-
+        return 'true'
+    
     def task_process_x(self, gearman_worker, gearman_job, func):
         sound_id = gearman_job.data
         self.write_stdout("Processing sound with id %s\n" % sound_id)

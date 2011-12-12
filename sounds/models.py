@@ -10,13 +10,13 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random, datetime, gearman, tempfile
+import os, logging, random, datetime, gearman, tempfile, shutil
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
 from search.views import get_pack_tags
 from django.db.models import Count
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.contrib.contenttypes import generic
 from similarity.client import Similarity
 
@@ -364,6 +364,11 @@ def delete_from_external_indexes(sender,instance, **kwargs):
     Similarity.delete(instance.id)
 post_delete.connect(delete_from_external_indexes, sender=Sound)
 
+def recreate_pack(sender,instance,**kwargs):
+    if instance.moderation_state=="OK":
+        instance.pack.process()
+    
+post_save.connect(recreate_pack, sender=Sound)
 
 class Pack(SocialModel):
     user = models.ForeignKey(User)
@@ -400,18 +405,21 @@ class Pack(SocialModel):
     def process(self):
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         gm_client.submit_job("create_pack_zip", str(self.id), wait_until_complete=False, background=True)
-        audio_logger.info("Send pack with id %s to queue 'create_pack_zips'" % self.id)
+        audio_logger.info("Send pack with id %s to queue 'create_pack_zip'" % self.id)
         
     def create_zip(self):
         import zipfile
         from django.template.loader import render_to_string
-
+        
+        num_pending = self.sound_set.exclude(processing_state="OK", moderation_state="OK").count()
+        if num_pending > 0: return
+        
         logger = logging.getLogger("audio")
 
         logger.info("creating pack zip for pack %d" % self.id)
         logger.info("\twill save in %s" % self.locations("path"))
         tmp_file = tempfile.mkstemp()
-        zip_file = zipfile.ZipFile(tmp_file, "w", zipfile.ZIP_STORED, True)
+        zip_file = zipfile.ZipFile(tmp_file[1], "w", zipfile.ZIP_STORED, True)
 
         logger.info("\tadding attribution")
         licenses = License.objects.all()
@@ -419,14 +427,14 @@ class Pack(SocialModel):
         zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
 
         logger.info("\tadding sounds")
+        
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
             path = sound.locations("path")
             logger.info("\t- %s" % os.path.normpath(path))
             zip_file.write(path, sound.friendly_filename().encode("utf-8"))
 
         zip_file.close()
-        os.rename(tmp_file.name,self.locations("path"))
-        os.unlink(tmp_file.name)
+        shutil.move(tmp_file[1],self.locations("path"))
 
         logger.info("\tall done")
 

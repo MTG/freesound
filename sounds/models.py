@@ -365,7 +365,7 @@ def delete_from_external_indexes(sender,instance, **kwargs):
 post_delete.connect(delete_from_external_indexes, sender=Sound)
 
 def recreate_pack(sender,instance,**kwargs):
-    if instance.moderation_state=="OK":
+    if instance.moderation_state=="OK" and instance.pack:
         instance.pack.process()
     
 post_save.connect(recreate_pack, sender=Sound)

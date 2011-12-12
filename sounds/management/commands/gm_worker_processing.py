@@ -3,7 +3,7 @@
 This django-admin command runs a Gearman worker for processing sounds.
 """
 
-import gearman, sys, traceback, json
+import gearman, sys, traceback, json, time
 from django.core.management.base import BaseCommand
 from utils.audioprocessing.freesound_audio_processing import process
 from utils.audioprocessing.essentia_analysis import analyze
@@ -56,6 +56,8 @@ class Command(BaseCommand):
         return self.task_process_x(gearman_worker, gearman_job, process)
 
     def task_create_pack_zip(self, gearmanworker, gearman_job):
+        # dirty hack: sleep 1 sec while the transaction finishes at the other end
+        time.sleep(1)
         pack_id  = gearman_job.data
         self.write_stdout("Processing pack with id %s\n" % pack_id)
         pack = Pack.objects.get(id=int(pack_id))

@@ -422,6 +422,7 @@ class Pack(SocialModel):
             if os.path.exists(self.locations("path")):
                 logger.info("Pack %d has now zero sounds, deleting ..." % self.id)
                 os.unlink(self.locations("path"))
+                return
         logger.info("creating pack zip for pack %d" % self.id)
         logger.info("\twill save in %s" % self.locations("path"))
         tmp_file = tempfile.mkstemp()

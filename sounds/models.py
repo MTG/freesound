@@ -417,7 +417,11 @@ class Pack(SocialModel):
         if num_pending > 0: 
             logger.info("Omitting zip for pack %d due to unmoderated or unprocessed sounds" % self.id)
             return
-
+        num_sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").count()
+        if num_sounds == 0:
+            if os.path.exists(self.locations("path")):
+                logger.info("Pack %d has now zero sounds, deleting ..." % self.id)
+                os.unlink(self.locations("path"))
         logger.info("creating pack zip for pack %d" % self.id)
         logger.info("\twill save in %s" % self.locations("path"))
         tmp_file = tempfile.mkstemp()

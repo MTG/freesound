@@ -57,8 +57,11 @@ class Command(BaseCommand):
 
     def task_create_pack_zip(self, gearmanworker, gearman_job):
         pack_id  = gearman_job.data
-        pack = Pack.objects.get(id=pack_id)
+        self.write_stdout("Processing pack with id %s\n" % pack_id)
+        pack = Pack.objects.get(id=int(pack_id))
+        self.write_stdout("Found pack with id %d\n" % pack.id)
         pack.create_zip()
+        self.write_stdout("Finished creating zip")
         return 'true'
     
     def task_process_x(self, gearman_worker, gearman_job, func):

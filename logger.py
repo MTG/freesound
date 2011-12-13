@@ -12,10 +12,6 @@ LOGGING = {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': '/var/log/freesound/error500.log'
         },
-        'testlogfile': {
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': '/var/log/freesound/testlog.log'
-        },
         'stderr': {
             'class': 'logging.StreamHandler'
         },
@@ -50,16 +46,10 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
-            'handlers': ['testlogfile'],
-            'level': 'INFO',
+            'handlers': ['errorlogfile'],
+            'level': 'ERROR',   # only catches 5xx not 4xx messages
             'propagate': True,
         },
-        'django': {
-            'handlers': ['errorlogfile'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        
         'processing': {
             'handlers': ['audioprocessinglogfile'],
             'level': 'INFO',

@@ -8,17 +8,22 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
+        'standard': {
+            'format': '[%(asctime)s] # %(levelname)s    # %(message)s'
+        },
         'worker': {
-            'format': '%(asctime)s %(process)d %(thread)d %(message)s'
+            'format': '[%(asctime)s] # %(levelname)s    # [%(process)d] %(message)s'
         },
     },
     'handlers': {
         'errorlogfile': {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': '/var/log/freesound/error500.log',
+            'formatter': 'standard'
         },
         'stderr': {
-            'class': 'logging.StreamHandler'
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard'
         },
         'audioprocessinglogfile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
@@ -31,23 +36,27 @@ LOGGING = {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/web.log',
             'when': 'midnight',
-            'backupCount': '14'
+            'backupCount': '14',
+            'formatter': 'standard'
         },
         'searchlogfile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/search.log',
             'when': 'midnight',
-            'backupCount': '14'
+            'backupCount': '14',
+            'formatter': 'standard'
         },
         'uploadlogfile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/upload.log',
             'when': 'midnight',
-            'backupCount': '14'
+            'backupCount': '14',
+            'formatter': 'standard'
         },
         'mail': {
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': '/var/log/freesound/mail.log'
+            'filename': '/var/log/freesound/mail.log',
+            'formatter': 'standard'
         },
     },
     'loggers': {

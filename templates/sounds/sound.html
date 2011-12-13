@@ -5,6 +5,7 @@
 {% load ratings %}
 {% load cache %}
 {% load absurl %}
+{% load bookmark_form %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
 
@@ -170,6 +171,10 @@
                 <li><em>Sound is processing, cannot edit.</em></li>
             {% endif %}
         {% endif %}
+        
+        <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
+        {% bookmark_form request.user sound request.path %}
+        
         
         {% if request.user.is_staff %}
             <li><a id="admin_link" class="icon" href="{% url admin:sounds_sound_change sound.id %}">Edit sound in the admin</a></li>

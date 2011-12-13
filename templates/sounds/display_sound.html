@@ -127,6 +127,16 @@
                 <img class="cc_license" src="{{media_url}}images/licenses/bync.png" height="16" alt="Creative Commons Attribution Non-Commercial license" title="This sound is licensed under the Creative Commons Attribution Non-Commercial license." />
             {% endif %}
             <!-- /license icons -->
+            
+            <!-- Bookmark icon -->
+            {% comment %}
+            <a class="bookmark" href="{% url sound-add-to-my-bookmarks sound.user.username sound.id %}">
+                <img src="{{media_url}}images/fugue-icons/icons/address-book-blue.png" width="16" height="16" alt="Add to my bookmarks" title="Add this sound to my bookmarks" />
+            </a>
+            {% endcomment %}
+            
+            <!-- /Bookmark icon -->
+            
         </div><!-- .sound_attributes -->
 
     </div><!-- .sample_information -->

@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     'tickets',
     'gunicorn',
     'south',
+    'bookmarks',
     #'test_utils', # Don't use this in production!
 )
 

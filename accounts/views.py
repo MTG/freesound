@@ -739,8 +739,9 @@ def delete(request):
 
             link_generated_time = float(now)
             if abs(time.time() - link_generated_time) < 10:
-                from forum.models import *
-                from comments.models import *
+                from forum.models import Post, Thread
+                from comments.models import Comment
+                from sounds.models import DeletedSound
             
                 deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
             
@@ -748,13 +749,17 @@ def delete(request):
                     post.author = deleted_user
                     post.save()
                 
-                for thread in Post.objects.filter(author=request.user):
+                for thread in Thread.objects.filter(author=request.user):
                     thread.author = deleted_user
                     thread.save()
                     
                 for comment in Comment.objects.filter(user=request.user):
                     comment.user = deleted_user
                     comment.save()
+
+                for sound in DeletedSound.objects.filter(user=request.user):
+                    sound.user = deleted_user
+                    sound.save()
 
                 request.user.delete()
                 return HttpResponseRedirect(reverse("front-page"))

@@ -1,7 +1,7 @@
 {% extends "accounts/_people.html" %}
 {% load bookmark_form %}
 {% load paginator %}
-{% block title %}{% if owner %}My bookmarks{% else %}Bookmarks by {{user.username}}{% endif %}{% endblock %}
+{% block title %}{% if owner %}Your bookmarks{% else %}Bookmarks by {{user.username}}{% endif %}{% endblock %}
 {% block section_content %}
 
 
@@ -42,7 +42,7 @@
 </script>
 
 
-<h1>{% if owner %}My bookmarks{% else %}Bookmarks by <a href="{% url account user.username%}">{{user.username}}</a>{% endif %}</h1>
+<h1>{% if owner %}Your bookmarks{% else %}Bookmarks by <a href="{% url account user.username%}">{{user.username}}</a>{% endif %}</h1>
 <div id="content">
     {% if all %}
         <h3>All bookmarks</h3>

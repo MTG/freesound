@@ -64,8 +64,8 @@ def bookmarks(request, username, category_id = None):
                     sound_name = bookmark.sound.original_filename
                     msg = "Removed bookmark for sound \"" + sound_name + "\" from category \"" + category_to_remove.name + "\"."
                     messages.add_message(request, messages.WARNING, msg)
-    else:
-        form_bookmark_category = BookmarkCategoryForm()
+    
+    form_bookmark_category = BookmarkCategoryForm()
     
     are_bookmarks = Bookmark.objects.select_related("sound").filter(user=user).exists()
     n_all = Bookmark.objects.select_related("sound").filter(user=user).count()

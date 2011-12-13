@@ -33,7 +33,7 @@
             <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} new sound{{ new_sounds|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
             {% endif %}
             <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
-            <li>My <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
+            <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
         </ul>
         </div>
         <br style="clear: both;" />

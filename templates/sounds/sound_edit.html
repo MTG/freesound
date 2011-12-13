@@ -60,13 +60,11 @@
     <input type="submit" name="submit" value="submit" />
 </form>
 
-{% comment %}
 <h3>Delete</h3>
 <a id="delete"></a>
 <p>
     <a href="{% url sound-delete sound.user.username sound.id %}">Delete this sound</a>
 </p>
-{% endcomment %}
 
 <script type="text/javascript">
     var map = new GMap2($("#map").get(0));

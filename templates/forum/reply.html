@@ -7,14 +7,20 @@
 {% block forum_search %}{% endblock %}
 
 {% block section_content %}
- 
+
 <form method="post" action=".">{% csrf_token %}
 {% include 'forum/html_explanation.html' %}
-
 {{form.as_p}}
 <input type="submit" value="reply" />
 </form>
-
-
+<h2>Latest posts in thread:</h2>
+<div style="height:400px; overflow: auto; margin: 10px;">
+{% for post in latest_posts %}
+    <p>
+    <a href="{% url account post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago:</br>
+    {{post.body|safe|linebreaks}}
+    </p>
+{% endfor %}
+</div>
 
 {% endblock %}

@@ -91,7 +91,7 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 ROOT_URLCONF = 'urls'
 
@@ -134,6 +134,8 @@ SOUNDS_PER_DESCRIBE_ROUND = 4
 SIMILAR_SOUNDS_TO_CACHE = 100 # for the similarity service
 SIMILARITY_CACHE_TIME = 60*60*1
 DEFAULT_SIMILARITY_PRESET = 'lowlevel'
+
+DELETED_USER_ID = 1
 
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
 

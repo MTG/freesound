@@ -52,7 +52,7 @@ class Thread(models.Model):
         (1, "Regular"),
         (2, "Sticky"),
     )
-    status = models.PositiveSmallIntegerField(choices=THREAD_STATUS_CHOICES, default=1)
+    status = models.PositiveSmallIntegerField(choices=THREAD_STATUS_CHOICES, default=1, db_index=True)
 
     num_posts = models.PositiveIntegerField(default=0)
     last_post = models.OneToOneField('Post', null=True, blank=True, default=None,

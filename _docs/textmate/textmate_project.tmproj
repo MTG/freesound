@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>../../../Freesound/settings.py</string>
+	<string>../../../Freesound/forum/views.py</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -13,8 +13,6 @@
 			<string>Freesound</string>
 			<key>regexFolderFilter</key>
 			<string>!.*/(\.[^/]*|CVS|_darcs|_MTN|\{arch\}|blib|.*~\.nib|.*\.(framework|app|pbproj|pbxproj|xcode(proj)?|bundle))$</string>
-			<key>selected</key>
-			<true/>
 			<key>sourceDirectory</key>
 			<string>../../../Freesound</string>
 		</dict>
@@ -23,40 +21,24 @@
 	<integer>200</integer>
 	<key>metaData</key>
 	<dict>
-		<key>../../../Freesound/_docs/django_admin_fields.txt</key>
+		<key>../../../Freesound/forum/views.py</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>5</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>14</integer>
+				<integer>11</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
-		</dict>
-		<key>../../../Freesound/settings.py</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>12</integer>
-				<key>line</key>
-				<integer>58</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>19</integer>
 		</dict>
 	</dict>
 	<key>openDocuments</key>
 	<array>
-		<string>../deployment.graffle</string>
-		<string>../../../Freesound/_docs/django_admin_fields.txt</string>
-		<string>../../../Freesound/settings.py</string>
+		<string>../../../Freesound/forum/views.py</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>

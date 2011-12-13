@@ -7,6 +7,11 @@ Created on Dec 12, 2011
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'workers': {
+            'format': '%(asctime)s %(process)d %(thread)d %(message)s'
+        },
+    },
     'handlers': {
         'errorlogfile': {
             'class': 'logging.handlers.WatchedFileHandler',
@@ -53,6 +58,7 @@ LOGGING = {
         'processing': {
             'handlers': ['audioprocessinglogfile'],
             'level': 'INFO',
+            'formatter': 'verbose',
             'propagate': False,
         },
         'web': {

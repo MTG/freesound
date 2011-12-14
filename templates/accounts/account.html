@@ -35,7 +35,7 @@
             {% if user.profile.num_sounds %}
             <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
             {% endif %}
-            <li>My <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
+            <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
         </ul>
         </div>
         <br style="clear: both;" />

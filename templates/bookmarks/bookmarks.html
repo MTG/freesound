@@ -1,11 +1,18 @@
-{% extends "accounts/_people.html" %}
+{% extends "accounts/_notab.html" %}
+
 {% load bookmark_form %}
 {% load paginator %}
 {% block title %}{% if owner %}Your bookmarks{% else %}Bookmarks by {{user.username}}{% endif %}{% endblock %}
+
+{% block tab_home_active %}{% if owner %}active_tab{% endif %}{% endblock %}
+{% block tab_people_active %}{% if not owner %}active_tab{% endif %}{% endblock %}
+
 {% block section_content %}
 
 
 <script type="text/javascript">
+    
+    /*
     var selected_ids = []
     
     function toggle_bookmark_id(id)
@@ -37,7 +44,7 @@
 		toggle_bookmark_id({{bookmark.id}})
 	    }
 	{% endfor %}
-    }
+    }*/
     
 </script>
 
@@ -60,22 +67,26 @@
 	
 	{% show_paginator paginator page current_page request "bookmark" %}
 	
+	{% comment %}
 	{% if owner %}
 	<div style="margin-top:-25px;margin-bottom:32px">
 	    <p style="margin-top:-15px;margin-bottom:0px">Select <a onclick="select_all()">all</a>/<a onclick="select_none()">none</a></p>
 	</div>
 	{% endif %}
+	{% endcomment %}
 	
 	<div style="margin-top:-15px;margin-bottom:15px">
 	{% for bookmark in page.object_list %}
 	    
 	    <div>
 		
+	    {% comment %}
 	    {% if owner %}
 	    <div class="infowindow_player" style="width:15px;height:20px;vertical-align:top;display:inline-block">
 	        <input onchange="toggle_bookmark_id({{bookmark.id}})" id="id_check_{{bookmark.id}}" name="check_{{bookmark.id}}" type="checkbox">
 	    </div>
 	    {% endif %}
+	    {% endcomment %}
 	    
 	    {% with bookmark.sound as sound%}
 		<div class="infowindow_player" style="width:45px;height:20px;display:inline-block">
@@ -127,6 +138,7 @@
 	
     </div><!-- #bookmark_categories -->
     
+    {% comment %}
     {% if owner %}
     <div id="actions" class="content_box">
     <h3>Organize your bookmarks</h3>
@@ -163,20 +175,9 @@
 	</p>
     </form>
     </div>
-    {% comment %}
-    </div><!-- #attribution_list -->
-	
-    
-	<div id="attribution_list" class="content_box">
-	<h3>Attribution</h3>
-    
-	<p>TODO: attribution list for the category</p>
-	
-    </div><!-- #add_bookmark_categories -->
-    {% endcomment %}
     
     {% endif %}
-
+    {% endcomment %}
    
 </div><!-- #sidebar -->
 

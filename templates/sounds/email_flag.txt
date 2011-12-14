@@ -10,7 +10,10 @@ A sound was flagged:
 
 Sound: {% absurl sound flag.sound.user.username flag.sound.id %}
 {% if flag.reporting_user %}
-Reporting user: {% absurl account flag.reporting_user.username %}
+Reporting user:
+
+<{% absurl account flag.reporting_user.username %}>
+
 {% endif %}
 Reason type: {{flag.get_reason_type_display}}
 

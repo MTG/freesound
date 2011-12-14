@@ -39,6 +39,13 @@ LOGGING = {
             'backupCount': '14',
             'formatter': 'standard'
         },
+        'api': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': '/var/log/freesound/api.log',
+            'when': 'midnight',
+            'backupCount': '14',
+            'formatter': 'standard'
+        },
         'searchlogfile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/search.log',
@@ -65,8 +72,13 @@ LOGGING = {
             'level': 'ERROR',   # only catches 5xx not 4xx messages
             'propagate': True,
         },
-        'processing': {
+        'audio': {
             'handlers': ['audioprocessinglogfile'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'api': {
+            'handlers': ['api'],
             'level': 'INFO',
             'propagate': False,
         },

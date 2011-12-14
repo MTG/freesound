@@ -51,43 +51,20 @@
 
 <h1>{% if owner %}Your bookmarks{% else %}Bookmarks by <a href="{% url account user.username%}">{{user.username}}</a>{% endif %}</h1>
 <div id="content">
-    {% if all %}
-        <h3>All bookmarks</h3>
-    {% else %}
-    {% if uncategorized %}
-	<h3>Uncategorized bookmarks</h3>
-    {% else %}
     {% if category %}
-	<h3>Bookmarks in "{{category.name}}"</h3>
-    {% endif %}
-    {% endif %}
+        <h3>Bookmarks in "{{category.name}}"</h3>
+    {% else %}
+	<h3>Uncategorized bookmarks</h3>
     {% endif %}
     
     {% if bookmarked_sounds %}
 	
 	{% show_paginator paginator page current_page request "bookmark" %}
 	
-	{% comment %}
-	{% if owner %}
-	<div style="margin-top:-25px;margin-bottom:32px">
-	    <p style="margin-top:-15px;margin-bottom:0px">Select <a onclick="select_all()">all</a>/<a onclick="select_none()">none</a></p>
-	</div>
-	{% endif %}
-	{% endcomment %}
-	
 	<div style="margin-top:-15px;margin-bottom:15px">
 	{% for bookmark in page.object_list %}
 	    
 	    <div>
-		
-	    {% comment %}
-	    {% if owner %}
-	    <div class="infowindow_player" style="width:15px;height:20px;vertical-align:top;display:inline-block">
-	        <input onchange="toggle_bookmark_id({{bookmark.id}})" id="id_check_{{bookmark.id}}" name="check_{{bookmark.id}}" type="checkbox">
-	    </div>
-	    {% endif %}
-	    {% endcomment %}
-	    
 	    {% with bookmark.sound as sound%}
 		<div class="infowindow_player" style="width:45px;height:20px;display:inline-block">
 		    {% include "sounds/player_small.html" %}
@@ -95,7 +72,11 @@
 	    {% endwith %}
 	    
 	    <div style="width:475px;height:25px;vertical-align:middle;font-size:12px;display:inline-block">
-		{% if bookmark.name %}{{bookmark.name}} ({% endif %}<a href="{% url sound bookmark.sound.user.username bookmark.sound.id %}">{{bookmark.sound.original_filename}}</a>{% if bookmark.name %}){% endif %} by <a href="{% url account bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>
+		<a href="{% url sound bookmark.sound.user.username bookmark.sound.id %}">{% if bookmark.name %}{{bookmark.name}}{% else %}{{bookmark.sound.original_filename}}{%endif%}</a> by <a href="{% url account bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>{% if bookmark.category %} under category <a href="{% url bookmarks-for-user-for-category user.username bookmark.category.id %}" {% if category.id = bookmark.category.id %}style="font-weight:bold"{% endif %}>{{bookmark.category.name}}</a>{% endif %}
+		
+		{% if owner %}
+		    <a href="{% url delete-bookmark request.user.username bookmark.id %}?next={{request.path}}&page={{current_page}}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete bookmark"/></a>
+		{% endif %}
 	    </div>
 	    
 	    </div>
@@ -120,13 +101,12 @@
  
 	{% if bookmark_categories %}
 	    <ul>
-		<li><a href="{% url bookmarks-for-user user.username %}" {% if all %}style="font-weight:bold"{% endif %}>All bookmarks</a> ({{n_all}} bookmark{{ n_all|pluralize }})</li>
-		<li><a href="{% url bookmarks-for-user-uncategorized user.username %}" {% if uncategorized %}style="font-weight:bold"{% endif %}>Uncategorized bookmarks</a> ({{n_uncat}} bookmark{{ n_uncat|pluralize }})</li>
+		<li><a href="{% url bookmarks-for-user user.username %}" {% if not category %}style="font-weight:bold"{% endif %}>Uncategorized</a> ({{n_uncat}} bookmark{{ n_uncat|pluralize }})</li>
 		
 	    {% for cat in bookmark_categories %}
 		<li><a href="{% url bookmarks-for-user-for-category user.username cat.id %}" {% if category.id = cat.id %}style="font-weight:bold"{% endif %}>{{cat.name}}</a> ({{cat.bookmarks.count}} bookmark{{ cat.bookmarks.count|pluralize }})
 		
-		{% if owner %} <a href="{% url delete-bookmark-category user.username cat.id %}{% if cat.id != category.id %}?next={{request.path}}?page={{current_page}}{% endif %}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete {{cat.name}} category"/></a>{% endif %}</li>
+		{% if owner %}<a href="{% url delete-bookmark-category user.username cat.id %}{% if cat.id != category.id %}?next={{request.path}}&page={{current_page}}{% endif %}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete {{cat.name}} category"/></a>{% endif %}</li>
 		
 	    {% endfor %}
 	    </ul>
@@ -141,8 +121,7 @@
     {% comment %}
     {% if owner %}
     <div id="actions" class="content_box">
-    <h3>Organize your bookmarks</h3>
-    <p>Create a new category:</p>
+    <h3>Create a new category</h3>
     <form action="" method="post" style="margin-left:-10px;margin-top:-10px">{% csrf_token %}
 	<p style="margin-top:-10px">
 	    Name: {{form_bookmark_category.name}}
@@ -150,34 +129,10 @@
 	    <br style="clear"/>
 	</p>
     </form>
-    
-    
-    <p>Select multiple bookmarks from the list on the left and perform one of the following actions:</p>
-    <form action="" method="post" style="margin-left:-10px;margin-top:-10px" onsubmit="collect_ids()">{% csrf_token %}
-	
-	<p style="margin-top:-10px">
-	    <select name="actions_list" id="id_actions_list" style="width:285px">
-		<option value=-1>-- None --</option>
-		<option value="del">Delete bookmarks</option>
-		{% if category %}	
-		    <option value="rem_cat_{{category.id}}">Remove bookmarks from category "{{category.name}}"</option>
-		{% endif %}
-		{% if bookmark_categories %}
-		    <option value=-1>Add category...</option>
-		    {% for cat in bookmark_categories %}
-			<option value="add_cat_{{cat.id}}">&nbsp&nbsp&nbsp&nbsp {{cat.name}}</option>
-		    {% endfor %}
-		{% endif %}
-	    </select>
-	    <input type="hidden" value="" id="id_list_ids" name="list_ids">
-	    <input type="submit" value="Perform the action" name="action" style="float:right;margin-top:8px"/>
-	    <br style="clear"/>
-	</p>
-    </form>
     </div>
-    
     {% endif %}
     {% endcomment %}
+    
    
 </div><!-- #sidebar -->
 

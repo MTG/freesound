@@ -72,7 +72,7 @@
 	    {% endwith %}
 	    
 	    <div style="width:475px;height:25px;vertical-align:middle;font-size:12px;display:inline-block">
-		<a href="{% url sound bookmark.sound.user.username bookmark.sound.id %}">{% if bookmark.name %}{{bookmark.name}}{% else %}{{bookmark.sound.original_filename}}{%endif%}</a> by <a href="{% url account bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>{% if bookmark.category %} under category <a href="{% url bookmarks-for-user-for-category user.username bookmark.category.id %}" {% if category.id = bookmark.category.id %}style="font-weight:bold"{% endif %}>{{bookmark.category.name}}</a>{% endif %}
+		<a href="{% url sound bookmark.sound.user.username bookmark.sound.id %}">{% if bookmark.name %}{{bookmark.name}}{% else %}{{bookmark.sound.original_filename}}{%endif%}</a> by <a href="{% url account bookmark.sound.user.username %}">{{bookmark.sound.user.username}}</a>{% if bookmark.category %} under category <a href="{% url bookmarks-for-user-for-category user.username bookmark.category.id %}">{{bookmark.category.name}}</a>{% endif %}
 		
 		{% if owner %}
 		    <a href="{% url delete-bookmark request.user.username bookmark.id %}?next={{request.path}}&page={{current_page}}"><img  style="vertical-align: bottom;" src="{{media_url}}images/cancel.png" width="16" height="16" alt="Delete bookmark"/></a>

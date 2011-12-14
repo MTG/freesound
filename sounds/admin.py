@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from sounds.models import Download, License, Sound, Pack, Flag
+from sounds.models import Download, License, Sound, Pack, Flag, DeletedSound
 
 class LicenseAdmin(admin.ModelAdmin):
     list_display = ('name', 'deed_url', 'legal_code_url', 'change_order')
@@ -19,13 +19,16 @@ class SoundAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'pack', 'sources')
     list_display = ('id', 'user', 'original_filename', 'license', 'created', 'moderation_state')
     list_filter = ('moderation_state', 'license', 'processing_state')
-
 admin.site.register(Sound, SoundAdmin)
+
+class DeletedSoundAdmin(admin.ModelAdmin):
+    raw_id_fields = ('user',)
+    list_display = ('sound_id', 'user')
+admin.site.register(DeletedSound, DeletedSoundAdmin)
 
 class PackAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_display = ('user', 'name', 'created')
-
 admin.site.register(Pack, PackAdmin)
 
 

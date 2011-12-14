@@ -344,10 +344,12 @@ class Sound(SocialModel):
 
 
 class DeletedSound(models.Model):
+    user = models.ForeignKey(User)
     sound_id = models.IntegerField(default=0, db_index=True)
 
 def on_delete_sound(sender,instance, **kwargs):
-    DeletedSound.objects.get_or_create(sound_id=instance.id)
+    if instance.moderation_state == "OK" and instance.processing_state == "OK":
+        DeletedSound.objects.get_or_create(sound_id=instance.id, user=instance.user)
     if instance.geotag:
         instance.geotag.delete()
     delete_sound_from_solr(instance)

@@ -25,7 +25,7 @@ from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
     NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm
 from sounds.management.commands.create_remix_groups import _create_nodes, \
     _create_and_save_remixgroup
-from sounds.models import Sound, Pack, Download, RemixGroup
+from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
@@ -161,7 +161,11 @@ def sound(request, username, sound_id):
             if sound.moderation_state != 'OK' or sound.processing_state != 'OK':
                 raise Http404
     except Sound.DoesNotExist: #@UndefinedVariable
-        raise Http404
+        try:
+            DeletedSound.objects.get(sound_id=sound_id)
+            return render_to_response('sounds/deleted_sound.html', {}, context_instance=RequestContext(request))
+        except DeletedSound.DoesNotExist:
+            raise Http404
 
     tags = sound.tags.select_related("tag__name")
 

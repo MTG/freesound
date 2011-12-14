@@ -65,6 +65,9 @@ def get_random_uploader():
     return random_uploader
 
 def sounds(request):
+    logger.info("info msg")
+    logger.info("info msg")
+    logger.info("info msg")
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]

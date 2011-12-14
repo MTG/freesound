@@ -277,20 +277,11 @@ def sound_edit(request, username, sound_id):
             data = pack_form.cleaned_data
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
-                if sound.pack:
-                    sound.pack.is_dirty = True
-                    sound.pack.save()
                 sound.pack = pack
             else:
                 new_pack = data["pack"]
                 old_pack = sound.pack
                 if new_pack != old_pack:
-                    if old_pack:
-                        old_pack.is_dirty = True
-                        old_pack.save()
-                    if new_pack:
-                        new_pack.is_dirty = True
-                        new_pack.save()
                     sound.pack = new_pack
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
@@ -481,7 +472,7 @@ def pack(request, username, pack_id):
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
-        if pack.is_dirty :
+        if not os.path.exists(pack.locations("path")):
             messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
         
         if num_sounds_ok < pack.num_sounds :

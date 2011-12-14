@@ -10,13 +10,13 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random, datetime, gearman
+import os, logging, random, datetime, gearman, tempfile, shutil
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
 from search.views import get_pack_tags
 from django.db.models import Count
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.contrib.contenttypes import generic
 from similarity.client import Similarity
 
@@ -358,12 +358,17 @@ def on_delete_sound(sender,instance, **kwargs):
     Similarity.delete(instance.id)
 post_delete.connect(on_delete_sound, sender=Sound)
 
+def recreate_pack(sender,instance,**kwargs):
+    if instance.moderation_state=="OK" and instance.pack:
+        instance.pack.process()
+    
+post_save.connect(recreate_pack, sender=Sound)
 
 class Pack(SocialModel):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True, default=None)
-    is_dirty = models.BooleanField(db_index=True, default=True)
+    is_dirty = models.BooleanField(db_index=True, default=False)
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)
@@ -391,15 +396,31 @@ class Pack(SocialModel):
                     path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
                    )
 
+    def process(self):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        gm_client.submit_job("create_pack_zip", str(self.id), wait_until_complete=False, background=True)
+        audio_logger.info("Send pack with id %s to queue 'create_pack_zip'" % self.id)
+        
     def create_zip(self):
         import zipfile
         from django.template.loader import render_to_string
-
         logger = logging.getLogger("audio")
-
+        
+        num_pending = self.sound_set.exclude(processing_state="OK", moderation_state="OK").count()
+        
+        if num_pending > 0: 
+            logger.info("Omitting zip for pack %d due to unmoderated or unprocessed sounds" % self.id)
+            return
+        num_sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").count()
+        if num_sounds == 0:
+            if os.path.exists(self.locations("path")):
+                logger.info("Pack %d has now zero sounds, deleting ..." % self.id)
+                os.unlink(self.locations("path"))
+                return
         logger.info("creating pack zip for pack %d" % self.id)
         logger.info("\twill save in %s" % self.locations("path"))
-        zip_file = zipfile.ZipFile(self.locations("path"), "w", zipfile.ZIP_STORED, True)
+        tmp_file = tempfile.mkstemp()
+        zip_file = zipfile.ZipFile(tmp_file[1], "w", zipfile.ZIP_STORED, True)
 
         logger.info("\tadding attribution")
         licenses = License.objects.all()
@@ -407,15 +428,14 @@ class Pack(SocialModel):
         zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
 
         logger.info("\tadding sounds")
+        
         for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
             path = sound.locations("path")
             logger.info("\t- %s" % os.path.normpath(path))
             zip_file.write(path, sound.friendly_filename().encode("utf-8"))
 
         zip_file.close()
-
-        self.is_dirty = False
-        self.save()
+        shutil.move(tmp_file[1],self.locations("path"))
 
         logger.info("\tall done")
 
@@ -437,9 +457,8 @@ class Pack(SocialModel):
 
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
-        self.is_dirty = True
-        self.save()
-
+        self.process()
+  
     def delete(self):
         """ This deletes all sounds in the pack as well. """
         # TODO: remove from solr?

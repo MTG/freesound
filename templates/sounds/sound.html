@@ -5,6 +5,7 @@
 {% load ratings %}
 {% load cache %}
 {% load absurl %}
+{% load bookmark_form %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}}{% endblock title %}
 
@@ -155,7 +156,7 @@
         <li><a id="geotag_link" class="icon" href="{% url sound-geotag sound.user.username sound.id %}">Geotag</a></li>
         {% endif %}
         {% if sound.remix_group.all.count %}
-        <li><a id="remixes_link" class="icon" href="{% url sound-remixes sound.user.username sound.id %}">Remixes</a></li>
+        <li><a id="remixes_link" class="icon" href="{% url sound-remixes sound.user.username sound.id %}">Remixes and Sources</a></li>
         {% endif %}
         {% if sound.similarity_state == 'OK' %}
         <li><a id="similar_sounds_link" rel="nofollow" class="icon" href="{% url sound-similar sound.user.username sound.id %}">Similar sounds</a></li>
@@ -170,6 +171,16 @@
                 <li><em>Sound is processing, cannot edit.</em></li>
             {% endif %}
         {% endif %}
+        
+        {% if user.is_authenticated %}
+        <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
+        {% bookmark_form request.user sound request.path %}
+        {% endif %}
+        
+        {% if request.user.is_staff %}
+            <li><a id="admin_link" class="icon" href="{% url admin:sounds_sound_change sound.id %}">Edit sound in the admin</a></li>
+        {% endif %}
+        
 
     {% cache 3600 sound_footer_bottom sound.id %}
 

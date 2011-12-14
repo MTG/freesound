@@ -15,7 +15,7 @@
 			{% endif %}
 		</div>
 		
-		{% if forum.last_post.created > last_action_time and forum.last_post.author != request.user %}
+		{% if forum.last_post.created > request.last_action_time and forum.last_post.author != request.user %}
 			<img src="{{media_url}}images/forum_new.png" width="20" height="20" alt="new posts" />
 		{% else %}
 			<img src="{{media_url}}images/forum_nonew.png" width="20" height="20" alt="no new posts" />
@@ -25,5 +25,8 @@
 		{{forum.num_threads}} thread{{forum.num_threads|pluralize}}, {{forum.num_posts}} post{{forum.num_posts|pluralize}}
 	</li>
 {% endfor %}
+<li>
+    <a href="{% url forums-latest-posts %}" class="forum_name">Latest posts</a>
+</li>
 </ul>
 {% endblock %}

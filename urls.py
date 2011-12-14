@@ -10,6 +10,7 @@ import support.views
 import tags.views
 import forum.views
 import comments.views
+import bookmarks.views
 
 admin.autodiscover()
 
@@ -31,6 +32,7 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/delete/$', sounds.views.delete, name="sound-delete"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/similar/$', sounds.views.similar, name="sound-similar"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/downloaders/$', sounds.views.downloaders, name="sound-downloaders"),
+    url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/add_to_my_bookmarks/$', bookmarks.views.add_to_my_bookmarks, name="sound-add-to-my-bookmarks"),
     url(r'^people/(?P<username>[^//]+)/packs/$', sounds.views.packs_for_user, name="packs-for-user"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', sounds.views.pack, name="pack"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
@@ -38,6 +40,13 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/display/$', sounds.views.display_sound_wrapper, name="sound-display"),
     url(r'^people/(?P<username>[^//]+)/downloaded_sounds/$', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
     url(r'^people/(?P<username>[^//]+)/downloaded_packs/$', accounts.views.downloaded_packs, name="user-downloaded-packs"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/$', bookmarks.views.bookmarks, name="bookmarks-for-user"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/uncategorized/$', bookmarks.views.bookmarks, name="bookmarks-for-user-uncategorized"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/$', bookmarks.views.bookmarks, name="bookmarks-for-user-for-category"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/delete/$', bookmarks.views.delete_bookmark_category, name="delete-bookmark-category"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/add/(?P<sound_id>\d+)/$', bookmarks.views.add_bookmark, name="add-bookmark"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/delete/(?P<bookmark_id>\d+)/$', bookmarks.views.delete_bookmark, name="delete-bookmark"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/delete_bookmark/(?P<bookmark_id>\d+)/$', bookmarks.views.delete_bookmark_from_category, name="delete-bookmark-from-category"),
 
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
     url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),

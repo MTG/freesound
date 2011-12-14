@@ -80,7 +80,6 @@ class PublicSoundManager(models.Manager):
     def get_query_set(self):
         return super(PublicSoundManager, self).get_query_set().filter(moderation_state="OK", processing_state="OK")
 
-
 class Sound(SocialModel):
     user = models.ForeignKey(User, related_name='sounds')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -153,7 +152,7 @@ class Sound(SocialModel):
     public = PublicSoundManager()
 
     def __unicode__(self):
-        return u"%s by %s" % (self.base_filename_slug, self.user)
+        return self.base_filename_slug
 
     def friendly_filename(self):
         filename_slug = slugify(os.path.splitext(self.original_filename)[0])
@@ -304,18 +303,6 @@ class Sound(SocialModel):
                 tagged_object = TaggedItem.objects.create(user=self.user, tag=tag_object, content_object=self)
                 tagged_object.save()
 
-    #def delete(self):
-        # remove from solr
-        #delete_sound_from_solr(self)
-        # delete foreignkeys
-        #if self.geotag:
-        #    self.geotag.delete()
-        # delete files
-        #delete_object_files(self, web_logger)
-        # super class delete
-        #super(Sound, self).delete()
-
-
     # N.B. These set functions are used in the distributed processing.
     # They set a single field to prevent overwriting eachother's result in
     # the database, which is what happens if you use Django's save() method.
@@ -355,14 +342,19 @@ class Sound(SocialModel):
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 
-def delete_from_external_indexes(sender,instance, **kwargs):
+
+class DeletedSound(models.Model):
+    sound_id = models.IntegerField(default=0, db_index=True)
+
+def on_delete_sound(sender,instance, **kwargs):
+    DeletedSound.objects.get_or_create(sound_id=instance.id)
     if instance.geotag:
         instance.geotag.delete()
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
     Similarity.delete(instance.id)
-post_delete.connect(delete_from_external_indexes, sender=Sound)
+post_delete.connect(on_delete_sound, sender=Sound)
 
 def recreate_pack(sender,instance,**kwargs):
     if instance.moderation_state=="OK" and instance.pack:
@@ -380,7 +372,7 @@ class Pack(SocialModel):
     num_downloads = models.PositiveIntegerField(default=0)
 
     def __unicode__(self):
-        return u"%s by %s" % (self.name, self.user)
+        return self.name
 
     @models.permalink
     def get_absolute_url(self):

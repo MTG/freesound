@@ -1,0 +1,70 @@
+<script type="text/javascript">
+    function show_hide_category_name_field(id)
+    {
+        if ($("#id_categories_list_" + id.toString()).val() == -2){
+            $("#category_name_field_" + id.toString()).show('blind', {}, 500, function() {});
+        }else{
+            $("#category_name_field_" + id.toString()).hide();
+        }
+    }
+    
+    function show_hide_bookmark_form(id)
+    {
+        $("#bookmark_form_"  + id.toString()).toggle('blind', {}, 500, function() {});
+    }
+
+</script>
+
+
+<div id="bookmark_form_{{sound.id}}" class="bookmark_form" style="display:none;width:240px">
+<form action="{% url add-bookmark sound.user.username sound.id %}?next={{ next }}" method="post">{% csrf_token %}
+
+<p>
+    {% if not new_bookmark %}
+    This sound has already been bookmarked{% if not bookmarked_categories_for_sound %}{% if not bookmark_name %}.{% endif %}{% endif %}
+    {% endif %}
+    
+    {% if bookmark_name %}
+    with the name <strong>{{bookmark_name}}</strong>{% if not bookmarked_categories_for_sound %}.{% endif %}
+    {% endif %}
+    
+    {% if bookmarked_categories_for_sound %}
+        under categories:
+        {% for cat in bookmarked_categories_for_sound %}
+            <strong>{{cat.name}}</strong>{% if forloop.last %}.{% else %}{% if forloop.revcounter == 2%} and {% else %}, {% endif %}{% endif %}
+        {% endfor %}
+    {% endif %}
+</p>
+
+<p>
+    Bookmark name: <input id="bookmark_name" name="name" type="text" value="{{bookmark_name}}" style="width:135px;height:10px;font-size:10px"></input>
+</p>
+<p>
+    {% if not new_bookmark %}Add category:{% else %}Category:{% endif %}
+    <select onchange="show_hide_category_name_field({{sound.id}})" name="categories_list" id="id_categories_list_{{sound.id}}" style="width:{% if not new_bookmark %}162{% else %}182{% endif %}px">
+    <option value=-1>-- None --</option>
+    {% for cat in categories %}
+        <option value="{{ cat.id }}">{{cat.name}}</option>
+    {% endfor %}
+    <option value=-2>-- New category... --</option>
+    </select>
+</p>
+<p id="category_name_field_{{sound.id}}" style="display:none">
+Category name: <input id="category_name" name="cat_name" type="text" style="width:140px;height:10px;font-size:10px"></input>
+
+</p> 
+
+<p>
+    <span style="float:right;font-size:9px;font-style:italic;margin-bottom:0px">Name and category fields are optional</span>
+    <br style="clear"/>
+    <input type="submit" value="{% if new_bookmark %}Add new bookmark{% else %}Update bookmark{% endif %}" style="float:right" />
+    {% if not new_bookmark %}
+        <br style="clear"/>
+        <a href="{% url delete-bookmark user.username bookmark_id %}?next={{ next }}" style="float:right;margin-top:5px;margin-right:2px">Delete this bookmark</a>
+    {% endif %}
+    <br style="clear"/>
+</p>
+
+</form>
+
+</div>

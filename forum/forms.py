@@ -3,7 +3,7 @@ from utils.forms import HtmlCleaningCharField
 from utils.spam import is_spam
 
 class PostReplyForm(forms.Form):
-    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
+    body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=20)))
     subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
     def __init__(self, request, quote, *args, **kwargs):
         self.request = request

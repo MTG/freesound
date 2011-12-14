@@ -33,9 +33,3 @@ class FlagAdmin(admin.ModelAdmin):
     raw_id_fields = ('reporting_user', 'sound')
     list_display = ('reporting_user', 'email', 'reason_type')
 admin.site.register(Flag, FlagAdmin)
-
-class DownloadAdmin(admin.ModelAdmin):
-    raw_id_fields = ('user', 'pack', 'sound')
-    list_display = ('user', 'created', 'sound', 'pack')
-
-admin.site.register(Download, DownloadAdmin)

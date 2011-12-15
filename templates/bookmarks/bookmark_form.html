@@ -1,4 +1,5 @@
 <script type="text/javascript">
+    
     function show_hide_category_name_field(id)
     {
         if ($("#id_categories_list_" + id.toString()).val() == -2){
@@ -8,42 +9,42 @@
         }
     }
     
-    function post_bookmark()
+    function post_bookmark(id)
     {
         $.ajax({
             type: 'POST',
             url: '{% url add-bookmark sound_id %}',
             data: {
-                name: $("#bookmark_name_{{sound_id}}").val(),
-                categories_list: $("#id_categories_list_{{sound_id}}").val(),
-                cat_name: $("#category_name").val()
+                name: $("#bookmark_name_" + id.toString()).val(),
+                categories_list: $("#id_categories_list_"  + id.toString()).val(),
+                cat_name: $("#category_name_"  + id.toString()).val()
             },
                 success: function(data) {
-                    display_bookmark_feedback(data);
+                    display_bookmark_feedback(id,data);
                 }, 
             });
     }
     
-    function display_bookmark_feedback(data){
-        $("#bookmark_name_{{sound_id}}").val("")
-        $("#id_categories_list_{{sound_id}}").val(-1)
-        $("#category_name").val("")
-        $("#bookmark_info_message").html("Bookmark correctly added!")
-        $("#bookmark_info_message").show()
+    function display_bookmark_feedback(id, data){
+        $("#bookmark_name_"  + id.toString()).val("")
+        $("#id_categories_list_" + id.toString()).val(-1)
+        $("#category_name_" + id.toString()).val("")
+        $("#bookmark_info_message_" + id.toString()).html("Bookmark correctly added!")
+        $("#bookmark_info_message_" + id.toString()).show()
         setTimeout(function() {
-            $('#bookmark_info_message').fadeOut('slow')
-            show_hide_bookmark_form({{sound_id}})
+            $("#bookmark_info_message_" + id.toString()).fadeOut('slow')
+            show_hide_bookmark_form(id)
         }, 2000);
     }
     
 </script>
 
-<div id="bookmark_info_message" style="display:none"></div>
+<div class = "bookmark_info_message" id="bookmark_info_message_{{sound_id}}" style="display:none"></div>
 <p>
     {% if bookmarks %}
-    You have already bookmarked this sound{% if not bookmarked_categories_for_sound %}.{% endif %}
+    This sound is already in your bookmarks{% if not bookmarked_categories_for_sound %}.{% endif %}
         {% if bookmarked_categories_for_sound %}
-            under categories:
+            under the categories:
             {% for name in bookmarked_categories_for_sound %}
                 <strong>{{name}}</strong>{% if forloop.last %}.{% else %}{% if forloop.revcounter == 2%} and {% else %}, {% endif %}{% endif %}
             {% endfor %}
@@ -52,7 +53,7 @@
 </p>
 
 <p>
-    Bookmark name: <input id="bookmark_name_{{sound_id}}" name="name" type="text" value="" class="name_widget"></input>
+    Bookmark name: <input id="bookmark_name_{{sound_id}}" name="name" type="text" value="{{sound_name}}" class="name_widget"></input>
 </p>
 <p>
     Category:
@@ -65,14 +66,14 @@
     </select>
 </p>
 <p id="category_name_field_{{sound_id}}" style="display:none">
-Category name: <input id="category_name" name="cat_name" type="text" class="category_name_widget_2"></input>
+Category name: <input id="category_name_{{sound_id}}" name="cat_name" type="text" class="category_name_widget_2"></input>
 
 </p> 
 
 <p>
     <span class="info_text">Name and category fields are optional</span>
     <br style="clear"/>
-    <input type="button" onclick="post_bookmark()" style="float:right" value="Add bookmark!"/>
+    <input type="button" onclick="post_bookmark({{sound_id}})" style="float:right" value="Add bookmark!"/>
     <!--<a onclick="post_bookmark()" style="float:right;font-size:12px">Add bookmark!</a>-->
     <br style="clear"/>
 </p>

@@ -31,10 +31,26 @@
                    <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">5</a></li>
                </ul>
             </div><!-- .sound_stars -->
-
+            
             <div class="sound_description">
                 <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
             </div><!-- .sound_description -->
+            
+            <div class="bookmark_link_sound_display">
+                <a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon"></a>
+            </div>
+            
+            <!-- maybe move this code somewhere else? function is duplicated for each sound...-->
+            <script type="text/javascript">
+            function show_hide_bookmark_form(id)
+            {
+                if( $("#bookmark_form_"  + id.toString()).is(':hidden') ) { // Only do the request when expanding the div
+                    $("#bookmark_form_"  + id.toString()).html('&nbsp;').load("/home/bookmarks/get_form_for_sound/" + id.toString())
+                }
+                $("#bookmark_form_"  + id.toString()).toggle();
+            }
+            </script>
+            
             <div class="sound_tags">
 
                 <ul class="tags">
@@ -45,6 +61,9 @@
                 <br style="clear: both;"/>
 
             </div><!-- .sound_tags -->
+            
+            <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
+            
             {% if sound.moderation_state != 'OK' or sound.processing_state != 'OK' %}
                 <p style="font-size:10px; color:gray">
                 {% if sound.processing_state != 'OK' %}
@@ -127,15 +146,6 @@
                 <img class="cc_license" src="{{media_url}}images/licenses/bync.png" height="16" alt="Creative Commons Attribution Non-Commercial license" title="This sound is licensed under the Creative Commons Attribution Non-Commercial license." />
             {% endif %}
             <!-- /license icons -->
-            
-            <!-- Bookmark icon -->
-            {% comment %}
-            <a class="bookmark" href="{% url sound-add-to-my-bookmarks sound.user.username sound.id %}">
-                <img src="{{media_url}}images/fugue-icons/icons/address-book-blue.png" width="16" height="16" alt="Add to my bookmarks" title="Add this sound to my bookmarks" />
-            </a>
-            {% endcomment %}
-            
-            <!-- /Bookmark icon -->
             
         </div><!-- .sound_attributes -->
 

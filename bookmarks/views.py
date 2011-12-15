@@ -132,6 +132,7 @@ def get_form_for_sound(request, sound_id):
     data_dict = {'request_user_username':request.user.username,
                  'bookmarks': bookmarks.count() != 0,
                  'sound_id':sound.id,
+                 'sound_name':sound.original_filename,
                  'bookmarked_categories_for_sound':bookmarked_categories_for_sound,
                  'categories':categories,}
     

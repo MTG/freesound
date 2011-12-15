@@ -3230,13 +3230,6 @@ ul.messages {
     background: #fafafa;
 }
 
-.bookmark_form {
-    margin-left: 0px;
-    padding: 0px 0px;
-    border-left: 0px solid #eee;
-    margin-bottom: 0px;
-}
-
 .bookmark_form form{
     margin-left: 0px;
     padding: 0px 0px;
@@ -3297,11 +3290,22 @@ ul.messages {
     margin-bottom:15px
 }
 
-#bookmark_info_message{
+.bookmark_info_message{
     border: 1px solid #ffff00;
     background-color: #F7F8E0;
     font-size:11px;
     padding:2px;
     padding-left:7px;
     margin-bottom:5px;
+}
+
+.bookmark_link_sound_display{
+    width:15px;
+    height:15px;
+    float: right;
+    
+    
+    
+    
+    
 }

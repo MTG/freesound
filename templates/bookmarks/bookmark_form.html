@@ -8,34 +8,55 @@
         }
     }
     
-    function show_hide_bookmark_form(id)
+    function post_bookmark()
     {
-        $("#bookmark_form_"  + id.toString()).toggle('blind', {}, 500, function() {});
+        $.ajax({
+            type: 'POST',
+            url: '{% url add-bookmark sound_id %}',
+            data: {
+                name: $("#bookmark_name_{{sound_id}}").val(),
+                categories_list: $("#id_categories_list_{{sound_id}}").val(),
+                cat_name: $("#category_name").val()
+            },
+                success: function(data) {
+                    display_bookmark_feedback(data);
+                }, 
+            });
     }
-
+    
+    function display_bookmark_feedback(data){
+        $("#bookmark_name_{{sound_id}}").val("")
+        $("#id_categories_list_{{sound_id}}").val(-1)
+        $("#category_name").val("")
+        $("#bookmark_info_message").html("Bookmark correctly added!")
+        $("#bookmark_info_message").show()
+        setTimeout(function() {
+            $('#bookmark_info_message').fadeOut('slow')
+            show_hide_bookmark_form({{sound_id}})
+        }, 2000);
+    }
+    
 </script>
 
-<div id="bookmark_form_{{sound.id}}" class="bookmark_form">
-<form action="{% url add-bookmark request_user.username sound.id %}?next={{ next }}" method="post">{% csrf_token %}
-
+<div id="bookmark_info_message" style="display:none"></div>
 <p>
     {% if bookmarks %}
     You have already bookmarked this sound{% if not bookmarked_categories_for_sound %}.{% endif %}
         {% if bookmarked_categories_for_sound %}
             under categories:
-            {% for cat in bookmarked_categories_for_sound %}
-                <strong>{{cat.name}}</strong>{% if forloop.last %}.{% else %}{% if forloop.revcounter == 2%} and {% else %}, {% endif %}{% endif %}
+            {% for name in bookmarked_categories_for_sound %}
+                <strong>{{name}}</strong>{% if forloop.last %}.{% else %}{% if forloop.revcounter == 2%} and {% else %}, {% endif %}{% endif %}
             {% endfor %}
         {% endif %}
     {% endif %}
 </p>
 
 <p>
-    Bookmark name: <input id="bookmark_name" name="name" type="text" value="" class="name_widget"></input>
+    Bookmark name: <input id="bookmark_name_{{sound_id}}" name="name" type="text" value="" class="name_widget"></input>
 </p>
 <p>
     Category:
-    <select onchange="show_hide_category_name_field({{sound.id}})" name="categories_list" id="id_categories_list_{{sound.id}}" class="select_widget">
+    <select onchange="show_hide_category_name_field({{sound_id}})" name="categories_list" id="id_categories_list_{{sound_id}}" class="select_widget">
     <option value=-1>-- None --</option>
     {% for cat in categories %}
         <option value="{{ cat.id }}">{{cat.name}}</option>
@@ -43,7 +64,7 @@
     <option value=-2>-- New category... --</option>
     </select>
 </p>
-<p id="category_name_field_{{sound.id}}" style="display:none">
+<p id="category_name_field_{{sound_id}}" style="display:none">
 Category name: <input id="category_name" name="cat_name" type="text" class="category_name_widget_2"></input>
 
 </p> 
@@ -51,11 +72,9 @@ Category name: <input id="category_name" name="cat_name" type="text" class="cate
 <p>
     <span class="info_text">Name and category fields are optional</span>
     <br style="clear"/>
-    <input type="submit" value="Add new bookmark" style="float:right" />
-    
+    <input type="button" onclick="post_bookmark()" style="float:right" value="Add bookmark!"/>
+    <!--<a onclick="post_bookmark()" style="float:right;font-size:12px">Add bookmark!</a>-->
     <br style="clear"/>
 </p>
 
-</form>
 
-</div>

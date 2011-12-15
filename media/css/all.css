@@ -3230,6 +3230,13 @@ ul.messages {
     background: #fafafa;
 }
 
+.bookmark_form {
+    margin-left: 0px;
+    padding: 0px 0px;
+    border-left: 0px solid #eee;
+    margin-bottom: 0px;
+}
+
 .bookmark_form form{
     margin-left: 0px;
     padding: 0px 0px;
@@ -3244,7 +3251,7 @@ ul.messages {
 
 .bookmark_form .name_widget{
     width:135px;
-    height:10px;
+    height:12px;
     font-size:10px
 }
 
@@ -3260,7 +3267,7 @@ ul.messages {
 
 .bookmark_form .category_name_widget_2{
     width:140px;
-    height:10px;
+    height:12px;
     font-size:10px
 }
 
@@ -3288,4 +3295,13 @@ ul.messages {
 .bookmark_list_container{
     margin-top:-15px;
     margin-bottom:15px
+}
+
+#bookmark_info_message{
+    border: 1px solid #ffff00;
+    background-color: #F7F8E0;
+    font-size:11px;
+    padding:2px;
+    padding-left:7px;
+    margin-bottom:5px;
 }

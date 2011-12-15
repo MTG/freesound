@@ -6,11 +6,14 @@ from bookmarks.models import *
 from bookmarks.forms import BookmarkCategoryForm
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.core.urlresolvers import reverse
 from datetime import datetime
 from django.contrib import messages
 from utils.pagination import paginate
 from utils.functional import combine_dicts
+from django.http import HttpResponse
+import json
 
 def bookmarks(request, username, category_id = None):
     
@@ -43,20 +46,22 @@ def bookmarks(request, username, category_id = None):
     return render_to_response('bookmarks/bookmarks.html', combine_dicts(locals(),paginate(request, bookmarked_sounds, 30)), context_instance=RequestContext(request))
 
 @login_required
-def delete_bookmark_category(request, username, category_id):
+def delete_bookmark_category(request, category_id):
     
-    if request.user.username == username: # Check that "is owner"
-        category = get_object_or_404(BookmarkCategory,id=category_id, user__username=username)
-        category.delete()
+    category = get_object_or_404(BookmarkCategory,id=category_id, user__username=request.user.username)
+    cat_name = category.name
+    category.delete()
+    msg = "Deleted bookmark category \"" + cat_name + "\"."
+    messages.add_message(request, messages.WARNING, msg)
     
     next = request.GET.get("next","")
     if next:
         return HttpResponseRedirect(next)
     else:
-        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[username]))
+        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
 @login_required
-def add_bookmark(request, username, sound_id):
+def add_bookmark(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     
     if request.POST:
@@ -81,29 +86,55 @@ def add_bookmark(request, username, sound_id):
     if category:
         bookmark.category = category
     bookmark.save()
-    
-    msg = "Added new bookmark for sound \"" + sound.original_filename + "\"."
-    messages.add_message(request, messages.WARNING, msg)
-        
-    
-    next = request.GET.get("next","")
-    if next:
-        return HttpResponseRedirect(next)
+     
+    if request.is_ajax():
+        return HttpResponse()   
     else:
-        return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
-    
-@login_required
-def delete_bookmark(request, username, bookmark_id):
-    
-    if request.user.username == username: # Check that "is owner"
-        bookmark = get_object_or_404(Bookmark,id=bookmark_id, user=request.user)
-        sound_name = bookmark.sound.original_filename
-        bookmark.delete()
-        msg = "Deleted bookmark for sound \"" + sound_name + "\"."
+        
+        msg = "Added new bookmark for sound \"" + sound.original_filename + "\"."
         messages.add_message(request, messages.WARNING, msg)
     
+        next = request.GET.get("next","")
+        if next:
+            return HttpResponseRedirect(next)
+        else:
+            return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
+
+
+@login_required
+def delete_bookmark(request, bookmark_id):
+    
+    bookmark = get_object_or_404(Bookmark,id=bookmark_id, user=request.user)
+    sound_name = bookmark.sound.original_filename
+    bookmark.delete()
+    msg = "Deleted bookmark for sound \"" + sound_name + "\"."
+    messages.add_message(request, messages.WARNING, msg)
+    
     next = request.GET.get("next","")
     if next:
         return HttpResponseRedirect(next)
     else:
-        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[username]))
+        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
+
+@login_required       
+def get_form_for_sound(request, sound_id):
+    
+    sound = Sound.objects.get(id=sound_id)
+    categories = BookmarkCategory.objects.filter(user=request.user)
+    bookmarks = Bookmark.objects.filter(user=request.user,sound=sound)
+    
+    bookmarked_categories_for_sound = []
+    for bookmark in bookmarks:
+        if bookmark.category:
+            if bookmark.category.name not in bookmarked_categories_for_sound:
+                bookmarked_categories_for_sound.append(bookmark.category.name)
+    
+    data_dict = {'request_user_username':request.user.username,
+                 'bookmarks': bookmarks.count() != 0,
+                 'sound_id':sound.id,
+                 'bookmarked_categories_for_sound':bookmarked_categories_for_sound,
+                 'categories':categories,}
+    
+    template = 'bookmarks/bookmark_form.html'
+    
+    return render_to_response(template, data_dict, context_instance = RequestContext(request))

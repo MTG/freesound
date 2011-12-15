@@ -44,8 +44,9 @@ def bookmarks(request, username, category_id = None):
 
 @login_required
 def delete_bookmark_category(request, username, category_id):
-    category = get_object_or_404(BookmarkCategory,id=category_id, user__username=username)
-    if request.user.username == username:
+    
+    if request.user.username == username: # Check that "is owner"
+        category = get_object_or_404(BookmarkCategory,id=category_id, user__username=username)
         category.delete()
     
     next = request.GET.get("next","")
@@ -94,8 +95,8 @@ def add_bookmark(request, username, sound_id):
 @login_required
 def delete_bookmark(request, username, bookmark_id):
     
-    if request.user.username == username:
-        bookmark = Bookmark.objects.get(id=bookmark_id)
+    if request.user.username == username: # Check that "is owner"
+        bookmark = get_object_or_404(Bookmark,id=bookmark_id, user=request.user)
         sound_name = bookmark.sound.original_filename
         bookmark.delete()
         msg = "Deleted bookmark for sound \"" + sound_name + "\"."

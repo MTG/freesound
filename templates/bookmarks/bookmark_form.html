@@ -15,7 +15,7 @@
 
 </script>
 
-<div id="bookmark_form_{{sound.id}}" class="bookmark_form" style="display:none;width:240px">
+<div id="bookmark_form_{{sound.id}}" class="bookmark_form">
 <form action="{% url add-bookmark request_user.username sound.id %}?next={{ next }}" method="post">{% csrf_token %}
 
 <p>
@@ -31,25 +31,25 @@
 </p>
 
 <p>
-    Bookmark name: <input id="bookmark_name" name="name" type="text" value="" style="width:135px;height:10px;font-size:10px"></input>
+    Bookmark name: <input id="bookmark_name" name="name" type="text" value="" class="name_widget"></input>
 </p>
 <p>
     Category:
-    <select onchange="show_hide_category_name_field({{sound.id}})" name="categories_list" id="id_categories_list_{{sound.id}}" style="width:182px">
+    <select onchange="show_hide_category_name_field({{sound.id}})" name="categories_list" id="id_categories_list_{{sound.id}}" class="select_widget">
     <option value=-1>-- None --</option>
-    {% for cat in possible_new_categories %}
+    {% for cat in categories %}
         <option value="{{ cat.id }}">{{cat.name}}</option>
     {% endfor %}
     <option value=-2>-- New category... --</option>
     </select>
 </p>
 <p id="category_name_field_{{sound.id}}" style="display:none">
-Category name: <input id="category_name" name="cat_name" type="text" style="width:140px;height:10px;font-size:10px"></input>
+Category name: <input id="category_name" name="cat_name" type="text" class="category_name_widget_2"></input>
 
 </p> 
 
 <p>
-    <span style="float:right;font-size:9px;font-style:italic;margin-bottom:0px">Name and category fields are optional</span>
+    <span class="info_text">Name and category fields are optional</span>
     <br style="clear"/>
     <input type="submit" value="Add new bookmark" style="float:right" />
     

@@ -3219,6 +3219,8 @@ ul.messages {
 ------------------------------------------------------*/
 
 .bookmark_form {
+    display:none;
+    width:240px;
     border-left: 2px solid #eee;
     padding-left: 8px;
     margin-top:10px;
@@ -3238,4 +3240,52 @@ ul.messages {
 .bookmark_form p{
     font-size:10px;
     margin-bottom:5px;
+}
+
+.bookmark_form .name_widget{
+    width:135px;
+    height:10px;
+    font-size:10px
+}
+
+.bookmark_form .select_widget{
+    width:182px;
+}
+
+.bookmark_form .category_name_widget{
+    width:230px;
+    height:10px;
+    font-size:10px;
+}
+
+.bookmark_form .category_name_widget_2{
+    width:140px;
+    height:10px;
+    font-size:10px
+}
+
+.bookmark_form .info_text{
+    float:right;
+    font-size:9px;
+    font-style:italic;
+    margin-bottom:0px
+}
+
+.bookmark_player{
+    width:45px;
+    height:20px;
+    display:inline-block
+}
+
+.bookmark_info{
+    width:525px;
+    height:25px;
+    vertical-align:middle;
+    font-size:12px;
+    display:inline-block
+}
+
+.bookmark_list_container{
+    margin-top:-15px;
+    margin-bottom:15px
 }

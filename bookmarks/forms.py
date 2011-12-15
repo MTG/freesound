@@ -7,11 +7,12 @@ class BookmarkCategoryForm(ModelForm):
         model = BookmarkCategory
         fields = ('name',)
         widgets = {
-            'name': TextInput(attrs={'style':'width:230px;height:10px;font-size:10px;'}),
+            'name': TextInput(attrs={'class':'category_name_widget'}),
         }
-        
+'''        
 class BookmarkForm(ModelForm):
     
     class Meta:
         model = Bookmark
         fields = ('name','category')
+'''

@@ -49,7 +49,7 @@
 	
     {% else %}
 	<p>
-	    There are no bookmarks {% if category or uncategorized %}in this category{% endif %}
+	    There are no {% if category %}uncategorized{% endif %} bookmarks {% if category %}in this category{% endif %}
 	</p>	
     {% endif %}
 

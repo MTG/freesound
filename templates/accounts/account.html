@@ -59,14 +59,14 @@
             {% endif %}
             <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
+            {% if user.profile.num_sounds %}
             <li><a href="{% url comments-for-user user.username %}">All comments</a> on this {{user.username}}'s sounds</li>
+            {% endif %}
             <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>
             {% if request.user.is_staff %}
                 <li><a id="admin_link" class="icon" href="{% url admin:auth_user_change user.id %}">Edit user in the admin</a></li>
             {% endif %}
-            {% if user.profile.num_sounds %}
-            <li><a href="{% url comments-for-user user.username %}">All comments</a> on this person's sounds</li>
-            {% endif %}
+            
         </ul>
         </div>
         <br style="clear: both;" />

@@ -11,6 +11,11 @@
     
     function post_bookmark(id)
     {
+        
+        $("#bookmark_name_" + id.toString()).attr('disabled','disabled')
+        $("#id_categories_list_"  + id.toString()).attr('disabled','disabled')
+        $("#category_name_"  + id.toString()).attr('disabled','disabled')
+        
         $.ajax({
             type: 'POST',
             url: '{% url add-bookmark sound_id %}',

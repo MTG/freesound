@@ -278,7 +278,6 @@ div.infowindow {
     min-height: 16px;
 }
 
-
 #random_sound_button {
     background-image: url(../images/fugue-icons/icons/speaker-volume.png);
 }
@@ -845,14 +844,20 @@ h3.header,
     height: 115px;
 }
 
+.sound_attributes{
+    margin-top:3px;
+}
+
 .sound_attributes a {
     float: left;
-    margin: 5px 6px 5px 0;
+    /*margin: 5px 6px 5px 0;*/
+    margin: 3px 4px 0px 0;
 }
 
 .sound_attributes img.cc_license {
     float: left;
-    margin: 5px 0px 5px 0;
+    /*margin: 5px 0px 5px 0;*/
+    margin: 3px 4px 0px 0;
 }
 
 

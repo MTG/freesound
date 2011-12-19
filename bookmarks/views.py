@@ -17,21 +17,19 @@ import json
 
 def bookmarks(request, username, category_id = None):
     
-    if request.user.username == username:
-        owner = True
-        user = request.user
-    else:
-        user = get_object_or_404(User,username = username)
+    user = get_object_or_404(User, username__iexact=username)
+    is_owner = request.user.is_authenticated and user == request.user
     
-    if request.POST:
-        if "create_cat" in request.POST:
-            form_bookmark_category = BookmarkCategoryForm(request.POST)
-            if form_bookmark_category.is_valid():
-                new_bookmark_category = BookmarkCategory(user=user, name=form_bookmark_category.cleaned_data["name"])
-                new_bookmark_category.save()
-            form_bookmark_category = BookmarkCategoryForm()
-    
+    '''
+    if is_owner and request.POST and "create_cat" in request.POST:
+        form_bookmark_category = BookmarkCategoryForm(request.POST, instance=BookmarkCategory(user=user))
+        if form_bookmark_category.is_valid():
+            form_bookmark_category.save()
+        
+        form_bookmark_category = BookmarkCategoryForm()
+        
     form_bookmark_category = BookmarkCategoryForm()
+    '''    
     
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user,category=None).count()
     
@@ -48,10 +46,9 @@ def bookmarks(request, username, category_id = None):
 @login_required
 def delete_bookmark_category(request, category_id):
     
-    category = get_object_or_404(BookmarkCategory,id=category_id, user__username=request.user.username)
-    cat_name = category.name
+    category = get_object_or_404(BookmarkCategory,id=category_id, user=request.user)
+    msg = "Deleted bookmark category \"" + category.name + "\"."
     category.delete()
-    msg = "Deleted bookmark category \"" + cat_name + "\"."
     messages.add_message(request, messages.WARNING, msg)
     
     next = request.GET.get("next","")
@@ -105,9 +102,8 @@ def add_bookmark(request, sound_id):
 def delete_bookmark(request, bookmark_id):
     
     bookmark = get_object_or_404(Bookmark,id=bookmark_id, user=request.user)
-    sound_name = bookmark.sound.original_filename
+    msg = "Deleted bookmark for sound \"" + bookmark.sound.original_filename + "\"."
     bookmark.delete()
-    msg = "Deleted bookmark for sound \"" + sound_name + "\"."
     messages.add_message(request, messages.WARNING, msg)
     
     next = request.GET.get("next","")
@@ -122,18 +118,13 @@ def get_form_for_sound(request, sound_id):
     sound = Sound.objects.get(id=sound_id)
     categories = BookmarkCategory.objects.filter(user=request.user)
     bookmarks = Bookmark.objects.filter(user=request.user,sound=sound)
-    
-    bookmarked_categories_for_sound = []
-    for bookmark in bookmarks:
-        if bookmark.category:
-            if bookmark.category.name not in bookmarked_categories_for_sound:
-                bookmarked_categories_for_sound.append(bookmark.category.name)
+    categories_aready_containing_sound = BookmarkCategory.objects.filter(user=request.user, bookmarks__sound=sound).distinct()
     
     data_dict = {'request_user_username':request.user.username,
                  'bookmarks': bookmarks.count() != 0,
                  'sound_id':sound.id,
                  'sound_name':sound.original_filename,
-                 'bookmarked_categories_for_sound':bookmarked_categories_for_sound,
+                 'categories_aready_containing_sound':categories_aready_containing_sound,
                  'categories':categories,}
     
     template = 'bookmarks/bookmark_form.html'

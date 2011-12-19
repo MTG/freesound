@@ -47,15 +47,16 @@
 <div class = "bookmark_info_message" id="bookmark_info_message_{{sound_id}}" style="display:none"></div>
 <p>
     {% if bookmarks %}
-    This sound is already in your bookmarks{% if not bookmarked_categories_for_sound %}.{% endif %}
-        {% if bookmarked_categories_for_sound %}
+    This sound is already in your bookmarks{% if not categories_aready_containing_sound %}.{% endif %}
+        {% if categories_aready_containing_sound %}
             under the categories:
-            {% for name in bookmarked_categories_for_sound %}
-                <strong>{{name}}</strong>{% if forloop.last %}.{% else %}{% if forloop.revcounter == 2%} and {% else %}, {% endif %}{% endif %}
+            {% for cat in categories_aready_containing_sound %}
+                <strong>{{cat.name}}</strong>{% if forloop.last %}.{% else %}{% if forloop.revcounter == 2%} and {% else %}, {% endif %}{% endif %}
             {% endfor %}
         {% endif %}
     {% endif %}
 </p>
+
 
 <p>
     Bookmark name: <input id="bookmark_name_{{sound_id}}" name="name" type="text" value="{{sound_name}}" class="name_widget"></input>
@@ -78,6 +79,7 @@ Category name: <input id="category_name_{{sound_id}}" name="cat_name" type="text
 <p>
     <span class="info_text">Name and category fields are optional</span>
     <br style="clear"/>
+    <a href="javascript:void(0)"  title="Close" onclick="show_hide_bookmark_form({{sound_id}})">Close</a>
     <input type="button" onclick="post_bookmark({{sound_id}})" style="float:right" value="Add bookmark!"/>
     <!--<a onclick="post_bookmark()" style="float:right;font-size:12px">Add bookmark!</a>-->
     <br style="clear"/>

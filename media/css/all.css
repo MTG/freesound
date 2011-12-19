@@ -3233,6 +3233,8 @@ ul.messages {
     padding-top:7px;
     padding-bottom:7px;
     background: #fafafa;
+    /*position: absolute;
+    z-index:20;*/
 }
 
 .bookmark_form form{

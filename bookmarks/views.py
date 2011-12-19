@@ -3,7 +3,7 @@ from django.template import RequestContext
 from django.contrib.auth.models import User
 from sounds.models import Sound
 from bookmarks.models import *
-from bookmarks.forms import BookmarkCategoryForm
+from bookmarks.forms import BookmarkCategoryForm, BookmarkForm
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -62,35 +62,17 @@ def add_bookmark(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     
     if request.POST:
-        category_id = int(request.POST["categories_list"])
-        category_name = request.POST["cat_name"]
-        name = request.POST["name"]
-    else:
-        category_id = -1
-        name = ""
-        category_name = ""
+        form = BookmarkForm(request.POST, instance=Bookmark(user=request.user, sound=sound))
+        if form.is_valid():
+            form.save()
     
-    if category_id == -1: # nothing todo with categories
-        category = False
-    elif category_id == -2: # create new category
-        category = BookmarkCategory(user=request.user, name=category_name)
-        category.save()
-    else: # get existing category from id
-        category = get_object_or_404(BookmarkCategory,id=category_id)
-
-    bookmark = Bookmark(user=request.user,sound=sound)
-    bookmark.name = name
-    if category:
-        bookmark.category = category
-    bookmark.save()
-     
     if request.is_ajax():
         return HttpResponse()   
+    
     else:
-        
         msg = "Added new bookmark for sound \"" + sound.original_filename + "\"."
         messages.add_message(request, messages.WARNING, msg)
-    
+        
         next = request.GET.get("next","")
         if next:
             return HttpResponseRedirect(next)
@@ -116,16 +98,13 @@ def delete_bookmark(request, bookmark_id):
 def get_form_for_sound(request, sound_id):
     
     sound = Sound.objects.get(id=sound_id)
-    categories = BookmarkCategory.objects.filter(user=request.user)
-    bookmarks = Bookmark.objects.filter(user=request.user,sound=sound)
+    form = BookmarkForm(instance = Bookmark(name=sound.original_filename), prefix = sound.id)
     categories_aready_containing_sound = BookmarkCategory.objects.filter(user=request.user, bookmarks__sound=sound).distinct()
     
-    data_dict = {'request_user_username':request.user.username,
-                 'bookmarks': bookmarks.count() != 0,
+    data_dict = {'bookmarks': Bookmark.objects.filter(user=request.user,sound=sound).count() != 0,
                  'sound_id':sound.id,
-                 'sound_name':sound.original_filename,
-                 'categories_aready_containing_sound':categories_aready_containing_sound,
-                 'categories':categories,}
+                 'form':form,
+                 'categories_aready_containing_sound':categories_aready_containing_sound}
     
     template = 'bookmarks/bookmark_form.html'
     

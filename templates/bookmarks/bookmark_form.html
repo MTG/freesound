@@ -1,39 +1,31 @@
 <script type="text/javascript">
     
-    function show_hide_category_name_field(id)
-    {
-        if ($("#id_categories_list_" + id.toString()).val() == -2){
-            $("#category_name_field_" + id.toString()).show('blind', {}, 500, function() {});
-        }else{
-            $("#category_name_field_" + id.toString()).hide();
-        }
-    }
-    
     function post_bookmark(id)
     {
         
-        $("#bookmark_name_" + id.toString()).attr('disabled','disabled')
-        $("#id_categories_list_"  + id.toString()).attr('disabled','disabled')
-        $("#category_name_"  + id.toString()).attr('disabled','disabled')
+        $("#id_" + id.toString() + "-name").attr('disabled','disabled')
+        $("#id_" + id.toString() + "-category").attr('disabled','disabled')
+        $("#id_" + id.toString() + "-new_category_name").attr('disabled','disabled')
         
         $.ajax({
             type: 'POST',
             url: '{% url add-bookmark sound_id %}',
             data: {
-                name: $("#bookmark_name_" + id.toString()).val(),
-                categories_list: $("#id_categories_list_"  + id.toString()).val(),
-                cat_name: $("#category_name_"  + id.toString()).val()
+                name: $("#id_" + id.toString() + "-name").val(),
+                category: $("#id_" + id.toString() + "-category").val(),
+                new_category_name: $("#id_" + id.toString() + "-new_category_name").val()
             },
                 success: function(data) {
                     display_bookmark_feedback(id,data);
-                }, 
+                },
+                error: function(data) {
+                    display_error_feedback(id,data);
+                },
+                
             });
     }
     
     function display_bookmark_feedback(id, data){
-        $("#bookmark_name_"  + id.toString()).val("")
-        $("#id_categories_list_" + id.toString()).val(-1)
-        $("#category_name_" + id.toString()).val("")
         $("#bookmark_info_message_" + id.toString()).html("Bookmark correctly added!")
         $("#bookmark_info_message_" + id.toString()).show()
         setTimeout(function() {
@@ -42,8 +34,18 @@
         }, 2000);
     }
     
+    function display_error_feedback(id, data){
+        $("#bookmark_info_message_" + id.toString()).html("Bookmark could not be added, some error occurred.")
+        $("#bookmark_info_message_" + id.toString()).show()
+        setTimeout(function() {
+            $("#bookmark_info_message_" + id.toString()).fadeOut('slow')
+            show_hide_bookmark_form(id)
+        }, 2000);
+    }
+    
 </script>
-
+	
+	
 <div class = "bookmark_info_message" id="bookmark_info_message_{{sound_id}}" style="display:none"></div>
 <p>
     {% if bookmarks %}
@@ -57,31 +59,13 @@
     {% endif %}
 </p>
 
-
-<p>
-    Bookmark name: <input id="bookmark_name_{{sound_id}}" name="name" type="text" value="{{sound_name}}" class="name_widget"></input>
-</p>
-<p>
-    Category:
-    <select onchange="show_hide_category_name_field({{sound_id}})" name="categories_list" id="id_categories_list_{{sound_id}}" class="select_widget">
-    <option value=-1>-- None --</option>
-    {% for cat in categories %}
-        <option value="{{ cat.id }}">{{cat.name}}</option>
-    {% endfor %}
-    <option value=-2>-- New category... --</option>
-    </select>
-</p>
-<p id="category_name_field_{{sound_id}}" style="display:none">
-Category name: <input id="category_name_{{sound_id}}" name="cat_name" type="text" class="category_name_widget_2"></input>
-
-</p> 
+{{form.as_p}}
 
 <p>
     <span class="info_text">Name and category fields are optional</span>
     <br style="clear"/>
     <a href="javascript:void(0)"  title="Close" onclick="show_hide_bookmark_form({{sound_id}})">Close</a>
     <input type="button" onclick="post_bookmark({{sound_id}})" style="float:right" value="Add bookmark!"/>
-    <!--<a onclick="post_bookmark()" style="float:right;font-size:12px">Add bookmark!</a>-->
     <br style="clear"/>
 </p>
 

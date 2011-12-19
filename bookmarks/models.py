@@ -8,7 +8,7 @@ class BookmarkCategory(models.Model):
     name = models.CharField(max_length=128, default ="")
     
     def __unicode__(self):
-        return u"Bookmark category: %s" % (self.name)
+        return u"%s" % (self.name)
 
 class Bookmark(models.Model):
     user = models.ForeignKey(User)

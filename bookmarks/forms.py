@@ -23,19 +23,23 @@ class BookmarkForm(forms.ModelForm):
     
     def save(self):
         
-        bookmark = Bookmark(user=self.instance.user,sound=self.instance.sound)
+        try:
+            bookmark = Bookmark(user=self.instance.user,sound=self.instance.sound)
+            
+            if not self.cleaned_data['category']:
+                if self.cleaned_data['new_category_name'] != "":
+                    category = BookmarkCategory(user=self.instance.user, name=self.cleaned_data['new_category_name'])
+                    category.save()
+                    bookmark.category = category
+                    self.cleaned_data['category'] = category
+            else:
+                bookmark.category = self.cleaned_data['category']
+            
+            if self.cleaned_data['name'] != "":
+                bookmark.name = self.cleaned_data['name']
+            
+            bookmark.save()
+            return True
         
-        if not self.cleaned_data['category']:
-            if self.cleaned_data['new_category_name'] != "":
-                category = BookmarkCategory(user=self.instance.user, name=self.cleaned_data['new_category_name'])
-                category.save()
-                bookmark.category = category
-                self.cleaned_data['category'] = category
-        else:
-            bookmark.category = self.cleaned_data['category']
-        
-        if self.cleaned_data['name'] != "":
-            bookmark.name = self.cleaned_data['name']
-        
-        bookmark.save()
-        return True
+        except:
+            return False

@@ -278,7 +278,6 @@ div.infowindow {
     min-height: 16px;
 }
 
-
 #random_sound_button {
     background-image: url(../images/fugue-icons/icons/speaker-volume.png);
 }
@@ -303,6 +302,13 @@ div.infowindow {
 #comments_link {
     background-image: url(../images/fugue-icons/icons/pencil.png);
 }
+#bookmark_link {
+    background-image: url(../images/fugue-icons/icons/address-book-blue.png);
+}
+#admin_link {
+    background-image: url(../images/fugue-icons/icons/application-detail.png);
+}
+
 
 
 /* Formatting Elements
@@ -838,14 +844,20 @@ h3.header,
     height: 115px;
 }
 
+.sound_attributes{
+    margin-top:3px;
+}
+
 .sound_attributes a {
     float: left;
-    margin: 5px 6px 5px 0;
+    /*margin: 5px 6px 5px 0;*/
+    margin: 3px 4px 0px 0;
 }
 
 .sound_attributes img.cc_license {
     float: left;
-    margin: 5px 0px 5px 0;
+    /*margin: 5px 0px 5px 0;*/
+    margin: 3px 4px 0px 0;
 }
 
 
@@ -3205,4 +3217,102 @@ ul.messages {
 
 .sound_list_edit_sources .add_remove_buttons {
 	margin-top:-20px;
+}
+
+
+/* Bookmarks
+------------------------------------------------------*/
+
+.bookmark_form {
+    display:none;
+    width:240px;
+    border-left: 2px solid #eee;
+    padding-left: 8px;
+    margin-top:10px;
+    margin-bottom:10px;
+    padding-top:7px;
+    padding-bottom:7px;
+    background: #fafafa;
+    /*position: absolute;
+    z-index:20;*/
+}
+
+.bookmark_form form{
+    margin-left: 0px;
+    padding: 0px 0px;
+    border-left: 0px solid #eee;
+    margin-bottom: 0px;
+}
+
+.bookmark_form p{
+    font-size:10px;
+    margin-bottom:5px;
+}
+
+.bookmark_form .name_widget{
+    width:135px;
+    height:12px;
+    font-size:10px
+}
+
+.bookmark_form .select_widget{
+    width:182px;
+}
+
+.bookmark_form .category_name_widget{
+    width:230px;
+    height:10px;
+    font-size:10px;
+}
+
+.bookmark_form .category_name_widget_2{
+    width:140px;
+    height:12px;
+    font-size:10px
+}
+
+.bookmark_form .info_text{
+    float:right;
+    font-size:9px;
+    font-style:italic;
+    margin-bottom:0px
+}
+
+.bookmark_player{
+    width:45px;
+    height:20px;
+    display:inline-block
+}
+
+.bookmark_info{
+    width:525px;
+    height:25px;
+    vertical-align:middle;
+    font-size:12px;
+    display:inline-block
+}
+
+.bookmark_list_container{
+    margin-top:-15px;
+    margin-bottom:15px
+}
+
+.bookmark_info_message{
+    border: 1px solid #ffff00;
+    background-color: #F7F8E0;
+    font-size:11px;
+    padding:2px;
+    padding-left:7px;
+    margin-bottom:5px;
+}
+
+.bookmark_link_sound_display{
+    width:15px;
+    height:15px;
+    float: right;
+    
+    
+    
+    
+    
 }

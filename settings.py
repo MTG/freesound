@@ -31,6 +31,7 @@ MIDDLEWARE_CLASSES = (
 )
 
 INSTALLED_APPS = (
+    'messages',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -44,7 +45,6 @@ INSTALLED_APPS = (
     'favorites',
     'geotags',
     'general',
-    'messages',
     'ratings',
     'sounds',
     'support',
@@ -56,6 +56,8 @@ INSTALLED_APPS = (
     'django_extensions',
     'tickets',
     'gunicorn',
+    'south',
+    'bookmarks',
     #'test_utils', # Don't use this in production!
 )
 
@@ -89,7 +91,7 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 ROOT_URLCONF = 'urls'
 
@@ -133,7 +135,13 @@ SIMILAR_SOUNDS_TO_CACHE = 100 # for the similarity service
 SIMILARITY_CACHE_TIME = 60*60*1
 DEFAULT_SIMILARITY_PRESET = 'lowlevel'
 
+<<<<<<< HEAD
 # logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
+=======
+DELETED_USER_ID = 1
+
+logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
+>>>>>>> origin/master
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 

@@ -195,9 +195,8 @@
 
     function addFilter(name, filter)
     {
-        if (filter.search(" ") != -1)
-            filter = "\"" + filter + "\""
-
+        if (filter.search(" ") != -1)        	
+            filter = "\"" + filter.replace(/"/g,'\\\"') + "\""
         var tag = name + ":" + filter;
 
         if ($("#filter_query").val().search(tag) == -1)
@@ -246,7 +245,7 @@
             }
         }
 
-        var value = $("#filter_query").val();
+        var value = $("#filter_query").val().replace(/\\\"/g,'---replace---');
 
 
         scan(value, /[\w-]+:[\w-\.]+/g, function (index, filter) {
@@ -254,8 +253,10 @@
         });
 
         scan(value, /[\w-]+:\"[^\"]+\"/g, function (index, filter) {
-            add_filter(filter);
+            add_filter(filter.replace(/---replace---/g,'\\\"'));
+         
         });
+        
     }
 
     update_filter_display();

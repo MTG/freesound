@@ -3,9 +3,6 @@ from piston.resource import Resource
 from handlers import *
 from views import create_api_key
 from api_utils import build_invalid_url
-#from key_authentication import KeyAuthentication
-
-#auth = KeyAuthentication()
 
 class AR(Resource):
     def __call__(self, *args, **kwargs):

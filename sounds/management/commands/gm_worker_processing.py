@@ -13,9 +13,7 @@ from optparse import make_option
 from psycopg2 import InterfaceError
 from django.db.utils import DatabaseError
 from django.db import connection
-import logging
 
-logger = logging.getLogger("processing")
 
 class Command(BaseCommand):
     help = 'Run the sound processing worker'
@@ -26,28 +24,28 @@ class Command(BaseCommand):
             help='Register this function (default: process_sound)'),
     )
 
+    def write_stdout(self, msg):
+        self.stdout.write(msg)
+        self.stdout.flush()
+
     def handle(self, *args, **options):
         # N.B. don't take out the print statements as they're
         # very very very very very very very very very very
         # helpful in debugging supervisor+worker+gearman
-        logger.info('Starting worker')
-        
+        self.write_stdout('Starting worker\n')
         task_name = 'task_%s' % options['queue']
-        logger.info('Task: %s\n' % task_name)
+        self.write_stdout('Task: %s\n' % task_name)
         if task_name not in dir(self):
-            logger.warning("Wow.. That's crazy! Maybe try an existing queue?")
+            self.write_stdout("Wow.. That's crazy! Maybe try an existing queue?\n")
             sys.exit(1)
         task_func = lambda x, y: getattr(Command, task_name)(self, x, y)
-        
-        logger.info('Initializing gm_worker')
+        self.write_stdout('Initializing gm_worker\n')
         gm_worker = gearman.GearmanWorker(settings.GEARMAN_JOB_SERVERS)
-        
-        logger.info('Registering task %s, function %s\n' % (task_name, task_func))
+        self.write_stdout('Registering task %s, function %s\n' % (task_name, task_func))
         gm_worker.register_task(options['queue'], task_func)
-        
-        logger.info('Starting work')
+        self.write_stdout('Starting work\n')
         gm_worker.work()
-        logger.info('Ended work')
+        self.write_stdout('Ended work\n')
 
 
     def task_analyze_sound(self, gearman_worker, gearman_job):
@@ -70,7 +68,7 @@ class Command(BaseCommand):
     
     def task_process_x(self, gearman_worker, gearman_job, func):
         sound_id = gearman_job.data
-        logger.info("Processing sound with id %s\n" % sound_id)
+        self.write_stdout("Processing sound with id %s\n" % sound_id)
         success = True
         sound = False
         try:
@@ -94,23 +92,23 @@ class Command(BaseCommand):
 
             # if we didn't succeed in resetting the connection, quit the worker
             if intent <= 0:
-                logger.info("Problems while connecting to the database, could not reset the connection and will kill the worker.\n")
+                self.write_stdout("Problems while connecting to the database, could not reset the connection and will kill the worker.\n")
                 sys.exit(255)
 
             result = func(sound)
-            logger.info("Finished, sound: %s, processing %s\n" % \
+            self.write_stdout("Finished, sound: %s, processing %s\n" % \
                               (sound_id, ("ok" if result else "failed")))
             success = result
             return 'true' if result else 'false'
         except Sound.DoesNotExist:
-            logger.warning("\t did not find sound with id: %s\n" % sound_id)
+            self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
             success = False
             return 'false'
         except (DatabaseError, InterfaceError):
-            logger.error("Problems while connecting to the database, will kill the worker.")
+            self.write_stdout("Problems while connecting to the database, will kill the worker.\n")
             sys.exit(255)
         except Exception, e:
-            logger.info("\t something went terribly wrong: %s\n" % e)
-            logger.info("\t%s\n" % traceback.format_exc())
+            self.write_stdout("\t something went terribly wrong: %s\n" % e)
+            self.write_stdout("\t%s\n" % traceback.format_exc())
             success = False
             return 'false'

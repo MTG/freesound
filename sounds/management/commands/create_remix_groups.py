@@ -40,7 +40,7 @@ class Command(BaseCommand):
         for row in cursor:
             dg.add_edge(row[0], row[1])
 
-        # 3) Add date to nodes for sorting (TODO: how can we avoid this query???)
+        # 3) Add date to nodes for sorting (FIXME: how can we avoid this query???)
         """
         for node in dg.nodes():
             cursor.execute("SELECT snd.created, snd.original_filename, au.username " \
@@ -52,8 +52,10 @@ class Command(BaseCommand):
         """
         dg = _create_nodes(dg)
         
+        # print dg.nodes(data=True)
         # 4) Find weakly connected components (single direction)
         subgraphs = nx.weakly_connected_component_subgraphs(dg)
+        node_list = []
         
         # 5) delete all remixgroup objects to recalculate
         RemixGroup.objects.all().delete()
@@ -128,8 +130,8 @@ def _create_and_save_remixgroup(sg, remixgroup):
                                "\"length\":" + str(len(node_list)) + "," \
                                "\"nodes\": " + json.dumps(nodes) + "," \
                                "\"links\": " + json.dumps(links) + "}"
-                                                   
-    remixgroup.save()  
-    pp(remixgroup.protovis_data)
-    
-    return remixgroup
+                               
+    remixgroup.networkx_data = json.dumps(dict(nodes=sg.nodes(), edges=sg.edges()))                         
+    remixgroup.save()   
+    print remixgroup.id
+    print remixgroup.networkx_data

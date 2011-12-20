@@ -134,14 +134,9 @@ SOUNDS_PER_DESCRIBE_ROUND = 4
 SIMILAR_SOUNDS_TO_CACHE = 100 # for the similarity service
 SIMILARITY_CACHE_TIME = 60*60*1
 DEFAULT_SIMILARITY_PRESET = 'lowlevel'
-
-<<<<<<< HEAD
-# logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
-=======
 DELETED_USER_ID = 1
 
-logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
->>>>>>> origin/master
+# logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 

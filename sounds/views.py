@@ -63,6 +63,9 @@ def get_random_uploader():
     return random_uploader
 
 def sounds(request):
+    logger.info("info msg")
+    logger.info("info msg")
+    logger.info("info msg")
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
@@ -343,94 +346,98 @@ def sound_edit_sources(request, username, sound_id):
         raise PermissionDenied
 
     current_sources = sound.sources.all()
+    print "################## before POST %s" % current_sources
     sources_string = ",".join(map(str, [source.id for source in current_sources]))
-
-    remix_group = RemixGroup.objects.filter(sounds=current_sources)
-    # No prints in production code!
-    #print ("======== remix group id following ===========")
-    #print (remix_group[0].id)
 
     if request.method == 'POST':
         form = RemixForm(sound, request.POST)
         if form.is_valid():
             form.save()
-            # FIXME: temp solution to not fuckup the deployment in tabasco
-            # remix_group = RemixGroup.objects.filter(sounds=sound) 
-            # if remix_group:
-            #     __recalc_remixgroup(remix_group[0], sound)
+            # check if the sources belong to remixgroup(s)
+            current_sources = sound.sources.all()
+            remix_group_sources = RemixGroup.objects.filter(sounds=current_sources)
+            # Need to get the sound again after the sources modifications have been saved
+            sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+            print "################## after POST %s" % sound.sources.all()
+            print current_sources
+            if current_sources:
+                # is edited sound part of a remixgroup?
+                remix_group = RemixGroup.objects.filter(sounds=sound)
+                if remix_group:
+                    remix_group = remix_group[0]
+                else:
+                    remix_group = RemixGroup()
+                # TODO: this seems to nearly work...
+                #       1) BUG: I need to save it twice (via web for it to work) >>> form.save() not committing?    FIXED
+                #       2) redirect old remixgroups_ids to new one...
+                dg = __recalc_remixgroups(nx.DiGraph(), sound, current_sources)
+                logger.info("################## graph nodes %s " % dg.nodes())
+                dg = _create_nodes(dg)
+                subgraphs = nx.weakly_connected_component_subgraphs(dg)
+                try:
+                    for sg in subgraphs:
+                        logger.info("subgraphs")
+                        saved_group = _create_and_save_remixgroup(sg, remix_group)
+                        # set old remixgroups to the new merged group id for redirecting
+                        for src in current_sources:
+                            if src.sources:
+                                src.remix_group.redirect_to = saved_group.id
+                        
+                except Exception, e:
+                    logger.info(e)
+            else:
+                try:
+                    # FIXME: this can throw exception, prevent it in the GUI (disable save if sources is empty)
+                    principal_remix_group = RemixGroup.objects.filter(sounds=sound)[0] 
+                    child_remixgroups = RemixGroup.objects.filter(redirect_to=principal_remix_group.id)
+                    # "unmerge" remixgroups by setting redirect_to to null
+                    for r in child_remixgroups:
+                        r.redirect_to=None
+                        r.save()
+                    
+                    RemixGroup.objects.filter(sounds=sound).delete()
+                except Exception, e:
+                    logger.info(e)
+                
         else:
             # TODO: Don't use prints! Either use logging or return the error to the user. ~~ Vincent
-            pass #print ("Form is not valid!!!!!!! %s" % ( form.errors))
+            logger.error("Form is not valid!!!!!!! %s" % ( form.errors))
     else:
         form = RemixForm(sound,initial=dict(sources=sources_string))
     return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
 
-# TODO: handle case were added/removed sound is part of remixgroup
-def __recalc_remixgroup(remixgroup, sound):
-
-    # recreate remixgroup
-    dg = nx.DiGraph()
-    data = json.loads(remixgroup.networkx_data)
-    dg.add_nodes_from(data['nodes'])
-    dg.add_edges_from(data['edges'])
-    
-    # print "========= NODES =========="
-    print dg.nodes()
-    # print "========= EDGES =========="
-    print dg.edges()
-    
-    # add new nodes/edges (sources in this case)
-    for source in sound.sources.all():
-        if source.id not in dg.successors(sound.id) \
-                    and source.created < sound.created: # time-bound, avoid illegal source assignment
-            dg.add_node(source.id)
-            dg.add_edge(sound.id, source.id)
-            remix_group = RemixGroup.objects.filter(sounds=source)
-            if remix_group:
-                dg = __nested_remixgroup(dg, remix_group[0])
-            
+# Can this only be one level? Meaning a sound can have sources that have sources. And the nesting stops here.
+# If it would continue it would mean we failed to merge a remixgroup. So only 1 level recursion is possible.
+def __recalc_remixgroups(dg, sound, sources):
+    print "__recalc_remixgroups"
     try:
-        # remove old nodes/edges
-        for source in dg.successors(sound.id):
-            if source not in [s.id for s in sound.sources.all()]:
-                dg.remove_node(source) # TODO: check if edges are removed automatically
-        
-        # create and save the modified remixgroup
-        dg = _create_nodes(dg)
-        print "============ NODES AND EDGES =============="
-        print dg.nodes()
-        print dg.edges()
-        _create_and_save_remixgroup(dg, remixgroup)
-    except Exception, e:
-        logger.warning(e)    
-
-def __nested_remixgroup(dg1, remix_group):
-    print "============= nested remix_group ================ \n"
-    dg2 = nx.DiGraph()
-    data = json.loads(remix_group.networkx_data)
-    dg2.add_nodes_from(data['nodes'])
-    dg2.add_edges_from(data['edges'])
-        
-    print "========== MERGED GROUP NODES: " + str(dg1.nodes())
-
-    # FIXME: this combines the graphs correctly
-    #        recheck the time-bound concept
-    dg1 = nx.compose(dg1, dg2)
-    print dg1.nodes()
-
-    return dg1
+        for src in sources:        
+            dg.add_edge(sound.id, src.id)
+            if src.sources:
+                dg = __recalc_remixgroups(dg, src, src.sources.all())
+    except Exception,e: 
+        logger.info(e)
+    
+    return dg
+    
 
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     try:
         remix_group = sound.remix_group.all()[0]
-    except:
+        if not remix_group.redirect_to:
+            id = remix_group.id
+        else:
+            id = remix_group.redirect_to
+    except Exception, e:
+        logger.warning(e)
         raise Http404
-    return HttpResponseRedirect(reverse("remix-group", args=[remix_group.id]))
+    return HttpResponseRedirect(reverse("remix-group", args=[id]))
 
 def remix_group(request, group_id):
     group = get_object_or_404(RemixGroup, id=group_id)
     data = group.protovis_data
+    logger.info(data)
     sounds = group.sounds.all().order_by('created')
     last_sound = sounds[len(sounds)-1]
     group_sound = sounds[0]

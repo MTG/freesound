@@ -42,7 +42,7 @@
         <br>
     {% else %}
         <h1>{{user.username}}</h1>
-
+		{% if user.profile %}
         <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
         <div class="account_information_and_home_options">
         <ul>
@@ -75,7 +75,10 @@
                 {{user.profile.about|safe|linebreaksbr }}
             </p>
         {% endif %}
-        <br>
+        <br>        
+        {% else %}
+        	This user has been deleted
+        {% endif %}
     {% endif %}
 
 <div id="content">

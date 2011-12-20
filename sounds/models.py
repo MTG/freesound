@@ -349,9 +349,16 @@ class DeletedSound(models.Model):
 
 def on_delete_sound(sender,instance, **kwargs):
     if instance.moderation_state == "OK" and instance.processing_state == "OK":
-        DeletedSound.objects.get_or_create(sound_id=instance.id, user=instance.user)
-    if instance.geotag:
-        instance.geotag.delete()
+        try:
+            DeletedSound.objects.get_or_create(sound_id=instance.id, user=instance.user)
+        except User.DoesNotExist:
+            deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
+            DeletedSound.objects.get_or_create(sound_id=instance.id, user=deleted_user)
+    try:            
+        if instance.geotag:
+            instance.geotag.delete()
+    except:
+        pass
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
@@ -519,3 +526,6 @@ class RemixGroup(models.Model):
 
     # facilitate ordering according to group size
     group_size = models.PositiveIntegerField(null=False, default=0)
+    
+    # keep correct id to redirect to when merging groups
+    redirect_to = models.IntegerField(null=True, blank=True, default=None)

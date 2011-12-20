@@ -6,7 +6,7 @@
             "username": "--DeletedUser--", 
             "first_name": "Deleted", 
             "last_name": "User", 
-            "is_active": false, 
+            "is_active": true, 
             "is_superuser": false, 
             "is_staff": false, 
             "last_login": "1978-06-21 00:00:00", 

@@ -26,6 +26,7 @@ import math
 import numpy
 import os
 import re
+import signal
 from . import get_sound_type
 
 try:
@@ -584,16 +585,21 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
 
 def convert_using_ffmpeg(input_filename, output_filename):
     """
-    converts the incoming wave file to n ogg file
+    converts the incoming wave file to stereo pcm using fffmpeg
     """
+    TIMEOUT = 3 * 60
+    def  alarm_handler(signum, frame):
+        raise AudioProcessingException, "timeout while waiting for ffmpeg"
 
     if not os.path.exists(input_filename):
         raise AudioProcessingException, "file %s does not exist" % input_filename
 
-    command = ["ffmpeg", "-y", "-i", input_filename, "-ac",1,"-sr","-acodec", "pcm_s16le", "-ar", 44100, output_filename]
+    command = ["ffmpeg", "-y", "-i", input_filename, "-ac","1","-acodec", "pcm_s16le", "-ar", "44100", output_filename]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    signal.signal(signal.SIGALRM,alarm_handler)
+    signal.alarm(TIMEOUT)
     (stdout, stderr) = process.communicate()
-
+    signal.alarm(0)
     if process.returncode != 0 or not os.path.exists(output_filename):
         raise AudioProcessingException, stdout

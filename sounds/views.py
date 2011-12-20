@@ -2,15 +2,17 @@ from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.db.models import Count, Max
+from django.db import connection, transaction
+from django.db.models import Count, Max, Q
 from django.http import HttpResponseRedirect, Http404, HttpResponse, \
     HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
@@ -18,29 +20,27 @@ from django.template import RequestContext
 from forum.models import Post, Thread
 from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
+from networkx import nx
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    NewLicenseForm, FlagForm, RemixForm
-from accounts.models import Profile
-from sounds.models import Sound, Pack, Download, RemixGroup
-from tickets.models import Ticket, TicketComment
+    NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm
+from sounds.management.commands.create_remix_groups import _create_nodes, \
+    _create_and_save_remixgroup
+from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
+from sounds.templatetags import display_sound
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
+from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_template_cache
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
-from utils.pagination import paginate
-from utils.text import slugify
 from utils.nginxsendfile import sendfile
-import datetime, os, time, logging
-from sounds.templatetags import display_sound
-from django.db.models import Q
+from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
-import urllib
-from django.contrib.sites.models import Site
-from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from django.db import connection, transaction
-from networkx import nx
+import datetime
+import time
+import logging
 import json
+import os
 
 logger = logging.getLogger('web')
 
@@ -66,16 +66,32 @@ def sounds(request):
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
-
-    # popular_sounds = Sound.public.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    popular_sounds = Sound.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:5]
-
-    # popular_packs = Pack.objects.filter(sound__moderation_state="OK", sound__processing_state="OK").filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-    popular_packs = Pack.objects.filter(download__created__gte=datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)).annotate(num_d=Count('download')).order_by("-num_d")[0:20]
-
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
+    
+    # N.B. this two queries group by twice on sound id, if anyone ever find out why....
+    popular_sounds = Download.objects.filter(created__gte=last_week)  \
+                                     .exclude(sound=None)             \
+                                     .values('sound_id')              \
+                                     .annotate(num_d=Count('sound'))  \
+                                     .order_by("-num_d")[0:5]
+    
+    packs = Download.objects.filter(created__gte=last_week)  \
+                            .exclude(pack=None)              \
+                            .values('pack_id')               \
+                            .annotate(num_d=Count('pack'))   \
+                            .order_by("-num_d")[0:5]
+    
+    popular_packs = []                              
+    for pack in packs:
+        pack_obj = Pack.objects.select_related().get(id=pack['pack_id'])
+        popular_packs.append({'pack': pack_obj,
+                              'num_d': pack['num_d']
+                              })
+    
     random_sound = get_random_sound()
     random_uploader = get_random_uploader()
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
+
 
 def remixed(request):
     # TODO: this doesn't return the right results after remix_group merge
@@ -101,7 +117,7 @@ def packs(request):
                      .filter(num_sounds__gt=0) \
                      .order_by(order)
     return render_to_response('sounds/browse_packs.html',
-                              combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()),
+                              combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE, cache_count=True), locals()),
                               context_instance=RequestContext(request))
 
 
@@ -118,8 +134,8 @@ LIMIT 10
 
 
 def front_page(request):
-    rss_url = settings.FREESOUND_RSS
-    pledgie_campaign = settings.PLEDGIE_CAMPAIGN
+    rss_cache = cache.get("rss_cache", None)
+    pledgie_cache = cache.get("pledgie_cache", None)
     current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids()) \
                                           .order_by('-last_post__created') \
                                           .select_related('author',
@@ -134,7 +150,8 @@ def front_page(request):
 def sound(request, username, sound_id):
     try:
         sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(user__username__iexact=username, id=sound_id)
-        user_is_owner = request.user.is_authenticated() and (sound.user == request.user or request.user.is_superuser or request.user.is_staff)
+        user_is_owner = request.user.is_authenticated() and (sound.user == request.user or request.user.is_superuser \
+                        or request.user.is_staff or Group.objects.get(name='moderators') in request.user.groups.all())
         # If the user is authenticated and this file is his, don't worry about moderation_state and processing_state
         if user_is_owner:
             if sound.moderation_state != "OK":
@@ -145,7 +162,11 @@ def sound(request, username, sound_id):
             if sound.moderation_state != 'OK' or sound.processing_state != 'OK':
                 raise Http404
     except Sound.DoesNotExist: #@UndefinedVariable
-        raise Http404
+        try:
+            DeletedSound.objects.get(sound_id=sound_id)
+            return render_to_response('sounds/deleted_sound.html', {}, context_instance=RequestContext(request))
+        except DeletedSound.DoesNotExist:
+            raise Http404
 
     tags = sound.tags.select_related("tag__name")
 
@@ -204,6 +225,14 @@ def sound_edit(request, username, sound_id):
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
 
+    def invalidate_sound_cache(sound):
+        invalidate_template_cache("sound_header", sound.id, True)
+        invalidate_template_cache("sound_header", sound.id, False)
+        invalidate_template_cache("sound_footer_top", sound.id)
+        invalidate_template_cache("sound_footer_bottom", sound.id)
+        invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+        invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+
     def is_selected(prefix):
         if request.method == "POST":
             for name in request.POST.keys():
@@ -219,8 +248,8 @@ def sound_edit(request, username, sound_id):
             sound.description = data["description"]
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id, True)
-            invalidate_template_cache("sound_header", sound.id, False)
+            invalidate_sound_cache(sound)
+            
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
                                             source=TICKET_SOURCE_NEW_SOUND) \
@@ -249,34 +278,24 @@ def sound_edit(request, username, sound_id):
             data = pack_form.cleaned_data
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
-                if sound.pack:
-                    sound.pack.is_dirty = True
-                    sound.pack.save()
                 sound.pack = pack
             else:
                 new_pack = data["pack"]
                 old_pack = sound.pack
                 if new_pack != old_pack:
-                    if old_pack:
-                        old_pack.is_dirty = True
-                        old_pack.save()
-                    if new_pack:
-                        new_pack.is_dirty = True
-                        new_pack.save()
                     sound.pack = new_pack
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id, True)
-            invalidate_template_cache("sound_header", sound.id, False)
-            invalidate_template_cache("sound_footer_top", sound.id)
-            invalidate_template_cache("sound_footer_bottom", sound.id)
+            invalidate_sound_cache(sound)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
 
     if is_selected("geotag"):
         geotag_form = GeotaggingForm(request.POST, prefix="geotag")
+        
         if geotag_form.is_valid():
             data = geotag_form.cleaned_data
+            
             if data["remove_geotag"]:
                 if sound.geotag:
                     geotag = sound.geotag.delete()
@@ -287,12 +306,13 @@ def sound_edit(request, username, sound_id):
                     sound.geotag.lat = data["lat"]
                     sound.geotag.lon = data["lon"]
                     sound.geotag.zoom = data["zoom"]
+                    sound.geotag.save()
                 else:
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
                     sound.mark_index_dirty()
 
-            invalidate_template_cache("sound_footer_top", sound.id)
-            invalidate_template_cache("sound_footer_bottom", sound.id)
+            invalidate_sound_cache(sound)
+            
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -304,12 +324,11 @@ def sound_edit(request, username, sound_id):
     if request.POST and license_form.is_valid():
         sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
-        invalidate_template_cache("sound_footer_top", sound.id)
-        invalidate_template_cache("sound_footer_bottom", sound.id)
+        invalidate_sound_cache(sound)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license})
-
+    
     google_api_key = settings.GOOGLE_API_KEY
 
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
@@ -404,7 +423,7 @@ def __nested_remixgroup(dg1, remix_group):
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     try:
-        remix_group = sound.remix_groups.all()[0]
+        remix_group = sound.remix_group.all()[0]
     except:
         raise Http404
     return HttpResponseRedirect(reverse("remix-group", args=[remix_group.id]))
@@ -446,17 +465,34 @@ def pack(request, username, pack_id):
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
     num_sounds_ok = len(qs)
-
+    # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
+    pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None).exists()
+    google_api_key = settings.GOOGLE_API_KEY
+    
+    
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
-        if pack.is_dirty :
+        if not os.path.exists(pack.locations("path")):
             messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
         
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 
+    # If user is owner of pack, display form to add description
+    enable_description_form = False
+    if request.user.username == username:
+        enable_description_form = True
+        form = PackDescriptionForm(instance = pack)
 
+    # Manage POST info (if adding a description)
+    if request.method == 'POST':
+        form = PackDescriptionForm(request.POST, pack)
+        if form.is_valid():
+            pack.description = form.cleaned_data['description']
+            pack.save()
+        else:
+            pass        
 
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
@@ -517,9 +553,9 @@ def flag(request, username, sound_id):
         email = request.user.email
 
     if request.method == "POST":
-        flag_form = FlagForm(request.POST)
+        flag_form = FlagForm(request, request.POST)
         if flag_form.is_valid():
-            flag = flag_form.save(commit=False)
+            flag = flag_form.save()
             flag.reporting_user=user
             flag.sound = sound
             flag.save()
@@ -529,9 +565,9 @@ def flag(request, username, sound_id):
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if user:
-            flag_form = FlagForm(initial=dict(email=email))
+            flag_form = FlagForm(request,initial=dict(email=email))
         else:
-            flag_form = FlagForm()
+            flag_form = FlagForm(request)
 
     return render_to_response('sounds/sound_flag.html', locals(), context_instance=RequestContext(request))
 
@@ -567,15 +603,15 @@ def embed_iframe(request, sound_id, player_size):
     return render_to_response('sounds/sound_iframe.html', locals(), context_instance=RequestContext(request))
 
 def downloaders(request, username, sound_id):
-    sound = Sound.objects.get(id=sound_id)
+    sound = get_object_or_404(Sound, id=sound_id)
+    
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(sound=sound_id)
-    num_results = len(qs)
     return render_to_response('sounds/downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
 
 def pack_downloaders(request, username, pack_id):
-    pack = Pack.objects.get(id=pack_id)
+    pack = get_object_or_404(Pack, id = pack_id)
+    
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
-    num_results = len(qs)
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))

@@ -10,6 +10,9 @@
 {% block section_content %}
 <h1>Tags</h1>
 
+{% if error %}
+The search server could not be reached, please try again later.
+{% else %}
 <div class="tagcloud">
     {% for tag in tags|add_sizes:"True:0.7:1.8" %}
         <span style="font-size:{{tag.size}}em;">
@@ -35,6 +38,8 @@
 {% endfor %}
 
 {% show_paginator paginator page current_page request "sound" %}
+{% endif %}
+
 {% endif %}
 
 {% endblock %}

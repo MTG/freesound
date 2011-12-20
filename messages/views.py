@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from messages.forms import MessageReplyForm
+from messages.forms import MessageReplyForm, MessageReplyFormNoCaptcha
 from messages.models import Message, MessageBody
 from utils.cache import invalidate_template_cache
 from utils.functional import exceptional
@@ -12,6 +12,7 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 from BeautifulSoup import BeautifulSoup
 import json
+from textwrap import wrap
 from accounts.models import User
 from django.http import HttpResponse
 
@@ -78,8 +79,13 @@ def message(request, message_id):
 
 @login_required
 def new_message(request, username=None, message_id=None):
+    
     if request.method == 'POST':
-        form = MessageReplyForm(request.POST)
+        if request.user.profile.num_sounds:
+            form = MessageReplyFormNoCaptcha(request.POST)
+        else:
+            form = MessageReplyForm(request,request.POST)
+            
         if form.is_valid():
             user_from = request.user
             user_to = form.cleaned_data["to"]
@@ -100,27 +106,37 @@ def new_message(request, username=None, message_id=None):
             
             return HttpResponseRedirect(reverse("messages"))
     else:
-        form = MessageReplyForm()
+        if request.user.profile.num_sounds:
+            form = MessageReplyFormNoCaptcha()
+        else:
+            form = MessageReplyForm(request)
+
         if message_id:
             try:
                 message = Message.objects.get(id=message_id)
 
                 if message.user_from != request.user and message.user_to != request.user:
                     raise Http404
-
+                
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
                 body = ''.join(BeautifulSoup(body).findAll(text=True))
-                body = "\n".join([(">" if line.startswith(">") else "> ") + line.strip() for line in body.split("\n")])
+                body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(),60)) for line in body.split("\n")])
                 body = "> --- " + message.user_from.username + " wrote:\n>\n" + body
                 
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
-                form = MessageReplyForm(initial=dict(to=to, subject=subject, body=body))
+                if request.user.profile.num_sounds:
+                    form = MessageReplyFormNoCaptcha(initial=dict(to=to, subject=subject, body=body))
+                else:
+                    form = MessageReplyForm(request,initial=dict(to=to, subject=subject, body=body))
             except Message.DoesNotExist:
                 pass
         elif username:
-            form = MessageReplyForm(initial=dict(to=username))
+            if request.user.profile.num_sounds:
+                form = MessageReplyFormNoCaptcha(initial=dict(to=username))
+            else:
+                form = MessageReplyForm(request, initial=dict(to=username))
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))
 
@@ -131,10 +147,13 @@ def username_lookup(request):
         if request.GET.has_key(u'q'):            
             value = request.GET[u'q']
 
-            # Ignore queries shorter than length 3
-            if len(value) > 2:
-                print "looking for results..."
-                model_results = User.objects.filter(username__icontains=value).order_by('username')#[0:30]
+            # When there is at least one character, start searching usernames (only among users previously contacted)
+            if len(value) > 0:
+                # Only autocompleting for previously contacted users 
+                previously_contacted_user_ids1 = list(Message.objects.filter(user_from = request.user.id, ).values_list('user_to', flat='True').distinct())
+                previously_contacted_user_ids2 = list(Message.objects.filter(user_to = request.user.id, ).values_list('user_from', flat='True').distinct())
+                previously_contacted_user_ids = set(previously_contacted_user_ids1+previously_contacted_user_ids2)
+                model_results = User.objects.filter(username__istartswith = value, id__in = previously_contacted_user_ids).order_by('username')#[0:30]
                 index = 0
                 for r in model_results:
                     results.append( (r.username,index) )

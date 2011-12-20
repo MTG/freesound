@@ -30,10 +30,15 @@
             <li><a href="{% url accounts-describe %}">Describe</a> your sounds</li>
             <li><a href="{% url accounts-attribution %}">Attribution</a> - the sounds you downloaded</li>
             {% if perms.tickets.can_moderate %}
-            <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} sounds, {{ new_support }} support requests</li>
+            <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} new sound{{ new_sounds|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
             {% endif %}
+            {% if user.profile.num_sounds %}
+            <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
+            {% endif %}
+            <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
         </ul>
         </div>
+        <br style="clear: both;" />
         <br>
     {% else %}
         <h1>{{user.username}}</h1>
@@ -45,12 +50,23 @@
             {% if user.profile.home_page %}
             <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
             {% endif %}
-            <li>Has a been a user for {{user.date_joined|timesince}}</li>
+            <li>Has been a user for {{user.date_joined|timesince}}</li>
+            {% if user.profile.num_sounds %}
             <li>Number of sounds: {{user.profile.num_sounds}}</li>
+            {% endif %}
+            {% if user.profile.num_posts %}
             <li>Number of forum posts: {{user.profile.num_posts}}</li>
+            {% endif %}
             <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
-
+            {% if user.profile.num_sounds %}
+            <li><a href="{% url comments-for-user user.username %}">All comments</a> on this {{user.username}}'s sounds</li>
+            {% endif %}
+            <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>
+            {% if request.user.is_staff %}
+                <li><a id="admin_link" class="icon" href="{% url admin:auth_user_change user.id %}">Edit user in the admin</a></li>
+            {% endif %}
+            
         </ul>
         </div>
         <br style="clear: both;" />
@@ -121,7 +137,7 @@
 </div><!-- #content -->
 
 <div id="sidebar">
-    {% if tags.count %}
+    {% if tags %}
     <div id="user_most_used_tags" class="content_box">
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
         <p class="user_tagcloud">
@@ -142,25 +158,51 @@
             map.setUIToDefault();
             map.disableScrollWheelZoom();
             map.setMapType(G_SATELLITE_MAP);
+            
+            GDownloadUrl('{% url geotags-for-user-latest-json user.username %}', function(data, responseCode)
+            {
 
-            var bounds = new GLatLngBounds();
-
-            {% for geotaged_sound in latest_geotags %}
-            var point = new GLatLng({{geotaged_sound.geotag.lat}}, {{geotaged_sound.geotag.lon}});
-            bounds.extend(point);
-            var marker = new GMarker(point);
-            GEvent.addListener(marker, "click", function() {
-                GDownloadUrl( "{% url geotags-infowindow geotaged_sound.id %}", function(data, responseCode) {
-                    marker.openInfoWindowHtml(data);
-                    setTimeout(function() {
-                        makePlayer('.infowindow_player .player');
-                    }, 500);
+                var bounds = new GLatLngBounds();
+                // We'll need to know the number of sounds to correctly display the map
+                // in case there is only one sound with geotag
+                var nSounds = 0;
+                var lastPoint;
+    
+                $.each($.parseJSON(data), function(index, item)
+                {
+                    nSounds = nSounds + 1;
+                    var id = item[0];
+                    var lat = item[1];
+                    var lon = item[2];
+                    
+                    var point = new GLatLng(lat, lon);
+                    lastPoint = point
+                    bounds.extend(point);
+                    var marker = new GMarker(point);
+                    
+                    GEvent.addListener(marker, "click", function()
+                    {
+                        GDownloadUrl( "/geotags/infowindow/" + id, function(data, responseCode)
+                        {
+                            marker.openInfoWindowHtml(data);
+                            setTimeout(function() {
+                                makePlayer('.infowindow_player .player');
+                            }, 500);
+                        });
+                    });
+                    map.addOverlay(marker);
                 });
+                
+                if (nSounds > 1){
+                    if (!bounds.isEmpty()) zoomToBounds(map, bounds);
+                }else{
+                    // Center the map in the geotag
+                    map.setCenter(lastPoint, 4);
+                }
+                
             });
-            map.addOverlay(marker);
-
-            {% endfor %}
-            zoomToBounds(map, bounds);
+            
+            //zoomToBounds(map, bounds);
         </script>
         <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
     </div><!-- #latest_geotags -->

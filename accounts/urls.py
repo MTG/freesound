@@ -4,6 +4,7 @@ from django.conf.urls.defaults import patterns, url
 import django.contrib.auth.views as authviews
 import messages.views as messages
 import accounts.views as accounts
+import bookmarks.views as bookmarks
 
 urlpatterns = patterns('accounts.views',
 
@@ -28,6 +29,10 @@ urlpatterns = patterns('accounts.views',
         accounts.activate_user,
         name="accounts-activate"),
 
+    url(r'^activate2/(?P<username>[^\/]+)/(?P<hash>[^\/]+)/$',
+        accounts.activate_user2,
+        name="accounts-activate2"),
+                       
     url(r'^register/$',
         accounts.registration,
         name="accounts-register"),
@@ -70,11 +75,17 @@ urlpatterns = patterns('accounts.views',
 
     url(r'^upload/file/$', accounts.upload_file, name="accounts-upload-file"),
     url(r'^upload/$', accounts.upload, name="accounts-upload"),
+    url(r'^upload/html/$', accounts.upload, name="accounts-upload-html", kwargs=dict(no_flash=True)),    
     url(r'^describe/$', accounts.describe, name="accounts-describe"),
     url(r'^describe/license/$', accounts.describe_license, name="accounts-describe-license"),
     url(r'^describe/pack/', accounts.describe_pack, name="accounts-describe-pack"),
     url(r'^describe/sounds/', accounts.describe_sounds, name="accounts-describe-sounds"),
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),
+    url(r'^bookmarks/add/(?P<sound_id>\d+)/$', bookmarks.add_bookmark, name="add-bookmark"),
+    url(r'^bookmarks/get_form_for_sound/(?P<sound_id>\d+)/$', bookmarks.get_form_for_sound, name="bookmarks-add-form-for-sound"),
+    url(r'^bookmarks/category/(?P<category_id>\d+)/delete/$', bookmarks.delete_bookmark_category, name="delete-bookmark-category"),    
+    url(r'^bookmarks/(?P<bookmark_id>\d+)/delete/$', bookmarks.delete_bookmark, name="delete-bookmark"),
+
 
     url(r'^messages/$', messages.inbox, name='messages'),
     url(r'^messages/sent/$', messages.sent_messages, name='messages-sent'),

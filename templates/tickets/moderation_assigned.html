@@ -23,10 +23,12 @@
 
     $(document).ready(function() {
         {% if moderator_tickets %}
-            moderate('{% url sound-display moderator_tickets.0.content.content_object.user.username moderator_tickets.0.content.object_id %}');
-            load_messages('{% url tickets-ticket moderator_tickets.0.key %}');
-            $('#id_ticket').get(0).value={{moderator_tickets.0.id}}
-            set_uploader_id({{moderator_tickets.0.sender.id}})
+            soundManager.onready(function() {
+                moderate('{% url sound-display moderator_tickets.0.content.content_object.user.username moderator_tickets.0.content.object_id %}');
+                load_messages('{% url tickets-ticket moderator_tickets.0.key %}');
+                $('#id_ticket').get(0).value={{moderator_tickets.0.id}};
+                set_uploader_id({{moderator_tickets.0.sender.id}});
+            });
         {% endif %}
     });
 
@@ -70,7 +72,7 @@
     <div id="moderation-queue">
 
         <div id="moderation-queue-left">
-            <h4>Assigned tickets</h4>
+            <h4>Assigned tickets {% if moderator_tickets_count > 0 %} ({{moderator_tickets_count}}) {% endif %}</h4>
             <br>
             {% if not moderator_tickets %}
                 <p>You've finished all the sounds in your queue.

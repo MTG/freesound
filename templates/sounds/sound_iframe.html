@@ -9,6 +9,9 @@
         <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/embed.css" />
         <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/player.css" />
         <script src="{{ media_url }}html_player/soundmanager2.js"></script>
+        <script type="text/javascript">
+            var isEmbed = true;
+        </script>
         <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
     </head>
 
@@ -26,7 +29,11 @@
             <br style="clear: both;" />
         </div>
         <div class="player large">
-            <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.L.url}} {{sound.locations.display.spectral.L.url}} {{sound.duration_ms}}</div>
+        <div class="metadata">
+            {% with 'L' as size %}
+                {% include 'sounds/metadata.html' %}
+            {% endwith %}
+        </div>
         </div>
     </div>
 
@@ -38,7 +45,11 @@
     <div class="widget medium">
         <div class="player_wrapper">
             <div class="player small">
-                <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.M.url}} {{sound.locations.display.spectral.M.url}} {{sound.duration_ms}}</div>
+                <div class="metadata">
+                    {% with 'M' as size %}
+                        {% include 'sounds/metadata.html' %}
+                    {% endwith %}
+                </div>
             </div>
         </div>
 
@@ -71,7 +82,11 @@
     <div class="widget small">
         <nobr>
             <div class="player mini">
-                <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.S.url}} {{sound.locations.display.spectral.S.url}} {{sound.duration_ms}}</div>
+                <div class="metadata">
+                {% with 'S' as size %}
+                        {% include 'sounds/metadata.html' %}
+                {% endwith %}
+                </div>
             </div>
             <div class="sample_info">
                 <a href="{% absurl sound sound.user.username sound.id %}" target="_parent"><h3>{{ username_and_filename|truncate_string:53 }}</h3></a>
@@ -85,7 +100,11 @@
     {% if size == 'mini' %}
     <div class="widget mini">
         <div class="player mini">
-            <div class="metadata">{{sound.locations.preview.LQ.mp3.url}} {{sound.locations.display.wave.S.url}} {{sound.locations.display.spectral.S.url}} {{sound.duration_ms}}</div>
+            <div class="metadata">
+                {% with 'S' as size %}
+                    {% include 'sounds/metadata.html' %}
+                {% endwith %}
+            </div>
         </div>
     </div>
     {% endif %}
@@ -150,7 +169,7 @@
                 <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to a pack." />
             </a>
             {% endif %}
-            {% if sound.remix_groups.all.count %}
+            {% if sound.remix_group.all.count %}
              <a class="remixes" href="{% url sound-remixes sound.user.username sound.id %}">
                 <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
             </a>

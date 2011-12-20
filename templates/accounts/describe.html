@@ -19,7 +19,6 @@
     function checkboxChange(checkbox)
     {
         var option = $("#fileform").find("option[value=" + checkbox.name + "]").get(0);
-
         if (checkbox.checked)
             option.selected = true;
         else
@@ -34,7 +33,8 @@
 <h3>Pick files</h3>
 <p>You've uploaded these files, but they won't appear on the website
 until you've described them. Select the files you want to describe and
-follow the instructions on the following pages.
+follow the instructions on the following pages. You can also delete files by
+selecting them and pressing the "delete" button.
 <ul id="root_file" class="upload">
     {% show_file file_structure %}
 </ul>
@@ -42,7 +42,8 @@ follow the instructions on the following pages.
     <div style="display:none">
     {{form.as_p}}
     </div>
-    <input type="submit" value="describe" name="describe">
+    <input type="submit" value="describe" name="describe" style="margin-left:10px">
+    <input type="submit" value="delete" name="delete">
 </form>
 </div><!-- #describe_page -->
 {% endblock %}

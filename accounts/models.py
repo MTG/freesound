@@ -38,12 +38,10 @@ class Profile(SocialModel):
     wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
 
-    last_action_time = models.DateTimeField(null=True, blank=True, default=None)
-
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
 
-    has_old_license = models.BooleanField(null=False, default=False)
+    has_old_license = models.BooleanField(null=False, default=True)
     not_shown_in_online_users_list = models.BooleanField(null=False, default=False)
 
     objects = ProfileManager()
@@ -93,7 +91,12 @@ class Profile(SocialModel):
                     tag_id,
                     count(*) as c
                 from tags_taggeditem
-                where user_id=%d
+                left join sounds_sound on
+                    object_id=sounds_sound.id
+                where
+                    tags_taggeditem.user_id=%d and
+                    sounds_sound.moderation_state='OK' and
+                    sounds_sound.processing_state='OK'
                 group by tag_id
                 order by c
                 desc limit 10

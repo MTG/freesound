@@ -1,7 +1,8 @@
 {% extends "sounds/_section.html" %}
-
+{% load cache %}
 {% load display_sound %}
 {% load paginator %}
+
 
 {% block title %}Sounds browse{% endblock title %}
 
@@ -18,6 +19,7 @@
             {% endif %}
     </div><!-- #sound_of_the_day -->
 
+{% cache 3600 latest_sounds  %}
     <div id="latest_sounds" class="content_box">
         <h3>Latest sounds</h3>
         <div>
@@ -32,11 +34,13 @@
         <p class="more_button" ><a href="{% url sounds-search %}?q=&f=&s=created+desc">more...</a></p>
         </div>
     </div><!-- #latest_sounds -->
+{% endcache %}
 
+{% cache 3600 most_downloaded_sounds  %}
     <div id="most_downloaded_sounds" class="content_box">
         <h3>Most downloaded sounds (in the last week)</h3>
         {% for sound in popular_sounds %}
-            {% display_sound sound.id %}
+            {% display_sound sound.sound_id %}
             <div class="sample_more">
                 <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads
                 in the last week.
@@ -45,9 +49,8 @@
             <p>No sounds in the database!
         {% endfor %}
         <p class="more_button"><a href="{% url sounds-search %}?q=&f=&s=num_downloads+desc">more...</a></p>
-
-
     </div><!-- #most_downloaded_sounds -->
+{% endcache %}
 </div><!-- #content -->
 
 <div id="sidebar">
@@ -67,10 +70,11 @@
             {% endif %}
     </div><!-- #uploader_of_the_day -->
     {% endcomment %}
-
+    
     <div id="other_sounds" class="content_box">
         <h3>More Sounds</h3>
         <ul style="margin-left: 0; padding-left: 0; list-style: none;">
+            <li><b><a class="icon" id ="comments_link" href="{% url comments %}">Browse latest comments</a></b></li>
             <li><b><a class="icon" id ="tag_button" href="{% url tags %}">Browse tags</a></b></li>
             <li><b><a class="icon" id ="geotag_link" href="{% url geotags %}">Browse geotags</a></b></li>
             <li><b><a class="icon" id ="pack_link" href="{% url packs %}">Browse packs</a></b></li>
@@ -78,7 +82,7 @@
             <li><b><a class="icon" id ="random_sound_button" href="{% url sounds-random %}">Give me a random sound!</a></b></li>
         </ul>
     </div><!-- #other_sounds -->
-
+{% cache 3600 latest_changed_packs  %}
     <div id="latest_changed_packs" class="content_box">
         <h3>Latest changed packs</h3>
         <ul>
@@ -91,15 +95,15 @@
         {% endfor %}
         </ul>
         <p class="more_button" ><a href="{% url packs %}?order=-last_update">more...</a></p>
-
     </div><!-- #latest_changed_packs -->
-
+{% endcache %}
+{% cache 3600 most_downloaded_packs  %}
     <div id="most_downloaded_packs" class="content_box">
         <h3>Most downloaded packs (in the last week)</h3>
         <ul>
         {% for pack in popular_packs %}
-            <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a>
-                by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
+            <li><a href="{% url pack pack.pack.user.username pack.pack.id %}">{{pack.pack.name}}</a>
+                by <a href="{% url account pack.pack.user.username %}">{{pack.pack.user.username}}</a>
                 (<span class="pack_count">{{pack.num_d}}</span> downloads)
             </li>
         {% empty %}
@@ -109,6 +113,7 @@
         <p class="more_button"><a href="{% url packs %}?order=-num_downloads">more...</a></p>
 
     </div><!-- #most_downloaded_packs -->
+{% endcache %}
 </div><!-- #sidebar -->
 
 {% endblock %}

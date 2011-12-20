@@ -35,7 +35,7 @@
     <p>In the moderation home you'll see a little menu at the top, and the
     headers 'Sounds and support requests' and 'Processing system status'.
 
-    <img src="{{ media_url }}images/moderation_guide/moderation_home.png" alt="screen shot of moderation home"/>
+    <img src="{{ media_url }}images/moderation_guide/moderation_home2.png" alt="screen shot of moderation home"/>
 
     <p>The menu item 'Moderation home' obviously takes you back to the
     moderation home. The 'Sounds' menu item, as well as the 'moderate sounds'
@@ -151,6 +151,31 @@
     <p>Try clicking the 'see full ticket' link in your sound queue if you are
     curious about tickets. It'll show you some more details.</p>
 
+    <h3>Tardy moderators and Tardy users sounds</h3>
+    
+    <p>In the moderation home page, under 'Sound moderation status', it can be seen
+    that along the number of new sounds awaiting for moderation there is also
+    the number of 'tardy moderators sounds' and 'tardy users sounds'. If there is
+    at least one sound in these categories they will also be visible in the sounds
+    page of the moderation (along with the other new sounds), and you will also be 
+    able to assign them for moderation.</p>
+    
+    <p>'Tardy moderators sounds' are those sounds that have already been assigned
+    for moderation but that have not been moderated during the last day (probably
+    because the moderator who assigned them to himself did not have time to moderate 
+    them all or just forgot). These sounds can be assigned to other moderators and 
+    in that case they will dissapear from the sounds queue of the former moderator.</p>
+    
+    <p>Moreover, 'Tardy users sounds' are those whose moderation process has started
+    but their status is 'Deferred', and the user who uploaded the sound has not given
+    any response during the last two days. For example, if a moderator picks a sound and
+    asks the user for a better description but the user does not answer in two days, this sound
+    will apear in the 'Tardy users sounds' list. In that case, it is a good idea to remind
+    the user that moderators are waiting for some response, and in case there is no response
+    at all the sound can be deleted. This is to avoid having lots of deferred sounds lost forever
+    in the moderation stage.</p>
+    
+    
     <h3>Moderation tips</h3>
 
     <p>Here is some advice to help you make decisions when moderating files.
@@ -215,11 +240,13 @@
     <p>In the future the moderation task will include not just the moderation of
     sounds, but also giving support to the community.</p>
 
+	{% comment %}
     <p>Only sounds that have passed through the processing system will show up
     in the moderation system. It's possible that some sounds fail to process
     correctly. These sounds will still show up in the moderation system, but
     the sound player will be left white and a small text will indicate the
     processing has failed.</p>
+    {% endcomment %}
 </div>
 
 {% endblock section_content %}

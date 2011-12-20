@@ -3,100 +3,102 @@
 {% block head %}
     {{ block.super }}
 
-<script type="text/javascript">
-    $(document).ready(function(){
-        if ($("#forum_search").length) {
-            $("#show_search").show();
-        }
-    });
+        <script type="text/javascript">
+            $(document).ready(function(){
+                if ($("#forum_search").length) {
+                    $("#show_search").show();
+                }
+            });
     
-    function showSearch() {
-        $("#forum_search").toggle("medium");
-    }
-    function showAdvancedForumSearch() {
-        $("#advanced_search").val(1);
-        $("#enableShowButton").hide();
-        $("#advanced_forum_search").show('blind', {}, 500, function() {});
-    }
-    function hideAdvancedForumSearch() {
-        $("#advanced_search").val(0);
-        $("#advanced_forum_search").hide('blind', {}, 500, function() {});
-        $("#enableShowButton").show();
-    }
+            function showSearch() {
+                $("#forum_search").toggle("medium");
+            }
+            function showAdvancedForumSearch() {
+                $("#advanced_search").val(1);
+                $("#enableShowButton").hide();
+                $("#advanced_forum_search").show('blind', {}, 500, function() {});
+            }
+            function hideAdvancedForumSearch() {
+                $("#advanced_search").val(0);
+                $("#advanced_forum_search").hide('blind', {}, 500, function() {});
+                $("#enableShowButton").show();
+            }
 
-    $(function(){
-        $("#date_from_forum_search").datepicker({
-                                                dateFormat: 'dd-mm-yy',
-                                                altField: "#dt_from",
-                                                altFormat: "yy-mm-dd"
-                                                });
-        $("#date_to_forum_search").datepicker({
-                                              dateFormat: 'dd-mm-yy',
-                                              altField: "#dt_to",
-                                              altFormat: "yy-mm-dd"
-                                              })
+            $(function(){
+                $("#date_from_forum_search").datepicker({
+                                                        dateFormat: 'dd-mm-yy',
+                                                        altField: "#dt_from",
+                                                        altFormat: "yy-mm-dd"
+                                                        });
+                $("#date_to_forum_search").datepicker({
+                                                      dateFormat: 'dd-mm-yy',
+                                                      altField: "#dt_to",
+                                                      altFormat: "yy-mm-dd"
+                                                      })
 		
-		// Set the date in datepicker objects (if it exists in the parameters)
-		from_date = gup('dt_from')
-		if ( from_date != "" ){
-			dateParts = from_date.match(/(\d+)/g)
-    		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
-    		$('#date_from_forum_search').datepicker('setDate', realDate);
-		}
+        		// Set the date in datepicker objects (if it exists in the parameters)
+        		from_date = gup('dt_from')
+        		if ( from_date != "" ){
+        			dateParts = from_date.match(/(\d+)/g)
+            		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
+            		$('#date_from_forum_search').datepicker('setDate', realDate);
+        		}
 		
-		to_date = gup('dt_to')
-		if ( to_date != "" ){
-			dateParts = to_date.match(/(\d+)/g)
-    		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
-    		$('#date_to_forum_search').datepicker('setDate', realDate);
-		}
+        		to_date = gup('dt_to')
+        		if ( to_date != "" ){
+        			dateParts = to_date.match(/(\d+)/g)
+            		realDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
+            		$('#date_to_forum_search').datepicker('setDate', realDate);
+        		}
 		
-        $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name}}'{%else%}all forums{% endif %} {% endif %}");
+                $("#forum_search input[name=q]").Watermark("search in {% if current_forum_name %}forum '{{current_forum_name}}'{% else %}{% if forum %}'forum {{forum.name|escapejs}}'{%else%}all forums{% endif %} {% endif %}");
 
-    });
+            });
     
-    function checkEmptyDates()
-	{
-		if ( $("#date_from_forum_search").val() == "" ){
-			$("#dt_from").val("")
-		}
+            function checkEmptyDates()
+        	{
+        		if ( $("#date_from_forum_search").val() == "" ){
+        			$("#dt_from").val("")
+        		}
 		
-		if ( $("#date_to_forum_search").val() == "" ){
-			$("#dt_to").val("")
-		}
-	}
+        		if ( $("#date_to_forum_search").val() == "" ){
+        			$("#dt_to").val("")
+        		}
+        	}
 	
-	function clearDate(date)
-	{
-		if (date == 0){
-			$("#date_from_forum_search").val("Choose a Date")
-			$("#dt_from").val("")
-		}
-		else if (date==1){
-			$("#date_to_forum_search").val("Choose a Date")		
-			$("#dt_to").val("")
-		}
-	}    
+        	function clearDate(date)
+        	{
+        		if (date == 0){
+        			$("#date_from_forum_search").val("Choose a Date")
+        			$("#dt_from").val("")
+        		}
+        		else if (date==1){
+        			$("#date_to_forum_search").val("Choose a Date")		
+        			$("#dt_to").val("")
+        		}
+        	}    
     
-    // Util to parse url parameters
-    function gup( name )
-	{
-	  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-	  var regexS = "[\\?&]"+name+"=([^&#]*)";
-	  var regex = new RegExp( regexS );
-	  var results = regex.exec( window.location.href );
-	  if( results == null )
-	    return "";
-	  else
-	    return results[1];
-	}
+            // Util to parse url parameters
+            function gup( name )
+        	{
+        	  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+        	  var regexS = "[\\?&]"+name+"=([^&#]*)";
+        	  var regex = new RegExp( regexS );
+        	  var results = regex.exec( window.location.href );
+        	  if( results == null )
+        	    return "";
+        	  else
+        	    return results[1];
+        	}
     
-</script>
+        </script>
 {% endblock head %}
 
 {% block tab_forums_active %}active_tab{% endblock %}
 
 {% block content %}
+<h1>Forums</h1>
+
 <div id="content_full"> <!-- START of Content area -->
 
 <div id="breadcrumb_outer">
@@ -109,7 +111,7 @@
 </div>
 
 {% block forum_search %}
-<div {% if forum or forums %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
+<div {% if forum or forums or hide_search %}style="display:none"{% endif %} id="forum_search" class="advanced_forum_search_options">
     <form method="get" action="{% url forums-search %}" onsubmit="checkEmptyDates()">
     <input type="hidden" name="current_forum_name_slug" value="{% if forum %}{{forum.name_slug}}{% else %}{{current_forum_name_slug}}{% endif %}"/>
     <input type="hidden" name="current_forum_name" value="{% if forum %}{{forum.name}}{% else %}{{current_forum_name}}{% endif %}"/>

@@ -153,27 +153,30 @@
     height: 20px;
 }
 
-.player .controls > div
+.player .controls > div , .player .controls > a
 {
     z-index: 6;
     background-repeat: no-repeat;
     background-position: 0px 0px;
     float: left;
+    font-size:0px;
+    line-height: 0;
+    text-indent:-9999px;
 }
 
-.player.large .controls > div
+.player.large .controls > div, .player.large .controls > a
 {
     width: 36px;
     height: 36px;
 }
 
-.player.small .controls > div
+.player.small .controls > div, .player.small .controls > a
 {
     width: 20px;
     height: 20px;
 }
 
-.player.mini .controls > div
+.player.mini .controls > div, .player.mini .controls > a
 {
     width: 20px;
     height: 20px;

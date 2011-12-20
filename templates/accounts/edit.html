@@ -8,13 +8,13 @@
 
 <div id="content">
     <div id="edit_account" class="content_box">
-        <h3>Edit account</h3>
+        <h3>Edit your account</h3>
         <form method="post" action=".">{% csrf_token %}
             {{profile_form.as_p}}
             {% include 'forum/html_explanation.html' %}
             <p>This formatting is supported for your about text and signature.
             <br><br>
-            <input type="submit" value="Save" />
+            <input type="submit" value="Save account settings" />
         </form>
     </div><!-- #edit_account -->
 </div><!-- #content -->
@@ -27,7 +27,7 @@
             <p>Current:<br/><img src="{{profile.locations.avatar.L.url}}" /></p>
             {% endif %}
             {{image_form.as_p}}
-            <input type="submit" value="Save" />
+            <input type="submit" value="Save avatar" />
         </form>
     </div><!-- #edit_avatar -->
 
@@ -40,14 +40,12 @@
         </ul>
     </div><!-- #reset_password_and_email -->
 
-    {% comment %}
     <div id="delete_account" class="continuous_sidebar_box">
         <h3>Delete account</h3>
         <p>
             To delete your account, please go <a href="{% url accounts-delete %}">here</a>.
         </p>
     </div><!-- #delete_account -->
-    {% endcomment %}
 </div><!-- #sidebar -->
 
 <br class="clear" /><!-- Clearing Element -->

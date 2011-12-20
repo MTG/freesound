@@ -10,6 +10,7 @@ from tickets import *
 from django.db import connection, transaction
 from django.contrib import messages
 from sounds.models import Sound
+import datetime
 
 
 def __get_contact_form(request, use_post=True):
@@ -34,7 +35,7 @@ def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, i
 def __can_view_mod_msg(request):
     return request.user.is_authenticated() \
             and (request.user.is_superuser or request.user.is_staff \
-                 or Group.objects.get(name='moderators') in request.user.groups)
+                 or Group.objects.get(name='moderators') in request.user.groups.all())
 
 # TODO: copied from sound_edit view,
 def is_selected(request, prefix):
@@ -166,6 +167,7 @@ def new_contact_ticket(request):
 # In the next 2 functions we return a queryset os the evaluation is lazy.
 # N.B. these functions are used in the home page as well.
 def new_sound_tickets_count():
+#AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
 #    return Ticket.objects.filter(status=TICKET_STATUS_NEW,
 #                                 source=TICKET_SOURCE_NEW_SOUND)
     return len(list(Ticket.objects.raw("""
@@ -180,7 +182,7 @@ WHERE
 AND ticket.assignee_id is NULL
 AND content.object_id = sound.id
 AND sound.moderation_state = 'PE'
-AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
+AND sound.processing_state = 'OK'
 AND ticket.status = '%s'
 """ % TICKET_STATUS_NEW)))
 
@@ -190,15 +192,25 @@ def new_support_tickets_count():
 
 @permission_required('tickets.can_moderate')
 def tickets_home(request):
+    
+    if request.user.id :
+        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+    else :
+        sounds_in_moderators_queue_count = -1
+        
     new_upload_count = new_sound_tickets_count()
+    tardy_moderator_sounds_count = len(list(__get_tardy_moderator_tickets_all()))
+    tardy_user_sounds_count = len(list(__get_tardy_user_tickets_all()))
     new_support_count = new_support_tickets_count()
     sounds_queued_count = Sound.objects.filter(processing_state='QU').count()
+    sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
     sounds_processing_count = Sound.objects.filter(processing_state='PR').count()
     sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
     return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
 
 
 def __get_new_uploaders_by_ticket():
+#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     cursor = connection.cursor()
     cursor.execute("""
 SELECT
@@ -207,7 +219,7 @@ FROM
     tickets_ticket, tickets_linkedcontent, sounds_sound
 WHERE
     tickets_ticket.source = 'new sound'
-    AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
+    AND sounds_sound.processing_state = 'OK'
     AND sounds_sound.moderation_state = 'PE'
     AND tickets_linkedcontent.object_id = sounds_sound.id
     AND tickets_ticket.content_id = tickets_linkedcontent.id
@@ -234,10 +246,10 @@ def __get_unsure_sound_tickets():
 
 
 def __get_tardy_moderator_tickets():
-    """Get tickets for moderators that haven't responded in the last 2 days"""
+    """Get tickets for moderators that haven't responded in the last day"""
     return Ticket.objects.raw("""
 SELECT
-ticket.id,
+distinct(ticket.id),
 ticket.modified as modified
 FROM
 tickets_ticketcomment AS comment,
@@ -249,8 +261,8 @@ WHERE comment.id in (   SELECT MAX(id)
                         GROUP BY ticket_id    )
 AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
-AND comment.sender_id = ticket.sender_id
-AND now() - modified > INTERVAL '2 days'
+AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
+AND now() - modified > INTERVAL '24 hours'
 AND content.object_id = sound.id
 AND sound.moderation_state != 'OK'
 AND ticket.status != '%s'
@@ -258,11 +270,35 @@ LIMIT 5
 """ % TICKET_STATUS_CLOSED)
 
 
+def __get_tardy_moderator_tickets_all():
+    """Get tickets for moderators that haven't responded in the last day"""
+    return Ticket.objects.raw("""
+SELECT
+distinct(ticket.id),
+ticket.modified as modified
+FROM
+tickets_ticketcomment AS comment,
+tickets_ticket AS ticket,
+sounds_sound AS sound,
+tickets_linkedcontent AS content
+WHERE comment.id in (   SELECT MAX(id)
+                        FROM tickets_ticketcomment
+                        GROUP BY ticket_id    )
+AND ticket.assignee_id is Not Null
+AND comment.ticket_id = ticket.id
+AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
+AND now() - modified > INTERVAL '24 hours'
+AND content.object_id = sound.id
+AND sound.moderation_state != 'OK'
+AND ticket.status != '%s'
+""" % TICKET_STATUS_CLOSED)
+
+
 def __get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
-ticket.id
+distinct(ticket.id)
 FROM
 tickets_ticketcomment AS comment,
 tickets_ticket AS ticket
@@ -270,24 +306,53 @@ WHERE comment.id in (   SELECT MAX(id)
                         FROM tickets_ticketcomment
                         GROUP BY ticket_id    )
 AND ticket.assignee_id is Not Null
+AND ticket.status != '%s'
 AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
 AND now() - comment.created > INTERVAL '2 days'
 LIMIT 5
-""")
+""" % TICKET_STATUS_CLOSED)
+    
+def __get_tardy_user_tickets_all():
+    """Get tickets for users that haven't responded in the last 2 days"""
+    return Ticket.objects.raw("""
+SELECT
+distinct(ticket.id)
+FROM
+tickets_ticketcomment AS comment,
+tickets_ticket AS ticket
+WHERE comment.id in (   SELECT MAX(id)
+                        FROM tickets_ticketcomment
+                        GROUP BY ticket_id    )
+AND ticket.assignee_id is Not Null
+AND ticket.status != '%s'
+AND comment.ticket_id = ticket.id
+AND comment.sender_id != ticket.sender_id
+AND now() - comment.created > INTERVAL '2 days'
+""" % TICKET_STATUS_CLOSED)
 
 
 @permission_required('tickets.can_moderate')
 def moderation_home(request):
+    if request.user.id :
+        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+    else :
+        sounds_in_moderators_queue_count = -1
+    
     new_sounds_users = __get_new_uploaders_by_ticket()
-    unsure_tickets = __get_unsure_sound_tickets()
-    tardy_moderator_tickets = __get_tardy_moderator_tickets()
-    tardy_user_tickets = __get_tardy_user_tickets()
+    unsure_tickets = list(__get_unsure_sound_tickets()) #TODO: shouldn't appear
+    tardy_moderator_tickets = list(__get_tardy_moderator_tickets())
+    tardy_user_tickets = list(__get_tardy_user_tickets())
+    
+    tardy_moderator_tickets_count = len(list(__get_tardy_moderator_tickets_all()))
+    tardy_user_tickets_count = len(list(__get_tardy_user_tickets_all()))
+    
     return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
 
 @permission_required('tickets.can_moderate')
 def moderation_assign_user(request, user_id):
+#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     sender = User.objects.get(id=user_id)
 #    Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
 #        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
@@ -297,13 +362,14 @@ UPDATE
     tickets_ticket
 SET
     assignee_id = %s,
-    status = '%s'
+    status = '%s',
+    modified = now()
 FROM
     sounds_sound,
     tickets_linkedcontent
 WHERE
     tickets_ticket.source = 'new sound'
-AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
+AND sounds_sound.processing_state = 'OK'
 AND sounds_sound.moderation_state = 'PE'
 AND tickets_linkedcontent.object_id = sounds_sound.id
 AND tickets_ticket.content_id = tickets_linkedcontent.id
@@ -316,9 +382,48 @@ AND sounds_sound.user_id = %s""" % \
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect(reverse("tickets-moderation-home"))
 
+# TODO: ongoing work
+@permission_required('tickets.can_moderate')
+def moderation_assign_single_ticket(request, user_id, ticket_id):
+#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
+    
+    # REASSIGN SINGLE TICKET
+    ticket = Ticket.objects.get(id=ticket_id)
+    sender = User.objects.get(id=user_id)
+    ticket.assignee = User.objects.get(id=request.user.id)
+    
+    '''
+    cursor = connection.cursor()
+    cursor.execute("""
+    UPDATE 
+        tickets_ticket 
+    SET 
+        assignee_id = %s
+    WHERE 
+        tickets_ticket.id = %s
+    """ % \
+    (request.user.id, ticket.id))
+    transaction.commit_unless_managed()
+    '''
+    '''
+    tc = TicketComment(sender=request.user,
+                       text="Reassigned ticket to moderator %s" % request.user.username,
+                       ticket=ticket,
+                       moderator_only=False)
+    tc.save()
+    '''
+    # update modified date, so it doesn't appear in tardy moderator's sounds
+    ticket.modified = datetime.datetime.now()
+    ticket.save()
+    
+    msg = 'You have been assigned ticket "%s".' % ticket.title
+    messages.add_message(request, messages.INFO, msg)
+    return HttpResponseRedirect(reverse("tickets-moderation-home"))
+
 
 @permission_required('tickets.can_moderate')
 def moderation_assigned(request, user_id):
+    
     can_view_moderator_only_messages = __can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
@@ -360,7 +465,7 @@ def moderation_assigned(request, user_id):
                                                     Ticket.USER_ONLY)
             elif action == "Return":
                 ticket.assignee = None
-                ticket.status = TICKET_STATUS_ACCEPTED
+                ticket.status = TICKET_STATUS_NEW
                 # no notification here
                 ticket.save()
             elif action == "Delete":
@@ -397,13 +502,14 @@ def moderation_assigned(request, user_id):
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationForm()
+        mod_sound_form = SoundModerationForm(initial={'action':'Approve'})
         msg_form = ModerationMessageForm()
     moderator_tickets = Ticket.objects.select_related() \
                             .filter(assignee=user_id) \
                             .exclude(status=TICKET_STATUS_CLOSED) \
                             .exclude(content=None) \
                             .order_by('status', '-created')
+    moderator_tickets_count = len(moderator_tickets)
     moderation_texts = MODERATION_TEXTS
     return render_to_response('tickets/moderation_assigned.html',
                               locals(),

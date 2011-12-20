@@ -9,6 +9,8 @@ import sounds.views
 import support.views
 import tags.views
 import forum.views
+import comments.views
+import bookmarks.views
 
 admin.autodiscover()
 
@@ -18,6 +20,7 @@ urlpatterns = patterns('',
     url(r'^people/$', accounts.views.accounts, name="accounts"),
     url(r'^people/(?P<username>[^//]+)/$', accounts.views.account, name="account"),
     url(r'^people/(?P<username>[^//]+)/sounds/$', sounds.views.for_user, name="sounds-for-user"),
+    url(r'^people/(?P<username>[^//]+)/comments/$', comments.views.for_user, name="comments-for-user"),
     url(r'^people/(?P<username>[^//]+)/geotags/$', geotags.views.for_user, name="geotags-for-user"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/$', sounds.views.sound, name="sound"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/download/.*$', sounds.views.sound_download, name="sound-download"),
@@ -36,15 +39,20 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/display/$', sounds.views.display_sound_wrapper, name="sound-display"),
     url(r'^people/(?P<username>[^//]+)/downloaded_sounds/$', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
     url(r'^people/(?P<username>[^//]+)/downloaded_packs/$', accounts.views.downloaded_packs, name="user-downloaded-packs"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/$', bookmarks.views.bookmarks, name="bookmarks-for-user"),
+    url(r'^people/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/$', bookmarks.views.bookmarks, name="bookmarks-for-user-for-category"),
 
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
+    url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
 
     url(r'^browse/$', sounds.views.sounds, name="sounds"),
     url(r'^browse/tags/$', tags.views.tags, name="tags"),
     url(r'^browse/tags/(?P<multiple_tags>[\w//-]+)/$', tags.views.tags, name="tags"),
     url(r'^browse/packs/$', sounds.views.packs, name="packs"),
+    url(r'^browse/comments/$', comments.views.all, name="comments"),
     url(r'^browse/random/$', sounds.views.random, name="sounds-random"),
     url(r'^browse/geotags/(?P<tag>[\w-]+)?/?$', geotags.views.geotags, name="geotags"),
+    url(r'^browse/geotags_box/$', geotags.views.geotags_box, name="geotags-box"),
 
     url(r'^browse/remixed/$',
         sounds.views.remixed,

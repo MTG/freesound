@@ -15,8 +15,8 @@ class File:
             for child in self.children:
                 child.recursive_print(spacer + "  ")
 
-    def __unicode__(self):
-        return u'<File %s>' % self.full_path
+    #def __unicode__(self):
+    #    return u'<File %s>' % self.full_path
 
 def generate_tree(path):
     counter = 0
@@ -25,7 +25,6 @@ def generate_tree(path):
 
     for (root, dirnames, filenames) in os.walk(path):
         parent = lookups[root]
-
         for dirname in sorted(dirnames):
             full_path = os.path.join(root, dirname)
             file_object = File(counter, dirname, full_path, True)
@@ -39,7 +38,7 @@ def generate_tree(path):
             counter += 1
             files[file_object.id] = file_object
             parent.children.append(file_object)
-
+            
     return lookups[path], files
 
 def md5file(filename):

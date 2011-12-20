@@ -4,10 +4,40 @@ soundManager.url = '/media/html_player/swf/';
 soundManager.flashVersion = 9;
 soundManager.debugMode = false;
 soundManager.preferFlash = true;
+// If the player is used in an embed, it uses HTML5 so it is lighter (althogh playbar position is not updated as fast as with flash)
+if (typeof isEmbed!="undefined"){
+    soundManager.preferFlash = false;
+}
 //if you have a stricter test than 'maybe' SM will switch back to flash.
-soundManager.html5Test = /^maybe$/i
+//soundManager.html5Test = /^maybe$/i
 
-function msToTime(position, durationEstimate, displayRemainingTime, showMs) {
+$(function()
+{
+	$.extend($.fn.disableTextSelect = function()
+	{
+		return this.each(function()
+		{
+			if($.browser.mozilla)
+			{   //Firefox
+				$(this).css('MozUserSelect','none');
+			}
+			else if($.browser.msie)
+			{
+			    //IE
+				$(this).bind('selectstart',function(){return false;});
+			}
+			else
+			{
+			    //Opera, etc.
+				$(this).mousedown(function(){return false;});
+			}
+		});
+	});
+	$('.noSelect').disableTextSelect();//No text selection on elements with a class of 'noSelect'
+});
+
+function msToTime(position, durationEstimate, displayRemainingTime, showMs)
+{
     if (displayRemainingTime)
         position = durationEstimate - position;
 
@@ -38,7 +68,6 @@ function msToTime(position, durationEstimate, displayRemainingTime, showMs) {
         return (displayRemainingTime ? "-" : " ") + minutes + ':' + seconds;
 }
 
-var mouseDown = 0;
 var uniqueId = 0;
 var _mapping = [];
 var y_min = Math.log(100.0) / Math.LN10;
@@ -47,13 +76,15 @@ var y_max = Math.log(22050.0) / Math.LN10;
 for (var y = 200;y >= 0; y--)
     _mapping.push(Math.pow(10.0, y_min + y / 200.0 * (y_max - y_min)));
 
-
-function switchToggle(element) {
-    if (element.hasClass("toggle")) {
+function switchToggle(element)
+{
+    if (element.hasClass("toggle"))
+    {
         element.removeClass("toggle");
         element.addClass("toggle-alt");
     }
-    else if (element.hasClass("toggle-alt")) {
+    else if (element.hasClass("toggle-alt"))
+    {
         element.removeClass("toggle-alt");
         element.addClass("toggle");
     }
@@ -61,21 +92,24 @@ function switchToggle(element) {
 }
 
 
-function switchOff(element) {
+function switchOff(element)
+{
     element.addClass("toggle");
     element.removeClass("toggle-alt");
     element.removeClass("on");
 }
 
 
-function switchOn(element) {
+function switchOn(element)
+{
     element.removeClass("toggle");
     element.addClass("toggle-alt");
     element.addClass("on");
 }
 
 
-function getPlayerPosition(element) {
+function getPlayerPosition(element)
+{
     el = element[0];
     for (var lx=0, ly=0;
          el != null;
@@ -84,27 +118,36 @@ function getPlayerPosition(element) {
 }
 
 
-function stopAll(exclude) {
-    ids = soundManager.soundIDs;
-    ids = jQuery.grep(ids, function(value) {
-        return value != exclude.sID;
+function stopAll(exclude)
+{
+    var ids = soundManager.soundIDs;
+    ids = jQuery.grep(ids, function(value)
+    {
+        if(exclude)
+            return value != exclude.sID;
+        else
+            return true;
     });
     switchOff($(".player .play"));
-    for(var i=0; i<ids.length; i++) {
+    for(var i=0; i<ids.length; i++)
+    {
         soundManager.pause(ids[i]);
     }
 }
 
 
-function getMousePosition(event, playerElement) {
+function getMousePosition(event, playerElement)
+{
     var posx = 0;
     var posy = 0;
     if (!event) var event = window.event;
-    if (event.pageX || event.pageY) {
+    if (event.pageX || event.pageY)
+    {
         posx = event.pageX;
         posy = event.pageY;
     }
-    else if (event.clientX || event.clientY) {
+    else if (event.clientX || event.clientY)
+    {
         posx = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
         posx = event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
     }
@@ -121,39 +164,43 @@ function makePlayer(selector) {
 
         var showMs = $(this).hasClass("large");
 
-        if ($(this).hasClass("large")) {
+        if ($(this).hasClass("large"))
+        {
             $(this).append('<div class="controls"> \
-                   <div class="toggle play"></div> \
-                   <div class="button stop"></div> \
-                   <div class="toggle display"></div> \
-                   <div class="toggle loop"></div> \
-                   <div class="toggle measure"></div> \
+                   <a href="javascript:void(0)" title="play / pause" class="toggle play">play / pause</a> \
+                   <a href="javascript:void(0)" title="stop" class="button stop">stop</a> \
+                   <a href="javascript:void(0)" title="change display" class="toggle display">change display</a> \
+                   <a href="javascript:void(0)" title="loop" class="toggle loop">loop</a> \
+                   <a href="javascript:void(0)" title="toggle measure" class="toggle measure">toggle measure</a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="measure-readout-container"><div class="measure-readout"></div></div> \
                 <div class="loading-progress"></div> \
                 <div class="position-indicator"></div> \
                 <div class="time-indicator-container"><div class="time-indicator"></div></div>');
-        } else if ($(this).hasClass("small")) {
+        }
+        else if ($(this).hasClass("small"))
+        {
             $(this).append('<div class="controls"> \
-                   <div class="toggle play"></div> \
-                   <div class="toggle loop"></div> \
+                    <a href="javascript:void(0)" title="play / pause" class="toggle play">play / pause</a> \
+                    <a href="javascript:void(0)" title="loop" class="toggle loop">loop</a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="loading-progress"></div> \
                 <div class="position-indicator"></div> \
                 <div class="time-indicator-container"><div class="time-indicator"></div></div>');
-        } else if ($(this).hasClass("mini")) {
+        }
+        else if ($(this).hasClass("mini")) {
             $(this).append('<div class="controls"> \
-                   <div class="toggle play"></div> \
-                   <div class="toggle loop"></div> \
+                   <a href="javascript:void(0)" title="play / pause" class="toggle play">play / pause</a> \
+                   <a href="javascript:void(0)" title="loop" class="toggle loop"></a> \
                 </div> \
                 <div class="background"></div> \
                 <div class="loading-progress"></div> \
                 <div class="position-indicator"></div>');
         }
-
-        //var urls = $(".metadata", this).text().split(" ");
+        
+        $("*", this).disableTextSelect();
 
         var mp3Preview = $(".metadata .mp3_file", this).attr('href');
         var oggPreview = $(".metadata .ogg_file", this).attr('href');
@@ -163,10 +210,8 @@ function makePlayer(selector) {
 
         var playerElement = $(this);
 
-        if (!$(this).hasClass("mini")) {
+        if (!$(this).hasClass("mini"))
             $(".background", this).css("backgroundImage", 'url("' + waveform + '")');
-        }
-
 
         $(".loading-progress", playerElement).hide();
 
@@ -185,143 +230,130 @@ function makePlayer(selector) {
             url: mp3Preview,
             autoLoad: false,
             autoPlay: false,
-            onload: function() {
+            onload: function()
+            {
                 $(".loading-progress", playerElement).remove();
             },
-            whileloading: function() {
-
+            whileloading: function()
+            {
                 var loaded = this.bytesLoaded / this.bytesTotal * 100;
                 if(loaded > 0) $(".loading-progress", playerElement).show();
-
                 $(".loading-progress", playerElement).css("width", (100 - loaded) + "%");
                 $(".loading-progress", playerElement).css("left", loaded + "%");
             },
-            whileplaying: function() {
-                var positionPercent = this.position / this.duration * 100;
+            whileplaying: function()
+            {
+                var positionPercent = this.position / duration * 100;
                 $(".position-indicator", playerElement).css("left", positionPercent + "%");
-                $(".time-indicator", playerElement).html(msToTime(sound.position, sound.duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
+                $(".time-indicator", playerElement).html(msToTime(sound.position, duration, !$(".time-indicator-container", playerElement).hasClass("on"), showMs));
             },
             onfinish: function ()
             {
-                if ($(".loop", playerElement).hasClass("on")) {
+                if ($(".loop", playerElement).hasClass("on"))
+                {
                     sound.play()
-                } else {
+                }
+                else
+                {
                     if ($(".play", playerElement).hasClass("on"))
                         switchToggle($(".play", playerElement));
                 }
             }
         });
 
-        $(".play", this).bind("toggle", function (event, on) {
-            if (on) {
+        $(".play", this).bind("toggle", function (event, on)
+        {
+            if (on)
+            {
                 switchOn($(".play", playerElement));
                 sound.play();
             }
-            else {
+            else
+            {
                 switchOff($(".play", playerElement));
                 sound.pause();
             }
-            mouseDown = 0;
         });
 
-        $(".stop", this).click(function (event) {
+        $(".stop", this).click(function (event)
+        {
             event.stopPropagation();
-            if (sound.playState) {
+            if (sound.playState == 1 || !sound.paused)
+            {
                 sound.stop();
+                sound.setPosition(0);
                 $(".time-indicator", playerElement).html(
                         msToTime(sound.position,
                                 sound.duration,
                                 !$(".time-indicator-container", playerElement).hasClass("on"),
                                 showMs));
-                switchToggle($(".play", playerElement));
+                $(".position-indicator", playerElement).css("left", "0%");
+                switchOff($(".play", playerElement));
             }
-            mouseDown = 0;
         });
 
-        $(".display", this).bind("toggle", function (event, on) {
+        $(".display", this).bind("toggle", function (event, on)
+        {
             if (on)
                 $(".background", playerElement).css("background", "url(" + spectrum + ")");
             else
                 $(".background", playerElement).css("background", "url(" + waveform + ")");
         });
 
-        $(".measure", this).bind("toggle", function (event, on) {
+        $(".measure", this).bind("toggle", function (event, on)
+        {
             if (on)
                 $(".measure-readout-container", playerElement).stop().fadeTo(100, 1.0);
             else
                 $(".measure-readout-container", playerElement).stop().fadeTo(100, 0);
         });
 
-        var clicks = 0;
-        $(".background", this).click(function(event) {
-            event.stopPropagation();
-            var evt = event;
-            var elem = $(this);
-            clicks++;
-            setTimeout(function() {
-                if(clicks == 1) {
-                    pos = getMousePosition(evt, elem);
-                    if (pos[0] < 20) {
-                        sound.stop()
-                    } else {
-                        sound.setPosition(sound.duration * pos[0] / elem.width());
-                    }
-                    switchOn($(".play", playerElement));
-                    if (!sound.playState){
-                        sound.play();
-                    } else if (sound.paused)
-                        sound.resume();
-                    mouseDown = 0;
-                }
-                clicks = 0;
-            }, 300);
-        });
-
-        $(".background", this).bind('dblclick', function (event) {
-            // Stop all sounds if the right mouse button was used
-            stopAll(sound);
-            switchOn($(".play", playerElement));
-            if (!sound.playState){
+        $(".background", this).click(function(event)
+        {
+            var pos = getMousePosition(event, $(this));
+            sound.setPosition(duration * pos[0] / $(this).width());
+            if (sound.playState == 0 || sound.paused)
+            {
                 sound.play();
-            } else if (sound.paused)
-                sound.resume();
+                switchOn($(".play", playerElement));
+            }
         });
 
-        $(".time-indicator-container", this).click(function(event) {
+        $(".time-indicator-container", this).click(function(event)
+        {
             event.stopPropagation();
             $(this).toggleClass("on");
         });
 
-        $(this).hover(function() {
-            if ($(this).hasClass("large")) {
+        $(this).hover(function()
+        {
+            if ($(this).hasClass("large"))
+            {
                 $(".controls", playerElement).stop().fadeTo(50, 1.0);
                 if ($(".measure", playerElement).hasClass("on"))
                     $(".measure-readout-container", playerElement).stop().fadeTo(50, 1.0);
             }
-        },function() {
-            if ($(this).hasClass("large")) {
+        },function()
+        {
+            if ($(this).hasClass("large"))
+            {
                 $(".controls", playerElement).stop().fadeTo(2000, 0.2);
                 if ($(".measure", playerElement).hasClass("on"))
                     $(".measure-readout-container", playerElement).stop().fadeTo(2000, 0.2);
             }
         });
 
-        $(this).mousemove(function (event) {
-            if(mouseDown) {
-                if (sound.playState) {
-                    switchOff($(".play", playerElement));
-                    sound.pause();
-                }
-                pos = getMousePosition(event, $(this));
-                sound.setPosition(sound.duration * pos[0] / $(this).width());
-            }
-
+        $(this).mousemove(function (event)
+        {
             var readout = "";
             pos = getMousePosition(event, $(this));
 
-            if ($(".display", playerElement).hasClass("on")) {
+            if ($(".display", playerElement).hasClass("on"))
+            {
                 readout = _mapping[Math.floor(pos[1])].toFixed(2) + "hz";
-            } else {
+            }
+            else
+            {
                 var height2 = $(this).height()/2;
 
                 if (pos[1] == height2)
@@ -335,40 +367,21 @@ function makePlayer(selector) {
             $('.measure-readout', playerElement).html(readout);
         });
 
-        // when dragging the pointer and it goes out of the player, set the
-        // player position to zero, but only if you're at the beginning of the sound.
-        $(this).mouseout(function (event) {
-            if(mouseDown) {
-                pos = getMousePosition(event, $(this));
-                if (pos[0] < 20) {
-                    sound.setPosition(0.000001)
-                    sound.stop();
-                    sound.play();
-                    switchOn($(".play", playerElement));
-                }
-            }
-        });
-
         return true;
     });
 }
 
 
 $(function() {
-    $(".toggle, .toggle-alt").live("click", function (event) {
+    $(".toggle, .toggle-alt").live("click", function (event)
+    {
         event.stopPropagation();
         switchToggle($(this));
         $(this).trigger("toggle", $(this).hasClass("on"));
     });
 
-    soundManager.onready(function() {
-        makePlayer('.player');
+    soundManager.onready(function()
+    {
+        makePlayer('.player');	
     });
-
-    document.body.onmousedown = function() {
-        ++mouseDown;
-    }
-    document.body.onmouseup = function() {
-        --mouseDown;
-    }
 });

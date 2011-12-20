@@ -36,7 +36,10 @@ def tags(request, multiple_tags=None):
     query.set_facet_options_default(limit=100, sort=True, mincount=1, count_missing=False)
     
     try:
+        
         results = SolrResponseInterpreter(solr.select(unicode(query)))
+        
+        
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
         page = paginator.page(current_page)
         error = False
@@ -44,7 +47,8 @@ def tags(request, multiple_tags=None):
     except SolrException, e:
         error = True
         search_logger.error("SOLR ERROR - %s" % e)
-
+    except :
+        error = True
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
 
 

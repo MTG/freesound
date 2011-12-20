@@ -3,9 +3,6 @@ from piston.resource import Resource
 from handlers import *
 from views import create_api_key
 from api_utils import build_invalid_url
-#from key_authentication import KeyAuthentication
-
-#auth = KeyAuthentication()
 
 class AR(Resource):
     def __call__(self, *args, **kwargs):
@@ -23,7 +20,8 @@ urlpatterns = patterns('',
     #url(r'^sounds/(?P<sound_id>\d+)/analysis_frames/$',            AR(SoundAnalysisFramesHandler), name='api-sound-analysis-frames'),
     url(r'^sounds/(?P<sound_id>\d+)/serve/$',                       AR(SoundServeHandler),          name='api-sound-serve'),
     url(r'^sounds/(?P<sound_id>\d+)/similar/$',                     AR(SoundSimilarityHandler),     name='api-sound-similarity'),
-
+    url(r'^sounds/geotag/$',                                        AR(SoundGeotagHandler),         name='api-sound-geotag'),
+    
     # users
     url(r'^people/(?P<username>[^//]+)/$',                          AR(UserHandler),           name='api-single-user'),
     url(r'^people/(?P<username>[^//]+)/sounds/$',                   AR(UserSoundsHandler),     name='api-user-sounds'),
@@ -34,6 +32,12 @@ urlpatterns = patterns('',
     url(r'^packs/(?P<pack_id>\d+)/serve/$',                         AR(PackServeHandler),      name='api-pack-serve'),
     url(r'^packs/(?P<pack_id>\d+)/sounds/$',                        AR(PackSoundsHandler),     name='api-pack-sounds'),
 
+    # cc-mixter pool
+    url(r'^pool/search$',                                         SoundPoolSearchHandler(),   name='api-pool-search'),
+    url(r'^pool/search/$',                                         SoundPoolSearchHandler(),   name='api-pool-search-slash'),
+    url(r'^pool/info$',                                           SoundPoolInfoHandler(),   name='api-pool-info'),
+    url(r'^pool/info/$',                                           SoundPoolInfoHandler(),   name='api-pool-info-slash'),
+    
     # website
     url(r'^apply/$', create_api_key),
 

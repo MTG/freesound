@@ -36,6 +36,7 @@ q	   string  no        The query!
 p          number  no        The page of the search result to get
 f          string  no	     The filter
 s	   string  no	     How to sort the results
+fields	   string  no	     Fields
 =========  ======  ========  =================================
 
 **q for query**
@@ -145,36 +146,56 @@ rating_desc     Sort by the average rating given to the sounds, highest rated fi
 rating_asc      Same as above, but lowest rated sounds first.
 ==============  ====================================================================
 
+
+.. _custom-fields:
+
+**fields for fields**
+
+The response of the search resource contains an array of sounds and each sound is
+represented with a number of pre-defined fields (see :ref:`sound-search-response` for more information).
+Sometimes we only need specific information about sounds such as their id, their tagline or
+their name, but the array of sounds that is returned contains many more properties useless for us (thus we are using
+a lot of badwidth that we could save).
+
+In these cases, parameter ``fields`` allows to define the exact list of fields that we want to obtain for each sound.
+Fields are specified as a list of properties (choosen from any of those listed in :ref:`sound-get-response`) separated by commas.
+For example, if we perform a search and we only want to get sound ids and duration, we can use fields parameter as ``fields=id,duration``.
+
+This parameter can be used in any resource that returns an array of sounds.
+
+
 **Curl Examples**
 
 ::
 
   # Get the third page with the query 'dogs', with the most downloaded sounds first.
-  curl http://beta.freesound.org/api/sounds/search?p=3&q=dogs&s=downloads_desc
+  curl http://www.freesound.org/api/sounds/search?p=3&q=dogs&s=downloads_desc
   # Get the most recent uploaded sounds with the tag 'synth' and querying for 'bass'
-  curl http://beta.freesound.org/api/sounds/search?q=bass&f=tag:synth&s=created_desc
+  curl http://www.freesound.org/api/sounds/search?q=bass&f=tag:synth&s=created_desc
   # Get short kick sounds
-  curl http://beta.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]
+  curl http://www.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]
+  # Get sound id and tags of short kick sounds
+  curl http://www.freesound.org/api/sounds/search?q=kick&f=duration:[0.1 TO 0.3]&fields=id,tags
 
 
 .. _sound-search-response:
 
-Response
-''''''''
+Sound search response
+'''''''''''''''''''''
 
 **Properties**
 
 ===========  =======  ===========================================================================================
 Name         Type     Description
 ===========  =======  ===========================================================================================
-sounds       array    Array of sounds. Each sound looks like a reduced version of the `response format of a single sound resource`__. (with less information)
+sounds       array    Array of sounds. Each sound looks like a reduced version of the :ref:`sound-get-response` (with less information).
 num_results  int      Number of sounds found that match your search
 num_pages    int      Number of pages (as the result is paginated)
 previous     URI      The URI to go back one page in the search results.
 next         URI      The URI to go forward one page in the search results.
 ===========  =======  ===========================================================================================
 
-__ sound-get-response_
+
 
 **JSON Example**
 
@@ -184,9 +205,9 @@ __ sound-get-response_
     "num_results": 810, 
     "sounds": [
         {
-            "analysis_stats": "http://beta.freesound.org/api/sounds/116841/analysis", 
-            "analysis_frames": "http://beta.freesound.org/data/analysis/116/116841_854810_frames.json", 
-            "waveform_m": "http://beta.freesound.org/data/displays/116/116841_854810_wave_M.png", 
+            "analysis_stats": "http://www.freesound.org/api/sounds/116841/analysis", 
+            "analysis_frames": "http://www.freesound.org/data/analysis/116/116841_854810_frames.json", 
+            "waveform_m": "http://www.freesound.org/data/displays/116/116841_854810_wave_M.png", 
             "type": "wav", 
             "original_filename": "falling metal 3 - 20.3.11.wav", 
             "tags": [
@@ -207,31 +228,31 @@ __ sound-get-response_
                 "horn", 
                 "shouting"
             ], 
-            "url": "http://beta.freesound.org/people/toiletrolltube/sounds/116841/", 
-            "preview-hq-ogg": "http://beta.freesound.org/data/previews/116/116841_854810-hq.ogg", 
-            "serve": "http://beta.freesound.org/api/sounds/116841/serve", 
-            "similarity": "http://beta.freesound.org/api/sounds/116841/similar", 
-            "preview-lq-ogg": "http://beta.freesound.org/data/previews/116/116841_854810-lq.ogg", 
-            "spectral_m": "http://beta.freesound.org/data/displays/116/116841_854810_spec_M.jpg", 
-            "preview-lq-mp3": "http://beta.freesound.org/data/previews/116/116841_854810-lq.mp3", 
+            "url": "http://www.freesound.org/people/toiletrolltube/sounds/116841/", 
+            "preview-hq-ogg": "http://www.freesound.org/data/previews/116/116841_854810-hq.ogg", 
+            "serve": "http://www.freesound.org/api/sounds/116841/serve", 
+            "similarity": "http://www.freesound.org/api/sounds/116841/similar", 
+            "preview-lq-ogg": "http://www.freesound.org/data/previews/116/116841_854810-lq.ogg", 
+            "spectral_m": "http://www.freesound.org/data/displays/116/116841_854810_spec_M.jpg", 
+            "preview-lq-mp3": "http://www.freesound.org/data/previews/116/116841_854810-lq.mp3", 
             "user": {
                 "username": "toiletrolltube", 
-                "url": "http://beta.freesound.org/people/toiletrolltube/", 
-                "ref": "http://beta.freesound.org/api/people/toiletrolltube"
+                "url": "http://www.freesound.org/people/toiletrolltube/", 
+                "ref": "http://www.freesound.org/api/people/toiletrolltube"
             }, 
-            "spectral_l": "http://beta.freesound.org/data/displays/116/116841_854810_spec_L.jpg", 
+            "spectral_l": "http://www.freesound.org/data/displays/116/116841_854810_spec_L.jpg", 
             "duration": 5.6986699999999999, 
-            "waveform_l": "http://beta.freesound.org/data/displays/116/116841_854810_wave_L.png", 
-            "ref": "http://beta.freesound.org/api/sounds/116841", 
+            "waveform_l": "http://www.freesound.org/data/displays/116/116841_854810_wave_L.png", 
+            "ref": "http://www.freesound.org/api/sounds/116841", 
             "id": 116841, 
-            "preview-hq-mp3": "http://beta.freesound.org/data/previews/116/116841_854810-hq.mp3", 
-            "pack": "http://beta.freesound.org/api/packs/7333"
+            "preview-hq-mp3": "http://www.freesound.org/data/previews/116/116841_854810-hq.mp3", 
+            "pack": "http://www.freesound.org/api/packs/7333"
         },
         [...more sounds...]
         {
-            "analysis_stats": "http://beta.freesound.org/api/sounds/113785/analysis", 
-            "analysis_frames": "http://beta.freesound.org/data/analysis/113/113785_1956076_frames.json", 
-            "waveform_m": "http://beta.freesound.org/data/displays/113/113785_1956076_wave_M.png", 
+            "analysis_stats": "http://www.freesound.org/api/sounds/113785/analysis", 
+            "analysis_frames": "http://www.freesound.org/data/analysis/113/113785_1956076_frames.json", 
+            "waveform_m": "http://www.freesound.org/data/displays/113/113785_1956076_wave_M.png", 
             "type": "wav", 
             "original_filename": "Woof Woof Drum.wav", 
             "tags": [
@@ -243,29 +264,29 @@ __ sound-get-response_
                 "canvas", 
                 "hit"
             ], 
-            "url": "http://beta.freesound.org/people/Puniho/sounds/113785/", 
-            "preview-hq-ogg": "http://beta.freesound.org/data/previews/113/113785_1956076-hq.ogg", 
-            "serve": "http://beta.freesound.org/api/sounds/113785/serve", 
-            "similarity": "http://beta.freesound.org/api/sounds/113785/similar", 
-            "preview-hq-mp3": "http://beta.freesound.org/data/previews/113/113785_1956076-hq.mp3", 
-            "spectral_m": "http://beta.freesound.org/data/displays/113/113785_1956076_spec_M.jpg", 
-            "preview-lq-mp3": "http://beta.freesound.org/data/previews/113/113785_1956076-lq.mp3", 
+            "url": "http://www.freesound.org/people/Puniho/sounds/113785/", 
+            "preview-hq-ogg": "http://www.freesound.org/data/previews/113/113785_1956076-hq.ogg", 
+            "serve": "http://www.freesound.org/api/sounds/113785/serve", 
+            "similarity": "http://www.freesound.org/api/sounds/113785/similar", 
+            "preview-hq-mp3": "http://www.freesound.org/data/previews/113/113785_1956076-hq.mp3", 
+            "spectral_m": "http://www.freesound.org/data/displays/113/113785_1956076_spec_M.jpg", 
+            "preview-lq-mp3": "http://www.freesound.org/data/previews/113/113785_1956076-lq.mp3", 
             "user": {
                 "username": "Puniho", 
-                "url": "http://beta.freesound.org/people/Puniho/", 
-                "ref": "http://beta.freesound.org/api/people/Puniho"
+                "url": "http://www.freesound.org/people/Puniho/", 
+                "ref": "http://www.freesound.org/api/people/Puniho"
             }, 
-            "spectral_l": "http://beta.freesound.org/data/displays/113/113785_1956076_spec_L.jpg", 
+            "spectral_l": "http://www.freesound.org/data/displays/113/113785_1956076_spec_L.jpg", 
             "duration": 2.6059399999999999, 
-            "waveform_l": "http://beta.freesound.org/data/displays/113/113785_1956076_wave_L.png", 
-            "ref": "http://beta.freesound.org/api/sounds/113785", 
+            "waveform_l": "http://www.freesound.org/data/displays/113/113785_1956076_wave_L.png", 
+            "ref": "http://www.freesound.org/api/sounds/113785", 
             "id": 113785, 
-            "preview-lq-ogg": "http://beta.freesound.org/data/previews/113/113785_1956076-lq.ogg"
+            "preview-lq-ogg": "http://www.freesound.org/data/previews/113/113785_1956076-lq.ogg"
         }
     ], 
-    "previous": "http://beta.freesound.org/api/sounds/search?q=dogs&p=1&f=&s=downloads_desc", 
+    "previous": "http://www.freesound.org/api/sounds/search?q=dogs&p=1&f=&s=downloads_desc", 
     "num_pages": 27, 
-    "next": "http://beta.freesound.org/api/sounds/search?q=dogs&p=3&f=&s=downloads_desc"
+    "next": "http://www.freesound.org/api/sounds/search?q=dogs&p=3&f=&s=downloads_desc"
   }
 
 
@@ -294,12 +315,12 @@ Request
 
 ::
 
-  curl http://beta.freesound.org/api/sounds/83295
+  curl http://www.freesound.org/api/sounds/83295
 
 .. _sound-get-response:
 
-Response
-''''''''
+Sound response
+''''''''''''''
 
 **Properties**
 
@@ -332,6 +353,7 @@ num_downloads         number            The number of times the sound was downlo
 num_ratings           number            The number of times the sound was rated.
 avg_rating            number            The average rating of the sound.
 pack                  URI               If the sound is part of a pack, this URI points to that pack's API resource.
+geotag                object            A dictionary with the latitude ('lat') and longitude ('lon') of the geotag (only for sounds that have been geotagged).
 user                  object            A dictionary with the username, url, and ref for the user that uploaded the sound.
 spectral_m            URI               A visualization of the sounds spectrum over time, jpeg file (medium).
 spectral_l            URI               A visualization of the sounds spectrum over time, jpeg file (large).
@@ -349,15 +371,15 @@ analysis_frames       URI               The URI for retrieving a JSON file with 
     "num_ratings": 0, 
     "duration": 260.98849999999999, 
     "samplerate": 44000.0, 
-    "preview-hq-ogg": "http://beta.freesound.org/data/previews/17/17185_18799-hq.ogg", 
+    "preview-hq-ogg": "http://www.freesound.org/data/previews/17/17185_18799-hq.ogg", 
     "id": 17185, 
-    "preview-lq-ogg": "http://beta.freesound.org/data/previews/17/17185_18799-lq.ogg", 
+    "preview-lq-ogg": "http://www.freesound.org/data/previews/17/17185_18799-lq.ogg", 
     "bitdepth": 16, 
     "num_comments": 0, 
     "filesize": 45934020, 
-    "preview-hq-mp3": "http://beta.freesound.org/data/previews/17/17185_18799-hq.mp3", 
+    "preview-hq-mp3": "http://www.freesound.org/data/previews/17/17185_18799-hq.mp3", 
     "type": "wav", 
-    "analysis_stats": "http://beta.freesound.org/api/sounds/17185/analysis", 
+    "analysis_stats": "http://www.freesound.org/api/sounds/17185/analysis", 
     "description": "The most beautiful nightingale recording I've ever made. Forest near Cologne, Germany,June 2004, Vivanco EM35 with preamp into Sony DAT-recorder.", 
     "tags": [
         "bulbul", 
@@ -385,32 +407,103 @@ analysis_frames       URI               The URI for retrieving a JSON file with 
         "nature", 
         "field-recording"
     ], 
-    "serve": "http://beta.freesound.org/api/sounds/17185/serve", 
-    "similarity": "http://beta.freesound.org/api/sounds/17185/similar", 
-    "spectral_m": "http://beta.freesound.org/data/displays/17/17185_18799_spec_M.jpg", 
-    "spectral_l": "http://beta.freesound.org/data/displays/17/17185_18799_spec_L.jpg", 
+    "serve": "http://www.freesound.org/api/sounds/17185/serve", 
+    "similarity": "http://www.freesound.org/api/sounds/17185/similar", 
+    "spectral_m": "http://www.freesound.org/data/displays/17/17185_18799_spec_M.jpg", 
+    "spectral_l": "http://www.freesound.org/data/displays/17/17185_18799_spec_L.jpg", 
     "user": {
         "username": "reinsamba", 
-        "url": "http://beta.freesound.org/people/reinsamba/", 
-        "ref": "http://beta.freesound.org/api/people/reinsamba"
+        "url": "http://www.freesound.org/people/reinsamba/", 
+        "ref": "http://www.freesound.org/api/people/reinsamba"
     }, 
     "bitrate": 1408, 
     "num_downloads": 0, 
-    "analysis_frames": "http://beta.freesound.org/data/analysis/17/17185_18799_frames.json", 
+    "analysis_frames": "http://www.freesound.org/data/analysis/17/17185_18799_frames.json", 
     "channels": 2, 
     "license": "http://creativecommons.org/licenses/sampling+/1.0/", 
     "created": "2006-03-19 23:53:37", 
-    "url": "http://beta.freesound.org/people/reinsamba/sounds/17185/", 
-    "ref": "http://beta.freesound.org/api/sounds/17185", 
+    "url": "http://www.freesound.org/people/reinsamba/sounds/17185/", 
+    "ref": "http://www.freesound.org/api/sounds/17185", 
     "avg_rating": 0.0, 
-    "preview-lq-mp3": "http://beta.freesound.org/data/previews/17/17185_18799-lq.mp3", 
+    "preview-lq-mp3": "http://www.freesound.org/data/previews/17/17185_18799-lq.mp3", 
     "original_filename": "Nightingale song 3.wav", 
-    "waveform_l": "http://beta.freesound.org/data/displays/17/17185_18799_wave_L.png", 
-    "waveform_m": "http://beta.freesound.org/data/displays/17/17185_18799_wave_M.png", 
-    "pack": "http://beta.freesound.org/api/packs/455"
+    "waveform_l": "http://www.freesound.org/data/displays/17/17185_18799_wave_L.png", 
+    "waveform_m": "http://www.freesound.org/data/displays/17/17185_18799_wave_M.png", 
+    "pack": "http://www.freesound.org/api/packs/455"
   }
 
+Sound Geotags resource
+======================
 
+URI
+---
+
+::
+
+  /sounds/geotag/
+
+The only allowed method is GET.
+
+GET
+---
+
+A GET request to the sound resource returns a list of sounds that have been geotagged inside a space defined with url parameters.
+
+Request
+'''''''
+
+**Parameters**
+
+=========  ======  ========  =================================
+Name       Type    Required  Description
+=========  ======  ========  =================================
+min_lat	   number  no        Minimum latitude [-90 to 90]
+max_lat    number  no        Maximum latitude [-90 to 90]
+min_lom    number  no	     Minimum longitude [-180 to 180]
+max_lon	   number  no	     Maximum longitude [-180 to 180]
+p          number  no        The page of the search result to get
+fields	   string  no	     Fields
+=========  ======  ========  =================================
+
+**latitude and longitude parameters**
+
+Geotags are represented as points defined by a latitude and a longitude parameters. Displying a world map as a rectangle, latitude is the x axis and ranges from -90 to 90, while longitude is the y axis and ranges from -180 to 180.
+
+"Sound Geotags resource" allows to define a rectangular space inside the "world map" rectangle and returns a list of all the sounds that have been geotagged inside the defined space.
+
+This rectangular space is specified with ``min_lat``, ``min_lon`` url parameters for the bottom-left corner and ``max_lat``, ``max_lon`` for the top-right corner. The following image shows an example. 
+
+    .. image:: _static/geotags/geotag_normal.png
+        :height: 300px
+
+The definition of the rectangle assumes that world map is a continuous space where latitude 90 = -90 and longitude 180 = -180. Thus, rectangles can wrap the edges of the map. This is achieved by using ``min_lat`` greater than ``max_lat`` or ``max_lon`` smaller than ``min_lon``.
+The following images show examples of these cases. If ``min_lon`` > ``max_lon``:
+
+    .. image:: _static/geotags/geotag_lon_changed.png
+        :height: 300px
+
+Example for ``min_lat`` > ``max_lat``:
+
+    .. image:: _static/geotags/geotag_lat_changed.png
+        :height: 300px
+
+Finally, an example for ``min_lat`` > ``max_lat`` and ``min_lon`` > ``max_lon``:
+
+    .. image:: _static/geotags/geotag_both_changed.png
+        :height: 300px
+
+
+
+**Curl Example**
+
+::
+
+  curl http://www.freesound.org/api/sounds/geotag/?min_lon=2.005176544189453&max_lon=2.334766387939453&min_lat=41.3265528618605&max_lat=41.4504467428547
+
+
+Response
+''''''''
+A paginated sound list like in the :ref:`sound-search-response` with the addition of a ``geotag`` property which indicates the latitude (``lat``) and longitude (``lon``) values for each sound.
 
 Sound Analysis resource
 =======================
@@ -478,13 +571,13 @@ all        bool    no        If set to true, all the available analysis data
 ::
 
   # For the complete analysis result
-  curl http://beta.freesound.org/sounds/999/analysis
+  curl http://www.freesound.org/sounds/999/analysis
   # For a filtered analysis result, in this case the analyzed average loudness
-  curl http://beta.freesound.org/api/sounds/999/analysis/lowlevel/average_loudness/
+  curl http://www.freesound.org/api/sounds/999/analysis/lowlevel/average_loudness/
   # Or for all the tonal data
-  curl http://beta.freesound.org/api/sounds/999/analysis/tonal
+  curl http://www.freesound.org/api/sounds/999/analysis/tonal
   # Or for all the pitch of a sound
-  curl http://beta.freesound.org/api/sounds/999/lowlevel/pitch/mean
+  curl http://www.freesound.org/api/sounds/999/lowlevel/pitch/mean
 
 Response
 ''''''''
@@ -510,7 +603,7 @@ is given by the ``analysis_frames`` property of a sound resource. As an example:
 
 ::
 
-  http://beta.freesound.org/data/analysis/17/17185_18799_frames.json
+  http://www.freesound.org/data/analysis/17/17185_18799_frames.json
 
 
 
@@ -542,6 +635,7 @@ Name         Type    Required  Description
 ===========  ======  ========  ===================================================
 num_results  number  no        The number of similar sounds to return (max = 100, default = 15)
 preset       string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``lowlevel``)
+fields	     string  no	       Fields
 ===========  ======  ========  ===================================================
 
 **Curl Examples**
@@ -549,17 +643,16 @@ preset       string  no        The similarity measure to use when retrieving sim
 ::
 
   # Get the most similar sound to 120597 with the preset for "musical" sounds (num_results equals 2 because original sound is also returned in the list)
-  curl http://beta.freesound.org/api/sounds/120597/similar?num_results=2&preset=music
+  curl http://www.freesound.org/api/sounds/120597/similar?num_results=2&preset=music
   # Get the 15 most similar sounds to 11 with the preset "lowlevel"
-  curl http://beta.freesound.org/api/sounds/11/similar?preset=lowlevel
+  curl http://www.freesound.org/api/sounds/11/similar?preset=lowlevel
 
 Response
 ''''''''
 
-The response is the same as the `sound search response`__ but with the addition of a ``distance`` property (for each sound) resembling a numerical value of "dissimilarity" respect to the query sound (then, the first sound of the result will always have distance = 0.0).
+The response is the same as the :ref:`sound-search-response` but with the addition of a ``distance`` property (for each sound) resembling a numerical value of "dissimilarity" respect to the query sound (then, the first sound of the result will always have distance = 0.0).
 If the response is an empty list (0 results), this is because the query sound has been recently uploaded and it has not still been indexed in the similarity database.
 
-__ sound-search-response_
 
 **JSON Example**
 
@@ -568,41 +661,41 @@ __ sound-search-response_
   {
     "sounds": [
         {
-            "analysis_stats": "http://beta.freesound.org/api/sounds/11/analysis", 
-            "preview-lq-ogg": "http://beta.freesound.org/data/previews/0/11_2-lq.ogg", 
+            "analysis_stats": "http://www.freesound.org/api/sounds/11/analysis", 
+            "preview-lq-ogg": "http://www.freesound.org/data/previews/0/11_2-lq.ogg", 
             "tags": [
                 "generated", 
                 "sinusoid", 
                 "sweep", 
                 "clean"
             ], 
-            "url": "http://beta.freesound.org/people/Bram/sounds/11/", 
-            "ref": "http://beta.freesound.org/api/sounds/11",
+            "url": "http://www.freesound.org/people/Bram/sounds/11/", 
+            "ref": "http://www.freesound.org/api/sounds/11",
             "id": 11, 
-            "preview-lq-mp3": "http://beta.freesound.org/data/previews/0/11_2-lq.mp3", 
-            "serve": "http://beta.freesound.org/api/sounds/11/serve", 
-            "similarity": "http://beta.freesound.org/api/sounds/11/similar", 
-            "pack": "http://beta.freesound.org/api/packs/2", 
+            "preview-lq-mp3": "http://www.freesound.org/data/previews/0/11_2-lq.mp3", 
+            "serve": "http://www.freesound.org/api/sounds/11/serve", 
+            "similarity": "http://www.freesound.org/api/sounds/11/similar", 
+            "pack": "http://www.freesound.org/api/packs/2", 
             "distance": 0.0, 
-            "spectral_m": "http://beta.freesound.org/data/displays/0/11_2_spec_M.jpg", 
-            "spectral_l": "http://beta.freesound.org/data/displays/0/11_2_spec_L.jpg", 
+            "spectral_m": "http://www.freesound.org/data/displays/0/11_2_spec_M.jpg", 
+            "spectral_l": "http://www.freesound.org/data/displays/0/11_2_spec_L.jpg", 
             "user": {
                 "username": "Bram", 
-                "url": "http://beta.freesound.org/people/Bram/", 
-                "ref": "http://beta.freesound.org/api/people/Bram"
+                "url": "http://www.freesound.org/people/Bram/", 
+                "ref": "http://www.freesound.org/api/people/Bram"
             }, 
             "original_filename": "sweep_log.wav", 
             "type": "wav", 
             "duration": 2.0, 
-            "analysis_frames": "http://beta.freesound.org/data/analysis/0/11_2_frames.json", 
-            "waveform_l": "http://beta.freesound.org/data/displays/0/11_2_wave_L.png", 
-            "waveform_m": "http://beta.freesound.org/data/displays/0/11_2_wave_M.png", 
-            "preview-hq-ogg": "http://beta.freesound.org/data/previews/0/11_2-hq.ogg", 
-            "preview-hq-mp3": "http://beta.freesound.org/data/previews/0/11_2-hq.mp3"
+            "analysis_frames": "http://www.freesound.org/data/analysis/0/11_2_frames.json", 
+            "waveform_l": "http://www.freesound.org/data/displays/0/11_2_wave_L.png", 
+            "waveform_m": "http://www.freesound.org/data/displays/0/11_2_wave_M.png", 
+            "preview-hq-ogg": "http://www.freesound.org/data/previews/0/11_2-hq.ogg", 
+            "preview-hq-mp3": "http://www.freesound.org/data/previews/0/11_2-hq.mp3"
         }, 
         {
-            "analysis_stats": "http://beta.freesound.org/api/sounds/104551/analysis", 
-            "preview-lq-ogg": "http://beta.freesound.org/data/previews/104/104551_420640-lq.ogg", 
+            "analysis_stats": "http://www.freesound.org/api/sounds/104551/analysis", 
+            "preview-lq-ogg": "http://www.freesound.org/data/previews/104/104551_420640-lq.ogg", 
             "tags": [
                 "attack", 
                 "air", 
@@ -612,91 +705,91 @@ __ sound-search-response_
                 "bomb", 
                 "whistle"
             ], 
-            "url": "http://beta.freesound.org/people/club%20sound/sounds/104551/", 
-            "ref": "http://beta.freesound.org/api/sounds/104551", 
+            "url": "http://www.freesound.org/people/club%20sound/sounds/104551/", 
+            "ref": "http://www.freesound.org/api/sounds/104551", 
             "id": 104551, 
-            "preview-lq-mp3": "http://beta.freesound.org/data/previews/104/104551_420640-lq.mp3", 
-            "serve": "http://beta.freesound.org/api/sounds/104551/serve", 
-            "similarity": "http://beta.freesound.org/api/sounds/104551/similar", 
-            "pack": "http://beta.freesound.org/api/packs/6609", 
+            "preview-lq-mp3": "http://www.freesound.org/data/previews/104/104551_420640-lq.mp3", 
+            "serve": "http://www.freesound.org/api/sounds/104551/serve", 
+            "similarity": "http://www.freesound.org/api/sounds/104551/similar", 
+            "pack": "http://www.freesound.org/api/packs/6609", 
             "distance": 7122293096448.0, 
-            "spectral_m": "http://beta.freesound.org/data/displays/104/104551_420640_spec_M.jpg", 
-            "spectral_l": "http://beta.freesound.org/data/displays/104/104551_420640_spec_L.jpg", 
+            "spectral_m": "http://www.freesound.org/data/displays/104/104551_420640_spec_M.jpg", 
+            "spectral_l": "http://www.freesound.org/data/displays/104/104551_420640_spec_L.jpg", 
             "user": {
                 "username": "club sound", 
-                "url": "http://beta.freesound.org/people/club%20sound/", 
-                "ref": "http://beta.freesound.org/api/people/club%20sound"
+                "url": "http://www.freesound.org/people/club%20sound/", 
+                "ref": "http://www.freesound.org/api/people/club%20sound"
             }, 
             "original_filename": "Bomb Whistle long.wav", 
             "type": "wav", 
             "duration": 30.036799999999999, 
-            "analysis_frames": "http://beta.freesound.org/data/analysis/104/104551_420640_frames.json", 
-            "waveform_l": "http://beta.freesound.org/data/displays/104/104551_420640_wave_L.png", 
-            "waveform_m": "http://beta.freesound.org/data/displays/104/104551_420640_wave_M.png", 
-            "preview-hq-ogg": "http://beta.freesound.org/data/previews/104/104551_420640-hq.ogg", 
-            "preview-hq-mp3": "http://beta.freesound.org/data/previews/104/104551_420640-hq.mp3"
+            "analysis_frames": "http://www.freesound.org/data/analysis/104/104551_420640_frames.json", 
+            "waveform_l": "http://www.freesound.org/data/displays/104/104551_420640_wave_L.png", 
+            "waveform_m": "http://www.freesound.org/data/displays/104/104551_420640_wave_M.png", 
+            "preview-hq-ogg": "http://www.freesound.org/data/previews/104/104551_420640-hq.ogg", 
+            "preview-hq-mp3": "http://www.freesound.org/data/previews/104/104551_420640-hq.mp3"
         }, 
         {
-            "analysis_stats": "http://beta.freesound.org/api/sounds/17052/analysis", 
-            "preview-lq-ogg": "http://beta.freesound.org/data/previews/17/17052_4942-lq.ogg", 
+            "analysis_stats": "http://www.freesound.org/api/sounds/17052/analysis", 
+            "preview-lq-ogg": "http://www.freesound.org/data/previews/17/17052_4942-lq.ogg", 
             "tags": [
                 "sweep", 
                 "electronic", 
                 "sound", 
                 "supercollider"
             ], 
-            "url": "http://beta.freesound.org/people/schluppipuppie/sounds/17052/", 
-            "ref": "http://beta.freesound.org/api/sounds/17052",
+            "url": "http://www.freesound.org/people/schluppipuppie/sounds/17052/", 
+            "ref": "http://www.freesound.org/api/sounds/17052",
             "id": 17052,  
-            "preview-lq-mp3": "http://beta.freesound.org/data/previews/17/17052_4942-lq.mp3", 
-            "serve": "http://beta.freesound.org/api/sounds/17052/serve", 
-            "similarity": "http://beta.freesound.org/api/sounds/17052/similar", 
-            "pack": "http://beta.freesound.org/api/packs/954", 
+            "preview-lq-mp3": "http://www.freesound.org/data/previews/17/17052_4942-lq.mp3", 
+            "serve": "http://www.freesound.org/api/sounds/17052/serve", 
+            "similarity": "http://www.freesound.org/api/sounds/17052/similar", 
+            "pack": "http://www.freesound.org/api/packs/954", 
             "distance": 161591534288896.0, 
-            "spectral_m": "http://beta.freesound.org/data/displays/17/17052_4942_spec_M.jpg", 
-            "spectral_l": "http://beta.freesound.org/data/displays/17/17052_4942_spec_L.jpg", 
+            "spectral_m": "http://www.freesound.org/data/displays/17/17052_4942_spec_M.jpg", 
+            "spectral_l": "http://www.freesound.org/data/displays/17/17052_4942_spec_L.jpg", 
             "user": {
                 "username": "schluppipuppie", 
-                "url": "http://beta.freesound.org/people/schluppipuppie/", 
-                "ref": "http://beta.freesound.org/api/people/schluppipuppie"
+                "url": "http://www.freesound.org/people/schluppipuppie/", 
+                "ref": "http://www.freesound.org/api/people/schluppipuppie"
             }, 
             "original_filename": "sweep03_careful.aif", 
             "type": "aif", 
             "duration": 40.106299999999997, 
-            "analysis_frames": "http://beta.freesound.org/data/analysis/17/17052_4942_frames.json", 
-            "waveform_l": "http://beta.freesound.org/data/displays/17/17052_4942_wave_L.png", 
-            "waveform_m": "http://beta.freesound.org/data/displays/17/17052_4942_wave_M.png", 
-            "preview-hq-ogg": "http://beta.freesound.org/data/previews/17/17052_4942-hq.ogg", 
-            "preview-hq-mp3": "http://beta.freesound.org/data/previews/17/17052_4942-hq.mp3"
+            "analysis_frames": "http://www.freesound.org/data/analysis/17/17052_4942_frames.json", 
+            "waveform_l": "http://www.freesound.org/data/displays/17/17052_4942_wave_L.png", 
+            "waveform_m": "http://www.freesound.org/data/displays/17/17052_4942_wave_M.png", 
+            "preview-hq-ogg": "http://www.freesound.org/data/previews/17/17052_4942-hq.ogg", 
+            "preview-hq-mp3": "http://www.freesound.org/data/previews/17/17052_4942-hq.mp3"
         }, 
         {
-            "analysis_stats": "http://beta.freesound.org/api/sounds/93063/analysis", 
-            "preview-lq-ogg": "http://beta.freesound.org/data/previews/93/93063_926020-lq.ogg", 
+            "analysis_stats": "http://www.freesound.org/api/sounds/93063/analysis", 
+            "preview-lq-ogg": "http://www.freesound.org/data/previews/93/93063_926020-lq.ogg", 
             "tags": [
                 "impulse"
             ], 
-            "url": "http://beta.freesound.org/people/simonbshelley/sounds/93063/", 
-            "ref": "http://beta.freesound.org/api/sounds/93063",
+            "url": "http://www.freesound.org/people/simonbshelley/sounds/93063/", 
+            "ref": "http://www.freesound.org/api/sounds/93063",
             "id": 93063,  
-            "preview-lq-mp3": "http://beta.freesound.org/data/previews/93/93063_926020-lq.mp3", 
-            "serve": "http://beta.freesound.org/api/sounds/93063/serve", 
-            "similarity": "http://beta.freesound.org/api/sounds/93063/similar", 
+            "preview-lq-mp3": "http://www.freesound.org/data/previews/93/93063_926020-lq.mp3", 
+            "serve": "http://www.freesound.org/api/sounds/93063/serve", 
+            "similarity": "http://www.freesound.org/api/sounds/93063/similar", 
             "distance": 350841315786752.0, 
-            "spectral_m": "http://beta.freesound.org/data/displays/93/93063_926020_spec_M.jpg", 
-            "spectral_l": "http://beta.freesound.org/data/displays/93/93063_926020_spec_L.jpg", 
+            "spectral_m": "http://www.freesound.org/data/displays/93/93063_926020_spec_M.jpg", 
+            "spectral_l": "http://www.freesound.org/data/displays/93/93063_926020_spec_L.jpg", 
             "user": {
                 "username": "simonbshelley", 
-                "url": "http://beta.freesound.org/people/simonbshelley/", 
-                "ref": "http://beta.freesound.org/api/people/simonbshelley"
+                "url": "http://www.freesound.org/people/simonbshelley/", 
+                "ref": "http://www.freesound.org/api/people/simonbshelley"
             }, 
             "original_filename": "sound source.wav", 
             "type": "wav", 
             "duration": 25.0, 
-            "analysis_frames": "http://beta.freesound.org/data/analysis/93/93063_926020_frames.json", 
-            "waveform_l": "http://beta.freesound.org/data/displays/93/93063_926020_wave_L.png", 
-            "waveform_m": "http://beta.freesound.org/data/displays/93/93063_926020_wave_M.png", 
-            "preview-hq-ogg": "http://beta.freesound.org/data/previews/93/93063_926020-hq.ogg", 
-            "preview-hq-mp3": "http://beta.freesound.org/data/previews/93/93063_926020-hq.mp3"
+            "analysis_frames": "http://www.freesound.org/data/analysis/93/93063_926020_frames.json", 
+            "waveform_l": "http://www.freesound.org/data/displays/93/93063_926020_wave_L.png", 
+            "waveform_m": "http://www.freesound.org/data/displays/93/93063_926020_wave_M.png", 
+            "preview-hq-ogg": "http://www.freesound.org/data/previews/93/93063_926020-hq.ogg", 
+            "preview-hq-mp3": "http://www.freesound.org/data/previews/93/93063_926020-hq.mp3"
         }
     ], 
     "num_results": 4
@@ -731,8 +824,8 @@ Request
 
 ::
 
-  curl http://beta.freesound.org/api/people/Jovica
-  curl http://beta.freesound.org/api/people/klankschap
+  curl http://www.freesound.org/api/people/Jovica
+  curl http://www.freesound.org/api/people/klankschap
 
 
 Response
@@ -765,13 +858,13 @@ date_joined	      string   The date the user joined Freesound.
     "username": "Jovica", 
     "first_name": "", 
     "last_name": "", 
-    "packs": "http://beta.freesound.org/api/people/Jovica/packs", 
-    "url": "http://beta.freesound.org/people/Jovica/", 
+    "packs": "http://www.freesound.org/api/people/Jovica/packs", 
+    "url": "http://www.freesound.org/people/Jovica/", 
     "about": "Policy of use: you must state somewhere somehow (credit lines, web page, whatever) that the Freesound Project served this sounds. It is irrelevant to me whether you mention or not my authorship. Can't credit? Send me a personal message. (Thanks to dobroide for these words!)\r\n\r\nIf possible, I would also like to hear where the sounds are used, so if you can send me a link or something else, please do so. Thanks!\r\n\r\nCurrently adding LAYERS & DISTOPIA sample packs!\r\n\r\nFor some more information about me, click on the links below:\r\n<a href=\"http://www.myspace.com/jovicastorer\" rel=\"nofollow\">http://www.myspace.com/jovicastorer</a>\r\n\r\nAnd this is an experimental droney label for which I do some producing, engineering, mixing and mastering:\r\n<a href=\"http://www.plaguerecordings.com/index.htm\" rel=\"nofollow\">http://www.plaguerecordings.com/index.htm</a>\r\n\r\nCurrently me and a good friend of mine are working on a new <strong>c-o-l-o-u-r-s</strong> website. \r\n\r\nThe first release, <strong>'gekarameliseerd'</strong> by <strong>Jovica Storer</strong>, is available on:\r\n- emusic: <a href=\"http://www.emusic.com/album/Jovica-Storer-Gekarameliseerd-MP3-Download/11666781.html\" rel=\"nofollow\">http://www.emusic.com/album/Jovica-Storer-Gekarameliseerd-MP3-Download/11666781.html</a>\r\n- iTunes: <a href=\"http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=333466000&id;=333464878&s;=143443&uo;=6\" rel=\"nofollow\">http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewAlbum?i=333466000&id;=333464878&s;=143443&uo;=6</a>\r\n- Napster: <a href=\"http://free.napster.com/view/album/index.html?id=13373722\" rel=\"nofollow\">http://free.napster.com/view/album/index.html?id=13373722</a>\r\nPlease check it out and if you want to support me, buy some tracks. Many thanks! \r\n\r\nNamaste!\r\nJovica Storer", 
     "home_page": "http://www.ampcast.com/music/25765/artist.php", 
     "signature": "Namaste!\r\nJovica Storer\r\n<a href=\"http://www.c-o-l-o-u-r-s.com\" rel=\"nofollow\">http://www.c-o-l-o-u-r-s.com</a>", 
-    "sounds": "http://beta.freesound.org/api/people/Jovica/sounds", 
-    "ref": "http://beta.freesound.org/api/people/Jovica", 
+    "sounds": "http://www.freesound.org/api/people/Jovica/sounds", 
+    "ref": "http://www.freesound.org/api/people/Jovica", 
     "date_joined": "2005-05-07 17:49:39"
   }
 
@@ -807,21 +900,21 @@ Request
 Name       Type    Required  Description
 =========  ======  ========  ========================================
 p          number  no        The page of the sound collection to get.
+fields	   string  no	     Fields
 =========  ======  ========  ========================================
 
 **Curl Examples**
 
 ::
 
-  curl http://beta.freesound.org/api/people/thanvannispen/sounds
-  curl http://beta.freesound.org/api/people/inchadney/sounds?p=5
+  curl http://www.freesound.org/api/people/thanvannispen/sounds
+  curl http://www.freesound.org/api/people/inchadney/sounds?p=5
 
 Response
 ''''''''
 
-The response is the same as the `sound search response`__.
+The response is the same as the :ref:`sound-search-response`.
 
-__ sound-search-response_
 
 
 
@@ -851,16 +944,14 @@ Request
 
 ::
 
-  curl http://beta.freesound.org/api/people/dobroide/packs
+  curl http://www.freesound.org/api/people/dobroide/packs
 
 Response
 ''''''''
 
 **Properties**
 
-The response is an array. Each item in the array follows a reduced version of the `pack resource format`__.
-
-__ pack-get-response_
+The response is an array. Each item in the array follows a reduced version of the :ref:`pack-get-response`.
 
 
 **JSON Example**
@@ -873,19 +964,19 @@ __ pack-get-response_
         {
             "description": "", 
             "created": "2009-09-28 09:50:08", 
-            "url": "http://beta.freesound.org/people/dobroide/packs/5266/", 
-            "sounds": "http://beta.freesound.org/api/packs/5266/sounds", 
+            "url": "http://www.freesound.org/people/dobroide/packs/5266/", 
+            "sounds": "http://www.freesound.org/api/packs/5266/sounds", 
             "num_downloads": 0, 
-            "ref": "http://beta.freesound.org/api/packs/5266", 
+            "ref": "http://www.freesound.org/api/packs/5266", 
             "name": "scrub"
         }, 
         {
             "description": "", 
             "created": "2009-09-20 10:55:32", 
-            "url": "http://beta.freesound.org/people/dobroide/packs/5230/", 
-            "sounds": "http://beta.freesound.org/api/packs/5230/sounds", 
+            "url": "http://www.freesound.org/people/dobroide/packs/5230/", 
+            "sounds": "http://www.freesound.org/api/packs/5230/sounds", 
             "num_downloads": 0, 
-            "ref": "http://beta.freesound.org/api/packs/5230", 
+            "ref": "http://www.freesound.org/api/packs/5230", 
             "name": "granada"
         }
     ]
@@ -921,12 +1012,12 @@ Request
 
 ::
 
-  curl http://beta.freesound.org/api/packs/5107
+  curl http://www.freesound.org/api/packs/5107
 
 .. _pack-get-response:
 
-Response
-''''''''
+Pack response
+'''''''''''''
 
 **Properties**
 
@@ -948,15 +1039,15 @@ num_downloads	      number   The number of times the pack was downloaded.
 
   {
     "created": "2009-09-01 19:56:15", 
-    "url": "http://beta.freesound.org/people/dobroide/packs/5107/", 
+    "url": "http://www.freesound.org/people/dobroide/packs/5107/", 
     "user": {
         "username": "dobroide", 
-        "url": "http://beta.freesound.org/people/dobroide/", 
-        "ref": "http://beta.freesound.org/api/people/dobroide"
+        "url": "http://www.freesound.org/people/dobroide/", 
+        "ref": "http://www.freesound.org/api/people/dobroide"
     }, 
-    "sounds": "http://beta.freesound.org/api/packs/5107/sounds", 
+    "sounds": "http://www.freesound.org/api/packs/5107/sounds", 
     "num_downloads": 0, 
-    "ref": "http://beta.freesound.org/api/packs/5107", 
+    "ref": "http://www.freesound.org/api/packs/5107", 
     "name": "Iceland"
   }
 
@@ -989,18 +1080,17 @@ Request
 Name       Type    Required  Description
 =========  ======  ========  ====================================
 p          number  no        The page of the pack's sounds to get
+fields	   string  no	     Fields
 =========  ======  ========  ====================================
 
 **Curl Examples**
 
 ::
 
-  curl http://beta.freesound.org/api/packs/5107/sounds
+  curl http://www.freesound.org/api/packs/5107/sounds
 
 Response
 ''''''''
 
-The response is the same as the `sound search response`__.
-
-__ sound-search-response_
+The response is the same as the :ref:`sound-search-response`.
 

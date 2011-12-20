@@ -137,7 +137,6 @@ DEFAULT_SIMILARITY_PRESET = 'lowlevel'
 
 DELETED_USER_ID = 1
 
-logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'logger.ini'))
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
@@ -220,3 +219,5 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
 ESSENTIA_EXECUTABLE = '/home/fsweb/essentia/essentia_1.2.2_extractor/streaming_extractor'
+
+from logger import LOGGING

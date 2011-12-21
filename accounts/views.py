@@ -48,9 +48,16 @@ from django.contrib.sites.models import get_current_site
 from utils.mail import send_mail, send_mail_template
 from django.db import transaction
 from bookmarks.models import Bookmark
+from django.contrib.auth.decorators import user_passes_test
 
 
 audio_logger = logging.getLogger('audio')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url = "/")
+def crash_me(request):
+    raise Exception
+
 
 @login_required
 def bulk_license_change(request):

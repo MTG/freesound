@@ -12,7 +12,7 @@ class BookmarkCategoryForm(forms.ModelForm):
         }
 
 class BookmarkForm(forms.ModelForm):
-    new_category_name = forms.CharField(max_length=128, help_text="If you want a new category, don't select one above, set its new name here.", required=False)
+    new_category_name = forms.CharField(max_length=128, help_text="<br>If you want a new category, don't select one above, set its new name here.", required=False)
 
     class Meta:
         model = Bookmark

@@ -63,6 +63,7 @@ def add_bookmark(request, sound_id):
     
     if request.POST:
         form = BookmarkForm(request.POST, instance=Bookmark(user=request.user, sound=sound))
+        form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
         if form.is_valid():
             form.save()
     
@@ -99,11 +100,7 @@ def get_form_for_sound(request, sound_id):
     
     sound = Sound.objects.get(id=sound_id)
     form = BookmarkForm(instance = Bookmark(name=sound.original_filename), prefix = sound.id)
-    #try:
     form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
-    #except Exception:
-    #    print Exception
-        
     categories_aready_containing_sound = BookmarkCategory.objects.filter(user=request.user, bookmarks__sound=sound).distinct()
     
     data_dict = {'bookmarks': Bookmark.objects.filter(user=request.user,sound=sound).count() != 0,

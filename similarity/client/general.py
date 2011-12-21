@@ -72,7 +72,8 @@ try:
 
 except ImportError:
     class Messenger():
-        pass
+        def call_service(cls, address, data, timeout=5):
+            pass
 
 global messenger
 try:

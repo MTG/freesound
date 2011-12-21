@@ -22,7 +22,9 @@ class TagField(forms.CharField):
         tags = clean_and_split_tags(value)
 
         if len(tags) < 3:
-            raise forms.ValidationError('Your should AT LEAST have 3 tags...')
+            raise forms.ValidationError('Your should at least have 3 tags...')
+        elif len(tags) > 30:
+            raise forms.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
 
         return tags
 

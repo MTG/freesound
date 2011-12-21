@@ -4,10 +4,13 @@ import traceback
 from models import ApiKey
 from piston.emitters import Emitter
 from piston.handler import typemapper
+import logging
 
+logger = logging.getLogger("api")
 
 def build_error_response(e, request):
     
+    #logger.error(str(e.status_code) + ' API error: ' + e.type)
     content = {"error": True,
                "type": e.type,
                "status_code": e.status_code,
@@ -33,7 +36,8 @@ class ReturnError(Exception):
 
 def build_unexpected(e, request):
     debug = traceback.format_exc() if settings.DEBUG else str(e)
-    #TODO: logger
+    logger.error('500 API error: Unexpected')
+    
     return build_error_response(ReturnError(500,
                                             "InternalError",
                                             {"explanation":
@@ -44,12 +48,12 @@ def build_unexpected(e, request):
 
 def build_invalid_url(e):
     format = e.GET.get("format", "json")
+    
     return build_error_response(ReturnError(404,
                                             "InvalidUrl",
                                             {"explanation":
                                              "The introduced url is invalid.",}
-                                             ), e) # TODO:!!!
-
+                                             ), e)
 
 class auth():
 

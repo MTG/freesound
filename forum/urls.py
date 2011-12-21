@@ -7,6 +7,7 @@ from search.views import search_forum
 urlpatterns = patterns('forum.views',
     url(r'^$', forum.forums, name='forums-forums'),
     url(r'^forums-search/$', search_forum, name="forums-search"),
+    url(r'^latest_posts/$', forum.latest_posts, name="forums-latest-posts"),
     url(r'^(?P<forum_name_slug>[\w\-]+)/$', forum.forum, name="forums-forum"),
     url(r'^(?P<forum_name_slug>[\w\-]+)/new-thread/$', forum.new_thread, name="forums-new-thread"),
     url(r'^(?P<forum_name_slug>[\w-]+)/(?P<thread_id>\d+)/$', forum.thread, name="forums-thread"),

@@ -9,7 +9,7 @@ register = template.Library()
 def active_user_content(context,user_obj, content_type):
     content = None
     if content_type == "sound":
-        content = Sound.objects.select_related().filter(user=user_obj).order_by("-created")[0]
+        content = Sound.public.select_related().filter(user=user_obj).order_by("-created")[0]
     elif  content_type == "post":
         content = Post.objects.select_related().filter(author=user_obj).order_by("-created")[0]
     elif content_type == "comment":

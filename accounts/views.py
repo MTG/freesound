@@ -47,6 +47,7 @@ from django.utils.http import int_to_base36
 from django.contrib.sites.models import get_current_site
 from utils.mail import send_mail, send_mail_template
 from django.db import transaction
+from bookmarks.models import Bookmark
 
 
 audio_logger = logging.getLogger('audio')
@@ -386,6 +387,8 @@ def describe_sounds(request):
                                               locals(),
                                               context_instance=RequestContext(request))
         # all valid, then create sounds and moderation tickets
+                
+        dirty_packs = []
         for i in range(len(sounds_to_describe)):
             sound = Sound()
             sound.user = request.user
@@ -438,8 +441,7 @@ def describe_sounds(request):
                 pack, created = Pack.objects.get_or_create(user=request.user, name=new_pack)
             if pack:
                 sound.pack = pack
-                sound.pack.is_dirty = True
-                sound.pack.save()
+                dirty_packs.append(sound.pack)
             # set the geotag (if 'lat' is there, all fields are)
             data = forms[i]['geotag'].cleaned_data
             if not data.get('remove_geotag') and data.get('lat'):
@@ -495,6 +497,7 @@ def describe_sounds(request):
                 sound.process()
         except Exception, e:
             audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
+                            
         if len(request.session['describe_sounds']) <= 0:
             msg = 'You have described all the selected files.'
             messages.add_message(request, messages.WARNING, msg)
@@ -622,12 +625,13 @@ def account(request, username):
     except User.DoesNotExist:
         raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    tags = list(user.profile.get_tagcloud())
+    tags = list(user.profile.get_tagcloud() if user.profile else [])
     latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = False
+    has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
 
@@ -726,6 +730,8 @@ def delete(request):
     encrypted_string = request.GET.get("user", None)
 
     waited_too_long = False
+    
+    num_sounds = request.user.sounds.all().count()
 
     if encrypted_string != None:
         try:
@@ -737,6 +743,28 @@ def delete(request):
 
             link_generated_time = float(now)
             if abs(time.time() - link_generated_time) < 10:
+                from forum.models import Post, Thread
+                from comments.models import Comment
+                from sounds.models import DeletedSound
+            
+                deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
+            
+                for post in Post.objects.filter(author=request.user):
+                    post.author = deleted_user
+                    post.save()
+                
+                for thread in Thread.objects.filter(author=request.user):
+                    thread.author = deleted_user
+                    thread.save()
+                    
+                for comment in Comment.objects.filter(user=request.user):
+                    comment.user = deleted_user
+                    comment.save()
+
+                for sound in DeletedSound.objects.filter(user=request.user):
+                    sound.user = deleted_user
+                    sound.save()
+
                 request.user.delete()
                 return HttpResponseRedirect(reverse("front-page"))
             else:

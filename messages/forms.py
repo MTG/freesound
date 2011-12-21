@@ -13,8 +13,8 @@ class ManualUserField(forms.CharField):
 
 def MessageReplyClassCreator(baseclass):
     class MessageReplyForm(baseclass):
-        to = ManualUserField()
-        subject = forms.CharField(min_length=3, max_length=128)
+        to = ManualUserField(widget=forms.TextInput(attrs={'size':'40'}))
+        subject = forms.CharField(min_length=3, max_length=128, widget=forms.TextInput(attrs={'size':'80'}))
         body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
     return MessageReplyForm
 

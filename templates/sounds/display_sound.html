@@ -31,10 +31,11 @@
                    <li><a href="{{sound|rating_url:"5"}}" title="amazing :-o" class="five-stars{% if not request.user.is_authenticated or request.user == sound.user %}_not_logged_in{% endif %}">5</a></li>
                </ul>
             </div><!-- .sound_stars -->
-
+            
             <div class="sound_description">
                 <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
             </div><!-- .sound_description -->
+            
             <div class="sound_tags">
 
                 <ul class="tags">
@@ -45,6 +46,9 @@
                 <br style="clear: both;"/>
 
             </div><!-- .sound_tags -->
+            
+            <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
+            
             {% if sound.moderation_state != 'OK' or sound.processing_state != 'OK' %}
                 <p style="font-size:10px; color:gray">
                 {% if sound.processing_state != 'OK' %}
@@ -93,13 +97,32 @@
         <a class="comments" href="{% url sound sound.user.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 
         <div class="sound_attributes">
+            
+            {% if request.user.is_authenticated %}
+            <a class="bookmark" href="javascript:void(0)" onclick="show_hide_bookmark_form({{sound.id}})">
+                <img src="{{media_url}}images/fugue-icons/icons/address-book-blue.png" width="16" height="16" alt="Bookmark" title="Bookmark this sound" />
+            </a>
+            
+            <!-- maybe move this code somewhere else? function is duplicated for each sound...-->
+            <script type="text/javascript">
+            function show_hide_bookmark_form(id)
+            {
+                if( $("#bookmark_form_"  + id.toString()).is(':hidden') ) { // Only do the request when expanding the div
+                    $("#bookmark_form_"  + id.toString()).html('&nbsp;').load("/home/bookmarks/get_form_for_sound/" + id.toString())
+                }
+                $("#bookmark_form_"  + id.toString()).toggle();
+            }
+            </script>
+            
+            {% endif %}
+            
             {% if sound.similarity_state == 'OK' %}
             <a class="similar" rel="nofollow" href="{% url sound-similar sound.user.username sound.id %}">
                 <img src="{{media_url}}images/fugue-icons/icons/headphone--plus.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
             </a>
             {% endif %}
             {% if sound.pack %}
-             <a class="pack" href="{% url pack sound.user.username sound.pack.id %}">
+            <a class="pack" href="{% url pack sound.user.username sound.pack.id %}">
                 <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to the pack: {{ sound.pack.name }}" />
             </a>
             {% endif %}
@@ -127,6 +150,7 @@
                 <img class="cc_license" src="{{media_url}}images/licenses/bync.png" height="16" alt="Creative Commons Attribution Non-Commercial license" title="This sound is licensed under the Creative Commons Attribution Non-Commercial license." />
             {% endif %}
             <!-- /license icons -->
+            
         </div><!-- .sound_attributes -->
 
     </div><!-- .sample_information -->

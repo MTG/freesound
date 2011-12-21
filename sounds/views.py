@@ -25,7 +25,7 @@ from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
     NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm
 from sounds.management.commands.create_remix_groups import _create_nodes, \
     _create_and_save_remixgroup
-from sounds.models import Sound, Pack, Download, RemixGroup
+from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
@@ -36,13 +36,11 @@ from utils.mail import send_mail_template
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
-from utils.text import slugify
 import datetime
-import os
 import time
 import logging
 import json
-import urllib
+import os
 
 logger = logging.getLogger('web')
 
@@ -164,7 +162,11 @@ def sound(request, username, sound_id):
             if sound.moderation_state != 'OK' or sound.processing_state != 'OK':
                 raise Http404
     except Sound.DoesNotExist: #@UndefinedVariable
-        raise Http404
+        try:
+            DeletedSound.objects.get(sound_id=sound_id)
+            return render_to_response('sounds/deleted_sound.html', {}, context_instance=RequestContext(request))
+        except DeletedSound.DoesNotExist:
+            raise Http404
 
     tags = sound.tags.select_related("tag__name")
 
@@ -223,6 +225,14 @@ def sound_edit(request, username, sound_id):
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
 
+    def invalidate_sound_cache(sound):
+        invalidate_template_cache("sound_header", sound.id, True)
+        invalidate_template_cache("sound_header", sound.id, False)
+        invalidate_template_cache("sound_footer_top", sound.id)
+        invalidate_template_cache("sound_footer_bottom", sound.id)
+        invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+        invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+
     def is_selected(prefix):
         if request.method == "POST":
             for name in request.POST.keys():
@@ -238,10 +248,7 @@ def sound_edit(request, username, sound_id):
             sound.description = data["description"]
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id, True)
-            invalidate_template_cache("sound_header", sound.id, False)
-            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+            invalidate_sound_cache(sound)
             
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
@@ -271,28 +278,14 @@ def sound_edit(request, username, sound_id):
             data = pack_form.cleaned_data
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
-                if sound.pack:
-                    sound.pack.is_dirty = True
-                    sound.pack.save()
                 sound.pack = pack
             else:
                 new_pack = data["pack"]
                 old_pack = sound.pack
                 if new_pack != old_pack:
-                    if old_pack:
-                        old_pack.is_dirty = True
-                        old_pack.save()
-                    if new_pack:
-                        new_pack.is_dirty = True
-                        new_pack.save()
                     sound.pack = new_pack
             sound.mark_index_dirty()
-            invalidate_template_cache("sound_header", sound.id, True)
-            invalidate_template_cache("sound_header", sound.id, False)
-            invalidate_template_cache("sound_footer_top", sound.id)
-            invalidate_template_cache("sound_footer_bottom", sound.id)
-            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+            invalidate_sound_cache(sound)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
@@ -318,10 +311,8 @@ def sound_edit(request, username, sound_id):
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
                     sound.mark_index_dirty()
 
-            invalidate_template_cache("sound_footer_top", sound.id)
-            invalidate_template_cache("sound_footer_bottom", sound.id)
-            invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-            invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+            invalidate_sound_cache(sound)
+            
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -333,10 +324,7 @@ def sound_edit(request, username, sound_id):
     if request.POST and license_form.is_valid():
         sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
-        invalidate_template_cache("sound_footer_top", sound.id)
-        invalidate_template_cache("sound_footer_bottom", sound.id)
-        invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-        invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+        invalidate_sound_cache(sound)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license})
@@ -485,7 +473,7 @@ def pack(request, username, pack_id):
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
-        if pack.is_dirty :
+        if not os.path.exists(pack.locations("path")):
             messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
         
         if num_sounds_ok < pack.num_sounds :

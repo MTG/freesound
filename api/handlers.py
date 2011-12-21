@@ -18,8 +18,6 @@ from api.api_utils import auth, ReturnError
 import os
 from django.contrib.syndication.views import Feed
 
-
-
 logger = logging.getLogger("api")
 
 # UTILITY FUNCTIONS
@@ -332,7 +330,7 @@ class SoundSearchHandler(BaseHandler):
 
     @auth()
     def read(self, request):
-
+        
         form = SoundSearchForm(SEARCH_SORT_OPTIONS_API, request.GET)
         if not form.is_valid():
             resp = rc.BAD_REQUEST
@@ -426,7 +424,7 @@ class SoundServeHandler(BaseHandler):
 
     @auth()
     def read(self, request, sound_id):
-
+        
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")            
         except Sound.DoesNotExist: #@UndefinedVariable
@@ -438,7 +436,8 @@ class SoundServeHandler(BaseHandler):
         
         # DISABLED (FOR THE MOMENT WE DON'T UPDATE DOWNLOADS TABLE THROUGH API)
         #Download.objects.get_or_create(user=request.user, sound=sound, interface='A')
-
+        
+        logger.info("Serving sound " + sound_id + " through API, api_key=" + request.GET.get("api_key", False) + ", api_key username=" + request.user.username)
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 

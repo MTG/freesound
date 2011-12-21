@@ -32,14 +32,17 @@
             {% if perms.tickets.can_moderate %}
             <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} new sound{{ new_sounds|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
             {% endif %}
+            {% if user.profile.num_sounds %}
             <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
+            {% endif %}
+            <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
         </ul>
         </div>
         <br style="clear: both;" />
         <br>
     {% else %}
         <h1>{{user.username}}</h1>
-
+		{% if user.profile %}
         <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
         <div class="account_information_and_home_options">
         <ul>
@@ -48,11 +51,24 @@
             <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
             {% endif %}
             <li>Has been a user for {{user.date_joined|timesince}}</li>
+            {% if user.profile.num_sounds %}
             <li>Number of sounds: {{user.profile.num_sounds}}</li>
+            {% endif %}
+            {% if user.profile.num_posts %}
             <li>Number of forum posts: {{user.profile.num_posts}}</li>
+            {% endif %}
             <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
-            <li><a href="{% url comments-for-user user.username %}">All comments</a> on this person's sounds</li>
+            {% if user.profile.num_sounds %}
+            <li><a href="{% url comments-for-user user.username %}">All comments</a> on this {{user.username}}'s sounds</li>
+            {% endif %}
+            {% if has_bookmarks %}
+            <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>
+            {% endif %}
+            {% if request.user.is_staff %}
+                <li><a id="admin_link" class="icon" href="{% url admin:auth_user_change user.id %}">Edit user in the admin</a></li>
+            {% endif %}
+            
         </ul>
         </div>
         <br style="clear: both;" />
@@ -61,7 +77,10 @@
                 {{user.profile.about|safe|linebreaksbr }}
             </p>
         {% endif %}
-        <br>
+        <br>        
+        {% else %}
+        	This user has been deleted
+        {% endif %}
     {% endif %}
 
 <div id="content">

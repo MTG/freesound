@@ -84,6 +84,11 @@ urlpatterns = patterns('',
     # api views
     (r'^api/', include('api.urls')),
 
+    # 500 view
+    url(r'^crash_me/$',
+        accounts.views.crash_me,
+        name="crash-me"),
+
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
     url(r'^samplesViewSingle', sounds.views.old_sound_link_redirect, name="old-sound-page"),

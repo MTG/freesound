@@ -3250,9 +3250,9 @@ ul.messages {
 }
 
 .bookmark_form .name_widget{
-    width:185px;
-    height:12px;
-    font-size:10px
+    width:190px;
+    /*height:12px;*/
+    font-size:11px
 }
 
 .bookmark_form .select_widget{
@@ -3309,10 +3309,5 @@ ul.messages {
 .bookmark_link_sound_display{
     width:15px;
     height:15px;
-    float: right;
-    
-    
-    
-    
-    
+    float: right;    
 }

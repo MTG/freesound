@@ -47,6 +47,7 @@ from django.utils.http import int_to_base36
 from django.contrib.sites.models import get_current_site
 from utils.mail import send_mail, send_mail_template
 from django.db import transaction
+from bookmarks.models import Bookmark
 
 
 audio_logger = logging.getLogger('audio')
@@ -630,6 +631,7 @@ def account(request, username):
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
     home = False
+    has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
 

@@ -587,7 +587,7 @@ def accounts(request):
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
 
     # select active users last num_days
-    latest_uploaders = Sound.objects.filter(created__gte=last_time, processing_state='OK', moderation_state='OK').values("user").annotate(Count('id')).order_by("-id__count")
+    latest_uploaders = Sound.public.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by("-id__count")
     latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by("-id__count")
     latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by("-id__count")
     # rank
@@ -604,7 +604,7 @@ def accounts(request):
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
     # select all time active users
-    all_time_uploaders = Sound.objects.filter(processing_state='OK', moderation_state='OK').values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+    all_time_uploaders = Sound.public.values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
     all_time_posters = Post.objects.all().values("author_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
     all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
 

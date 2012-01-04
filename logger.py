@@ -17,8 +17,16 @@ LOGGING = {
     },
     'handlers': {
         'errorlogfile': {
-            'class': 'logging.handlers.WatchedFileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/error500.log',
+            'when': 'midnight',
+            'backupCount': '14',
+            'formatter': 'standard'
+        },
+        'gelf_error': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': '12201',
             'formatter': 'standard'
         },
         'stderr': {
@@ -32,11 +40,23 @@ LOGGING = {
             'backupCount': '14',
             'formatter': 'worker'
         },
+        'gelf_audio': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': '12201',
+            'formatter': 'worker'
+        },
         'weblogfile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/web.log',
             'when': 'midnight',
             'backupCount': '14',
+            'formatter': 'standard'
+        },
+        'gelf_web': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': '12201',
             'formatter': 'standard'
         },
         'api': {
@@ -46,6 +66,12 @@ LOGGING = {
             'backupCount': '14',
             'formatter': 'standard'
         },
+        'gelf_api': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': '12201',
+            'formatter': 'standard'
+        },
         'searchlogfile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/search.log',
@@ -53,11 +79,23 @@ LOGGING = {
             'backupCount': '14',
             'formatter': 'standard'
         },
+        'gelf_search': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': '12201',
+            'formatter': 'standard'
+        },
         'uploadlogfile': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/upload.log',
             'when': 'midnight',
             'backupCount': '14',
+            'formatter': 'standard'
+        },
+        'gelf_upload': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': '12201',
             'formatter': 'standard'
         },
         'mail': {
@@ -68,32 +106,32 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
-            'handlers': ['errorlogfile'],
+            'handlers': ['errorlogfile','gelf_error'],
             'level': 'ERROR',   # only catches 5xx not 4xx messages
             'propagate': True,
         },
         'audio': {
-            'handlers': ['audioprocessinglogfile'],
+            'handlers': ['audioprocessinglogfile','gelf_audio'],
             'level': 'INFO',
             'propagate': False,
         },
         'api': {
-            'handlers': ['api'],
+            'handlers': ['api','gelf_api'],
             'level': 'INFO',
             'propagate': False,
         },
         'web': {
-            'handlers': ['weblogfile'],
+            'handlers': ['weblogfile','gelf_web'],
             'level': 'INFO',
             'propagate': False,
         },
         'search': {
-            'handlers': ['searchlogfile'],
+            'handlers': ['searchlogfile','gelf_search'],
             'level': 'INFO',
             'propagate': False,
         },
         'upload': {
-            'handlers': ['uploadlogfile'],
+            'handlers': ['uploadlogfile','gelf_upload'],
             'level': 'INFO',
             'propagate': False,
         },

@@ -37,7 +37,7 @@ p                   number  no        The page of the search result to get
 f                   string  no	      The filter
 s                   string  no	      How to sort the results
 fields	            string  no	      Fields
-sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries)
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
 ==================  ======  ========  =================================
 
 **q for query**
@@ -464,7 +464,7 @@ min_lom             number  no	      Minimum longitude [-180 to 180]
 max_lon	            number  no	      Maximum longitude [-180 to 180]
 p                   number  no        The page of the search result to get
 fields	            string  no	      Fields
-sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries)
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
 ==================  ======  ========  =================================
 
 **latitude and longitude parameters**
@@ -638,7 +638,7 @@ Name                Type    Required  Description
 num_results         number  no        The number of similar sounds to return (max = 100, default = 15)
 preset              string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``lowlevel``)
 fields	            string  no	      Fields
-sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries)
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
 ==================  ======  ========  ===================================================
 
 **Curl Examples**
@@ -904,7 +904,7 @@ Name                Type    Required  Description
 ==================  ======  ========  ========================================
 p                   number  no        The page of the sound collection to get.
 fields	            string  no	      Fields
-sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries)
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
 ==================  ======  ========  ========================================
 
 **Curl Examples**
@@ -1059,7 +1059,7 @@ Name                Type    Required  Description
 ==================  ======  ========  ====================================
 p                   number  no        The page of sounds to get
 fields	            string  no	      Fields
-sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries)
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
 ==================  ======  ========  ====================================
 
 **Curl Examples**

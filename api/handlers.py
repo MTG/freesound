@@ -365,7 +365,7 @@ class SoundSearchHandler(BaseHandler):
         #return cd
 
         solr = Solr(settings.SOLR_URL)
-        sounds_per_page = int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE))
+        sounds_per_page = min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE)
         query = search_prepare_query(cd['q'],
                                      cd['f'],
                                      search_prepare_sort(cd['s'], SEARCH_SORT_OPTIONS_API),
@@ -586,7 +586,7 @@ class SoundGeotagHandler(BaseHandler):
         else:
             return ReturnError(400, "BadRequest", {"explanation": "Parameters min_lat, max_lat, min_long and max_log are not correctly defined."})
 
-        paginator = paginate(request, raw_sounds, int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)), 'p')
+        paginator = paginate(request, raw_sounds, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=True, include_geotag=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
@@ -647,7 +647,7 @@ class UserSoundsHandler(BaseHandler):
         except User.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "User (%s) does not exist." % username})
 
-        paginator = paginate(request, Sound.public.filter(user=user), int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)), 'p')
+        paginator = paginate(request, Sound.public.filter(user=user), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
@@ -751,7 +751,7 @@ class UserBookmarkCategoryHandler(BaseHandler):
         else:
             bookmarked_sounds = Bookmark.objects.select_related("sound").filter(user=user,category=None)
 
-        paginator = paginate(request, bookmarked_sounds, int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)), 'p')
+        paginator = paginate(request, bookmarked_sounds, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(bookmark.sound, include_user=False, custom_fields = request.GET.get('fields', False), extra_properties={'bookmark_name':bookmark.name}) for bookmark in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
@@ -811,7 +811,7 @@ class PackSoundsHandler(BaseHandler):
         except User.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "Pack with id %s does not exist." % pack_id})
 
-        paginator = paginate(request, Sound.objects.filter(pack=pack.id), int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)), 'p')
+        paginator = paginate(request, Sound.objects.filter(pack=pack.id), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}

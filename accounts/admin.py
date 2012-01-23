@@ -32,7 +32,7 @@ def delete_active_user(modeladmin, request, queryset):
             sound.save()
         user.delete()
         
-delete_active_user.description="Delete active user(s)"  
+delete_active_user.description="Delete user(s), not posts etc"  
 
 UserAdmin.actions.append(delete_active_user)
 admin.site.unregister(User)

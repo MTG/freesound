@@ -322,6 +322,7 @@ def prepare_single_pack(pack, include_user=True):
 
 def prepare_single_bookmark_category(username, category):
     d = {}
+    d['id'] = category.id
     d['name'] = category.name
     d['url'] = get_bookmark_category_web_url(username, category.id)
     d['sounds'] = get_bookmark_category_api_url(username, category.id)

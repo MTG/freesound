@@ -4,6 +4,7 @@ from piston.utils import rc
 from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
 from sounds.models import Sound, Pack, Download
+from bookmarks.models import Bookmark, BookmarkCategory
 from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import logging
 from django.contrib.auth.models import User
@@ -40,11 +41,20 @@ def get_user_api_url(username):
 def get_user_web_url(username):
     return prepend_base(reverse('account', args=[username]))
 
+def get_bookmark_category_api_url(username, category_id):
+    return prepend_base(reverse('api-user-bookmark-category', args=[username, category_id]))
+
+def get_bookmark_category_web_url(username, category_id):
+    return prepend_base(reverse('bookmarks-for-user-for-category', args=[username, category_id]))
+
 def get_user_sounds_api_url(username):
     return prepend_base(reverse('api-user-sounds', args=[username]))
 
 def get_user_packs_api_url(username):
     return prepend_base(reverse('api-user-packs', args=[username]))
+
+def get_user_bookmark_categories_api_url(username):
+    return prepend_base(reverse('api-user-bookmark-categories', args=[username]))
 
 def get_pack_api_url(pack_id):
     return prepend_base(reverse('api-single-pack', args=[pack_id]))
@@ -103,7 +113,7 @@ def prepare_single_sound(sound):
     d.update(get_sound_links(sound))
     return d
 
-def prepare_collection_sound(sound, include_user=True, include_geotag=False, custom_fields = False):
+def prepare_collection_sound(sound, include_user=True, include_geotag=False, custom_fields = False, extra_properties = None):
     if not custom_fields:
         d = {}
         for field in ["duration", "type", "original_filename", "id"]:
@@ -117,12 +127,18 @@ def prepare_collection_sound(sound, include_user=True, include_geotag=False, cus
                 d['geotag'] = {'lat':sound.geotag.lat,'lon':sound._geotag_cache.lon}
             except:
                 pass
+
         d.update(get_sound_links(sound))
+
+        if extra_properties:
+            d.update(extra_properties)
+
         return d
     else:
         single_sound_prepared = prepare_single_sound(sound)
-        print single_sound_prepared.keys()
-        
+        if extra_properties:
+            single_sound_prepared.update(extra_properties)
+
         custom_fields = custom_fields.split(",")
         d = {}
         for field in custom_fields:
@@ -289,6 +305,7 @@ def prepare_single_user(user):
     d['signature'] = user.profile.signature
     d['sounds'] = get_user_sounds_api_url(user.username)
     d['packs'] = get_user_packs_api_url(user.username)
+    d['bookmark_categories'] = get_user_bookmark_categories_api_url(user.username)
     return d
 
 def prepare_single_pack(pack, include_user=True):
@@ -303,6 +320,12 @@ def prepare_single_pack(pack, include_user=True):
     d['sounds'] = get_pack_sounds_api_url(pack.id)
     return d
 
+def prepare_single_bookmark_category(username, category):
+    d = {}
+    d['name'] = category.name
+    d['url'] = get_bookmark_category_web_url(username, category.id)
+    d['sounds'] = get_bookmark_category_api_url(username, category.id)
+    return d
 
 def find_api_option(cleaned_sort):
     for t in SEARCH_SORT_OPTIONS_API:
@@ -312,7 +335,7 @@ def find_api_option(cleaned_sort):
 
 def add_request_id(request,result):
     if request.GET.get('request_id', '')!='':
-            result['request_id'] = request.GET.get('request_id', '')
+        result['request_id'] = request.GET.get('request_id', '')
 
 # HANDLERS
 
@@ -341,16 +364,16 @@ class SoundSearchHandler(BaseHandler):
         #return cd
 
         solr = Solr(settings.SOLR_URL)
-
+        sounds_per_page = int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE))
         query = search_prepare_query(cd['q'],
                                      cd['f'],
                                      search_prepare_sort(cd['s'], SEARCH_SORT_OPTIONS_API),
                                      cd['p'],
-                                     settings.SOUNDS_PER_API_RESPONSE)
+                                     sounds_per_page)
 
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
-            paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_API_RESPONSE)
+            paginator = SolrResponseInterpreterPaginator(results,sounds_per_page)
             page = paginator.page(form.cleaned_data['p'])
             sounds = []
             bad_results = 0
@@ -541,8 +564,6 @@ class SoundGeotagHandler(BaseHandler):
     input:          min_lat, max_lat, min_lon, max_lon, p
     output:         #paginated_sound_results#
     curl:           curl http://www.freesound.org/api/sounds/geotag/?min_lon=2.005176544189453&max_lon=2.334766387939453&min_lat=41.3265528618605&max_lat=41.4504467428547
-    
-    
     '''
 
     @auth()
@@ -563,8 +584,8 @@ class SoundGeotagHandler(BaseHandler):
             raw_sounds = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK").exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
         else:
             return ReturnError(400, "BadRequest", {"explanation": "Parameters min_lat, max_lat, min_long and max_log are not correctly defined."})
-        
-        paginator = paginate(request, raw_sounds, settings.SOUNDS_PER_API_RESPONSE, 'p')
+
+        paginator = paginate(request, raw_sounds, int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=True, include_geotag=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
@@ -625,7 +646,7 @@ class UserSoundsHandler(BaseHandler):
         except User.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "User (%s) does not exist." % username})
 
-        paginator = paginate(request, Sound.public.filter(user=user), settings.SOUNDS_PER_API_RESPONSE, 'p')
+        paginator = paginate(request, Sound.public.filter(user=user), int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
@@ -667,6 +688,84 @@ class UserPacksHandler(BaseHandler):
 
         add_request_id(request,result)
         return result
+
+class UserBookmarkCategoriesHandler(BaseHandler):
+    '''
+    api endpoint:   /people/<username>/bookmark_categories
+    '''
+    allowed_methods = ('GET',)
+
+    '''
+    input:          n.a.
+    output:         #user_bookmark_categories#
+    curl:           curl http://www.freesound.org/api/people/vincent_akkermans/bookmark_categories
+    '''
+
+    @auth()
+    def read(self, request, username):
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            raise ReturnError(404, "NotFound", {"explanation": "User (%s) does not exist." % username})
+
+        categories = [prepare_single_bookmark_category(username, category) for category in BookmarkCategory.objects.filter(user=user)]
+        # Add uncategorized category (if uncategorized bookmarks exist)
+        if Bookmark.objects.select_related("sound").filter(user=user,category=None).count():
+            categories.append({
+                'name':'Uncategorized bookmarks',
+                'url':get_user_bookmark_categories_api_url(username),
+                'sounds':prepend_base(reverse('api-user-bookmark-uncategorized', args=[username]))
+            })
+
+        result = {'categories': categories, 'num_results': len(categories)}
+
+        add_request_id(request,result)
+        return result
+
+class UserBookmarkCategoryHandler(BaseHandler):
+    '''
+    api endpoint:   /people/<username>/bookmark_categories/<category_id>/sounds/
+    '''
+    allowed_methods = ('GET',)
+
+    '''
+    input:          n.a.
+    output:         #user_bookmark_category_sounds#
+    curl:           curl http://www.freesound.org/api/people/vincent_akkermans/bookmark_categories/34/sounds/
+    '''
+
+    @auth()
+    def read(self, request, username, category_id = None):
+        try:
+            user = User.objects.get(username__iexact=username)
+            if category_id:
+                category = BookmarkCategory.objects.get(user__username__iexact=username, id=category_id )
+        except BookmarkCategory.DoesNotExist:
+            raise ReturnError(404, "NotFound", {"explanation": "Bookmark category with id %s does not exist." % category_id})
+        except User.DoesNotExist:
+            raise ReturnError(404, "NotFound", {"explanation": "User (%s) does not exist." % username})
+
+        if category_id:
+            bookmarked_sounds = category.bookmarks.select_related("sound").all()
+        else:
+            bookmarked_sounds = Bookmark.objects.select_related("sound").filter(user=user,category=None)
+
+        paginator = paginate(request, bookmarked_sounds, int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)), 'p')
+        page = paginator['page']
+        sounds = [prepare_collection_sound(bookmark.sound, include_user=False, custom_fields = request.GET.get('fields', False), extra_properties={'bookmark_name':bookmark.name}) for bookmark in page.object_list]
+        result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
+
+        if page.has_other_pages():
+            if page.has_previous():
+                result['previous'] = self.__construct_pagination_link(username, category_id, page.previous_page_number())
+            if page.has_next():
+                result['next'] = self.__construct_pagination_link(username, category_id, page.next_page_number())
+
+        add_request_id(request,result)
+        return result
+
+    def __construct_pagination_link(self, username, category_id, p):
+        return get_bookmark_category_api_url(username,category_id)+'?p=%s' % p
 
 class PackHandler(BaseHandler):
     '''
@@ -711,7 +810,7 @@ class PackSoundsHandler(BaseHandler):
         except User.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "Pack with id %s does not exist." % pack_id})
 
-        paginator = paginate(request, Sound.objects.filter(pack=pack.id), settings.SOUNDS_PER_API_RESPONSE, 'p')
+        paginator = paginate(request, Sound.objects.filter(pack=pack.id), int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}

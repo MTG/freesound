@@ -1,0 +1,55 @@
+# install macports: get the DMG from the macports site and ... install
+
+# update macports
+sudo port selfupdate
+
+# install python, postgres and psycopg all in one go
+sudo port install py27-psycopg2 -postgresql90 +postgresql84 -postgresql83
+
+# set the python installed by macports as default
+sudo port select --set python python27
+
+# load up postgres
+sudo port install postgresql84-server
+sudo port load postgresql84-server
+
+# install pgadmin3, useful for looking at postgres tables :-)
+sudo port install pgAdmin3 +with_postgresql84 -with_postgresql90 -with_postgresql83 -with_postgresql82 -debug
+
+# PIL seems to be problematic to install in pip, so use port instead
+sudo port install py27-pil -universal
+
+# pip is like easy_install, but better
+sudo port install py27-pip
+
+# install memcached
+sudo port install memcached -sasl -umem -universal
+
+# launch memcached
+sudo port load memcached
+
+# install a bunch of packages with pip...
+sudo pip-2.7 install django markdown pycrypto BeautifulSoup functional FeedParser Pygments python-cjson python-memcached django-extensions django-debug-toolbar akismet
+sudo pip-2.7 install gunicorn south gear man recaptcha-client networkx
+
+# create the database for freesound...
+# - postgres aparently needed this on my system
+sudo sysctl -w kern.sysv.shmall=65536
+sudo sysctl -w kern.sysv.shmmax=16777216
+
+# - Set the postgres password
+sudo su - root
+passwd postgres
+
+# - create the default postgres DB
+sudo mkdir -p /opt/local/var/db/postgresql84/defaultdb
+sudo chown postgres:postgres /opt/local/var/db/postgresql84/defaultdb
+sudo su postgres -c '/opt/local/lib/postgresql84/bin/initdb -D /opt/local/var/db/postgresql84/defaultdb'
+
+# - setup and run a nice little shortcut:
+ln -s /opt/local/etc/LaunchDaemons/org.macports.postgresql84-server/postgresql84-server.wrapper /opt/local/bin/pgsql.server
+chmod a+x /opt/local/bin/pgsql.server
+/opt/local/bin/pgsql.server start (stop | restart)
+
+# - Add /opt/local/lib/postgresql84/bin to your PATH. This usually goes in ~/.bash_profile or ~/.profile
+

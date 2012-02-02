@@ -26,7 +26,7 @@ LOGGING = {
         'gelf_error': {
             'class': 'graypy.GELFHandler',
             'host': '10.55.0.20',
-            'port': '12201',
+            'port': 12201,
             'formatter': 'standard'
         },
         'stderr': {
@@ -43,7 +43,7 @@ LOGGING = {
         'gelf_audio': {
             'class': 'graypy.GELFHandler',
             'host': '10.55.0.20',
-            'port': '12201',
+            'port': 12201,
             'formatter': 'worker'
         },
         'weblogfile': {
@@ -56,7 +56,7 @@ LOGGING = {
         'gelf_web': {
             'class': 'graypy.GELFHandler',
             'host': '10.55.0.20',
-            'port': '12201',
+            'port': 12201,
             'formatter': 'standard'
         },
         'api': {
@@ -69,7 +69,7 @@ LOGGING = {
         'gelf_api': {
             'class': 'graypy.GELFHandler',
             'host': '10.55.0.20',
-            'port': '12201',
+            'port': 12201,
             'formatter': 'standard'
         },
         'searchlogfile': {
@@ -95,7 +95,7 @@ LOGGING = {
         'gelf_upload': {
             'class': 'graypy.GELFHandler',
             'host': '10.55.0.20',
-            'port': '12201',
+            'port': 12201,
             'formatter': 'standard'
         },
         'mail': {

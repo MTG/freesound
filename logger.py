@@ -106,7 +106,7 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
-            'handlers': ['errorlogfile','gelf_error'],
+            'handlers': ['errorlogfile'],
             'level': 'ERROR',   # only catches 5xx not 4xx messages
             'propagate': True,
         },

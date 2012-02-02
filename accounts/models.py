@@ -112,22 +112,22 @@ class Profile(SocialModel):
         if user_has_posts_pending_to_moderate:
             return False, "We're sorry, but you can't post to the forum because you have previous posts still pending to moderate"
 
-        # THROTTLING: only applied if user registration date is not older than 7 days
-        today = datetime.datetime.today()
-        reference_date = self.user.date_joined # This could be changed to first post date with: reference_date = self.user.post_set.all()[0].created
-        if (today - reference_date).days <= 7:
-            # Do not allow posts if last post is not older than 5 minutes
-            # Do not allow posts if user has already posyted N posts that day
-            if self.user.post_set.all().count() > 1:
-                # Posts per minute
-                if (today - self.user.post_set.all().reverse()[0].created).seconds < 60*5:
-                    return False, "We're sorry, but you can't post to the forum because your last post was less than 5 minutes ago"
+        # THROTTLING
+        if self.user.post_set.all().count() > 1 and self.user.sounds.all().count() == 0:
+            today = datetime.datetime.today()
+            reference_date = self.user.post_set.all()[0].created # or since registration date: reference_date = self.user.date_joined
 
-                # Posts per day (every day users can post as many posts as twice the number of days since the reference date (registration or first post date))
-                N = 3#int((today - reference_date).days * 2)
-                print self.user.post_set.filter(created__range=(today,today+datetime.timedelta(days=1))).count()
-                if self.user.post_set.filter(created__range=(today-datetime.timedelta(days=1),today)).count() > N:
-                    return False, "We're sorry, but you can't post to the forum because you exceeded your maximum number of posts per day"
+            # Do not allow posts if last post is not older than 5 minutes
+            seconds_per_post = 60*5
+            if (today - self.user.post_set.all().reverse()[0].created).seconds < seconds_per_post:
+                return False, "We're sorry, but you can't post to the forum because your last post was less than 5 minutes ago"
+
+            # Do not allow posts if user has already posyted N posts that day
+            # (every day users can post as many posts as twice the number of days since the reference date (registration or first post date))
+            max_posts_per_day = 5 + pow((today - reference_date).days,2)
+            print self.user.post_set.filter(created__range=(today,today+datetime.timedelta(days=1))).count()
+            if self.user.post_set.filter(created__range=(today-datetime.timedelta(days=1),today)).count() > max_posts_per_day:
+                return False, "We're sorry, but you can't post to the forum because you exceeded your maximum number of posts per day"
 
         return True, ""
 

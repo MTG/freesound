@@ -82,7 +82,7 @@ LOGGING = {
         'gelf_search': {
             'class': 'graypy.GELFHandler',
             'host': '10.55.0.20',
-            'port': '12201',
+            'port': 12201,
             'formatter': 'standard'
         },
         'uploadlogfile': {

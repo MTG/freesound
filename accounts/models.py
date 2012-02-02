@@ -7,6 +7,7 @@ from geotags.models import GeoTag
 from utils.sql import DelayedQueryExecuter
 from django.conf import settings
 from utils.locations import locations_decorator
+import datetime
 import os
 
 class ResetEmailRequest(models.Model):
@@ -103,6 +104,15 @@ class Profile(SocialModel):
             ) as X
             left join tags_tag on tags_tag.id=X.tag_id
             order by tags_tag.name;""" % self.user_id)
+
+    def can_post_in_forum(self):
+
+        today = datetime.datetime.today()
+        date_joined = self.user.date_joined
+        if (today-date_joined).days > 7:
+            return True, ""
+        else:
+            return False, "We're sorry, but you can't post to the forum because your registration date is not older than 7 days"
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

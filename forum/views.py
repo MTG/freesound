@@ -15,6 +15,7 @@ from utils.search.search_forum import add_post_to_solr
 import logging
 import re
 import datetime
+from django.contrib import messages
 
 logger = logging.getLogger("web")
 
@@ -129,33 +130,36 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     
     latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').filter(thread=thread)[0:15]
 
-    # Check that users register date is older than 7 days
-    today = datetime.datetime.today()
-    date_joined = request.user.date_joined
 
-    if request.method == 'POST'and (today-date_joined).days > 7:
+    if request.method == 'POST':
         form = PostReplyForm(request, quote, request.POST)
-        if form.is_valid():
-            post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
-            add_post_to_solr(post)
-            if form.cleaned_data["subscribe"]:
-                subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
-                if not subscription.is_active:
-                    subscription.is_active = True
+        user_can_post_in_forum = request.user.profile.can_post_in_forum()
+
+        if user_can_post_in_forum[0]:
+            if form.is_valid():
+                post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
+                add_post_to_solr(post)
+                if form.cleaned_data["subscribe"]:
+                    subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
+                    if not subscription.is_active:
+                        subscription.is_active = True
+                        subscription.save()
+
+                # figure out if there are active subscriptions in this thread
+                emails_to_notify = []
+                for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
+                    emails_to_notify.append(subscription.subscriber.email)
+                    logger.info("NOTIFY %s" % subscription.subscriber.email)
+                    subscription.is_active = False
                     subscription.save()
 
-            # figure out if there are active subscriptions in this thread
-            emails_to_notify = []
-            for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
-                emails_to_notify.append(subscription.subscriber.email)
-                logger.info("NOTIFY %s" % subscription.subscriber.email)
-                subscription.is_active = False
-                subscription.save()
+                if emails_to_notify:
+                    send_mail_template(u"topic reply notification - " + thread.title, "forum/email_new_post_notification.txt", dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify)
 
-            if emails_to_notify:
-                send_mail_template(u"topic reply notification - " + thread.title, "forum/email_new_post_notification.txt", dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify)
+                return HttpResponseRedirect(post.get_absolute_url())
+        else:
+            messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
 
-            return HttpResponseRedirect(post.get_absolute_url())
     else:
         if quote:
             form = PostReplyForm(request, quote, {'body':quote})
@@ -169,21 +173,22 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
 
-    # Check that users register date is older than 7 days
-    today = datetime.datetime.today()
-    date_joined = request.user.date_joined
-
-    if request.method == 'POST' and (today-date_joined).days > 7:
+    if request.method == 'POST':
         form = NewThreadForm(request.POST)
-        if form.is_valid():
-            thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-            post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
-            add_post_to_solr(post)
+        user_can_post_in_forum = request.user.profile.can_post_in_forum()
 
-            if form.cleaned_data["subscribe"]:
-                Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
+        if user_can_post_in_forum[0]:
+            if form.is_valid():
+                thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
+                post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+                add_post_to_solr(post)
 
-            return HttpResponseRedirect(post.get_absolute_url())
+                if form.cleaned_data["subscribe"]:
+                    Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
+
+                return HttpResponseRedirect(post.get_absolute_url())
+        else:
+            messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
     else:
         form = NewThreadForm()
 

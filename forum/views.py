@@ -14,6 +14,7 @@ from utils.pagination import paginate
 from utils.search.search_forum import add_post_to_solr
 import logging
 import re
+import datetime
 
 logger = logging.getLogger("web")
 
@@ -128,7 +129,11 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     
     latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').filter(thread=thread)[0:15]
 
-    if request.method == 'POST':
+    # Check that users register date is older than 7 days
+    today = datetime.datetime.today()
+    date_joined = request.user.date_joined
+
+    if request.method == 'POST'and (today-date_joined).days > 7:
         form = PostReplyForm(request, quote, request.POST)
         if form.is_valid():
             post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
@@ -164,7 +169,11 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
 
-    if request.method == 'POST':
+    # Check that users register date is older than 7 days
+    today = datetime.datetime.today()
+    date_joined = request.user.date_joined
+
+    if request.method == 'POST' and (today-date_joined).days > 7:
         form = NewThreadForm(request.POST)
         if form.is_valid():
             thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])

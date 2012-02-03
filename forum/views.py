@@ -136,12 +136,14 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 
         if user_can_post_in_forum[0]:
             if form.is_valid():
-                if not request.user.post_set.all().count() and ("http://" or "https://" in form.cleaned_data["body"]): # first post has urls
+                if not request.user.post_set.all().count() and ("http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]): # first post has urls
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
+                    set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
                     add_post_to_solr(post)
+                    set_to_moderation = False
 
                 if form.cleaned_data["subscribe"]:
                     subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
@@ -160,7 +162,11 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                 if emails_to_notify:
                     send_mail_template(u"topic reply notification - " + thread.title, "forum/email_new_post_notification.txt", dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify)
 
-                return HttpResponseRedirect(post.get_absolute_url())
+                if not set_to_moderation:
+                    return HttpResponseRedirect(post.get_absolute_url())
+                else:
+                    messages.add_message(request, messages.INFO, "Your post won't be shown until it is manually approved by moderators")
+                    return HttpResponseRedirect(post.thread.get_absolute_url())
 
     else:
         if quote:
@@ -168,7 +174,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         else:
             form = PostReplyForm(request, quote)
 
-    if user_can_post_in_forum[0]:
+    if not user_can_post_in_forum[0]:
         messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
 
     return render_to_response('forum/reply.html', locals(), context_instance=RequestContext(request))
@@ -184,12 +190,14 @@ def new_thread(request, forum_name_slug):
         if user_can_post_in_forum[0]:
             if form.is_valid():
                 thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-                if not request.user.post_set.all().count() and ("http://" or "https://" in form.cleaned_data["body"]): # first post has urls
+                if not request.user.post_set.all().count() and ("http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]): # first post has urls
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
+                    set_to_moderation = True
                 else:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
                     add_post_to_solr(post)
+                    set_to_moderation = False
 
                 # Add first post to thread (this will never be changed)
                 thread.first_post = post
@@ -198,7 +206,11 @@ def new_thread(request, forum_name_slug):
                 if form.cleaned_data["subscribe"]:
                     Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
 
-                return HttpResponseRedirect(post.get_absolute_url())
+                if not set_to_moderation:
+                    return HttpResponseRedirect(post.get_absolute_url())
+                else:
+                    messages.add_message(request, messages.INFO, "Your post won't be shown until it is manually approved by moderators")
+                    return HttpResponseRedirect(post.thread.forum.get_absolute_url())
     else:
         form = NewThreadForm()
 

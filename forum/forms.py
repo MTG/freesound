@@ -25,3 +25,15 @@ class NewThreadForm(forms.Form):
     title = forms.CharField()
     body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
     subscribe = forms.BooleanField(help_text="Send me an email notification when new posts are added in this thread.", required=False, initial=True)
+
+
+MODERATION_CHOICES = [(x,x) for x in\
+    ['Approve',
+     'Delete User']]
+
+class PostModerationForm(forms.Form):
+    action      = forms.ChoiceField(choices=MODERATION_CHOICES,
+                                    required=True,
+                                    widget=forms.RadioSelect(),
+                                    label='')
+    post      = forms.IntegerField(widget=forms.widgets.HiddenInput)

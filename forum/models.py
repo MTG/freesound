@@ -111,6 +111,9 @@ class Post(models.Model):
 
     class Meta:
         ordering = ('created',)
+        permissions = (
+            ("can_moderate", "Can moderate_posts."),
+            )
 
     def __unicode__(self):
         return u"Post by %s in %s" % (self.author, self.thread)

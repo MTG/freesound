@@ -1,12 +1,12 @@
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator, InvalidPage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext, loader
-from forum.forms import PostReplyForm, NewThreadForm
+from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
@@ -265,3 +265,28 @@ def post_edit(request, post_id):
                                   context_instance=RequestContext(request))
     else:
         raise Http404
+
+@permission_required('forum.can_moderate')
+def moderate_posts(request):
+    if request.method == 'POST':
+        mod_form = PostModerationForm(request.POST)
+        if mod_form.is_valid():
+            action = mod_form.cleaned_data.get("action")
+            post_id = mod_form.cleaned_data.get("post")
+            post = Post.objects.get(id=post_id)
+            if action == "Approve":
+                post.moderation_state  = "OK"
+                post.save()
+            elif action == "Delete user":
+                try:
+                    post.author.delete()
+                except: #someone deleted him already
+                    pass
+
+    pending_posts = Post.objects.filter(moderation_state='NM')
+    post_list = []
+    for p in pending_posts:
+        f = PostModerationForm(initial={'action':'Approve','post':p.id})
+        post_list.append({'post':p,'form':f})
+    forums = True # prevent base template showing forum search
+    return render_to_response('forum/moderate.html',locals(),context_instance=RequestContext(request))

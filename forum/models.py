@@ -114,7 +114,7 @@ class Post(models.Model):
     class Meta:
         ordering = ('created',)
         permissions = (
-            ("can_moderate", "Can moderate_posts."),
+            ("can_moderate_forum", "Can moderate posts."),
             )
 
     def __unicode__(self):

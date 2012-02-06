@@ -291,7 +291,7 @@ def post_edit(request, post_id):
     else:
         raise Http404
 
-@permission_required('forum.can_moderate')
+@permission_required('forum.can_moderate_forum')
 def moderate_posts(request):
     if request.method == 'POST':
         mod_form = PostModerationForm(request.POST)

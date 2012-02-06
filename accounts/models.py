@@ -108,12 +108,12 @@ class Profile(SocialModel):
     def can_post_in_forum(self):
 
         # POSTS PENDING TO MODERATE: Do not allow new posts if there are others pending to moderate
-        user_has_posts_pending_to_moderate = self.user.post_set.filter(moderation_state="NEEDS_MODERATION").count() > 0
+        user_has_posts_pending_to_moderate = self.user.post_set.filter(moderation_state="NM").count() > 0
         if user_has_posts_pending_to_moderate:
             return False, "We're sorry, but you can't post to the forum because you have previous posts still pending to moderate"
 
         # THROTTLING
-        if self.user.post_set.all().count() > 1 and self.user.sounds.all().count() == 0:
+        if self.user.post_set.all().count() >= 1 and self.user.sounds.all().count() == 0:
             today = datetime.datetime.today()
             reference_date = self.user.post_set.all()[0].created # or since registration date: reference_date = self.user.date_joined
 
@@ -125,7 +125,6 @@ class Profile(SocialModel):
             # Do not allow posts if user has already posyted N posts that day
             # (every day users can post as many posts as twice the number of days since the reference date (registration or first post date))
             max_posts_per_day = 5 + pow((today - reference_date).days,2)
-            print self.user.post_set.filter(created__range=(today,today+datetime.timedelta(days=1))).count()
             if self.user.post_set.filter(created__range=(today-datetime.timedelta(days=1),today)).count() > max_posts_per_day:
                 return False, "We're sorry, but you can't post to the forum because you exceeded your maximum number of posts per day"
 

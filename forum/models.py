@@ -59,6 +59,9 @@ class Thread(models.Model):
     last_post = models.OneToOneField('Post', null=True, blank=True, default=None,
                                      related_name="latest_in_thread",
                                      on_delete=models.SET_NULL)
+    first_post = models.OneToOneField('Post', null=True, blank=True, default=None,
+                                     related_name="first_in_thread",
+                                     on_delete=models.SET_NULL)
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -73,7 +76,6 @@ class Thread(models.Model):
                 pass
         else:
             self.delete()
-        
 
     @models.permalink
     def get_absolute_url(self):

@@ -78,7 +78,7 @@ def forum(request, forum_name_slug):
     except Forum.DoesNotExist: #@UndefinedVariable
         raise Http404
 
-    paginator = paginate(request, Thread.objects.filter(forum=forum).select_related('last_post', 'last_post__author'), settings.FORUM_THREADS_PER_PAGE)
+    paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK").select_related('last_post', 'last_post__author'), settings.FORUM_THREADS_PER_PAGE)
 
     return render_to_response('forum/threads.html', combine_dicts(locals(), paginator), context_instance=RequestContext(request))
 
@@ -86,9 +86,9 @@ def forum(request, forum_name_slug):
 @last_action
 def thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
-    thread = get_object_or_404(Thread, forum=forum, id=thread_id)
+    thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
 
-    paginator = paginate(request, Post.objects.select_related('author', 'author__profile').filter(thread=thread), settings.FORUM_POSTS_PER_PAGE)
+    paginator = paginate(request, Post.objects.select_related('author', 'author__profile').filter(thread=thread, moderation_state="OK"), settings.FORUM_POSTS_PER_PAGE)
 
     # a logged in user watching a thread can activate his subscription to that thread!
     # we assume the user has seen the latest post if he is browsing the thread
@@ -100,16 +100,16 @@ def thread(request, forum_name_slug, thread_id):
 
 @last_action
 def latest_posts(request):
-    paginator = paginate(request, Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').all(), settings.FORUM_POSTS_PER_PAGE)
+    paginator = paginate(request, Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').filter(moderation_state="OK").order_by('-created').all(), settings.FORUM_POSTS_PER_PAGE)
     hide_search = True
     return render_to_response('forum/latest_posts.html', combine_dicts(locals(), paginator), context_instance=RequestContext(request))
 
 
 @last_action
 def post(request, forum_name_slug, thread_id, post_id):
-    post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)
+    post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug, moderation_state="OK")
 
-    posts_before = Post.objects.filter(thread=post.thread, created__lt=post.created).count()
+    posts_before = Post.objects.filter(thread=post.thread, moderation_state="OK", created__lt=post.created).count()
     page = 1 + posts_before / settings.FORUM_POSTS_PER_PAGE
     url = post.thread.get_absolute_url() + "?page=%d#post%d" % (page, post.id)
 
@@ -119,7 +119,7 @@ def post(request, forum_name_slug, thread_id, post_id):
 @login_required
 def reply(request, forum_name_slug, thread_id, post_id=None):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
-    thread = get_object_or_404(Thread, id=thread_id, forum=forum)
+    thread = get_object_or_404(Thread, id=thread_id, forum=forum, first_post__moderation_state="OK")
 
     if post_id:
         post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)
@@ -128,17 +128,23 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         post = None
         quote = ""
     
-    latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').filter(thread=thread)[0:15]
-
+    latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
+    user_can_post_in_forum = request.user.profile.can_post_in_forum()
 
     if request.method == 'POST':
         form = PostReplyForm(request, quote, request.POST)
-        user_can_post_in_forum = request.user.profile.can_post_in_forum()
 
         if user_can_post_in_forum[0]:
             if form.is_valid():
-                post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
-                add_post_to_solr(post)
+                if not request.user.post_set.all().count() and ("http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]): # first post has urls
+                    post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
+                    # DO NOT add the post to solr, only do it when it is moderated
+                    set_to_moderation = True
+                else:
+                    post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread)
+                    add_post_to_solr(post)
+                    set_to_moderation = False
+
                 if form.cleaned_data["subscribe"]:
                     subscription, created = Subscription.objects.get_or_create(thread=thread, subscriber=request.user)
                     if not subscription.is_active:
@@ -156,9 +162,11 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                 if emails_to_notify:
                     send_mail_template(u"topic reply notification - " + thread.title, "forum/email_new_post_notification.txt", dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify)
 
-                return HttpResponseRedirect(post.get_absolute_url())
-        else:
-            messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
+                if not set_to_moderation:
+                    return HttpResponseRedirect(post.get_absolute_url())
+                else:
+                    messages.add_message(request, messages.INFO, "Your post won't be shown until it is manually approved by moderators")
+                    return HttpResponseRedirect(post.thread.get_absolute_url())
 
     else:
         if quote:
@@ -166,31 +174,48 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         else:
             form = PostReplyForm(request, quote)
 
+    if not user_can_post_in_forum[0]:
+        messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
+
     return render_to_response('forum/reply.html', locals(), context_instance=RequestContext(request))
 
 
 @login_required
 def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
+    user_can_post_in_forum = request.user.profile.can_post_in_forum()
 
     if request.method == 'POST':
         form = NewThreadForm(request.POST)
-        user_can_post_in_forum = request.user.profile.can_post_in_forum()
-
         if user_can_post_in_forum[0]:
             if form.is_valid():
                 thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-                post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
-                add_post_to_solr(post)
+                if not request.user.post_set.all().count() and ("http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]): # first post has urls
+                    post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
+                    # DO NOT add the post to solr, only do it when it is moderated
+                    set_to_moderation = True
+                else:
+                    post = Post.objects.create(author=request.user, body=form.cleaned_data['body'], thread=thread)
+                    add_post_to_solr(post)
+                    set_to_moderation = False
+
+                # Add first post to thread (this will never be changed)
+                thread.first_post = post
+                thread.save()
 
                 if form.cleaned_data["subscribe"]:
                     Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)
 
-                return HttpResponseRedirect(post.get_absolute_url())
-        else:
-            messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
+                if not set_to_moderation:
+                    return HttpResponseRedirect(post.get_absolute_url())
+                else:
+                    messages.add_message(request, messages.INFO, "Your post won't be shown until it is manually approved by moderators")
+                    return HttpResponseRedirect(post.thread.forum.get_absolute_url())
     else:
         form = NewThreadForm()
+
+    if not user_can_post_in_forum[0]:
+        messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
 
     return render_to_response('forum/new_thread.html', locals(), context_instance=RequestContext(request))
 
@@ -198,7 +223,7 @@ def new_thread(request, forum_name_slug):
 @login_required
 def unsubscribe_from_thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
-    thread = get_object_or_404(Thread, forum=forum, id=thread_id)
+    thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
     Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
     return render_to_response('forum/unsubscribe_from_thread.html', locals(), context_instance=RequestContext(request))
 

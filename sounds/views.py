@@ -136,7 +136,7 @@ LIMIT 10
 def front_page(request):
     rss_cache = cache.get("rss_cache", None)
     pledgie_cache = cache.get("pledgie_cache", None)
-    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),first_post__moderation_state="OK") \
+    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),first_post__moderation_state="OK",last_post__moderation_state="OK") \
                                           .order_by('-last_post__created') \
                                           .select_related('author',
                                                           'thread',

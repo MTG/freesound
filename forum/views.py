@@ -302,7 +302,7 @@ def moderate_posts(request):
             if action == "Approve":
                 post.moderation_state  = "OK"
                 post.save()
-            elif action == "Delete user":
+            elif action == "Delete User":
                 try:
                     post.author.delete()
                 except: #someone deleted him already

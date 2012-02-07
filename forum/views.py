@@ -200,8 +200,10 @@ def new_thread(request, forum_name_slug):
                     set_to_moderation = False
 
                 # Add first post to thread (this will never be changed)
-                thread.first_post = post
-                thread.save()
+                # First we have to "reload" thread object from DB, not so overwrite the object we created before when saving
+                updated_thread = Thread.objects.get(id=thread.id)
+                updated_thread.first_post = post
+                updated_thread.save()
 
                 if form.cleaned_data["subscribe"]:
                     Subscription.objects.create(subscriber=request.user, thread=thread, is_active=True)

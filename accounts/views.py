@@ -176,6 +176,7 @@ def home(request):
     latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
     unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
+
     
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
@@ -188,6 +189,9 @@ def home(request):
     if home and request.user.has_perm('tickets.can_moderate'):
         new_sounds = new_sound_tickets_count()
         new_support = new_support_tickets_count()
+    if home and request.user.has_perm('forum.can_moderate_forum'):
+        new_posts = Post.objects.filter(moderation_state='NM').count()
+
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 

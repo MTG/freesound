@@ -6,6 +6,7 @@ from general.models import OrderedModel
 from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
 from utils.cache import invalidate_template_cache
+from django.utils.translation import ugettext as _
 import logging
 
 logger = logging.getLogger('web')
@@ -58,6 +59,9 @@ class Thread(models.Model):
     last_post = models.OneToOneField('Post', null=True, blank=True, default=None,
                                      related_name="latest_in_thread",
                                      on_delete=models.SET_NULL)
+    first_post = models.OneToOneField('Post', null=True, blank=True, default=None,
+                                     related_name="first_in_thread",
+                                     on_delete=models.SET_NULL)
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
@@ -72,7 +76,6 @@ class Thread(models.Model):
                 pass
         else:
             self.delete()
-        
 
     @models.permalink
     def get_absolute_url(self):
@@ -102,8 +105,17 @@ class Post(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
+    MODERATION_STATE_CHOICES = (
+        ("NM",_('NEEDS_MODERATION')),
+        ("OK",_('OK')),
+        )
+    moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="OK")
+
     class Meta:
         ordering = ('created',)
+        permissions = (
+            ("can_moderate_forum", "Can moderate posts."),
+            )
 
     def __unicode__(self):
         return u"Post by %s in %s" % (self.author, self.thread)

@@ -27,8 +27,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.transaction.TransactionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'middleware.OnlineUsersHandler',
-    'stopforumspam.middleware.StopForumSpamMiddleware'
+    'middleware.OnlineUsersHandler'
 )
 
 INSTALLED_APPS = (
@@ -58,8 +57,7 @@ INSTALLED_APPS = (
     'api',
     'django_extensions',
     'tickets',
-    'gunicorn',
-    'stopforumspam',
+    'gunicorn', 
     #'test_utils', # Don't use this in production!
 )
 

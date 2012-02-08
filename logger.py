@@ -111,27 +111,27 @@ LOGGING = {
             'propagate': True,
         },
         'audio': {
-            'handlers': ['audioprocessinglogfile','gelf_audio'],
+            'handlers': ['audioprocessinglogfile'],
             'level': 'INFO',
             'propagate': False,
         },
         'api': {
-            'handlers': ['api','gelf_api'],
+            'handlers': ['api'],
             'level': 'INFO',
             'propagate': False,
         },
         'web': {
-            'handlers': ['weblogfile','gelf_web'],
+            'handlers': ['weblogfile'],
             'level': 'INFO',
             'propagate': False,
         },
         'search': {
-            'handlers': ['searchlogfile','gelf_search'],
+            'handlers': ['searchlogfile'],
             'level': 'INFO',
             'propagate': False,
         },
         'upload': {
-            'handlers': ['uploadlogfile','gelf_upload'],
+            'handlers': ['uploadlogfile'],
             'level': 'INFO',
             'propagate': False,
         },

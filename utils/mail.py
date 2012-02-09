@@ -12,15 +12,16 @@ def send_mail(subject, email_body, email_from=None, email_to=[]):
         email_to = [admin[1] for admin in settings.SUPPORT]
     elif not isinstance(email_to, tuple) and not isinstance(email_to, list):
         email_to = [email_to]
-    
+
     try:
         #core_send_mail(settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, email_to, fail_silently=False)
-        emails = ( (settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, email) for email in email_to )
-        send_mass_mail( emails, fail_silently=False)
+        emails = tuple(( (settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email]) for email in email_to ))
+        send_mass_mail( emails, fail_silently = False)
 
         return True
     except:
         return False
+    
 
 def send_mail_template(subject, template, context, email_from=None, email_to=[]):
     context["settings"] = settings

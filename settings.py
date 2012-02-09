@@ -40,24 +40,24 @@ INSTALLED_APPS = (
     'django.contrib.flatpages',
     'django.contrib.markup',
     'django.contrib.messages',
+    'south',
+    'geotags',
     'accounts',
     'comments',
-    'favorites',
-    'geotags',
-    'general',
     'ratings',
-    'sounds',
-    'support',
     'tags',
-    'forum',
+    'general',
+    'support',
     'wiki',
+    'favorites',
+    'sounds',
+    'bookmarks',
+    'forum',
     'search',
     'api',
     'django_extensions',
     'tickets',
-    'gunicorn',
-    'south',
-    'bookmarks',
+    'gunicorn', 
     #'test_utils', # Don't use this in production!
 )
 
@@ -164,7 +164,7 @@ STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '_sandbo
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 
 # leave at bottom starting here!
-from local_settings import * #@UnusedWildImport
+from local_settings import *
 
 TEMPLATE_DEBUG = DEBUG
 MANAGERS = ADMINS

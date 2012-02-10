@@ -398,6 +398,7 @@ class SoundSearchHandler(BaseHandler):
                                                                       cd['f'],
                                                                       find_api_option(cd['s']))
             add_request_id(request,result)
+            logger.info("Searching,q=" + cd['q'] + ",f=" + cd['f'] + ",p=" + str(cd['p']) + ",sounds_per_page=" + str(sounds_per_page) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
             return result
 
         except SolrException, e:
@@ -432,6 +433,7 @@ class SoundHandler(BaseHandler):
         result = prepare_single_sound(sound)
 
         add_request_id(request,result)
+        logger.info("Sound info,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
 class SoundServeHandler(BaseHandler):
@@ -461,7 +463,7 @@ class SoundServeHandler(BaseHandler):
         # DISABLED (FOR THE MOMENT WE DON'T UPDATE DOWNLOADS TABLE THROUGH API)
         #Download.objects.get_or_create(user=request.user, sound=sound, interface='A')
         
-        logger.info("Serving sound " + sound_id + " through API, api_key=" + request.GET.get("api_key", False) + ", api_key username=" + request.user.username)
+        logger.info("Serving sound,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
@@ -498,6 +500,7 @@ class SoundSimilarityHandler(BaseHandler):
 
         result = {'sounds': sounds, 'num_results': len(similar_sounds)}
         add_request_id(request,result)
+        logger.info("Sound similarity,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
 
@@ -527,6 +530,7 @@ class SoundAnalysisHandler(BaseHandler):
         result = prepare_single_sound_analysis(sound,request,filter)
 
         add_request_id(request,result)
+        logger.info("Sound analysis,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
 """
@@ -598,6 +602,7 @@ class SoundGeotagHandler(BaseHandler):
                 result['next'] = self.__construct_pagination_link(page.next_page_number(), min_lon, max_lon, min_lat, max_lat)
 
         add_request_id(request,result)
+        logger.info("Geotags search,min_lat=" + str(min_lat) + ",max_lat=" + str(max_lat) + ",min_lon=" + str(min_lon) + ",max_lon=" + str(max_lon) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
     def __construct_pagination_link(self, p, min_lon, max_lon, min_lat, max_lat):
@@ -626,6 +631,7 @@ class UserHandler(BaseHandler):
         result = prepare_single_user(user)
 
         add_request_id(request,result)
+        logger.info("User info,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
 class UserSoundsHandler(BaseHandler):
@@ -659,6 +665,7 @@ class UserSoundsHandler(BaseHandler):
                 result['next'] = self.__construct_pagination_link(username, page.next_page_number())
 
         add_request_id(request,result)
+        logger.info("User sounds,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
     #TODO: auth() ?
@@ -688,6 +695,7 @@ class UserPacksHandler(BaseHandler):
         result = {'packs': packs, 'num_results': len(packs)}
 
         add_request_id(request,result)
+        logger.info("User packs,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
 class UserBookmarkCategoriesHandler(BaseHandler):
@@ -721,6 +729,7 @@ class UserBookmarkCategoriesHandler(BaseHandler):
         result = {'categories': categories, 'num_results': len(categories)}
 
         add_request_id(request,result)
+        logger.info("User bookmark categories,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
 class UserBookmarkCategoryHandler(BaseHandler):
@@ -763,6 +772,7 @@ class UserBookmarkCategoryHandler(BaseHandler):
                 result['next'] = self.__construct_pagination_link(username, category_id, page.next_page_number())
 
         add_request_id(request,result)
+        logger.info("User bookmarks for category,username=" + username + ",category_id=" + str(category_id) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
     def __construct_pagination_link(self, username, category_id, p):
@@ -790,6 +800,7 @@ class PackHandler(BaseHandler):
         result = prepare_single_pack(pack)
 
         add_request_id(request,result)
+        logger.info("Pack info,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
 class PackSoundsHandler(BaseHandler):
@@ -823,6 +834,7 @@ class PackSoundsHandler(BaseHandler):
                 result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number())
 
         add_request_id(request,result)
+        logger.info("Pack sounds,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
     def __construct_pagination_link(self, pack_id, p):
@@ -848,6 +860,7 @@ class PackServeHandler(BaseHandler):
         except Pack.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "Pack with id %s does not exist." % pack_id})
 
+        logger.info("Serving pack,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
 
 
@@ -874,7 +887,6 @@ class SoundPoolSearchHandler(Feed):
         query = request.GET.get('query', '')
         limit = request.GET.get('limit', 20)
         offset = request.GET.get('offset', 0)
-        
         return {'type':type,'query':query,'limit':limit,'offset':offset}
 
     def items(self, obj):
@@ -913,6 +925,8 @@ class SoundPoolSearchHandler(Feed):
                             sounds.append(object)
                         except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
                             pass
+
+                    logger.info("Sound pool search RSS")
                     return sounds
         
                 except SolrException, e:
@@ -930,7 +944,7 @@ class SoundPoolSearchHandler(Feed):
         s= "Tags: "
         for t in tags:
             s = s + t + " "
-        s = s + "<br>"
+        s += "<br>"
         desc = item['description']
         s = s + desc
         return s
@@ -953,6 +967,7 @@ class SoundPoolInfoHandler(Feed):
     link = "http://freesound.org/"
 
     def items(self):
+        logger.info("Sound pool info RSS")
         return []
 
     def item_title(self, item):

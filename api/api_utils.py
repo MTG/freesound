@@ -48,6 +48,7 @@ def build_unexpected(e, request):
 
 def build_invalid_url(e):
     format = e.GET.get("format", "json")
+    logger.error('404 API error: Invalid Url')
     
     return build_error_response(ReturnError(404,
                                             "InvalidUrl",
@@ -72,12 +73,14 @@ class auth():
                 # Try to get the api key
                 api_key = request.GET.get(self.get_parameter, False)
                 if not api_key:
+                    logger.error('401 API error: Authentication error (no api key supplied)')
                     raise ReturnError(401, "AuthenticationError",
                                           {"explanation":  "Please include your api key as the api_key GET parameter"},
                                           )
                 try:
                     db_api_key = ApiKey.objects.get(key=api_key, status='OK')
                 except ApiKey.DoesNotExist:
+                    logger.error('401 API error: Authentication error (wrong api key)')
                     raise ReturnError(401, "AuthenticationError",
                                           {"explanation":  "Supplied api_key does not exist"},
                                           )

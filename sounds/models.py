@@ -354,12 +354,14 @@ def on_delete_sound(sender,instance, **kwargs):
         except User.DoesNotExist:
             deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
             DeletedSound.objects.get_or_create(sound_id=instance.id, user=deleted_user)
+        
     try:            
         if instance.geotag:
             instance.geotag.delete()
     except:
         pass
-    delete_sound_from_solr(instance)
+    
+    delete_sound_from_solr(instance.user, instance)
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
     Similarity.delete(instance.id)

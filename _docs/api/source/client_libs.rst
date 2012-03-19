@@ -10,5 +10,10 @@ As3 (Flash, Flex)
 Javscript
   http://github.com/ffont/freesound-javascript
 
+Php
+  https://github.com/nocive/freesound-php (by nocive_)
+
+.. _nocive: https://github.com/nocive
+
 Supercollider 
   Download through the Quarks system from within supercollider

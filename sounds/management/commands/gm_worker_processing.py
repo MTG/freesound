@@ -27,7 +27,7 @@ class Command(BaseCommand):
     )
 
     def write_stdout(self, msg):
-        logger.info("[%s] %s" % (os.getpid(),msg))
+        logger.info("[%d] %s" % (os.getpid(),msg))
         self.stdout.write(msg)
         self.stdout.flush()
 

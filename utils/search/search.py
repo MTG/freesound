@@ -73,7 +73,7 @@ def add_sounds_to_solr(sounds):
     solr.add(documents)
 
     logger.info("optimizing solr index")
-    solr.optimize()
+    #solr.optimize()
     logger.info("done")
 
 

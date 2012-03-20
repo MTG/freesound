@@ -428,8 +428,8 @@ class Pack(SocialModel):
                 return
         logger.info("creating pack zip for pack %d" % self.id)
         logger.info("\twill save in %s" % self.locations("path"))
-        tmp_file = tempfile.mkstemp()
-        zip_file = zipfile.ZipFile(tmp_file[1], "w", zipfile.ZIP_STORED, True)
+        tmp_path = "/home/fsweb/freesound-data/temp/"+str(self.id)+".zip"
+        zip_file = zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_STORED, True)
 
         logger.info("\tadding attribution")
         licenses = License.objects.all()
@@ -444,7 +444,7 @@ class Pack(SocialModel):
             zip_file.write(path, sound.friendly_filename().encode("utf-8"))
 
         zip_file.close()
-        shutil.move(tmp_file[1],self.locations("path"))
+        shutil.move(tmp_path,self.locations("path"))
 
         logger.info("\tall done")
 

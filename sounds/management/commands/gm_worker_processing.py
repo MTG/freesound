@@ -63,10 +63,29 @@ class Command(BaseCommand):
         time.sleep(1)
         pack_id  = gearman_job.data
         self.write_stdout("Processing pack with id %s\n" % pack_id)
-        pack = Pack.objects.get(id=int(pack_id))
-        self.write_stdout("Found pack with id %d\n" % pack.id)
-        pack.create_zip()
-        self.write_stdout("Finished creating zip")
+        # connection (max of 'intent' times)
+        intent = 3
+        while intent > 0:
+            try:
+                pack = Pack.objects.get(id=int(pack_id))
+                break
+            except (InterfaceError, DatabaseError):
+                try:
+                    connection.connection.close()
+                except:
+                    pass
+                    # Trick Django into creating a fresh connection on the next db use attempt
+                connection.connection = None
+                intent -= 1
+        if intent <= 0:
+            self.write_stdout("Problems while connecting to the database, could not reset the connection and will kill the worker.\n")
+            sys.exit(255)
+        try:
+            self.write_stdout("Found pack with id %d\n" % pack.id)
+            pack.create_zip()
+            self.write_stdout("Finished creating zip")
+        except Exception, e:
+            self.write_stdout("ERROR in zip creation: % \n"%str(e))
         return 'true'
     
     def task_process_x(self, gearman_worker, gearman_job, func):

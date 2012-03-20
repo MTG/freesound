@@ -121,6 +121,23 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, id=thread_id, forum=forum, first_post__moderation_state="OK")
 
+    is_survey = False
+    if thread.title == "Freesound Survey":
+        is_survey = True
+    survey_text = """
+1) What do you use Freesound for? (what are your specific interests? what do you do with Freesound samples? ...)
+
+
+2) Do you perceive some shared goals in Freesounds user community? If so, which ones? (is there a sense of community? and of long-term goals to be achieved? ...)
+
+
+3) What kinds of sounds are you most interested in? (do you upload and/or download specific types of sounds? which ones? ...)
+
+
+4) What makes Freesound different from other sound sharing sites? (you can compare with sites like Soundcloud, Looperman, CCMixter or others)
+"""
+
+
     if post_id:
         post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)
         quote = loader.render_to_string('forum/quote_style.html', {'post':post})
@@ -172,7 +189,10 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
         if quote:
             form = PostReplyForm(request, quote, {'body':quote})
         else:
-            form = PostReplyForm(request, quote)
+            if is_survey:
+                form = PostReplyForm(request, quote, {'body':survey_text})
+            else:
+                form = PostReplyForm(request, quote)
 
     if not user_can_post_in_forum[0]:
         messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
@@ -190,7 +210,7 @@ def new_thread(request, forum_name_slug):
         if user_can_post_in_forum[0]:
             if form.is_valid():
                 thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-                if not request.user.post_set.all().count() and ("http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]): # first post has urls
+                if (not request.user.post_set.all().count()) and (re.search("[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$)",  form.cleaned_data["body"]) is not None):
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
                     set_to_moderation = True

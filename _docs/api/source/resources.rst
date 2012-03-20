@@ -29,15 +29,16 @@ Request
 
 **Parameters**
 
-=========  ======  ========  =================================
-Name       Type    Required  Description
-=========  ======  ========  =================================
-q	   string  no        The query!
-p          number  no        The page of the search result to get
-f          string  no	     The filter
-s	   string  no	     How to sort the results
-fields	   string  no	     Fields
-=========  ======  ========  =================================
+==================  ======  ========  =================================
+Name                Type    Required  Description
+==================  ======  ========  =================================
+q                   string  no        The query!
+p                   number  no        The page of the search result to get
+f                   string  no	      The filter
+s                   string  no	      How to sort the results
+fields	            string  no	      Fields
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
+==================  ======  ========  =================================
 
 **q for query**
 
@@ -454,16 +455,17 @@ Request
 
 **Parameters**
 
-=========  ======  ========  =================================
-Name       Type    Required  Description
-=========  ======  ========  =================================
-min_lat	   number  no        Minimum latitude [-90 to 90]
-max_lat    number  no        Maximum latitude [-90 to 90]
-min_lom    number  no	     Minimum longitude [-180 to 180]
-max_lon	   number  no	     Maximum longitude [-180 to 180]
-p          number  no        The page of the search result to get
-fields	   string  no	     Fields
-=========  ======  ========  =================================
+==================  ======  ========  =================================
+Name                Type    Required  Description
+==================  ======  ========  =================================
+min_lat	            number  no        Minimum latitude [-90 to 90]
+max_lat             number  no        Maximum latitude [-90 to 90]
+min_lom             number  no	      Minimum longitude [-180 to 180]
+max_lon	            number  no	      Maximum longitude [-180 to 180]
+p                   number  no        The page of the search result to get
+fields	            string  no	      Fields
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
+==================  ======  ========  =================================
 
 **latitude and longitude parameters**
 
@@ -630,13 +632,14 @@ Request
 
 **Parameters**
 
-===========  ======  ========  ===================================================
-Name         Type    Required  Description
-===========  ======  ========  ===================================================
-num_results  number  no        The number of similar sounds to return (max = 100, default = 15)
-preset       string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``lowlevel``)
-fields	     string  no	       Fields
-===========  ======  ========  ===================================================
+==================  ======  ========  ===================================================
+Name                Type    Required  Description
+==================  ======  ========  ===================================================
+num_results         number  no        The number of similar sounds to return (max = 100, default = 15)
+preset              string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``lowlevel``)
+fields	            string  no	      Fields
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
+==================  ======  ========  ===================================================
 
 **Curl Examples**
 
@@ -896,12 +899,13 @@ Request
 
 **Parameters**
 
-=========  ======  ========  ========================================
-Name       Type    Required  Description
-=========  ======  ========  ========================================
-p          number  no        The page of the sound collection to get.
-fields	   string  no	     Fields
-=========  ======  ========  ========================================
+==================  ======  ========  ========================================
+Name                Type    Required  Description
+==================  ======  ========  ========================================
+p                   number  no        The page of the sound collection to get.
+fields	            string  no	      Fields
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
+==================  ======  ========  ========================================
 
 **Curl Examples**
 
@@ -983,11 +987,98 @@ The response is an array. Each item in the array follows a reduced version of th
   }
 
 
+User Bookmark categories
+========================
+
+URI
+---
+
+::
+
+  /people/<username>/bookmark_categories
+
+The only allowed method is GET.
+
+GET
+---
+
+Retrieve an array of the user's bookmark categories.
+
+Request
+'''''''
+
+**Curl Examples**
+
+::
+
+  curl http://www.freesound.org/api/people/but2/bookmark_categories
+
+Response
+''''''''
+
+**Properties**
+
+The response is an array. Each item in the array is a dictionary with 'name', 'url' and 'sounds' properties.
+
+===========  ======  ===================================================
+Name         Type    Description
+===========  ======  ===================================================
+name         String  Name of the category
+url          URI     Url to the page of the category
+sounds	     URI     The API URI for getting a list of the sounds bookmarked under the category
+===========  ======  ===================================================
+
+If user has some bookmarks that have not been assigned to any category, an 'Uncategorized bookmarks' category
+will automatically be added to the array that will contain all these bookmarks/sounds.
+
+
+User Bookmark category sound collection
+=======================================
+
+URI
+---
+
+::
+
+  /people/<username>/bookmark_categories/[<category_id>|uncategorized]/sounds/
+
+The only allowed method is GET.
+
+GET
+---
+
+A paginated collection of all sounds bookmarked under a particular bookmark category (or all uncategorized bookmarks by a user).
+
+Request
+'''''''
+
+**Parameters**
+
+==================  ======  ========  ====================================
+Name                Type    Required  Description
+==================  ======  ========  ====================================
+p                   number  no        The page of sounds to get
+fields	            string  no	      Fields
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
+==================  ======  ========  ====================================
+
+**Curl Examples**
+
+::
+
+  curl http://www.freesound.org/api/people/but2/bookmark_categories/32/sounds/
+
+Response
+''''''''
+
+The response is the same as the :ref:`sound-search-response`, with the addition of an extra field called "bookmark_name"
+which shows the name the user has given to the bookmark (by default this name is the same as "original_filename", but
+users can change that while adding a new bookmark).
+
 
 
 Packs
 >>>>>
-
 
 
 Pack resource

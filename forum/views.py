@@ -190,7 +190,7 @@ def new_thread(request, forum_name_slug):
         if user_can_post_in_forum[0]:
             if form.is_valid():
                 thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-                if not request.user.post_set.all().count() and ("http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]): # first post has urls
+                if (not request.user.post_set.all().count()) and (re.search("[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$)",  form.cleaned_data["body"]) is not None):
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
                     set_to_moderation = True

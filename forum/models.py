@@ -25,7 +25,7 @@ class Forum(OrderedModel):
                                      on_delete=models.SET_NULL)
 
     def set_last_post(self):
-        qs = Post.objects.filter(thread__forum=self)
+        qs = Post.objects.filter(thread__forum=self,moderation_state ='OK')
 #        if exclude_post:
 #            qs = qs.exclude(id=exclude_post.id)
 #        if exclude_thread:
@@ -41,6 +41,9 @@ class Forum(OrderedModel):
     @models.permalink
     def get_absolute_url(self):
         return ("forums-forum", (smart_unicode(self.name_slug),))
+
+    def get_last_post(self):
+        return Post.objects.filter(thread__forum=self,moderation_state ='OK').order_by("-created")[0]
 
 
 class Thread(models.Model):

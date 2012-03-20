@@ -447,18 +447,18 @@ class Solr(object):
             self._request(message=encoded_docs)
         except error, e:
             raise SolrException, e
-        if self.auto_commit:
-            self.commit()
+        #if self.auto_commit:
+        #    self.commit()
 
     def delete_by_id(self, id):
         self._request(message=u'<delete><id>%s</id></delete>' % unicode(id))
-        if self.auto_commit:
-            self.commit()
+        #if self.auto_commit:
+        #    self.commit()
 
     def delete_by_query(self, query):
         self._request(message=u'<delete><query>%s</query></delete>' % unicode(query))
-        if self.auto_commit:
-            self.commit()
+        #if self.auto_commit:
+        #    self.commit()
 
     def commit(self, wait_flush=True, wait_searcher=True):
         message = ET.Element('commit')

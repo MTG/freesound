@@ -98,6 +98,32 @@ LOGGING = {
             'port': 12201,
             'formatter': 'standard'
         },
+        'gearman_worker_processing_handler': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': '/var/log/freesound/gearman_worker_processing.log',
+            'when': 'midnight',
+            'backupCount': '14',
+            'formatter': 'standard'
+        },
+        'gelf_gearman_worker_processing': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': 12201,
+            'formatter': 'standard'
+        },
+        'processing_handler': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': '/var/log/freesound/audio_processing.log',
+            'when': 'midnight',
+            'backupCount': '14',
+            'formatter': 'standard'
+        },
+        'gelf_processing': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': 12201,
+            'formatter': 'standard'
+        },       
         'mail': {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': '/var/log/freesound/mail.log',
@@ -111,27 +137,37 @@ LOGGING = {
             'propagate': True,
         },
         'audio': {
-            'handlers': ['audioprocessinglogfile','gelf_audio'],
+            'handlers': ['audioprocessinglogfile'],
             'level': 'INFO',
             'propagate': False,
         },
         'api': {
-            'handlers': ['api','gelf_api'],
+            'handlers': ['api'],
             'level': 'INFO',
             'propagate': False,
         },
         'web': {
-            'handlers': ['weblogfile','gelf_web'],
+            'handlers': ['weblogfile'],
             'level': 'INFO',
             'propagate': False,
         },
         'search': {
-            'handlers': ['searchlogfile','gelf_search'],
+            'handlers': ['searchlogfile'],
             'level': 'INFO',
             'propagate': False,
         },
         'upload': {
-            'handlers': ['uploadlogfile','gelf_upload'],
+            'handlers': ['uploadlogfile'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'processing': {
+            'handlers': ['processing_handler'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'gearman_worker_processing': {
+            'handlers': ['gearman_worker_processing_handler'],
             'level': 'INFO',
             'propagate': False,
         },

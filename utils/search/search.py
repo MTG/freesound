@@ -94,9 +94,9 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
 
 
 
-def delete_sound_from_solr(user, sound):
-    logger.info("deleting sound from user %s with id %d" % (user.username, sound.id))
+def delete_sound_from_solr(sound):
+    logger.info("deleting sound with id %d" % sound.id)
     try:
         Solr(settings.SOLR_URL).delete_by_id(sound.id)
     except Exception, e:
-        logger.error('could not delete sound from user %s with id %s (%s).' % (user.id, sound.id, e))
+        logger.error('could not delete sound with id %s (%s).' % (sound.id, e))

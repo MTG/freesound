@@ -361,7 +361,7 @@ def on_delete_sound(sender,instance, **kwargs):
     except:
         pass
     
-    delete_sound_from_solr(instance.user, instance)
+    delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
     Similarity.delete(instance.id)

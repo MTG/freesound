@@ -98,14 +98,14 @@ LOGGING = {
             'port': 12201,
             'formatter': 'standard'
         },
-        'gearman_processing': {
+        'gearman_worker_processing': {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': '/var/log/freesound/gearman_worker_processing.log',
             'when': 'midnight',
             'backupCount': '14',
             'formatter': 'standard'
         },
-        'gelf_gearman_processing': {
+        'gelf_gearman__worker_processing': {
             'class': 'graypy.GELFHandler',
             'host': '10.55.0.20',
             'port': 12201,

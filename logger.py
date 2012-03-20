@@ -161,5 +161,15 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'processing': {
+            'handlers': ['processing'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'gearman_worker_processing': {
+            'handlers': ['gearman_worker_processing'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }

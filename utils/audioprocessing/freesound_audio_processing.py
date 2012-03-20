@@ -3,11 +3,14 @@ from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
 import utils.audioprocessing.processing as audioprocessing
 import os, tempfile, gearman, shutil, sys
+import logging
 
+logger = logging.getLogger("processing")
 
 def process(sound):
 
     def write_log(message):
+        logger.info("[%s] %s" % (os.getpid(),message))
         sys.stdout.write(str(message)+'\n')
         sys.stdout.flush()
 

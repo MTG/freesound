@@ -98,6 +98,32 @@ LOGGING = {
             'port': 12201,
             'formatter': 'standard'
         },
+        'gearman_processing': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': '/var/log/freesound/gearman_worker_processing.log',
+            'when': 'midnight',
+            'backupCount': '14',
+            'formatter': 'standard'
+        },
+        'gelf_gearman_processing': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': 12201,
+            'formatter': 'standard'
+        },
+        'processing': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': '/var/log/freesound/audio_processing.log',
+            'when': 'midnight',
+            'backupCount': '14',
+            'formatter': 'standard'
+        },
+        'gelf_processing': {
+            'class': 'graypy.GELFHandler',
+            'host': '10.55.0.20',
+            'port': 12201,
+            'formatter': 'standard'
+        },       
         'mail': {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': '/var/log/freesound/mail.log',

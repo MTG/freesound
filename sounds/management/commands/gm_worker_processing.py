@@ -3,7 +3,7 @@
 This django-admin command runs a Gearman worker for processing sounds.
 """
 
-import gearman, sys, traceback, json, time
+import gearman, sys, traceback, json, time, os
 from django.core.management.base import BaseCommand
 from utils.audioprocessing.freesound_audio_processing import process
 from utils.audioprocessing.essentia_analysis import analyze
@@ -13,7 +13,9 @@ from optparse import make_option
 from psycopg2 import InterfaceError
 from django.db.utils import DatabaseError
 from django.db import connection
+import logging
 
+logger = logging.getLogger("gearman_worker_processing")
 
 class Command(BaseCommand):
     help = 'Run the sound processing worker'
@@ -25,6 +27,7 @@ class Command(BaseCommand):
     )
 
     def write_stdout(self, msg):
+        logger.info("[%s] %s" % (os.getpid(),msg))
         self.stdout.write(msg)
         self.stdout.flush()
 

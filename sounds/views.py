@@ -615,3 +615,15 @@ def pack_downloaders(request, username, pack_id):
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
+
+def pack_zip(request,pack_id):
+    from django.http import HttpResponse
+    sounds = " "
+    for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
+        url = sound.locations("sendfile_url")
+        path = sound.locations("path")
+        sounds= sounds + "- %i %s %s \r\n"%(sound.filesize,url,path)
+    response = HttpResponse(sounds)
+    response['X-Archive-Files'='zip']
+    return response
+

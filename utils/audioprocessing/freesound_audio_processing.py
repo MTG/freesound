@@ -20,7 +20,7 @@ def process(sound):
         logging_message += "\tmessage: %s\n" % message
         if error:
             logging_message += "\terror: %s\n" + str(error)
-        write_log(message)
+        write_log(logging_message)
 
     def success(message):
         write_log(message)

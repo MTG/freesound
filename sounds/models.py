@@ -333,7 +333,9 @@ class Sound(SocialModel):
         self.set_single_field('original_path', path)
 
     def set_audio_info_fields(self, info):
-        self.set_fields([[field, info[field], False] for field in ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']])
+        field_names = ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']
+        field_values = [[field, info[field] if info[field] is not None else "null", False] for field in field_names]
+        self.set_fields(field_values)
 
     # N.B. This is used in the ticket template (ugly, but a quick fix)
     def is_sound(self):

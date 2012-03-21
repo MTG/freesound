@@ -123,9 +123,6 @@ class Command(BaseCommand):
             self.write_stdout("\t did not find sound with id: %s\n" % sound_id)
             success = False
             return 'false'
-        except (DatabaseError, InterfaceError):
-            self.write_stdout("Problems while connecting to the database, will kill the worker.\n")
-            sys.exit(255)
         except Exception, e:
             self.write_stdout("\t something went terribly wrong: %s\n" % e)
             self.write_stdout("\t%s\n" % traceback.format_exc())

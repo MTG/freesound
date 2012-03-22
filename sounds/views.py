@@ -223,7 +223,7 @@ def pack_download(request, username, pack_id):
         path = sound.locations("path")
         sounds= sounds + "- %i %s %s \r\n"%(sound.filesize,url,path)
     response = HttpResponse(sounds)
-    response['X-Archive-Files'='zip']
+    response['X-Archive-Files']='zip'
     return response
     #return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
 

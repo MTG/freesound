@@ -25,7 +25,13 @@
     
     
     var box = document.location.hash.slice(5,document.location.hash.length);
-    var url = "{{url}}?box="+box // TODO: the template tag could use other URLs    
+    {% if not username %}
+        var url = "{{url}}?box="+box // TODO: the template tag could use other URLs
+    {%  else %}
+        var url = "{{url}}{{ username }}"
+    {%  endif %}
+    console.log(url)
+
     GDownloadUrl(url, function(data, responseCode)
     {
         var bounds = new GLatLngBounds();

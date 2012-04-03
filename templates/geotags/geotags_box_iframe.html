@@ -17,8 +17,14 @@
         
     </head>
 
-<body>   
-    {% display_geotags "/geotags/geotags_box_json/" m_width m_height clusters center_lat center_lon zoom %}
+<body>
+
+{% if not username %}
+    {% display_geotags "/geotags/geotags_box_json/" m_width m_height clusters center_lat center_lon zoom username %}
+{% else %}
+    {% display_geotags "/geotags/sounds_json/user/" m_width m_height clusters center_lat center_lon zoom username %}
+{% endif %}
+
 </body>
 </html>
 

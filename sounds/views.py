@@ -109,7 +109,7 @@ def random(request):
 
 def packs(request):
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds"]:
+    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related() \
                      .filter(sound__moderation_state="OK", sound__processing_state="OK") \

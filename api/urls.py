@@ -23,9 +23,12 @@ urlpatterns = patterns('',
     url(r'^sounds/geotag/$',                                        AR(SoundGeotagHandler),         name='api-sound-geotag'),
     
     # users
-    url(r'^people/(?P<username>[^//]+)/$',                          AR(UserHandler),           name='api-single-user'),
-    url(r'^people/(?P<username>[^//]+)/sounds/$',                   AR(UserSoundsHandler),     name='api-user-sounds'),
-    url(r'^people/(?P<username>[^//]+)/packs/$',                    AR(UserPacksHandler),      name='api-user-packs'),
+    url(r'^people/(?P<username>[^//]+)/$',                                                     AR(UserHandler),                    name='api-single-user'),
+    url(r'^people/(?P<username>[^//]+)/sounds/$',                                              AR(UserSoundsHandler),              name='api-user-sounds'),
+    url(r'^people/(?P<username>[^//]+)/packs/$',                                               AR(UserPacksHandler),               name='api-user-packs'),
+    url(r'^people/(?P<username>[^//]+)/bookmark_categories/$',                                 AR(UserBookmarkCategoriesHandler),  name='api-user-bookmark-categories'),
+    url(r'^people/(?P<username>[^//]+)/bookmark_categories/(?P<category_id>\d+)/sounds/$',     AR(UserBookmarkCategoryHandler),    name='api-user-bookmark-category'),
+    url(r'^people/(?P<username>[^//]+)/bookmark_categories/uncategorized/sounds/$',            AR(UserBookmarkCategoryHandler),    name='api-user-bookmark-uncategorized'),
 
     # packs
     url(r'^packs/(?P<pack_id>\d+)/$',                               AR(PackHandler),           name='api-single-pack'),
@@ -33,10 +36,10 @@ urlpatterns = patterns('',
     url(r'^packs/(?P<pack_id>\d+)/sounds/$',                        AR(PackSoundsHandler),     name='api-pack-sounds'),
 
     # cc-mixter pool
-    url(r'^pool/search$',                                         SoundPoolSearchHandler(),   name='api-pool-search'),
-    url(r'^pool/search/$',                                         SoundPoolSearchHandler(),   name='api-pool-search-slash'),
-    url(r'^pool/info$',                                           SoundPoolInfoHandler(),   name='api-pool-info'),
-    url(r'^pool/info/$',                                           SoundPoolInfoHandler(),   name='api-pool-info-slash'),
+    url(r'^pool/search$',                                           SoundPoolSearchHandler(),   name='api-pool-search'),
+    url(r'^pool/search/$',                                          SoundPoolSearchHandler(),   name='api-pool-search-slash'),
+    url(r'^pool/info$',                                             SoundPoolInfoHandler(),     name='api-pool-info'),
+    url(r'^pool/info/$',                                            SoundPoolInfoHandler(),     name='api-pool-info-slash'),
     
     # website
     url(r'^apply/$', create_api_key),

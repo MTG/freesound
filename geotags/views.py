@@ -71,6 +71,7 @@ def geotags_box(request):
     center_lat = request.GET.get("c_lat",None)
     center_lon = request.GET.get("c_lon",None)
     zoom = request.GET.get("z",None)
+    username = request.GET.get("username",None)
     
     google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('geotags/geotags_box.html', locals(), context_instance=RequestContext(request))
@@ -101,6 +102,7 @@ def embed_iframe(request):
     center_lat = request.GET.get("c_lat",None)
     center_lon = request.GET.get("c_lon",None)
     zoom = request.GET.get("z",None)
+    username = request.GET.get("username",None)
     
     google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('geotags/geotags_box_iframe.html', locals(), context_instance=RequestContext(request))

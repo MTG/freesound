@@ -79,13 +79,15 @@ a.external_link:hover {
 
 body {
     /*border-top: 100px solid #fff;*/
-    /*background-position: 0 105px; */ /* remove or comment out when removing banners */
-    background-color: #fff;  /* remove or comment out when removing banners */
+    
+    /*background-position: 0 105px;*/  /* comment out when removing banners */
+    background-color: #fff; /* comment out when adding banners */
 }
 #banner_wrapper {
     width: 728px;
     margin: 0 auto;
 }
+
 #warning_banner {
     margin-bottom: 10px;
 }

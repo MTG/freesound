@@ -210,22 +210,12 @@ def sound_download(request, username, sound_id):
 
 
 def pack_download(request, username, pack_id):
-    from django.http import HttpResponse
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
-
-    sounds = " "
-    for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
-        url = sound.locations("sendfile_url")
-        path = sound.locations("path")
-        sounds= sounds + "- %i %s %s \r\n"%(sound.filesize,url,path)
-    response = HttpResponse(sounds)
-    response['X-Archive-Files']='zip'
-    return response
-    #return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
+    return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
 
 
 @login_required

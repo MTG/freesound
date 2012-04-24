@@ -653,7 +653,7 @@ class UserSoundsHandler(BaseHandler):
         except User.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "User (%s) does not exist." % username})
 
-        paginator = paginate(request, Sound.public.filter(user=user), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
+        paginator = paginate(request, Sound.public.filter(user=user, processing_state="OK", moderation_state="OK"), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
@@ -822,7 +822,7 @@ class PackSoundsHandler(BaseHandler):
         except User.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "Pack with id %s does not exist." % pack_id})
 
-        paginator = paginate(request, Sound.objects.filter(pack=pack.id), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
+        paginator = paginate(request, Sound.objects.filter(pack=pack.id, processing_state="OK", moderation_state="OK"), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
         sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}

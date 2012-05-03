@@ -15,6 +15,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         sound_list = args[0]
         base_dir = os.path.dirname(sound_list)
+        delete_already_existing = False
         if len(args) > 1:
             delete_already_existing = bool(args[1])
 

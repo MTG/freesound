@@ -411,11 +411,17 @@ class Pack(SocialModel):
     
     def create_license_file(self):
         from django.template.loader import render_to_string
-        licenses = License.objects.all()
-        attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
-        f = open(self.locations()['license_path'],'w')
-        f.write(attribution.encode("UTF-8"))
-        f.close()
+
+        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
+        if len(pack_sounds)>0:
+            licenses = License.objects.all()
+            attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
+            f = open(self.locations()['license_path'],'w')
+            f.write(attribution.encode("UTF-8"))
+            f.close()
+        else:
+            if os.path.exists(self.locations()['license_path']):
+                os.remove((self.locations()['license_path']) 
     
     def process(self):
         self.create_license_file()

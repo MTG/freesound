@@ -208,7 +208,6 @@ def sound_download(request, username, sound_id):
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
-
 def pack_download(request, username, pack_id):
     from django.http import HttpResponse
     if not request.user.is_authenticated():
@@ -217,12 +216,11 @@ def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
 
-    filelist =  "- %i %s %s \r\n"%(pack.locations['license_path'],pack.locations['license_url'])
+    filelist =  "- %i %s %s \r\n" % (os.stat(pack.locations('license_path')).st_size, pack.locations('license_url'), "_readme_and_license.txt")
     for sound in pack.sound_set.filter(processing_state="OK", moderation_state="OK"):
         url = sound.locations("sendfile_url")
-        name = sound.friendly_filename() 
+        name = sound.friendly_filename()
         filelist = filelist + "- %i %s %s \r\n"%(sound.filesize,url,name)
-    
     response = HttpResponse(filelist)
     response['X-Archive-Files']='zip'
     return response
@@ -483,7 +481,7 @@ def pack(request, username, pack_id):
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
-        if not os.path.exists(pack.locations("path")):
+        if not os.path.exists(pack.locations("license_path")):
             messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
         
         if num_sounds_ok < pack.num_sounds :

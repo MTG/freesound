@@ -217,15 +217,15 @@ def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
 
-    sounds = " "
-    for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
+    filelist =  "- %i %s %s \r\n"%(pack.locations['license_path'],pack.locations['license_url'])
+    for sound in pack.sound_set.filter(processing_state="OK", moderation_state="OK"):
         url = sound.locations("sendfile_url")
-        path = sound.locations("path")
-        sounds= sounds + "- %i %s %s \r\n"%(sound.filesize,url,path)
-    response = HttpResponse(sounds)
+        name = sound.friendly_filename() 
+        filelist = filelist + "- %i %s %s \r\n"%(sound.filesize,url,name)
+    
+    response = HttpResponse(filelist)
     response['X-Archive-Files']='zip'
     return response
-    #return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
 
 
 @login_required

@@ -410,6 +410,7 @@ class Pack(SocialModel):
 
     
     def create_license_file(self):
+        from django.template.loader import render_to_string
         licenses = License.objects.all()
         attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
         f = open(self.locations()['license_path'],'w')

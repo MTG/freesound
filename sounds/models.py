@@ -421,7 +421,7 @@ class Pack(SocialModel):
             f.close()
         else:
             if os.path.exists(self.locations()['license_path']):
-                os.remove((self.locations()['license_path']) 
+                os.remove(self.locations()['license_path']) 
     
     def process(self):
         self.create_license_file()

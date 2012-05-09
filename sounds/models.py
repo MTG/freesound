@@ -362,8 +362,8 @@ def on_delete_sound(sender,instance, **kwargs):
             instance.geotag.delete()
     except:
         pass
-    if sound.pack:
-        sound.pack.create_license_file()
+    if instance.pack:
+        instance.pack.create_license_file()
     
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)

@@ -415,7 +415,7 @@ class Pack(SocialModel):
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
         if len(pack_sounds)>0:
             licenses = License.objects.all()
-            attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
+            attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,sound_list = pack_sounds))
             f = open(self.locations()['license_path'],'w')
             f.write(attribution.encode("UTF-8"))
             f.close()
@@ -423,8 +423,6 @@ class Pack(SocialModel):
             if os.path.exists(self.locations()['license_path']):
                 os.remove(self.locations()['license_path']) 
     
-    def process(self):
-        self.create_license_file()
     
     def get_random_sound_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:1]

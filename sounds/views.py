@@ -215,6 +215,7 @@ def pack_download(request, username, pack_id):
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
+    pack.create_license_file()
 
     filelist =  "- %i %s %s \r\n" % (os.stat(pack.locations('license_path')).st_size, pack.locations('license_url'), "_readme_and_license.txt")
     for sound in pack.sound_set.filter(processing_state="OK", moderation_state="OK"):
@@ -284,6 +285,7 @@ def sound_edit(request, username, sound_id):
         pack_form = PackForm(packs, request.POST, prefix="pack")
         if pack_form.is_valid():
             data = pack_form.cleaned_data
+            dirty_packs = []
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
                 sound.pack = pack
@@ -292,6 +294,15 @@ def sound_edit(request, username, sound_id):
                 old_pack = sound.pack
                 if new_pack != old_pack:
                     sound.pack = new_pack
+
+                if new_pack:
+                    dirty_packs.append(new_pack)
+                if old_pack:
+                    dirty_packs.append(old_pack)
+            
+            for p in dirty_packs:
+               p.create_license_file()
+
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
             return HttpResponseRedirect(sound.get_absolute_url())
@@ -481,9 +492,6 @@ def pack(request, username, pack_id):
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
-        if not os.path.exists(pack.locations("license_path")):
-            messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
-        
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 

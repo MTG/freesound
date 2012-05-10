@@ -362,18 +362,17 @@ def on_delete_sound(sender,instance, **kwargs):
             instance.geotag.delete()
     except:
         pass
+    if instance.pack:
+        instance.pack.create_license_file()
     
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
     Similarity.delete(instance.id)
+
 post_delete.connect(on_delete_sound, sender=Sound)
 
-def recreate_pack(sender,instance,**kwargs):
-    if instance.moderation_state=="OK" and instance.pack:
-        instance.pack.process()
     
-post_save.connect(recreate_pack, sender=Sound)
 
 class Pack(SocialModel):
     user = models.ForeignKey(User)
@@ -404,52 +403,26 @@ class Pack(SocialModel):
     def locations(self):
         return dict(
                     sendfile_url = settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,
-                    path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
+                    license_url = settings.PACKS_SENDFILE_URL + "%d.txt" % self.id,
+                    license_path = os.path.join(settings.PACKS_PATH, "%d.txt" % self.id)
                    )
 
-    def process(self):
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_job("create_pack_zip", str(self.id), wait_until_complete=False, background=True)
-        audio_logger.info("Send pack with id %s to queue 'create_pack_zip'" % self.id)
-        
-    def create_zip(self):
-        import zipfile
+    
+    def create_license_file(self):
         from django.template.loader import render_to_string
-        logger = logging.getLogger("audio")
-        
-        num_pending = self.sound_set.exclude(processing_state="OK", moderation_state="OK").count()
-        
-        if num_pending > 0: 
-            logger.info("Omitting zip for pack %d due to unmoderated or unprocessed sounds" % self.id)
-            return
-        num_sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").count()
-        if num_sounds == 0:
-            if os.path.exists(self.locations("path")):
-                logger.info("Pack %d has now zero sounds, deleting ..." % self.id)
-                os.unlink(self.locations("path"))
-                return
-        logger.info("creating pack zip for pack %d" % self.id)
-        logger.info("\twill save in %s" % self.locations("path"))
-        tmp_path = "/home/fsweb/freesound-data/temp/"+str(self.id)+".zip"
-        zip_file = zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_STORED, True)
 
-        logger.info("\tadding attribution")
-        licenses = License.objects.all()
-        attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
-        zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
-
-        logger.info("\tadding sounds")
-        
-        for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
-            path = sound.locations("path")
-            logger.info("\t- %s" % os.path.normpath(path))
-            zip_file.write(path, sound.friendly_filename().encode("utf-8"))
-
-        zip_file.close()
-        shutil.move(tmp_path,self.locations("path"))
-
-        logger.info("\tall done")
-
+        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
+        if len(pack_sounds)>0:
+            licenses = License.objects.all()
+            attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,sound_list = pack_sounds))
+            f = open(self.locations()['license_path'],'w')
+            f.write(attribution.encode("UTF-8"))
+            f.close()
+        else:
+            if os.path.exists(self.locations()['license_path']):
+                os.remove(self.locations()['license_path']) 
+    
+    
     def get_random_sound_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:1]
         return pack_sounds[0]

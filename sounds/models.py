@@ -10,13 +10,12 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random, datetime, gearman, tempfile, shutil
-import subprocess
+import os, logging, random, datetime, gearman, tempfile, shutil, subprocess
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
 from search.views import get_pack_tags
-from django.db.models import Count, subprocess
+from django.db.models import Count
 from django.db.models.signals import post_delete, post_save
 from django.contrib.contenttypes import generic
 from similarity.client import Similarity

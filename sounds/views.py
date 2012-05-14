@@ -215,17 +215,9 @@ def pack_download(request, username, pack_id):
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
-    pack.create_license_file()
-
-    filelist =  "- %i %s %s \r\n" % (os.stat(pack.locations('license_path')).st_size, pack.locations('license_url'), "_readme_and_license.txt")
-    for sound in pack.sound_set.filter(processing_state="OK", moderation_state="OK"):
-        url = sound.locations("sendfile_url")
-        name = sound.friendly_filename()
-        filelist = filelist + "- %i %s %s \r\n"%(sound.filesize,url,name)
-    response = HttpResponse(filelist)
+    response = HttpResponse(open(pack.locations("path")).read())
     response['X-Archive-Files']='zip'
     return response
-
 
 @login_required
 def sound_edit(request, username, sound_id):
@@ -508,7 +500,9 @@ def pack(request, username, pack_id):
             pack.description = form.cleaned_data['description']
             pack.save()
         else:
-            pass        
+            pass
+
+    files_exist = os.path.exists(pack.locations("path") and os.path.exists(pack.locations("license_path"))
 
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 

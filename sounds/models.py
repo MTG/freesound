@@ -10,12 +10,12 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random, datetime, gearman, tempfile, shutil
+import os, logging, random, datetime, gearman, tempfile, shutil, subprocess
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
 from search.views import get_pack_tags
-from django.db.models import Count
+from django.db.models import Count, subprocess
 from django.db.models.signals import post_delete, post_save
 from django.contrib.contenttypes import generic
 from similarity.client import Similarity
@@ -403,24 +403,48 @@ class Pack(SocialModel):
     def locations(self):
         return dict(
                     sendfile_url = settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,
-                    license_url = settings.PACKS_SENDFILE_URL + "%d.txt" % self.id,
-                    license_path = os.path.join(settings.PACKS_PATH, "%d.txt" % self.id)
+                    license_url = settings.PACKS_SENDFILE_URL + "%d_license.txt" % self.id,
+                    license_path = os.path.join(settings.PACKS_PATH, "%d_license.txt" % self.id),
+                    path = os.path.join(settings.PACKS_PATH, "%d.txt" % self.id),
                    )
 
-    
-    def create_license_file(self):
+    def process(self):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        gm_client.submit_job("create_pack_zip", str(self.id), wait_until_complete=False, background=True)
+        audio_logger.info("Send pack with id %s to queue 'create_pack_zip'" % self.id)
+        
+    def create_zip(self):
         from django.template.loader import render_to_string
+        
+        def write_file(path,content):
+            f = open(path,'w')
+            f.write(content.encode("UTF-8"))
+            f.close()
 
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
         if len(pack_sounds)>0:
             licenses = License.objects.all()
             attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,sound_list = pack_sounds))
-            f = open(self.locations()['license_path'],'w')
-            f.write(attribution.encode("UTF-8"))
-            f.close()
+            write_file(self.locations()['license_path'],attribution)
+
+            filelist =  "- %i %s %s \r\n" % (os.stat(self.locations('license_path')).st_size, \
+            for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
+                url = sound.locations("sendfile_url")
+                name = sound.friendly_filename()
+                try:
+                    p = subprocess.Popen(["cksum",sound.locations("path")],stdout=subprocess.PIPE)
+                    crc = int(p.communicate()[0].split(" ")[0])
+                    filelist = filelist + "%i %i %s %s \r\n"%(crc,sound.filesize,url,name)
+                except:
+                    audio_logger.error("error computing crc for sound %s"%name)
+                    
+            write_file(self.locations()['path'],filelist)
         else:
             if os.path.exists(self.locations()['license_path']):
                 os.remove(self.locations()['license_path']) 
+            if os.path.exists(self.locations()['path']):
+                os.remove(self.locations()['path']) 
+
     
     
     def get_random_sound_from_pack(self):

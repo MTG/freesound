@@ -178,7 +178,7 @@
     {% endif %}
     
     {% if not pack.is_dirty %}
-	{% if num_sounds_ok > 0 %}
+	{% if num_sounds_ok > 0  and files_exist %}
 		<!--<div id="single_pack_sidebar">-->
 		{% if pack_geotags %}
 		    <div id="download" style="margin-top:-40px">

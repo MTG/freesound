@@ -293,7 +293,7 @@ def sound_edit(request, username, sound_id):
                     dirty_packs.append(old_pack)
             
             for p in dirty_packs:
-               p.create_license_file()
+               p.process()
 
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)

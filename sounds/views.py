@@ -215,7 +215,7 @@ def pack_download(request, username, pack_id):
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
-    response = HttpResponse(open(pack.locations("path")).read())
+    response = HttpResponse(open(pack.locations("path")).read(),content_type="text/plain")
     response['X-Archive-Files']='zip'
     return response
 
@@ -502,7 +502,7 @@ def pack(request, username, pack_id):
         else:
             pass
 
-    files_exist = os.path.exists(pack.locations("path") and os.path.exists(pack.locations("license_path"))
+    files_exist = os.path.exists(pack.locations("path")) and os.path.exists(pack.locations("license_path"))
 
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 

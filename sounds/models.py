@@ -421,8 +421,8 @@ class Pack(SocialModel):
             f.write(content.encode("UTF-8"))
             f.close()
         def get_crc(path):
-             p = subprocess.Popen(["cksum",path],stdout=subprocess.PIPE)
-             crc = int(p.communicate()[0].split(" ")[0])
+             p = subprocess.Popen(["crc32",path],stdout=subprocess.PIPE)
+             crc = p.communicate()[0].split(" ")[0][:-1]
              return crc
 
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
@@ -432,12 +432,12 @@ class Pack(SocialModel):
             attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,sound_list = pack_sounds))
             write_file(license_path,attribution)
 
-            filelist =  "%i %i %s %s \r\n" % (get_crc(license_path),os.stat(license_path).st_sze, self.locations("license_url"),"_readme_and_license.txt")
+            filelist =  "%s %i %s %s \r\n" % (get_crc(license_path),os.stat(license_path).st_size, self.locations("license_url"),"_readme_and_license.txt")
             for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
                 url = sound.locations("sendfile_url")
                 name = sound.friendly_filename()
                 try:
-                    filelist = filelist + "%i %i %s %s \r\n"%(get_crc(sound.locations("path")),sound.filesize,url,name)
+                    filelist = filelist + "%s %i %s %s \r\n"%(get_crc(sound.locations("path")),sound.filesize,url,name)
                 except:
                     audio_logger.error("error computing crc for sound %s"%name)
                     

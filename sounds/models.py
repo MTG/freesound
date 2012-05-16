@@ -363,7 +363,7 @@ def on_delete_sound(sender,instance, **kwargs):
     except:
         pass
     if instance.pack:
-        instance.pack.create_license_file()
+        instance.pack.process()
     
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)

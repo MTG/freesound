@@ -49,6 +49,14 @@ class SimilarityThread(threading.Thread):
             res = indexer.search(str(sound_id), results, str(preset))
             self.reply(res)
 
+        elif msg['type'] == 'Query':
+            query_parameters = msg.get('query_parameters', False)
+            results = msg.get('num_results', 10)
+            if not query_parameters:
+                raise Exception("You should specify the parameters for the query.")
+            res = indexer.query(query_parameters, results)
+            self.reply(res)
+
         elif msg['type'] == 'AddSound':
             sound_id = msg.get('sound_id', False)
             yaml  = msg.get('yaml', False)

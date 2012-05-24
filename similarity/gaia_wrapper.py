@@ -132,6 +132,11 @@ class GaiaWrapper:
             similar_songs = self.views[preset_name].nnSearch(query_point).get(int(number_of_results))
         return similar_songs
 
+    def query_dataset(self, query_parameters, number_of_results):
+        # FAKE implementartion
+        results = [[1,0.1],[2,0.2],[3,0.3],[4,0.4]]
+        return results
+
 
     def delete_point(self, pointname):
         pointname = str(pointname)

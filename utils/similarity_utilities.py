@@ -31,3 +31,17 @@ def get_similar_sounds(sound, preset, num_results = settings.SOUNDS_PER_PAGE ):
             cache.set(cache_key, similar_sounds, settings.SIMILARITY_CACHE_TIME)
 
     return similar_sounds[0:num_results]
+
+
+def query_for_descriptors(query_parameters, num_results = settings.SOUNDS_PER_PAGE ):
+
+    # TODO: add cache? not likely that two queries are identical...
+
+    try:
+        returned_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.query(query_parameters, num_results)]
+    except Exception, e:
+        logger.debug('Could not get a response from the similarity service (query for descriptors) (%s)\n\t%s' %\
+                     (e, traceback.format_exc()))
+        returned_sounds = []
+
+    return returned_sounds

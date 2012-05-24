@@ -11,6 +11,12 @@ class Similarity():
                   'preset': preset}
         return messenger.call_service(REQREP_ADDRESS, params)
 
+    @classmethod
+    def query(cls, query_parameters, num_results):
+        params = {'type': 'Query',
+                  'query_parameters': query_parameters,
+                  'num_results': num_results}
+        return messenger.call_service(REQREP_ADDRESS, params)
 
     @classmethod
     def add(cls, sound_id, yaml):

@@ -44,4 +44,4 @@ def query_for_descriptors(query_parameters, num_results = settings.SOUNDS_PER_PA
                      (e, traceback.format_exc()))
         returned_sounds = []
 
-    return returned_sounds
+    return returned_sounds[0:num_results]

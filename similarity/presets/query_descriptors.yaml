@@ -1,40 +1,18 @@
 {
-    "presetdetails": "This is a test preset. Uses just the spectral features of a file and uses manhattan distance.",
+    "presetdetails": "This preset is to be used when querying by descriptor values.",
     "filter": {
         "type":"select",
         "parameters": {
-            "descriptorNames": ["*lowlevel*mean",
-                                "*lowlevel*dmean",
-                                "*lowlevel*dmean2",
-                                "*lowlevel*var",
-                                "*lowlevel*dvar",
-                                "*lowlevel*dvar2",
-                                "*sfx*mean",
-                                "*sfx*dmean",
-                                "*sfx*dmean2",
-                                "*sfx*var",
-                                "*sfx*dvar",
-                                "*sfx*dvar2",
-                                ".sfx.pitch_after_max_to_before_max_energy_ratio",
-                                ".sfx.pitch_centroid",
-                                ".sfx.pitch_max_to_total",
-                                ".sfx.pitch_min_to_total",
-                                ".tonal.hpcp.mean",
-                                ".tonal.hpcp.dmean",
-                                ".tonal.hpcp.dmean2",
-                                ".tonal.hpcp.var",
-                                ".tonal.hpcp.dvar",
-                                ".tonal.hpcp.dvar2",
-                                ".rhythm.onset_rate"],
+            "descriptorNames": ["*"],
         },
     },
-    #"transform": {
-    #    "type":"normalize",
-    #    "parameters": {
-    #        "descriptorNames": "*",
-    #        "independent": true
-    #    }
-    #},
+    "transform": {
+        "type":"normalize",
+        "parameters": {
+            "descriptorNames": "*",
+            "independent": true
+        }
+    },
     "distance": {
         "type":"euclidean",
         "parameters": {

@@ -133,8 +133,48 @@ class GaiaWrapper:
         return similar_songs
 
     def query_dataset(self, query_parameters, number_of_results):
-        # FAKE implementartion
-        results = [[1,0.1],[2,0.2],[3,0.3],[4,0.4]]
+
+        preset_name = 'query_descriptors'
+        trans_hist = self.preset_datasets[preset_name].history().toPython()
+        layout = self.preset_datasets[preset_name].layout()
+        view = self.views[preset_name]
+
+        # Get normalization coefficients to transform the input data (get info from the last transformation which has been a normalization)
+        coeffs = None
+        for i in range(0,len(trans_hist)):
+            if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
+                coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
+
+        # Transform input params to the normalized feature space and add them to a query point
+        q = Point()
+        q.setLayout(layout)
+        feature_names = []
+        for param in query_parameters['target'].keys():
+            feature_names.append(param)
+            value = query_parameters['target'][param]
+            if coeffs:
+                a = coeffs[param]['a']
+                b = coeffs[param]['b']
+
+                if len(a) == 1:
+                    norm_value = a[0]*value + b[0]
+                else:
+                    norm_value = []
+                    for i in range(0,len(a)):
+                        norm_value.append(a[i]*value[i]+b[i])
+                q.setValue(param, norm_value)
+            else:
+                q.setValue(param, value)
+
+        # Parse filter info and costruct filter syntax
+        filter = ""
+        for param in query_parameters['filter'].keys():
+            pass
+
+        metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
+        results = view.nnSearch(q,filter,metric).get(int(number_of_results))
+        #results = [[1,0.1],[2,0.2],[3,0.3],[4,0.4]]
+
         return results
 
 

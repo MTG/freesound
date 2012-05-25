@@ -135,9 +135,9 @@ class GaiaWrapper:
     def query_dataset(self, query_parameters, number_of_results):
 
         preset_name = 'lowlevel'
+        view = self.views[preset_name]
         trans_hist = self.preset_datasets[preset_name].history().toPython()
         layout = self.preset_datasets[preset_name].layout()
-        view = self.views[preset_name]
 
         # Get normalization coefficients to transform the input data (get info from the last transformation which has been a normalization)
         coeffs = None

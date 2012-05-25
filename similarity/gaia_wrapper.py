@@ -134,7 +134,7 @@ class GaiaWrapper:
 
     def query_dataset(self, query_parameters, number_of_results):
 
-        preset_name = 'lowlevel'
+        preset_name = 'query_parameters'
         view = self.views[preset_name]
         trans_hist = self.preset_datasets[preset_name].history().toPython()
         layout = self.preset_datasets[preset_name].layout()
@@ -170,13 +170,13 @@ class GaiaWrapper:
                 q.setValue(str(param), value)
 
         # Parse filter info and costruct filter syntax
+        # TODO: filtering interface
         filter = ""
         for param in query_parameters['filter'].keys():
             pass
 
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
         results = view.nnSearch(q,filter,metric).get(int(number_of_results))
-        #results = [[1,0.1],[2,0.2],[3,0.3],[4,0.4]]
 
         return results
 

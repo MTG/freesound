@@ -134,7 +134,7 @@ class GaiaWrapper:
 
     def query_dataset(self, query_parameters, number_of_results):
 
-        preset_name = 'query_parameters'
+        preset_name = 'query_descriptors'
         view = self.views[preset_name]
         trans_hist = self.preset_datasets[preset_name].history().toPython()
         layout = self.preset_datasets[preset_name].layout()

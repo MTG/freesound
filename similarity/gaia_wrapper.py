@@ -164,10 +164,10 @@ class GaiaWrapper:
                         norm_value.append(a[i]*value[i]+b[i])
 
                 text = str(type(param)) + " " + str(type(norm_value))
-                logger.debug('ERROR: ' + text)
-                q.setValue(param, norm_value)
+
+                q.setValue(str(param), norm_value)
             else:
-                q.setValue(param, value)
+                q.setValue(str(param), value)
 
         # Parse filter info and costruct filter syntax
         filter = ""

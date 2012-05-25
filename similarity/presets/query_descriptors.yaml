@@ -3,7 +3,7 @@
     "filter": {
         "type":"select",
         "parameters": {
-            "descriptorNames": ["*"],
+            "descriptorNames": "*",
         },
     },
     "transform": {

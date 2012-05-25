@@ -150,7 +150,7 @@ class GaiaWrapper:
         q.setLayout(layout)
         feature_names = []
         for param in query_parameters['target'].keys():
-            feature_names.append(param)
+            feature_names.append(str(param))
             value = query_parameters['target'][param]
             if coeffs:
                 a = coeffs[param]['a']

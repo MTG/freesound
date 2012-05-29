@@ -2,6 +2,7 @@ import os, yaml, shutil, logging
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
 from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, PRESET_DIR, PRESETS, SAVE_ON_CHANGE
 
+
 logger = logging.getLogger('similarity')
 
 class GaiaWrapper:
@@ -152,7 +153,9 @@ class GaiaWrapper:
         for param in query_parameters['target'].keys():
             feature_names.append(str(param))
             value = query_parameters['target'][param]
-            if coeffs:
+            # If there are coefficients (there has been some normalization), and for the current parameter there are
+            # particualr coeficcients (if the parameter is non numerical there will be no normalization coeffs)
+            if coeffs and param in coeffs.keys():
                 a = coeffs[param]['a']
                 b = coeffs[param]['b']
 

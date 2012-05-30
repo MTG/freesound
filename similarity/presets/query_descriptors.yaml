@@ -27,7 +27,9 @@
                                ".tonal.hpcp.dvar2",
                                ".tonal.key_key",
                                ".tonal.key_strength",
-                               ".rhythm.onset_rate"],
+                               ".rhythm.onset_rate",
+                               ".rhythm.bpm",
+                               ".metadata.audio_properties.length"],
         },
     },
     "transform": {

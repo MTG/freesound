@@ -177,6 +177,12 @@ class GaiaWrapper:
                         q.setValue(str(param), value)
 
 
+
+        text_to_debug = "VALUE: " + str(q.value('.lowlevel.pitch.mean')) + "\n"
+        text_to_debug += "COEFFS: a:" + str(coeffs['.lowlevel.pitch.mean']['a'][0]) + " b:" + str(coeffs['.lowlevel.pitch.mean']['b'][0]) + "\n"
+        logger.debug(text_to_debug)
+
+
         ##############
         # PARSE FILTER
         ##############

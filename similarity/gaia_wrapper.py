@@ -178,10 +178,11 @@ class GaiaWrapper:
 
 
         # TODO:eliminate this
+        '''
         text_to_debug = "VALUE: " + str(q.value('.lowlevel.pitch.mean')) + "\n"
         text_to_debug += "COEFFS: a:" + str(coeffs['.lowlevel.pitch.mean']['a'][0]) + " b:" + str(coeffs['.lowlevel.pitch.mean']['b'][0]) + "\n"
         logger.debug(text_to_debug)
-
+        '''
 
         ##############
         # PARSE FILTER
@@ -198,6 +199,7 @@ class GaiaWrapper:
         results = view.nnSearch(q,str(filter),metric).get(int(number_of_results))
 
         # TODO:eliminate this
+        '''
         logger.debug("TestingA: " + str(results) )
         p = Point()
         DB = DataSet()
@@ -207,7 +209,7 @@ class GaiaWrapper:
         metric = DistanceFunctionFactory.create('euclidean', DB.layout(), {})
         results2 = view.nnSearch(p,str(filter),metric).get(10)
         logger.debug("TestingB: " + str(results2) )
-
+        '''
 
         return results
 

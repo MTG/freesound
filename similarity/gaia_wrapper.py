@@ -190,6 +190,18 @@ class GaiaWrapper:
         logger.debug("Performing content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
         results = view.nnSearch(q,str(filter),metric).get(int(number_of_results))
+
+        logger.debug("mooooore")
+        p = Point()
+        DB = DataSet()
+        DB.load('/home/fsweb/freesound-similarity/query_descriptors.db')
+        p.setLayout(DB.layout())
+        view = View(DB)
+        metric = DistanceFunctionFactory.create('euclidean', DB.layout(), {})
+        results = view.nnSearch(p,str(f),metric).get(10)
+        logger.debug("Testing: " + str(results) )
+
+
         return results
 
     def prepend_value_label(self, f):

@@ -181,15 +181,15 @@ def parse_filter(filter_string):
                 f['value'] = float(f['value'])
             elif f['type'] == 'ARRAY':
                 f['value'] = [float(x) for x in f['value'].split(',')]
-            #elif f['type'] == 'STRING':
-            #    f['value'] = str(f['value'][1:-1])
+            elif f['type'] == 'STRING':
+                f['value'] = str(f['value'].replace('sharp','#'))
             elif f['type'] == 'RANGE':
                 min_str = f['value'][:f['value'].find("TO")-1]
                 if min_str != "*":
                     min_v = float(min_str)
                 else:
                     min_v = None
-                max_str = f['value'][f['value'].find("TO")+3:]
+                max_str = f['value'][f['value'].find("TO")+3:].replace(']','')
                 if max_str != "*":
                     max_v = float(max_str)
                 else:

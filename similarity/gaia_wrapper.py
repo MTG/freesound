@@ -177,7 +177,7 @@ class GaiaWrapper:
                         q.setValue(str(param), value)
 
 
-
+        # TODO:eliminate this
         text_to_debug = "VALUE: " + str(q.value('.lowlevel.pitch.mean')) + "\n"
         text_to_debug += "COEFFS: a:" + str(coeffs['.lowlevel.pitch.mean']['a'][0]) + " b:" + str(coeffs['.lowlevel.pitch.mean']['b'][0]) + "\n"
         logger.debug(text_to_debug)
@@ -196,17 +196,17 @@ class GaiaWrapper:
         logger.debug("Performing content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
         results = view.nnSearch(q,str(filter),metric).get(int(number_of_results))
+
+        # TODO:eliminate this
         logger.debug("TestingA: " + str(results) )
-
-
         p = Point()
         DB = DataSet()
         DB.load('/home/fsweb/freesound-similarity/query_descriptors.db')
         p.setLayout(DB.layout())
         view = View(DB)
         metric = DistanceFunctionFactory.create('euclidean', DB.layout(), {})
-        results = view.nnSearch(p,str(filter),metric).get(10)
-        logger.debug("TestingB: " + str(results) )
+        results2 = view.nnSearch(p,str(filter),metric).get(10)
+        logger.debug("TestingB: " + str(results2) )
 
 
         return results
@@ -218,6 +218,9 @@ class GaiaWrapper:
             return "label"
 
     def parse_filter_list(self, filter_list, coeffs):
+
+        # TODO: eliminate this..?
+        coeffs = None
 
         filter = "WHERE"
         for f in filter_list:

@@ -187,6 +187,7 @@ class GaiaWrapper:
             filter = self.parse_filter_list(query_parameters['filter'], coeffs)
 
         # Do query!
+        logger.debug("Performing content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
         results = view.nnSearch(q,str(filter),metric).get(int(number_of_results))
         return results

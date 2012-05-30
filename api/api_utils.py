@@ -116,7 +116,7 @@ def parse_filter(filter_string):
             next_space_pos = current_pos + 1
             for i in range(0,3):
                 next_space_pos = filter_string.find(' ',next_space_pos + 1)
-            right_part = filter_string[current_pos+1:next_space_pos]
+            right_part = filter_string[current_pos+2:next_space_pos]
             type_val = "RANGE"
 
         elif filter_string[current_pos+1] == '"':
@@ -184,12 +184,12 @@ def parse_filter(filter_string):
             #elif f['type'] == 'STRING':
             #    f['value'] = str(f['value'][1:-1])
             elif f['type'] == 'RANGE':
-                min_str = f['value'][1:f['value'].find("TO")-1]
+                min_str = f['value'][:f['value'].find("TO")-1]
                 if min_str != "*":
                     min_v = float(min_str)
                 else:
                     min_v = None
-                max_str = f['value'][f['value'].find("TO")+3:-1]
+                max_str = f['value'][f['value'].find("TO")+3:]
                 if max_str != "*":
                     max_v = float(max_str)
                 else:

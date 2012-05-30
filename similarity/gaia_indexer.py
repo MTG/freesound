@@ -79,7 +79,7 @@ class GaiaIndexer:
         '''
         The 'query parameters' argument must be a dictionary...
         '''
-        logger.debug('Querying with parameters %s' % str(query_parameters))
+        #logger.debug('Querying with parameters %s' % str(query_parameters))
         self.__acquire_shared(READ_TIMEOUT)
         try:
             return self.index.query_dataset(query_parameters, no_of_results)

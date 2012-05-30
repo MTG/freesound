@@ -188,7 +188,7 @@ class GaiaWrapper:
 
         # Do query!
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
-        results = view.nnSearch(q,filter,metric).get(int(number_of_results))
+        results = view.nnSearch(q,str(filter),metric).get(int(number_of_results))
         return results
 
     def prepend_value_label(self, f):

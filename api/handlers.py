@@ -14,7 +14,7 @@ from utils.pagination import paginate
 from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
-from utils.similarity_utilities import get_similar_sounds
+from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
 from api.api_utils import auth, ReturnError
 import os
 from django.contrib.syndication.views import Feed
@@ -414,6 +414,47 @@ class SoundSearchHandler(BaseHandler):
         if spp:
             link += "&sounds_per_page=" +  str(spp)
         return link
+
+
+class SoundContentSearchHandler(BaseHandler):
+    '''
+    api endpoint:   /sounds/content_search
+    '''
+    allowed_methods = ('GET',)
+
+    '''
+    input:          t, f, p
+    output:         #paginated_search_results#
+    curl:           curl http://www.freesound.org/api/sounds/content_search/?t=".lowlevel.pitch.mean:220.56 .tonal.hpcp:1,3,4,5,6"
+    '''
+
+    @auth()
+    def read(self, request):
+        t = request.GET.get("t", None)
+        f = request.GET.get("f", None)
+
+        if not t and not f:
+            # TODO: correct error code...
+            raise ReturnError(404, "InvalidUrl", {"explanation": "Introduce either a target, a filter or both."})
+
+        try:
+            results = query_for_descriptors({'target':t,'filter':f}, int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
+        except e:
+            raise ReturnError(500, "ContentSearchError", {"explanation": e})
+
+        sounds = []
+        for result in results :
+            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=result[0]), custom_fields = request.GET.get('fields', False))
+            sound['distance'] = result[1]
+            sounds.append( sound )
+
+        result = {'sounds': sounds, 'num_results': len(results)}
+        add_request_id(request,result)
+
+        logger.info("Content searching, api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        return result
+
+
 
 class SoundHandler(BaseHandler):
     '''

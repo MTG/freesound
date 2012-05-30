@@ -146,43 +146,100 @@ class GaiaWrapper:
             if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
                 coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
 
+        ##############
+        # PARSE TARGET
+        ##############
+
         # Transform input params to the normalized feature space and add them to a query point
+        # If there are no params specified in the target, the point is set as empty (probably random sounds are returned)
         q = Point()
         q.setLayout(layout)
         feature_names = []
-        for param in query_parameters['target'].keys():
-            feature_names.append(str(param))
-            value = query_parameters['target'][param]
-            # If there are coefficients (there has been some normalization), and for the current parameter there are
-            # particualr coeficcients (if the parameter is non numerical there will be no normalization coeffs)
-            if coeffs and param in coeffs.keys():
-                a = coeffs[param]['a']
-                b = coeffs[param]['b']
+        # If some target has been specified...
+        if query_parameters['target'].keys():
+            for param in query_parameters['target'].keys():
+                # Only add numerical parameters. Non numerical ones (like key) are only used as filters
+                if param in coeffs.keys():
+                    feature_names.append(str(param))
+                    value = query_parameters['target'][param]
+                    if coeffs:
+                        a = coeffs[param]['a']
+                        b = coeffs[param]['b']
+                        if len(a) == 1:
+                            norm_value = a[0]*value + b[0]
+                        else:
+                            norm_value = []
+                            for i in range(0,len(a)):
+                                norm_value.append(a[i]*value[i]+b[i])
+                        #text = str(type(param)) + " " + str(type(norm_value))
+                        q.setValue(str(param), norm_value)
+                    else:
+                        q.setValue(str(param), value)
 
-                if len(a) == 1:
-                    norm_value = a[0]*value + b[0]
-                else:
-                    norm_value = []
-                    for i in range(0,len(a)):
-                        norm_value.append(a[i]*value[i]+b[i])
 
-                text = str(type(param)) + " " + str(type(norm_value))
+        ##############
+        # PARSE FILTER
+        ##############
 
-                q.setValue(str(param), norm_value)
-            else:
-                q.setValue(str(param), value)
-
-        # Parse filter info and costruct filter syntax
-        # TODO: filtering interface
         filter = ""
-        for param in query_parameters['filter'].keys():
-            pass
+        # If some filter has been specified...
+        if query_parameters['filter']:
+            filter = self.parse_filter_list(query_parameters['filter'], coeffs)
 
+        # Do query!
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
         results = view.nnSearch(q,filter,metric).get(int(number_of_results))
-
         return results
 
+    def prepend_value_label(self, f):
+        if f['type'] == 'NUMBER' or f['type'] == 'RANGE' or f['type'] == 'ARRAY':
+            return "value"
+        else:
+            return "label"
+
+    def parse_filter_list(self, filter_list, coeffs):
+
+        filter = "WHERE"
+        for f in filter_list:
+            if type(f) != dict:
+                filter += f
+            else:
+                if f['type'] == 'NUMBER' or f['type'] == 'STRING' or f['type'] == 'ARRAY':
+
+                    if f['type'] == 'NUMBER':
+                        if coeffs:
+                            norm_value = coeffs[f['feature']]['a'][0] * f['value'] + coeffs[f['feature']]['b'][0]
+                        else:
+                            norm_value = f['value']
+                    elif f['type'] == 'ARRAY':
+                        if coeffs:
+                            norm_value = []
+                            for i in range(len(f['value'])):
+                                norm_value.append(coeffs[f['feature']]['a'][i] * f['value'][i] + coeffs[f['feature']]['b'][i])
+                        else:
+                            norm_value = f['value']
+                    else:
+                        norm_value = f['value']
+                    filter += " " + self.prepend_value_label(f) + f['feature'] + "=" + str(norm_value) + " "
+
+                else:
+                    filter += " "
+                    if f['value']['min']:
+                        if coeffs:
+                            norm_value = coeffs[f['feature']]['a'][0] * f['value']['min'] + coeffs[f['feature']]['b'][0]
+                        else:
+                            norm_value = f['value']['min']
+                        filter += self.prepend_value_label(f) + f['feature'] + ">" + str(norm_value) + " "
+                    if f['value']['max']:
+                        if f['value']['min']:
+                            filter += "AND "
+                        if coeffs:
+                            norm_value = coeffs[f['feature']]['a'][0] * f['value']['max'] + coeffs[f['feature']]['b'][0]
+                        else:
+                            norm_value = f['value']['max']
+                        filter += self.prepend_value_label(f) + f['feature'] + "<" + str(norm_value) + " "
+
+        return filter
 
     def delete_point(self, pointname):
         pointname = str(pointname)

@@ -13,6 +13,7 @@ class AR(Resource):
 urlpatterns = patterns('',
     # sounds
     url(r'^sounds/search/$',                                        AR(SoundSearchHandler),         name='api-search'),
+    url(r'^sounds/content_search/$',                                AR(SoundContentSearchHandler),  name='api-content-search'),
     url(r'^sounds/(?P<sound_id>\d+)/$',                             AR(SoundHandler),               name='api-single-sound'),
     url(r'^sounds/(?P<sound_id>\d+)/analysis/$',                    AR(SoundAnalysisHandler),       name='api-sound-analysis'),
     url(r'^sounds/(?P<sound_id>\d+)/analysis(?P<filter>/[\w\/]+)/$',AR(SoundAnalysisHandler),       name='api-sound-analysis-filtered'),

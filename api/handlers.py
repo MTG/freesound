@@ -437,10 +437,17 @@ class SoundContentSearchHandler(BaseHandler):
             # TODO: correct error code...
             raise ReturnError(404, "InvalidUrl", {"explanation": "Introduce either a target, a filter or both."})
 
-        pf = parse_filter(f)
-        pt = parse_target(t)
+        if f:
+            pf = parse_filter(f)
+        else:
+            pf = []
 
-        if type(pf) != dict or type(pt) != list:
+        if t:
+            pt = parse_target(t)
+        else:
+            pt = {}
+
+        if type(pf) != list or type(pt) != dict:
             raise ReturnError(404, "InvalidUrl", {"explanation": "Invalid filter or target."})
 
         try:

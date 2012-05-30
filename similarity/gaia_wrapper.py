@@ -198,7 +198,7 @@ class GaiaWrapper:
         p.setLayout(DB.layout())
         view = View(DB)
         metric = DistanceFunctionFactory.create('euclidean', DB.layout(), {})
-        results = view.nnSearch(p,str(f),metric).get(10)
+        results = view.nnSearch(p,str(filter),metric).get(10)
         logger.debug("Testing: " + str(results) )
 
 

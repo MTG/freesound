@@ -15,7 +15,7 @@ from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
 from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
-from api.api_utils import auth, ReturnError
+from api.api_utils import auth, ReturnError, parse_filter, parse_target
 import os
 from django.contrib.syndication.views import Feed
 
@@ -437,8 +437,14 @@ class SoundContentSearchHandler(BaseHandler):
             # TODO: correct error code...
             raise ReturnError(404, "InvalidUrl", {"explanation": "Introduce either a target, a filter or both."})
 
+        pf = parse_filter(f)
+        pt = parse_target(t)
+
+        if type(f) != dict or type(t) != list:
+            raise ReturnError(404, "InvalidUrl", {"explanation": "Invalid filter or target."})
+
         try:
-            results = query_for_descriptors({'target':t,'filter':f}, int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
+            results = query_for_descriptors({'target':pt,'filter':pf}, int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
         except e:
             raise ReturnError(500, "ContentSearchError", {"explanation": e})
 

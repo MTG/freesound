@@ -425,7 +425,7 @@ class SoundContentSearchHandler(BaseHandler):
     '''
     input:          t, f, p
     output:         #paginated_search_results#
-    curl:           curl http://www.freesound.org/api/sounds/content_search/?t=".lowlevel.pitch.mean:220.56 .tonal.hpcp:1,3,4,5,6"
+    curl:           curl http://www.freesound.org/api/sounds/content_search/?t=".lowlevel.pitch.mean:220.56"
     '''
 
     @auth()
@@ -440,7 +440,7 @@ class SoundContentSearchHandler(BaseHandler):
         pf = parse_filter(f)
         pt = parse_target(t)
 
-        if type(f) != dict or type(t) != list:
+        if type(pf) != dict or type(pt) != list:
             raise ReturnError(404, "InvalidUrl", {"explanation": "Invalid filter or target."})
 
         try:
@@ -457,7 +457,7 @@ class SoundContentSearchHandler(BaseHandler):
         result = {'sounds': sounds, 'num_results': len(results)}
         add_request_id(request,result)
 
-        logger.info("Content searching, api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Content searching, t=" + str(t) + ", f=" + str(f) + ", api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
 

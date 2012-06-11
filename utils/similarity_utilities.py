@@ -33,9 +33,10 @@ def get_similar_sounds(sound, preset, num_results = settings.SOUNDS_PER_PAGE ):
     return similar_sounds[0:num_results]
 
 
-def query_for_descriptors(query_parameters, num_results = settings.SOUNDS_PER_PAGE ):
-
-    cache_key = "content-based-search-%s-%s" % (str(query_parameters),num_results)
+def query_for_descriptors(original_t, original_f, query_parameters, num_results):
+    original_t = original_t.replace(" ","")
+    original_f = original_f.replace(" ","")
+    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (original_t,original_f,num_results)
 
     # Don't use the cache when we're debugging
     if settings.DEBUG:

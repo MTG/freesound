@@ -430,8 +430,8 @@ class SoundContentSearchHandler(BaseHandler):
 
     @auth()
     def read(self, request):
-        t = request.GET.get("t", None)
-        f = request.GET.get("f", None)
+        t = request.GET.get("t", "")
+        f = request.GET.get("f", "")
 
         if not t and not f:
             # TODO: correct error code...
@@ -453,20 +453,35 @@ class SoundContentSearchHandler(BaseHandler):
         try:
             results = query_for_descriptors({'target':pt,'filter':pf}, int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
         except e:
-            raise ReturnError(500, "ContentSearchError", {"explanation": e})
+            raise ReturnError(500, "ContentBasedSearchError", {"explanation": e})
 
         sounds = []
         for result in results :
-            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=result[0]), custom_fields = request.GET.get('fields', False))
+            sound = Sound.objects.select_related('user').get(id=result[0])
             sound['distance'] = result[1]
             sounds.append( sound )
 
-        result = {'sounds': sounds, 'num_results': len(results)}
+        paginator = paginate(request, sounds, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
+        page = paginator['page']
+        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
+
+        if page.has_other_pages():
+            if page.has_previous():
+                result['previous'] = self.__construct_pagination_link(str(t), str(f), page.previous_page_number(), request.GET.get('sounds_per_page',None))
+            if page.has_next():
+                result['next'] = self.__construct_pagination_link(str(t), str(f), page.next_page_number(), request.GET.get('sounds_per_page',None))
+
         add_request_id(request,result)
 
         logger.info("Content searching, t=" + str(t) + ", f=" + str(f) + ", api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result
 
+    def __construct_pagination_link(self, t, f, p, spp):
+        link = prepend_base(reverse('api-content-search')+'?t=%s&f=%s&p=%s' % (t,f,p))#get_user_sounds_api_url(u)+'?p=%s' % p
+        if spp:
+            link += "&sounds_per_page=" + str(spp)
+        return link
 
 
 class SoundHandler(BaseHandler):

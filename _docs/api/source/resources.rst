@@ -291,6 +291,106 @@ next         URI      The URI to go forward one page in the search results.
   }
 
 
+Sound Content-based Search resource
+===================================
+
+Content-based search can be used as an alternative way for querying the freesound database. With content-based search you can
+perform queries such as "give me all the sounds whose pitch is between 218 and 222 Hz", or "all the sounds whose key is A#", or
+"20 sounds that are closer to having a spectral centroid of 200hz and a pitch of 180hz"... Here (:ref:`content-search-descriptors`) you can check
+which descriptors can be used in the content based search.
+
+Generally there are two ways to specify a query for content based search. One is defining a *target* and the other a *filter*. They can also be combined.
+By defining *target* you specify a number of descriptor names and their desired values, and the api returns a list of sounds that closely matches the desired descriptor values.
+Sounds are sorted by similarity, thus the first sound of the returned list will be the one whose indicated descriptor values are closer to the values indicated in the target.
+When using a *filter*, only the sounds that comply with the filter constraints are returned. Filter constraints can be defined as ranges for particular descriptors (ex: pitch between X and Y) or exact values for certain properties (ex: pitch equal to 220 or key equal to A#).
+
+
+URI
+---
+
+::
+
+  /sounds/content_search
+
+The only allowed method is GET.
+
+GET
+---
+
+Request
+'''''''
+
+
+**Parameters**
+
+==================  ======  ========  =================================
+Name                Type    Required  Description
+==================  ======  ========  =================================
+t                   string  no        Target
+f                   string  no	      Filter
+p                   number  no	      Page number (same as in search resource)
+fields	            string  no	      Fields (same as in search resource)
+sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
+max_results         number  no        The maximum number of results to get in each query (default = 15)
+==================  ======  ========  =================================
+
+**t for target**
+
+A target is defined as a series of descriptors and their values. Descriptors used as targets **can only be** either numerical or vectors, but not any "stringed" descriptor such as *.tonal.key_key*.
+Several descriptors can be defined in the target concatenating them with blank spaces. Here are some examples::
+
+  t=.lowlevel.pitch.mean:220
+  t=.lowlevel.pitch.mean:220 .lowlevel.pitch_salience.mean:1.0
+  t=.sfx.tristimulus.mean:0.8,0.3,0.0
+
+Notice that when using a target without a filter, the api will ALLWAYS return sounds (even if they are really distant).
+Actually, content-based search using a target and no filter can be considered as a way of similarity search by manually specifying the descriptors to use. The whole database is *sorted* according to the specified target.
+
+
+**f for filter**
+
+Filters are defined with a similar syntax as in the normal query filters. In this case, also non numerical descriptors can be used.
+Content-based search filters also allow AND/OR operators and pharentheses to specify complex conditions.
+
+To only return sounds that have a particular descriptor value it must be indicated as::
+
+  descriptor_name:value
+
+Notice that defining an exact value for a filter is only recommended for non numerical descriptors, as for numerical ones it might be hard to find an EXACT match (it is better to define a very small range).
+String descriptors must be sorrounded by double quotes ("). Note that character # must be replaced by the string "sharp" as in urls # character has another meaning (see the example).
+
+To indicate filter ranges the syntax is the same as in the normal search::
+
+  [start TO end]
+  [* TO end]
+  [start TO *]
+
+Here you have some examples of defining filters::
+
+  f=.tonal.key_key:"Asharp"
+  f=.lowlevel.spectral_centroid.mean:[500 TO *]
+  f=.lowlevel.pitch.mean:[219 TO 221]
+  f=(.tonal.key_key:"C" AND .tonal.key_scale:"major") OR (.tonal.key_key:"A" AND .tonal.key_scale:"minor")
+  f=.tonal.key_key:"C" .tonal.key_scale="major" .tonal.key_strength:[0.8 TO *]
+
+
+
+
+**Curl Examples**
+
+::
+
+  curl http://www.freesound.org/api/sounds/content_search?t=.sfx.tristimulus.mean:0.8,0.3,0.0
+  curl http://www.freesound.org/api/sounds/content_search?f=.tonal.key_key:"Asharp"
+  curl http://www.freesound.org/api/sounds/content_search?f=(.tonal.key_key:"C" AND .tonal.key_scale:"major") OR (.tonal.key_key:"A" AND .tonal.key_scale:"minor")&t=.tonal.key_strength:1.0&max_results:5
+
+
+
+Sound content-based search response
+'''''''''''''''''''''''''''''''''''
+The response is the same as the :ref:`sound-search-response`. Sounds are sorted by similarity to the gived target (if given). If no target is specified, sounds are sorted by id (ascendent order).
+
+
 
 Sound resource
 ==============

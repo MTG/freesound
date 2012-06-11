@@ -10,3 +10,4 @@ Contents:
 
    analysis_docs.rst
    analysis_example.rst
+   allowed_descriptors_for_content_based_search.rst

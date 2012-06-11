@@ -218,6 +218,7 @@ ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS = [
     '.tonal.hpcp.mean',
     '.tonal.hpcp.var',
     '.tonal.key_key',
+    '.tonal.key_scale',
     '.tonal.key_strength']
 
 def build_error_response(e, request):
@@ -323,9 +324,6 @@ def parse_filter(filter_string):
         previous_space_pos = filter_string.rfind(' ',0,current_pos)
         feature_name = filter_string[previous_space_pos+1:current_pos]
 
-        if feature_name not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS:
-            return 'Filter error: At least one feature name does not match with any descirptor name in our database (' + str(feature_name) + '). '
-
         # Right part (value, range)
         if filter_string[current_pos+1] == '[':
             next_space_pos = current_pos + 1
@@ -352,20 +350,33 @@ def parse_filter(filter_string):
             feature_name = feature_name.replace(op,"")
             right_part = right_part.replace(op,"")
 
+        if feature_name not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS:
+            return 'Filter error: At least one feature name does not match with any descirptor name in our database (' + str(feature_name) + '). '
+
         filter_struct.append({'feature':feature_name,'type':type_val,'value':right_part,'delimiter_position':current_pos,'id':len(filter_struct)+1})
 
     # Find OPERATORS clauses
+    aux_ops = {}
     for op in operators:
         min_pos = 0
         while filter_string.find(op,min_pos) != -1:
             current_pos = filter_string.find(op,min_pos)
             min_pos = current_pos + 1
-            # Insert OPERATOR clause in appropiate place of filter_struct
-            for i,f in enumerate(filter_struct):
-                if type(f) == dict:
-                    if f['delimiter_position'] > current_pos:
-                        filter_struct.insert(i,op)
-                        break
+            aux_ops[current_pos] = op#.append({'op':op,'pos':current_pos})
+    keylist = aux_ops.keys()
+    keylist.sort()
+    for key in keylist:
+        op = aux_ops[key]
+        current_pos = key
+
+        # Insert OPERATOR clause in appropiate place of filter_struct
+        for i,f in enumerate(filter_struct):
+            if type(f) == dict:
+                if f['delimiter_position'] > current_pos:
+                    filter_struct.insert(i,op)
+                    break
+        if filter_struct[-1]['delimiter_position'] < current_pos:
+            filter_struct.append(op)
 
     # Add AND operators by default (only where there are no other operators between two features)
     final_filter_struct = []
@@ -387,7 +398,7 @@ def parse_filter(filter_string):
 
     # Check good pairing of parenthesis
     if final_filter_struct.count("(") != final_filter_struct.count(")"):
-        return "BAD FILTER"
+        return "Bad filter syntax."
 
     # Change values for corrent types
     for f in final_filter_struct:

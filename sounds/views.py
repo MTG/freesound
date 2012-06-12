@@ -209,7 +209,6 @@ def sound_download(request, username, sound_id):
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 def pack_download(request, username, pack_id):
-    from django.http import HttpResponse
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))

@@ -114,6 +114,7 @@ class Sound(SocialModel):
     filesize = models.IntegerField(default=0)
     channels = models.IntegerField(default=0)
     md5 = models.CharField(max_length=32, unique=True, db_index=True)
+    crc = models.CharField(max_length=8)
     is_index_dirty = models.BooleanField(null=False, default=True)
 
     # moderation
@@ -385,6 +386,7 @@ class Pack(SocialModel):
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)
+    license_crc = models.CharField(max_length=8)
 
     def __unicode__(self):
         return self.name

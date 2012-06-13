@@ -471,7 +471,7 @@ def pack(request, username, pack_id):
     available = True
     
     if num_sounds_ok == 0 and pack.num_sounds != 0:
-        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.'
+        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
         available = False
     else :
         if not os.path.exists(pack.locations("path")):

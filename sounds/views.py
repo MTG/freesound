@@ -109,7 +109,7 @@ def random(request):
 
 def packs(request):
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
+    if order not in ["name", "-last_update", "-created", "-num_sounds","-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related() \
                      .filter(sound__moderation_state="OK", sound__processing_state="OK") \
@@ -208,15 +208,15 @@ def sound_download(request, username, sound_id):
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
+
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
-    response = HttpResponse(open(pack.locations("path")).read(),content_type="text/plain")
-    response['X-Archive-Files']='zip'
-    return response
+    return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
+
 
 @login_required
 def sound_edit(request, username, sound_id):
@@ -276,7 +276,6 @@ def sound_edit(request, username, sound_id):
         pack_form = PackForm(packs, request.POST, prefix="pack")
         if pack_form.is_valid():
             data = pack_form.cleaned_data
-            dirty_packs = []
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
                 sound.pack = pack
@@ -285,15 +284,6 @@ def sound_edit(request, username, sound_id):
                 old_pack = sound.pack
                 if new_pack != old_pack:
                     sound.pack = new_pack
-
-                if new_pack:
-                    dirty_packs.append(new_pack)
-                if old_pack:
-                    dirty_packs.append(old_pack)
-            
-            for p in dirty_packs:
-               p.process()
-
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
             return HttpResponseRedirect(sound.get_absolute_url())
@@ -483,6 +473,9 @@ def pack(request, username, pack_id):
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
+        if not os.path.exists(pack.locations("path")):
+            messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
+        
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 
@@ -499,9 +492,7 @@ def pack(request, username, pack_id):
             pack.description = form.cleaned_data['description']
             pack.save()
         else:
-            pass
-
-    files_exist = os.path.exists(pack.locations("path")) and os.path.exists(pack.locations("license_path"))
+            pass        
 
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 
@@ -624,4 +615,3 @@ def pack_downloaders(request, username, pack_id):
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
-

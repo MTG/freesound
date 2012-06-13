@@ -10,7 +10,7 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random, datetime, gearman, tempfile, shutil, subprocess
+import os, logging, random, datetime, gearman, tempfile, shutil
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
@@ -362,20 +362,18 @@ def on_delete_sound(sender,instance, **kwargs):
             instance.geotag.delete()
     except:
         pass
-    if instance.pack:
-        p = instance.pack
-        p.sound_set.remove(instance)
-        p.save()
-        p.process()
     
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
     Similarity.delete(instance.id)
-
 post_delete.connect(on_delete_sound, sender=Sound)
 
+def recreate_pack(sender,instance,**kwargs):
+    if instance.moderation_state=="OK" and instance.pack:
+        instance.pack.process()
     
+post_save.connect(recreate_pack, sender=Sound)
 
 class Pack(SocialModel):
     user = models.ForeignKey(User)
@@ -406,9 +404,7 @@ class Pack(SocialModel):
     def locations(self):
         return dict(
                     sendfile_url = settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,
-                    license_url = settings.PACKS_SENDFILE_URL + "%d_license.txt" % self.id,
-                    license_path = os.path.join(settings.PACKS_PATH, "%d_license.txt" % self.id),
-                    path = os.path.join(settings.PACKS_PATH, "%d.txt" % self.id),
+                    path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
                    )
 
     def process(self):
@@ -417,42 +413,43 @@ class Pack(SocialModel):
         audio_logger.info("Send pack with id %s to queue 'create_pack_zip'" % self.id)
         
     def create_zip(self):
+        import zipfile
         from django.template.loader import render_to_string
+        logger = logging.getLogger("audio")
         
-        def write_file(path,content):
-            f = open(path,'w')
-            f.write(content.encode("UTF-8"))
-            f.close()
-        def get_crc(path):
-             p = subprocess.Popen(["crc32",path],stdout=subprocess.PIPE)
-             crc = p.communicate()[0].split(" ")[0][:-1]
-             return crc
+        num_pending = self.sound_set.exclude(processing_state="OK", moderation_state="OK").count()
+        
+        if num_pending > 0: 
+            logger.info("Omitting zip for pack %d due to unmoderated or unprocessed sounds" % self.id)
+            return
+        num_sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").count()
+        if num_sounds == 0:
+            if os.path.exists(self.locations("path")):
+                logger.info("Pack %d has now zero sounds, deleting ..." % self.id)
+                os.unlink(self.locations("path"))
+                return
+        logger.info("creating pack zip for pack %d" % self.id)
+        logger.info("\twill save in %s" % self.locations("path"))
+        tmp_path = "/home/fsweb/freesound-data/temp/"+str(self.id)+".zip"
+        zip_file = zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_STORED, True)
 
-        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
-        if len(pack_sounds)>0:
-            licenses = License.objects.all()
-            license_path = self.locations("license_path")
-            attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,sound_list = pack_sounds))
-            write_file(license_path,attribution)
+        logger.info("\tadding attribution")
+        licenses = License.objects.all()
+        attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses))
+        zip_file.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
 
-            filelist =  "%s %i %s %s \r\n" % (get_crc(license_path),os.stat(license_path).st_size, self.locations("license_url"),"_readme_and_license.txt")
-            for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
-                url = sound.locations("sendfile_url")
-                name = sound.friendly_filename()
-                try:
-                    filelist = filelist + "%s %i %s %s \r\n"%(get_crc(sound.locations("path")),sound.filesize,url,name)
-                except:
-                    audio_logger.error("error computing crc for sound %s"%name)
-                    
-            write_file(self.locations("path"),filelist)
-        else:
-            if os.path.exists(self.locations()['license_path']):
-                os.remove(self.locations()['license_path']) 
-            if os.path.exists(self.locations()['path']):
-                os.remove(self.locations()['path']) 
+        logger.info("\tadding sounds")
+        
+        for sound in self.sound_set.filter(processing_state="OK", moderation_state="OK"):
+            path = sound.locations("path")
+            logger.info("\t- %s" % os.path.normpath(path))
+            zip_file.write(path, sound.friendly_filename().encode("utf-8"))
 
-    
-    
+        zip_file.close()
+        shutil.move(tmp_path,self.locations("path"))
+
+        logger.info("\tall done")
+
     def get_random_sound_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:1]
         return pack_sounds[0]

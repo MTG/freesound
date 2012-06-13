@@ -468,13 +468,15 @@ def pack(request, username, pack_id):
     # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
     pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None).exists()
     google_api_key = settings.GOOGLE_API_KEY
-    
+    available = True
     
     if num_sounds_ok == 0 and pack.num_sounds != 0:
-        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
+        messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.'
+        available = False
     else :
         if not os.path.exists(pack.locations("path")):
             messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
+            available = False
         
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')

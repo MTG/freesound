@@ -50,9 +50,9 @@ def query_for_descriptors(original_t, original_f, query_parameters, num_results)
         except Exception, e:
             logger.debug('Could not get a response from the similarity service (query for descriptors) (%s)\n\t%s' %\
                          (e, traceback.format_exc()))
-            returned_sounds = []
+            returned_sounds = [-999]
 
-        if len(returned_sounds) > 0:
+        if len(returned_sounds) > 0 and returned_sounds[0] != -999:
             cache.set(cache_key, returned_sounds, settings.SIMILARITY_CACHE_TIME)
 
     return returned_sounds[0:num_results]

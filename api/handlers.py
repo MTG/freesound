@@ -463,12 +463,23 @@ class SoundContentSearchHandler(BaseHandler):
 
         try:
             results = query_for_descriptors(t,f,{'target':pt,'filter':pf}, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+            if results[0] == -999:
+                raise ReturnError(500, "ContentBasedSearchError", {"explanation": "Could not get a response from the similarity service"})
         except:
             raise ReturnError(500, "ContentBasedSearchError", {})
 
         paginator = paginate(request, results, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=int(result[0])), include_user=False, custom_fields = request.GET.get('fields', False)) for result in page.object_list]
+
+        sounds = []
+        for result in page.object_list:
+            try:
+                sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=int(result[0])), include_user=False, custom_fields = request.GET.get('fields', False))
+                sounds.append(sound)
+            except Exception, e:
+                pass
+
+        #sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=int(result[0])), include_user=False, custom_fields = request.GET.get('fields', False)) for result in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():

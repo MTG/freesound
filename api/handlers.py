@@ -463,10 +463,10 @@ class SoundContentSearchHandler(BaseHandler):
 
         try:
             results = query_for_descriptors(t,f,{'target':pt,'filter':pf}, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
-            if results[0] == -999:
-                raise ReturnError(500, "ContentBasedSearchError", {"explanation": "Could not get a response from the similarity service"})
-        except:
-            raise ReturnError(500, "ContentBasedSearchError", {})
+            #if results[0] == -999:
+            #    raise ReturnError(500, "ContentBasedSearchError", {"explanation": "Could not get a response from the similarity service"})
+        except Exception, e:
+            raise ReturnError(500, "ContentBasedSearchError", {'explanation':e})
 
         paginator = paginate(request, results, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']

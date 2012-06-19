@@ -337,6 +337,11 @@ class Sound(SocialModel):
         field_names = ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']
         field_values = [[field, info[field] if info[field] is not None else "null", False] for field in field_names]
         self.set_fields(field_values)
+    
+    def compute_crc(self):
+        p = subprocess.Popen(["crc32",self.locations('path')],stdout=subprocess.PIPE)
+        self.crc= p.communicate()[0].split(" ")[0][:-1]
+        self.save()
 
     # N.B. This is used in the ticket template (ugly, but a quick fix)
     def is_sound(self):
@@ -417,6 +422,17 @@ class Pack(SocialModel):
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         gm_client.submit_job("create_pack_zip", str(self.id), wait_until_complete=False, background=True)
         audio_logger.info("Send pack with id %s to queue 'create_pack_zip'" % self.id)
+    
+    def create_license_file(self):
+        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
+        if len(pack_sounds)>0:
+             licenses = License.objects.all()
+             license_path = self.locations("license_path")
+             attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,sound_list = pack_sounds))
+             write_file(license_path,attribution)
+             p = subprocess.Popen(["crc32",license_path],stdout=subprocess.PIPE)
+             self.license_crc = p.communicate()[0].split(" ")[0][:-1]
+             self.save()
         
     def create_zip(self):
         from django.template.loader import render_to_string

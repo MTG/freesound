@@ -430,7 +430,9 @@ class Pack(SocialModel):
              licenses = License.objects.all()
              license_path = self.locations("license_path")
              attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,sound_list = pack_sounds))
-             write_file(license_path,attribution)
+             f = open(license_path,'w')
+             f.write(attribution.encode("UTF-8"))
+             f.close()
              p = subprocess.Popen(["crc32",license_path],stdout=subprocess.PIPE)
              self.license_crc = p.communicate()[0].split(" ")[0][:-1]
              self.save()

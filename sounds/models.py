@@ -424,6 +424,7 @@ class Pack(SocialModel):
         audio_logger.info("Send pack with id %s to queue 'create_pack_zip'" % self.id)
     
     def create_license_file(self):
+        from django.template.loader import render_to_string
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
         if len(pack_sounds)>0:
              licenses = License.objects.all()

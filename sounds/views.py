@@ -509,7 +509,7 @@ def pack(request, username, pack_id):
         else:
             pass
 
-    files_exist = os.path.exists(pack.locations("path")) and os.path.exists(pack.locations("license_path"))
+    file_exists = os.path.exists(pack.locations("license_path"))
 
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 

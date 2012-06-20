@@ -341,6 +341,7 @@ class Sound(SocialModel):
     def compute_crc(self):
         p = subprocess.Popen(["crc32",self.locations('path')],stdout=subprocess.PIPE)
         self.crc= p.communicate()[0].split(" ")[0][:-1]
+        self.save()
 
     # N.B. This is used in the ticket template (ugly, but a quick fix)
     def is_sound(self):
@@ -380,7 +381,11 @@ def on_delete_sound(sender,instance, **kwargs):
 
 post_delete.connect(on_delete_sound, sender=Sound)
 
-    
+def recreate_pack(sender,instance,**kwargs):
+    if instance.moderation_state=="OK" and instance.pack:
+        instance.pack.process()
+        
+post_save.connect(recreate_pack, sender=Sound)
 
 class Pack(SocialModel):
     user = models.ForeignKey(User)

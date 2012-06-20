@@ -409,6 +409,7 @@ def describe_sounds(request):
 
             try:
                 sound.md5 = md5file(forms[i]['sound'].full_path)
+                sound.compute_crc()
             except IOError:
                 messages.add_message(request, messages.ERROR, 'Something went wrong with accessing the file %s.' % sound.original_path)
                 continue

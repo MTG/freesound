@@ -109,7 +109,7 @@ def random(request):
 
 def packs(request):
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds","-num_downloads"]:
+    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related() \
                      .filter(sound__moderation_state="OK", sound__processing_state="OK") \
@@ -302,7 +302,7 @@ def sound_edit(request, username, sound_id):
                     dirty_packs.append(old_pack)
 
             for p in dirty_packs:
-                p.process()
+               p.process()
 
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
@@ -508,7 +508,7 @@ def pack(request, username, pack_id):
             pack.description = form.cleaned_data['description']
             pack.save()
         else:
-            pass        
+            pass
 
     file_exists = os.path.exists(pack.locations("license_path"))
 

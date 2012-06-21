@@ -220,6 +220,7 @@ def pack_download(request, username, pack_id):
     for sound in pack.sound_set.filter(processing_state="OK", moderation_state="OK"):
         url = sound.locations("sendfile_url")
         name = sound.friendly_filename()
+        if sound.crc=='': continue
         filelist = filelist + "%s %i %s %s \r\n"%(sound.crc, sound.filesize,url,name)
     response = HttpResponse(filelist, content_type="text/plain")
     response['X-Archive-Files']='zip'

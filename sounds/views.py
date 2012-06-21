@@ -210,12 +210,23 @@ def sound_download(request, username, sound_id):
 
 
 def pack_download(request, username, pack_id):
+    from django.http import HttpResponse
+
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
-    return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
+
+    filelist =  "%s %i %s %s \r\n" % (pack.license_crc,os.stat(pack.locations('license_path')).st_size, pack.locations('license_url'), "_readme_and_license.txt")
+    for sound in pack.sound_set.filter(processing_state="OK", moderation_state="OK"):
+        url = sound.locations("sendfile_url")
+        name = sound.friendly_filename()
+        if sound.crc=='': continue
+        filelist = filelist + "%s %i %s %s \r\n"%(sound.crc, sound.filesize,url,name)
+    response = HttpResponse(filelist, content_type="text/plain")
+    response['X-Archive-Files']='zip'
+    return response
 
 
 @login_required
@@ -495,6 +506,8 @@ def pack(request, username, pack_id):
             pack.save()
         else:
             pass        
+
+    file_exists = os.path.exists(pack.locations("license_path"))
 
     return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
 

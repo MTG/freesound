@@ -10,7 +10,7 @@ from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
-import os, logging, random, datetime, gearman, tempfile, shutil
+import os, logging, random, datetime, gearman, tempfile, shutil, subprocess
 from utils.search.search import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
@@ -368,6 +368,11 @@ def on_delete_sound(sender,instance, **kwargs):
             instance.geotag.delete()
     except:
         pass
+    if instance.pack:
+        p = instance.pack
+        p.sound_set.remove(instance)
+        p.save()
+        p.process()
     
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
@@ -411,7 +416,9 @@ class Pack(SocialModel):
     def locations(self):
         return dict(
                     sendfile_url = settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,
-                    path = os.path.join(settings.PACKS_PATH, "%d.zip" % self.id)
+                    license_url = settings.PACKS_SENDFILE_URL + "%d_license.txt" % self.id,
+                    license_path = os.path.join(settings.PACKS_PATH, "%d_license.txt" % self.id),
+                    path = os.path.join(settings.PACKS_PATH, "%d.txt" % self.id),
                    )
 
     def process(self):

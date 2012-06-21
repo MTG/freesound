@@ -287,6 +287,7 @@ def sound_edit(request, username, sound_id):
         pack_form = PackForm(packs, request.POST, prefix="pack")
         if pack_form.is_valid():
             data = pack_form.cleaned_data
+            dirty_packs = []
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
                 sound.pack = pack
@@ -295,6 +296,14 @@ def sound_edit(request, username, sound_id):
                 old_pack = sound.pack
                 if new_pack != old_pack:
                     sound.pack = new_pack
+                if new_pack:
+                    dirty_packs.append(new_pack)
+                if old_pack:
+                    dirty_packs.append(old_pack)
+
+            for p in dirty_packs:
+                p.process()
+
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
             return HttpResponseRedirect(sound.get_absolute_url())
@@ -479,16 +488,10 @@ def pack(request, username, pack_id):
     # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
     pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None).exists()
     google_api_key = settings.GOOGLE_API_KEY
-    available = True
     
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
-        available = False
     else :
-        if not os.path.exists(pack.locations("path")):
-            messages.add_message(request, messages.INFO, 'This pack is <b>not available</b> for downloading right now. Check again <b>later</b>.')
-            available = False
-        
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 

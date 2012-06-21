@@ -369,10 +369,7 @@ def on_delete_sound(sender,instance, **kwargs):
     except:
         pass
     if instance.pack:
-        p = instance.pack
-        p.sound_set.remove(instance)
-        p.save()
-        p.process()
+        instance.pack.process()
     
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)

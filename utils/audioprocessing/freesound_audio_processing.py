@@ -99,7 +99,7 @@ def process(sound):
         try:
             audioprocessing.convert_using_ffmpeg(sound.original_path, tmp_wavefile)
             info = audioprocessing.stereofy_and_find_info(settings.STEREOFY_PATH, tmp_wavefile, tmp_wavefile2)
-            if tmp_wavefile not in to_cleanup: to_cleanup.append(tmp_wavefile)
+            #if tmp_wavefile not in to_cleanup: to_cleanup.append(tmp_wavefile)
             to_cleanup.append(tmp_wavefile2)
         except AudioProcessingException, e:
             failure("ffmpeg + stereofy failed", e)

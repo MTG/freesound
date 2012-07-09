@@ -1,7 +1,7 @@
 import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
-from accounts.models import Profile, ResetEmailRequest
+from accounts.models import Profile, ResetEmailRequest, UserFlag
 from comments.models import Comment
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -49,6 +49,8 @@ from utils.mail import send_mail, send_mail_template
 from django.db import transaction
 from bookmarks.models import Bookmark
 from django.contrib.auth.decorators import user_passes_test
+import json
+from messages.models import Message
 
 
 audio_logger = logging.getLogger('audio')
@@ -943,3 +945,31 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))
 
+
+
+
+
+@login_required
+def flag_user(request):
+    if request.POST:
+
+        flagged_user = User.objects.get(username=request.POST["username"])
+        reporting_user = request.user
+        object_id = request.POST["object_id"]
+
+        if object_id:
+            if request.POST["flag_type"] == "PM":
+                flagged_object = Message.objects.get(id = object_id)
+            elif request.POST["flag_type"] == "FP":
+                flagged_object = Post.objects.get(id = object_id)
+            elif request.POST["flag_type"] == "SC":
+                flagged_object = Comment.objects.get(id = object_id)
+            else:
+                return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+        else:
+            return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+
+        uflag = UserFlag(user = flagged_user, reporting_user = reporting_user, content_object = flagged_object)
+        uflag.save()
+
+        return HttpResponse(json.dumps({"errors":None}), mimetype='application/javascript')

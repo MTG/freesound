@@ -9,6 +9,9 @@ from django.conf import settings
 from utils.locations import locations_decorator
 import datetime
 import os
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
+
 
 class ResetEmailRequest(models.Model):
     email = models.EmailField()
@@ -132,3 +135,22 @@ class Profile(SocialModel):
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
+
+
+class UserFlag(models.Model):
+    user = models.ForeignKey(User, related_name="flags")
+    reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
+
+
+    content_type = models.ForeignKey(ContentType, null=True)
+    object_id = models.PositiveIntegerField(null=True)
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    def __unicode__(self):
+        return u"Flag %s: %s" % (self.content_type, self.object_id)
+
+    class Meta:
+        ordering = ("-user__username",)

@@ -945,14 +945,10 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))
 
-
-
-
-
 @login_required
-def flag_user(request):
-    if request.POST:
+def flag_user(request, username = None):
 
+    if request.POST:
         flagged_user = User.objects.get(username=request.POST["username"])
         reporting_user = request.user
         object_id = request.POST["object_id"]
@@ -973,3 +969,5 @@ def flag_user(request):
         uflag.save()
 
         return HttpResponse(json.dumps({"errors":None}), mimetype='application/javascript')
+    else:
+        return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')

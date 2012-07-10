@@ -140,8 +140,6 @@ class Profile(SocialModel):
 class UserFlag(models.Model):
     user = models.ForeignKey(User, related_name="flags")
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
-
-
     content_type = models.ForeignKey(ContentType, null=True)
     object_id = models.PositiveIntegerField(null=True)
     content_object = generic.GenericForeignKey('content_type', 'object_id')

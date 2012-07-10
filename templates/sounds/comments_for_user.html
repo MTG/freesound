@@ -17,7 +17,7 @@
     {% for comment in comments %}
     <li>
         <div style="float:right; text-align: right; font-size: 10px">
-            {%  flag_user "SC" comment.user.username comment.id %}
+            {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
         </div>
         <img src="{{comment.user.profile.locations.avatar.S.url}}" alt="avatar" class="comment_avatar" />
         <div class="comment_info">

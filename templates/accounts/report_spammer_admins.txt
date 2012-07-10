@@ -1,0 +1,13 @@
+Spam report for user {{flagged_user.username}}
+----------------------------------------
+
+Hi there super admin!
+User {{ flagged_user.username }} has been reported as a spammer at least three times by different users.
+Here you have a list of the items that have been marked as spam:
+
+{% for url in urls %}
+    * {{url.0}}: {{url.1}}
+{% endfor %}
+
+If you can confirm this user is a spammer, please delete him through the admin ({{user_url}}).
+

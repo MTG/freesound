@@ -1,3 +1,5 @@
+{% if user_sounds < 1 %}
+
 <script type="text/javascript">
 
     function post_flag(div_id, uname, flag_type, object_id, url)
@@ -44,17 +46,19 @@
 </script>
 
 
-<span id="{{username}}{{content_obj_id}}{{flag_type}}_link">
+<span id="{{content_obj_id}}{{flag_type}}_link">
+
 {% if flagged %}
     <span style="color:#808080;">{{ done_text }}</span>
 {% else %}
-    <a onclick="post_flag('{{username}}{{content_obj_id}}{{flag_type}}','{{username}}','{{ flag_type }}',{{ content_obj_id }},'{% url flag-user username %}')">{{ link_text }}</a>
+    <a onclick="post_flag('{{content_obj_id}}{{flag_type}}','{{username}}','{{ flag_type }}',{{ content_obj_id }},'{% url flag-user username %}')">{{ link_text }}</a>
 {% endif %}
 </span>
 
-<span id="{{username}}{{content_obj_id}}{{flag_type}}_info">
+<span id="{{content_obj_id}}{{flag_type}}_info">
     {% comment %}
     {% if not flagged %}<img src="{{ media_url }}images/info.png"/>{% endif %}
     {% endcomment %}
 </span>
 
+{% endif %}

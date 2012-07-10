@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest, HttpResponseNotFound, Http404, \
-    HttpResponsePermanentRedirect, HttpResponseServerError
+    HttpResponsePermanentRedirect, HttpResponseServerError, HttpRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
@@ -51,6 +51,7 @@ from bookmarks.models import Bookmark
 from django.contrib.auth.decorators import user_passes_test
 import json
 from messages.models import Message
+from django.contrib.contenttypes.models import ContentType
 
 
 audio_logger = logging.getLogger('audio')
@@ -967,6 +968,26 @@ def flag_user(request, username = None):
 
         uflag = UserFlag(user = flagged_user, reporting_user = reporting_user, content_object = flagged_object)
         uflag.save()
+
+        # Check if flagged user has more than 3 flags from unique different users
+        # TODO: what happens if user adds more messages? for the moment it sends the mail at 3, 10 and 20...
+        reports_count = UserFlag.objects.filter(user__username = flagged_user.username).values('reporting_user').distinct().count()
+        if  reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or reports_count == 10 or reports_count == 20:
+            # Get all flagged objects by the user, create links to admin pages and send email
+            flagged_objects = UserFlag.objects.filter(user__username = flagged_user.username)
+            urls = []
+            added_objects = []
+            for object in flagged_objects:
+                key = str(object.content_type) + str(object.object_id)
+                if not key in added_objects:
+                    added_objects.append(key)
+                    obj = object.content_type.get_object_for_this_type(id=object.object_id)
+                    url = reverse('admin:%s_%s_change' %(obj._meta.app_label,  obj._meta.module_name),  args=[obj.id] )
+                    urls.append([str(object.content_type),request.build_absolute_uri(url)])
+
+            user_url = reverse('admin:%s_%s_delete' %(flagged_user._meta.app_label,  flagged_user._meta.module_name),  args=[flagged_user.id] )
+            user_url = request.build_absolute_uri(user_url)
+            send_mail_template(u'Spam report for user ' + flagged_user.username , 'accounts/report_spammer_admins.txt', locals(), None, settings.REPORT_SPAM_MAILS)
 
         return HttpResponse(json.dumps({"errors":None}), mimetype='application/javascript')
     else:

@@ -969,10 +969,8 @@ def flag_user(request, username = None):
         uflag = UserFlag(user = flagged_user, reporting_user = reporting_user, content_object = flagged_object)
         uflag.save()
 
-        # Check if flagged user has more than 3 flags from unique different users
-        # TODO: what happens if user adds more messages? for the moment it sends the mail at 3, 10 and 20...
         reports_count = UserFlag.objects.filter(user__username = flagged_user.username).values('reporting_user').distinct().count()
-        if  reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or reports_count == 10 or reports_count == 20:
+        if  reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or reports_count == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING:
             # Get all flagged objects by the user, create links to admin pages and send email
             flagged_objects = UserFlag.objects.filter(user__username = flagged_user.username)
             urls = []
@@ -987,8 +985,28 @@ def flag_user(request, username = None):
 
             user_url = reverse('admin:%s_%s_delete' %(flagged_user._meta.app_label,  flagged_user._meta.module_name),  args=[flagged_user.id] )
             user_url = request.build_absolute_uri(user_url)
-            send_mail_template(u'Spam report for user ' + flagged_user.username , 'accounts/report_spammer_admins.txt', locals(), None, settings.REPORT_SPAM_MAILS)
+            clear_url = reverse("clear-flags-user", args=[flagged_user.username])
+            clear_url = request.build_absolute_uri(clear_url)
+
+            if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING:
+                template_to_use = 'accounts/report_spammer_admins.txt'
+            else:
+                template_to_use = 'accounts/report_blocked_spammer_admins.txt'
+
+            send_mail_template(u'Spam report for user ' + flagged_user.username , template_to_use, locals(), None, settings.REPORT_SPAM_MAILS)
 
         return HttpResponse(json.dumps({"errors":None}), mimetype='application/javascript')
     else:
         return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+
+@login_required
+def clear_flags_user(request, username):
+    if request.user.is_superuser or request.user.is_staff:
+        flags = UserFlag.objects.filter(user__username = username)
+        num = len(flags)
+        for flag in flags:
+            flag.delete()
+
+        return render_to_response('accounts/flags_cleared.html',locals(),context_instance=RequestContext(request))
+    else:
+        return HttpResponseRedirect(reverse('accounts-login'))

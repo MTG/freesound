@@ -147,11 +147,12 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     
     latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
     user_can_post_in_forum = request.user.profile.can_post_in_forum()
+    user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
 
     if request.method == 'POST':
         form = PostReplyForm(request, quote, request.POST)
 
-        if user_can_post_in_forum[0]:
+        if user_can_post_in_forum[0] and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 if not request.user.post_set.all().count() and ("http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]): # first post has urls
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
@@ -184,7 +185,6 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                 else:
                     messages.add_message(request, messages.INFO, "Your post won't be shown until it is manually approved by moderators")
                     return HttpResponseRedirect(post.thread.get_absolute_url())
-
     else:
         if quote:
             form = PostReplyForm(request, quote, {'body':quote})
@@ -197,6 +197,9 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     if not user_can_post_in_forum[0]:
         messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
 
+    if user_is_blocked_for_spam_reports:
+        messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account has been temporaly blocked after multiple spam reports")
+
     return render_to_response('forum/reply.html', locals(), context_instance=RequestContext(request))
 
 
@@ -204,10 +207,11 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 def new_thread(request, forum_name_slug):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     user_can_post_in_forum = request.user.profile.can_post_in_forum()
+    user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
 
     if request.method == 'POST':
         form = NewThreadForm(request.POST)
-        if user_can_post_in_forum[0]:
+        if user_can_post_in_forum[0] and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
                 mayBeSpam = False
@@ -242,6 +246,9 @@ def new_thread(request, forum_name_slug):
 
     if not user_can_post_in_forum[0]:
         messages.add_message(request, messages.INFO, user_can_post_in_forum[1])
+
+    if user_is_blocked_for_spam_reports:
+        messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account has been temporaly blocked after multiple spam reports")
 
     return render_to_response('forum/new_thread.html', locals(), context_instance=RequestContext(request))
 

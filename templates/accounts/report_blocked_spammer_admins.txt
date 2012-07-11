@@ -1,8 +1,8 @@
-Spam report for user {{flagged_user.username}}
-----------------------------------------
+Blocked user {{flagged_user.username}} after multiple spam reports
+---------------------------------------------------------
 
 Hi there super admin!
-User {{ flagged_user.username }} has been reported as a spammer at least three times by different users.
+User {{ flagged_user.username }} has been blocked after several spam reports by different users.
 Here you have a list of the items that have been marked as spam:
 
 {% for url in urls %}

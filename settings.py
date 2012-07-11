@@ -136,6 +136,7 @@ SIMILAR_SOUNDS_TO_CACHE = 100 # for the similarity service
 SIMILARITY_CACHE_TIME = 60*60*1
 DEFAULT_SIMILARITY_PRESET = 'lowlevel'
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
+USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 REPORT_SPAM_MAILS = ['frederic.font@gmail.com','bram.dejong@gmail.com','gerard.roma@upf.edu']
 
 DELETED_USER_ID = 1

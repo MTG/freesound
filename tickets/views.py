@@ -253,9 +253,7 @@ distinct(ticket.id),
 ticket.modified as modified
 FROM
 tickets_ticketcomment AS comment,
-tickets_ticket AS ticket,
-sounds_sound AS sound,
-tickets_linkedcontent AS content
+tickets_ticket AS ticket
 WHERE comment.id in (   SELECT MAX(id)
                         FROM tickets_ticketcomment
                         GROUP BY ticket_id    )
@@ -263,8 +261,6 @@ AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
 AND now() - modified > INTERVAL '24 hours'
-AND content.object_id = sound.id
-AND sound.moderation_state != 'OK'
 AND ticket.status != '%s'
 LIMIT 5
 """ % TICKET_STATUS_CLOSED)
@@ -279,8 +275,6 @@ ticket.modified as modified
 FROM
 tickets_ticketcomment AS comment,
 tickets_ticket AS ticket,
-sounds_sound AS sound,
-tickets_linkedcontent AS content
 WHERE comment.id in (   SELECT MAX(id)
                         FROM tickets_ticketcomment
                         GROUP BY ticket_id    )
@@ -288,8 +282,6 @@ AND ticket.assignee_id is Not Null
 AND comment.ticket_id = ticket.id
 AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
 AND now() - modified > INTERVAL '24 hours'
-AND content.object_id = sound.id
-AND sound.moderation_state != 'OK'
 AND ticket.status != '%s'
 """ % TICKET_STATUS_CLOSED)
 

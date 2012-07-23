@@ -208,8 +208,10 @@ def sound_download(request, username, sound_id):
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
+
 def pack_download(request, username, pack_id):
     from django.http import HttpResponse
+
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
@@ -294,12 +296,11 @@ def sound_edit(request, username, sound_id):
                 old_pack = sound.pack
                 if new_pack != old_pack:
                     sound.pack = new_pack
-
                 if new_pack:
                     dirty_packs.append(new_pack)
                 if old_pack:
                     dirty_packs.append(old_pack)
-            
+
             for p in dirty_packs:
                p.process()
 
@@ -488,7 +489,6 @@ def pack(request, username, pack_id):
     pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None).exists()
     google_api_key = settings.GOOGLE_API_KEY
     
-    
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
@@ -633,4 +633,3 @@ def pack_downloaders(request, username, pack_id):
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
-

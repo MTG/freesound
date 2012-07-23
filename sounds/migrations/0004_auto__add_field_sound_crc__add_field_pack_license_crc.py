@@ -9,10 +9,10 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'Sound.crc'
-        db.add_column('sounds_sound', 'crc', self.gf('django.db.models.fields.CharField')(default=None, max_length=8), keep_default=False)
+        db.add_column('sounds_sound', 'crc', self.gf('django.db.models.fields.CharField')(default='', max_length=8, blank=True), keep_default=False)
 
         # Adding field 'Pack.license_crc'
-        db.add_column('sounds_pack', 'license_crc', self.gf('django.db.models.fields.CharField')(default=None, max_length=8), keep_default=False)
+        db.add_column('sounds_pack', 'license_crc', self.gf('django.db.models.fields.CharField')(default='', max_length=8, blank=True), keep_default=False)
 
 
     def backwards(self, orm):
@@ -138,7 +138,7 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.TextField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_dirty': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
-            'license_crc': ('django.db.models.fields.CharField', [], {'max_length': '8'}),
+            'license_crc': ('django.db.models.fields.CharField', [], {'max_length': '8', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'num_downloads': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
@@ -158,7 +158,7 @@ class Migration(SchemaMigration):
             'bitdepth': ('django.db.models.fields.IntegerField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),
             'bitrate': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'channels': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'crc': ('django.db.models.fields.CharField', [], {'max_length': '8'}),
+            'crc': ('django.db.models.fields.CharField', [], {'max_length': '8', 'blank': 'True'}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'db_index': 'True', 'blank': 'True'}),
             'date_recorded': ('django.db.models.fields.DateField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {}),

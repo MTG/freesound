@@ -274,7 +274,7 @@ distinct(ticket.id),
 ticket.modified as modified
 FROM
 tickets_ticketcomment AS comment,
-tickets_ticket AS ticket,
+tickets_ticket AS ticket
 WHERE comment.id in (   SELECT MAX(id)
                         FROM tickets_ticketcomment
                         GROUP BY ticket_id    )

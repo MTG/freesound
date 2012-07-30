@@ -375,13 +375,12 @@ def on_delete_sound(sender,instance, **kwargs):
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
     Similarity.delete(instance.id)
-
 post_delete.connect(on_delete_sound, sender=Sound)
 
 def recreate_pack(sender,instance,**kwargs):
     if instance.moderation_state=="OK" and instance.pack:
         instance.pack.process()
-        
+ 
 post_save.connect(recreate_pack, sender=Sound)
 
 class Pack(SocialModel):

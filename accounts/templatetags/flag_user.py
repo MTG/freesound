@@ -11,9 +11,6 @@ def flag_user(context, flag_type, username, content_id, text = None, user_sounds
     no_show = False
     link_text = "Report spam"
 
-    print context['request'].user
-    print context['request'].user.is_authenticated()
-
     if not context['request'].user.is_authenticated():
         no_show = True
         flagged = []

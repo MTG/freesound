@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from accounts.models import Profile
+from accounts.models import Profile, UserFlag
 
 from forum.models import Post, Thread
 from comments.models import Comment
@@ -46,3 +46,9 @@ class ProfileAdmin(admin.ModelAdmin):
     search_fields = ('=user__username', )
 
 admin.site.register(Profile, ProfileAdmin)
+
+
+class UserFlagAdmin(admin.ModelAdmin):
+    raw_id_fields = ('user', 'reporting_user', 'content_type')
+    list_display = ('user', 'reporting_user', 'content_type')
+admin.site.register(UserFlag, UserFlagAdmin)

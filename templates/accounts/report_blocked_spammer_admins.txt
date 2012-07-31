@@ -6,10 +6,10 @@ User {{ flagged_user.username }} has been blocked after several spam reports by 
 Here you have a list of the items that have been marked as spam:
 
 {% for url in urls %}
-    * {{url.0}}: <a href="{{url.1}}">{{url.1}}</a>
+    * {{url.0}}: {{url.1}}
 {% endfor %}
 
-If you can confirm this user is a spammer, please delete him following <a href="{{user_url}}">this link</a>.
-If the user is not a spammer, you can clean the spam reports by following <a href="{{clear_url}}">this link</a>.
+If you can confirm this user is a spammer, please delete him following {{user_url}}
+If the user is not a spammer, you can clean the spam reports by following {{clear_url}}
 
 

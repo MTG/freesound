@@ -137,7 +137,7 @@ SIMILARITY_CACHE_TIME = 60*60*1
 DEFAULT_SIMILARITY_PRESET = 'lowlevel'
 USERFLAG_THRESHOLD_FOR_NOTIFICATION = 3
 USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
-REPORT_SPAM_MAILS = ['gerard.roma@upf.edu','frederic.font@gmail.com','bram.dejong@gmail.com']
+REPORT_SPAM_MAILS = ['gerard.roma@gmail.com','frederic.font@gmail.com','bram.dejong@gmail.com']
 
 DELETED_USER_ID = 1
 

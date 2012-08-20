@@ -172,25 +172,28 @@ def sound(request, username, sound_id):
 
     if request.method == "POST":
         form = CommentForm(request, request.POST)
-        if form.is_valid():
-            comment_text=form.cleaned_data["comment"]
-            sound.comments.add(Comment(content_object=sound,
-                                       user=request.user,
-                                       comment=comment_text))
-            sound.num_comments = sound.num_comments + 1
-            sound.save()
-            try:
-                # send the user an email to notify him of the new comment!
-                logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username, request.user.username))
-                send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
-                                   {'sound': sound, 'user': request.user, 'comment': comment_text},
-                                   None, sound.user.email)
-            except Exception, e:
-                # if the email sending fails, ignore...
-                logger.error("Problem sending email to '%s' about new comment: %s" \
-                             % (request.user.email, e))
+        if request.user.profile.is_blocked_for_spam_reports():
+            messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your account has been temporaly blocked after multiple spam reports")
+        else:
+            if form.is_valid():
+                comment_text=form.cleaned_data["comment"]
+                sound.comments.add(Comment(content_object=sound,
+                                           user=request.user,
+                                           comment=comment_text))
+                sound.num_comments = sound.num_comments + 1
+                sound.save()
+                try:
+                    # send the user an email to notify him of the new comment!
+                    logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username, request.user.username))
+                    send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
+                                       {'sound': sound, 'user': request.user, 'comment': comment_text},
+                                       None, sound.user.email)
+                except Exception, e:
+                    # if the email sending fails, ignore...
+                    logger.error("Problem sending email to '%s' about new comment: %s" \
+                                 % (request.user.email, e))
 
-            return HttpResponseRedirect(sound.get_absolute_url())
+                return HttpResponseRedirect(sound.get_absolute_url())
     else:
         form = CommentForm(request)
 

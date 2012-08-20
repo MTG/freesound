@@ -15,6 +15,7 @@ import json
 from textwrap import wrap
 from accounts.models import User
 from django.http import HttpResponse
+from django.contrib import messages
 
 @login_required
 def messages_change_state(request):
@@ -81,30 +82,34 @@ def message(request, message_id):
 def new_message(request, username=None, message_id=None):
     
     if request.method == 'POST':
+
         if request.user.profile.num_sounds:
             form = MessageReplyFormNoCaptcha(request.POST)
         else:
             form = MessageReplyForm(request,request.POST)
-            
-        if form.is_valid():
-            user_from = request.user
-            user_to = form.cleaned_data["to"]
-            subject = form.cleaned_data["subject"]
-            body = MessageBody.objects.create(body=form.cleaned_data["body"])
 
-            Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=True, is_archived=False, is_read=False)
-            Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False, is_archived=False, is_read=False)
-            
-            invalidate_template_cache("user_header", user_to.id)
-            
-            try:
-                # send the user an email to notify him of the sent message!
-                send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
-            except:
-                # if the email sending fails, ignore...
-                pass
-            
-            return HttpResponseRedirect(reverse("messages"))
+        if request.user.profile.is_blocked_for_spam_reports():
+            messages.add_message(request, messages.INFO, "You're not allowed to send the message because your account has been temporaly blocked after multiple spam reports")
+        else:
+            if form.is_valid():
+                user_from = request.user
+                user_to = form.cleaned_data["to"]
+                subject = form.cleaned_data["subject"]
+                body = MessageBody.objects.create(body=form.cleaned_data["body"])
+
+                Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=True, is_archived=False, is_read=False)
+                Message.objects.create(user_from=user_from, user_to=user_to, subject=subject, body=body, is_sent=False, is_archived=False, is_read=False)
+
+                invalidate_template_cache("user_header", user_to.id)
+
+                try:
+                    # send the user an email to notify him of the sent message!
+                    send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
+                except:
+                    # if the email sending fails, ignore...
+                    pass
+
+                return HttpResponseRedirect(reverse("messages"))
     else:
         if request.user.profile.num_sounds:
             form = MessageReplyFormNoCaptcha()

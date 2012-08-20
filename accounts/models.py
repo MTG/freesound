@@ -9,6 +9,9 @@ from django.conf import settings
 from utils.locations import locations_decorator
 import datetime
 import os
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
+
 
 class ResetEmailRequest(models.Model):
     email = models.EmailField()
@@ -110,7 +113,7 @@ class Profile(SocialModel):
         # POSTS PENDING TO MODERATE: Do not allow new posts if there are others pending to moderate
         user_has_posts_pending_to_moderate = self.user.post_set.filter(moderation_state="NM").count() > 0
         if user_has_posts_pending_to_moderate:
-            return False, "We're sorry, but you can't post to the forum because you have previous posts still pending to moderate"
+            return False, "We're sorry but you can't post to the forum because you have previous posts still pending to moderate"
 
         # THROTTLING
         if self.user.post_set.all().count() >= 1 and self.user.sounds.all().count() == 0:
@@ -120,15 +123,39 @@ class Profile(SocialModel):
             # Do not allow posts if last post is not older than 5 minutes
             seconds_per_post = 60*5
             if (today - self.user.post_set.all().reverse()[0].created).seconds < seconds_per_post:
-                return False, "We're sorry, but you can't post to the forum because your last post was less than 5 minutes ago"
+                return False, "We're sorry but you can't post to the forum because your last post was less than 5 minutes ago"
 
             # Do not allow posts if user has already posyted N posts that day
             # (every day users can post as many posts as twice the number of days since the reference date (registration or first post date))
             max_posts_per_day = 5 + pow((today - reference_date).days,2)
             if self.user.post_set.filter(created__range=(today-datetime.timedelta(days=1),today)).count() > max_posts_per_day:
-                return False, "We're sorry, but you can't post to the forum because you exceeded your maximum number of posts per day"
+                return False, "We're sorry but you can't post to the forum because you exceeded your maximum number of posts per day"
 
         return True, ""
 
+    def is_blocked_for_spam_reports(self):
+        reports_count = UserFlag.objects.filter(user__username = self.user.username).values('reporting_user').distinct().count()
+        if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING or self.user.sounds.all().count() > 0:
+            return False
+        else:
+            return True
+
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
+
+
+class UserFlag(models.Model):
+    user = models.ForeignKey(User, related_name="flags")
+    reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
+    content_type = models.ForeignKey(ContentType, null=True)
+    object_id = models.PositiveIntegerField(null=True)
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    def __unicode__(self):
+        return u"Flag %s: %s" % (self.content_type, self.object_id)
+
+    class Meta:
+        ordering = ("-user__username",)

@@ -993,7 +993,10 @@ def flag_user(request, username = None):
             else:
                 template_to_use = 'accounts/report_blocked_spammer_admins.txt'
 
-            send_mail_template(u'Spam report for user ' + flagged_user.username , template_to_use, locals(), None, settings.REPORT_SPAM_MAILS)
+            to_emails = []
+            for mail in settings.ADMINS:
+                to_emails.append(mail[1])
+            send_mail_template(u'Spam report for user ' + flagged_user.username , template_to_use, locals(), None, to_emails)
 
         return HttpResponse(json.dumps({"errors":None}), mimetype='application/javascript')
     else:

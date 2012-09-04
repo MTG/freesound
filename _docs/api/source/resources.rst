@@ -75,7 +75,7 @@ created: 		date
 original_filename: 	string, tokenized
 description: 		string, tokenized
 tag: 			string
-license: 		string ("Attribution", "Attribution Noncommercial" or "Creative Commons Zero")
+license: 		string ("Attribution", "Attribution Noncommercial" or "Creative Commons 0")
 is_remix: 		boolean
 was_remixed: 		boolean
 pack: 			string

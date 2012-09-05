@@ -29,7 +29,7 @@ urlpatterns = patterns('accounts.views',
         accounts.activate_user,
         name="accounts-activate"),
 
-    url(r'^activate2/(?P<username>[^\/]+)/(?P<hash>[^\/]+)/$',
+    url(r'^activate2/(?P<username>[^\/]+)/(?P<hash>[^\/]+)/.*$', # old pattern: url(r'^activate2/(?P<username>[^\/]+)/(?P<hash>[^\/]+)/$',
         accounts.activate_user2,
         name="accounts-activate2"),
                        

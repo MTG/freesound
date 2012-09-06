@@ -3,6 +3,7 @@
 {% load cache %}
 {% load paginator %}
 {% load display_sound %}
+{% load flag_user %}
 
 {% block title %}Comments for sounds by {{user.username}}{% endblock title %}
 
@@ -15,6 +16,9 @@
 <ul id="comments">
     {% for comment in comments %}
     <li>
+        <div style="float:right; text-align: right; font-size: 10px">
+            {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+        </div>
         <img src="{{comment.user.profile.locations.avatar.S.url}}" alt="avatar" class="comment_avatar" />
         <div class="comment_info">
             <span class="comment_author"><a href="{% url account comment.user.username %}">{{comment.user.username}}</a></span>

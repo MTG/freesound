@@ -1,7 +1,7 @@
 import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
-from accounts.models import Profile, ResetEmailRequest
+from accounts.models import Profile, ResetEmailRequest, UserFlag
 from comments.models import Comment
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest, HttpResponseNotFound, Http404, \
-    HttpResponsePermanentRedirect, HttpResponseServerError
+    HttpResponsePermanentRedirect, HttpResponseServerError, HttpRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
@@ -49,6 +49,9 @@ from utils.mail import send_mail, send_mail_template
 from django.db import transaction
 from bookmarks.models import Bookmark
 from django.contrib.auth.decorators import user_passes_test
+import json
+from messages.models import Message
+from django.contrib.contenttypes.models import ContentType
 
 
 audio_logger = logging.getLogger('audio')
@@ -943,3 +946,70 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))
 
+@login_required
+def flag_user(request, username = None):
+
+    if request.POST:
+        flagged_user = User.objects.get(username=request.POST["username"])
+        reporting_user = request.user
+        object_id = request.POST["object_id"]
+
+        if object_id:
+            if request.POST["flag_type"] == "PM":
+                flagged_object = Message.objects.get(id = object_id)
+            elif request.POST["flag_type"] == "FP":
+                flagged_object = Post.objects.get(id = object_id)
+            elif request.POST["flag_type"] == "SC":
+                flagged_object = Comment.objects.get(id = object_id)
+            else:
+                return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+        else:
+            return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+
+        uflag = UserFlag(user = flagged_user, reporting_user = reporting_user, content_object = flagged_object)
+        uflag.save()
+
+        reports_count = UserFlag.objects.filter(user__username = flagged_user.username).values('reporting_user').distinct().count()
+        if  reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or reports_count == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING:
+            # Get all flagged objects by the user, create links to admin pages and send email
+            flagged_objects = UserFlag.objects.filter(user__username = flagged_user.username)
+            urls = []
+            added_objects = []
+            for object in flagged_objects:
+                key = str(object.content_type) + str(object.object_id)
+                if not key in added_objects:
+                    added_objects.append(key)
+                    obj = object.content_type.get_object_for_this_type(id=object.object_id)
+                    url = reverse('admin:%s_%s_change' %(obj._meta.app_label,  obj._meta.module_name),  args=[obj.id] )
+                    urls.append([str(object.content_type),request.build_absolute_uri(url)])
+
+            user_url = reverse('admin:%s_%s_delete' %(flagged_user._meta.app_label,  flagged_user._meta.module_name),  args=[flagged_user.id] )
+            user_url = request.build_absolute_uri(user_url)
+            clear_url = reverse("clear-flags-user", args=[flagged_user.username])
+            clear_url = request.build_absolute_uri(clear_url)
+
+            if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING:
+                template_to_use = 'accounts/report_spammer_admins.txt'
+            else:
+                template_to_use = 'accounts/report_blocked_spammer_admins.txt'
+
+            to_emails = []
+            for mail in settings.ADMINS:
+                to_emails.append(mail[1])
+            send_mail_template(u'Spam report for user ' + flagged_user.username , template_to_use, locals(), None, to_emails)
+
+        return HttpResponse(json.dumps({"errors":None}), mimetype='application/javascript')
+    else:
+        return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+
+@login_required
+def clear_flags_user(request, username):
+    if request.user.is_superuser or request.user.is_staff:
+        flags = UserFlag.objects.filter(user__username = username)
+        num = len(flags)
+        for flag in flags:
+            flag.delete()
+
+        return render_to_response('accounts/flags_cleared.html',locals(),context_instance=RequestContext(request))
+    else:
+        return HttpResponseRedirect(reverse('accounts-login'))

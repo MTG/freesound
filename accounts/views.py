@@ -979,9 +979,12 @@ def flag_user(request, username = None):
                 key = str(object.content_type) + str(object.object_id)
                 if not key in added_objects:
                     added_objects.append(key)
-                    obj = object.content_type.get_object_for_this_type(id=object.object_id)
-                    url = reverse('admin:%s_%s_change' %(obj._meta.app_label,  obj._meta.module_name),  args=[obj.id] )
-                    urls.append([str(object.content_type),request.build_absolute_uri(url)])
+                    try:
+                        obj = object.content_type.get_object_for_this_type(id=object.object_id)
+                        url = reverse('admin:%s_%s_change' %(obj._meta.app_label,  obj._meta.module_name),  args=[obj.id] )
+                        urls.append([str(object.content_type),request.build_absolute_uri(url)])
+                    except Exception:
+                        urls.append([str(object.content_type),"url not available"])
 
             user_url = reverse('admin:%s_%s_delete' %(flagged_user._meta.app_label,  flagged_user._meta.module_name),  args=[flagged_user.id] )
             user_url = request.build_absolute_uri(user_url)

@@ -1,0 +1,278 @@
+import os, logging, yaml
+from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
+from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR
+
+
+logger = logging.getLogger('similarity')
+
+class GaiaWrapper:
+
+    def __init__(self):
+        self.index_path                 = INDEX_DIR
+        self.original_dataset           = DataSet()
+        self.original_dataset_path      = self.__get_dataset_path('fs_index')
+        self.metrics                    = {}
+        self.view                       = None
+        self.__load_dataset()
+
+
+    def __get_dataset_path(self, ds_name):
+        return os.path.join(INDEX_DIR, ds_name + '.db')
+
+
+    def __load_dataset(self):
+        # Loads the dataset, applies transforms if needed and saves. If dataset does not exists, creates an empty one and saves.
+
+        if not os.path.exists(INDEX_DIR):
+            os.makedirs(INDEX_DIR)
+
+        # load original dataset
+        if os.path.exists(self.original_dataset_path):
+            self.original_dataset.load(self.original_dataset_path)
+            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS:
+
+                # if we have loaded a dataset of the correct size but it is unprepared, prepare it
+                if self.original_dataset.history().size() <= 0:
+                    self.__prepare_original_dataset()
+                    self.original_dataset.save(self.original_dataset_path)
+
+                # build metrics for the different similarity presets
+                self.__build_metrics()
+                # create view
+                view = View(self.original_dataset)
+                self.view = view
+
+            logger.debug('Dataset loaded, size: %s points' % (self.original_dataset.size()))
+
+        else:
+            # If there is no existing dataset we create an empty one.
+            # For the moment we do not create any distance metric nor a view because search won't be possible until the DB has a minimum of SIMILARITY_MINIMUM_POINTS
+            self.original_dataset.save(self.original_dataset_path)
+            logger.debug('Created new dataset, size: %s points (should be 0)' % (self.original_dataset.size()))
+
+
+    def __prepare_original_dataset(self):
+        logger.debug('Transforming the original dataset.')
+        self.original_dataset = self.prepare_original_dataset_helper(self.original_dataset)
+
+
+    @staticmethod
+    def prepare_original_dataset_helper(ds):
+        proc_ds1  = transform(ds, 'RemoveVL')
+        proc_ds2  = transform(proc_ds1,  'FixLength')
+        proc_ds1 = None
+        prepared_ds = transform(proc_ds2, 'Cleaner')
+        return prepared_ds
+
+
+    def __build_metrics(self):
+        for preset in PRESETS:
+            logger.debug('Bulding metric for preset %s' % preset)
+            name = preset
+            path = PRESET_DIR + name + ".yaml"
+            preset_file = yaml.load(open(path))
+            distance = preset_file['distance']['type']
+            parameters = preset_file['distance']['parameters']
+            search_metric = DistanceFunctionFactory.create(str(distance),self.original_dataset.layout(),parameters)
+            self.metrics[name] = search_metric
+
+
+    def add_point(self, point_location, point_name):
+        logger.debug('Adding point with name %s' % str(point_name))
+        if self.original_dataset.contains(str(point_name)):
+            self.delete_point(str(point_name))
+        p = Point()
+        p.load(str(point_location))
+        p.setName(str(point_name))
+        self.original_dataset.addPoint(p)
+        size = self.original_dataset.size()
+
+        # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
+        #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
+        if size == SIMILARITY_MINIMUM_POINTS:
+            self.__prepare_original_dataset()
+            self.save_index(msg = "(because of reaching 2000 points)")
+
+            # build metrics for the different similarity presets
+            self.__build_metrics()
+            # create view
+            view = View(self.original_dataset)
+            self.view = view
+
+
+    def delete_point(self, point_name):
+        logger.debug('Deleting point with name %s' % str(point_name))
+        if self.original_dataset.contains(str(point_name)):
+            self.original_dataset.removePoint(str(point_name))
+
+
+    def get_point(self, point_name):
+        logger.debug('Getting point with name %s' % str(point_name))
+        if self.original_dataset.contains(str(point_name)):
+            return self.original_dataset.point(str(point_name))
+
+
+    def save_index(self, path = "", msg = ""):
+        logger.debug('Saving index...' + msg)
+        if not path:
+            self.original_dataset.save(self.original_dataset_path)
+        else:
+            self.original_dataset.save(path)
+        logger.debug('Finished saving index.')
+
+
+    def contains(self, point_name):
+        return self.original_dataset.contains(point_name)
+
+
+    # SIMILARITY SEARCH (WEB and API)
+    def search_dataset(self, query_point, number_of_results, preset_name = DEFAULT_PRESET):
+        preset_name = str(preset_name)
+        query_point = str(query_point)
+        size = self.original_dataset.size()
+        if size < SIMILARITY_MINIMUM_POINTS:
+            raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
+
+        if query_point.endswith('.yaml'):
+            #The point doesn't exist in the dataset....
+            # So, make a temporary point, add all the transformations
+            # to it and search for it
+            p, p1 = Point(), Point()
+            p.load(query_point)
+            p1 = self.original_dataset.history().mapPoint(p)
+            similar_sounds = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results))
+        else:
+            if not self.original_dataset.contains(query_point):
+                raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
+            similar_sounds = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results))
+
+        return similar_sounds
+
+
+    # CONTENT-BASED SEARCH (API)
+    def query_dataset(self, query_parameters, number_of_results):
+
+        size = self.original_dataset.size()
+        if size < SIMILARITY_MINIMUM_POINTS:
+            raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
+
+        trans_hist = self.original_dataset.history().toPython()
+        layout = self.original_dataset.layout()
+
+        # Get normalization coefficients to transform the input data (get info from the last transformation which has been a normalization)
+        coeffs = None
+        for i in range(0,len(trans_hist)):
+            if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
+                coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
+
+        ##############
+        # PARSE TARGET
+        ##############
+
+        # Transform input params to the normalized feature space and add them to a query point
+        # If there are no params specified in the target, the point is set as empty (probably random sounds are returned)
+        q = Point()
+        q.setLayout(layout)
+        feature_names = []
+        # If some target has been specified...
+        if query_parameters['target'].keys():
+            for param in query_parameters['target'].keys():
+                # Only add numerical parameters. Non numerical ones (like key) are only used as filters
+                if param in coeffs.keys():
+                    feature_names.append(str(param))
+                    value = query_parameters['target'][param]
+                    if coeffs:
+                        a = coeffs[param]['a']
+                        b = coeffs[param]['b']
+                        if len(a) == 1:
+                            norm_value = a[0]*value + b[0]
+                        else:
+                            norm_value = []
+                            for i in range(0,len(a)):
+                                norm_value.append(a[i]*value[i]+b[i])
+                        #text = str(type(param)) + " " + str(type(norm_value))
+                        q.setValue(str(param), norm_value)
+                    else:
+                        q.setValue(str(param), value)
+
+        ##############
+        # PARSE FILTER
+        ##############
+
+        filter = ""
+        # If some filter has been specified...
+        if query_parameters['filter']:
+            if type(query_parameters['filter'][0:5]) == str:
+                filter = query_parameters['filter']
+            else:
+                filter = self.parse_filter_list(query_parameters['filter'], coeffs)
+
+
+        #############
+        # DO QUERY!!!
+        #############
+
+        logger.debug("Performing content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
+        metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
+        # Looks like that depending on the version of gaia, variable filter must go after or before the metric
+	    # For the gaia version we have currently (sep 2012) in freesound: nnSearch(query,filter,metric)
+        #results = self.view.nnSearch(q,str(filter),metric).get(int(number_of_results)) # <- Freesound
+        results = self.view.nnSearch(q,metric,str(filter)).get(int(number_of_results))
+
+        return results
+
+
+    # UTILS for content-based search
+    def prepend_value_label(self, f):
+        if f['type'] == 'NUMBER' or f['type'] == 'RANGE' or f['type'] == 'ARRAY':
+            return "value"
+        else:
+            return "label"
+
+
+    def parse_filter_list(self, filter_list, coeffs):
+
+        # TODO: eliminate this?
+        coeffs = None
+
+        filter = "WHERE"
+        for f in filter_list:
+            if type(f) != dict:
+                filter += f
+            else:
+                if f['type'] == 'NUMBER' or f['type'] == 'STRING' or f['type'] == 'ARRAY':
+
+                    if f['type'] == 'NUMBER':
+                        if coeffs:
+                            norm_value = coeffs[f['feature']]['a'][0] * f['value'] + coeffs[f['feature']]['b'][0]
+                        else:
+                            norm_value = f['value']
+                    elif f['type'] == 'ARRAY':
+                        if coeffs:
+                            norm_value = []
+                            for i in range(len(f['value'])):
+                                norm_value.append(coeffs[f['feature']]['a'][i] * f['value'][i] + coeffs[f['feature']]['b'][i])
+                        else:
+                            norm_value = f['value']
+                    else:
+                        norm_value = f['value']
+                    filter += " " + self.prepend_value_label(f) + f['feature'] + "=" + str(norm_value) + " "
+
+                else:
+                    filter += " "
+                    if f['value']['min']:
+                        if coeffs:
+                            norm_value = coeffs[f['feature']]['a'][0] * f['value']['min'] + coeffs[f['feature']]['b'][0]
+                        else:
+                            norm_value = f['value']['min']
+                        filter += self.prepend_value_label(f) + f['feature'] + ">" + str(norm_value) + " "
+                    if f['value']['max']:
+                        if f['value']['min']:
+                            filter += "AND "
+                        if coeffs:
+                            norm_value = coeffs[f['feature']]['a'][0] * f['value']['max'] + coeffs[f['feature']]['b'][0]
+                        else:
+                            norm_value = f['value']['max']
+                        filter += self.prepend_value_label(f) + f['feature'] + "<" + str(norm_value) + " "
+
+        return filter

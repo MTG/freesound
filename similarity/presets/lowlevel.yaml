@@ -1,0 +1,16 @@
+{
+    "presetdetails": "Lowlevel standard preset.",
+    "distance": {
+        "type": "euclidean",
+        "parameters": {
+            "descriptorNames": [
+                "*lowlevel*mean",
+                "*lowlevel*dmean",
+                "*lowlevel*dmean2",
+                "*lowlevel*var",
+                "*lowlevel*dvar",
+                "*lowlevel*dvar2"
+            ]
+        }
+    }
+}

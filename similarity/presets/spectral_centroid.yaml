@@ -1,0 +1,11 @@
+{
+    "presetdetails": "Test preset that only uses spectral_centroid.mean.",
+    "distance": {
+        "type": "euclidean",
+        "parameters": {
+            "descriptorNames": [
+                ".lowlevel.spectral_centroid.mean"
+            ]
+        }
+    }
+}

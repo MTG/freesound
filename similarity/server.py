@@ -1,7 +1,7 @@
 from twisted.web import server, resource
 from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
-from settings import LISTEN_PORT, LOGFILE, INDEX_NAME
+from similarity_settings import LISTEN_PORT, LOGFILE, INDEX_NAME
 import logging
 from logging.handlers import RotatingFileHandler
 import json

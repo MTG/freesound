@@ -1,6 +1,6 @@
 import os, logging, yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
-from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR, INDEX_NAME
+from similarity_settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR, INDEX_NAME
 import time
 
 logger = logging.getLogger('similarity')

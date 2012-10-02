@@ -1,4 +1,5 @@
 import os
+# NOTE: In production and test this file is taken from the deploy repository
 
 # SERVER SETTINGS
 INDEX_DIR                   = '/home/fsweb/freesound/freesound-similarity/'

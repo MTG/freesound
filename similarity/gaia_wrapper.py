@@ -1,7 +1,7 @@
 import os, logging, yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
-from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR
-
+from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR, INDEX_NAME
+import time
 
 logger = logging.getLogger('similarity')
 
@@ -10,7 +10,7 @@ class GaiaWrapper:
     def __init__(self):
         self.index_path                 = INDEX_DIR
         self.original_dataset           = DataSet()
-        self.original_dataset_path      = self.__get_dataset_path('fs_index')
+        self.original_dataset_path      = self.__get_dataset_path(INDEX_NAME)
         self.metrics                    = {}
         self.view                       = None
         self.__load_dataset()
@@ -78,7 +78,6 @@ class GaiaWrapper:
 
 
     def add_point(self, point_location, point_name):
-        logger.debug('Adding point with name %s' % str(point_name))
         if self.original_dataset.contains(str(point_name)):
             self.delete_point(str(point_name))
         p = Point()
@@ -86,6 +85,7 @@ class GaiaWrapper:
         p.setName(str(point_name))
         self.original_dataset.addPoint(p)
         size = self.original_dataset.size()
+        logger.debug('Added point with name %s. Index has now %i points.' % (str(point_name),size))
 
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
@@ -101,9 +101,9 @@ class GaiaWrapper:
 
 
     def delete_point(self, point_name):
-        logger.debug('Deleting point with name %s' % str(point_name))
         if self.original_dataset.contains(str(point_name)):
             self.original_dataset.removePoint(str(point_name))
+        logger.debug('Deleted point with name %s. Index has now %i points.' % (str(point_name),self.original_dataset.size()))
 
 
     def get_point(self, point_name):
@@ -112,16 +112,19 @@ class GaiaWrapper:
             return self.original_dataset.point(str(point_name))
 
 
-    def save_index(self, path = "", msg = ""):
-        logger.debug('Saving index...' + msg)
-        if not path:
-            self.original_dataset.save(self.original_dataset_path)
-        else:
-            self.original_dataset.save(path)
-        logger.debug('Finished saving index.')
+    def save_index(self, filename = None, msg = ""):
+        tic = time.time()
+        path = self.original_dataset_path
+        if filename:
+            path =  INDEX_DIR + filename + ".db"
+        logger.debug('Saving index to (%s)...'%path + msg)
+        self.original_dataset.save(path)
+        toc = time.time()
+        logger.debug('Finished saving index (done in %.2f seconds).'%((toc - tic)))
 
 
     def contains(self, point_name):
+        logger.debug('Checking if index has point with name %s' % str(point_name))
         return self.original_dataset.contains(point_name)
 
 
@@ -129,6 +132,7 @@ class GaiaWrapper:
     def search_dataset(self, query_point, number_of_results, preset_name = DEFAULT_PRESET):
         preset_name = str(preset_name)
         query_point = str(query_point)
+        logger.debug('NN search for point with name %s' % query_point)
         size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
             raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
@@ -212,7 +216,7 @@ class GaiaWrapper:
         # DO QUERY!!!
         #############
 
-        logger.debug("Performing content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
+        logger.debug("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
         # Looks like that depending on the version of gaia, variable filter must go after or before the metric
 	    # For the gaia version we have currently (sep 2012) in freesound: nnSearch(query,filter,metric)

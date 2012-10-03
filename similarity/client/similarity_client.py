@@ -28,6 +28,7 @@ class Similarity():
               url += '&preset=' + preset
         result = _get_url_as_json(url)
 
+        print result
         if not result['error']:
             return result['result']
         else:

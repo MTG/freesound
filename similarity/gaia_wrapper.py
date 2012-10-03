@@ -136,7 +136,7 @@ class GaiaWrapper:
 
     def contains(self, point_name):
         logger.debug('Checking if index has point with name %s' % str(point_name))
-        return {'error':False,'result:':self.original_dataset.contains(point_name)}
+        return {'error':False,'result':self.original_dataset.contains(point_name)}
 
     # SIMILARITY SEARCH (WEB and API)
     def search_dataset(self, query_point, number_of_results, preset_name):
@@ -147,7 +147,7 @@ class GaiaWrapper:
         if size < SIMILARITY_MINIMUM_POINTS:
             msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
             logger.debug(msg)
-            return {'error':True,'result:':msg}
+            return {'error':True,'result':msg}
             #raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
 
         if query_point.endswith('.yaml'):
@@ -162,7 +162,7 @@ class GaiaWrapper:
             if not self.original_dataset.contains(query_point):
                 msg = "Sound with id %s doesn't exist in the dataset." % query_point
                 logger.debug(msg)
-                return {'error':True,'result:':msg}
+                return {'error':True,'result':msg}
                 #raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
 
             similar_sounds = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results))
@@ -177,7 +177,7 @@ class GaiaWrapper:
         if size < SIMILARITY_MINIMUM_POINTS:
             msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
             logger.debug(msg)
-            return {'error':True,'result:':msg}
+            return {'error':True,'result':msg}
             #raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
 
         trans_hist = self.original_dataset.history().toPython()

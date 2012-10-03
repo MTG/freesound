@@ -1,15 +1,15 @@
 import settings, traceback, logging
 from sounds.models import Sound
 from django.core.cache import cache
-from similarity.client import Similarity
-from similarity.settings import PRESETS
+from similarity.client.similarity_client import Similarity
+from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILAR_SOUNDS_TO_CACHE, SIMILARITY_CACHE_TIME
 
 logger = logging.getLogger('web')
 
-def get_similar_sounds(sound, preset, num_results = settings.SOUNDS_PER_PAGE ):
+def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SOUNDS_PER_PAGE ):
 
     if preset not in PRESETS:
-        preset = settings.DEFAULT_SIMILARITY_PRESET
+        preset = DEFAULT_PRESET
 
     cache_key = "similar-for-sound-%s-%s" % (sound.id, preset)
 
@@ -21,14 +21,14 @@ def get_similar_sounds(sound, preset, num_results = settings.SOUNDS_PER_PAGE ):
 
     if not similar_sounds:
         try:
-            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset, settings.SIMILAR_SOUNDS_TO_CACHE)]
+            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset,SIMILAR_SOUNDS_TO_CACHE)]
         except Exception, e:
             logger.debug('Could not get a response from the similarity service (%s)\n\t%s' % \
                          (e, traceback.format_exc()))
             similar_sounds = []
 
         if len(similar_sounds) > 0:
-            cache.set(cache_key, similar_sounds, settings.SIMILARITY_CACHE_TIME)
+            cache.set(cache_key, similar_sounds, SIMILARITY_CACHE_TIME)
 
     return similar_sounds[0:num_results]
 
@@ -53,6 +53,6 @@ def query_for_descriptors(original_t, original_f, query_parameters, num_results)
             returned_sounds = []#[-999]
 
         if len(returned_sounds) > 0:# and returned_sounds[0] != -999:
-            cache.set(cache_key, returned_sounds, settings.SIMILARITY_CACHE_TIME)
+            cache.set(cache_key, returned_sounds, SIMILARITY_CACHE_TIME)
 
     return returned_sounds[0:num_results]

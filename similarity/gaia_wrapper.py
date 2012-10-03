@@ -129,7 +129,7 @@ class GaiaWrapper:
 
 
     # SIMILARITY SEARCH (WEB and API)
-    def search_dataset(self, query_point, number_of_results, preset_name = DEFAULT_PRESET):
+    def search_dataset(self, query_point, number_of_results, preset_name):
         preset_name = str(preset_name)
         query_point = str(query_point)
         logger.debug('NN search for point with name %s' % query_point)

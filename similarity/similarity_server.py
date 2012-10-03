@@ -1,7 +1,7 @@
 from twisted.web import server, resource
 from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
-from similarity_settings import LISTEN_PORT, LOGFILE, INDEX_NAME
+from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME
 import logging
 from logging.handlers import RotatingFileHandler
 import json
@@ -43,18 +43,23 @@ class SimilarityServer(resource.Resource):
     def contains(self, sound_id):
         return json.dumps({'result':self.gaia.contains(sound_id[0])})
 
-    def nnsearch(self,sound_id,num_results):
-        result = self.gaia.search_dataset(sound_id[0], num_results[0])
+    def nnsearch(self,sound_id,num_results = None,preset = None):
+        if not preset:
+            preset = [DEFAULT_PRESET]
+        if not num_results:
+            num_results = [DEFAULT_NUMBER_OF_RESULTS]
+
+        result = self.gaia.search_dataset(sound_id[0], num_results[0], preset_name = preset[0])
         return json.dumps({'result':result})
 
     def nnrange(self, query_parameters, num_results):
         result = self.gaia.query_dataset(json.loads(query_parameters[0]), num_results[0])
 
     def save(self, filename = None):
-        if filename:
-            self.gaia.save_index(filename[0])
-        else:
-            self.gaia.save_index()
+        if not filename:
+            filename = [INDEX_NAME]
+
+        self.gaia.save_index(filename[0])
         return json.dumps({'result':'OK'})
 
 

@@ -1,7 +1,7 @@
 from django.core.management.base import NoArgsCommand
 from sounds.models import Sound
 from django.contrib.auth.models import User
-from similarity.client import Similarity
+from similarity.client.similarity_client import Similarity
 from django.db.models import Max
 import os
 

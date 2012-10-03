@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
-from similarity.client import Similarity
+from similarity.client.similarity_client import Similarity
 from optparse import make_option
 
 class Command(BaseCommand):

@@ -1,7 +1,7 @@
 from twisted.web import server, resource
 from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
-from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME
+from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS
 import logging
 from logging.handlers import RotatingFileHandler
 import json
@@ -46,6 +46,9 @@ class SimilarityServer(resource.Resource):
     def nnsearch(self,sound_id,num_results = None,preset = None):
         if not preset:
             preset = [DEFAULT_PRESET]
+        else:
+            if preset[0] not in PRESETS:
+                preset = [DEFAULT_PRESET] 
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
 

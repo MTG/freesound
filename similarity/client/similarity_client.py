@@ -20,8 +20,12 @@ def _get_url_as_json(url):
 class Similarity():
 
     @classmethod
-    def search(cls, sound_id, num_results, preset = False):
-        url = _BASE_URL + _URL_NNSEARCH + '?' + 'sound_id=' + str(sound_id) + '&num_results=' + str(num_results) + '&preset=' + preset
+    def search(cls, sound_id, num_results = None, preset = None):
+        url = _BASE_URL + _URL_NNSEARCH + '?' + 'sound_id=' + str(sound_id)
+        if num_results:
+              url += '&num_results=' + str(num_results)
+        if preset:
+              url += '&preset=' + preset
         result = _get_url_as_json(url)
         return result['result']
 

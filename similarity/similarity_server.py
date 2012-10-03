@@ -11,8 +11,8 @@ def server_interface(resource):
         'add_point':resource.add_point, # location, sound_id
         'delete_point':resource.delete_point, # sound_id
         'contains':resource.contains, # sound_id
-        'nnsearch':resource.nnsearch, # sound_id, num_results
-        'nnrange':resource.nnrange,  # query_parameters, num_results
+        'nnsearch':resource.nnsearch, # sound_id, num_results (optional), preset (optional)
+        'nnrange':resource.nnrange,  # query_parameters, num_results (optional)
         'save':resource.save # filename (optional)
     }
 
@@ -33,37 +33,33 @@ class SimilarityServer(resource.Resource):
         return self.methods[request.prepath[1]](**request.args)
 
     def add_point(self,location,sound_id):
-        self.gaia.add_point(location[0],sound_id[0])
-        return json.dumps({'result':'OK'})
+        return json.dumps( self.gaia.add_point(location[0],sound_id[0]))
 
     def delete_point(self, sound_id):
-        self.gaia.delete_point(sound_id[0])
-        return json.dumps({'result':'OK'})
+        return json.dumps(self.gaia.delete_point(sound_id[0]))
 
     def contains(self, sound_id):
-        return json.dumps({'result':self.gaia.contains(sound_id[0])})
+        return json.dumps(self.gaia.contains(sound_id[0]))
 
     def nnsearch(self,sound_id,num_results = None,preset = None):
         if not preset:
             preset = [DEFAULT_PRESET]
         else:
             if preset[0] not in PRESETS:
-                preset = [DEFAULT_PRESET] 
+                preset = [DEFAULT_PRESET]
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
 
-        result = self.gaia.search_dataset(sound_id[0], num_results[0], preset_name = preset[0])
-        return json.dumps({'result':result})
+        return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name = preset[0]))
 
     def nnrange(self, query_parameters, num_results):
-        result = self.gaia.query_dataset(json.loads(query_parameters[0]), num_results[0])
+        return json.dumps(self.gaia.query_dataset(json.loads(query_parameters[0]), num_results[0]))
 
     def save(self, filename = None):
         if not filename:
             filename = [INDEX_NAME]
 
-        self.gaia.save_index(filename[0])
-        return json.dumps({'result':'OK'})
+        return json.dumps(self.gaia.save_index(filename[0]))
 
 
 if __name__ == '__main__':

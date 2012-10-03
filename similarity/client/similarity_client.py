@@ -27,7 +27,11 @@ class Similarity():
         if preset:
               url += '&preset=' + preset
         result = _get_url_as_json(url)
-        return result['result']
+
+        if not result['error']:
+            return result['result']
+        else:
+            raise Exception(result['result'])
 
 
 '''

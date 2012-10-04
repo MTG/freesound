@@ -54,6 +54,9 @@ class SimilarityServer(resource.Resource):
         return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name = preset[0]))
 
     def nnrange(self, target = None, filter = None, num_results = None):
+        if not filter and not target:
+            return json.dumps({'error':True,'result':"At least introduce either a filter or a target"})
+
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
 

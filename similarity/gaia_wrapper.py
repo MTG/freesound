@@ -34,6 +34,17 @@ class GaiaWrapper:
                 # if we have loaded a dataset of the correct size but it is unprepared, prepare it
                 if self.original_dataset.history().size() <= 0:
                     self.__prepare_original_dataset()
+                    self.__normalize_original_dataset()
+                    self.original_dataset.save(self.original_dataset_path)
+
+                # if we have loaded a dataset which has not been normalized, normalize it
+                normalized = False
+                for element in self.original_dataset.history().toPython():
+                    if element['Analyzer name'] == 'normalize':
+                        normalized = True
+                        break
+                if not normalized:
+                    self.__normalize_original_dataset()
                     self.original_dataset.save(self.original_dataset_path)
 
                 # build metrics for the different similarity presets
@@ -52,9 +63,12 @@ class GaiaWrapper:
 
 
     def __prepare_original_dataset(self):
-        logger.debug('Transforming the original dataset.')
+        logger.debug('Preparing the original dataset.')
         self.original_dataset = self.prepare_original_dataset_helper(self.original_dataset)
 
+    def __normalize_original_dataset(self):
+        logger.debug('Normalizing the original dataset.')
+        self.original_dataset = self.normalize_dataset_helper(self.original_dataset)
 
     @staticmethod
     def prepare_original_dataset_helper(ds):
@@ -62,8 +76,20 @@ class GaiaWrapper:
         proc_ds2  = transform(proc_ds1,  'FixLength')
         proc_ds1 = None
         prepared_ds = transform(proc_ds2, 'Cleaner')
+        proc_ds2 = None
+
         return prepared_ds
 
+    @staticmethod
+    def normalize_dataset_helper(ds):
+        # Remove ['.lowlevel.mfcc.cov','.lowlevel.mfcc.icov'] (they give errors when normalizing)
+        ds = transform(ds, 'remove', { 'descriptorNames': ['.lowlevel.mfcc.cov','.lowlevel.mfcc.icov'] })
+        # Add normalization
+        normalization_params = { "descriptorNames":"*","independent":True, "outliers":-1}
+        normalized_ds = transform(ds, 'normalize', normalization_params)
+        ds = None
+
+        return normalized_ds
 
     def __build_metrics(self):
         for preset in PRESETS:
@@ -96,6 +122,7 @@ class GaiaWrapper:
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
         if size == SIMILARITY_MINIMUM_POINTS:
             self.__prepare_original_dataset()
+            self.__normalize_original_dataset()
             self.save_index(msg = "(because of reaching 2000 points)")
 
             # build metrics for the different similarity presets

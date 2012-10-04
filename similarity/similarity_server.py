@@ -57,15 +57,14 @@ class SimilarityServer(resource.Resource):
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
 
-        filter = filter[0]
-        target = target[0]
-
         if filter:
+            filter = filter[0]
             pf = parse_filter(filter.replace("'",'"'))
         else:
             pf = []
 
         if target:
+            target = target[0]
             pt = parse_target(target.replace("'",'"'))
         else:
             pt = {}

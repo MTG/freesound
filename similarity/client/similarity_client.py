@@ -39,9 +39,9 @@ class Similarity():
             raise Exception("At least a target or a filter should be specified")
         url = _BASE_URL + _URL_NNRANGE + '?'
         if target:
-            url += '&t=' + str(target)
+            url += '&target=' + str(target)
         if filter:
-            url += '&f=' + str(filter)
+            url += '&filter=' + str(filter)
         if num_results:
             url += '&num_results=' + str(num_results)
         return _result_or_exception(_get_url_as_json(url))

@@ -123,7 +123,7 @@ class GaiaWrapper:
         if size == SIMILARITY_MINIMUM_POINTS:
             self.__prepare_original_dataset()
             self.__normalize_original_dataset()
-            self.save_index(msg = "(because of reaching 2000 points)")
+            self.save_index(msg = "(reaching 2000 points)")
 
             # build metrics for the different similarity presets
             self.__build_metrics()
@@ -169,7 +169,7 @@ class GaiaWrapper:
     def search_dataset(self, query_point, number_of_results, preset_name):
         preset_name = str(preset_name)
         query_point = str(query_point)
-        logger.debug('NN search for point with name %s' % query_point)
+        logger.debug('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
         size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
             msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)

@@ -21,7 +21,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
 
     if not similar_sounds:
         try:
-            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset,SIMILAR_SOUNDS_TO_CACHE)]
+            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset = preset, num_results = SIMILAR_SOUNDS_TO_CACHE)]
         except Exception, e:
             logger.debug('Could not get a response from the similarity service (%s)\n\t%s' % \
                          (e, traceback.format_exc()))

@@ -4,6 +4,7 @@ from gaia_wrapper import GaiaWrapper
 from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS
 import logging
 from logging.handlers import RotatingFileHandler
+from similarity_server_utils import parse_filter, parse_target
 import json
 
 def server_interface(resource):
@@ -12,7 +13,7 @@ def server_interface(resource):
         'delete_point':resource.delete_point, # sound_id
         'contains':resource.contains, # sound_id
         'nnsearch':resource.nnsearch, # sound_id, num_results (optional), preset (optional)
-        'nnrange':resource.nnrange,  # query_parameters, num_results (optional)
+        'nnrange':resource.nnrange,  # target, filter, num_results (optional)
         'save':resource.save # filename (optional)
     }
 
@@ -52,8 +53,33 @@ class SimilarityServer(resource.Resource):
 
         return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name = preset[0]))
 
-    def nnrange(self, query_parameters, num_results):
-        return json.dumps(self.gaia.query_dataset(json.loads(query_parameters[0]), num_results[0]))
+    def nnrange(self, target, filter, num_results = None):
+        if not num_results:
+            num_results = [DEFAULT_NUMBER_OF_RESULTS]
+
+        if filter:
+            pf = parse_filter(filter.replace("'",'"'))
+        else:
+            pf = []
+
+        if target:
+            pt = parse_target(target.replace("'",'"'))
+        else:
+            pt = {}
+
+        if type(pf) != list or type(pt) != dict:
+            message = ""
+            if type(pf) == str:
+                message += pf
+            if type(pt) == str:
+                message += pt
+            if message == "":
+                message = "Invalid filter or target."
+
+            return json.dumps({'error':True,'result':message})
+            #raise ReturnError(400, "BadRequest", {"explanation": message})
+
+        return json.dumps(self.gaia.query_dataset({'target':pt,'filter':pf}, num_results[0]))
 
     def save(self, filename = None):
         if not filename:

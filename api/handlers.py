@@ -439,32 +439,8 @@ class SoundContentSearchHandler(BaseHandler):
 
         if not t and not f:
             raise ReturnError(400, "BadRequest", {"explanation": "Introduce either a target, a filter or both."})
-
-        if f:
-            pf = parse_filter(f.replace("'",'"'))
-        else:
-            pf = []
-
-        if t:
-            pt = parse_target(t.replace("'",'"'))
-        else:
-            pt = {}
-
-        if type(pf) != list or type(pt) != dict:
-            message = ""
-            if type(pf) == str:
-                message += pf
-            if type(pt) == str:
-                message += pt
-            if message == "":
-                message = "Invalid filter or target."
-
-            raise ReturnError(400, "BadRequest", {"explanation": message})
-
         try:
-            results = query_for_descriptors(t,f,{'target':pt,'filter':pf}, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
-            #if results[0] == -999:
-            #    raise ReturnError(500, "ContentBasedSearchError", {"explanation": "Could not get a response from the similarity service"})
+            results = query_for_descriptors(t,f, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
         except Exception, e:
             raise ReturnError(500, "ContentBasedSearchError", {'explanation':e})
 

@@ -284,7 +284,7 @@ class GaiaWrapper:
     def parse_filter_list(self, filter_list, coeffs):
 
         # TODO: eliminate this?
-        coeffs = None
+        #coeffs = None
 
         filter = "WHERE"
         for f in filter_list:

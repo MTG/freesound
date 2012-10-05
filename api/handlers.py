@@ -15,7 +15,7 @@ from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
 from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
-from api.api_utils import auth, ReturnError, parse_filter, parse_target
+from api.api_utils import auth, ReturnError#, parse_filter, parse_target
 import os
 from django.contrib.syndication.views import Feed
 

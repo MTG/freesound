@@ -72,6 +72,10 @@ class SimilarityServer(resource.Resource):
         else:
             pt = {}
 
+        print pf
+        print pt
+
+
         if type(pf) != list or type(pt) != dict:
             message = ""
             if type(pf) == str:

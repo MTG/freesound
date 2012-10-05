@@ -33,10 +33,10 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
     return similar_sounds[0:num_results]
 
 
-def query_for_descriptors(original_t, original_f, query_parameters, num_results):
-    original_t = original_t.replace(" ","")
-    original_f = original_f.replace(" ","")
-    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (original_t,original_f,num_results)
+def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE):
+    target = target.replace(" ","")
+    filter = filter.replace(" ","")
+    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (target,filter,num_results)
 
     # Don't use the cache when we're debugging
     if settings.DEBUG:
@@ -46,7 +46,7 @@ def query_for_descriptors(original_t, original_f, query_parameters, num_results)
 
     if not returned_sounds:
         try:
-            returned_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.query(query_parameters, num_results)]
+            returned_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.query(target, filter, num_results)]
         except Exception, e:
             logger.info('Could not get a response from the similarity service (query for descriptors) (%s)\n\t%s' %\
                          (e, traceback.format_exc()))

@@ -44,6 +44,8 @@ class Similarity():
             url += '&filter=' + str(filter)
         if num_results:
             url += '&num_results=' + str(num_results)
+
+        print url
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod

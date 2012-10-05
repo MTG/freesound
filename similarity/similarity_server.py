@@ -72,10 +72,6 @@ class SimilarityServer(resource.Resource):
         else:
             pt = {}
 
-        return json.dumps({'error':True,'result':{'pf':pf,'pt':pt}})
-        
-
-
         if type(pf) != list or type(pt) != dict:
             message = ""
             if type(pf) == str:

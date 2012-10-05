@@ -48,9 +48,9 @@ def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE
         try:
             returned_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.query(target, filter, num_results)]
         except Exception, e:
-            logger.info('Could not get a response from the similarity service (query for descriptors) (%s)\n\t%s' %\
+            logger.info('Something wrong occurred with the "query for descriptors" request (%s)\n\t%s' %\
                          (e, traceback.format_exc()))
-            returned_sounds = []#[-999]
+            raise Exception(e)
 
         if len(returned_sounds) > 0:# and returned_sounds[0] != -999:
             cache.set(cache_key, returned_sounds, SIMILARITY_CACHE_TIME)

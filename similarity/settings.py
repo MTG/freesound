@@ -1,6 +1,6 @@
 import os, logging
 
-INDEX_DIR                   = '/home/fsweb/freesound/freesound/freesound-similarity/'
+INDEX_DIR                   = '/home/fsweb/freesound/freesound-similarity/'
 PRESET_DIR                  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'presets/')
 PRESETS                     = ['lowlevel', 'music', 'query_descriptors' ] #, 'sfx', 'lowlevelplus']
 SIMILARITY_MINIMUM_POINTS   = 2000

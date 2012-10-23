@@ -1,0 +1,3 @@
+sampler_label,aggregate_report_count,average,aggregate_report_median,aggregate_report_90%_line,aggregate_report_min,aggregate_report_max,aggregate_report_error%,aggregate_report_rate,aggregate_report_bandwidth
+similarity search,1007,679,647,1165,17,2021,0.041708043694141016,4.968741827727257,345.7302534761456
+TOTAL,1007,679,647,1165,17,2021,0.041708043694141016,4.968741827727257,345.7302534761456

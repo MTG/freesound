@@ -82,7 +82,7 @@ pack: 			string
 pack_tokenized: 	string, tokenized
 is_geotagged: 		boolean
 type: 			string, original file type, one of wav,
-    			aiff, ogg, mp3, flac
+    			aif, aiff, ogg, mp3, flac
 duration: 		numerical, duration of sound in seconds
 bitdepth: 		integer, WARNING is not to be trusted right now
 bitrate: 		numerical, WARNING is not to be trusted right now
@@ -437,7 +437,7 @@ preview-hq-ogg        URI               The URI for retrieving a high quality (~
 preview-lq-ogg        URI               The URI for retrieving a low quality (~80kbps) ogg of the sound.
 serve                 URI               The URI for retrieving the original sound.
 similarity            URI               URI pointing to the similarity resource (to get a list of similar sounds).
-type                  string            The type of sound (wav, aif, mp3, etc.).
+type                  string            The type of sound (wav, aif, aiff, mp3, etc.).
 duration              number            The duration of the sound in seconds.
 samplerate            number            The samplerate of the sound.
 bitdepth              number            The bit depth of the sound.
@@ -725,7 +725,7 @@ GET
 ---
 
 This resource returns a list of similar sounds according to a given sound example (which is also returned as the first of the list).
-``preset`` parameter can be set to indicate which kind of similarity measure must be used when computing the distance.
+``preset`` parameter can be set to indicate which kind of similarity measure must be used when computing the distance (for the moment only ``lowlevel`` is available.).
 
 Request
 '''''''
@@ -736,7 +736,7 @@ Request
 Name                Type    Required  Description
 ==================  ======  ========  ===================================================
 num_results         number  no        The number of similar sounds to return (max = 100, default = 15)
-preset              string  no        The similarity measure to use when retrieving similar sounds [``music``, ``lowlevel``] (default = ``lowlevel``)
+preset              string  no        The similarity measure to use when retrieving similar sounds (for the moment, only ``lowlevel`` is available at is selected by default)
 fields	            string  no	      Fields
 sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
 ==================  ======  ========  ===================================================
@@ -745,10 +745,10 @@ sounds_per_page     number  no	      Number of sounds to return in each page (be
 
 ::
 
-  # Get the most similar sound to 120597 with the preset for "musical" sounds (num_results equals 2 because original sound is also returned in the list)
-  curl http://www.freesound.org/api/sounds/120597/similar?num_results=2&preset=music
-  # Get the 15 most similar sounds to 11 with the preset "lowlevel"
-  curl http://www.freesound.org/api/sounds/11/similar?preset=lowlevel
+  # Get the most similar sound to sound with id 120597 (num_results equals 2 because original sound is also returned in the list)
+  curl http://www.freesound.org/api/sounds/120597/similar?num_results=2
+  # Get the 15 most similar sounds to sound with id 11
+  curl http://www.freesound.org/api/sounds/11/similar
 
 Response
 ''''''''
@@ -1118,7 +1118,7 @@ Response
 
 **Properties**
 
-The response is an array. Each item in the array is a dictionary with 'name', 'url' and 'sounds' properties.
+The response is a dictionary. The array has two keys: 'categories' (which returns an array of categories whhere each is a dictionary with 'name', 'url' and 'sounds' properties) and 'num_results' indicating the total number of categories.
 
 ===========  ======  ===================================================
 Name         Type    Description

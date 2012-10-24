@@ -1,7 +1,7 @@
 import settings, traceback, logging
 from sounds.models import Sound
 from django.core.cache import cache
-from similarity.client.similarity_client import Similarity
+from similarity.client import Similarity
 from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILAR_SOUNDS_TO_CACHE, SIMILARITY_CACHE_TIME
 
 logger = logging.getLogger('web')

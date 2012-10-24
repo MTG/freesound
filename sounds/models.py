@@ -18,7 +18,7 @@ from search.views import get_pack_tags
 from django.db.models import Count
 from django.db.models.signals import post_delete, post_save
 from django.contrib.contenttypes import generic
-from similarity.client.similarity_client import Similarity
+from similarity.client import Similarity
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')

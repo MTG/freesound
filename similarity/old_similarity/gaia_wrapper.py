@@ -1,3 +1,6 @@
+# NOTE: this is a version of the old similarity code adapted for the new machines.
+# It was created to compare performance before switching to new similarity and new machines
+
 import os, yaml, shutil, logging
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
 from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, PRESET_DIR, PRESETS, SAVE_ON_CHANGE
@@ -32,17 +35,17 @@ class GaiaWrapper:
     def __load_datasets(self):
         if not os.path.exists(INDEX_DIR):
             os.makedirs(INDEX_DIR)
-        # load original dataset
+            # load original dataset
         if os.path.exists(self.original_dataset_path):
             self.original_dataset.load(self.original_dataset_path)
             # if we're loading unprepared datasets, that are the right size, prepare the dataset
-            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS \
-               and self.original_dataset.history().size() <= 0:
+            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS\
+            and self.original_dataset.history().size() <= 0:
                 self.__prepare_original_dataset()
                 self.original_dataset.save(self.original_dataset_path)
         else:
             self.original_dataset.save(self.original_dataset_path)
-        # load preset datasets
+            # load preset datasets
         for preset_name in self.presets.keys():
             ds_path = self.__get_dataset_path(preset_name)
             if os.path.exists(ds_path):
@@ -61,7 +64,7 @@ class GaiaWrapper:
                 # and we weren't able to load the datasets
                 if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS:
                     self.__build_preset_dataset_and_save(preset_name)
-        logger.debug('Datasets loaded, presets: %s, size: %s' % \
+        logger.debug('Datasets loaded, presets: %s, size: %s' %\
                      (self.preset_datasets.keys(), self.original_dataset.size()))
 
 
@@ -115,6 +118,11 @@ class GaiaWrapper:
         preset_name = str(preset_name)
         query_point = str(query_point)
         size = self.original_dataset.size()
+        preset = self.presets[preset_name]
+        distance = preset['distance']
+        search_metric = DistanceFunctionFactory.create(distance['type'], self.preset_datasets[preset_name].layout(), distance['parameters'])
+
+
         if (size < SIMILARITY_MINIMUM_POINTS):
             raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
         if not preset_name in self.presets:
@@ -126,11 +134,12 @@ class GaiaWrapper:
             p, p1 = Point(), Point()
             p.load(query_point)
             p1 = self.preset_datasets[preset_name].history().mapPoint(p)
-            similar_songs = self.views[preset_name].nnSearch(p1).get(int(number_of_results))
+            similar_songs = self.views[preset_name].nnSearch(p1,search_metric).get(int(number_of_results))
         else:
             if not self.original_dataset.contains(query_point):
                 raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
-            similar_songs = self.views[preset_name].nnSearch(query_point).get(int(number_of_results))
+
+            similar_songs = self.views[preset_name].nnSearch(query_point,search_metric).get(int(number_of_results))
         return similar_songs
 
     def query_dataset(self, query_parameters, number_of_results):
@@ -171,7 +180,7 @@ class GaiaWrapper:
                             norm_value = []
                             for i in range(0,len(a)):
                                 norm_value.append(a[i]*value[i]+b[i])
-                        #text = str(type(param)) + " " + str(type(norm_value))
+                            #text = str(type(param)) + " " + str(type(norm_value))
                         q.setValue(str(param), norm_value)
                     else:
                         q.setValue(str(param), value)
@@ -188,7 +197,7 @@ class GaiaWrapper:
         # Do query!
         logger.debug("Performing content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
-        results = view.nnSearch(q,str(filter),metric).get(int(number_of_results))
+        results = view.nnSearch(q,metric,str(filter)).get(int(number_of_results))
 
         return results
 
@@ -275,8 +284,8 @@ class GaiaWrapper:
         filter_ds = transform(self.original_dataset, filter['type'], filter['parameters'])
         if 'transform' in preset:
             preset_ds = transform(filter_ds,
-                                  preset['transform']['type'],
-                                  preset['transform']['parameters'])
+                preset['transform']['type'],
+                preset['transform']['parameters'])
         else:
             preset_ds = filter_ds
         preset_ds.setReferenceDataSet(self.original_dataset)
@@ -287,9 +296,9 @@ class GaiaWrapper:
         logger.debug('Bulding view for preset %s' % preset_name)
         preset = self.presets[preset_name]
         distance = preset['distance']
-        search_metric = DistanceFunctionFactory.create(distance['type'],
-                                                      preset_ds.layout(),
-                                                      distance['parameters'])
-        view = View(preset_ds, search_metric)
+        #search_metric = DistanceFunctionFactory.create(distance['type'],
+        #                                              preset_ds.layout(),
+        #                                              distance['parameters'])
+        view = View(preset_ds)#, search_metric)
         preset_ds.addView(view)
         self.views[preset_name] = view

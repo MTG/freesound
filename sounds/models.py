@@ -347,6 +347,12 @@ class Sound(SocialModel):
     def is_sound(self):
         return True
 
+    # N.B. Temporary, so we can get rid of the original_path which breaks things in migration
+    @property
+    def original_path(self):
+        return self.locations("path")
+
+
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 

@@ -15,7 +15,7 @@ from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
 from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
-from api.api_utils import auth, ReturnError, parse_filter, parse_target
+from api.api_utils import auth, ReturnError#, parse_filter, parse_target
 import os
 from django.contrib.syndication.views import Feed
 
@@ -439,34 +439,13 @@ class SoundContentSearchHandler(BaseHandler):
 
         if not t and not f:
             raise ReturnError(400, "BadRequest", {"explanation": "Introduce either a target, a filter or both."})
-
-        if f:
-            pf = parse_filter(f.replace("'",'"'))
-        else:
-            pf = []
-
-        if t:
-            pt = parse_target(t.replace("'",'"'))
-        else:
-            pt = {}
-
-        if type(pf) != list or type(pt) != dict:
-            message = ""
-            if type(pf) == str:
-                message += pf
-            if type(pt) == str:
-                message += pt
-            if message == "":
-                message = "Invalid filter or target."
-
-            raise ReturnError(400, "BadRequest", {"explanation": message})
-
         try:
-            results = query_for_descriptors(t,f,{'target':pt,'filter':pf}, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
-            #if results[0] == -999:
-            #    raise ReturnError(500, "ContentBasedSearchError", {"explanation": "Could not get a response from the similarity service"})
+            results = query_for_descriptors(t,f, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
         except Exception, e:
-            raise ReturnError(500, "ContentBasedSearchError", {'explanation':e})
+            if str(e)[0:6] == u"Target" or str(e)[0:6] == u"Filter":
+                raise ReturnError(400, "BadRequest", {'explanation':e})
+            else:
+                raise ReturnError(500, "ContentBasedSearchError", {'explanation':e})
 
         paginator = paginate(request, results, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
@@ -585,7 +564,7 @@ class SoundSimilarityHandler(BaseHandler):
         except Sound.DoesNotExist: #@UndefinedVariable
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or similarity data is not ready." % sound_id})
 
-        similar_sounds = get_similar_sounds(sound,request.GET.get('preset', settings.DEFAULT_SIMILARITY_PRESET), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
+        similar_sounds = get_similar_sounds(sound,request.GET.get('preset', None), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
 
         sounds = []
         for similar_sound in similar_sounds :

@@ -1,144 +1,214 @@
-import os, yaml, shutil, logging
+import os, logging, yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
-from settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, PRESET_DIR, PRESETS, SAVE_ON_CHANGE
-
+from similarity_settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR, INDEX_NAME
+import time
 
 logger = logging.getLogger('similarity')
 
 class GaiaWrapper:
-    '''
-    N.B.: if at SIMILARITY_MINIMUM_POINTS you get an error like the following
-        "PCA: Specified target dimension (30) is greater than given dataset dimension (0)",
-        that probably means all the points are analyses of the same file, and therefore all
-        the dimensions were filtered out.
-    '''
+
     def __init__(self):
-        self.preset_names               = PRESETS
         self.index_path                 = INDEX_DIR
-        self.preset_path                = PRESET_DIR
         self.original_dataset           = DataSet()
-        self.original_dataset_path      = self.__get_dataset_path('orig')
-        self.preset_datasets            = {}
-        self.preset_dataset_paths       = {}
-        self.views                      = {}
-        self.presets                    = self.__load_preset_files()
-        self.__load_datasets()
+        self.original_dataset_path      = self.__get_dataset_path(INDEX_NAME)
+        self.metrics                    = {}
+        self.view                       = None
+        self.__load_dataset()
 
 
     def __get_dataset_path(self, ds_name):
         return os.path.join(INDEX_DIR, ds_name + '.db')
 
 
-    def __load_datasets(self):
+    def __load_dataset(self):
+        # Loads the dataset, applies transforms if needed and saves. If dataset does not exists, creates an empty one and saves.
+
         if not os.path.exists(INDEX_DIR):
             os.makedirs(INDEX_DIR)
+
         # load original dataset
         if os.path.exists(self.original_dataset_path):
             self.original_dataset.load(self.original_dataset_path)
-            # if we're loading unprepared datasets, that are the right size, prepare the dataset
-            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS \
-               and self.original_dataset.history().size() <= 0:
-                self.__prepare_original_dataset()
-                self.original_dataset.save(self.original_dataset_path)
+            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS:
+
+                # if we have loaded a dataset of the correct size but it is unprepared, prepare it
+                if self.original_dataset.history().size() <= 0:
+                    self.__prepare_original_dataset()
+                    self.__normalize_original_dataset()
+                    self.original_dataset.save(self.original_dataset_path)
+
+                # if we have loaded a dataset which has not been normalized, normalize it
+                normalized = False
+                for element in self.original_dataset.history().toPython():
+                    if element['Analyzer name'] == 'normalize':
+                        normalized = True
+                        break
+                if not normalized:
+                    self.__normalize_original_dataset()
+                    self.original_dataset.save(self.original_dataset_path)
+
+                # build metrics for the different similarity presets
+                self.__build_metrics()
+                # create view
+                view = View(self.original_dataset)
+                self.view = view
+
+            logger.debug('Dataset loaded, size: %s points' % (self.original_dataset.size()))
+
         else:
+            # If there is no existing dataset we create an empty one.
+            # For the moment we do not create any distance metric nor a view because search won't be possible until the DB has a minimum of SIMILARITY_MINIMUM_POINTS
             self.original_dataset.save(self.original_dataset_path)
-        # load preset datasets
-        for preset_name in self.presets.keys():
-            ds_path = self.__get_dataset_path(preset_name)
-            if os.path.exists(ds_path):
-                try:
-                    ds = DataSet()
-                    ds.load(ds_path)
-                    ds.setReferenceDataSet(self.original_dataset)
-                    self.__build_view(ds, preset_name)
-                    self.preset_datasets[preset_name] = ds
-                    self.preset_dataset_paths[preset_name] = ds_path
-                except:
-                    logger.error('Failed to load preset %s, should we reconstruct it?' % preset_name)
-                    #self.__build_preset_dataset_and_save(preset_name)
-            else:
-                # only create new datasets when the threshold has been reached
-                # and we weren't able to load the datasets
-                if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS:
-                    self.__build_preset_dataset_and_save(preset_name)
-        logger.debug('Datasets loaded, presets: %s, size: %s' % \
-                     (self.preset_datasets.keys(), self.original_dataset.size()))
-
-
-    def __build_preset_dataset_and_save(self, preset_name):
-        logger.debug('Building the preset dataset and saving.')
-        ds_path = self.__get_dataset_path(preset_name)
-        self.preset_dataset_paths[preset_name] = ds_path
-        ds = self.__build_preset_dataset(preset_name)
-        self.preset_datasets[preset_name] = ds
-        ds.save(ds_path)
-        self.__build_view(ds, preset_name)
+            logger.debug('Created new dataset, size: %s points (should be 0)' % (self.original_dataset.size()))
 
 
     def __prepare_original_dataset(self):
-        logger.debug('Transforming the original dataset.')
+        logger.debug('Preparing the original dataset.')
         self.original_dataset = self.prepare_original_dataset_helper(self.original_dataset)
+
+    def __normalize_original_dataset(self):
+        logger.debug('Normalizing the original dataset.')
+        self.original_dataset = self.normalize_dataset_helper(self.original_dataset)
 
     @staticmethod
     def prepare_original_dataset_helper(ds):
-        """This function is used by the inject script as well."""
         proc_ds1  = transform(ds, 'RemoveVL')
         proc_ds2  = transform(proc_ds1,  'FixLength')
         proc_ds1 = None
         prepared_ds = transform(proc_ds2, 'Cleaner')
+        proc_ds2 = None
+
         return prepared_ds
+
+    @staticmethod
+    def normalize_dataset_helper(ds):
+        # Remove ['.lowlevel.mfcc.cov','.lowlevel.mfcc.icov'] (they give errors when normalizing)
+        ds = transform(ds, 'remove', { 'descriptorNames': ['.lowlevel.mfcc.cov','.lowlevel.mfcc.icov'] })
+        # Add normalization
+        normalization_params = { "descriptorNames":"*","independent":True, "outliers":-1}
+        normalized_ds = transform(ds, 'normalize', normalization_params)
+        ds = None
+
+        return normalized_ds
+
+    def __build_metrics(self):
+        for preset in PRESETS:
+            logger.debug('Bulding metric for preset %s' % preset)
+            name = preset
+            path = PRESET_DIR + name + ".yaml"
+            preset_file = yaml.load(open(path))
+            distance = preset_file['distance']['type']
+            parameters = preset_file['distance']['parameters']
+            search_metric = DistanceFunctionFactory.create(str(distance),self.original_dataset.layout(),parameters)
+            self.metrics[name] = search_metric
 
 
     def add_point(self, point_location, point_name):
         if self.original_dataset.contains(str(point_name)):
-            self.delete_point(str(point_name))
-        p = Point()
-        p.load(str(point_location))
-        p.setName(str(point_name))
-        self.original_dataset.addPoint(p)
-        size = self.original_dataset.size()
+                self.original_dataset.removePoint(str(point_name))
+        try:
+            p = Point()
+            p.load(str(point_location))
+            p.setName(str(point_name))
+            self.original_dataset.addPoint(p)
+            size = self.original_dataset.size()
+            logger.debug('Added point with name %s. Index has now %i points.' % (str(point_name),size))
+        except:
+            msg = 'Point with name %s could NOT be added. Index has now %i points.' % (str(point_name),size)
+            logger.debug(msg)
+            return {'error':True, 'result':msg}
+
+        # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
+        #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
         if size == SIMILARITY_MINIMUM_POINTS:
             self.__prepare_original_dataset()
-            for preset_name in self.presets.keys():
-                self.__build_preset_dataset_and_save(preset_name)
+            self.__normalize_original_dataset()
+            self.save_index(msg = "(reaching 2000 points)")
+
+            # build metrics for the different similarity presets
+            self.__build_metrics()
+            # create view
+            view = View(self.original_dataset)
+            self.view = view
+
+        return {'error':False, 'result':True}
+
+    def delete_point(self, point_name):
+        if self.original_dataset.contains(str(point_name)):
+            self.original_dataset.removePoint(str(point_name))
+            logger.debug('Deleted point with name %s. Index has now %i points.' % (str(point_name),self.original_dataset.size()))
+            return {'error':False, 'result':True}
         else:
-            if SAVE_ON_CHANGE:
-                for preset_name, preset_ds in self.preset_datasets.items():
-                    preset_ds.save(self.preset_dataset_paths[preset_name])
-        if SAVE_ON_CHANGE:
-            self.original_dataset.save(self.original_dataset_path)
+            msg = 'Can\'t delete point with name %s because it does not exist.'% str(point_name)
+            logger.debug(msg)
+            return {'error':True,'result':msg}
+
+    def get_point(self, point_name):
+        logger.debug('Getting point with name %s' % str(point_name))
+        if self.original_dataset.contains(str(point_name)):
+            return self.original_dataset.point(str(point_name))
+
+
+    def save_index(self, filename = None, msg = ""):
+        tic = time.time()
+        path = self.original_dataset_path
+        if filename:
+            path =  INDEX_DIR + filename + ".db"
+        logger.debug('Saving index to (%s)...'%path + msg)
+        self.original_dataset.save(path)
+        toc = time.time()
+        logger.debug('Finished saving index (done in %.2f seconds).'%((toc - tic)))
+        return {'error':False,'result':path}
+
 
     def contains(self, point_name):
-        return self.original_dataset.contains(point_name)
+        logger.debug('Checking if index has point with name %s' % str(point_name))
+        return {'error':False,'result':self.original_dataset.contains(point_name)}
 
+    # SIMILARITY SEARCH (WEB and API)
     def search_dataset(self, query_point, number_of_results, preset_name):
         preset_name = str(preset_name)
         query_point = str(query_point)
+        logger.debug('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
         size = self.original_dataset.size()
-        if (size < SIMILARITY_MINIMUM_POINTS):
-            raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
-        if not preset_name in self.presets:
-            raise Exception('Invalid preset %s' % preset_name)
+        if size < SIMILARITY_MINIMUM_POINTS:
+            msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
+            logger.debug(msg)
+            return {'error':True,'result':msg}
+            #raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
+
         if query_point.endswith('.yaml'):
             #The point doesn't exist in the dataset....
             # So, make a temporary point, add all the transformations
             # to it and search for it
             p, p1 = Point(), Point()
             p.load(query_point)
-            p1 = self.preset_datasets[preset_name].history().mapPoint(p)
-            similar_songs = self.views[preset_name].nnSearch(p1).get(int(number_of_results))
+            p1 = self.original_dataset.history().mapPoint(p)
+            similar_sounds = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results))
         else:
             if not self.original_dataset.contains(query_point):
-                raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
-            similar_songs = self.views[preset_name].nnSearch(query_point).get(int(number_of_results))
-        return similar_songs
+                msg = "Sound with id %s doesn't exist in the dataset." % query_point
+                logger.debug(msg)
+                return {'error':True,'result':msg}
+                #raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
 
+            similar_sounds = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results))
+
+        return {'error':False, 'result':similar_sounds}
+
+
+    # CONTENT-BASED SEARCH (API)
     def query_dataset(self, query_parameters, number_of_results):
 
-        preset_name = 'query_descriptors'
-        view = self.views[preset_name]
-        trans_hist = self.preset_datasets[preset_name].history().toPython()
-        layout = self.preset_datasets[preset_name].layout()
+        size = self.original_dataset.size()
+        if size < SIMILARITY_MINIMUM_POINTS:
+            msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
+            logger.debug(msg)
+            return {'error':True,'result':msg}
+            #raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
+
+        trans_hist = self.original_dataset.history().toPython()
+        layout = self.original_dataset.layout()
 
         # Get normalization coefficients to transform the input data (get info from the last transformation which has been a normalization)
         coeffs = None
@@ -183,25 +253,38 @@ class GaiaWrapper:
         filter = ""
         # If some filter has been specified...
         if query_parameters['filter']:
-            filter = self.parse_filter_list(query_parameters['filter'], coeffs)
+            if type(query_parameters['filter'][0:5]) == str:
+                filter = query_parameters['filter']
+            else:
+                filter = self.parse_filter_list(query_parameters['filter'], coeffs)
 
-        # Do query!
-        logger.debug("Performing content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
+
+        #############
+        # DO QUERY!!!
+        #############
+
+        logger.debug("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
         metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
-        results = view.nnSearch(q,str(filter),metric).get(int(number_of_results))
+        # Looks like that depending on the version of gaia, variable filter must go after or before the metric
+	    # For the gaia version we have currently (sep 2012) in freesound: nnSearch(query,filter,metric)
+        #results = self.view.nnSearch(q,str(filter),metric).get(int(number_of_results)) # <- Freesound
+        results = self.view.nnSearch(q,metric,str(filter)).get(int(number_of_results))
 
-        return results
+        return {'error':False, 'result':results}
 
+
+    # UTILS for content-based search
     def prepend_value_label(self, f):
         if f['type'] == 'NUMBER' or f['type'] == 'RANGE' or f['type'] == 'ARRAY':
             return "value"
         else:
             return "label"
 
+
     def parse_filter_list(self, filter_list, coeffs):
 
-        # TODO: eliminate this..?
-        coeffs = None
+        # TODO: eliminate this?
+        #coeffs = None
 
         filter = "WHERE"
         for f in filter_list:
@@ -244,52 +327,3 @@ class GaiaWrapper:
                         filter += self.prepend_value_label(f) + f['feature'] + "<" + str(norm_value) + " "
 
         return filter
-
-    def delete_point(self, pointname):
-        pointname = str(pointname)
-        if self.original_dataset.contains(pointname):
-            self.original_dataset.removePoint(pointname)
-        if SAVE_ON_CHANGE:
-            for preset_name, preset_ds in self.preset_datasets.items():
-                preset_ds.save(self.preset_dataset_paths[preset_name])
-            self.original_dataset.save(self.original_dataset_path)
-
-
-    def __load_preset_files(self):
-        presets = {}
-        for preset_name in self.preset_names:
-            preset_path = os.path.join(self.preset_path, preset_name + ".yaml")
-            if not os.path.exists(preset_path):
-                raise Exception('This preset file does not exist (%s).' % preset_path)
-            f = file(preset_path, 'r')
-            cf = yaml.load(f)
-            f.close()
-            presets[preset_name] = cf
-        return presets
-
-
-    def __build_preset_dataset(self, preset_name):
-        logger.debug('Building preset dataset %s.' % preset_name)
-        preset = self.presets[preset_name]
-        filter = preset['filter']
-        filter_ds = transform(self.original_dataset, filter['type'], filter['parameters'])
-        if 'transform' in preset:
-            preset_ds = transform(filter_ds,
-                                  preset['transform']['type'],
-                                  preset['transform']['parameters'])
-        else:
-            preset_ds = filter_ds
-        preset_ds.setReferenceDataSet(self.original_dataset)
-        return preset_ds
-
-
-    def __build_view(self, preset_ds, preset_name):
-        logger.debug('Bulding view for preset %s' % preset_name)
-        preset = self.presets[preset_name]
-        distance = preset['distance']
-        search_metric = DistanceFunctionFactory.create(distance['type'],
-                                                      preset_ds.layout(),
-                                                      distance['parameters'])
-        view = View(preset_ds, search_metric)
-        preset_ds.addView(view)
-        self.views[preset_name] = view

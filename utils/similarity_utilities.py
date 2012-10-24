@@ -2,14 +2,14 @@ import settings, traceback, logging
 from sounds.models import Sound
 from django.core.cache import cache
 from similarity.client import Similarity
-from similarity.settings import PRESETS
+from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILAR_SOUNDS_TO_CACHE, SIMILARITY_CACHE_TIME
 
 logger = logging.getLogger('web')
 
-def get_similar_sounds(sound, preset, num_results = settings.SOUNDS_PER_PAGE ):
+def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SOUNDS_PER_PAGE ):
 
     if preset not in PRESETS:
-        preset = settings.DEFAULT_SIMILARITY_PRESET
+        preset = DEFAULT_PRESET
 
     cache_key = "similar-for-sound-%s-%s" % (sound.id, preset)
 
@@ -21,22 +21,22 @@ def get_similar_sounds(sound, preset, num_results = settings.SOUNDS_PER_PAGE ):
 
     if not similar_sounds:
         try:
-            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset, settings.SIMILAR_SOUNDS_TO_CACHE)]
+            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset = preset, num_results = SIMILAR_SOUNDS_TO_CACHE)]
         except Exception, e:
             logger.debug('Could not get a response from the similarity service (%s)\n\t%s' % \
                          (e, traceback.format_exc()))
             similar_sounds = []
 
         if len(similar_sounds) > 0:
-            cache.set(cache_key, similar_sounds, settings.SIMILARITY_CACHE_TIME)
+            cache.set(cache_key, similar_sounds, SIMILARITY_CACHE_TIME)
 
     return similar_sounds[0:num_results]
 
 
-def query_for_descriptors(original_t, original_f, query_parameters, num_results):
-    original_t = original_t.replace(" ","")
-    original_f = original_f.replace(" ","")
-    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (original_t,original_f,num_results)
+def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE):
+    target = target.replace(" ","")
+    filter = filter.replace(" ","")
+    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (target,filter,num_results)
 
     # Don't use the cache when we're debugging
     if settings.DEBUG:
@@ -46,13 +46,13 @@ def query_for_descriptors(original_t, original_f, query_parameters, num_results)
 
     if not returned_sounds:
         try:
-            returned_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.query(query_parameters, num_results)]
+            returned_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.query(target, filter, num_results)]
         except Exception, e:
-            logger.info('Could not get a response from the similarity service (query for descriptors) (%s)\n\t%s' %\
+            logger.info('Something wrong occurred with the "query for descriptors" request (%s)\n\t%s' %\
                          (e, traceback.format_exc()))
-            returned_sounds = []#[-999]
+            raise Exception(e)
 
         if len(returned_sounds) > 0:# and returned_sounds[0] != -999:
-            cache.set(cache_key, returned_sounds, settings.SIMILARITY_CACHE_TIME)
+            cache.set(cache_key, returned_sounds, SIMILARITY_CACHE_TIME)
 
     return returned_sounds[0:num_results]

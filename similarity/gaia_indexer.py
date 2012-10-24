@@ -70,7 +70,9 @@ class GaiaIndexer:
         logger.debug('Searching with id %s' % point)
         self.__acquire_shared(READ_TIMEOUT)
         try:
-            return self.index.search_dataset(point, no_of_results, presetkey)
+            a =  self.index.search_dataset(point, no_of_results, presetkey)
+            logger.debug('test %s' % a)
+            return a
         finally:
             self.__release_shared()
 

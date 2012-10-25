@@ -12,10 +12,13 @@ class Command(BaseCommand):
         sounds_ok = 0
         sounds_set_to_pending = 0
 
-        sounds = Sound.objects.filter(analysis_state='OK', moderation_state='OK').exclude(similarity_state='PE')[0:2000]
-        print "Iterating over sounds with similarity_state != 'PE' (%i)..."%len(sounds),
+        sounds = Sound.objects.filter(analysis_state='OK', moderation_state='OK').exclude(similarity_state='PE').only("id","similarity_state")
+        print "Iterating over sounds with similarity_state != 'PE' (%i)..."%len(sounds)
         sys.stdout.flush()
         for sound in sounds:
+            sys.stdout.write("\r%i of %i"%(sounds_ok+sounds_set_to_pending+1,len(sounds)))
+            sys.stdout.flush()
+
             is_in_similarity_index = Similarity.contains(sound.id)
 
             if not is_in_similarity_index:
@@ -25,6 +28,5 @@ class Command(BaseCommand):
             else:
                 sounds_ok += 1
 
-        print "done!"
         print "\t- %i sounds set again to Pending"%sounds_set_to_pending
         print "\t- %i already Ok"%sounds_ok

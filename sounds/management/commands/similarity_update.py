@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     def handle(self,  *args, **options):
 
-        end = -1
+        end = 100000000000 # Big enough numebr so num_sounds will never exceed this one
         if args:
             limit = args[0]
             if limit:
@@ -23,9 +23,9 @@ class Command(BaseCommand):
             print "Indexing sounds to similarity (limit %i)"%end
 
         if options['force']:
-            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK')[:end]
+            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK')[0:end]
         else:
-            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK')[:end]
+            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK')[0:end]
 
         for sound in to_be_added:
             try:

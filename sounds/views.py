@@ -554,6 +554,7 @@ def delete(request, username, sound_id):
 
         if abs(time.time() - link_generated_time) < 10:
             sound.delete()
+            logger.debug("Sound %s deleted by user %s" % (sound_id, request.user.username))
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
             waited_too_long = True

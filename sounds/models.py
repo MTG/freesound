@@ -381,6 +381,8 @@ def on_delete_sound(sender,instance, **kwargs):
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
     Similarity.delete(instance.id)
+    web_logger.debug("Deleted sound with id %i"%instance.id)
+
 post_delete.connect(on_delete_sound, sender=Sound)
 
 def recreate_pack(sender,instance,**kwargs):

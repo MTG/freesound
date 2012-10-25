@@ -553,8 +553,8 @@ def delete(request, username, sound_id):
             raise PermissionDenied
 
         if abs(time.time() - link_generated_time) < 10:
+            logger.debug("User %s requested to delete sound %s" % (request.user.username,sound_id))
             sound.delete()
-            logger.debug("Sound %s deleted by user %s" % (sound_id, request.user.username))
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
             waited_too_long = True

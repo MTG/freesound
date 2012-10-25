@@ -22,8 +22,7 @@ class Command(BaseCommand):
             is_in_similarity_index = Similarity.contains(sound.id)
 
             if not is_in_similarity_index:
-                sound.similarity_state = 'PE'
-                sound.save()
+                sound.set_similarity_state('PE')
                 sounds_set_to_pending += 1
             else:
                 sounds_ok += 1

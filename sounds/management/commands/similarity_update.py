@@ -4,7 +4,7 @@ from similarity.client import Similarity
 from optparse import make_option
 
 class Command(BaseCommand):
-    help = "Take all sounds that haven't been added to the similarity service yet and add them. Use option --force to force reindex ALL sounds"
+    help = "Take all sounds that haven't been added to the similarity service yet and add them. Use option --force to force reindex ALL sounds. Pas a number argument to limit the number of sounds that will be reindexed (to avoid collapsing similarity if using crons)"
     option_list = BaseCommand.option_list + (
     make_option('-f','--force',
         dest='force',
@@ -15,10 +15,17 @@ class Command(BaseCommand):
 
     def handle(self,  *args, **options):
 
+        end = -1
+        if args:
+            limit = args[0]
+            if limit:
+                end = int(limit)
+            print "Indexing sounds to similarity (limit %i)"%end
+
         if options['force']:
-            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK')
+            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK')[:end]
         else:
-            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK')
+            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK')[:end]
 
         for sound in to_be_added:
             try:

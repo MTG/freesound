@@ -348,9 +348,13 @@ class Sound(SocialModel):
         return True
 
     # N.B. Temporary, so we can get rid of the original_path which breaks things in migration
-    @property
-    def original_path(self):
-        return self.locations("path")
+    #@property
+    #def original_path(self):
+    #    return self.locations("path")
+
+    #@original_path.setter
+    #def original_path(self, value):
+    #    return self.set_original_path(value)
 
 
     class Meta(SocialModel.Meta):

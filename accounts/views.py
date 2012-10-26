@@ -501,7 +501,11 @@ def describe_sounds(request):
                                      'File <a href="%s">%s</a> has been described and is awaiting moderation.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
             # compute crc
-            sound.compute_crc()
+            # TEMPORARY
+            try:
+                sound.compute_crc()
+            except:
+                pass
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
         # Process the sound

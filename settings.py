@@ -185,7 +185,7 @@ else:
 
 # change the media url to tabasco to make the players work when testing
 if DEBUG:
-    DATA_URL = "http://tabasco.upf.edu/data/"
+    DATA_URL = "http://freesound.org/data/"
 else:
     DATA_URL = "/data/"
 
@@ -218,6 +218,6 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
-ESSENTIA_EXECUTABLE = '/home/fsweb/essentia/essentia_1.2.2_extractor/streaming_extractor'
+ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/essentia_1.2.2_extractor/streaming_extractor'
 
 from logger import LOGGING

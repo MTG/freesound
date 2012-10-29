@@ -71,7 +71,7 @@ def analyze(sound):
         shutil.move('%s_frames.json' % tmp_ana_path, frames_path)
         os.remove('%s.json' % tmp_ana_path)
         sound.set_analysis_state('OK')
-    except:
+    except Exception, e:
         failure("Unexpected error in analysis ",e)
         return False
     finally:

@@ -348,9 +348,13 @@ class Sound(SocialModel):
         return True
 
     # N.B. Temporary, so we can get rid of the original_path which breaks things in migration
-    @property
-    def original_path(self):
-        return self.locations("path")
+    #@property
+    #def original_path(self):
+    #    return self.locations("path")
+
+    #@original_path.setter
+    #def original_path(self, value):
+    #    return self.set_original_path(value)
 
 
     class Meta(SocialModel.Meta):
@@ -380,7 +384,8 @@ def on_delete_sound(sender,instance, **kwargs):
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
     # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
-    Similarity.delete(instance.id)
+    if Similarity.contains(instance.id):
+        Similarity.delete(instance.id)
     web_logger.debug("Deleted sound with id %i"%instance.id)
 
 post_delete.connect(on_delete_sound, sender=Sound)

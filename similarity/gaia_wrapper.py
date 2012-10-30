@@ -157,7 +157,7 @@ class GaiaWrapper:
         logger.debug('Saving index to (%s)...'%path + msg)
         self.original_dataset.save(path)
         toc = time.time()
-        logger.debug('Finished saving index (done in %.2f seconds).'%((toc - tic)))
+        logger.debug('Finished saving index (done in %.2f seconds, index has now %i points).'%((toc - tic),self.original_dataset.size()))
         return {'error':False,'result':path}
 
 

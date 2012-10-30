@@ -10,7 +10,7 @@ logger = logging.getLogger("processing")
 def process(sound):
 
     def write_log(message):
-        logger.info("[%d] %s" % (os.getpid(),message))
+        logger.info("[%d] %i: %s" % (os.getpid(),sound.id,message))
         sys.stdout.write(str(message)+'\n')
         sys.stdout.flush()
 

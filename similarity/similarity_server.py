@@ -108,7 +108,7 @@ if __name__ == '__main__':
     std_handler.setFormatter(formatter)
     logger.addHandler(std_handler)
     handler_graypy = graypy.GELFHandler('10.55.0.48', 12201)
-    logger.addHandler(handler)
+    logger.addHandler(handler_graypy)
 
     # Start service
     logger.info('Configuring similarity service...')

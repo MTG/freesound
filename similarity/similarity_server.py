@@ -3,6 +3,7 @@ from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
 from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS
 import logging
+import graypy
 from logging.handlers import RotatingFileHandler
 from similarity_server_utils import parse_filter, parse_target
 import json
@@ -106,6 +107,8 @@ if __name__ == '__main__':
     logger.addHandler(handler)
     std_handler.setFormatter(formatter)
     logger.addHandler(std_handler)
+    handler_graypy = graypy.GELFHandler('10.55.0.48', 12201)
+    logger.addHandler(handler)
 
     # Start service
     logger.info('Configuring similarity service...')

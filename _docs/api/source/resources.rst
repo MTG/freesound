@@ -560,7 +560,7 @@ Name                Type    Required  Description
 ==================  ======  ========  =================================
 min_lat	            number  no        Minimum latitude [-90 to 90]
 max_lat             number  no        Maximum latitude [-90 to 90]
-min_lom             number  no	      Minimum longitude [-180 to 180]
+min_lon             number  no	      Minimum longitude [-180 to 180]
 max_lon	            number  no	      Maximum longitude [-180 to 180]
 p                   number  no        The page of the search result to get
 fields	            string  no	      Fields
@@ -1066,7 +1066,6 @@ The response is an array. Each item in the array follows a reduced version of th
     "num_results": 47, 
     "packs": [
         {
-            "description": "", 
             "created": "2009-09-28 09:50:08", 
             "url": "http://www.freesound.org/people/dobroide/packs/5266/", 
             "sounds": "http://www.freesound.org/api/packs/5266/sounds", 
@@ -1075,7 +1074,6 @@ The response is an array. Each item in the array follows a reduced version of th
             "name": "scrub"
         }, 
         {
-            "description": "", 
             "created": "2009-09-20 10:55:32", 
             "url": "http://www.freesound.org/people/dobroide/packs/5230/", 
             "sounds": "http://www.freesound.org/api/packs/5230/sounds", 
@@ -1220,6 +1218,7 @@ url		      URI      The URL for this pack's page on the Freesound website.
 sounds		      URI      The API URI for the pack's sound collection.
 user		      object   A JSON object with the user's username, url, and ref.
 name		      string   The pack's name.
+description		      string   The pack's textual description (if it has any).
 created		      string   The date when the pack was created.
 num_downloads	      number   The number of times the pack was downloaded.
 ====================  =======  ========================================================
@@ -1229,14 +1228,15 @@ num_downloads	      number   The number of times the pack was downloaded.
 ::
 
   {
-    "created": "2009-09-01 19:56:15", 
+    "created": "2009-09-01 19:56:15",
+    "description": "",
     "url": "http://www.freesound.org/people/dobroide/packs/5107/", 
     "user": {
         "username": "dobroide", 
         "url": "http://www.freesound.org/people/dobroide/", 
         "ref": "http://www.freesound.org/api/people/dobroide"
     }, 
-    "sounds": "http://www.freesound.org/api/packs/5107/sounds", 
+    "sounds": "http://www.freesound.org/api/packs/5107/sounds",
     "num_downloads": 0, 
     "ref": "http://www.freesound.org/api/packs/5107", 
     "name": "Iceland"

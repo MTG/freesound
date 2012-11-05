@@ -308,13 +308,15 @@ def prepare_single_user(user):
     d['bookmark_categories'] = get_user_bookmark_categories_api_url(user.username)
     return d
 
-def prepare_single_pack(pack, include_user=True):
+def prepare_single_pack(pack, include_user=True, include_description=False):
     d = {}
     for field in ["name", "num_downloads", "created"]:
         d[field] = getattr(pack, field)
     user = User.objects.get(id=pack.user_id)
     if include_user:
         d['user'] = prepare_minimal_user(user)
+    if include_description:
+        d['description'] = pack.description
     d['ref'] = get_pack_api_url(pack.id)
     d['url'] = get_pack_web_url(user.username, pack.id)
     d['sounds'] = get_pack_sounds_api_url(pack.id)
@@ -733,7 +735,7 @@ class UserSoundsHandler(BaseHandler):
 
         paginator = paginate(request, Sound.public.filter(user=user, processing_state="OK", moderation_state="OK"), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():
@@ -845,7 +847,7 @@ class UserBookmarkCategoryHandler(BaseHandler):
 
         paginator = paginate(request, bookmarked_sounds, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(bookmark.sound, include_user=False, custom_fields = request.GET.get('fields', False), extra_properties={'bookmark_name':bookmark.name}) for bookmark in page.object_list]
+        sounds = [prepare_collection_sound(bookmark.sound, include_user=True, custom_fields = request.GET.get('fields', False), extra_properties={'bookmark_name':bookmark.name}) for bookmark in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():
@@ -880,7 +882,7 @@ class PackHandler(BaseHandler):
         except Pack.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "Pack with id %s does not exist." % pack_id})
 
-        result = prepare_single_pack(pack)
+        result = prepare_single_pack(pack, include_description=True)
 
         add_request_id(request,result)
         logger.info("Pack info,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
@@ -907,7 +909,7 @@ class PackSoundsHandler(BaseHandler):
 
         paginator = paginate(request, Sound.objects.filter(pack=pack.id, processing_state="OK", moderation_state="OK"), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=False, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        sounds = [prepare_collection_sound(sound, include_user=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
         if page.has_other_pages():

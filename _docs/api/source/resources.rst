@@ -1218,7 +1218,7 @@ url		      URI      The URL for this pack's page on the Freesound website.
 sounds		      URI      The API URI for the pack's sound collection.
 user		      object   A JSON object with the user's username, url, and ref.
 name		      string   The pack's name.
-description		  string   The pack's textual description (if it has any).
+description	      string      The pack's textual description (if it has any).
 created		      string   The date when the pack was created.
 num_downloads	      number   The number of times the pack was downloaded.
 ====================  =======  ========================================================

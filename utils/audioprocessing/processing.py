@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
-# processing.py -- various audio processing functions
-# Copyright (C) 2008 MUSIC TECHNOLOGY GROUP (MTG)
-#                    UNIVERSITAT POMPEU FABRA
 #
-# This program is free software: you can redistribute it and/or modify
+# Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
+#
+# Freesound is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
+# Freesound is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
@@ -18,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:
-#   Bram de Jong <bram.dejong at domain.com where domain in gmail>
+#     See AUTHORS file.
+#
 
 from PIL import Image, ImageDraw, ImageColor #@UnresolvedImport
 from functools import partial

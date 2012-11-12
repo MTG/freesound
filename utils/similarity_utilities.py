@@ -54,9 +54,8 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
 
 
 def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE):
-    target = target.replace(" ","")
-    filter = filter.replace(" ","")
-    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (target,filter,num_results)
+
+    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (target.replace(" ",""),filter.replace(" ",""),num_results)
 
     # Don't use the cache when we're debugging
     if settings.DEBUG:

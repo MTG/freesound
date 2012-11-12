@@ -1,6 +1,6 @@
 /*
 *
-* Freesound is (C) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA 2008-2012
+* Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA 2008-2012
 *
 * Freesound is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as

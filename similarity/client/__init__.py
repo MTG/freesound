@@ -32,7 +32,7 @@ _URL_SAVE                     = 'save/'
 
 
 def _get_url_as_json(url):
-    f = urllib2.urlopen(url)
+    f = urllib2.urlopen(url.replace(" ","%20"))
     resp = f.read()
     return json.loads(resp)
 
@@ -65,7 +65,10 @@ class Similarity():
         if num_results:
             url += '&num_results=' + str(num_results)
 
-        return _result_or_exception(_get_url_as_json(url))
+        j = _get_url_as_json(url)
+        r = _result_or_exception(j)
+
+        return r
 
     @classmethod
     def add(cls, sound_id, yaml_path):

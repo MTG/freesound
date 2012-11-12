@@ -467,7 +467,7 @@ class SoundContentSearchHandler(BaseHandler):
             if str(e)[0:6] == u"Target" or str(e)[0:6] == u"Filter":
                 raise ReturnError(400, "BadRequest", {'explanation':e})
             else:
-                raise ReturnError(500, "ContentBasedSearchError", {'explanation':e})
+                raise ReturnError(500, "ContentBasedSearchError", {'explanation':'Unknown error 500'})
 
         paginator = paginate(request, results, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']

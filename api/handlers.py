@@ -434,7 +434,7 @@ class SoundSearchHandler(BaseHandler):
 
 
     def __construct_pagination_link(self, q, p, f, s, spp, fields):
-        link = prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (q,p,f,s))
+        link = prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (q.replace(' ','%20'),p,f.replace(' ','%20'),s))
         if spp:
             link += "&sounds_per_page=" +  str(spp)
         if fields:
@@ -496,7 +496,7 @@ class SoundContentSearchHandler(BaseHandler):
 
     def __construct_pagination_link(self, t, f, p, spp, num_results, fields):
 
-        link = prepend_base(reverse('api-content-search')+'?t=%s&f=%s&p=%s' % (t.replace('"',"'"),f.replace('"',"'"),p))#get_user_sounds_api_url(u)+'?p=%s' % p
+        link = prepend_base(reverse('api-content-search')+'?t=%s&f=%s&p=%s' % (t.replace('"',"'").replace(' ','%20'),f.replace('"',"'").replace(' ','%20'),p))#get_user_sounds_api_url(u)+'?p=%s' % p
         if spp:
             link += "&sounds_per_page=" + str(spp)
         if num_results:

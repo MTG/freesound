@@ -38,17 +38,19 @@
 
 {% cache 3600 most_downloaded_sounds  %}
     <div id="most_downloaded_sounds" class="content_box">
-        <h3>Most downloaded sounds (in the last week)</h3>
+        <h3>Most downloaded sounds (uploaded in the last week)</h3>
         {% for sound in popular_sounds %}
-            {% display_sound sound.sound_id %}
+            {% display_sound sound %}
+            {% comment %}
             <div class="sample_more">
-                <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_d}} downloads
-                in the last week.
+                <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_downloads}} downloads
             </div>
+            {% endcomment %}
         {% empty %}
             <p>No sounds in the database!
         {% endfor %}
-        <p class="more_button"><a href="{% url sounds-search %}?q=&f=&s=num_downloads+desc">more...</a></p>
+        <p class="more_button"><a href="{% url sounds-search %}?q=&f=created:[NOW-7DAY%20TO%20NOW]&s=num_downloads+desc">more...</a></p>
+
     </div><!-- #most_downloaded_sounds -->
 {% endcache %}
 </div><!-- #content -->
@@ -99,7 +101,7 @@
 {% endcache %}
 {% cache 3600 most_downloaded_packs  %}
     <div id="most_downloaded_packs" class="content_box">
-        <h3>Most downloaded packs (in the last week)</h3>
+        <h3>Most downloaded packs (uploaded in the last week)</h3>
         <ul>
         {% for pack in popular_packs %}
             <li><a href="{% url pack pack.pack.user.username pack.pack.id %}">{{pack.pack.name}}</a>

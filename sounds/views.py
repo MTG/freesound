@@ -87,8 +87,6 @@ def sounds(request):
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
-    #last_week = datetime.datetime(2010,1,1,0,0)-datetime.timedelta(weeks=n_weeks_back)
-
 
     # N.B. this two queries group by twice on sound id, if anyone ever find out why....
     #popular_sounds = Download.objects.filter(created__gte=last_week)  \
@@ -96,20 +94,14 @@ def sounds(request):
     #                                 .values('sound_id')              \
     #                                 .annotate(num_d=Count('sound'))  \
     #                                 .order_by("-num_d")[0:5]
-    popular_sounds = Sound.objects.filter(created__gte=last_week)\
-                                     .values('id')              \
-                                     .order_by("-num_downloads")[0:5]
-    #popular_sounds = []
+    popular_sounds = Sound.objects.filter(created__gte=last_week).order_by("-num_downloads")[0:5]
 
-    #packs = Download.objects.filter(created__gte=last_week)  \
-    #                        .exclude(pack=None)              \
-    #                        .values('pack_id')               \
-    #                        .annotate(num_d=Count('pack'))   \
-    #                        .order_by("-num_d")[0:5]
 
-    packs = Pack.objects.filter(created__gte=last_week)  \
-                            .values('id')               \
-                            .order_by("-num_downloads")[0:5]
+    packs = Download.objects.filter(created__gte=last_week)  \
+                            .exclude(pack=None)              \
+                            .values('pack_id')               \
+                            .annotate(num_d=Count('pack'))   \
+                            .order_by("-num_d")[0:5]
 
     packs = []
     popular_packs = []                              

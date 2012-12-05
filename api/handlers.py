@@ -38,10 +38,14 @@ from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
 from api.api_utils import auth, ReturnError#, parse_filter, parse_target
 import os
 from django.contrib.syndication.views import Feed
+from urllib import quote
 
 logger = logging.getLogger("api")
 
 # UTILITY FUNCTIONS
+
+def my_quote(s):
+    return quote(s,safe=":[]*+()'")
 
 def prepend_base(rel):
     return "http://%s%s" % (Site.objects.get_current().domain, rel)
@@ -434,7 +438,7 @@ class SoundSearchHandler(BaseHandler):
 
 
     def __construct_pagination_link(self, q, p, f, s, spp, fields):
-        link = prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (q.replace(' ','%20'),p,f.replace(' ','%20'),s))
+        link = prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (my_quote(q),p,my_quote(f),s))
         if spp:
             link += "&sounds_per_page=" +  str(spp)
         if fields:
@@ -496,7 +500,7 @@ class SoundContentSearchHandler(BaseHandler):
 
     def __construct_pagination_link(self, t, f, p, spp, num_results, fields):
 
-        link = prepend_base(reverse('api-content-search')+'?t=%s&f=%s&p=%s' % (t.replace('"',"'").replace(' ','%20'),f.replace('"',"'").replace(' ','%20'),p))#get_user_sounds_api_url(u)+'?p=%s' % p
+        link = prepend_base(reverse('api-content-search')+'?t=%s&f=%s&p=%s' % (my_quote(t.replace('"',"'")),my_quote(f.replace('"',"'")),p))#get_user_sounds_api_url(u)+'?p=%s' % p
         if spp:
             link += "&sounds_per_page=" + str(spp)
         if num_results:

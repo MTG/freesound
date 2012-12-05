@@ -560,7 +560,7 @@ class SolrResponseInterpreterPaginator(object):
     def page(self, page_num):
         object_list = self.interpreter.docs
         has_next = page_num < self.num_pages
-        has_previous = page_num > 1
+        has_previous = page_num > 1 and page_num <= self.num_pages
         has_other_pages = has_next or has_previous
         next_page_number = page_num + 1
         previous_page_number = page_num - 1

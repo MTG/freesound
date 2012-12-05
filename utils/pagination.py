@@ -53,11 +53,11 @@ def paginate(request, qs, items_per_page=20, page_get_name='page', cache_count=F
         qs.count = CachedCountProxy(qs)
 
     paginator = Paginator(qs, items_per_page)
-
     try:
         current_page = int(request.GET.get(page_get_name, 1))
     except ValueError:
         current_page = 1
+
     try:
         page = paginator.page(current_page)
     except InvalidPage:

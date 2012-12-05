@@ -63,7 +63,7 @@ class SoundSearchForm(forms.Form):
             p = int(self.cleaned_data['p'])
         except:
             return 1 
-        return p if p >= 1 else 1  
+        return p if p >= 1 else 1
     
     def clean_s(self):
         s = self.cleaned_data['s']

@@ -473,25 +473,26 @@ class SoundContentSearchHandler(BaseHandler):
             else:
                 raise ReturnError(500, "ContentBasedSearchError", {'explanation':'Unknown error 500'})
 
-        paginator = paginate(request, results, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
+        paginator = paginate(request, results, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE),'p')
         page = paginator['page']
-
         sounds = []
-        for result in page.object_list:
-            try:
-                sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=int(result[0])), include_user=False, custom_fields = request.GET.get('fields', False))
-                sounds.append(sound)
-            except Exception, e:
-                pass
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            for result in page.object_list:
+                try:
+                    sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=int(result[0])), include_user=False, custom_fields = request.GET.get('fields', False))
+                    sounds.append(sound)
+                except Exception, e:
+                    pass
 
         #sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=int(result[0])), include_user=False, custom_fields = request.GET.get('fields', False)) for result in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
-        if page.has_other_pages():
-            if page.has_previous():
-                result['previous'] = self.__construct_pagination_link(str(t), str(f), page.previous_page_number(), request.GET.get('sounds_per_page',None), int(request.GET.get('max_results', False)), request.GET.get('fields', False))
-            if page.has_next():
-                result['next'] = self.__construct_pagination_link(str(t), str(f), page.next_page_number(), request.GET.get('sounds_per_page',None), int(request.GET.get('max_results', False)), request.GET.get('fields', False))
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            if page.has_other_pages():
+                if page.has_previous():
+                    result['previous'] = self.__construct_pagination_link(str(t), str(f), page.previous_page_number(), request.GET.get('sounds_per_page',None), int(request.GET.get('max_results', False)), request.GET.get('fields', False))
+                if page.has_next():
+                    result['next'] = self.__construct_pagination_link(str(t), str(f), page.next_page_number(), request.GET.get('sounds_per_page',None), int(request.GET.get('max_results', False)), request.GET.get('fields', False))
 
         add_request_id(request,result)
 
@@ -692,14 +693,17 @@ class SoundGeotagHandler(BaseHandler):
 
         paginator = paginate(request, raw_sounds, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=True, include_geotag=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            sounds = [prepare_collection_sound(sound, include_user=True, include_geotag=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        else:
+            sounds = []
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
-
-        if page.has_other_pages():
-            if page.has_previous():
-                result['previous'] = self.__construct_pagination_link(page.previous_page_number(), min_lon, max_lon, min_lat, max_lat, request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
-            if page.has_next():
-                result['next'] = self.__construct_pagination_link(page.next_page_number(), min_lon, max_lon, min_lat, max_lat, request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            if page.has_other_pages():
+                if page.has_previous():
+                    result['previous'] = self.__construct_pagination_link(page.previous_page_number(), min_lon, max_lon, min_lat, max_lat, request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
+                if page.has_next():
+                    result['next'] = self.__construct_pagination_link(page.next_page_number(), min_lon, max_lon, min_lat, max_lat, request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
 
         add_request_id(request,result)
         logger.info("Geotags search,min_lat=" + str(min_lat) + ",max_lat=" + str(max_lat) + ",min_lon=" + str(min_lon) + ",max_lon=" + str(max_lon) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
@@ -759,14 +763,18 @@ class UserSoundsHandler(BaseHandler):
 
         paginator = paginate(request, Sound.public.filter(user=user, processing_state="OK", moderation_state="OK"), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            sounds = [prepare_collection_sound(sound, include_user=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        else:
+            sounds = []
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
 
-        if page.has_other_pages():
-            if page.has_previous():
-                result['previous'] = self.__construct_pagination_link(username, page.previous_page_number(), request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
-            if page.has_next():
-                result['next'] = self.__construct_pagination_link(username, page.next_page_number(), request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            if page.has_other_pages():
+                if page.has_previous():
+                    result['previous'] = self.__construct_pagination_link(username, page.previous_page_number(), request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
+                if page.has_next():
+                    result['next'] = self.__construct_pagination_link(username, page.next_page_number(), request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
 
         add_request_id(request,result)
         logger.info("User sounds,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
@@ -871,14 +879,17 @@ class UserBookmarkCategoryHandler(BaseHandler):
 
         paginator = paginate(request, bookmarked_sounds, min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(bookmark.sound, include_user=True, custom_fields = request.GET.get('fields', False), extra_properties={'bookmark_name':bookmark.name}) for bookmark in page.object_list]
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            sounds = [prepare_collection_sound(bookmark.sound, include_user=True, custom_fields = request.GET.get('fields', False), extra_properties={'bookmark_name':bookmark.name}) for bookmark in page.object_list]
+        else:
+            sounds = []
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
-
-        if page.has_other_pages():
-            if page.has_previous():
-                result['previous'] = self.__construct_pagination_link(username, category_id, page.previous_page_number())
-            if page.has_next():
-                result['next'] = self.__construct_pagination_link(username, category_id, page.next_page_number())
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            if page.has_other_pages():
+                if page.has_previous():
+                    result['previous'] = self.__construct_pagination_link(username, category_id, page.previous_page_number())
+                if page.has_next():
+                    result['next'] = self.__construct_pagination_link(username, category_id, page.next_page_number())
 
         add_request_id(request,result)
         logger.info("User bookmarks for category,username=" + username + ",category_id=" + str(category_id) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
@@ -933,14 +944,17 @@ class PackSoundsHandler(BaseHandler):
 
         paginator = paginate(request, Sound.objects.filter(pack=pack.id, processing_state="OK", moderation_state="OK"), min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE), 'p')
         page = paginator['page']
-        sounds = [prepare_collection_sound(sound, include_user=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            sounds = [prepare_collection_sound(sound, include_user=True, custom_fields = request.GET.get('fields', False)) for sound in page.object_list]
+        else:
+            sounds = []
         result = {'sounds': sounds, 'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
-
-        if page.has_other_pages():
-            if page.has_previous():
-                result['previous'] = self.__construct_pagination_link(pack_id, page.previous_page_number(),request.GET.get('sounds_per_page', None), request.GET.get('fields', False))
-            if page.has_next():
-                result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number(),request.GET.get('sounds_per_page', None), request.GET.get('fields', False))
+        if int(request.GET.get("p", "1")) <= paginator['paginator'].num_pages: # This is to mimic solr paginator behavior
+            if page.has_other_pages():
+                if page.has_previous():
+                    result['previous'] = self.__construct_pagination_link(pack_id, page.previous_page_number(),request.GET.get('sounds_per_page', None), request.GET.get('fields', False))
+                if page.has_next():
+                    result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number(),request.GET.get('sounds_per_page', None), request.GET.get('fields', False))
 
         add_request_id(request,result)
         logger.info("Pack sounds,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)

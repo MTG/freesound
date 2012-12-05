@@ -101,7 +101,7 @@
 {% endcache %}
 {% cache 3600 most_downloaded_packs  %}
     <div id="most_downloaded_packs" class="content_box">
-        <h3>Most downloaded packs (uploaded in the last week)</h3>
+        <h3>Most downloaded packs (in the last week)</h3>
         <ul>
         {% for pack in popular_packs %}
             <li><a href="{% url pack pack.pack.user.username pack.pack.id %}">{{pack.pack.name}}</a>

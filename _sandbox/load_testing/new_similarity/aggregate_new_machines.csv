@@ -1,5 +1,0 @@
-sampler_label,aggregate_report_count,average,aggregate_report_median,aggregate_report_90%_line,aggregate_report_min,aggregate_report_max,aggregate_report_error%,aggregate_report_rate,aggregate_report_bandwidth
-NEW SIM ahir,1007,679,647,1165,17,2021,0.0417080437,4.9687418277,345.7302534761
-TOTAL,1007,679,647,1165,17,2021,0.0417080437,4.9687418277,345.7302534761
-OLD SIM A,1008,1115,1149,1654,17,2471,0.0396825397,3.6513933616,254.6042757447
-NEW SIM A,1008,1127,1114,1662,17,2138,0.0416666667,3.6180644791,251.7941630781

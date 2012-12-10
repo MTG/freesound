@@ -59,7 +59,7 @@ class Ticket(models.Model):
     sender_email    = models.EmailField(null=True)
     assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True)
     queue           = models.ForeignKey(Queue, related_name='tickets')
-    content         = models.ForeignKey(LinkedContent, null=True)
+    content         = models.ForeignKey(LinkedContent, null=True, on_delete=models.SET_NULL)
 
     NOTIFICATION_QUESTION     = 'tickets/email_notification_question.txt'
     NOTIFICATION_APPROVED     = 'tickets/email_notification_approved.txt'

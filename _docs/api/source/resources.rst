@@ -137,6 +137,7 @@ of the following.
 ==============  ====================================================================
 Option          Explanation
 ==============  ====================================================================
+score           Sort by a relevance score returned by our search engine (default).
 duration_desc   Sort by the duration of the sounds, longest sounds first.
 duration_asc    Same as above, but shortest sounds first.
 created_desc    Sort by the date of when the sound was added. newest sounds first.

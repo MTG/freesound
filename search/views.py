@@ -39,7 +39,7 @@ def search_prepare_sort(sort, options):
         else:
             sort = [sort]
     else:
-        sort = ["num_downloads desc"]
+        sort = [forms.SEARCH_DEFAULT_SORT]
     return sort
 
 DEFAULT_SEARCH_WEIGHTS = {
@@ -96,7 +96,7 @@ def search(request):
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
-    sort = request.GET.get("s", forms.SEARCH_DEFAULT_SORT)
+    sort = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
 
     # Set default values
@@ -144,8 +144,9 @@ def search(request):
             if a_filename != "" :
                 original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename']
 
-    # Allow to return ALL sounds when search has no q parameter
-    #if search_query.strip() != "":
+    # ALLOW "q" empty queries
+    #if search_query.strip() == ""
+
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
     query = search_prepare_query(search_query,

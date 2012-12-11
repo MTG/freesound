@@ -24,7 +24,7 @@ from django import template
 register = template.Library()
 
 @register.inclusion_tag('templatetags/paginator.html', takes_context=True)
-def show_paginator(context, paginator, page, current_page, request, anchor=""):
+def show_paginator(context, paginator, page, current_page, request, anchor="", non_grouped_number_of_results = -1 ):
     """
     Adds pagination context variables for use in displaying first, adjacent and
     last page links in addition to those created by the object_list generic
@@ -65,5 +65,6 @@ def show_paginator(context, paginator, page, current_page, request, anchor=""):
         "show_last": paginator.num_pages not in page_numbers,
         "url" : url,
         "media_url": context['media_url'],
-        "anchor": anchor
+        "anchor": anchor,
+        "non_grouped_number_of_results": non_grouped_number_of_results
     }

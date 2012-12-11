@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:
-#     See AUTHORS file.
+#     Bram de Jong
 #
 
 from datetime import datetime, date
@@ -468,16 +468,27 @@ class Solr(object):
 
 class SolrResponseInterpreter(object):
     def __init__(self, response):
+
         if "grouped" in response:
-            self.docs = response["grouped"]["thread_title_grouped"]["groups"]
-            self.start = response["responseHeader"]["params"]["start"]
-            self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
-            self.num_found = response["grouped"]["thread_title_grouped"]["ngroups"]
+            if "thread_title_grouped" in response["grouped"].keys():
+                self.docs = response["grouped"]["thread_title_grouped"]["groups"]
+                self.start = response["responseHeader"]["params"]["start"]
+                self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
+                self.num_found = response["grouped"]["thread_title_grouped"]["ngroups"]
+                self.non_grouped_number_of_matches = response["grouped"]["thread_title_grouped"]["matches"]
+            elif "pack" in response["grouped"].keys():
+                #self.docs = response["grouped"]["pack"]["groups"]
+                self.docs = [{'id': group['doclist']['docs'][0]['id'], 'more_from_pack':group['doclist']['numFound']-1, 'pack_name':group['groupValue']} for group in response["grouped"]["pack"]["groups"]]
+                self.start = response["responseHeader"]["params"]["start"]
+                self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
+                self.num_found = response["grouped"]["pack"]["ngroups"]#["matches"]#
+                self.non_grouped_number_of_matches = response["grouped"]["pack"]["matches"]
         else:
             self.docs = response["response"]["docs"]
             self.start = response["response"]["start"]
             self.num_rows = len(self.docs)
             self.num_found = response["response"]["numFound"]
+            self.non_grouped_number_of_matches = -1
         
         self.q_time = response["responseHeader"]["QTime"]
         try:

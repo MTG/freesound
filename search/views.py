@@ -61,7 +61,8 @@ def search_prepare_query(search_query,
                          description_weight = DEFAULT_SEARCH_WEIGHTS['description'],
                          username_weight = DEFAULT_SEARCH_WEIGHTS['username'],
                          pack_tokenized_weight = DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
-                         original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename']):
+                         original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename'],
+                         grouping = False):
     query = SolrQuery()
 
     field_weights = []
@@ -87,6 +88,23 @@ def search_prepare_query(search_query,
     query.set_facet_options("username", limit=30)
     query.set_facet_options("pack", limit=10)
     query.set_facet_options("license", limit=10)
+
+    if grouping:
+        query.set_group_field(group_field="pack")
+        query.set_group_options(group_func=None,
+            group_query=None,
+            group_rows=10,
+            group_start=0,
+            group_limit=1,
+            group_offset=0,
+            group_sort=None,
+            group_sort_ingroup=None,
+            group_format='grouped',
+            group_main=False,
+            group_num_groups=True,
+            group_cache_percent=0)
+
+
     return query
 
 def search(request):
@@ -149,6 +167,11 @@ def search(request):
 
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
+    if request.GET.get("ajax", "") != "1":
+        grouping = True
+    else:
+        grouping = False # Do not group on ajax requests!
+
     query = search_prepare_query(search_query,
                                  filter_query,
                                  sort,
@@ -159,7 +182,8 @@ def search(request):
                                  description_weight,
                                  username_weight,
                                  pack_tokenized_weight,
-                                 original_filename_weight
+                                 original_filename_weight,
+                                 grouping = grouping
                                  )
     
     solr = Solr(settings.SOLR_URL) 
@@ -168,6 +192,7 @@ def search(request):
         results = SolrResponseInterpreter(solr.select(unicode(query)))
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
         num_results = paginator.count
+        non_grouped_number_of_results = results.non_grouped_number_of_matches
         page = paginator.page(current_page)
         error = False
     except SolrException, e:
@@ -175,6 +200,7 @@ def search(request):
         error = True
         error_text = 'There was an error while searching, is your query correct?'
     except Exception, e:
+        print e
         logger.error("Could probably not connect to Solr - %s" % e)
         error = True
         error_text = 'The search server could not be reached, please try again later.'

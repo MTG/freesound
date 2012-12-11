@@ -36,15 +36,29 @@
 	
 	
 		<p class="number_of_results">
-		&nbsp|&nbsp {{ paginator.count }} {{ anchor }}s
-		</p>
+            {% if non_grouped_number_of_results > 0 %}
+                &nbsp|&nbsp {{non_grouped_number_of_results}} {{ anchor }}s
+            {% else %}
+                &nbsp|&nbsp {{ paginator.count }} {{ anchor }}s
+            {% endif %}
+        </p>
+
+
 	
 	{% else %}
 	
 		<p class="number_of_results">
+            {% comment %}
 			{% if paginator.count > 0 %}
 				{{ paginator.count }} {{ anchor }}{{ paginator.count|pluralize }}
 			{% endif %}
+			{% endcomment %}
+
+            {% if non_grouped_number_of_results > 0 %}
+                {{non_grouped_number_of_results}} {{ anchor }}{{ non_grouped_number_of_results|pluralize }}
+            {% else %}
+                {{ paginator.count }} {{ anchor }}{{ paginator.count|pluralize }}
+            {% endif %}
 		</p>
 	
 	{% endif %}

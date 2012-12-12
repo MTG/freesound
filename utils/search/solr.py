@@ -477,7 +477,7 @@ class SolrResponseInterpreter(object):
                 self.non_grouped_number_of_matches = response["grouped"]["thread_title_grouped"]["matches"]
             elif "grouping_pack" in response["grouped"].keys():
                 #self.docs = response["grouped"]["pack"]["groups"]
-                self.docs = [{'id': group['doclist']['docs'][0]['id'], 'more_from_pack':group['doclist']['numFound']-1, 'pack_name':group['groupValue']} for group in response["grouped"]["grouping_pack"]["groups"] if group['groupValue'] != None ]
+                self.docs = [{'id': group['doclist']['docs'][0]['id'], 'more_from_pack':group['doclist']['numFound']-1, 'pack_name':group['groupValue'][group['groupValue'].find("_")+1:]} for group in response["grouped"]["grouping_pack"]["groups"] if group['groupValue'] != None ]
                 self.start = response["responseHeader"]["params"]["start"]
                 self.num_rows = len(self.docs) # response["responseHeader"]["params"]["rows"]
                 self.num_found = response["grouped"]["grouping_pack"]["ngroups"]#["matches"]#

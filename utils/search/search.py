@@ -45,7 +45,7 @@ def convert_to_solr_document(sound):
 
     if sound.pack:
         document["pack"] = sound.pack.name
-        document["grouping_pack"] = sound.pack.name
+        document["grouping_pack"] = str(sound.pack.id) + "_" + sound.pack.name
     else:
         document["grouping_pack"] = str(sound.id)
 

@@ -3,6 +3,7 @@
 {% load display_sound %}
 {% load paginator %}
 {% load search %}
+{% load util %}
 
 {% block title %}sound search{% endblock title %}
 
@@ -17,9 +18,9 @@
        <span class="advanced_search_options">Sort results by </span>
        {% endcomment %}
        <select name="s">
-           {% for option in sort_options %}
-        <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
-        {% endfor %}
+            {% for option in sort_options %}
+            <option value="{{option.1}}"{% ifequal option.1 sort.0 %}selected="selected"{% endifequal %}>{{option.0}}</option>
+            {% endfor %}
        </select>
 
        <input type="submit" value="search" id="search_submit"/>
@@ -53,7 +54,6 @@
         // Geotagged
         if (getFilterValue("is_geotagged")==1)
                $("#filter_is_geotagged").attr('checked','checked')
-
 
     });
 
@@ -133,6 +133,7 @@
                 $("#filter_query").val(value + " " + filter);
             else
                 $("#filter_query").val(filter);
+
         }
 
         return true
@@ -260,10 +261,19 @@
     }
 
     update_filter_display();
+
+    function set_hidden_grouping_value(){
+        if ($("#grouping_geotagged").is(':checked')){
+            $("#grouping_geotagged_hidden").val("1")
+        }else{
+            $("#grouping_geotagged_hidden").val("")
+        }
+    }
+
 </script>
 
 {% if error %}
-    {{ error_text }}
+    <p>{{ error_text }}</p>
 {% else %}
     {% if results %}
     <div id="sidebar" style="float:right">
@@ -318,7 +328,9 @@
                 {% display_sound result.id %}
 
                 {% if result.more_from_pack %}
-                    <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> {{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }} inside the pack "{{ result.pack_name }}"</div>
+                        {% comment %}<div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='javascript:addFilter("pack", "{{result.pack_name|escapejs}}")'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>{% endcomment %}
+                        <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url sounds-search  %}?q={{ search_query }}&f=pack:"{{ result.pack_name|escapejs }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>
+
                 {% endif %}
             {% endfor %}
 

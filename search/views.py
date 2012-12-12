@@ -44,9 +44,9 @@ def search_prepare_sort(sort, options):
 
 DEFAULT_SEARCH_WEIGHTS = {
                         'id' : 4,
-                        'tag' : 3,
+                        'tag' : 4,
                         'description' : 3,
-                        'username' : 2,
+                        'username' : 1,
                         'pack_tokenized' : 2,
                         'original_filename' : 2
                         }
@@ -90,7 +90,7 @@ def search_prepare_query(search_query,
     query.set_facet_options("license", limit=10)
 
     if grouping:
-        query.set_group_field(group_field="pack")
+        query.set_group_field(group_field="grouping_pack")
         query.set_group_options(group_func=None,
             group_query=None,
             group_rows=10,
@@ -110,12 +110,24 @@ def search_prepare_query(search_query,
 def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
+    filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
+
+
+
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:
         current_page = 1
     sort = request.GET.get("s", None)
     sort_options = forms.SEARCH_SORT_OPTIONS_WEB
+
+
+    grouping = request.GET.get("g", "1") # Group by default
+    actual_groupnig = grouping
+    # If the query is filtered by pack, do not collapse sounds of the same pack (makes no sense)
+    # If the query is thourhg ajax (for sources remix editing), do not collapse
+    if "pack" in filter_query or request.GET.get("ajax", "") == "1":
+        actual_groupnig = ""
 
     # Set default values
     id_weight = DEFAULT_SEARCH_WEIGHTS['id']
@@ -167,11 +179,6 @@ def search(request):
 
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
-    if request.GET.get("ajax", "") != "1":
-        grouping = True
-    else:
-        grouping = False # Do not group on ajax requests!
-
     query = search_prepare_query(search_query,
                                  filter_query,
                                  sort,
@@ -183,7 +190,7 @@ def search(request):
                                  username_weight,
                                  pack_tokenized_weight,
                                  original_filename_weight,
-                                 grouping = grouping
+                                 grouping = actual_groupnig
                                  )
     
     solr = Solr(settings.SOLR_URL) 

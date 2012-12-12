@@ -42,8 +42,13 @@ def convert_to_solr_document(sound):
     document["is_remix"] = bool(sound.sources.count())
     document["was_remixed"] = bool(sound.remixes.count())
 
+
     if sound.pack:
         document["pack"] = sound.pack.name
+        document["grouping_pack"] = sound.pack.name
+    else:
+        document["grouping_pack"] = str(sound.id)
+
 
     document["is_geotagged"] = sound.geotag_id != None
 
@@ -102,6 +107,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
     # the Sound class, it causes circular imports.
     num_sounds = sound_queryset.count()
     for i in range(0, num_sounds, slice_size):
+        print "Adding %i sounds to solr, slice %i"%(slice_size,i)
         try:
             sounds_to_update = sound_queryset[i:i+slice_size]
             add_sounds_to_solr(sounds_to_update)

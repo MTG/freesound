@@ -388,7 +388,9 @@ class SoundSearchHandler(BaseHandler):
             return resp
 
         cd = form.cleaned_data
-        #return cd
+        grouping = request.GET.get('g', "")
+        if grouping == "0":
+            grouping = ""
 
         solr = Solr(settings.SOLR_URL)
         sounds_per_page = min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE)
@@ -396,7 +398,8 @@ class SoundSearchHandler(BaseHandler):
                                      cd['f'],
                                      search_prepare_sort(cd['s'], SEARCH_SORT_OPTIONS_API),
                                      cd['p'],
-                                     sounds_per_page)
+                                     sounds_per_page,
+                                     grouping = grouping)
 
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
@@ -406,7 +409,17 @@ class SoundSearchHandler(BaseHandler):
             bad_results = 0
             for object in page['object_list'] :
                 try:
-                    sounds.append( prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id']), custom_fields = request.GET.get('fields', False)) )
+                    sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=object['id']), custom_fields = request.GET.get('fields', False))
+                    if 'more_from_pack' in object.keys():
+                        if object['more_from_pack'] > 0:
+                            link = prepend_base(reverse('api-search')+'?q=%s&f=pack:"%s" %s&s=%s&g=%s' % (my_quote(cd['q']),object['pack_name'],my_quote(cd['f']),cd['s'],""))
+                            if request.GET.get('sounds_per_page', None):
+                                link += "&sounds_per_page=" +  str(request.GET.get('sounds_per_page', None))
+                            if request.GET.get('fields', False):
+                                link += "&fields=" + str(request.GET.get('fields', False))
+                            sound['results_from_the_same_pack'] = link
+                            sound['n_results_from_the_same_pack'] = object['more_from_pack']
+                    sounds.append(sound)
                 except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
                     pass
             result = {'sounds': sounds, 'num_results': paginator.count - bad_results, 'num_pages': paginator.num_pages}
@@ -419,14 +432,16 @@ class SoundSearchHandler(BaseHandler):
                                                                           cd['f'],
                                                                           find_api_option(cd['s']),
                                                                           request.GET.get('sounds_per_page', None),
-                                                                          request.GET.get('fields', False))
+                                                                          request.GET.get('fields', False),
+                                                                          grouping)
                 if page['has_next']:
                     result['next'] = self.__construct_pagination_link(cd['q'],
                                                                       page['next_page_number'],
                                                                       cd['f'],
                                                                       find_api_option(cd['s']),
                                                                       request.GET.get('sounds_per_page',None),
-                                                                      request.GET.get('fields', False))
+                                                                      request.GET.get('fields', False),
+                                                                      grouping)
             add_request_id(request,result)
             logger.info("Searching,q=" + cd['q'] + ",f=" + cd['f'] + ",p=" + str(cd['p']) + ",sounds_per_page=" + str(sounds_per_page) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
             return result
@@ -437,8 +452,8 @@ class SoundSearchHandler(BaseHandler):
             raise ReturnError(500, "SearchError", {"explanation": error})
 
 
-    def __construct_pagination_link(self, q, p, f, s, spp, fields):
-        link = prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s' % (my_quote(q),p,my_quote(f),s))
+    def __construct_pagination_link(self, q, p, f, s, spp, fields, grouping):
+        link = prepend_base(reverse('api-search')+'?q=%s&p=%s&f=%s&s=%s&g=%s' % (my_quote(q),p,my_quote(f),s,grouping))
         if spp:
             link += "&sounds_per_page=" +  str(spp)
         if fields:

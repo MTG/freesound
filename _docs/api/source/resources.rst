@@ -38,6 +38,7 @@ f                   string  no	      The filter
 s                   string  no	      How to sort the results
 fields	            string  no	      Fields
 sounds_per_page     number  no	      Number of sounds to return in each page (be aware that large numbers may produce sloooow queries, maximum allowed is 100 sounds per page)
+g                   bool    no        Group results in packs. g=0 (default) don't group, g=1 group. See below.
 ==================  ======  ========  =================================
 
 **q for query**
@@ -164,6 +165,19 @@ Fields are specified as a list of properties (choosen from any of those listed i
 For example, if we perform a search and we only want to get sound ids and duration, we can use fields parameter as ``fields=id,duration``.
 
 This parameter can be used in any resource that returns an array of sounds.
+
+
+.. _grouping:
+
+**g for grouping results**
+
+This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries
+in the sounds list. With g=1, if search results contain more than one sound that belongs to the same pack,
+only one sound for each distinct pack is returned (sounds with no packs are returned aswell). However, the
+returned sound will feature two extra properties to access these other sounds omitted from the results list:
+``n_results_from_the_same_pack``: indicates how many other results belong to the same pack (and have not been returned)
+``results_from_the_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned)
+
 
 
 **Curl Examples**

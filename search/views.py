@@ -80,13 +80,13 @@ def search_prepare_query(search_query,
         field_weights.append(("original_filename", original_filename_weight))
 
     query.set_dismax_query(search_query,
-                           query_fields=field_weights)
+                           query_fields=field_weights,)
     query.set_query_options(start=(current_page - 1) * sounds_per_page, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
-    query.add_facet_fields("samplerate", "pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
+    query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
     query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
     query.set_facet_options("tag", limit=30)
     query.set_facet_options("username", limit=30)
-    query.set_facet_options("pack", limit=10)
+    query.set_facet_options("grouping_pack", limit=10)
     query.set_facet_options("license", limit=10)
 
     if grouping:
@@ -111,8 +111,6 @@ def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
-
-
 
     try:
         current_page = int(request.GET.get("page", 1))

@@ -579,12 +579,12 @@ def attribution(request):
 
 
 def downloaded_sounds(request, username):
-    user=get_object_or_404(User, username=username)
+    user=get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user=user.id, sound__isnull=False)
     return render_to_response('accounts/downloaded_sounds.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 def downloaded_packs(request, username):
-    user=get_object_or_404(User, username=username)
+    user=get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
     return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
@@ -974,7 +974,7 @@ def email_reset_complete(request, uidb36=None, token=None):
 def flag_user(request, username = None):
 
     if request.POST:
-        flagged_user = User.objects.get(username=request.POST["username"])
+        flagged_user = User.objects.get(username__iexact=request.POST["username"])
         reporting_user = request.user
         object_id = request.POST["object_id"]
 

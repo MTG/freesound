@@ -1,0 +1,32 @@
+{% extends "tickets/_section.html" %}
+{% load paginator %}
+{% block title %}
+    Sound Moderation
+{% endblock title %}
+
+{% block section_content %}
+
+    <h2>Sounds by tardy moderators</h2>
+
+    {% if tardy_moderators_tickets %}
+        {% show_paginator paginator page current_page request "sound" %}
+
+        {% for ticket in page.object_list %}
+            <div style="height:90px;">
+                {% include 'tickets/ticket_sound.html' %}<br>
+            </div>
+
+            <div style="margin-top:-17px;height:30px;width:100px;margin-bottom:20px">
+                {% if ticket.assignee.id != request.user.id %}
+                    <a style="font-size:10px" href="{% url tickets-moderation-assign-signle-ticket user.id ticket.id %}">
+                        <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
+                {% endif %}
+            </div>
+
+        {% endfor %}
+
+        {% show_paginator paginator page current_page request "sound" %}
+    {% endif %}
+
+
+{% endblock section_content %}

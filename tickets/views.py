@@ -31,6 +31,8 @@ from django.db import connection, transaction
 from django.contrib import messages
 from sounds.models import Sound
 import datetime
+from utils.pagination import paginate
+from utils.functional import combine_dicts
 
 
 def __get_contact_form(request, use_post=True):
@@ -360,6 +362,28 @@ def moderation_home(request):
     tardy_user_tickets_count = len(list(__get_tardy_user_tickets_all()))
     
     return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
+
+@permission_required('tickets.can_moderate')
+def moderation_tary_users_sounds(request):
+    if request.user.id :
+        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+    else :
+        sounds_in_moderators_queue_count = -1
+
+    tardy_user_tickets = list(__get_tardy_user_tickets_all())
+
+    return render_to_response('tickets/moderation_tardy_users.html', combine_dicts(paginate(request, tardy_user_tickets, 10), locals()), context_instance=RequestContext(request))
+
+@permission_required('tickets.can_moderate')
+def moderation_tary_moderators_sounds(request):
+    if request.user.id :
+        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+    else :
+        sounds_in_moderators_queue_count = -1
+
+    tardy_moderators_tickets = list(__get_tardy_moderator_tickets_all())
+
+    return render_to_response('tickets/moderation_tardy_moderators.html', combine_dicts(paginate(request, tardy_moderators_tickets, 10), locals()), context_instance=RequestContext(request))
 
 
 @permission_required('tickets.can_moderate')

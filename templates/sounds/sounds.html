@@ -31,7 +31,7 @@
             {% empty %}
             <p>No sounds in the database!
         {% endfor %}
-        <p class="more_button" ><a href="{% url sounds-search %}?q=&f=&s=created+desc">more...</a></p>
+        <p class="more_button" ><a href="{% url sounds-search %}?q=&f=&s=created+desc&g=0">more...</a></p>
         </div>
     </div><!-- #latest_sounds -->
 {% endcache %}
@@ -49,7 +49,7 @@
         {% empty %}
             <p>No sounds in the database!
         {% endfor %}
-        <p class="more_button"><a href="{% url sounds-search %}?q=&f=created:[NOW-7DAY%20TO%20NOW]&s=num_downloads+desc">more...</a></p>
+        <p class="more_button"><a href="{% url sounds-search %}?q=&f=created:[NOW-7DAY%20TO%20NOW]&s=num_downloads+desc&g=0">more...</a></p>
 
     </div><!-- #most_downloaded_sounds -->
 {% endcache %}

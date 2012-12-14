@@ -454,7 +454,19 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
     
     msg = 'You have been assigned ticket "%s".' % ticket.title
     messages.add_message(request, messages.INFO, msg)
-    return HttpResponseRedirect(reverse("tickets-moderation-home"))
+
+    next = request.GET.get("next",None)
+    p = request.GET.get("p",1)
+
+    if next:
+        if next == "tardy_users":
+            return HttpResponseRedirect(reverse("tickets-moderation-tardy-users"))
+        elif next == "tardy_moderators":
+            return HttpResponseRedirect(reverse("tickets-moderation-tardy-moderators")+"?page=%i"%p)
+        else:
+            return HttpResponseRedirect(reverse("tickets-moderation-home")+"?page=%i"%p)
+    else:
+        return HttpResponseRedirect(reverse("tickets-moderation-home"))
 
 
 @permission_required('tickets.can_moderate')

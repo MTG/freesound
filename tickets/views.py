@@ -462,9 +462,9 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
         if next == "tardy_users":
             return HttpResponseRedirect(reverse("tickets-moderation-tardy-users"))
         elif next == "tardy_moderators":
-            return HttpResponseRedirect(reverse("tickets-moderation-tardy-moderators")+"?page=%i"%p)
+            return HttpResponseRedirect(reverse("tickets-moderation-tardy-moderators")+"?page=%s"%str(p))
         else:
-            return HttpResponseRedirect(reverse("tickets-moderation-home")+"?page=%i"%p)
+            return HttpResponseRedirect(reverse("tickets-moderation-home")+"?page=%s"%str(p))
     else:
         return HttpResponseRedirect(reverse("tickets-moderation-home"))
 

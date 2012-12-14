@@ -103,7 +103,7 @@ def sounds(request):
                             .annotate(num_d=Count('pack'))   \
                             .order_by("-num_d")[0:5]
 
-    packs = []
+    #packs = []
     popular_packs = []                              
     for pack in packs:
         pack_obj = Pack.objects.select_related().get(id=pack['pack_id'])

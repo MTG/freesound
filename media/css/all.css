@@ -1709,7 +1709,7 @@ ul.pagination {
 .pagination .number_of_results {
      margin-left: 0px;
      color: #888;
-     margin-top:-1px;
+     /*margin-top:-1px;*/
 }
 
 .pagination .dots {

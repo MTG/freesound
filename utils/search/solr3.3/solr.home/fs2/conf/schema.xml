@@ -275,7 +275,10 @@
 		<field name="was_remixed" type="boolean" indexed="true" stored="true" required="true" />
 
 		<field name="pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal -->
-		<field name="pack_tokenized" type="text" indexed="true" stored="true" required="false" /> <!-- parsed -->
+        <field name="grouping_pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal for gorupin
+g purposes: This field will contain either sounds packs name or the stringed sound id. This is to avoid collapsing all sounds witho
+ut pack in a single group -->
+        <field name="pack_tokenized" type="text" indexed="true" stored="true" required="false" /> <!-- parsed -->
 
 		<field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
 

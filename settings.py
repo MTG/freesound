@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# Test comment
+
 # Django settings for freesound project.
 import os
 import logging.config

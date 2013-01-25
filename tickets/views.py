@@ -250,13 +250,21 @@ WHERE
 GROUP BY sender_id""" % TICKET_STATUS_NEW)
     user_ids_plus_new_count = dict(cursor.fetchall())
     user_objects = User.objects.filter(id__in=user_ids_plus_new_count.keys())
-    users_plus_new_count = {}
+
+    users_aux = []
     for user in user_objects:
-        users_plus_new_count[user] = user_ids_plus_new_count[user.id]
-    # looks nicer, but probably less efficient
-    #return [(User.objects.get(id=id).username, count) \
-    #        for id,count in user_ids_plus_new_count.items()]
-    return users_plus_new_count
+        # Pick the oldest non moderated ticket of each user and compute how many seconds it has been in the queue
+        oldest_new_ticket = Ticket.objects.filter(sender__id=user.id).order_by("created")[0]
+        seconds_in_queue = (datetime.datetime.today()-oldest_new_ticket.created).seconds
+        users_aux.append({'user':user, 'seconds_in_queue':seconds_in_queue, 'new_sounds':user_ids_plus_new_count[user.id]})
+
+    # Sort users according to their oldest ticket (older = first)
+    users_aux.sort(key=lambda item:item['seconds_in_queue'], reverse=True)
+    new_sounds_users = []
+    for user in users_aux:
+        new_sounds_users.append((user['user'],user['new_sounds']))
+
+    return new_sounds_users
 
 
 def __get_unsure_sound_tickets():
@@ -352,12 +360,11 @@ def moderation_home(request):
         sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
     else :
         sounds_in_moderators_queue_count = -1
-    
+
     new_sounds_users = __get_new_uploaders_by_ticket()
     unsure_tickets = list(__get_unsure_sound_tickets()) #TODO: shouldn't appear
     tardy_moderator_tickets = list(__get_tardy_moderator_tickets())
     tardy_user_tickets = list(__get_tardy_user_tickets())
-    
     tardy_moderator_tickets_count = len(list(__get_tardy_moderator_tickets_all()))
     tardy_user_tickets_count = len(list(__get_tardy_user_tickets_all()))
     

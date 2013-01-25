@@ -11,7 +11,8 @@
     {% if new_sounds_users %}
         <h3>Users with new sounds</h3>
         <p><div class="moderation-user-list">
-            {% for user, new_count in new_sounds_users.items %}
+
+            {% for user, new_count in new_sounds_users %}
                 <div class="moderation-user-list-user">
                     <div class="moderation-user-list-user-left">
                     <img src="{{user.profile.locations.avatar.L.url}}"/>

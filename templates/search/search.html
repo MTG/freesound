@@ -306,6 +306,12 @@
             <h3>bitdepth</h3>
             {% display_facet "bitdepth" results.facets.bitdepth "list" %}
         {% endif %}
+        
+        {% if results.facets.bitrate and results.facets.bitrate|length > 1 %}
+            <h3>bitrate</h3>
+            {% display_facet "bitrate" results.facets.bitrate "list" %}
+        {% endif %}
+        
 
         {% if results.facets.channels and results.facets.channels|length > 1 %}
             <h3>channels</h3>

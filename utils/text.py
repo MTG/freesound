@@ -166,6 +166,8 @@ def clean_html(input):
     u'<ul><p>123hello<strong>there http://www</strong></p></ul>'
     >>> clean_html(u'abc http://www.google.com abc')
     u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc'
+    >>> clean_html(u'abc <http://www.google.com> abc')
+    u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc'
     >>> clean_html(u'GALORE: http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
     u'GALORE: <a href="http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092" rel="nofollow">http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092</a>\\nFreesound Moderator'
     """
@@ -174,9 +176,12 @@ def clean_html(input):
     ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br", u"ul", u"li", u"blockquote", u"code"]
     ok_attributes = {u"a": [u"href"], u"img": [u"src", u"alt", u"title"]}
     # all other tags: replace with the content of the tag
+
+    input = re.sub("\<(http://\S+)\>", r'<<a href="\1" rel="nofollow">\1</a>>',
+            input)
     
     soup = BeautifulSoup(input, fromEncoding="utf-8")
-    
+
     # delete all comments
     [comment.extract() for comment in soup.findAll(text=lambda text:isinstance(text, Comment))]
 

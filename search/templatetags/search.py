@@ -5,7 +5,7 @@ register = template.Library()
 
 @register.inclusion_tag('search/facet.html', takes_context=True)
 def display_facet(context, filter, facet, type):
-    facet = annotate_tags([dict(name=f[0], count=f[1]) for f in facet if f[0] != "0"], sort=True, small_size=0.5, large_size=1.5)
+    facet = annotate_tags([dict(name=f[0], count=f[1]) for f in facet if f[0] != "0"], sort=True, small_size=0.7, large_size=2.0)
 
     # If the filter is grouping_pack and there are elements which do not contain the chaarcter "_" means that
     # these sounds do not belong to any pack (as goruping pack values should by "packId_packName" if there is a pack

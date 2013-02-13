@@ -134,7 +134,8 @@ var vis{{ forloop.counter }} = new pv.Panel()
                 .height(270)
                 .bottom(60)
                 .top(0)
-                .right(50);
+                .left(100)
+                .right(10);
 
 var arc = vis{{ forloop.counter }}.add(pv.Layout.Arc)
     .nodes(data{{ forloop.counter }}.nodes)

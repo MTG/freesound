@@ -60,6 +60,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'tickets',
     'gunicorn', 
+    'usage',
     #'test_utils', # Don't use this in production!
 )
 
@@ -187,7 +188,8 @@ else:
 
 # change the media url to tabasco to make the players work when testing
 if DEBUG:
-    DATA_URL = "http://freesound.org/data/"
+    #DATA_URL = "http://freesound.org/data/"
+    DATA_URL = "/data/"
 else:
     DATA_URL = "/data/"
 

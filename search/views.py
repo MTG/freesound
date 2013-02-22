@@ -28,6 +28,7 @@ import forms
 import logging
 
 logger = logging.getLogger("search")
+logger_click = logging.getLogger('clickusage')
 
 def search_prepare_sort(sort, options):
     """ for ordering by rating order by rating, then by number of ratings """
@@ -190,6 +191,14 @@ def search(request):
                                  original_filename_weight,
                                  grouping = actual_groupnig
                                  )
+    # clickusage tracking
+    request.session["query"]=search_query
+    # The session id of an unauthenticated user is different from the session id of the same user when
+    # authenticated.
+    if not request.user.is_authenticated():
+        request.session["anonymous_session_key"]=request.session.session_key
+    else:
+        request.session["anonymous_session_key"]=""
     
     solr = Solr(settings.SOLR_URL) 
         

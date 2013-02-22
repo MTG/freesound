@@ -64,12 +64,12 @@ package
 				
 				try
 				{
-					var filterExtensions:String = "*.wav;*.aiff;*.aif;*.ogg;*.flac;*.mp3";
+					//var filterLowerCaseExtensions:String = "*.wav;*.aiff;*.aif;*.ogg;*.flac;*.mp3";
+					var filterExtensions:String = "";
 					// On linux, file extensions are case-sensative. Therefor we need to the upper case version of all
 					// the extensions as well.
-					if ((Capabilities.os.indexOf("Linux") >= 0))
-						filterExtensions = filterExtensions.toUpperCase() + ";" + filterExtensions;
-					trace(filterExtensions);
+					//if ((Capabilities.os.indexOf("Linux") >= 0))
+					//	filterExtensions = filterExtensions.toUpperCase() + ";" + filterExtensions;
 					fileReferenceList.browse([new FileFilter("Audio files", filterExtensions)]);
 				}
 				catch (e : IllegalOperationError)
@@ -188,6 +188,10 @@ package
 		private function javascriptDone(fileId : int) : void
 		{
 			ExternalInterface.call("uploadDone", fileId);
+		}
+		private function javascriptLog(log_t : String) : void
+		{
+			ExternalInterface.call("console.log", log_t);
 		}
 	}
 }

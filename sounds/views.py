@@ -243,7 +243,7 @@ def sound_preview(request, pack_id, sound_id, user_id):
                        % (request.session.session_key, request.session["anonymous_session_key"], request.session["query"],sound_id))
 
     #url=request.get_full_path().replace("/data/","data/")
-    url=request.get_full_path()g
+    url=request.get_full_path()
     return sendfile(url,"")
 
 def pack_download(request, username, pack_id):

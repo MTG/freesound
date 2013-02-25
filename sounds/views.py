@@ -242,7 +242,8 @@ def sound_preview(request, pack_id, sound_id, user_id):
     logger_click.info("Logging a preview: session_key=%s, anonymous_session_key=%s, query=%s,sound_id=%s"
                        % (request.session.session_key, request.session["anonymous_session_key"], request.session["query"],sound_id))
 
-    url=request.get_full_path().replace("/data/","data/")
+    #url=request.get_full_path().replace("/data/","data/")
+    url=request.get_full_path()g
     return sendfile(url,"")
 
 def pack_download(request, username, pack_id):

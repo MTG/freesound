@@ -34,6 +34,7 @@ def create_api_key(request):
             db_api_key.description = form.cleaned_data['description']
             db_api_key.name        = form.cleaned_data['name']
             db_api_key.url         = form.cleaned_data['url']
+            db_api_key.accepted_tos= form.cleaned_data['accepted_tos']
             db_api_key.save()
             form = ApiKeyForm()
     else:

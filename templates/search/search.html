@@ -61,7 +61,7 @@
         for(var i=0;i<terms.length;i++)
         {
         	term = terms[i];
-        	re = RegExp(term);
+        	re = RegExp(term,"i"); // i for case-insensative
         	
         	descriptions = document.getElementsByClassName("description");
         	for (var j=0;j<descriptions.length;j++)

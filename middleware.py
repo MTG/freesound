@@ -88,8 +88,8 @@ class TosAcceptanceHandler:
             
             if not cache_info:
                 has_accepted_tos = user.profile.accepted_tos
-                cache.set(cache_key, 'no', 2592000) # 30 days cache
                 if not has_accepted_tos:
+                    cache.set(cache_key, 'no', 2592000) # 30 days cache
                     return HttpResponseRedirect(reverse("tos-acceptance"))
                 else:
                     cache.set(cache_key, 'yes', 2592000) # 30 days cache

@@ -65,7 +65,15 @@ class RegistrationForm(RecaptchaForm):
     email2 = forms.EmailField(label=_("Email confirmation"))
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
-    newsletter = forms.BooleanField(label=_("Sign up for the newsletter (only once every 4 months or so)?"), required=False, initial=True)
+    newsletter = forms.BooleanField(label=_(""),
+                                    required=False,
+                                    initial=True,
+                                    help_text=_("Sign up for the newsletter (only once every 4 months or so)?"))
+    accepted_tos = forms.BooleanField(label='',
+                                       help_text=_('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the Freesound website'),
+                                       required=True,
+                                       error_messages={'required': _('You must accept the terms of use in order to register to Freesound.')})
+
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -105,12 +113,13 @@ class RegistrationForm(RecaptchaForm):
         first_name = self.cleaned_data.get("first_name", "")
         last_name = self.cleaned_data.get("last_name", "")
         newsletter = self.cleaned_data.get("newsletter", False)
+        accepted_tos = self.cleaned_data.get("accepted_tos", False)
 
         user = User(username=username, first_name=first_name, last_name=last_name, email=email, password=password,is_staff=False, is_active=False, is_superuser=False)
         user.set_password(password)
         user.save()
         
-        profile = Profile(user=user, wants_newsletter=newsletter)
+        profile = Profile(user=user, wants_newsletter=newsletter, accepted_tos=accepted_tos)
         profile.save()
 
         return user

@@ -69,6 +69,8 @@ class Profile(SocialModel):
     has_old_license = models.BooleanField(null=False, default=True)
     not_shown_in_online_users_list = models.BooleanField(null=False, default=False)
 
+    accepted_tos = models.BooleanField(default=False)
+
     objects = ProfileManager()
 
     def __unicode__(self):

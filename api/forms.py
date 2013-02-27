@@ -24,3 +24,7 @@ class ApiKeyForm(forms.Form):
     name          = forms.CharField(label='Application name')
     url           = forms.URLField(label='Application url')
     description   = forms.CharField(label='Describe your application', widget=forms.Textarea)
+    accepted_tos  = forms.BooleanField(label='',
+                                       help_text='Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API',
+                                       required=True,
+                                       error_messages={'required': 'You must accept the terms of use in order to get an API key.'})

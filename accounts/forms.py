@@ -28,6 +28,12 @@ from utils.spam import is_spam
 class UploadFileForm(forms.Form):
     file = forms.FileField()
 
+class  TermsOfServiceForm(forms.Form):
+    accepted_tos  = forms.BooleanField(label='',
+                                       help_text='Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the Freesound website',
+                                       required=True,
+                                       error_messages={'required': 'You must accept the terms of use in order to continue using Freesound.'})
+
 class AvatarForm(forms.Form):
     file = forms.FileField(required=False)
     remove = forms.BooleanField(label="Remove avatar", required=False)

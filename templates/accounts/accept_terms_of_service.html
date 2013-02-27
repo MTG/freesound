@@ -1,0 +1,19 @@
+{% extends "accounts/_section.html" %}
+
+{% block title %}Acceptance of Freesound terms of use{% endblock %}
+
+{% block content %}
+    <h1>Acceptance of Freesound terms of use</h1>
+
+    <p>Hi! We have created a terms of use for Freesound that must be accepted before you can continue using the site.</p>
+
+    <p>More explanation, bullets and link to full text</p>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" name="submit" value="Continue!" id="submit">
+    </form>
+
+
+{% endblock %}

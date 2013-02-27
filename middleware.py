@@ -71,3 +71,27 @@ class BulkChangeLicenseHandler:
                 #print "CACHE LICENSE: has_old_license=" + str(has_old_license) + " has_sounds=" + str(has_sounds)
                 if has_old_license and has_sounds:
                     return HttpResponseRedirect(reverse("bulk-license-change"))
+
+
+class TosAcceptanceHandler:
+
+    def process_request(self, request):
+
+        if request.user.is_authenticated() \
+            and not 'tosacceptance' in request.get_full_path() \
+            and not 'logout' in request.get_full_path() \
+            and not request.get_full_path().startswith(settings.MEDIA_URL):
+
+            user = request.user
+            cache_key = "has-accepted-tos-%s" % user.id
+            cache_info = cache.get(cache_key)
+            
+            if not cache_info:
+                has_accepted_tos = user.profile.accepted_tos
+                cache.set(cache_key, 'no', 2592000) # 30 days cache
+                if not has_accepted_tos:
+                    return HttpResponseRedirect(reverse("tos-acceptance"))
+                else:
+                    cache.set(cache_key, 'yes', 2592000) # 30 days cache
+            elif cache_info == 'no':
+                return HttpResponseRedirect(reverse("tos-acceptance"))

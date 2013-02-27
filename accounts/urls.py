@@ -89,6 +89,10 @@ urlpatterns = patterns('accounts.views',
         accounts.bulk_license_change,
         name="bulk-license-change"),
 
+    url(r'^tosacceptance/$',
+        accounts.tos_acceptance,
+        name="tos-acceptance"),
+
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
     url(r'^delete/$', accounts.delete, name="accounts-delete"),

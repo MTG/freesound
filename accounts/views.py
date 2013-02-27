@@ -20,7 +20,7 @@
 
 import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
-    ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm
+    ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm, TermsOfServiceForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag
 from comments.models import Comment
 from django.conf import settings
@@ -98,6 +98,21 @@ def bulk_license_change(request):
     else:
         form = NewLicenseForm()
     return render_to_response('accounts/choose_new_license.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+def tos_acceptance(request):
+    if request.method == 'POST':
+        form = TermsOfServiceForm(request.POST)
+        if form.is_valid():
+            # update accepted tos field in user profile
+            Profile.objects.filter(user=request.user).update(accepted_tos=True)
+            # update cache
+            cache.set("has-accepted-tos-%s" % request.user.id, 'yes', 2592000)
+            return HttpResponseRedirect(reverse('accounts-home'))
+    else:
+        form = TermsOfServiceForm()
+    return render_to_response('accounts/accept_terms_of_service.html', locals(), context_instance=RequestContext(request))
+
 
 
 def activate_user(request, activation_key, username):

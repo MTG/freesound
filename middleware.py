@@ -74,12 +74,13 @@ class BulkChangeLicenseHandler:
 
 
 class TosAcceptanceHandler:
-
     def process_request(self, request):
 
         if request.user.is_authenticated() \
             and not 'tosacceptance' in request.get_full_path() \
             and not 'logout' in request.get_full_path() \
+            and not 'tos_api' in request.get_full_path() \
+            and not 'tos_web' in request.get_full_path() \
             and not request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
@@ -89,9 +90,9 @@ class TosAcceptanceHandler:
             if not cache_info:
                 has_accepted_tos = user.profile.accepted_tos
                 if not has_accepted_tos:
-                    cache.set(cache_key, 'no', 2592000) # 30 days cache
                     return HttpResponseRedirect(reverse("tos-acceptance"))
                 else:
                     cache.set(cache_key, 'yes', 2592000) # 30 days cache
-            elif cache_info == 'no':
-                return HttpResponseRedirect(reverse("tos-acceptance"))
+            else:
+                # If there is cache it means the terms has been accepted
+                pass

@@ -52,6 +52,7 @@ class BulkChangeLicenseHandler:
         if request.user.is_authenticated() \
             and not 'bulklicensechange' in request.get_full_path() \
             and not 'logout' in request.get_full_path() \
+            and not 'tosacceptance' in request.get_full_path() \
             and not request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
@@ -82,7 +83,8 @@ class TosAcceptanceHandler:
             and not 'tos_api' in request.get_full_path() \
             and not 'tos_web' in request.get_full_path() \
             and not 'contact' in request.get_full_path() \
-	    and not request.get_full_path().startswith(settings.MEDIA_URL):
+            and not 'bulklicensechange' in request.get_full_path() \
+            and not request.get_full_path().startswith(settings.MEDIA_URL):
 
             user = request.user
             cache_key = "has-accepted-tos-%s" % user.id

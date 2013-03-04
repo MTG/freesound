@@ -66,7 +66,7 @@ class Profile(SocialModel):
     num_sounds = models.PositiveIntegerField(editable=False, default=0)
     num_posts = models.PositiveIntegerField(editable=False, default=0)
 
-    has_old_license = models.BooleanField(null=False, default=True)
+    has_old_license = models.BooleanField(null=False, default=False)
     not_shown_in_online_users_list = models.BooleanField(null=False, default=False)
 
     accepted_tos = models.BooleanField(default=False)

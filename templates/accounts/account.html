@@ -63,7 +63,7 @@
             <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
             <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
             {% if user.profile.num_sounds %}
-            <li><a href="{% url comments-for-user user.username %}">All comments</a> on this {{user.username}}'s sounds</li>
+            <li><a href="{% url comments-for-user user.username %}">All comments</a> on {{user.username}}'s sounds</li>
             {% endif %}
             {% if has_bookmarks %}
             <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>

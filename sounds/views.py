@@ -234,7 +234,7 @@ def sound_download(request, username, sound_id):
     if settings.DO_LOG_CLICKTHROUGH_DATA:
         anonymous_session_key = "-"
         query = "-"
-        if "ananymous_session_key" in request.session:
+        if "anonymous_session_key" in request.session:
             anonymous_session_key = request.session["anonymous_session_key"]
         if "query" in request.session:
             query = request.session["query"]
@@ -251,7 +251,7 @@ def sound_preview(request, folder_id, sound_id, user_id):
     if settings.DO_LOG_CLICKTHROUGH_DATA:
         anonymous_session_key = "-"
         query = "-"
-        if "ananymous_session_key" in request.session:
+        if "anonymous_session_key" in request.session:
             anonymous_session_key = request.session["anonymous_session_key"]
         if "query" in request.session:
             query = request.session["query"]

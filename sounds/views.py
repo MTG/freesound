@@ -230,20 +230,38 @@ def sound(request, username, sound_id):
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
-                                                    reverse("sound", args=[username, sound_id])))
-    logger_click.info("Logging a download: session_key=%s, anonymous_session_key=%s, query=%s,sound_id=%s"
-                       % (request.session.session_key, request.session["anonymous_session_key"], request.session["query"],sound_id))
+                                                    reverse("sound", args=[username, sound_id])))   
+    if settings.DO_LOG_CLICKTHROUGH_DATA:
+        anonymous_session_key = "-"
+        query = "-"
+        if "ananymous_session_key" in request.session:
+            anonymous_session_key = request.session["anonymous_session_key"]
+        if "query" in request.session:
+            query = request.session["query"]
+
+        logger_click.info("Logging a download: session_key=%s, anonymous_session_key=%s, query=%s,sound_id=%s"
+                       % (request.session.session_key, anonymous_session_key, query,sound_id))
     
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
-def sound_preview(request, pack_id, sound_id, user_id):
-    logger_click.info("Logging a preview: session_key=%s, anonymous_session_key=%s, query=%s,sound_id=%s"
-                       % (request.session.session_key, request.session["anonymous_session_key"], request.session["query"],sound_id))
+def sound_preview(request, folder_id, sound_id, user_id):
+
+    if settings.DO_LOG_CLICKTHROUGH_DATA:
+        anonymous_session_key = "-"
+        query = "-"
+        if "ananymous_session_key" in request.session:
+            anonymous_session_key = request.session["anonymous_session_key"]
+        if "query" in request.session:
+            query = request.session["query"]
+
+        logger_click.info("Logging a preview: session_key=%s, anonymous_session_key=%s, query=%s,sound_id=%s"
+                       % (request.session.session_key, anonymous_session_key, query,sound_id))
 
     url=request.get_full_path()
     return sendfile(url,"")
+
 
 def pack_download(request, username, pack_id):
     from django.http import HttpResponse

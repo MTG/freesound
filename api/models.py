@@ -39,3 +39,4 @@ class ApiKey(models.Model):
     name           = models.CharField(max_length=64)
     url            = models.URLField()
     description    = models.TextField(blank=True)
+    accepted_tos   = models.BooleanField(default=False)

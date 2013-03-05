@@ -15,7 +15,6 @@ package
 	import flash.net.FileReference;
 	import flash.net.FileReferenceList;
 	import flash.utils.Dictionary;
-	import flash.system.Capabilities;
 
 	[SWF( backgroundColor='0xffffff', width='160', height='31', frameRate='20')]
 
@@ -64,13 +63,7 @@ package
 				
 				try
 				{
-					//var filterLowerCaseExtensions:String = "*.wav;*.aiff;*.aif;*.ogg;*.flac;*.mp3";
-					var filterExtensions:String = "";
-					// On linux, file extensions are case-sensative. Therefor we need to the upper case version of all
-					// the extensions as well.
-					//if ((Capabilities.os.indexOf("Linux") >= 0))
-					//	filterExtensions = filterExtensions.toUpperCase() + ";" + filterExtensions;
-					fileReferenceList.browse([new FileFilter("Audio files", filterExtensions)]);
+					fileReferenceList.browse([new FileFilter("Audio files", "*.wav;*.aiff;*.aif;*.ogg;*.flac;*.mp3")]);
 				}
 				catch (e : IllegalOperationError)
 				{

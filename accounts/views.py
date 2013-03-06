@@ -288,10 +288,6 @@ def handle_uploaded_image(profile, f):
 def edit(request):
     profile = request.user.profile
 
-    needs_spam_check = True
-    if request.user.sounds.count() > 0:
-        needs_spam_check = False
-
     def is_selected(prefix):
         if request.method == "POST":
             for name in request.POST.keys():
@@ -304,12 +300,12 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile", needs_spam_check=needs_spam_check)
+        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         if profile_form.is_valid():
             profile_form.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
-        profile_form = ProfileForm(request,instance=profile, prefix="profile", needs_spam_check=needs_spam_check)
+        profile_form = ProfileForm(request,instance=profile, prefix="profile")
 
     if is_selected("image"):
         image_form = AvatarForm(request.POST, request.FILES, prefix="image")

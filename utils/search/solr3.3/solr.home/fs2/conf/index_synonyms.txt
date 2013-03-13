@@ -31,7 +31,7 @@
 
 # Synonyms in Freesound
 cello,violoncello
-fieldrecording,field recording,fiel-recording
+fieldrecording,field recording,field-recording
 
 # Synonym mappings can be used for spelling correction too
 pixima => pixma

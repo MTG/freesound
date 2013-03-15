@@ -88,6 +88,8 @@ urlpatterns = patterns('',
 
     url(r'^contact/', support.views.contact, name="contact"),
     url(r'^search/$', search.views.search, name='sounds-search'),
+    # Alternative previews url for logging clickthrough data
+    url(r'^data/previews_alt/(?P<folder_id>\d+)/(?P<sound_id>\d+)_(?P<user_id>\d+)', sounds.views.sound_preview,name="sound-preview"),
 
     (r'^ratings/', include('ratings.urls')),
     (r'^comments/', include('comments.urls')),

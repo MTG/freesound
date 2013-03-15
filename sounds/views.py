@@ -63,6 +63,7 @@ import json
 import os
 
 logger = logging.getLogger('web')
+logger_click = logging.getLogger('clickusage')
 
 sound_content_type = ContentType.objects.get_for_model(Sound)
 
@@ -222,6 +223,8 @@ def sound(request, username, sound_id):
 
     qs = Comment.objects.select_related("user", "user__profile").filter(content_type=sound_content_type, object_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
+    do_log = settings.DO_LOG_CLICKTHROUGH_DATA
+
     #facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
@@ -229,10 +232,53 @@ def sound(request, username, sound_id):
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
-                                                    reverse("sound", args=[username, sound_id])))
+                                                    reverse("sound", args=[username, sound_id])))   
+    if settings.DO_LOG_CLICKTHROUGH_DATA:
+        anonymous_session_key = "-"
+        query_chain = "-"
+        session_key = "-"
+        sound_rank = "-"
+        if "anonymous_session_key" in request.session:
+            anonymous_session_key = request.session["anonymous_session_key"]
+        if "query_chain" in request.session:
+            query_chain = request.session["query_chain"]
+        if request.session.session_key is not None:
+            session_key = request.session.session_key
+        if "current_page_ranks" in request.session and "current_page" in request.session:
+            if request.session["current_page_ranks"].count(int(sound_id)) != 0:
+                rank_in_page = request.session["current_page_ranks"].index(int(sound_id)) + 1
+                sound_rank = (request.session["current_page"] - 1) * settings.SOUNDS_PER_PAGE + rank_in_page
+        logger_click.info("Logging a sound download: session_key=%s, anonymous_session_key=%s, query_chain=%s,sound_id=%s, sound_rank=%s"
+                       % (session_key, anonymous_session_key, query_chain,sound_id, sound_rank))
+    
     sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
+
+def sound_preview(request, folder_id, sound_id, user_id):
+
+    if settings.DO_LOG_CLICKTHROUGH_DATA:
+        anonymous_session_key = "-"
+        query_chain = "-"
+        session_key = "-"
+        sound_rank = "-"
+        if "anonymous_session_key" in request.session:
+            anonymous_session_key = request.session["anonymous_session_key"]
+        if "query_chain" in request.session:
+            query_chain = request.session["query_chain"]
+        if request.session.session_key is not None:
+            session_key = request.session.session_key
+        if "current_page_ranks" in request.session and "current_page" in request.session:
+            if request.session["current_page_ranks"].count(int(sound_id)) != 0:
+                rank_in_page = request.session["current_page_ranks"].index(int(sound_id)) + 1
+                sound_rank = (request.session["current_page"] - 1) * settings.SOUNDS_PER_PAGE + rank_in_page
+
+        logger_click.info("Logging a sound preview: session_key=%s, anonymous_session_key=%s, query_chain=%s,sound_id=%s, sound_rank=%s"
+                       % (session_key, anonymous_session_key, query_chain,sound_id,sound_rank))
+
+    url = request.get_full_path().replace("_alt","")
+    return HttpResponseRedirect(url)
 
 
 def pack_download(request, username, pack_id):
@@ -241,6 +287,21 @@ def pack_download(request, username, pack_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
+        
+    if settings.DO_LOG_CLICKTHROUGH_DATA:
+        anonymous_session_key = "-"
+        query_chain = "-"
+        session_key = "-"
+        if "anonymous_session_key" in request.session:
+            anonymous_session_key = request.session["anonymous_session_key"]
+        if "query_chain" in request.session:
+            query_chain = request.session["query_chain"]
+        if request.session.session_key is not None:
+            session_key = request.session.session_key
+    
+        logger_click.info("Logging a pack download: session_key=%s, anonymous_session_key=%s, query_chain=%s,pack_id=%s"
+                       % (session_key, anonymous_session_key, query_chain,pack_id))
+        
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     Download.objects.get_or_create(user=request.user, pack=pack)
 

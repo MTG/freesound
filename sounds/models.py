@@ -207,7 +207,18 @@ class Sound(SocialModel):
                     ogg = dict(
                         path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
                         url = settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id)
-                    )
+                    ),
+                    # We added the following to locations for the clickthrough data log.
+                    # The player access this new url (which is "previews_alt" instead of "previews"), django handles the view
+                    # and logs to a file and then redirects to normal url ("previews") so nginx serves the files
+                    mp3_alt = dict(
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, sound_user_id)),
+                        url = settings.PREVIEWS_URL.replace("previews","previews_alt") + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id)
+                    ),
+                    ogg_alt = dict(
+                        path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
+                        url = settings.PREVIEWS_URL.replace("previews","previews_alt") + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id)
+                    ),
                 )
             ),
             display = dict(

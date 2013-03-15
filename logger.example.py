@@ -79,6 +79,13 @@ LOGGING = {
             'backupCount': '14',
             'formatter': 'standard'
         },
+        'clickusagelogfile': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': '/var/log/freesound/clickusage.log',
+            'when': 'midnight',
+            'backupCount': '14',
+            'formatter': 'standard'
+        },
         'gelf_search': {
             'class': 'graypy.GELFHandler',
             'host': '10.55.0.20',
@@ -153,6 +160,11 @@ LOGGING = {
         },
         'search': {
             'handlers': ['searchlogfile'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'clickusage': {
+            'handlers': ['clickusagelogfile'],
             'level': 'INFO',
             'propagate': False,
         },

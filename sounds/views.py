@@ -223,6 +223,8 @@ def sound(request, username, sound_id):
 
     qs = Comment.objects.select_related("user", "user__profile").filter(content_type=sound_content_type, object_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
+    do_log = settings.DO_LOG_CLICKTHROUGH_DATA
+
     #facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
 
@@ -253,6 +255,7 @@ def sound_download(request, username, sound_id):
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
+
 def sound_preview(request, folder_id, sound_id, user_id):
 
     if settings.DO_LOG_CLICKTHROUGH_DATA:
@@ -269,19 +272,13 @@ def sound_preview(request, folder_id, sound_id, user_id):
         if "current_page_ranks" in request.session and "current_page" in request.session:
             if request.session["current_page_ranks"].count(int(sound_id)) != 0:
                 rank_in_page = request.session["current_page_ranks"].index(int(sound_id)) + 1
-                sound_rank = (request.session["current_page"] - 1) * settings.SOUNDS_PER_PAGE + rank_in_page        
-                
+                sound_rank = (request.session["current_page"] - 1) * settings.SOUNDS_PER_PAGE + rank_in_page
+
         logger_click.info("Logging a sound preview: session_key=%s, anonymous_session_key=%s, query_chain=%s,sound_id=%s, sound_rank=%s"
                        % (session_key, anonymous_session_key, query_chain,sound_id,sound_rank))
 
-
-    path=request.get_full_path()
-    if not os.path.exists(path):
-        raise Http404
-    response = HttpResponse()
-    response['X-Accel-Redirect'] = path
-    response['Content-Type']="application/octet-stream"
-    return response
+    url = request.get_full_path().replace("_alt","")
+    return HttpResponseRedirect(url)
 
 
 def pack_download(request, username, pack_id):

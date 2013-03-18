@@ -203,10 +203,7 @@ def search(request):
         error = False
                
         # clickusage tracking
-        if "query_chain" in request.session:
-            request.session["query_chain"].append(search_query.encode('utf-8'))
-        else:
-            request.session["query_chain"]=[search_query.encode('utf-8')]
+        request.session.setdefault("query_chain", []).append(search_query.encode("utf-8"))
         # The session id of an unauthenticated user is different from the session id of the same user when
         # authenticated.
         if not request.user.is_authenticated():
@@ -217,7 +214,7 @@ def search(request):
         if results.docs is not None:
             ids = []
             for item in results.docs:
-                ids.append(item['id'])
+                ids.append(item["id"])
             request.session["current_page_ranks"] = ids
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))

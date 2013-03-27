@@ -21,11 +21,13 @@
 from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.http import HttpResponse
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 from datetime import datetime
 import forms
 import logging
+import json
 
 logger = logging.getLogger("search")
 
@@ -327,3 +329,12 @@ def __add_date_range(filter_query, date_from, date_to):
     date_to = date_to + "T00:00:00Z]" if date_to != "" else "*]"
     
     return filter_query + date_from + " TO " + date_to
+
+def suggest_query(request):
+    results = []
+    
+    results = [('piano',1),
+               ('pianossimo',3)]
+
+    json_resp = json.dumps(results)
+    return HttpResponse(json_resp, mimetype='application/json')

@@ -8,11 +8,31 @@
 {% block title %}sound search{% endblock title %}
 
 {% block section_content %}
+<script type="text/javascript" src="{{media_url}}js/jquery.autocomplete.min.js"></script>
+<script>
+    $(function() {
+        $('#search_tb').autocomplete('{% url suggest-query %}', {
+            dataType: 'json',
+            width: 500,  
+            max: 50,
+            parse: function(data) {
+                return $.map(data, function(row) {
+					return { data:row, value:row[0], result:row[1] };
+                });
+            }
+            }).result(
+                function(e, data, value) {
+                    $("#search_tb").val(data[0]);
+                }
+            );
+        }
+    );
+</script>
 
 <form id="search_form" method="get" onsubmit="return addAdvancedSearchOptionsFilters()"  action="{% url sounds-search %}">
     <fieldset>
 
-       <input type="text" name="q" value="{{search_query}}" size="30" />
+       <input id="search_tb" type="text" name="q" value="{{search_query}}" size="30" />
        <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
        {% comment %}
        <span class="advanced_search_options">Sort results by </span>

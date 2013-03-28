@@ -8,23 +8,10 @@
 
 <script type="text/javascript" src="{{media_url}}js/jquery.autocomplete.min.js"></script>
 <script>
-    $(function() {
-        $('#id_to').autocomplete('{% url messages-username_lookup %}', {
-            dataType: 'json',
-            width: 500,  
-            max: 50,
-            parse: function(data) {
-                return $.map(data, function(row) {
-					return { data:row, value:row[0], result:row[1] };
-                });
-            }
-            }).result(
-                function(e, data, value) {
-                    $("#id_to").val(data[0]);
-                }
-            );
-        }
-    );
+	$(function()
+		    {
+		    		auto_suggest("#id_to","{% url messages-username_lookup %}");
+		    });
 </script>
 
 <form method="post" action=".">{% csrf_token %}

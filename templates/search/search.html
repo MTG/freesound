@@ -10,23 +10,10 @@
 {% block section_content %}
 <script type="text/javascript" src="{{media_url}}js/jquery.autocomplete.min.js"></script>
 <script>
-    $(function() {
-        $('#search_tb').autocomplete('{% url suggest-query %}', {
-            dataType: 'json',
-            width: 500,  
-            max: 50,
-            parse: function(data) {
-                return $.map(data, function(row) {
-					return { data:row, value:row[0], result:row[1] };
-                });
-            }
-            }).result(
-                function(e, data, value) {
-                    $("#search_tb").val(data[0]);
-                }
-            );
-        }
-    );
+	$(function()
+		    {
+		    		auto_suggest("#search_tb","{% url suggest-query %}");
+		    });
 </script>
 
 <form id="search_form" method="get" onsubmit="return addAdvancedSearchOptionsFilters()"  action="{% url sounds-search %}">

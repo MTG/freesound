@@ -340,14 +340,9 @@ def suggest_query(request):
 
             # When there is at least one character, start searching queries previously entered
             if len(value) > 0:
-                querySuggestions = Query.objects.filter(querytext__startswith=value
-                                                        ).filter(frequency__gte=settings.QUERY_SUGGESTION_THRESHOLD
-                                                                 ).order_by('-frequency')
-                index = 0
-                # Only return a maximum of 5 results
-                suggestionCount = min(5,querySuggestions.count())
-                for i in range(suggestionCount):
-                    results.append( (querySuggestions[i].querytext,i) )
+                results = [(t[1],t[0]) for t in enumerate(Query.objects.filter(querytext__startswith=value
+                                                       ).filter(frequency__gte=settings.QUERY_SUGGESTION_THRESHOLD
+                                                                ).order_by('-frequency').values_list('querytext', flat=True)[0:5])]
     
 
     json_resp = json.dumps(results)

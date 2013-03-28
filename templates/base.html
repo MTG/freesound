@@ -25,26 +25,13 @@
 			   return true
 			}
         </script>
-        <script src="{{media_url}}js/freesound.js" type="text/javascript"></script>
         <script type="text/javascript" src="{{media_url}}js/jquery.autocomplete.min.js"></script>
+        <script src="{{media_url}}js/freesound.js" type="text/javascript"></script>
 		<script>
-		    $(function() {
-		        $('#global_search_tb').autocomplete('{% url suggest-query %}', {
-		            dataType: 'json',
-		            width: 500,  
-		            max: 50,
-		            parse: function(data) {
-		                return $.map(data, function(row) {
-							return { data:row, value:row[0], result:row[1] };
-		                });
-		            }
-		            }).result(
-		                function(e, data, value) {
-		                    $("#global_search_tb").val(data[0]);
-		                }
-		            );
-		        }
-		    );
+		    $(function()
+		    {
+		    		auto_suggest("#global_search_tb","{% url suggest-query %}");
+		    });
 		</script>
 	<script src="{{media_url}}js/ajax_utils.js" type="text/javascript"></script>
         <!-- next couple of lines are used for the HTML player -->

@@ -83,6 +83,23 @@ function switchFormSubmits()
     }
 }
 
+function auto_suggest(tb_id,url){
+		        $(tb_id).autocomplete(url, {
+		            dataType: 'json',
+		            width: 500,  
+		            max: 50,
+		            parse: function(data) {
+		                return $.map(data, function(row) {
+							return { data:row, value:row[0], result:row[1] };
+		                });
+		            }
+		            }).result(
+		                function(e, data, value) {
+		                    $(tb_id).val(data[0]);
+		                }
+		            );
+}
+
 // ----------GOOGLE MAPS FUNCTION -------------
 function zoomToBounds(map, bounds)
 {

@@ -24,6 +24,7 @@ from django.template import RequestContext
 from django.http import HttpResponse
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
+from queries.models import Query
 from datetime import datetime
 import forms
 import logging
@@ -332,9 +333,22 @@ def __add_date_range(filter_query, date_from, date_to):
 
 def suggest_query(request):
     results = []
+    value = ""
+    if request.method == "GET":
+        if request.GET.has_key(u'q'):            
+            value = request.GET[u'q']
+
+            # When there is at least one character, start searching queries previously entered
+            if len(value) > 0:
+                querySuggestions = Query.objects.filter(querytext__startswith=value
+                                                        ).filter(frequency__gte=settings.QUERY_SUGGESTION_THRESHOLD
+                                                                 ).order_by('-frequency')
+                index = 0
+                # Only return a maximum of 5 results
+                suggestionCount = min(5,querySuggestions.count())
+                for i in range(suggestionCount):
+                    results.append( (querySuggestions[i].querytext,i) )
     
-    results = [('piano',1),
-               ('pianossimo',3)]
 
     json_resp = json.dumps(results)
     return HttpResponse(json_resp, mimetype='application/json')

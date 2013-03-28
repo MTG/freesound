@@ -61,6 +61,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'tickets',
     'gunicorn', 
+    'queries',
     #'test_utils', # Don't use this in production!
 )
 
@@ -142,6 +143,10 @@ DELETED_USER_ID = 1
 
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
+
+#-------------------------------------------------------------------------------
+# Queries with frequencies above QUERY_SUGGESTION_THRESHOLD will be suggestion candidates
+QUERY_SUGGESTION_THRESHOLD=5
 
 #-------------------------------------------------------------------------------
 # freesound paths and urls:

@@ -220,6 +220,7 @@ def search(request):
                 for item in results.docs:
                     ids.append(item["id"])
                 request.session["current_page_ranks"] = ids
+            logger_click.info("query_chain %s" % request.session["query_chain"])
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))
         error = True

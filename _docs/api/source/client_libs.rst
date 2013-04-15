@@ -20,3 +20,6 @@ Php
 
 Supercollider 
   Download through the Quarks system from within supercollider
+
+C#
+  https://github.com/EricSchayes/freesound-CSharp

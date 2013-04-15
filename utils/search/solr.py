@@ -401,7 +401,9 @@ class Solr(object):
             self.conn = httplib.HTTPConnection(self.host, self.port)
 
     def _request(self, query_string="", message=""):
-        if query_string != "":
+        if query_string.startswith("suggest"):
+            path = '%s/%s' % (self.path, query_string) 
+        elif query_string != "":
             path = '%s/select/?%s' % (self.path, query_string)
         else:
             path = '%s/update' % self.path

@@ -340,10 +340,23 @@ def suggest_query(request):
 
             # When there is at least one character, start searching queries previously entered
             if len(value) > 0:
-                results = [(t[1],t[0]) for t in enumerate(Query.objects.filter(querytext__startswith=value
-                                                       ).filter(frequency__gte=settings.QUERY_SUGGESTION_THRESHOLD
-                                                                ).order_by('-frequency').values_list('querytext', flat=True)[0:5])]
-    
+#                results = [(t[1],t[0]) for t in enumerate(Query.objects.filter(querytext__startswith=value
+#                                                       ).filter(frequency__gte=settings.QUERY_SUGGESTION_THRESHOLD
+#                                                                ).order_by('-frequency').values_list('querytext', flat=True)[0:5])]
+#    
+                query = "suggest?q="+value+"&wt=json"
+                
+                solr = Solr(settings.SOLR_URL) 
+            
+                try:
+                    response = solr.select(unicode(query))  
+                    results = [(t[1],t[0]) for t in enumerate(response['spellcheck']['suggestions'][1]['suggestion'])]
+                except SolrException, e:
+                    logger.warning("search error: query: %s error %s" % (query, e))
+                except Exception, e:
+                    print e
+                    logger.error("Could probably not connect to Solr - %s" % e)
+
 
     json_resp = json.dumps(results)
     return HttpResponse(json_resp, mimetype='application/json')

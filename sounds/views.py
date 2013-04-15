@@ -680,6 +680,8 @@ def pack_downloaders(request, username, pack_id):
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
 
 def click_log(request,click_type=None, sound_id="", pack_id="" ):
+    logger_click.info("calling click_log with click_type=%s" % click_type)
+    
     anonymous_session_key = "-"
     query_chain = "-"
     session_key = "-"
@@ -691,6 +693,7 @@ def click_log(request,click_type=None, sound_id="", pack_id="" ):
     if request.session.session_key is not None:
         session_key = request.session.session_key
     if click_type in ['soundpreview','sounddownload']:
+        logger_click.info("Checking sound_rank calculation code: current_page_ranks=%s current_page=%s" % (request.session["current_page_ranks"], request.session["current_page"]))
         if "current_page_ranks" in request.session and "current_page" in request.session:
             if request.session["current_page_ranks"].count(int(sound_id)) != 0:
                 rank_in_page = request.session["current_page_ranks"].index(int(sound_id)) + 1

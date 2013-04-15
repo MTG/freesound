@@ -201,21 +201,25 @@ def search(request):
         non_grouped_number_of_results = results.non_grouped_number_of_matches
         page = paginator.page(current_page)
         error = False
-               
-        # clickusage tracking
-        request.session.setdefault("query_chain", []).append(search_query.encode("utf-8"))
-        # The session id of an unauthenticated user is different from the session id of the same user when
-        # authenticated.
-        if not request.user.is_authenticated():
-            request.session["anonymous_session_key"]=request.session.session_key
-        else:
-            request.session["anonymous_session_key"]=""
-        request.session["current_page"] = current_page
-        if results.docs is not None:
-            ids = []
-            for item in results.docs:
-                ids.append(item["id"])
-            request.session["current_page_ranks"] = ids
+       
+        # clickusage tracking           
+        if settings.LOG_CLICKTHROUGH_DATA:
+            # If the user reformulates the query, add it to the query chain
+            request.session.setdefault("query_chain", [])
+            if search_query not in request.session["query_chain"]:
+                request.session["query_chain"].append(search_query.encode("utf-8"))
+            # The session id of an unauthenticated user is different from the session id of the same user when
+            # authenticated.
+            if not request.user.is_authenticated():
+                request.session["anonymous_session_key"]=request.session.session_key
+            else:
+                request.session["anonymous_session_key"]=""
+            request.session["current_page"] = current_page
+            if results.docs is not None:
+                ids = []
+                for item in results.docs:
+                    ids.append(item["id"])
+                request.session["current_page_ranks"] = ids
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))
         error = True

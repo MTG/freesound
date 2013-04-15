@@ -5,15 +5,16 @@
     {{ block.super }}
     <script>
           $(document).ready(function() {
-			  $(".gmap-wrapper").hide();
-              //$("#sound-accordion").accordion({ collapsible: true, active: false });
-              //$("#sound-accordion").accordion("option", "active", 0);
-
               display_errors();
-              for (var n=0;n<{{ sounds_per_round }};n++){
-                  $('#gmap-header-text-'+n).text('Show Geotag map');
+
+              //$(".gmap-wrapper").hide();
+
+              {% comment %}
+              //for (var n=0;n<{{ sounds_per_round }};n++){
+              //    $('#gmap-header-text-'+n).text('Show Geotag map');
                   //toggleMapVisibility(n)
-              }
+              //}
+              {% endcomment %}
 
 
           });
@@ -65,10 +66,10 @@
 <h1>Describe</h1>
 <h3>Describe individual sounds ({{request.session.describe_sounds_number}} left)</h3>
 <p>This is the last step in the describe process. If you've selected
-   more than {{ sounds_per_round }} you will be asked to describe {{ sounds_per_round }}
+   more than {{ sounds_per_round }} you will be asked to describe groups of {{ sounds_per_round }}
    sounds until all are done. In the list below you'll have to at least specify tags and
-   a description for each of the uploaded sounds. Please make them as specific and descriptive
-   as humanly possible!
+   a description for each of the uploaded sounds. <strong>Click on the sound filenames to display the
+    form for describing each sound</strong>.
 
 <p>The license and the pack you've chosen in the previous steps will be applied to each
    of the files here. You can however change these settings for each individual file.
@@ -86,19 +87,17 @@
 
         <div class="sound-accordion-sound-alternate" id="sound-accordion-sound-{{ forloop.counter }}">
 
-
             <h3>Tags and Description</h3>
 
-                    {{ form.description.as_p }}
+                 {{ form.description.as_p }}
 
-                <h3>Geotag</h3>
-
+            <h3>Geotag</h3>
 
                 <p id="gmap-header-{{forloop.counter}}">
-                <a onclick="toggleMapVisibility({{forloop.counter}});"><span id="gmap-header-text-{{forloop.counter}}">Show Geotag map</span></a>
+                <a onclick="toggleMapVisibility({{forloop.counter}});"><span id="gmap-header-text-{{forloop.counter}}">{% if form.geotag.errors or form.geotag.zoom.value %}Hide{% else %}Show{% endif %} Geotag map</span></a>
                 </p>
 
-                <div class="gmap-wrapper" id="gmap-wrapper-{{forloop.counter}}">
+                <div class="gmap-wrapper" id="gmap-wrapper-{{forloop.counter}}" {% if form.geotag.errors or form.geotag.zoom.value %}{% else %}style="display:none;{% endif %}">
                         <p>Drag this map to set a geotag:</p>
                         <div class="describe-gmap" id="gmap{{forloop.counter}}" style="width: 400px; height:300px;"></div>
                         <div class="describe-geotag-form">{{ form.geotag.as_p }}
@@ -131,7 +130,9 @@
 
                             GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
 
-                            //updateAndAddCenter{{forloop.counter}}()
+                            {% comment %}
+                            updateAndAddCenter{{forloop.counter}}()
+                            {% endcomment %}
 
                             function initMap()
                             {
@@ -172,14 +173,13 @@
                                 }
                             });
 
-
+                            {% comment %}
                             if ($("#{{form.geotag.zoom.auto_id}}").val() != ""){
                                 $('#gmap-header-text-{{forloop.counter}}').text('Hide Geotag map');
                             }else{
                                 toggleMapVisibility({{forloop.counter}})
                             }
-
-
+                            {% endcomment %}
                         </script>
                     </div>
 

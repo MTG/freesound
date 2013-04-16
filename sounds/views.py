@@ -680,31 +680,17 @@ def pack_downloaders(request, username, pack_id):
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
 
 def click_log(request,click_type=None, sound_id="", pack_id="" ):
-    logger_click.info("calling click_log with click_type=%s" % click_type)
     
-    anonymous_session_key = "-"
-    query_chain = "-"
-    session_key = "-"
-    sound_rank = "-"
+    anonymous_session_key = ""
     if "anonymous_session_key" in request.session:
         anonymous_session_key = request.session["anonymous_session_key"]
-    if "query_chain" in request.session:
-        query_chain = request.session["query_chain"]
-    if request.session.session_key is not None:
-        session_key = request.session.session_key
-    if click_type in ['soundpreview','sounddownload']:
-        logger_click.info("Checking sound_rank calculation code: current_page_ranks=%s current_page=%s" % (request.session["current_page_ranks"], request.session["current_page"]))
-        if "current_page_ranks" in request.session and "current_page" in request.session:
-            if request.session["current_page_ranks"].count(int(sound_id)) != 0:
-                rank_in_page = request.session["current_page_ranks"].index(int(sound_id)) + 1
-                sound_rank = (request.session["current_page"] - 1) * settings.SOUNDS_PER_PAGE + rank_in_page
-                
+
     if click_type == 'soundpreview': 
-        logger_click.info("Logging a sound preview: session_key=%s, anonymous_session_key=%s, query_chain=%s,sound_id=%s, sound_rank=%s"
-                          % (session_key, anonymous_session_key, query_chain,sound_id,sound_rank))
+        logger_click.info("CLICK.preview : %s : %s : %s"
+                          % (request.session.session_key, anonymous_session_key, sound_id))
     elif click_type == 'sounddownload':
-        logger_click.info("Logging a sound download: session_key=%s, anonymous_session_key=%s, query_chain=%s,sound_id=%s, sound_rank=%s"
-                          % (session_key, anonymous_session_key, query_chain,sound_id, sound_rank))
+        logger_click.info("CLICK.sounddownload : %s : %s : %s"
+                          % (request.session.session_key, anonymous_session_key, sound_id))
     elif click_type == 'packdownload':
-        logger_click.info("Logging a pack download: session_key=%s, anonymous_session_key=%s, query_chain=%s,pack_id=%s"
-                          % (session_key, anonymous_session_key, query_chain,pack_id))
+        logger_click.info("CLICK.packdownload : %s : %s : %s"
+                          % (request.session.session_key, anonymous_session_key, pack_id))

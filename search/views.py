@@ -204,23 +204,19 @@ def search(request):
        
         # clickusage tracking           
         if settings.LOG_CLICKTHROUGH_DATA:
-            # If the user reformulates the query, add it to the query chain
-            request.session.setdefault("query_chain", [])
-            if search_query not in request.session["query_chain"]:
-                request.session["query_chain"].append(search_query.encode("utf-8"))
+            request_full_path = request.get_full_path()
             # The session id of an unauthenticated user is different from the session id of the same user when
             # authenticated.
-            if not request.user.is_authenticated():
-                request.session["anonymous_session_key"]=request.session.session_key
-            else:
+            if request.user.is_authenticated():
                 request.session["anonymous_session_key"]=""
-            request.session["current_page"] = current_page
+            else:
+                request.session["anonymous_session_key"]=request.session.session_key
             if results.docs is not None:
                 ids = []
                 for item in results.docs:
                     ids.append(item["id"])
-                request.session["current_page_ranks"] = ids
-            logger_click.info("query_chain %s" % request.session["query_chain"])
+            logger_click.info("QUERY : %s : %s : %s : %s" %
+                                (request_full_path, request.session.session_key, ids, current_page))
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))
         error = True

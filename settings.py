@@ -60,7 +60,7 @@ INSTALLED_APPS = (
     'api',
     'django_extensions',
     'tickets',
-    'gunicorn', 
+    'gunicorn',
     #'test_utils', # Don't use this in production!
 )
 
@@ -140,6 +140,7 @@ USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING = 6
 
 DELETED_USER_ID = 1
 
+DO_LOG_CLICKTHROUGH_DATA = True
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
@@ -188,7 +189,8 @@ else:
 
 # change the media url to tabasco to make the players work when testing
 if DEBUG:
-    DATA_URL = "http://freesound.org/data/"
+    #DATA_URL = "http://freesound.org/data/"
+    DATA_URL = "/data/"
 else:
     DATA_URL = "/data/"
 

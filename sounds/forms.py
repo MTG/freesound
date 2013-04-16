@@ -51,10 +51,10 @@ class GeotaggingForm(forms.Form):
 
 class SoundDescriptionForm(forms.Form):
     name = forms.CharField(max_length=512, min_length=5,
-                           widget=forms.TextInput(attrs={'size': 52, 'class':'inputText'}))
-    tags = TagField(widget=forms.Textarea(attrs={'cols': 40, 'rows': 2}),
-                    help_text="<br>Please join multi-word tags with dashes. For example: field-recording is a popular tag.")
-    description = HtmlCleaningCharField(widget=forms.Textarea)
+                           widget=forms.TextInput(attrs={'size': 65, 'class':'inputText'}))
+    tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 2, 'style':'resize: none;'}),
+                    help_text="<br>Separate tags with spaces. Join multi-word tags with dashes. For example: field-recording is a popular tag.")
+    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10, 'style':'resize: none;'}))
 
 
 class RemixForm(forms.Form):
@@ -133,7 +133,7 @@ class PackChoiceField(forms.ModelChoiceField):
 
 class PackForm(forms.Form):
     pack = PackChoiceField(label="Change pack or remove from pack:", queryset=Pack.objects.none(), required=False)
-    new_pack = HtmlCleaningCharField(label="Or fill in the name of a new pack:", required=False, min_length=1)
+    new_pack = HtmlCleaningCharField(widget=forms.TextInput(attrs={'size': 45}), label="Or fill in the name of a new pack:", required=False, min_length=1)
 
     def __init__(self, pack_choices, *args, **kwargs):
         super(PackForm, self).__init__(*args, **kwargs)

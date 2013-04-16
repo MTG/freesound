@@ -1,11 +1,11 @@
 {% if do_log %}
-    <a class="mp3_file" href="{{sound.locations.preview.LQ.mp3_alt.url}}"
+    <a class="mp3_file" href="{{sound.locations.preview.LQ.mp3.url_alt}}"
 {% else %}
     <a class="mp3_file" href="{{sound.locations.preview.LQ.mp3.url}}"
 {% endif %}
    title="mp3 file">{{sound.original_filename}} - mp3 version</a>
 {% if do_log %}
-    <a class="ogg_file" href="{{sound.locations.preview.LQ.ogg_alt.url}}"
+    <a class="ogg_file" href="{{sound.locations.preview.LQ.ogg.url_alt}}"
 {% else %}
     <a class="ogg_file" href="{{sound.locations.preview.LQ.ogg.url}}"
 {% endif %}

@@ -33,6 +33,7 @@ def annotate(dictionary, **kwargs):
     x.update(**kwargs)
     return x
 
+
 def annotate_tags(tags, sort=True, small_size=0.7, large_size=1.8):
     """
     if tags are given as:
@@ -47,11 +48,20 @@ def annotate_tags(tags, sort=True, small_size=0.7, large_size=1.8):
         tags.sort(cmp=lambda x, y: cmp(x["name"].lower(), y["name"].lower()))
     return tags
 
+
 alphanum_only = re.compile(r"[^ a-zA-Z0-9-]")
 multi_dashes = re.compile(r"-+")
 
+
 def clean_and_split_tags(tags):
-    tags = alphanum_only.sub("", tags)
+    """
+    >>> sorted(clean_and_split_tags("a,b\\tc d\\n\\ne"))
+    ['a', 'b', 'c', 'd', 'e']
+    >>> sorted(clean_and_split_tags("apple\\n\\n\\n    field-recording tree"))
+    ['apple', 'field-recording', 'tree']
+    """
+
+    tags = alphanum_only.sub(" ", tags)
     tags = multi_dashes.sub("-", tags)
     common_words = "the of to and an in is it you that he was for on are with as i his they be at".split() #@UnusedVariable
-    return Set([tag for tag in [tag.strip('-') for tag in tags.split()] if tag and tag not in common_words])
+    return set([tag for tag in [tag.strip('-') for tag in tags.split()] if tag and tag not in common_words])

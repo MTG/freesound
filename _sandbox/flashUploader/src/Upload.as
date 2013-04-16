@@ -182,5 +182,9 @@ package
 		{
 			ExternalInterface.call("uploadDone", fileId);
 		}
+		private function javascriptLog(log_t : String) : void
+		{
+			ExternalInterface.call("console.log", log_t);
+		}
 	}
 }

@@ -2671,6 +2671,8 @@ span.tag_addremove a:hover {
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px; /* rounded corners */
+    margin-bottom: 3px;
+
 }
 #describe_form .ui-accordion-header.ui-state-active {
     border-bottom: none;
@@ -2682,6 +2684,7 @@ span.tag_addremove a:hover {
     -moz-border-radius-bottomleft: 0;
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 0; /* rounded bottom left and right corners */
+    margin-bottom: 0px;
 }
 
 #describe_form .sound-accordion-sound {
@@ -2697,6 +2700,7 @@ span.tag_addremove a:hover {
     -moz-border-radius-bottomleft: 5px;
     border-bottom-right-radius: 5px;
     border-bottom-left-radius: 5px; /* rounded bottom left and right corners */
+
 }
 
 #describe_form .sound-accordion-sound.ui-accordion-content-active {
@@ -2707,6 +2711,47 @@ span.tag_addremove a:hover {
     margin-bottom: 20px;
 }
 
+/* Alternate accordion*/
+
+#describe_form .sound-accordion-sound-alternate {
+    display: block;
+    padding: 15px;
+    background: #f9f9f9;
+    border: solid 1px #ccc;
+    margin: 10px 0;
+    border-radius: 5px;
+    display: none;
+    margin-top: -6px;
+}
+
+#describe_form .sound-accordion-sound-alternate-header {
+    display: block;
+    border: solid 1px #ccc;
+    padding: 15px;
+    background: #eee;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px; /* rounded corners */
+    margin-bottom: 5px;
+    color:#2C74C9;
+}
+
+#describe_form .sound-accordion-sound-alternate-header-errors {
+    display: block;
+    border: solid 1px #ccc;
+    padding: 15px;
+    background: #bd2d33;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px; /* rounded corners */
+    margin-bottom: 5px;
+    color:#ffffff;
+}
+
+.errortag_message {
+   margin-bottom:20px;
+   color: #bd2d33;
+}
 
 /* Describe google map
 ------------------------------------------------------*/

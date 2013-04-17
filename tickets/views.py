@@ -262,7 +262,6 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
     users_aux.sort(key=lambda item:item['seconds_in_queue'], reverse=True)
     new_sounds_users = []
     for user in users_aux:
-        print user
         new_sounds_users.append((user['user'],user['new_sounds']))
 
     return new_sounds_users

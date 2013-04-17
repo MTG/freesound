@@ -207,10 +207,7 @@ def search(request):
             request_full_path = request.get_full_path()
             # The session id of an unauthenticated user is different from the session id of the same user when
             # authenticated.
-            if request.user.is_authenticated():
-                request.session["anonymous_session_key"]=""
-            else:
-                request.session["anonymous_session_key"]=request.session.session_key
+            request.session["searchtime_session_key"] = request.session.session_key
             if results.docs is not None:
                 ids = []
                 for item in results.docs:

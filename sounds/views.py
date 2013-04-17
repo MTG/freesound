@@ -682,16 +682,19 @@ def pack_downloaders(request, username, pack_id):
 
 def click_log(request,click_type=None, sound_id="", pack_id="" ):
     
-    anonymous_session_key = ""
-    if "anonymous_session_key" in request.session:
-        anonymous_session_key = request.session["anonymous_session_key"]
+    searchtime_session_key = ""
+    authenticated_session_key = ""
+    if "searchtime_session_key" in request.session:
+        searchtime_session_key = request.session["searchtime_session_key"]
+    if request.user.is_authenticated():
+        authenticated_session_key = request.session.session_key
 
     if click_type == 'soundpreview': 
         logger_click.info("CLICK.preview : %s : %s : %s"
-                          % (request.session.session_key, anonymous_session_key, sound_id))
+                          % (authenticated_session_key, searchtime_session_key, sound_id))
     elif click_type == 'sounddownload':
         logger_click.info("CLICK.sounddownload : %s : %s : %s"
-                          % (request.session.session_key, anonymous_session_key, sound_id))
+                          % (authenticated_session_key, searchtime_session_key, sound_id))
     elif click_type == 'packdownload':
         logger_click.info("CLICK.packdownload : %s : %s : %s"
-                          % (request.session.session_key, anonymous_session_key, pack_id))
+                          % (authenticated_session_key, searchtime_session_key, pack_id))

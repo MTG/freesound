@@ -25,6 +25,11 @@ from django.conf import settings
 from general.models import AkismetSpam
 
 def is_spam(request, comment):
+
+    # If request user has uploaded sounds, we don't check for spam
+    if request.user.sounds.count() > 0:
+        return False
+
     domain = "http://%s" % Site.objects.get_current().domain
     api = Akismet(key=settings.AKISMET_KEY, blog_url=domain)
     

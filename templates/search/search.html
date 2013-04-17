@@ -12,7 +12,7 @@
 <form id="search_form" method="get" onsubmit="return addAdvancedSearchOptionsFilters()"  action="{% url sounds-search %}">
     <fieldset>
 
-       <input type="text" name="q" value="{{search_query}}" size="30" />
+       <input id="query_input" type="text" name="q" value="{{search_query}}" size="30" />
        <input id="filter_query" type="hidden" name="f" value="{{filter_query}}" size="30" />
        {% comment %}
        <span class="advanced_search_options">Sort results by </span>
@@ -54,6 +54,21 @@
         // Geotagged
         if (getFilterValue("is_geotagged")==1)
                $("#filter_is_geotagged").attr('checked','checked')
+               
+        // Extract terms from the query search box and highlight any of their occurrences in the descriptions
+        terms = document.getElementById("query_input").value.split(" ");
+        
+        for(var i=0;i<terms.length;i++)
+        {
+        	term = terms[i];
+        	re = RegExp(term,"i"); // i for case-insensative
+        	
+        	descriptions = document.getElementsByClassName("description");
+        	for (var j=0;j<descriptions.length;j++)
+        	{
+        		descriptions[j].innerHTML = descriptions[j].innerHTML.replace(re,"<b>"+term+"</b>");
+        	}	
+        }
 
     });
 

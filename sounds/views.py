@@ -245,8 +245,8 @@ def sound_preview(request, folder_id, sound_id, user_id):
 
     if settings.LOG_CLICKTHROUGH_DATA:
         click_log(request,click_type='soundpreview',sound_id=sound_id)
-
     url = request.get_full_path().replace("data/previews_alt/","data/previews/")
+
     return HttpResponseRedirect(url)
 
 

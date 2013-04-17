@@ -162,9 +162,7 @@
       <analyzer type="index">
 	<charFilter class="solr.HTMLStripCharFilterFactory"/>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-        <!-- in this example, we will only use synonyms at query time
-        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
-        -->
+        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="true"/>
         <!-- Case insensitive stop word removal.
              enablePositionIncrements=true ensures that a 'gap' is left to
              allow for accurate phrase queries.
@@ -182,7 +180,9 @@
       <analyzer type="query">
 	<charFilter class="solr.HTMLStripCharFilterFactory"/>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+	<!-- SOLR advises against embedding the synonym filter in the query analyzer. Better to do it with the index analyzer
         <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+	-->
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
         <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0" splitOnCaseChange="1"/>
         <filter class="solr.LowerCaseFilterFactory"/>
@@ -210,12 +210,14 @@
      Setup simple analysis for spell checking
      -->
     <fieldType name="textSpell" class="solr.TextField" positionIncrementGap="100" >
-      <analyzer>
+      <analyzer type="query">
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
       </analyzer>
     </fieldType>
+
+
 
     <!-- This is an example of using the KeywordTokenizer along
          With various TokenFilterFactories to produce a sortable field
@@ -275,10 +277,8 @@
 		<field name="was_remixed" type="boolean" indexed="true" stored="true" required="true" />
 
 		<field name="pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal -->
-        <field name="grouping_pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal for gorupin
-g purposes: This field will contain either sounds packs name or the stringed sound id. This is to avoid collapsing all sounds witho
-ut pack in a single group -->
-        <field name="pack_tokenized" type="text" indexed="true" stored="true" required="false" /> <!-- parsed -->
+		<field name="grouping_pack" type="string" indexed="true" stored="true" required="false" /> <!-- literal -->
+		<field name="pack_tokenized" type="text" indexed="true" stored="true" required="false" /> <!-- parsed -->
 
 		<field name="is_geotagged" type="boolean" indexed="true" stored="true" required="true" />
 

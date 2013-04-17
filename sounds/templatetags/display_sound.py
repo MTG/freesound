@@ -24,6 +24,7 @@ from tags.models import TaggedItem as ti
 from django.contrib.contenttypes.models import ContentType
 from sounds.models import Sound
 from django import template
+import settings
 
 register = template.Library()
 sound_content_type = ContentType.objects.get_for_model(Sound)
@@ -42,11 +43,11 @@ def display_sound(context, sound):
         except Sound.DoesNotExist:
             sound_obj = []
 
-
     return { 'sound_id':     sound_id,
              'sound':        sound_obj,
              'sound_tags':   ti.objects.select_related() \
                                 .filter(object_id=sound_id, content_type=sound_content_type)[0:12],
+             'do_log':       settings.LOG_CLICKTHROUGH_DATA,
              'media_url':    context['media_url'],
              'request':      context['request']
            }

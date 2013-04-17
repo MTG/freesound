@@ -1,6 +1,14 @@
-<a class="mp3_file" href="{{sound.locations.preview.LQ.mp3.url}}"
+{% if do_log %}
+    <a class="mp3_file" href="{{sound.locations.preview.LQ.mp3.url_alt}}"
+{% else %}
+    <a class="mp3_file" href="{{sound.locations.preview.LQ.mp3.url}}"
+{% endif %}
    title="mp3 file">{{sound.original_filename}} - mp3 version</a>
-<a class="ogg_file" href="{{sound.locations.preview.LQ.ogg.url}}"
+{% if do_log %}
+    <a class="ogg_file" href="{{sound.locations.preview.LQ.ogg.url_alt}}"
+{% else %}
+    <a class="ogg_file" href="{{sound.locations.preview.LQ.ogg.url}}"
+{% endif %}
    title="ogg file">{{sound.original_filename}} - ogg version</a>
 <a class="waveform" href="{% if size == 'L' %}{{sound.locations.display.wave.L.url}}{% else %}{{sound.locations.display.wave.M.url}}{% endif %}"
    title="waveform file">{{sound.original_filename}} - waveform</a>

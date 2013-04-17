@@ -202,12 +202,18 @@ class Sound(SocialModel):
                 LQ = dict(
                     mp3 = dict(
                         path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, sound_user_id)),
-                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id)
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id),
+                        # The alternative url is sent to the requesting browser if the clickthrough logger is activated
+                        # After logging the clickthrough data, the reponse is redirected to a url stripped of the _alt part.
+                        # the redirect will be handled by nginx
+                        url_alt = settings.PREVIEWS_URL.replace("previews","previews_alt") + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id)
                     ),
                     ogg = dict(
                         path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
-                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id)
-                    )
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
+                        # Refer to comments in mp3.url_alt 
+                        url_alt = settings.PREVIEWS_URL.replace("previews","previews_alt") + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id)
+                    ),
                 )
             ),
             display = dict(

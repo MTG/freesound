@@ -66,6 +66,19 @@ def build_unexpected(e, request):
                                              "debug": debug}
                                              ), request)
 
+def create_unexpected_error(e):
+    if settings.DEBUG:
+        debug = traceback.format_exc() if settings.DEBUG else str(e)
+    else:
+        debug = "-"
+        #logger.error('500 API error: Unexpected')
+    return ReturnError(500,
+                       "InternalError",
+                       {"explanation": "An internal Freesound error ocurred.",
+                        "really_really_sorry": True,
+                        "debug": debug})
+
+
 def build_invalid_url(e):
     format = e.GET.get("format", "json")
     logger.error('404 API error: Invalid Url')

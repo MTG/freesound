@@ -28,6 +28,7 @@ import forms
 import logging
 
 logger = logging.getLogger("search")
+logger_click = logging.getLogger('clickusage')
 
 def search_prepare_sort(sort, options):
     """ for ordering by rating order by rating, then by number of ratings """
@@ -200,6 +201,19 @@ def search(request):
         non_grouped_number_of_results = results.non_grouped_number_of_matches
         page = paginator.page(current_page)
         error = False
+       
+        # clickusage tracking           
+        if settings.LOG_CLICKTHROUGH_DATA:
+            request_full_path = request.get_full_path()
+            # The session id of an unauthenticated user is different from the session id of the same user when
+            # authenticated.
+            request.session["searchtime_session_key"] = request.session.session_key
+            if results.docs is not None:
+                ids = []
+                for item in results.docs:
+                    ids.append(item["id"])
+            logger_click.info("QUERY : %s : %s : %s : %s" %
+                                (request_full_path, request.session.session_key, ids, current_page))
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))
         error = True
@@ -209,7 +223,7 @@ def search(request):
         logger.error("Could probably not connect to Solr - %s" % e)
         error = True
         error_text = 'The search server could not be reached, please try again later.'
-
+    
     if request.GET.get("ajax", "") != "1":
         return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
     else:

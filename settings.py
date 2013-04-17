@@ -189,8 +189,8 @@ else:
 
 # change the media url to tabasco to make the players work when testing
 if DEBUG:
-    #DATA_URL = "http://freesound.org/data/"
-    DATA_URL = "/data/"
+    DATA_URL = "http://freesound.org/data/"
+    #DATA_URL = "/data/"
 else:
     DATA_URL = "/data/"
 

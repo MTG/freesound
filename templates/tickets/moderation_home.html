@@ -12,14 +12,14 @@
         <h3>Users with new sounds</h3>
         <p><div class="moderation-user-list">
 
-            {% for user, new_count in new_sounds_users %}
+            {% for user, new_count, time in new_sounds_users %}
                 <div class="moderation-user-list-user">
                     <div class="moderation-user-list-user-left">
                     <img src="{{user.profile.locations.avatar.L.url}}"/>
                     </div>
                     <div class="moderation-user-list-user-right">
-                        <p>{{ user.username }}
-                        <br>{{ new_count }} new sounds
+                        <p><a href="{% url account user.username %}">{{ user.username }}</a>
+                        <br>{{ new_count }} new sounds, {{ time }} day{{ time|pluralize }} in queue
                         <br><a href="{% url tickets-moderation-assign-user user.id %}">
                             <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
                     </div>

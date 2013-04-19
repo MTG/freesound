@@ -84,10 +84,18 @@ class DataProcessor:
             tag_names_sim_matrix = tag_names[tag_positions]
 
             if save_sim:
+                # Save sim
                 path = RECOMMENDATION_DATA_DIR + dataset + "_%s_SIMILARITY_MATRIX_" % out_name_prefix + metric + "_SUBSET.saved.npy"
                 if self.verbose:
                     print "Saving to " + path + "..."
                 save(path, sim_matrix_npy)
+
+                # Save tag names
+                path = RECOMMENDATION_DATA_DIR + dataset + "_%s_SIMILARITY_MATRIX_" % out_name_prefix + metric + "_SUBSET_TAG_NAMES.saved.npy"
+                if self.verbose:
+                    print "Saving to " + path + "..."
+                save(path, tag_names_sim_matrix)
+
 
         else:
             if self.verbose:

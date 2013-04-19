@@ -88,8 +88,10 @@ class ClassifierUtils():
 
         instance_vector = zeros(self.N_TAGS)
         for tag in tags_t:
-            pos = int(where(self.tag_names == tag)[0][0])
-            instance_vector[pos] = 1
+            w_out = where(self.tag_names == tag)[0]
+            if len(w_out) > 0:
+                pos = w_out[0]
+                instance_vector[pos] = 1
         return instance_vector
 
     def load_instance_vector_from_tags(self, tags):
@@ -125,8 +127,10 @@ class CommunityDetector:
         self.selected_instances = selected_instances
         self.cu = ClassifierUtils()
         self.cu.classifier_type = classifier_type
+
         if not PATH:
             self.load(LIMIT = LIMIT, MAX_PER_USER = MAX_PER_USER, MIN_TAGS = MIN_TAGS, RANDOMIZE = RANDOMIZE, classifier_type = classifier_type)
+
         else:
             if not os.path.exists(PATH + ".pkl") or not os.path.exists(PATH + "_meta.json"):
                 raise Exception("Classifier not existing in classifiers folder.")
@@ -195,7 +199,7 @@ class CommunityDetector:
                 sys.stdout.flush()
             resource_id = instance.id
             class_id = instance.gt_class
-            instance_vector = self.cu.get_instance_vector_from_resource_id(resource_id,'train')
+            instance_vector = self.cu.get_instance_vector_from_resource_id(resource_id)
             loaded_instances.append(list(instance_vector))
             classes.append(class_id)
 
@@ -240,8 +244,7 @@ class CommunityDetector:
     def detectCommunity(self, input_tags=None):
         if not self.clf:
             raise Exception("Classifier not yet trained!")
-
-        instance_vector = self.cu.load_instance_vector_from_tags(input_tags, init_method=self.init_method)
+        instance_vector = self.cu.load_instance_vector_from_tags(input_tags)
         cl = self.clf.predict([instance_vector])[0]
 
-        return cl, str(self.class_name_ids[cl])
+        return cl, str(self.class_name_ids[unicode(cl)])

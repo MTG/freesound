@@ -51,7 +51,7 @@ class TagRecommendationServer(resource.Resource):
         self.cbtr.load_recommenders()
 
     def error(self,message):
-        return json.dumps({'Error':message})
+        return json.dumps({'Error': message})
 
     def getChild(self, name, request):
         return self
@@ -63,8 +63,8 @@ class TagRecommendationServer(resource.Resource):
         try:
             logger.debug('Getting recommendation for input tags %s' % input_tags)
             input_tags = input_tags[0].split(",")
-            recommended_tags = self.cbtr.recommend_tags(input_tags, general_recommendation=True)
-            result = {'error': False, 'result': recommended_tags}
+            recommended_tags, com_name = self.cbtr.recommend_tags(input_tags)
+            result = {'error': False, 'result': {'tags': recommended_tags, 'community': com_name}}
 
         except Exception, e:
             logger.debug('Errors occurred while recommending tags to %s' % input_tags)

@@ -18,6 +18,12 @@
 #     See AUTHORS file.
 #
 
+# This machine where the server runs has some important python dependencies
+#   - twisted
+#   - numpy
+#   - sklearn
+#   - pysparse
+
 from twisted.web import server, resource
 from twisted.internet import reactor
 from tagrecommendation_settings import *
@@ -25,6 +31,7 @@ import logging
 import graypy
 from logging.handlers import RotatingFileHandler
 import json
+from communityBasedTagRecommendation import CommunityBasedTagRecommender
 
 
 def server_interface(resource):
@@ -39,6 +46,10 @@ class TagRecommendationServer(resource.Resource):
         self.methods = server_interface(self)
         self.isLeaf = False
 
+        # Load tag recommender
+        self.cbtr = CommunityBasedTagRecommender()
+        self.cbtr.load_recommenders()
+
     def error(self,message):
         return json.dumps({'Error':message})
 
@@ -52,8 +63,8 @@ class TagRecommendationServer(resource.Resource):
         try:
             logger.debug('Getting recommendation for input tags %s' % input_tags)
             input_tags = input_tags[0].split(",")
-            input_tags += ["new_test_tag"]
-            result = {'error': False, 'result': input_tags}
+            recommended_tags = self.cbtr.recommend_tags(input_tags, general_recommendation=True)
+            result = {'error': False, 'result': recommended_tags}
 
         except Exception, e:
             logger.debug('Errors occurred while recommending tags to %s' % input_tags)

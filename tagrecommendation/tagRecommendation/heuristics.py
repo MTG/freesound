@@ -18,24 +18,8 @@
 #     See AUTHORS file.
 #
 
-import os
-# NOTE: In production and test this file is taken from the deploy repository
+from tag_recommendation_utils import *
 
-# SERVER SETTINGS
-LOGFILE                     = '/var/log/freesound/tagrecommendation.log'
-LISTEN_PORT                 = 8010
-RECOMMENDATION_DATA_DIR     = '/home/frederic/Freesound/freesound-tagrecommendation/'
-
-# CLIENT SETTINGS (to be moved to django settings?)
-TAGRECOMMENDATION_ADDRESS          = 'localhost'
-TAGRECOMMENDATION_PORT             = 8010
-
-# OTHER
-CLASSES = {
-    'FX':'Collection CFX.json',
-    'Soundscape':'Collection CSoundscape.json',
-    'Music':'Collection CMusic.json',
-    'Samples':'Collection CSamples.json',
-    'Speech':'Collection CSpeech.json',
+heuristics = {
+    'hRankPercentage015': {'name':'RankP@0.15','c':cNMostSimilar, 'a':aNormalizedRankSum,'s':sPercentage, 'options':{'cNMostSimilar_N':100, 'aNormalizedRankSum_factor':1.0, 'sPercentage_percentage': 0.15}},
 }
-

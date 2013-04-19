@@ -61,6 +61,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'tickets',
     'gunicorn',
+    'clickthrough',
     #'test_utils', # Don't use this in production!
 )
 

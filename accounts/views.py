@@ -70,6 +70,7 @@ from django.db import transaction
 from bookmarks.models import Bookmark
 from django.contrib.auth.decorators import user_passes_test
 import json
+from utils.tagrecommendation_utilities import get_recommended_tags
 from messages.models import Message
 from django.contrib.contenttypes.models import ContentType
 
@@ -355,7 +356,6 @@ def describe(request):
     else:
         form = FileChoiceForm(files)
     return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
-
 
 @login_required
 def describe_license(request):

@@ -13,6 +13,11 @@
                 $('#sound-accordion-sound-'+i).hide();
             }
 
+            $("textarea[id$='-tags']").bind('input cut paste focusin', function() {
+                var textarea_id = $(this)[0].id;
+                get_tags(textarea_id)
+            });
+
         });
         function display_errors() {
             if ($(".errorlist").length > 0) {
@@ -42,6 +47,50 @@
             }
         }
 
+        function get_tags(textarea_id)
+        {
+            $.ajax({
+                type: 'POST',
+                url: '{% url recommend-tags %}',
+                data: {
+                    input_tags: $("#" + textarea_id).val()
+                },
+                success: function(data) {
+                    display_recommended_tags(textarea_id, data);
+                }
+            });
+        }
+
+        function display_recommended_tags(textarea_id, data){
+            var tags = JSON.parse(data)
+            if (tags.length > 0){
+                var html = "";
+                html += "<ul id=\"" + textarea_id + "-recommended-list\">";
+                for (var i in tags){
+                    html += "<li><a onclick=\"add_tag(\'" + textarea_id + "\',\'" + tags[i] + "\')\">" + tags[i] + "</a></li>"
+                }
+                html += "</ul><br>"
+                $("#" + textarea_id + "-recommended").text("")
+                $("#" + textarea_id + "-recommended").append("<span style=\"color: #AB4646;font-size:12px;\">Suggestions of other possibly relevant tags given your input&nbsp</span> (clik on the tags to add them, <a style=\"color:gray\" onclick=\"clear_recommendations(\'" + textarea_id + "\')\">click here to clear the recommendation</a>)")
+                $("#" + textarea_id + "-recommended").append(html)
+                $("#" + textarea_id + "-recommended-list").addClass("tags")
+                $("#" + textarea_id + "-recommended-list").css("margin-top","5px")
+                $("#" + textarea_id + "-recommended-list").css("margin-bottom","5px")
+            }else{
+                $("#" + textarea_id + "-recommended").text("")
+                $("#" + textarea_id + "-recommended").append("")
+            }
+        }
+
+        function add_tag(textarea_id, tag){
+            $("#" + textarea_id).val($("#" + textarea_id).val() + " " + tag)
+            get_tags(textarea_id)
+        }
+
+        function clear_recommendations(textarea_id){
+            $("#" + textarea_id + "-recommended").text("")
+        }
+
     </script>
     <style type="text/css">
         <!--
@@ -50,6 +99,7 @@
     </style>
     <script src="{{media_url}}/js/jquery-ui-1.8.11.custom.min.js" type="text/javascript"></script>
     <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{GOOGLE_API_KEY}}" type="text/javascript"></script>
+
 {% endblock head %}
 
 
@@ -82,7 +132,32 @@
 
                 <div class="sound-accordion-sound-alternate" id="sound-accordion-sound-{{ forloop.counter }}">
                     <h3>Tags and Description</h3>
-                        {{ form.description.as_p }}
+
+                        {{form.description.name.errors}}
+                        <p>
+                            Name:<br>
+                            {{form.description.name}}
+                        </p>
+
+                        {{form.description.tags.errors}}
+                        <p>
+                            Tags:
+                            {{form.description.tags.help_text|safe}}<br>
+                            {{form.description.tags}}
+
+                            <br>
+                            {% comment %}
+                            The following span must have the same id as the tags textarea but ended with "-recommended"
+                            {% endcomment %}
+                            <div id="id_{{ forloop.counter0 }}-tags-recommended" style="font-size: 10px;margin-top:-5px;width: 670px;"></div>
+                        </p>
+
+                        {{form.description.description.errors }}
+                        <p>
+                            Description:<br>
+                            {{form.description.description }}
+                        </p>
+
 
                     <h3>Geotag</h3>
 

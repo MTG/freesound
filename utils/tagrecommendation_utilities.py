@@ -18,22 +18,50 @@
 #     See AUTHORS file.
 #
 
-import logging, traceback
+import logging, traceback, settings
 from tagrecommendation.client import TagRecommendation
+from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME
+from django.core.cache import cache
+from django.http import HttpResponse
+import json
+from django.contrib.auth.decorators import login_required
+from utils.tags import clean_and_split_tags
 
 logger = logging.getLogger('web')
 
 
 def get_recommended_tags(input_tags, max_number_of_tags=None, general_recommendation=False):
 
-    try:
-        recommended_tags = TagRecommendation.recommend_tags(input_tags,
-                                                            max_number_of_tags=max_number_of_tags,
-                                                            general_recommendation=general_recommendation)
-    except Exception, e:
-        logger.debug('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
-                     (e, traceback.format_exc()))
+    cache_key = "recommended-tags-for-%s" % (",".join(sorted(input_tags)))
+
+    # Don't use the cache when we're debugging
+    if settings.DEBUG:
         recommended_tags = False
+    else:
+        recommended_tags = cache.get(cache_key)
 
-    return recommended_tags['tags'], recommended_tags['community']
+    if not recommended_tags:
+        try:
+            recommended_tags = TagRecommendation.recommend_tags(input_tags,
+                                                                general_recommendation=general_recommendation)
+            cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
 
+        except Exception, e:
+            logger.debug('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
+                         (e, traceback.format_exc()))
+            recommended_tags = False
+
+    return recommended_tags['tags'][:max_number_of_tags], recommended_tags['community']
+
+
+@login_required
+def get_recommended_tags_view(request):
+    if request.is_ajax() and request.method == 'POST':
+        input_tags = request.POST.get('input_tags', False)
+        if input_tags:
+            input_tags = list(clean_and_split_tags(input_tags))
+            if len(input_tags) > 0:
+                tags, community = get_recommended_tags(input_tags)
+                return HttpResponse(json.dumps(tags), mimetype='application/javascript')
+
+    return HttpResponse(json.dumps({}), mimetype='application/javascript')

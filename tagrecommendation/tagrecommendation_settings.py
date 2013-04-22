@@ -29,6 +29,7 @@ RECOMMENDATION_DATA_DIR     = '/home/frederic/Freesound/freesound-tagrecommendat
 # CLIENT SETTINGS (to be moved to django settings?)
 TAGRECOMMENDATION_ADDRESS          = 'localhost'
 TAGRECOMMENDATION_PORT             = 8010
+TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 
 # OTHER
 USE_COMMUNITY_BASED_RECOMMENDERS = False

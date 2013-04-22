@@ -22,6 +22,8 @@ import logging, traceback, settings
 from tagrecommendation.client import TagRecommendation
 from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME
 from django.core.cache import cache
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from django.http import HttpResponse
 import json
 from django.contrib.auth.decorators import login_required
@@ -30,7 +32,7 @@ from utils.tags import clean_and_split_tags
 logger = logging.getLogger('web')
 
 
-def get_recommended_tags(input_tags, max_number_of_tags=None, general_recommendation=False):
+def get_recommended_tags(input_tags, max_number_of_tags=30, general_recommendation=False):
 
     cache_key = "recommended-tags-for-%s" % (",".join(sorted(input_tags)))
 
@@ -54,7 +56,6 @@ def get_recommended_tags(input_tags, max_number_of_tags=None, general_recommenda
     return recommended_tags['tags'][:max_number_of_tags], recommended_tags['community']
 
 
-@login_required
 def get_recommended_tags_view(request):
     if request.is_ajax() and request.method == 'POST':
         input_tags = request.POST.get('input_tags', False)
@@ -65,3 +66,7 @@ def get_recommended_tags_view(request):
                 return HttpResponse(json.dumps(tags), mimetype='application/javascript')
 
     return HttpResponse(json.dumps({}), mimetype='application/javascript')
+
+
+def tag_recommendation_test_page(request):
+    return render_to_response('tagrecommendation/test_page.html', locals(), context_instance=RequestContext(request))

@@ -22,7 +22,7 @@
 from tagRecommendation import TagRecommender
 from dataProcessing import DataProcessor
 from communityDetection import CommunityDetector
-from tagrecommendation_settings import RECOMMENDATION_DATA_DIR, CLASSES
+from tagrecommendation_settings import RECOMMENDATION_DATA_DIR, CLASSES, USE_COMMUNITY_BASED_RECOMMENDERS
 from utils import loadFromJson, FSCollectionManager
 from numpy import load
 
@@ -69,7 +69,7 @@ class CommunityBasedTagRecommender():
         self.recommenders[-1] = TagRecommender()
         self.recommenders[-1].set_heuristic(self.recommendation_heuristic)
         data = {
-            'TAG_NAMES': load(RECOMMENDATION_DATA_DIR + self.dataset + '_TAG_NAMES.npy'),
+            'TAG_NAMES': load(RECOMMENDATION_DATA_DIR + self.dataset + '_SIMILARITY_MATRIX_' + self.metric + '_TAG_NAMES.npy'),
             'SIMILARITY_MATRIX': load(RECOMMENDATION_DATA_DIR + self.dataset + '_SIMILARITY_MATRIX_' + self.metric + '.npy'),
         }
         self.recommenders[-1].load_data(
@@ -79,23 +79,24 @@ class CommunityBasedTagRecommender():
         )
         print self.recommenders[-1]
 
-        # Load particular recommenders
-        for collection_id, collection_data in self.collections_ids.items():
-            self.recommenders[collection_id] = TagRecommender()
-            self.recommenders[collection_id].set_heuristic(self.recommendation_heuristic)
+        if USE_COMMUNITY_BASED_RECOMMENDERS:
+            # Load particular recommenders
+            for collection_id, collection_data in self.collections_ids.items():
+                self.recommenders[collection_id] = TagRecommender()
+                self.recommenders[collection_id].set_heuristic(self.recommendation_heuristic)
 
-            data = {
-                'TAG_NAMES': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % collection_data['name'] + self.metric + '_SUBSET_TAG_NAMES.npy'),
-                'SIMILARITY_MATRIX': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % collection_data['name'] + self.metric + '_SUBSET.npy'),
-            }
+                data = {
+                    'TAG_NAMES': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % collection_data['name'] + self.metric + '_SUBSET_TAG_NAMES.npy'),
+                    'SIMILARITY_MATRIX': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % collection_data['name'] + self.metric + '_SUBSET.npy'),
+                }
 
-            self.recommenders[collection_id].load_data(
-                data=data,
-                dataset="FREESOUND2012-%s" % collection_data['name'],
-                metric=self.metric
-            )
+                self.recommenders[collection_id].load_data(
+                    data=data,
+                    dataset="FREESOUND2012-%s" % collection_data['name'],
+                    metric=self.metric
+                )
 
-            print self.recommenders[collection_id]
+                print self.recommenders[collection_id]
 
     def recompute_recommenders(self, LIMIT=None):
 
@@ -131,6 +132,7 @@ class CommunityBasedTagRecommender():
             dataset=self.dataset,
             training_set=instances_ids[0:LIMIT],
             save_sim=True,
+            is_general_recommender=True,
         )
         self.recommenders[-1].load_data(data=data_general_recommender, dataset=self.dataset, metric=self.metric)
         print self.recommenders[-1]
@@ -162,7 +164,8 @@ class CommunityBasedTagRecommender():
                 dataset=self.dataset,
                 training_set=training_ids,
                 save_sim=True,
-                out_name_prefix=collection_data['name']
+                out_name_prefix=collection_data['name'],
+                is_general_recommender=False,
             )
             self.recommenders[collection_id].load_data(
                 data=data,
@@ -173,11 +176,11 @@ class CommunityBasedTagRecommender():
 
 
     def recommend_tags(self, input_tags, general_recommendation=False):
-        if not general_recommendation:
-            com_id, com_name = self.communityDetector.detectCommunity(input_tags)
-            rec = self.recommenders[com_id].recommend_tags(input_tags)
-        else:
+        if general_recommendation or not USE_COMMUNITY_BASED_RECOMMENDERS:
             com_name = ""
             rec = self.recommenders[-1].recommend_tags(input_tags)
+        else:
+            com_id, com_name = self.communityDetector.detectCommunity(input_tags)
+            rec = self.recommenders[com_id].recommend_tags(input_tags)
 
         return rec, com_name

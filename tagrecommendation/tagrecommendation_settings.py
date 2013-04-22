@@ -31,6 +31,7 @@ TAGRECOMMENDATION_ADDRESS          = 'localhost'
 TAGRECOMMENDATION_PORT             = 8010
 
 # OTHER
+USE_COMMUNITY_BASED_RECOMMENDERS = False
 CLASSES = {
     'FX':'Collection CFX.json',
     'Soundscape':'Collection CSoundscape.json',

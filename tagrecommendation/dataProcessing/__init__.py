@@ -36,7 +36,13 @@ class DataProcessor:
     def __repr__(self):
         return "DataProcessor instance"
 
-    def association_matrix_to_similarity_matrix(self, metric="cosine", dataset="FREESOUND2012", save_sim=False, training_set=None, out_name_prefix = ""):
+    def association_matrix_to_similarity_matrix(self,
+                                                metric="cosine",
+                                                dataset="FREESOUND2012",
+                                                save_sim=False,
+                                                training_set=None,
+                                                out_name_prefix = "",
+                                                is_general_recommender = False):
         """Given an association matrix"""
 
         if self.verbose:
@@ -84,17 +90,30 @@ class DataProcessor:
             tag_names_sim_matrix = tag_names[tag_positions]
 
             if save_sim:
-                # Save sim
-                path = RECOMMENDATION_DATA_DIR + dataset + "_%s_SIMILARITY_MATRIX_" % out_name_prefix + metric + "_SUBSET.saved.npy"
-                if self.verbose:
-                    print "Saving to " + path + "..."
-                save(path, sim_matrix_npy)
+                if not is_general_recommender:
+                    # Save sim
+                    path = RECOMMENDATION_DATA_DIR + dataset + "_%s_SIMILARITY_MATRIX_" % out_name_prefix + metric + "_SUBSET.saved.npy"
+                    if self.verbose:
+                        print "Saving to " + path + "..."
+                    save(path, sim_matrix_npy)
 
-                # Save tag names
-                path = RECOMMENDATION_DATA_DIR + dataset + "_%s_SIMILARITY_MATRIX_" % out_name_prefix + metric + "_SUBSET_TAG_NAMES.saved.npy"
-                if self.verbose:
-                    print "Saving to " + path + "..."
-                save(path, tag_names_sim_matrix)
+                    # Save tag names
+                    path = RECOMMENDATION_DATA_DIR + dataset + "_%s_SIMILARITY_MATRIX_" % out_name_prefix + metric + "_SUBSET_TAG_NAMES.saved.npy"
+                    if self.verbose:
+                        print "Saving to " + path + "..."
+                    save(path, tag_names_sim_matrix)
+                else:
+                    # Save sim
+                    path = RECOMMENDATION_DATA_DIR + dataset + "_SIMILARITY_MATRIX_" + metric + ".saved.npy"
+                    if self.verbose:
+                        print "Saving to " + path + "..."
+                    save(path, sim_matrix_npy)
+
+                    # Save tag names
+                    path = RECOMMENDATION_DATA_DIR + dataset + "_SIMILARITY_MATRIX_" + metric + "_TAG_NAMES.saved.npy"
+                    if self.verbose:
+                        print "Saving to " + path + "..."
+                    save(path, tag_names_sim_matrix)
 
 
         else:
@@ -121,10 +140,17 @@ class DataProcessor:
             tag_names_sim_matrix = tag_names
 
             if save_sim:
-                path = RECOMMENDATION_DATA_DIR + dataset + "_SIMILARITY_MATRIX_" + metric + ".npy"
+                # Save sim
+                path = RECOMMENDATION_DATA_DIR + dataset + "_SIMILARITY_MATRIX_" + metric + ".saved.npy"
                 if self.verbose:
                     print "Saving to " + path + "..."
                 save(path, sim_matrix_npy)
+
+                # Save tag names
+                path = RECOMMENDATION_DATA_DIR + dataset + "_SIMILARITY_MATRIX_" + metric + "_TAG_NAMES.saved.npy"
+                if self.verbose:
+                    print "Saving to " + path + "..."
+                save(path, tag_names_sim_matrix)
 
         return {'SIMILARITY_MATRIX': sim_matrix_npy, 'TAG_NAMES': tag_names_sim_matrix}
 

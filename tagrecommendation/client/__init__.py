@@ -42,6 +42,10 @@ def _result_or_exception(result):
 class TagRecommendation():
 
     @classmethod
-    def recommend_tags(cls, input_tags):
+    def recommend_tags(cls, input_tags, max_number_of_tags=None, general_recommendation=False):
         url = _BASE_URL + _URL_RECOMMEND_TAGS + '?' + 'input_tags=' + ",".join(input_tags)
+        if max_number_of_tags:
+            url += '&max_number_of_tags=' + str(max_number_of_tags)
+        if general_recommendation:
+            url += '&general_recommendation=1'
         return _result_or_exception(_get_url_as_json(url))

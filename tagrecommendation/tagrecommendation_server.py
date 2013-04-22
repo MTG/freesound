@@ -36,7 +36,7 @@ from communityBasedTagRecommendation import CommunityBasedTagRecommender
 
 def server_interface(resource):
     return {
-        'recommend_tags':resource.recommend_tags, # input_tags (tags separated by commas)
+        'recommend_tags': resource.recommend_tags, # input_tags (tags separated by commas), max_number_of_tags (optional), general_recommendation (optional)
     }
 
 
@@ -59,11 +59,18 @@ class TagRecommendationServer(resource.Resource):
     def render_GET(self, request):
         return self.methods[request.prepath[1]](**request.args)
 
-    def recommend_tags(self, input_tags):
+    def recommend_tags(self, input_tags, max_number_of_tags=None, general_recommendation=False):
         try:
             logger.debug('Getting recommendation for input tags %s' % input_tags)
             input_tags = input_tags[0].split(",")
-            recommended_tags, com_name = self.cbtr.recommend_tags(input_tags)
+            do_general_recommendation = False
+            if general_recommendation:
+                do_general_recommendation = True
+            if max_number_of_tags:
+                max_number_of_tags = int(max_number_of_tags[0])
+            recommended_tags, com_name = self.cbtr.recommend_tags(input_tags,
+                                                                  max_number_of_tags=max_number_of_tags,
+                                                                  general_recommendation=do_general_recommendation)
             result = {'error': False, 'result': {'tags': recommended_tags, 'community': com_name}}
 
         except Exception, e:

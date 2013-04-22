@@ -18,35 +18,22 @@
 #     See AUTHORS file.
 #
 
-import settings, traceback, logging
-#from django.core.cache import cache
+import logging, traceback
 from tagrecommendation.client import TagRecommendation
 
 logger = logging.getLogger('web')
 
-def get_recommended_tags(input_tags, max_number_of_tags = 10 ):
 
-    if preset not in PRESETS:
-        preset = DEFAULT_PRESET
+def get_recommended_tags(input_tags, max_number_of_tags=None, general_recommendation=False):
 
-    cache_key = "similar-for-sound-%s-%s" % (sound.id, preset)
+    try:
+        recommended_tags = TagRecommendation.recommend_tags(input_tags,
+                                                            max_number_of_tags=max_number_of_tags,
+                                                            general_recommendation=general_recommendation)
+    except Exception, e:
+        logger.debug('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
+                     (e, traceback.format_exc()))
+        recommended_tags = False
 
-    # Don't use the cache when we're debugging
-    if settings.DEBUG:
-        similar_sounds = False
-    else:
-        similar_sounds = cache.get(cache_key)
-
-    if not similar_sounds:
-        try:
-            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset = preset, num_results = SIMILAR_SOUNDS_TO_CACHE)]
-        except Exception, e:
-            logger.debug('Could not get a response from the similarity service (%s)\n\t%s' % \
-                         (e, traceback.format_exc()))
-            similar_sounds = []
-
-        if len(similar_sounds) > 0:
-            cache.set(cache_key, similar_sounds, SIMILARITY_CACHE_TIME)
-
-    return similar_sounds[0:num_results]
+    return recommended_tags['tags'], recommended_tags['community']
 

@@ -41,3 +41,11 @@ CLASSES = {
     'Speech':'Collection CSpeech.json',
 }
 
+KEY_TAGS = {
+    'FX': ['fx', 'effect', 'foley'],
+    'Soundscape': ['field-recording', 'soundscape', 'ambient'],
+    'Music': ['music', 'loop'],
+    'Samples': ['multisample', 'sample', 'instrument'],
+    'Speech': ['speech', 'voice'],
+}
+

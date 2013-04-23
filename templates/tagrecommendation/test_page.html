@@ -19,20 +19,27 @@
 
     function get_tags(textarea_id)
     {
-        $.ajax({
-            type: 'POST',
-            url: '{% url recommend-tags %}',
-            data: {
-                input_tags: $("#" + textarea_id).val()
-            },
-            success: function(data) {
-                display_recommended_tags(textarea_id, data);
-            }
-        });
+        if ($("#" + textarea_id).val() != ""){
+            $.ajax({
+                type: 'POST',
+                url: '{% url recommend-tags %}',
+                data: {
+                    input_tags: $("#" + textarea_id).val()
+                },
+                success: function(data) {
+                    display_recommended_tags(textarea_id, data);
+                }
+            });
+        }else{
+            clear_recommendations(textarea_id)
+        }
     }
 
     function display_recommended_tags(textarea_id, data){
-        var tags = JSON.parse(data)
+        var parsedData = JSON.parse(data)
+        var tags = parsedData[0]
+        var community = parsedData[1]
+
         if (tags.length > 0){
             var html = "";
             html += "<ul id=\"" + textarea_id + "-recommended-list\">";
@@ -50,6 +57,12 @@
             $("#" + textarea_id + "-recommended").text("")
             $("#" + textarea_id + "-recommended").append("")
         }
+
+        if (community != "-"){
+            $("#" + textarea_id + "-community").text("Community: " + community)
+        }else{
+            $("#" + textarea_id + "-community").text("")
+        }
     }
 
     function add_tag(textarea_id, tag){
@@ -59,6 +72,7 @@
 
     function clear_recommendations(textarea_id){
         $("#" + textarea_id + "-recommended").text("")
+        $("#" + textarea_id + "-community").text("")
     }
 
 </script>
@@ -71,5 +85,7 @@
     <textarea id="id_0-tags" rows="3" cols="80" name="0-tags"></textarea>
 
     <div id="id_0-tags-recommended" style="font-size: 10px;margin-top:0px;width: 670px;"></div>
+    <div id="id_0-tags-community" style="font-size: 12px;margin-top:0px;width: 670px;"></div>
+
 
 {% endblock %}

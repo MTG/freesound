@@ -63,9 +63,9 @@ def get_recommended_tags_view(request):
             input_tags = list(clean_and_split_tags(input_tags))
             if len(input_tags) > 0:
                 tags, community = get_recommended_tags(input_tags)
-                return HttpResponse(json.dumps(tags), mimetype='application/javascript')
+                return HttpResponse(json.dumps([tags,community]), mimetype='application/javascript')
 
-    return HttpResponse(json.dumps({}), mimetype='application/javascript')
+    return HttpResponse(json.dumps([[],"-"]), mimetype='application/javascript')
 
 
 def tag_recommendation_test_page(request):

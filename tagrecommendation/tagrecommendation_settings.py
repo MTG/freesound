@@ -24,7 +24,7 @@ import os
 # SERVER SETTINGS
 LOGFILE                     = '/var/log/freesound/tagrecommendation.log'
 LISTEN_PORT                 = 8010
-RECOMMENDATION_DATA_DIR     = '/home/frederic/Freesound/freesound-tagrecommendation/'
+RECOMMENDATION_DATA_DIR     = '/Users/frederic/SMC/Freesound/freesound-tagrecommendation/'
 
 # CLIENT SETTINGS (to be moved to django settings?)
 TAGRECOMMENDATION_ADDRESS          = 'localhost'
@@ -32,7 +32,7 @@ TAGRECOMMENDATION_PORT             = 8010
 TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 
 # OTHER
-USE_COMMUNITY_BASED_RECOMMENDERS = False
+USE_COMMUNITY_BASED_RECOMMENDERS = True
 CLASSES = {
     'FX':'Collection CFX.json',
     'Soundscape':'Collection CSoundscape.json',

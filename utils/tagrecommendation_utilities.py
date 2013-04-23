@@ -20,7 +20,7 @@
 
 import logging, traceback, settings
 from tagrecommendation.client import TagRecommendation
-from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME, KEY_TAGS
+from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME, KEY_TAGS, USE_KEYTAGS
 from django.core.cache import cache
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -46,17 +46,19 @@ def get_recommended_tags(input_tags, max_number_of_tags=30, general_recommendati
         try:
             recommended_tags = TagRecommendation.recommend_tags(input_tags,
                                                                 general_recommendation=general_recommendation)
-            # Check for key tags in the recommendation and add them if not present neither in the recommendation or in input tags
-            key_tags = KEY_TAGS[recommended_tags['community']]
-            to_add = []
-            for tag in key_tags:
-                if tag not in input_tags:
-                    to_add.append(tag)
-                    if tag in recommended_tags['tags']:
-                        recommended_tags['tags'].remove(tag)
 
-            if to_add:
-                recommended_tags['tags'] = to_add + recommended_tags['tags']
+            if USE_KEYTAGS:
+                # Check for key tags in the recommendation and add them if not present neither in the recommendation
+                # or in input tags
+                key_tags = KEY_TAGS[recommended_tags['community']]
+                to_add = []
+                for tag in key_tags:
+                    if tag not in input_tags:
+                        to_add.append(tag)
+                        if tag in recommended_tags['tags']:
+                            recommended_tags['tags'].remove(tag)
+                if to_add:
+                    recommended_tags['tags'] = to_add + recommended_tags['tags']
 
             cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
 

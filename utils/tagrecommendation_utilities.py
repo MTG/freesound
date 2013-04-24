@@ -47,7 +47,10 @@ def get_recommended_tags(input_tags, max_number_of_tags=30, general_recommendati
             recommended_tags = TagRecommendation.recommend_tags(input_tags,
                                                                 general_recommendation=general_recommendation)
 
-            if USE_KEYTAGS:
+            if not recommended_tags['tags']:
+                recommended_tags['community'] = "-"
+
+            if USE_KEYTAGS and recommended_tags['community'] in KEY_TAGS:
                 # Check for key tags in the recommendation and add them if not present neither in the recommendation
                 # or in input tags
                 key_tags = KEY_TAGS[recommended_tags['community']]
@@ -77,7 +80,7 @@ def get_recommended_tags_view(request):
             input_tags = list(clean_and_split_tags(input_tags))
             if len(input_tags) > 0:
                 tags, community = get_recommended_tags(input_tags)
-                return HttpResponse(json.dumps([tags,community]), mimetype='application/javascript')
+                return HttpResponse(json.dumps([tags, community]), mimetype='application/javascript')
 
     return HttpResponse(json.dumps([[],"-"]), mimetype='application/javascript')
 

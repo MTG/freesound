@@ -7,14 +7,51 @@
 
 <script type="text/javascript">
 
+
     $(document).ready(function() {
 
-        $("textarea[id$='-tags']").bind('input cut paste focusin', function() {
+        // Clear header and footer
+        $("#header").text("")
+        $("#footer").text("")
+
+        var textarea_elements = $("textarea[id$='-tags']");
+        var timer;                     //timer identifier
+        var doneTypingInterval = 500;  //time in ms
+
+        // Listen to keyup events in tags textareas to display tags
+        textarea_elements.keyup(function(event) {
+            clearTimeout(timer);
+
+            var textarea_id = $(this)[0].id;
+            var textarea_used_element = $("#" + textarea_id);
+            var cursor_position = textarea_used_element.getCursorPosition();
+
+            if (textarea_used_element.val) {
+                // display properties menu in textarea_id when last character is ":"
+                if(event.keyCode == 186) { // ":"
+                    // Display list of properties, etc...
+                }
+
+                // recommend tags when last character is " " or "\n"
+                if ((event.keyCode == 32) || (event.keyCode == 13)) { // " " or "\n"
+                    get_tags(textarea_id)
+                }
+
+                timer = setTimeout(function(){
+                    get_tags(textarea_id)
+                }, doneTypingInterval);
+
+            }else{
+                clear_recommendations(textarea_id)
+            }
+
+        });
+
+        // Listen to cut, paste and focusin events to recommend tags
+        textarea_elements.bind('cut paste focusin', function() {
             var textarea_id = $(this)[0].id;
             get_tags(textarea_id)
         });
-        $("#header").text("")
-        $("#footer").text("")
     });
 
     function get_tags(textarea_id)
@@ -74,6 +111,24 @@
         $("#" + textarea_id + "-recommended").text("")
         $("#" + textarea_id + "-community").text("")
     }
+
+    // Function to get the current position of cursor in text area
+    (function ($, undefined) {
+        $.fn.getCursorPosition = function() {
+            var el = $(this).get(0);
+            var pos = 0;
+            if('selectionStart' in el) {
+                pos = el.selectionStart;
+            } else if('selection' in document) {
+                el.focus();
+                var Sel = document.selection.createRange();
+                var SelLength = document.selection.createRange().text.length;
+                Sel.moveStart('character', -el.value.length);
+                pos = Sel.text.length - SelLength;
+            }
+            return pos;
+        }
+    })(jQuery);
 
 </script>
 

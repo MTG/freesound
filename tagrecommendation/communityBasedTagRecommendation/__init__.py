@@ -176,11 +176,11 @@ class CommunityBasedTagRecommender():
 
 
     def recommend_tags(self, input_tags, general_recommendation=False, max_number_of_tags=None):
+        com_id, com_name = self.communityDetector.detectCommunity(input_tags)
         if general_recommendation or not USE_COMMUNITY_BASED_RECOMMENDERS:
-            com_name = ""
+            #com_name = ""
             rec = self.recommenders[-1].recommend_tags(input_tags)
         else:
-            com_id, com_name = self.communityDetector.detectCommunity(input_tags)
             rec = self.recommenders[com_id].recommend_tags(input_tags)
 
         return rec[0:max_number_of_tags], com_name

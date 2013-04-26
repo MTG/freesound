@@ -5,16 +5,42 @@
 {% block head %}
 {{ block.super }}
 
+
+<style>
+    #project-label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 1em;
+    }
+    #project-icon {
+        float: left;
+        height: 32px;
+        width: 32px;
+    }
+    #project-description {
+        margin: 0;
+        padding: 0;
+    }
+
+</style>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+
 <script type="text/javascript">
 
+
+    var current_position = -1;
+    var inPropertyMode = false;
+    var lastInsertedSeparatorPosition = 0;
+    var lastLastInsertedSeparatorPosition = 0;
 
     $(document).ready(function() {
 
         // Clear header and footer
         $("#header").text("")
         $("#footer").text("")
-
         var textarea_elements = $("textarea[id$='-tags']");
+
+
         var timer;                     //timer identifier
         var doneTypingInterval = 500;  //time in ms
 
@@ -24,17 +50,26 @@
 
             var textarea_id = $(this)[0].id;
             var textarea_used_element = $("#" + textarea_id);
-            var cursor_position = textarea_used_element.getCursorPosition();
+            current_position = textarea_used_element.getCursorPosition();
 
             if (textarea_used_element.val) {
                 // display properties menu in textarea_id when last character is ":"
+                if (inPropertyMode == true){
+                    textarea_used_element.autocomplete( "option", "disabled", false );
+                } else {
+                    textarea_used_element.autocomplete( "option", "disabled", true );
+                }
+
                 if(event.keyCode == 186) { // ":"
-                    // Display list of properties, etc...
+                    lastLastInsertedSeparatorPosition = lastInsertedSeparatorPosition;
+                    lastInsertedSeparatorPosition = current_position;
+                    inPropertyMode = !inPropertyMode
                 }
 
                 // recommend tags when last character is " " or "\n"
                 if ((event.keyCode == 32) || (event.keyCode == 13)) { // " " or "\n"
-                    get_tags(textarea_id)
+                    get_tags(textarea_id);
+                    inPropertyMode = false;
                 }
 
                 timer = setTimeout(function(){
@@ -52,6 +87,73 @@
             var textarea_id = $(this)[0].id;
             get_tags(textarea_id)
         });
+
+        // Autocomplete for properties
+        $(function() {
+            var availableTags = [
+                "ActionScript",
+                "AppleScript",
+                "Asp",
+                "BASIC",
+                "C",
+                "C++",
+                "Clojure",
+                "COBOL",
+                "ColdFusion",
+                "Erlang",
+                "Fortran",
+                "Groovy",
+                "Haskell",
+                "Java",
+                "JavaScript",
+                "Lisp",
+                "Perl",
+                "PHP",
+                "Python",
+                "Ruby",
+                "Scala",
+                "Scheme"
+            ];
+
+            textarea_elements
+                // don't navigate away from the field on tab when selecting an item
+                    .bind( "keydown", function( event ) {
+                        if ( event.keyCode === $.ui.keyCode.TAB &&
+                                $( this ).data( "ui-autocomplete" ).menu.active ) {
+                            event.preventDefault();
+                        }
+                    })
+                    .autocomplete({
+                        disabled: true,
+                        minLength: 0,
+                        source: function( request, response ) {
+                            // delegate back to autocomplete, but extract the last term
+                            var query_text = request.term.slice(lastInsertedSeparatorPosition, current_position)
+
+                            // TODO: if query text is nothing "" (right after :), show all properties (or some we select)
+                            response( $.ui.autocomplete.filter(
+                                    availableTags, query_text ) );
+                        },
+                        focus: function() {
+                            // prevent value inserted on focus
+                            return false;
+                        },
+                        select: function( event, ui ) {
+                            // TODO: add propertyname and remove first ":"
+
+                            var terms = split( this.value );
+                            // remove the current input
+                            terms.pop();
+                            // add the selected item
+                            terms.push( ui.item.value );
+                            // add placeholder to get the comma-and-space at the end
+                            terms.push( "" );
+                            this.value = terms.join( ", " );
+                            return false;
+                        }
+                    });
+             });
+
     });
 
     function get_tags(textarea_id)
@@ -130,7 +232,9 @@
         }
     })(jQuery);
 
+
 </script>
+
 
 {% endblock head %}
 
@@ -141,6 +245,7 @@
 
     <div id="id_0-tags-recommended" style="font-size: 10px;margin-top:0px;width: 670px;"></div>
     <div id="id_0-tags-community" style="font-size: 12px;margin-top:0px;width: 670px;"></div>
+
 
 
 {% endblock %}

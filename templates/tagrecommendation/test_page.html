@@ -30,21 +30,22 @@
     var separator_value = 186; //190; -> "." // 186 -> :
     var separator_char = ":";
     var availableProps = [
-        {value: "note", desc:"textual description note..."},
-        {value: "instrument", desc:"textual description inst..."},
-        {value: "attack", desc:"textual description..."},
-        {value: "bpm", desc:"textual description..."},
-        {value: "tempo", desc:"textual description..."},
-        {value: "action", desc:"textual description..."},
-        {value: "recorder", desc:"textual description..."},
-        {value: "processing", desc:"textual description..."},
-        {value: "type", desc:"textual description..."},
+        {label: "note", value: "note", desc:"textual description note..."},
+        {label: "instrument", value: "instrument", desc:"textual description inst..."},
+        {label: "attack", value: "attack", desc:"textual description..."},
+        {label: "bpm", value: "bpm", desc:"textual description..."},
+        {label: "tempo", value: "tempo", desc:"textual description..."},
+        {label: "action", value: "action", desc:"textual description..."},
+        {label: "recorder", value: "recorder", desc:"textual description..."},
+        {label: "processing", value: "processing", desc:"textual description..."},
+        {label: "type", value: "type", desc:"textual description..."},
     ];
     var use_autocomplete = true;
     var use_tagrecommendation = true;
 
     // show info on each category
     // what happens on focusout?
+    // ; also triggers autocomplete?
 
     $(document).ready(function() {
 
@@ -151,11 +152,13 @@
             disabled: true,
             minLength: 0,
             source: availableProps,
-            focus: function() {
-                // prevent value inserted on focus
+            focus: function(event, ui) {
+                    //$( "#project" ).val( ui.item.label );
                     return false;
                 },
             select: function( event, ui ) {
+
+
                 textarea_element.val(textarea_element.val().remove(
                         textarea_element.data("at_last_inserted_separator_position"), // add -1 if we want to remove separator too
                         textarea_element.data("at_current_position") + 1
@@ -174,14 +177,14 @@
             }
         });
 
-        textarea_element.data( "autocomplete" )._renderItem = function( ul, item ) {
-            return $( "<li>" )
+        /*
+        //console.log(textarea_element.autocomplete().data())
+        textarea_element.data("autocomplete")._renderItem = function( ul, item ) {
+            return $( "<li></li>" )
                     .append( "<a>" + item.label + "<br><span style='font-size:10px;'>" + item.desc + "</span></a>" )
                     .appendTo( ul );
         };
-
-
-
+        */
     }
 
     function change_textarea_color(textarea_element){

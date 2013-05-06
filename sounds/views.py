@@ -659,7 +659,7 @@ def display_sound_wrapper(request, username, sound_id):
 
 
 def embed_iframe(request, sound_id, player_size):
-    if player_size not in ['mini', 'small', 'medium', 'large']:
+    if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info']:
         raise Http404
     size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')

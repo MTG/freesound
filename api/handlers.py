@@ -615,6 +615,7 @@ class SoundSimilarityHandler(BaseHandler):
                 sound['distance'] = similar_sound[1]
                 sounds.append(sound)
             except Exception, e:
+                # TODO: Delete sound from gaia index (and set similarity_index to dirty)
                 pass
 
         result = {'sounds': sounds, 'num_results': len(similar_sounds)}

@@ -610,9 +610,12 @@ class SoundSimilarityHandler(BaseHandler):
 
         sounds = []
         for similar_sound in similar_sounds :
-            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('fields', False))
-            sound['distance'] = similar_sound[1]
-            sounds.append( sound )
+            try:
+                sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('fields', False))
+                sound['distance'] = similar_sound[1]
+                sounds.append(sound)
+            except Exception, e:
+                pass
 
         result = {'sounds': sounds, 'num_results': len(similar_sounds)}
         add_request_id(request,result)

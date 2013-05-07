@@ -629,7 +629,7 @@ class SoundSimilarityHandler(BaseHandler):
                 cache_key = "similar-for-sound-%s-%s" % (similar_sound[0], request.GET.get('preset', None))
                 cache.delete(cache_key)
 
-        result = {'sounds': sounds, 'num_results': len(similar_sounds)}
+        result = {'sounds': sounds, 'num_results': len(sounds)}
         add_request_id(request,result)
         logger.info("Sound similarity,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result

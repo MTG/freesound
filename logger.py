@@ -81,7 +81,7 @@ LOGGING = {
         },
         'clickusagelog': {
             'class': 'logging.handlers.SysLogHandler',
-            'address': ('fs-appserver3.s.upf.edu',514),
+            'address': ('10.55.0.55',514),
             'facility': logging.handlers.SysLogHandler.LOG_LOCAL0,
 	    'formatter': 'standard',
 	    'level': 'INFO'

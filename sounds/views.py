@@ -692,4 +692,4 @@ def click_log(request,click_type=None, sound_id="", pack_id="" ):
         entity_id = pack_id
 
     logger_click.info("%s : %s : %s : %s"
-                          % (click_type, authenticated_session_key, searchtime_session_key, entity_id))
+                          % (click_type, authenticated_session_key, searchtime_session_key, unicode(entity_id).encode('utf-8'))

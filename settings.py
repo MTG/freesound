@@ -6,7 +6,7 @@
 import os
 import logging.config
 
-DEBUG = True
+DEBUG = False
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     # 'django.core.context_processors.auth',

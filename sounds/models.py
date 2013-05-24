@@ -102,7 +102,7 @@ class PublicSoundManager(models.Manager):
         return super(PublicSoundManager, self).get_query_set().filter(moderation_state="OK", processing_state="OK")
 
 class Sound(SocialModel):
-    user = models.IntegerField(null=True, blank=True, default=None)
+    user = models.ForeignKey(User, related_name='sounds')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     # filenames
@@ -116,8 +116,8 @@ class Sound(SocialModel):
 
     license = models.ForeignKey(License)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
-    pack = models.IntegerField(null=True, blank=True, default=None)
-    geotag = models.IntegerField(null=True, blank=True, default=None)
+    pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # file properties
     SOUND_TYPE_CHOICES = (
@@ -135,6 +135,7 @@ class Sound(SocialModel):
     filesize = models.IntegerField(default=0)
     channels = models.IntegerField(default=0)
     md5 = models.CharField(max_length=32, unique=True, db_index=True)
+    crc = models.CharField(max_length=8,blank=True)
     is_index_dirty = models.BooleanField(null=False, default=True)
 
     # moderation
@@ -168,7 +169,6 @@ class Sound(SocialModel):
 
     avg_rating = models.FloatField(default=0)
     num_ratings = models.PositiveIntegerField(default=0)
-    crc = models.CharField(max_length=8,blank=True)
 
     objects = SoundManager()
     public = PublicSoundManager()

@@ -213,7 +213,8 @@ def search(request):
                 for item in results.docs:
                     ids.append(item["id"])
             logger_click.info("QUERY : %s : %s : %s : %s" %
-                                (request_full_path, request.session.session_key, ids, current_page))
+                                (unicode(request_full_path).encode('utf-8'), request.session.session_key, unicode(ids).encode('utf-8'), unicode(current_page).encode('utf-8')))
+
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))
         error = True

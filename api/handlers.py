@@ -35,10 +35,12 @@ from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
 from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
+from similarity.client import Similarity
 from api.api_utils import auth, ReturnError#, parse_filter, parse_target
 import os
 from django.contrib.syndication.views import Feed
 from urllib import quote
+from django.core.cache import cache
 
 logger = logging.getLogger("api")
 
@@ -497,7 +499,12 @@ class SoundContentSearchHandler(BaseHandler):
                     sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=int(result[0])), include_user=False, custom_fields = request.GET.get('fields', False))
                     sounds.append(sound)
                 except Exception, e:
-                    pass
+                    # Delete sound from gaia index so it does not appear again in similarity searches
+                    if Similarity.contains(int(result[0])):
+                        Similarity.delete(int(result[0]))
+                    # Invalidate similarity search cache
+                    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (t.replace(" ",""),f.replace(" ",""),int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+                    cache.delete(cache_key)
 
         #sounds = [prepare_collection_sound(Sound.objects.select_related('user').get(id=int(result[0])), include_user=False, custom_fields = request.GET.get('fields', False)) for result in page.object_list]
         result = {'sounds': sounds,  'num_results': paginator['paginator'].count, 'num_pages': paginator['paginator'].num_pages}
@@ -610,11 +617,19 @@ class SoundSimilarityHandler(BaseHandler):
 
         sounds = []
         for similar_sound in similar_sounds :
-            sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('fields', False))
-            sound['distance'] = similar_sound[1]
-            sounds.append( sound )
+            try:
+                sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('fields', False))
+                sound['distance'] = similar_sound[1]
+                sounds.append(sound)
+            except Exception, e:
+                # Delete sound from gaia index so it does not appear again in similarity searches
+                if Similarity.contains(similar_sound[0]):
+                    Similarity.delete(similar_sound[0])
+                # Invalidate similarity search cache
+                cache_key = "similar-for-sound-%s-%s" % (similar_sound[0], request.GET.get('preset', None))
+                cache.delete(cache_key)
 
-        result = {'sounds': sounds, 'num_results': len(similar_sounds)}
+        result = {'sounds': sounds, 'num_results': len(sounds)}
         add_request_id(request,result)
         logger.info("Sound similarity,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
         return result

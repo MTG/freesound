@@ -110,6 +110,20 @@
     </div>
     {% endif %}
 
+    {% if size == 'large_no_info' %}
+    <div class="widget large">
+        <div class="player large">
+        <div class="metadata">
+            {% with 'L' as size %}
+                {% include 'sounds/metadata.html' %}
+            {% endwith %}
+        </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+
 
 
 </body>

@@ -35,3 +35,17 @@ SOLR_FORUM_URL = "http://localhost:8983/solr/forum/"
 GEARMAN_JOB_SERVERS = ["localhost:4730"]
 
 PLEDGIE_CAMPAIGN=14560
+
+LOG_CLICKTHROUGH_DATA = False
+
+
+#-------------------------------------------------------------------------------
+# SOLR ranking weights
+DEFAULT_SEARCH_WEIGHTS = {
+    'id' : 4,
+    'tag' : 4,
+    'description' : 3,
+    'username' : 1,
+    'pack_tokenized' : 2,
+    'original_filename' : 2
+}

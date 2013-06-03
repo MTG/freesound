@@ -54,7 +54,8 @@ class SoundDescriptionForm(forms.Form):
                            widget=forms.TextInput(attrs={'size': 65, 'class':'inputText'}))
     tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 2, 'style':'resize: none;'}),
                     help_text="<br>Separate tags with spaces. Join multi-word tags with dashes. For example: field-recording is a popular tag.")
-    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10, 'style':'resize: none;'}))
+    description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10, 'style':'resize: none;'}),
+                    help_text="<br />Describe what hardware/software was used and credit sounds by other people with links.")
 
 
 class RemixForm(forms.Form):
@@ -170,7 +171,8 @@ class LicenseForm(forms.Form):
 
 class NewLicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(Q(name__startswith='Attribution') | Q(name__startswith='Creative')),
-                                     required=True)
+                                     required=True,
+                                     help_text="<br />Not sure what this means? Learn about the available licenses in our <a target=\"_blank\" href=\"/help/faq/#licenses-0\">FAQ</a>.")
 
 class FlagForm(RecaptchaForm):
     email = forms.EmailField(label="Your email", required=True, 

@@ -146,17 +146,6 @@ LOG_CLICKTHROUGH_DATA = False
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
 #-------------------------------------------------------------------------------
-# SOLR ranking weights
-DEFAULT_SEARCH_WEIGHTS = {
-                        'id' : 4,
-                        'tag' : 4,
-                        'description' : 3,
-                        'username' : 1,
-                        'pack_tokenized' : 2,
-                        'original_filename' : 2
-                        }
-
-#-------------------------------------------------------------------------------
 # freesound paths and urls:
 
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/'))

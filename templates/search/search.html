@@ -69,7 +69,16 @@
         		descriptions[j].innerHTML = descriptions[j].innerHTML.replace(re,"<b>"+term+"</b>");
         	}	
         }
-
+	el = document.getElementById('query_input');
+	el.focus();
+	if (typeof el.selectionStart == "number") {
+        	el.selectionStart = el.selectionEnd = el.value.length;
+    	} else if (typeof el.createTextRange != "undefined") {
+        	el.focus();
+        	var range = el.createTextRange();
+        	range.collapse(false);
+        	range.select();
+    	}
     });
 
     function showAdvancedSearchOptions()

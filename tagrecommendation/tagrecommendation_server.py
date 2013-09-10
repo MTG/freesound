@@ -80,8 +80,14 @@ class TagRecommendationServer(resource.Resource):
     def reload(self):
         # Load tag recommender
         self.cbtr = None
-        self.cbtr = CommunityBasedTagRecommender()
-        self.cbtr.load_recommenders()
+        try:
+            self.cbtr = CommunityBasedTagRecommender()
+            self.cbtr.load_recommenders()
+            result = {'error': False, 'result': "Server reloaded"}
+        except Exception, e:
+            result = {'error': True, 'result': str(e)}
+
+        return json.dumps(result)
 
 
 if __name__ == '__main__':

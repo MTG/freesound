@@ -21,8 +21,8 @@
 # This machine where the server runs has some important python dependencies
 #   - twisted
 #   - numpy
-#   - sklearn
-#   - pysparse
+#   - sklearn (joblib)
+
 
 from twisted.web import server, resource
 from twisted.internet import reactor
@@ -36,7 +36,8 @@ from communityBasedTagRecommendation import CommunityBasedTagRecommender
 
 def server_interface(resource):
     return {
-        'recommend_tags': resource.recommend_tags, # input_tags (tags separated by commas), max_number_of_tags (optional), general_recommendation (optional)
+        'recommend_tags': resource.recommend_tags, # input_tags (tags separated by commas), max_number_of_tags (optional)
+        'reload': resource.reload,
     }
 
 
@@ -59,18 +60,15 @@ class TagRecommendationServer(resource.Resource):
     def render_GET(self, request):
         return self.methods[request.prepath[1]](**request.args)
 
-    def recommend_tags(self, input_tags, max_number_of_tags=None, general_recommendation=False):
+    def recommend_tags(self, input_tags, max_number_of_tags=None):
+
         try:
             logger.debug('Getting recommendation for input tags %s' % input_tags)
             input_tags = input_tags[0].split(",")
-            do_general_recommendation = False
-            if general_recommendation:
-                do_general_recommendation = True
             if max_number_of_tags:
                 max_number_of_tags = int(max_number_of_tags[0])
             recommended_tags, com_name = self.cbtr.recommend_tags(input_tags,
-                                                                  max_number_of_tags=max_number_of_tags,
-                                                                  general_recommendation=do_general_recommendation)
+                                                                  max_number_of_tags=max_number_of_tags)
             result = {'error': False, 'result': {'tags': recommended_tags, 'community': com_name}}
 
         except Exception, e:
@@ -78,6 +76,12 @@ class TagRecommendationServer(resource.Resource):
             result = {'error': True, 'result': str(e)}
 
         return json.dumps(result)
+
+    def reload(self):
+        # Load tag recommender
+        self.cbtr = None
+        self.cbtr = CommunityBasedTagRecommender()
+        self.cbtr.load_recommenders()
 
 
 if __name__ == '__main__':

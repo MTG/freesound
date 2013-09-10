@@ -24,7 +24,7 @@ import os
 # SERVER SETTINGS
 LOGFILE                     = '/var/log/freesound/tagrecommendation.log'
 LISTEN_PORT                 = 8010
-RECOMMENDATION_DATA_DIR     = '/Users/frederic/SMC/Freesound/freesound-tagrecommendation/' #'/home/frederic/Freesound/freesound-tagrecommendation/' #'/Users/frederic/SMC/Freesound/freesound-tagrecommendation/'
+RECOMMENDATION_DATA_DIR     = '/home/frederic/Freesound/freesound-tagrecommendation/' #'/home/frederic/Freesound/freesound-tagrecommendation/' #'/Users/frederic/SMC/Freesound/freesound-tagrecommendation/'
 
 # CLIENT SETTINGS (to be moved to django settings?)
 TAGRECOMMENDATION_ADDRESS          = 'localhost'
@@ -32,21 +32,32 @@ TAGRECOMMENDATION_PORT             = 8010
 TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 
 # OTHER
-USE_COMMUNITY_BASED_RECOMMENDERS = False
+DATABASE = "FREESOUND2012"
 CLASSES = {
-    'FX':'Collection CFX.json',
-    'Soundscape':'Collection CSoundscape.json',
-    'Music':'Collection CMusic.json',
-    'Samples':'Collection CSamples.json',
-    'Speech':'Collection CSpeech.json',
+    'FX': 'CFX',
+    'Soundscape': 'CSoundscape',
+    'Music': 'CMusic',
+    'Samples': 'CSamples',
+    'Speech': 'CSpeech',
 }
 
-USE_KEYTAGS = True
-KEY_TAGS = {
-    'FX': ['fx', 'effect', 'foley'],
-    'Soundscape': ['field-recording', 'soundscape', 'ambient'],
-    'Music': ['music', 'loop'],
-    'Samples': ['multisample', 'sample', 'instrument'],
-    'Speech': ['speech', 'voice'],
-}
+
+# This tag recommendation server needs some data files to be in the data folder
+#
+# For the class detection step:
+#   Classifier.pkl              (precomputed classifier pickled)
+#   Classifier_meta.json        (metadata of the classifier)
+#   Classifier_TAG_NAMES.npy    (vector of all tag names used to train the classifier)
+#
+# For every class used:
+#   [[DATABASE]]_[[CLASSNAME]]_SIMILARITY_MATRIX_cosine_SUBSET.npy
+#   [[DATABASE]]_[[CLASSNAME]]_SIMILARITY_MATRIX_cosine_SUBSET_TAG_NAMES.npy
+# Example:
+#   FREESOUND2012_CFX_SIMILARITY_MATRIX_cosine_SUBSET.npy
+#   FREESOUND2012_CFX_SIMILARITY_MATRIX_cosine_SUBSET_TAG_NAMES.npy
+#   ...
+#
+# If these files are recalcuated and placed at the correct directory, the recommendation service
+# can reload the matrixs using the method "reload" -> tagrecommendation/reload
+
 

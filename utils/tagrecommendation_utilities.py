@@ -32,7 +32,7 @@ from utils.tags import clean_and_split_tags
 logger = logging.getLogger('web')
 
 
-def get_recommended_tags(input_tags, max_number_of_tags=30, general_recommendation=False):
+def get_recommended_tags(input_tags, max_number_of_tags=30):
 
     cache_key = "recommended-tags-for-%s" % (",".join(sorted(input_tags)))
 
@@ -44,24 +44,10 @@ def get_recommended_tags(input_tags, max_number_of_tags=30, general_recommendati
 
     if not recommended_tags:
         try:
-            recommended_tags = TagRecommendation.recommend_tags(input_tags,
-                                                                general_recommendation=general_recommendation)
+            recommended_tags = TagRecommendation.recommend_tags(input_tags)
 
             if not recommended_tags['tags']:
                 recommended_tags['community'] = "-"
-
-            if USE_KEYTAGS and recommended_tags['community'] in KEY_TAGS:
-                # Check for key tags in the recommendation and add them if not present neither in the recommendation
-                # or in input tags
-                key_tags = KEY_TAGS[recommended_tags['community']]
-                to_add = []
-                for tag in key_tags:
-                    if tag not in input_tags:
-                        to_add.append(tag)
-                        if tag in recommended_tags['tags']:
-                            recommended_tags['tags'].remove(tag)
-                if to_add:
-                    recommended_tags['tags'] = to_add + recommended_tags['tags']
 
             cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
 

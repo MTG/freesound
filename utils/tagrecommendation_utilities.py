@@ -20,7 +20,7 @@
 
 import logging, traceback, settings
 from tagrecommendation.client import TagRecommendation
-from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME, KEY_TAGS, USE_KEYTAGS
+from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME
 from django.core.cache import cache
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -69,7 +69,3 @@ def get_recommended_tags_view(request):
                 return HttpResponse(json.dumps([tags, community]), mimetype='application/javascript')
 
     return HttpResponse(json.dumps([[],"-"]), mimetype='application/javascript')
-
-
-def tag_recommendation_test_page(request):
-    return render_to_response('tagrecommendation/test_page.html', locals(), context_instance=RequestContext(request))

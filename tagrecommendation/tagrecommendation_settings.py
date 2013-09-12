@@ -24,7 +24,7 @@ import os
 # SERVER SETTINGS
 LOGFILE                     = '/var/log/freesound/tagrecommendation.log'
 LISTEN_PORT                 = 8010
-RECOMMENDATION_DATA_DIR     = '/home/frederic/Freesound/freesound-tagrecommendation/' #'/home/frederic/Freesound/freesound-tagrecommendation/' #'/Users/frederic/SMC/Freesound/freesound-tagrecommendation/'
+RECOMMENDATION_DATA_DIR     = '/Users/frederic/SMC/Freesound/freesound-tagrecommendation/' #'/home/frederic/Freesound/freesound-tagrecommendation/' #'/Users/frederic/SMC/Freesound/freesound-tagrecommendation/'
 
 # CLIENT SETTINGS (to be moved to django settings?)
 TAGRECOMMENDATION_ADDRESS          = 'localhost'

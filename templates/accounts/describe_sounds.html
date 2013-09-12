@@ -49,13 +49,13 @@
         });
     });
 
-    
+
     // Logging functions (for tag recommendation)
     // ******************************************
 
     function log(activity,textarea_id){
         var timestamp = new Date().getTime();
-        var logline = timestamp + "#" + randomDescriptionSessionId + "#" + textarea_id + "#" + activity;
+        var logline = timestamp + "#describing#" + randomDescriptionSessionId + "#" + textarea_id + "#" + activity;
 
         if (doLog){
             $.ajax({

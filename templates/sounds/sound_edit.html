@@ -10,20 +10,80 @@
 <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{google_api_key}}" type="text/javascript"></script>
 <script type="text/javascript">
 
+    var doLog = true;
+    var typingTimer;
+    var addingTagTimer;
+    var doneAddingTagInterval = 3500;  //time in ms
+    var doneTypingInterval = 500;     //time in ms
+    var randomDescriptionSessionId = Math.floor(Math.random()*99999).toString(10);
+
     $(document).ready(function() {
-        $("textarea[id$='-tags']").bind('input cut paste focusin', function() {
+
+        // Tag recommendation
+        // ******************
+
+        var textarea_elements = $("textarea[id$='-tags']");
+
+        // Listen to keyup events in tags textareas to display tags
+        textarea_elements.keyup(function(event) {
+
+            clearTimeout(typingTimer);
             var textarea_id = $(this)[0].id;
-            get_tags(textarea_id)
+
+            // recommend tags when last character is " " or "\n"
+            if  ((event.keyCode == 32) || (event.keyCode == 13)) { // " " or "\n"
+                get_tags(textarea_id);
+            }
+
+            typingTimer = setTimeout(function(){
+                get_tags(textarea_id)
+            }, doneTypingInterval);
+        });
+
+        // Listen to cut, paste and focusin events to recommend tags
+        textarea_elements.bind('cut paste focusin', function() {
+            var textarea_id = $(this)[0].id;
+            get_tags(textarea_id);
         });
     });
 
-    function get_tags(textarea_id)
-    {
+
+    // Logging functions (for tag recommendation)
+    // ******************************************
+
+    function log(activity,textarea_id){
+        var timestamp = new Date().getTime();
+        var logline = timestamp + "#editing#" + randomDescriptionSessionId + "#" + textarea_id + "#" + activity;
+
+        if (doLog){
+            $.ajax({
+                type: 'POST',
+                url: '/tagrecommendation/savelog/',
+                contentType:"application/x-www-form-urlencoded",
+                data: {
+                    log: logline
+                },
+                success: function(data) {
+                    // Do nothing
+                }
+            });
+        }
+    }
+
+
+    // Tag recommendation
+    // ******************
+
+    function get_tags(textarea_id){
+        var textarea_element = $("#" + textarea_id);
+        log("GettingTagsForInputTags:" + textarea_element.val(), textarea_id);
+
         $.ajax({
             type: 'POST',
-            url: '{% url recommend-tags %}',
+            url: '/tagrecommendation/recommendtags/',
+            contentType:"application/x-www-form-urlencoded",
             data: {
-                input_tags: $("#" + textarea_id).val()
+                input_tags: textarea_element.val()
             },
             success: function(data) {
                 display_recommended_tags(textarea_id, data);
@@ -32,29 +92,73 @@
     }
 
     function display_recommended_tags(textarea_id, data){
-        var tags = JSON.parse(data)
+
+        var parsedData = JSON.parse(data);
+        var tags = parsedData[0];
+        var community = parsedData[1];
+
+        var logline = "RecommendationResults:Tags:";
+        for (var i in tags){
+            logline += tags[i].toString() + " ";
+        }
+        logline += ":DetectedCommunity:" + community;
+        log(logline, textarea_id);
+
         if (tags.length > 0){
             var html = "";
             html += "<ul id=\"" + textarea_id + "-recommended-list\">";
             for (var i in tags){
-                html += "<li><a onclick=\"add_tag(\'" + textarea_id + "\',\'" + tags[i] + "\')\">" + tags[i] + "</a></li>"
+
+                var tag = tags[i]; //tags[i][0]
+                var tag_css_class = "tag";
+
+                html += "<li class=\"" + tag_css_class + "\" id=\"tag-" + tag + "\"><a onclick=\"add_tag(\'" + textarea_id + "\',\'" + tag + "\',\'" + i + "\')\">" + tag + "</a></li>";
             }
-            html += "</ul><br>"
-            $("#" + textarea_id + "-recommended").text("")
-            $("#" + textarea_id + "-recommended").append("<span style=\"color: #AB4646;font-size:12px;\">Suggestions of other possibly relevant tags given your input&nbsp</span> (click on the tags to add them, <a style=\"color:gray\" onclick=\"clear_recommendations(\'" + textarea_id + "\')\">click here to clear the recommendation</a>)")
-            $("#" + textarea_id + "-recommended").append(html)
-            $("#" + textarea_id + "-recommended-list").addClass("tags")
-            $("#" + textarea_id + "-recommended-list").css("margin-top","5px")
-            $("#" + textarea_id + "-recommended-list").css("margin-bottom","5px")
+            html += "</ul>";
+            var textarea_element = $("#" + textarea_id + "-recommended");
+            textarea_element.text("");
+            textarea_element.append("<span style=\"color: #AB4646;font-size:12px;\">Suggested tags:&nbsp</span> (click on the tags to add them, <a style=\"color:gray\" onclick=\"clear_recommendations(\'" + textarea_id + "\')\">click here to clear the recommendation</a>)");
+            textarea_element.append(html);
+            textarea_element.append("<br class=\"clear\">");
+
+            var textarea_element_list = $("#" + textarea_id + "-recommended-list");
+            textarea_element_list.css("margin-left","-20px");
+            textarea_element_list.css("margin-top","5px");
+            textarea_element_list.css("margin-bottom","5px");
+
         }else{
-            $("#" + textarea_id + "-recommended").text("")
-            $("#" + textarea_id + "-recommended").append("")
+            clear_recommendations(textarea_id);
         }
     }
 
-    function add_tag(textarea_id, tag){
-        $("#" + textarea_id).val($("#" + textarea_id).val() + " " + tag)
-        get_tags(textarea_id)
+    function add_tag(textarea_id, tag, cloud_pos){
+
+        clearTimeout(addingTagTimer);
+        log("AddingTag:" + tag + ":InCloudPos:" + cloud_pos, textarea_id);
+
+        var ask_for_more = false;
+        var textarea_element = $("#" + textarea_id);
+        var separator = " ";
+        if (!$.trim(textarea_element.val())) {
+            ask_for_more = true;
+            separator = ""
+        }
+
+        textarea_element.val(textarea_element.val() + separator + tag);
+        $("#tag-" + tag).remove();
+
+        var remaining_tags = $("#" + textarea_id + "-recommended-list").children().length;
+        if (remaining_tags < 1){
+            ask_for_more = true;
+        }
+
+        if (ask_for_more == true){
+            get_tags(textarea_id);
+        } else {
+            addingTagTimer = setTimeout(function(){
+                get_tags(textarea_id)
+            }, doneAddingTagInterval);
+        }
     }
 
     function clear_recommendations(textarea_id){
@@ -82,11 +186,6 @@
         Tags:
         {{description_form.tags.help_text|safe}}<br>
         {{description_form.tags}}
-
-        <br>
-        {% comment %}
-        The following span must have the same id as the tags textarea but ended with "-recommended"
-        {% endcomment %}
         <div id="id_description-tags-recommended" style="font-size: 10px;margin-top:-5px;width: 670px;"></div>
     </p>
 

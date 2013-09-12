@@ -33,7 +33,7 @@ import forum.views
 import comments.views
 import bookmarks.views
 from django.views.generic.simple import redirect_to
-from utils.tagrecommendation_utilities import get_recommended_tags_view
+from utils.tagrecommendation_utilities import get_recommended_tags_view, log_recommendation_info_view
 
 admin.autodiscover()
 
@@ -112,7 +112,8 @@ urlpatterns = patterns('',
     (r'^api/', include('api.urls')),
 
     # tag recommendation
-    url(r'^tagrecommendation/recommend_tags/$', get_recommended_tags_view, name="recommend-tags"),
+    url(r'^tagrecommendation/recommendtags/$', get_recommended_tags_view, name="recommend-tags"),
+    url(r'^tagrecommendation/savelog/$', log_recommendation_info_view, name="log-recommendation-info"),
 
     # 500 view
     url(r'^crash_me/$',

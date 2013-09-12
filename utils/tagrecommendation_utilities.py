@@ -30,6 +30,7 @@ from django.contrib.auth.decorators import login_required
 from utils.tags import clean_and_split_tags
 
 logger = logging.getLogger('web')
+rec_logger = logging.getLogger('tagrecommendation_research')
 
 
 def get_recommended_tags(input_tags, max_number_of_tags=30):
@@ -52,7 +53,7 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
             cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
 
         except Exception, e:
-            logger.debug('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
+            logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
                          (e, traceback.format_exc()))
             recommended_tags = False
 
@@ -69,3 +70,12 @@ def get_recommended_tags_view(request):
                 return HttpResponse(json.dumps([tags, community]), mimetype='application/javascript')
 
     return HttpResponse(json.dumps([[],"-"]), mimetype='application/javascript')
+
+
+def log_recommendation_info_view(request):
+    if request.is_ajax() and request.method == 'POST':
+        log = request.POST.get('log', False)
+        if log:
+            rec_logger.info(log)
+
+    return HttpResponse(json.dumps(""), mimetype='application/javascript')

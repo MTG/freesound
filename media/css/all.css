@@ -78,10 +78,8 @@ a.external_link:hover {
 ------------------------------------------------------*/
 
 body {
-    /*border-top: 100px solid #fff;*/
-    
-    /*background-position: 0 105px;*/  /* comment out when removing banners */
-    background-color: #fff; /* comment out when adding banners */
+    /*background-position: 0 105px;*/ /* uncomment this one when adding banners */
+    background-color: #fff;
 }
 #banner_wrapper {
     width: 728px;

@@ -659,7 +659,7 @@ def display_sound_wrapper(request, username, sound_id):
 
 
 def embed_iframe(request, sound_id, player_size):
-    if player_size not in ['mini', 'small', 'medium', 'large']:
+    if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info']:
         raise Http404
     size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
@@ -692,4 +692,4 @@ def click_log(request,click_type=None, sound_id="", pack_id="" ):
         entity_id = pack_id
 
     logger_click.info("%s : %s : %s : %s"
-                          % (click_type, authenticated_session_key, searchtime_session_key, entity_id))
+                          % (click_type, authenticated_session_key, searchtime_session_key, unicode(entity_id).encode('utf-8')))

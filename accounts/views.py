@@ -1055,3 +1055,7 @@ def clear_flags_user(request, username):
         return render_to_response('accounts/flags_cleared.html',locals(),context_instance=RequestContext(request))
     else:
         return HttpResponseRedirect(reverse('accounts-login'))
+
+def donate_redirect(request):
+    pledgie_campaign_url = "http://pledgie.com/campaigns/%d/" % settings.PLEDGIE_CAMPAIGN
+    return HttpResponseRedirect(pledgie_campaign_url)

@@ -289,6 +289,7 @@ class RecommendationDataProcessor:
                 sys.stdout.write("\rClassifying resources... %.2f%%"%(float(100*(count+1))/len(instances_ids)))
                 sys.stdout.flush()
 
+        saveToJson(RECOMMENDATION_TMP_DATA_DIR + 'CLASSIFIED_RESOURCES.json', resource_class)
         print ""
 
         print "\nComputing data for general recommender..."
@@ -337,7 +338,7 @@ class RecommendationDataProcessor:
             )
 
         # TODO: move files to the tag recommendation directory and clean intermediate files from temp directory
-            
+
 
 '''
 from recommendationDataProcessor import RecommendationDataProcessor

@@ -32,13 +32,15 @@ import graypy
 from logging.handlers import RotatingFileHandler
 import json
 from communityBasedTagRecommendation import CommunityBasedTagRecommender
-from utils import loadFromJson
+from utils import loadFromJson, saveToJson
 
 
 def server_interface(resource):
     return {
-        'recommend_tags': resource.recommend_tags, # input_tags (tags separated by commas), max_number_of_tags (optional)
+        'recommend_tags': resource.recommend_tags,  # input_tags (tags separated by commas), max_number_of_tags (optional)
         'reload': resource.reload,
+        'last_indexed_id': resource.last_indexed_id,
+        'add_to_index': resource.add_to_index,  # sound_ids (str separated by commas), sound_tagss (sets of tags separated by #)
     }
 
 
@@ -53,10 +55,20 @@ class TagRecommendationServer(resource.Resource):
             tag_recommendation_data = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
             DATABASE = tag_recommendation_data['database']
             CLASSES = tag_recommendation_data['classes']
+            self.cbtr = CommunityBasedTagRecommender(dataset=DATABASE, classes=CLASSES)
+            self.cbtr.load_recommenders()
+
         except:
-            raise Exception("No metadata found for computed matrixs. Tag recommendation system can not start.")
-        self.cbtr = CommunityBasedTagRecommender(dataset=DATABASE, classes=CLASSES)
-        self.cbtr.load_recommenders()
+            self.cbtr = None
+            logger.info("No data was, recommendation system not loading for the moment.")
+
+        try:
+            self.index_stats = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
+        except Exception, e:
+            self.index_stats = {
+                'biggest_id': 0,
+                'n_sounds': 0,
+            }
 
     def error(self,message):
         return json.dumps({'Error': message})
@@ -90,6 +102,7 @@ class TagRecommendationServer(resource.Resource):
             tag_recommendation_data = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
             DATABASE = tag_recommendation_data['database']
             CLASSES = tag_recommendation_data['classes']
+            self.index_stats = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
         except Exception, e:
             raise Exception("No metadata found for computed matrixs. Tag recommendation system can not start.")
 
@@ -102,6 +115,30 @@ class TagRecommendationServer(resource.Resource):
         except Exception, e:
             result = {'error': True, 'result': str(e)}
 
+        return json.dumps(result)
+
+    def last_indexed_id(self):
+        result = {'error': False, 'result': self.index_stats['biggest_id']}
+        return json.dumps(result)
+
+    def add_to_index(self, sound_ids, sound_tagss):
+        sound_ids = sound_ids[0].split(",")
+        sound_tags = [stags.split(",") for stags in sound_tagss[0].split("-!-!-")]
+        logger.info('Adding %i sounds to recommendation index' % len(sound_ids))
+
+        try:
+            index = loadFromJson(RECOMMENDATION_DATA_DIR + 'Index.json')
+        except Exception, e:
+            index = dict()
+
+        for count, sound_id in enumerate(sound_ids):
+            sid = sound_id
+            stags = sound_tags[count]
+            index[sid] = stags
+
+        saveToJson(RECOMMENDATION_DATA_DIR + 'Index.json', index, verbose=False)
+
+        result = {'error': False, 'result': True}
         return json.dumps(result)
 
 

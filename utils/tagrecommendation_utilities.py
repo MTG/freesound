@@ -28,6 +28,7 @@ from django.http import HttpResponse
 import json
 from django.contrib.auth.decorators import login_required
 from utils.tags import clean_and_split_tags
+from math import ceil
 
 logger = logging.getLogger('web')
 rec_logger = logging.getLogger('tagrecommendation_research')
@@ -79,3 +80,39 @@ def log_recommendation_info_view(request):
             rec_logger.info(log)
 
     return HttpResponse(json.dumps(""), mimetype='application/javascript')
+
+
+def get_id_of_last_indexed_sound():
+    try:
+        result = TagRecommendation.get_last_indexed_id()
+        return result
+
+    except Exception, e:
+        return -1
+
+
+def post_sounds_to_tagrecommendation_service(sound_qs):
+    data_to_post = []
+    N_SOUNDS_PER_CALL = 10
+    total_calls = int(ceil(float(len(sound_qs))/N_SOUNDS_PER_CALL))
+    print "Sending recommendation data..."
+    idx = 1
+    for count, sound in enumerate(sound_qs):
+        data_to_post.append(
+            (sound.id, list(sound.tags.select_related("tag").values_list('tag__name', flat=True)))
+        )
+        if (count + 1) % N_SOUNDS_PER_CALL == 0:
+            ids = [element[0] for element in data_to_post]
+            tagss = [element[1] for element in data_to_post]
+            print "\tSending group of sounds %i of %i (%i sounds)" % (idx, total_calls, len(ids))
+            idx += 1
+            TagRecommendation.add_to_index(ids, tagss)
+            data_to_post = []
+
+    if data_to_post:
+        ids = [element[0] for element in data_to_post]
+        tagss = [element[1] for element in data_to_post]
+        print "\tSending group of sounds %i of %i (%i sounds)" % (idx, total_calls, len(ids))
+        TagRecommendation.add_to_index(ids, tagss)
+
+    print "Finished!"

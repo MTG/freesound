@@ -39,8 +39,9 @@ TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 #   Classifier.pkl              (precomputed classifier pickled)
 #   Classifier_meta.json        (metadata of the classifier)
 #   Classifier_TAG_NAMES.npy    (vector of all tag names used to train the classifier)
+#   Index.json                  (tag resource assignments, comes from appservers)
 #
-# For every class used:
+# For every class used (these files can be generated with an index file)
 #   [[DATABASE]]_[[CLASSNAME]]_SIMILARITY_MATRIX_cosine_SUBSET.npy
 #   [[DATABASE]]_[[CLASSNAME]]_SIMILARITY_MATRIX_cosine_SUBSET_TAG_NAMES.npy
 # Example:

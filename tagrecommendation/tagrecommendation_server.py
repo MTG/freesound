@@ -32,6 +32,7 @@ import graypy
 from logging.handlers import RotatingFileHandler
 import json
 from communityBasedTagRecommendation import CommunityBasedTagRecommender
+from utils import loadFromJson
 
 
 def server_interface(resource):
@@ -48,7 +49,13 @@ class TagRecommendationServer(resource.Resource):
         self.isLeaf = False
 
         # Load tag recommender
-        self.cbtr = CommunityBasedTagRecommender()
+        try:
+            tag_recommendation_data = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
+            DATABASE = tag_recommendation_data['database']
+            CLASSES = tag_recommendation_data['classes']
+        except:
+            raise Exception("No metadata found for computed matrixs. Tag recommendation system can not start.")
+        self.cbtr = CommunityBasedTagRecommender(dataset=DATABASE, classes=CLASSES)
         self.cbtr.load_recommenders()
 
     def error(self,message):
@@ -79,9 +86,17 @@ class TagRecommendationServer(resource.Resource):
 
     def reload(self):
         # Load tag recommender
+        try:
+            tag_recommendation_data = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
+            DATABASE = tag_recommendation_data['database']
+            CLASSES = tag_recommendation_data['classes']
+        except Exception, e:
+            raise Exception("No metadata found for computed matrixs. Tag recommendation system can not start.")
+
         self.cbtr = None
         try:
-            self.cbtr = CommunityBasedTagRecommender()
+
+            self.cbtr = CommunityBasedTagRecommender(dataset=DATABASE, classes=CLASSES)
             self.cbtr.load_recommenders()
             result = {'error': False, 'result': "Server reloaded"}
         except Exception, e:

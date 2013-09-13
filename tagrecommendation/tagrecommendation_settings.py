@@ -32,16 +32,6 @@ TAGRECOMMENDATION_ADDRESS          = 'localhost'
 TAGRECOMMENDATION_PORT             = 8010
 TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 
-# OTHER
-DATABASE = "FREESOUND2012"
-CLASSES = {
-    'FX': 'CFX',
-    'Soundscape': 'CSoundscape',
-    'Music': 'CMusic',
-    'Samples': 'CSamples',
-    'Speech': 'CSpeech',
-}
-
 
 # This tag recommendation server needs some data files to be in the data folder
 #

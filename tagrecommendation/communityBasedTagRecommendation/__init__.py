@@ -21,7 +21,7 @@
 
 from tagRecommendation import TagRecommender
 from communityDetection import CommunityDetector
-from tagrecommendation_settings import RECOMMENDATION_DATA_DIR, CLASSES, DATABASE
+from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
 from utils import loadFromJson
 from numpy import load
 
@@ -37,15 +37,18 @@ class CommunityBasedTagRecommender():
     community_detection_heuristic = None
     classifier_type = None
     recommendation_heuristic = None
+    classes = None
 
     def __init__(self,
-                 dataset=DATABASE,
+                 dataset="",
+                 classes=[],
                  metric="cosine",
                  community_detection_heuristic="ZeroInit",
                  recommendation_heuristic="hRankPercentage015",
                  classifier_type="bayes"):
 
         self.dataset = dataset
+        self.classes = classes
         self.metric = metric
         self.community_detection_heuristic = community_detection_heuristic
         self.classifier_type = classifier_type
@@ -53,6 +56,7 @@ class CommunityBasedTagRecommender():
 
     def load_recommenders(self):
         # Load classifier from file
+        print "\nLOADING DATA FOR DATABASE %s AND CLASSES %s\n" % (self.dataset, ", ".join(self.classes))
         print "Loading community detector..."
         self.communityDetector = CommunityDetector(verbose=False, PATH=RECOMMENDATION_DATA_DIR + "Classifier")
         print self.communityDetector
@@ -60,23 +64,23 @@ class CommunityBasedTagRecommender():
         # Loading class recommenders
         print "Loading class recommenders..."
         self.recommenders = dict()
-        for class_key, class_name in CLASSES.items():
+        for class_name in self.classes:
 
-            self.recommenders[class_key] = TagRecommender()
-            self.recommenders[class_key].set_heuristic(self.recommendation_heuristic)
+            self.recommenders[class_name] = TagRecommender()
+            self.recommenders[class_name].set_heuristic(self.recommendation_heuristic)
 
             data = {
                 'TAG_NAMES': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric + '_SUBSET_TAG_NAMES.npy'),
                 'SIMILARITY_MATRIX': load(RECOMMENDATION_DATA_DIR + self.dataset + '_%s_SIMILARITY_MATRIX_' % class_name + self.metric + '_SUBSET.npy'),
             }
 
-            self.recommenders[class_key].load_data(
+            self.recommenders[class_name].load_data(
                 data=data,
                 dataset="%s-%s" % (self.dataset, class_name),
                 metric=self.metric
             )
 
-            print self.recommenders[class_key]
+            print self.recommenders[class_name]
 
     def recommend_tags(self, input_tags, max_number_of_tags=None):
         com_name = self.communityDetector.detectCommunity(input_tags)

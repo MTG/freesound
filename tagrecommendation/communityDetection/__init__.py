@@ -21,7 +21,7 @@
 from sklearn.externals import joblib
 from numpy import load, where, zeros
 from utils import loadFromJson
-from tagrecommendation_settings import RECOMMENDATION_DATA_DIR, DATABASE
+from tagrecommendation_settings import RECOMMENDATION_DATA_DIR
 import os
 
 

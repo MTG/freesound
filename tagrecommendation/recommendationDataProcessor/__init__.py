@@ -19,7 +19,7 @@
 #
 
 from tagrecommendation_settings import RECOMMENDATION_TMP_DATA_DIR, RECOMMENDATION_DATA_DIR
-import fileinput, sys
+import fileinput, sys, os
 from utils import saveToJson, mtx2npy, loadFromJson
 from numpy import save, load, where, in1d
 from math import sqrt
@@ -270,11 +270,10 @@ class RecommendationDataProcessor:
         print cd
 
         # Classify existing resources
-        print "Classifying resources..."
         resources_tags = loadFromJson(RECOMMENDATION_TMP_DATA_DIR + database_name + '_RESOURCES_TAGS.json')
         instances_ids = resources_tags.keys()
         try:
-            resource_class = loadFromJson(RECOMMENDATION_TMP_DATA_DIR + 'CLASSIFIED_RESOURCES.json')
+            resource_class = loadFromJson(RECOMMENDATION_DATA_DIR + 'Classifier_classified_resources.json')
         except Exception, e:
             resource_class = dict()
 
@@ -289,7 +288,7 @@ class RecommendationDataProcessor:
                 sys.stdout.write("\rClassifying resources... %.2f%%"%(float(100*(count+1))/len(instances_ids)))
                 sys.stdout.flush()
 
-        saveToJson(RECOMMENDATION_TMP_DATA_DIR + 'CLASSIFIED_RESOURCES.json', resource_class)
+        saveToJson(RECOMMENDATION_DATA_DIR + 'Classifier_classified_resources.json', resource_class)
         print ""
 
         print "\nComputing data for general recommender..."
@@ -337,12 +336,72 @@ class RecommendationDataProcessor:
                 metric=similarity_metric,
             )
 
-        # TODO: move files to the tag recommendation directory and clean intermediate files from temp directory
+    def clear_temp_files(self):
 
+        new_data = False
+        for filename in os.listdir(RECOMMENDATION_TMP_DATA_DIR):
+            if "SIMILARITY_MATRIX" in filename and "SUBSET" in filename:
+                new_data = True
+                break
 
-'''
-from recommendationDataProcessor import RecommendationDataProcessor
-rdp = RecommendationDataProcessor()
-filename= "/Users/frederic/SMC/Freesound/freesound-tagrecommendation/tmp/FREESOUND.tas"
-rdp.process_tag_recommendation_data(filename=filename,tag_threshold=10,line_limit=1000)
-'''
+        if not new_data:
+            raise Exception("There is no new matrix data to update the tag recommendation system")
+
+        for filename in os.listdir(RECOMMENDATION_DATA_DIR):
+            file_extension = filename.split(".")[-1]
+            if file_extension in ['npy', 'json', 'pkl']:
+                if "Classifier" not in filename:  # Do not alter Classifier files
+                    if filename[0:6] == "backup":
+                        # Delete old backups
+                        print "Removing %s" % RECOMMENDATION_DATA_DIR + filename
+                        os.remove(RECOMMENDATION_DATA_DIR + filename)
+                    else:
+                        # Set previous matrixs to "backup mode" (will be deleted in the next update)
+                        print "Setting to backup %s" % RECOMMENDATION_DATA_DIR + filename
+                        os.rename(RECOMMENDATION_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + "backup_" + filename)
+
+        current_database_name = ""
+        class_names = []
+        for filename in os.listdir(RECOMMENDATION_TMP_DATA_DIR):
+            file_extension = filename.split(".")[-1]
+            if file_extension != 'tas':
+                if "SIMILARITY_MATRIX" in filename and "SUBSET" in filename:
+                    # Move similarity matrix to recommendation data dir
+                    print "Moving %s" % RECOMMENDATION_TMP_DATA_DIR + filename
+                    os.rename(RECOMMENDATION_TMP_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + filename)
+                    current_database_name = filename.split("_")[0]
+                    class_names.append(filename.split("_")[1])
+                else:
+                    # Remove remeaining files in tmp dir (except for the tas file)
+                    print "Clearing %s" % RECOMMENDATION_TMP_DATA_DIR + filename
+                    os.remove(RECOMMENDATION_TMP_DATA_DIR + filename)
+
+        class_names = list(set(class_names))
+        saveToJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json', {'database': current_database_name, 'classes':class_names})
+
+    def rollback_last_backup(self):
+        backup_data = False
+        for filename in os.listdir(RECOMMENDATION_TMP_DATA_DIR):
+            if "backup" in filename:
+                backup_data = True
+                break
+
+        if not backup_data:
+            raise Exception("There is no backup data to roll back")
+
+        for filename in os.listdir(RECOMMENDATION_DATA_DIR):
+            file_extension = filename.split(".")[-1]
+            if file_extension in ['npy', 'json']:
+                if "Classifier" not in filename:  # Do not alter Classifier files
+                    if filename[0:6] != "backup":
+                        print "Removing %s" % RECOMMENDATION_DATA_DIR + filename
+                        os.remove(RECOMMENDATION_DATA_DIR + filename)
+
+        for filename in os.listdir(RECOMMENDATION_DATA_DIR):
+            file_extension = filename.split(".")[-1]
+            if file_extension in ['npy', 'json']:
+                if "Classifier" not in filename:  # Do not alter Classifier files
+                    if filename[0:6] == "backup":
+                        # Set previous matrixs to "backup mode" (will be deleted in the next update)
+                        print "Rolling back backup %s" % RECOMMENDATION_DATA_DIR + filename
+                        os.rename(RECOMMENDATION_DATA_DIR + filename, RECOMMENDATION_DATA_DIR + filename[7:])

@@ -23,6 +23,6 @@ from recommendationDataProcessor import RecommendationDataProcessor
 
 tas_file_path = sys.argv[1]
 rdp = RecommendationDataProcessor()
-rdp.process_tag_recommendation_data(filename=tas_file_path, tag_threshold=10, line_limit=None)
+rdp.process_tag_recommendation_data(filename=tas_file_path, tag_threshold=10, line_limit=9999999999999)
 rdp.clear_temp_files()
 #rdp.rollback_last_backup()

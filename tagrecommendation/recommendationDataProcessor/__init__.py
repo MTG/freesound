@@ -381,7 +381,7 @@ class RecommendationDataProcessor:
 
     def rollback_last_backup(self):
         backup_data = False
-        for filename in os.listdir(RECOMMENDATION_TMP_DATA_DIR):
+        for filename in os.listdir(RECOMMENDATION_DATA_DIR):
             if "backup" in filename:
                 backup_data = True
                 break

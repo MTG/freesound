@@ -143,7 +143,9 @@ class TagRecommendationServer(resource.Resource):
             stags = sound_tags[count]
             index[sid] = stags
 
-        saveToJson(RECOMMENDATION_DATA_DIR + 'Index.json', index, verbose=False)
+        if len(index.keys()) % 1000 == 0:
+            # Every 1000 indexed sounds, save the index
+            saveToJson(RECOMMENDATION_DATA_DIR + 'Index.json', index, verbose=False)
 
         result = {'error': False, 'result': True}
         return json.dumps(result)

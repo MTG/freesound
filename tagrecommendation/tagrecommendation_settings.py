@@ -39,9 +39,16 @@ TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 #   Classifier.pkl              (precomputed classifier pickled)
 #   Classifier_meta.json        (metadata of the classifier)
 #   Classifier_TAG_NAMES.npy    (vector of all tag names used to train the classifier)
-#   Index.json                  (tag resource assignments, comes from appservers)
 #
-# For every class used (these files can be generated with an index file)
+# Classifier files can be found in freesound-deploy repository.
+#
+# Having this classifier the recommendation server can be started. Once the server is running
+# a command from the appservers must be run so the recomendation is feeded with tag assignement data
+# from freesound which is stored in a file called Index.json. This fille incrementally stores
+# all tag assingment information from freesound. Once this file exists and has some data, the
+# "update_tagrecommendation_data.py" script can be run and will generate the following files:
+#
+# For every class used:
 #   [[DATABASE]]_[[CLASSNAME]]_SIMILARITY_MATRIX_cosine_SUBSET.npy
 #   [[DATABASE]]_[[CLASSNAME]]_SIMILARITY_MATRIX_cosine_SUBSET_TAG_NAMES.npy
 # Example:
@@ -49,7 +56,4 @@ TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 #   FREESOUND2012_CFX_SIMILARITY_MATRIX_cosine_SUBSET_TAG_NAMES.npy
 #   ...
 #
-# If these files are recalcuated and placed at the correct directory, the recommendation service
-# can reload the matrixs using the method "reload" -> tagrecommendation/reload
-
-
+# Once the files are generated the recommendation service is restarted and ready.

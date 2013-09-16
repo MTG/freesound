@@ -50,7 +50,9 @@ class TagRecommendationServer(resource.Resource):
         self.methods = server_interface(self)
         self.isLeaf = False
 
-        # Load tag recommender
+        self.load()
+
+    def load(self):
         try:
             tag_recommendation_data = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
             DATABASE = tag_recommendation_data['database']
@@ -71,11 +73,12 @@ class TagRecommendationServer(resource.Resource):
             }
 
         try:
-            index = loadFromJson(RECOMMENDATION_DATA_DIR + 'Index.json')
-            self.index_stats['biggest_id_in_index'] = max([int(key) for key in index.keys()])
-        except:
+            self.index = loadFromJson(RECOMMENDATION_DATA_DIR + 'Index.json')
+            self.index_stats['biggest_id_in_index'] = max([int(key) for key in self.index.keys()])
+        except Exception, e:
             logger.info("Index file not present. Listening for indexing data from appservers.")
             self.index_stats['biggest_id_in_index'] = 0
+            self.index = dict()
 
     def error(self,message):
         return json.dumps({'Error': message})
@@ -104,24 +107,8 @@ class TagRecommendationServer(resource.Resource):
         return json.dumps(result)
 
     def reload(self):
-        # Load tag recommender
-        try:
-            tag_recommendation_data = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_database_and_class_names.json')
-            DATABASE = tag_recommendation_data['database']
-            CLASSES = tag_recommendation_data['classes']
-            self.index_stats = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
-        except Exception, e:
-            raise Exception("No metadata found for computed matrixs. Tag recommendation system can not start.")
-
-        self.cbtr = None
-        try:
-
-            self.cbtr = CommunityBasedTagRecommender(dataset=DATABASE, classes=CLASSES)
-            self.cbtr.load_recommenders()
-            result = {'error': False, 'result': "Server reloaded"}
-        except Exception, e:
-            result = {'error': True, 'result': str(e)}
-
+        self.load()
+        result = {'error': False, 'result': "Server reloaded"}
         return json.dumps(result)
 
     def last_indexed_id(self):
@@ -133,19 +120,16 @@ class TagRecommendationServer(resource.Resource):
         sound_tags = [stags.split(",") for stags in sound_tagss[0].split("-!-!-")]
         logger.info('Adding %i sounds to recommendation index' % len(sound_ids))
 
-        try:
-            index = loadFromJson(RECOMMENDATION_DATA_DIR + 'Index.json')
-        except Exception, e:
-            index = dict()
+
 
         for count, sound_id in enumerate(sound_ids):
             sid = sound_id
             stags = sound_tags[count]
-            index[sid] = stags
+            self.index[sid] = stags
 
-        if len(index.keys()) % 1000 == 0:
+        if len(self.index.keys()) % 1000 == 0:
             # Every 1000 indexed sounds, save the index
-            saveToJson(RECOMMENDATION_DATA_DIR + 'Index.json', index, verbose=False)
+            saveToJson(RECOMMENDATION_DATA_DIR + 'Index.json', self.index, verbose=False)
 
         result = {'error': False, 'result': True}
         return json.dumps(result)

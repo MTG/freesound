@@ -64,12 +64,18 @@ class TagRecommendationServer(resource.Resource):
 
         try:
             self.index_stats = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
-            logger.info("Matrices computed out of information from %i sounds" % self.index_stats['n_sounds'])
+            logger.info("Matrices computed out of information from %i sounds" % self.index_stats['n_sounds_in_matrix'])
         except Exception, e:
             self.index_stats = {
-                'biggest_id': 0,
-                'n_sounds': 0,
+                'n_sounds_in_matrix': 0,
             }
+
+        try:
+            index = loadFromJson(RECOMMENDATION_DATA_DIR + 'Index.json')
+            self.index_stats['biggest_id_in_index'] = max([int(key) for key in index.keys()])
+        except:
+            logger.info("Index file not present. Listening for indexing data from appservers.")
+            self.index_stats['biggest_id_in_index'] = 0
 
     def error(self,message):
         return json.dumps({'Error': message})
@@ -119,7 +125,7 @@ class TagRecommendationServer(resource.Resource):
         return json.dumps(result)
 
     def last_indexed_id(self):
-        result = {'error': False, 'result': self.index_stats['biggest_id']}
+        result = {'error': False, 'result': self.index_stats['biggest_id_in_index']}
         return json.dumps(result)
 
     def add_to_index(self, sound_ids, sound_tagss):

@@ -84,8 +84,8 @@ class RecommendationDataProcessor:
                 break
 
         stats = {
-            'n_sounds': len(sound_ids),
-            'biggest_id': max([int(sid) for sid in sound_ids])
+            'n_sounds_in_matrix': len(sound_ids),
+            #'biggest_id': max([int(sid) for sid in sound_ids])
         }
         saveToJson(RECOMMENDATION_TMP_DATA_DIR + 'Current_index_stats.json', stats)
         if self.verbose:

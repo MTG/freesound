@@ -60,10 +60,11 @@ class TagRecommendationServer(resource.Resource):
 
         except:
             self.cbtr = None
-            logger.info("No data was, recommendation system not loading for the moment.")
+            logger.info("No computed matrices were found, recommendation system not loading for the moment (but service listening for data to come).")
 
         try:
             self.index_stats = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
+            logger.info("Matrices computed out of information from %i sounds" % self.index_stats['n_sounds'])
         except Exception, e:
             self.index_stats = {
                 'biggest_id': 0,

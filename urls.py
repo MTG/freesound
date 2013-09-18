@@ -110,6 +110,9 @@ urlpatterns = patterns('',
     # api views
     (r'^api/', include('api.urls')),
 
+    # apiv2 views
+    (r'^apiv2/', include('apiv2.urls')),
+
     # 500 view
     url(r'^crash_me/$',
         accounts.views.crash_me,

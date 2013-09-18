@@ -62,6 +62,8 @@ INSTALLED_APPS = (
     'django_extensions',
     'tickets',
     'gunicorn',
+    'rest_framework',
+    'apiv2',
     #'test_utils', # Don't use this in production!
 )
 
@@ -231,5 +233,12 @@ ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/essentia_1.2.2_extractor/s
 # parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
+
+# APIV2 settings
+################
+
+REST_FRAMEWORK = {
+    'PAGINATE_BY': 15
+}
 
 from logger import LOGGING

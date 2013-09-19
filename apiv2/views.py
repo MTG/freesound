@@ -20,16 +20,14 @@
 #     See AUTHORS file.
 #
 
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer
 from sounds.models import Sound
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
-from django.http import Http404
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework.reverse import reverse
 from rest_framework import generics
-from rest_framework.views import APIView
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 
 @api_view(('GET',))
@@ -43,9 +41,10 @@ class SoundDetail(generics.RetrieveAPIView):
     """
     Detailed sound information.
     """
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
     serializer_class = SoundSerializer
-
 
 
 class UserDetail(generics.RetrieveAPIView):

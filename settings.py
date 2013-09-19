@@ -63,6 +63,7 @@ INSTALLED_APPS = (
     'tickets',
     'gunicorn',
     'rest_framework',
+    'rest_framework.authtoken',
     'apiv2',
     #'test_utils', # Don't use this in production!
 )
@@ -238,7 +239,8 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 ################
 
 REST_FRAMEWORK = {
-    'PAGINATE_BY': 15
+    'PAGINATE_BY': 15,
+    #'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',)
 }
 
 from logger import LOGGING

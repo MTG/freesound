@@ -46,7 +46,7 @@ from utils.filesystem import generate_tree, md5file
 from utils.functional import combine_dicts
 from utils.images import extract_square
 from utils.pagination import paginate
-from utils.text import slugify
+from utils.text import slugify, remove_control_chars
 from geotags.models import GeoTag
 from django.contrib import messages
 from settings import SOUNDS_PER_DESCRIBE_ROUND
@@ -502,9 +502,7 @@ def describe_sounds(request):
                 sound.geotag = geotag
             # set the tags and descriptions
             data = forms[i]['description'].cleaned_data
-            description = ''.join(c for c in data.get('description', '') 
-                if (ord(c) >= 32 or ord(c) in [9,10,13]))            
-            sound.description = description
+            sound.description = remove_control_chars(data.get('description', ''))
             sound.set_tags(data.get('tags'))
             sound.save()
             # remember to process the file

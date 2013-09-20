@@ -502,7 +502,9 @@ def describe_sounds(request):
                 sound.geotag = geotag
             # set the tags and descriptions
             data = forms[i]['description'].cleaned_data
-            sound.description = data.get('description', '')
+            description = ''.join(c for c in data.get('description', '') 
+                if (ord(c) >= 32 or ord(c) in [9,10,13]))            
+            sound.description = description
             sound.set_tags(data.get('tags'))
             sound.save()
             # remember to process the file

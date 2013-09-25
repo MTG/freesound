@@ -20,6 +20,12 @@
 #     See AUTHORS file.
 #
 
+# packages to install:
+#   - django-oauth2-provider
+#   - djangorestframework
+#   - markdown (for browseable api)
+
+
 from django.conf.urls.defaults import patterns, url, include
 from apiv2 import views
 

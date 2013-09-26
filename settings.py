@@ -63,8 +63,9 @@ INSTALLED_APPS = (
     'tickets',
     'gunicorn',
     'rest_framework',
-    'rest_framework.authtoken',
     'apiv2',
+    'provider',
+    'provider.oauth2',
     #'test_utils', # Don't use this in production!
 )
 
@@ -240,7 +241,14 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 REST_FRAMEWORK = {
     'PAGINATE_BY': 15,
+    'PAGINATE_BY_PARAM': 'page_size',
+    'MAX_PAGINATE_BY': 100,
     #'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',)
 }
+
+# Oauth2 provider settings
+OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60)
+OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
+OAUTH_SINGLE_ACCESS_TOKEN = False # If set to true can give 500 errors when refreshing tokens and getting new access tokens
 
 from logger import LOGGING

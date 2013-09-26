@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,20 +18,14 @@
 #     See AUTHORS file.
 #
 
-# packages to install:
-#   - django-oauth2-provider
-#   - djangorestframework
-#   - markdown (for browseable api)
+import django.forms as forms
 
-
-from django.conf.urls.defaults import patterns, url, include
-from apiv2 import views
-
-urlpatterns = patterns('apiv2.views',
-    url(r'^$', 'api_root'),
-#    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
-    url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
-    url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
-    url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
-    url(r'^oauth2/', include('provider.oauth2.urls', namespace='oauth2')),
-)
+class ApiV2ClientForm(forms.Form):
+    name          = forms.CharField(label='Application name')
+    url           = forms.URLField(label='Application url')
+    redirect_uri  = forms.URLField(label='Your application\'s callback URL')
+    description   = forms.CharField(label='Describe your application', widget=forms.Textarea)
+    accepted_tos  = forms.BooleanField(label='',
+                                       help_text='Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API',
+                                       required=True,
+                                       error_messages={'required': 'You must accept the terms of use in order to get access to the API.'})

@@ -20,20 +20,14 @@
 #     See AUTHORS file.
 #
 
-# packages to install:
-#   - django-oauth2-provider
-#   - djangorestframework
-#   - markdown (for browseable api)
+from django.contrib import admin
+from apiv2.models import ApiV2Client
 
 
-from django.conf.urls.defaults import patterns, url, include
-from apiv2 import views
+class ApiV2ClientAdmin(admin.ModelAdmin):
+    raw_id_fields = ('user',)
+    search_fields = ('=user__username', )
+    list_filter = ('status', )
+    list_display = ("user", "key", "oauth_client", "status", "allow_oauth_passoword_grant")
 
-urlpatterns = patterns('apiv2.views',
-    url(r'^$', 'api_root'),
-#    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
-    url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
-    url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
-    url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
-    url(r'^oauth2/', include('provider.oauth2.urls', namespace='oauth2')),
-)
+admin.site.register(ApiV2Client, ApiV2ClientAdmin)

@@ -26,7 +26,7 @@ from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializ
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import generics
-from rest_framework.authentication import TokenAuthentication
+from apiv2.authentication import OAuth2Authentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -41,7 +41,7 @@ class SoundDetail(generics.RetrieveAPIView):
     """
     Detailed sound information.
     """
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (OAuth2Authentication, TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
     serializer_class = SoundSerializer

@@ -19,21 +19,3 @@
 # Authors:
 #     See AUTHORS file.
 #
-
-# packages to install:
-#   - django-oauth2-provider
-#   - djangorestframework
-#   - markdown (for browseable api)
-
-
-from django.conf.urls.defaults import patterns, url, include
-from apiv2 import views
-
-urlpatterns = patterns('apiv2.views',
-    url(r'^$', 'api_root'),
-#    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
-    url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
-    url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
-    url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
-    url(r'^oauth2/', include('provider.oauth2.urls', namespace='oauth2')),
-)

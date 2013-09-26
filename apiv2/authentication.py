@@ -34,8 +34,7 @@ We overwrite OAuth2Authentication from rest_framework.authentication because of 
 Django-oauth2-provider tries to import a function only present in django >= 1.4 (django.utils.timezone), and we
 are using 1.3.
 
-We may use this overwritten class to add some extra funcitonality like enabling or disabling oauth2 grant types
-depending on the client.
+We may use this overwritten class to add some extra funcitonality.
 '''
 
 
@@ -79,7 +78,7 @@ class OAuth2Authentication(BaseAuthentication):
         """
 
         try:
-            token = oauth2_provider.models.AccessToken.objects.select_related('user')
+            token = oauth2_provider.models.AccessToken.objects.select_related('user','client')
             # provider_now switches to timezone aware datetime when
             # the oauth2_provider version supports to it.
             token = token.get(token=access_token, expires__gt=provider_now())
@@ -89,8 +88,10 @@ class OAuth2Authentication(BaseAuthentication):
         user = token.user
 
         if not user.is_active:
-            msg = 'User inactive or deleted: %s' % user.username
-            raise exceptions.AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed('User inactive or deleted')
+
+        if not token.client.apiv2_client.status == 'OK':
+            raise exceptions.AuthenticationFailed('Suspended token or token pending for approval')
 
         return (user, token)
 
@@ -104,7 +105,7 @@ class OAuth2Authentication(BaseAuthentication):
 
 
 '''
-We also overwrite TokenAuthentication so we can add extra features.
+We also overwrite TokenAuthentication so we can add extra features and change the default Token model.
 '''
 
 
@@ -119,12 +120,6 @@ class TokenAuthentication(BaseAuthentication):
     """
 
     model = ApiV2Client
-    """
-    A custom token model may be used, but must have the following properties.
-
-    * key -- The string identifying the token
-    * user -- The user to which the token belongs
-    """
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
@@ -149,6 +144,9 @@ class TokenAuthentication(BaseAuthentication):
 
         if not token.user.is_active:
             raise exceptions.AuthenticationFailed('User inactive or deleted')
+
+        if not token.status == 'OK':
+            raise exceptions.AuthenticationFailed('Suspended token or token pending for approval')
 
         return (token.user, token)
 

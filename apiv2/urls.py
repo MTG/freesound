@@ -27,8 +27,13 @@
 
 
 from django.conf.urls.defaults import patterns, url, include
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from apiv2 import views
+from provider.oauth2.views import Authorize, Redirect, Capture
+from apiv2.utils import AccessTokenView
 
+'''
 urlpatterns = patterns('apiv2.views',
     url(r'^$', 'api_root'),
 #    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
@@ -37,3 +42,19 @@ urlpatterns = patterns('apiv2.views',
     url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
     url(r'^oauth2/', include('provider.oauth2.urls', namespace='oauth2')),
 )
+'''
+
+urlpatterns = patterns('apiv2.views',
+       url(r'^$', 'api_root'),
+       #    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
+       url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
+       url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
+       url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
+       #url(r'^oauth2/', include('provider.oauth2.urls', namespace='oauth2')),
+       url('^oauth2/authorize/?$', login_required(Capture.as_view()), name='oauth2:capture'),
+       url('^oauth2/authorize/confirm/?$', login_required(Authorize.as_view()), name='oauth2:authorize'),
+       url('^oauth2/redirect/?$', login_required(Redirect.as_view()), name='oauth2:redirect'),
+       url('^oauth2/access_token/?$', csrf_exempt(AccessTokenView.as_view()), name='oauth2:access_token'),
+)
+
+

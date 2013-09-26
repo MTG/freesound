@@ -33,7 +33,7 @@ class ApiV2Client(models.Model):
 
     DEFAULT_STATUS = 'OK'
 
-    oauth_client                = models.ForeignKey(Client, related_name='apiv2_client', default=None, null=True, blank=True)
+    oauth_client                = models.OneToOneField(Client, related_name='apiv2_client', default=None, null=True, blank=True)
     key                         = models.CharField(max_length=40, blank=True)
     user                        = models.ForeignKey(User, related_name='apiv2_client')
     status                      = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)

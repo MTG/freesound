@@ -39,7 +39,7 @@ def process(sound):
         logging_message = "Failed to process sound with id %s\n" % sound.id
         logging_message += "\tmessage: %s\n" % message
         if error:
-            logging_message += "\terror: %s\n" + str(error)
+            logging_message += "\terror: %s\n" % str(error)
         write_log(logging_message)
 
     def success(message):

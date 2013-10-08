@@ -28,6 +28,6 @@ class ApiV2ClientAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     search_fields = ('=user__username', )
     list_filter = ('status', )
-    list_display = ("user", "key", "oauth_client", "status", "allow_oauth_passoword_grant")
+    list_display = ("user", "client_id", "client_secret", "oauth_client", "status", "allow_oauth_passoword_grant")
 
 admin.site.register(ApiV2Client, ApiV2ClientAdmin)

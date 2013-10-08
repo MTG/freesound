@@ -1,7 +1,7 @@
 
 
-- View to apply for api key
 - Customize online interactive api
 - How to log in the views?
 - How to access developer and user in the views?
 - Simple login window
+- User management of existing access tokens

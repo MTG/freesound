@@ -28,6 +28,11 @@ from rest_framework.decorators import api_view
 from rest_framework import generics
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from forms import ApiV2ClientForm
+from models import ApiV2Client
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 
 
 @api_view(('GET',))
@@ -65,3 +70,27 @@ class UserSoundList(generics.ListAPIView):
         return Sound.objects.select_related('user').filter(moderation_state="OK",
                                                            processing_state="OK",
                                                            user__id=self.kwargs['pk'])
+
+
+
+### View for applying for an apikey
+
+@login_required
+def create_apiv2_key(request):
+    if request.method == 'POST':
+        form = ApiV2ClientForm(request.POST)
+        if form.is_valid():
+            db_api_key = ApiV2Client()
+            db_api_key.user = request.user
+            db_api_key.description = form.cleaned_data['description']
+            db_api_key.name = form.cleaned_data['name']
+            db_api_key.url = form.cleaned_data['url']
+            db_api_key.redirect_uri = form.cleaned_data['redirect_uri']
+            db_api_key.accepted_tos = form.cleaned_data['accepted_tos']
+            db_api_key.save()
+            form = ApiV2ClientForm()
+    else:
+        form = ApiV2ClientForm()
+    return render_to_response('api/apply_key_apiv2.html',
+                              { 'user': request.user, 'form': form },
+                              context_instance=RequestContext(request))

@@ -45,6 +45,7 @@ urlpatterns = patterns('apiv2.views',
 '''
 
 urlpatterns = patterns('apiv2.views',
+       url(r'^apply/$', views.create_apiv2_key),
        url(r'^$', 'api_root'),
        #    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
        url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),

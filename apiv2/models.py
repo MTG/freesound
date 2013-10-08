@@ -33,6 +33,12 @@ class ApiV2Client(models.Model):
 
     DEFAULT_STATUS = 'OK'
 
+    SCOPE_CHOICES = (('r', 'read'),
+                     ('w', 'write'),
+                     ('rw', 'read+write'))
+
+    DEFAULT_SCOPE = 'r'
+
     oauth_client                = models.OneToOneField(Client, related_name='apiv2_client', default=None, null=True, blank=True)
     key                         = models.CharField(max_length=40, blank=True)
     user                        = models.ForeignKey(User, related_name='apiv2_client')
@@ -43,24 +49,36 @@ class ApiV2Client(models.Model):
     description                 = models.TextField(blank=True)
     accepted_tos                = models.BooleanField(default=False)
     allow_oauth_passoword_grant = models.BooleanField(default=False)
+    scope                       = models.CharField(max_length=3, default=DEFAULT_SCOPE, choices=SCOPE_CHOICES)
     created                     = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
         return "credentials for developer %s" % self.user.username
 
     def save(self, *args, **kwargs):
-        # Set oauth client (create oauth client object)
-        oauth_cient = Client.objects.create(
-            user=self.user,
-            name=self.name,
-            url=self.url,
-            redirect_uri=self.redirect_uri,
-            client_type=1, # Public client
-        )
-        self.oauth_client = oauth_cient
 
-        # Set key (using same key as in oauth client to simplify work for developers)
-        self.key = self.oauth_client.client_secret
+        # If oauth client does not exist create a new one (that means ApiV2Client is being saved for the first time)
+        # Otherwise update existing client
+
+        if not self.oauth_client:
+            # Set oauth client (create oauth client object)
+            oauth_cient = Client.objects.create(
+                user=self.user,
+                name=self.name,
+                url=self.url,
+                redirect_uri=self.redirect_uri,
+                client_type=1, # Public client
+            )
+            self.oauth_client = oauth_cient
+
+            # Set key (using same key as in oauth client to simplify work for developers)
+            self.key = self.oauth_client.client_secret
+
+        else:
+            # Update existing oauth client
+            self.oauth_client.name = self.name
+            self.oauth_client.url = self.url
+            self.oauth_client.redirect_uri = self.redirect_uri
 
         return super(ApiV2Client, self).save(*args, **kwargs)
 
@@ -71,4 +89,3 @@ class ApiV2Client(models.Model):
     @property
     def client_secret(self):
         return self.oauth_client.client_secret
-

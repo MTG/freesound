@@ -1,0 +1,8 @@
+
+
+- Allow write access on a per-client basis
+- View to apply for api key
+- Customize online interactive api
+- How to log in the views?
+- How to access developer and user in the views?
+- Simple login window

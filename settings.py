@@ -239,7 +239,6 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 # APIV2 settings
 ################
 
-
 APIV2KEYS_ALLOWED_FOR_APIV1 = True
 
 REST_FRAMEWORK = {

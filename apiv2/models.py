@@ -89,3 +89,7 @@ class ApiV2Client(models.Model):
     @property
     def client_secret(self):
         return self.oauth_client.client_secret
+
+    @property
+    def version(self):
+        return "V2"

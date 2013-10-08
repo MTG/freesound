@@ -21,8 +21,15 @@
 from django.conf.urls.defaults import *
 from piston.resource import Resource
 from handlers import *
-from views import create_api_key
 from api_utils import build_invalid_url
+import settings
+
+if not settings.APIV2KEYS_ALLOWED_FOR_APIV1:
+    from views import create_api_key as apply_for_api_key_view
+else:
+    from apiv2.views import create_apiv2_key as apply_for_api_key_view
+
+
 
 class AR(Resource):
     def __call__(self, *args, **kwargs):
@@ -63,7 +70,7 @@ urlpatterns = patterns('',
     url(r'^pool/info/$',                                            SoundPoolInfoHandler(),     name='api-pool-info-slash'),
     
     # website
-    url(r'^apply/$', create_api_key),
+    url(r'^apply/$', apply_for_api_key_view),
 
     # anything else (invalid urls)
     url(r'/$', build_invalid_url ),

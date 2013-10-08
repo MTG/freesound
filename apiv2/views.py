@@ -33,6 +33,7 @@ from models import ApiV2Client
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+import settings
 
 
 @api_view(('GET',))
@@ -72,11 +73,11 @@ class UserSoundList(generics.ListAPIView):
                                                            user__id=self.kwargs['pk'])
 
 
-
 ### View for applying for an apikey
 
 @login_required
 def create_apiv2_key(request):
+    user_credentials = None
     if request.method == 'POST':
         form = ApiV2ClientForm(request.POST)
         if form.is_valid():
@@ -90,7 +91,14 @@ def create_apiv2_key(request):
             db_api_key.save()
             form = ApiV2ClientForm()
     else:
+        if settings.APIV2KEYS_ALLOWED_FOR_APIV1:
+            user_credentials = list(request.user.apiv2_client.all()) + list(request.user.api_keys.all())
+        else:
+            user_credentials = request.user.apiv2_client.all()
         form = ApiV2ClientForm()
     return render_to_response('api/apply_key_apiv2.html',
-                              { 'user': request.user, 'form': form },
-                              context_instance=RequestContext(request))
+                              { 'user': request.user,
+                                'form': form,
+                                'user_credentials': user_credentials,
+                                'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1
+                              }, context_instance=RequestContext(request))

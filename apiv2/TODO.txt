@@ -1,6 +1,5 @@
 
 
-- Allow write access on a per-client basis
 - View to apply for api key
 - Customize online interactive api
 - How to log in the views?

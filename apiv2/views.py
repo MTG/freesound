@@ -65,4 +65,3 @@ class UserSoundList(generics.ListAPIView):
         return Sound.objects.select_related('user').filter(moderation_state="OK",
                                                            processing_state="OK",
                                                            user__id=self.kwargs['pk'])
-

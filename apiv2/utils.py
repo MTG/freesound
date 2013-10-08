@@ -23,13 +23,14 @@
 from provider.oauth2.views import AccessTokenView
 from provider.views import OAuthError
 from provider.oauth2.forms import PasswordGrantForm
-
+from provider.oauth2.models import RefreshToken, AccessToken
+from provider.scope import to_names, to_int
 
 class AccessTokenView(AccessTokenView):
 
     '''
     We override only a function of the AccessTokenView class in order to be able to set different
-    allowed grant types per API client.
+    allowed grant types per API client and to resctrict scopes on a client basis.
     '''
 
     def get_password_grant(self, request, data, client):
@@ -40,3 +41,23 @@ class AccessTokenView(AccessTokenView):
         if not form.is_valid():
             raise OAuthError(form.errors)
         return form.cleaned_data
+
+    def create_access_token(self, request, user, scope, client):
+
+        # Filter out requested scopes and only leave those allowed to the client
+        client_scope = client.apiv2_client.get_scope_display()
+        allowed_scopes = [requested_scope for requested_scope in to_names(scope) if requested_scope in client_scope]
+
+        return AccessToken.objects.create(
+            user=user,
+            client=client,
+            scope=to_int(*allowed_scopes)
+        )
+
+    def create_refresh_token(self, request, user, scope, access_token, client):
+
+        return RefreshToken.objects.create(
+            user=user,
+            access_token=access_token,
+            client=client
+        )

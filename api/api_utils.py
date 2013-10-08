@@ -22,6 +22,7 @@ import settings
 from piston.utils import rc
 import traceback
 from models import ApiKey
+from apiv2.models import ApiV2Client
 from piston.emitters import Emitter
 from piston.handler import typemapper
 import logging
@@ -113,8 +114,19 @@ class auth():
                 try:
                     db_api_key = ApiKey.objects.get(key=api_key, status='OK')
                 except ApiKey.DoesNotExist:
-                    logger.error('401 API error: Authentication error (wrong api key)')
-                    raise ReturnError(401, "AuthenticationError",
+                    if not settings.APIV2KEYS_ALLOWED_FOR_APIV1:
+                        logger.error('401 API error: Authentication error (wrong api key)')
+                        raise ReturnError(401, "AuthenticationError",
+                                          {"explanation":  "Supplied api_key does not exist"},
+                                          )
+                    else:
+                        # Look for the key in the ApiV2Client models. In this way keys for ApiV2 can be used for ApiV1
+                        try:
+                            db_api_key = ApiV2Client.objects.get(key=api_key, status='OK')
+
+                        except ApiV2Client.DoesNotExist:
+                            logger.error('401 API error: Authentication error (wrong api key)')
+                            raise ReturnError(401, "AuthenticationError",
                                           {"explanation":  "Supplied api_key does not exist"},
                                           )
 

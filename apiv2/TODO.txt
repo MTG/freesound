@@ -1,7 +1,6 @@
 
 
 - Customize online interactive api
-- How to log in the views?
 - Simple login window
 - User management of existing access tokens
 - Add support for api key as a request parameter in token auth

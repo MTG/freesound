@@ -34,6 +34,10 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils import get_authentication_details_form_request
 import settings
+import logging
+
+
+logger = logging.getLogger("api")
 
 
 @api_view(('GET',))
@@ -69,6 +73,7 @@ class UserSoundList(generics.ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         print "Auth method: %s, Developer: %s, End user: %s" % get_authentication_details_form_request(request)
+        logger.info("Test log")
         return super(UserSoundList, self).get(request, *args, **kwargs)
 
     def get_queryset(self):

@@ -4,5 +4,4 @@
 - Simple login window
 - User management of existing access tokens
 - Implement equivalent handlers and new write methods
-- Redirect 404 to not found api error (not general django 404)
 - add more formats to api (xml?)

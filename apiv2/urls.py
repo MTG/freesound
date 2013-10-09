@@ -56,6 +56,9 @@ urlpatterns = patterns('apiv2.views',
        url('^oauth2/authorize/confirm/?$', login_required(Authorize.as_view()), name='oauth2:authorize'),
        url('^oauth2/redirect/?$', login_required(Redirect.as_view()), name='oauth2:redirect'),
        url('^oauth2/access_token/?$', csrf_exempt(AccessTokenView.as_view()), name='oauth2:access_token'),
+
+       # Any other url
+       url(r'/$', views.return_invalid_url ),
 )
 
 

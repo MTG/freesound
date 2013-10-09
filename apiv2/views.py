@@ -24,7 +24,7 @@ from sounds.models import Sound
 from django.contrib.auth.models import User
 from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes
 from rest_framework import generics
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from forms import ApiV2ClientForm
@@ -60,6 +60,7 @@ class UserDetail(generics.RetrieveAPIView):
     """
     Detailed user information.
     """
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
 
@@ -80,6 +81,17 @@ class UserSoundList(generics.ListAPIView):
         return Sound.objects.select_related('user').filter(moderation_state="OK",
                                                            processing_state="OK",
                                                            user__id=self.kwargs['pk'])
+
+############
+# OTHER VEWS
+############
+
+### View for returning "Invalid url" 400 responses
+
+@api_view(['GET'])
+@authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
+def return_invalid_url(request):
+    return Response({'details': 'Invalid url'}, status=400)
 
 
 ### View for applying for an apikey

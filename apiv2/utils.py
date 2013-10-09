@@ -20,11 +20,11 @@
 #     See AUTHORS file.
 #
 
-from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView
 from provider.views import OAuthError
+from provider.scope import to_names, to_int
+from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
-from provider.scope import to_names, to_int
 
 
 class AccessTokenView(DjangoRestFrameworkAccessTokenView):

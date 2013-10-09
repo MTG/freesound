@@ -3,4 +3,6 @@
 - Customize online interactive api
 - Simple login window
 - User management of existing access tokens
-- Add support for api key as a request parameter in token auth
+- Implement equivalent handlers and new write methods
+- Redirect 404 to not found api error (not general django 404)
+- add more formats to api (xml?)

@@ -26,13 +26,13 @@ from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializ
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import generics
-from apiv2.authentication import OAuth2Authentication, TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from forms import ApiV2ClientForm
 from models import ApiV2Client
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from utils import get_authentication_details_form_request
 import settings
 
 
@@ -48,7 +48,6 @@ class SoundDetail(generics.RetrieveAPIView):
     Detailed sound information.
     """
     authentication_classes = (OAuth2Authentication, TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
     serializer_class = SoundSerializer
 
@@ -65,7 +64,12 @@ class UserSoundList(generics.ListAPIView):
     """
     List of sounds uploaded by user.
     """
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     serializer_class = SoundListSerializer
+
+    def get(self, request,  *args, **kwargs):
+        print get_authentication_details_form_request(request)
+        return super(UserSoundList, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
         return Sound.objects.select_related('user').filter(moderation_state="OK",

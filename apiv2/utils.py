@@ -61,3 +61,23 @@ class AccessTokenView(AccessTokenView):
             access_token=access_token,
             client=client
         )
+
+
+def get_authentication_details_form_request(request):
+    auth_method_name = None
+    user = None
+    developer = None
+
+    if request.successful_authenticator:
+        auth_method_name = request.successful_authenticator.authentication_method_name
+        if auth_method_name == "OAuth2":
+            user = request.user
+            developer = request.auth.user
+        elif auth_method_name == "Token":
+            user = None
+            developer = request.auth.user
+        elif auth_method_name == "Session":
+            user = request.user
+            developer = None
+
+    return auth_method_name, developer, user

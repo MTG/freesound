@@ -23,7 +23,7 @@
 from django.core.exceptions import ImproperlyConfigured
 from rest_framework import exceptions
 from rest_framework.authentication import get_authorization_header
-from rest_framework.authentication import BaseAuthentication
+from rest_framework.authentication import BaseAuthentication, SessionAuthentication as DjangoRestFrameworkSessionAuthentication
 from apiv2.models import ApiV2Client
 import provider.oauth2 as oauth2_provider
 import datetime
@@ -51,6 +51,10 @@ class OAuth2Authentication(BaseAuthentication):
             raise ImproperlyConfigured(
                 "The 'django-oauth2-provider' package could not be imported. "
                 "It is required for use with the 'OAuth2Authentication' class.")
+
+    @property
+    def authentication_method_name(self):
+        return "Oauth2"
 
     def authenticate(self, request):
         """
@@ -121,6 +125,10 @@ class TokenAuthentication(BaseAuthentication):
 
     model = ApiV2Client
 
+    @property
+    def authentication_method_name(self):
+        return "Token"
+
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 
@@ -152,3 +160,14 @@ class TokenAuthentication(BaseAuthentication):
 
     def authenticate_header(self, request):
         return 'Token'
+
+
+class SessionAuthentication(DjangoRestFrameworkSessionAuthentication):
+
+    """
+    Use Django's session framework for authentication.
+    """
+
+    @property
+    def authentication_method_name(self):
+        return "Session"

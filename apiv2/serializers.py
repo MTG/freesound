@@ -40,7 +40,7 @@ def prepend_base(rel):
 # SOUND SERIALIZERS
 ###################
 
-DEFAULT_FIELDS_IN_SOUND_LIST = 'url'  # Separated by commas (None = all)
+DEFAULT_FIELDS_IN_SOUND_LIST = 'url,uri'  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_SOUND_DETAIL = None  # Separated by commas (None = all)
 
 

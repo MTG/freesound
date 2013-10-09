@@ -20,13 +20,14 @@
 #     See AUTHORS file.
 #
 
-from provider.oauth2.views import AccessTokenView
+from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView
 from provider.views import OAuthError
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
 from provider.scope import to_names, to_int
 
-class AccessTokenView(AccessTokenView):
+
+class AccessTokenView(DjangoRestFrameworkAccessTokenView):
 
     '''
     We override only a function of the AccessTokenView class in order to be able to set different
@@ -72,7 +73,7 @@ def get_authentication_details_form_request(request):
         auth_method_name = request.successful_authenticator.authentication_method_name
         if auth_method_name == "OAuth2":
             user = request.user
-            developer = request.auth.user
+            developer = request.auth.client.user
         elif auth_method_name == "Token":
             user = None
             developer = request.auth.user

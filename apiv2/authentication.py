@@ -54,7 +54,7 @@ class OAuth2Authentication(BaseAuthentication):
 
     @property
     def authentication_method_name(self):
-        return "Oauth2"
+        return "OAuth2"
 
     def authenticate(self, request):
         """

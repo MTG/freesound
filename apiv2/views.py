@@ -68,7 +68,7 @@ class UserSoundList(generics.ListAPIView):
     serializer_class = SoundListSerializer
 
     def get(self, request,  *args, **kwargs):
-        print get_authentication_details_form_request(request)
+        print "Auth method: %s, Developer: %s, End user: %s" % get_authentication_details_form_request(request)
         return super(UserSoundList, self).get(request, *args, **kwargs)
 
     def get_queryset(self):

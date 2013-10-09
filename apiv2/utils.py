@@ -22,11 +22,9 @@
 
 from provider.views import OAuthError
 from provider.scope import to_names, to_int
-from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView
+from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView, Authorize as DjangoOauth2ProviderAuthorize
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
-from rest_framework.exceptions import APIException
-from rest_framework import status
 
 
 class AccessTokenView(DjangoRestFrameworkAccessTokenView):
@@ -84,3 +82,7 @@ def get_authentication_details_form_request(request):
             developer = None
 
     return auth_method_name, developer, user
+
+
+class Authorize(DjangoOauth2ProviderAuthorize):
+    template_name = 'api/authorize_app.html'

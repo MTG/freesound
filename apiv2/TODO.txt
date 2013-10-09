@@ -5,3 +5,4 @@
 - User management of existing access tokens
 - Implement equivalent handlers and new write methods
 - add more formats to api (xml?)
+- see what happens with expired permissions... should token be refreshed before it expires?

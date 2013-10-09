@@ -27,11 +27,7 @@
 
 
 from django.conf.urls.defaults import patterns, url, include
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
 from apiv2 import views
-from provider.oauth2.views import Authorize, Redirect, Capture
-from apiv2.utils import AccessTokenView
 
 
 urlpatterns = patterns('apiv2.views',

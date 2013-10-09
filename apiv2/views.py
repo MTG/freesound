@@ -53,7 +53,7 @@ class SoundDetail(generics.RetrieveAPIView):
     """
     Detailed sound information.
     """
-    authentication_classes = (OAuth2Authentication, TokenAuthentication,)
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     serializer_class = SoundSerializer
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
 

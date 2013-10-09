@@ -20,33 +20,21 @@
 #     See AUTHORS file.
 #
 
-# packages to install:
-#   - django-oauth2-provider ('0.2.6')
-#   - djangorestframework ('2.3.8')
-#   - markdown (for browseable api)
-
-
-from django.conf.urls.defaults import patterns, url, include
+from django.conf.urls.defaults import patterns, url
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from apiv2 import views
 from provider.oauth2.views import Authorize, Redirect, Capture
 from apiv2.utils import AccessTokenView
 
+'''
+We create oauth2_urls.py files and then include to the main apiv2/urls.py because we were having namespace problems
+otherwise. Apparently if namespace is defined manually (ex: name='oauth2:capture'), Django complains.
+'''
 
-urlpatterns = patterns('apiv2.views',
-       url(r'^apply/$', views.create_apiv2_key),
-       url(r'^$', 'api_root'),
-       #    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
-       url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
-       url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
-       url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
-
-       # Include views for three-legged auth process
-       url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2')),
-
-       # Any other url
-       url(r'/$', views.return_invalid_url ),
+urlpatterns = patterns('',
+    url('^authorize/?$', login_required(Capture.as_view()), name='capture'),
+    url('^authorize/confirm/?$', login_required(Authorize.as_view()), name='authorize'),
+    url('^redirect/?$', login_required(Redirect.as_view()), name='redirect'),
+    url('^access_token/?$', csrf_exempt(AccessTokenView.as_view()), name='access_token'),
 )
-
 

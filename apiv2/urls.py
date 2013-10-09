@@ -21,8 +21,8 @@
 #
 
 # packages to install:
-#   - django-oauth2-provider
-#   - djangorestframework
+#   - django-oauth2-provider ('0.2.6')
+#   - djangorestframework ('2.3.8')
 #   - markdown (for browseable api)
 
 
@@ -33,16 +33,6 @@ from apiv2 import views
 from provider.oauth2.views import Authorize, Redirect, Capture
 from apiv2.utils import AccessTokenView
 
-'''
-urlpatterns = patterns('apiv2.views',
-    url(r'^$', 'api_root'),
-#    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
-    url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
-    url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
-    url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
-    url(r'^oauth2/', include('provider.oauth2.urls', namespace='oauth2')),
-)
-'''
 
 urlpatterns = patterns('apiv2.views',
        url(r'^apply/$', views.create_apiv2_key),

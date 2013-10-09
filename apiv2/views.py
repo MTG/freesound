@@ -25,6 +25,7 @@ from django.contrib.auth.models import User
 from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
+from rest_framework import status
 from rest_framework import generics
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from forms import ApiV2ClientForm
@@ -33,6 +34,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils import get_authentication_details_form_request
+from exceptions import NotFoundException, InvalidUrlException
 import settings
 import logging
 
@@ -52,8 +54,8 @@ class SoundDetail(generics.RetrieveAPIView):
     Detailed sound information.
     """
     authentication_classes = (OAuth2Authentication, TokenAuthentication,)
-    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
     serializer_class = SoundSerializer
+    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
 
 
 class UserDetail(generics.RetrieveAPIView):
@@ -61,8 +63,8 @@ class UserDetail(generics.RetrieveAPIView):
     Detailed user information.
     """
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-    queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
+    queryset = User.objects.filter(is_active=True)
 
 
 class UserSoundList(generics.ListAPIView):
@@ -78,24 +80,29 @@ class UserSoundList(generics.ListAPIView):
         return super(UserSoundList, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
+        try:
+            User.objects.get(id=self.kwargs['pk'], is_active=True)
+        except User.DoesNotExist:
+            raise NotFoundException()
+
         return Sound.objects.select_related('user').filter(moderation_state="OK",
                                                            processing_state="OK",
                                                            user__id=self.kwargs['pk'])
+
 
 ############
 # OTHER VEWS
 ############
 
-### View for returning "Invalid url" 400 responses
 
+### View for returning "Invalid url" 400 responses
 @api_view(['GET'])
 @authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
 def return_invalid_url(request):
-    return Response({'details': 'Invalid url'}, status=400)
+    raise InvalidUrlException
 
 
 ### View for applying for an apikey
-
 @login_required
 def create_apiv2_key(request):
     user_credentials = None

@@ -25,6 +25,8 @@ from provider.scope import to_names, to_int
 from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
+from rest_framework.exceptions import APIException
+from rest_framework import status
 
 
 class AccessTokenView(DjangoRestFrameworkAccessTokenView):

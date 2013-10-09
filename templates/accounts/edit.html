@@ -31,6 +31,12 @@
         </form>
     </div><!-- #edit_avatar -->
 
+    {% if has_granted_permissions %}
+    <div id="app_permissions" class="content_box">
+        <h3>App permissions</h3>
+        <p>Manage your list of permissions granted to third-party applications <a href="{% url access-tokens %}">here</a>.</p>
+    </div>
+    {% endif %}
 
     <div id="reset_password_and_email" class="content_box">
         <h3>Password and email addres</h3>

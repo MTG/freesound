@@ -25,6 +25,7 @@ import django.contrib.auth.views as authviews
 import messages.views as messages
 import accounts.views as accounts
 import bookmarks.views as bookmarks
+import apiv2.views as api
 
 urlpatterns = patterns('accounts.views',
 
@@ -120,4 +121,7 @@ urlpatterns = patterns('accounts.views',
     url(r'^messages/new/$', messages.new_message, name='messages-new'),
     url(r'^messages/new/(?P<username>[^//]+)/$', messages.new_message, name='messages-new', kwargs=dict(message_id=None)),
     url(r'^messages/new/username_lookup$', messages.username_lookup, name='messages-username_lookup'),
+
+    url(r'^app_permissions/$', api.granted_permissions, name='access-tokens'),
+    url(r'^app_permissions/revoke_permission/(?P<client_id>[^//]+)/$', api.revoke_permission, name='revoke-permission'),
 )

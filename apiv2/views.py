@@ -25,7 +25,6 @@ from django.contrib.auth.models import User
 from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
-from rest_framework import status
 from rest_framework import generics
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from forms import ApiV2ClientForm
@@ -37,6 +36,8 @@ from utils import get_authentication_details_form_request
 from exceptions import NotFoundException, InvalidUrlException
 import settings
 import logging
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 
 logger = logging.getLogger("api")
@@ -130,3 +131,36 @@ def create_apiv2_key(request):
                                 'user_credentials': user_credentials,
                                 'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1
                               }, context_instance=RequestContext(request))
+
+
+### View for managing permissions granted to apps
+from provider.oauth2.models import AccessToken
+
+@login_required
+def granted_permissions(request):
+    user = request.user
+    tokens_raw = AccessToken.objects.select_related('client').filter(user=user).order_by('expires')
+    tokens = []
+    token_names = []
+    for token in tokens_raw:
+        if not token.client.apiv2_client.name in token_names:
+            tokens.append({
+                'client_name': token.client.apiv2_client.name,
+                'expiration_date': token.expires,
+                'client_id': token.client.apiv2_client.client_id,
+            })
+        token_names.append(token.client.apiv2_client.name)
+
+    return render_to_response('api/manage_permissions.html',
+                              {'user': request.user, 'tokens': tokens},
+                              context_instance=RequestContext(request))
+
+
+@login_required
+def revoke_permission(request, client_id):
+    user = request.user
+    tokens = AccessToken.objects.filter(user=user, client__client_id=client_id)
+    for token in tokens:
+        token.delete()
+
+    return HttpResponseRedirect(reverse("access-tokens"))

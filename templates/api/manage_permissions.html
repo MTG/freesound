@@ -1,0 +1,30 @@
+{% extends "accounts/_section.html" %}
+
+
+{% block title %}{{user.username}} - Granted permissions{% endblock %}
+
+{% block section_content %}
+    <h1>Your granted permissions</h1>
+
+     {% if tokens %}
+     <p>This is the list of applications that you granted permission to use your credentials.
+     You can revoke the permission to any of the applications using this list.
+     <br>If you saw the "granted permission" page and still the application is not listed in this page, that means the
+         application did not correctly finish the last step of the authorization process and will not be able to act on your behalf.
+
+    <table>
+        <tr><th>Application name</th><th>Client id</th><th>Expires in</th><th></th></tr>
+        {% for token in tokens %}
+            <tr><td>{{ token.client_name }}</td><td>{{ token.client_id }}</td><td>{{ token.expiration_date }}</td>
+                <td>
+                   <a href="{% url revoke-permission token.client_id %}">Revoke access</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+         <p>Currently you have not granted any permission to any third-party application.</p>
+    {% endif %}
+
+
+{% endblock %}

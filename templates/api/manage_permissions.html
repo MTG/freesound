@@ -1,29 +1,37 @@
 {% extends "accounts/_section.html" %}
 
 
-{% block title %}{{user.username}} - Granted permissions{% endblock %}
+{% block title %}{{user.username}} - Manage API application permissions{% endblock %}
 
 {% block section_content %}
-    <h1>Your granted permissions</h1>
+    <h1>Manage API application permissions</h1>
 
      {% if tokens %}
-     <p>This is the list of applications that you granted permission to use your credentials.
-     You can revoke the permission to any of the applications using this list.
-     <br>If you saw the "granted permission" page and still the application is not listed in this page, that means the
-         application did not correctly finish the last step of the authorization process and will not be able to act on your behalf.
+        <p>This list shows all the API applications to which you have granted permission to access your data.
+        <br>Granting permission to access your data means that you allow the application to act on your behealf inside Freesound.</p>
 
-    <table>
-        <tr><th>Application name</th><th>Client id</th><th>Expires in</th><th></th></tr>
-        {% for token in tokens %}
-            <tr><td>{{ token.client_name }}</td><td>{{ token.client_id }}</td><td>{{ token.expiration_date }}</td>
-                <td>
-                   <a href="{% url revoke-permission token.client_id %}">Revoke access</a>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
+        <table>
+            <tr><th>Application name</th><th>Client id</th><th>Permission</th>{% comment %}<th>Expiration date</th>{% endcomment %}<th></th></tr>
+            {% for token in tokens %}
+                <tr><td>{{ token.client_name }}</td>
+                    <td>{{ token.client_id }}</td>
+                    <td>{{ token.scope }}</td>
+                    {% comment %}
+                        <td {% if token.expired %}style="background-color:#44AA44;{% endif %}">
+                            {{ token.expiration_date }}
+                        </td>
+                    {% endcomment %}
+                    <td>
+                       <a href="{% url revoke-permission token.client_id %}">Revoke permission</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        {% comment %}<p>Those permission marked in red correspond to expired permissions. However, API applications do have a mehcanism to renew them.</p>{% endcomment %}
+
     {% else %}
-         <p>Currently you have not granted any permission to any third-party application.</p>
+         <p>You have not granted any permission to any API application.</p>
     {% endif %}
 
 

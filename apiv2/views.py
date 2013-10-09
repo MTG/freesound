@@ -38,6 +38,7 @@ import settings
 import logging
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
+import datetime
 
 
 logger = logging.getLogger("api")
@@ -139,14 +140,18 @@ from provider.oauth2.models import AccessToken
 @login_required
 def granted_permissions(request):
     user = request.user
-    tokens_raw = AccessToken.objects.select_related('client').filter(user=user).order_by('expires')
+    tokens_raw = AccessToken.objects.select_related('client').filter(user=user).order_by('-expires')
     tokens = []
     token_names = []
+
+    # One single user can have more than one active access token per application. We only show the one that expires later. On revoking, all are removed
     for token in tokens_raw:
         if not token.client.apiv2_client.name in token_names:
             tokens.append({
                 'client_name': token.client.apiv2_client.name,
                 'expiration_date': token.expires,
+                'expired': (token.expires - datetime.datetime.today()).total_seconds() < 0,
+                'scope': token.client.apiv2_client.get_scope_display,
                 'client_id': token.client.apiv2_client.client_id,
             })
         token_names.append(token.client.apiv2_client.name)

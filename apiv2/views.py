@@ -39,6 +39,7 @@ import logging
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 import datetime
+from provider.oauth2.models import AccessToken, Grant
 
 
 logger = logging.getLogger("api")
@@ -108,6 +109,8 @@ def return_invalid_url(request):
 @login_required
 def create_apiv2_key(request):
     user_credentials = None
+    fs_callback_url =  request.build_absolute_uri(reverse('permission-granted'))
+
     if request.method == 'POST':
         form = ApiV2ClientForm(request.POST)
         if form.is_valid():
@@ -130,13 +133,12 @@ def create_apiv2_key(request):
                               { 'user': request.user,
                                 'form': form,
                                 'user_credentials': user_credentials,
-                                'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1
+                                'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1,
+                                'fs_callback_url': fs_callback_url,
                               }, context_instance=RequestContext(request))
 
 
 ### View for managing permissions granted to apps
-from provider.oauth2.models import AccessToken
-
 @login_required
 def granted_permissions(request):
     user = request.user
@@ -169,3 +171,20 @@ def revoke_permission(request, client_id):
         token.delete()
 
     return HttpResponseRedirect(reverse("access-tokens"))
+
+
+### View to show grant code (pin code) if application does not support redirection
+@login_required
+def permission_granted(request):
+    user = request.user
+    code = request.GET.get('code', None)
+    app_name = None
+    try:
+        grant = Grant.objects.get(user=user, code=code)
+        app_name = grant.client.apiv2_client.name
+    except:
+        grant = None
+
+    return render_to_response('api/app_authorized.html',
+                              {'code': code, 'app_name': app_name},
+                              context_instance=RequestContext(request))

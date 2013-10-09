@@ -23,7 +23,7 @@ import django.forms as forms
 class ApiV2ClientForm(forms.Form):
     name          = forms.CharField(label='Application name')
     url           = forms.URLField(label='Application url')
-    redirect_uri  = forms.URLField(label='Your application\'s callback URL')
+    redirect_uri  = forms.URLField(label='Your application\'s callback URL*')
     description   = forms.CharField(label='Describe your application', widget=forms.Textarea)
     accepted_tos  = forms.BooleanField(label='',
                                        help_text='Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API',

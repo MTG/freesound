@@ -124,4 +124,5 @@ urlpatterns = patterns('accounts.views',
 
     url(r'^app_permissions/$', api.granted_permissions, name='access-tokens'),
     url(r'^app_permissions/revoke_permission/(?P<client_id>[^//]+)/$', api.revoke_permission, name='revoke-permission'),
+    url(r'^app_permissions/permission_granted/$', api.permission_granted, name='permission-granted'),
 )

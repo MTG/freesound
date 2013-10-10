@@ -245,7 +245,14 @@ REST_FRAMEWORK = {
     'PAGINATE_BY': 15,
     'PAGINATE_BY_PARAM': 'page_size',
     'MAX_PAGINATE_BY': 100,
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',)
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.YAMLRenderer',
+        'rest_framework.renderers.JSONPRenderer',
+        'rest_framework.renderers.XMLRenderer',
+    )
 }
 
 # Oauth2 provider settings

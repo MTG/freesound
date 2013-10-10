@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Freesound - app authorized</title>
+    <style>
+        body {
+            background-color: #f3f3f3;
+            font-family: Verdana, sans-serif;
+            font-size: 70%;
+        }
+
+        ul.errorlist {
+            list-style-type: none;
+            padding: 0 0 4px 0;
+            color: #bd2d33;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+<div style="text-align: center; left: 50%; top: 50%; position: fixed; height:260px; width:400px; margin-top:-130px; margin-left:-200px;">
+
+     <img src="/media/images/logo.png"/>
+     {% if app_name and code %}
+            <p>
+                Permission has been granted to application <strong>{{ app_name }}</strong>.
+                In order to comple the full authentication process the application will require you to introduce the following authorization code:
+            </p>
+
+            <div style="font-size:14px;font-family:'Courier';">{{ code }}</div>
+
+        {% else %}
+
+            <p>Ops! there were some errors...</p>
+            <p>You should probably start again the authorization process from the 3rd party application!</p>
+
+        {% endif %}
+
+</div>
+
+</body>
+</html>

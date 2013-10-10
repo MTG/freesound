@@ -253,4 +253,7 @@ OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60)
 OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
 OAUTH_SINGLE_ACCESS_TOKEN = False  # If set to true can give 500 errors when refreshing tokens and getting new access tokens
 
+USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
+
+
 from logger import LOGGING

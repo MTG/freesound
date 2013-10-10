@@ -25,6 +25,7 @@ from provider.scope import to_names, to_int
 from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView, Authorize as DjangoOauth2ProviderAuthorize
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
+import settings
 
 
 class AccessTokenView(DjangoRestFrameworkAccessTokenView):
@@ -85,4 +86,7 @@ def get_authentication_details_form_request(request):
 
 
 class Authorize(DjangoOauth2ProviderAuthorize):
-    template_name = 'api/authorize_app.html'
+    if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
+        template_name = 'api/minimal_authorize_app.html'
+    else:
+        template_name = 'api/authorize_app.html'

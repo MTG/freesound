@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Freesound - authorize app</title>
+    <style>
+        body {
+            background-color: #f3f3f3;
+            font-family: Verdana, sans-serif;
+            font-size: 70%;
+        }
+
+        ul.errorlist {
+            list-style-type: none;
+            padding: 0 0 4px 0;
+            color: #bd2d33;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+<div style="text-align: center; left: 50%; top: 50%; position: fixed; height:260px; width:400px; margin-top:-130px; margin-left:-200px;">
+
+
+    {% load url from future %}
+
+    <img src="/media/images/logo.png"/>
+    {% if not error %}
+        <p>Hi {{ user.username }}!</p>
+        <p>The application <strong>{{ client.name }}</strong> has requested permission to access your data with the following permissions: {{ client.apiv2_client.get_scope_display }}</p>
+        <p>
+            Granting permission to access your data means that you allow the application to act on your behealf inside Freesound.
+            You can revoke the permissions you have given to an application at any time by visiting your Freesound settings page.
+        </p>
+        <form method="post" action="{% url "oauth2:authorize" %}">
+            {% csrf_token %}
+            {{ form.errors }}
+            {{ form.non_field_errors }}
+            <input type="submit" class="btn login large danger" value="Deny access" />
+            <input type="submit" class="btn login large primary" name="authorize" value="Authorize!" />
+        </form>
+    {% else %}
+        <p>Ops! there were some errors...</p>
+        <p>{{ error_description }}</p>
+        <p>You should probably start again the authorization process from the 3rd party application!</p>
+    {% endif %}
+
+
+</div>
+
+</body>
+</html>

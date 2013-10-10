@@ -185,6 +185,13 @@ def permission_granted(request):
     except:
         grant = None
 
-    return render_to_response('api/app_authorized.html',
+    if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
+        template = 'api/minimal_app_authorized.html'
+    else:
+        template = 'api/app_authorized.html'
+
+    return render_to_response(template,
                               {'code': code, 'app_name': app_name},
                               context_instance=RequestContext(request))
+
+

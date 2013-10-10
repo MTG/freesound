@@ -83,6 +83,11 @@ class ApiV2Client(models.Model):
 
         return super(ApiV2Client, self).save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        # On delete, delete also oauth client
+        self.oauth_client.delete()
+        super(ApiV2Client, self).delete(*args, **kwargs)
+
     @property
     def client_id(self):
         return self.oauth_client.client_id

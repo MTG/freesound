@@ -40,7 +40,8 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 import datetime
 from provider.oauth2.models import AccessToken, Grant
-
+from api.models import ApiKey
+from django.contrib import messages
 
 logger = logging.getLogger("api")
 
@@ -108,8 +109,6 @@ def return_invalid_url(request):
 ### View for applying for an apikey
 @login_required
 def create_apiv2_key(request):
-    user_credentials = None
-    fs_callback_url = request.build_absolute_uri(reverse('permission-granted'))
 
     if request.method == 'POST':
         form = ApiV2ClientForm(request.POST)
@@ -124,11 +123,14 @@ def create_apiv2_key(request):
             api_client.save()
             form = ApiV2ClientForm()
     else:
-        if settings.APIV2KEYS_ALLOWED_FOR_APIV1:
-            user_credentials = list(request.user.apiv2_client.all()) + list(request.user.api_keys.all())
-        else:
-            user_credentials = request.user.apiv2_client.all()
         form = ApiV2ClientForm()
+
+    if settings.APIV2KEYS_ALLOWED_FOR_APIV1:
+        user_credentials = list(request.user.apiv2_client.all()) + list(request.user.api_keys.all())
+    else:
+        user_credentials = request.user.apiv2_client.all()
+    fs_callback_url = request.build_absolute_uri(reverse('permission-granted'))
+
     return render_to_response('api/apply_key_apiv2.html',
                               {'user': request.user,
                                'form': form,
@@ -136,6 +138,28 @@ def create_apiv2_key(request):
                                'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1,
                                'fs_callback_url': fs_callback_url,
                                }, context_instance=RequestContext(request))
+
+### View for deleting api clients (works both for apiv2 and apiv1)
+@login_required
+def delete_api_credential(request, key):
+    name = ""
+
+    try:
+        client = ApiV2Client.objects.get(key=key)
+        name = client.name
+        client.delete()
+    except ApiV2Client.DoesNotExist:
+        pass
+
+    try:
+        client = ApiKey.objects.get(key=key)
+        name = client.name
+        client.delete()
+    except ApiKey.DoesNotExist:
+        pass
+
+    messages.add_message(request, messages.INFO, "Credentials with name %s have been deleted." % name)
+    return HttpResponseRedirect(reverse("apiv2-apply"))
 
 
 ### View for managing permissions granted to apps

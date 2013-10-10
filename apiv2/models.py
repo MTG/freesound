@@ -79,6 +79,7 @@ class ApiV2Client(models.Model):
             self.oauth_client.name = self.name
             self.oauth_client.url = self.url
             self.oauth_client.redirect_uri = self.redirect_uri
+            self.oauth_client.save()
 
         return super(ApiV2Client, self).save(*args, **kwargs)
 

@@ -109,19 +109,19 @@ def return_invalid_url(request):
 @login_required
 def create_apiv2_key(request):
     user_credentials = None
-    fs_callback_url =  request.build_absolute_uri(reverse('permission-granted'))
+    fs_callback_url = request.build_absolute_uri(reverse('permission-granted'))
 
     if request.method == 'POST':
         form = ApiV2ClientForm(request.POST)
         if form.is_valid():
-            db_api_key = ApiV2Client()
-            db_api_key.user = request.user
-            db_api_key.description = form.cleaned_data['description']
-            db_api_key.name = form.cleaned_data['name']
-            db_api_key.url = form.cleaned_data['url']
-            db_api_key.redirect_uri = form.cleaned_data['redirect_uri']
-            db_api_key.accepted_tos = form.cleaned_data['accepted_tos']
-            db_api_key.save()
+            api_client = ApiV2Client()
+            api_client.user = request.user
+            api_client.description = form.cleaned_data['description']
+            api_client.name = form.cleaned_data['name']
+            api_client.url = form.cleaned_data['url']
+            api_client.redirect_uri = form.cleaned_data['redirect_uri']
+            api_client.accepted_tos = form.cleaned_data['accepted_tos']
+            api_client.save()
             form = ApiV2ClientForm()
     else:
         if settings.APIV2KEYS_ALLOWED_FOR_APIV1:
@@ -130,12 +130,12 @@ def create_apiv2_key(request):
             user_credentials = request.user.apiv2_client.all()
         form = ApiV2ClientForm()
     return render_to_response('api/apply_key_apiv2.html',
-                              { 'user': request.user,
-                                'form': form,
-                                'user_credentials': user_credentials,
-                                'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1,
-                                'fs_callback_url': fs_callback_url,
-                              }, context_instance=RequestContext(request))
+                              {'user': request.user,
+                               'form': form,
+                               'user_credentials': user_credentials,
+                               'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1,
+                               'fs_callback_url': fs_callback_url,
+                               }, context_instance=RequestContext(request))
 
 
 ### View for managing permissions granted to apps

@@ -3,5 +3,4 @@
 - Customize online interactive api
 - Implement equivalent handlers and new write methods
 - add more formats to api (xml?)
-- what do we do with old expired tokens and grant objects?
 - allow editing api clients to change redirect_uri, name, description, etc...?

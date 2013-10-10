@@ -146,7 +146,11 @@ def granted_permissions(request):
     tokens = []
     token_names = []
 
-    # One single user can have more than one active access token per application. We only show the one that expires later. On revoking, all are removed
+    # If settings.OAUTH_SINGLE_ACCESS_TOKEN is set to false it is possible that one single user have more than one active
+    # access token per application. In that case we only show the one that expires later (and all are removed if permissions
+    # revoked). If settings.OAUTH_SINGLE_ACCESS_TOKEN is set to true we don't need the token name check below because
+    # there can only be one access token per client-user pair. Nevertheless the code below works in both cases.
+
     for token in tokens_raw:
         if not token.client.apiv2_client.name in token_names:
             tokens.append({
@@ -163,6 +167,7 @@ def granted_permissions(request):
                               context_instance=RequestContext(request))
 
 
+### View to revoke permissions granted to an application
 @login_required
 def revoke_permission(request, client_id):
     user = request.user

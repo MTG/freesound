@@ -44,6 +44,25 @@ class AccessTokenView(DjangoRestFrameworkAccessTokenView):
             raise OAuthError(form.errors)
         return form.cleaned_data
 
+    def refresh_token(self, request, data, client):
+        """
+        Handle ``grant_type=refresh_token`` requests as defined in :draft:`6`.
+        We overwrite this function so that old access tokens are deleted when refreshed. Otherwise multiple access tokens
+        can be created, leading to errors.
+        """
+        rt = self.get_refresh_token_grant(request, data, client)
+
+        #self.invalidate_refresh_token(rt)
+        #self.invalidate_access_token(rt.access_token)
+        scope = rt.access_token.scope
+        rt.access_token.delete()
+
+        at = self.create_access_token(request, rt.user, scope, client)
+        rt.delete()
+        rt = self.create_refresh_token(request, at.user, at.scope, at, client)
+
+        return self.access_token_response(at)
+
     def create_access_token(self, request, user, scope, client):
 
         # Filter out requested scopes and only leave those allowed to the client

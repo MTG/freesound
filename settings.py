@@ -251,8 +251,7 @@ REST_FRAMEWORK = {
 # Oauth2 provider settings
 OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60)
 OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
-OAUTH_SINGLE_ACCESS_TOKEN = False  # If set to true can give 500 errors when refreshing tokens and getting new access tokens
-
+OAUTH_SINGLE_ACCESS_TOKEN = True
 USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
 
 

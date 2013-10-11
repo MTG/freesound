@@ -28,7 +28,15 @@ from provider.oauth2.models import RefreshToken, AccessToken
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
 from exceptions import UnauthorizedException
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
+from sounds.models import Sound, Pack, License
+from freesound.utils.audioprocessing import get_sound_type
+from geotags.models import GeoTag
+from freesound.utils.filesystem import md5file
+from freesound.utils.text import slugify
+from exceptions import ServerErrorException, OtherException
+import shutil
 import settings
+import os
 
 
 class AccessTokenView(DjangoRestFrameworkAccessTokenView):
@@ -147,3 +155,102 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 
         # Get request informationa dn store it as class variable
         self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+
+
+def create_sound_object(user, sound_fields):
+
+    # 1 prepare some variable names
+    filename = sound_fields['upload_filename']
+    if not sound_fields['name']:
+        sound_fields['name'] = filename
+
+    directory = os.path.join(settings.UPLOADS_PATH, str(user.id))
+    dest_path = os.path.join(directory, filename)
+
+    # 2 make sound object
+    sound = Sound()
+    sound.user = user
+    sound.original_filename = sound_fields['name']
+    sound.original_path = dest_path
+    sound.filesize = os.path.getsize(sound.original_path)
+    sound.type = get_sound_type(sound.original_path)
+    license = License.objects.get(name=sound_fields['license'])
+    sound.license = license
+
+    # 3 md5, check
+    try:
+        sound.md5 = md5file(sound.original_path)
+    except IOError:
+        if settings.DEBUG:
+            msg = "Md5 could not be computed."
+        else:
+            msg = "Server error."
+        raise ServerErrorException(msg=msg)
+
+    sound_already_exists = Sound.objects.filter(md5=sound.md5).exists()
+    if sound_already_exists:
+        os.remove(sound.original_path)
+        raise OtherException("Sound could not be created because the uploaded file is already part of freesound.")
+
+    # 4 save
+    sound.save()
+
+    # 5 move to new path
+    orig = os.path.splitext(os.path.basename(sound.original_filename))[0]  # WATCH OUT!
+    sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
+    new_original_path = sound.locations("path")
+    if sound.original_path != new_original_path:
+        try:
+            os.makedirs(os.path.dirname(new_original_path))
+        except OSError:
+            pass
+        try:
+            shutil.move(sound.original_path, new_original_path)
+        except IOError, e:
+            if settings.DEBUG:
+                msg = "File could not be copied to the correct destination."
+            else:
+                msg = "Server error."
+            raise ServerErrorException(msg=msg)
+        sound.original_path = new_original_path
+        sound.save()
+
+    # 6 create pack if it does not exist
+    if sound_fields['pack']:
+        if Pack.objects.filter(name=sound_fields['pack'], user=user).exists():
+            p = Pack.objects.get(name=sound_fields['pack'], user=user)
+        else:
+            p, created = Pack.objects.get_or_create(user=user, name=sound_fields['pack'])
+
+        sound.pack = p
+
+    # 7 create geotag objects
+    # format: lat#lon#zoom
+    if sound_fields['geotag']:
+        lat, lon, zoom = sound_fields['geotag'].split(',')
+        geotag = GeoTag(user=user,
+            lat=float(lat),
+            lon=float(lon),
+            zoom=int(zoom))
+        geotag.save()
+        sound.geotag = geotag
+
+    # 8 set description, tags
+    sound.description = sound_fields['description']
+    sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
+
+    # 9 save!
+    sound.save()
+
+    # 10 Proces
+    try:
+        sound.process()
+    except Exception, e:
+        pass
+
+    # Set moderation state to OK (this is just for testing)
+    #sound.moderation_state = 'OK'
+    #sound.processing_state = 'OK'
+    #sound.save()
+
+    return sound

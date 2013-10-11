@@ -22,7 +22,7 @@
 
 from sounds.models import Sound, Pack
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -44,6 +44,7 @@ from api.models import ApiKey
 from django.contrib import messages
 from accounts.views import handle_uploaded_file
 from freesound.utils.filesystem import generate_tree
+from utils import create_sound_object
 import os
 
 logger = logging.getLogger("api")
@@ -213,26 +214,31 @@ class DescribeAudioFile(WriteRequiredGenericAPIView):
         filenames = [file_instance.name for file_id, file_instance in files.items()]
         serializer = SoundDescriptionSerializer(data=request.DATA, context={'not_yet_described_audio_files': filenames})
         if serializer.is_valid():
-            # Create sound object, etc, etc
-            return Response(data={'data': request.DATA}, status=status.HTTP_201_CREATED)
+            sound = create_sound_object(self.user, request.DATA)
+            return Response(data={'details': 'Sound successfully described', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UploadAndDescribeAudioFile(DescribeAudioFile):
+class UploadAndDescribeAudioFile(WriteRequiredGenericAPIView):
     """
     Upload a sound and describe it (without description)
     TODO: proper doccumentation.
     """
-
     serializer_class = UploadAndDescribeAudioFileSerializer
 
     def post(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
         serializer = UploadAndDescribeAudioFileSerializer(data=request.DATA, files=request.FILES)
         if serializer.is_valid():
-            # Create sound object, etc, etc
-            return Response(data={'data': request.DATA}, status=status.HTTP_201_CREATED)
+            audiofile = request.FILES['audiofile']
+            try:
+                handle_uploaded_file(self.user.id, audiofile)
+            except:
+                raise ServerErrorException
+            request.DATA['upload_filename'] = request.FILES['audiofile'].name
+            sound = create_sound_object(self.user, request.DATA)
+            return Response(data={'details': 'Audio file successfully uploaded and described', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

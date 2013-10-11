@@ -40,5 +40,17 @@ class UnauthorizedException(APIException):
 
 
 class ServerErrorException(APIException):
-    detail = "Server error"
+    detail = None
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    def __init__(self, msg="Server error"):
+        self.detail = msg
+
+
+class OtherException(APIException):
+    detail = None
+    status_code = None
+
+    def __init__(self, msg="Bad request", status=status.HTTP_400_BAD_REQUEST):
+        self.detail = msg
+        self.status = status

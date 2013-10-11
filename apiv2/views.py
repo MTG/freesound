@@ -43,6 +43,8 @@ from provider.oauth2.models import AccessToken, Grant
 from api.models import ApiKey
 from django.contrib import messages
 from accounts.views import handle_uploaded_file
+from freesound.utils.filesystem import generate_tree
+import os
 
 logger = logging.getLogger("api")
 
@@ -176,9 +178,22 @@ class UploadAudioFile(WriteRequiredGenericAPIView):
             except:
                 raise ServerErrorException
 
-            return Response(data={'details': 'File successfully uploaded (%s, %i)' % (audiofile.name, audiofile.size)}, status=status.HTTP_201_CREATED)
+            return Response(data={'filename': audiofile.name, 'details': 'File successfully uploaded (%i)' % audiofile.size}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NotYetDescribedUploadedAudioFiles(WriteRequiredGenericAPIView):
+    """
+    List uploaded audio files which have not been yes described
+    TODO: proper doccumentation.
+    """
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
+        filenames = [file_instance.name for file_id, file_instance in files.items()]
+        return Response(data={'filenames': filenames}, status=status.HTTP_200_OK)
 
 
 #############

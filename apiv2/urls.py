@@ -34,10 +34,17 @@ from apiv2 import views
 urlpatterns = patterns('apiv2.views',
        url(r'^apply/$', views.create_apiv2_key),
        url(r'^$', 'api_root'),
-       #    url(r'^sounds/$', views.SoundList.as_view(), name="sound-list"),
+#       url(r'^sounds/$', views.SoundList.as_view(), name="apiv2-sound-list"),
        url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
-       url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
-       url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
+       
+       url(r'^users/(?P<username>[^//]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
+       url(r'^users/(?P<username>[^//]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
+
+    # packs
+       url(r'^packs/(?P<pk>[0-9]+)/$', views.PackDetail.as_view(), name='apiv2-pack-detail'),
+#    url(r'^packs/(?P<pack_id>\d+)/serve/$',                         AR(PackServeHandler),      name='api-pack-serve'),
+       url(r'^packs/(?P<pack>[0-9]+)/sounds/$', views.PackSoundList.as_view(), name='apiv2-pack-sound-list'),
+
 
        # Include views for three-legged auth process
        url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2')),
@@ -45,6 +52,9 @@ urlpatterns = patterns('apiv2.views',
 
        # Any other url
        url(r'/$', views.return_invalid_url ),
+
+
+
 )
 
 

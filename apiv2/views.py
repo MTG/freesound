@@ -20,9 +20,9 @@
 #     See AUTHORS file.
 #
 
-from sounds.models import Sound
+from sounds.models import Sound, Pack
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, PackSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework import generics
@@ -66,6 +66,7 @@ class UserDetail(generics.RetrieveAPIView):
     Detailed user information.
     """
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+    lookup_field = "username"
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_active=True)
 
@@ -75,6 +76,7 @@ class UserSoundList(generics.ListAPIView):
     List of sounds uploaded by user.
     """
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+    lookup_field = "username"
     serializer_class = SoundListSerializer
 
     def get(self, request,  *args, **kwargs):
@@ -84,17 +86,48 @@ class UserSoundList(generics.ListAPIView):
 
     def get_queryset(self):
         try:
-            User.objects.get(id=self.kwargs['pk'], is_active=True)
+            User.objects.get(username=self.kwargs['username'], is_active=True)
         except User.DoesNotExist:
             raise NotFoundException()
 
         return Sound.objects.select_related('user').filter(moderation_state="OK",
                                                            processing_state="OK",
-                                                           user__id=self.kwargs['pk'])
+                                                           user__username=self.kwargs['username'])
 
+
+class PackDetail(generics.RetrieveAPIView):
+    """
+    Detailed pack information.
+    """
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+    serializer_class = PackSerializer
+    queryset = Pack.objects.all()
+
+class PackSoundList(generics.ListAPIView):
+    """
+    Detailed pack information.
+    """
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+    lookup_field = "pack"
+    serializer_class = SoundListSerializer
+
+    def get(self, request,  *args, **kwargs):
+        print "Auth method: %s, Developer: %s, End user: %s" % get_authentication_details_form_request(request)
+        logger.info("Test log")
+        return super(PackSoundList, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        try:
+            Pack.objects.get(id=self.kwargs['pack'])
+        except Pack.DoesNotExist:
+            raise NotFoundException()
+
+        return Sound.objects.select_related('pack').filter(moderation_state="OK",
+                                                           processing_state="OK",
+                                                           pack__id=self.kwargs['pack'])
 
 ############
-# OTHER VEWS
+# OTHER VIEWS
 ############
 
 

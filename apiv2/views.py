@@ -22,18 +22,18 @@
 
 from sounds.models import Sound
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
-from rest_framework import generics
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from forms import ApiV2ClientForm
 from models import ApiV2Client
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from utils import get_authentication_details_form_request
-from exceptions import NotFoundException, InvalidUrlException
+from utils import get_authentication_details_form_request, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView
+from exceptions import NotFoundException, InvalidUrlException, UnauthorizedException, ServerErrorException
 import settings
 import logging
 from django.http import HttpResponseRedirect
@@ -42,6 +42,7 @@ import datetime
 from provider.oauth2.models import AccessToken, Grant
 from api.models import ApiKey
 from django.contrib import messages
+from accounts.views import handle_uploaded_file
 
 logger = logging.getLogger("api")
 
@@ -53,7 +54,7 @@ def api_root(request, format=None):
     })
 
 
-class SoundDetail(generics.RetrieveAPIView):
+class SoundDetail(RetrieveAPIView):
     """
     Detailed sound information.
     """
@@ -62,7 +63,7 @@ class SoundDetail(generics.RetrieveAPIView):
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
 
 
-class UserDetail(generics.RetrieveAPIView):
+class UserDetail(RetrieveAPIView):
     """
     Detailed user information.
     """
@@ -71,7 +72,7 @@ class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.filter(is_active=True)
 
 
-class UserSoundList(generics.ListAPIView):
+class UserSoundList(ListAPIView):
     """
     List of sounds uploaded by user.
     """
@@ -92,6 +93,37 @@ class UserSoundList(generics.ListAPIView):
         return Sound.objects.select_related('user').filter(moderation_state="OK",
                                                            processing_state="OK",
                                                            user__id=self.kwargs['pk'])
+
+
+class UploadAudioFile(WriteRequiredGenericAPIView):
+    """
+    Upload a sound (without description)
+    """
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+    serializer_class = UploadAudioFileSerializer
+
+    def post(self, request,  *args, **kwargs):
+
+        # Get request information
+        auth_method_name, developer, user = get_authentication_details_form_request(request)
+
+        # Check if client has write permissions
+        if auth_method_name == "OAuth2":
+            if "write" not in request.auth.get_scope_display():
+                raise UnauthorizedException
+
+        serializer = UploadAudioFileSerializer(data=request.DATA, files=request.FILES)
+        if serializer.is_valid():
+            audiofile = request.FILES['audiofile']
+            try:
+                handle_uploaded_file(user.id, audiofile)
+            except:
+                raise ServerErrorException
+
+            return Response(data={'details': 'File successfully uploaded (%s, %i)' % (audiofile.name, audiofile.size)}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 ############

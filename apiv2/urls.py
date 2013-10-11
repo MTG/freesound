@@ -38,6 +38,9 @@ urlpatterns = patterns('apiv2.views',
        url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
        url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
 
+       # Upload files
+       url(r'^sounds/upload/$', views.UploadAudioFile.as_view(), name="apiv2-upload-sound-file"),
+
        # Client management
        url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),
        url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),

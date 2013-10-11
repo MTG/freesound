@@ -111,6 +111,10 @@ class SoundSerializer(AbstractSoundSerializer):
         super(SoundSerializer, self).__init__(*args, **kwargs)
 
 
+class UploadAudioFileSerializer(serializers.Serializer):
+    audiofile = serializers.FileField(max_length=100, allow_empty_file=False)
+
+
 ##################
 # USER SERIALIZERS
 ##################

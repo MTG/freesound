@@ -32,3 +32,13 @@ class NotFoundException(APIException):
 class InvalidUrlException(APIException):
     detail = "Invalid url"
     status_code = status.HTTP_400_BAD_REQUEST
+
+
+class UnauthorizedException(APIException):
+    detail = "Not authorized"
+    status_code = status.HTTP_401_UNAUTHORIZED
+
+
+class ServerErrorException(APIException):
+    detail = "Server error"
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

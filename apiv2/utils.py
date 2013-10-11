@@ -25,6 +25,8 @@ from provider.scope import to_names, to_int
 from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView, Authorize as DjangoOauth2ProviderAuthorize
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
+from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
+from exceptions import UnauthorizedException
 import settings
 
 
@@ -109,3 +111,35 @@ class Authorize(DjangoOauth2ProviderAuthorize):
         template_name = 'api/minimal_authorize_app.html'
     else:
         template_name = 'api/authorize_app.html'
+
+
+class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
+
+    def initial(self, request, *args, **kwargs):
+        super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
+
+        # Get request informationa dn store it as class variable
+        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+
+        # Check if client has write permissions
+        if self.auth_method_name == "OAuth2":
+            if "write" not in request.auth.client.apiv2_client.get_scope_display():
+                raise UnauthorizedException
+
+
+class ListAPIView(RestFrameworkListAPIView):
+
+    def initial(self, request, *args, **kwargs):
+        super(ListAPIView, self).initial(request, *args, **kwargs)
+
+        # Get request informationa dn store it as class variable
+        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+
+
+class RetrieveAPIView(RestFrameworkRetrieveAPIView):
+
+    def initial(self, request, *args, **kwargs):
+        super(RetrieveAPIView, self).initial(request, *args, **kwargs)
+
+        # Get request informationa dn store it as class variable
+        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)

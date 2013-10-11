@@ -627,12 +627,12 @@ Sound Analysis resource
 
 When a file is uploaded in Freesound it is automatically analyzed. Several descriptors are
 extracted and the results can be retrieved through this URI. The analysis is
-done by the audio analysis tool Essentia, property of the MTG_ and
-exclusively licensed to BMAT_. For detailed documentation on all the
+done by the audio analysis tool Essentia_, an open-source C++ library for audio analysis and audio-based music information retrieval. 
+ For detailed documentation on all the
 descriptors see :ref:`analysis-docs`.
 
-.. _MTG: http://mtg.upf.edu/
-.. _BMAT: http://www.bmat.com/
+
+.. _Essentia: http://essentia.upf.edu/documentation/
 
 
 URI

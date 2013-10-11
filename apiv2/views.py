@@ -22,7 +22,7 @@
 
 from sounds.models import Sound, Pack
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -51,8 +51,12 @@ logger = logging.getLogger("api")
 
 @api_view(('GET',))
 def api_root(request, format=None):
+    '''
+    Main docs
+    '''
+
     return Response({
-        #'sounds': reverse('apiv2-sound-list', request=request, format=format),
+        #'upload': reverse('apiv2-uploads-upload'),
     })
 
 
@@ -168,6 +172,8 @@ class UploadAudioFile(WriteRequiredGenericAPIView):
     """
     serializer_class = UploadAudioFileSerializer
 
+    # Check formats!
+
     def post(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
         serializer = UploadAudioFileSerializer(data=request.DATA, files=request.FILES)
@@ -194,6 +200,25 @@ class NotYetDescribedUploadedAudioFiles(WriteRequiredGenericAPIView):
         file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
         filenames = [file_instance.name for file_id, file_instance in files.items()]
         return Response(data={'filenames': filenames}, status=status.HTTP_200_OK)
+
+
+class DescribeAudioFile(WriteRequiredGenericAPIView):
+    """
+    Describe a previously uploaded audio file (audio file is identified by its filename which must be a post param)
+    TODO: proper doccumentation.
+    """
+    serializer_class = SoundDescriptionSerializer
+
+    def post(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
+        filenames = [file_instance.name for file_id, file_instance in files.items()]
+        serializer = SoundDescriptionSerializer(data=request.DATA, context={'not_yet_described_audio_files': filenames})
+        if serializer.is_valid():
+            # Create sound object, etc, etc
+            return Response(data={'data': request.DATA}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############

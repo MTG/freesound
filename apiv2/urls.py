@@ -46,8 +46,9 @@ urlpatterns = patterns('apiv2.views',
     url(r'^packs/(?P<pk>[0-9]+)/sounds/$', views.PackSoundList.as_view(), name='apiv2-pack-sound-list'),
 
     # Upload files
-    url(r'^uploads/upload/$', views.UploadAudioFile.as_view(), name="apiv2-upload-sound-file"),
-    url(r'^uploads/not_yet_described/$', views.NotYetDescribedUploadedAudioFiles.as_view(), name="apiv2-not-described"),
+    url(r'^uploads/upload/$', views.UploadAudioFile.as_view(), name="apiv2-uploads-upload"),
+    url(r'^uploads/not_yet_described/$', views.NotYetDescribedUploadedAudioFiles.as_view(), name="apiv2-uploads-not-described"),
+    url(r'^uploads/describe/$', views.DescribeAudioFile.as_view(), name="apiv2-uploads-describe"),
 
     # Client management
     url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),

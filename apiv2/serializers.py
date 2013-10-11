@@ -25,6 +25,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from rest_framework import serializers
+from freesound.utils.tags import clean_and_split_tags
 import yaml
 
 
@@ -186,4 +187,72 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UploadAudioFileSerializer(serializers.Serializer):
-    audiofile = serializers.FileField(max_length=100, allow_empty_file=False)
+    audiofile = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
+
+    def validate_audiofile(self, attrs, source):
+        value = attrs[source]
+        try:
+            extension = value.name.split('.')[-1]
+        except:
+            extension = None
+
+        print extension
+        if extension not in ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3'] or not extension:
+            raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
+
+        return attrs
+
+
+class SoundDescriptionSerializer(serializers.Serializer):
+    LICENSE_CHOICES = (
+        ('Attribution', 'CC Attribution'),
+        ('AttributionNonCommercial', 'CC Attribution Non Commercial'),
+        ('CreativeCommons0', 'Creative Commons 0'),)
+
+    upload_filename = serializers.CharField(max_length=100, help_text='Must match a filename from \'Not Yet Described Uploaded Audio Files\' resource.')
+    name = serializers.CharField(max_length=100, required=False, help_text='Not required. Name you want to give to the sound (by default it will be the original filename).')
+    tags = serializers.CharField(max_length=500, help_text='Separate tags with spaces. Join multi-word tags with dashes.')
+    description = serializers.CharField(help_text='Textual description of the sound.')
+    license = serializers.ChoiceField(choices=LICENSE_CHOICES, help_text='License for the sound. Must be one either \'Attribution\', \'AttributionNonCommercial\' or \'CreativeCommons0\'.')
+    pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new one will be created).', required=False)
+    geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
+
+    def validate_upload_filename(self, attrs, source):
+        value = attrs[source]
+        if value not in self.context['not_yet_described_audio_files']:
+            raise serializers.ValidationError('Upload filename must match with a filename from \'Not Yet Described Uploaded Audio Files\' resource.')
+        return attrs
+
+    def validate_geotag(self, attrs, source):
+        value = attrs[source]
+        if not value:
+            return attrs
+
+        fails = False
+        try:
+            data = value.split(',')
+        except:
+            fails = True
+        if len(data) != 3:
+            fails = True
+        try:
+            float(data[0])
+            float(data[1])
+            int(data[2])
+        except:
+            fails = True
+
+        if fails:
+            raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, longitude and zoom respectively)')
+        else:
+            return attrs
+
+    def validate_tags(self, attrs, source):
+        value = attrs[source]
+        tags = clean_and_split_tags(value)
+        if len(tags) < 3:
+            raise serializers.ValidationError('Your should at least have 3 tags...')
+        elif len(tags) > 30:
+            raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
+
+        return attrs

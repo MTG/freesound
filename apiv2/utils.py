@@ -27,6 +27,7 @@ from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
 from exceptions import UnauthorizedException
+from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import settings
 
 
@@ -114,6 +115,7 @@ class Authorize(DjangoOauth2ProviderAuthorize):
 
 
 class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
@@ -128,6 +130,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
 
 
 class ListAPIView(RestFrameworkListAPIView):
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(ListAPIView, self).initial(request, *args, **kwargs)
@@ -137,6 +140,7 @@ class ListAPIView(RestFrameworkListAPIView):
 
 
 class RetrieveAPIView(RestFrameworkRetrieveAPIView):
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)

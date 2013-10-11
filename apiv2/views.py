@@ -32,8 +32,8 @@ from models import ApiV2Client
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from utils import get_authentication_details_form_request, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView
-from exceptions import NotFoundException, InvalidUrlException, UnauthorizedException, ServerErrorException
+from utils import ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView
+from exceptions import NotFoundException, InvalidUrlException, ServerErrorException
 import settings
 import logging
 from django.http import HttpResponseRedirect
@@ -64,7 +64,6 @@ class SoundInstance(RetrieveAPIView):
     Detailed sound information.
     TODO: proper doccumentation.
     """
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     serializer_class = SoundSerializer
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
 
@@ -83,7 +82,6 @@ class UserInstance(RetrieveAPIView):
     Detailed user information.
     TODO: proper doccumentation.
     """
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     lookup_field = "username"
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_active=True)
@@ -98,7 +96,6 @@ class UserSoundList(ListAPIView):
     List of sounds uploaded by user.
     TODO: proper doccumentation.
     """
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     lookup_field = "username"
     serializer_class = SoundListSerializer
 
@@ -127,7 +124,6 @@ class PackInstance(RetrieveAPIView):
     Detailed pack information.
     TODO: proper doccumentation.
     """
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     serializer_class = PackSerializer
     queryset = Pack.objects.all()
 
@@ -141,7 +137,6 @@ class PackSoundList(ListAPIView):
     List of sounds in a pack.
     TODO: proper doccumentation.
     """
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     serializer_class = SoundListSerializer
 
     def get(self, request,  *args, **kwargs):
@@ -169,7 +164,6 @@ class UploadAudioFile(WriteRequiredGenericAPIView):
     Upload a sound (without description)
     TODO: proper doccumentation.
     """
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
     serializer_class = UploadAudioFileSerializer
 
     def post(self, request,  *args, **kwargs):

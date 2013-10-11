@@ -22,7 +22,7 @@
 
 from sounds.models import Sound, Pack
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -172,8 +172,6 @@ class UploadAudioFile(WriteRequiredGenericAPIView):
     """
     serializer_class = UploadAudioFileSerializer
 
-    # Check formats!
-
     def post(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
         serializer = UploadAudioFileSerializer(data=request.DATA, files=request.FILES)
@@ -219,6 +217,25 @@ class DescribeAudioFile(WriteRequiredGenericAPIView):
             return Response(data={'data': request.DATA}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UploadAndDescribeAudioFile(DescribeAudioFile):
+    """
+    Upload a sound and describe it (without description)
+    TODO: proper doccumentation.
+    """
+
+    serializer_class = UploadAndDescribeAudioFileSerializer
+
+    def post(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        serializer = UploadAndDescribeAudioFileSerializer(data=request.DATA, files=request.FILES)
+        if serializer.is_valid():
+            # Create sound object, etc, etc
+            return Response(data={'data': request.DATA}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 #############

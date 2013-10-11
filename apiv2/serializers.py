@@ -196,7 +196,6 @@ class UploadAudioFileSerializer(serializers.Serializer):
         except:
             extension = None
 
-        print extension
         if extension not in ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3'] or not extension:
             raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
 
@@ -219,8 +218,9 @@ class SoundDescriptionSerializer(serializers.Serializer):
 
     def validate_upload_filename(self, attrs, source):
         value = attrs[source]
-        if value not in self.context['not_yet_described_audio_files']:
-            raise serializers.ValidationError('Upload filename must match with a filename from \'Not Yet Described Uploaded Audio Files\' resource.')
+        if 'not_yet_described_audio_files' in self.context:
+            if value not in self.context['not_yet_described_audio_files']:
+                raise serializers.ValidationError('Upload filename must match with a filename from \'Not Yet Described Uploaded Audio Files\' resource.')
         return attrs
 
     def validate_geotag(self, attrs, source):
@@ -254,5 +254,25 @@ class SoundDescriptionSerializer(serializers.Serializer):
             raise serializers.ValidationError('Your should at least have 3 tags...')
         elif len(tags) > 30:
             raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
+
+        return attrs
+
+
+class UploadAndDescribeAudioFileSerializer(SoundDescriptionSerializer):
+    audiofile = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
+
+    def __init__(self, *args, **kwargs):
+        super(UploadAndDescribeAudioFileSerializer, self).__init__(*args, **kwargs)
+        self.fields.pop('upload_filename')
+
+    def validate_audiofile(self, attrs, source):
+        value = attrs[source]
+        try:
+            extension = value.name.split('.')[-1]
+        except:
+            extension = None
+
+        if extension not in ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3'] or not extension:
+            raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
 
         return attrs

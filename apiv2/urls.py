@@ -49,6 +49,7 @@ urlpatterns = patterns('apiv2.views',
     url(r'^uploads/upload/$', views.UploadAudioFile.as_view(), name="apiv2-uploads-upload"),
     url(r'^uploads/not_yet_described/$', views.NotYetDescribedUploadedAudioFiles.as_view(), name="apiv2-uploads-not-described"),
     url(r'^uploads/describe/$', views.DescribeAudioFile.as_view(), name="apiv2-uploads-describe"),
+    url(r'^uploads/upload_and_describe/$', views.UploadAndDescribeAudioFile.as_view(), name="apiv2-uploads-upload-and-describe"),
 
     # Client management
     url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),

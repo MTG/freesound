@@ -4,3 +4,5 @@
 - Implement equivalent handlers and new write methods
 - allow editing api clients to change redirect_uri, name, description, etc...?
 - find out proper way of documenting the api
+- write methods: create bookmarks, rate sounds, write comments?
+- user field: user avatar

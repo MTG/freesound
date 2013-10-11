@@ -54,36 +54,56 @@ def api_root(request, format=None):
     })
 
 
-class SoundDetail(RetrieveAPIView):
+#############
+# SOUND VIEWS
+#############
+
+
+class SoundInstance(RetrieveAPIView):
     """
     Detailed sound information.
+    TODO: proper doccumentation.
     """
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     serializer_class = SoundSerializer
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
 
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(SoundInstance, self).get(request, *args, **kwargs)
 
-class UserDetail(RetrieveAPIView):
+
+############
+# USER VIEWS
+############
+
+
+class UserInstance(RetrieveAPIView):
     """
     Detailed user information.
+    TODO: proper doccumentation.
     """
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     lookup_field = "username"
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_active=True)
 
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(UserInstance, self).get(request, *args, **kwargs)
+
 
 class UserSoundList(ListAPIView):
     """
     List of sounds uploaded by user.
+    TODO: proper doccumentation.
     """
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
     lookup_field = "username"
     serializer_class = SoundListSerializer
 
     def get(self, request,  *args, **kwargs):
-        print "Auth method: %s, Developer: %s, End user: %s" % get_authentication_details_form_request(request)
-        logger.info("Test log")
+        logger.info("TODO: proper logging")
         return super(UserSoundList, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -97,29 +117,68 @@ class UserSoundList(ListAPIView):
                                                            user__username=self.kwargs['username'])
 
 
+############
+# PACK VIEWS
+############
+
+
+class PackInstance(RetrieveAPIView):
+    """
+    Detailed pack information.
+    TODO: proper doccumentation.
+    """
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+    serializer_class = PackSerializer
+    queryset = Pack.objects.all()
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(PackInstance, self).get(request, *args, **kwargs)
+
+
+class PackSoundList(ListAPIView):
+    """
+    List of sounds in a pack.
+    TODO: proper doccumentation.
+    """
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+    serializer_class = SoundListSerializer
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(PackSoundList, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        try:
+            Pack.objects.get(id=self.kwargs['pk'])
+        except Pack.DoesNotExist:
+            raise NotFoundException()
+
+        return Sound.objects.select_related('pack').filter(moderation_state="OK",
+                                                           processing_state="OK",
+                                                           pack__id=self.kwargs['pk'])
+
+
+##############
+# UPLOAD VIEWS
+##############
+
 
 class UploadAudioFile(WriteRequiredGenericAPIView):
     """
     Upload a sound (without description)
+    TODO: proper doccumentation.
     """
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
     serializer_class = UploadAudioFileSerializer
 
     def post(self, request,  *args, **kwargs):
-
-        # Get request information
-        auth_method_name, developer, user = get_authentication_details_form_request(request)
-
-        # Check if client has write permissions
-        if auth_method_name == "OAuth2":
-            if "write" not in request.auth.get_scope_display():
-                raise UnauthorizedException
-
+        logger.info("TODO: proper logging")
         serializer = UploadAudioFileSerializer(data=request.DATA, files=request.FILES)
         if serializer.is_valid():
             audiofile = request.FILES['audiofile']
             try:
-                handle_uploaded_file(user.id, audiofile)
+                handle_uploaded_file(self.user.id, audiofile)
             except:
                 raise ServerErrorException
 
@@ -128,42 +187,9 @@ class UploadAudioFile(WriteRequiredGenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-class PackDetail(RetrieveAPIView):
-    """
-    Detailed pack information.
-    """
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-    serializer_class = PackSerializer
-    queryset = Pack.objects.all()
-
-class PackSoundList(ListAPIView):
-    """
-    Detailed pack information.
-    """
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-    lookup_field = "pack"
-    serializer_class = SoundListSerializer
-
-    def get(self, request,  *args, **kwargs):
-        print "Auth method: %s, Developer: %s, End user: %s" % get_authentication_details_form_request(request)
-        logger.info("Test log")
-        return super(PackSoundList, self).get(request, *args, **kwargs)
-
-    def get_queryset(self):
-        try:
-            Pack.objects.get(id=self.kwargs['pack'])
-        except Pack.DoesNotExist:
-            raise NotFoundException()
-
-        return Sound.objects.select_related('pack').filter(moderation_state="OK",
-                                                           processing_state="OK",
-                                                           pack__id=self.kwargs['pack'])
-
-
-############
+#############
 # OTHER VIEWS
-############
+#############
 
 
 ### View for returning "Invalid url" 400 responses
@@ -205,6 +231,7 @@ def create_apiv2_key(request):
                                'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1,
                                'fs_callback_url': fs_callback_url,
                                }, context_instance=RequestContext(request))
+
 
 ### View for deleting api clients (works both for apiv2 and apiv1)
 @login_required

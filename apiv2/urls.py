@@ -34,16 +34,16 @@ from apiv2 import views
 urlpatterns = patterns('apiv2.views',
     url(r'^$', 'api_root'),
 
-    # sounds
-    url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
+    # Sounds
+    url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
 
-    # users
-    url(r'^users/(?P<username>[^//]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
+    # Users
+    url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),
     url(r'^users/(?P<username>[^//]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
 
-    # packs
-    url(r'^packs/(?P<pk>[0-9]+)/$', views.PackDetail.as_view(), name='apiv2-pack-detail'),
-    url(r'^packs/(?P<pack>[0-9]+)/sounds/$', views.PackSoundList.as_view(), name='apiv2-pack-sound-list'),
+    # Packs
+    url(r'^packs/(?P<pk>[0-9]+)/$', views.PackInstance.as_view(), name='apiv2-pack-instance'),
+    url(r'^packs/(?P<pk>[0-9]+)/sounds/$', views.PackSoundList.as_view(), name='apiv2-pack-sound-list'),
 
     # Upload files
     url(r'^sounds/upload/$', views.UploadAudioFile.as_view(), name="apiv2-upload-sound-file"),

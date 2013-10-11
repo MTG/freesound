@@ -32,25 +32,33 @@ from apiv2 import views
 
 
 urlpatterns = patterns('apiv2.views',
-       # Handlers
-       url(r'^$', 'api_root'),
-       url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
-       url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
-       url(r'^users/(?P<pk>[0-9]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
+    url(r'^$', 'api_root'),
 
-       # Upload files
-       url(r'^sounds/upload/$', views.UploadAudioFile.as_view(), name="apiv2-upload-sound-file"),
+    # sounds
+    url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundDetail.as_view(), name="apiv2-sound-detail"),
 
-       # Client management
-       url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),
-       url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
+    # users
+    url(r'^users/(?P<username>[^//]+)/$', views.UserDetail.as_view(), name="apiv2-user-detail"),
+    url(r'^users/(?P<username>[^//]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
 
-       # Include views for three-legged auth process
-       url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2')),
-       url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
+    # packs
+    url(r'^packs/(?P<pk>[0-9]+)/$', views.PackDetail.as_view(), name='apiv2-pack-detail'),
+    url(r'^packs/(?P<pack>[0-9]+)/sounds/$', views.PackSoundList.as_view(), name='apiv2-pack-sound-list'),
 
-       # Any other url
-       url(r'/$', views.return_invalid_url ),
+    # Upload files
+    url(r'^sounds/upload/$', views.UploadAudioFile.as_view(), name="apiv2-upload-sound-file"),
+
+    # Client management
+    url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),
+    url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
+
+    # Include views for three-legged auth process
+    url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2')),
+    url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
+
+    # Any other url
+    url(r'/$', views.return_invalid_url),
+
 )
 
 

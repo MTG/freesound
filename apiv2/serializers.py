@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from sounds.models import Sound
+from sounds.models import Sound, Pack
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
@@ -42,6 +42,7 @@ def prepend_base(rel):
 
 DEFAULT_FIELDS_IN_SOUND_LIST = 'url,uri'  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_SOUND_DETAIL = None  # Separated by commas (None = all)
+DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
 
 class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
@@ -111,6 +112,7 @@ class SoundSerializer(AbstractSoundSerializer):
         super(SoundSerializer, self).__init__(*args, **kwargs)
 
 
+
 class UploadAudioFileSerializer(serializers.Serializer):
     audiofile = serializers.FileField(max_length=100, allow_empty_file=False)
 
@@ -123,7 +125,8 @@ class UploadAudioFileSerializer(serializers.Serializer):
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     uri = serializers.SerializerMethodField('get_uri')
     url = serializers.SerializerMethodField('get_url')
-    sounds = serializers.HyperlinkedIdentityField(view_name='apiv2-user-sound-list')
+    sounds = serializers.SerializerMethodField('get_sounds')
+#    sounds = serializers.HyperlinkedIdentityField(view_name='apiv2-user-sound-list')
 
     class Meta:
         model = User
@@ -138,4 +141,40 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         return prepend_base(reverse('account', args=[obj.username]))
 
     def get_uri(self, obj):
-        return prepend_base(reverse('apiv2-user-detail', args=[obj.id]))
+        return prepend_base(reverse('apiv2-user-detail', args=[obj.username]))
+
+    def get_sounds(self, obj):
+        return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]))
+
+
+
+##################
+# PACK SERIALIZERS
+##################
+
+
+class PackSerializer(serializers.HyperlinkedModelSerializer):
+
+    url = serializers.SerializerMethodField('get_url')
+    def get_url(self, obj):
+        return prepend_base(reverse('pack', args=[obj.user.username, obj.id]))
+    uri = serializers.SerializerMethodField('get_uri')
+    def get_uri(self, obj):
+        return prepend_base(reverse('apiv2-pack-detail', args=[obj.id]))
+    sounds = serializers.SerializerMethodField('get_sounds')
+    def get_sounds(self, obj):
+        return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]))
+
+    class Meta:
+        model = Pack
+        fields = ('id',
+                  'uri',
+                  'url',
+                  'description',
+                  'created',
+                  'name',
+                  'sounds',
+                  'num_downloads')
+
+
+

@@ -28,8 +28,9 @@
             <td>{{ credential.client_secret }}</td>
             <td>{{ credential.get_scope_display }}</td>
             <td>{{ credential.redirect_uri|truncate_string:20 }}</td>
-            <td><a href="{% url apiv2-delete-credential credential.client_secret %}"><img src="/media/images/cancel.png"/></a></td>
             <td><a href="{% url apiv2-edit-credential credential.client_secret %}">edit</a></td>
+            <td><a href="{% url apiv2-delete-credential credential.client_secret %}">delete</a></td>
+
             {% comment %}<td>{{ credential.status }}</td>{% endcomment %}
         </tr>
     {% endfor %}

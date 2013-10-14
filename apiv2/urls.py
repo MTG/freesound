@@ -54,6 +54,7 @@ urlpatterns = patterns('apiv2.views',
     # Client management
     url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),
     url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
+    url(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
 
     # Include views for three-legged auth process
     url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2')),

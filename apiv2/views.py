@@ -36,16 +36,18 @@ from utils import ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView
 from exceptions import NotFoundException, InvalidUrlException, ServerErrorException
 import settings
 import logging
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.core.urlresolvers import reverse
 import datetime
 from provider.oauth2.models import AccessToken, Grant
 from api.models import ApiKey
+from api.forms import ApiKeyForm
 from django.contrib import messages
 from accounts.views import handle_uploaded_file
 from freesound.utils.filesystem import generate_tree
 from utils import create_sound_object
 import os
+
 
 logger = logging.getLogger("api")
 
@@ -286,6 +288,68 @@ def create_apiv2_key(request):
                                'form': form,
                                'user_credentials': user_credentials,
                                'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1,
+                               'fs_callback_url': fs_callback_url,
+                               }, context_instance=RequestContext(request))
+
+
+### View for editing client (works both for apiv2 and apiv1)
+@login_required
+def edit_api_credential(request, key):
+    client = None
+    try:
+        client = ApiV2Client.objects.get(key=key)
+    except ApiV2Client.DoesNotExist:
+        pass
+
+    try:
+        client = ApiKey.objects.get(key=key)
+    except ApiKey.DoesNotExist:
+        pass
+
+    if not client:
+        raise Http404
+
+    if request.method == 'POST':
+        if client.version == 'V2':
+            form = ApiV2ClientForm(request.POST)
+            if form.is_valid():
+                client.name = form.cleaned_data['name']
+                client.url = form.cleaned_data['url']
+                client.redirect_uri = form.cleaned_data['redirect_uri']
+                client.description = form.cleaned_data['description']
+                client.accepted_tos = form.cleaned_data['accepted_tos']
+                client.save()
+                messages.add_message(request, messages.INFO, "Credentials with name %s have been updated." % client.name)
+                return HttpResponseRedirect(reverse("apiv2-apply"))
+        elif client.version == 'V1':
+            form = ApiKeyForm(request.POST)
+            if form.is_valid():
+                client.name = form.cleaned_data['name']
+                client.url = form.cleaned_data['url']
+                client.description = form.cleaned_data['description']
+                client.accepted_tos = form.cleaned_data['accepted_tos']
+                client.save()
+                messages.add_message(request, messages.INFO, "Credentials with name %s have been updated." % client.name)
+                return HttpResponseRedirect(reverse("apiv2-apply"))
+    else:
+        if client.version == 'V2':
+            form = ApiV2ClientForm(initial={'name': client.name,
+                                            'url': client.url,
+                                            'redirect_uri': client.redirect_uri,
+                                            'description': client.description,
+                                            'accepted_tos': client.accepted_tos
+                                            })
+        elif client.version == 'V1':
+            form = ApiKeyForm(initial={'name': client.name,
+                                        'url': client.url,
+                                        'description': client.description,
+                                        'accepted_tos': client.accepted_tos
+                                        })
+
+    fs_callback_url = request.build_absolute_uri(reverse('permission-granted'))
+    return render_to_response('api/edit_api_credential.html',
+                              {'client': client,
+                               'form': form,
                                'fs_callback_url': fs_callback_url,
                                }, context_instance=RequestContext(request))
 

@@ -201,6 +201,18 @@ class GaiaWrapper:
         data = self.__get_point_descriptors(point_name, required_descriptor_names, normalization_coeffs)
         return {'error': False, 'result': data}
 
+    def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization_coeffs=None):
+        '''
+        Returns a list with the descritor values for all requested point names
+        '''
+        data = dict()
+        required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
+        for point_name in point_names:
+            sound_descriptors = self.__get_point_descriptors(point_name, required_descriptor_names, normalization_coeffs)
+            data[point_name] = sound_descriptors
+
+        return {'error': False, 'result': data}
+
     def __calculate_complete_required_descriptor_names(self, descriptor_names):
         layout = self.original_dataset.layout()
         if not descriptor_names:

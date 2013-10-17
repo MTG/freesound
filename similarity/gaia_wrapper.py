@@ -195,11 +195,16 @@ class GaiaWrapper:
         # We first process the descritor names to create the FULL list of descritors needed (ex: if
         # descriptor names include 'lowlevel.spectral_centroid', the output will include all statistics
         # on that descritor (lowlevel.spectral_cetroid.mean, lowlevel.spectral_cetroid.var...)
-        # At the same time we create the data structure where we will store all descriptor values to return
+        required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
+
+        # Now we fill the required layout data structure with descritor values
+        data = self.__get_point_descriptors(point_name, required_descriptor_names, normalization_coeffs)
+        return {'error': False, 'result': data}
+
+    def __calculate_complete_required_descriptor_names(self, descriptor_names):
         layout = self.original_dataset.layout()
         if not descriptor_names:
             descriptor_names = layout.descriptorNames()
-
         try:
             structured_layout = generate_structured_dict_from_layout(layout.descriptorNames())
             processed_descriptor_names = []
@@ -214,13 +219,10 @@ class GaiaWrapper:
                     for extra_name in extra_names:
                         processed_descriptor_names.append('%s.%s' % (name, extra_name))
             processed_descriptor_names = list(set(processed_descriptor_names))
+            return processed_descriptor_names
 
         except:
             return {'error': True, 'result': 'Wrong descriptor names, unable to create layout.'}
-
-        # Now we fill the required layout data structure with descritor values
-        data = self.__get_point_descriptors(point_name, processed_descriptor_names, normalization_coeffs)
-        return {'error': False, 'result': data}
 
     def __get_point_descriptors(self, point_name, required_descriptor_names, normalization_coeffs=None):
         required_layout = generate_structured_dict_from_layout(required_descriptor_names)

@@ -33,6 +33,8 @@ def server_interface(resource):
         'add_point':resource.add_point, # location, sound_id
         'delete_point':resource.delete_point, # sound_id
         'contains':resource.contains, # sound_id
+        'get_sound_descriptors':resource.get_sound_descriptors, # sound_id, descritor_names (optional), normalization (optional)
+        'get_sounds_descriptors':resource.get_sounds_descriptors, # sound_ids, descritor_names (optional), normalization (optional)
         'nnsearch':resource.nnsearch, # sound_id, num_results (optional), preset (optional)
         'nnrange':resource.nnrange,  # target, filter, num_results (optional)
         'save':resource.save # filename (optional)
@@ -63,7 +65,21 @@ class SimilarityServer(resource.Resource):
     def contains(self, sound_id):
         return json.dumps(self.gaia.contains(sound_id[0]))
 
-    def nnsearch(self,sound_id,num_results = None,preset = None):
+    def get_sound_descriptors(self, sound_id, descriptor_names=None, normalization=[1]):
+        args = [sound_id[0]]
+        if descriptor_names:
+            args.append(descriptor_names[0].split(','))
+        args.append(normalization[0]=='1')
+        return json.dumps(self.gaia.get_sound_descriptors(*args))
+
+    def get_sounds_descriptors(self, sound_ids, descriptor_names=None, normalization=[1]):
+        args = [sound_ids[0].split(',')]
+        if descriptor_names:
+            args.append(descriptor_names[0].split(','))
+        args.append(normalization[0]=='1')
+        return json.dumps(self.gaia.get_sounds_descriptors(*args))
+
+    def nnsearch(self, sound_id, num_results=None, preset=None):
         if not preset:
             preset = [DEFAULT_PRESET]
         else:

@@ -21,6 +21,7 @@
 import os, logging, yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
 from similarity_settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR, INDEX_NAME
+from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, get_nested_descriptor_names, set_nested_dictionary_value
 import time
 
 logger = logging.getLogger('similarity')
@@ -184,6 +185,103 @@ class GaiaWrapper:
     def contains(self, point_name):
         logger.debug('Checking if index has point with name %s' % str(point_name))
         return {'error':False,'result':self.original_dataset.contains(point_name)}
+
+
+    def get_sound_descriptors(self, point_name, descriptor_names=None, normalization=True):
+        '''
+        Given a point name it returns the values for the descriptors specified in 'descriptor_names' list.
+        If no normalization coefficients are provided, the method will return normalized values [0-1].
+        '''
+
+        # We first process the descritor names to create the FULL list of descritors needed (ex: if
+        # descriptor names include 'lowlevel.spectral_centroid', the output will include all statistics
+        # on that descritor (lowlevel.spectral_cetroid.mean, lowlevel.spectral_cetroid.var...)
+        required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
+
+        # Now we fill the required layout data structure with descritor values
+        data = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
+        if 'error' not in data:
+            return {'error': False, 'result': data}
+        else:
+            return data
+
+
+    def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization=True):
+        '''
+        Returns a list with the descritor values for all requested point names
+        '''
+        data = dict()
+        required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
+        for point_name in point_names:
+            sound_descriptors = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
+            if 'error' not in sound_descriptors:
+                data[point_name] = sound_descriptors
+
+        return {'error': False, 'result': data}
+
+
+    def __calculate_complete_required_descriptor_names(self, descriptor_names):
+        layout = self.original_dataset.layout()
+        if not descriptor_names:
+            descriptor_names = layout.descriptorNames()
+        try:
+            structured_layout = generate_structured_dict_from_layout(layout.descriptorNames())
+            processed_descriptor_names = []
+            for name in descriptor_names:
+                nested_descriptors = get_nested_dictionary_value(name.split('.')[1:], structured_layout)
+                if not nested_descriptors:
+                    processed_descriptor_names.append(name)
+                else:
+                    # Return all nested descriptor names
+                    extra_names = []
+                    get_nested_descriptor_names(nested_descriptors, extra_names)
+                    for extra_name in extra_names:
+                        processed_descriptor_names.append('%s.%s' % (name, extra_name))
+            processed_descriptor_names = list(set(processed_descriptor_names))
+            return processed_descriptor_names
+
+        except:
+            return {'error': True, 'result': 'Wrong descriptor names, unable to create layout.'}
+
+
+    def __get_point_descriptors(self, point_name, required_descriptor_names, normalization=True):
+        # Get normalization coefficients to transform the input data (get info from the last
+        # transformation which has been a normalization)
+
+        normalization_coeffs = None
+        if normalization:
+            trans_hist = self.original_dataset.history().toPython()
+            for i in range(0,len(trans_hist)):
+                if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
+                    normalization_coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
+
+        required_layout = generate_structured_dict_from_layout(required_descriptor_names)
+        try:
+            p = self.original_dataset.point(str(point_name))
+        except:
+            return {'error': True, 'result': 'Sound does not exist in gaia index.'}
+
+        for descriptor_name in required_descriptor_names:
+            try:
+                value = p.value(str(descriptor_name))
+                if normalization_coeffs:
+                    a = normalization_coeffs[descriptor_name]['a']
+                    b = normalization_coeffs[descriptor_name]['b']
+                    if len(a) == 1:
+                        value = float(value - b[0]) / a[0]
+                    else:
+                        normalized_value = []
+                        for i in range(0, len(a)):
+                            normalized_value.append(float(value[i]-b[i]) / a[i])
+                        value = normalized_value
+            except:
+                value = 'unknown'
+
+            if descriptor_name[0] == '.':
+                descriptor_name = descriptor_name[1:]
+            set_nested_dictionary_value(descriptor_name.split('.'), required_layout, value)
+        return required_layout
+
 
     # SIMILARITY SEARCH (WEB and API)
     def search_dataset(self, query_point, number_of_results, preset_name):

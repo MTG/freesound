@@ -377,3 +377,46 @@ def parse_target(target_string):
         target_struct[feature_name] = value
 
     return target_struct
+
+
+
+### Functions to generate a structured dictionary from a list of descriptor names
+
+def create_nested_structure_of_dicts_from_list_of_keys(dict, keys):
+    dict_aux = dict
+    for count, key in enumerate(keys):
+        if key not in dict_aux:
+            if count == len(keys) - 1:
+                dict_aux[key] = None
+            else:
+                dict_aux[key] = {}
+        dict_aux = dict_aux[key]
+
+def generate_structured_dict_from_layout(layout_descriptor_names):
+    names = sorted(layout_descriptor_names)
+    structure = dict()
+    for name in names:
+        create_nested_structure_of_dicts_from_list_of_keys(structure, name.split('.')[1:])
+    return structure
+
+def get_nested_dictionary_value(keys, dict):
+    if len(keys) == 1:
+        return dict[keys[0]]
+    else:
+        return get_nested_dictionary_value(keys[1:], dict[keys[0]])
+
+def set_nested_dictionary_value(keys, dict, value):
+    if len(keys) == 1:
+        dict[keys[0]] = value
+    else:
+        set_nested_dictionary_value(keys[1:], dict[keys[0]], value)
+
+def get_nested_descriptor_names(structured_layout, accumulated_list=[], keys=[]):
+    for key, item in structured_layout.items():
+        if type(item) == dict:
+            keys.append(key)
+            get_nested_descriptor_names(item, accumulated_list, keys)
+        else:
+            keys.append(key)
+            accumulated_list.append('.'.join(keys))
+        keys.pop()

@@ -28,6 +28,8 @@ _URL_DELETE_POINT             = 'delete_point/'
 _URL_CONTAINS_POINT           = 'contains/'
 _URL_NNSEARCH                 = 'nnsearch/'
 _URL_NNRANGE                  = 'nnrange/'
+_URL_SOUND_DESCRIPTORS        = 'get_sound_descriptors/'
+_URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
 _URL_SAVE                     = 'save/'
 
 
@@ -92,4 +94,10 @@ class Similarity():
         url = _BASE_URL + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
+        return _result_or_exception(_get_url_as_json(url))
+
+    @classmethod
+    def get_sound_descriptors(cls, sound_id, descriptor_names=None, normalization):
+        url = _BASE_URL + _URL_SOUND_DESCRIPTORS + '?' + 'sound_id=' + str(sound_id)
+
         return _result_or_exception(_get_url_as_json(url))

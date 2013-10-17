@@ -56,7 +56,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(AbstractSoundSerializer, self).__init__(*args, **kwargs)
-        requested_fields = kwargs['context']['request'].GET.get("fields", self.default_fields)
+        requested_fields = self.context['request'].GET.get("fields", self.default_fields)
         if requested_fields:
             allowed = set(requested_fields.split(","))
             existing = set(self.fields.keys())
@@ -103,12 +103,19 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     analysis = serializers.SerializerMethodField('get_analysis')
     def get_analysis(self, obj):
+        ### Gaia-based implementation
         try:
-            # TODO: control selected descriptors with a request parameter. Current implementation is just to test
+            return self.context['view'].sound_analysis_data[str(obj.id)]
+        except Exception, e:
+            return None
+        ### File-based test implementation
+        '''
+        try:
             analysis = yaml.load(file(obj.locations('analysis.statistics.path')))
             return analysis['lowlevel']['spectral_centroid']['mean']
         except Exception, e:
             return None
+        '''
 
 
 class SoundListSerializer(AbstractSoundSerializer):

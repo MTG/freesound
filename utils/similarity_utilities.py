@@ -75,3 +75,19 @@ def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE
             cache.set(cache_key, returned_sounds, SIMILARITY_CACHE_TIME)
 
     return returned_sounds[0:num_results]
+
+
+def get_sounds_descriptor(sound_ids, descriptor_names, normalization=True):
+
+    # TODO: add cache
+
+    returned_data = None
+    if not returned_data:
+        try:
+            returned_data = Similarity.get_sounds_descriptors(sound_ids, descriptor_names, normalization)
+        except Exception, e:
+            logger.info('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
+                         (e, traceback.format_exc()))
+            raise Exception(e)
+
+    return returned_data

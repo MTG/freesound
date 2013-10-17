@@ -100,6 +100,7 @@ class UserInstance(RetrieveAPIView):
         return super(UserInstance, self).get(request, *args, **kwargs)
 
 
+
 class UserSoundList(ListAPIView):
     """
     List of sounds uploaded by user.
@@ -118,9 +119,27 @@ class UserSoundList(ListAPIView):
         except User.DoesNotExist:
             raise NotFoundException()
 
-        return Sound.objects.select_related('user').filter(moderation_state="OK",
+        queryset = Sound.objects.select_related('user').filter(moderation_state="OK",
                                                            processing_state="OK",
                                                            user__username=self.kwargs['username'])
+
+        ids = [int(sound.id) for sound in queryset]
+        # Check if 'analysis' is in 'fields' request parameter, and in that case gather analysis data so the serializer can add it
+        fields = self.request.GET.get('fields', '')
+        if 'analysis' in fields.split(','):
+            # FAKE implementation for testing purposes (in real life must come grom gaia)
+            # Should ask gaia and also pass the GET parameter 'descriptors'
+            self.sound_analysis_data = {
+                '127653': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
+                '127652': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
+                '106751': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
+                '106750': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
+                '106749': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
+                '106748': {'lowlevel': {'spectral_centroid': {'mean': 440}}}
+            }
+
+        return queryset
+
 
 
 ############

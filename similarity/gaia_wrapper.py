@@ -186,6 +186,7 @@ class GaiaWrapper:
         logger.debug('Checking if index has point with name %s' % str(point_name))
         return {'error':False,'result':self.original_dataset.contains(point_name)}
 
+
     def get_sound_descriptors(self, point_name, descriptor_names=None, normalization=True):
         '''
         Given a point name it returns the values for the descriptors specified in 'descriptor_names' list.
@@ -199,7 +200,11 @@ class GaiaWrapper:
 
         # Now we fill the required layout data structure with descritor values
         data = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
-        return {'error': False, 'result': data}
+        if 'error' not in data:
+            return {'error': False, 'result': data}
+        else:
+            return data
+
 
     def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization=True):
         '''
@@ -209,9 +214,11 @@ class GaiaWrapper:
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
         for point_name in point_names:
             sound_descriptors = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
-            data[point_name] = sound_descriptors
+            if 'error' not in sound_descriptors:
+                data[point_name] = sound_descriptors
 
         return {'error': False, 'result': data}
+
 
     def __calculate_complete_required_descriptor_names(self, descriptor_names):
         layout = self.original_dataset.layout()
@@ -236,6 +243,7 @@ class GaiaWrapper:
         except:
             return {'error': True, 'result': 'Wrong descriptor names, unable to create layout.'}
 
+
     def __get_point_descriptors(self, point_name, required_descriptor_names, normalization=True):
         # Get normalization coefficients to transform the input data (get info from the last
         # transformation which has been a normalization)
@@ -248,7 +256,11 @@ class GaiaWrapper:
                     normalization_coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
 
         required_layout = generate_structured_dict_from_layout(required_descriptor_names)
-        p = self.original_dataset.point(str(point_name))
+        try:
+            p = self.original_dataset.point(str(point_name))
+        except:
+            return {'error': True, 'result': 'Sound does not exist in gaia index.'}
+
         for descriptor_name in required_descriptor_names:
             try:
                 value = p.value(str(descriptor_name))

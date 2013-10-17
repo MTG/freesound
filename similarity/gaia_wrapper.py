@@ -186,7 +186,7 @@ class GaiaWrapper:
         logger.debug('Checking if index has point with name %s' % str(point_name))
         return {'error':False,'result':self.original_dataset.contains(point_name)}
 
-    def get_sound_descriptors(self, point_name, descriptor_names=None, normalization_coeffs=None):
+    def get_sound_descriptors(self, point_name, descriptor_names=None, normalization=True):
         '''
         Given a point name it returns the values for the descriptors specified in 'descriptor_names' list.
         If no normalization coefficients are provided, the method will return normalized values [0-1].
@@ -198,17 +198,17 @@ class GaiaWrapper:
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
 
         # Now we fill the required layout data structure with descritor values
-        data = self.__get_point_descriptors(point_name, required_descriptor_names, normalization_coeffs)
+        data = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
         return {'error': False, 'result': data}
 
-    def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization_coeffs=None):
+    def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization=True):
         '''
         Returns a list with the descritor values for all requested point names
         '''
         data = dict()
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
         for point_name in point_names:
-            sound_descriptors = self.__get_point_descriptors(point_name, required_descriptor_names, normalization_coeffs)
+            sound_descriptors = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
             data[point_name] = sound_descriptors
 
         return {'error': False, 'result': data}
@@ -236,22 +236,32 @@ class GaiaWrapper:
         except:
             return {'error': True, 'result': 'Wrong descriptor names, unable to create layout.'}
 
-    def __get_point_descriptors(self, point_name, required_descriptor_names, normalization_coeffs=None):
+    def __get_point_descriptors(self, point_name, required_descriptor_names, normalization=True):
+        # Get normalization coefficients to transform the input data (get info from the last
+        # transformation which has been a normalization)
+
+        normalization_coeffs = None
+        if normalization:
+            trans_hist = self.original_dataset.history().toPython()
+            for i in range(0,len(trans_hist)):
+                if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
+                    normalization_coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
+
         required_layout = generate_structured_dict_from_layout(required_descriptor_names)
         p = self.original_dataset.point(str(point_name))
         for descriptor_name in required_descriptor_names:
             try:
                 value = p.value(str(descriptor_name))
                 if normalization_coeffs:
-                        a = normalization_coeffs[descriptor_name]['a']
-                        b = normalization_coeffs[descriptor_name]['b']
-                        if len(a) == 1:
-                            value = a[0]*value + b[0]
-                        else:
-                            normalized_value = []
-                            for i in range(0, len(a)):
-                                normalized_value.append(a[i]*value[i]+b[i])
-                            value = normalized_value
+                    a = normalization_coeffs[descriptor_name]['a']
+                    b = normalization_coeffs[descriptor_name]['b']
+                    if len(a) == 1:
+                        value = float(value - b[0]) / a[0]
+                    else:
+                        normalized_value = []
+                        for i in range(0, len(a)):
+                            normalized_value.append(float(value[i]-b[i]) / a[i])
+                        value = normalized_value
             except:
                 value = 'unknown'
 

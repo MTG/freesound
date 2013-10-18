@@ -21,8 +21,9 @@
 #
 
 from sounds.models import Sound, Pack
+from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base
+from apiv2.serializers import GenericSoundSerializer, SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -32,7 +33,7 @@ from models import ApiV2Client
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from utils import ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView
 from exceptions import NotFoundException, InvalidUrlException, ServerErrorException
 import settings
 import logging
@@ -46,6 +47,10 @@ from django.contrib import messages
 from accounts.views import handle_uploaded_file
 from freesound.utils.filesystem import generate_tree
 from utils import create_sound_object
+from freesound.utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from piston.utils import rc
+from search.views import search_prepare_sort, search_prepare_query
+from urllib import quote
 import os
 
 
@@ -61,6 +66,16 @@ def api_root(request, format=None):
     return Response({
         #'upload': reverse('apiv2-uploads-upload'),
     })
+
+def my_quote(s):
+    return quote(s,safe=":[]*+()'")
+
+def find_api_option(cleaned_sort):
+    for t in SEARCH_SORT_OPTIONS_API:
+        if t[1] == cleaned_sort:
+            return t[0]
+    return None
+
 
 
 #############
@@ -79,6 +94,89 @@ class SoundInstance(RetrieveAPIView):
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
         return super(SoundInstance, self).get(request, *args, **kwargs)
+
+class SoundSearch(GenericAPIView):
+
+    serializer_class = SoundListSerializer
+
+    def get(self, request,  *args, **kwargs):
+        form = SoundSearchForm(SEARCH_SORT_OPTIONS_API, request.GET)
+        if not form.is_valid():
+            resp = rc.BAD_REQUEST
+            resp.content = form.errors
+            return resp
+
+        cd = form.cleaned_data
+        grouping = request.GET.get('g', "")
+        if grouping == "0":
+            grouping = ""
+
+        solr = Solr(settings.SOLR_URL)
+        sounds_per_page = min(int(request.GET.get('sounds_per_page', settings.SOUNDS_PER_API_RESPONSE)),settings.MAX_SOUNDS_PER_API_RESPONSE)
+        query = search_prepare_query(cd['q'],
+                                     cd['f'],
+                                     search_prepare_sort(cd['s'], SEARCH_SORT_OPTIONS_API),
+                                     cd['p'],
+                                     sounds_per_page,
+                                     grouping = grouping)
+
+        try:
+            results = SolrResponseInterpreter(solr.select(unicode(query)))
+            paginator = SolrResponseInterpreterPaginator(results,sounds_per_page)
+            page = paginator.page(form.cleaned_data['p'])
+            sounds = []
+            bad_results = 0
+            i = 0
+            for object in page['object_list'] :
+                try:
+                    sound = GenericSoundSerializer(Sound.objects.select_related('user').get(id=object['id'])).data
+                    i = i+1
+                    if 'more_from_pack' in object.keys():
+                        if object['more_from_pack'] > 0:
+                            link = prepend_base(reverse('apiv2-sound-search')+'?q=%s&f=pack:"%s" %s&s=%s&g=%s' % (my_quote(cd['q']),object['pack_name'],my_quote(cd['f']),cd['s'],""))
+                            if request.GET.get('sounds_per_page', None):
+                                link += "&sounds_per_page=" +  str(request.GET.get('sounds_per_page', None))
+                            if request.GET.get('fields', False):
+                                link += "&fields=" + str(request.GET.get('fields', False))
+                            sound['results_from_the_same_pack'] = link
+                            sound['n_results_from_the_same_pack'] = object['more_from_pack']
+                    sounds.append(sound)
+                except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
+                    pass
+            result = {'sounds': sounds, 'num_results': paginator.count - bad_results, 'num_pages': paginator.num_pages}
+
+            # construct previous and next urls
+            if page['has_other_pages']:
+                if page['has_previous']:
+                    result['previous'] = self.__construct_pagination_link(cd['q'],
+                                                                          page['previous_page_number'],
+                                                                          cd['f'],
+                                                                          find_api_option(cd['s']),
+                                                                          request.GET.get('sounds_per_page', None),
+                                                                          request.GET.get('fields', False),
+                                                                          grouping)
+                if page['has_next']:
+                    result['next'] = self.__construct_pagination_link(cd['q'],
+                                                                      page['next_page_number'],
+                                                                      cd['f'],
+                                                                      find_api_option(cd['s']),
+                                                                      request.GET.get('sounds_per_page',None),
+                                                                      request.GET.get('fields', False),
+                                                                      grouping)
+            data=result
+
+        except SolrException, e:
+                raise ServerErrorException
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    def __construct_pagination_link(self, q, p, f, s, spp, fields, grouping):
+        link = prepend_base(reverse('apiv2-sound-search')+'?q=%s&p=%s&f=%s&s=%s&g=%s' % (my_quote(q),p,my_quote(f),s,grouping))
+        if spp:
+            link += "&sounds_per_page=" +  str(spp)
+        if fields:
+            link += "&fields=" + str(fields)
+        return link
 
 
 ############

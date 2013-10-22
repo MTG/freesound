@@ -65,14 +65,14 @@ class SimilarityServer(resource.Resource):
     def contains(self, sound_id):
         return json.dumps(self.gaia.contains(sound_id[0]))
 
-    def get_sound_descriptors(self, sound_id, descriptor_names=None, normalization=[1]):
+    def get_sound_descriptors(self, sound_id, descriptor_names=None, normalization=[0]):
         kwargs = dict()
         if descriptor_names:
             kwargs['descriptor_names'] = descriptor_names[0].split(',')
         kwargs['normalization'] = normalization[0] == '1'
         return json.dumps(self.gaia.get_sound_descriptors(sound_id[0], **kwargs))
 
-    def get_sounds_descriptors(self, sound_ids, descriptor_names=None, normalization=[1]):
+    def get_sounds_descriptors(self, sound_ids, descriptor_names=None, normalization=[0]):
         kwargs = dict()
         if descriptor_names:
             kwargs['descriptor_names'] = descriptor_names[0].split(',')

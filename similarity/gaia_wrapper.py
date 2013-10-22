@@ -190,7 +190,7 @@ class GaiaWrapper:
     def get_sound_descriptors(self, point_name, descriptor_names=None, normalization=True):
         '''
         Given a point name it returns the values for the descriptors specified in 'descriptor_names' list.
-        If no normalization coefficients are provided, the method will return normalized values [0-1].
+        If normalization is required, the method will return normalized values [0-1].
         '''
 
         # We first process the descritor names to create the FULL list of descritors needed (ex: if
@@ -249,7 +249,7 @@ class GaiaWrapper:
         # transformation which has been a normalization)
 
         normalization_coeffs = None
-        if normalization:
+        if not normalization:
             trans_hist = self.original_dataset.history().toPython()
             for i in range(0,len(trans_hist)):
                 if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':

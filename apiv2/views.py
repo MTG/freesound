@@ -46,6 +46,7 @@ from django.contrib import messages
 from accounts.views import handle_uploaded_file
 from freesound.utils.filesystem import generate_tree
 from utils import create_sound_object
+from freesound.utils.similarity_utilities import get_sounds_descriptors
 import os
 
 
@@ -123,23 +124,24 @@ class UserSoundList(ListAPIView):
                                                            processing_state="OK",
                                                            user__username=self.kwargs['username'])
 
-        ids = [int(sound.id) for sound in queryset]
-        # Check if 'analysis' is in 'fields' request parameter, and in that case gather analysis data so the serializer can add it
-        fields = self.request.GET.get('fields', '')
-        if 'analysis' in fields.split(','):
-            # FAKE implementation for testing purposes (in real life must come grom gaia)
-            # Should ask gaia and also pass the GET parameter 'descriptors'
-            self.sound_analysis_data = {
-                '127653': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
-                '127652': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
-                '106751': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
-                '106750': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
-                '106749': {'lowlevel': {'spectral_centroid': {'mean': 440}}},
-                '106748': {'lowlevel': {'spectral_centroid': {'mean': 440}}}
-            }
+        # Check if field 'analysis' is present in the 'fields' GET parameter. If it is, get analysis data
+        # for all requested sounds and save it to a class variable so the serializer can access it and
+        # we only need one request to the similarity service
+        analysis_required = 'analysis' in self.request.GET.get('fields', None).split(',')
+        if analysis_required:
+            # Get ids of the particular sounds we need
+            paginated_queryset = self.paginate_queryset(queryset)
+            ids = [int(sound.id) for sound in paginated_queryset.object_list]
+            # Get descriptor values for the required ids
+            # Required descritors are indicated with the parameter 'descriptors'. If 'descriptors' is empty,
+            # we return nothing
+            descriptors = self.request.GET.get('descriptors', [])
+            if descriptors:
+                self.sound_analysis_data = get_sounds_descriptors(ids, descriptors.split(','), self.request.GET.get('normalized', '0') == '1')
+            else:
+                self.sound_analysis_data = {}
 
         return queryset
-
 
 
 ############

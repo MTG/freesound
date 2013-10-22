@@ -77,7 +77,7 @@ def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE
     return returned_sounds[0:num_results]
 
 
-def get_sounds_descriptor(sound_ids, descriptor_names, normalization=True):
+def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True):
 
     # TODO: add cache
 

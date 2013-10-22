@@ -66,18 +66,18 @@ class SimilarityServer(resource.Resource):
         return json.dumps(self.gaia.contains(sound_id[0]))
 
     def get_sound_descriptors(self, sound_id, descriptor_names=None, normalization=[1]):
-        args = [sound_id[0]]
+        kwargs = dict()
         if descriptor_names:
-            args.append(descriptor_names[0].split(','))
-        args.append(normalization[0]=='1')
-        return json.dumps(self.gaia.get_sound_descriptors(*args))
+            kwargs['descriptor_names'] = descriptor_names[0].split(',')
+        kwargs['normalization'] = normalization[0] == '1'
+        return json.dumps(self.gaia.get_sound_descriptors(sound_id[0], **kwargs))
 
     def get_sounds_descriptors(self, sound_ids, descriptor_names=None, normalization=[1]):
-        args = [sound_ids[0].split(',')]
+        kwargs = dict()
         if descriptor_names:
-            args.append(descriptor_names[0].split(','))
-        args.append(normalization[0]=='1')
-        return json.dumps(self.gaia.get_sounds_descriptors(*args))
+            kwargs['descriptor_names'] = descriptor_names[0].split(',')
+        kwargs['normalization'] = normalization[0] == '1'
+        return json.dumps(self.gaia.get_sounds_descriptors(sound_ids[0].split(','), **kwargs))
 
     def nnsearch(self, sound_id, num_results=None, preset=None):
         if not preset:

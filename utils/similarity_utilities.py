@@ -79,15 +79,28 @@ def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE
 
 def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True):
 
-    # TODO: add cache
+    cache_key = "analysis-sound-id-%s-descriptors-%s"
 
-    returned_data = None
-    if not returned_data:
-        try:
-            returned_data = Similarity.get_sounds_descriptors(sound_ids, descriptor_names, normalization)
-        except Exception, e:
-            logger.info('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
-                         (e, traceback.format_exc()))
-            raise Exception(e)
+    cached_data = {}
+    # Check if at least some sound analysis data is already on cache
+    not_cached_sound_ids = sound_ids[:]
+    for id in sound_ids:
+        analysis_data = cache.get(cache_key % (str(id), ",".join(sorted(descriptor_names))))
+        if analysis_data:
+            cached_data[unicode(id)] = analysis_data
+            # remove id form list so it is not included in similarity request
+            not_cached_sound_ids.remove(id)
+    try:
+        returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization)
+    except Exception, e:
+        logger.info('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
+                     (e, traceback.format_exc()))
+        raise Exception(e)
 
+    # save sound analysis information in cache
+    for key, item in returned_data.items():
+        cache.set(cache_key % (key, ",".join(sorted(descriptor_names))),
+                  item, SIMILARITY_CACHE_TIME)
+
+    returned_data.update(cached_data)
     return returned_data

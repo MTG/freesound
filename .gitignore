@@ -22,3 +22,4 @@ freesound.komodoproject
 .idea/
 logger.py
 similarity/similarity_settings.py
+.env

@@ -91,6 +91,8 @@ class SoundSearchFormAPI(forms.Form):
     filter          = forms.CharField(required=False, label='filter')
     sort            = forms.CharField(required=False, label='sort')
     fields          = forms.CharField(required=False, label='fields')
+    descriptors     = forms.CharField(required=False, label='descriptors')
+    normalized      = forms.CharField(required=False, label='normalized')
     page_size       = forms.CharField(required=False, label='page_size')
     group_by_pack   = forms.CharField(required=False, label='group_by_pack')
 
@@ -101,6 +103,17 @@ class SoundSearchFormAPI(forms.Form):
     def clean_filter(self):
         filter = self.cleaned_data['filter']
         return my_quote(filter) if filter != None else ""
+
+    def clean_descriptors(self):
+        descriptors = self.cleaned_data['descriptors']
+        return my_quote(descriptors) if descriptors != None else ""
+
+    def clean_normalized(self):
+        requested_normalized = self.cleaned_data['normalized']
+        normalized = ''
+        if requested_normalized:
+            normalized = '1'
+        return normalized
 
     def clean_page(self):
         try:

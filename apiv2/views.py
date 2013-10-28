@@ -149,14 +149,18 @@ class SoundSearch(GenericAPIView):
                             '&page=%s' \
                             '&page_size=%s' \
                             '&group_by_pack=%s' \
-                            '&fields=%s' % (
+                            '&fields=%s' \
+                            '&descriptors=%s' \
+                            '&normalized=%s' % (
                                   search_form.cleaned_data['query'],
                                   search_form.cleaned_data['filter'],
                                   search_form.original_url_sort_value,
                                   page_number,
                                   search_form.cleaned_data['page_size'],
                                   search_form.cleaned_data['group_by_pack'],
-                                  search_form.cleaned_data['fields']
+                                  search_form.cleaned_data['fields'],
+                                  search_form.cleaned_data['descriptors'],
+                                  search_form.cleaned_data['normalized']
                             ))
 
     def __construct_more_from_pack_link(self, search_form, pack_name):
@@ -165,12 +169,16 @@ class SoundSearch(GenericAPIView):
                             '&filter=pack:%s' \
                             '&sort=%s' \
                             '&page_size=%s' \
-                            '&fields=%s' % (
+                            '&fields=%s' \
+                            '&descriptors=%s' \
+                            '&normalized=%s' % (
                                   search_form.cleaned_data['query'],
                                   pack_name,
                                   search_form.original_url_sort_value,
                                   search_form.cleaned_data['page_size'],
-                                  search_form.cleaned_data['fields']
+                                  search_form.cleaned_data['fields'],
+                                  search_form.cleaned_data['descriptors'],
+                                  search_form.cleaned_data['normalized']
                             ))
 
 

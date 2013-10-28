@@ -33,7 +33,7 @@ from models import ApiV2Client
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, get_analysis_data_for_queryset_or_sound_ids
 from exceptions import NotFoundException, InvalidUrlException, ServerErrorException
 from rest_framework.exceptions import ParseError
 import settings
@@ -47,7 +47,6 @@ from api.forms import ApiKeyForm
 from django.contrib import messages
 from accounts.views import handle_uploaded_file
 from freesound.utils.filesystem import generate_tree
-from freesound.utils.similarity_utilities import get_sounds_descriptors
 from freesound.utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 from piston.utils import rc
 from search.views import search_prepare_query
@@ -109,6 +108,7 @@ class SoundSearch(GenericAPIView):
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, search_form.cleaned_data['page_size'])
             page = paginator.page(search_form.cleaned_data['page'])
+            get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=[object['id'] for object in page['object_list']])
             sounds = []
             for object in page['object_list']:
                 try:
@@ -193,7 +193,6 @@ class UserInstance(RetrieveAPIView):
         return super(UserInstance, self).get(request, *args, **kwargs)
 
 
-
 class UserSoundList(ListAPIView):
     """
     List of sounds uploaded by user.
@@ -213,25 +212,9 @@ class UserSoundList(ListAPIView):
             raise NotFoundException()
 
         queryset = Sound.objects.select_related('user').filter(moderation_state="OK",
-                                                           processing_state="OK",
-                                                           user__username=self.kwargs['username'])
-
-        # Check if field 'analysis' is present in the 'fields' GET parameter. If it is, get analysis data
-        # for all requested sounds and save it to a class variable so the serializer can access it and
-        # we only need one request to the similarity service
-        analysis_required = 'analysis' in self.request.GET.get('fields', '').split(',')
-        if analysis_required:
-            # Get ids of the particular sounds we need
-            paginated_queryset = self.paginate_queryset(queryset)
-            ids = [int(sound.id) for sound in paginated_queryset.object_list]
-            # Get descriptor values for the required ids
-            # Required descritors are indicated with the parameter 'descriptors'. If 'descriptors' is empty,
-            # we return nothing
-            descriptors = self.request.GET.get('descriptors', [])
-            if descriptors:
-                self.sound_analysis_data = get_sounds_descriptors(ids, descriptors.split(','), self.request.GET.get('normalized', '0') == '1')
-            else:
-                self.sound_analysis_data = {}
+                                                               processing_state="OK",
+                                                               user__username=self.kwargs['username'])
+        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
 
         return queryset
 
@@ -271,9 +254,12 @@ class PackSoundList(ListAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException()
 
-        return Sound.objects.select_related('pack').filter(moderation_state="OK",
-                                                           processing_state="OK",
-                                                           pack__id=self.kwargs['pk'])
+        queryset = Sound.objects.select_related('pack').filter(moderation_state="OK",
+                                                               processing_state="OK",
+                                                               pack__id=self.kwargs['pk'])
+        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
+
+        return queryset
 
 
 ##############

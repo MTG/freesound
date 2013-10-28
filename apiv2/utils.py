@@ -37,6 +37,7 @@ from exceptions import ServerErrorException, OtherException
 import shutil
 import settings
 import os
+from freesound.utils.similarity_utilities import get_sounds_descriptors
 
 
 ############################
@@ -175,6 +176,28 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 
         # Get request information and store it as class variable
         self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+
+
+def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[]):
+    # Get analysis data for all requested sounds and save it to a class variable so the serializer can access it and
+    # we only need one request to the similarity service
+
+    analysis_data_required = 'analysis' in view.request.GET.get('fields', '').split(',')
+    if analysis_data_required:
+        # Get ids of the particular sounds we need
+        if queryset:
+            paginated_queryset = view.paginate_queryset(queryset)
+            ids = [int(sound.id) for sound in paginated_queryset.object_list]
+        else:
+            ids = [int(sid) for sid in sound_ids]
+
+        # Get descriptor values for the required ids
+        # Required descriptors are indicated with the parameter 'descriptors'. If 'descriptors' is empty, we return nothing
+        descriptors = view.request.GET.get('descriptors', [])
+        if descriptors:
+            view.sound_analysis_data = get_sounds_descriptors(ids, descriptors.split(','), view.request.GET.get('normalized', '0') == '1')
+        else:
+            view.sound_analysis_data = {}
 
 
 ######################

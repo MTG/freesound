@@ -193,6 +193,8 @@ class GaiaWrapper:
         If normalization is required, the method will return normalized values [0-1].
         '''
 
+        logger.debug('Getting descriptors for point %s' % str(point_name))
+
         # We first process the descritor names to create the FULL list of descritors needed (ex: if
         # descriptor names include 'lowlevel.spectral_centroid', the output will include all statistics
         # on that descritor (lowlevel.spectral_cetroid.mean, lowlevel.spectral_cetroid.var...)
@@ -210,6 +212,9 @@ class GaiaWrapper:
         '''
         Returns a list with the descritor values for all requested point names
         '''
+
+        logger.debug('Getting descriptors for points %s' % ','.join([str(name) for name in point_names]))
+
         data = dict()
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
         for point_name in point_names:

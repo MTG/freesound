@@ -23,7 +23,7 @@ import settings
 from urllib import quote
 
 def my_quote(s):
-    return quote(s,safe=":[]*+()'")
+    return quote(s,safe=",:[]*+()'")
     
 SEARCH_SORT_OPTIONS_WEB = [
         ("Automatic by relevance", "score desc"),

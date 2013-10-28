@@ -157,6 +157,16 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
         self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
 
 
+class GenericAPIView(RestFrameworkGenericAPIView):
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+
+    def initial(self, request, *args, **kwargs):
+        super(GenericAPIView, self).initial(request, *args, **kwargs)
+
+        # Get request informationa dn store it as class variable
+        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+
+
 def create_sound_object(user, sound_fields):
 
     # 1 prepare some variable names

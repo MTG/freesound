@@ -47,16 +47,18 @@ def _result_or_exception(result):
 class Similarity():
 
     @classmethod
-    def search(cls, sound_id, num_results = None, preset = None):
+    def search(cls, sound_id, num_results = None, preset = None, offset = None):
         url = _BASE_URL + _URL_NNSEARCH + '?' + 'sound_id=' + str(sound_id)
         if num_results:
             url += '&num_results=' + str(num_results)
         if preset:
             url += '&preset=' + preset
+        if offset:
+            url += '&offset=' + str(offset)
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def query(cls, target = None, filter = None, num_results = None):
+    def query(cls, target = None, filter = None, num_results = None, offset = None):
         if not target and not filter:
             raise Exception("At least a target or a filter should be specified")
         url = _BASE_URL + _URL_NNRANGE + '?'
@@ -66,6 +68,8 @@ class Similarity():
             url += '&filter=' + str(filter)
         if num_results:
             url += '&num_results=' + str(num_results)
+        if offset:
+            url += '&offset=' + str(offset)
 
         j = _get_url_as_json(url)
         r = _result_or_exception(j)

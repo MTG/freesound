@@ -26,12 +26,12 @@ from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILAR_SOUN
 
 logger = logging.getLogger('web')
 
-def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SOUNDS_PER_PAGE ):
+def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SOUNDS_PER_PAGE, offset = 0 ):
 
     if preset not in PRESETS:
         preset = DEFAULT_PRESET
 
-    cache_key = "similar-for-sound-%s-%s" % (sound.id, preset)
+    cache_key = "similar-for-sound-%s-%s-%i" % (sound.id, preset, offset)
 
     # Don't use the cache when we're debugging
     if settings.DEBUG:
@@ -41,7 +41,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
 
     if not similar_sounds:
         try:
-            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset = preset, num_results = SIMILAR_SOUNDS_TO_CACHE)]
+            similar_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.search(sound.id, preset = preset, num_results = num_results, offset = offset)]
         except Exception, e:
             logger.debug('Could not get a response from the similarity service (%s)\n\t%s' % \
                          (e, traceback.format_exc()))
@@ -53,7 +53,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
     return similar_sounds[0:num_results]
 
 
-def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE):
+def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE, offset=0):
 
     cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (target.replace(" ",""),filter.replace(" ",""),num_results)
 
@@ -65,7 +65,7 @@ def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE
 
     if not returned_sounds:
         try:
-            returned_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.query(target, filter, num_results)]
+            returned_sounds = [ [int(x[0]),float(x[1])] for x in Similarity.query(target, filter, num_results, offset)]
         except Exception, e:
             logger.info('Something wrong occurred with the "query for descriptors" request (%s)\n\t%s' %\
                          (e, traceback.format_exc()))

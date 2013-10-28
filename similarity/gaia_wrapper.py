@@ -284,7 +284,7 @@ class GaiaWrapper:
 
 
     # SIMILARITY SEARCH (WEB and API)
-    def search_dataset(self, query_point, number_of_results, preset_name):
+    def search_dataset(self, query_point, number_of_results, preset_name, offset=0):
         preset_name = str(preset_name)
         query_point = str(query_point)
         logger.debug('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
@@ -302,7 +302,7 @@ class GaiaWrapper:
             p, p1 = Point(), Point()
             p.load(query_point)
             p1 = self.original_dataset.history().mapPoint(p)
-            similar_sounds = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results))
+            similar_sounds = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
         else:
             if not self.original_dataset.contains(query_point):
                 msg = "Sound with id %s doesn't exist in the dataset." % query_point
@@ -310,13 +310,13 @@ class GaiaWrapper:
                 return {'error':True,'result':msg}
                 #raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
 
-            similar_sounds = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results))
+            similar_sounds = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
 
         return {'error':False, 'result':similar_sounds}
 
 
     # CONTENT-BASED SEARCH (API)
-    def query_dataset(self, query_parameters, number_of_results):
+    def query_dataset(self, query_parameters, number_of_results, offset=0):
 
         size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
@@ -386,7 +386,7 @@ class GaiaWrapper:
         # Looks like that depending on the version of gaia, variable filter must go after or before the metric
 	    # For the gaia version we have currently (sep 2012) in freesound: nnSearch(query,filter,metric)
         #results = self.view.nnSearch(q,str(filter),metric).get(int(number_of_results)) # <- Freesound
-        results = self.view.nnSearch(q,metric,str(filter)).get(int(number_of_results))
+        results = self.view.nnSearch(q,metric,str(filter)).get(int(number_of_results), offset=int(offset))
 
         return {'error':False, 'result':results}
 

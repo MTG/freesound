@@ -79,7 +79,7 @@ class SimilarityServer(resource.Resource):
         kwargs['normalization'] = normalization[0] == '1'
         return json.dumps(self.gaia.get_sounds_descriptors(sound_ids[0].split(','), **kwargs))
 
-    def nnsearch(self, sound_id, num_results=None, preset=None):
+    def nnsearch(self, sound_id, num_results=None, preset=None, offset=[0]):
         if not preset:
             preset = [DEFAULT_PRESET]
         else:
@@ -88,9 +88,9 @@ class SimilarityServer(resource.Resource):
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
 
-        return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name = preset[0]))
+        return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name=preset[0], offset=offset[0]))
 
-    def nnrange(self, target = None, filter = None, num_results = None):
+    def nnrange(self, target = None, filter = None, num_results = None, offset=[0]):
         if not filter and not target:
             return json.dumps({'error':True,'result':"At least introduce either a filter or a target"})
 
@@ -121,7 +121,7 @@ class SimilarityServer(resource.Resource):
             return json.dumps({'error':True,'result':message})
             #raise ReturnError(400, "BadRequest", {"explanation": message})
 
-        return json.dumps(self.gaia.query_dataset({'target':pt,'filter':pf}, num_results[0]))
+        return json.dumps(self.gaia.query_dataset({'target':pt,'filter':pf}, num_results[0], offset=offset[0]))
 
     def save(self, filename = None):
         if not filename:

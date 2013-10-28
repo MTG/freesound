@@ -39,6 +39,11 @@ import settings
 import os
 
 
+############################
+# Authentication util tweaks
+############################
+
+
 class AccessTokenView(DjangoRestFrameworkAccessTokenView):
 
     '''
@@ -122,6 +127,21 @@ class Authorize(DjangoOauth2ProviderAuthorize):
         template_name = 'api/authorize_app.html'
 
 
+#############################
+# Rest Framework custom views
+#############################
+
+
+class GenericAPIView(RestFrameworkGenericAPIView):
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+
+    def initial(self, request, *args, **kwargs):
+        super(GenericAPIView, self).initial(request, *args, **kwargs)
+
+        # Get request information and store it as class variable
+        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+
+
 class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
@@ -143,7 +163,7 @@ class ListAPIView(RestFrameworkListAPIView):
     def initial(self, request, *args, **kwargs):
         super(ListAPIView, self).initial(request, *args, **kwargs)
 
-        # Get request informationa dn store it as class variable
+        # Get request information and store it as class variable
         self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
 
 
@@ -153,21 +173,20 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
     def initial(self, request, *args, **kwargs):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)
 
-        # Get request informationa dn store it as class variable
+        # Get request information and store it as class variable
         self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
 
 
-class GenericAPIView(RestFrameworkGenericAPIView):
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-
-    def initial(self, request, *args, **kwargs):
-        super(GenericAPIView, self).initial(request, *args, **kwargs)
-
-        # Get request informationa dn store it as class variable
-        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+######################
+# Upload handler utils
+######################
 
 
 def create_sound_object(user, sound_fields):
+    '''
+    This function is used by the upload handler to create a sound object with the information provided through post
+    parameters.
+    '''
 
     # 1 prepare some variable names
     filename = sound_fields['upload_filename']

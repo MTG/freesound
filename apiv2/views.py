@@ -33,7 +33,7 @@ from models import ApiV2Client
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, get_analysis_data_for_queryset_or_sound_ids
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object
 from exceptions import NotFoundException, InvalidUrlException, ServerErrorException
 from rest_framework.exceptions import ParseError
 import settings

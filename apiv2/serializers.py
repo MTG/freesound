@@ -57,11 +57,15 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def __init__(self, *args, **kwargs):
         super(AbstractSoundSerializer, self).__init__(*args, **kwargs)
         requested_fields = self.context['request'].GET.get("fields", self.default_fields)
+        if not requested_fields: # If parameter is in url but parameter is empty, set to default
+            requested_fields = self.default_fields
+
         if requested_fields:
             allowed = set(requested_fields.split(","))
             existing = set(self.fields.keys())
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
+
 
     class Meta:
         model = Sound
@@ -131,6 +135,7 @@ class SoundSerializer(AbstractSoundSerializer):
         self.default_fields = DEFAULT_FIELDS_IN_SOUND_DETAIL
         super(SoundSerializer, self).__init__(*args, **kwargs)
 
+
 class GenericSoundSerializer(serializers.Serializer):
     uri = serializers.SerializerMethodField('get_uri')
     def get_uri(self, obj):
@@ -154,7 +159,6 @@ class GenericSoundSerializer(serializers.Serializer):
             return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]))
         else:
             return None
-
 
 
 ##################

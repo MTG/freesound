@@ -19,6 +19,11 @@
 #
 
 import django.forms as forms
+import settings
+from urllib import quote
+
+def my_quote(s):
+    return quote(s,safe=":[]*+()'")
     
 SEARCH_SORT_OPTIONS_WEB = [
         ("Automatic by relevance", "score desc"),
@@ -45,6 +50,7 @@ SEARCH_SORT_OPTIONS_API = [
     ]
 
 SEARCH_DEFAULT_SORT = "score desc"
+
 
 class SoundSearchForm(forms.Form):
     q    = forms.CharField(required=False, label='query')
@@ -77,3 +83,63 @@ class SoundSearchForm(forms.Form):
     def __init__(self, sort_options, *args, **kargs):
         super(SoundSearchForm, self).__init__(*args, **kargs)
         self.sort_options = sort_options
+
+
+class SoundSearchFormAPI(forms.Form):
+    query           = forms.CharField(required=False, label='query')
+    page            = forms.CharField(required=False, label='page')
+    filter          = forms.CharField(required=False, label='filter')
+    sort            = forms.CharField(required=False, label='sort')
+    fields          = forms.CharField(required=False, label='fields')
+    page_size       = forms.CharField(required=False, label='page_size')
+    group_by_pack   = forms.CharField(required=False, label='group_by_pack')
+
+    def clean_query(self):
+        query = self.cleaned_data['query']
+        return my_quote(query) if query != None else ""
+
+    def clean_filter(self):
+        filter = self.cleaned_data['filter']
+        return my_quote(filter) if filter != None else ""
+
+    def clean_page(self):
+        try:
+            page = int(self.cleaned_data['page'])
+        except:
+            return 1
+        return page if page >= 1 else 1
+
+    def clean_sort(self):
+        sort = self.cleaned_data['sort']
+        for option in SEARCH_SORT_OPTIONS_API:
+            if option[0] == sort:
+                sort = option[1]
+                self.original_url_sort_value = option[0]
+        sort = SEARCH_DEFAULT_SORT
+        self.original_url_sort_value = SEARCH_DEFAULT_SORT.split(' ')[0]
+
+        if sort in [option[1] for option in SEARCH_SORT_OPTIONS_API]:
+            if sort == "avg_rating desc":
+                sort = [sort, "num_ratings desc"]
+            elif  sort == "avg_rating asc":
+                sort = [sort, "num_ratings asc"]
+            else:
+                sort = [sort]
+        else:
+            sort = [SEARCH_DEFAULT_SORT]
+        return sort
+
+    def clean_fields(self):
+        fields = self.cleaned_data['fields']
+        return my_quote(fields) if fields != None else ""
+
+    def clean_group_by_pack(self):
+        requested_group_by_pack = self.cleaned_data['group_by_pack']
+        group_by_pack = ''
+        if requested_group_by_pack:
+            group_by_pack = '1'
+        return group_by_pack
+
+    def clean_page_size(self):
+        requested_paginate_by = self.cleaned_data[settings.REST_FRAMEWORK['PAGINATE_BY_PARAM']] or settings.REST_FRAMEWORK['PAGINATE_BY']
+        return min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])

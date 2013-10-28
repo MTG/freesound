@@ -21,7 +21,7 @@
 #
 
 from sounds.models import Sound, Pack
-from search.forms import SoundSearchFormAPI
+from search.forms import SoundSearchFormAPI, SoundAdvancedSearchFormAPI
 from django.contrib.auth.models import User
 from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base
 from rest_framework import status
@@ -146,8 +146,15 @@ class SoundSearch(GenericAPIView):
 class SoundAdvancedSearch(GenericAPIView):
     """
     Sound advanced search.
-    TODO: proper doccumentation.
+    TODO: proper documentation.
     """
+
+    def get(self, request,  *args, **kwargs):
+        search_form = SoundAdvancedSearchFormAPI(request.GET)
+        if not search_form.is_valid():
+            raise ParseError
+
+        return Response(search_form.construct_link(reverse('apiv2-sound-advanced-search')), status=status.HTTP_200_OK)
 
 
 ############

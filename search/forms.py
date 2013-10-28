@@ -150,8 +150,11 @@ class SoundSearchFormAPI(forms.Form):
     def clean_group_by_pack(self):
         requested_group_by_pack = self.cleaned_data['group_by_pack']
         group_by_pack = ''
-        if int(requested_group_by_pack):
-            group_by_pack = '1'
+        try:
+            if int(requested_group_by_pack):
+                group_by_pack = '1'
+        except:
+            pass
         return group_by_pack
 
     def clean_page_size(self):
@@ -161,31 +164,46 @@ class SoundSearchFormAPI(forms.Form):
     def construct_link(self, base_url, page=None, filter=None, group_by_pack=None):
         link = "?"
         if self.cleaned_data['query']:
-            link += 'query=%s&' % self.cleaned_data['query']
+            link += '&query=%s' % self.cleaned_data['query']
         if not filter:
             if self.cleaned_data['filter']:
-                link += 'filter=%s&' % self.cleaned_data['filter']
+                link += '&filter=%s' % self.cleaned_data['filter']
         else:
-            link += 'filter=%s&' % my_quote(filter)
+            link += '&filter=%s' % my_quote(filter)
         if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_DEFAULT_SORT.split(' ')[0]:
-            link += 'sort=%s&' % self.original_url_sort_value
+            link += '&sort=%s' % self.original_url_sort_value
         if not page:
-            if self.cleaned_data['page']:
-                link += 'page=%s&' % self.cleaned_data['page']
+            if self.cleaned_data['page'] and self.cleaned_data['page'] != 1:
+                link += '&page=%s' % self.cleaned_data['page']
         else:
-            link += 'page=%s&' % str(page)
+            link += '&page=%s' % str(page)
         if self.cleaned_data['page_size'] and not self.cleaned_data['page_size'] == settings.REST_FRAMEWORK['PAGINATE_BY']:
-            link += 'page_size=%s&' % str(self.cleaned_data['page_size'])
+            link += '&page_size=%s' % str(self.cleaned_data['page_size'])
         if self.cleaned_data['fields']:
-            link += 'fields=%s&' % self.cleaned_data['fields']
+            link += '&fields=%s' % self.cleaned_data['fields']
         if self.cleaned_data['descriptors']:
-            link += 'descriptors=%s&' % self.cleaned_data['descriptors']
+            link += '&descriptors=%s' % self.cleaned_data['descriptors']
         if self.cleaned_data['normalized']:
-            link += 'normalized=%s&' % self.cleaned_data['normalized']
+            link += '&normalized=%s' % self.cleaned_data['normalized']
         if not group_by_pack:
             if self.cleaned_data['group_by_pack']:
-                link += 'group_by_pack=%s&' % self.cleaned_data['group_by_pack']
+                link += '&group_by_pack=%s' % self.cleaned_data['group_by_pack']
         else:
-            link += 'group_by_pack=%s&' % group_by_pack
+            link += '&group_by_pack=%s' % group_by_pack
 
         return "http://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
+
+
+class SoundAdvancedSearchFormAPI(SoundSearchFormAPI):
+    descriptors_filter = forms.CharField(required=False, label='descriptors_filter')
+
+    def clean_descriptors_filter(self):
+        descriptors_filter = self.cleaned_data['descriptors_filter']
+        return my_quote(descriptors_filter) if descriptors_filter != None else ""
+
+    def construct_link(self, *args, **kwargs):
+        link = super(SoundAdvancedSearchFormAPI, self).construct_link(*args, **kwargs)
+        if self.cleaned_data['descriptors_filter']:
+                link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
+
+        return link

@@ -7,3 +7,4 @@
 - user field: user avatar
 - clean up utils.py
 - clean up imports
+- return view options (parameters, etc...) in view metadata?

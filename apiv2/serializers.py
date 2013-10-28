@@ -136,31 +136,6 @@ class SoundSerializer(AbstractSoundSerializer):
         super(SoundSerializer, self).__init__(*args, **kwargs)
 
 
-class GenericSoundSerializer(serializers.Serializer):
-    uri = serializers.SerializerMethodField('get_uri')
-    def get_uri(self, obj):
-        return prepend_base(reverse('apiv2-sound-instance', args=[obj.id]))
-
-    url = serializers.SerializerMethodField('get_url')
-    def get_url(self, obj):
-        return prepend_base(reverse('sound', args=[obj.user.username, obj.id]))
-
-    user = serializers.SerializerMethodField('get_user')
-    def get_user(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]))
-
-    name = serializers.SerializerMethodField('get_name')
-    def get_name(self, obj):
-        return obj.original_filename
-
-    pack = serializers.SerializerMethodField('get_pack')
-    def get_pack(self, obj):
-        if obj.pack:
-            return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]))
-        else:
-            return None
-
-
 ##################
 # USER SERIALIZERS
 ##################

@@ -21,9 +21,9 @@
 #
 
 from sounds.models import Sound, Pack
-from search.forms import SoundSearchFormAPI, SEARCH_SORT_OPTIONS_API
+from search.forms import SoundSearchFormAPI
 from django.contrib.auth.models import User
-from apiv2.serializers import GenericSoundSerializer, SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -87,6 +87,10 @@ class SoundInstance(RetrieveAPIView):
 
 
 class SoundSearch(GenericAPIView):
+    """
+    Sound search.
+    TODO: proper doccumentation.
+    """
 
     def get(self, request,  *args, **kwargs):
         search_form = SoundSearchFormAPI(request.GET)
@@ -114,8 +118,8 @@ class SoundSearch(GenericAPIView):
                             sound['more_from_same_pack'] = self.__construct_more_from_pack_link(search_form, object['pack_name'])
                             sound['n_from_same_pack'] = object['more_from_pack']
                     sounds.append(sound)
-                except: # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and both num_results and results per page might become inacurate
-                    pass
+                except:  # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and 'count' might become inacurate
+                    sounds.append(None)
             response_data = {'count': paginator.count}
 
             # construct previous and next urls

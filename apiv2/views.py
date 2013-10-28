@@ -96,9 +96,11 @@ class SoundSearch(GenericAPIView):
         if not search_form.is_valid():
             raise ParseError
 
+        from urllib import unquote
+
         solr = Solr(settings.SOLR_URL)
         query = search_prepare_query(search_form.cleaned_data['query'],
-                                     search_form.cleaned_data['filter'],
+                                     unquote(search_form.cleaned_data['filter']),
                                      search_form.cleaned_data['sort'],
                                      search_form.cleaned_data['page'],
                                      search_form.cleaned_data['page_size'],
@@ -115,8 +117,8 @@ class SoundSearch(GenericAPIView):
                     sound = SoundListSerializer(Sound.objects.select_related('user').get(id=object['id']), context=self.get_serializer_context()).data
                     if 'more_from_pack' in object.keys():
                         if object['more_from_pack'] > 0:
-                            sound['more_from_same_pack'] = self.__construct_more_from_pack_link(search_form, object['pack_name'])
-                            sound['n_from_same_pack'] = object['more_from_pack']
+                            sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(object['pack_id']), object['pack_name']), group_by_pack='0')
+                            sound['n_from_same_pack'] = object['more_from_pack'] + 1  # we add one as is the sound itself
                     sounds.append(sound)
                 except:  # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and 'count' might become inacurate
                     sounds.append(None)
@@ -127,12 +129,12 @@ class SoundSearch(GenericAPIView):
                 if not page['has_previous']:
                     response_data['previous'] = None
                 else:
-                    response_data['previous'] = self.__construct_pagination_link(search_form, page['previous_page_number'])
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['previous_page_number'])
 
                 if not page['has_next']:
                     response_data['next'] = None
                 else:
-                    response_data['next'] = self.__construct_pagination_link(search_form, page['next_page_number'])
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['next_page_number'])
 
             response_data['results'] = sounds
 
@@ -141,45 +143,12 @@ class SoundSearch(GenericAPIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-    def __construct_pagination_link(self, search_form, page_number):
-        return prepend_base(reverse('apiv2-sound-search') +
-                            '?query=%s' \
-                            '&filter=%s' \
-                            '&sort=%s' \
-                            '&page=%s' \
-                            '&page_size=%s' \
-                            '&group_by_pack=%s' \
-                            '&fields=%s' \
-                            '&descriptors=%s' \
-                            '&normalized=%s' % (
-                                  search_form.cleaned_data['query'],
-                                  search_form.cleaned_data['filter'],
-                                  search_form.original_url_sort_value,
-                                  page_number,
-                                  search_form.cleaned_data['page_size'],
-                                  search_form.cleaned_data['group_by_pack'],
-                                  search_form.cleaned_data['fields'],
-                                  search_form.cleaned_data['descriptors'],
-                                  search_form.cleaned_data['normalized']
-                            ))
 
-    def __construct_more_from_pack_link(self, search_form, pack_name):
-        return prepend_base(reverse('apiv2-sound-search') +
-                            '?query=%s' \
-                            '&filter=pack:%s' \
-                            '&sort=%s' \
-                            '&page_size=%s' \
-                            '&fields=%s' \
-                            '&descriptors=%s' \
-                            '&normalized=%s' % (
-                                  search_form.cleaned_data['query'],
-                                  pack_name,
-                                  search_form.original_url_sort_value,
-                                  search_form.cleaned_data['page_size'],
-                                  search_form.cleaned_data['fields'],
-                                  search_form.cleaned_data['descriptors'],
-                                  search_form.cleaned_data['normalized']
-                            ))
+class SoundAdvancedSearch(GenericAPIView):
+    """
+    Sound advanced search.
+    TODO: proper doccumentation.
+    """
 
 
 ############

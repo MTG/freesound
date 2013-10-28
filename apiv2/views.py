@@ -154,7 +154,37 @@ class SoundAdvancedSearch(GenericAPIView):
         if not search_form.is_valid():
             raise ParseError
 
-        return Response(search_form.construct_link(reverse('apiv2-sound-advanced-search')), status=status.HTTP_200_OK)
+        RETRIEVAL_PAGE_SIZE = 5000
+        RETRIEVAL_PAGE = 1
+
+        solr = Solr(settings.SOLR_URL)
+        query = search_prepare_query(search_form.cleaned_data['query'],
+                                     unquote(search_form.cleaned_data['filter']),
+                                     search_form.cleaned_data['sort'],
+                                     search_form.cleaned_data['page'],
+                                     RETRIEVAL_PAGE_SIZE,
+                                     grouping=False)
+        results = SolrResponseInterpreter(solr.select(unicode(query)))
+        paginator = SolrResponseInterpreterPaginator(results, RETRIEVAL_PAGE_SIZE)
+        page = paginator.page(RETRIEVAL_PAGE)
+        solr_sound_ids = [int(object['id']) for object in page['object_list']]
+
+        from freesound.utils.similarity_utilities import query_for_descriptors
+        gaia_ids = [id[0] for id in query_for_descriptors('', search_form.cleaned_data['descriptors_filter'], num_results=RETRIEVAL_PAGE_SIZE, offset=RETRIEVAL_PAGE-1)]
+        combined_sound_ids = list(set(gaia_ids).intersection(set(solr_sound_ids)))
+
+        sounds = []
+        count = len(combined_sound_ids)
+        combined_sound_ids = combined_sound_ids[0:30]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=combined_sound_ids)
+        for id in combined_sound_ids:
+            try:
+                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=id), context=self.get_serializer_context()).data
+                sounds.append(sound)
+            except:  # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and 'count' might become inacurate
+                sounds.append(None)
+
+        return Response({'count': count, 'results': sounds}, status=status.HTTP_200_OK)
 
 
 ############

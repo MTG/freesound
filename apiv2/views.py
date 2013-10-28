@@ -50,6 +50,7 @@ from freesound.utils.filesystem import generate_tree
 from freesound.utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 from piston.utils import rc
 from search.views import search_prepare_query
+from urllib import unquote
 import os
 
 
@@ -95,8 +96,6 @@ class SoundSearch(GenericAPIView):
         search_form = SoundSearchFormAPI(request.GET)
         if not search_form.is_valid():
             raise ParseError
-
-        from urllib import unquote
 
         solr = Solr(settings.SOLR_URL)
         query = search_prepare_query(search_form.cleaned_data['query'],

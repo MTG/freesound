@@ -92,7 +92,7 @@ class SimilarityServer(resource.Resource):
 
     def nnrange(self, target = None, filter = None, num_results = None, offset=[0]):
         if not filter and not target:
-            return json.dumps({'error':True,'result':"At least introduce either a filter or a target"})
+            return json.dumps({'error':True,'result':"At least descriptors_target or descriptors_filter should be specified"})
 
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]

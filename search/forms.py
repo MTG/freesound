@@ -121,7 +121,7 @@ class SoundSearchFormAPI(forms.Form):
             page = int(self.cleaned_data['page'])
         except:
             return 1
-        return page if page >= 1 else 1
+        return page
 
     def clean_sort(self):
         sort = self.cleaned_data['sort']
@@ -194,16 +194,23 @@ class SoundSearchFormAPI(forms.Form):
         return "http://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
 
 
-class SoundAdvancedSearchFormAPI(SoundSearchFormAPI):
+class SoundCombinedSearchFormAPI(SoundSearchFormAPI):
     descriptors_filter = forms.CharField(required=False, label='descriptors_filter')
+    descriptors_target = forms.CharField(required=False, label='descriptors_target')
 
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']
         return my_quote(descriptors_filter) if descriptors_filter != None else ""
 
+    def clean_descriptors_target(self):
+        descriptors_target = self.cleaned_data['descriptors_target']
+        return my_quote(descriptors_target) if descriptors_target != None else ""
+
     def construct_link(self, *args, **kwargs):
-        link = super(SoundAdvancedSearchFormAPI, self).construct_link(*args, **kwargs)
+        link = super(SoundCombinedSearchFormAPI, self).construct_link(*args, **kwargs)
         if self.cleaned_data['descriptors_filter']:
                 link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
+        if self.cleaned_data['descriptors_target']:
+                link += '&descriptors_target=%s' % self.cleaned_data['descriptors_target']
 
         return link

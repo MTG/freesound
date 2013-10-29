@@ -60,7 +60,7 @@ class Similarity():
     @classmethod
     def query(cls, target = None, filter = None, num_results = None, offset = None):
         if not target and not filter:
-            raise Exception("At least a target or a filter should be specified")
+            raise Exception("At least descriptors_target or descriptors_filter should be specified")
         url = _BASE_URL + _URL_NNRANGE + '?'
         if target:
             url += '&target=' + str(target)

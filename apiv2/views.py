@@ -21,7 +21,7 @@
 #
 
 from sounds.models import Sound, Pack
-from search.forms import SoundSearchFormAPI, SoundAdvancedSearchFormAPI
+from search.forms import SoundSearchFormAPI, SoundCombinedSearchFormAPI
 from django.contrib.auth.models import User
 from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base
 from rest_framework import status
@@ -52,6 +52,8 @@ from piston.utils import rc
 from search.views import search_prepare_query
 from urllib import unquote
 import os
+from freesound.utils.pagination import paginate
+from freesound.utils.similarity_utilities import query_for_descriptors
 
 
 logger = logging.getLogger("api")
@@ -93,22 +95,40 @@ class SoundSearch(GenericAPIView):
     """
 
     def get(self, request,  *args, **kwargs):
+        # Validate search form and check page 0
         search_form = SoundSearchFormAPI(request.GET)
         if not search_form.is_valid():
             raise ParseError
-
-        solr = Solr(settings.SOLR_URL)
-        query = search_prepare_query(search_form.cleaned_data['query'],
-                                     unquote(search_form.cleaned_data['filter']),
-                                     search_form.cleaned_data['sort'],
-                                     search_form.cleaned_data['page'],
-                                     search_form.cleaned_data['page_size'],
-                                     grouping=search_form.cleaned_data['group_by_pack'])
+        if search_form.cleaned_data['page'] < 1:
+                raise NotFoundException
 
         try:
+            # Get search results
+            solr = Solr(settings.SOLR_URL)
+            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
+                                         unquote(search_form.cleaned_data['filter']),
+                                         search_form.cleaned_data['sort'],
+                                         search_form.cleaned_data['page'],
+                                         search_form.cleaned_data['page_size'],
+                                         grouping=search_form.cleaned_data['group_by_pack'])
             results = SolrResponseInterpreter(solr.select(unicode(query)))
+
+            # Paginate results
             paginator = SolrResponseInterpreterPaginator(results, search_form.cleaned_data['page_size'])
+            if search_form.cleaned_data['page'] > paginator.num_pages:
+                raise NotFoundException
             page = paginator.page(search_form.cleaned_data['page'])
+            response_data = dict()
+            response_data['count'] = paginator.count
+            response_data['previous'] = None
+            response_data['next'] = None
+            if page['has_other_pages']:
+                if page['has_previous']:
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['previous_page_number'])
+                if page['has_next']:
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['next_page_number'])
+
+            # Get analysis data and serialize sound results
             get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=[object['id'] for object in page['object_list']])
             sounds = []
             for object in page['object_list']:
@@ -119,22 +139,10 @@ class SoundSearch(GenericAPIView):
                             sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(object['pack_id']), object['pack_name']), group_by_pack='0')
                             sound['n_from_same_pack'] = object['more_from_pack'] + 1  # we add one as is the sound itself
                     sounds.append(sound)
-                except:  # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and 'count' might become inacurate
+                except:
+                    # This will happen if there are synchronization errors between solr index and the database.
+                    # In that case sounds are are set to null
                     sounds.append(None)
-            response_data = {'count': paginator.count}
-
-            # construct previous and next urls
-            if page['has_other_pages']:
-                if not page['has_previous']:
-                    response_data['previous'] = None
-                else:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['previous_page_number'])
-
-                if not page['has_next']:
-                    response_data['next'] = None
-                else:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['next_page_number'])
-
             response_data['results'] = sounds
 
         except SolrException:
@@ -143,48 +151,81 @@ class SoundSearch(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class SoundAdvancedSearch(GenericAPIView):
+class SoundCombinedSearch(GenericAPIView):
     """
     Sound advanced search.
     TODO: proper documentation.
     """
 
     def get(self, request,  *args, **kwargs):
-        search_form = SoundAdvancedSearchFormAPI(request.GET)
+        # Validate search form and check page 0
+        search_form = SoundCombinedSearchFormAPI(request.GET)
         if not search_form.is_valid():
             raise ParseError
+        if search_form.cleaned_data['page'] < 1:
+                raise NotFoundException
 
-        RETRIEVAL_PAGE_SIZE = 5000
+        # Get search results
+        # TODO: cases for normal search, content-based search, and combined search
+        RETRIEVAL_PAGE_SIZE = 2000
         RETRIEVAL_PAGE = 1
 
-        solr = Solr(settings.SOLR_URL)
-        query = search_prepare_query(search_form.cleaned_data['query'],
-                                     unquote(search_form.cleaned_data['filter']),
-                                     search_form.cleaned_data['sort'],
-                                     search_form.cleaned_data['page'],
-                                     RETRIEVAL_PAGE_SIZE,
-                                     grouping=False)
-        results = SolrResponseInterpreter(solr.select(unicode(query)))
-        paginator = SolrResponseInterpreterPaginator(results, RETRIEVAL_PAGE_SIZE)
-        page = paginator.page(RETRIEVAL_PAGE)
-        solr_sound_ids = [int(object['id']) for object in page['object_list']]
+        # Get solr data
+        try:
+            solr = Solr(settings.SOLR_URL)
+            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
+                                         unquote(search_form.cleaned_data['filter']),
+                                         search_form.cleaned_data['sort'],
+                                         RETRIEVAL_PAGE,
+                                         RETRIEVAL_PAGE_SIZE,
+                                         grouping=False)
+            results = SolrResponseInterpreter(solr.select(unicode(query)))
+            paginator = SolrResponseInterpreterPaginator(results, RETRIEVAL_PAGE_SIZE)
+            page = paginator.page(RETRIEVAL_PAGE)
+            solr_ids = [int(object['id']) for object in page['object_list']]
+        except SolrException:
+            raise ServerErrorException
 
-        from freesound.utils.similarity_utilities import query_for_descriptors
-        gaia_ids = [id[0] for id in query_for_descriptors('', search_form.cleaned_data['descriptors_filter'], num_results=RETRIEVAL_PAGE_SIZE, offset=RETRIEVAL_PAGE-1)]
-        combined_sound_ids = list(set(gaia_ids).intersection(set(solr_sound_ids)))
+        # Get gaia data
+        try:
+            gaia_ids = [id[0] for id in query_for_descriptors(search_form.cleaned_data['descriptors_target'], search_form.cleaned_data['descriptors_filter'], num_results=RETRIEVAL_PAGE_SIZE, offset=RETRIEVAL_PAGE-1)]
+        except Exception, e:
+            raise ServerErrorException(e.message.message)
+        combined_ids = list(set(gaia_ids).intersection(set(solr_ids)))
 
+        # TODO: cache combined sound ids
+
+        # Paginate results
+        paginator = paginate(request, combined_ids, search_form.cleaned_data['page_size'], 'page')
+        if search_form.cleaned_data['page'] > paginator['paginator'].num_pages:
+            raise NotFoundException
+        page = paginator['page']
+        response_data = dict()
+        response_data['count'] = len(combined_ids)
+        response_data['previous'] = None
+        response_data['next'] = None
+        if page.has_other_pages():
+            if page.has_previous():
+                response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-advanced-search'), page=page.number - 1)
+            if page.has_next():
+                response_data['next'] = search_form.construct_link(reverse('apiv2-sound-advanced-search'), page=page.number + 1)
+
+        # Get analysis data and serialize sound results
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page.object_list)
         sounds = []
-        count = len(combined_sound_ids)
-        combined_sound_ids = combined_sound_ids[0:30]
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=combined_sound_ids)
-        for id in combined_sound_ids:
+        for sound_id in page.object_list:
             try:
-                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=id), context=self.get_serializer_context()).data
+                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
                 sounds.append(sound)
-            except:  # This will happen if there are synchronization errors between solr index and the database. In that case sounds are ommited and 'count' might become inacurate
+            except:
+                # This will happen if there are synchronization errors between solr, gaia and and the database.
+                # In that case sounds are are set to null
                 sounds.append(None)
+        response_data['results'] = sounds
 
-        return Response({'count': count, 'results': sounds}, status=status.HTTP_200_OK)
+
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 ############

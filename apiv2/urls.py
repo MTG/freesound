@@ -37,7 +37,7 @@ urlpatterns = patterns('apiv2.views',
     # Sounds
     url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
     url(r'^sounds/search/$', views.SoundSearch.as_view(), name="apiv2-sound-search"),
-    url(r'^sounds/advanced_search/$', views.SoundAdvancedSearch.as_view(), name="apiv2-sound-advanced-search"),
+    url(r'^sounds/combined_search/$', views.SoundCombinedSearch.as_view(), name="apiv2-sound-advanced-search"),
 
     # Users
     url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),

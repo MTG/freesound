@@ -315,17 +315,29 @@ class UserBookmarkSounds (ListAPIView):
 
     def get_queryset(self):
 
+        kwargs = dict()
+        kwargs['user__username'] = self.kwargs['username']
+
+        if 'category_id' in self.kwargs:
+            #category = BookmarkCategory.objects.get(user__username=self.kwargs['username'], id=self.kwargs['category_id'])
+            kwargs['category__id'] = self.kwargs['category_id']
+        else:
+            kwargs['category'] = None
+        #else:
+        #    return  [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'],category=None)]
+
         try:
-            if 'category_id' in self.kwargs:
-                category = BookmarkCategory.objects.get(user__username=self.kwargs['username'], id=self.kwargs['category_id'])
-            else:
-                return  [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'],category=None)]
-        except BookmarkCategory.DoesNotExist:
-            raise NotFoundException()
-        except User.DoesNotExist:
+            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
+        except:
             raise NotFoundException()
 
-        return [bookmark.sound for bookmark in category.bookmarks.select_related("sound").all()]
+        get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
+
+
+
+        #[bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'],category=None)]
+
+        return queryset
 
 
 ############

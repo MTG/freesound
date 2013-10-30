@@ -21,6 +21,7 @@
 #
 
 from sounds.models import Sound, Pack
+from bookmarks.models import Bookmark, BookmarkCategory
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
@@ -100,9 +101,12 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     pack = serializers.SerializerMethodField('get_pack')
     def get_pack(self, obj):
-        if obj.pack:
-            return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]))
-        else:
+        try:
+            if obj.pack:
+                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]))
+            else:
+                return None
+        except:
             return None
 
     analysis = serializers.SerializerMethodField('get_analysis')
@@ -194,6 +198,34 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
         return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]))
+
+
+##################
+# BOOKMARK SERIALIZERS
+##################
+
+
+class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = BookmarkCategory
+        fields = ('url',
+                  'name',
+                  'sounds')
+
+    url = serializers.SerializerMethodField('get_url')
+    def get_url(self, obj):
+        if obj.id != 0:
+            return prepend_base(reverse('bookmarks-for-user-for-category', args=[obj.user.username, obj.id]))
+        else:
+            return prepend_base(reverse('bookmarks-for-user', args=[obj.user.username]))
+
+    sounds = serializers.SerializerMethodField('get_sounds')
+    def get_sounds(self, obj):
+        if obj.id != 0:
+            return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]))
+        else:
+            return prepend_base(reverse('apiv2-user-bookmark-uncategorized', args=[obj.user.username]))
 
 
 ####################

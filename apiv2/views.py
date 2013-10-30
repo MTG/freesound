@@ -21,9 +21,10 @@
 #
 
 from sounds.models import Sound, Pack
+from bookmarks.models import Bookmark, BookmarkCategory
 from search.forms import SoundSearchFormAPI
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base, BookmarkCategorySerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -182,7 +183,7 @@ class SoundSearch(GenericAPIView):
 class UserInstance(RetrieveAPIView):
     """
     Detailed user information.
-    TODO: proper doccumentation.
+    TODO: proper documentation.
     """
     lookup_field = "username"
     serializer_class = UserSerializer
@@ -197,7 +198,7 @@ class UserInstance(RetrieveAPIView):
 class UserSoundList(ListAPIView):
     """
     List of sounds uploaded by user.
-    TODO: proper doccumentation.
+    TODO: proper documentation.
     """
     lookup_field = "username"
     serializer_class = SoundListSerializer
@@ -234,6 +235,60 @@ class UserSoundList(ListAPIView):
                 self.sound_analysis_data = {}
 
         return queryset
+
+class UserPacks (ListAPIView):
+    """
+    List of packs uploaded by user.
+    TODO: proper documentation.
+    """
+    serializer_class = PackSerializer
+    queryset = Pack.objects.all()
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(UserPacks, self).get(request, *args, **kwargs)
+
+class UserBookmarks (ListAPIView):
+    """
+    List of bookmarks of a user.
+    TODO: proper documentation.
+    """
+    serializer_class = BookmarkCategorySerializer
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(UserBookmarks, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        categories = BookmarkCategory.objects.filter(user__username=self.kwargs['username'])
+        user = User.objects.get(username=self.kwargs['username'])
+        uncategorized = BookmarkCategory(name='Uncategorized',user=user,id=0)
+        return [uncategorized] + list(categories)
+
+class UserBookmarkSounds (ListAPIView):
+    """
+    List of sounds of a bookmark category of a user.
+    TODO: proper documentation.
+    """
+    serializer_class = SoundListSerializer
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(UserBookmarkSounds, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+
+        try:
+            if 'category_id' in self.kwargs:
+                category = BookmarkCategory.objects.get(user__username=self.kwargs['username'], id=self.kwargs['category_id'])
+            else:
+                return  [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'],category=None)]
+        except BookmarkCategory.DoesNotExist:
+            raise NotFoundException()
+        except User.DoesNotExist:
+            raise NotFoundException()
+
+        return [bookmark.sound for bookmark in category.bookmarks.select_related("sound").all()]
 
 
 ############

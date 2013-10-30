@@ -27,6 +27,7 @@ from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from rest_framework import serializers
 from freesound.utils.tags import clean_and_split_tags
+from freesound.utils.similarity_utilities import get_sounds_descriptors
 import yaml
 
 
@@ -111,19 +112,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     analysis = serializers.SerializerMethodField('get_analysis')
     def get_analysis(self, obj):
-        ### Gaia-based implementation
-        try:
-            return self.context['view'].sound_analysis_data[str(obj.id)]
-        except Exception, e:
-            return None
-        ### File-based test implementation
-        '''
-        try:
-            analysis = yaml.load(file(obj.locations('analysis.statistics.path')))
-            return analysis['lowlevel']['spectral_centroid']['mean']
-        except Exception, e:
-            return None
-        '''
+        # Fake implementation. Method implemented in subclasses
+        return None
 
 
 class SoundListSerializer(AbstractSoundSerializer):
@@ -132,12 +122,30 @@ class SoundListSerializer(AbstractSoundSerializer):
         self.default_fields = DEFAULT_FIELDS_IN_SOUND_LIST
         super(SoundListSerializer, self).__init__(*args, **kwargs)
 
+    def get_analysis(self, obj):
+        # Get descriptors from the view class (should have been requested before the serializer is invoked)
+        try:
+            return self.context['view'].sound_analysis_data[str(obj.id)]
+        except Exception, e:
+            return None
+
 
 class SoundSerializer(AbstractSoundSerializer):
 
     def __init__(self, *args, **kwargs):
         self.default_fields = DEFAULT_FIELDS_IN_SOUND_DETAIL
         super(SoundSerializer, self).__init__(*args, **kwargs)
+
+    def get_analysis(self, obj):
+        # Get the sound descriptors from gaia
+        try:
+            descriptors = self.context['request'].GET.get('descriptors', [])
+            if descriptors:
+                return get_sounds_descriptors([obj.id], descriptors.split(','), self.context['request'].GET.get('normalized', '0') == '1')[str(obj.id)]
+            else:
+                return None
+        except Exception, e:
+            return None
 
 
 ##################

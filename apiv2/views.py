@@ -168,10 +168,10 @@ class SoundCombinedSearch(GenericAPIView):
                 raise NotFoundException
 
         # Get search results
-        try:
-            results, count, distance_to_target_data = api_search(search_form)
-        except Exception, e:
-            raise ServerErrorException
+        #try:
+        results, count, distance_to_target_data, more_from_pack_data = api_search(search_form)
+        #except Exception, e:
+        #    raise ServerErrorException
 
         # Paginate results
         from utils import ApiSearchPaginator
@@ -198,6 +198,9 @@ class SoundCombinedSearch(GenericAPIView):
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sound_id]
+                if more_from_pack_data[sound_id][0]:
+                    sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sound_id][1]), more_from_pack_data[sound_id][2]), group_by_pack='0')
+                    sound['n_from_same_pack'] = more_from_pack_data[sound_id][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
 
             except:

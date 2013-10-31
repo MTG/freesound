@@ -38,7 +38,7 @@ import shutil
 import settings
 import os
 from freesound.utils.similarity_utilities import get_sounds_descriptors
-from freesound.utils.search.solr import Solr, SolrException
+from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from search.views import search_prepare_query
 from freesound.utils.similarity_utilities import query_for_descriptors
 from urllib import unquote
@@ -233,7 +233,7 @@ def api_search(search_form):
             # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
             distance_to_target_data = dict(results)
         gaia_count = count
-        return gaia_ids, gaia_count, distance_to_target_data
+        return gaia_ids, gaia_count, distance_to_target_data, None
 
     elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
         # Standard text-based search
@@ -245,10 +245,16 @@ def api_search(search_form):
                                      search_form.cleaned_data['page_size'],
                                      grouping=search_form.cleaned_data['group_by_pack'],
                                      include_facets=False)
-        result = solr.select(unicode(query))
-        solr_ids = [element['id'] for element in result['response']['docs']]
-        solr_count = result['response']['numFound']
-        return solr_ids, solr_count, None
+        result = SolrResponseInterpreter(solr.select(unicode(query)))
+        solr_ids = [element['id'] for element in result.docs]
+        solr_count = result.num_found
+
+        more_from_pack_data = None
+        if search_form.cleaned_data['group_by_pack']:
+            # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
+            more_from_pack_data = dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs])
+
+        return solr_ids, solr_count, None, more_from_pack_data
 
     else:
         # Combined search (there is at least one of query/filter and one of desriptors_filter/descriptors_target)
@@ -309,7 +315,8 @@ def api_search(search_form):
         combined_count = len(combined_ids)
         return combined_ids[(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size']:search_form.cleaned_data['page'] * search_form.cleaned_data['page_size']], \
                combined_count, \
-               distance_to_target_data
+               distance_to_target_data, \
+               None
 
 
 class ApiSearchPaginator(object):

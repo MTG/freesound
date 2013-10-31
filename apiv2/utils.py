@@ -38,6 +38,10 @@ import shutil
 import settings
 import os
 from freesound.utils.similarity_utilities import get_sounds_descriptors
+from freesound.utils.search.solr import Solr, SolrException
+from search.views import search_prepare_query
+from freesound.utils.similarity_utilities import query_for_descriptors
+from urllib import unquote
 
 
 ############################
@@ -202,6 +206,130 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
                 pass
 
 
+##################
+# Search utilities
+##################
+
+
+def api_search(search_form):
+
+    distance_to_target_data = None
+
+    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
+        # No input data for search, return empty results
+        return [], 0
+
+    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
+        # Standard content-based search
+        results, count = query_for_descriptors(search_form.cleaned_data['descriptors_target'],
+                                               search_form.cleaned_data['descriptors_filter'],
+                                               num_results=search_form.cleaned_data['page_size'],
+                                               offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'])
+
+        gaia_ids = [result[0] for result in results]
+        distance_to_target_data = None
+        if search_form.cleaned_data['descriptors_target']:
+            # Save sound distance to target into view class so it can be accessed by the serializer
+            # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
+            distance_to_target_data = dict(results)
+        gaia_count = count
+        return gaia_ids, gaia_count, distance_to_target_data
+
+    elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
+        # Standard text-based search
+        solr = Solr(settings.SOLR_URL)
+        query = search_prepare_query(unquote(search_form.cleaned_data['query']),
+                                     unquote(search_form.cleaned_data['filter']),
+                                     search_form.cleaned_data['sort'],
+                                     search_form.cleaned_data['page'],
+                                     search_form.cleaned_data['page_size'],
+                                     grouping=search_form.cleaned_data['group_by_pack'],
+                                     include_facets=False)
+        result = solr.select(unicode(query))
+        solr_ids = [element['id'] for element in result['response']['docs']]
+        solr_count = result['response']['numFound']
+        return solr_ids, solr_count, None
+
+    else:
+        # Combined search (there is at least one of query/filter and one of desriptors_filter/descriptors_target)
+
+        # Get solr results
+        solr = Solr(settings.SOLR_URL)
+        solr_ids = []
+        solr_count = None
+        PAGE_SIZE = 1000
+        current_page = 1
+        try:
+            while len(solr_ids) < solr_count or solr_count == None:
+                query = search_prepare_query(unquote(search_form.cleaned_data['query']),
+                                         unquote(search_form.cleaned_data['filter']),
+                                         search_form.cleaned_data['sort'],
+                                         current_page,
+                                         PAGE_SIZE,
+                                         grouping=False,
+                                         include_facets=False)
+                result = solr.select(unicode(query))
+                solr_ids += [element['id'] for element in result['response']['docs']]
+                solr_count = result['response']['numFound']
+                current_page += 1
+        except SolrException:
+            raise ServerErrorException
+
+        # Get gaia results
+        try:
+            results, count = query_for_descriptors(search_form.cleaned_data['descriptors_target'],
+                                                   search_form.cleaned_data['descriptors_filter'],
+                                                   num_results=99999999,  # Return all sounds in one page
+                                                   offset=0)
+            gaia_ids = [id[0] for id in results]
+            distance_to_target_data = None
+            if search_form.cleaned_data['descriptors_target']:
+                # Save sound distance to target into view class so it can be accessed by the serializer
+                # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
+                distance_to_target_data = dict(results)
+
+        except Exception, e:
+            if settings.DEBUG:
+                raise ServerErrorException(e.message.message)
+            else:
+                raise ServerErrorException
+
+        if search_form.cleaned_data['descriptors_target']:
+            # Combined search, sort by gaia_ids
+            results_a = gaia_ids
+            results_b = solr_ids
+        else:
+            # Combined search, sort by solr ids
+            results_a = solr_ids
+            results_b = gaia_ids
+
+        # Combine results
+        results_b_set = set(results_b)
+        combined_ids = [id for id in results_a if id in results_b_set]
+        combined_count = len(combined_ids)
+        return combined_ids[(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size']:search_form.cleaned_data['page'] * search_form.cleaned_data['page_size']], \
+               combined_count, \
+               distance_to_target_data
+
+
+class ApiSearchPaginator(object):
+    def __init__(self, results, count, num_per_page):
+        self.num_per_page = num_per_page
+        self.count = count
+        self.num_pages = count / num_per_page + int(count % num_per_page != 0)
+        self.page_range = range(1, self.num_pages + 1)
+        self.results = results
+
+    def page(self, page_num):
+        object_list = self.results
+        has_next = page_num < self.num_pages
+        has_previous = page_num > 1 and page_num <= self.num_pages
+        has_other_pages = has_next or has_previous
+        next_page_number = page_num + 1
+        previous_page_number = page_num - 1
+        return locals()
+
+
 ######################
 # Upload handler utils
 ######################
@@ -308,116 +436,3 @@ def create_sound_object(user, sound_fields):
     #sound.save()
 
     return sound
-
-
-##################
-# Search utilities
-##################
-from freesound.utils.search.solr import Solr, SolrException
-from search.views import search_prepare_query
-from freesound.utils.similarity_utilities import query_for_descriptors
-from urllib import unquote
-
-def api_search(search_form):
-
-    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
-        # No input data for search, return empty results
-        return [], 0
-
-    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
-        # Standard content-based search
-        results, count = query_for_descriptors(search_form.cleaned_data['descriptors_target'],
-                                               search_form.cleaned_data['descriptors_filter'],
-                                               num_results=search_form.cleaned_data['page_size'],
-                                               offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'])
-
-        gaia_ids = [id[0] for id in results]
-        gaia_count = count
-        return gaia_ids, gaia_count
-
-    elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
-        # Standard text-based search
-        solr = Solr(settings.SOLR_URL)
-        query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                     unquote(search_form.cleaned_data['filter']),
-                                     search_form.cleaned_data['sort'],
-                                     search_form.cleaned_data['page'],
-                                     search_form.cleaned_data['page_size'],
-                                     grouping=search_form.cleaned_data['group_by_pack'],
-                                     include_facets=False)
-        result = solr.select(unicode(query))
-        solr_ids = [element['id'] for element in result['response']['docs']]
-        solr_count = result['response']['numFound']
-        return solr_ids, solr_count
-
-    else:
-        # Combined search (there is at least one of query/filter and one of desriptors_filter/descriptors_target)
-
-        # Get solr results
-        solr = Solr(settings.SOLR_URL)
-        solr_ids = []
-        solr_count = None
-        PAGE_SIZE = 1000
-        current_page = 1
-        try:
-            while len(solr_ids) < solr_count or solr_count == None:
-                query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                         unquote(search_form.cleaned_data['filter']),
-                                         search_form.cleaned_data['sort'],
-                                         current_page,
-                                         PAGE_SIZE,
-                                         grouping=False,
-                                         include_facets=False)
-                result = solr.select(unicode(query))
-                solr_ids += [element['id'] for element in result['response']['docs']]
-                solr_count = result['response']['numFound']
-                current_page += 1
-        except SolrException:
-            raise ServerErrorException
-
-        # Get gaia results
-        try:
-            results, count = query_for_descriptors(search_form.cleaned_data['descriptors_target'],
-                                                   search_form.cleaned_data['descriptors_filter'],
-                                                   num_results=99999999,  # Return all sounds in one page
-                                                   offset=0)
-            gaia_ids = [id[0] for id in results]
-            gaia_count = count
-        except Exception, e:
-            if settings.DEBUG:
-                raise ServerErrorException(e.message.message)
-            else:
-                raise ServerErrorException
-
-        if search_form.cleaned_data['descriptors_target']:
-            # Combined search, sort by gaia_ids
-            results_a = gaia_ids
-            results_b = solr_ids
-        else:
-            # Combined search, sort by solr ids
-            results_a = solr_ids
-            results_b = gaia_ids
-
-        # Combine results
-        results_b_set = set(results_b)
-        combined_ids = [id for id in results_a if id in results_b_set]
-        combined_count = len(combined_ids)
-        return combined_ids[(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size']:search_form.cleaned_data['page'] * search_form.cleaned_data['page_size']], combined_count
-
-
-class ApiSearchPaginator(object):
-    def __init__(self, results, count, num_per_page):
-        self.num_per_page = num_per_page
-        self.count = count
-        self.num_pages = count / num_per_page + int(count % num_per_page != 0)
-        self.page_range = range(1, self.num_pages + 1)
-        self.results = results
-
-    def page(self, page_num):
-        object_list = self.results
-        has_next = page_num < self.num_pages
-        has_previous = page_num > 1 and page_num <= self.num_pages
-        has_other_pages = has_next or has_previous
-        next_page_number = page_num + 1
-        previous_page_number = page_num - 1
-        return locals()

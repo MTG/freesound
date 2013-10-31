@@ -169,7 +169,7 @@ class SoundCombinedSearch(GenericAPIView):
 
         # Get search results
         try:
-            results, count = api_search(search_form)
+            results, count, distance_to_target_data = api_search(search_form)
         except Exception, e:
             raise ServerErrorException
 
@@ -195,7 +195,11 @@ class SoundCombinedSearch(GenericAPIView):
         for sound_id in page['object_list']:
             try:
                 sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
+                # Distance to target is present we add it to the serialized sound
+                if distance_to_target_data:
+                    sound['distance_to_target'] = distance_to_target_data[sound_id]
                 sounds.append(sound)
+
             except:
                 # This will happen if there are synchronization errors between solr, gaia and and the database.
                 # In that case sounds are are set to null

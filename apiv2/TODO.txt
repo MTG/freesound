@@ -8,4 +8,4 @@
 - clean up utils.py
 - clean up imports
 - Return view options (parameters, etc...) in view metadata?
-- Add distance field in content based queries?
+- Grouped queries in combined search?

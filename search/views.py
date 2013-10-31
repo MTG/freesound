@@ -56,7 +56,8 @@ def search_prepare_query(search_query,
                          username_weight = DEFAULT_SEARCH_WEIGHTS['username'],
                          pack_tokenized_weight = DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
                          original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename'],
-                         grouping = False):
+                         grouping = False,
+                         include_facets = True):
     query = SolrQuery()
 
     field_weights = []
@@ -76,12 +77,14 @@ def search_prepare_query(search_query,
     query.set_dismax_query(search_query,
                            query_fields=field_weights,)
     query.set_query_options(start=(current_page - 1) * sounds_per_page, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
-    query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
-    query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
-    query.set_facet_options("tag", limit=30)
-    query.set_facet_options("username", limit=30)
-    query.set_facet_options("grouping_pack", limit=10)
-    query.set_facet_options("license", limit=10)
+
+    if include_facets:
+        query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")
+        query.set_facet_options_default(limit=5, sort=True, mincount=1, count_missing=False)
+        query.set_facet_options("tag", limit=30)
+        query.set_facet_options("username", limit=30)
+        query.set_facet_options("grouping_pack", limit=10)
+        query.set_facet_options("license", limit=10)
 
     if grouping:
         query.set_group_field(group_field="grouping_pack")

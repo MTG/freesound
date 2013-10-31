@@ -1,10 +1,11 @@
 
 
 - Customize online interactive api
-- Implement equivalent handlers and new write methods
-- find out proper way of documenting the api
-- write methods: create bookmarks, rate sounds, write comments?
+- Complete serializers
+- Write docummentation
+- Write methods: create bookmarks, rate sounds, write comments?
 - user field: user avatar
 - clean up utils.py
 - clean up imports
-- return view options (parameters, etc...) in view metadata?
+- Return view options (parameters, etc...) in view metadata?
+- Add distance field in content based queries?

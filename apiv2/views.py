@@ -54,7 +54,7 @@ from search.views import search_prepare_query
 from urllib import unquote
 import os
 from freesound.utils.pagination import paginate
-from freesound.utils.similarity_utilities import query_for_descriptors
+from utils import api_search
 
 
 logger = logging.getLogger("api")
@@ -111,7 +111,8 @@ class SoundSearch(GenericAPIView):
                                          search_form.cleaned_data['sort'],
                                          search_form.cleaned_data['page'],
                                          search_form.cleaned_data['page_size'],
-                                         grouping=search_form.cleaned_data['group_by_pack'])
+                                         grouping=search_form.cleaned_data['group_by_pack'],
+                                         include_facets=False)
             results = SolrResponseInterpreter(solr.select(unicode(query)))
 
             # Paginate results
@@ -167,54 +168,31 @@ class SoundCombinedSearch(GenericAPIView):
                 raise NotFoundException
 
         # Get search results
-        # TODO: cases for normal search, content-based search, and combined search
-        RETRIEVAL_PAGE_SIZE = 2000
-        RETRIEVAL_PAGE = 1
-
-        # Get solr data
         try:
-            solr = Solr(settings.SOLR_URL)
-            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                         unquote(search_form.cleaned_data['filter']),
-                                         search_form.cleaned_data['sort'],
-                                         RETRIEVAL_PAGE,
-                                         RETRIEVAL_PAGE_SIZE,
-                                         grouping=False)
-            results = SolrResponseInterpreter(solr.select(unicode(query)))
-            paginator = SolrResponseInterpreterPaginator(results, RETRIEVAL_PAGE_SIZE)
-            page = paginator.page(RETRIEVAL_PAGE)
-            solr_ids = [int(object['id']) for object in page['object_list']]
-        except SolrException:
+            results, count = api_search(search_form)
+        except Exception, e:
             raise ServerErrorException
 
-        # Get gaia data
-        try:
-            gaia_ids = [id[0] for id in query_for_descriptors(search_form.cleaned_data['descriptors_target'], search_form.cleaned_data['descriptors_filter'], num_results=RETRIEVAL_PAGE_SIZE, offset=RETRIEVAL_PAGE-1)]
-        except Exception, e:
-            raise ServerErrorException(e.message.message)
-        combined_ids = list(set(gaia_ids).intersection(set(solr_ids)))
-
-        # TODO: cache combined sound ids
-
         # Paginate results
-        paginator = paginate(request, combined_ids, search_form.cleaned_data['page_size'], 'page')
-        if search_form.cleaned_data['page'] > paginator['paginator'].num_pages:
+        from utils import ApiSearchPaginator
+        paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
+        if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
             raise NotFoundException
-        page = paginator['page']
+        page = paginator.page(search_form.cleaned_data['page'])
         response_data = dict()
-        response_data['count'] = len(combined_ids)
+        response_data['count'] = paginator.count
         response_data['previous'] = None
         response_data['next'] = None
-        if page.has_other_pages():
-            if page.has_previous():
-                response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-advanced-search'), page=page.number - 1)
-            if page.has_next():
-                response_data['next'] = search_form.construct_link(reverse('apiv2-sound-advanced-search'), page=page.number + 1)
+        if page['has_other_pages']:
+                if page['has_previous']:
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-advanced-search'), page=page['previous_page_number'])
+                if page['has_next']:
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-advanced-search'), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page.object_list)
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
         sounds = []
-        for sound_id in page.object_list:
+        for sound_id in page['object_list']:
             try:
                 sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
                 sounds.append(sound)
@@ -223,8 +201,6 @@ class SoundCombinedSearch(GenericAPIView):
                 # In that case sounds are are set to null
                 sounds.append(None)
         response_data['results'] = sounds
-
-
 
         return Response(response_data, status=status.HTTP_200_OK)
 

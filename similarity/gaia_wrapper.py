@@ -391,9 +391,10 @@ class GaiaWrapper:
         # Looks like that depending on the version of gaia, variable filter must go after or before the metric
 	    # For the gaia version we have currently (sep 2012) in freesound: nnSearch(query,filter,metric)
         #results = self.view.nnSearch(q,str(filter),metric).get(int(number_of_results)) # <- Freesound
-        results = self.view.nnSearch(q,metric,str(filter)).get(int(number_of_results), offset=int(offset))
+        results = self.view.nnSearch(q, metric, str(filter)).get(int(number_of_results), offset=int(offset))
+        count = self.view.nnSearch(q, metric, str(filter)).size()
 
-        return {'error':False, 'result':results}
+        return {'error':False, 'result':{'results': results, 'count': count}}
 
 
     # UTILS for content-based search

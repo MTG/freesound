@@ -9,4 +9,6 @@
 - clean up imports
 - Return view options (parameters, etc...) in view metadata?
 - Grouped queries in combined search?
-    - it can be done but the "n_from_same_pack" becomes inacurate as content filtering is not performed until query. it can be set to null
+    - it can be done but the "n_from_same_pack" becomes inacurate as content filtering is not performed until query.
+    - explain this in the docummentation
+- Add proper logging to the apiv2

@@ -263,6 +263,9 @@ def api_search(search_form):
         solr = Solr(settings.SOLR_URL)
         solr_ids = []
         solr_count = None
+        more_from_pack_data = None
+        if search_form.cleaned_data['group_by_pack']:
+            more_from_pack_data = dict()
         PAGE_SIZE = 1000
         current_page = 1
         try:
@@ -272,11 +275,14 @@ def api_search(search_form):
                                          search_form.cleaned_data['sort'],
                                          current_page,
                                          PAGE_SIZE,
-                                         grouping=False,
+                                         grouping=search_form.cleaned_data['group_by_pack'],
                                          include_facets=False)
-                result = solr.select(unicode(query))
-                solr_ids += [element['id'] for element in result['response']['docs']]
-                solr_count = result['response']['numFound']
+                result = SolrResponseInterpreter(solr.select(unicode(query)))
+                solr_ids += [element['id'] for element in result.docs]
+                solr_count = result.num_found
+                if search_form.cleaned_data['group_by_pack']:
+                    # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
+                    more_from_pack_data.update(dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs]))
                 current_page += 1
         except SolrException:
             raise ServerErrorException
@@ -316,7 +322,7 @@ def api_search(search_form):
         return combined_ids[(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size']:search_form.cleaned_data['page'] * search_form.cleaned_data['page_size']], \
                combined_count, \
                distance_to_target_data, \
-               None
+               more_from_pack_data
 
 
 class ApiSearchPaginator(object):

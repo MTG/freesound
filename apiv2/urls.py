@@ -44,8 +44,10 @@ urlpatterns = patterns('apiv2.views',
     url(r'^users/(?P<username>[^//]+)/sounds/$', views.UserSoundList.as_view(), name="apiv2-user-sound-list"),
     url(r'^users/(?P<username>[^//]+)/packs/$', views.UserPacks.as_view(), name='apiv2-user-packs'),
     url(r'^users/(?P<username>[^//]+)/bookmarks/$', views.UserBookmarks.as_view(), name='apiv2-user-bookmark-categories'),
-    url(r'^users/(?P<username>[^//]+)/bookmarks/(?P<category_id>\d+)/sounds/$', views.UserBookmarkSounds.as_view(), name='apiv2-user-bookmark-category-sounds'),
-    url(r'^users/(?P<username>[^//]+)/bookmarks/uncategorized/sounds/$', views.UserBookmarkSounds.as_view(),    name='apiv2-user-bookmark-uncategorized'),
+    url(r'^users/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/sounds/$', views.UserBookmarkSounds.as_view(), name='apiv2-user-bookmark-category-sounds'),
+    url(r'^users/(?P<username>[^//]+)/bookmarks/category/uncategorized/sounds/$', views.UserBookmarkSounds.as_view(),    name='apiv2-user-bookmark-uncategorized'),
+    url(r'^users/(?P<username>[^//]+)/bookmarks/create/$', views.CreateUserBookmark.as_view(), name='apiv2-user-create-bookmark'),
+
 
     # Packs
     url(r'^packs/(?P<pk>[0-9]+)/$', views.PackInstance.as_view(), name='apiv2-pack-instance'),

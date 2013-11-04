@@ -24,7 +24,7 @@ from sounds.models import Sound, Pack
 from bookmarks.models import Bookmark, BookmarkCategory
 from search.forms import SoundSearchFormAPI, SoundCombinedSearchFormAPI
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base, BookmarkCategorySerializer
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base, BookmarkCategorySerializer, CreateBookmarkSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -339,6 +339,28 @@ class UserBookmarkSounds (ListAPIView):
 
         return queryset
 
+
+class CreateUserBookmark(WriteRequiredGenericAPIView):
+    """
+    Create a new bookmark category of a user.
+    DATA: name
+    TODO: proper documentation.
+    """
+    serializer_class = CreateBookmarkSerializer
+
+    def post(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        serializer = CreateBookmarkSerializer(data=request.DATA)
+        if serializer.is_valid():
+            if ('category' in request.DATA):
+                category = BookmarkCategory.objects.get_or_create(user=self.user, name=request.DATA['category'])
+                bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=request.DATA['sound_id'], category=category[0])
+            else:
+                bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=request.DATA['sound_id'])
+            bookmark.save()
+            return Response(data={'details': 'Bookmark succesfully created'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 ############
 # PACK VIEWS

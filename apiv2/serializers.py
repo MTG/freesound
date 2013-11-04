@@ -235,6 +235,10 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
         else:
             return prepend_base(reverse('apiv2-user-bookmark-uncategorized', args=[obj.user.username]))
 
+class CreateBookmarkSerializer(serializers.Serializer):
+    category = serializers.CharField(max_length=128, required=False, help_text='Not Required. Name you want to give to the category.')
+    name = serializers.CharField(max_length=128, required=True, help_text='Required. Name you want to give to the bookmark.')
+    sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
 
 ####################
 # UPLOAD SERIALIZERS

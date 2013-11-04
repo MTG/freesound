@@ -437,7 +437,14 @@ def create_sound_object(user, sound_fields):
     # 9 save!
     sound.save()
 
+
+
     # 10 Proces
+    try:
+        sound.compute_crc()
+    except:
+        pass
+
     try:
         sound.process()
     except Exception, e:

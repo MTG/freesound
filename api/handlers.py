@@ -178,11 +178,11 @@ def prepare_single_sound_analysis(sound,request,filter):
         analysis = yaml.load(file(sound.locations('analysis.statistics.path')))
 
         # delete nonsensical/faulty descriptors
-        del analysis['lowlevel']['silence_rate_20dB']
-        del analysis['lowlevel']['silence_rate_30dB']
-        del analysis['rhythm']['bpm_confidence']
-        del analysis['rhythm']['perceptual_tempo']
-        del analysis['metadata']['tags']
+        #del analysis['lowlevel']['silence_rate_20dB']
+        #del analysis['lowlevel']['silence_rate_30dB']
+        #del analysis['rhythm']['bpm_confidence']
+        #del analysis['rhythm']['perceptual_tempo']
+        #del analysis['metadata']['tags']
         
         # put the moods in one place
         moods = {'c': {}, 'm': {}}
@@ -296,14 +296,14 @@ def level_filter_get(d, levels):
         return level_filter_get(d[levels[0]], levels[1:])
 
 
-RECOMMENDED_DESCRIPTORS = [ 'metadata.audio_properties',
-                            'highlevel.culture',
-                            'highlevel.gender',
-                            'highlevel.moods',
-                            'highlevel.timbre',
-                            'highlevel.voice_instrumental',
-                            'highlevel.acoustic',
-                            'highlevel.electronic',
+RECOMMENDED_DESCRIPTORS = [ #'metadata.audio_properties',
+                            #'highlevel.culture',
+                            #'highlevel.gender',
+                            #'highlevel.moods',
+                            #'highlevel.timbre',
+                            #'highlevel.voice_instrumental',
+                            #'highlevel.acoustic',
+                            #'highlevel.electronic',
                             'tonal.key_key',
                             'tonal.key_scale',
                             'tonal.key_strength',

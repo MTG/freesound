@@ -224,7 +224,7 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
-ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/essentia_1.2.2_extractor/streaming_extractor'
+ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
 
 # We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
 # settings were loaded). We add this variable to the context processor and use it in base.html as a

@@ -50,6 +50,7 @@ image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
 algorithm_doc_str = "http://essentia.upf.edu/documentation/reference/streaming_"
 sorted_namespaces = ["metadata","lowlevel","rhythm","tonal"]
+desc_exceptions = ["metadata.audio_properties","metadata.version","rhythm.onset_rate"]
 
 top = yaml.load(open('example.yaml'))
 mapping = dict()
@@ -72,20 +73,28 @@ for k in sorted_namespaces:
 		if mapping[descriptor] !="None":
 			print "\n**Essentia Algorithm**\n"
 			print algorithm_doc_str+mapping[descriptor]+".html"
-		if type(top[k][d]) ==dict:
-			stats = top[k][d]
+		stats = top[k][d]
+		if descriptor in desc_exceptions: 
+			print "\n"
+			continue
+		if type(stats) ==dict:
 			print "\n\n**Stats**::\n\n"
 			for s in stats.keys():
 				print "/"+s
+
+			print "\n\n**Distribution in Freesound**\n"
+
 			if "mean" in stats.keys():
-				print "\n\n**Distribution in Freesound**\n"
 				if  type(stats['mean'])==list:
 					for i in range(len(stats['mean'])):
 						img = image_str+descriptor+".mean.%03d"%i
 						print img+".png"
 						print height_str
-				elif  type(stats['mean'])==float:
+				else:
 					print image_str+descriptor+".mean.png"
 					print height_str
+		elif type(stats)== float or type(stats)==int:
+			print image_str+descriptor+".png"
+			print height_str
 		print "\n\n"
 		

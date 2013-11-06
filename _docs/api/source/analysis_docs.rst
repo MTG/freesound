@@ -50,26 +50,12 @@ metadata.audio_properties
     curl http://www.freesound.org/api/sounds/<sound_id>/analysis/metadata/audio_properties
 
 
-**Stats**::
-
-
-/equal_loudness
-
-
-
 metadata.version
 -------------------------
 
 ::
 
     curl http://www.freesound.org/api/sounds/<sound_id>/analysis/metadata/version
-
-
-**Stats**::
-
-
-/essentia
-
 
 
 Lowlevel Descriptors
@@ -135,6 +121,8 @@ http://essentia.upf.edu/documentation/reference/streaming_SilenceRate.html
 
 **Distribution in Freesound**
 
+    .. image:: _static/descriptors/lowlevel.silence_rate_20dB.mean.png
+        :height: 300px
 
 
 
@@ -148,6 +136,8 @@ lowlevel.average_loudness
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_Loudness.html
+    .. image:: _static/descriptors/lowlevel.average_loudness.png
+        :height: 300px
 
 
 
@@ -316,6 +306,8 @@ http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
 
 **Distribution in Freesound**
 
+    .. image:: _static/descriptors/lowlevel.spectral_spread.mean.png
+        :height: 300px
 
 
 
@@ -506,6 +498,8 @@ http://essentia.upf.edu/documentation/reference/streaming_SilenceRate.html
 
 **Distribution in Freesound**
 
+    .. image:: _static/descriptors/lowlevel.silence_rate_30dB.mean.png
+        :height: 300px
 
 
 
@@ -1335,6 +1329,8 @@ rhythm.first_peak_bpm
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+    .. image:: _static/descriptors/rhythm.first_peak_bpm.png
+        :height: 300px
 
 
 
@@ -1393,6 +1389,8 @@ rhythm.first_peak_spread
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+    .. image:: _static/descriptors/rhythm.first_peak_spread.png
+        :height: 300px
 
 
 
@@ -1406,6 +1404,8 @@ rhythm.second_peak_weight
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+    .. image:: _static/descriptors/rhythm.second_peak_weight.png
+        :height: 300px
 
 
 
@@ -1419,6 +1419,8 @@ rhythm.bpm
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html
+    .. image:: _static/descriptors/rhythm.bpm.png
+        :height: 300px
 
 
 
@@ -1445,6 +1447,8 @@ rhythm.first_peak_weight
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+    .. image:: _static/descriptors/rhythm.first_peak_weight.png
+        :height: 300px
 
 
 
@@ -1513,6 +1517,8 @@ rhythm.second_peak_bpm
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+    .. image:: _static/descriptors/rhythm.second_peak_bpm.png
+        :height: 300px
 
 
 
@@ -1526,7 +1532,6 @@ rhythm.onset_rate
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_OnsetRate.html
-
 
 
 rhythm.beats_position
@@ -1552,6 +1557,8 @@ rhythm.second_peak_spread
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
+    .. image:: _static/descriptors/rhythm.second_peak_spread.png
+        :height: 300px
 
 
 
@@ -1671,6 +1678,8 @@ tonal.chords_number_rate
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
+    .. image:: _static/descriptors/tonal.chords_number_rate.png
+        :height: 300px
 
 
 
@@ -1684,6 +1693,8 @@ tonal.key_strength
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_Key.html
+    .. image:: _static/descriptors/tonal.key_strength.png
+        :height: 300px
 
 
 
@@ -1768,6 +1779,8 @@ tonal.chords_changes_rate
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
+    .. image:: _static/descriptors/tonal.chords_changes_rate.png
+        :height: 300px
 
 
 

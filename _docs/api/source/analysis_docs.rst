@@ -147,7 +147,7 @@ lowlevel.average_loudness
 
 **Essentia Algorithm**
 
-http://essentia.upf.edu/documentation/reference/streaming_Loudness		.html
+http://essentia.upf.edu/documentation/reference/streaming_Loudness.html
 
 
 

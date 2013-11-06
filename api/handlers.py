@@ -183,7 +183,7 @@ def prepare_single_sound_analysis(sound,request,filter):
 
     # only show recommended descriptors
     print request.GET
-    if not ('all' in request.GET and request.GET['all'] in ['1', 'true', 'True']):
+    if not ('all' in request.GET and request.GET['all'] in ['1', 'true', 'True']) and not filter:
         analysis = level_filter(analysis, RECOMMENDED_DESCRIPTORS)
 
     if filter:

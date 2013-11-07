@@ -49,7 +49,7 @@ curl_str = "    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/"
 image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
 algorithm_doc_str = "http://essentia.upf.edu/documentation/reference/streaming_"
-sorted_namespaces = ["metadata","lowlevel","rhythm","tonal"]
+sorted_namespaces = ["metadata","lowlevel","rhythm","tonal","sfx"]
 desc_exceptions = ["metadata.audio_properties","metadata.version","rhythm.onset_rate"]
 
 top = yaml.load(open('example.yaml'))

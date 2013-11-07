@@ -2125,3 +2125,432 @@ http://essentia.upf.edu/documentation/reference/streaming_HPCP.html
 
 
 
+Sfx Descriptors
+>>>>>>>>>>>>>>>>>>>>
+
+
+sfx.temporal_spread
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_spread
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.temporal_spread.mean.png
+        :height: 300px
+
+
+
+sfx.tc_to_total
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/tc_to_total
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_TCToTotal.html
+    .. image:: _static/descriptors/sfx.tc_to_total.png
+        :height: 300px
+
+
+
+sfx.pitch_centroid
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_centroid
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
+    .. image:: _static/descriptors/sfx.pitch_centroid.png
+        :height: 300px
+
+
+
+sfx.pitch_min_to_total
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_min_to_total
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_MinToTotal.html
+    .. image:: _static/descriptors/sfx.pitch_min_to_total.png
+        :height: 300px
+
+
+
+sfx.temporal_skewness
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_skewness
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.temporal_skewness.mean.png
+        :height: 300px
+
+
+
+sfx.strongdecay
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/strongdecay
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_StrongDecay.html
+    .. image:: _static/descriptors/sfx.strongdecay.png
+        :height: 300px
+
+
+
+sfx.temporal_decrease
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_decrease
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_Decrease.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.temporal_decrease.mean.png
+        :height: 300px
+
+
+
+sfx.effective_duration
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/effective_duration
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_EffectiveDuration.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.effective_duration.mean.png
+        :height: 300px
+
+
+
+sfx.der_av_after_max
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/der_av_after_max
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_DerivativeSFX.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.der_av_after_max.mean.png
+        :height: 300px
+
+
+
+sfx.pitch_max_to_total
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_max_to_total
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_MaxToTotal.html
+    .. image:: _static/descriptors/sfx.pitch_max_to_total.png
+        :height: 300px
+
+
+
+sfx.temporal_kurtosis
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_kurtosis
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.temporal_kurtosis.mean.png
+        :height: 300px
+
+
+
+sfx.logattacktime
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/logattacktime
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_LogAttackTime.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.logattacktime.mean.png
+        :height: 300px
+
+
+
+sfx.flatness
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/flatness
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_FlatnessSFX.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.flatness.mean.png
+        :height: 300px
+
+
+
+sfx.max_der_before_max
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/max_der_before_max
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_DerivativeSFX.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.max_der_before_max.mean.png
+        :height: 300px
+
+
+
+sfx.temporal_centroid
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_centroid
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.temporal_centroid.mean.png
+        :height: 300px
+
+
+
+sfx.pitch_after_max_to_before_max_energy_ratio
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_after_max_to_before_max_energy_ratio
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_AfterMaxToBeforeMaxEnergyRatio.html
+    .. image:: _static/descriptors/sfx.pitch_after_max_to_before_max_energy_ratio.png
+        :height: 300px
+
+
+
+sfx.max_to_total
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/max_to_total
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_MaxToTotal.html
+    .. image:: _static/descriptors/sfx.max_to_total.png
+        :height: 300px
+
+
+

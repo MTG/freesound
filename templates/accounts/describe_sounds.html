@@ -49,7 +49,7 @@
         -->
     </style>
     <script src="{{media_url}}/js/jquery-ui-1.8.11.custom.min.js" type="text/javascript"></script>
-    <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{GOOGLE_API_KEY}}" type="text/javascript"></script>
+    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
 {% endblock head %}
 
 
@@ -96,43 +96,41 @@
                         <div class="describe-geotag-form">{{ form.geotag.as_p }}
                             <script type="text/javascript">
 
-                                var map{{forloop.counter}} = new GMap2($("#gmap{{forloop.counter}}").get(0));
+                                var map{{forloop.counter}} = new google.maps.Map(
+                                    document.getElementById('gmap{{forloop.counter}}'), {
+                                      center: new google.maps.LatLng(23.885837699862005,21.796875),
+                                      zoom: 2,
+                                      mapTypeId: google.maps.MapTypeId.SATELLITE,
+                                      scrollwheel: false,
+                                      streetViewControl: false,
+                                });
 
-                                var initialCenter = new GLatLng(23.885837699862005,21.796875);
-                                var initialZoom = 2;
-
-                                initMap()
-
-                                map{{forloop.counter}}.setCenter(initialCenter, initialZoom);
-
-                                map{{forloop.counter}}.setMapType( G_HYBRID_MAP );
-                                map{{forloop.counter}}.disableScrollWheelZoom();
-                                map{{forloop.counter}}.enableContinuousZoom();
-                                map{{forloop.counter}}.addControl(new GSmallMapControl());
-                                map{{forloop.counter}}.addControl(new GMapTypeControl());
-
-                                var centerIcon = new GIcon();
-                                centerIcon.image = "{{media_url}}/images/arrow.png";
-                                centerIcon.iconSize = new GSize(25, 24);
-                                centerIcon.shadowSize = new GSize(0, 0);
-                                centerIcon.iconAnchor = new GPoint(0, 24);
-                                centerIcon.infoWindowAnchor = new GPoint(25, 0);
-
-                                var centerMarker{{forloop.counter}} = new GMarker(initialCenter, centerIcon);
-                                map{{forloop.counter}}.addOverlay(centerMarker{{forloop.counter}});
-
-                                GEvent.addListener(map{{forloop.counter}}, "move", updateAndAddCenter{{forloop.counter}});
-
-                                //updateAndAddCenter{{forloop.counter}}()
-
-                                function initMap()
+                                var initial_center = new google.maps.LatLng(23.885837699862005,21.796875)
+                                var initial_zoom =  2
+                                if ( ($("#{{form.geotag.zoom.auto_id}}").val() != "") & ($("#{{form.geotag.lon.auto_id}}").val() != "") & ($("#{{form.geotag.lat.auto_id}}").val() != ""))
                                 {
-                                    if ( ($("#{{form.geotag.zoom.auto_id}}").val() != "") & ($("#{{form.geotag.lon.auto_id}}").val() != "") & ($("#{{form.geotag.lat.auto_id}}").val() != ""))
-                                    {
-                                        initialCenter = new GLatLng( $("#{{form.geotag.lat.auto_id}}").val() , $("#{{form.geotag.lon.auto_id}}").val())
-                                        initialZoom = parseInt($("#{{form.geotag.zoom.auto_id}}").val())
-                                    }
+                                    initial_center = new google.maps.LatLng( $("#{{form.geotag.lat.auto_id}}").val() , $("#{{form.geotag.lon.auto_id}}").val())
+                                    initial_zoom = parseInt($("#{{form.geotag.zoom.auto_id}}").val())
                                 }
+
+                                map{{forloop.counter}}.setCenter(initial_center);
+                                map{{forloop.counter}}.setZoom(initial_zoom);
+
+                                var image = {
+                                    url: "{{media_url}}/images/arrow.png",
+                                    size: new google.maps.Size(25, 24),
+                                    anchor: new google.maps.Point(0, 24)
+                                };
+
+                                var myLatLng{{forloop.counter}} = new google.maps.LatLng(initial_center);
+                                var centerMarker{{forloop.counter}} = new google.maps.Marker({
+                                      position: myLatLng{{forloop.counter}},
+                                      map: map{{forloop.counter}},
+                                      icon: image
+                                });
+
+
+                                google.maps.event.addListener(map{{forloop.counter}}, "bounds_changed", updateAndAddCenter{{forloop.counter}});
 
                                 function updateAndAddCenter{{forloop.counter}}()
                                 {
@@ -145,7 +143,7 @@
                                         $("#{{form.geotag.lat.auto_id}}").val(center.lat());
                                         $("#{{form.geotag.zoom.auto_id}}").val(zoom);
                                     }
-                                    centerMarker{{forloop.counter}}.setLatLng(center);
+                                    centerMarker{{forloop.counter}}.setPosition(center);
                                 }
 
                                 $("#{{form.geotag.remove_geotag.auto_id}}").change(function (event) {
@@ -164,13 +162,11 @@
                                     }
                                 });
 
-
                                 if ($("#{{form.geotag.zoom.auto_id}}").val() != ""){
                                     $('#gmap-header-text-{{forloop.counter}}').text('Hide Geotag map');
                                 }else{
                                     toggleMapVisibility({{forloop.counter}})
                                 }
-
 
                             </script>
                         </div><br style="clear: both" />
@@ -197,3 +193,6 @@
     </form>
 
 {% endblock %}
+
+
+

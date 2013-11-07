@@ -1,14 +1,27 @@
+- Implement views
+    - POST:
+        - Sounds -OK
+        - Describe -OK
+        - Bookmarks -OK
+        - Ratings
+        - Comments
+    - GET:
+        - Sound comments
+        - Sound similarity (similar sounds) - F
+        - Sound analysis - F
+        - Search geotags
+            - See if it can be added to solr
+        - Sound serve (download)
+        - Pack serve (download pack)
 
+- Complete serializers - F
+    - User serializer: user avatar field
+
+- Write docummentation and add LOGGING
+    - Return view options (parameters, etc...) in view metadata?
+    - Explain group by pack results in combined search (n_form_same_pack becomes inacurate)
 
 - Customize online interactive api
-- Complete serializers
-- Write docummentation
-- Write methods: create bookmarks, rate sounds, write comments?
-- user field: user avatar
-- clean up utils.py
-- clean up imports
-- Return view options (parameters, etc...) in view metadata?
-- Grouped queries in combined search?
-    - it can be done but the "n_from_same_pack" becomes inacurate as content filtering is not performed until query.
-    - explain this in the docummentation
-- Add proper logging to the apiv2
+- Clean code (imports, utils...)
+
+

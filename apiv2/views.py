@@ -324,7 +324,7 @@ class UserBookmarkSounds (ListAPIView):
         return queryset
 
 
-class CreateUserBookmark(WriteRequiredGenericAPIView):
+class CreateBookmark(WriteRequiredGenericAPIView):
     """
     Create a new bookmark category of a user.
     DATA: name

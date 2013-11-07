@@ -169,7 +169,8 @@
                     if (!bounds.isEmpty()) map.fitBounds(bounds);
                 }else{
                     // Center the map in the geotag
-                    map.setCenter(lastPoint, 4);
+                    map.setCenter(lastPoint);
+                    map.setZoom(4);
                 }
             });
 

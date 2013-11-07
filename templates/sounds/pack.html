@@ -5,8 +5,6 @@
 
 {% block title %}pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
 
-{% block onunload %}GUnload(){% endblock %}
-
 {% block head %}
     {{ block.super }}
     <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{GOOGLE_API_KEY}}" type="text/javascript"></script>

@@ -22,18 +22,18 @@ import os
 # NOTE: In production and test this file is taken from the deploy repository
 
 # SERVER SETTINGS
-INDEX_DIR                   = '/home/fsweb/freesound/freesound-similarity/'  # Path to your gaia database file (or where it should be created)
-INDEX_NAME                  = 'fs_index'  # Name of the database file
+INDEX_DIR                   = '/home/fsweb/freesound/freesound-similarity/'
+INDEX_NAME                  = 'fs_index'
 PRESET_DIR                  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'presets/')
-PRESETS                     = ['lowlevel', 'spectral_centroid']  # 'music'
+PRESETS                     = ['lowlevel','spectral_centroid'] # 'music'
 DEFAULT_PRESET              = "lowlevel"
 SIMILARITY_MINIMUM_POINTS   = 2000
 LOGFILE                     = '/var/log/freesound/similarity.log'
-LISTEN_PORT                 = 8000
+LISTEN_PORT                 = 8008
 
-# CLIENT SETTINGS
-SIMILARITY_ADDRESS          = '127.0.0.1'
-SIMILARITY_PORT             = 8000
+# CLIENT SETTINGS (to be moved to django settings?)
+SIMILARITY_ADDRESS          = 'localhost'
+SIMILARITY_PORT             = 8008
 
 # OTHER
 SIMILAR_SOUNDS_TO_CACHE = 100

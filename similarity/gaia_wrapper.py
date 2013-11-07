@@ -188,8 +188,10 @@ class GaiaWrapper:
     def get_sound_descriptors(self, point_name, descriptor_names=None, normalization=True):
         '''
         Given a point name it returns the values for the descriptors specified in 'descriptor_names' list.
-        If no normalization coefficients are provided, the method will return normalized values [0-1].
+        If normalization is required, the method will return normalized values [0-1].
         '''
+
+        logger.debug('Getting descriptors for point %s' % str(point_name))
 
         # We first process the descritor names to create the FULL list of descritors needed (ex: if
         # descriptor names include 'lowlevel.spectral_centroid', the output will include all statistics
@@ -208,6 +210,9 @@ class GaiaWrapper:
         '''
         Returns a list with the descritor values for all requested point names
         '''
+
+        logger.debug('Getting descriptors for points %s' % ','.join([str(name) for name in point_names]))
+
         data = dict()
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
         for point_name in point_names:
@@ -247,7 +252,7 @@ class GaiaWrapper:
         # transformation which has been a normalization)
 
         normalization_coeffs = None
-        if normalization:
+        if not normalization:
             trans_hist = self.original_dataset.history().toPython()
             for i in range(0,len(trans_hist)):
                 if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
@@ -282,7 +287,7 @@ class GaiaWrapper:
 
 
     # SIMILARITY SEARCH (WEB and API)
-    def search_dataset(self, query_point, number_of_results, preset_name):
+    def search_dataset(self, query_point, number_of_results, preset_name, offset=0):
         preset_name = str(preset_name)
         query_point = str(query_point)
         logger.debug('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
@@ -300,7 +305,7 @@ class GaiaWrapper:
             p, p1 = Point(), Point()
             p.load(query_point)
             p1 = self.original_dataset.history().mapPoint(p)
-            similar_sounds = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results))
+            similar_sounds = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
         else:
             if not self.original_dataset.contains(query_point):
                 msg = "Sound with id %s doesn't exist in the dataset." % query_point
@@ -308,13 +313,13 @@ class GaiaWrapper:
                 return {'error':True,'result':msg}
                 #raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
 
-            similar_sounds = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results))
+            similar_sounds = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
 
         return {'error':False, 'result':similar_sounds}
 
 
     # CONTENT-BASED SEARCH (API)
-    def query_dataset(self, query_parameters, number_of_results):
+    def query_dataset(self, query_parameters, number_of_results, offset=0):
 
         size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
@@ -384,9 +389,10 @@ class GaiaWrapper:
         # Looks like that depending on the version of gaia, variable filter must go after or before the metric
 	    # For the gaia version we have currently (sep 2012) in freesound: nnSearch(query,filter,metric)
         #results = self.view.nnSearch(q,str(filter),metric).get(int(number_of_results)) # <- Freesound
-        results = self.view.nnSearch(q,metric,str(filter)).get(int(number_of_results))
+        results = self.view.nnSearch(q, metric, str(filter)).get(int(number_of_results), offset=int(offset))
+        count = self.view.nnSearch(q, metric, str(filter)).size()
 
-        return {'error':False, 'result':results}
+        return {'error':False, 'result':{'results': results, 'count': count}}
 
 
     # UTILS for content-based search

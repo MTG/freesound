@@ -103,8 +103,6 @@ class GaiaWrapper:
 
     @staticmethod
     def normalize_dataset_helper(ds):
-        # Remove ['.lowlevel.mfcc.cov','.lowlevel.mfcc.icov'] (they give errors when normalizing)
-        ds = transform(ds, 'remove', { 'descriptorNames': ['.lowlevel.mfcc.cov','.lowlevel.mfcc.icov'] })
         # Add normalization
         normalization_params = { "descriptorNames":"*","independent":True, "outliers":-1}
         normalized_ds = transform(ds, 'normalize', normalization_params)

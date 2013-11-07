@@ -56,6 +56,7 @@ from utils.mail import send_mail_template
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
+from utils.text import remove_control_chars
 import datetime
 import time
 import logging
@@ -301,7 +302,7 @@ def sound_edit(request, username, sound_id):
         if description_form.is_valid():
             data = description_form.cleaned_data
             sound.set_tags(data["tags"])
-            sound.description = data["description"]
+            sound.description = remove_control_chars(data["description"])
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
@@ -659,7 +660,7 @@ def display_sound_wrapper(request, username, sound_id):
 
 
 def embed_iframe(request, sound_id, player_size):
-    if player_size not in ['mini', 'small', 'medium', 'large']:
+    if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info']:
         raise Http404
     size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
@@ -692,4 +693,4 @@ def click_log(request,click_type=None, sound_id="", pack_id="" ):
         entity_id = pack_id
 
     logger_click.info("%s : %s : %s : %s"
-                          % (click_type, authenticated_session_key, searchtime_session_key, entity_id))
+                          % (click_type, authenticated_session_key, searchtime_session_key, unicode(entity_id).encode('utf-8')))

@@ -50,7 +50,7 @@ def analyze(sound):
             failure('Could not find file with path %s'% input_path)
             return False
 
-        if os.path.getsize(input_path) >50 * 1024 * 1024: #same as filesize_warning in sound model
+        if os.path.getsize(input_path) >100 * 1024 * 1024: #same as filesize_warning in sound model
             failure('File is larger than 50MB. Passing on it.')
             return False
 

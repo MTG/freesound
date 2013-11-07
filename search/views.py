@@ -23,6 +23,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
+from settings import DEFAULT_SEARCH_WEIGHTS
 from datetime import datetime
 import forms
 import logging
@@ -43,14 +44,6 @@ def search_prepare_sort(sort, options):
         sort = [forms.SEARCH_DEFAULT_SORT]
     return sort
 
-DEFAULT_SEARCH_WEIGHTS = {
-                        'id' : 4,
-                        'tag' : 4,
-                        'description' : 3,
-                        'username' : 1,
-                        'pack_tokenized' : 2,
-                        'original_filename' : 2
-                        }
 
 def search_prepare_query(search_query,
                          filter_query,
@@ -213,7 +206,8 @@ def search(request):
                 for item in results.docs:
                     ids.append(item["id"])
             logger_click.info("QUERY : %s : %s : %s : %s" %
-                                (request_full_path, request.session.session_key, ids, current_page))
+                                (unicode(request_full_path).encode('utf-8'), request.session.session_key, unicode(ids).encode('utf-8'), unicode(current_page).encode('utf-8')))
+
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))
         error = True

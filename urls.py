@@ -124,6 +124,7 @@ urlpatterns = patterns('',
     url(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
     url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
     url(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
+    
 
     # dead season redirect (THIS IS TEMPORAL)
     url(r'^deadseason/$', redirect_to, {'url': 'http://www.freesound.org/people/Slave2theLight/bookmarks/category/4730/'}),

@@ -37,7 +37,7 @@ from utils.filesystem import delete_object_files
 from django.db import connection, transaction
 from search.views import get_pack_tags
 from django.db.models import Count
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.contrib.contenttypes import generic
 from similarity.client import Similarity
 
@@ -422,6 +422,12 @@ def recreate_pack(sender,instance,**kwargs):
         instance.pack.process()
  
 post_save.connect(recreate_pack, sender=Sound)
+
+def set_dirty(sender,instance,**kwargs):
+    instance.is_index_dirty=True
+
+pre_save.connect(set_dirty, sender=Sound)
+
 
 class Pack(SocialModel):
     user = models.ForeignKey(User)

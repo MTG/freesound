@@ -148,6 +148,11 @@ class Command(BaseCommand):
 
             # 10 Proces
             try:
+                sound.compute_crc()
+            except:
+                pass
+
+            try:
                 sound.process()
             except Exception, e:
                 print 'Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e))

@@ -44,7 +44,7 @@ SEARCH_SORT_OPTIONS_API = [
         ("rating_asc", "avg_rating asc")
     ]
 
-SEARCH_DEFAULT_SORT = "score desc"#"num_downloads desc"
+SEARCH_DEFAULT_SORT = "score desc"
 
 class SoundSearchForm(forms.Form):
     q    = forms.CharField(required=False, label='query')

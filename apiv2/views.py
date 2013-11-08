@@ -22,9 +22,10 @@
 
 from sounds.models import Sound, Pack
 from bookmarks.models import Bookmark, BookmarkCategory
+from ratings.models import Rating
 from search.forms import SoundSearchFormAPI, SoundCombinedSearchFormAPI
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base, BookmarkCategorySerializer, CreateBookmarkSerializer
+from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base, BookmarkCategorySerializer, CreateBookmarkSerializer, CreateRatingSerializer, SoundRatingsSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -55,6 +56,7 @@ from urllib import unquote
 import os
 from freesound.utils.pagination import paginate
 from utils import api_search
+from django.contrib.contenttypes.models import ContentType
 
 
 logger = logging.getLogger("api")
@@ -342,9 +344,46 @@ class CreateBookmark(WriteRequiredGenericAPIView):
             else:
                 bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=request.DATA['sound_id'])
             bookmark.save()
-            return Response(data={'details': 'Bookmark succesfully created'}, status=status.HTTP_201_CREATED)
+            return Response(data={'details': 'Bookmark successfully created'}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+############
+# RATING VIEWS
+############
+
+class SoundRatings (ListAPIView):
+    """
+    List of bookmarks of a user.
+    TODO: proper documentation.
+    """
+    serializer_class = SoundRatingsSerializer
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(SoundRatings, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Rating.objects.filter(object_id=self.kwargs['pk'])
+
+
+class CreateRating(WriteRequiredGenericAPIView):
+    """
+    Create a new rating of a sound.
+    DATA: name
+    TODO: proper documentation.
+    """
+    serializer_class = CreateRatingSerializer
+
+    def post(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        serializer = CreateRatingSerializer(data=request.DATA)
+        if serializer.is_valid():
+            rating = Rating.objects.create(user=self.user, object_id=request.DATA['sound_id'], content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
+            return Response(data={'details': 'Rating successfully created'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 ############
 # PACK VIEWS

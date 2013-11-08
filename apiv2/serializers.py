@@ -21,6 +21,7 @@
 #
 
 from sounds.models import Sound, Pack
+from ratings.models import Rating
 from bookmarks.models import Bookmark, BookmarkCategory
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -81,7 +82,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'channels',
                   'duration',
                   'samplerate',
-                  'analysis')
+                  'analysis',
+                  'ratings')
 
 
     uri = serializers.SerializerMethodField('get_uri')
@@ -115,6 +117,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         # Fake implementation. Method implemented in subclasses
         return None
 
+    ratings = serializers.SerializerMethodField('get_ratings')
+    def get_ratings(self, obj):
+        return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]))
 
 class SoundListSerializer(AbstractSoundSerializer):
 
@@ -238,6 +243,27 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 class CreateBookmarkSerializer(serializers.Serializer):
     category = serializers.CharField(max_length=128, required=False, help_text='Not Required. Name you want to give to the category.')
     name = serializers.CharField(max_length=128, required=True, help_text='Required. Name you want to give to the bookmark.')
+    sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
+
+
+####################
+# RATING SERIALIZERS
+####################
+
+class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Rating
+        fields = ('user',
+                  'rating')
+
+    user = serializers.SerializerMethodField('get_user')
+    def get_user(self, obj):
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]))
+
+
+class CreateRatingSerializer(serializers.Serializer):
+    rating = serializers.IntegerField(required=True, help_text='Required. Chose a rating between 0 and 5.')
     sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
 
 ####################

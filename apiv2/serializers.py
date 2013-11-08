@@ -146,7 +146,10 @@ class SoundSerializer(AbstractSoundSerializer):
         try:
             descriptors = self.context['request'].GET.get('descriptors', [])
             if descriptors:
-                return get_sounds_descriptors([obj.id], descriptors.split(','), self.context['request'].GET.get('normalized', '0') == '1')[str(obj.id)]
+                return get_sounds_descriptors([obj.id],
+                                              descriptors.split(','),
+                                              self.context['request'].GET.get('normalized', '0') == '1',
+                                              only_leaf_descriptors=True)[str(obj.id)]
             else:
                 return None
         except Exception, e:

@@ -201,7 +201,10 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
         view.sound_analysis_data = {}
         if descriptors:
             try:
-                view.sound_analysis_data = get_sounds_descriptors(ids, descriptors.split(','), view.request.GET.get('normalized', '0') == '1')
+                view.sound_analysis_data = get_sounds_descriptors(ids,
+                                                                  descriptors.split(','),
+                                                                  view.request.GET.get('normalized', '0') == '1',
+                                                                  only_leaf_descriptors=True)
             except:
                 pass
 

@@ -28,7 +28,6 @@ _URL_DELETE_POINT             = 'delete_point/'
 _URL_CONTAINS_POINT           = 'contains/'
 _URL_NNSEARCH                 = 'nnsearch/'
 _URL_NNRANGE                  = 'nnrange/'
-_URL_SOUND_DESCRIPTORS        = 'get_sound_descriptors/'
 _URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
 _URL_SAVE                     = 'save/'
 
@@ -101,21 +100,13 @@ class Similarity():
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def get_sound_descriptors(cls, sound_id, descriptor_names=None, normalization=True):
-        url = _BASE_URL + _URL_SOUND_DESCRIPTORS + '?' + 'sound_id=' + str(sound_id)
-        if descriptor_names:
-            url += '&descriptor_names=' + ','.join(descriptor_names)
-        if normalization:
-            url += '&normalization=1'
-
-        return _result_or_exception(_get_url_as_json(url))
-
-    @classmethod
-    def get_sounds_descriptors(cls, sound_ids, descriptor_names=None, normalization=True):
+    def get_sounds_descriptors(cls, sound_ids, descriptor_names=None, normalization=True, only_leaf_descriptors=False):
         url = _BASE_URL + _URL_SOUNDS_DESCRIPTORS + '?' + 'sound_ids=' + ','.join([str(sound_id) for sound_id in sound_ids])
         if descriptor_names:
             url += '&descriptor_names=' + ','.join(descriptor_names)
         if normalization:
             url += '&normalization=1'
+        if only_leaf_descriptors:
+            url += '&only_leaf_descriptors=1'
 
         return _result_or_exception(_get_url_as_json(url))

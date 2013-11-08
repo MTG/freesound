@@ -185,28 +185,7 @@ class GaiaWrapper:
         return {'error':False,'result':self.original_dataset.contains(point_name)}
 
 
-    def get_sound_descriptors(self, point_name, descriptor_names=None, normalization=True):
-        '''
-        Given a point name it returns the values for the descriptors specified in 'descriptor_names' list.
-        If normalization is required, the method will return normalized values [0-1].
-        '''
-
-        logger.debug('Getting descriptors for point %s' % str(point_name))
-
-        # We first process the descritor names to create the FULL list of descritors needed (ex: if
-        # descriptor names include 'lowlevel.spectral_centroid', the output will include all statistics
-        # on that descritor (lowlevel.spectral_cetroid.mean, lowlevel.spectral_cetroid.var...)
-        required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
-
-        # Now we fill the required layout data structure with descritor values
-        data = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
-        if 'error' not in data:
-            return {'error': False, 'result': data}
-        else:
-            return data
-
-
-    def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization=True):
+    def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization=True, only_leaf_descriptors=False):
         '''
         Returns a list with the descritor values for all requested point names
         '''
@@ -214,7 +193,7 @@ class GaiaWrapper:
         logger.debug('Getting descriptors for points %s' % ','.join([str(name) for name in point_names]))
 
         data = dict()
-        required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names)
+        required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names, only_leaf_descriptors=only_leaf_descriptors)
         for point_name in point_names:
             sound_descriptors = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
             if 'error' not in sound_descriptors:
@@ -223,7 +202,7 @@ class GaiaWrapper:
         return {'error': False, 'result': data}
 
 
-    def __calculate_complete_required_descriptor_names(self, descriptor_names):
+    def __calculate_complete_required_descriptor_names(self, descriptor_names, only_leaf_descriptors=False):
         layout = self.original_dataset.layout()
         if not descriptor_names:
             descriptor_names = layout.descriptorNames()
@@ -235,11 +214,12 @@ class GaiaWrapper:
                 if not nested_descriptors:
                     processed_descriptor_names.append(name)
                 else:
-                    # Return all nested descriptor names
-                    extra_names = []
-                    get_nested_descriptor_names(nested_descriptors, extra_names)
-                    for extra_name in extra_names:
-                        processed_descriptor_names.append('%s.%s' % (name, extra_name))
+                    if not only_leaf_descriptors:
+                        # Return all nested descriptor names
+                        extra_names = []
+                        get_nested_descriptor_names(nested_descriptors, extra_names)
+                        for extra_name in extra_names:
+                            processed_descriptor_names.append('%s.%s' % (name, extra_name))
             processed_descriptor_names = list(set(processed_descriptor_names))
             return processed_descriptor_names
 

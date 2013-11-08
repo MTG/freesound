@@ -170,10 +170,10 @@ class SoundCombinedSearch(GenericAPIView):
                 raise NotFoundException
 
         # Get search results
-        #try:
-        results, count, distance_to_target_data, more_from_pack_data = api_search(search_form)
-        #except Exception, e:
-        #    raise ServerErrorException
+        try:
+            results, count, distance_to_target_data, more_from_pack_data = api_search(search_form)
+        except Exception, e:
+            raise ServerErrorException
 
         # Paginate results
         from utils import ApiSearchPaginator

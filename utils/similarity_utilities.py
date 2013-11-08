@@ -78,7 +78,7 @@ def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE
     return returned_sounds[0:num_results], result['count']
 
 
-def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True):
+def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only_leaf_descriptors=False):
     cache_key = "analysis-sound-id-%s-descriptors-%s-normalization-%s"
 
     cached_data = {}
@@ -91,7 +91,7 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True):
             # remove id form list so it is not included in similarity request
             not_cached_sound_ids.remove(id)
     try:
-        returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization)
+        returned_data = Similarity.get_sounds_descriptors(not_cached_sound_ids, descriptor_names, normalization, only_leaf_descriptors)
     except Exception, e:
         logger.info('Something wrong occurred with the "get sound descriptors" request (%s)\n\t%s' %\
                      (e, traceback.format_exc()))

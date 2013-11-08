@@ -35,7 +35,7 @@ def server_interface(resource):
         'contains':resource.contains, # sound_id
         'get_sounds_descriptors':resource.get_sounds_descriptors, # sound_ids, descritor_names (optional), normalization (optional)
         'nnsearch':resource.nnsearch, # sound_id, num_results (optional), preset (optional)
-        'nnrange':resource.nnrange,  # target, filter, num_results (optional)
+        'nnrange':resource.nnrange,  # target, filter, num_results (optional), preset (optional)
         'save':resource.save # filename (optional)
     }
 
@@ -83,12 +83,17 @@ class SimilarityServer(resource.Resource):
 
         return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name=preset[0], offset=offset[0]))
 
-    def nnrange(self, target = None, filter = None, num_results = None, offset=[0]):
+    def nnrange(self, target = None, filter = None, num_results = None, offset=[0], preset=None):
         if not filter and not target:
             return json.dumps({'error':True,'result':"At least descriptors_target or descriptors_filter should be specified"})
 
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
+        if not preset:
+            preset = [DEFAULT_PRESET]
+        else:
+            if preset[0] not in PRESETS:
+                preset = [DEFAULT_PRESET]
 
         if filter:
             filter = filter[0]
@@ -96,9 +101,15 @@ class SimilarityServer(resource.Resource):
         else:
             pf = []
 
+        target_sound_id = False
         if target:
             target = target[0]
-            pt = parse_target(target.replace("'",'"'))
+            try:
+                # If target can be parsed as an integer, we assume it corresponds to a sound_id
+                target_sound_id = int(target)
+                pt = {}
+            except:
+                pt = parse_target(target.replace("'",'"'))
         else:
             pt = {}
 
@@ -114,7 +125,7 @@ class SimilarityServer(resource.Resource):
             return json.dumps({'error':True,'result':message})
             #raise ReturnError(400, "BadRequest", {"explanation": message})
 
-        return json.dumps(self.gaia.query_dataset({'target':pt,'filter':pf}, num_results[0], offset=offset[0]))
+        return json.dumps(self.gaia.query_dataset({'target':pt,'filter':pf}, num_results[0], preset_name=preset[0], offset=offset[0], target_sound_id=target_sound_id))
 
     def save(self, filename = None):
         if not filename:

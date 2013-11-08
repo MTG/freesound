@@ -302,7 +302,7 @@ class GaiaWrapper:
 
 
     # CONTENT-BASED SEARCH (API)
-    def query_dataset(self, query_parameters, number_of_results, offset=0):
+    def query_dataset(self, query_parameters, number_of_results, preset_name, offset=0, target_sound_id=False):
 
         size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
@@ -323,32 +323,43 @@ class GaiaWrapper:
         ##############
         # PARSE TARGET
         ##############
+        # If the target is a sound id (target_sound_id!=False), we get the point of this sound and set as target.
+        # Otherwise we create a point and add the descriptors provided
+        if target_sound_id:
+            query_point = str(target_sound_id)
+            if not self.original_dataset.contains(query_point):
+                msg = "Sound with id %s doesn't exist in the dataset and can not be set as descriptors_target." % query_point
+                logger.debug(msg)
+                return {'error':True,'result':msg}
+            else:
+                q = query_point
 
-        # Transform input params to the normalized feature space and add them to a query point
-        # If there are no params specified in the target, the point is set as empty (probably random sounds are returned)
-        q = Point()
-        q.setLayout(layout)
-        feature_names = []
-        # If some target has been specified...
-        if query_parameters['target'].keys():
-            for param in query_parameters['target'].keys():
-                # Only add numerical parameters. Non numerical ones (like key) are only used as filters
-                if param in coeffs.keys():
-                    feature_names.append(str(param))
-                    value = query_parameters['target'][param]
-                    if coeffs:
-                        a = coeffs[param]['a']
-                        b = coeffs[param]['b']
-                        if len(a) == 1:
-                            norm_value = a[0]*value + b[0]
+        else:
+            # Transform input params to the normalized feature space and add them to a query point
+            # If there are no params specified in the target, the point is set as empty (probably random sounds are returned)
+            q = Point()
+            q.setLayout(layout)
+            feature_names = []
+            # If some target has been specified...
+            if query_parameters['target'].keys():
+                for param in query_parameters['target'].keys():
+                    # Only add numerical parameters. Non numerical ones (like key) are only used as filters
+                    if param in coeffs.keys():
+                        feature_names.append(str(param))
+                        value = query_parameters['target'][param]
+                        if coeffs:
+                            a = coeffs[param]['a']
+                            b = coeffs[param]['b']
+                            if len(a) == 1:
+                                norm_value = a[0]*value + b[0]
+                            else:
+                                norm_value = []
+                                for i in range(0,len(a)):
+                                    norm_value.append(a[i]*value[i]+b[i])
+                            #text = str(type(param)) + " " + str(type(norm_value))
+                            q.setValue(str(param), norm_value)
                         else:
-                            norm_value = []
-                            for i in range(0,len(a)):
-                                norm_value.append(a[i]*value[i]+b[i])
-                        #text = str(type(param)) + " " + str(type(norm_value))
-                        q.setValue(str(param), norm_value)
-                    else:
-                        q.setValue(str(param), value)
+                            q.setValue(str(param), value)
 
         ##############
         # PARSE FILTER
@@ -366,12 +377,18 @@ class GaiaWrapper:
         #############
         # DO QUERY!!!
         #############
+        if target_sound_id:
+            logger.debug("Content based search with target: " + str(target_sound_id) + " (sound id) and filter: " + str(filter) )
+        else:
+            logger.debug("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
 
-        logger.debug("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
-        metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
-        # Looks like that depending on the version of gaia, variable filter must go after or before the metric
-	    # For the gaia version we have currently (sep 2012) in freesound: nnSearch(query,filter,metric)
-        #results = self.view.nnSearch(q,str(filter),metric).get(int(number_of_results)) # <- Freesound
+        # If target is a sound id, we use the metric of the preset spcified in preset parameter. Otherwise we create a
+        # metric with the calculated feature_names
+        if target_sound_id:
+            metric = self.metrics[preset_name]
+        else:
+            metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
+
         results = self.view.nnSearch(q, metric, str(filter)).get(int(number_of_results), offset=int(offset))
         count = self.view.nnSearch(q, metric, str(filter)).size()
 

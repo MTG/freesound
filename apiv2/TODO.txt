@@ -1,8 +1,8 @@
 - Implement views
     - POST:
-        - Sounds -OK
-        - Describe -OK
-        - Bookmarks -OK
+        - Sounds - OK
+        - Describe - OK
+        - Bookmarks - OK
         - Ratings
         - Comments
     - GET:
@@ -13,6 +13,10 @@
             - See if it can be added to solr
         - Sound serve (download)
         - Pack serve (download pack)
+    - other:
+        - Allow only leaf descriptors (ex: .xxx.xxx.mean, not .xxx or .xxx.xxx) in 'descriptors' parameter for sound lists - F
+        - Allow specification of target in content-based search as a json file with descriptors - F
+
 
 - Complete serializers - F
     - User serializer: user avatar field

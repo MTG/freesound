@@ -272,6 +272,7 @@ class GaiaWrapper:
         query_point = str(query_point)
         logger.debug('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
         size = self.original_dataset.size()
+        results = []
         if size < SIMILARITY_MINIMUM_POINTS:
             msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
             logger.debug(msg)
@@ -285,7 +286,8 @@ class GaiaWrapper:
             p, p1 = Point(), Point()
             p.load(query_point)
             p1 = self.original_dataset.history().mapPoint(p)
-            similar_sounds = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
+            results = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
+            count = self.view.nnSearch(p1, self.metrics[preset_name]).size()
         else:
             if not self.original_dataset.contains(query_point):
                 msg = "Sound with id %s doesn't exist in the dataset." % query_point
@@ -293,9 +295,10 @@ class GaiaWrapper:
                 return {'error':True,'result':msg}
                 #raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
 
-            similar_sounds = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
+            results = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
+            count = self.view.nnSearch(query_point, self.metrics[preset_name]).size()
 
-        return {'error':False, 'result':similar_sounds}
+        return {'error':False, 'result':{'results': results, 'count': count}}
 
 
     # CONTENT-BASED SEARCH (API)

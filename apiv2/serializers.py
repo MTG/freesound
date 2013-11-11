@@ -83,6 +83,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'duration',
                   'samplerate',
                   'analysis',
+                  'avg_rating',
+                  'num_ratings',
                   'ratings')
 
 
@@ -120,6 +122,11 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     ratings = serializers.SerializerMethodField('get_ratings')
     def get_ratings(self, obj):
         return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]))
+
+    avg_rating = serializers.SerializerMethodField('get_avg_rating')
+    def get_avg_rating(self, obj):
+        return obj.avg_rating/2
+
 
 class SoundListSerializer(AbstractSoundSerializer):
 
@@ -261,10 +268,23 @@ class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]))
 
+    rating = serializers.SerializerMethodField('get_rating')
+    def get_rating(self, obj):
+        if (obj.rating % 2 == 1):
+            return float(obj.rating)/2
+        else:
+            return obj.rating/2
+
 
 class CreateRatingSerializer(serializers.Serializer):
-    rating = serializers.IntegerField(required=True, help_text='Required. Chose a rating between 0 and 5.')
+    rating = serializers.IntegerField(required=True, help_text='Required. Chose an integer rating between 0 and 5.')
     sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
+
+    def validate_rating(self, attrs, source):
+        value = attrs[source]
+        if (value not in [0,1,2,3,4,5]):
+            raise serializers.ValidationError('You have to introduce an integer value between 0 and 5')
+        return attrs
 
 ####################
 # UPLOAD SERIALIZERS

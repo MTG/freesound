@@ -220,7 +220,7 @@ def api_search(search_form):
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
         # No input data for search, return empty results
-        return [], 0
+        return [], 0, None, None
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
         # Standard content-based search

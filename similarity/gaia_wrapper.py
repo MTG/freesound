@@ -267,54 +267,69 @@ class GaiaWrapper:
 
 
     # SIMILARITY SEARCH (WEB and API)
-    def search_dataset(self, query_point, number_of_results, preset_name, offset=0):
+    def search_dataset(self, query_point, number_of_results, preset_name, offset=0, descriptors_data=None):
         preset_name = str(preset_name)
-        query_point = str(query_point)
-        logger.debug('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
-        size = self.original_dataset.size()
         results = []
+        count = 0
+        size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
             msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
             logger.debug(msg)
-            return {'error':True,'result':msg}
-            #raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
+            return {'error': True, 'result': msg}
 
-        if query_point.endswith('.yaml'):
-            #The point doesn't exist in the dataset....
-            # So, make a temporary point, add all the transformations
-            # to it and search for it
-            p, p1 = Point(), Point()
-            p.load(query_point)
-            p1 = self.original_dataset.history().mapPoint(p)
-            results = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
-            count = self.view.nnSearch(p1, self.metrics[preset_name]).size()
-        else:
-            if not self.original_dataset.contains(query_point):
-                msg = "Sound with id %s doesn't exist in the dataset." % query_point
+        if query_point:
+            query_point = str(query_point)
+            logger.debug('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
+            results = []
+
+            if query_point.endswith('.yaml'):
+                # The point doesn't exist in the dataset....
+                # So, make a temporary point, add all the transformations
+                # to it and search for it
+                p, p1 = Point(), Point()
+                p.load(query_point)
+                p1 = self.original_dataset.history().mapPoint(p)
+                results = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
+                count = self.view.nnSearch(p1, self.metrics[preset_name]).size()
+            else:
+                if not self.original_dataset.contains(query_point):
+                    msg = "Sound with id %s doesn't exist in the dataset." % query_point
+                    logger.debug(msg)
+                    return {'error':True,'result':msg}
+                results = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
+                count = self.view.nnSearch(query_point, self.metrics[preset_name]).size()
+
+        if descriptors_data:
+            # Create a point with the data in 'descriptors_data' and search for it
+            try:
+                logger.debug('NN search for point of uploaded file')
+                p, p1 = Point(), Point()
+                p.loadFromString(yaml.dump(descriptors_data))
+                p1 = self.original_dataset.history().mapPoint(p)
+                results = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
+                count = self.view.nnSearch(p1, self.metrics[preset_name]).size()
+            except:
+                msg = 'Unable to create gaia point from uploaded file.'
                 logger.debug(msg)
-                return {'error':True,'result':msg}
-                #raise Exception("Sound with id %s doesn't exist in the dataset." % query_point)
+                return {'error': True, 'result': msg}
 
-            results = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
-            count = self.view.nnSearch(query_point, self.metrics[preset_name]).size()
-
-        return {'error':False, 'result':{'results': results, 'count': count}}
+        return {'error': False, 'result': {'results': results, 'count': count}}
 
 
     # CONTENT-BASED SEARCH (API)
-    def query_dataset(self, query_parameters, number_of_results, preset_name, offset=0, target_sound_id=False):
+    def query_dataset(self, query_parameters, number_of_results, preset_name, offset=0, target_sound_id=False, use_file_as_target=False, descriptors_data=None):
 
         size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
             msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
             logger.debug(msg)
-            return {'error':True,'result':msg}
-            #raise Exception('Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS))
+            return {'error': True, 'result': msg}
 
         trans_hist = self.original_dataset.history().toPython()
         layout = self.original_dataset.layout()
 
-        # Get normalization coefficients to transform the input data (get info from the last transformation which has been a normalization)
+        # Get normalization coefficients to transform the input data (get info from the last transformation which has
+        # been a normalization)
         coeffs = None
         for i in range(0,len(trans_hist)):
             if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
@@ -323,43 +338,56 @@ class GaiaWrapper:
         ##############
         # PARSE TARGET
         ##############
-        # If the target is a sound id (target_sound_id!=False), we get the point of this sound and set as target.
-        # Otherwise we create a point and add the descriptors provided
-        if target_sound_id:
-            query_point = str(target_sound_id)
-            if not self.original_dataset.contains(query_point):
-                msg = "Sound with id %s doesn't exist in the dataset and can not be set as descriptors_target." % query_point
-                logger.debug(msg)
-                return {'error':True,'result':msg}
-            else:
-                q = query_point
 
-        else:
-            # Transform input params to the normalized feature space and add them to a query point
-            # If there are no params specified in the target, the point is set as empty (probably random sounds are returned)
-            q = Point()
-            q.setLayout(layout)
-            feature_names = []
-            # If some target has been specified...
-            if query_parameters['target'].keys():
-                for param in query_parameters['target'].keys():
-                    # Only add numerical parameters. Non numerical ones (like key) are only used as filters
-                    if param in coeffs.keys():
-                        feature_names.append(str(param))
-                        value = query_parameters['target'][param]
-                        if coeffs:
-                            a = coeffs[param]['a']
-                            b = coeffs[param]['b']
-                            if len(a) == 1:
-                                norm_value = a[0]*value + b[0]
+        if not use_file_as_target:
+            # If the target is a sound id (target_sound_id!=False), we get the point of this sound and set as target.
+            # Otherwise we create a point and add the descriptors provided
+            if target_sound_id:
+                query_point = str(target_sound_id)
+                if not self.original_dataset.contains(query_point):
+                    msg = "Sound with id %s doesn't exist in the dataset and can not be set as descriptors_target." % query_point
+                    logger.debug(msg)
+                    return {'error':True,'result':msg}
+                else:
+                    q = query_point
+
+            else:
+                # Transform input params to the normalized feature space and add them to a query point
+                # If there are no params specified in the target, the point is set as empty (probably random sounds are returned)
+                q = Point()
+                q.setLayout(layout)
+                feature_names = []
+                # If some target has been specified...
+                if query_parameters['target'].keys():
+                    for param in query_parameters['target'].keys():
+                        # Only add numerical parameters. Non numerical ones (like key) are only used as filters
+                        if param in coeffs.keys():
+                            feature_names.append(str(param))
+                            value = query_parameters['target'][param]
+                            if coeffs:
+                                a = coeffs[param]['a']
+                                b = coeffs[param]['b']
+                                if len(a) == 1:
+                                    norm_value = a[0]*value + b[0]
+                                else:
+                                    norm_value = []
+                                    for i in range(0,len(a)):
+                                        norm_value.append(a[i]*value[i]+b[i])
+                                #text = str(type(param)) + " " + str(type(norm_value))
+                                q.setValue(str(param), norm_value)
                             else:
-                                norm_value = []
-                                for i in range(0,len(a)):
-                                    norm_value.append(a[i]*value[i]+b[i])
-                            #text = str(type(param)) + " " + str(type(norm_value))
-                            q.setValue(str(param), norm_value)
-                        else:
-                            q.setValue(str(param), value)
+                                q.setValue(str(param), value)
+        else:
+            # Target is specified as the attached file
+            # Create a point with the data in 'descriptors_data' and search for it
+            try:
+                p, q = Point(), Point()
+                p.loadFromString(yaml.dump(descriptors_data))
+                q = self.original_dataset.history().mapPoint(p)
+            except:
+                msg = 'Unable to create gaia point from uploaded file.'
+                logger.debug(msg)
+                return {'error': True, 'result': msg}
 
         ##############
         # PARSE FILTER
@@ -377,14 +405,17 @@ class GaiaWrapper:
         #############
         # DO QUERY!!!
         #############
-        if target_sound_id:
-            logger.debug("Content based search with target: " + str(target_sound_id) + " (sound id) and filter: " + str(filter) )
+        if not use_file_as_target:
+            if target_sound_id:
+                logger.debug("Content based search with target: " + str(target_sound_id) + " (sound id) and filter: " + str(filter) )
+            else:
+                logger.debug("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
         else:
-            logger.debug("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
+            logger.debug("Content based search with give analysis file as target.")
 
-        # If target is a sound id, we use the metric of the preset spcified in preset parameter. Otherwise we create a
+        # If target is a sound id or a file, we use the metric of the preset specified in preset parameter. Otherwise we create a
         # metric with the calculated feature_names
-        if target_sound_id:
+        if target_sound_id or use_file_as_target:
             metric = self.metrics[preset_name]
         else:
             metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
@@ -392,7 +423,7 @@ class GaiaWrapper:
         results = self.view.nnSearch(q, metric, str(filter)).get(int(number_of_results), offset=int(offset))
         count = self.view.nnSearch(q, metric, str(filter)).size()
 
-        return {'error':False, 'result':{'results': results, 'count': count}}
+        return {'error': False, 'result': {'results': results, 'count': count}}
 
 
     # UTILS for content-based search

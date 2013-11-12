@@ -20,9 +20,10 @@
 
 import os, logging, yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
-from similarity_settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR, INDEX_NAME
-from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, get_nested_descriptor_names, set_nested_dictionary_value
+from similarity_settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR, INDEX_NAME, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE
+from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, get_nested_descriptor_names, set_nested_dictionary_value, parse_filter_list
 import time
+
 
 logger = logging.getLogger('similarity')
 
@@ -74,21 +75,21 @@ class GaiaWrapper:
                 view = View(self.original_dataset)
                 self.view = view
 
-            logger.debug('Dataset loaded, size: %s points' % (self.original_dataset.size()))
+            logger.info('Dataset loaded, size: %s points' % (self.original_dataset.size()))
 
         else:
             # If there is no existing dataset we create an empty one.
             # For the moment we do not create any distance metric nor a view because search won't be possible until the DB has a minimum of SIMILARITY_MINIMUM_POINTS
             self.original_dataset.save(self.original_dataset_path)
-            logger.debug('Created new dataset, size: %s points (should be 0)' % (self.original_dataset.size()))
+            logger.info('Created new dataset, size: %s points (should be 0)' % (self.original_dataset.size()))
 
 
     def __prepare_original_dataset(self):
-        logger.debug('Preparing the original dataset.')
+        logger.info('Preparing the original dataset.')
         self.original_dataset = self.prepare_original_dataset_helper(self.original_dataset)
 
     def __normalize_original_dataset(self):
-        logger.debug('Normalizing the original dataset.')
+        logger.info('Normalizing the original dataset.')
         self.original_dataset = self.normalize_dataset_helper(self.original_dataset)
 
     @staticmethod
@@ -112,7 +113,7 @@ class GaiaWrapper:
 
     def __build_metrics(self):
         for preset in PRESETS:
-            logger.debug('Bulding metric for preset %s' % preset)
+            logger.info('Bulding metric for preset %s' % preset)
             name = preset
             path = PRESET_DIR + name + ".yaml"
             preset_file = yaml.load(open(path))
@@ -131,11 +132,11 @@ class GaiaWrapper:
             p.setName(str(point_name))
             self.original_dataset.addPoint(p)
             size = self.original_dataset.size()
-            logger.debug('Added point with name %s. Index has now %i points.' % (str(point_name),size))
+            logger.info('Added point with name %s. Index has now %i points.' % (str(point_name),size))
         except:
             msg = 'Point with name %s could NOT be added. Index has now %i points.' % (str(point_name),size)
-            logger.debug(msg)
-            return {'error':True, 'result':msg}
+            logger.info(msg)
+            return {'error':True, 'result':msg, 'status_code': SERVER_ERROR_CODE}
 
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
@@ -155,15 +156,15 @@ class GaiaWrapper:
     def delete_point(self, point_name):
         if self.original_dataset.contains(str(point_name)):
             self.original_dataset.removePoint(str(point_name))
-            logger.debug('Deleted point with name %s. Index has now %i points.' % (str(point_name),self.original_dataset.size()))
+            logger.info('Deleted point with name %s. Index has now %i points.' % (str(point_name),self.original_dataset.size()))
             return {'error':False, 'result':True}
         else:
             msg = 'Can\'t delete point with name %s because it does not exist.'% str(point_name)
-            logger.debug(msg)
-            return {'error':True,'result':msg}
+            logger.info(msg)
+            return {'error':True,'result':msg, 'status_code': NOT_FOUND_CODE}
 
     def get_point(self, point_name):
-        logger.debug('Getting point with name %s' % str(point_name))
+        logger.info('Getting point with name %s' % str(point_name))
         if self.original_dataset.contains(str(point_name)):
             return self.original_dataset.point(str(point_name))
 
@@ -173,15 +174,15 @@ class GaiaWrapper:
         path = self.original_dataset_path
         if filename:
             path =  INDEX_DIR + filename + ".db"
-        logger.debug('Saving index to (%s)...'%path + msg)
+        logger.info('Saving index to (%s)...'%path + msg)
         self.original_dataset.save(path)
         toc = time.time()
-        logger.debug('Finished saving index (done in %.2f seconds, index has now %i points).'%((toc - tic),self.original_dataset.size()))
+        logger.info('Finished saving index (done in %.2f seconds, index has now %i points).'%((toc - tic),self.original_dataset.size()))
         return {'error':False,'result':path}
 
 
     def contains(self, point_name):
-        logger.debug('Checking if index has point with name %s' % str(point_name))
+        logger.info('Checking if index has point with name %s' % str(point_name))
         return {'error':False,'result':self.original_dataset.contains(point_name)}
 
 
@@ -190,7 +191,7 @@ class GaiaWrapper:
         Returns a list with the descritor values for all requested point names
         '''
 
-        logger.debug('Getting descriptors for points %s' % ','.join([str(name) for name in point_names]))
+        logger.info('Getting descriptors for points %s' % ','.join([str(name) for name in point_names]))
 
         data = dict()
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names, only_leaf_descriptors=only_leaf_descriptors)
@@ -224,7 +225,7 @@ class GaiaWrapper:
             return processed_descriptor_names
 
         except:
-            return {'error': True, 'result': 'Wrong descriptor names, unable to create layout.'}
+            return {'error': True, 'result': 'Wrong descriptor names, unable to create layout.', 'status_code': BAD_REQUEST_CODE}
 
 
     def __get_point_descriptors(self, point_name, required_descriptor_names, normalization=True):
@@ -242,7 +243,7 @@ class GaiaWrapper:
         try:
             p = self.original_dataset.point(str(point_name))
         except:
-            return {'error': True, 'result': 'Sound does not exist in gaia index.'}
+            return {'error': True, 'result': 'Sound does not exist in gaia index.', 'status_code': NOT_FOUND_CODE}
 
         for descriptor_name in required_descriptor_names:
             try:
@@ -267,6 +268,7 @@ class GaiaWrapper:
 
 
     # SIMILARITY SEARCH (WEB and API)
+
     def search_dataset(self, query_point, number_of_results, preset_name, offset=0, descriptors_data=None):
         preset_name = str(preset_name)
         results = []
@@ -274,12 +276,12 @@ class GaiaWrapper:
         size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
             msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
-            logger.debug(msg)
-            return {'error': True, 'result': msg}
+            logger.info(msg)
+            return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
 
         if query_point:
             query_point = str(query_point)
-            logger.debug('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
+            logger.info('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
             results = []
 
             if query_point.endswith('.yaml'):
@@ -294,15 +296,15 @@ class GaiaWrapper:
             else:
                 if not self.original_dataset.contains(query_point):
                     msg = "Sound with id %s doesn't exist in the dataset." % query_point
-                    logger.debug(msg)
-                    return {'error':True,'result':msg}
+                    logger.info(msg)
+                    return {'error':True,'result':msg, 'status_code': NOT_FOUND_CODE}
                 results = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
                 count = self.view.nnSearch(query_point, self.metrics[preset_name]).size()
 
         if descriptors_data:
             # Create a point with the data in 'descriptors_data' and search for it
             try:
-                logger.debug('NN search for point of uploaded file')
+                logger.info('NN search for point of uploaded file')
                 p, p1 = Point(), Point()
                 p.loadFromString(yaml.dump(descriptors_data))
                 p1 = self.original_dataset.history().mapPoint(p)
@@ -310,7 +312,7 @@ class GaiaWrapper:
                 count = self.view.nnSearch(p1, self.metrics[preset_name]).size()
             except:
                 msg = 'Unable to create gaia point from uploaded file.'
-                logger.debug(msg)
+                logger.info(msg)
                 return {'error': True, 'result': msg}
 
         return {'error': False, 'result': {'results': results, 'count': count}}
@@ -322,8 +324,8 @@ class GaiaWrapper:
         size = self.original_dataset.size()
         if size < SIMILARITY_MINIMUM_POINTS:
             msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
-            logger.debug(msg)
-            return {'error': True, 'result': msg}
+            logger.info(msg)
+            return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
 
         trans_hist = self.original_dataset.history().toPython()
         layout = self.original_dataset.layout()
@@ -346,8 +348,8 @@ class GaiaWrapper:
                 query_point = str(target_sound_id)
                 if not self.original_dataset.contains(query_point):
                     msg = "Sound with id %s doesn't exist in the dataset and can not be set as descriptors_target." % query_point
-                    logger.debug(msg)
-                    return {'error':True,'result':msg}
+                    logger.info(msg)
+                    return {'error':True,'result':msg, 'status_code':NOT_FOUND_CODE}
                 else:
                     q = query_point
 
@@ -385,9 +387,9 @@ class GaiaWrapper:
                 p.loadFromString(yaml.dump(descriptors_data))
                 q = self.original_dataset.history().mapPoint(p)
             except:
-                msg = 'Unable to create gaia point from uploaded file.'
-                logger.debug(msg)
-                return {'error': True, 'result': msg}
+                msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout.'
+                logger.info(msg)
+                return {'error': True, 'result': msg, 'status_code':SERVER_ERROR_CODE}
 
         ##############
         # PARSE FILTER
@@ -407,11 +409,11 @@ class GaiaWrapper:
         #############
         if not use_file_as_target:
             if target_sound_id:
-                logger.debug("Content based search with target: " + str(target_sound_id) + " (sound id) and filter: " + str(filter) )
+                logger.info("Content based search with target: " + str(target_sound_id) + " (sound id) and filter: " + str(filter) )
             else:
-                logger.debug("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
+                logger.info("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
         else:
-            logger.debug("Content based search with give analysis file as target.")
+            logger.info("Content based search with give analysis file as target.")
 
         # If target is a sound id or a file, we use the metric of the preset specified in preset parameter. Otherwise we create a
         # metric with the calculated feature_names
@@ -426,57 +428,115 @@ class GaiaWrapper:
         return {'error': False, 'result': {'results': results, 'count': count}}
 
 
-    # UTILS for content-based search
-    def prepend_value_label(self, f):
-        if f['type'] == 'NUMBER' or f['type'] == 'RANGE' or f['type'] == 'ARRAY':
-            return "value"
-        else:
-            return "label"
+    def search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset):
 
+        # Check if index has sufficient points
+        size = self.original_dataset.size()
+        if size < SIMILARITY_MINIMUM_POINTS:
+            msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
+            logger.info(msg)
+            return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
 
-    def parse_filter_list(self, filter_list, coeffs):
+        # Get some dataset parameters that will be useful later
+        trans_hist = self.original_dataset.history().toPython()
+        layout = self.original_dataset.layout()
+        coeffs = None  # Get normalization coefficients
+        for i in range(0,len(trans_hist)):
+            if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
+                coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
+                
+        # Set query metric
+        metric = self.metrics[preset_name]
+        if metric_descriptor_names:
+            metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': metric_descriptor_names})
 
-        # TODO: eliminate this?
-        #coeffs = None
-
-        filter = "WHERE"
-        for f in filter_list:
-            if type(f) != dict:
-                filter += f
-            else:
-                if f['type'] == 'NUMBER' or f['type'] == 'STRING' or f['type'] == 'ARRAY':
-
-                    if f['type'] == 'NUMBER':
-                        if coeffs:
-                            norm_value = coeffs[f['feature']]['a'][0] * f['value'] + coeffs[f['feature']]['b'][0]
-                        else:
-                            norm_value = f['value']
-                    elif f['type'] == 'ARRAY':
-                        if coeffs:
-                            norm_value = []
-                            for i in range(len(f['value'])):
-                                norm_value.append(coeffs[f['feature']]['a'][i] * f['value'][i] + coeffs[f['feature']]['b'][i])
-                        else:
-                            norm_value = f['value']
-                    else:
-                        norm_value = f['value']
-                    filter += " " + self.prepend_value_label(f) + f['feature'] + "=" + str(norm_value) + " "
-
+        # Process target
+        if target:
+            if target_type == 'sound_id':
+                query_point = str(target)
+                if not self.original_dataset.contains(query_point):
+                    msg = "Sound with id %s doesn't exist in the dataset and can not be set as similarity target." % query_point
+                    logger.info(msg)
+                    return {'error': True, 'result': msg, 'status_code': NOT_FOUND_CODE}
                 else:
-                    filter += " "
-                    if f['value']['min']:
-                        if coeffs:
-                            norm_value = coeffs[f['feature']]['a'][0] * f['value']['min'] + coeffs[f['feature']]['b'][0]
-                        else:
-                            norm_value = f['value']['min']
-                        filter += self.prepend_value_label(f) + f['feature'] + ">" + str(norm_value) + " "
-                    if f['value']['max']:
-                        if f['value']['min']:
-                            filter += "AND "
-                        if coeffs:
-                            norm_value = coeffs[f['feature']]['a'][0] * f['value']['max'] + coeffs[f['feature']]['b'][0]
-                        else:
-                            norm_value = f['value']['max']
-                        filter += self.prepend_value_label(f) + f['feature'] + "<" + str(norm_value) + " "
+                    query = query_point
 
-        return filter
+            elif target_type == 'descriptor_values':
+                # Transform input params to the normalized feature space and add them to a query point
+                # If there are no params specified in the target, the point is set as empty (probably random sounds are returned)
+                feature_names = []
+                query = Point()
+                query.setLayout(layout)
+                try:
+                    for param in target.keys():
+                        # Only add numerical parameters. Non numerical ones (like key) are only used as filters
+                        if param in coeffs.keys():
+                            feature_names.append(str(param))
+                            value = target[param]
+                            if coeffs:
+                                a = coeffs[param]['a']
+                                b = coeffs[param]['b']
+                                if len(a) == 1:
+                                    norm_value = a[0]*value + b[0]
+                                else:
+                                    norm_value = []
+                                    for i in range(0,len(a)):
+                                        norm_value.append(a[i]*value[i]+b[i])
+                                query.setValue(str(param), norm_value)
+                            else:
+                                query.setValue(str(param), value)
+                except:
+                    return {'error': True, 'result': 'Invalid target (descriptor values could not be correctly parsed)', 'status_code': BAD_REQUEST_CODE}
+
+                # Overwrite metric with present descriptors in target
+                metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
+
+            elif target_type == 'file':
+                # Target is specified as the attached file
+                # Create a point with the data in 'descriptors_data' and search for it
+                try:
+                    p, query = Point(), Point()
+                    p.loadFromString(yaml.dump(target))
+                    query = self.original_dataset.history().mapPoint(p)
+                except:
+                    msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout.'
+                    logger.info(msg)
+                    return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+        else:
+            query = Point()  # Empty target
+            query.setLayout(layout)
+
+        # Process filter
+        if filter:
+            filter = parse_filter_list(filter, coeffs)
+        else:
+            filter = ""  # Empty filter
+
+        # log
+        log_message = 'Similarity search'
+        if target:
+            if target_type == 'sound_id':
+                log_target = '%s (sound id)' % str(target)
+            elif target_type == 'descriptor_values':
+                log_target = '%s (descriptor values)' % str(target)
+            elif target_type == 'file':
+                log_target = 'uploaded file'
+            log_message += ' with target: %s' % log_target
+        if filter:
+            log_message += ' with filter: %s' % str(filter)
+        logger.info(log_message)
+
+        # Do query!
+        try:
+            search = self.view.nnSearch(query, metric, str(filter))
+            results = search.get(num_results, offset=offset)
+            count = search.size()
+        except:
+            return {'error': True, 'result': 'Server error', 'status_code': SERVER_ERROR_CODE}
+
+        return {'error': False, 'result': {'results': results, 'count': count}}
+
+
+    # UTILS for content-based search
+    def get_layout_descriptor_names(self):
+        return self.original_dataset.layout().descriptorNames()

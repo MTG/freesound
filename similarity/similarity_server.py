@@ -21,11 +21,11 @@
 from twisted.web import server, resource
 from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
-from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS
+from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE
 import logging
 import graypy
 from logging.handlers import RotatingFileHandler
-from similarity_server_utils import parse_filter, parse_target
+from similarity_server_utils import parse_filter, parse_target, parse_metric_descriptors
 import json
 import yaml
 
@@ -38,6 +38,7 @@ def server_interface(resource):
         'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descritor_names (optional), normalization (optional)
         'nnsearch': resource.nnsearch,  # sound_id, num_results (optional), preset (optional)
         'nnrange': resource.nnrange,  # target, filter, num_results (optional), preset (optional)
+        'search': resource.search,
         'save': resource.save,  # filename (optional)
     }
 
@@ -85,14 +86,14 @@ class SimilarityServer(resource.Resource):
             # Check if attached file
             data = request.content.getvalue().split('&')[0]  # If more than one file attached, just get the first one
             if not data:
-                return json.dumps({'error': True, 'result': 'Either specify a point id or attach an analysis file.'})
+                return json.dumps({'error': True, 'result': 'Either specify a point id or attach an analysis file.', 'status_code': BAD_REQUEST_CODE})
 
             # If not sound id but file attached found, parse file and pass as a dict
             sound_id = [None]
             try:
                 descriptors_data = yaml.load(data)
             except:
-                return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.'})
+                return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.', 'status_code': BAD_REQUEST_CODE})
 
         if not preset:
             preset = [DEFAULT_PRESET]
@@ -111,11 +112,11 @@ class SimilarityServer(resource.Resource):
                 # check if instead of a target, an analysis file was attached
                 data = request.content.getvalue().split('&')[0]  # If more than one file attached, just get the first one
                 if not data:
-                    return json.dumps({'error': True, 'result': 'You should at least specify a descriptors_filter, descriptors_target or attach an analysis file for content based search.'})
+                    return json.dumps({'error': True, 'result': 'You should at least specify a descriptors_filter, descriptors_target or attach an analysis file for content based search.', 'status_code': BAD_REQUEST_CODE})
                 try:
                     descriptors_data = yaml.load(data)
                 except:
-                    return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.'})
+                    return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.', 'status_code': BAD_REQUEST_CODE})
 
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
@@ -127,7 +128,7 @@ class SimilarityServer(resource.Resource):
 
         if filter:
             filter = filter[0]
-            pf = parse_filter(filter.replace("'",'"'))
+            pf = parse_filter(filter.replace("'",'"'), self.gaia.get_layout_descriptor_names())
         else:
             pf = []
 
@@ -140,7 +141,7 @@ class SimilarityServer(resource.Resource):
                 target_sound_id = int(target)
                 pt = {}
             except:
-                pt = parse_target(target.replace("'",'"'))
+                pt = parse_target(target.replace("'",'"'), self.gaia.get_layout_descriptor_names())
         else:
             pt = {}
             if descriptors_data:
@@ -155,7 +156,7 @@ class SimilarityServer(resource.Resource):
             if message == "":
                 message = "Invalid filter or target."
 
-            return json.dumps({'error': True, 'result': message})
+            return json.dumps({'error': True, 'result': message, 'status_code': BAD_REQUEST_CODE})
 
 
         return json.dumps(self.gaia.query_dataset({'target': pt, 'filter': pf},
@@ -165,6 +166,116 @@ class SimilarityServer(resource.Resource):
                                                   target_sound_id=target_sound_id,
                                                   use_file_as_target=use_file_as_target,
                                                   descriptors_data=descriptors_data))
+
+    def search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0]):
+        '''
+        This function is used as an interface to all search-related gaia funcionalities we use in freesound.
+        This function allows the definition of a query point that will be used by gaia as the target for the search (i.e.
+        gaia will sort the results by similarity according to this point), and a filter to reduce the scope of the search.
+
+        The query point is defined with the target and target_type parameters, and can be either a sound id from the
+        gaia index, a list of descriptors with values or the content of a file attached to a post request.
+            Ex:
+                target=1234
+                target_type=sound_id
+
+                target=.lowlevel.pitch.mean:220
+                target_type=descriptors_values
+
+                target=.lowlevel.scvalleys.mean:-8.0,-11.0,-13.0,-15.0,-16.0,-15.0
+                target_type=descriptors_values
+
+        The filter is defined as a string following the same syntax as solr filter that is then parsed and translated to
+        a representation that gaia can understand.
+            Ex:
+                filter=.lowlevel.pitch.mean:[100 TO *]
+                TODO: how to filter multidimensional features
+
+        Along with target and filter other parameters can be specified:
+            - preset: set of descriptors that will be used to determine the similarity distance (by default 'lowlevel' preset)
+            - metric_descriptor_names*: a list of descriptor names (separated by ,) that will be used as to build the distance metric (preset will be overwritten)
+                * this parameter is bypassed with the descriptor_values target type, as the list is automatically built with the descriptors specified in the target
+            - num_results, offset: to control the number of returned results and the offset since the first result (so pagination is possible)
+        '''
+
+        if not target and not filter:
+            if target_type:
+                if target_type[0] != 'file':
+                    return json.dumps({'error': True, 'result': 'At least \'target\' or \'filter\' should be specified.', 'status_code': BAD_REQUEST_CODE})
+            else:
+                return json.dumps({'error': True, 'result': 'At least \'target\' or \'filter\' should be specified.', 'status_code': BAD_REQUEST_CODE})
+        if target and not target_type:
+            return json.dumps({'error': True, 'result': 'Parameter \'target_type\' should be specified.', 'status_code': BAD_REQUEST_CODE})
+        if target_type:
+            target_type = target_type[0]
+
+        if target:
+            if target_type == 'sound_id':
+                try:
+                    target = int(target[0])
+                except:
+                    return json.dumps({'error': True, 'result': 'Invalid sound id.', 'status_code': BAD_REQUEST_CODE})
+            elif target_type == 'descriptor_values':
+                try:
+                    target = parse_target(target[0].replace("'", '"'), self.gaia.get_layout_descriptor_names())
+                    if type(target) != dict:
+                        if type(target) == str:
+                            return json.dumps({'error': True, 'result': target, 'status_code': BAD_REQUEST_CODE})
+                        else:
+                            return json.dumps({'error': True, 'result': 'Invalid descriptor values for target.', 'status_code': BAD_REQUEST_CODE})
+                    if not target.items():
+                        return json.dumps({'error': True, 'result': 'Invalid target.', 'status_code': BAD_REQUEST_CODE})
+                except Exception, e:
+                    return json.dumps({'error': True, 'result': 'Invalid descriptor values for target.', 'status_code': BAD_REQUEST_CODE})
+            elif target_type == 'file':
+                data = request.content.getvalue().split('&')[0]  # If more than one file attached, just get the first one
+                if not data:
+                    return json.dumps({'error': True, 'result': 'You should specified \'file\' as target file but attached no analysis file.', 'status_code': BAD_REQUEST_CODE})
+                try:
+                    target = yaml.load(data)
+                except:
+                    return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.', 'status_code': BAD_REQUEST_CODE})
+            else:
+                return json.dumps({'error': True, 'result': 'Invalid target type.', 'status_code': BAD_REQUEST_CODE})
+
+        if filter:
+            try:
+                filter = parse_filter(filter[0].replace("'", '"'), self.gaia.get_layout_descriptor_names())
+                if type(filter) != list:
+                    if type(filter) == str:
+                        return json.dumps({'error': True, 'result': filter, 'status_code': BAD_REQUEST_CODE})
+                    else:
+                        return json.dumps({'error': True, 'result': 'Invalid filter.', 'status_code': BAD_REQUEST_CODE})
+            except Exception, e:
+                return json.dumps({'error': True, 'result': 'Invalid filter.', 'status_code': BAD_REQUEST_CODE})
+
+        if preset:
+            if preset[0] not in PRESETS:
+                preset = DEFAULT_PRESET
+            else:
+                preset = preset[0]
+
+        if not num_results[0]:
+            num_results = int(DEFAULT_NUMBER_OF_RESULTS)
+        else:
+            num_results = int(num_results[0])
+
+        if not offset[0]:
+            offset = 0
+        else:
+            offset = int(offset[0])
+
+        if metric_descriptor_names:
+            metric_descriptor_names = parse_metric_descriptors(metric_descriptor_names[0], self.gaia.get_layout_descriptor_names())
+
+        return json.dumps(self.gaia.search(target_type,
+                                           target,
+                                           filter,
+                                           preset,
+                                           metric_descriptor_names,
+                                           num_results,
+                                           offset))
+
 
     def save(self, request, filename=None):
         if not filename:

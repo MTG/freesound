@@ -14,7 +14,7 @@
         - Sound serve (download)
         - Pack serve (download pack)
     - other:
-        - Allow specification of target in content-based search as a json file with descriptors - F
+        - Similarity: how do you filter multidimensional descriptors?
 
 
 - Complete serializers - F

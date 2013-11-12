@@ -209,7 +209,7 @@ class SimilarityServer(resource.Resource):
         if target_type:
             target_type = target_type[0]
 
-        if target:
+        if target or target_type == 'file':
             if target_type == 'sound_id':
                 try:
                     target = int(target[0])
@@ -230,7 +230,7 @@ class SimilarityServer(resource.Resource):
             elif target_type == 'file':
                 data = request.content.getvalue().split('&')[0]  # If more than one file attached, just get the first one
                 if not data:
-                    return json.dumps({'error': True, 'result': 'You should specified \'file\' as target file but attached no analysis file.', 'status_code': BAD_REQUEST_CODE})
+                    return json.dumps({'error': True, 'result': 'You specified \'file\' as target file but attached no analysis file.', 'status_code': BAD_REQUEST_CODE})
                 try:
                     target = yaml.load(data)
                 except:

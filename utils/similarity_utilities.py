@@ -59,7 +59,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
     return similar_sounds[0:num_results], count
 
 
-def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None):
+def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None):
 
     cache_key = 'api-search-t-%s-f-%s-nr-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results)
 
@@ -72,16 +72,17 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
         returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
         count = result['count']
 
-    if not returned_sounds:
-        target_type = None
-        try:
-            int(target)
-            target_type = 'sound_id'
-        except:
-            if type(target) == unicode or type(target) == str:
-                target_type = 'descriptor_values'
-        # TODO: what if file target?
-
+    if not returned_sounds or file:
+        if file:
+            target_type='file'
+        else:
+            try:
+                int(target)
+                target_type = 'sound_id'
+            except:
+                if type(target) == unicode or type(target) == str:
+                    target_type = 'descriptor_values'
+       
         result = Similarity.api_search(
             target_type=target_type,
             target=target,
@@ -89,7 +90,8 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
             preset=preset,
             metric_descriptor_names=metric_descriptor_names,
             num_results=num_results,
-            offset=offset
+            offset=offset,
+            file=file,
         )
         returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
         count = result['count']

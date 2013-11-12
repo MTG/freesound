@@ -349,8 +349,8 @@ def api_search(search_form):
                 raise NotFoundException(msg=e.message)
             else:
                 raise ServerErrorException(msg=e.message)
-        #except Exception, e:
-        #    raise ServerErrorException
+        except Exception, e:
+            raise ServerErrorException
 
 
         if search_form.cleaned_data['descriptors_target']:

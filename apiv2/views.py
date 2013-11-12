@@ -25,7 +25,7 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from ratings.models import Rating
 from search.forms import SoundSearchFormAPI, SoundCombinedSearchFormAPI
 from django.contrib.auth.models import User
-from apiv2.serializers import SoundSerializer, SoundListSerializer, UserSerializer, UploadAudioFileSerializer, PackSerializer, SoundDescriptionSerializer, UploadAndDescribeAudioFileSerializer, prepend_base, BookmarkCategorySerializer, CreateBookmarkSerializer, CreateRatingSerializer, SoundRatingsSerializer
+from apiv2.serializers import *
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
@@ -57,6 +57,7 @@ import os
 from freesound.utils.pagination import paginate
 from utils import api_search
 from django.contrib.contenttypes.models import ContentType
+from utils import ApiSearchPaginator
 
 
 logger = logging.getLogger("api")
@@ -173,7 +174,6 @@ class SoundCombinedSearch(GenericAPIView):
         results, count, distance_to_target_data, more_from_pack_data = api_search(search_form)
 
         # Paginate results
-        from utils import ApiSearchPaginator
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
         if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
             raise NotFoundException
@@ -345,9 +345,9 @@ class CreateBookmark(WriteRequiredGenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-############
+##############
 # RATING VIEWS
-############
+##############
 
 class SoundRatings (ListAPIView):
     """
@@ -506,6 +506,49 @@ class UploadAndDescribeAudioFile(WriteRequiredGenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+##################
+# SIMILARITY VIEWS
+##################
+
+
+class SimilarityFile(GenericAPIView):
+    """
+    Return similarity sounds to an uploaded analysis file.
+    TODO: proper documentation.
+    """
+
+    serializer_class = SimilarityFileSerializer
+
+    def post(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
+        if serializer.is_valid():
+            analysis_file = request.FILES['analysis_file']
+
+            # Create the response as if it was a get with the gaia results
+            from freesound.utils.similarity_utilities import api_search as similarity_api_search
+            from similarity.client import SimilarityException
+            # TODO: create form like the combined search form but with minimal parameters (maybe can inherit from superclass form and delete fields?)
+            # TODO: we just need filter, preset, num_results and page parameter
+
+            try:
+                results, count = similarity_api_search(file=analysis_file.read())
+            except SimilarityException, e:
+                if e.status_code == 500:
+                    raise ServerErrorException(msg=e.message)
+                elif e.status_code == 400:
+                    raise InvalidUrlException(msg=e.message)
+                elif e.status_code == 404:
+                    raise NotFoundException(msg=e.message)
+                else:
+                    raise ServerErrorException(msg=e.message)
+            except Exception:
+                raise ServerErrorException
+
+            return Response({'count': count, 'results': results}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############

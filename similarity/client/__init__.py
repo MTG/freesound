@@ -41,8 +41,11 @@ class SimilarityException(Exception):
         self.status_code = kwargs['status_code']
 
 
-def _get_url_as_json(url):
-    f = urllib2.urlopen(url.replace(" ","%20"))
+def _get_url_as_json(url, data=None):
+    if not data:
+        f = urllib2.urlopen(url.replace(" ", "%20"))
+    else:
+        f = urllib2.urlopen(url.replace(" ", "%20"), data)
     resp = f.read()
     return json.loads(resp)
 
@@ -90,7 +93,7 @@ class Similarity():
         return r
 
     @classmethod
-    def api_search(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None):
+    def api_search(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None):
         url = _BASE_URL + _URL_API_SEARCH + '?'
         if target_type:
             url += '&target_type=' + str(target_type)
@@ -107,7 +110,7 @@ class Similarity():
         if offset:
             url += '&offset=' + str(offset)
 
-        j = _get_url_as_json(url)
+        j = _get_url_as_json(url, data=file)
         r = _result_or_exception(j)
 
         return r

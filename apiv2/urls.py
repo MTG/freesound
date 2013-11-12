@@ -50,7 +50,6 @@ urlpatterns = patterns('apiv2.views',
     url(r'^users/create/bookmark/$', views.CreateBookmark.as_view(), name='apiv2-user-create-bookmark'),
     url(r'^users/create/rating/$', views.CreateRating.as_view(), name='apiv2-user-create-bookmark'),
 
-
     # Packs
     url(r'^packs/(?P<pk>[0-9]+)/$', views.PackInstance.as_view(), name='apiv2-pack-instance'),
     url(r'^packs/(?P<pk>[0-9]+)/sounds/$', views.PackSoundList.as_view(), name='apiv2-pack-sound-list'),
@@ -60,6 +59,10 @@ urlpatterns = patterns('apiv2.views',
     url(r'^uploads/not_yet_described/$', views.NotYetDescribedUploadedAudioFiles.as_view(), name="apiv2-uploads-not-described"),
     url(r'^uploads/describe/$', views.DescribeAudioFile.as_view(), name="apiv2-uploads-describe"),
     url(r'^uploads/upload_and_describe/$', views.UploadAndDescribeAudioFile.as_view(), name="apiv2-uploads-upload-and-describe"),
+
+    # Similarity
+    #url(r'^similarity/sound/(?P<pk>[0-9]+)/$', views.SimilaritySound.as_view(), name="apiv2-similarity-sound"),
+    url(r'^similarity/file/$', views.SimilarityFile.as_view(), name="apiv2-similarity-sound"),
 
     # Client management
     url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),

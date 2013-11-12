@@ -26,6 +26,7 @@ from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILAR_SOUN
 
 logger = logging.getLogger('web')
 
+
 def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SOUNDS_PER_PAGE, offset = 0 ):
 
     if preset not in PRESETS:
@@ -73,7 +74,6 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
 
     if not returned_sounds:
         target_type = None
-        print type(target)
         try:
             int(target)
             target_type = 'sound_id'
@@ -93,35 +93,6 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
         )
         returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
         count = result['count']
-
-        if len(returned_sounds) > 0:
-            cache.set(cache_key, result, SIMILARITY_CACHE_TIME)
-
-    return returned_sounds[0:num_results], count
-
-
-def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE, offset=0):
-
-    cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (target.replace(" ",""),filter.replace(" ",""),num_results)
-
-    # Don't use the cache when we're debugging
-    if settings.DEBUG:
-        returned_sounds = False
-        count = False
-    else:
-        result = cache.get(cache_key)
-        returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-        count = result['count']
-
-    if not returned_sounds:
-        #try:
-        result = Similarity.query(target, filter, num_results, offset)
-        returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-        count = result['count']
-        #except Exception, e:
-        #    logger.info('Something wrong occurred with the "query for descriptors" request (%s)\n\t%s' %\
-        #                 (e, traceback.format_exc()))
-        #    raise Exception(e)
 
         if len(returned_sounds) > 0:
             cache.set(cache_key, result, SIMILARITY_CACHE_TIME)

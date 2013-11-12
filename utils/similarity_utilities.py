@@ -72,14 +72,14 @@ def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE
         count = result['count']
 
     if not returned_sounds:
-        try:
-            result = Similarity.query(target, filter, num_results, offset)
-            returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-            count = result['count']
-        except Exception, e:
-            logger.info('Something wrong occurred with the "query for descriptors" request (%s)\n\t%s' %\
-                         (e, traceback.format_exc()))
-            raise Exception(e)
+        #try:
+        result = Similarity.query(target, filter, num_results, offset)
+        returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
+        count = result['count']
+        #except Exception, e:
+        #    logger.info('Something wrong occurred with the "query for descriptors" request (%s)\n\t%s' %\
+        #                 (e, traceback.format_exc()))
+        #    raise Exception(e)
 
         if len(returned_sounds) > 0:
             cache.set(cache_key, result, SIMILARITY_CACHE_TIME)

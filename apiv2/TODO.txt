@@ -14,7 +14,8 @@
         - Sound serve (download)
         - Pack serve (download pack)
     - other:
-        - Similarity: how do you filter multidimensional descriptors?
+        - Similarity: how do you filter multidimensional descriptors? - F
+        - improve more_from_pack response in combined search - F
 
 
 - Complete serializers - F

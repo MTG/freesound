@@ -26,14 +26,13 @@ from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTo
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
-from exceptions import UnauthorizedException
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from sounds.models import Sound, Pack, License
 from freesound.utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from freesound.utils.filesystem import md5file
 from freesound.utils.text import slugify
-from exceptions import ServerErrorException, OtherException
+from exceptions import ServerErrorException, OtherException, UnauthorizedException, InvalidUrlException, NotFoundException
 import shutil
 import settings
 import os
@@ -41,6 +40,7 @@ from freesound.utils.similarity_utilities import get_sounds_descriptors
 from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from search.views import search_prepare_query
 from freesound.utils.similarity_utilities import query_for_descriptors
+from similarity.client import SimilarityException
 from urllib import unquote
 
 
@@ -224,40 +224,60 @@ def api_search(search_form):
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
         # Standard content-based search
-        results, count = query_for_descriptors(search_form.cleaned_data['descriptors_target'],
-                                               search_form.cleaned_data['descriptors_filter'],
-                                               num_results=search_form.cleaned_data['page_size'],
-                                               offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'])
+        try:
+            results, count = query_for_descriptors(search_form.cleaned_data['descriptors_target'],
+                                                   search_form.cleaned_data['descriptors_filter'],
+                                                   num_results=search_form.cleaned_data['page_size'],
+                                                   offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'])
 
-        gaia_ids = [result[0] for result in results]
-        distance_to_target_data = None
-        if search_form.cleaned_data['descriptors_target']:
-            # Save sound distance to target into view class so it can be accessed by the serializer
-            # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
-            distance_to_target_data = dict(results)
-        gaia_count = count
-        return gaia_ids, gaia_count, distance_to_target_data, None
+            gaia_ids = [result[0] for result in results]
+            distance_to_target_data = None
+            if search_form.cleaned_data['descriptors_target']:
+                # Save sound distance to target into view class so it can be accessed by the serializer
+                # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
+                distance_to_target_data = dict(results)
+            gaia_count = count
+            return gaia_ids, gaia_count, distance_to_target_data, None
+        except SimilarityException, e:
+            if e.status_code == 500:
+                raise ServerErrorException(msg=e.message)
+            elif e.status_code == 400:
+                raise InvalidUrlException(msg=e.message)
+            elif e.status_code == 404:
+                raise NotFoundException(msg=e.message)
+            else:
+                raise ServerErrorException(msg=e.message)
+        except Exception:
+            raise ServerErrorException
+
 
     elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
         # Standard text-based search
-        solr = Solr(settings.SOLR_URL)
-        query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                     unquote(search_form.cleaned_data['filter']),
-                                     search_form.cleaned_data['sort'],
-                                     search_form.cleaned_data['page'],
-                                     search_form.cleaned_data['page_size'],
-                                     grouping=search_form.cleaned_data['group_by_pack'],
-                                     include_facets=False)
-        result = SolrResponseInterpreter(solr.select(unicode(query)))
-        solr_ids = [element['id'] for element in result.docs]
-        solr_count = result.num_found
+        try:
+            solr = Solr(settings.SOLR_URL)
+            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
+                                         unquote(search_form.cleaned_data['filter']),
+                                         search_form.cleaned_data['sort'],
+                                         search_form.cleaned_data['page'],
+                                         search_form.cleaned_data['page_size'],
+                                         grouping=search_form.cleaned_data['group_by_pack'],
+                                         include_facets=False)
 
-        more_from_pack_data = None
-        if search_form.cleaned_data['group_by_pack']:
-            # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
-            more_from_pack_data = dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs])
+            result = SolrResponseInterpreter(solr.select(unicode(query)))
+            solr_ids = [element['id'] for element in result.docs]
+            solr_count = result.num_found
 
-        return solr_ids, solr_count, None, more_from_pack_data
+            more_from_pack_data = None
+            if search_form.cleaned_data['group_by_pack']:
+                # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
+                more_from_pack_data = dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs])
+
+            return solr_ids, solr_count, None, more_from_pack_data
+
+        except SolrException, e:
+            raise InvalidUrlException(msg='Solr exception: %s' % e.message)
+        except Exception:
+            raise ServerErrorException
 
     else:
         # Combined search (there is at least one of query/filter and one of desriptors_filter/descriptors_target)
@@ -287,7 +307,9 @@ def api_search(search_form):
                     # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
                     more_from_pack_data.update(dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs]))
                 current_page += 1
-        except SolrException:
+        except SolrException, e:
+            raise InvalidUrlException(msg='Solr exception: %s' % e.message)
+        except Exception:
             raise ServerErrorException
 
         # Get gaia results
@@ -303,11 +325,18 @@ def api_search(search_form):
                 # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
                 distance_to_target_data = dict(results)
 
-        except Exception, e:
-            if settings.DEBUG:
-                raise ServerErrorException(e.message.message)
+        except SimilarityException, e:
+            if e.status_code == 500:
+                raise ServerErrorException(msg=e.message)
+            elif e.status_code == 400:
+                raise InvalidUrlException(msg=e.message)
+            elif e.status_code == 404:
+                raise NotFoundException(msg=e.message)
             else:
-                raise ServerErrorException
+                raise ServerErrorException(msg=e.message)
+        except Exception, e:
+            raise ServerErrorException
+
 
         if search_form.cleaned_data['descriptors_target']:
             # Combined search, sort by gaia_ids

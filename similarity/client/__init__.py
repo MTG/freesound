@@ -28,8 +28,17 @@ _URL_DELETE_POINT             = 'delete_point/'
 _URL_CONTAINS_POINT           = 'contains/'
 _URL_NNSEARCH                 = 'nnsearch/'
 _URL_NNRANGE                  = 'nnrange/'
+_URL_SEARCH                   = 'search/'
 _URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
 _URL_SAVE                     = 'save/'
+
+
+class SimilarityException(Exception):
+    status_code = None
+
+    def __init__(self, *args, **kwargs):
+        super(SimilarityException, self).__init__(*args)
+        self.status_code = kwargs['status_code']
 
 
 def _get_url_as_json(url):
@@ -37,11 +46,16 @@ def _get_url_as_json(url):
     resp = f.read()
     return json.loads(resp)
 
+
 def _result_or_exception(result):
     if not result['error']:
         return result['result']
     else:
-        raise Exception(result['result'])
+        if 'status_code' in result.keys():
+            raise SimilarityException(result['result'], status_code=result['status_code'])
+        else:
+            raise SimilarityException(result['result'], status_code=500)
+
 
 class Similarity():
 
@@ -65,6 +79,29 @@ class Similarity():
             url += '&target=' + str(target)
         if filter:
             url += '&filter=' + str(filter)
+        if num_results:
+            url += '&num_results=' + str(num_results)
+        if offset:
+            url += '&offset=' + str(offset)
+
+        j = _get_url_as_json(url)
+        r = _result_or_exception(j)
+
+        return r
+
+    @classmethod
+    def search2(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None):
+        url = _BASE_URL + _URL_SEARCH + '?'
+        if target_type:
+            url += '&target_type=' + str(target_type)
+        if target:
+            url += '&target=' + str(target)
+        if filter:
+            url += '&filter=' + str(filter)
+        if preset:
+            url += '&preset=' + str(preset)
+        if metric_descriptor_names:
+            url += '&metric_descriptor_names=' + str(metric_descriptor_names)
         if num_results:
             url += '&num_results=' + str(num_results)
         if offset:

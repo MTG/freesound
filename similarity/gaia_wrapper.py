@@ -401,7 +401,7 @@ class GaiaWrapper:
             if type(query_parameters['filter'][0:5]) == str:
                 filter = query_parameters['filter']
             else:
-                filter = self.parse_filter_list(query_parameters['filter'], coeffs)
+                filter = parse_filter_list(query_parameters['filter'], coeffs)
 
 
         #############

@@ -299,13 +299,14 @@ def api_search(search_form):
                                              current_page,
                                              PAGE_SIZE,
                                              grouping=search_form.cleaned_data['group_by_pack'],
-                                             include_facets=False)
+                                             include_facets=False,
+                                             grouping_pack_limit=1000)  # We want to get all results in the same group so we can filter them out with content data and provide accurate 'more_from_pack' counts
                 result = SolrResponseInterpreter(solr.select(unicode(query)))
                 solr_ids += [element['id'] for element in result.docs]
                 solr_count = result.num_found
                 if search_form.cleaned_data['group_by_pack']:
                     # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
-                    more_from_pack_data.update(dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs]))
+                    more_from_pack_data.update(dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name'], element['other_ids']]) for element in result.docs]))
                 current_page += 1
         except SolrException, e:
             raise InvalidUrlException(msg='Solr exception: %s' % e.message)
@@ -325,6 +326,20 @@ def api_search(search_form):
                 # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
                 distance_to_target_data = dict(results)
 
+            if search_form.cleaned_data['group_by_pack']:
+                # If results were grouped by pack, we need to update the counts of the 'more_from_pack' property, as they do not
+                # consider the gaia search result and will not be accurate.
+                keys_to_remove = []
+                for key, value in more_from_pack_data.items():
+                    ids_from_pack_in_gaia_results = list(set(more_from_pack_data[key][3]).intersection(gaia_ids))
+                    if ids_from_pack_in_gaia_results:
+                        # Update more_from_pack_data values
+                        more_from_pack_data[key][0] = len(ids_from_pack_in_gaia_results)
+                        more_from_pack_data[key][3] = ids_from_pack_in_gaia_results
+                    else:
+                        # Set it to zero
+                        more_from_pack_data[key][0] = 0
+                        more_from_pack_data[key][3] = []
         except SimilarityException, e:
             if e.status_code == 500:
                 raise ServerErrorException(msg=e.message)

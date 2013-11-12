@@ -34,7 +34,7 @@ from utils.pagination import paginate
 from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
-from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
+from utils.similarity_utilities import get_similar_sounds, api_search
 from similarity.client import Similarity
 from api.api_utils import auth, ReturnError#, parse_filter, parse_target
 import os
@@ -483,7 +483,7 @@ class SoundContentSearchHandler(BaseHandler):
         if not t and not f:
             raise ReturnError(400, "BadRequest", {"explanation": "Introduce either a target, a filter or both."})
         try:
-            results, count = query_for_descriptors(t,f, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+            results, count = api_search(target=t, filter=f, num_results=int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
         except Exception, e:
             if str(e)[0:6] == u"Target" or str(e)[0:6] == u"Filter":
                 raise ReturnError(400, "BadRequest", {'explanation':e})

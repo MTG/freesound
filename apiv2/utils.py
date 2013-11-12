@@ -39,7 +39,7 @@ import os
 from freesound.utils.similarity_utilities import get_sounds_descriptors
 from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from search.views import search_prepare_query
-from freesound.utils.similarity_utilities import query_for_descriptors
+from freesound.utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
 from urllib import unquote
 
@@ -225,8 +225,8 @@ def api_search(search_form):
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
         # Standard content-based search
         try:
-            results, count = query_for_descriptors(search_form.cleaned_data['descriptors_target'],
-                                                   search_form.cleaned_data['descriptors_filter'],
+            results, count = similarity_api_search(target=search_form.cleaned_data['descriptors_target'],
+                                                   filter=search_form.cleaned_data['descriptors_filter'],
                                                    num_results=search_form.cleaned_data['page_size'],
                                                    offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'])
 
@@ -294,12 +294,12 @@ def api_search(search_form):
         try:
             while len(solr_ids) < solr_count or solr_count == None:
                 query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                         unquote(search_form.cleaned_data['filter']),
-                                         search_form.cleaned_data['sort'],
-                                         current_page,
-                                         PAGE_SIZE,
-                                         grouping=search_form.cleaned_data['group_by_pack'],
-                                         include_facets=False)
+                                             unquote(search_form.cleaned_data['filter']),
+                                             search_form.cleaned_data['sort'],
+                                             current_page,
+                                             PAGE_SIZE,
+                                             grouping=search_form.cleaned_data['group_by_pack'],
+                                             include_facets=False)
                 result = SolrResponseInterpreter(solr.select(unicode(query)))
                 solr_ids += [element['id'] for element in result.docs]
                 solr_count = result.num_found
@@ -314,8 +314,8 @@ def api_search(search_form):
 
         # Get gaia results
         try:
-            results, count = query_for_descriptors(search_form.cleaned_data['descriptors_target'],
-                                                   search_form.cleaned_data['descriptors_filter'],
+            results, count = similarity_api_search(target=search_form.cleaned_data['descriptors_target'],
+                                                   filter=search_form.cleaned_data['descriptors_filter'],
                                                    num_results=99999999,  # Return all sounds in one page
                                                    offset=0)
             gaia_ids = [id[0] for id in results]
@@ -334,8 +334,8 @@ def api_search(search_form):
                 raise NotFoundException(msg=e.message)
             else:
                 raise ServerErrorException(msg=e.message)
-        except Exception, e:
-            raise ServerErrorException
+        #except Exception, e:
+        #    raise ServerErrorException
 
 
         if search_form.cleaned_data['descriptors_target']:

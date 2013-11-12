@@ -58,6 +58,48 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
     return similar_sounds[0:num_results], count
 
 
+def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None):
+
+    cache_key = 'api-search-t-%s-f-%s-nr-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results)
+
+    # Don't use the cache when we're debugging
+    if settings.DEBUG:
+        returned_sounds = False
+        count = False
+    else:
+        result = cache.get(cache_key)
+        returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
+        count = result['count']
+
+    if not returned_sounds:
+        target_type = None
+        print type(target)
+        try:
+            int(target)
+            target_type = 'sound_id'
+        except:
+            if type(target) == unicode or type(target) == str:
+                target_type = 'descriptor_values'
+        # TODO: what if file target?
+
+        result = Similarity.api_search(
+            target_type=target_type,
+            target=target,
+            filter=filter,
+            preset=preset,
+            metric_descriptor_names=metric_descriptor_names,
+            num_results=num_results,
+            offset=offset
+        )
+        returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
+        count = result['count']
+
+        if len(returned_sounds) > 0:
+            cache.set(cache_key, result, SIMILARITY_CACHE_TIME)
+
+    return returned_sounds[0:num_results], count
+
+
 def query_for_descriptors(target, filter, num_results = settings.SOUNDS_PER_PAGE, offset=0):
 
     cache_key = "content-based-search-t-%s-f-%s-nr-%s" % (target.replace(" ",""),filter.replace(" ",""),num_results)

@@ -38,7 +38,7 @@ def server_interface(resource):
         'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descritor_names (optional), normalization (optional)
         'nnsearch': resource.nnsearch,  # sound_id, num_results (optional), preset (optional)
         'nnrange': resource.nnrange,  # target, filter, num_results (optional), preset (optional)
-        'search': resource.search,
+        'api_search': resource.api_search,
         'save': resource.save,  # filename (optional)
     }
 
@@ -167,7 +167,7 @@ class SimilarityServer(resource.Resource):
                                                   use_file_as_target=use_file_as_target,
                                                   descriptors_data=descriptors_data))
 
-    def search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0]):
+    def api_search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0]):
         '''
         This function is used as an interface to all search-related gaia funcionalities we use in freesound.
         This function allows the definition of a query point that will be used by gaia as the target for the search (i.e.
@@ -268,13 +268,13 @@ class SimilarityServer(resource.Resource):
         if metric_descriptor_names:
             metric_descriptor_names = parse_metric_descriptors(metric_descriptor_names[0], self.gaia.get_layout_descriptor_names())
 
-        return json.dumps(self.gaia.search(target_type,
-                                           target,
-                                           filter,
-                                           preset,
-                                           metric_descriptor_names,
-                                           num_results,
-                                           offset))
+        return json.dumps(self.gaia.api_search(target_type,
+                                              target,
+                                              filter,
+                                              preset,
+                                              metric_descriptor_names,
+                                              num_results,
+                                              offset))
 
 
     def save(self, request, filename=None):

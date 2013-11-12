@@ -428,7 +428,7 @@ class GaiaWrapper:
         return {'error': False, 'result': {'results': results, 'count': count}}
 
 
-    def search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset):
+    def api_search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset):
 
         # Check if index has sufficient points
         size = self.original_dataset.size()

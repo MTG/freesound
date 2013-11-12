@@ -28,7 +28,7 @@ _URL_DELETE_POINT             = 'delete_point/'
 _URL_CONTAINS_POINT           = 'contains/'
 _URL_NNSEARCH                 = 'nnsearch/'
 _URL_NNRANGE                  = 'nnrange/'
-_URL_SEARCH                   = 'search/'
+_URL_API_SEARCH               = 'api_search/'
 _URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
 _URL_SAVE                     = 'save/'
 
@@ -90,8 +90,8 @@ class Similarity():
         return r
 
     @classmethod
-    def search2(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None):
-        url = _BASE_URL + _URL_SEARCH + '?'
+    def api_search(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None):
+        url = _BASE_URL + _URL_API_SEARCH + '?'
         if target_type:
             url += '&target_type=' + str(target_type)
         if target:

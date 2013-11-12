@@ -16,6 +16,7 @@
     - other:
         - Similarity: how do you filter multidimensional descriptors? - F
         - improve more_from_pack response in combined search - F
+        - Pass file as target -  F
 
 
 - Complete serializers - F

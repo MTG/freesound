@@ -3,8 +3,8 @@
         - Sounds -OK
         - Describe -OK
         - Bookmarks -OK
-        - Ratings
-        - Comments
+        - Ratings -OK
+        - Comments -OK
     - GET:
         - Sound comments
         - Sound similarity (similar sounds) - F

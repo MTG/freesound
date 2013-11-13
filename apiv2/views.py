@@ -365,7 +365,7 @@ class CreateBookmark(WriteRequiredGenericAPIView):
 
 class SoundRatings (ListAPIView):
     """
-    List of bookmarks of a user.
+    List of ratings of a user.
     TODO: proper documentation.
     """
     serializer_class = SoundRatingsSerializer
@@ -392,6 +392,47 @@ class CreateRating(WriteRequiredGenericAPIView):
         if serializer.is_valid():
             rating = Rating.objects.create(user=self.user, object_id=request.DATA['sound_id'], content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
             return Response(data={'details': 'Rating successfully created'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+############
+# COMMENTS VIEWS
+############
+
+class SoundComments (ListAPIView):
+    """
+    List of comments of a user.
+    TODO: proper documentation.
+    """
+    serializer_class = SoundCommentsSerializer
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(SoundComments, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Comment.objects.filter(object_id=self.kwargs['pk'])
+
+
+class CreateComment(WriteRequiredGenericAPIView):
+    """
+    Create a new comment of a sound.
+    DATA: name
+    TODO: proper documentation.
+    """
+    serializer_class = CreateCommentSerializer
+
+    def post(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        serializer = CreateCommentSerializer(data=request.DATA)
+        if serializer.is_valid():
+            comment = Comment.objects.create(user=self.user, object_id=request.DATA['sound_id'], content_type=ContentType.objects.get(id=20), comment=request.DATA['comment'])
+            if comment.content_type == ContentType.objects.get_for_model(Sound):
+                sound = comment.content_object
+                sound.num_comments = sound.num_comments + 1
+                sound.save()
+            return Response(data={'details': 'Comment successfully created'}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

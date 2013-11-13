@@ -1,10 +1,10 @@
 - Implement views
     - POST:
-        - Sounds - OK
-        - Describe - OK
-        - Bookmarks - OK
-        - Ratings
-        - Comments
+        - Sounds -OK
+        - Describe -OK
+        - Bookmarks -OK
+        - Ratings -OK
+        - Comments -OK
     - GET:
         - Sound comments
         - Sound similarity (similar sounds) - F

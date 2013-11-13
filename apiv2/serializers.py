@@ -22,6 +22,7 @@
 
 from sounds.models import Sound, Pack
 from ratings.models import Rating
+from comments.models import Comment
 from bookmarks.models import Bookmark, BookmarkCategory
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -83,7 +84,12 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'duration',
                   'samplerate',
                   'analysis',
-                  'ratings')
+                  'avg_rating',
+                  'num_ratings',
+                  'ratings',
+                  'num_comments',
+                  'comments',
+                  'num_downloads')
 
 
     uri = serializers.SerializerMethodField('get_uri')
@@ -120,6 +126,15 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     ratings = serializers.SerializerMethodField('get_ratings')
     def get_ratings(self, obj):
         return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]))
+
+    avg_rating = serializers.SerializerMethodField('get_avg_rating')
+    def get_avg_rating(self, obj):
+        return obj.avg_rating/2
+
+    comments = serializers.SerializerMethodField('get_comments')
+    def get_comments(self, obj):
+        return prepend_base(reverse('apiv2-sound-comments', args=[obj.id]))
+
 
 class SoundListSerializer(AbstractSoundSerializer):
 
@@ -258,16 +273,53 @@ class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Rating
         fields = ('user',
-                  'rating')
+                  'rating',
+                  'created')
+
+    user = serializers.SerializerMethodField('get_user')
+    def get_user(self, obj):
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]))
+
+    rating = serializers.SerializerMethodField('get_rating')
+    def get_rating(self, obj):
+        if (obj.rating % 2 == 1):
+            return float(obj.rating)/2
+        else:
+            return obj.rating/2
+
+
+class CreateRatingSerializer(serializers.Serializer):
+    rating = serializers.IntegerField(required=True, help_text='Required. Chose an integer rating between 0 and 5.')
+    sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
+
+    def validate_rating(self, attrs, source):
+        value = attrs[source]
+        if (value not in [0,1,2,3,4,5]):
+            raise serializers.ValidationError('You have to introduce an integer value between 0 and 5')
+        return attrs
+
+####################
+# COMMENTS SERIALIZERS
+####################
+
+class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = ('user',
+                  'comment',
+                  'created')
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]))
 
 
-class CreateRatingSerializer(serializers.Serializer):
-    rating = serializers.IntegerField(required=True, help_text='Required. Chose a rating between 0 and 5.')
+
+class CreateCommentSerializer(serializers.Serializer):
+    comment = serializers.CharField(required=True, help_text='Required. Chose an integer rating between 0 and 5.')
     sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
+
 
 ####################
 # UPLOAD SERIALIZERS

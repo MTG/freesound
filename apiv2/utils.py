@@ -218,14 +218,14 @@ def api_search(search_form, target_file=None):
 
     distance_to_target_data = None
 
-    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target'] and not target_file:
+    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
         # No input data for search, return empty results
         return [], 0, None, None
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
         # Standard content-based search
         try:
-            results, count = similarity_api_search(target=search_form.cleaned_data['descriptors_target'],
+            results, count = similarity_api_search(target=search_form.cleaned_data['target'],
                                                    filter=search_form.cleaned_data['descriptors_filter'],
                                                    num_results=search_form.cleaned_data['page_size'],
                                                    offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
@@ -233,9 +233,9 @@ def api_search(search_form, target_file=None):
 
             gaia_ids = [result[0] for result in results]
             distance_to_target_data = None
-            if search_form.cleaned_data['descriptors_target']:
+            if search_form.cleaned_data['target']:
                 # Save sound distance to target into view class so it can be accessed by the serializer
-                # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
+                # We only do that when a target is specified (otherwise there is no meaningful distance value)
                 distance_to_target_data = dict(results)
             gaia_count = count
             return gaia_ids, gaia_count, distance_to_target_data, None
@@ -252,7 +252,7 @@ def api_search(search_form, target_file=None):
             raise ServerErrorException
 
 
-    elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target'] and not target_file:
+    elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
         # Standard text-based search
         try:
             solr = Solr(settings.SOLR_URL)
@@ -281,7 +281,7 @@ def api_search(search_form, target_file=None):
             raise ServerErrorException
 
     else:
-        # Combined search (there is at least one of query/filter and one of desriptors_filter/descriptors_target)
+        # Combined search (there is at least one of query/filter and one of desriptors_filter/target)
 
         # Get solr results
         solr = Solr(settings.SOLR_URL)
@@ -316,16 +316,16 @@ def api_search(search_form, target_file=None):
 
         # Get gaia results
         try:
-            results, count = similarity_api_search(target=search_form.cleaned_data['descriptors_target'],
+            results, count = similarity_api_search(target=search_form.cleaned_data['target'],
                                                    filter=search_form.cleaned_data['descriptors_filter'],
                                                    num_results=99999999,  # Return all sounds in one page
                                                    offset=0,
                                                    target_file=target_file)
             gaia_ids = [id[0] for id in results]
             distance_to_target_data = None
-            if search_form.cleaned_data['descriptors_target']:
+            if search_form.cleaned_data['target']:
                 # Save sound distance to target into view class so it can be accessed by the serializer
-                # We only do that when a descriptors_target is specified (otherwise there is no meaningful distance value)
+                # We only do that when a target is specified (otherwise there is no meaningful distance value)
                 distance_to_target_data = dict(results)
 
             if search_form.cleaned_data['group_by_pack']:
@@ -355,7 +355,7 @@ def api_search(search_form, target_file=None):
             raise ServerErrorException
 
 
-        if search_form.cleaned_data['descriptors_target'] or target_file:
+        if search_form.cleaned_data['target'] or target_file:
             # Combined search, sort by gaia_ids
             results_a = gaia_ids
             results_b = solr_ids

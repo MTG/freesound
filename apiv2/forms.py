@@ -49,8 +49,10 @@ SEARCH_SORT_OPTIONS_API = [
 
 SEARCH_DEFAULT_SORT = "score desc"
 
+
 def my_quote(s):
     return quote(s,safe=",:[]*+()'")
+
 
 class SoundSearchFormAPI(forms.Form):
     query           = forms.CharField(required=False, label='query')
@@ -162,22 +164,22 @@ class SoundSearchFormAPI(forms.Form):
 
 class SoundCombinedSearchFormAPI(SoundSearchFormAPI):
     descriptors_filter = forms.CharField(required=False, label='descriptors_filter')
-    descriptors_target = forms.CharField(required=False, label='descriptors_target')
+    target = forms.CharField(required=False, label='target')
 
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']
         return my_quote(descriptors_filter) if descriptors_filter != None else ""
 
-    def clean_descriptors_target(self):
-        descriptors_target = self.cleaned_data['descriptors_target']
-        return my_quote(descriptors_target) if descriptors_target != None else ""
+    def clean_target(self):
+        target = self.cleaned_data['target']
+        return my_quote(target) if target != None else ""
 
     def construct_link(self, *args, **kwargs):
         link = super(SoundCombinedSearchFormAPI, self).construct_link(*args, **kwargs)
         if self.cleaned_data['descriptors_filter']:
                 link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
-        if self.cleaned_data['descriptors_target']:
-                link += '&descriptors_target=%s' % self.cleaned_data['descriptors_target']
+        if self.cleaned_data['target']:
+                link += '&target=%s' % self.cleaned_data['target']
 
         return link
 
@@ -197,71 +199,29 @@ class SimilarityFileFormAPI(SoundCombinedSearchFormAPI):
     def clean_group_by_pack(self):
         return None
 
+    def clean_target(self):
+        return None
 
-'''
-class SimilarityFileFormAPI2(forms.Form):
-    page            = forms.CharField(required=False, label='page')
-    fields          = forms.CharField(required=False, label='fields')
-    descriptors     = forms.CharField(required=False, label='descriptors')
-    normalized      = forms.CharField(required=False, label='normalized')
-    page_size       = forms.CharField(required=False, label='page_size')
-    descriptors_filter = forms.CharField(required=False, label='descriptors_filter')
-    descriptors_target = forms.CharField(required=False, label='descriptors_target')
 
-    def clean_descriptors(self):
-        descriptors = self.cleaned_data['descriptors']
-        return my_quote(descriptors) if descriptors != None else ""
+class SimilaritySoundFormAPI(SoundCombinedSearchFormAPI):
+    #sound_id = None
 
-    def clean_normalized(self):
-        requested_normalized = self.cleaned_data['normalized']
-        normalized = ''
-        if requested_normalized:
-            normalized = '1'
-        return normalized
+    #def __init__(self, *args, **kwargs):
+    #    self.sound_id = args[1]
+    #    super(SimilaritySoundFormAPI, self).__init__(*args[:-1], **kwargs)
 
-    def clean_page(self):
-        try:
-            page = int(self.cleaned_data['page'])
-        except:
-            return 1
-        return page
+    def clean_query(self):
+        return None
 
-    def clean_fields(self):
-        fields = self.cleaned_data['fields']
-        return my_quote(fields) if fields != None else ""
+    def clean_filter(self):
+        return None
 
-    def clean_page_size(self):
-        requested_paginate_by = self.cleaned_data[settings.REST_FRAMEWORK['PAGINATE_BY_PARAM']] or settings.REST_FRAMEWORK['PAGINATE_BY']
-        return min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
+    def clean_sort(self):
+        self.original_url_sort_value = None
+        return None
 
-    def clean_descriptors_filter(self):
-        descriptors_filter = self.cleaned_data['descriptors_filter']
-        return my_quote(descriptors_filter) if descriptors_filter != None else ""
+    def clean_group_by_pack(self):
+        return None
 
-    def clean_descriptors_target(self):
-        descriptors_target = self.cleaned_data['descriptors_target']
-        return my_quote(descriptors_target) if descriptors_target != None else ""
-
-    def construct_link(self, base_url, page=None):
-        link = "?"
-
-        if not page:
-            if self.cleaned_data['page'] and self.cleaned_data['page'] != 1:
-                link += '&page=%s' % self.cleaned_data['page']
-        else:
-            link += '&page=%s' % str(page)
-        if self.cleaned_data['page_size'] and not self.cleaned_data['page_size'] == settings.REST_FRAMEWORK['PAGINATE_BY']:
-            link += '&page_size=%s' % str(self.cleaned_data['page_size'])
-        if self.cleaned_data['fields']:
-            link += '&fields=%s' % self.cleaned_data['fields']
-        if self.cleaned_data['descriptors']:
-            link += '&descriptors=%s' % self.cleaned_data['descriptors']
-        if self.cleaned_data['normalized']:
-            link += '&normalized=%s' % self.cleaned_data['normalized']
-        if self.cleaned_data['descriptors_filter']:
-            link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
-        if self.cleaned_data['descriptors_target']:
-            link += '&descriptors_target=%s' % self.cleaned_data['descriptors_target']
-
-        return "http://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
-'''
+    def clean_target(self):
+        return None #str(self.sound_id)

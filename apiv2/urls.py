@@ -61,7 +61,7 @@ urlpatterns = patterns('apiv2.views',
     url(r'^uploads/upload_and_describe/$', views.UploadAndDescribeAudioFile.as_view(), name="apiv2-uploads-upload-and-describe"),
 
     # Similarity
-    #url(r'^similarity/sound/(?P<pk>[0-9]+)/$', views.SimilaritySound.as_view(), name="apiv2-similarity-sound"),
+    url(r'^similarity/sound/(?P<pk>[0-9]+)/$', views.SimilaritySound.as_view(), name="apiv2-similarity-sound"),
     url(r'^similarity/file/$', views.SimilarityFile.as_view(), name="apiv2-similarity-file"),
 
     # Client management

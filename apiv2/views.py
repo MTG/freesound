@@ -158,6 +158,9 @@ class SoundCombinedSearch(GenericAPIView):
     TODO: proper documentation.
     """
 
+    serializer_class = SimilarityFileSerializer
+    analysis_file = None
+
     def get(self, request,  *args, **kwargs):
         # Validate search form and check page 0
         search_form = SoundCombinedSearchFormAPI(request.QUERY_PARAMS)
@@ -167,7 +170,10 @@ class SoundCombinedSearch(GenericAPIView):
                 raise NotFoundException
 
         # Get search results
-        results, count, distance_to_target_data, more_from_pack_data = api_search(search_form)
+        analysis_file = None
+        if self.analysis_file:
+            analysis_file = self.analysis_file.read()
+        results, count, distance_to_target_data, more_from_pack_data = api_search(search_form, target_file=analysis_file)
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -175,6 +181,8 @@ class SoundCombinedSearch(GenericAPIView):
             raise NotFoundException
         page = paginator.page(search_form.cleaned_data['page'])
         response_data = dict()
+        if self.analysis_file:
+            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name, self.analysis_file._size/1024)
         response_data['count'] = paginator.count
         response_data['previous'] = None
         response_data['next'] = None
@@ -206,6 +214,16 @@ class SoundCombinedSearch(GenericAPIView):
         response_data['results'] = sounds
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+    def post(self, request,  *args, **kwargs):
+        # This view has a post version to handle analysis file uploads
+        serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
+        if serializer.is_valid():
+            analysis_file = request.FILES['analysis_file']
+            self.analysis_file = analysis_file
+            return self.get(request,  *args, **kwargs)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 ############
@@ -519,16 +537,16 @@ class SimilarityFile(GenericAPIView):
     def post(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
 
-        # Validate search form and check page 0
-        similarity_file_form = SimilarityFileFormAPI(request.QUERY_PARAMS)
-        if not similarity_file_form.is_valid():
-            raise ParseError
-        if similarity_file_form.cleaned_data['page'] < 1:
-                raise NotFoundException
-
         serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
         if serializer.is_valid():
             analysis_file = request.FILES['analysis_file']
+
+            # Validate search form and check page 0
+            similarity_file_form = SimilarityFormAPI(request.QUERY_PARAMS)
+            if not similarity_file_form.is_valid():
+                raise ParseError
+            if similarity_file_form.cleaned_data['page'] < 1:
+                    raise NotFoundException
 
             # Get gaia results
             results, count, distance_to_target_data, more_from_pack_data = api_search(similarity_file_form, target_file=analysis_file.read())
@@ -539,6 +557,7 @@ class SimilarityFile(GenericAPIView):
                 raise NotFoundException
             page = paginator.page(similarity_file_form.cleaned_data['page'])
             response_data = dict()
+            response_data['target_analysis_file'] = '%s (%i KB)' % (analysis_file._name, analysis_file._size/1024)
             response_data['count'] = paginator.count
             response_data['previous'] = None
             response_data['next'] = None
@@ -579,7 +598,7 @@ class SimilaritySound(GenericAPIView):
         logger.info("TODO: proper logging")
 
         # Validate search form and check page 0
-        similarity_sound_form = SimilaritySoundFormAPI(request.QUERY_PARAMS)
+        similarity_sound_form = SimilarityFormAPI(request.QUERY_PARAMS)
         if not similarity_sound_form.is_valid():
             raise ParseError
         if similarity_sound_form.cleaned_data['page'] < 1:

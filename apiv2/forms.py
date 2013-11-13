@@ -184,7 +184,7 @@ class SoundCombinedSearchFormAPI(SoundSearchFormAPI):
         return link
 
 
-class SimilarityFileFormAPI(SoundCombinedSearchFormAPI):
+class SimilarityFormAPI(SoundCombinedSearchFormAPI):
 
     def clean_query(self):
         return None
@@ -201,27 +201,3 @@ class SimilarityFileFormAPI(SoundCombinedSearchFormAPI):
 
     def clean_target(self):
         return None
-
-
-class SimilaritySoundFormAPI(SoundCombinedSearchFormAPI):
-    #sound_id = None
-
-    #def __init__(self, *args, **kwargs):
-    #    self.sound_id = args[1]
-    #    super(SimilaritySoundFormAPI, self).__init__(*args[:-1], **kwargs)
-
-    def clean_query(self):
-        return None
-
-    def clean_filter(self):
-        return None
-
-    def clean_sort(self):
-        self.original_url_sort_value = None
-        return None
-
-    def clean_group_by_pack(self):
-        return None
-
-    def clean_target(self):
-        return None #str(self.sound_id)

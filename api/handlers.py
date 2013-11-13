@@ -21,7 +21,8 @@
 from django.conf import settings
 from piston.handler import BaseHandler
 from piston.utils import rc
-from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
+from search.forms import SoundSearchForm
+from apiv2.forms import SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
 from sounds.models import Sound, Pack, Download
 from bookmarks.models import Bookmark, BookmarkCategory

@@ -186,7 +186,7 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
     # Get analysis data for all requested sounds and save it to a class variable so the serializer can access it and
     # we only need one request to the similarity service
 
-    analysis_data_required = 'analysis' in view.request.GET.get('fields', '').split(',')
+    analysis_data_required = 'analysis' in view.request.QUERY_PARAMS.get('fields', '').split(',')
     if analysis_data_required:
         # Get ids of the particular sounds we need
         if queryset:
@@ -197,13 +197,13 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
 
         # Get descriptor values for the required ids
         # Required descriptors are indicated with the parameter 'descriptors'. If 'descriptors' is empty, we return nothing
-        descriptors = view.request.GET.get('descriptors', [])
+        descriptors = view.request.QUERY_PARAMS.get('descriptors', [])
         view.sound_analysis_data = {}
         if descriptors:
             try:
                 view.sound_analysis_data = get_sounds_descriptors(ids,
                                                                   descriptors.split(','),
-                                                                  view.request.GET.get('normalized', '0') == '1',
+                                                                  view.request.QUERY_PARAMS.get('normalized', '0') == '1',
                                                                   only_leaf_descriptors=True)
             except:
                 pass
@@ -214,11 +214,11 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
 ##################
 
 
-def api_search(search_form):
+def api_search(search_form, target_file=None):
 
     distance_to_target_data = None
 
-    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
+    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target'] and not target_file:
         # No input data for search, return empty results
         return [], 0, None, None
 
@@ -228,7 +228,8 @@ def api_search(search_form):
             results, count = similarity_api_search(target=search_form.cleaned_data['descriptors_target'],
                                                    filter=search_form.cleaned_data['descriptors_filter'],
                                                    num_results=search_form.cleaned_data['page_size'],
-                                                   offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'])
+                                                   offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
+                                                   target_file=target_file)
 
             gaia_ids = [result[0] for result in results]
             distance_to_target_data = None
@@ -251,7 +252,7 @@ def api_search(search_form):
             raise ServerErrorException
 
 
-    elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target']:
+    elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['descriptors_target'] and not target_file:
         # Standard text-based search
         try:
             solr = Solr(settings.SOLR_URL)
@@ -318,7 +319,8 @@ def api_search(search_form):
             results, count = similarity_api_search(target=search_form.cleaned_data['descriptors_target'],
                                                    filter=search_form.cleaned_data['descriptors_filter'],
                                                    num_results=99999999,  # Return all sounds in one page
-                                                   offset=0)
+                                                   offset=0,
+                                                   target_file=target_file)
             gaia_ids = [id[0] for id in results]
             distance_to_target_data = None
             if search_form.cleaned_data['descriptors_target']:
@@ -353,7 +355,7 @@ def api_search(search_form):
             raise ServerErrorException
 
 
-        if search_form.cleaned_data['descriptors_target']:
+        if search_form.cleaned_data['descriptors_target'] or target_file:
             # Combined search, sort by gaia_ids
             results_a = gaia_ids
             results_b = solr_ids

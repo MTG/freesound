@@ -59,7 +59,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
     return similar_sounds[0:num_results], count
 
 
-def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None):
+def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, target_file=None):
 
     cache_key = 'api-search-t-%s-f-%s-nr-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results)
 
@@ -72,17 +72,18 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
         returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
         count = result['count']
 
-    if not returned_sounds or file:
-        if file:
-            target_type='file'
+    if not returned_sounds or target_file:
+        if target_file:
+            # If there is a file attahced, set the file as the target
+            target_type = 'file'
+            target = None  # If target is given as a file, we set target to None (just in case)
         else:
-            try:
-                int(target)
+            # In case there is no file, if the string target represents an integer value, then target is a sound_id, otherwise target is descriptor_values
+            if target.isdigit():
                 target_type = 'sound_id'
-            except:
-                if type(target) == unicode or type(target) == str:
-                    target_type = 'descriptor_values'
-       
+            else:
+                target_type = 'descriptor_values'
+
         result = Similarity.api_search(
             target_type=target_type,
             target=target,
@@ -91,13 +92,14 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
             metric_descriptor_names=metric_descriptor_names,
             num_results=num_results,
             offset=offset,
-            file=file,
+            file=target_file,
         )
         returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
         count = result['count']
 
-        if len(returned_sounds) > 0:
-            cache.set(cache_key, result, SIMILARITY_CACHE_TIME)
+        if not target_file:
+            if len(returned_sounds) > 0:
+                cache.set(cache_key, result, SIMILARITY_CACHE_TIME)
 
     return returned_sounds[0:num_results], count
 

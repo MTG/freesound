@@ -102,7 +102,7 @@ class SoundAnalysis(GenericAPIView):
         response_data = get_sounds_descriptors([sound_id],
                                                 descriptors,
                                                 request.QUERY_PARAMS.get('normalized', '0') == '1',
-                                                only_leaf_descriptors=False)
+                                                only_leaf_descriptors=True)
         if response_data:
             return Response(response_data[str(sound_id)], status=status.HTTP_200_OK)
         else:

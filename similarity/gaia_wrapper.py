@@ -243,7 +243,12 @@ class GaiaWrapper:
                 if not nested_descriptors:
                     processed_descriptor_names.append(name)
                 else:
-                    if not only_leaf_descriptors:
+                    if only_leaf_descriptors:
+                        # only return descriptors if nested descriptors are statistics
+                        if len(set(nested_descriptors.keys()).intersection(['min', 'max', 'dvar2', 'dmean2', 'dmean', 'var', 'dvar', 'mean'])) > 0:
+                            for extra_name in nested_descriptors.keys():
+                                processed_descriptor_names.append('%s.%s' % (name, extra_name))
+                    else:
                         # Return all nested descriptor names
                         extra_names = []
                         get_nested_descriptor_names(nested_descriptors, extra_names)

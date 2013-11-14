@@ -166,7 +166,7 @@ class SoundSerializer(AbstractSoundSerializer):
                                               self.context['request'].GET.get('normalized', '0') == '1',
                                               only_leaf_descriptors=True)[str(obj.id)]
             else:
-                return None
+                return {}
         except Exception, e:
             return None
 

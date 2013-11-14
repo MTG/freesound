@@ -36,7 +36,7 @@ class InvalidUrlException(APIException):
     detail = None
     status_code = status.HTTP_400_BAD_REQUEST
 
-    def __init__(self, msg="Invalid url"):
+    def __init__(self, msg="Bad request"):
         self.detail = msg
 
 

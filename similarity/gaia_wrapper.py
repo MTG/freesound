@@ -33,6 +33,7 @@ class GaiaWrapper:
         self.index_path                 = INDEX_DIR
         self.original_dataset           = DataSet()
         self.original_dataset_path      = self.__get_dataset_path(INDEX_NAME)
+        self.descriptor_names           = {}
         self.metrics                    = {}
         self.view                       = None
         self.__load_dataset()
@@ -51,6 +52,7 @@ class GaiaWrapper:
         # load original dataset
         if os.path.exists(self.original_dataset_path):
             self.original_dataset.load(self.original_dataset_path)
+            self.__calculate_descriptor_names()
             if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS:
 
                 # if we have loaded a dataset of the correct size but it is unprepared, prepare it
@@ -75,38 +77,64 @@ class GaiaWrapper:
                 view = View(self.original_dataset)
                 self.view = view
 
-            logger.info('Dataset loaded, size: %s points' % (self.original_dataset.size()))
+            logger.info('Dataset loaded, size: %s points (%i fixed-length desc., %i variable-length desc.)' % (self.original_dataset.size(), len(self.descriptor_names['fixed-length']), len(self.descriptor_names['variable-length'])))
 
         else:
             # If there is no existing dataset we create an empty one.
             # For the moment we do not create any distance metric nor a view because search won't be possible until the DB has a minimum of SIMILARITY_MINIMUM_POINTS
             self.original_dataset.save(self.original_dataset_path)
+            self.__calculate_descriptor_names()
             logger.info('Created new dataset, size: %s points (should be 0)' % (self.original_dataset.size()))
 
 
     def __prepare_original_dataset(self):
         logger.info('Preparing the original dataset.')
         self.original_dataset = self.prepare_original_dataset_helper(self.original_dataset)
+        self.__calculate_descriptor_names()
 
     def __normalize_original_dataset(self):
         logger.info('Normalizing the original dataset.')
-        self.original_dataset = self.normalize_dataset_helper(self.original_dataset)
+        self.original_dataset = self.normalize_dataset_helper(self.original_dataset, self.descriptor_names['fixed-length'])
+
+    def __calculate_descriptor_names(self):
+        layout = self.original_dataset.layout()
+        all_descriptor_names = layout.descriptorNames()
+        fixed_length_descritpor_names = []
+        variable_length_descritpor_names = []
+
+        for name in all_descriptor_names:
+            region = layout.descriptorLocation(name)
+            if region.lengthType() == 1:  # lengthType() == 1 means variable length descriptor (from gaia docs)
+                variable_length_descritpor_names.append(name)
+            else:
+                fixed_length_descritpor_names.append(name)
+
+        self.descriptor_names = {'all': all_descriptor_names,
+                                 'fixed-length': fixed_length_descritpor_names,
+                                 'variable-length': variable_length_descritpor_names}
+
 
     @staticmethod
     def prepare_original_dataset_helper(ds):
-        proc_ds1  = transform(ds, 'RemoveVL')
-        proc_ds2  = transform(proc_ds1,  'FixLength')
+        proc_ds1 = transform(ds,  'FixLength')  # this transformation marks which descriptors are of fixed length, it optimizes things
+        prepared_ds = transform(proc_ds1, 'Cleaner')
+        proc_ds1.clear()
         proc_ds1 = None
-        prepared_ds = transform(proc_ds2, 'Cleaner')
-        proc_ds2 = None
+
+        #proc_ds1  = transform(ds, 'RemoveVL')
+        #proc_ds2  = transform(proc_ds1,  'FixLength')
+        #proc_ds1 = None
+        #prepared_ds = transform(proc_ds2, 'Cleaner')
+        #proc_ds2 = None
 
         return prepared_ds
 
     @staticmethod
-    def normalize_dataset_helper(ds):
+    def normalize_dataset_helper(ds, descriptor_names):
         # Add normalization
-        normalization_params = { "descriptorNames":"*","independent":True, "outliers":-1}
+        normalization_params = {"descriptorNames": descriptor_names, "independent": True, "outliers": -1}
         normalized_ds = transform(ds, 'normalize', normalization_params)
+        ds.clear()
         ds = None
 
         return normalized_ds
@@ -119,31 +147,36 @@ class GaiaWrapper:
             preset_file = yaml.load(open(path))
             distance = preset_file['distance']['type']
             parameters = preset_file['distance']['parameters']
-            search_metric = DistanceFunctionFactory.create(str(distance),self.original_dataset.layout(),parameters)
+            search_metric = DistanceFunctionFactory.create(str(distance), self.original_dataset.layout(), parameters)
             self.metrics[name] = search_metric
-
 
     def add_point(self, point_location, point_name):
         if self.original_dataset.contains(str(point_name)):
                 self.original_dataset.removePoint(str(point_name))
-        try:
-            p = Point()
+        #try:
+        p = Point()
+        if os.path.exists(str(point_location)):
             p.load(str(point_location))
             p.setName(str(point_name))
             self.original_dataset.addPoint(p)
-            size = self.original_dataset.size()
-            logger.info('Added point with name %s. Index has now %i points.' % (str(point_name),size))
-        except:
-            msg = 'Point with name %s could NOT be added. Index has now %i points.' % (str(point_name),size)
+            msg = 'Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size())
+            logger.info('Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size()))
+            #except Exception, e:
+            #    msg = 'Point with name %s could NOT be added (%s).' % (str(point_name), str(e))
+            #    logger.info(msg)
+            #    return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+        else:
+            msg = 'Point with name %s could NOT be added because analysis file does not exist (%s).' % (str(point_name), str(point_location))
             logger.info(msg)
-            return {'error':True, 'result':msg, 'status_code': SERVER_ERROR_CODE}
+            return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+
 
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
-        if size == SIMILARITY_MINIMUM_POINTS:
+        if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS:
             self.__prepare_original_dataset()
             self.__normalize_original_dataset()
-            self.save_index(msg = "(reaching 2000 points)")
+            self.save_index(msg="(reaching 2000 points)")
 
             # build metrics for the different similarity presets
             self.__build_metrics()
@@ -151,40 +184,37 @@ class GaiaWrapper:
             view = View(self.original_dataset)
             self.view = view
 
-        return {'error':False, 'result':True}
+        return {'error': False, 'result': msg}
 
     def delete_point(self, point_name):
         if self.original_dataset.contains(str(point_name)):
             self.original_dataset.removePoint(str(point_name))
-            logger.info('Deleted point with name %s. Index has now %i points.' % (str(point_name),self.original_dataset.size()))
-            return {'error':False, 'result':True}
+            logger.info('Deleted point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size()))
+            return {'error': False, 'result': True}
         else:
-            msg = 'Can\'t delete point with name %s because it does not exist.'% str(point_name)
+            msg = 'Can\'t delete point with name %s because it does not exist.' % str(point_name)
             logger.info(msg)
-            return {'error':True,'result':msg, 'status_code': NOT_FOUND_CODE}
+            return {'error': True, 'result': msg, 'status_code': NOT_FOUND_CODE}
 
     def get_point(self, point_name):
         logger.info('Getting point with name %s' % str(point_name))
         if self.original_dataset.contains(str(point_name)):
             return self.original_dataset.point(str(point_name))
 
-
-    def save_index(self, filename = None, msg = ""):
+    def save_index(self, filename=None, msg=""):
         tic = time.time()
         path = self.original_dataset_path
         if filename:
-            path =  INDEX_DIR + filename + ".db"
-        logger.info('Saving index to (%s)...'%path + msg)
+            path = INDEX_DIR + filename + ".db"
+        logger.info('Saving index to (%s)...' % path + msg)
         self.original_dataset.save(path)
         toc = time.time()
-        logger.info('Finished saving index (done in %.2f seconds, index has now %i points).'%((toc - tic),self.original_dataset.size()))
-        return {'error':False,'result':path}
-
+        logger.info('Finished saving index (done in %.2f seconds, index has now %i points).' % ((toc - tic), self.original_dataset.size()))
+        return {'error': False, 'result': path}
 
     def contains(self, point_name):
         logger.info('Checking if index has point with name %s' % str(point_name))
-        return {'error':False,'result':self.original_dataset.contains(point_name)}
-
+        return {'error': False, 'result': self.original_dataset.contains(point_name)}
 
     def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization=True, only_leaf_descriptors=False):
         '''
@@ -202,13 +232,11 @@ class GaiaWrapper:
 
         return {'error': False, 'result': data}
 
-
     def __calculate_complete_required_descriptor_names(self, descriptor_names, only_leaf_descriptors=False):
-        layout = self.original_dataset.layout()
         if not descriptor_names:
-            descriptor_names = layout.descriptorNames()
+            descriptor_names = self.descriptor_names['all']
         try:
-            structured_layout = generate_structured_dict_from_layout(layout.descriptorNames())
+            structured_layout = generate_structured_dict_from_layout(self.descriptor_names['all'])
             processed_descriptor_names = []
             for name in descriptor_names:
                 nested_descriptors = get_nested_dictionary_value(name.split('.')[1:], structured_layout)
@@ -223,19 +251,17 @@ class GaiaWrapper:
                             processed_descriptor_names.append('%s.%s' % (name, extra_name))
             processed_descriptor_names = list(set(processed_descriptor_names))
             return processed_descriptor_names
-
         except:
             return {'error': True, 'result': 'Wrong descriptor names, unable to create layout.', 'status_code': BAD_REQUEST_CODE}
 
-
     def __get_point_descriptors(self, point_name, required_descriptor_names, normalization=True):
+
         # Get normalization coefficients to transform the input data (get info from the last
         # transformation which has been a normalization)
-
         normalization_coeffs = None
         if not normalization:
             trans_hist = self.original_dataset.history().toPython()
-            for i in range(0,len(trans_hist)):
+            for i in range(0, len(trans_hist)):
                 if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
                     normalization_coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
 
@@ -249,17 +275,21 @@ class GaiaWrapper:
             try:
                 value = p.value(str(descriptor_name))
                 if normalization_coeffs:
-                    a = normalization_coeffs[descriptor_name]['a']
-                    b = normalization_coeffs[descriptor_name]['b']
-                    if len(a) == 1:
-                        value = float(value - b[0]) / a[0]
-                    else:
-                        normalized_value = []
-                        for i in range(0, len(a)):
-                            normalized_value.append(float(value[i]-b[i]) / a[i])
-                        value = normalized_value
+                    if descriptor_name in normalization_coeffs:
+                        a = normalization_coeffs[descriptor_name]['a']
+                        b = normalization_coeffs[descriptor_name]['b']
+                        if len(a) == 1:
+                            value = float(value - b[0]) / a[0]
+                        else:
+                            normalized_value = []
+                            for i in range(0, len(a)):
+                                normalized_value.append(float(value[i]-b[i]) / a[i])
+                            value = normalized_value
             except:
-                value = 'unknown'
+                try:
+                    value = p.label(str(descriptor_name))
+                except:
+                    value = 'unknown'
 
             if descriptor_name[0] == '.':
                 descriptor_name = descriptor_name[1:]
@@ -535,8 +565,3 @@ class GaiaWrapper:
             return {'error': True, 'result': 'Server error', 'status_code': SERVER_ERROR_CODE}
 
         return {'error': False, 'result': {'results': results, 'count': count}}
-
-
-    # UTILS for content-based search
-    def get_layout_descriptor_names(self):
-        return self.original_dataset.layout().descriptorNames()

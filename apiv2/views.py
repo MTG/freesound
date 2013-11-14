@@ -51,9 +51,7 @@ from urllib import unquote
 import os
 from utils import api_search
 from django.contrib.contenttypes.models import ContentType
-from utils import ApiSearchPaginator
-from freesound.utils.similarity_utilities import api_search as similarity_api_search
-from similarity.client import SimilarityException
+from utils import ApiSearchPaginator, get_sounds_descriptors
 
 
 logger = logging.getLogger("api")
@@ -86,6 +84,29 @@ class SoundInstance(RetrieveAPIView):
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
         return super(SoundInstance, self).get(request, *args, **kwargs)
+
+
+class SoundAnalysis(GenericAPIView):
+    """
+    Sound analysis information.
+    TODO: proper doccumentation.
+    """
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+
+        sound_id = kwargs['pk']
+        descriptors = []
+        if request.QUERY_PARAMS.get('descriptors', False):
+            descriptors = request.QUERY_PARAMS['descriptors'].split(',')
+        response_data = get_sounds_descriptors([sound_id],
+                                                descriptors,
+                                                request.QUERY_PARAMS.get('normalized', '0') == '1',
+                                                only_leaf_descriptors=False)
+        if response_data:
+            return Response(response_data[str(sound_id)], status=status.HTTP_200_OK)
+        else:
+            raise InvalidUrlException
 
 
 class SoundSearch(GenericAPIView):

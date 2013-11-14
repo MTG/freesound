@@ -128,7 +128,7 @@ class SimilarityServer(resource.Resource):
 
         if filter:
             filter = filter[0]
-            pf = parse_filter(filter.replace("'",'"'), self.gaia.get_layout_descriptor_names())
+            pf = parse_filter(filter.replace("'", '"'), self.gaia.descriptor_names['fixed-length'])
         else:
             pf = []
 
@@ -141,7 +141,7 @@ class SimilarityServer(resource.Resource):
                 target_sound_id = int(target)
                 pt = {}
             except:
-                pt = parse_target(target.replace("'",'"'), self.gaia.get_layout_descriptor_names())
+                pt = parse_target(target.replace("'", '"'), self.gaia.descriptor_names['fixed-length'])
         else:
             pt = {}
             if descriptors_data:
@@ -217,7 +217,7 @@ class SimilarityServer(resource.Resource):
                     return json.dumps({'error': True, 'result': 'Invalid sound id.', 'status_code': BAD_REQUEST_CODE})
             elif target_type == 'descriptor_values':
                 try:
-                    target = parse_target(target[0].replace("'", '"'), self.gaia.get_layout_descriptor_names())
+                    target = parse_target(target[0].replace("'", '"'), self.gaia.descriptor_names['fixed-length'])
                     if type(target) != dict:
                         if type(target) == str:
                             return json.dumps({'error': True, 'result': target, 'status_code': BAD_REQUEST_CODE})
@@ -240,7 +240,7 @@ class SimilarityServer(resource.Resource):
 
         if filter:
             try:
-                filter = parse_filter(filter[0].replace("'", '"'), self.gaia.get_layout_descriptor_names())
+                filter = parse_filter(filter[0].replace("'", '"'), self.gaia.descriptor_names['fixed-length'])
                 if type(filter) != list:
                     if type(filter) == str:
                         return json.dumps({'error': True, 'result': filter, 'status_code': BAD_REQUEST_CODE})
@@ -266,7 +266,7 @@ class SimilarityServer(resource.Resource):
             offset = int(offset[0])
 
         if metric_descriptor_names:
-            metric_descriptor_names = parse_metric_descriptors(metric_descriptor_names[0], self.gaia.get_layout_descriptor_names())
+            metric_descriptor_names = parse_metric_descriptors(metric_descriptor_names[0], self.gaia.descriptor_names['fixed-length'])
 
         return json.dumps(self.gaia.api_search(target_type,
                                               target,

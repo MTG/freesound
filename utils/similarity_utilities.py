@@ -52,6 +52,8 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
             logger.debug('Could not get a response from the similarity service (%s)\n\t%s' % \
                          (e, traceback.format_exc()))
             result = False
+            similar_sounds = []
+            count = 0
 
         if result:
             cache.set(cache_key, result, SIMILARITY_CACHE_TIME)

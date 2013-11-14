@@ -42,6 +42,7 @@ import os
 from django.contrib.syndication.views import Feed
 from urllib import quote
 from django.core.cache import cache
+from similarity.client import SimilarityException
 
 logger = logging.getLogger("api")
 
@@ -178,81 +179,13 @@ def prepare_single_sound_analysis(sound,request,filter):
     try:
         analysis = yaml.load(file(sound.locations('analysis.statistics.path')))
 
-        # delete nonsensical/faulty descriptors
-        del analysis['lowlevel']['silence_rate_20dB']
-        del analysis['lowlevel']['silence_rate_30dB']
-        del analysis['rhythm']['bpm_confidence']
-        del analysis['rhythm']['perceptual_tempo']
-        del analysis['metadata']['tags']
-        
-        # put the moods in one place
-        moods = {'c': {}, 'm': {}}
-        for m in ['happy', 'aggressive', 'sad', 'relaxed']:
-            moods['c'][m] = analysis['highlevel']['mood_%s' % m]
-            del analysis['highlevel']['mood_%s' % m]
-        analysis['highlevel']['moods'] = moods
-        # rename the mood descriptors that aren't actually moods
-        for m in ['party', 'acoustic', 'electronic']:
-            analysis['highlevel'][m] = \
-                analysis['highlevel']['mood_%s' % m]
-            del analysis['highlevel']['mood_%s' % m]
-        # put all the genre descriptors in analysis['highlevel']['genre']
-        analysis['highlevel']['genre'] = {}
-        # rename the genre descriptors
-        genre_mappings = {'rosamerica':  {'hip': 'hiphop',
-                                          'rhy': 'rnb',
-                                          'jaz': 'jazz',
-                                          'dan': 'dance',
-                                          'roc': 'rock',
-                                          'cla': 'classical',
-                                          'spe': 'speech'},
-                          'dortmund':    {'raphiphop': 'hiphop',
-                                          'funksoulrnb': 'rnb',
-                                          'folkcountry': 'country'},
-                          'tzanetakis':  {'hip': 'hiphop',
-                                          'jaz': 'jazz',
-                                          'blu': 'blues',
-                                          'roc': 'rock',
-                                          'cla': 'classical',
-                                          'met': 'metal',
-                                          'cou': 'country',
-                                          'reg': 'reggae',
-                                          'dis': 'disco'},
-                           'electronica': {}}
-        for name,mapping in genre_mappings.items():
-            genre_orig = analysis['highlevel']['genre_%s' % name]
-            for key,val in mapping.items():
-                if key is not val:
-                    genre_orig['all'][val] = genre_orig['all'][key]
-                    del genre_orig['all'][key]
-            if genre_orig['value'] in mapping:
-                genre_orig['value'] = mapping[genre_orig['value']]
-            analysis['highlevel']['genre'][name[0]] = genre_orig
-            del analysis['highlevel']['genre_%s' % name]
-        # rename the mirex clusters
-        mirex_mapping = {'Cluster1': 'passionate',
-                         'Cluster2': 'cheerful',
-                         'Cluster3': 'melancholic',
-                         'Cluster4': 'humorous',
-                         'Cluster5': 'aggressive'}
-        for key,val in mirex_mapping.items():
-            analysis['highlevel']['mood']['all'][val] = \
-                analysis['highlevel']['mood']['all'][key]
-            del analysis['highlevel']['mood']['all'][key]
-        analysis['highlevel']['mood']['value'] = \
-            mirex_mapping[analysis['highlevel']['mood']['value']]
-        analysis['highlevel']['moods']['m'] = \
-            analysis['highlevel']['mood']
-        del analysis['highlevel']['mood']
-
-
     except Exception, e:
         raise e
         raise Exception('Could not load analysis data.')
 
     # only show recommended descriptors
     print request.GET
-    if not ('all' in request.GET and request.GET['all'] in ['1', 'true', 'True']):
+    if not ('all' in request.GET and request.GET['all'] in ['1', 'true', 'True']) and not filter:
         analysis = level_filter(analysis, RECOMMENDED_DESCRIPTORS)
 
     if filter:
@@ -297,14 +230,14 @@ def level_filter_get(d, levels):
         return level_filter_get(d[levels[0]], levels[1:])
 
 
-RECOMMENDED_DESCRIPTORS = [ 'metadata.audio_properties',
-                            'highlevel.culture',
-                            'highlevel.gender',
-                            'highlevel.moods',
-                            'highlevel.timbre',
-                            'highlevel.voice_instrumental',
-                            'highlevel.acoustic',
-                            'highlevel.electronic',
+RECOMMENDED_DESCRIPTORS = [ #'metadata.audio_properties',
+                            #'highlevel.culture',
+                            #'highlevel.gender',
+                            #'highlevel.moods',
+                            #'highlevel.timbre',
+                            #'highlevel.voice_instrumental',
+                            #'highlevel.acoustic',
+                            #'highlevel.electronic',
                             'tonal.key_key',
                             'tonal.key_scale',
                             'tonal.key_strength',
@@ -485,6 +418,8 @@ class SoundContentSearchHandler(BaseHandler):
             raise ReturnError(400, "BadRequest", {"explanation": "Introduce either a target, a filter or both."})
         try:
             results, count = api_search(target=t, filter=f, num_results=int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+        except SimilarityException, e:
+            raise ReturnError(e.status_code, "SimilarityError", {"explanation": e.message})
         except Exception, e:
             if str(e)[0:6] == u"Target" or str(e)[0:6] == u"Filter":
                 raise ReturnError(400, "BadRequest", {'explanation':e})
@@ -614,10 +549,13 @@ class SoundSimilarityHandler(BaseHandler):
         except Sound.DoesNotExist: #@UndefinedVariable
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or similarity data is not ready." % sound_id})
 
-        similar_sounds, count = get_similar_sounds(sound,request.GET.get('preset', None), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
+        try:
+            similar_sounds, count = api_search(target=str(sound.id), preset=request.GET.get('preset', None), num_results=int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
+        except SimilarityException, e:
+            raise ReturnError(404, "NotFound", {"explanation": e})
 
         sounds = []
-        for similar_sound in similar_sounds :
+        for similar_sound in similar_sounds:
             try:
                 sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('fields', False))
                 sound['distance'] = similar_sound[1]

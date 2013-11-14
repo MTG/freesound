@@ -2,27 +2,25 @@
 <script type="text/javascript">	
 	
     function updateHash(bounds){
-	document.location.hash=
-	"box="+bounds.getSouthWest().lat()+","+
-	bounds.getSouthWest().lng()+","+
-	bounds.getNorthEast().lat()+","+
-	bounds.getNorthEast().lng();
+        document.location.hash=
+        "box="+bounds.getSouthWest().lat()+","+
+        bounds.getSouthWest().lng()+","+
+        bounds.getNorthEast().lat()+","+
+        bounds.getNorthEast().lng();
     }
-    
-    var map = new GMap2($("#map_canvas").get(0));    
-    GEvent.addListener(map, 'infowindowclose', function() {
+
+    var map = new google.maps.Map(
+        document.getElementById('map_canvas'), {
+          center: new google.maps.LatLng(24, 22),
+          zoom: 2,
+          mapTypeId: google.maps.MapTypeId.SATELLITE,
+          scrollwheel: false,
+          streetViewControl: false,
+    });
+    var infowindow = new google.maps.InfoWindow();
+    google.maps.event.addListener(infowindow, 'closeclick', function() {
         stopAll();
     });
-    
-   
-        
-    map.setUIToDefault();
-    map.disableScrollWheelZoom();
-
-    map.setCenter(new GLatLng(24, 22), 2);
-    map.setMapType( G_SATELLITE_MAP );
-    map.enableContinuousZoom();
-    
     
     var box = document.location.hash.slice(5,document.location.hash.length);
     {% if not username %}
@@ -30,54 +28,57 @@
     {%  else %}
         var url = "{{url}}{{ username }}"
     {%  endif %}
-    console.log(url)
 
-    GDownloadUrl(url, function(data, responseCode)
+    ajaxLoad(url, function(data, responseCode)
     {
-        var bounds = new GLatLngBounds();
+
+        var bounds = new google.maps.LatLngBounds();
         var markers = [];
-        $.each($.parseJSON(data), function(index, item)
+        $.each($.parseJSON(data.response), function(index, item)
         {
             var id = item[0];
             var lat = item[1];
             var lon = item[2];
 
-            var point = new GLatLng(lat, lon);
-            var marker = new GMarker(point);
+            var point = new google.maps.LatLng(lat, lon);
+            var marker = new google.maps.Marker({'position': point {% if clusters != "on" %}, 'map': map {% endif %} });
             bounds.extend(point);
-            GEvent.addListener(marker, "click", function()
+
+            google.maps.event.addListener(marker, 'click', function()
             {
-                GDownloadUrl( "/geotags/infowindow/" + id, function(data, responseCode)
+                stopAll();
+                ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
                 {
-                    marker.openInfoWindowHtml(data);
+                    infowindow.setContent(data.response);
+                    infowindow.open(map, marker);
                     setTimeout(function() {
                         makePlayer('.infowindow_player .player');
                     }, 500);
                 });
             });
-	    
-	    {% if clusters == "on" %}
-		markers.push(marker);
-	    {% else %}
-		map.addOverlay(marker);
-	    {% endif %}
+
+
+            {% if clusters == "on" %}
+                markers.push(marker);
+            {% endif %}
         });		
        
-	{% if borders == "automatic" %}
-		if (!bounds.isEmpty()) zoomToBounds(map, bounds);
-	{% else %}
-		// Set center and zoom
-		map.setCenter(new GLatLng({{center_lat}}, {{center_lon}}), {{zoom}});
-	{% endif %}
-	
-	{% if clusters == "on" %}
-		var mcOptions = { gridSize: 50, maxZoom: 12 };
-		var markerCluster = new MarkerClusterer(map, markers, mcOptions);
-	{% endif %}
+        {% if borders == "automatic" %}
+            if (!bounds.isEmpty()) map.fitBounds(bounds);
+        {% else %}
+            // Set center and zoom
+            map.setCenter(new google.maps.LatLng({{center_lat}}, {{center_lon}}));
+            map.setZoom({{zoom}});
+        {% endif %}
+
+        {% if clusters == "on" %}
+            var mcOptions = { gridSize: 50, maxZoom: 12 };
+            var markerCluster = new MarkerClusterer(map, markers, mcOptions);
+        {% endif %}
         updateHash(map.getBounds());
-        
     });
-    GEvent.addListener( map, 'zoomend',   function() {updateHash(map.getBounds())} );
-    GEvent.addListener( map, 'moveend', function() {updateHash(map.getBounds())});
+    //GEvent.addListener( map, 'zoomend',   function() {updateHash(map.getBounds())} );
+    //GEvent.addListener( map, 'moveend', function() {updateHash(map.getBounds())});
+    google.maps.event.addListener( map, 'bounds_changed', function() {updateHash(map.getBounds())});
 </script>
 

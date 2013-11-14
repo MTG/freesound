@@ -20,11 +20,23 @@
 
 from django.core.management.base import BaseCommand
 from similarity.client import Similarity
+from optparse import make_option
 
 
 class Command(BaseCommand):
     args = ''
     help = 'Save current similarity index'
+    option_list = BaseCommand.option_list + (
+    make_option('-i','--indexing_server',
+        dest='indexing_server',
+        action='store_true',
+        default=False,
+        help='Save the index of the indexing server instead of the index of the main similarity server'),
+    )
 
     def handle(self, *args, **options):
-        Similarity.save()
+        if options['indexing_server']:
+            Similarity.save_indexing_server()
+        else:
+            Similarity.save()
+

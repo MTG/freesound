@@ -20,7 +20,7 @@
 
 import os, logging, yaml
 from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
-from similarity_settings import SIMILARITY_MINIMUM_POINTS, INDEX_DIR, DEFAULT_PRESET, PRESETS, PRESET_DIR, INDEX_NAME, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE
+from similarity_settings import *
 from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, get_nested_descriptor_names, set_nested_dictionary_value, parse_filter_list
 import time
 
@@ -29,13 +29,22 @@ logger = logging.getLogger('similarity')
 
 class GaiaWrapper:
 
-    def __init__(self):
+    def __init__(self, indexing_only_mode=False):
         self.index_path                 = INDEX_DIR
         self.original_dataset           = DataSet()
-        self.original_dataset_path      = self.__get_dataset_path(INDEX_NAME)
+        if not indexing_only_mode:
+            self.original_dataset_path  = self.__get_dataset_path(INDEX_NAME)
+        else:
+            self.original_dataset_path  = self.__get_dataset_path(INDEXING_SERVER_INDEX_NAME)
         self.descriptor_names           = {}
         self.metrics                    = {}
         self.view                       = None
+
+        # If indexing_only_mode delete existing dataset before loading dataset (so we start with a fresh new dataset)
+        if indexing_only_mode:
+            if os.path.exists(self.original_dataset_path):
+                os.remove(self.original_dataset_path)
+
         self.__load_dataset()
 
 
@@ -77,7 +86,10 @@ class GaiaWrapper:
                 view = View(self.original_dataset)
                 self.view = view
 
-            logger.info('Dataset loaded, size: %s points (%i fixed-length desc., %i variable-length desc.)' % (self.original_dataset.size(), len(self.descriptor_names['fixed-length']), len(self.descriptor_names['variable-length'])))
+            if self.original_dataset.history().size() <= 0:
+                logger.info('Dataset loaded, size: %s points' % (self.original_dataset.size()))
+            else:
+                logger.info('Dataset loaded, size: %s points (%i fixed-length desc., %i variable-length desc.)' % (self.original_dataset.size(), len(self.descriptor_names['fixed-length']), len(self.descriptor_names['variable-length'])))
 
         else:
             # If there is no existing dataset we create an empty one.

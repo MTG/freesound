@@ -18,11 +18,12 @@
 #     See AUTHORS file.
 #
 
-from similarity.similarity_settings import SIMILARITY_ADDRESS, SIMILARITY_PORT
+from similarity.similarity_settings import SIMILARITY_ADDRESS, SIMILARITY_PORT, SIMILARITY_INDEXING_SERVER_PORT
 import json
 import urllib2
 
-_BASE_URL                     = 'http://%s:%i/similarity/'%(SIMILARITY_ADDRESS,SIMILARITY_PORT)
+_BASE_URL                     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS, SIMILARITY_PORT)
+_BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS, SIMILARITY_INDEXING_SERVER_PORT)
 _URL_ADD_POINT                = 'add_point/'
 _URL_DELETE_POINT             = 'delete_point/'
 _URL_CONTAINS_POINT           = 'contains/'
@@ -120,12 +121,15 @@ class Similarity():
         url = _BASE_URL + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id)  + '&location=' + str(yaml_path)
         return _result_or_exception(_get_url_as_json(url))
 
+    @classmethod
+    def add_to_indeixing_server(cls, sound_id, yaml_path):
+        url = _BASE_INDEXING_SERVER_URL + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id) + '&location=' + str(yaml_path)
+        return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
     def delete(cls, sound_id):
         url = _BASE_URL + _URL_DELETE_POINT + '?' + 'sound_id=' + str(sound_id)
         return _result_or_exception(_get_url_as_json(url))
-
 
     @classmethod
     def contains(cls, sound_id):
@@ -135,6 +139,13 @@ class Similarity():
     @classmethod
     def save(cls, filename = None):
         url = _BASE_URL + _URL_SAVE
+        if filename:
+            url += '?' + 'filename=' + str(filename)
+        return _result_or_exception(_get_url_as_json(url))
+
+    @classmethod
+    def save_indexing_server(cls, filename = None):
+        url = _BASE_INDEXING_SERVER_URL + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
         return _result_or_exception(_get_url_as_json(url))

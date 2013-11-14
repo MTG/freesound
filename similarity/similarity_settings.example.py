@@ -24,16 +24,20 @@ import os
 # SERVER SETTINGS
 INDEX_DIR                   = '/home/fsweb/freesound/freesound-similarity/'
 INDEX_NAME                  = 'fs_index'
+INDEXING_SERVER_INDEX_NAME  = 'background_index'
 PRESET_DIR                  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'presets/')
 PRESETS                     = ['lowlevel']
 DEFAULT_PRESET              = "lowlevel"
 SIMILARITY_MINIMUM_POINTS   = 2000
 LOGFILE                     = '/var/log/freesound/similarity.log'
+LOGFILE_INDEXING_SERVER     = '/var/log/freesound/similarity_indexing.log'
 LISTEN_PORT                 = 8008
+INDEXING_SERVER_LISTEN_PORT = 8009
 
 # CLIENT SETTINGS (to be moved to django settings?)
-SIMILARITY_ADDRESS          = 'localhost'
-SIMILARITY_PORT             = 8008
+SIMILARITY_ADDRESS               = 'localhost'
+SIMILARITY_PORT                  = 8008
+SIMILARITY_INDEXING_SERVER_PORT  = 8009
 
 # OTHER
 SIMILAR_SOUNDS_TO_CACHE = 100

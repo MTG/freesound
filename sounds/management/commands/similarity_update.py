@@ -32,6 +32,13 @@ class Command(BaseCommand):
         default=False,
         help='Reindex all sounds regardless of their similarity state'),
     )
+    option_list += (
+    make_option('-i','--indexing_server',
+        dest='indexing_server',
+        action='store_true',
+        default=False,
+        help='Send files to the indexing server instead of the main similarity server'),
+    )
 
     def handle(self,  *args, **options):
 
@@ -43,13 +50,27 @@ class Command(BaseCommand):
             print "Indexing sounds to similarity (limit %i)"%end
 
         if options['force']:
-            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK')[0:end]
+            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK').order_by('id')[0:end]
         else:
-            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK')[0:end]
+            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK').order_by('id')[0:end]
+
+        '''
+        We should first add a sound which we know it is correctly analyzed
+        '''
+        sound = Sound.objects.get(id=1234)
+        if options['indexing_server']:
+            result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
+        else:
+            result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
+
 
         for sound in to_be_added:
             try:
-                result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
+                if options['indexing_server']:
+                    result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
+                else:
+                    result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
+
                 #sound.similarity_state = 'OK'
                 sound.set_similarity_state('OK')
                 print result
@@ -59,3 +80,8 @@ class Command(BaseCommand):
                 sound.set_similarity_state('FA')
             #sound.save()
 
+        # At the end save the index
+        if options['indexing_server']:
+            Similarity.save_indexing_server()
+        else:
+            Similarity.save()

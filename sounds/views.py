@@ -519,7 +519,7 @@ def similar(request, username, sound_id):
                               analysis_state="OK",
                               similarity_state="OK")
 
-    similar_sounds = get_similar_sounds(sound,request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
+    similar_sounds, count = get_similar_sounds(sound,request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
     logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
     return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 

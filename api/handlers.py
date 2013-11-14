@@ -34,13 +34,14 @@ from utils.pagination import paginate
 from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
-from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
+from utils.similarity_utilities import get_similar_sounds, api_search
 from similarity.client import Similarity
 from api.api_utils import auth, ReturnError#, parse_filter, parse_target
 import os
 from django.contrib.syndication.views import Feed
 from urllib import quote
 from django.core.cache import cache
+from similarity.client import SimilarityException
 
 logger = logging.getLogger("api")
 
@@ -415,7 +416,9 @@ class SoundContentSearchHandler(BaseHandler):
         if not t and not f:
             raise ReturnError(400, "BadRequest", {"explanation": "Introduce either a target, a filter or both."})
         try:
-            results, count = query_for_descriptors(t,f, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+            results, count = api_search(target=t, filter=f, num_results=int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+        except SimilarityException, e:
+            raise ReturnError(e.status_code, "SimilarityError", {"explanation": e.message})
         except Exception, e:
             if str(e)[0:6] == u"Target" or str(e)[0:6] == u"Filter":
                 raise ReturnError(400, "BadRequest", {'explanation':e})
@@ -545,10 +548,15 @@ class SoundSimilarityHandler(BaseHandler):
         except Sound.DoesNotExist: #@UndefinedVariable
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or similarity data is not ready." % sound_id})
 
-        similar_sounds = get_similar_sounds(sound,request.GET.get('preset', None), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
+        try:
+            similar_sounds, count = api_search(target=str(sound.id), preset=request.GET.get('preset', None), num_results=int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
+        except SimilarityException, e:
+            raise ReturnError(404, "NotFound", {"explanation": e})
+
+        #get_similar_sounds(sound,request.GET.get('preset', None), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
 
         sounds = []
-        for similar_sound in similar_sounds :
+        for similar_sound in similar_sounds:
             try:
                 sound = prepare_collection_sound(Sound.objects.select_related('user').get(id=similar_sound[0]), custom_fields = request.GET.get('fields', False))
                 sound['distance'] = similar_sound[1]

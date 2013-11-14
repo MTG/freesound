@@ -15,7 +15,6 @@
         - Pack serve (download pack)
     - other:
         - Similarity: how do you filter multidimensional descriptors? - F
-        - Similarity: what to do with descriptors that are not indexed? - F (reference dataset?)
         - Sporadic server errors on combined search?
 
 - Complete serializers - F

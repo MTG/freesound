@@ -19,7 +19,7 @@
 #
 
 import os, logging, yaml
-from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point
+from gaia2 import DataSet, transform, DistanceFunctionFactory, View, Point, VariableLength
 from similarity_settings import *
 from similarity_server_utils import generate_structured_dict_from_layout, get_nested_dictionary_value, get_nested_descriptor_names, set_nested_dictionary_value, parse_filter_list
 import time
@@ -117,7 +117,7 @@ class GaiaWrapper:
 
         for name in all_descriptor_names:
             region = layout.descriptorLocation(name)
-            if region.lengthType() == 1:  # lengthType() == 1 means variable length descriptor (from gaia docs)
+            if region.lengthType() == VariableLength:
                 variable_length_descritpor_names.append(name)
             else:
                 fixed_length_descritpor_names.append(name)

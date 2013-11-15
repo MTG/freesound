@@ -34,6 +34,8 @@ def server_interface(resource):
     return {
         'add_point': resource.add_point,  # location, sound_id
         'delete_point': resource.delete_point, # sound_id
+        'get_all_point_names': resource.get_all_point_names,
+        'get_descriptor_names': resource.get_descriptor_names,
         'contains': resource.contains,  # sound_id
         'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descritor_names (optional), normalization (optional)
         'nnsearch': resource.nnsearch,  # sound_id, num_results (optional), preset (optional)
@@ -71,6 +73,12 @@ class SimilarityServer(resource.Resource):
 
     def contains(self, request, sound_id):
         return json.dumps(self.gaia.contains(sound_id[0]))
+
+    def get_all_point_names(self, request):
+        return json.dumps(self.gaia.get_all_point_names())
+
+    def get_descriptor_names(self, request):
+        return json.dumps({'error': False, 'result': self.gaia.descriptor_names})
 
     def get_sounds_descriptors(self, request, sound_ids, descriptor_names=None, normalization=[0], only_leaf_descriptors=[0]):
         kwargs = dict()

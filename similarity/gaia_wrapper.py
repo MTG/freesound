@@ -113,6 +113,7 @@ class GaiaWrapper:
         all_descriptor_names = layout.descriptorNames()
         fixed_length_descritpor_names = []
         variable_length_descritpor_names = []
+        multidimensional_descriptor_names = []
 
         for name in all_descriptor_names:
             region = layout.descriptorLocation(name)
@@ -120,10 +121,16 @@ class GaiaWrapper:
                 variable_length_descritpor_names.append(name)
             else:
                 fixed_length_descritpor_names.append(name)
+                try:
+                    if region.dimension() > 1:
+                        multidimensional_descriptor_names.append(name)
+                except:
+                    pass
 
         self.descriptor_names = {'all': all_descriptor_names,
                                  'fixed-length': fixed_length_descritpor_names,
-                                 'variable-length': variable_length_descritpor_names}
+                                 'variable-length': variable_length_descritpor_names,
+                                 'multidimensional': multidimensional_descriptor_names}
 
 
     @staticmethod
@@ -212,6 +219,11 @@ class GaiaWrapper:
         logger.info('Getting point with name %s' % str(point_name))
         if self.original_dataset.contains(str(point_name)):
             return self.original_dataset.point(str(point_name))
+
+    def get_all_point_names(self):
+        point_names = sorted([int(name) for name in self.original_dataset.pointNames()])
+        logger.info('Getting all point names (%i points)' % len(point_names))
+        return {'error': False, 'result': point_names}
 
     def save_index(self, filename=None, msg=""):
         tic = time.time()

@@ -120,16 +120,18 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
             logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
 
 
-def get_all_sound_ids_from_solr():
+def get_all_sound_ids_from_solr(limit=False):
     logger.info("getting all sound ids from solr.")
+    if not limit:
+        limit = 99999999999999
     solr = Solr(settings.SOLR_URL)
     solr_ids = []
     solr_count = None
-    PAGE_SIZE = 100000
+    PAGE_SIZE = 2000
     current_page = 1
     try:
-        while len(solr_ids) < solr_count or solr_count == None:
-            print "Getting page %i" % current_page
+        while (len(solr_ids) < solr_count or solr_count == None) and len(solr_ids) < limit:
+            #print "Getting page %i" % current_page
             response = SolrResponseInterpreter(solr.select(unicode(search_prepare_query('', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_API), current_page, PAGE_SIZE, include_facets=False))))
             solr_ids += [element['id'] for element in response.docs]
             solr_count = response.num_found

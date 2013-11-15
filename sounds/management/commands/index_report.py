@@ -317,5 +317,3 @@ if __name__ == '__main__':
     logger.info('Started similarity service, listening to port ' + str(LISTEN_PORT) + "...")
     reactor.run()
     logger.info('Service stopped.')
-
-

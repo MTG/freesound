@@ -38,7 +38,8 @@ import settings
 import os
 from freesound.utils.similarity_utilities import get_sounds_descriptors
 from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter
-from search.views import search_prepare_query
+from search.views import search_prepare_query, search_prepare_sort
+from apiv2.forms import SEARCH_SORT_OPTIONS_API
 from freesound.utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
 from urllib import unquote
@@ -258,7 +259,7 @@ def api_search(search_form, target_file=None):
             solr = Solr(settings.SOLR_URL)
             query = search_prepare_query(unquote(search_form.cleaned_data['query']),
                                          unquote(search_form.cleaned_data['filter']),
-                                         search_form.cleaned_data['sort'],
+                                         search_prepare_sort(search_form.cleaned_data['sort'], SEARCH_SORT_OPTIONS_API),
                                          search_form.cleaned_data['page'],
                                          search_form.cleaned_data['page_size'],
                                          grouping=search_form.cleaned_data['group_by_pack'],
@@ -296,7 +297,7 @@ def api_search(search_form, target_file=None):
             while len(solr_ids) < solr_count or solr_count == None:
                 query = search_prepare_query(unquote(search_form.cleaned_data['query']),
                                              unquote(search_form.cleaned_data['filter']),
-                                             search_form.cleaned_data['sort'],
+                                             search_prepare_sort(search_form.cleaned_data['sort']),
                                              current_page,
                                              PAGE_SIZE,
                                              grouping=search_form.cleaned_data['group_by_pack'],

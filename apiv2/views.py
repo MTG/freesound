@@ -46,12 +46,13 @@ from django.contrib import messages
 from accounts.views import handle_uploaded_file
 from freesound.utils.filesystem import generate_tree
 from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
-from search.views import search_prepare_query
+from search.views import search_prepare_query, search_prepare_sort
 from urllib import unquote
 import os
 from utils import api_search
 from django.contrib.contenttypes.models import ContentType
 from utils import ApiSearchPaginator, get_sounds_descriptors
+from apiv2.forms import SEARCH_SORT_OPTIONS_API
 
 
 logger = logging.getLogger("api")
@@ -128,7 +129,7 @@ class SoundSearch(GenericAPIView):
             solr = Solr(settings.SOLR_URL)
             query = search_prepare_query(unquote(search_form.cleaned_data['query']),
                                          unquote(search_form.cleaned_data['filter']),
-                                         search_form.cleaned_data['sort'],
+                                         search_prepare_sort(search_form.cleaned_data['sort'], SEARCH_SORT_OPTIONS_API),
                                          search_form.cleaned_data['page'],
                                          search_form.cleaned_data['page_size'],
                                          grouping=search_form.cleaned_data['group_by_pack'],

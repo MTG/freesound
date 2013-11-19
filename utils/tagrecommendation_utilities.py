@@ -31,7 +31,7 @@ from utils.tags import clean_and_split_tags
 from math import ceil
 
 logger = logging.getLogger('web')
-rec_logger = logging.getLogger('tagrecommendation_research')
+research_logger = logging.getLogger('tagrecommendation_research')
 
 
 def get_recommended_tags(input_tags, max_number_of_tags=30):
@@ -77,7 +77,7 @@ def log_recommendation_info_view(request):
     if request.is_ajax() and request.method == 'POST':
         log = request.POST.get('log', False)
         if log:
-            rec_logger.info(log)
+            research_logger.info(log)
 
     return HttpResponse(json.dumps(""), mimetype='application/javascript')
 

@@ -8,7 +8,7 @@
     var doLog = true;
     var typingTimer;
     var addingTagTimer;
-    var doneAddingTagInterval = 3500;  //time in ms
+    var doneAddingTagInterval = 0;  //time in ms
     var doneTypingInterval = 500;     //time in ms
     var randomDescriptionSessionId = Math.floor(Math.random()*99999).toString(10);
 
@@ -55,7 +55,7 @@
 
     function log(activity,textarea_id){
         var timestamp = new Date().getTime();
-        var logline = timestamp + "#describing#" + randomDescriptionSessionId + "#" + textarea_id + "#" + activity;
+        var logline = timestamp + "#describing#" + randomDescriptionSessionId + "#" + "{{ request.user.id }}" + "#" + textarea_id + "#" + activity;
 
         if (doLog){
             $.ajax({

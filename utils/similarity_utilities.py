@@ -40,8 +40,12 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
         count = False
     else:
         result = cache.get(cache_key)
-        similar_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-        count = result['count']
+        if result:
+            similar_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
+            count = result['count']
+        else:
+            similar_sounds = False
+            count = False
 
     if not similar_sounds:
         try:
@@ -71,8 +75,12 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
         count = False
     else:
         result = cache.get(cache_key)
-        returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
-        count = result['count']
+        if result:
+            returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
+            count = result['count']
+        else:
+            returned_sounds = False
+            count = False
 
     if not returned_sounds or target_file:
         if target_file:

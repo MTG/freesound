@@ -22,3 +22,4 @@ freesound.komodoproject
 .idea/
 logger.py
 tagrecommendation/TODO.txt
+tagrecommendation/tagrecommendation_settings.py

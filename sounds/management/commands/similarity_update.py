@@ -63,8 +63,8 @@ class Command(BaseCommand):
         #else:
         #    result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
 
-
-        for sound in to_be_added:
+        N = len(to_be_added)
+        for count, sound in enumerate(to_be_added):
             try:
                 if options['indexing_server']:
                     result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
@@ -73,9 +73,9 @@ class Command(BaseCommand):
 
                 #sound.similarity_state = 'OK'
                 sound.set_similarity_state('OK')
-                print result
+                print "%s (%i of %i)" % (result, count+1, N)
             except Exception, e:
-                print 'Sound could not be added (id: %i): \n\t%s' % (sound.id, str(e))
+                print 'Sound could not be added (id: %i, %i of %i): \n\t%s' % (sound.id, count+1, N ,str(e))
                 #sound.similarity_state = 'FA'
                 sound.set_similarity_state('FA')
             #sound.save()

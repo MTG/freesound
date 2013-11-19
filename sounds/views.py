@@ -56,6 +56,7 @@ from utils.mail import send_mail_template
 from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
+from utils.text import remove_control_chars
 import datetime
 import time
 import logging
@@ -301,7 +302,7 @@ def sound_edit(request, username, sound_id):
         if description_form.is_valid():
             data = description_form.cleaned_data
             sound.set_tags(data["tags"])
-            sound.description = data["description"]
+            sound.description = remove_control_chars(data["description"])
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
@@ -518,7 +519,7 @@ def similar(request, username, sound_id):
                               analysis_state="OK",
                               similarity_state="OK")
 
-    similar_sounds = get_similar_sounds(sound,request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
+    similar_sounds, count = get_similar_sounds(sound,request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
     logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
     return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 

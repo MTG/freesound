@@ -217,6 +217,10 @@ def clean_html(input):
     
     return unicode(soup)
 
+def remove_control_chars(text):
+    print "removing control chars"
+    return ''.join(c for c in text if (ord(c) >= 32 or ord(c) in [9,10,13]))
+
 
 def _test():
     import doctest

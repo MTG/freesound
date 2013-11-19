@@ -18,9 +18,11 @@
 #     See AUTHORS file.
 #
 
-from solr import Solr, SolrException
+from solr import Solr, SolrException, SolrResponseInterpreter
 import sounds
 from django.conf import settings
+from freesound.search.views import search_prepare_sort, search_prepare_query
+from freesound.search.forms import SEARCH_SORT_OPTIONS_WEB
 import logging
 
 logger = logging.getLogger("search")
@@ -118,6 +120,26 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
             logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
 
 
+def get_all_sound_ids_from_solr(limit=False):
+    logger.info("getting all sound ids from solr.")
+    if not limit:
+        limit = 99999999999999
+    solr = Solr(settings.SOLR_URL)
+    solr_ids = []
+    solr_count = None
+    PAGE_SIZE = 2000
+    current_page = 1
+    try:
+        while (len(solr_ids) < solr_count or solr_count == None) and len(solr_ids) < limit:
+            #print "Getting page %i" % current_page
+            response = SolrResponseInterpreter(solr.select(unicode(search_prepare_query('', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), current_page, PAGE_SIZE, include_facets=False))))
+            solr_ids += [element['id'] for element in response.docs]
+            solr_count = response.num_found
+            current_page += 1
+    except Exception, e:
+        raise Exception(e)
+
+    return sorted(solr_ids)
 
 
 def delete_sound_from_solr(sound):

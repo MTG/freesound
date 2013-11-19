@@ -5,11 +5,9 @@
 
 {% block title %}{% if home %}home{% else %}{{user.username}}{% endif %}{% endblock %}
 
-{% block onunload %}GUnload(){% endblock %}
-
 {% block head %}
     {{ block.super }}
-    <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{GOOGLE_API_KEY}}" type="text/javascript"></script>
+    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
 {% endblock head %}
 
 
@@ -159,58 +157,63 @@
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
         <div id="map_canvas"></div>
         <script type="text/javascript">
-            var map = new GMap2(document.getElementById("map_canvas"));
-            GEvent.addListener(map, 'infowindowclose', function() {
+            var map = new google.maps.Map(
+                document.getElementById('map_canvas'), {
+                  center: new google.maps.LatLng(24, 22),
+                  zoom: 2,
+                  mapTypeId: google.maps.MapTypeId.SATELLITE,
+                  scrollwheel: false,
+                  streetViewControl: false,
+            });
+            var infowindow = new google.maps.InfoWindow();
+            google.maps.event.addListener(infowindow, 'closeclick', function() {
                 stopAll();
             });
-            map.setUIToDefault();
-            map.disableScrollWheelZoom();
-            map.setMapType(G_SATELLITE_MAP);
             
-            GDownloadUrl('{% url geotags-for-user-latest-json user.username %}', function(data, responseCode)
+            ajaxLoad('{% url geotags-for-user-latest-json user.username %}', function(data, responseCode)
             {
 
-                var bounds = new GLatLngBounds();
+                var bounds = new google.maps.LatLngBounds();
                 // We'll need to know the number of sounds to correctly display the map
                 // in case there is only one sound with geotag
                 var nSounds = 0;
                 var lastPoint;
     
-                $.each($.parseJSON(data), function(index, item)
+                $.each($.parseJSON(data.response), function(index, item)
                 {
                     nSounds = nSounds + 1;
                     var id = item[0];
                     var lat = item[1];
                     var lon = item[2];
                     
-                    var point = new GLatLng(lat, lon);
-                    lastPoint = point
+                    var point = new google.maps.LatLng(lat, lon);
+                    lastPoint = point;
                     bounds.extend(point);
-                    var marker = new GMarker(point);
+                    var marker = new google.maps.Marker({'position': point, 'map': map});
                     
-                    GEvent.addListener(marker, "click", function()
+                    google.maps.event.addListener(marker, 'click', function()
                     {
-                        GDownloadUrl( "/geotags/infowindow/" + id, function(data, responseCode)
+                        stopAll();
+                        ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
                         {
-                            marker.openInfoWindowHtml(data);
+                            infowindow.setContent(data.response);
+                            infowindow.open(map, marker);
                             setTimeout(function() {
                                 makePlayer('.infowindow_player .player');
                             }, 500);
                         });
                     });
-                    map.addOverlay(marker);
                 });
                 
                 if (nSounds > 1){
-                    if (!bounds.isEmpty()) zoomToBounds(map, bounds);
+                    if (!bounds.isEmpty()) map.fitBounds(bounds);
                 }else{
                     // Center the map in the geotag
                     map.setCenter(lastPoint, 4);
                 }
                 
             });
-            
-            //zoomToBounds(map, bounds);
+
         </script>
         <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
     </div><!-- #latest_geotags -->

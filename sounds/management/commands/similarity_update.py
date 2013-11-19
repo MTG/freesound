@@ -57,11 +57,11 @@ class Command(BaseCommand):
         '''
         We should first add a sound which we know it is correctly analyzed
         '''
-        sound = Sound.objects.get(id=1234)
-        if options['indexing_server']:
-            result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
-        else:
-            result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
+        #sound = Sound.objects.get(id=1234)
+        #if options['indexing_server']:
+        #    result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
+        #else:
+        #    result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
 
 
         for sound in to_be_added:

@@ -68,6 +68,7 @@ class TagRecommendationServer(resource.Resource):
             self.index_stats = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
             logger.info("Matrices computed out of information from %i sounds" % self.index_stats['n_sounds_in_matrix'])
         except Exception, e:
+            print e
             self.index_stats = {
                 'n_sounds_in_matrix': 0,
             }
@@ -75,9 +76,11 @@ class TagRecommendationServer(resource.Resource):
         try:
             self.index = loadFromJson(RECOMMENDATION_DATA_DIR + 'Index.json')
             self.index_stats['biggest_id_in_index'] = max([int(key) for key in self.index.keys()])
+            self.index_stats['n_sounds_in_index'] = len(self.index.keys())
         except Exception, e:
             logger.info("Index file not present. Listening for indexing data from appservers.")
             self.index_stats['biggest_id_in_index'] = 0
+            self.index_stats['n_sounds_in_index'] = 0
             self.index = dict()
 
     def error(self,message):
@@ -107,20 +110,22 @@ class TagRecommendationServer(resource.Resource):
         return json.dumps(result)
 
     def reload(self):
+        logger.info('Reloading tagrecommendation server...')
         self.load()
         result = {'error': False, 'result': "Server reloaded"}
         return json.dumps(result)
 
     def last_indexed_id(self):
         result = {'error': False, 'result': self.index_stats['biggest_id_in_index']}
+        logger.info('Getting last indexed id information (%i, %i sounds in index, %i sounds in matrix)' % (self.index_stats['biggest_id_in_index'],
+                                                                                                           self.index_stats['n_sounds_in_index'],
+                                                                                                           self.index_stats['n_sounds_in_matrix']))
         return json.dumps(result)
 
     def add_to_index(self, sound_ids, sound_tagss):
         sound_ids = sound_ids[0].split(",")
         sound_tags = [stags.split(",") for stags in sound_tagss[0].split("-!-!-")]
         logger.info('Adding %i sounds to recommendation index' % len(sound_ids))
-
-
 
         for count, sound_id in enumerate(sound_ids):
             sid = sound_id
@@ -129,7 +134,10 @@ class TagRecommendationServer(resource.Resource):
 
         if len(self.index.keys()) % 1000 == 0:
             # Every 1000 indexed sounds, save the index
+            logger.info('Saving tagrecommendation index...')
             saveToJson(RECOMMENDATION_DATA_DIR + 'Index.json', self.index, verbose=False)
+            self.index_stats['biggest_id_in_index'] = max([int(key) for key in self.index.keys()])
+            self.index_stats['n_sounds_in_index'] = len(self.index.keys())
 
         result = {'error': False, 'result': True}
         return json.dumps(result)

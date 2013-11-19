@@ -249,8 +249,11 @@ def api_search(search_form, target_file=None):
                 raise NotFoundException(msg=e.message)
             else:
                 raise ServerErrorException(msg=e.message)
-        except Exception:
-            raise ServerErrorException
+        except Exception, e:
+            if settings.DEBUG:
+                raise ServerErrorException(msg=e.message)
+            else:
+                raise ServerErrorException()
 
 
     elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
@@ -278,8 +281,11 @@ def api_search(search_form, target_file=None):
 
         except SolrException, e:
             raise InvalidUrlException(msg='Solr exception: %s' % e.message)
-        except Exception:
-            raise ServerErrorException
+        except Exception, e:
+            if settings.DEBUG:
+                raise ServerErrorException(msg=e.message)
+            else:
+                raise ServerErrorException()
 
     else:
         # Combined search (there is at least one of query/filter and one of desriptors_filter/target)
@@ -297,7 +303,7 @@ def api_search(search_form, target_file=None):
             while len(solr_ids) < solr_count or solr_count == None:
                 query = search_prepare_query(unquote(search_form.cleaned_data['query']),
                                              unquote(search_form.cleaned_data['filter']),
-                                             search_prepare_sort(search_form.cleaned_data['sort']),
+                                             search_prepare_sort(search_form.cleaned_data['sort'], SEARCH_SORT_OPTIONS_API),
                                              current_page,
                                              PAGE_SIZE,
                                              grouping=search_form.cleaned_data['group_by_pack'],
@@ -312,8 +318,11 @@ def api_search(search_form, target_file=None):
                 current_page += 1
         except SolrException, e:
             raise InvalidUrlException(msg='Solr exception: %s' % e.message)
-        except Exception:
-            raise ServerErrorException
+        except Exception, e:
+            if settings.DEBUG:
+                raise ServerErrorException(msg=e.message)
+            else:
+                raise ServerErrorException()
 
         # Get gaia results
         try:
@@ -353,7 +362,10 @@ def api_search(search_form, target_file=None):
             else:
                 raise ServerErrorException(msg=e.message)
         except Exception, e:
-            raise ServerErrorException
+            if settings.DEBUG:
+                raise ServerErrorException(msg=e.message)
+            else:
+                raise ServerErrorException()
 
 
         if search_form.cleaned_data['target'] or target_file:

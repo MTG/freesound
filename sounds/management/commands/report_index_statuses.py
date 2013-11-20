@@ -59,10 +59,10 @@ class Command(BaseCommand):
 
         print "Getting freesound db data..."
         # Get all moderated and processed sound ids
-        queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK').order_by('id')
+        queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK').order_by('id').only("id")
         fs_mp = [sound.id for sound in queryset]
         # Get ell moderated, processed and analysed sounds
-        queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK', analysis_state='OK').order_by('id')
+        queryset = Sound.objects.filter(processing_state='OK', moderation_state='OK', analysis_state='OK').order_by('id').only("id")
         fs_mpa = [sound.id for sound in queryset]
         print "done!"
 
@@ -125,7 +125,7 @@ class Command(BaseCommand):
                     sys.stdout.flush()
                     Similarity.delete(sid)
 
-            Similarity.save()
+                Similarity.save()
 
 
 

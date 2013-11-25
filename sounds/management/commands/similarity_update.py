@@ -57,11 +57,6 @@ class Command(BaseCommand):
         '''
         We should first add a sound which we know it is correctly analyzed
         '''
-        #sound = Sound.objects.get(id=1234)
-        #if options['indexing_server']:
-        #    result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
-        #else:
-        #    result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
 
         N = len(to_be_added)
         for count, sound in enumerate(to_be_added):
@@ -70,15 +65,12 @@ class Command(BaseCommand):
                     result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))
                 else:
                     result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
-
-                #sound.similarity_state = 'OK'
-                sound.set_similarity_state('OK')
+                    sound.set_similarity_state('OK')
                 print "%s (%i of %i)" % (result, count+1, N)
             except Exception, e:
+                if not options['indexing_server']:
+                    sound.set_similarity_state('FA')
                 print 'Sound could not be added (id: %i, %i of %i): \n\t%s' % (sound.id, count+1, N ,str(e))
-                #sound.similarity_state = 'FA'
-                sound.set_similarity_state('FA')
-            #sound.save()
 
         # At the end save the index
         if options['indexing_server']:

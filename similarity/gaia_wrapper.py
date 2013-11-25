@@ -43,7 +43,10 @@ class GaiaWrapper:
         # If indexing_only_mode delete existing dataset before loading dataset (so we start with a fresh new dataset)
         if indexing_only_mode:
             if os.path.exists(self.original_dataset_path):
-                os.remove(self.original_dataset_path)
+                self.original_dataset.load(self.original_dataset_path)
+                logger.info('Loaded indexing dataset with %i points' % self.original_dataset.size())
+
+                #os.remove(self.original_dataset_path)
 
         self.__load_dataset()
 

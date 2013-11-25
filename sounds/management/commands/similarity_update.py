@@ -67,6 +67,15 @@ class Command(BaseCommand):
                     result = Similarity.add(sound.id, sound.locations('analysis.statistics.path'))
                     sound.set_similarity_state('OK')
                 print "%s (%i of %i)" % (result, count+1, N)
+
+                # Every 2000 added sounds, save the index
+                if count % 2000 == 0:
+                    if options['indexing_server']:
+                        Similarity.save_indexing_server()
+                    else:
+                        Similarity.save()
+
+
             except Exception, e:
                 if not options['indexing_server']:
                     sound.set_similarity_state('FA')

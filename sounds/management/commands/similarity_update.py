@@ -55,8 +55,13 @@ class Command(BaseCommand):
             to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK').order_by('id')[0:end]
 
         '''
-        We should first add a sound which we know it is correctly analyzed
+        If indexing to similarity indexing server we should first reload its gaia wrapper instance
+        to prepare things for indexing
         '''
+        if options['indexing_server']:
+            print "Reloading indexing server gaia instance...",
+            Similarity.reload_indexing_server_gaia_wrapper()
+            print "done!"
 
         N = len(to_be_added)
         for count, sound in enumerate(to_be_added):
@@ -75,7 +80,6 @@ class Command(BaseCommand):
                     else:
                         Similarity.save()
 
-
             except Exception, e:
                 if not options['indexing_server']:
                     sound.set_similarity_state('FA')
@@ -83,6 +87,8 @@ class Command(BaseCommand):
 
         # At the end save the index
         if options['indexing_server']:
-            Similarity.save_indexing_server()
+            # If indexing to similarity indexing server we save the index and also clear the memory
+            #Similarity.save_indexing_server()
+            Similarity.clear_indexing_server_memory()
         else:
             Similarity.save()

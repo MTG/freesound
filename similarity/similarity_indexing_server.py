@@ -39,6 +39,8 @@ import json
 def server_interface(resource):
     return {
         'add_point': resource.add_point,  # location, sound_id
+        'clear_memory': resource.clear_memory,
+        'reload_gaia_wrapper': resource.reload_gaia_wrapper,
         'save': resource.save,  # filename (optional)
     }
 

@@ -30,9 +30,10 @@ logger = logging.getLogger('similarity')
 class GaiaWrapper:
 
     def __init__(self, indexing_only_mode=False):
+        self.indexing_only_mode = indexing_only_mode
         self.index_path                 = INDEX_DIR
         self.original_dataset           = DataSet()
-        if not indexing_only_mode:
+        if not self.indexing_only_mode:
             self.original_dataset_path  = self.__get_dataset_path(INDEX_NAME)
         else:
             self.original_dataset_path  = self.__get_dataset_path(INDEXING_SERVER_INDEX_NAME)
@@ -62,7 +63,7 @@ class GaiaWrapper:
         if os.path.exists(self.original_dataset_path):
             self.original_dataset.load(self.original_dataset_path)
             self.__calculate_descriptor_names()
-            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS:
+            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
 
                 # if we have loaded a dataset of the correct size but it is unprepared, prepare it
                 if self.original_dataset.history().size() <= 0:
@@ -138,13 +139,6 @@ class GaiaWrapper:
         proc_ds1 = transform(ds,  'FixLength')  # this transformation marks which descriptors are of fixed length, it optimizes things
         prepared_ds = transform(proc_ds1, 'Cleaner')
         proc_ds1.clear()
-        proc_ds1 = None
-
-        #proc_ds1  = transform(ds, 'RemoveVL')
-        #proc_ds2  = transform(proc_ds1,  'FixLength')
-        #proc_ds1 = None
-        #prepared_ds = transform(proc_ds2, 'Cleaner')
-        #proc_ds2 = None
 
         return prepared_ds
 
@@ -154,7 +148,6 @@ class GaiaWrapper:
         normalization_params = {"descriptorNames": descriptor_names, "independent": True, "outliers": -1}
         normalized_ds = transform(ds, 'normalize', normalization_params)
         ds.clear()
-        ds = None
 
         return normalized_ds
 
@@ -237,15 +230,22 @@ class GaiaWrapper:
         return {'error': False, 'result': path}
 
     def clear_index_memory(self):
-        logger.info('Clearing index memory...')
-        self.original_dataset.clear()
-        self.original_dataset = DataSet()
-        self.descriptor_names = {}
-        self.metrics = {}
-        self.view = None
-        msg = 'Cleared indexing dataset memory, current dataset has %i points' % self.original_dataset.size()
-        logger.info(msg)
-        return {'error': False, 'result': msg}
+
+        if self.original_dataset.size() > 0:
+            logger.info('Clearing index memory...')
+            self.original_dataset.clear()
+            self.original_dataset = None
+            self.original_dataset = DataSet()
+            self.descriptor_names = {}
+            self.metrics = {}
+            self.view = None
+            msg = 'Cleared indexing dataset memory, current dataset has %i points' % self.original_dataset.size()
+            logger.info(msg)
+            return {'error': False, 'result': msg}
+        else:
+            msg = 'Not clearing index because dataset size = 0'
+            logger.info(msg)
+            return {'error': False, 'result': msg}
 
     def contains(self, point_name):
         logger.info('Checking if index has point with name %s' % str(point_name))

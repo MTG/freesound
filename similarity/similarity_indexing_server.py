@@ -74,11 +74,8 @@ class SimilarityServer(resource.Resource):
         return json.dumps({'error': False, 'result': 'Gaia wrapper reloaded!'})
 
     def clear_memory(self, request):
-        # First save the index
-        self.gaia.save_index(INDEXING_SERVER_INDEX_NAME)
         # Then clear the memory
         return json.dumps(self.gaia.clear_index_memory())
-
 
 if __name__ == '__main__':
     # Set up logging

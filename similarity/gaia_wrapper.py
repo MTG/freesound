@@ -41,12 +41,9 @@ class GaiaWrapper:
         self.view                       = None
 
         # If indexing_only_mode delete existing dataset before loading dataset (so we start with a fresh new dataset)
-        if indexing_only_mode:
-            if os.path.exists(self.original_dataset_path):
-                self.original_dataset.load(self.original_dataset_path)
-                logger.info('Loaded indexing dataset with %i points' % self.original_dataset.size())
-
-                #os.remove(self.original_dataset_path)
+        #if indexing_only_mode:
+        #    if os.path.exists(self.original_dataset_path):
+        #        os.remove(self.original_dataset_path)
 
         self.__load_dataset()
 
@@ -238,6 +235,17 @@ class GaiaWrapper:
         toc = time.time()
         logger.info('Finished saving index (done in %.2f seconds, index has now %i points).' % ((toc - tic), self.original_dataset.size()))
         return {'error': False, 'result': path}
+
+    def clear_index_memory(self):
+        logger.info('Clearing index memory...')
+        self.original_dataset.clear()
+        self.original_dataset = DataSet()
+        self.descriptor_names = {}
+        self.metrics = {}
+        self.view = None
+        msg = 'Cleared indexing dataset memory, current dataset has %i points' % self.original_dataset.size()
+        logger.info(msg)
+        return {'error': False, 'result': msg}
 
     def contains(self, point_name):
         logger.info('Checking if index has point with name %s' % str(point_name))

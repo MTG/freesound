@@ -51,7 +51,7 @@ class SimilarityServer(resource.Resource):
         self.request = None
 
     def error(self,message):
-        return json.dumps({'Error':message})
+        return json.dumps({'Error': message})
 
     def getChild(self, name, request):
         return self
@@ -66,6 +66,16 @@ class SimilarityServer(resource.Resource):
         if not filename:
             filename = [INDEXING_SERVER_INDEX_NAME]
         return json.dumps(self.gaia.save_index(filename[0]))
+
+    def reload_gaia_wrapper(self, request):
+        self.gaia = GaiaWrapper(indexing_only_mode=True)
+        return json.dumps({'error': False, 'result': 'Gaia wrapper reloaded!'})
+
+    def clear_memory(self, request):
+        # First save the index
+        self.gaia.save_index(INDEXING_SERVER_INDEX_NAME)
+        # Then clear the memory
+        return json.dumps(self.gaia.clear_index_memory())
 
 
 if __name__ == '__main__':

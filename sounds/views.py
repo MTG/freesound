@@ -577,8 +577,8 @@ def for_user(request, username):
 
 
 @login_required
-def delete(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+def delete(request, username, sound_id):    
+    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id)
 
     if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
         raise PermissionDenied

@@ -2298,11 +2298,14 @@ p.about_pack {
 
 /* Account page
 ------------------------------------------------------*/
-p.about {
+div.about {
     /* font-style: italic; */
     padding: 20px;
     width: 904px;
     background-color: #F6F6F6;
+    font-size: 12px;
+    line-height: 18px;
+    margin-bottom: 18px
 }
 
 .account_avatar {

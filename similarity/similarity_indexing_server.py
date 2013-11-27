@@ -39,6 +39,8 @@ import json
 def server_interface(resource):
     return {
         'add_point': resource.add_point,  # location, sound_id
+        'clear_memory': resource.clear_memory,
+        'reload_gaia_wrapper': resource.reload_gaia_wrapper,
         'save': resource.save,  # filename (optional)
     }
 
@@ -51,7 +53,7 @@ class SimilarityServer(resource.Resource):
         self.request = None
 
     def error(self,message):
-        return json.dumps({'Error':message})
+        return json.dumps({'Error': message})
 
     def getChild(self, name, request):
         return self
@@ -67,6 +69,13 @@ class SimilarityServer(resource.Resource):
             filename = [INDEXING_SERVER_INDEX_NAME]
         return json.dumps(self.gaia.save_index(filename[0]))
 
+    def reload_gaia_wrapper(self, request):
+        self.gaia = GaiaWrapper(indexing_only_mode=True)
+        return json.dumps({'error': False, 'result': 'Gaia wrapper reloaded!'})
+
+    def clear_memory(self, request):
+        # Then clear the memory
+        return json.dumps(self.gaia.clear_index_memory())
 
 if __name__ == '__main__':
     # Set up logging

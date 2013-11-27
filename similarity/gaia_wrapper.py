@@ -30,20 +30,16 @@ logger = logging.getLogger('similarity')
 class GaiaWrapper:
 
     def __init__(self, indexing_only_mode=False):
+        self.indexing_only_mode = indexing_only_mode
         self.index_path                 = INDEX_DIR
         self.original_dataset           = DataSet()
-        if not indexing_only_mode:
+        if not self.indexing_only_mode:
             self.original_dataset_path  = self.__get_dataset_path(INDEX_NAME)
         else:
             self.original_dataset_path  = self.__get_dataset_path(INDEXING_SERVER_INDEX_NAME)
         self.descriptor_names           = {}
         self.metrics                    = {}
         self.view                       = None
-
-        # If indexing_only_mode delete existing dataset before loading dataset (so we start with a fresh new dataset)
-        if indexing_only_mode:
-            if os.path.exists(self.original_dataset_path):
-                os.remove(self.original_dataset_path)
 
         self.__load_dataset()
 
@@ -62,7 +58,7 @@ class GaiaWrapper:
         if os.path.exists(self.original_dataset_path):
             self.original_dataset.load(self.original_dataset_path)
             self.__calculate_descriptor_names()
-            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS:
+            if self.original_dataset.size() >= SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
 
                 # if we have loaded a dataset of the correct size but it is unprepared, prepare it
                 if self.original_dataset.history().size() <= 0:
@@ -138,13 +134,6 @@ class GaiaWrapper:
         proc_ds1 = transform(ds,  'FixLength')  # this transformation marks which descriptors are of fixed length, it optimizes things
         prepared_ds = transform(proc_ds1, 'Cleaner')
         proc_ds1.clear()
-        proc_ds1 = None
-
-        #proc_ds1  = transform(ds, 'RemoveVL')
-        #proc_ds2  = transform(proc_ds1,  'FixLength')
-        #proc_ds1 = None
-        #prepared_ds = transform(proc_ds2, 'Cleaner')
-        #proc_ds2 = None
 
         return prepared_ds
 
@@ -154,7 +143,6 @@ class GaiaWrapper:
         normalization_params = {"descriptorNames": descriptor_names, "independent": True, "outliers": -1}
         normalized_ds = transform(ds, 'normalize', normalization_params)
         ds.clear()
-        ds = None
 
         return normalized_ds
 
@@ -172,18 +160,19 @@ class GaiaWrapper:
     def add_point(self, point_location, point_name):
         if self.original_dataset.contains(str(point_name)):
                 self.original_dataset.removePoint(str(point_name))
-        #try:
+
         p = Point()
         if os.path.exists(str(point_location)):
-            p.load(str(point_location))
-            p.setName(str(point_name))
-            self.original_dataset.addPoint(p)
-            msg = 'Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size())
-            logger.info('Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size()))
-            #except Exception, e:
-            #    msg = 'Point with name %s could NOT be added (%s).' % (str(point_name), str(e))
-            #    logger.info(msg)
-            #    return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+            try:
+                p.load(str(point_location))
+                p.setName(str(point_name))
+                self.original_dataset.addPoint(p)
+                msg = 'Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size())
+                logger.info('Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size()))
+            except Exception, e:
+                msg = 'Point with name %s could NOT be added (%s).' % (str(point_name), str(e))
+                logger.info(msg)
+                return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
         else:
             msg = 'Point with name %s could NOT be added because analysis file does not exist (%s).' % (str(point_name), str(point_location))
             logger.info(msg)
@@ -192,7 +181,7 @@ class GaiaWrapper:
 
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
-        if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS:
+        if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
             self.__prepare_original_dataset()
             self.__normalize_original_dataset()
             self.save_index(msg="(reaching 2000 points)")
@@ -235,6 +224,24 @@ class GaiaWrapper:
         toc = time.time()
         logger.info('Finished saving index (done in %.2f seconds, index has now %i points).' % ((toc - tic), self.original_dataset.size()))
         return {'error': False, 'result': path}
+
+    def clear_index_memory(self):
+
+        if self.original_dataset.size() > 0:
+            logger.info('Clearing index memory...')
+            self.original_dataset.clear()
+            self.original_dataset = None
+            self.original_dataset = DataSet()
+            self.descriptor_names = {}
+            self.metrics = {}
+            self.view = None
+            msg = 'Cleared indexing dataset memory, current dataset has %i points' % self.original_dataset.size()
+            logger.info(msg)
+            return {'error': False, 'result': msg}
+        else:
+            msg = 'Not clearing index because dataset size = 0'
+            logger.info(msg)
+            return {'error': False, 'result': msg}
 
     def contains(self, point_name):
         logger.info('Checking if index has point with name %s' % str(point_name))

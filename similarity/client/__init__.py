@@ -34,6 +34,8 @@ _URL_NNRANGE                  = 'nnrange/'
 _URL_API_SEARCH               = 'api_search/'
 _URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
 _URL_SAVE                     = 'save/'
+_URL_RELOAD_GAIA_WRAPPER      = 'reload_gaia_wrapper/'
+_URL_CLEAR_MEMORY             = 'clear_memory/'
 
 
 class SimilarityException(Exception):
@@ -160,6 +162,16 @@ class Similarity():
         url = _BASE_INDEXING_SERVER_URL + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
+        return _result_or_exception(_get_url_as_json(url))
+
+    @classmethod
+    def clear_indexing_server_memory(cls):
+        url = _BASE_INDEXING_SERVER_URL + _URL_CLEAR_MEMORY
+        return _result_or_exception(_get_url_as_json(url))
+
+    @classmethod
+    def reload_indexing_server_gaia_wrapper(cls):
+        url = _BASE_INDEXING_SERVER_URL + _URL_RELOAD_GAIA_WRAPPER
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod

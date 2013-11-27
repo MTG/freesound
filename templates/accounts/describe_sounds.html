@@ -6,103 +6,264 @@
     <script src="{{media_url}}/js/jquery-ui-1.8.11.custom.min.js" type="text/javascript"></script>
     <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
     <script>
-        var maps = {};
-        var centerMarkers = {};
 
-        $(document).ready(function() {
-            display_errors();
-            for (var i=0; i<{{ sounds_per_round }}; i++){
-                $('#sound-accordion-sound-'+i).hide();
+    var doLog = true;
+    var typingTimer;
+    var addingTagTimer;
+    var doneAddingTagInterval = 0;  //time in ms
+    var doneTypingInterval = 500;     //time in ms
+    var randomDescriptionSessionId = Math.floor(Math.random()*99999).toString(10);
+
+    var maps = {};
+    var centerMarkers = {};
+
+    $(document).ready(function() {
+
+        display_errors();
+        for (var i=0; i<{{ sounds_per_round }}; i++){
+            $('#sound-accordion-sound-'+i).hide();
+        }
+
+        // Init tag recommendation
+        var textarea_elements = $("textarea[id$='-tags']");
+
+        // Log soundnames that will be described
+        var names = "";
+        {% for form in forms %}
+            names += "id_{{ forloop.counter0 }}|{{ form.sound.name }},"
+        {% endfor %}
+        log("StartedDescriptionOfSounds: " + names,"-")
+
+        // Listen to keyup events in tags textareas to display tags
+        textarea_elements.keyup(function(event) {
+
+            clearTimeout(typingTimer);
+            var textarea_id = $(this)[0].id;
+
+            // recommend tags when last character is " " or "\n"
+            if  ((event.keyCode == 32) || (event.keyCode == 13)) { // " " or "\n"
+                get_tags(textarea_id);
             }
+
+            typingTimer = setTimeout(function(){
+                get_tags(textarea_id)
+            }, doneTypingInterval);
         });
-        function display_errors() {
-            if ($(".errorlist").length > 0) {
-                if ($("#errormessage").length == 0) {
-                    $("#describe_form").before("<div id='errormessage' class='errortag_message'>There are some errors or missing fields below. Please review files marked in red...</div>");
-                }
+
+        // Listen to cut, paste and focusin events to recommend tags
+        textarea_elements.bind('cut paste focusin', function() {
+            var textarea_id = $(this)[0].id;
+            get_tags(textarea_id);
+        });
+    });
+
+    function display_errors() {
+        if ($(".errorlist").length > 0) {
+            if ($("#errormessage").length == 0) {
+                $("#describe_form").before("<div id='errormessage' class='errortag_message'>There are some errors or missing fields below. Please review files marked in red...</div>");
             }
         }
-        function toggleMapVisibility(n) {
-            var wrapper = $('#gmap-wrapper-'+n);
-            if(wrapper.is(':visible')) {
-                $('#gmap-header-'+n).removeClass('.active-gmap');
-                $('#gmap-header-text-'+n).text('Show Geotag map');
-                wrapper.hide(500);
-            } else {
-                $('#gmap-header-'+n).addClass('.active-gmap');
-                $('#gmap-header-text-'+n).text('Hide Geotag map');
-                wrapper.show(500);
+    }
+
+    // Google Maps stuff
+    // *****************
+
+    function toggleMapVisibility(n) {
+        var wrapper = $('#gmap-wrapper-'+n);
+        if(wrapper.is(':visible')) {
+            $('#gmap-header-'+n).removeClass('.active-gmap');
+            $('#gmap-header-text-'+n).text('Show Geotag map');
+            wrapper.hide(500);
+        } else {
+            $('#gmap-header-'+n).addClass('.active-gmap');
+            $('#gmap-header-text-'+n).text('Hide Geotag map');
+            wrapper.show(500);
+            if (!maps[n]){
+                init_map(n);
+            }
+        }
+    }
+
+    function toggleSound(n) {
+        if ($('#sound-accordion-sound-'+n).is(':visible')) {
+            $('#sound-accordion-sound-'+n).hide('fast');
+        } else {
+            $('#sound-accordion-sound-'+n).show('fast');
+            if ($("#id_" + parseInt(n-1,10) + "-zoom").val()){
                 if (!maps[n]){
                     init_map(n);
                 }
             }
         }
+    }
 
-        function toggleSound(n) {
-            if ($('#sound-accordion-sound-'+n).is(':visible')) {
-                $('#sound-accordion-sound-'+n).hide('fast');
-            } else {
-                $('#sound-accordion-sound-'+n).show('fast');
-                if ($("#id_" + parseInt(n-1,10) + "-zoom").val()){
-                    if (!maps[n]){
-                        init_map(n);
-                    }
-                }
-            }
-        }
+    function updateAndAddCenter(n)
+    {
+        var center = maps[parseInt(n,10)].getCenter();
+        var zoom = maps[parseInt(n,10)].getZoom();
 
-        function updateAndAddCenter(n)
+        if (!$("#id_" + parseInt(n-1,10) + "-remove_geotag").checked)
         {
-            var center = maps[parseInt(n,10)].getCenter();
-            var zoom = maps[parseInt(n,10)].getZoom();
+            $("#id_" + parseInt(n-1,10) + "-lon").val(center.lng());
+            $("#id_" + parseInt(n-1,10) + "-lat").val(center.lat());
+            $("#id_" + parseInt(n-1,10) + "-zoom").val(zoom);
+        }
+        centerMarkers[parseInt(n,10)].setPosition(center);
+    }
 
-            if (!$("#id_" + parseInt(n-1,10) + "-remove_geotag").checked)
-            {
-                $("#id_" + parseInt(n-1,10) + "-lon").val(center.lng());
-                $("#id_" + parseInt(n-1,10) + "-lat").val(center.lat());
-                $("#id_" + parseInt(n-1,10) + "-zoom").val(zoom);
+    function init_map(n) {
+        var map = new google.maps.Map(
+            document.getElementById('gmap' + parseInt(n,10)), {
+              center: new google.maps.LatLng(23.885837699862005,21.796875),
+              zoom: 2,
+              mapTypeId: google.maps.MapTypeId.SATELLITE,
+              scrollwheel: false,
+              streetViewControl: false,
+        });
+
+        var initial_center = new google.maps.LatLng(23.885837699862005,21.796875);
+        var initial_zoom =  2;
+        if ( ($("#id_" + parseInt(n-1,10) + "-zoom").val() != "") & ($("#id_" + parseInt(n-1,10) + "-lon").val() != "") & ($("#id_" + parseInt(n-1,10) + "-lat").val() != ""))
+        {
+            initial_center = new google.maps.LatLng( $("#id_" + parseInt(n-1,10) + "-lat").val() , $("#id_" + parseInt(n-1,10) + "-lon").val())
+            initial_zoom = parseInt($("#id_" + parseInt(n-1,10) + "-zoom").val())
+        }
+        map.setCenter(initial_center);
+        map.setZoom(initial_zoom);
+
+        var image = {
+            url: "{{media_url}}/images/arrow.png",
+            size: new google.maps.Size(25, 24),
+            anchor: new google.maps.Point(0, 24)
+        };
+
+        var centerMarker = new google.maps.Marker({
+              position: google.maps.LatLng(initial_center),
+              map: map,
+              icon: image
+        });
+        centerMarkers[parseInt(n,10)] = centerMarker;
+        maps[parseInt(n,10)] = map;
+
+        google.maps.event.addListener(maps[parseInt(n,10)], "bounds_changed", function(){
+            updateAndAddCenter(n);
+        });
+    }
+
+
+    // Tag recommendation stuff
+    // ************************
+
+    function log(activity,textarea_id){
+        var timestamp = new Date().getTime();
+        var logline = timestamp + "#describing#" + randomDescriptionSessionId + "#" + "{{ request.user.id }}" + "#" + textarea_id + "#" + activity;
+
+        if (doLog){
+            $.ajax({
+                type: 'POST',
+                url: '/tagrecommendation/savelog/',
+                contentType:"application/x-www-form-urlencoded",
+                data: {
+                    log: logline
+                },
+                success: function(data) {
+                    // Do nothing
+                }
+            });
+        }
+    }
+
+    function get_tags(textarea_id){
+        var textarea_element = $("#" + textarea_id);
+        log("GettingTagsForInputTags:" + textarea_element.val(), textarea_id);
+
+        $.ajax({
+            type: 'POST',
+            url: '/tagrecommendation/recommendtags/',
+            contentType:"application/x-www-form-urlencoded",
+            data: {
+                input_tags: textarea_element.val()
+            },
+            success: function(data) {
+                display_recommended_tags(textarea_id, data);
             }
-            centerMarkers[parseInt(n,10)].setPosition(center);
+        });
+    }
+
+    function display_recommended_tags(textarea_id, data){
+
+        var parsedData = JSON.parse(data);
+        var tags = parsedData[0];
+        var community = parsedData[1];
+
+        var logline = "RecommendationResults:Tags:";
+        for (var i in tags){
+            logline += tags[i].toString() + " ";
+        }
+        logline += ":DetectedCommunity:" + community;
+        log(logline, textarea_id);
+
+        if (tags.length > 0){
+            var html = "";
+            html += "<ul id=\"" + textarea_id + "-recommended-list\">";
+            for (var i in tags){
+
+                var tag = tags[i]; //tags[i][0]
+                var tag_css_class = "tag";
+
+                html += "<li class=\"" + tag_css_class + "\" id=\"tag-" + tag + "\"><a onclick=\"add_tag(\'" + textarea_id + "\',\'" + tag + "\',\'" + i + "\')\">" + tag + "</a></li>";
+            }
+            html += "</ul>";
+            var textarea_element = $("#" + textarea_id + "-recommended");
+            textarea_element.text("");
+            textarea_element.append("<span style=\"color: #AB4646;font-size:12px;\">Suggested tags:&nbsp</span> (click on the tags to add them, <a style=\"color:gray\" onclick=\"clear_recommendations(\'" + textarea_id + "\')\">click here to clear the recommendation</a>)");
+            textarea_element.append(html);
+            textarea_element.append("<br class=\"clear\">");
+
+            var textarea_element_list = $("#" + textarea_id + "-recommended-list");
+            textarea_element_list.css("margin-left","-20px");
+            textarea_element_list.css("margin-top","5px");
+            textarea_element_list.css("margin-bottom","5px");
+
+        }else{
+            clear_recommendations(textarea_id);
+        }
+    }
+
+    function add_tag(textarea_id, tag, cloud_pos){
+
+        clearTimeout(addingTagTimer);
+        log("AddingTag:" + tag + ":InCloudPos:" + cloud_pos, textarea_id);
+
+        var ask_for_more = false;
+        var textarea_element = $("#" + textarea_id);
+        var separator = " ";
+        if (!$.trim(textarea_element.val())) {
+            ask_for_more = true;
+            separator = ""
         }
 
-        function init_map(n) {
-            var map = new google.maps.Map(
-                document.getElementById('gmap' + parseInt(n,10)), {
-                  center: new google.maps.LatLng(23.885837699862005,21.796875),
-                  zoom: 2,
-                  mapTypeId: google.maps.MapTypeId.SATELLITE,
-                  scrollwheel: false,
-                  streetViewControl: false,
-            });
+        textarea_element.val(textarea_element.val() + separator + tag);
+        $("#tag-" + tag).remove();
 
-            var initial_center = new google.maps.LatLng(23.885837699862005,21.796875);
-            var initial_zoom =  2;
-            if ( ($("#id_" + parseInt(n-1,10) + "-zoom").val() != "") & ($("#id_" + parseInt(n-1,10) + "-lon").val() != "") & ($("#id_" + parseInt(n-1,10) + "-lat").val() != ""))
-            {
-                initial_center = new google.maps.LatLng( $("#id_" + parseInt(n-1,10) + "-lat").val() , $("#id_" + parseInt(n-1,10) + "-lon").val())
-                initial_zoom = parseInt($("#id_" + parseInt(n-1,10) + "-zoom").val())
-            }
-            map.setCenter(initial_center);
-            map.setZoom(initial_zoom);
-
-            var image = {
-                url: "{{media_url}}/images/arrow.png",
-                size: new google.maps.Size(25, 24),
-                anchor: new google.maps.Point(0, 24)
-            };
-
-            var centerMarker = new google.maps.Marker({
-                  position: google.maps.LatLng(initial_center),
-                  map: map,
-                  icon: image
-            });
-            centerMarkers[parseInt(n,10)] = centerMarker;
-            maps[parseInt(n,10)] = map;
-
-            google.maps.event.addListener(maps[parseInt(n,10)], "bounds_changed", function(){
-                updateAndAddCenter(n);
-            });
+        var remaining_tags = $("#" + textarea_id + "-recommended-list").children().length;
+        if (remaining_tags < 1){
+            ask_for_more = true;
         }
+
+        if (ask_for_more == true){
+            get_tags(textarea_id);
+        } else {
+            addingTagTimer = setTimeout(function(){
+                get_tags(textarea_id)
+            }, doneAddingTagInterval);
+        }
+    }
+
+    function clear_recommendations(textarea_id){
+        $("#" + textarea_id + "-recommended").text("")
+    }
+
 
     </script>
     <style type="text/css">
@@ -110,6 +271,7 @@
         .errortag {color: red;}
         -->
     </style>
+
 {% endblock head %}
 
 
@@ -130,7 +292,6 @@
     <p>You are not required to specify a geolocation for each sound, but if the sound is a
         field-recording it's probably a good idea to specify the location.
 
-
     <form id="describe_form" action="." method="post">{% csrf_token %}
         <div id="sound-accordion-alternate">
             {% for form in forms %}
@@ -141,7 +302,28 @@
 
                 <div class="sound-accordion-sound-alternate" id="sound-accordion-sound-{{ forloop.counter }}">
                     <h3>Tags and Description</h3>
-                        {{ form.description.as_p }}
+
+                        {{form.description.name.errors}}
+                        <p>
+                            Name:<br>
+                            {{form.description.name}}
+                        </p>
+
+                        {{form.description.tags.errors}}
+                        <p>
+                            Tags:
+                            {{form.description.tags.help_text|safe}}<br>
+                            {{form.description.tags}}
+                            <div id="id_{{ forloop.counter0 }}-tags-recommended" style="font-size: 10px;margin-top:-5px;width: 670px;"></div>
+
+                        </p>
+
+                        {{form.description.description.errors }}
+                        <p>
+                            Description:<br>
+                            {{form.description.description }}
+                        </p>
+
 
                     <h3>Geotag</h3>
 

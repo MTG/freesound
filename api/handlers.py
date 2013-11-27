@@ -35,7 +35,7 @@ from utils.pagination import paginate
 from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
-from utils.similarity_utilities import get_similar_sounds, api_search
+from utils.similarity_utilities import get_similar_sounds, api_search, get_sounds_descriptors
 from similarity.client import Similarity
 from api.api_utils import auth, ReturnError#, parse_filter, parse_target
 import os
@@ -177,14 +177,16 @@ def prepare_collection_sound(sound, include_user=True, include_geotag=False, cus
 def prepare_single_sound_analysis(sound,request,filter):
 
     try:
-        analysis = yaml.load(file(sound.locations('analysis.statistics.path')))
+        # Load file from disk
+        #analysis = yaml.load(file(sound.locations('analysis.statistics.path')))
 
+        # Get data from gaia
+        analysis = get_sounds_descriptors([sound.id], [], normalization=False, only_leaf_descriptors=False)[str(sound.id)]
     except Exception, e:
         raise e
         raise Exception('Could not load analysis data.')
 
     # only show recommended descriptors
-    print request.GET
     if not ('all' in request.GET and request.GET['all'] in ['1', 'true', 'True']) and not filter:
         analysis = level_filter(analysis, RECOMMENDED_DESCRIPTORS)
 

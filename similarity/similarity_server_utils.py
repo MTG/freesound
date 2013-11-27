@@ -62,7 +62,10 @@ def parse_filter(filter_string, layout_descriptor_names):
             feature_name = feature_name.replace(op,"")
             right_part = right_part.replace(op,"")
 
-        if feature_name not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS:
+        # Check if the feature name is allowed (if is correct).
+        # As filtering in multidimensional descriptors is indicated by (excample) feature.name.3 or feature.name.0, we
+        # also check the existence of this feature name by removing the last number (and dot)
+        if feature_name not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS and feature_name.split('[')[0] not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS:
             return 'Filter error: At least one feature name does not match with any descirptor name in our database or the matched descriptor can not be used in a filter (' + str(feature_name) + '). '
 
         filter_struct.append({'feature':feature_name,'type':type_val,'value':right_part,'delimiter_position':current_pos,'id':len(filter_struct)+1})
@@ -112,7 +115,7 @@ def parse_filter(filter_string, layout_descriptor_names):
     if final_filter_struct.count("(") != final_filter_struct.count(")"):
         return "Bad filter syntax."
 
-    # Change values for corrent types
+    # Change values for current types
     for f in final_filter_struct:
         if type(f) == dict:
             if f['type'] == 'NUMBER':
@@ -153,14 +156,27 @@ def parse_filter_list(filter_list, coeffs):
 
                     if f['type'] == 'NUMBER':
                         if coeffs:
-                            norm_value = coeffs[f['feature']]['a'][0] * f['value'] + coeffs[f['feature']]['b'][0]
+                            if '[' in f['feature']:
+                                # if character [ is in feature name it means that is multidimensional filter
+                                f_name = f['feature'].split('[')[0]
+                                f_dimension = int(f['feature'].split('[')[1].split(']')[0])
+                                norm_value = coeffs[f_name]['a'][f_dimension] * f['value'] + coeffs[f_name]['b'][f_dimension]
+                            else:
+                                norm_value = coeffs[f['feature']]['a'][0] * f['value'] + coeffs[f['feature']]['b'][0]
                         else:
                             norm_value = f['value']
                     elif f['type'] == 'ARRAY':
                         if coeffs:
-                            norm_value = []
-                            for i in range(len(f['value'])):
-                                norm_value.append(coeffs[f['feature']]['a'][i] * f['value'][i] + coeffs[f['feature']]['b'][i])
+                            if '[' in f['feature']:
+                                # if character [ is in feature name it means that is multidimensional filter
+                                f_name = f['feature'].split('[')[0]
+                                norm_value = []
+                                for i in range(len(f['value'])):
+                                    norm_value.append(coeffs[f_name]['a'][i] * f['value'][i] + coeffs[f_name]['b'][i])
+                            else:
+                                norm_value = []
+                                for i in range(len(f['value'])):
+                                    norm_value.append(coeffs[f['feature']]['a'][i] * f['value'][i] + coeffs[f['feature']]['b'][i])
                         else:
                             norm_value = f['value']
                     else:
@@ -171,7 +187,13 @@ def parse_filter_list(filter_list, coeffs):
                     filter += " "
                     if f['value']['min']:
                         if coeffs:
-                            norm_value = coeffs[f['feature']]['a'][0] * f['value']['min'] + coeffs[f['feature']]['b'][0]
+                            if '[' in f['feature']:
+                                # if character [ is in feature name it means that is multidimensional filter
+                                f_name = f['feature'].split('[')[0]
+                                f_dimension = int(f['feature'].split('[')[1].split(']')[0])
+                                norm_value = coeffs[f_name]['a'][f_dimension] * f['value']['min'] + coeffs[f_name]['b'][f_dimension]
+                            else:
+                                norm_value = coeffs[f['feature']]['a'][0] * f['value']['min'] + coeffs[f['feature']]['b'][0]
                         else:
                             norm_value = f['value']['min']
                         filter += prepend_value_label(f) + f['feature'] + ">" + str(norm_value) + " "
@@ -179,7 +201,13 @@ def parse_filter_list(filter_list, coeffs):
                         if f['value']['min']:
                             filter += "AND "
                         if coeffs:
-                            norm_value = coeffs[f['feature']]['a'][0] * f['value']['max'] + coeffs[f['feature']]['b'][0]
+                            if '[' in f['feature']:
+                                # if character [ is in feature name it means that is multidimensional filter
+                                f_name = f['feature'].split('[')[0]
+                                f_dimension = int(f['feature'].split('[')[1].split(']')[0])
+                                norm_value = coeffs[f_name]['a'][f_dimension] * f['value']['max'] + coeffs[f_name]['b'][f_dimension]
+                            else:
+                                norm_value = coeffs[f['feature']]['a'][0] * f['value']['max'] + coeffs[f['feature']]['b'][0]
                         else:
                             norm_value = f['value']['max']
                         filter += prepend_value_label(f) + f['feature'] + "<" + str(norm_value) + " "

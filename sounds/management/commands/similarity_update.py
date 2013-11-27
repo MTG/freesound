@@ -78,8 +78,6 @@ class Command(BaseCommand):
 
         # At the end save the index
         if options['indexing_server']:
-            # If indexing to similarity indexing server we save the index and also clear the memory
             Similarity.save_indexing_server()
-            Similarity.clear_indexing_server_memory()
         else:
             Similarity.save()

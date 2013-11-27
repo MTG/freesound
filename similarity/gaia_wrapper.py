@@ -41,11 +41,6 @@ class GaiaWrapper:
         self.metrics                    = {}
         self.view                       = None
 
-        # If indexing_only_mode delete existing dataset before loading dataset (so we start with a fresh new dataset)
-        #if indexing_only_mode:
-        #    if os.path.exists(self.original_dataset_path):
-        #        os.remove(self.original_dataset_path)
-
         self.__load_dataset()
 
 
@@ -165,18 +160,19 @@ class GaiaWrapper:
     def add_point(self, point_location, point_name):
         if self.original_dataset.contains(str(point_name)):
                 self.original_dataset.removePoint(str(point_name))
-        #try:
+
         p = Point()
         if os.path.exists(str(point_location)):
-            p.load(str(point_location))
-            p.setName(str(point_name))
-            self.original_dataset.addPoint(p)
-            msg = 'Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size())
-            logger.info('Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size()))
-            #except Exception, e:
-            #    msg = 'Point with name %s could NOT be added (%s).' % (str(point_name), str(e))
-            #    logger.info(msg)
-            #    return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+            try:
+                p.load(str(point_location))
+                p.setName(str(point_name))
+                self.original_dataset.addPoint(p)
+                msg = 'Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size())
+                logger.info('Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size()))
+            except Exception, e:
+                msg = 'Point with name %s could NOT be added (%s).' % (str(point_name), str(e))
+                logger.info(msg)
+                return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
         else:
             msg = 'Point with name %s could NOT be added because analysis file does not exist (%s).' % (str(point_name), str(point_location))
             logger.info(msg)
@@ -185,7 +181,7 @@ class GaiaWrapper:
 
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
-        if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS:
+        if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
             self.__prepare_original_dataset()
             self.__normalize_original_dataset()
             self.save_index(msg="(reaching 2000 points)")

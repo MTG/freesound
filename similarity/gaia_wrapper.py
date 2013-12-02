@@ -131,20 +131,20 @@ class GaiaWrapper:
 
     @staticmethod
     def prepare_original_dataset_helper(ds):
-        proc_ds1 = transform(ds,  'FixLength')  # this transformation marks which descriptors are of fixed length, it optimizes things
-        prepared_ds = transform(proc_ds1, 'Cleaner')
-        proc_ds1.clear()
-
-        return prepared_ds
+        ds = transform(ds, 'FixLength')  # this transformation marks which descriptors are of fixed length, it optimizes things
+        ds = transform(ds, 'Cleaner')
+        try:
+            ds = transform(ds, 'enumerate', {'descriptorNames': ['.tonal.chords_progression']})
+        except:
+            logger.info('WARNING: enumerate transformation to .tonal.chords_progression could not be performed.')
+        return ds
 
     @staticmethod
     def normalize_dataset_helper(ds, descriptor_names):
         # Add normalization
         normalization_params = {"descriptorNames": descriptor_names, "independent": True, "outliers": -1}
-        normalized_ds = transform(ds, 'normalize', normalization_params)
-        ds.clear()
-
-        return normalized_ds
+        ds = transform(ds, 'normalize', normalization_params)
+        return ds
 
     def __build_metrics(self):
         for preset in PRESETS:

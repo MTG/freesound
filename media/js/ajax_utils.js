@@ -56,7 +56,8 @@ function ajaxLoad(url,callback,postData,plain) {
         }
     }
     if (!http_request) {
-        alert('Giving up :( Cannot create an XMLHTTP instance');
+        //alert('Giving up :( Cannot create an XMLHTTP instance');
+        console.log('Giving up :( Cannot create an XMLHTTP instance');
         return false;
     }
     http_request.onreadystatechange =  function() {
@@ -65,7 +66,8 @@ function ajaxLoad(url,callback,postData,plain) {
                 eval(callback(http_request));
             }
             else {
-                alert('Request Failed: ' + http_request.status);
+                //alert('Request Failed: ' + http_request.status);
+                conosle.log('Request Failed: ' + http_request.status);
             }
         }
     };

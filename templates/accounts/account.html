@@ -74,9 +74,9 @@
         </div>
         <br style="clear: both;" />
         {% if user.profile.about %}
-            <p class="about">
+            <div class="about">            
                 {{user.profile.about|safe|linebreaksbr }}
-            </p>
+            </div>
         {% endif %}
         <br>        
         {% else %}
@@ -116,7 +116,8 @@
             {% endcomment %}
 
             {% for sound in unprocessed_sounds %}
-                <li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span>
+                <li>
+                    <span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span>
                 {% if sound.processing_state == 'PE' %}
                     <span class="pending">Processing state: Pending</span>
                 {% else %}
@@ -134,6 +135,7 @@
                         {% endif %}
                     {% endif %}
                 {% endif %}
+                <a href="{% url sound-delete sound.user.username sound.id %}" >x</a>
                 </li>
             {% endfor %}
         </div><!-- #unprocessed_sounds -->

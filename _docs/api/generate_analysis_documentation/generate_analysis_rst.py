@@ -1,7 +1,7 @@
 # Generate skeleton for documentation, 
 # add essentia documentation links by hand
 
-import yaml
+import urllib2,json
 
 
 header = """
@@ -52,7 +52,13 @@ algorithm_doc_str = "http://essentia.upf.edu/documentation/reference/streaming_"
 sorted_namespaces = ["metadata","lowlevel","rhythm","tonal","sfx"]
 desc_exceptions = ["metadata.audio_properties","metadata.version","rhythm.onset_rate"]
 
-top = yaml.load(open('example.yaml'))
+example_url = "http://freesound.org/api/sounds/1234/analysis/?api_key=53b80e4d8a674ccaa80b780372103680&all=True"
+
+req = urllib2.Request(example_url)
+resp = urllib2.urlopen(req)
+top = json.loads(resp.read())
+
+
 mapping = dict()
 for line in open("algorithm_mapping.csv"):
 	desc,alg = line[:-1].split(",")

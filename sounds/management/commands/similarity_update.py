@@ -64,7 +64,12 @@ class Command(BaseCommand):
 
             # Check if sound analyzed using the desired extractor
             if freesound_extractor_version:
-                data = yaml.load(open(sound.locations('analysis.statistics.path')))
+                try:
+                    data = yaml.load(open(sound.locations('analysis.statistics.path')))
+                except:
+                    print 'Sound with id %i was not indexed (no yaml file found when checking for extractor version)' % sound.id
+                    continue
+
                 if 'freesound_extractor' in data['metadata']['version']:
                     if data['metadata']['version']['freesound_extractor'] != freesound_extractor_version:
                         print 'Sound with id %i was not indexed (it was analyzed with extractor version %s)' % (sound.id, data['metadata']['version']['freesound_extractor'])

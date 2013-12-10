@@ -20,16 +20,16 @@
 
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
-from datetime import datetime
-#from django.db.models import Q
+import gearman
+import settings
 
 class Command(BaseCommand):
     help = 'Analyze all sounds that have passed moderation and have already been analyzed OK. This command is intended to run it when a new essentia extractor is deployed'
-    gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+
 
     def handle(self, *args, **options):
-        num_hours = int(args[0])
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         for sound in Sound.objects.filter(analysis_state='OK',moderation_state='OK'):
-	    # we avoid saving the sound as currently this triggers crc calculation
-	    # also with wait_until_complete=True we avoid processing all sounds at once in gm client machine
-	    gm_client.submit_job("analyze_sound", str(sound.id), wait_until_complete=True, background=True) 
+            # we avoid saving the sound as currently this triggers crc calculation
+            # also with wait_until_complete=True we avoid processing all sounds at once in gm client machine
+            gm_client.submit_job("analyze_sound", str(sound.id), wait_until_complete=True, background=True)

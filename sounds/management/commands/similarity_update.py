@@ -22,9 +22,13 @@ from django.core.management.base import BaseCommand
 from sounds.models import Sound
 from similarity.client import Similarity
 from optparse import make_option
+import yaml
 
 class Command(BaseCommand):
-    help = "Take all sounds that haven't been added to the similarity service yet and add them. Use option --force to force reindex ALL sounds. Pas a number argument to limit the number of sounds that will be reindexed (to avoid collapsing similarity if using crons)"
+    help = "Take all sounds that haven't been added to the similarity service yet and add them. Use option --force to " \
+           "force reindex ALL sounds. Pas a number argument to limit the number of sounds that will be reindexed " \
+           "(to avoid collapsing similarity if using crons). Pass a string argument with the freesound extractor version" \
+           "to only index sounds analyzed with the specified version."
     option_list = BaseCommand.option_list + (
     make_option('-f','--force',
         dest='force',
@@ -42,20 +46,33 @@ class Command(BaseCommand):
 
     def handle(self,  *args, **options):
 
-        end = 100000000000 # Big enough numebr so num_sounds will never exceed this one
-        if args:
-            limit = args[0]
-            if limit:
-                end = int(limit)
-            print "Indexing sounds to similarity (limit %i)"%end
+        limit = None
+        freesound_extractor_version = ''
+        for arg in args:
+            if arg.isdigit():
+                limit = int(arg)
+            else:
+                freesound_extractor_version = arg
 
         if options['force']:
-            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK').order_by('id')[0:end]
+            to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK').order_by('id')[:limit]
         else:
-            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK').order_by('id')[0:end]
+            to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK').order_by('id')[:limit]
 
         N = len(to_be_added)
         for count, sound in enumerate(to_be_added):
+
+            # Check if sound analyzed using the desired extractor
+            if freesound_extractor_version:
+                data = yaml.load(open(sound.locations('analysis.statistics.path')))
+                if 'freesound_extractor' in data['metadata']['version']:
+                    if data['metadata']['version']['freesound_extractor'] != freesound_extractor_version:
+                        print 'Sound with id %i was not indexed (it was analyzed with extractor version %s)' % (sound.id, data['metadata']['version']['freesound_extractor'])
+                        continue
+                else:
+                    print 'Sound with id %i was not indexed (it was analyzed with an unknown extractor)' % sound.id
+                    continue
+
             try:
                 if options['indexing_server']:
                     result = Similarity.add_to_indeixing_server(sound.id, sound.locations('analysis.statistics.path'))

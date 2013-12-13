@@ -179,6 +179,14 @@ class GaiaWrapper:
             return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
 
 
+        if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS:
+            # Do enumerate
+            try:
+                self.original_dataset = transform(self.original_dataset, 'enumerate', {'descriptorNames': ['.tonal.chords_progression']})
+            except:
+                logger.info('WARNING: enumerate transformation to .tonal.chords_progression could not be performed.')
+
+
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
         if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:

@@ -42,7 +42,10 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
     if settings.DEBUG:
         recommended_tags = False
     else:
-        recommended_tags = cache.get(cache_key)
+        try:
+            recommended_tags = cache.get(cache_key)
+        except:
+            recommended_tags = False
 
     if not recommended_tags:
         try:
@@ -51,7 +54,10 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
             if not recommended_tags['tags']:
                 recommended_tags['community'] = "-"
 
-            cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
+            try:
+                cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
+            except:
+                pass
 
         except Exception, e:
             logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \

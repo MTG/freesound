@@ -34,6 +34,9 @@ from apiv2 import views
 urlpatterns = patterns('apiv2.views',
     url(r'^$', 'api_root'),
 
+    # Me
+    url(r'^me/$', views.Me.as_view(), name="apiv2-me"),
+
     # Sounds
     url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
     url(r'^sounds/search/$', views.SoundSearch.as_view(), name="apiv2-sound-search"),

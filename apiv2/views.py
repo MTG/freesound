@@ -68,6 +68,30 @@ def api_root(request, format=None):
         #'upload': reverse('apiv2-uploads-upload'),
     })
 
+#########
+# ME VIEW
+#########
+
+class Me(GenericAPIView):
+    """
+    Returns some information about the end-user logged into the api
+    TODO: proper documentation.
+    """
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def get(self, request,  *args, **kwargs):
+        response_data = {
+                         'username': self.user.username,
+                         'email': self.user.email,
+                         'date_joined': self.user.date_joined,
+                         'about': self.user.profile.about,
+                         'home_page': self.user.profile.home_page,
+                         'num_sound': self.user.profile.num_sounds,
+                         'num_posts': self.user.profile.num_posts
+
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
 
 #############
 # SOUND VIEWS

@@ -28,3 +28,5 @@
 - Clean code (imports, utils...)
 
 
+- Clean up expired grants from database with a django command
+

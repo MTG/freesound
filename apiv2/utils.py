@@ -68,6 +68,17 @@ class AccessTokenView(DjangoRestFrameworkAccessTokenView):
             raise OAuthError(form.errors)
         return form.cleaned_data
 
+    def get_access_token(self, request, user, scope, client):
+        # If previous access tokens exist, delete them
+        at = AccessToken.objects.filter(user=user, client=client)
+        for ati in at:
+            ati.delete()
+
+        # Create a new access token
+        at = self.create_access_token(request, user, scope, client)
+        self.create_refresh_token(request, user, scope, at, client)
+        return at
+
     def refresh_token(self, request, data, client):
         """
         Handle ``grant_type=refresh_token`` requests as defined in :draft:`6`.
@@ -146,7 +157,6 @@ class Authorize(DjangoOauth2ProviderAuthorize):
             client, data = self._validate_client(request, data)
         except OAuthError, e:
             return self.error_response(request, e.args[0], status=400)
-
 
         # Check if request user already has validated access token for client
         has_valid_token = False

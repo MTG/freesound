@@ -151,9 +151,7 @@ class Authorize(DjangoOauth2ProviderAuthorize):
         # Check if request user already has validated access token for client
         has_valid_token = False
         try:
-            access_token = AccessToken.objects.get(user=request.user, client=client)
-            if access_token.get_expire_delta():
-                # We can do the redirect automatically
+            if AccessToken.objects.filter(user=request.user, client=client).count():
                 has_valid_token = True
         except:
             pass

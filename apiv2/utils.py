@@ -43,6 +43,8 @@ from apiv2.forms import SEARCH_SORT_OPTIONS_API
 from freesound.utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
 from urllib import unquote
+from django.http import HttpResponseRedirect
+from django.utils.translation import ugettext as _
 
 
 ############################
@@ -131,6 +133,57 @@ class Authorize(DjangoOauth2ProviderAuthorize):
         template_name = 'api/minimal_authorize_app.html'
     else:
         template_name = 'api/authorize_app.html'
+
+    def handle(self, request, post_data=None):
+        data = self.get_data(request)
+
+        if data is None:
+            return self.error_response(request, {
+                'error': 'expired_authorization',
+                'error_description': _('Authorization session has expired.')})
+
+        try:
+            client, data = self._validate_client(request, data)
+        except OAuthError, e:
+            return self.error_response(request, e.args[0], status=400)
+
+
+        # Check if request user already has validated access token for client
+        has_valid_token = False
+        try:
+            access_token = AccessToken.objects.get(user=request.user, client=client)
+            if access_token.get_expire_delta():
+                # We can do the redirect automatically
+                has_valid_token = True
+        except:
+            pass
+
+        if not has_valid_token:
+            # If user has no valid token display the authorization form as normal
+            authorization_form = self.get_authorization_form(request, client, post_data, data)
+
+            if not authorization_form.is_bound or not authorization_form.is_valid():
+                return self.render_to_response({
+                    'client': client,
+                    'form': authorization_form,
+                    'oauth_data': data, })
+        else:
+            # If user has a valid token fill the authorization form with a newly created grant and continue
+            post_data = {u'authorize': [u'Authorize!']}
+            authorization_form = self.get_authorization_form(request, client, post_data, data)
+            if not authorization_form.is_valid():
+                return self.render_to_response({
+                    'client': client,
+                    'form': authorization_form,
+                    'oauth_data': data, })
+
+        code = self.save_authorization(request, client, authorization_form, data)
+
+        self.cache_data(request, data)
+        self.cache_data(request, code, "code")
+        self.cache_data(request, client, "client")
+
+        return HttpResponseRedirect(self.get_redirect_url(request))
 
 
 #############################

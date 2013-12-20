@@ -1,0 +1,365 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+
+<rdf:RDF xmlns="http://www.semanticweb.org/sergio/ontologies/2013/11/untitled-ontology-8#"
+     xml:base="http://www.semanticweb.org/sergio/ontologies/2013/11/untitled-ontology-8"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <owl:Ontology rdf:about="http://www.semanticweb.org/sergio/ontologies/2013/11/untitled-ontology-8"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://freesound.org/ontology/core#hasAge -->
+
+    <owl:ObjectProperty rdf:about="http://freesound.org/ontology/core#hasAge">
+        <rdfs:range rdf:resource="http://freesound.org/ontology/core#AgeTag"/>
+        <rdfs:domain rdf:resource="http://freesound.org/ontology/core#SpeechSound"/>
+        <owl:inverseOf rdf:resource="http://freesound.org/ontology/core#isAgeOf"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://freesound.org/ontology/core#isAgeOf -->
+
+    <owl:ObjectProperty rdf:about="http://freesound.org/ontology/core#isAgeOf">
+        <rdfs:domain rdf:resource="http://freesound.org/ontology/core#AgeTag"/>
+        <rdfs:range rdf:resource="http://freesound.org/ontology/core#SpeechSound"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://freesound.org/ontology/core#ActionTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#ActionTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#AgeTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#AgeTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#ArticulationTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#ArticulationTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#AttackTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#AttackTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#ChordProgresionSound -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#ChordProgresionSound">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#MusicalSound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#DecayTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#DecayTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#DynamicTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#DynamicTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#EffectSound -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#EffectSound">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#Sound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#FieldRecording -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#FieldRecording">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#SoundScape"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#GearTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#GearTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#GenderTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#GenderTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#GenreTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#GenreTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#InstrumentTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#InstrumentTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#KeyTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#KeyTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#LanguageTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#LanguageTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#LocationTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#LocationTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#Loop -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#Loop">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#MusicalSound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#MaterialTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#MaterialTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#MelodySound -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#MelodySound">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#MusicalSound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#MicrophoneTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#MicrophoneTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#MoodTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#MoodTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#MusicalSound -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#MusicalSound">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#Sound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#NoteTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#NoteTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#OnomatopeiaTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#OnomatopeiaTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#PitchedSampleSound -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#PitchedSampleSound">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#SampleSound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#ProcessingTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#ProcessingTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#ReleaseTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#ReleaseTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#SampleSound -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#SampleSound">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#Sound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#SoftwareTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#SoftwareTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#Sound -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#Sound"/>
+    
+
+
+    <!-- http://freesound.org/ontology/core#SoundScape -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#SoundScape">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#Sound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#SourceTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#SourceTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#SpeechSound -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#SpeechSound">
+        <rdfs:subClassOf rdf:resource="http://freesound.org/ontology/core#Sound"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#TechniqueTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#TechniqueTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#TempoTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#TempoTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#TypeTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#TypeTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://freesound.org/ontology/core#WhenTag -->
+
+    <owl:Class rdf:about="http://freesound.org/ontology/core#WhenTag">
+        <rdfs:subClassOf rdf:resource="http://purl.org/muto/core#Tag"/>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.org/muto/core#Tag -->
+
+    <owl:Class rdf:about="http://purl.org/muto/core#Tag"/>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 3.4.2) http://owlapi.sourceforge.net -->
+

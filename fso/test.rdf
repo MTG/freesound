@@ -1,0 +1,206 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY dcterms "http://purl.org/dc/terms/" >
+    <!ENTITY foaf "http://xmlns.com/foaf/0.1/" >
+    <!ENTITY muto "http://purl.org/muto/core#" >
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY dc "http://purl.org/dc/elements/1.1/" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+
+<rdf:RDF xmlns="http://localhost:8000/fso#"
+     xml:base="http://localhost:8000/fso"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:foaf="http://xmlns.com/foaf/0.1/"
+     xmlns:muto="http://purl.org/muto/core#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:dcterms="http://purl.org/dc/terms/">
+    <owl:Ontology rdf:about="http://localhost:8000/fso">
+        <rdfs:label xml:lang="en">FSO Core Ontology</rdfs:label>
+        <foaf:homepage>http://purl.org/fso</foaf:homepage>
+        <foaf:depiction>http://purl.org/fso/core/muto-UML.png</foaf:depiction>
+        <foaf:depiction>http://purl.org/fso/core/muto-compact.png</foaf:depiction>
+        <dc:title>Freesound Ontology (FSO)</dc:title>
+        <dc:description>The Freesound Ontology is defined to extend the semantic capabilities of the MUTO Ontology in the Freesound context</dc:description>
+        <owl:versionInfo>Version 0.1</owl:versionInfo>
+        <dcterms:issued>2013-12-16</dcterms:issued>
+        <dc:creator>Sergio Oramas, Frededric Font</dc:creator>
+        <rdfs:seeAlso>http://purl.org/muto/fso#</rdfs:seeAlso>
+        <dcterms:licence>http://creativecommons.org/licenses/by/3.0/</dcterms:licence>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.org/dc/elements/1.1/creator -->
+
+    <owl:AnnotationProperty rdf:about="&dc;creator"/>
+    
+
+
+    <!-- http://purl.org/dc/elements/1.1/description -->
+
+    <owl:AnnotationProperty rdf:about="&dc;description"/>
+    
+
+
+    <!-- http://purl.org/dc/elements/1.1/title -->
+
+    <owl:AnnotationProperty rdf:about="&dc;title"/>
+    
+
+
+    <!-- http://purl.org/dc/terms/issued -->
+
+    <owl:AnnotationProperty rdf:about="&dcterms;issued"/>
+    
+
+
+    <!-- http://purl.org/dc/terms/licence -->
+
+    <owl:AnnotationProperty rdf:about="&dcterms;licence"/>
+    
+
+
+    <!-- http://xmlns.com/foaf/0.1/depiction -->
+
+    <owl:AnnotationProperty rdf:about="&foaf;depiction"/>
+    
+
+
+    <!-- http://xmlns.com/foaf/0.1/homepage -->
+
+    <owl:AnnotationProperty rdf:about="&foaf;homepage"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://rdfs.org/sioc/ns#about -->
+
+    <owl:ObjectProperty rdf:about="http://rdfs.org/sioc/ns#about"/>
+    
+
+
+    <!-- http://rdfs.org/sioc/ns#creator_of -->
+
+    <owl:ObjectProperty rdf:about="http://rdfs.org/sioc/ns#creator_of"/>
+    
+
+
+    <!-- http://rdfs.org/sioc/ns#has_creator -->
+
+    <owl:ObjectProperty rdf:about="http://rdfs.org/sioc/ns#has_creator"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.org/dc/terms/created -->
+
+    <owl:DatatypeProperty rdf:about="&dcterms;created"/>
+    
+
+
+    <!-- http://purl.org/dc/terms/modified -->
+
+    <owl:DatatypeProperty rdf:about="&dcterms;modified"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://localhost:8000/fso#InstrumentTag -->
+
+    <owl:Class rdf:about="http://localhost:8000/fso#InstrumentTag">
+        <rdfs:label xml:lang="en">InstrumentTag</rdfs:label>
+        <rdfs:subClassOf rdf:resource="&muto;Tag"/>
+        <rdfs:comment xml:lang="en">Instrument Tag</rdfs:comment>
+        <rdfs:isDefinedBy rdf:resource="http://localhost:8000/fso#"/>
+    </owl:Class>
+    
+
+
+    <!-- http://localhost:8000/fso#SourceTag -->
+
+    <owl:Class rdf:about="http://localhost:8000/fso#SourceTag">
+        <rdfs:label xml:lang="en">SourceTag</rdfs:label>
+        <rdfs:subClassOf rdf:resource="&muto;Tag"/>
+        <rdfs:comment xml:lang="en">Source Tag</rdfs:comment>
+        <rdfs:isDefinedBy rdf:resource="http://localhost:8000/fso#"/>
+    </owl:Class>
+    
+
+
+    <!-- http://purl.org/muto/core#Tag -->
+
+    <owl:Class rdf:about="&muto;Tag"/>
+    
+
+
+    <!-- http://rdfs.org/sioc/ns#Item -->
+
+    <owl:Class rdf:about="http://rdfs.org/sioc/ns#Item"/>
+    
+
+
+    <!-- http://rdfs.org/sioc/ns#UserAccount -->
+
+    <owl:Class rdf:about="http://rdfs.org/sioc/ns#UserAccount"/>
+    
+
+
+    <!-- http://www.w3.org/2004/02/skos/core#Concept -->
+
+    <owl:Class rdf:about="http://www.w3.org/2004/02/skos/core#Concept"/>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 3.4.2) http://owlapi.sourceforge.net -->
+

@@ -89,7 +89,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'ratings',
                   'num_comments',
                   'comments',
-                  'num_downloads')
+                  'num_downloads',
+                  'geotag')
 
 
     uri = serializers.SerializerMethodField('get_uri')
@@ -135,6 +136,9 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_comments(self, obj):
         return prepend_base(reverse('apiv2-sound-comments', args=[obj.id]))
 
+    geotag = serializers.SerializerMethodField('get_geotag')
+    def get_geotag(self, obj):
+        return str(obj.geotag.lon) + " " + str(obj.geotag.lat)
 
 class SoundListSerializer(AbstractSoundSerializer):
 

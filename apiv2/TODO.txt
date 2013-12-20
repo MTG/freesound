@@ -6,7 +6,7 @@
         - Ratings -OK
         - Comments -OK
     - GET:
-        - Sound comments
+        - Sound comments -OK
         - Sound similarity (similar sounds) - F
         - Sound analysis - F
         - Search geotags

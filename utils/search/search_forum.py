@@ -70,7 +70,7 @@ def add_posts_to_solr(posts):
     solr.add(documents)
 
     logger.info("optimizing solr index")
-    solr.optimize()
+    #solr.optimize()
     logger.info("done")
     
 def add_all_posts_to_solr(post_queryset, slice_size=4000, mark_index_clean=False):

@@ -77,6 +77,8 @@ from provider.oauth2.models import AccessToken
 
 
 audio_logger = logging.getLogger('audio')
+# TAGRECOMMENDATION CODE
+research_logger = logging.getLogger('tagrecommendation_research')
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url = "/")
@@ -425,6 +427,14 @@ def describe_sounds(request):
         return HttpResponseRedirect(reverse('accounts-describe'))
 
     if request.method == 'POST':
+
+        # this is for tag recommendation logging purposes. can be deleted in a future
+        # TAGRECOMMENDATION CODE
+        try:
+            tag_recommendation_random_session_id = int(request.POST['random_session_id'])
+        except:
+            tag_recommendation_random_session_id = False
+
         # first get all the data
         for i in range(len(sounds_to_describe)):
             prefix = str(i)
@@ -443,9 +453,12 @@ def describe_sounds(request):
                     return render_to_response('accounts/describe_sounds.html',
                                               locals(),
                                               context_instance=RequestContext(request))
+
         # all valid, then create sounds and moderation tickets
-                
         dirty_packs = []
+        # TAGRECOMMENDATION CODE
+        tag_recommendation_session_sound_id_links = []
+
         for i in range(len(sounds_to_describe)):
             sound = Sound()
             sound.user = request.user
@@ -508,11 +521,17 @@ def describe_sounds(request):
                                 zoom=data.get('zoom'))
                 geotag.save()
                 sound.geotag = geotag
+
             # set the tags and descriptions
             data = forms[i]['description'].cleaned_data
             sound.description = remove_control_chars(data.get('description', ''))
             sound.set_tags(data.get('tags'))
             sound.save()
+
+            # add sound info in tagrecommendation log
+            # TAGRECOMMENDATION CODE
+            tag_recommendation_session_sound_id_links.append((forms[i]['description'].auto_id % i, sound.id))
+
             # remember to process the file
             sounds_to_process.append(sound)
             if request.user.profile.is_whitelisted:
@@ -549,6 +568,16 @@ def describe_sounds(request):
                 sound.compute_crc()
             except:
                 pass
+
+        # Save tag recommendation info in tagrecommendationresearch log
+        # TAGRECOMMENDATION CODE
+        if tag_recommendation_session_sound_id_links:
+            research_logger.info('%s000#describing#%s#%i#-#SoundsSaved:%s' % (datetime.datetime.today().strftime('%s'),
+                                                               tag_recommendation_random_session_id,
+                                                               sound.user.id,
+                                                               ','.join(['%s|%i' % (div_id, sound_id)  for div_id, sound_id in tag_recommendation_session_sound_id_links])))
+
+
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
         # Process the sound

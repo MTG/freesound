@@ -42,14 +42,6 @@ Metadata Descriptors
 >>>>>>>>>>>>>>>>>>>>
 
 
-metadata.audio_properties
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/metadata/audio_properties
-
-
 metadata.version
 -------------------------
 
@@ -141,16 +133,16 @@ http://essentia.upf.edu/documentation/reference/streaming_Loudness.html
 
 
 
-lowlevel.pitch
+lowlevel.spectral_rms
 -------------------------
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rms
 
 **Essentia Algorithm**
 
-http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+http://essentia.upf.edu/documentation/reference/streaming_RMS.html
 
 
 **Stats**::
@@ -168,7 +160,7 @@ http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.pitch.mean.png
+    .. image:: _static/descriptors/lowlevel.spectral_rms.mean.png
         :height: 300px
 
 
@@ -311,16 +303,16 @@ http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
 
 
 
-lowlevel.spectral_rms
+lowlevel.pitch
 -------------------------
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_rms
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/pitch
 
 **Essentia Algorithm**
 
-http://essentia.upf.edu/documentation/reference/streaming_RMS.html
+http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 
 **Stats**::
@@ -338,7 +330,7 @@ http://essentia.upf.edu/documentation/reference/streaming_RMS.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_rms.mean.png
+    .. image:: _static/descriptors/lowlevel.pitch.mean.png
         :height: 300px
 
 
@@ -981,34 +973,31 @@ http://essentia.upf.edu/documentation/reference/streaming_StrongPeak.html
 
 
 
-lowlevel.hfc
+lowlevel.spectral_decrease
 -------------------------
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/hfc
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_decrease
 
 **Essentia Algorithm**
 
-http://essentia.upf.edu/documentation/reference/streaming_HFC.html
+http://essentia.upf.edu/documentation/reference/streaming_Decrease.html
 
 
 **Stats**::
 
 
-/min
-/max
-/dvar2
 /dmean2
 /dmean
-/var
-/dvar
 /mean
+/max
+/min
 
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.hfc.mean.png
+    .. image:: _static/descriptors/lowlevel.spectral_decrease.mean.png
         :height: 300px
 
 
@@ -1251,16 +1240,16 @@ http://essentia.upf.edu/documentation/reference/streaming_ZeroCrossingRate.html
 
 
 
-lowlevel.spectral_decrease
+lowlevel.hfc
 -------------------------
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/spectral_decrease
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/lowlevel/hfc
 
 **Essentia Algorithm**
 
-http://essentia.upf.edu/documentation/reference/streaming_Decrease.html
+http://essentia.upf.edu/documentation/reference/streaming_HFC.html
 
 
 **Stats**::
@@ -1278,7 +1267,7 @@ http://essentia.upf.edu/documentation/reference/streaming_Decrease.html
 
 **Distribution in Freesound**
 
-    .. image:: _static/descriptors/lowlevel.spectral_decrease.mean.png
+    .. image:: _static/descriptors/lowlevel.hfc.mean.png
         :height: 300px
 
 
@@ -1437,17 +1426,17 @@ http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.ht
 
 
 
-rhythm.first_peak_weight
+rhythm.second_peak_spread
 -------------------------
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_weight
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_spread
 
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
-    .. image:: _static/descriptors/rhythm.first_peak_weight.png
+    .. image:: _static/descriptors/rhythm.second_peak_spread.png
         :height: 300px
 
 
@@ -1522,18 +1511,6 @@ http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptor
 
 
 
-rhythm.onset_rate
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/onset_rate
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_OnsetRate.html
-
-
 rhythm.beats_position
 -------------------------
 
@@ -1547,125 +1524,23 @@ http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.ht
 
 
 
-rhythm.second_peak_spread
+rhythm.first_peak_weight
 -------------------------
 
 ::
 
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/second_peak_spread
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/rhythm/first_peak_weight
 
 **Essentia Algorithm**
 
 http://essentia.upf.edu/documentation/reference/streaming_BpmHistogramDescriptors.html
-    .. image:: _static/descriptors/rhythm.second_peak_spread.png
+    .. image:: _static/descriptors/rhythm.first_peak_weight.png
         :height: 300px
 
 
 
 Tonal Descriptors
 >>>>>>>>>>>>>>>>>>>>
-
-
-tonal.hpcp
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_HPCP.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/tonal.hpcp.mean.000.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.001.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.002.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.003.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.004.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.005.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.006.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.007.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.008.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.009.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.010.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.011.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.012.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.013.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.014.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.015.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.016.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.017.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.018.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.019.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.020.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.021.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.022.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.023.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.024.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.025.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.026.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.027.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.028.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.029.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.030.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.031.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.032.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.033.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.034.png
-        :height: 300px
-    .. image:: _static/descriptors/tonal.hpcp.mean.035.png
-        :height: 300px
-
 
 
 tonal.chords_number_rate
@@ -1680,6 +1555,19 @@ tonal.chords_number_rate
 http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
     .. image:: _static/descriptors/tonal.chords_number_rate.png
         :height: 300px
+
+
+
+tonal.chords_scale
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_scale
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
 
 
 
@@ -1781,19 +1669,6 @@ tonal.chords_changes_rate
 http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
     .. image:: _static/descriptors/tonal.chords_changes_rate.png
         :height: 300px
-
-
-
-tonal.chords_scale
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/chords_scale
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html
 
 
 
@@ -2125,132 +2000,110 @@ http://essentia.upf.edu/documentation/reference/streaming_HPCP.html
 
 
 
+tonal.hpcp
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/tonal/hpcp
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_HPCP.html
+
+
+**Stats**::
+
+
+/min
+/max
+/dvar2
+/dmean2
+/dmean
+/var
+/dvar
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/tonal.hpcp.mean.000.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.001.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.002.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.003.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.004.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.005.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.006.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.007.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.008.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.009.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.010.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.011.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.012.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.013.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.014.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.015.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.016.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.017.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.018.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.019.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.020.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.021.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.022.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.023.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.024.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.025.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.026.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.027.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.028.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.029.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.030.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.031.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.032.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.033.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.034.png
+        :height: 300px
+    .. image:: _static/descriptors/tonal.hpcp.mean.035.png
+        :height: 300px
+
+
+
 Sfx Descriptors
 >>>>>>>>>>>>>>>>>>>>
-
-
-sfx.temporal_spread
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_spread
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/sfx.temporal_spread.mean.png
-        :height: 300px
-
-
-
-sfx.tc_to_total
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/tc_to_total
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_TCToTotal.html
-    .. image:: _static/descriptors/sfx.tc_to_total.png
-        :height: 300px
-
-
-
-sfx.pitch_centroid
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_centroid
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
-    .. image:: _static/descriptors/sfx.pitch_centroid.png
-        :height: 300px
-
-
-
-sfx.pitch_min_to_total
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_min_to_total
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_MinToTotal.html
-    .. image:: _static/descriptors/sfx.pitch_min_to_total.png
-        :height: 300px
-
-
-
-sfx.temporal_skewness
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_skewness
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
-
-
-**Stats**::
-
-
-/min
-/max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
-/mean
-
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/sfx.temporal_skewness.mean.png
-        :height: 300px
-
-
-
-sfx.strongdecay
--------------------------
-
-::
-
-    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/strongdecay
-
-**Essentia Algorithm**
-
-http://essentia.upf.edu/documentation/reference/streaming_StrongDecay.html
-    .. image:: _static/descriptors/sfx.strongdecay.png
-        :height: 300px
-
 
 
 sfx.temporal_decrease
@@ -2268,13 +2121,8 @@ http://essentia.upf.edu/documentation/reference/streaming_Decrease.html
 **Stats**::
 
 
-/min
 /max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
+/min
 /mean
 
 
@@ -2300,19 +2148,29 @@ http://essentia.upf.edu/documentation/reference/streaming_EffectiveDuration.html
 **Stats**::
 
 
-/min
 /max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
+/min
 /mean
 
 
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/sfx.effective_duration.mean.png
+        :height: 300px
+
+
+
+sfx.pitch_min_to_total
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_min_to_total
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_MinToTotal.html
+    .. image:: _static/descriptors/sfx.pitch_min_to_total.png
         :height: 300px
 
 
@@ -2332,13 +2190,8 @@ http://essentia.upf.edu/documentation/reference/streaming_DerivativeSFX.html
 **Stats**::
 
 
-/min
 /max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
+/min
 /mean
 
 
@@ -2364,6 +2217,33 @@ http://essentia.upf.edu/documentation/reference/streaming_MaxToTotal.html
 
 
 
+sfx.temporal_spread
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_spread
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+
+
+**Stats**::
+
+
+/max
+/min
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.temporal_spread.mean.png
+        :height: 300px
+
+
+
 sfx.temporal_kurtosis
 -------------------------
 
@@ -2379,13 +2259,8 @@ http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
 **Stats**::
 
 
-/min
 /max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
+/min
 /mean
 
 
@@ -2411,19 +2286,29 @@ http://essentia.upf.edu/documentation/reference/streaming_LogAttackTime.html
 **Stats**::
 
 
-/min
 /max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
+/min
 /mean
 
 
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/sfx.logattacktime.mean.png
+        :height: 300px
+
+
+
+sfx.tc_to_total
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/tc_to_total
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_TCToTotal.html
+    .. image:: _static/descriptors/sfx.tc_to_total.png
         :height: 300px
 
 
@@ -2443,13 +2328,8 @@ http://essentia.upf.edu/documentation/reference/streaming_FlatnessSFX.html
 **Stats**::
 
 
-/min
 /max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
+/min
 /mean
 
 
@@ -2475,19 +2355,29 @@ http://essentia.upf.edu/documentation/reference/streaming_DerivativeSFX.html
 **Stats**::
 
 
-/min
 /max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
+/min
 /mean
 
 
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/sfx.max_der_before_max.mean.png
+        :height: 300px
+
+
+
+sfx.pitch_centroid
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/pitch_centroid
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
+    .. image:: _static/descriptors/sfx.pitch_centroid.png
         :height: 300px
 
 
@@ -2507,19 +2397,41 @@ http://essentia.upf.edu/documentation/reference/streaming_Centroid.html
 **Stats**::
 
 
-/min
 /max
-/dvar2
-/dmean2
-/dmean
-/var
-/dvar
+/min
 /mean
 
 
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/sfx.temporal_centroid.mean.png
+        :height: 300px
+
+
+
+sfx.temporal_skewness
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/temporal_skewness
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_CentralMoments.html
+
+
+**Stats**::
+
+
+/max
+/min
+/mean
+
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/sfx.temporal_skewness.mean.png
         :height: 300px
 
 
@@ -2550,6 +2462,21 @@ sfx.max_to_total
 
 http://essentia.upf.edu/documentation/reference/streaming_MaxToTotal.html
     .. image:: _static/descriptors/sfx.max_to_total.png
+        :height: 300px
+
+
+
+sfx.strongdecay
+-------------------------
+
+::
+
+    curl http://www.freesound.org/api/sounds/<sound_id>/analysis/sfx/strongdecay
+
+**Essentia Algorithm**
+
+http://essentia.upf.edu/documentation/reference/streaming_StrongDecay.html
+    .. image:: _static/descriptors/sfx.strongdecay.png
         :height: 300px
 
 

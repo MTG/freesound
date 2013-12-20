@@ -131,20 +131,20 @@ class GaiaWrapper:
 
     @staticmethod
     def prepare_original_dataset_helper(ds):
-        proc_ds1 = transform(ds,  'FixLength')  # this transformation marks which descriptors are of fixed length, it optimizes things
-        prepared_ds = transform(proc_ds1, 'Cleaner')
-        proc_ds1.clear()
-
-        return prepared_ds
+        ds = transform(ds, 'FixLength')  # this transformation marks which descriptors are of fixed length, it optimizes things
+        ds = transform(ds, 'Cleaner')
+        try:
+            ds = transform(ds, 'enumerate', {'descriptorNames': ['.tonal.chords_progression']})
+        except:
+            logger.info('WARNING: enumerate transformation to .tonal.chords_progression could not be performed.')
+        return ds
 
     @staticmethod
     def normalize_dataset_helper(ds, descriptor_names):
         # Add normalization
         normalization_params = {"descriptorNames": descriptor_names, "independent": True, "outliers": -1}
-        normalized_ds = transform(ds, 'normalize', normalization_params)
-        ds.clear()
-
-        return normalized_ds
+        ds = transform(ds, 'normalize', normalization_params)
+        return ds
 
     def __build_metrics(self):
         for preset in PRESETS:
@@ -177,6 +177,14 @@ class GaiaWrapper:
             msg = 'Point with name %s could NOT be added because analysis file does not exist (%s).' % (str(point_name), str(point_location))
             logger.info(msg)
             return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+
+
+        if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS:
+            # Do enumerate
+            try:
+                self.original_dataset = transform(self.original_dataset, 'enumerate', {'descriptorNames': ['.tonal.chords_progression']})
+            except:
+                logger.info('WARNING: enumerate transformation to .tonal.chords_progression could not be performed.')
 
 
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics

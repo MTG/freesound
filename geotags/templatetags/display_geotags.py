@@ -28,5 +28,5 @@ def display_geotags(context, url = "/geotags/geotags_box_json/", width = 900, he
         borders = "defined"
     else:
         borders = "automatic"
-    
+
     return {"url":url, "media_url": context['media_url'], "m_width":width, "m_height":height, "clusters":clusters, "center_lat":center_lat, "center_lon":center_lon, "zoom":zoom, "borders":borders, "username":username}

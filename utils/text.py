@@ -171,7 +171,7 @@ def clean_html(input):
     """
     
     delete_tags = [u"script", u"style", u"head"]
-    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br", u"ul", u"li", u"blockquote", u"code"]
+    ok_tags = [u"a", u"img", u"strong", u"b", u"em", u"i", u"u", u"p", u"br",  u"blockquote", u"code"]
     ok_attributes = {u"a": [u"href"], u"img": [u"src", u"alt", u"title"]}
     # all other tags: replace with the content of the tag
     

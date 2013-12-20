@@ -410,9 +410,13 @@ def on_delete_sound(sender,instance, **kwargs):
     
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
-    # N.B. be watchful of errors that might be thrown if the sound is not in the similarity index
-    if Similarity.contains(instance.id):
-        Similarity.delete(instance.id)
+    if instance.similarity_state=='OK':
+	try:
+    		if Similarity.contains(instance.id):
+        		Similarity.delete(instance.id)
+	except:
+		web_logger.warn("ommitting similarity deletion for deleted sound %d"%instance.id)
+		
     web_logger.debug("Deleted sound with id %i"%instance.id)
 
 post_delete.connect(on_delete_sound, sender=Sound)

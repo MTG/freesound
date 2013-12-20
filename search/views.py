@@ -57,7 +57,8 @@ def search_prepare_query(search_query,
                          pack_tokenized_weight = DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
                          original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename'],
                          grouping = False,
-                         include_facets = True):
+                         include_facets = True,
+                         grouping_pack_limit = 1):
     query = SolrQuery()
 
     field_weights = []
@@ -92,7 +93,7 @@ def search_prepare_query(search_query,
             group_query=None,
             group_rows=10,
             group_start=0,
-            group_limit=1,
+            group_limit=grouping_pack_limit,  # This is the number of documents that will be returned for each group. By default only 1 is returned.
             group_offset=0,
             group_sort=None,
             group_sort_ingroup=None,

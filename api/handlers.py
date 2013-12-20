@@ -21,7 +21,8 @@
 from django.conf import settings
 from piston.handler import BaseHandler
 from piston.utils import rc
-from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
+from search.forms import SoundSearchForm
+from apiv2.forms import SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
 from sounds.models import Sound, Pack, Download
 from bookmarks.models import Bookmark, BookmarkCategory
@@ -34,7 +35,7 @@ from utils.pagination import paginate
 from django.core.urlresolvers import reverse
 from utils.nginxsendfile import sendfile
 import yaml
-from utils.similarity_utilities import get_similar_sounds, query_for_descriptors
+from utils.similarity_utilities import get_similar_sounds, api_search
 from similarity.client import Similarity
 from api.api_utils import auth, ReturnError#, parse_filter, parse_target
 import os
@@ -483,7 +484,7 @@ class SoundContentSearchHandler(BaseHandler):
         if not t and not f:
             raise ReturnError(400, "BadRequest", {"explanation": "Introduce either a target, a filter or both."})
         try:
-            results, count = query_for_descriptors(t,f, int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+            results, count = api_search(target=t, filter=f, num_results=int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
         except Exception, e:
             if str(e)[0:6] == u"Target" or str(e)[0:6] == u"Filter":
                 raise ReturnError(400, "BadRequest", {'explanation':e})
@@ -613,7 +614,7 @@ class SoundSimilarityHandler(BaseHandler):
         except Sound.DoesNotExist: #@UndefinedVariable
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or similarity data is not ready." % sound_id})
 
-        similar_sounds = get_similar_sounds(sound,request.GET.get('preset', None), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
+        similar_sounds, count = get_similar_sounds(sound,request.GET.get('preset', None), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
 
         sounds = []
         for similar_sound in similar_sounds :

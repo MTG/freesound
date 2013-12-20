@@ -28,21 +28,37 @@ _URL_DELETE_POINT             = 'delete_point/'
 _URL_CONTAINS_POINT           = 'contains/'
 _URL_NNSEARCH                 = 'nnsearch/'
 _URL_NNRANGE                  = 'nnrange/'
-_URL_SOUND_DESCRIPTORS        = 'get_sound_descriptors/'
+_URL_API_SEARCH               = 'api_search/'
 _URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
 _URL_SAVE                     = 'save/'
 
 
-def _get_url_as_json(url):
-    f = urllib2.urlopen(url.replace(" ","%20"))
+class SimilarityException(Exception):
+    status_code = None
+
+    def __init__(self, *args, **kwargs):
+        super(SimilarityException, self).__init__(*args)
+        self.status_code = kwargs['status_code']
+
+
+def _get_url_as_json(url, data=None):
+    if not data:
+        f = urllib2.urlopen(url.replace(" ", "%20"))
+    else:
+        f = urllib2.urlopen(url.replace(" ", "%20"), data)
     resp = f.read()
     return json.loads(resp)
+
 
 def _result_or_exception(result):
     if not result['error']:
         return result['result']
     else:
-        raise Exception(result['result'])
+        if 'status_code' in result.keys():
+            raise SimilarityException(result['result'], status_code=result['status_code'])
+        else:
+            raise SimilarityException(result['result'], status_code=500)
+
 
 class Similarity():
 
@@ -77,6 +93,29 @@ class Similarity():
         return r
 
     @classmethod
+    def api_search(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None):
+        url = _BASE_URL + _URL_API_SEARCH + '?'
+        if target_type:
+            url += '&target_type=' + str(target_type)
+        if target:
+            url += '&target=' + str(target)
+        if filter:
+            url += '&filter=' + str(filter)
+        if preset:
+            url += '&preset=' + str(preset)
+        if metric_descriptor_names:
+            url += '&metric_descriptor_names=' + str(metric_descriptor_names)
+        if num_results:
+            url += '&num_results=' + str(num_results)
+        if offset:
+            url += '&offset=' + str(offset)
+
+        j = _get_url_as_json(url, data=file)
+        r = _result_or_exception(j)
+
+        return r
+
+    @classmethod
     def add(cls, sound_id, yaml_path):
         url = _BASE_URL + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id)  + '&location=' + str(yaml_path)
         return _result_or_exception(_get_url_as_json(url))
@@ -101,21 +140,13 @@ class Similarity():
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def get_sound_descriptors(cls, sound_id, descriptor_names=None, normalization=True):
-        url = _BASE_URL + _URL_SOUND_DESCRIPTORS + '?' + 'sound_id=' + str(sound_id)
-        if descriptor_names:
-            url += '&descriptor_names=' + ','.join(descriptor_names)
-        if normalization:
-            url += '&normalization=1'
-
-        return _result_or_exception(_get_url_as_json(url))
-
-    @classmethod
-    def get_sounds_descriptors(cls, sound_ids, descriptor_names=None, normalization=True):
+    def get_sounds_descriptors(cls, sound_ids, descriptor_names=None, normalization=True, only_leaf_descriptors=False):
         url = _BASE_URL + _URL_SOUNDS_DESCRIPTORS + '?' + 'sound_ids=' + ','.join([str(sound_id) for sound_id in sound_ids])
         if descriptor_names:
             url += '&descriptor_names=' + ','.join(descriptor_names)
         if normalization:
             url += '&normalization=1'
+        if only_leaf_descriptors:
+            url += '&only_leaf_descriptors=1'
 
         return _result_or_exception(_get_url_as_json(url))

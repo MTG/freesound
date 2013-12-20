@@ -20,18 +20,13 @@
 #     See AUTHORS file.
 #
 
-from sounds.models import Sound, Pack
-from bookmarks.models import Bookmark, BookmarkCategory
-from ratings.models import Rating
-from comments.models import Comment
-from search.forms import SoundSearchFormAPI, SoundCombinedSearchFormAPI
-from django.contrib.auth.models import User
+
 from apiv2.serializers import *
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from forms import ApiV2ClientForm
+from forms import *
 from models import ApiV2Client
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
@@ -50,14 +45,15 @@ from api.forms import ApiKeyForm
 from django.contrib import messages
 from accounts.views import handle_uploaded_file
 from freesound.utils.filesystem import generate_tree
-from freesound.utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
-from piston.utils import rc
+from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 from search.views import search_prepare_query
 from urllib import unquote
 import os
-from freesound.utils.pagination import paginate
 from utils import api_search
 from django.contrib.contenttypes.models import ContentType
+from utils import ApiSearchPaginator
+from freesound.utils.similarity_utilities import api_search as similarity_api_search
+from similarity.client import SimilarityException
 
 
 logger = logging.getLogger("api")
@@ -100,7 +96,7 @@ class SoundSearch(GenericAPIView):
 
     def get(self, request,  *args, **kwargs):
         # Validate search form and check page 0
-        search_form = SoundSearchFormAPI(request.GET)
+        search_form = SoundSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
         if search_form.cleaned_data['page'] < 1:
@@ -162,35 +158,39 @@ class SoundCombinedSearch(GenericAPIView):
     TODO: proper documentation.
     """
 
+    serializer_class = SimilarityFileSerializer
+    analysis_file = None
+
     def get(self, request,  *args, **kwargs):
         # Validate search form and check page 0
-        search_form = SoundCombinedSearchFormAPI(request.GET)
+        search_form = SoundCombinedSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
         if search_form.cleaned_data['page'] < 1:
                 raise NotFoundException
 
         # Get search results
-        #try:
-        results, count, distance_to_target_data, more_from_pack_data = api_search(search_form)
-        #except Exception, e:
-        #    raise ServerErrorException
+        analysis_file = None
+        if self.analysis_file:
+            analysis_file = self.analysis_file.read()
+        results, count, distance_to_target_data, more_from_pack_data = api_search(search_form, target_file=analysis_file)
 
         # Paginate results
-        from utils import ApiSearchPaginator
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
         if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
             raise NotFoundException
         page = paginator.page(search_form.cleaned_data['page'])
         response_data = dict()
+        if self.analysis_file:
+            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name, self.analysis_file._size/1024)
         response_data['count'] = paginator.count
         response_data['previous'] = None
         response_data['next'] = None
         if page['has_other_pages']:
                 if page['has_previous']:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-advanced-search'), page=page['previous_page_number'])
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['previous_page_number'])
                 if page['has_next']:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-advanced-search'), page=page['next_page_number'])
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
         get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
@@ -203,7 +203,7 @@ class SoundCombinedSearch(GenericAPIView):
                     sound['distance_to_target'] = distance_to_target_data[sound_id]
                 if more_from_pack_data:
                     if more_from_pack_data[sound_id][0]:
-                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sound_id][1]), more_from_pack_data[sound_id][2]), group_by_pack='0')
+                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sound_id][1]), more_from_pack_data[sound_id][2]), group_by_pack='0')
                         sound['n_from_same_pack'] = more_from_pack_data[sound_id][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
 
@@ -214,6 +214,16 @@ class SoundCombinedSearch(GenericAPIView):
         response_data['results'] = sounds
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+    def post(self, request,  *args, **kwargs):
+        # This view has a post version to handle analysis file uploads
+        serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
+        if serializer.is_valid():
+            analysis_file = request.FILES['analysis_file']
+            self.analysis_file = analysis_file
+            return self.get(request,  *args, **kwargs)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 ############
@@ -349,9 +359,9 @@ class CreateBookmark(WriteRequiredGenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-############
+##############
 # RATING VIEWS
-############
+##############
 
 class SoundRatings (ListAPIView):
     """
@@ -551,6 +561,127 @@ class UploadAndDescribeAudioFile(WriteRequiredGenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+##################
+# SIMILARITY VIEWS
+##################
+
+
+class SimilarityFile(GenericAPIView):
+    """
+    Return similarity sounds to an uploaded analysis file.
+    TODO: proper documentation.
+    """
+
+    serializer_class = SimilarityFileSerializer
+
+    def post(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+
+        serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
+        if serializer.is_valid():
+            analysis_file = request.FILES['analysis_file']
+
+            # Validate search form and check page 0
+            similarity_file_form = SimilarityFormAPI(request.QUERY_PARAMS)
+            if not similarity_file_form.is_valid():
+                raise ParseError
+            if similarity_file_form.cleaned_data['page'] < 1:
+                    raise NotFoundException
+
+            # Get gaia results
+            results, count, distance_to_target_data, more_from_pack_data = api_search(similarity_file_form, target_file=analysis_file.read())
+
+            # Paginate results
+            paginator = ApiSearchPaginator(results, count, similarity_file_form.cleaned_data['page_size'])
+            if similarity_file_form.cleaned_data['page'] > paginator.num_pages and count != 0:
+                raise NotFoundException
+            page = paginator.page(similarity_file_form.cleaned_data['page'])
+            response_data = dict()
+            response_data['target_analysis_file'] = '%s (%i KB)' % (analysis_file._name, analysis_file._size/1024)
+            response_data['count'] = paginator.count
+            response_data['previous'] = None
+            response_data['next'] = None
+            if page['has_other_pages']:
+                    if page['has_previous']:
+                        response_data['previous'] = similarity_file_form.construct_link(reverse('apiv2-similarity-file'), page=page['previous_page_number'])
+                    if page['has_next']:
+                        response_data['next'] = similarity_file_form.construct_link(reverse('apiv2-similarity-file'), page=page['next_page_number'])
+
+            # Get analysis data and serialize sound results
+            get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
+            sounds = []
+            for sound_id in page['object_list']:
+                try:
+                    sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
+                    # Distance to target is present we add it to the serialized sound
+                    if distance_to_target_data:
+                        sound['distance_to_target'] = distance_to_target_data[sound_id]
+                    sounds.append(sound)
+
+                except:
+                    # This will happen if there are synchronization errors between gaia and and the database.
+                    # In that case sounds are are set to null
+                    sounds.append(None)
+            response_data['results'] = sounds
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SimilaritySound(GenericAPIView):
+    """
+    Return similarity sounds to a given sound id
+    TODO: proper documentation.
+    """
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+
+        # Validate search form and check page 0
+        similarity_sound_form = SimilarityFormAPI(request.QUERY_PARAMS)
+        if not similarity_sound_form.is_valid():
+            raise ParseError
+        if similarity_sound_form.cleaned_data['page'] < 1:
+                raise NotFoundException
+
+        # Get search results
+        sound_id = self.kwargs['pk']
+        similarity_sound_form.cleaned_data['target'] = str(sound_id)
+        results, count, distance_to_target_data, more_from_pack_data = api_search(similarity_sound_form)
+
+        # Paginate results
+        paginator = ApiSearchPaginator(results, count, similarity_sound_form.cleaned_data['page_size'])
+        if similarity_sound_form.cleaned_data['page'] > paginator.num_pages and count != 0:
+            raise NotFoundException
+        page = paginator.page(similarity_sound_form.cleaned_data['page'])
+        response_data = dict()
+        response_data['count'] = paginator.count
+        response_data['previous'] = None
+        response_data['next'] = None
+        if page['has_other_pages']:
+                if page['has_previous']:
+                    response_data['previous'] = similarity_sound_form.construct_link(reverse('apiv2-similarity-sound', args=[sound_id]), page=page['previous_page_number'])
+                if page['has_next']:
+                    response_data['next'] = similarity_sound_form.construct_link(reverse('apiv2-similarity-sound', args=[sound_id]), page=page['next_page_number'])
+
+        # Get analysis data and serialize sound results
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
+        sounds = []
+        for sound_id in page['object_list']:
+            try:
+                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
+                # Distance to target is present we add it to the serialized sound
+                if distance_to_target_data:
+                    sound['distance_to_target'] = distance_to_target_data[sound_id]
+                sounds.append(sound)
+
+            except:
+                # This will happen if there are synchronization errors between gaia and and the database.
+                # In that case sounds are are set to null
+                sounds.append(None)
+        response_data['results'] = sounds
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 #############

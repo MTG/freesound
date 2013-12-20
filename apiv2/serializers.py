@@ -165,7 +165,10 @@ class SoundSerializer(AbstractSoundSerializer):
         try:
             descriptors = self.context['request'].GET.get('descriptors', [])
             if descriptors:
-                return get_sounds_descriptors([obj.id], descriptors.split(','), self.context['request'].GET.get('normalized', '0') == '1')[str(obj.id)]
+                return get_sounds_descriptors([obj.id],
+                                              descriptors.split(','),
+                                              self.context['request'].GET.get('normalized', '0') == '1',
+                                              only_leaf_descriptors=True)[str(obj.id)]
             else:
                 return None
         except Exception, e:
@@ -421,4 +424,26 @@ class UploadAndDescribeAudioFileSerializer(SoundDescriptionSerializer):
             extension = None
         if extension not in ALLOWED_EXTENSIONS or not extension:
             raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
+        return attrs
+
+
+########################
+# SIMILARITY SERIALIZERS
+########################
+
+ALLOWED_ANALYSIS_EXTENSIONS = ['json']
+
+class SimilarityFileSerializer(serializers.Serializer):
+    analysis_file = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Analysis file created with the latest freesound extractor. Must be in .json format.')
+
+    def validate_analysis_file(self, attrs, source):
+        value = attrs[source]
+        try:
+            extension = value.name.split('.')[-1]
+        except:
+            extension = None
+
+        if extension not in ALLOWED_ANALYSIS_EXTENSIONS or not extension:
+            raise serializers.ValidationError('Uploaded analysis file format not supported, must be .json.')
+
         return attrs

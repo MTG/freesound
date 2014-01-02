@@ -192,7 +192,8 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
                   'url',
                   'username',
                   'date_joined',
-                  'sounds')
+                  'sounds',
+                  'avatar')
 
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
@@ -205,6 +206,13 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
         return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]))
+
+    avatar = serializers.SerializerMethodField('get_avatar')
+    def get_avatar(self, obj):
+        if obj.profile.has_avatar:
+            return obj.profile.locations()['avatar']['L']['url']
+        else:
+            return None
 
 
 ##################

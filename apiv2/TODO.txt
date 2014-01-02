@@ -7,26 +7,22 @@
         - Comments -OK
     - GET:
         - Sound comments -OK
-        - Sound similarity (similar sounds) - F
-        - Sound analysis - F
+        - Sound similarity (similar sounds) - OK
+        - Sound analysis - OK
         - Search geotags
             - See if it can be added to solr
         - Sound serve (download)
         - Pack serve (download pack)
     - other:
-        - Similarity: how do you filter multidimensional descriptors? - F
+        - Similarity: how do you filter multidimensional descriptors? - OK
         - Sporadic server errors on combined search?
 
 - Complete serializers - F
-    - User serializer: user avatar field
 
 - Write docummentation and add LOGGING
-    - Return view options (parameters, etc...) in view metadata?
-    - Explain group by pack results in combined search (n_form_same_pack becomes inacurate)
 
 - Customize online interactive api
 - Clean code (imports, utils...)
-
 
 - Clean up expired grants from database with a django command
 

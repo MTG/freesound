@@ -29,7 +29,7 @@ from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors
-from exceptions import NotFoundException, InvalidUrlException, ServerErrorException
+from exceptions import *
 from forms import *
 from models import ApiV2Client
 from api.models import ApiKey
@@ -38,12 +38,13 @@ from accounts.views import handle_uploaded_file
 from search.views import search_prepare_query, search_prepare_sort
 from freesound.utils.filesystem import generate_tree
 from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from freesound.utils.nginxsendfile import sendfile
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.core.urlresolvers import reverse
 from urllib import unquote
 import settings
@@ -96,7 +97,7 @@ class Search(GenericAPIView):
         if not search_form.is_valid():
             raise ParseError
         if search_form.cleaned_data['page'] < 1:
-                raise NotFoundException
+            raise NotFoundException
 
         try:
             # Get search results
@@ -429,6 +430,28 @@ class SoundListFromIds(ListAPIView):
         return Sound.objects.filter(id__in=ids)
 
 
+class SoundDownload(GenericAPIView):
+    """
+    Download a sound.
+    """
+
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+
+        sound_id = kwargs['pk']
+        try:
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+        except Sound.DoesNotExist:
+            raise NotFoundException
+
+        if not os.path.exists(sound.locations('path')):
+            raise NotFoundException
+
+        return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
+
 ############
 # USER VIEWS
 ############
@@ -463,7 +486,7 @@ class UserSoundList(ListAPIView):
         try:
             User.objects.get(username=self.kwargs['username'], is_active=True)
         except User.DoesNotExist:
-            raise NotFoundException()
+            raise NotFoundException
 
         queryset = Sound.objects.select_related('user').filter(moderation_state="OK",
                                                                processing_state="OK",
@@ -531,7 +554,7 @@ class UserBookmarkSounds (ListAPIView):
         try:
             queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
         except:
-            raise NotFoundException()
+            raise NotFoundException
 
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         #[bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'],category=None)]
@@ -571,14 +594,51 @@ class PackSoundList(ListAPIView):
         try:
             Pack.objects.get(id=self.kwargs['pk'])
         except Pack.DoesNotExist:
-            raise NotFoundException()
+            raise NotFoundException
 
         queryset = Sound.objects.select_related('pack').filter(moderation_state="OK",
                                                                processing_state="OK",
                                                                pack__id=self.kwargs['pk'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
-
         return queryset
+
+
+class PackDownload(GenericAPIView):
+    """
+    Download a pack
+    """
+
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        pack_id = kwargs['pk']
+        try:
+            pack = Pack.objects.get(id=pack_id)
+        except Pack.DoesNotExist:
+            raise NotFoundException
+
+        sounds = pack.sound_set.filter(processing_state="OK", moderation_state="OK")
+        if not sounds:
+            raise NotFoundException(msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id))
+
+        try:
+            filelist = "%s %i %s %s\r\n" % (pack.license_crc,
+                                            os.stat(pack.locations('license_path')).st_size,
+                                            pack.locations('license_url'),
+                                            "_readme_and_license.txt")
+        except:
+            raise ServerErrorException
+
+        for sound in sounds:
+            url = sound.locations("sendfile_url")
+            name = sound.friendly_filename()
+            if sound.crc == '':
+                continue
+            filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
+        response = HttpResponse(filelist, content_type="text/plain")
+        response['X-Archive-Files'] = 'zip'
+        return response
 
 
 ##################

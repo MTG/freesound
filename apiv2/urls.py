@@ -51,7 +51,7 @@ urlpatterns = patterns('apiv2.views',
     url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysis.as_view(), name="apiv2-sound-analysis"),
     url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilaritySound.as_view(), name="apiv2-similarity-sound"),
     url(r'^sounds/list_from_ids/$', views.SoundListFromIds.as_view(), name="apiv2-sound-list-from-ids"),
-    # TODO: download sound
+    url(r'^sounds/(?P<pk>[0-9]+)/download/$', views.SoundDownload.as_view(), name="apiv2-sound-download"),
 
     # Users
     url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),
@@ -64,7 +64,7 @@ urlpatterns = patterns('apiv2.views',
     # Packs
     url(r'^packs/(?P<pk>[0-9]+)/$', views.PackInstance.as_view(), name='apiv2-pack-instance'),
     url(r'^packs/(?P<pk>[0-9]+)/sounds/$', views.PackSoundList.as_view(), name='apiv2-pack-sound-list'),
-    # TODO: download pack
+    url(r'^packs/(?P<pk>[0-9]+)/download/$', views.PackDownload.as_view(), name='apiv2-pack-download'),
 
 
     ##############

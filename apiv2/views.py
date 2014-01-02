@@ -21,14 +21,13 @@
 #
 
 
-from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -68,17 +67,20 @@ class Me(GenericAPIView):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def get(self, request,  *args, **kwargs):
-        response_data = {
-                         'username': self.user.username,
-                         'email': self.user.email,
-                         'date_joined': self.user.date_joined,
-                         'about': self.user.profile.about,
-                         'home_page': self.user.profile.home_page,
-                         'num_sound': self.user.profile.num_sounds,
-                         'num_posts': self.user.profile.num_posts
+        if self.user:
+            response_data = {
+                             'username': self.user.username,
+                             'email': self.user.email,
+                             'date_joined': self.user.date_joined,
+                             'about': self.user.profile.about,
+                             'home_page': self.user.profile.home_page,
+                             'num_sound': self.user.profile.num_sounds,
+                             'num_posts': self.user.profile.num_posts
 
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            raise ServerErrorException
 
 
 ####################################
@@ -430,12 +432,10 @@ class SoundListFromIds(ListAPIView):
         return Sound.objects.filter(id__in=ids)
 
 
-class SoundDownload(GenericAPIView):
+class SoundDownload(DownloadAPIView):
     """
     Download a sound.
     """
-
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
@@ -603,12 +603,10 @@ class PackSoundList(ListAPIView):
         return queryset
 
 
-class PackDownload(GenericAPIView):
+class PackDownload(DownloadAPIView):
     """
     Download a pack
     """
-
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
@@ -791,6 +789,7 @@ class CreateComment(WriteRequiredGenericAPIView):
 
 ### Root view
 @api_view(('GET',))
+@authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
 def api_root(request, format=None):
     '''
     Main docs

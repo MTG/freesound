@@ -209,6 +209,16 @@ class GenericAPIView(RestFrameworkGenericAPIView):
         self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
 
 
+class DownloadAPIView(RestFrameworkGenericAPIView):
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def initial(self, request, *args, **kwargs):
+        super(GenericAPIView, self).initial(request, *args, **kwargs)
+
+        # Get request information and store it as class variable
+        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+
+
 class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 

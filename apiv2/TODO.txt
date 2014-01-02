@@ -1,7 +1,6 @@
-- Check required permissions per view
 - Complete serializers
 - Rename views so they better match api organization
-- Write docummentation and add LOGGING
+- Write documentation and add LOGGING
 - Customize online interactive api
 - Clean code (imports, utils...)
 - Clean up expired grants from database with a django command

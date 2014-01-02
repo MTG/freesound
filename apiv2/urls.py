@@ -50,7 +50,7 @@ urlpatterns = patterns('apiv2.views',
     url(r'^sounds/(?P<pk>[0-9]+)/comments/$', views.SoundComments.as_view(), name="apiv2-sound-comments"),
     url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysis.as_view(), name="apiv2-sound-analysis"),
     url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilaritySound.as_view(), name="apiv2-similarity-sound"),
-    # TODO: list sounds from ids
+    url(r'^sounds/list_from_ids/$', views.SoundListFromIds.as_view(), name="apiv2-sound-list-from-ids"),
     # TODO: download sound
 
     # Users

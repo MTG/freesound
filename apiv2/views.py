@@ -379,7 +379,7 @@ class SimilaritySound(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class SoundComments (ListAPIView):
+class SoundComments(ListAPIView):
     """
     List of comments of a user.
     TODO: proper documentation.
@@ -394,7 +394,7 @@ class SoundComments (ListAPIView):
         return Comment.objects.filter(object_id=self.kwargs['pk'])
 
 
-class SoundRatings (ListAPIView):
+class SoundRatings(ListAPIView):
     """
     List of ratings of a user.
     TODO: proper documentation.
@@ -407,6 +407,26 @@ class SoundRatings (ListAPIView):
 
     def get_queryset(self):
         return Rating.objects.filter(object_id=self.kwargs['pk'])
+
+
+class SoundListFromIds(ListAPIView):
+    """
+    Return a list of sounds for the specified IDS (so developers can get all information at once)
+    Ids must be indicated with parameter ids and a list of comma-separated numbers.
+    """
+
+    serializer_class = SoundListSerializer
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(SoundListFromIds, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        try:
+            ids = [int(item) for item in self.request.QUERY_PARAMS.get('ids').split(',')[:settings.REST_FRAMEWORK['MAX_PAGINATE_BY']]]
+        except:
+            ids = []
+        return Sound.objects.filter(id__in=ids)
 
 
 ############

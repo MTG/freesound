@@ -1,28 +1,9 @@
-- Implement views
-    - POST:
-        - Sounds -OK
-        - Describe -OK
-        - Bookmarks -OK
-        - Ratings -OK
-        - Comments -OK
-    - GET:
-        - Sound comments -OK
-        - Sound similarity (similar sounds) - OK
-        - Sound analysis - OK
-        - Search geotags
-            - See if it can be added to solr
-        - Sound serve (download)
-        - Pack serve (download pack)
-    - other:
-        - Similarity: how do you filter multidimensional descriptors? - OK
-        - Sporadic server errors on combined search?
-
 - Complete serializers - F
-
+- Rename views so they better match api organization
 - Write docummentation and add LOGGING
-
 - Customize online interactive api
 - Clean code (imports, utils...)
-
 - Clean up expired grants from database with a django command
+- Sporadic server errors on combined search?
+- TEST TEST TEST!!!
 

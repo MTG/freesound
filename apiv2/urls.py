@@ -43,7 +43,7 @@ urlpatterns = patterns('apiv2.views',
     url(r'^search/$', views.Search.as_view(), name="apiv2-sound-search"),
     url(r'^search/combined/$', views.CombinedSearch.as_view(), name="apiv2-sound-combined-search"),
     url(r'^search/target_file/$', views.SimilarityFile.as_view(), name="apiv2-similarity-file"),
-    
+
     # Sounds
     url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
     url(r'^sounds/(?P<pk>[0-9]+)/ratings/$', views.SoundRatings.as_view(), name="apiv2-sound-ratings"),
@@ -52,7 +52,6 @@ urlpatterns = patterns('apiv2.views',
     url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilaritySound.as_view(), name="apiv2-similarity-sound"),
     # TODO: list sounds from ids
     # TODO: download sound
-    # TODO: download analysis frames
 
     # Users
     url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),

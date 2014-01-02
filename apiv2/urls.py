@@ -32,18 +32,27 @@ from apiv2 import views
 
 
 urlpatterns = patterns('apiv2.views',
-    url(r'^$', 'api_root'),
+    #############
+    # READ ONLY #
+    #############
 
     # Me
     url(r'^me/$', views.Me.as_view(), name="apiv2-me"),
 
+    # Search and similarity search
+    url(r'^search/$', views.Search.as_view(), name="apiv2-sound-search"),
+    url(r'^search/combined/$', views.CombinedSearch.as_view(), name="apiv2-sound-combined-search"),
+    url(r'^search/target_file/$', views.SimilarityFile.as_view(), name="apiv2-similarity-file"),
+    
     # Sounds
     url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
-    url(r'^sounds/search/$', views.SoundSearch.as_view(), name="apiv2-sound-search"),
-    url(r'^sounds/combined_search/$', views.SoundCombinedSearch.as_view(), name="apiv2-sound-combined-search"),
     url(r'^sounds/(?P<pk>[0-9]+)/ratings/$', views.SoundRatings.as_view(), name="apiv2-sound-ratings"),
     url(r'^sounds/(?P<pk>[0-9]+)/comments/$', views.SoundComments.as_view(), name="apiv2-sound-comments"),
     url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysis.as_view(), name="apiv2-sound-analysis"),
+    url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilaritySound.as_view(), name="apiv2-similarity-sound"),
+    # TODO: list sounds from ids
+    # TODO: download sound
+    # TODO: download analysis frames
 
     # Users
     url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),
@@ -52,36 +61,49 @@ urlpatterns = patterns('apiv2.views',
     url(r'^users/(?P<username>[^//]+)/bookmarks/$', views.UserBookmarks.as_view(), name='apiv2-user-bookmark-categories'),
     url(r'^users/(?P<username>[^//]+)/bookmarks/category/uncategorized/sounds/$', views.UserBookmarkSounds.as_view(),    name='apiv2-user-bookmark-uncategorized'),
     url(r'^users/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/sounds/$', views.UserBookmarkSounds.as_view(), name='apiv2-user-bookmark-category-sounds'),
-    url(r'^users/create/bookmark/$', views.CreateBookmark.as_view(), name='apiv2-user-create-bookmark'),
-    url(r'^users/create/rating/$', views.CreateRating.as_view(), name='apiv2-user-create-rating'),
-    url(r'^users/create/comment/$', views.CreateComment.as_view(), name='apiv2-user-create-comment'),
 
     # Packs
     url(r'^packs/(?P<pk>[0-9]+)/$', views.PackInstance.as_view(), name='apiv2-pack-instance'),
     url(r'^packs/(?P<pk>[0-9]+)/sounds/$', views.PackSoundList.as_view(), name='apiv2-pack-sound-list'),
+    # TODO: download pack
 
-    # Upload files
-    url(r'^uploads/upload/$', views.UploadAudioFile.as_view(), name="apiv2-uploads-upload"),
-    url(r'^uploads/not_yet_described/$', views.NotYetDescribedUploadedAudioFiles.as_view(), name="apiv2-uploads-not-described"),
-    url(r'^uploads/describe/$', views.DescribeAudioFile.as_view(), name="apiv2-uploads-describe"),
-    url(r'^uploads/upload_and_describe/$', views.UploadAndDescribeAudioFile.as_view(), name="apiv2-uploads-upload-and-describe"),
 
-    # Similarity
-    url(r'^similarity/sound/(?P<pk>[0-9]+)/$', views.SimilaritySound.as_view(), name="apiv2-similarity-sound"),
-    url(r'^similarity/file/$', views.SimilarityFile.as_view(), name="apiv2-similarity-file"),
+    ##############
+    # READ WRITE #
+    ##############
+
+    # Upload sounds
+    url(r'^post/sound/$', views.UploadAudioFile.as_view(), name="apiv2-uploads-upload"),
+    url(r'^post/sound/not_yet_described/$', views.NotYetDescribedUploadedAudioFiles.as_view(), name="apiv2-uploads-not-described"),
+    url(r'^post/sound/describe/$', views.DescribeAudioFile.as_view(), name="apiv2-uploads-describe"),
+    url(r'^post/sound/upload_and_describe/$', views.UploadAndDescribeAudioFile.as_view(), name="apiv2-uploads-upload-and-describe"),
+
+    # Other
+    url(r'^post/bookmark/$', views.CreateBookmark.as_view(), name='apiv2-user-create-bookmark'),
+    url(r'^post/rating/$', views.CreateRating.as_view(), name='apiv2-user-create-rating'),
+    url(r'^post/comment/$', views.CreateComment.as_view(), name='apiv2-user-create-comment'),
+
+
+    #########################
+    # MANAGEMENT AND OAUTH2 #
+    #########################
 
     # Client management
     url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),
     url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
     url(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
 
-    # Include views for three-legged auth process
+    # Oauth2
     url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2')),
     url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
 
-    # Any other url
-    url(r'/$', views.return_invalid_url),
 
+    #########
+    # OTHER #
+    #########
+
+    url(r'^$', 'api_root'),
+    url(r'/$', views.return_invalid_url),
 )
 
 

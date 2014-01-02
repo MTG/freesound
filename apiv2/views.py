@@ -68,6 +68,7 @@ def api_root(request, format=None):
         #'upload': reverse('apiv2-uploads-upload'),
     })
 
+
 #########
 # ME VIEW
 #########
@@ -93,48 +94,12 @@ class Me(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-#############
-# SOUND VIEWS
-#############
+##############
+# SEARCH VIEWS
+##############
 
 
-class SoundInstance(RetrieveAPIView):
-    """
-    Detailed sound information.
-    TODO: proper doccumentation.
-    """
-    serializer_class = SoundSerializer
-    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
-
-    def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
-        return super(SoundInstance, self).get(request, *args, **kwargs)
-
-
-class SoundAnalysis(GenericAPIView):
-    """
-    Sound analysis information.
-    TODO: proper doccumentation.
-    """
-
-    def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
-
-        sound_id = kwargs['pk']
-        descriptors = []
-        if request.QUERY_PARAMS.get('descriptors', False):
-            descriptors = request.QUERY_PARAMS['descriptors'].split(',')
-        response_data = get_sounds_descriptors([sound_id],
-                                                descriptors,
-                                                request.QUERY_PARAMS.get('normalized', '0') == '1',
-                                                only_leaf_descriptors=True)
-        if response_data:
-            return Response(response_data[str(sound_id)], status=status.HTTP_200_OK)
-        else:
-            raise InvalidUrlException
-
-
-class SoundSearch(GenericAPIView):
+class Search(GenericAPIView):
     """
     Sound search.
     TODO: proper doccumentation.
@@ -198,7 +163,7 @@ class SoundSearch(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class SoundCombinedSearch(GenericAPIView):
+class CombinedSearch(GenericAPIView):
     """
     Sound advanced search.
     TODO: proper documentation.
@@ -270,6 +235,50 @@ class SoundCombinedSearch(GenericAPIView):
             return self.get(request,  *args, **kwargs)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+#############
+# SOUND VIEWS
+#############
+
+
+class SoundInstance(RetrieveAPIView):
+    """
+    Detailed sound information.
+    TODO: proper doccumentation.
+    """
+    serializer_class = SoundSerializer
+    queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+        return super(SoundInstance, self).get(request, *args, **kwargs)
+
+
+class SoundAnalysis(GenericAPIView):
+    """
+    Sound analysis information.
+    TODO: proper doccumentation.
+    """
+
+    def get(self, request,  *args, **kwargs):
+        logger.info("TODO: proper logging")
+
+        sound_id = kwargs['pk']
+        descriptors = []
+        if request.QUERY_PARAMS.get('descriptors', False):
+            descriptors = request.QUERY_PARAMS['descriptors'].split(',')
+        response_data = get_sounds_descriptors([sound_id],
+                                                descriptors,
+                                                request.QUERY_PARAMS.get('normalized', '0') == '1',
+                                                only_leaf_descriptors=True)
+        if response_data:
+            return Response(response_data[str(sound_id)], status=status.HTTP_200_OK)
+        else:
+            raise InvalidUrlException
+
+
+
 
 
 ############

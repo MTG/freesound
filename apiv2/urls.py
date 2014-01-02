@@ -72,15 +72,15 @@ urlpatterns = patterns('apiv2.views',
     ##############
 
     # Upload sounds
-    url(r'^post/sound/$', views.UploadAudioFile.as_view(), name="apiv2-uploads-upload"),
-    url(r'^post/sound/not_yet_described/$', views.NotYetDescribedUploadedAudioFiles.as_view(), name="apiv2-uploads-not-described"),
-    url(r'^post/sound/describe/$', views.DescribeAudioFile.as_view(), name="apiv2-uploads-describe"),
-    url(r'^post/sound/upload_and_describe/$', views.UploadAndDescribeAudioFile.as_view(), name="apiv2-uploads-upload-and-describe"),
+    url(r'^create/sound/$', views.UploadAudioFile.as_view(), name="apiv2-uploads-upload"),
+    url(r'^create/sound/not_yet_described/$', views.NotYetDescribedUploadedAudioFiles.as_view(), name="apiv2-uploads-not-described"),
+    url(r'^create/sound/describe/$', views.DescribeAudioFile.as_view(), name="apiv2-uploads-describe"),
+    url(r'^create/sound/upload_and_describe/$', views.UploadAndDescribeAudioFile.as_view(), name="apiv2-uploads-upload-and-describe"),
 
     # Other
-    url(r'^post/bookmark/$', views.CreateBookmark.as_view(), name='apiv2-user-create-bookmark'),
-    url(r'^post/rating/$', views.CreateRating.as_view(), name='apiv2-user-create-rating'),
-    url(r'^post/comment/$', views.CreateComment.as_view(), name='apiv2-user-create-comment'),
+    url(r'^create/bookmark/$', views.CreateBookmark.as_view(), name='apiv2-user-create-bookmark'),
+    url(r'^create/rating/$', views.CreateRating.as_view(), name='apiv2-user-create-rating'),
+    url(r'^create/comment/$', views.CreateComment.as_view(), name='apiv2-user-create-comment'),
 
 
     #########################
@@ -101,7 +101,7 @@ urlpatterns = patterns('apiv2.views',
     # OTHER #
     #########
 
-    url(r'^$', 'api_root'),
+    url(r'^$', 'freesound_api_v2_resources'),
     url(r'/$', views.return_invalid_url),
 )
 

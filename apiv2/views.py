@@ -27,7 +27,7 @@ from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -790,14 +790,54 @@ class CreateComment(WriteRequiredGenericAPIView):
 ### Root view
 @api_view(('GET',))
 @authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
-def api_root(request, format=None):
+def freesound_api_v2_resources(request, format=None):
+
     '''
-    Main docs
+    List of resources available in the Freesound API V2.<br>Note that urls that
+    contain elements in brackets (<>) should be replaced with the corresponding
+    variables.
     '''
 
-    return Response({
-        #'upload': reverse('apiv2-uploads-upload'),
-    })
+    return Response([
+        {'Search resources': {
+            'Search': prepend_base(reverse('apiv2-sound-search')),
+            'Combined Search': prepend_base(reverse('apiv2-sound-combined-search')),
+            'Similarity search with target file': prepend_base(reverse('apiv2-similarity-file')),
+        }},
+        {'Sound resources': {
+            'Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>')),
+            'Sound ratings': prepend_base(reverse('apiv2-sound-ratings', args=[0]).replace('0', '<sound_id>')),
+            'Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>')),
+            'Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>')) + '<filter>',
+            'Download sound': prepend_base(reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
+            'Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>')),
+            'Sounds from list of sound ids': prepend_base(reverse('apiv2-sound-list-from-ids')),
+
+        }},
+        {'User resources': {
+            'User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>')),
+            'User sounds': prepend_base(reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>')),
+            'User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>')),
+            'User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>')),
+            'User uncategorized sound bookmarks': prepend_base(reverse('apiv2-user-bookmark-uncategorized', args=['uname']).replace('uname', '<username>')),
+            'User sounds for bookmark category': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>')),
+        }},
+        {'Pack resources': {
+            'Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>')),
+            'Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>')),
+            'Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
+        }},
+        {'Create resources': {
+            'Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
+            'Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
+            'Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
+            'Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
+            'Create bookmark': prepend_base(reverse('apiv2-user-create-bookmark')),
+            'Create rating': prepend_base(reverse('apiv2-user-create-rating')),
+            'Create comment': prepend_base(reverse('apiv2-user-create-comment')),
+        }},
+        {'Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')), },
+    ])
 
 ### View for returning "Invalid url" 400 responses
 @api_view(['GET'])

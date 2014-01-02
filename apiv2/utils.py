@@ -45,6 +45,7 @@ from similarity.client import SimilarityException
 from urllib import unquote
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
+from django.contrib.sites.models import Site
 
 
 ############################
@@ -474,6 +475,14 @@ class ApiSearchPaginator(object):
         next_page_number = page_num + 1
         previous_page_number = page_num - 1
         return locals()
+
+
+###############
+# GENERAL UTILS
+###############
+
+def prepend_base(rel):
+    return "http://%s%s" % (Site.objects.get_current().domain, rel)
 
 
 ######################

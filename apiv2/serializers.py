@@ -23,22 +23,13 @@
 from sounds.models import Sound, Pack
 from ratings.models import Rating
 from comments.models import Comment
-from bookmarks.models import Bookmark, BookmarkCategory
+from bookmarks.models import BookmarkCategory
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from rest_framework import serializers
 from freesound.utils.tags import clean_and_split_tags
 from freesound.utils.similarity_utilities import get_sounds_descriptors
-import yaml
-
-
-###############
-# GENERAL UTILS
-###############
-
-def prepend_base(rel):
-    return "http://%s%s" % (Site.objects.get_current().domain, rel)
+from utils import prepend_base
 
 
 ###################

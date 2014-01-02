@@ -1,3 +1,4 @@
+- Create api root view
 - Complete serializers
 - Rename views so they better match api organization
 - Write documentation and add LOGGING

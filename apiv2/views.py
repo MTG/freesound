@@ -27,7 +27,7 @@ from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  basic_request_info_for_log_message
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -39,6 +39,7 @@ from search.views import search_prepare_query, search_prepare_sort
 from freesound.utils.filesystem import generate_tree
 from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 from freesound.utils.nginxsendfile import sendfile
+from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
@@ -62,11 +63,13 @@ logger = logging.getLogger("api")
 
 class Search(GenericAPIView):
     """
-    Sound search.
-    TODO: proper doccumentation.
+    Search sounds in Freesound based on their tags and other metadata.
+    TODO: proper documentation.
     """
 
     def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('search'))
+
         # Validate search form and check page 0
         search_form = SoundSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
@@ -126,7 +129,7 @@ class Search(GenericAPIView):
 
 class CombinedSearch(GenericAPIView):
     """
-    Sound advanced search.
+    Search sounds in Freesound based on their tags, metadata and content-based descriptors.
     TODO: proper documentation.
     """
 
@@ -134,6 +137,8 @@ class CombinedSearch(GenericAPIView):
     analysis_file = None
 
     def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('combined_search'))
+
         # Validate search form and check page 0
         search_form = SoundCombinedSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
@@ -200,14 +205,14 @@ class CombinedSearch(GenericAPIView):
 
 class SimilaritySearchWithTargetFile(GenericAPIView):
     """
-    Return similarity sounds to an uploaded analysis file.
+    Get sounds from the Freesound database which are similar to an uploaded analysis file.
     TODO: proper documentation.
     """
 
     serializer_class = SimilarityFileSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('similarity_search_with_file'))
 
         serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
         if serializer.is_valid():
@@ -267,29 +272,28 @@ class SimilaritySearchWithTargetFile(GenericAPIView):
 class SoundInstance(RetrieveAPIView):
     """
     Detailed sound information.
-    TODO: proper doccumentation.
+    TODO: proper documentation.
     """
     serializer_class = SoundSerializer
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('sound:%i instance' % (int(kwargs['pk']))))
         return super(SoundInstance, self).get(request, *args, **kwargs)
 
 
 class SoundAnalysis(GenericAPIView):
     """
     Sound analysis information.
-    TODO: proper doccumentation.
+    TODO: proper documentation.
     """
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
-
         sound_id = kwargs['pk']
         descriptors = []
         if request.QUERY_PARAMS.get('descriptors', False):
             descriptors = request.QUERY_PARAMS['descriptors'].split(',')
+        logger.info(self.log_message('sound:%i analysis' % (int(sound_id))))
         response_data = get_sounds_descriptors([sound_id],
                                                 descriptors,
                                                 request.QUERY_PARAMS.get('normalized', '0') == '1',
@@ -302,22 +306,23 @@ class SoundAnalysis(GenericAPIView):
 
 class SimilarSounds(GenericAPIView):
     """
-    Return similarity sounds to a given sound id
+    Similar sounds to a given Freesound example.
     TODO: proper documentation.
     """
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+
+        sound_id = self.kwargs['pk']
+        logger.info(self.log_message('sound:%i similar_sounds' % (int(sound_id))))
 
         # Validate search form and check page 0
         similarity_sound_form = SimilarityFormAPI(request.QUERY_PARAMS)
         if not similarity_sound_form.is_valid():
             raise ParseError
         if similarity_sound_form.cleaned_data['page'] < 1:
-                raise NotFoundException
+            raise NotFoundException
 
         # Get search results
-        sound_id = self.kwargs['pk']
         similarity_sound_form.cleaned_data['target'] = str(sound_id)
         results, count, distance_to_target_data, more_from_pack_data = api_search(similarity_sound_form)
 
@@ -357,13 +362,13 @@ class SimilarSounds(GenericAPIView):
 
 class SoundComments(ListAPIView):
     """
-    List of comments of a user.
+    Comments of a particular sound.
     TODO: proper documentation.
     """
     serializer_class = SoundCommentsSerializer
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('sound:%i comments' % (int(self.kwargs['pk']))))
         return super(SoundComments, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -372,13 +377,13 @@ class SoundComments(ListAPIView):
 
 class SoundRatings(ListAPIView):
     """
-    List of ratings of a user.
+    Ratings of a particular sound.
     TODO: proper documentation.
     """
     serializer_class = SoundRatingsSerializer
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('sound:%i ratings' % (int(self.kwargs['pk']))))
         return super(SoundRatings, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -387,14 +392,14 @@ class SoundRatings(ListAPIView):
 
 class SoundsFromListOfIds(ListAPIView):
     """
-    Return a list of sounds for the specified IDS (so developers can get all information at once)
-    Ids must be indicated with parameter ids and a list of comma-separated numbers.
+    Get a sound list for a specified number of ids.
+    TODO: proper documentation.
     """
 
     serializer_class = SoundListSerializer
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('sounds_from_list_of_ids'))
         return super(SoundsFromListOfIds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -408,12 +413,12 @@ class SoundsFromListOfIds(ListAPIView):
 class DownloadSound(DownloadAPIView):
     """
     Download a sound.
+    TODO: proper documentation.
     """
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
-
         sound_id = kwargs['pk']
+        logger.info(self.log_message('sound:%i download' % (int(sound_id))))
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
@@ -439,20 +444,20 @@ class UserInstance(RetrieveAPIView):
     queryset = User.objects.filter(is_active=True)
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('user:%s instance' % (self.kwargs['username'])))
         return super(UserInstance, self).get(request, *args, **kwargs)
 
 
 class UserSounds(ListAPIView):
     """
-    List of sounds uploaded by user.
+    List of sounds uploaded by a user.
     TODO: proper documentation.
     """
     lookup_field = "username"
     serializer_class = SoundListSerializer
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('user:%s sounds' % (self.kwargs['username'])))
         return super(UserSounds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -470,14 +475,14 @@ class UserSounds(ListAPIView):
 
 class UserPacks (ListAPIView):
     """
-    List of packs uploaded by user.
+    List of packs create by a user.
     TODO: proper documentation.
     """
     serializer_class = PackSerializer
     queryset = Pack.objects.all()
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('user:%s packs' % (self.kwargs['username'])))
         return super(UserPacks, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -492,13 +497,13 @@ class UserPacks (ListAPIView):
 
 class UserBookmarkCategories(ListAPIView):
     """
-    List of bookmarks of a user.
+    List of bookmark categories created by a user.
     TODO: proper documentation.
     """
     serializer_class = BookmarkCategorySerializer
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('user:%s bookmark_categories' % (self.kwargs['username'])))
         return super(UserBookmarkCategories, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -510,13 +515,13 @@ class UserBookmarkCategories(ListAPIView):
 
 class UserSoundsForBookmarkCategory(ListAPIView):
     """
-    List of sounds of a bookmark category of a user.
+    List of sounds of a bookmark category created by a user.
     TODO: proper documentation.
     """
     serializer_class = SoundListSerializer
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s' % (self.kwargs['username'], str(self.kwargs.get('category_id', None)))))
         return super(UserSoundsForBookmarkCategory, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -550,25 +555,25 @@ class UserSoundsForBookmarkCategory(ListAPIView):
 class PackInstance(RetrieveAPIView):
     """
     Detailed pack information.
-    TODO: proper doccumentation.
+    TODO: proper documentation.
     """
     serializer_class = PackSerializer
     queryset = Pack.objects.all()
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('pack:%i instance' % (int(kwargs['pk']))))
         return super(PackInstance, self).get(request, *args, **kwargs)
 
 
 class PackSounds(ListAPIView):
     """
     List of sounds in a pack.
-    TODO: proper doccumentation.
+    TODO: proper documentation.
     """
     serializer_class = SoundListSerializer
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('pack:%i sounds' % (int(kwargs['pk']))))
         return super(PackSounds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -586,12 +591,13 @@ class PackSounds(ListAPIView):
 
 class DownloadPack(DownloadAPIView):
     """
-    Download a pack
+    Download a pack.
+    TODO: proper documentation.
     """
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
         pack_id = kwargs['pk']
+        logger.info(self.log_message('pack:%i download' % (int(pack_id))))
         try:
             pack = Pack.objects.get(id=pack_id)
         except Pack.DoesNotExist:
@@ -626,13 +632,13 @@ class DownloadPack(DownloadAPIView):
 
 class UploadSound(WriteRequiredGenericAPIView):
     """
-    Upload a sound (without description)
-    TODO: proper doccumentation.
+    Upload a sound (without description).
+    TODO: proper documentation.
     """
     serializer_class = UploadAudioFileSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('uploading_sound'))
         serializer = UploadAudioFileSerializer(data=request.DATA, files=request.FILES)
         if serializer.is_valid():
             audiofile = request.FILES['audiofile']
@@ -648,12 +654,12 @@ class UploadSound(WriteRequiredGenericAPIView):
 
 class NotYetDescribedUploadedSounds(WriteRequiredGenericAPIView):
     """
-    List uploaded audio files which have not been yes described
-    TODO: proper doccumentation.
+    List uploaded audio files which have not been yet described.
+    TODO: proper documentation.
     """
 
     def get(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('not_yet_described_uploaded_sounds'))
         file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
         filenames = [file_instance.name for file_id, file_instance in files.items()]
         return Response(data={'filenames': filenames}, status=status.HTTP_200_OK)
@@ -661,13 +667,13 @@ class NotYetDescribedUploadedSounds(WriteRequiredGenericAPIView):
 
 class DescribeSound(WriteRequiredGenericAPIView):
     """
-    Describe a previously uploaded audio file (audio file is identified by its filename which must be a post param)
-    TODO: proper doccumentation.
+    Describe a previously uploaded audio file (audio file is identified by its filename which must be a post param).
+    TODO: proper documentation.
     """
     serializer_class = SoundDescriptionSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('describe_sound'))
         file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
         filenames = [file_instance.name for file_id, file_instance in files.items()]
         serializer = SoundDescriptionSerializer(data=request.DATA, context={'not_yet_described_audio_files': filenames})
@@ -680,13 +686,13 @@ class DescribeSound(WriteRequiredGenericAPIView):
 
 class UploadAndDescribeSound(WriteRequiredGenericAPIView):
     """
-    Upload a sound and describe it (without description)
-    TODO: proper doccumentation.
+    Upload a sound and describe it (without description).
+    TODO: proper documentation.
     """
     serializer_class = UploadAndDescribeAudioFileSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('upload_and_describe_sound'))
         serializer = UploadAndDescribeAudioFileSerializer(data=request.DATA, files=request.FILES)
         if serializer.is_valid():
             audiofile = request.FILES['audiofile']
@@ -703,14 +709,13 @@ class UploadAndDescribeSound(WriteRequiredGenericAPIView):
 
 class CreateBookmark(WriteRequiredGenericAPIView):
     """
-    Create a new bookmark category of a user.
-    DATA: name
+    Create a new bookmark for a user.
     TODO: proper documentation.
     """
     serializer_class = CreateBookmarkSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('sound:%s create_bookmark' % (request.DATA.get('sound_id', None))))
         serializer = CreateBookmarkSerializer(data=request.DATA)
         if serializer.is_valid():
             if ('category' in request.DATA):
@@ -726,32 +731,35 @@ class CreateBookmark(WriteRequiredGenericAPIView):
 
 class CreateRating(WriteRequiredGenericAPIView):
     """
-    Create a new rating of a sound.
-    DATA: name
+    Create a new rating for a sound.
     TODO: proper documentation.
     """
     serializer_class = CreateRatingSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('sound:%s create_rating' % (request.DATA.get('sound_id', None))))
         serializer = CreateRatingSerializer(data=request.DATA)
         if serializer.is_valid():
-            rating = Rating.objects.create(user=self.user, object_id=request.DATA['sound_id'], content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
-            return Response(data={'details': 'Rating successfully created'}, status=status.HTTP_201_CREATED)
+            try:
+                rating = Rating.objects.create(user=self.user, object_id=request.DATA['sound_id'], content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
+                return Response(data={'details': 'Rating successfully created'}, status=status.HTTP_201_CREATED)
+            except IntegrityError:
+                raise InvalidUrlException(msg='User has already rated sound %s' % request.DATA['sound_id'])
+            except:
+                raise ServerErrorException
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateComment(WriteRequiredGenericAPIView):
     """
-    Create a new comment of a sound.
-    DATA: name
+    Create a new comment for a sound.
     TODO: proper documentation.
     """
     serializer_class = CreateCommentSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info("TODO: proper logging")
+        logger.info(self.log_message('sound:%s create_comment' % (request.DATA.get('sound_id', None))))
         serializer = CreateCommentSerializer(data=request.DATA)
         if serializer.is_valid():
             comment = Comment.objects.create(user=self.user, object_id=request.DATA['sound_id'], content_type=ContentType.objects.get(id=20), comment=request.DATA['comment'])
@@ -771,12 +779,13 @@ class CreateComment(WriteRequiredGenericAPIView):
 ### Me View
 class Me(GenericAPIView):
     """
-    Returns some information about the end-user logged into the api
+    Get some information about the end-user logged into the api.
     TODO: proper documentation.
     """
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('me'))
         if self.user:
             response_data = {
                              'username': self.user.username,
@@ -792,65 +801,65 @@ class Me(GenericAPIView):
         else:
             raise ServerErrorException
 
-### Root view
-@api_view(('GET',))
-@authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
-def freesound_api_v2_resources(request, format=None):
 
-    '''
+### Root view
+class FreesoundApiV2Resources(GenericAPIView):
+    """
     List of resources available in the Freesound API V2.
-    <br>
     Note that urls containing elements in brackets (<>) should be replaced with the corresponding
     variables.
-    <br>
-    '''
+    """
+    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
-    return Response([
-        {'Search resources': {
-            'Search': prepend_base(reverse('apiv2-sound-search')),
-            'Combined Search': prepend_base(reverse('apiv2-sound-combined-search')),
-            'Similarity search with target file': prepend_base(reverse('apiv2-similarity-file')),
-        }},
-        {'Sound resources': {
-            'Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>')),
-            'Sound ratings': prepend_base(reverse('apiv2-sound-ratings', args=[0]).replace('0', '<sound_id>')),
-            'Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>')),
-            'Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>')) + '<filter>',
-            'Download sound': prepend_base(reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
-            'Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>')),
-            'Sounds from list of sound ids': prepend_base(reverse('apiv2-sound-list-from-ids')),
+    def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('api_root'))
+        return Response([
+            {'Search resources': {
+                    'Search': prepend_base(reverse('apiv2-sound-search')),
+                    'Combined Search': prepend_base(reverse('apiv2-sound-combined-search')),
+                    'Similarity search with target file': prepend_base(reverse('apiv2-similarity-file')),
+                }},
+                {'Sound resources': {
+                    'Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>')),
+                    'Sound ratings': prepend_base(reverse('apiv2-sound-ratings', args=[0]).replace('0', '<sound_id>')),
+                    'Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>')),
+                    'Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>')),
+                    'Download sound': prepend_base(reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
+                    'Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>')),
+                    'Sounds from list of sound ids': prepend_base(reverse('apiv2-sound-list-from-ids')),
 
-        }},
-        {'User resources': {
-            'User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>')),
-            'User sounds': prepend_base(reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>')),
-            'User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>')),
-            'User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>')),
-            'User uncategorized sound bookmarks': prepend_base(reverse('apiv2-user-bookmark-uncategorized', args=['uname']).replace('uname', '<username>')),
-            'User sounds for bookmark category': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>')),
-        }},
-        {'Pack resources': {
-            'Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>')),
-            'Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>')),
-            'Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
-        }},
-        {'Create resources': {
-            'Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
-            'Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
-            'Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
-            'Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
-            'Create bookmark': prepend_base(reverse('apiv2-user-create-bookmark')),
-            'Create rating': prepend_base(reverse('apiv2-user-create-rating')),
-            'Create comment': prepend_base(reverse('apiv2-user-create-comment')),
-        }},
-        {'Other resources': {
-            'Oauth2 Authorize': prepend_base(reverse('oauth2:capture')),
-            'Oauth2 Access token': prepend_base(reverse('oauth2:access_token')),
-            'Apply': prepend_base(reverse('apiv2-apply')),
-            'Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
+                }},
+                {'User resources': {
+                    'User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>')),
+                    'User sounds': prepend_base(reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>')),
+                    'User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>')),
+                    'User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>')),
+                    'User uncategorized sound bookmarks': prepend_base(reverse('apiv2-user-bookmark-uncategorized', args=['uname']).replace('uname', '<username>')),
+                    'User sounds for bookmark category': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>')),
+                }},
+                {'Pack resources': {
+                    'Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>')),
+                    'Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>')),
+                    'Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
+                }},
+                {'Create resources': {
+                    'Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
+                    'Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
+                    'Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
+                    'Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
+                    'Create bookmark': prepend_base(reverse('apiv2-user-create-bookmark')),
+                    'Create rating': prepend_base(reverse('apiv2-user-create-rating')),
+                    'Create comment': prepend_base(reverse('apiv2-user-create-comment')),
+                }},
+                {'Other resources': {
+                    'Oauth2 Authorize': prepend_base(reverse('oauth2:capture')),
+                    'Oauth2 Access token': prepend_base(reverse('oauth2:access_token')),
+                    'Apply': prepend_base(reverse('apiv2-apply')),
+                    'Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
 
-        }},
-    ])
+                }},
+            ])
+
 
 ### View for returning "Invalid url" 400 responses
 @api_view(['GET'])

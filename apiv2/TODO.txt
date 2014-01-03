@@ -1,4 +1,4 @@
-- Write documentation and add LOGGING
+- Write documentation
 - Customize online interactive api
 - Clean code (imports, utils...)
 - Clean up expired grants from database with a django command

@@ -120,26 +120,6 @@ class AccessTokenView(DjangoRestFrameworkAccessTokenView):
         )
 
 
-def get_authentication_details_form_request(request):
-    auth_method_name = None
-    user = None
-    developer = None
-
-    if request.successful_authenticator:
-        auth_method_name = request.successful_authenticator.authentication_method_name
-        if auth_method_name == "OAuth2":
-            user = request.user
-            developer = request.auth.client.user
-        elif auth_method_name == "Token":
-            user = None
-            developer = request.auth.user
-        elif auth_method_name == "Session":
-            user = request.user
-            developer = None
-
-    return auth_method_name, developer, user
-
-
 class Authorize(DjangoOauth2ProviderAuthorize):
     if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
         template_name = 'api/minimal_authorize_app.html'
@@ -207,7 +187,10 @@ class GenericAPIView(RestFrameworkGenericAPIView):
         super(GenericAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
-        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
+
+    def log_message(self, message):
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
 
 class DownloadAPIView(RestFrameworkGenericAPIView):
@@ -217,8 +200,10 @@ class DownloadAPIView(RestFrameworkGenericAPIView):
         super(GenericAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
-        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
+    def log_message(self, message):
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
 class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
@@ -227,12 +212,15 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
         super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
 
         # Get request informationa dn store it as class variable
-        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
             if "write" not in request.auth.client.apiv2_client.get_scope_display():
                 raise UnauthorizedException
+
+    def log_message(self, message):
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
 
 class ListAPIView(RestFrameworkListAPIView):
@@ -242,7 +230,10 @@ class ListAPIView(RestFrameworkListAPIView):
         super(ListAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
-        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
+
+    def log_message(self, message):
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
 
 class RetrieveAPIView(RestFrameworkRetrieveAPIView):
@@ -252,40 +243,15 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
-        self.auth_method_name, self.developer, self.user = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
-
-def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[]):
-    # Get analysis data for all requested sounds and save it to a class variable so the serializer can access it and
-    # we only need one request to the similarity service
-
-    analysis_data_required = 'analysis' in view.request.QUERY_PARAMS.get('fields', '').split(',')
-    if analysis_data_required:
-        # Get ids of the particular sounds we need
-        if queryset:
-            paginated_queryset = view.paginate_queryset(queryset)
-            ids = [int(sound.id) for sound in paginated_queryset.object_list]
-        else:
-            ids = [int(sid) for sid in sound_ids]
-
-        # Get descriptor values for the required ids
-        # Required descriptors are indicated with the parameter 'descriptors'. If 'descriptors' is empty, we return nothing
-        descriptors = view.request.QUERY_PARAMS.get('descriptors', [])
-        view.sound_analysis_data = {}
-        if descriptors:
-            try:
-                view.sound_analysis_data = get_sounds_descriptors(ids,
-                                                                  descriptors.split(','),
-                                                                  view.request.QUERY_PARAMS.get('normalized', '0') == '1',
-                                                                  only_leaf_descriptors=True)
-            except:
-                pass
+    def log_message(self, message):
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
 
 ##################
 # Search utilities
 ##################
-
 
 def api_search(search_form, target_file=None):
 
@@ -459,6 +425,49 @@ def api_search(search_form, target_file=None):
                more_from_pack_data
 
 
+###############
+# OTHER UTILS
+###############
+
+# General utils
+###############
+
+def prepend_base(rel):
+    return "http://%s%s" % (Site.objects.get_current().domain, rel)
+
+
+def get_authentication_details_form_request(request):
+    auth_method_name = None
+    user = None
+    developer = None
+    client_id = None
+
+    if request.successful_authenticator:
+        auth_method_name = request.successful_authenticator.authentication_method_name
+        if auth_method_name == "OAuth2":
+            user = request.user
+            developer = request.auth.client.user
+            client_id = request.auth.id
+        elif auth_method_name == "Token":
+            user = None
+            developer = request.auth.user
+            client_id = request.auth.id
+        elif auth_method_name == "Session":
+            user = request.user
+            developer = None
+            client_id = None
+
+    return auth_method_name, developer, user, client_id
+
+
+def basic_request_info_for_log_message(auth_method_name, developer, user, client_id):
+    return 'ApiV2 Auth:%s Dev:%s User:%s Client:%s' % (auth_method_name, developer, user, str(client_id))
+
+
+def request_parameters_info_for_log_message(get_parameters):
+    return ','.join(['%s=%s' % (key, value) for key, value in get_parameters.items()])
+
+
 class ApiSearchPaginator(object):
     def __init__(self, results, count, num_per_page):
         self.num_per_page = num_per_page
@@ -477,18 +486,38 @@ class ApiSearchPaginator(object):
         return locals()
 
 
-###############
-# GENERAL UTILS
-###############
+# Similarity utils
+##################
 
-def prepend_base(rel):
-    return "http://%s%s" % (Site.objects.get_current().domain, rel)
+def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[]):
+    # Get analysis data for all requested sounds and save it to a class variable so the serializer can access it and
+    # we only need one request to the similarity service
+
+    analysis_data_required = 'analysis' in view.request.QUERY_PARAMS.get('fields', '').split(',')
+    if analysis_data_required:
+        # Get ids of the particular sounds we need
+        if queryset:
+            paginated_queryset = view.paginate_queryset(queryset)
+            ids = [int(sound.id) for sound in paginated_queryset.object_list]
+        else:
+            ids = [int(sid) for sid in sound_ids]
+
+        # Get descriptor values for the required ids
+        # Required descriptors are indicated with the parameter 'descriptors'. If 'descriptors' is empty, we return nothing
+        descriptors = view.request.QUERY_PARAMS.get('descriptors', [])
+        view.sound_analysis_data = {}
+        if descriptors:
+            try:
+                view.sound_analysis_data = get_sounds_descriptors(ids,
+                                                                  descriptors.split(','),
+                                                                  view.request.QUERY_PARAMS.get('normalized', '0') == '1',
+                                                                  only_leaf_descriptors=True)
+            except:
+                pass
 
 
-######################
 # Upload handler utils
 ######################
-
 
 def create_sound_object(user, sound_fields):
     '''

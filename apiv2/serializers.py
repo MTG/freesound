@@ -36,7 +36,7 @@ from utils import prepend_base
 # SOUND SERIALIZERS
 ###################
 
-DEFAULT_FIELDS_IN_SOUND_LIST = 'url,uri,user,pack'  # Separated by commas (None = all)
+DEFAULT_FIELDS_IN_SOUND_LIST = 'uri,url,license,user,pack'  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_SOUND_DETAIL = None  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
@@ -68,20 +68,34 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'uri',
                   'url',
                   'name',
-                  'user',
-                  'pack',
-                  'num_downloads',
+                  'tags',
+                  'description',
+                  'geotag',
+                  'created',
+                  'license',
+                  'type',
                   'channels',
+                  'filesize',
+                  'bitrate',
+                  'bitdepth',
                   'duration',
                   'samplerate',
-                  'analysis',
+                  'user',
+                  'pack',
+                  'download',
+                  'previews',
+                  'images',
+                  'num_downloads',
                   'avg_rating',
                   'num_ratings',
                   'ratings',
                   'num_comments',
                   'comments',
-                  'num_downloads',
-                  'geotag')
+                  'similar_sounds',
+                  'analysis',
+                  'analysis_frames',
+                  'analysis_stats',
+                  )
 
 
     uri = serializers.SerializerMethodField('get_uri')
@@ -100,6 +114,14 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_name(self, obj):
         return obj.original_filename
 
+    tags = serializers.SerializerMethodField('get_tags')
+    def get_tags(self, obj):
+        return [tagged.tag.name for tagged in obj.tags.select_related("tag").all()]
+
+    license = serializers.SerializerMethodField('get_license')
+    def get_license(self, obj):
+        return obj.license.deed_url
+
     pack = serializers.SerializerMethodField('get_pack')
     def get_pack(self, obj):
         try:
@@ -110,10 +132,44 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
         except:
             return None
 
+    previews = serializers.SerializerMethodField('get_previews')
+    def get_previews(self, obj):
+        return {
+            'preview-hq-mp3': obj.locations("preview.HQ.mp3.url"),
+            'preview-hq-ogg': obj.locations("preview.HQ.ogg.url"),
+            'preview-lq-mp3': obj.locations("preview.LQ.mp3.url"),
+            'preview-lq-ogg': obj.locations("preview.LQ.ogg.url"),
+        }
+
+    images = serializers.SerializerMethodField('get_images')
+    def get_images(self, obj):
+        return {
+            'waveform_m': obj.locations("display.wave.M.url"),
+            'waveform_l': obj.locations("display.wave.L.url"),
+            'spectral_m': obj.locations("display.spectral.M.url"),
+            'spectral_l': obj.locations("display.spectral.L.url"),
+        }
+
     analysis = serializers.SerializerMethodField('get_analysis')
     def get_analysis(self, obj):
         # Fake implementation. Method implemented in subclasses
         return None
+
+    analysis_frames = serializers.SerializerMethodField('get_analysis_frames')
+    def get_analysis_frames(self, obj):
+        return obj.locations('analysis.frames.url')
+
+    analysis_stats = serializers.SerializerMethodField('get_analysis_stats')
+    def get_analysis_stats(self, obj):
+        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]))
+
+    similar_sounds = serializers.SerializerMethodField('get_similar_sounds')
+    def get_similar_sounds(self, obj):
+        return prepend_base(reverse('apiv2-similarity-sound', args=[obj.id]))
+
+    download = serializers.SerializerMethodField('get_download')
+    def get_download(self, obj):
+        return prepend_base(reverse('apiv2-sound-download', args=[obj.id]))
 
     ratings = serializers.SerializerMethodField('get_ratings')
     def get_ratings(self, obj):

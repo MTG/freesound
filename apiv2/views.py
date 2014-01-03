@@ -297,7 +297,7 @@ class SoundAnalysis(GenericAPIView):
         if response_data:
             return Response(response_data[str(sound_id)], status=status.HTTP_200_OK)
         else:
-            raise InvalidUrlException
+            raise NotFoundException
 
 
 class SimilarSounds(GenericAPIView):

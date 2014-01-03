@@ -274,9 +274,9 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     def get_avatar(self, obj):
         if obj.profile.has_avatar:
             return {
-                obj.profile.locations()['avatar']['S']['url'],
-                obj.profile.locations()['avatar']['M']['url'],
-                obj.profile.locations()['avatar']['L']['url'],
+                'Small': obj.profile.locations()['avatar']['S']['url'],
+                'Medium': obj.profile.locations()['avatar']['M']['url'],
+                'Large': obj.profile.locations()['avatar']['L']['url'],
             }
         else:
             return None

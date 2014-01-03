@@ -32,6 +32,7 @@ from exceptions import *
 from forms import *
 from models import ApiV2Client
 from api.models import ApiKey
+from bookmarks.models import Bookmark, BookmarkCategory
 from api.forms import ApiKeyForm
 from accounts.views import handle_uploaded_file
 from search.views import search_prepare_query, search_prepare_sort
@@ -53,34 +54,6 @@ import os
 
 
 logger = logging.getLogger("api")
-
-
-#########
-# ME VIEW
-#########
-
-class Me(GenericAPIView):
-    """
-    Returns some information about the end-user logged into the api
-    TODO: proper documentation.
-    """
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
-
-    def get(self, request,  *args, **kwargs):
-        if self.user:
-            response_data = {
-                             'username': self.user.username,
-                             'email': self.user.email,
-                             'date_joined': self.user.date_joined,
-                             'about': self.user.profile.about,
-                             'home_page': self.user.profile.home_page,
-                             'num_sound': self.user.profile.num_sounds,
-                             'num_posts': self.user.profile.num_posts
-
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-        else:
-            raise ServerErrorException
 
 
 ####################################
@@ -225,7 +198,7 @@ class CombinedSearch(GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SimilarityFile(GenericAPIView):
+class SimilaritySearchWithTargetFile(GenericAPIView):
     """
     Return similarity sounds to an uploaded analysis file.
     TODO: proper documentation.
@@ -327,7 +300,7 @@ class SoundAnalysis(GenericAPIView):
             raise InvalidUrlException
 
 
-class SimilaritySound(GenericAPIView):
+class SimilarSounds(GenericAPIView):
     """
     Return similarity sounds to a given sound id
     TODO: proper documentation.
@@ -412,7 +385,7 @@ class SoundRatings(ListAPIView):
         return Rating.objects.filter(object_id=self.kwargs['pk'])
 
 
-class SoundListFromIds(ListAPIView):
+class SoundsFromListOfIds(ListAPIView):
     """
     Return a list of sounds for the specified IDS (so developers can get all information at once)
     Ids must be indicated with parameter ids and a list of comma-separated numbers.
@@ -422,7 +395,7 @@ class SoundListFromIds(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
-        return super(SoundListFromIds, self).get(request, *args, **kwargs)
+        return super(SoundsFromListOfIds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
         try:
@@ -432,7 +405,7 @@ class SoundListFromIds(ListAPIView):
         return Sound.objects.filter(id__in=ids)
 
 
-class SoundDownload(DownloadAPIView):
+class DownloadSound(DownloadAPIView):
     """
     Download a sound.
     """
@@ -470,7 +443,7 @@ class UserInstance(RetrieveAPIView):
         return super(UserInstance, self).get(request, *args, **kwargs)
 
 
-class UserSoundList(ListAPIView):
+class UserSounds(ListAPIView):
     """
     List of sounds uploaded by user.
     TODO: proper documentation.
@@ -480,7 +453,7 @@ class UserSoundList(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
-        return super(UserSoundList, self).get(request, *args, **kwargs)
+        return super(UserSounds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
         try:
@@ -509,7 +482,7 @@ class UserPacks (ListAPIView):
         return super(UserPacks, self).get(request, *args, **kwargs)
 
 
-class UserBookmarks (ListAPIView):
+class UserBookmarkCategories(ListAPIView):
     """
     List of bookmarks of a user.
     TODO: proper documentation.
@@ -518,7 +491,7 @@ class UserBookmarks (ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
-        return super(UserBookmarks, self).get(request, *args, **kwargs)
+        return super(UserBookmarkCategories, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
         categories = BookmarkCategory.objects.filter(user__username=self.kwargs['username'])
@@ -527,7 +500,7 @@ class UserBookmarks (ListAPIView):
         return [uncategorized] + list(categories)
 
 
-class UserBookmarkSounds (ListAPIView):
+class UserSoundsForBookmarkCategory(ListAPIView):
     """
     List of sounds of a bookmark category of a user.
     TODO: proper documentation.
@@ -536,7 +509,7 @@ class UserBookmarkSounds (ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
-        return super(UserBookmarkSounds, self).get(request, *args, **kwargs)
+        return super(UserSoundsForBookmarkCategory, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
 
@@ -579,7 +552,7 @@ class PackInstance(RetrieveAPIView):
         return super(PackInstance, self).get(request, *args, **kwargs)
 
 
-class PackSoundList(ListAPIView):
+class PackSounds(ListAPIView):
     """
     List of sounds in a pack.
     TODO: proper doccumentation.
@@ -588,7 +561,7 @@ class PackSoundList(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
-        return super(PackSoundList, self).get(request, *args, **kwargs)
+        return super(PackSounds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
         try:
@@ -603,7 +576,7 @@ class PackSoundList(ListAPIView):
         return queryset
 
 
-class PackDownload(DownloadAPIView):
+class DownloadPack(DownloadAPIView):
     """
     Download a pack
     """
@@ -643,7 +616,7 @@ class PackDownload(DownloadAPIView):
 # READ WRITE VIEWS
 ##################
 
-class UploadAudioFile(WriteRequiredGenericAPIView):
+class UploadSound(WriteRequiredGenericAPIView):
     """
     Upload a sound (without description)
     TODO: proper doccumentation.
@@ -665,7 +638,7 @@ class UploadAudioFile(WriteRequiredGenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class NotYetDescribedUploadedAudioFiles(WriteRequiredGenericAPIView):
+class NotYetDescribedUploadedSounds(WriteRequiredGenericAPIView):
     """
     List uploaded audio files which have not been yes described
     TODO: proper doccumentation.
@@ -678,7 +651,7 @@ class NotYetDescribedUploadedAudioFiles(WriteRequiredGenericAPIView):
         return Response(data={'filenames': filenames}, status=status.HTTP_200_OK)
 
 
-class DescribeAudioFile(WriteRequiredGenericAPIView):
+class DescribeSound(WriteRequiredGenericAPIView):
     """
     Describe a previously uploaded audio file (audio file is identified by its filename which must be a post param)
     TODO: proper doccumentation.
@@ -697,7 +670,7 @@ class DescribeAudioFile(WriteRequiredGenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UploadAndDescribeAudioFile(WriteRequiredGenericAPIView):
+class UploadAndDescribeSound(WriteRequiredGenericAPIView):
     """
     Upload a sound and describe it (without description)
     TODO: proper doccumentation.
@@ -786,6 +759,30 @@ class CreateComment(WriteRequiredGenericAPIView):
 #############
 # OTHER VIEWS
 #############
+
+### Me View
+class Me(GenericAPIView):
+    """
+    Returns some information about the end-user logged into the api
+    TODO: proper documentation.
+    """
+    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def get(self, request,  *args, **kwargs):
+        if self.user:
+            response_data = {
+                             'username': self.user.username,
+                             'email': self.user.email,
+                             'date_joined': self.user.date_joined,
+                             'about': self.user.profile.about,
+                             'home_page': self.user.profile.home_page,
+                             'num_sound': self.user.profile.num_sounds,
+                             'num_posts': self.user.profile.num_posts
+
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            raise ServerErrorException
 
 ### Root view
 @api_view(('GET',))

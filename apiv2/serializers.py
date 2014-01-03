@@ -234,13 +234,21 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id',
-                  'uri',
+        fields = ('uri',
                   'url',
                   'username',
+                  'about',
+                  'home_page',
+                  'avatar',
                   'date_joined',
+                  'num_sounds',
                   'sounds',
-                  'avatar')
+                  'num_packs',
+                  'packs',
+                  'num_posts',
+                  'num_comments',
+                  'bookmark_categories',
+                  )
 
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
@@ -254,12 +262,48 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     def get_sounds(self, obj):
         return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]))
 
+    packs = serializers.SerializerMethodField('get_packs')
+    def get_packs(self, obj):
+        return prepend_base(reverse('apiv2-user-packs', args=[obj.username]))
+
+    bookmark_categories = serializers.SerializerMethodField('get_bookmark_categories')
+    def get_bookmark_categories(self, obj):
+        return prepend_base(reverse('apiv2-user-bookmark-categories', args=[obj.username]))
+
     avatar = serializers.SerializerMethodField('get_avatar')
     def get_avatar(self, obj):
         if obj.profile.has_avatar:
-            return obj.profile.locations()['avatar']['L']['url']
+            return {
+                obj.profile.locations()['avatar']['S']['url'],
+                obj.profile.locations()['avatar']['M']['url'],
+                obj.profile.locations()['avatar']['L']['url'],
+            }
         else:
             return None
+
+    about = serializers.SerializerMethodField('get_about')
+    def get_about(self, obj):
+        return obj.profile.about
+
+    home_page = serializers.SerializerMethodField('get_home_page')
+    def get_home_page(self, obj):
+        return obj.profile.home_page
+
+    num_sounds = serializers.SerializerMethodField('get_num_sounds')
+    def get_num_sounds(self, obj):
+        return obj.sounds.filter(moderation_state="OK", processing_state="OK").count()
+
+    num_packs = serializers.SerializerMethodField('get_num_packs')
+    def get_num_packs(self, obj):
+        return obj.pack_set.all().count()
+
+    num_posts = serializers.SerializerMethodField('get_num_posts')
+    def get_num_posts(self, obj):
+        return obj.profile.num_posts
+
+    num_comments = serializers.SerializerMethodField('get_num_comments')
+    def get_num_comments(self, obj):
+        return obj.comment_set.all().count()
 
 
 ##################

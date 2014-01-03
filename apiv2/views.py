@@ -784,7 +784,7 @@ class Me(GenericAPIView):
                              'date_joined': self.user.date_joined,
                              'about': self.user.profile.about,
                              'home_page': self.user.profile.home_page,
-                             'num_sound': self.user.profile.num_sounds,
+                             'num_sounds': self.user.profile.num_sounds,
                              'num_posts': self.user.profile.num_posts
 
             }

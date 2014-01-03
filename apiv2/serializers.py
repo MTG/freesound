@@ -321,6 +321,7 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
                   'description',
                   'created',
                   'name',
+                  'num_sounds',
                   'sounds',
                   'num_downloads')
 
@@ -331,6 +332,10 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     uri = serializers.SerializerMethodField('get_uri')
     def get_uri(self, obj):
         return prepend_base(reverse('apiv2-pack-instance', args=[obj.id]))
+
+    num_sounds = serializers.SerializerMethodField('get_num_sounds')
+    def get_num_sounds(self, obj):
+        return obj.sound_set.filter(processing_state="OK", moderation_state="OK").count()
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
@@ -348,6 +353,7 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
         model = BookmarkCategory
         fields = ('url',
                   'name',
+                  'num_sounds',
                   'sounds')
 
     url = serializers.SerializerMethodField('get_url')
@@ -356,6 +362,10 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
             return prepend_base(reverse('bookmarks-for-user-for-category', args=[obj.user.username, obj.id]))
         else:
             return prepend_base(reverse('bookmarks-for-user', args=[obj.user.username]))
+
+    num_sounds = serializers.SerializerMethodField('get_num_sounds')
+    def get_num_sounds(self, obj):
+        return obj.bookmarks.filter(sound__processing_state="OK", sound__moderation_state="OK").count()
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):

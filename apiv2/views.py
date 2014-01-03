@@ -465,7 +465,6 @@ class UserSounds(ListAPIView):
                                                                processing_state="OK",
                                                                user__username=self.kwargs['username'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
-
         return queryset
 
 
@@ -480,6 +479,15 @@ class UserPacks (ListAPIView):
     def get(self, request,  *args, **kwargs):
         logger.info("TODO: proper logging")
         return super(UserPacks, self).get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        try:
+            User.objects.get(username=self.kwargs['username'], is_active=True)
+        except User.DoesNotExist:
+            raise NotFoundException
+
+        queryset = Pack.objects.select_related('user').filter(user__username=self.kwargs['username'])
+        return queryset
 
 
 class UserBookmarkCategories(ListAPIView):

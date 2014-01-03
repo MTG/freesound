@@ -793,9 +793,11 @@ class CreateComment(WriteRequiredGenericAPIView):
 def freesound_api_v2_resources(request, format=None):
 
     '''
-    List of resources available in the Freesound API V2.<br>Note that urls that
-    contain elements in brackets (<>) should be replaced with the corresponding
+    List of resources available in the Freesound API V2.
+    <br>
+    Note that urls containing elements in brackets (<>) should be replaced with the corresponding
     variables.
+    <br>
     '''
 
     return Response([
@@ -836,7 +838,13 @@ def freesound_api_v2_resources(request, format=None):
             'Create rating': prepend_base(reverse('apiv2-user-create-rating')),
             'Create comment': prepend_base(reverse('apiv2-user-create-comment')),
         }},
-        {'Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')), },
+        {'Other resources': {
+            'Oauth2 Authorize': prepend_base(reverse('oauth2:capture')),
+            'Oauth2 Access token': prepend_base(reverse('oauth2:access_token')),
+            'Apply': prepend_base(reverse('apiv2-apply')),
+            'Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
+
+        }},
     ])
 
 ### View for returning "Invalid url" 400 responses

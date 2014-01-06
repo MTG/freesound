@@ -308,8 +308,8 @@ def search_forum(request):
 def get_pack_tags(pack_obj):
     query = SolrQuery()
     query.set_dismax_query('')
-    #filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
-    filter_query = 'pack:\"%s\"' % (pack_obj.name,)
+    filter_query = 'username:\"%s\" pack:\"%s\"' % (pack_obj.user.username, pack_obj.name)
+    #filter_query = 'pack:\"%s\"' % (pack_obj.name,)
     query.set_query_options(field_list=["id"], filter_query=filter_query)
     query.add_facet_fields("tag")
     query.set_facet_options("tag", limit=20, mincount=1)

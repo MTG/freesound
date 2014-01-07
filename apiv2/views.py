@@ -64,7 +64,7 @@ logger = logging.getLogger("api")
 class Search(GenericAPIView):
     """
     Search sounds in Freesound based on their tags and other metadata.
-    TODO: proper documentation.
+    <br>Full documentation including examples can be found <a href='http://www.freesound.org/docs/api/resources.html#search'>here</a>.
     """
 
     def get(self, request,  *args, **kwargs):

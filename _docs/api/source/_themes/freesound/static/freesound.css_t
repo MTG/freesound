@@ -177,13 +177,13 @@ div.body h6 {
 div.body h1 {
     color: {{ theme_headtextcolor }};
     margin-top: 0; 
-    font-size: 200%;
+    font-size: 180%;
     line-height: 60px;
     margin-left: -30px;
 }
 
 div.body h2 { 
-    font-size: 180%;
+    font-size: 160%;
     font-style: italic;
     /*font-weight: bold;*/
     text-decoration: undeline;

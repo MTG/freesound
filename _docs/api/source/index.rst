@@ -7,8 +7,23 @@ Contents:
    :maxdepth: 3
 
    overview.rst
-   resources.rst
-   resources_apiv1.rst
-   analysis_index.rst
-   client_libs.rst
 
+.. toctree::
+   :maxdepth: 3
+
+   resources.rst
+
+.. toctree::
+   :maxdepth: 1
+
+   resources_apiv1.rst
+
+.. toctree::
+   :maxdepth: 3
+
+   analysis_index.rst
+
+.. toctree::
+   :maxdepth: 3
+
+   client_libs.rst

@@ -1,7 +1,7 @@
 Overview
 >>>>>>>>
 
-With the Freesound API you can browse, search, and retrieve information 
+With the Freesound API you can browse, search, and retrieve information
 about Freesound users, packs, and the sounds themselves of course. You 
 can also find similar sounds to a given target (based on content analysis) 
 and retrieve automatically extracted features from audio files.

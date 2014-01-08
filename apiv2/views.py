@@ -47,7 +47,10 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.core.urlresolvers import reverse
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except:
+    from freesound.utils.ordered_dict import OrderedDict
 from urllib import unquote
 import settings
 import logging

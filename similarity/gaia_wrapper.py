@@ -569,13 +569,41 @@ class GaiaWrapper:
                 # Target is specified as the attached file
                 # Create a point with the data in 'descriptors_data' and search for it
                 try:
+                    # Try directly loading the file
                     p, query = Point(), Point()
                     p.loadFromString(yaml.dump(target))
-                    query = self.original_dataset.history().mapPoint(p)
+                    query = self.original_dataset.history().mapPoint(query)
+
                 except:
-                    msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout.'
-                    logger.info(msg)
-                    return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+                    # If does not work load descriptors one by one
+                    try:
+                        query = Point()
+                        query.setLayout(layout)
+
+                        feature_names = []
+                        get_nested_descriptor_names(target, feature_names)
+                        feature_names = ['.%s' % item for item in feature_names]
+
+                        for param in feature_names:
+                            if param in coeffs.keys():
+                                value = get_nested_dictionary_value(param[1:].split('.'), target)
+                                if coeffs:
+                                    a = coeffs[param]['a']
+                                    b = coeffs[param]['b']
+                                    if len(a) == 1:
+                                        norm_value = a[0]*value + b[0]
+                                    else:
+                                        norm_value = []
+                                        for i in range(0,len(a)):
+                                            norm_value.append(a[i]*value[i]+b[i])
+                                    query.setValue(str(param[1:]), norm_value)
+                                else:
+                                    query.setValue(str(param[1:]), value)
+
+                    except Exception, e:
+                        msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout.'
+                        logger.info(msg + ' (%s)' % e)
+                        return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
         else:
             query = Point()  # Empty target
             query.setLayout(layout)

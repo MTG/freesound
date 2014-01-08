@@ -821,12 +821,12 @@ class FreesoundApiV2Resources(GenericAPIView):
                 }},
                 {'Sound resources': {
                     'Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>')),
-                    'Sound ratings': prepend_base(reverse('apiv2-sound-ratings', args=[0]).replace('0', '<sound_id>')),
+                    #'Sound ratings': prepend_base(reverse('apiv2-sound-ratings', args=[0]).replace('0', '<sound_id>')),
                     'Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>')),
                     'Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>')),
                     'Download sound': prepend_base(reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
                     'Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>')),
-                    'Sounds from list of sound ids': prepend_base(reverse('apiv2-sound-list-from-ids')),
+                    #'Sounds from list of sound ids': prepend_base(reverse('apiv2-sound-list-from-ids')),
 
                 }},
                 {'User resources': {

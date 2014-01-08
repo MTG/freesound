@@ -1,3 +1,4 @@
+- Refactor SimilaritySearchWithTargetFile so it is useful as general content-based search
 - Write documentation
 - Customize online interactive api
 - Clean code (imports, utils...)

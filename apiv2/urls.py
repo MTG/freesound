@@ -41,8 +41,8 @@ urlpatterns = patterns('apiv2.views',
 
     # Search and similarity search
     url(r'^search/$', views.Search.as_view(), name="apiv2-sound-search"),
-    url(r'^search/combined/$', views.CombinedSearch.as_view(), name="apiv2-sound-combined-search"),
-    url(r'^search/target_file/$', views.SimilaritySearchWithTargetFile.as_view(), name="apiv2-similarity-file"),
+    url(r'^search/advanced/$', views.AdvancedSearch.as_view(), name="apiv2-sound-combined-search"),
+    #url(r'^search/target_file/$', views.SimilaritySearchWithTargetFile.as_view(), name="apiv2-similarity-file"),
 
     # Sounds
     url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
@@ -52,35 +52,27 @@ urlpatterns = patterns('apiv2.views',
     url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilarSounds.as_view(), name="apiv2-similarity-sound"),
     #url(r'^sounds/list_from_ids/$', views.SoundsFromListOfIds.as_view(), name="apiv2-sound-list-from-ids"),
     url(r'^sounds/(?P<pk>[0-9]+)/download/$', views.DownloadSound.as_view(), name="apiv2-sound-download"),
+    # Create
+    url(r'^sounds/(?P<pk>[0-9]+)/bookmark/$', views.BookmarkSound.as_view(), name='apiv2-user-create-bookmark'),
+    url(r'^sounds/(?P<pk>[0-9]+)/rate/$', views.RateSound.as_view(), name='apiv2-user-create-rating'),
+    url(r'^sounds/(?P<pk>[0-9]+)/comment/$', views.CommentSound.as_view(), name='apiv2-user-create-comment'),
+    # Upload
+    url(r'^sounds/upload/$', views.UploadSound.as_view(), name="apiv2-uploads-upload"),
+    url(r'^sounds/not_yet_described/$', views.NotYetDescribedUploadedSounds.as_view(), name="apiv2-uploads-not-described"),
+    url(r'^sounds/describe/$', views.DescribeSound.as_view(), name="apiv2-uploads-describe"),
+    url(r'^sounds/upload_and_describe/$', views.UploadAndDescribeSound.as_view(), name="apiv2-uploads-upload-and-describe"),
 
     # Users
     url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),
     url(r'^users/(?P<username>[^//]+)/sounds/$', views.UserSounds.as_view(), name="apiv2-user-sound-list"),
     url(r'^users/(?P<username>[^//]+)/packs/$', views.UserPacks.as_view(), name='apiv2-user-packs'),
-    url(r'^users/(?P<username>[^//]+)/bookmarks/$', views.UserBookmarkCategories.as_view(), name='apiv2-user-bookmark-categories'),
-    url(r'^users/(?P<username>[^//]+)/bookmarks/category/uncategorized/sounds/$', views.UserSoundsForBookmarkCategory.as_view(),    name='apiv2-user-bookmark-uncategorized'),
-    url(r'^users/(?P<username>[^//]+)/bookmarks/category/(?P<category_id>\d+)/sounds/$', views.UserSoundsForBookmarkCategory.as_view(), name='apiv2-user-bookmark-category-sounds'),
+    url(r'^users/(?P<username>[^//]+)/bookmark_categories/$', views.UserBookmarkCategories.as_view(), name='apiv2-user-bookmark-categories'),
+    url(r'^users/(?P<username>[^//]+)/bookmark_categories/(?P<category_id>\d+)/sounds/$', views.UserBookmarkCategorySounds.as_view(), name='apiv2-user-bookmark-category-sounds'),
 
     # Packs
     url(r'^packs/(?P<pk>[0-9]+)/$', views.PackInstance.as_view(), name='apiv2-pack-instance'),
     url(r'^packs/(?P<pk>[0-9]+)/sounds/$', views.PackSounds.as_view(), name='apiv2-pack-sound-list'),
     url(r'^packs/(?P<pk>[0-9]+)/download/$', views.DownloadPack.as_view(), name='apiv2-pack-download'),
-
-
-    ##############
-    # READ WRITE #
-    ##############
-
-    # Upload sounds
-    url(r'^create/sound/$', views.UploadSound.as_view(), name="apiv2-uploads-upload"),
-    url(r'^create/sound/not_yet_described/$', views.NotYetDescribedUploadedSounds.as_view(), name="apiv2-uploads-not-described"),
-    url(r'^create/sound/describe/$', views.DescribeSound.as_view(), name="apiv2-uploads-describe"),
-    url(r'^create/sound/upload_and_describe/$', views.UploadAndDescribeSound.as_view(), name="apiv2-uploads-upload-and-describe"),
-
-    # Other
-    url(r'^create/bookmark/$', views.CreateBookmark.as_view(), name='apiv2-user-create-bookmark'),
-    url(r'^create/rating/$', views.CreateRating.as_view(), name='apiv2-user-create-rating'),
-    url(r'^create/comment/$', views.CreateComment.as_view(), name='apiv2-user-create-comment'),
 
 
     #########################

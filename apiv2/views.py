@@ -47,6 +47,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.core.urlresolvers import reverse
+from collections import OrderedDict
 from urllib import unquote
 import settings
 import logging
@@ -127,7 +128,7 @@ class Search(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class CombinedSearch(GenericAPIView):
+class AdvancedSearch(GenericAPIView):
     """
     Search sounds in Freesound based on their tags, metadata and content-based descriptors.
     TODO: proper documentation.
@@ -203,6 +204,7 @@ class CombinedSearch(GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+'''
 class SimilaritySearchWithTargetFile(GenericAPIView):
     """
     Get sounds from the Freesound database which are similar to an uploaded analysis file.
@@ -263,7 +265,7 @@ class SimilaritySearchWithTargetFile(GenericAPIView):
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+'''
 
 #############
 # SOUND VIEWS
@@ -508,12 +510,19 @@ class UserBookmarkCategories(ListAPIView):
 
     def get_queryset(self):
         categories = BookmarkCategory.objects.filter(user__username=self.kwargs['username'])
-        user = User.objects.get(username=self.kwargs['username'])
-        uncategorized = BookmarkCategory(name='Uncategorized',user=user,id=0)
-        return [uncategorized] + list(categories)
+        try:
+            user = User.objects.get(username=self.kwargs['username'], is_active=True)
+        except User.DoesNotExist:
+            raise NotFoundException
+
+        if Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'], category=None).count():
+            uncategorized = BookmarkCategory(name='Uncategorized', user=user, id=0)
+            return [uncategorized] + list(categories)
+        else:
+            return list(categories)
 
 
-class UserSoundsForBookmarkCategory(ListAPIView):
+class UserBookmarkCategorySounds(ListAPIView):
     """
     List of sounds of a bookmark category created by a user.
     TODO: proper documentation.
@@ -522,7 +531,7 @@ class UserSoundsForBookmarkCategory(ListAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('user:%s sounds_for_bookmark_category:%s' % (self.kwargs['username'], str(self.kwargs.get('category_id', None)))))
-        return super(UserSoundsForBookmarkCategory, self).get(request, *args, **kwargs)
+        return super(UserBookmarkCategorySounds, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
 
@@ -530,12 +539,12 @@ class UserSoundsForBookmarkCategory(ListAPIView):
         kwargs['user__username'] = self.kwargs['username']
 
         if 'category_id' in self.kwargs:
-            #category = BookmarkCategory.objects.get(user__username=self.kwargs['username'], id=self.kwargs['category_id'])
-            kwargs['category__id'] = self.kwargs['category_id']
+            if int(self.kwargs['category_id']) != 0:
+                kwargs['category__id'] = self.kwargs['category_id']
+            else:
+                kwargs['category'] = None
         else:
             kwargs['category'] = None
-        #else:
-        #    return  [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(user__username=self.kwargs['username'],category=None)]
 
         try:
             queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
@@ -707,7 +716,7 @@ class UploadAndDescribeSound(WriteRequiredGenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CreateBookmark(WriteRequiredGenericAPIView):
+class BookmarkSound(WriteRequiredGenericAPIView):
     """
     Create a new bookmark for a user.
     TODO: proper documentation.
@@ -715,21 +724,22 @@ class CreateBookmark(WriteRequiredGenericAPIView):
     serializer_class = CreateBookmarkSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('sound:%s create_bookmark' % (request.DATA.get('sound_id', None))))
+        sound_id = kwargs['pk']
+        logger.info(self.log_message('sound:%s create_bookmark' % sound_id))
         serializer = CreateBookmarkSerializer(data=request.DATA)
         if serializer.is_valid():
             if ('category' in request.DATA):
                 category = BookmarkCategory.objects.get_or_create(user=self.user, name=request.DATA['category'])
-                bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=request.DATA['sound_id'], category=category[0])
+                bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=sound_id, category=category[0])
             else:
-                bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=request.DATA['sound_id'])
+                bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=sound_id)
             bookmark.save()
             return Response(data={'details': 'Bookmark successfully created'}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CreateRating(WriteRequiredGenericAPIView):
+class RateSound(WriteRequiredGenericAPIView):
     """
     Create a new rating for a sound.
     TODO: proper documentation.
@@ -737,21 +747,22 @@ class CreateRating(WriteRequiredGenericAPIView):
     serializer_class = CreateRatingSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('sound:%s create_rating' % (request.DATA.get('sound_id', None))))
+        sound_id = kwargs['pk']
+        logger.info(self.log_message('sound:%s create_rating' % sound_id))
         serializer = CreateRatingSerializer(data=request.DATA)
         if serializer.is_valid():
             try:
-                rating = Rating.objects.create(user=self.user, object_id=request.DATA['sound_id'], content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
+                rating = Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
                 return Response(data={'details': 'Rating successfully created'}, status=status.HTTP_201_CREATED)
             except IntegrityError:
-                raise InvalidUrlException(msg='User has already rated sound %s' % request.DATA['sound_id'])
+                raise InvalidUrlException(msg='User has already rated sound %s' % sound_id)
             except:
                 raise ServerErrorException
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CreateComment(WriteRequiredGenericAPIView):
+class CommentSound(WriteRequiredGenericAPIView):
     """
     Create a new comment for a sound.
     TODO: proper documentation.
@@ -759,10 +770,11 @@ class CreateComment(WriteRequiredGenericAPIView):
     serializer_class = CreateCommentSerializer
 
     def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('sound:%s create_comment' % (request.DATA.get('sound_id', None))))
+        sound_id = kwargs['pk']
+        logger.info(self.log_message('sound:%s create_comment' % sound_id))
         serializer = CreateCommentSerializer(data=request.DATA)
         if serializer.is_valid():
-            comment = Comment.objects.create(user=self.user, object_id=request.DATA['sound_id'], content_type=ContentType.objects.get(id=20), comment=request.DATA['comment'])
+            comment = Comment.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), comment=request.DATA['comment'])
             if comment.content_type == ContentType.objects.get_for_model(Sound):
                 sound = comment.content_object
                 sound.num_comments = sound.num_comments + 1
@@ -787,16 +799,10 @@ class Me(GenericAPIView):
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('me'))
         if self.user:
-            response_data = {
-                             'username': self.user.username,
-                             'email': self.user.email,
-                             'date_joined': self.user.date_joined,
-                             'about': self.user.profile.about,
-                             'home_page': self.user.profile.home_page,
-                             'num_sounds': self.user.profile.num_sounds,
-                             'num_posts': self.user.profile.num_posts
-
-            }
+            response_data = UserSerializer(self.user).data
+            response_data.update({
+                 'email': self.user.email,
+            })
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             raise ServerErrorException
@@ -814,50 +820,37 @@ class FreesoundApiV2Resources(GenericAPIView):
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('api_root'))
         return Response([
-            {'Search resources': {
-                    'Search': prepend_base(reverse('apiv2-sound-search')),
-                    'Combined Search': prepend_base(reverse('apiv2-sound-combined-search')),
-                    'Similarity search with target file': prepend_base(reverse('apiv2-similarity-file')),
-                }},
-                {'Sound resources': {
-                    'Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>')),
-                    #'Sound ratings': prepend_base(reverse('apiv2-sound-ratings', args=[0]).replace('0', '<sound_id>')),
-                    'Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>')),
-                    'Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>')),
-                    'Download sound': prepend_base(reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
-                    'Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>')),
-                    #'Sounds from list of sound ids': prepend_base(reverse('apiv2-sound-list-from-ids')),
-
-                }},
-                {'User resources': {
-                    'User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>')),
-                    'User sounds': prepend_base(reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>')),
-                    'User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>')),
-                    'User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>')),
-                    'User uncategorized sound bookmarks': prepend_base(reverse('apiv2-user-bookmark-uncategorized', args=['uname']).replace('uname', '<username>')),
-                    'User sounds for bookmark category': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>')),
-                }},
-                {'Pack resources': {
-                    'Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>')),
-                    'Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>')),
-                    'Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
-                }},
-                {'Create resources': {
-                    'Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
-                    'Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
-                    'Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
-                    'Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
-                    'Create bookmark': prepend_base(reverse('apiv2-user-create-bookmark')),
-                    'Create rating': prepend_base(reverse('apiv2-user-create-rating')),
-                    'Create comment': prepend_base(reverse('apiv2-user-create-comment')),
-                }},
-                {'Other resources': {
-                    'Oauth2 Authorize': prepend_base(reverse('oauth2:capture')),
-                    'Oauth2 Access token': prepend_base(reverse('oauth2:access_token')),
-                    'Apply': prepend_base(reverse('apiv2-apply')),
-                    'Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
-
-                }},
+            {'Search resources': OrderedDict(sorted(dict({
+                    '01 Search': prepend_base(reverse('apiv2-sound-search')),
+                    '02 Advanced Search': prepend_base(reverse('apiv2-sound-combined-search')),
+                }).items(), key=lambda t: t[0]))},
+                {'Sound resources': OrderedDict(sorted(dict({
+                    '01 Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>')),
+                    '02 Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>')),
+                    '03 Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>')),
+                    '04 Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>')),
+                    '05 Download sound': prepend_base(reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
+                    '06 Bookmark sound': prepend_base(reverse('apiv2-user-create-bookmark', args=[0]).replace('0', '<sound_id>')),
+                    '07 Rate sound': prepend_base(reverse('apiv2-user-create-rating', args=[0]).replace('0', '<sound_id>')),
+                    '08 Comment sound': prepend_base(reverse('apiv2-user-create-comment', args=[0]).replace('0', '<sound_id>')),
+                    '09 Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
+                    '10 Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
+                    '11 Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
+                    '12 Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
+                }).items(), key=lambda t: t[0]))},
+                {'User resources': OrderedDict(sorted(dict({
+                    '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>')),
+                    '02 User sounds': prepend_base(reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>')),
+                    '03 User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>')),
+                    '04 User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>')),
+                    '05 User bookmark category sounds': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>')),
+                    '06 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
+                }).items(), key=lambda t: t[0]))},
+                {'Pack resources': OrderedDict(sorted(dict({
+                    '01 Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>')),
+                    '02 Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>')),
+                    '03 Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
+                }).items(), key=lambda t: t[0]))},
             ])
 
 

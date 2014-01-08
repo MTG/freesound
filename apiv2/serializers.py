@@ -23,7 +23,7 @@
 from sounds.models import Sound, Pack
 from ratings.models import Rating
 from comments.models import Comment
-from bookmarks.models import BookmarkCategory
+from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from rest_framework import serializers
@@ -365,14 +365,18 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
     num_sounds = serializers.SerializerMethodField('get_num_sounds')
     def get_num_sounds(self, obj):
-        return obj.bookmarks.filter(sound__processing_state="OK", sound__moderation_state="OK").count()
+        if obj.id != 0: # Category is not 'uncategorized'
+            return obj.bookmarks.filter(sound__processing_state="OK", sound__moderation_state="OK").count()
+        else:
+            return Bookmark.objects.select_related("sound").filter(user__username=obj.user.username, category=None).count()
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
-        if obj.id != 0:
-            return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]))
-        else:
-            return prepend_base(reverse('apiv2-user-bookmark-uncategorized', args=[obj.user.username]))
+        return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]))
+        #if obj.id != 0: # Category is not 'uncategorized'
+        #    return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]))
+        #else:
+        #    return prepend_base(reverse('apiv2-user-bookmark-uncategorized', args=[obj.user.username]))
 
 class CreateBookmarkSerializer(serializers.Serializer):
     category = serializers.CharField(max_length=128, required=False, help_text='Not Required. Name you want to give to the category.')

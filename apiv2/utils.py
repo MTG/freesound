@@ -272,10 +272,11 @@ def api_search(search_form, target_file=None):
 
             gaia_ids = [result[0] for result in results]
             distance_to_target_data = None
-            if search_form.cleaned_data['target']:
+            if search_form.cleaned_data['target'] or target_file:
                 # Save sound distance to target into view class so it can be accessed by the serializer
                 # We only do that when a target is specified (otherwise there is no meaningful distance value)
                 distance_to_target_data = dict(results)
+
             gaia_count = count
             return gaia_ids, gaia_count, distance_to_target_data, None
         except SimilarityException, e:
@@ -371,7 +372,7 @@ def api_search(search_form, target_file=None):
                                                    target_file=target_file)
             gaia_ids = [id[0] for id in results]
             distance_to_target_data = None
-            if search_form.cleaned_data['target']:
+            if search_form.cleaned_data['target'] or target_file:
                 # Save sound distance to target into view class so it can be accessed by the serializer
                 # We only do that when a target is specified (otherwise there is no meaningful distance value)
                 distance_to_target_data = dict(results)

@@ -240,6 +240,7 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 ################
 
 APIV2KEYS_ALLOWED_FOR_APIV1 = True
+ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
 
 REST_FRAMEWORK = {
     'PAGINATE_BY': 15,
@@ -254,6 +255,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.XMLRenderer',
     )
 }
+
 
 # Oauth2 provider settings
 OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)

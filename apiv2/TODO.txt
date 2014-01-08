@@ -1,4 +1,4 @@
-- Refactor SimilaritySearchWithTargetFile so it is useful as general content-based search
+- check api option to enforce ssl requests (in provider)
 - Write documentation
 - Customize online interactive api
 - Clean code (imports, utils...)

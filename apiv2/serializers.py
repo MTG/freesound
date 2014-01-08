@@ -88,7 +88,6 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'num_downloads',
                   'avg_rating',
                   'num_ratings',
-                  'ratings',
                   'num_comments',
                   'comments',
                   'similar_sounds',
@@ -381,7 +380,7 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 class CreateBookmarkSerializer(serializers.Serializer):
     category = serializers.CharField(max_length=128, required=False, help_text='Not Required. Name you want to give to the category.')
     name = serializers.CharField(max_length=128, required=True, help_text='Required. Name you want to give to the bookmark.')
-    sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
+    #sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
 
 
 ####################
@@ -410,7 +409,7 @@ class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
 
 class CreateRatingSerializer(serializers.Serializer):
     rating = serializers.IntegerField(required=True, help_text='Required. Chose an integer rating between 0 and 5.')
-    sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
+    #sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
 
     def validate_rating(self, attrs, source):
         value = attrs[source]
@@ -438,7 +437,7 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
 class CreateCommentSerializer(serializers.Serializer):
     comment = serializers.CharField(required=True, help_text='Required. Chose an integer rating between 0 and 5.')
-    sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
+    #sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
 
 
 ####################

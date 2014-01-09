@@ -419,7 +419,7 @@ class SoundContentSearchHandler(BaseHandler):
         if not t and not f:
             raise ReturnError(400, "BadRequest", {"explanation": "Introduce either a target, a filter or both."})
         try:
-            results, count = api_search(target=t, filter=f, num_results=int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+            results, count, note = api_search(target=t, filter=f, num_results=int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
         except SimilarityException, e:
             raise ReturnError(e.status_code, "SimilarityError", {"explanation": e.message})
         except Exception, e:
@@ -552,7 +552,7 @@ class SoundSimilarityHandler(BaseHandler):
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or similarity data is not ready." % sound_id})
 
         try:
-            similar_sounds, count = api_search(target=str(sound.id), preset=request.GET.get('preset', None), num_results=int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
+            similar_sounds, count, note = api_search(target=str(sound.id), preset=request.GET.get('preset', None), num_results=int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
         except SimilarityException, e:
             raise ReturnError(404, "NotFound", {"explanation": e})
 

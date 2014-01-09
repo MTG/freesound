@@ -154,7 +154,7 @@ class AdvancedSearch(GenericAPIView):
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
-        results, count, distance_to_target_data, more_from_pack_data = api_search(search_form, target_file=analysis_file)
+        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -193,6 +193,8 @@ class AdvancedSearch(GenericAPIView):
                 # In that case sounds are are set to null
                 sounds.append(None)
         response_data['results'] = sounds
+        if note:
+            response_data['note'] = note
 
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -231,7 +233,7 @@ class SimilaritySearchWithTargetFile(GenericAPIView):
                     raise NotFoundException
 
             # Get gaia results
-            results, count, distance_to_target_data, more_from_pack_data = api_search(similarity_file_form, target_file=analysis_file.read())
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(similarity_file_form, target_file=analysis_file.read())
 
             # Paginate results
             paginator = ApiSearchPaginator(results, count, similarity_file_form.cleaned_data['page_size'])
@@ -329,7 +331,7 @@ class SimilarSounds(GenericAPIView):
 
         # Get search results
         similarity_sound_form.cleaned_data['target'] = str(sound_id)
-        results, count, distance_to_target_data, more_from_pack_data = api_search(similarity_sound_form)
+        results, count, distance_to_target_data, more_from_pack_data, note = api_search(similarity_sound_form)
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, similarity_sound_form.cleaned_data['page_size'])

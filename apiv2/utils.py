@@ -259,16 +259,16 @@ def api_search(search_form, target_file=None):
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
         # No input data for search, return empty results
-        return [], 0, None, None
+        return [], 0, None, None, None
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
         # Standard content-based search
         try:
-            results, count = similarity_api_search(target=search_form.cleaned_data['target'],
-                                                   filter=search_form.cleaned_data['descriptors_filter'],
-                                                   num_results=search_form.cleaned_data['page_size'],
-                                                   offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
-                                                   target_file=target_file)
+            results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
+                                                         filter=search_form.cleaned_data['descriptors_filter'],
+                                                         num_results=search_form.cleaned_data['page_size'],
+                                                         offset=(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size'],
+                                                         target_file=target_file)
 
             gaia_ids = [result[0] for result in results]
             distance_to_target_data = None
@@ -278,7 +278,7 @@ def api_search(search_form, target_file=None):
                 distance_to_target_data = dict(results)
 
             gaia_count = count
-            return gaia_ids, gaia_count, distance_to_target_data, None
+            return gaia_ids, gaia_count, distance_to_target_data, None, note
         except SimilarityException, e:
             if e.status_code == 500:
                 raise ServerErrorException(msg=e.message)
@@ -316,7 +316,7 @@ def api_search(search_form, target_file=None):
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
                 more_from_pack_data = dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs])
 
-            return solr_ids, solr_count, None, more_from_pack_data
+            return solr_ids, solr_count, None, more_from_pack_data, None
 
         except SolrException, e:
             raise InvalidUrlException(msg='Solr exception: %s' % e.message)
@@ -365,11 +365,11 @@ def api_search(search_form, target_file=None):
 
         # Get gaia results
         try:
-            results, count = similarity_api_search(target=search_form.cleaned_data['target'],
-                                                   filter=search_form.cleaned_data['descriptors_filter'],
-                                                   num_results=99999999,  # Return all sounds in one page
-                                                   offset=0,
-                                                   target_file=target_file)
+            results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
+                                                         filter=search_form.cleaned_data['descriptors_filter'],
+                                                         num_results=99999999,  # Return all sounds in one page
+                                                         offset=0,
+                                                         target_file=target_file)
             gaia_ids = [id[0] for id in results]
             distance_to_target_data = None
             if search_form.cleaned_data['target'] or target_file:
@@ -423,7 +423,8 @@ def api_search(search_form, target_file=None):
         return combined_ids[(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size']:search_form.cleaned_data['page'] * search_form.cleaned_data['page_size']], \
                combined_count, \
                distance_to_target_data, \
-               more_from_pack_data
+               more_from_pack_data, \
+               note
 
 
 ###############

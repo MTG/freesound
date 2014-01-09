@@ -612,7 +612,7 @@ class GaiaWrapper:
                         target_file_parsing_type = 'walkDict'
 
                     except Exception, e:
-                        msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout.'
+                        msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout. Are you using the last version of Essentia\'s Freesound extractor?'
                         logger.info(msg + ' (%s)' % e)
                         return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
         else:
@@ -647,4 +647,9 @@ class GaiaWrapper:
         except:
             return {'error': True, 'result': 'Server error', 'status_code': SERVER_ERROR_CODE}
 
-        return {'error': False, 'result': {'results': results, 'count': count}}
+        note = None
+        if target_type == 'file':
+            if target_file_parsing_type == 'walkDict':
+                note = 'The layout of the given analysis file differed from what we expected. Similarity results might not be accurate. Was the file generated with the last version of Essentia\'s Freesound extractor?'
+
+        return {'error': False, 'result': {'results': results, 'count': count, 'note': note}}

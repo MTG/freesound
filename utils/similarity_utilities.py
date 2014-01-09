@@ -111,7 +111,7 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
             if len(returned_sounds) > 0:
                 cache.set(cache_key, result, SIMILARITY_CACHE_TIME)
 
-    return returned_sounds[0:num_results], count
+    return returned_sounds[0:num_results], count, result['note']
 
 
 def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only_leaf_descriptors=False):

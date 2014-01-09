@@ -29,6 +29,7 @@ examples = {
     ],
     'AdvancedSearch': [
         ('text', ['apiv2/...todo sound advanced search examples...']),
+        ('Textual query plus filtering of multidiemnsional descriptors', ['apiv2/search/advanced/?query=music&fields=id,analysis&descriptors=.lowlevel.mfcc.mean&descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]']),
     ],
 
     # Sounds

@@ -7,7 +7,7 @@ Search resources
 >>>>>>>>>>>>>>>>
 
 Search
-======
+=========================================================
 
 ::
 
@@ -67,4 +67,208 @@ Name                    Type                       Description
 Examples
 --------
 
-{{examples_search}}
+{{examples_Search}}
+
+
+
+Advanced Search
+=========================================================
+
+Examples
+--------
+
+{{examples_AdvancedSearch}}
+
+
+Sound resources
+>>>>>>>>>>>>>>>
+
+
+Sound Instance
+=========================================================
+
+Examples
+--------
+
+{{examples_SoundInstance}}
+
+
+Sound Analysis
+=========================================================
+
+Examples
+--------
+
+{{examples_SoundAnalysis}}
+
+
+Similar Sounds
+=========================================================
+
+Examples
+--------
+
+{{examples_SimilarSounds}}
+
+
+Sound Comments
+=========================================================
+
+Examples
+--------
+
+{{examples_SoundComments}}
+
+
+Download Sound
+=========================================================
+
+Examples
+--------
+
+{{examples_DownloadSound}}
+
+
+Upload Sound
+=========================================================
+
+Examples
+--------
+
+{{examples_UploadSound}}
+
+
+Not Yet Described Uploaded Sounds
+=========================================================
+
+Examples
+--------
+
+{{examples_NotYetDescribedUploadedSounds}}
+
+
+Describe Sound
+=========================================================
+
+Examples
+--------
+
+{{examples_DescribeSound}}
+
+
+Upload and Describe Sound
+=========================================================
+
+Examples
+--------
+
+{{examples_UploadAndDescribeSound}}
+
+
+Bookmark Sound
+=========================================================
+
+Examples
+--------
+
+{{examples_BookmarkSound}}
+
+
+Rate Sound
+=========================================================
+
+Examples
+--------
+
+{{examples_RateSound}}
+
+
+Comment Sound
+=========================================================
+
+Examples
+--------
+
+{{examples_CommentSound}}
+
+
+
+User resources
+>>>>>>>>>>>>>>
+
+
+User Instance
+=========================================================
+
+Examples
+--------
+
+{{examples_UserInstance}}
+
+
+User Sounds
+=========================================================
+
+Examples
+--------
+
+{{examples_UserSounds}}
+
+
+
+User Packs
+=========================================================
+
+Examples
+--------
+
+{{examples_UserPacks}}
+
+
+User Bookmark Categories
+=========================================================
+
+Examples
+--------
+
+{{examples_UserBookmarkCategories}}
+
+
+User Bookmark Category Sounds
+=========================================================
+
+Examples
+--------
+
+{{examples_UserBookmarkCategorySounds}}
+
+
+Pack resources
+>>>>>>>>>>>>>>
+
+
+Pack Instance
+=========================================================
+
+Examples
+--------
+
+{{examples_PackInstance}}
+
+
+Pack Sounds
+=========================================================
+
+Examples
+--------
+
+{{examples_PackSounds}}
+
+
+Download Pack
+=========================================================
+
+Examples
+--------
+
+{{examples_DownloadPack}}

@@ -24,8 +24,9 @@ def get_formatted_examples_for_view(view_name):
 with open('source/resources.rst', 'r') as f:
     newlines = []
     for line in f.readlines():
-        if '{{examples_search}}' in line:
-            examples_string = get_formatted_examples_for_view('Search')
+        if '{{examples_' in line:
+            name = line.split('{{')[1].split('}}')[0].split('_')[1]
+            examples_string = get_formatted_examples_for_view(name)
             for example_line in examples_string.split('\n'):
                 newlines.append(example_line + '\n')
         else:

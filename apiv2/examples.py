@@ -21,9 +21,80 @@
 #
 
 examples = {
+    # Search
     'Search': [
-        ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano']),
+        ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano&page=2']),
         ('Search with filter', ['apiv2/search/?query=music&filter=tag:guitar']),
         ('Slect return fields', ['apiv2/search/?query=alarm&fields=name,previews']),
     ],
+    'AdvancedSearch': [
+        ('text', ['apiv2/...todo sound advanced search examples...']),
+    ],
+
+    # Sounds
+    'SoundInstance': [
+        ('text', ['apiv2/...todo sound instance examples...']),
+    ],
+    'SoundAnalysis': [
+        ('text', ['apiv2/...todo sound analysis examples...']),
+    ],
+    'SimilarSounds': [
+        ('text', ['apiv2/...todo similar sounds examples...']),
+    ],
+    'SoundComments': [
+        ('text', ['apiv2/...todo sound comments examples...']),
+    ],
+    'DownloadSound': [
+        ('text', ['apiv2/...todo download sound examples...']),
+    ],
+    'UploadSound': [
+        ('text', ['apiv2/...todo upload sound examples...']),
+    ],
+    'NotYetDescribedUploadedSounds': [
+        ('text', ['apiv2/...todo not yet described... examples...']),
+    ],
+    'DescribeSound': [
+        ('text', ['apiv2/...todo describe sound examples...']),
+    ],
+    'UploadAndDescribeSound': [
+        ('text', ['apiv2/...todo upload and describe sound examples...']),
+    ],
+    'BookmarkSound': [
+        ('text', ['apiv2/...todo bookmark sound examples...']),
+    ],
+    'RateSound': [
+        ('text', ['apiv2/...todo rate sound examples...']),
+    ],
+    'CommentSound': [
+        ('text', ['apiv2/...todo comment sound examples...']),
+    ],
+
+    # Users
+    'UserInstance': [
+        ('text', ['apiv2/...todo user instance examples...']),
+    ],
+    'UserSounds': [
+        ('text', ['apiv2/...todo user sounds examples...']),
+    ],
+    'UserPacks': [
+        ('text', ['apiv2/...todo user packs examples...']),
+    ],
+    'UserBookmarkCategories': [
+        ('text', ['apiv2/...todo user bookmark categories examples...']),
+    ],
+    'UserBookmarkCategorySounds': [
+        ('text', ['apiv2/...todo user bookmark category sounds examples...']),
+    ],
+
+    # Packs
+    'PackInstance': [
+        ('text', ['apiv2/...todo pack instance examples...']),
+    ],
+    'PackSounds': [
+        ('text', ['apiv2/...todo pack sounds examples...']),
+    ],
+    'DownloadPack': [
+        ('text', ['apiv2/...todo pack download examples...']),
+    ],
+
 }

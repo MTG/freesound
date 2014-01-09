@@ -574,10 +574,12 @@ class GaiaWrapper:
                     # Try directly loading the file
                     p, query = Point(), Point()
                     p.loadFromString(yaml.dump(target))
-                    query = self.original_dataset.history().mapPoint(query)
+                    query = self.original_dataset.history().mapPoint(p)
                     target_file_parsing_type = 'mapPoint'
 
-                except:
+                except Exception, e:
+                    logger.info('Unable to create gaia point from uploaded file (%s). Trying addind descriptors one by one.' % e)
+
                     # If does not work load descriptors one by one
                     try:
                         query = Point()
@@ -612,9 +614,8 @@ class GaiaWrapper:
                         target_file_parsing_type = 'walkDict'
 
                     except Exception, e:
-                        msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout. Are you using the last version of Essentia\'s Freesound extractor?'
-                        logger.info(msg + ' (%s)' % e)
-                        return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+                        logger.info('Unable to create gaia point from uploaded file and addind descriptors one by one (%s)' % e)
+                        return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout. Are you using the last version of Essentia\'s Freesound extractor?', 'status_code': SERVER_ERROR_CODE}
         else:
             query = Point()  # Empty target
             query.setLayout(layout)

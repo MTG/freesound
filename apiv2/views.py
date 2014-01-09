@@ -27,7 +27,7 @@ from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  basic_request_info_for_log_message
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -57,8 +57,8 @@ import logging
 import datetime
 import os
 
-
 logger = logging.getLogger("api")
+docs_base_url = prepend_base('/docs/api')
 
 
 ####################################
@@ -66,10 +66,10 @@ logger = logging.getLogger("api")
 ####################################
 
 class Search(GenericAPIView):
-    """
-    Search sounds in Freesound based on their tags and other metadata.
-    <br>Full documentation including examples can be found <a href='http://www.freesound.org/docs/api/resources.html#search'>here</a>.
-    """
+
+    __doc__ = 'Search sounds in Freesound based on their tags and other metadata.' \
+              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+              % (docs_base_url, 'resources.html#search', get_formatted_examples_for_view('Search', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))

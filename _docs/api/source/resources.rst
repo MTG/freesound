@@ -67,6 +67,4 @@ Name                    Type                       Description
 Examples
 --------
 
-::
-
-  curl http://localhost:8000/apiv2/search/search?query=piano
+{{examples_search}}

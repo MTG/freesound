@@ -11,7 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
-   resources.rst
+   resources_apiv2.rst
 
 .. toctree::
    :maxdepth: 1

@@ -33,6 +33,7 @@ from geotags.models import GeoTag
 from freesound.utils.filesystem import md5file
 from freesound.utils.text import slugify
 from exceptions import ServerErrorException, OtherException, UnauthorizedException, InvalidUrlException, NotFoundException
+from examples import examples
 import shutil
 import settings
 import os
@@ -487,6 +488,30 @@ class ApiSearchPaginator(object):
         previous_page_number = page_num - 1
         return locals()
 
+
+# Docs examples utils
+#####################
+
+def get_formatted_examples_for_view(view_name, max=10):
+    try:
+        data = examples[view_name]
+    except:
+        print 'Could not find examples for view %s' % view_name
+        return ''
+
+    count = 0
+    output = 'Some quick examples:<div class="request-info" style="clear: both"><pre class="prettyprint">'
+    for description, elements in data:
+        for element in elements:
+            if count >= max:
+                break
+
+            output += '<span class="pln"><a href="%s">%s</a></span><br>' % (prepend_base('/' + element), prepend_base('/' + element))
+            count += 1
+
+    output += '</pre></div>'
+
+    return output
 
 # Similarity utils
 ##################

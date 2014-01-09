@@ -1,4 +1,5 @@
 - check api option to enforce ssl requests (in provider)
+- check content based filter error: Exception: Scanner error at character '_': "WHERE value.lowlevel.spectral_centroid.mean>0.00210238411091 AND value.lowlevel.spectral_centroid.mean<0.00446948304307 " (gaia)
 - Write documentation
 - Customize online interactive api
 - Clean code (imports, utils...)

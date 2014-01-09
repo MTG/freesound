@@ -645,7 +645,7 @@ class GaiaWrapper:
             search = self.view.nnSearch(query, metric, str(filter))
             results = search.get(num_results, offset=offset)
             count = search.size()
-        except:
+        except Exception, e:
             return {'error': True, 'result': 'Server error', 'status_code': SERVER_ERROR_CODE}
 
         note = None

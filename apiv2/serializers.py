@@ -219,7 +219,7 @@ class SoundSerializer(AbstractSoundSerializer):
                                               self.context['request'].GET.get('normalized', '0') == '1',
                                               only_leaf_descriptors=True)[str(obj.id)]
             else:
-                return {}
+                return 'No descriptors specified. You should indicate which descriptors you want with the \'descriptors\' request parameter.'
         except Exception, e:
             return None
 

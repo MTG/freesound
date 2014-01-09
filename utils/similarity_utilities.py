@@ -68,6 +68,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
 def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, target_file=None):
 
     cache_key = 'api-search-t-%s-f-%s-nr-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results)
+    note = False
 
     # Don't use the cache when we're debugging
     if settings.DEBUG:
@@ -104,14 +105,16 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
             offset=offset,
             file=target_file,
         )
+
         returned_sounds = [[int(x[0]), float(x[1])] for x in result['results']]
         count = result['count']
+        note = result['note']
 
         if not target_file:
             if len(returned_sounds) > 0:
                 cache.set(cache_key, result, SIMILARITY_CACHE_TIME)
 
-    return returned_sounds[0:num_results], count, result['note']
+    return returned_sounds[0:num_results], count, note
 
 
 def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only_leaf_descriptors=False):
@@ -139,4 +142,5 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
                   item, SIMILARITY_CACHE_TIME)
 
     returned_data.update(cached_data)
+
     return returned_data

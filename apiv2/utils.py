@@ -541,6 +541,9 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
                                                                   only_leaf_descriptors=True)
             except:
                 pass
+        else:
+            for id in ids:
+                view.sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors you want with the \'descriptors\' request parameter.'
 
 
 # Upload handler utils

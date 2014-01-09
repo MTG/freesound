@@ -137,7 +137,7 @@ def parse_filter(filter_string, layout_descriptor_names):
                     max_v = None
                 f['value'] = {'min':min_v,'max':max_v}
 
-    print final_filter_struct
+    #print final_filter_struct
     return final_filter_struct
 
 def prepend_value_label(f):

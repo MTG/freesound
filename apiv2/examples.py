@@ -24,8 +24,8 @@ examples = {
     # Search
     'Search': [
         ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano&page=2']),
-        ('Search with filter', ['apiv2/search/?query=music&filter=tag:guitar']),
-        ('Slect return fields', ['apiv2/search/?query=alarm&fields=name,previews']),
+        ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar']),
+        ('Simple search and selection of sound fields to return in the results', ['apiv2/search/?query=alarm&fields=name,previews']),
     ],
     'AdvancedSearch': [
         ('text', ['apiv2/...todo sound advanced search examples...']),
@@ -33,19 +33,23 @@ examples = {
 
     # Sounds
     'SoundInstance': [
-        ('text', ['apiv2/...todo sound instance examples...']),
+        ('Complete sound information', ['apiv2/sounds/1234/']),
+        ('Getting only id and tags for a particular sound', ['apiv2/sounds/1234/?fields=id,tags']),
+        ('Getting sound name and spectral centroid values (second example gets normalized centroid values)', ['apiv2/sounds/1234/?fields=name,analysis&descriptors=.lowlevel.spectral_centroid', 'apiv2/sounds/1234/?fields=name,analysis&descriptors=.lowlevel.spectral_centroid&normalized=1']),
     ],
     'SoundAnalysis': [
-        ('text', ['apiv2/...todo sound analysis examples...']),
+        ('Full analysis information', ['apiv2/sounds/1234/analysis/']),
+        ('Getting only tristimulus descriptor', ['apiv2/sounds/1234/analysis/?descriptors=.sfx.tristimulus']),
+        ('Getting normalized mean mfcc descriptors', ['apiv2/sounds/1234/analysis/?descriptors=.lowlevel.mfcc.mean&normalized=1']),
     ],
     'SimilarSounds': [
-        ('text', ['apiv2/...todo similar sounds examples...']),
+        ('Getting similar sounds', ['apiv2/sounds/80408/similar/', 'apiv2/sounds/80408/similar/?page=2', 'apiv2/sounds/1234/similar/?fields=name,analysis&descriptors=.lowlevel.pitch.mean&descriptors_filter=.lowlevel.pitch.mean:[90 TO 110]']),
     ],
     'SoundComments': [
-        ('text', ['apiv2/...todo sound comments examples...']),
+        ('Get sound comments', ['apiv2/sounds/14854/comments/', 'apiv2/sounds/14854/comments/?page=2']),
     ],
     'DownloadSound': [
-        ('text', ['apiv2/...todo download sound examples...']),
+        ('Download a sound', ['apiv2/sounds/14854/download/']),
     ],
     'UploadSound': [
         ('text', ['apiv2/...todo upload sound examples...']),
@@ -71,30 +75,31 @@ examples = {
 
     # Users
     'UserInstance': [
-        ('text', ['apiv2/...todo user instance examples...']),
+        ('User information', ['apiv2/users/reinsamba/', 'apiv2/users/Freed/']),
     ],
     'UserSounds': [
-        ('text', ['apiv2/...todo user sounds examples...']),
+        ('Getting user sounds', ['apiv2/users/Jovica/sounds/', 'apiv2/users/Jovica/sounds/?page=2', 'apiv2/users/Jovica/sounds/?fields=id,bitdepth,type,samplerate']),
     ],
     'UserPacks': [
-        ('text', ['apiv2/...todo user packs examples...']),
+        ('Getting user packs', ['apiv2/users/reinsamba/packs/', 'apiv2/users/reinsamba/packs/?page=2']),
     ],
     'UserBookmarkCategories': [
-        ('text', ['apiv2/...todo user bookmark categories examples...']),
+        ('Users bookmark categories', ['apiv2/users/frederic.font/bookmark_categories/']),
     ],
     'UserBookmarkCategorySounds': [
-        ('text', ['apiv2/...todo user bookmark category sounds examples...']),
+        ('Getting uncategorized bookmarks', ['apiv2/users/frederic.font/bookmark_categories/0/sounds/']),
+        ('Getting sounds of a particular bookmark cateogry', ['apiv2/users/frederic.font/bookmark_categories/11819/sounds/', 'apiv2/users/frederic.font/bookmark_categories/11819/sounds/?fields=duration,previews']),
     ],
 
     # Packs
     'PackInstance': [
-        ('text', ['apiv2/...todo pack instance examples...']),
+        ('Getting a pack', ['apiv2/packs/9678/']),
     ],
     'PackSounds': [
-        ('text', ['apiv2/...todo pack sounds examples...']),
+        ('Getting pack sounds', ['apiv2/packs/9678/sounds/','apiv2/packs/9678/sounds/?fields=id,name']),
     ],
     'DownloadPack': [
-        ('text', ['apiv2/...todo pack download examples...']),
+        ('Download a pack', ['apiv2/packs/9678/download/']),
     ],
 
 }

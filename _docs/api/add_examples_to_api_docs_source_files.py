@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../../apiv2")
 from examples import examples
-
+base_url = 'http://www.freesound.org/'
 
 def get_formatted_examples_for_view(view_name):
     try:
@@ -12,13 +12,12 @@ def get_formatted_examples_for_view(view_name):
 
     output = ''
     for description, elements in data:
-        output += '\n\n%s\n\n' % description
+        output += '\n\n%s:\n\n' % description
         output += '::\n\n'
         for element in elements:
-            output += '  curl %s\n' % element
+            output += '  curl %s%s\n' % (base_url, element)
 
     return output
-
 
 
 with open('source/resources.rst', 'r') as f:

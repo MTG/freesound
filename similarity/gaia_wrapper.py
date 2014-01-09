@@ -568,11 +568,14 @@ class GaiaWrapper:
             elif target_type == 'file':
                 # Target is specified as the attached file
                 # Create a point with the data in 'descriptors_data' and search for it
+                target_file_parsing_type = '-'
+
                 try:
                     # Try directly loading the file
                     p, query = Point(), Point()
                     p.loadFromString(yaml.dump(target))
                     query = self.original_dataset.history().mapPoint(query)
+                    target_file_parsing_type = 'mapPoint'
 
                 except:
                     # If does not work load descriptors one by one
@@ -606,6 +609,8 @@ class GaiaWrapper:
                             else:
                                 nonused_features.append(param)
 
+                        target_file_parsing_type = 'walkDict'
+
                     except Exception, e:
                         msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout.'
                         logger.info(msg + ' (%s)' % e)
@@ -628,7 +633,7 @@ class GaiaWrapper:
             elif target_type == 'descriptor_values':
                 log_target = '%s (descriptor values)' % str(target)
             elif target_type == 'file':
-                log_target = 'uploaded file'
+                log_target = 'uploaded file (%s)' % target_file_parsing_type
             log_message += ' with target: %s' % log_target
         if filter:
             log_message += ' with filter: %s' % str(filter)

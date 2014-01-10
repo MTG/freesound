@@ -413,7 +413,7 @@ class CreateRatingSerializer(serializers.Serializer):
 
     def validate_rating(self, attrs, source):
         value = attrs[source]
-        if (value not in [0,1,2,3,4,5]):
+        if (value not in [0, 1, 2, 3, 4, 5]):
             raise serializers.ValidationError('You have to introduce an integer value between 0 and 5')
         return attrs
 
@@ -436,7 +436,7 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CreateCommentSerializer(serializers.Serializer):
-    comment = serializers.CharField(required=True, help_text='Required. Chose an integer rating between 0 and 5.')
+    comment = serializers.CharField(required=True, help_text='Required. String comment.')
     #sound_id = serializers.IntegerField(required=True, help_text='Required. Id of the sound.')
 
 

@@ -26,9 +26,10 @@ examples = {
         ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano&page=2']),
         ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar']),
         ('Simple search and selection of sound fields to return in the results', ['apiv2/search/?query=alarm&fields=name,previews']),
+        ('Todo', ['complete previous examples and add more...']),
     ],
     'AdvancedSearch': [
-        ('text', ['apiv2/...todo sound advanced search examples...']),
+        ('Todo...', ['apiv2/...todo sound advanced search examples...']),
         ('Textual query plus filtering of multidiemnsional descriptors', ['apiv2/search/advanced/?query=music&fields=id,analysis&descriptors=.lowlevel.mfcc.mean&descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]']),
     ],
 
@@ -68,13 +69,14 @@ examples = {
         ('Upload and describe a sound with name, pack and geotag', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "name=Another cool sound" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" -F "pack=A birds pack" -F "geotag=2.145677,3.22345,14" %s/apiv2/sounds/upload_and_describe/']),
     ],
     'BookmarkSound': [
-        ('text', ['apiv2/...todo bookmark sound examples...']),
+        ('Simple bookmark', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "name=Classic thunderstorm" %s/apiv2/sounds/2523/bookmark/']),
+        ('Bookmark with category', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "name=Nice loop&category=Nice loops" %s/apiv2/sounds/1234/bookmark/']),
     ],
     'RateSound': [
-        ('text', ['apiv2/...todo rate sound examples...']),
+        ('Rate sounds', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "rating=5" %s/apiv2/sounds/2523/rate/', 'curl -X POST -H "Authorization: Bearer {{access_token}}" --data "rating=4" %s/apiv2/sounds/1234/rate/']),
     ],
     'CommentSound': [
-        ('text', ['apiv2/...todo comment sound examples...']),
+        ('Comment sounds', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "comment=Cool! I understand now why this is the most downloaded sound in Freesound..." %s/apiv2/sounds/2523/comment/', 'curl -X POST -H "Authorization: Bearer {{access_token}}" --data "comment=A very cool sound!" %s/apiv2/sounds/1234/comment/']),
     ],
 
     # Users

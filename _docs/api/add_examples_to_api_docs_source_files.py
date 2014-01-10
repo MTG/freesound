@@ -15,7 +15,10 @@ def get_formatted_examples_for_view(view_name):
         output += '\n\n%s:\n\n' % description
         output += '::\n\n'
         for element in elements:
-            output += '  curl %s%s\n' % (base_url, element)
+            if element[0:5] == 'apiv2':
+                output += '  curl %s%s\n' % (base_url, element)
+            else:
+                output += '  %s\n' % (element % base_url[:-1])
 
     return output
 

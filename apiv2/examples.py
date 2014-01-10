@@ -26,7 +26,7 @@ examples = {
         ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano&page=2']),
         ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar']),
         ('Simple search and selection of sound fields to return in the results', ['apiv2/search/?query=alarm&fields=name,previews']),
-        ('Todo', ['complete previous examples and add more...']),
+        ('Todo', ['apiv2/complete previous examples and add more...']),
     ],
     'AdvancedSearch': [
         ('Todo...', ['apiv2/...todo sound advanced search examples...']),

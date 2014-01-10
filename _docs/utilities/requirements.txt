@@ -19,3 +19,5 @@ django-extensions==0.7.1
 django-debug-toolbar==0.9.4
 gunicorn==0.13.4
 akismet==0.2.0
+django-oauth2-provider==0.2.6
+djangorestframework==2.3.8

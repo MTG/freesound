@@ -506,7 +506,10 @@ def get_formatted_examples_for_view(view_name, max=10):
             if count >= max:
                 break
 
-            output += '<span class="pln"><a href="%s">%s</a></span><br>' % (prepend_base('/' + element), prepend_base('/' + element))
+            if element[0:5] == 'apiv2':
+                output += '<span class="pln"><a href="%s">%s</a></span><br>' % (prepend_base('/' + element), prepend_base('/' + element))
+            else:
+                output += '<span class="pln">%s</span><br>' % (element % prepend_base(''))
             count += 1
 
     output += '</pre></div>'
@@ -549,16 +552,23 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
 # Upload handler utils
 ######################
 
-def create_sound_object(user, sound_fields):
+def create_sound_object(user, original_sound_fields):
     '''
     This function is used by the upload handler to create a sound object with the information provided through post
     parameters.
     '''
 
     # 1 prepare some variable names
+    sound_fields = dict()
+    for key, item in original_sound_fields.items():
+        sound_fields[key] = item
+
     filename = sound_fields['upload_filename']
-    if not sound_fields['name']:
+    if not 'name' in sound_fields:
         sound_fields['name'] = filename
+    else:
+        if not sound_fields['name']:
+            sound_fields['name'] = filename
 
     directory = os.path.join(settings.UPLOADS_PATH, str(user.id))
     dest_path = os.path.join(directory, filename)
@@ -612,17 +622,16 @@ def create_sound_object(user, sound_fields):
         sound.save()
 
     # 6 create pack if it does not exist
-    if sound_fields['pack']:
+    if 'pack' in sound_fields:
         if Pack.objects.filter(name=sound_fields['pack'], user=user).exists():
             p = Pack.objects.get(name=sound_fields['pack'], user=user)
         else:
             p, created = Pack.objects.get_or_create(user=user, name=sound_fields['pack'])
-
         sound.pack = p
 
     # 7 create geotag objects
     # format: lat#lon#zoom
-    if sound_fields['geotag']:
+    if 'geotag' in sound_fields:
         lat, lon, zoom = sound_fields['geotag'].split(',')
         geotag = GeoTag(user=user,
             lat=float(lat),
@@ -637,8 +646,6 @@ def create_sound_object(user, sound_fields):
 
     # 9 save!
     sound.save()
-
-
 
     # 10 Proces
     try:

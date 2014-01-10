@@ -53,16 +53,19 @@ examples = {
         ('Download a sound', ['apiv2/sounds/14854/download/']),
     ],
     'UploadSound': [
-        ('text', ['apiv2/...todo upload sound examples...']),
+        ('Upload a sound', ['curl -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" %s/apiv2/sounds/upload/']),
     ],
     'NotYetDescribedUploadedSounds': [
-        ('text', ['apiv2/...todo not yet described... examples...']),
+        ('Get sounds that have not been yet described', ['apiv2/sounds/not_yet_described/']),
     ],
     'DescribeSound': [
-        ('text', ['apiv2/...todo describe sound examples...']),
+        ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" %s/apiv2/sounds/describe/']),
+        ('Also add a name to the sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" %s/apiv2/sounds/describe/']),
+        ('Include geotag and pack information', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution&pack=A birds pack&geotag=2.145677,3.22345,14" %s/apiv2/sounds/describe/']),
     ],
     'UploadAndDescribeSound': [
-        ('text', ['apiv2/...todo upload and describe sound examples...']),
+        ('Upload and describe a sound all at once', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" %s/apiv2/sounds/upload_and_describe/']),
+        ('Upload and describe a sound with name, pack and geotag', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "name=Another cool sound" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" -F "pack=A birds pack" -F "geotag=2.145677,3.22345,14" %s/apiv2/sounds/upload_and_describe/']),
     ],
     'BookmarkSound': [
         ('text', ['apiv2/...todo bookmark sound examples...']),

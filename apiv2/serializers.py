@@ -478,14 +478,14 @@ class SoundDescriptionSerializer(serializers.Serializer):
     geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
 
     def validate_upload_filename(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
         if 'not_yet_described_audio_files' in self.context:
             if value not in self.context['not_yet_described_audio_files']:
-                raise serializers.ValidationError('Upload filename must match with a filename from \'Not Yet Described Uploaded Audio Files\' resource.')
+                raise serializers.ValidationError('Upload filename (%s) must match with a filename from \'Not Yet Described Uploaded Audio Files\' resource.' % value)
         return attrs
 
     def validate_geotag(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
         if not value:
             return attrs
         fails = False

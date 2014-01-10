@@ -596,13 +596,13 @@ class DescribeSound(WriteRequiredGenericAPIView):
         serializer = SoundDescriptionSerializer(data=request.DATA, context={'not_yet_described_audio_files': filenames})
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Sound successfully described',
+                return Response(data={'details': 'Sound successfully described (now pending moderation)',
                                       'uri': None,
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 sound = create_sound_object(self.user, request.DATA)
-                return Response(data={'details': 'Sound successfully described', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
+                return Response(data={'details': 'Sound successfully described (now pending moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -626,13 +626,13 @@ class UploadAndDescribeSound(WriteRequiredGenericAPIView):
             request.DATA['upload_filename'] = request.FILES['audiofile'].name
 
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Audio file successfully uploaded and described',
+                return Response(data={'details': 'Audio file successfully uploaded and described (now pending moderation)',
                                       'uri': None,
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 sound = create_sound_object(self.user, request.DATA)
-                return Response(data={'details': 'Audio file successfully uploaded and described', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
+                return Response(data={'details': 'Audio file successfully uploaded and described (now pending moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

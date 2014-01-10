@@ -435,9 +435,11 @@ def api_search(search_form, target_file=None):
 # General utils
 ###############
 
-def prepend_base(rel):
-    return "http://%s%s" % (Site.objects.get_current().domain, rel)
-
+def prepend_base(rel, use_https=False):
+    if use_https:
+        return "https://%s%s" % (Site.objects.get_current().domain, rel)
+    else:
+        return "http://%s%s" % (Site.objects.get_current().domain, rel)
 
 def get_authentication_details_form_request(request):
     auth_method_name = None

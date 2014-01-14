@@ -15,8 +15,8 @@ Search
 
 This resource allows searching sounds in Freesound by matching their tags and other kinds of metadata.
 
-Request parameters
-------------------
+Request parameters (basic search parameters)
+--------------------------------------------
 
 ======================  =========================  ======================
 Name                    Type                       Description
@@ -73,6 +73,24 @@ Examples
 
 Advanced Search
 =========================================================
+
+
+::
+
+  GET /apiv2/search/advanced/
+
+Description.
+
+Request parameters
+------------------
+
+
+Response
+--------
+
+Return a sound list just like :ref:`sound-list-response`.
+
+
 
 Examples
 --------

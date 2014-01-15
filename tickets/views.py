@@ -254,7 +254,12 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
     users_aux = []
     for user in user_objects:
         # Pick the oldest non moderated ticket of each user and compute how many seconds it has been in the queue
-        oldest_new_ticket = Ticket.objects.filter(sender__id=user.id,status=TICKET_STATUS_NEW,content__isnull=False).order_by("created")[0]
+        tt = Ticket.objects.filter(sender__id=user.id,status=TICKET_STATUS_NEW,content__isnull=False).order_by("created")
+        for t in tt:
+            if t.content.content_object.processing_state == 'OK':
+                oldest_new_ticket = t
+                break
+
         #seconds_in_queue = (datetime.datetime.now() - oldest_new_ticket.created).total_seconds()
         days_in_queue = (datetime.datetime.now() - oldest_new_ticket.created).days #seconds_in_queue / (3600 * 24)
         users_aux.append({'user':user, 'days_in_queue':days_in_queue, 'new_sounds':user_ids_plus_new_count[user.id]})

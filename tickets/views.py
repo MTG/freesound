@@ -216,7 +216,7 @@ def new_support_tickets_count():
 def tickets_home(request):
     
     if request.user.id :
-        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id,content__object_id__in=Sound.objects.all()).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
     else :
         sounds_in_moderators_queue_count = -1
         
@@ -363,7 +363,7 @@ AND now() - comment.created > INTERVAL '2 days'
 @permission_required('tickets.can_moderate')
 def moderation_home(request):
     if request.user.id :
-        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id,content__object_id__in=Sound.objects.all()).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
     else :
         sounds_in_moderators_queue_count = -1
 
@@ -566,7 +566,7 @@ def moderation_assigned(request, user_id):
         mod_sound_form = SoundModerationForm(initial={'action':'Approve'})
         msg_form = ModerationMessageForm()
     moderator_tickets = Ticket.objects.select_related() \
-                            .filter(assignee=user_id) \
+                            .filter(assignee=user_id,content__object_id__in=Sound.objects.all()) \
                             .exclude(status=TICKET_STATUS_CLOSED) \
                             .exclude(content=None) \
                             .order_by('status', '-created')

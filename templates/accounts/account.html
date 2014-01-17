@@ -27,14 +27,14 @@
             <li><a href="{% url accounts-edit %}">Edit</a> your public profile</li>
             <li><a href="{% url accounts-describe %}">Describe</a> your sounds</li>
             <li><a href="{% url accounts-attribution %}">Attribution</a> - the sounds you downloaded</li>
-            {% if perms.tickets.can_moderate %}
+                {% if perms.tickets.can_moderate %}
             <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} new sound{{ new_sounds|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
             {% endif %}
             {% if perms.forum.can_moderate_forum %}
                 <li><a href="{% url forums-moderate %}">Moderate posts</a> - {{ new_posts }} new post{{ new_posts|pluralize}} </li>
             {% endif %}
             {% if user.profile.num_sounds %}
-            <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
+                <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
             {% endif %}
             <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
         </ul>

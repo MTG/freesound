@@ -26,4 +26,3 @@ register = template.Library()
 @register.simple_tag
 def new_sound_tickets_count():
     return TicketViews.new_sound_tickets_count()
-    # return Ticket.objects.filter(user_to=user, is_archived=False, is_sent=False, is_read=False).count()

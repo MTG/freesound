@@ -39,6 +39,7 @@ from forum.models import Post
 from operator import itemgetter
 from sounds.models import Sound, Pack, Download, License
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm, RemixForm
+from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
 from utils.encryption import decrypt, encrypt, create_hash
@@ -52,7 +53,7 @@ from django.contrib import messages
 from settings import SOUNDS_PER_DESCRIBE_ROUND
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
-    TICKET_STATUS_NEW
+    TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED
 from utils.audioprocessing import get_sound_type
 from django.core.cache import cache
 import django.contrib.auth.views as authviews
@@ -73,7 +74,8 @@ import json
 from utils.tagrecommendation_utilities import get_recommended_tags
 from messages.models import Message
 from django.contrib.contenttypes.models import ContentType
-
+import tickets.views as TicketViews
+from django.contrib.auth.models import Group
 
 audio_logger = logging.getLogger('audio')
 # TAGRECOMMENDATION CODE
@@ -554,6 +556,14 @@ def describe_sounds(request):
                 messages.add_message(request, messages.INFO,
                                      'File <a href="%s">%s</a> has been described and is awaiting moderation.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
+
+                # TODO: comment here
+                invalidate_template_cache("user_header", ticket.sender.id)
+                moderators = Group.objects.get(name='moderators').user_set.all()
+                for moderator in moderators:
+                    invalidate_template_cache("user_header", moderator.id)
+
+
             # compute crc
             # TEMPORARY
             try:
@@ -1088,3 +1098,12 @@ def clear_flags_user(request, username):
 def donate_redirect(request):
     pledgie_campaign_url = "http://pledgie.com/campaigns/%d/" % settings.PLEDGIE_CAMPAIGN
     return HttpResponseRedirect(pledgie_campaign_url)
+
+@login_required
+def pending(request):
+    tickets_sounds = TicketViews.get_pending_sounds(request.user)
+    pendings = []
+    for ticket, sound in tickets_sounds:
+        last_comments = ticket.get_n_last_non_moderator_only_comments(2)
+        pendings.append( (ticket, sound, last_comments) )
+    return render_to_response('accounts/pending.html', locals(), context_instance=RequestContext(request))

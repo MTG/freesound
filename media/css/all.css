@@ -3398,3 +3398,23 @@ ul.messages {
     font-weight: bold;
     background: url(../images/tag_edge.png) no-repeat left top;
 }
+
+#last-ticket-comments p, li, a {
+    font-size: 11px;
+}
+
+#last-ticket-comments p {
+    margin: 0px;
+}
+
+#last-ticket-comments ul {
+    padding-left: 25px;
+    padding-bottom: 0px;
+}
+
+#last-ticket-comments {
+    margin-bottom: 65px;
+    margin-left: 20px;
+}
+
+

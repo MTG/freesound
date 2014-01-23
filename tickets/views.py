@@ -31,6 +31,7 @@ from django.db import connection, transaction
 from django.contrib import messages
 from sounds.models import Sound
 import datetime
+from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 from utils.functional import combine_dicts
 
@@ -72,6 +73,9 @@ def ticket(request, ticket_key):
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
     if request.method == 'POST':
+
+        invalidate_template_cache("user_header", ticket.sender.id)
+
         # Left ticket message
         if is_selected(request, 'recaptcha') or (request.user.is_authenticated() and is_selected(request, 'message')):
             tc_form = __get_tc_form(request)
@@ -483,12 +487,14 @@ def moderation_assigned(request, user_id):
     can_view_moderator_only_messages = __can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
+
         mod_sound_form = SoundModerationForm(request.POST)
         msg_form = ModerationMessageForm(request.POST)
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
 
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket", False))
+            invalidate_template_cache("user_header", ticket.sender.id)
             action = mod_sound_form.cleaned_data.get("action")
             msg = msg_form.cleaned_data.get("message", False)
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
@@ -541,14 +547,14 @@ def moderation_assigned(request, user_id):
                 whitelist_user.profile.save()
                 pending_tickets = Ticket.objects.filter(sender=whitelist_user,
                                                         source='new sound') \
-                                                .exclude(status=TICKET_STATUS_CLOSED)
+                    .exclude(status=TICKET_STATUS_CLOSED)
                 # Set all sounds to OK and the tickets to closed
                 for pending_ticket in pending_tickets:
                     if pending_ticket.content:
                         pending_ticket.content.content_object.moderation_state = "OK"
                         pending_ticket.content.content_object.save()
                         pending_ticket.content.content_object.mark_index_dirty()
-                    # This could be done with a single update, but there's a chance
+                        # This could be done with a single update, but there's a chance
                     # we lose a sound that way (a newly created ticket who's sound
                     # is not set to OK, but the ticket is closed).
                     pending_ticket.status = TICKET_STATUS_CLOSED
@@ -595,3 +601,18 @@ def user_annotations(request, user_id):
 @permission_required('tickets.can_moderate')
 def support_home(request):
     return HttpResponse('TODO')
+
+def get_pending_sounds(user):
+
+    ret = []
+
+    # getting all user tickets that last that have not been closed
+    user_tickets = Ticket.objects.filter(sender=user).exclude(status=TICKET_STATUS_CLOSED)
+
+    for user_ticket in user_tickets:
+        sound_id = user_ticket.content.object_id
+        sound_obj = Sound.objects.get(id=sound_id)
+        ret.append( (user_ticket, sound_obj) )
+
+    return ret
+

@@ -97,6 +97,8 @@ urlpatterns = patterns('accounts.views',
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
     url(r'^delete/$', accounts.delete, name="accounts-delete"),
 
+    url(r'^pending/$', accounts.pending, name="accounts-pending"),
+
     url(r'^upload/file/$', accounts.upload_file, name="accounts-upload-file"),
     url(r'^upload/$', accounts.upload, name="accounts-upload"),
     url(r'^upload/html/$', accounts.upload, name="accounts-upload-html", kwargs=dict(no_flash=True)),    

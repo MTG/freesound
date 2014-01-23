@@ -37,6 +37,7 @@
                 <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
             {% endif %}
             <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
+            <li>Your <a href="{% url accounts-pending %}">pendings sounds</a> - 3 sounds waiting</li>
         </ul>
         </div>
         <br style="clear: both;" />
@@ -96,17 +97,21 @@
     </div><!-- #latest_sounds -->
     {% endif %}
 
+    {% comment %}
+    {# Section not needed anymore since there is a dedicated /pending page for this now #}
     {% if home %}
         {% if unmoderated_sounds %}
-        <div id="unmoderated_sounds" class="content_box">
-            <h3>Sounds waiting for moderation</h3>
-            {% for sound in unmoderated_sounds %}
-                {% display_sound sound %}
-            {% endfor %}
-        </div><!-- #unmoderated_sounds -->
+            <div id="unmoderated_sounds" class="content_box">
+                <h3>Sounds waiting for moderation</h3>
+                {% for sound in unmoderated_sounds %}
+                    {% display_sound sound %}
+                {% endfor %}
+            </div><!-- #unmoderated_sounds -->
         {% endif %}
+    {% endif %}
+    {% endcomment %}
 
-
+    {% if home %}
         {% if unprocessed_sounds %}
         <div id="unprocessed_sounds" class="content_box">
             <h3>Sounds that have not been processed yet</h3>

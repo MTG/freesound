@@ -72,6 +72,14 @@ class Ticket(models.Model):
     USER_ONLY = 2
     USER_AND_MODERATOR = 3
 
+
+    def get_n_last_non_moderator_only_comments(self, n):
+        """
+        Get the last n comments that are not 'moderator only' from the self ticket
+        """
+        ticket_comments = self.messages.all().filter(moderator_only=False)
+        return list(ticket_comments)[-n:] # converting from Django QuerySet to Python list in order to use negative indexing
+
     def send_notification_emails(self, notification_type, sender_moderator):
         ticket = self
         send_to = []

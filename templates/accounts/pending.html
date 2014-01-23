@@ -1,0 +1,33 @@
+{% extends "accounts/_section.html" %}
+
+{% load display_sound %}
+
+{% block title %}Pending Sounds{% endblock title %}
+
+{% block section_content %}
+
+    <h2>Sounds waiting moderation</h2>
+
+    {% for ticket, sound, comments in pendings %}
+
+        {% display_sound sound %}
+
+        <div id='last-ticket-comments'>
+
+            <p><a href="{% url tickets-ticket ticket.key %}"><b>Ticket</b></a> last comment{{ comments|length|pluralize}}:
+
+            <ul>
+                {% for comment in comments %}
+                    <li><a href="{% url account comment.sender %}">{{ comment.sender }}</a>: <i>{{ comment.text }}</i></li>
+                {% endfor %}
+            </ul>
+
+{#            <a href="{% url tickets-ticket ticket.key %}"><b>Link to Ticket</b></a>#}
+
+            </p>
+
+        </div>
+
+    {% endfor %}
+
+{% endblock %}

@@ -3417,4 +3417,19 @@ ul.messages {
     margin-left: 20px;
 }
 
+/*#pending-ticket h3, a {*/
+    /*font-size: 12px;*/
+    /*color: black;*/
+/*}*/
+
+#pending-ticket {
+    padding-left: 25px;
+}
+
+#user-do-sth {
+    color: red;
+}
+/*#time-since {*/
+    /*font-size: 8px;*/
+/*}*/
 

@@ -10,19 +10,29 @@
 
     {% for ticket, sound, comments in pendings %}
 
-        {% display_sound sound %}
+        <div id="pending-ticket">
+
+            <h3>Ticket <a href="{% url tickets-ticket ticket.key %}">#{{ticket.id}}</a></h3>
+
+            {% with comments|first as last_comment %}
+                {% ifnotequal last_comment.sender_id user.id %}
+                    <p id="user-do-sth">This ticket is pending your response.</p>
+                {% endifnotequal %}
+            {% endwith %}
+
+            {% display_sound sound %}
+
+        </div>
 
         <div id='last-ticket-comments'>
 
-            <p><a href="{% url tickets-ticket ticket.key %}"><b>Ticket</b></a> last comment{{ comments|length|pluralize}}:
+            <p>Last comment{{ comments|length|pluralize}}:
 
             <ul>
                 {% for comment in comments %}
-                    <li><a href="{% url account comment.sender %}">{{ comment.sender }}</a>: <i>{{ comment.text }}</i></li>
+                    <li><a href="{% url account comment.sender %}">{{ comment.sender }}</a> <span id="time-since">({{ comment.created|timesince}})</span>: <i>{{ comment.text }}</i></li>
                 {% endfor %}
             </ul>
-
-{#            <a href="{% url tickets-ticket ticket.key %}"><b>Link to Ticket</b></a>#}
 
             </p>
 

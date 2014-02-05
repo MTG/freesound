@@ -52,6 +52,8 @@ class TagField(forms.CharField):
 class RecaptchaWidget(forms.Widget):
     """ A Widget which "renders" the output of captcha.displayhtml """
     def render(self, *args, **kwargs):
+        if settings.RECAPTCHA_PUBLIC_KEY == '':
+            return ''
         return captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY).strip()
 
 
@@ -73,8 +75,14 @@ class RecaptchaForm(forms.Form):
     If the captcha is not guessed correctly, a ValidationError is raised
     for the appropriate field
     """
-    recaptcha_challenge_field = forms.CharField(widget=DummyWidget)
-    recaptcha_response_field = forms.CharField(widget=RecaptchaWidget, label="Please prove you are not a robot:")
+
+    captcha_enabled = settings.RECAPTCHA_PUBLIC_KEY != ''
+
+    recaptcha_challenge_field = forms.CharField(widget=DummyWidget, required=captcha_enabled)
+    recaptcha_response_field = forms.CharField(widget=RecaptchaWidget, required=captcha_enabled, label="Please prove you are not a robot:")
+
+    if not captcha_enabled:
+        recaptcha_response_field.label = ''
 
     def __init__(self, request, *args, **kwargs):
         super(RecaptchaForm, self).__init__(*args, **kwargs)
@@ -98,6 +106,10 @@ class RecaptchaForm(forms.Form):
         rcf = self.cleaned_data['recaptcha_challenge_field']
         rrf = self.cleaned_data['recaptcha_response_field']
         ip_address = self._request.META['REMOTE_ADDR']
-        check = captcha.submit(rcf, rrf, settings.RECAPTCHA_PRIVATE_KEY, ip_address)
-        if not check.is_valid:
-            raise forms.ValidationError('You have not entered the correct words')
+
+        # only submit captcha information if it is enabled
+        if self.captcha_enabled:
+            check = captcha.submit(rcf, rrf, settings.RECAPTCHA_PRIVATE_KEY, ip_address)
+
+            if not check.is_valid:
+                raise forms.ValidationError('You have not entered the correct words')

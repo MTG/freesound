@@ -31,6 +31,7 @@ from django.db import connection, transaction
 from django.contrib import messages
 from sounds.models import Sound
 import datetime
+from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 from utils.functional import combine_dicts
 from settings import MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
@@ -75,6 +76,7 @@ def ticket(request, ticket_key):
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
     if request.method == 'POST':
+        invalidate_template_cache("user_header", ticket.sender.id)
         # Left ticket message
         if is_selected(request, 'recaptcha') or (request.user.is_authenticated() and is_selected(request, 'message')):
             tc_form = __get_tc_form(request)
@@ -504,6 +506,7 @@ def moderation_assigned(request, user_id):
         if mod_sound_form.is_valid() and msg_form.is_valid():
 
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket", False))
+            invalidate_template_cache("user_header", ticket.sender.id)
             action = mod_sound_form.cleaned_data.get("action")
             msg = msg_form.cleaned_data.get("message", False)
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
@@ -604,3 +607,17 @@ def user_annotations(request, user_id):
 @permission_required('tickets.can_moderate')
 def support_home(request):
     return HttpResponse('TODO')
+
+
+def get_pending_sounds(user):
+    ret = []
+    # getting all user tickets that last that have not been closed
+    user_tickets = Ticket.objects.filter(sender=user).exclude(status=TICKET_STATUS_CLOSED)
+
+    for user_ticket in user_tickets:
+        sound_id = user_ticket.content.object_id
+        sound_obj = Sound.objects.get(id=sound_id)
+        ret.append( (user_ticket, sound_obj) )
+
+    return ret
+

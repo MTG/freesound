@@ -34,6 +34,8 @@ import datetime
 from utils.pagination import paginate
 from utils.functional import combine_dicts
 from settings import MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+from django.core.management import call_command
+from threading import Thread
 
 
 def __get_contact_form(request, use_post=True):
@@ -545,30 +547,20 @@ def moderation_assigned(request, user_id):
                 ticket.status = TICKET_STATUS_CLOSED
                 ticket.save()
             elif action == "Whitelist":
-                # Get all currently pending sound tickets for user
-                whitelist_user = ticket.sender
-                whitelist_user.profile.is_whitelisted = True
-                whitelist_user.profile.save()
-                pending_tickets = Ticket.objects.filter(sender=whitelist_user,
-                                                        source='new sound') \
-                                                .exclude(status=TICKET_STATUS_CLOSED)
-                # Set all sounds to OK and the tickets to closed
-                for pending_ticket in pending_tickets:
-                    if pending_ticket.content:
-                        pending_ticket.content.content_object.moderation_state = "OK"
-                        pending_ticket.content.content_object.save()
-                        pending_ticket.content.content_object.mark_index_dirty()
-                    # This could be done with a single update, but there's a chance
-                    # we lose a sound that way (a newly created ticket who's sound
-                    # is not set to OK, but the ticket is closed).
-                    pending_ticket.status = TICKET_STATUS_CLOSED
-                    pending_ticket.save()
+
+                th = Thread(target=call_command, args=('whitelist_user', ticket.id,))
+                th.start()
                 ticket.send_notification_emails(Ticket.NOTIFICATION_WHITELISTED,
                                                 Ticket.USER_ONLY)
+
+                messages.add_message(request, messages.INFO, 'User %s has been whitelisted but some of his tickets might '
+                                                             'still appear on this list for some time. Please reload the page in a few '
+                                                             'seconds to see the updated list of pending tickets' % ticket.sender.username)
+
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationForm(initial={'action':'Approve'})
+        mod_sound_form = SoundModerationForm(initial={'action': 'Approve'})
         msg_form = ModerationMessageForm()
 
     qs = Ticket.objects.select_related() \

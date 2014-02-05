@@ -595,7 +595,7 @@ def describe_sounds(request):
             p.process()
                             
         if len(request.session['describe_sounds']) <= 0:
-            msg = 'You have described all the selected files.'
+            msg = 'You have described all the selected files and are now awaiting processing and moderation.'
             messages.add_message(request, messages.WARNING, msg)
             return HttpResponseRedirect(reverse('accounts-describe'))
         else:
@@ -1106,4 +1106,7 @@ def pending(request):
     for ticket, sound in tickets_sounds:
         last_comments = ticket.get_n_last_non_moderator_only_comments(2)
         pendings.append( (ticket, sound, last_comments) )
-    return render_to_response('accounts/pending.html', locals(), context_instance=RequestContext(request))
+
+    show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
+
+    return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))

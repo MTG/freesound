@@ -70,13 +70,21 @@ def is_selected(request, prefix):
             return True
     return False
 
+def invalidate_all_moderators_header_cache():
+    mods = Group.objects.get(name='moderators').user_set.all()
+    for mod in mods:
+        invalidate_template_cache("user_header", mod.id)
+
 def ticket(request, ticket_key):
     can_view_moderator_only_messages = __can_view_mod_msg(request)
     clean_status_forms = True
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
     if request.method == 'POST':
+
         invalidate_template_cache("user_header", ticket.sender.id)
+        invalidate_all_moderators_header_cache()
+
         # Left ticket message
         if is_selected(request, 'recaptcha') or (request.user.is_authenticated() and is_selected(request, 'message')):
             tc_form = __get_tc_form(request)
@@ -266,8 +274,9 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
         user_new_tickets = Ticket.objects.filter(sender__id=user.id, status=TICKET_STATUS_NEW, content__isnull=False).order_by("created")
         oldest_new_ticket = user_new_tickets[0]
         for ticket in user_new_tickets:
-            if ticket.content.content_object.processing_state == 'OK' and ticket.content.content_object.moderation_state == 'PE':
-                oldest_new_ticket = ticket
+            if ticket.content.content_object:
+                if ticket.content.content_object.processing_state == 'OK' and ticket.content.content_object.moderation_state == 'PE':
+                    oldest_new_ticket = ticket
 
         days_in_queue = (datetime.datetime.now() - oldest_new_ticket.created).days #seconds_in_queue / (3600 * 24)
         users_aux.append({'user': user, 'days_in_queue': days_in_queue, 'new_sounds': user_ids_plus_new_count[user.id]})
@@ -441,6 +450,8 @@ AND sounds_sound.user_id = %s""" % \
     transaction.commit_unless_managed()
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
+    invalidate_all_moderators_header_cache()
+
     return HttpResponseRedirect(reverse("tickets-moderation-home"))
 
 # TODO: ongoing work
@@ -476,6 +487,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
     # update modified date, so it doesn't appear in tardy moderator's sounds
     ticket.modified = datetime.datetime.now()
     ticket.save()
+    invalidate_all_moderators_header_cache()
     
     msg = 'You have been assigned ticket "%s".' % ticket.title
     messages.add_message(request, messages.INFO, msg)
@@ -507,6 +519,7 @@ def moderation_assigned(request, user_id):
 
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket", False))
             invalidate_template_cache("user_header", ticket.sender.id)
+            invalidate_all_moderators_header_cache()
             action = mod_sound_form.cleaned_data.get("action")
             msg = msg_form.cleaned_data.get("message", False)
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
@@ -615,9 +628,12 @@ def get_pending_sounds(user):
     user_tickets = Ticket.objects.filter(sender=user).exclude(status=TICKET_STATUS_CLOSED)
 
     for user_ticket in user_tickets:
-        sound_id = user_ticket.content.object_id
-        sound_obj = Sound.objects.get(id=sound_id)
-        ret.append( (user_ticket, sound_obj) )
+        try:
+            sound_id = user_ticket.content.object_id
+            sound_obj = Sound.objects.get(id=sound_id, processing_state='OK', moderation_state='PE')
+            ret.append( (user_ticket, sound_obj) )
+        except:
+            pass
 
     return ret
 

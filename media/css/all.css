@@ -3399,8 +3399,11 @@ ul.messages {
     background: url(../images/tag_edge.png) no-repeat left top;
 }
 
+/* Pending sounds to moderate page
+--------------------------------------------------------------*/
+
 #last-ticket-comments p, li, a {
-    font-size: 11px;
+    /*font-size: 11px;*/
 }
 
 #last-ticket-comments p {
@@ -3432,4 +3435,3 @@ ul.messages {
 /*#time-since {*/
     /*font-size: 8px;*/
 /*}*/
-

@@ -56,7 +56,11 @@
                     {% if perms.tickets.can_moderate %}
                         <a href="{% url tickets-home %}">Mod</a> <div class="messages_count" id="new_tickets_indicator_{% new_sound_tickets_count %}"><div>{% new_sound_tickets_count %}</div></div>
                     {% endif %}
-                    <a href="{% url accounts-pending %}">Uploads</a> <div class="messages_count"id="pending_indicator_3"><div>{% pending_sounds_count request.user %}</div></div>
+                    {% with request.user.profile.num_sounds_pending_moderation as num_pending_sounds %}
+                       {% if num_pending_sounds %}
+                            <a href="{% url accounts-pending %}">Uploads</a> <div class="messages_count" id="pending_indicator_3"><div>{{ num_pending_sounds }}</div></div>
+                       {% endif %}
+                    {% endwith %}
                     <a href="{% url accounts-edit %}">Settings</a>
                     <a href="{% url accounts-logout %}?next=/">Log Out</a>
                     {% endcache %}

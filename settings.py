@@ -241,6 +241,7 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 APIV2KEYS_ALLOWED_FOR_APIV1 = True
 ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
+APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download','apiv2-user-create-bookmark','apiv2-user-create-rating','apiv2-user-create-comment','apiv2-uploads-upload','apiv2-uploads-not-described','apiv2-uploads-describe','apiv2-uploads-upload-and-describe','apiv2-pack-download','apiv2-me','oauth2:capture','oauth2:authorize','oauth2:redirect','oauth2:access_token','api-login']
 
 REST_FRAMEWORK = {
     'PAGINATE_BY': 15,

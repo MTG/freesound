@@ -47,6 +47,7 @@ from urllib import unquote
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 from django.contrib.sites.models import Site
+from django.core.urlresolvers import resolve
 
 
 ############################
@@ -436,6 +437,15 @@ def api_search(search_form, target_file=None):
 ###############
 
 def prepend_base(rel, use_https=False):
+
+    if rel:
+        try:
+            url_name = resolve(rel.replace('<sound_id>', '1').replace('<username', 'name').replace('<pack_id>', '1').replace('<category_id>', '1')).url_name
+            if url_name in settings.APIV2_RESOURCES_REQUIRING_HTTPS:
+                use_https = True
+        except Exception, e:
+            print e
+
     if use_https:
         return "https://%s%s" % (Site.objects.get_current().domain, rel)
     else:
@@ -511,7 +521,7 @@ def get_formatted_examples_for_view(view_name, max=10):
             if element[0:5] == 'apiv2':
                 output += '<span class="pln"><a href="%s">%s</a></span><br>' % (prepend_base('/' + element), prepend_base('/' + element))
             else:
-                output += '<span class="pln">%s</span><br>' % (element % prepend_base(''))
+                output += '<span class="pln">%s</span><br>' % (element % prepend_base('').replace('http', 'https'))
             count += 1
 
     output += '</pre></div>'

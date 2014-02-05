@@ -88,7 +88,7 @@
                                     load_messages('{% url tickets-ticket ticket.key %}');
                                     $('#id_ticket').get(0).value={{ticket.id}};
                                     set_uploader_id({{ticket.sender.id}});">
-                                {{ticket.content.content_object.original_filename|truncate_string:28}}</a></td>
+                                {{ticket.content.content_object.original_filename|truncate_string:20}}</a></td>
                             <td>{{ticket.sender.username}}</td>
                             <td>{{ticket.created|date:"d/m/Y" }}</td>
                             <td>{{ticket.status|capfirst}}</td>

@@ -33,6 +33,7 @@ from sounds.models import Sound
 import datetime
 from utils.pagination import paginate
 from utils.functional import combine_dicts
+from settings import MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
 
 
 def __get_contact_form(request, use_post=True):
@@ -560,15 +561,19 @@ def moderation_assigned(request, user_id):
     if clear_forms:
         mod_sound_form = SoundModerationForm(initial={'action':'Approve'})
         msg_form = ModerationMessageForm()
-    moderator_tickets = Ticket.objects.select_related() \
-                            .filter(assignee=user_id) \
-                            .exclude(status=TICKET_STATUS_CLOSED) \
-                            .exclude(content=None) \
-                            .order_by('status', '-created')
-    moderator_tickets_count = len(moderator_tickets)
+
+    qs = Ticket.objects.select_related() \
+                       .filter(assignee=user_id) \
+                       .exclude(status=TICKET_STATUS_CLOSED) \
+                       .exclude(content=None) \
+                       .order_by('status', '-created')
+
+    moderator_tickets_count = qs.count()
     moderation_texts = MODERATION_TEXTS
+    show_pagination = moderator_tickets_count > MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+
     return render_to_response('tickets/moderation_assigned.html',
-                              locals(),
+                              combine_dicts(paginate(request, qs, MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE), locals()),
                               context_instance=RequestContext(request))
 
 

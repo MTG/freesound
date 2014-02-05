@@ -219,7 +219,11 @@ def new_support_tickets_count():
 def tickets_home(request):
     
     if request.user.id :
-        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+        sounds_in_moderators_queue_count = Ticket.objects.select_related()\
+                                                         .filter(assignee=request.user.id)\
+                                                         .exclude(status='closed')\
+                                                         .exclude(content=None)\
+                                                         .order_by('status', '-created').count()
     else :
         sounds_in_moderators_queue_count = -1
         
@@ -258,16 +262,11 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
     for user in user_objects:
         # Pick the oldest non moderated ticket of each user and compute how many seconds it has been in the queue
         user_new_tickets = Ticket.objects.filter(sender__id=user.id, status=TICKET_STATUS_NEW, content__isnull=False).order_by("created")
-        filtered_tickets = []
+        oldest_new_ticket = user_new_tickets[0]
         for ticket in user_new_tickets:
-            try:
-                Sound.objects.get(id=ticket.content.object_id, processing_state='OK', moderation_state='PE')
-                filtered_tickets.append(ticket)
-            except:
-                pass
-        oldest_new_ticket = filtered_tickets[0]
+            if ticket.content.content_object.processing_state == 'OK' and ticket.content.content_object.moderation_state == 'PE':
+                oldest_new_ticket = ticket
 
-        #seconds_in_queue = (datetime.datetime.now() - oldest_new_ticket.created).total_seconds()
         days_in_queue = (datetime.datetime.now() - oldest_new_ticket.created).days #seconds_in_queue / (3600 * 24)
         users_aux.append({'user': user, 'days_in_queue': days_in_queue, 'new_sounds': user_ids_plus_new_count[user.id]})
 
@@ -370,7 +369,11 @@ AND now() - comment.created > INTERVAL '2 days'
 @permission_required('tickets.can_moderate')
 def moderation_home(request):
     if request.user.id :
-        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+        sounds_in_moderators_queue_count = Ticket.objects.select_related()\
+                                                         .filter(assignee=request.user.id)\
+                                                         .exclude(status='closed')\
+                                                         .exclude(content=None)\
+                                                         .order_by('status', '-created').count()
     else :
         sounds_in_moderators_queue_count = -1
 

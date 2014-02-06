@@ -37,7 +37,7 @@
                 <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
             {% endif %}
             <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
-            <li>Your sound uploads <a href="{% url accounts-pending %}">pending moderation</a></li>
+            {% comment %}<li>Your sound uploads <a href="{% url accounts-pending %}">pending moderation</a></li>{% endcomment %}
         </ul>
         </div>
         <br style="clear: both;" />
@@ -97,24 +97,26 @@
     </div><!-- #latest_sounds -->
     {% endif %}
 
-    {% comment %}
-    {# Section not needed anymore since there is a dedicated /pending page for this now #}
     {% if home %}
         {% if unmoderated_sounds %}
             <div id="unmoderated_sounds" class="content_box">
-                <h3>Sounds waiting for moderation</h3>
-                {% for sound in unmoderated_sounds %}
-                    {% display_sound sound %}
+                <h3>Uploaded sounds waiting for moderation ({{ unmoderated_sounds_count }})</h3>
+                {% for ticket, sound in unmoderated_sounds %}
+                    <li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span> <span class="ticket_link"><a href="{% url tickets-ticket ticket.key %}">Go to ticket</a></span></li>
                 {% endfor %}
-            </div><!-- #unmoderated_sounds -->
-        {% endif %}
-    {% endif %}
-    {% endcomment %}
+                {% if num_more_unmoderated_sounds > 0 %}
+                    <li> And {{ num_more_unmoderated_sounds }} other uploaded sound{{ num_more_unmoderated_sounds|pluralize}}
+                {% endif %}
 
-    {% if home %}
+            </div><!-- #unmoderated_sounds -->
+            <p style='margin-left:20px'><a href="{% url accounts-pending %}">more...</a></p>
+
+        {% endif %}
+
+
         {% if unprocessed_sounds %}
         <div id="unprocessed_sounds" class="content_box">
-            <h3>Sounds that have not been processed yet</h3>
+            <h3>Uploaded sounds that have not been processed yet ({{ unprocessed_sounds.count }})</h3>
 
             {% comment %}
             <p>Sounds in this list have not been processed yet and thus can't be moderated. This might be because they are still pending to process or because processing has failed.</p>
@@ -143,6 +145,7 @@
                 <a href="{% url sound-delete sound.user.username sound.id %}" >x</a>
                 </li>
             {% endfor %}
+
         </div><!-- #unprocessed_sounds -->
         {% endif %}
     {% endif %}

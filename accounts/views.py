@@ -218,9 +218,12 @@ def home(request):
     tags = list(user.profile.get_tagcloud())
     latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
-    unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
+    #unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
+    unmoderated_sounds = TicketViews.get_pending_sounds(request.user)
+    unmoderated_sounds_count = len(unmoderated_sounds)
+    unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
+    num_more_unmoderated_sounds = unmoderated_sounds_count - settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE
 
-    
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     packs_without_sounds = Pack.objects.select_related().filter(user=user).annotate(num_sounds=Count('sound')).filter(num_sounds=0)
@@ -1104,7 +1107,7 @@ def pending(request):
     tickets_sounds = TicketViews.get_pending_sounds(request.user)
     pendings = []
     for ticket, sound in tickets_sounds:
-        last_comments = ticket.get_n_last_non_moderator_only_comments(2)
+        last_comments = ticket.get_n_last_non_moderator_only_comments(3)
         pendings.append( (ticket, sound, last_comments) )
 
     show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE

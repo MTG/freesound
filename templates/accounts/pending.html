@@ -4,10 +4,10 @@
 {% load paginator %}
 {% load util %}
 
-{% block title %}Sounds pending moderation{% endblock title %}
+{% block title %}Uploaded sounds awaiting moderation{% endblock title %}
 {% block section_content %}
 
-    <h2>Uploaded sounds waiting moderation</h2>
+    <h2>Uploaded sounds awaiting moderation</h2>
 
     {% if show_pagination %}
         {% show_paginator paginator page current_page request "moderation ticket" %}

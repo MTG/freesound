@@ -419,6 +419,7 @@ def describe_sounds(request):
 
     # If there are no files in the session redirect to the first describe page
     if len(sounds_to_describe) <= 0:
+        # Check if there is at least one message which is not saying that the sound was already part of freesound
         msg = 'You have finished describing your sounds.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
@@ -433,6 +434,7 @@ def describe_sounds(request):
             tag_recommendation_random_session_id = False
 
         # first get all the data
+        n_sounds_already_part_of_freesound = 0
         for i in range(len(sounds_to_describe)):
             prefix = str(i)
             forms.append({})
@@ -472,6 +474,7 @@ def describe_sounds(request):
             # check if file exists or not
             try:
                 existing_sound = Sound.objects.get(md5=sound.md5)
+                n_sounds_already_part_of_freesound += 1
                 msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>' % \
                     (forms[i]['sound'].name, reverse('sound', args=[existing_sound.user.username, existing_sound.id]))
                 messages.add_message(request, messages.WARNING, msg)
@@ -557,7 +560,7 @@ def describe_sounds(request):
                 tc.save()
                 # add notification that the file was described successfully
                 messages.add_message(request, messages.INFO,
-                                     'File <a href="%s">%s</a> has been described and is awaiting moderation.' % \
+                                     'File <a href="%s">%s</a> has been described and is now awaiting processing and moderation.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
 
                 # TODO: comment here
@@ -598,8 +601,12 @@ def describe_sounds(request):
             p.process()
                             
         if len(request.session['describe_sounds']) <= 0:
-            msg = 'You have described all the selected files and are now awaiting processing and moderation.'
-            messages.add_message(request, messages.WARNING, msg)
+            if len(sounds_to_describe) != n_sounds_already_part_of_freesound:
+                msg = 'You have described all the selected files and are now awaiting processing and moderation. ' \
+                      'You can check the status of your uploaded sounds in your <a href="%s">home page</a>. ' \
+                      'Once your sounds have been processed, you can also get information about the moderation ' \
+                      'status in the <a href="%s">uploaded sounds awaiting moderation</a> page.' % (reverse('accounts-home'), reverse('accounts-pending'))
+                messages.add_message(request, messages.WARNING, msg)
             return HttpResponseRedirect(reverse('accounts-describe'))
         else:
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
@@ -1111,5 +1118,12 @@ def pending(request):
         pendings.append( (ticket, sound, last_comments) )
 
     show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
+
+    n_unprocessed_sounds = Sound.objects.select_related().filter(user=request.user).exclude(processing_state="OK").count()
+    if n_unprocessed_sounds:
+        messages.add_message(request, messages.WARNING, '%i of your recently uploaded sounds are still in processing '
+                                                        'phase and therefore are not yet ready for moderation. These '
+                                                        'sounds won\'t appear in this list until they are successfully '
+                                                        'processed. This process should take no more than a few minutes.' % n_unprocessed_sounds)
 
     return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))

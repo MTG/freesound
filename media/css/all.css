@@ -2322,6 +2322,26 @@ div.about {
     display:inline;
 }
 
+#unmoderated_sounds {
+    font-size: 10px;
+}
+
+#unmoderated_sounds li {
+    padding: 4px;
+}
+
+#unmoderated_sounds .date{
+    color: gray;
+}
+
+#unmoderated_sounds .filename{
+    font-weight: bold;
+}
+
+#unmoderated_sounds .ticket_link{
+    font-weight: bold;
+}
+
 #unprocessed_sounds {
     font-size: 10px;
 }
@@ -3401,20 +3421,23 @@ ul.messages {
     background: url(../images/tag_edge.png) no-repeat left top;
 }
 
-#last-ticket-comments p, li, a {
-    font-size: 11px;
+/* Pending sounds to moderate page
+--------------------------------------------------------------*/
+
+.last-ticket-comments p, li, a {
+    /*font-size: 11px;*/
 }
 
-#last-ticket-comments p {
+.last-ticket-comments p {
     margin: 0px;
 }
 
-#last-ticket-comments ul {
+.last-ticket-comments ul {
     padding-left: 25px;
     padding-bottom: 0px;
 }
 
-#last-ticket-comments {
+.last-ticket-comments {
     margin-bottom: 65px;
     margin-left: 20px;
 }
@@ -3450,4 +3473,3 @@ ul.messages {
     font-style: italic;
     color: white;
 }
-

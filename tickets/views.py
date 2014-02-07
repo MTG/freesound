@@ -34,6 +34,9 @@ import datetime
 from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 from utils.functional import combine_dicts
+from settings import MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+from django.core.management import call_command
+from threading import Thread
 
 
 def __get_contact_form(request, use_post=True):
@@ -67,6 +70,11 @@ def is_selected(request, prefix):
             return True
     return False
 
+def invalidate_all_moderators_header_cache():
+    mods = Group.objects.get(name='moderators').user_set.all()
+    for mod in mods:
+        invalidate_template_cache("user_header", mod.id)
+
 def ticket(request, ticket_key):
     can_view_moderator_only_messages = __can_view_mod_msg(request)
     clean_status_forms = True
@@ -75,6 +83,7 @@ def ticket(request, ticket_key):
     if request.method == 'POST':
 
         invalidate_template_cache("user_header", ticket.sender.id)
+        invalidate_all_moderators_header_cache()
 
         # Left ticket message
         if is_selected(request, 'recaptcha') or (request.user.is_authenticated() and is_selected(request, 'message')):
@@ -220,7 +229,11 @@ def new_support_tickets_count():
 def tickets_home(request):
     
     if request.user.id :
-        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+        sounds_in_moderators_queue_count = Ticket.objects.select_related()\
+                                                         .filter(assignee=request.user.id)\
+                                                         .exclude(status='closed')\
+                                                         .exclude(content=None)\
+                                                         .order_by('status', '-created').count()
     else :
         sounds_in_moderators_queue_count = -1
         
@@ -258,10 +271,15 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
     users_aux = []
     for user in user_objects:
         # Pick the oldest non moderated ticket of each user and compute how many seconds it has been in the queue
-        oldest_new_ticket = Ticket.objects.filter(sender__id=user.id,status=TICKET_STATUS_NEW,content__isnull=False).order_by("created")[0]
-        #seconds_in_queue = (datetime.datetime.now() - oldest_new_ticket.created).total_seconds()
+        user_new_tickets = Ticket.objects.filter(sender__id=user.id, status=TICKET_STATUS_NEW, content__isnull=False).order_by("created")
+        oldest_new_ticket = user_new_tickets[0]
+        for ticket in user_new_tickets:
+            if ticket.content.content_object:
+                if ticket.content.content_object.processing_state == 'OK' and ticket.content.content_object.moderation_state == 'PE':
+                    oldest_new_ticket = ticket
+
         days_in_queue = (datetime.datetime.now() - oldest_new_ticket.created).days #seconds_in_queue / (3600 * 24)
-        users_aux.append({'user':user, 'days_in_queue':days_in_queue, 'new_sounds':user_ids_plus_new_count[user.id]})
+        users_aux.append({'user': user, 'days_in_queue': days_in_queue, 'new_sounds': user_ids_plus_new_count[user.id]})
 
     # Sort users according to their oldest ticket (older = first)
     users_aux.sort(key=lambda item:item['days_in_queue'], reverse=True)
@@ -362,7 +380,11 @@ AND now() - comment.created > INTERVAL '2 days'
 @permission_required('tickets.can_moderate')
 def moderation_home(request):
     if request.user.id :
-        sounds_in_moderators_queue_count = Ticket.objects.select_related().filter(assignee=request.user.id).exclude(status='closed').exclude(content=None).order_by('status', '-created').count()
+        sounds_in_moderators_queue_count = Ticket.objects.select_related()\
+                                                         .filter(assignee=request.user.id)\
+                                                         .exclude(status='closed')\
+                                                         .exclude(content=None)\
+                                                         .order_by('status', '-created').count()
     else :
         sounds_in_moderators_queue_count = -1
 
@@ -428,6 +450,8 @@ AND sounds_sound.user_id = %s""" % \
     transaction.commit_unless_managed()
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
+    invalidate_all_moderators_header_cache()
+
     return HttpResponseRedirect(reverse("tickets-moderation-home"))
 
 # TODO: ongoing work
@@ -463,6 +487,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
     # update modified date, so it doesn't appear in tardy moderator's sounds
     ticket.modified = datetime.datetime.now()
     ticket.save()
+    invalidate_all_moderators_header_cache()
     
     msg = 'You have been assigned ticket "%s".' % ticket.title
     messages.add_message(request, messages.INFO, msg)
@@ -487,7 +512,6 @@ def moderation_assigned(request, user_id):
     can_view_moderator_only_messages = __can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
-
         mod_sound_form = SoundModerationForm(request.POST)
         msg_form = ModerationMessageForm(request.POST)
 
@@ -495,6 +519,7 @@ def moderation_assigned(request, user_id):
 
             ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket", False))
             invalidate_template_cache("user_header", ticket.sender.id)
+            invalidate_all_moderators_header_cache()
             action = mod_sound_form.cleaned_data.get("action")
             msg = msg_form.cleaned_data.get("message", False)
             moderator_only = msg_form.cleaned_data.get("moderator_only", False)
@@ -541,40 +566,34 @@ def moderation_assigned(request, user_id):
                 ticket.status = TICKET_STATUS_CLOSED
                 ticket.save()
             elif action == "Whitelist":
-                # Get all currently pending sound tickets for user
-                whitelist_user = ticket.sender
-                whitelist_user.profile.is_whitelisted = True
-                whitelist_user.profile.save()
-                pending_tickets = Ticket.objects.filter(sender=whitelist_user,
-                                                        source='new sound') \
-                    .exclude(status=TICKET_STATUS_CLOSED)
-                # Set all sounds to OK and the tickets to closed
-                for pending_ticket in pending_tickets:
-                    if pending_ticket.content:
-                        pending_ticket.content.content_object.moderation_state = "OK"
-                        pending_ticket.content.content_object.save()
-                        pending_ticket.content.content_object.mark_index_dirty()
-                        # This could be done with a single update, but there's a chance
-                    # we lose a sound that way (a newly created ticket who's sound
-                    # is not set to OK, but the ticket is closed).
-                    pending_ticket.status = TICKET_STATUS_CLOSED
-                    pending_ticket.save()
+
+                th = Thread(target=call_command, args=('whitelist_user', ticket.id,))
+                th.start()
                 ticket.send_notification_emails(Ticket.NOTIFICATION_WHITELISTED,
                                                 Ticket.USER_ONLY)
+
+                messages.add_message(request, messages.INFO, 'User %s has been whitelisted but some of his tickets might '
+                                                             'still appear on this list for some time. Please reload the page in a few '
+                                                             'seconds to see the updated list of pending tickets' % ticket.sender.username)
+
         else:
             clear_forms = False
     if clear_forms:
-        mod_sound_form = SoundModerationForm(initial={'action':'Approve'})
+        mod_sound_form = SoundModerationForm(initial={'action': 'Approve'})
         msg_form = ModerationMessageForm()
-    moderator_tickets = Ticket.objects.select_related() \
-                            .filter(assignee=user_id) \
-                            .exclude(status=TICKET_STATUS_CLOSED) \
-                            .exclude(content=None) \
-                            .order_by('status', '-created')
-    moderator_tickets_count = len(moderator_tickets)
+
+    qs = Ticket.objects.select_related() \
+                       .filter(assignee=user_id) \
+                       .exclude(status=TICKET_STATUS_CLOSED) \
+                       .exclude(content=None) \
+                       .order_by('status', '-created')
+
+    moderator_tickets_count = qs.count()
     moderation_texts = MODERATION_TEXTS
+    show_pagination = moderator_tickets_count > MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+
     return render_to_response('tickets/moderation_assigned.html',
-                              locals(),
+                              combine_dicts(paginate(request, qs, MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE), locals()),
                               context_instance=RequestContext(request))
 
 
@@ -602,17 +621,19 @@ def user_annotations(request, user_id):
 def support_home(request):
     return HttpResponse('TODO')
 
+
 def get_pending_sounds(user):
-
     ret = []
-
     # getting all user tickets that last that have not been closed
     user_tickets = Ticket.objects.filter(sender=user).exclude(status=TICKET_STATUS_CLOSED)
 
     for user_ticket in user_tickets:
-        sound_id = user_ticket.content.object_id
-        sound_obj = Sound.objects.get(id=sound_id)
-        ret.append( (user_ticket, sound_obj) )
+        try:
+            sound_id = user_ticket.content.object_id
+            sound_obj = Sound.objects.get(id=sound_id, processing_state='OK', moderation_state='PE')
+            ret.append( (user_ticket, sound_obj) )
+        except:
+            pass
 
     return ret
 

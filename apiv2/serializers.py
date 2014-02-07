@@ -99,15 +99,15 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     uri = serializers.SerializerMethodField('get_uri')
     def get_uri(self, obj):
-        return prepend_base(reverse('apiv2-sound-instance', args=[obj.id]))
+        return prepend_base(reverse('apiv2-sound-instance', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
-        return prepend_base(reverse('sound', args=[obj.user.username, obj.id]))
+        return prepend_base(reverse('sound', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]))
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     name = serializers.SerializerMethodField('get_name')
     def get_name(self, obj):
@@ -125,7 +125,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_pack(self, obj):
         try:
             if obj.pack:
-                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]))
+                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]), request_is_secure=self.context['request'].is_secure())
             else:
                 return None
         except:
@@ -133,21 +133,37 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     previews = serializers.SerializerMethodField('get_previews')
     def get_previews(self, obj):
-        return {
-            'preview-hq-mp3': obj.locations("preview.HQ.mp3.url"),
-            'preview-hq-ogg': obj.locations("preview.HQ.ogg.url"),
-            'preview-lq-mp3': obj.locations("preview.LQ.mp3.url"),
-            'preview-lq-ogg': obj.locations("preview.LQ.ogg.url"),
-        }
+        if not self.context['request'].is_secure():
+            return {
+                'preview-hq-mp3': obj.locations("preview.HQ.mp3.url"),
+                'preview-hq-ogg': obj.locations("preview.HQ.ogg.url"),
+                'preview-lq-mp3': obj.locations("preview.LQ.mp3.url"),
+                'preview-lq-ogg': obj.locations("preview.LQ.ogg.url"),
+            }
+        else:
+            return {
+                'preview-hq-mp3': obj.locations("preview.HQ.mp3.url").replace('http://', 'https://'),
+                'preview-hq-ogg': obj.locations("preview.HQ.ogg.url").replace('http://', 'https://'),
+                'preview-lq-mp3': obj.locations("preview.LQ.mp3.url").replace('http://', 'https://'),
+                'preview-lq-ogg': obj.locations("preview.LQ.ogg.url").replace('http://', 'https://'),
+            }
 
     images = serializers.SerializerMethodField('get_images')
     def get_images(self, obj):
-        return {
-            'waveform_m': obj.locations("display.wave.M.url"),
-            'waveform_l': obj.locations("display.wave.L.url"),
-            'spectral_m': obj.locations("display.spectral.M.url"),
-            'spectral_l': obj.locations("display.spectral.L.url"),
-        }
+        if not self.context['request'].is_secure():
+            return {
+                'waveform_m': obj.locations("display.wave.M.url"),
+                'waveform_l': obj.locations("display.wave.L.url"),
+                'spectral_m': obj.locations("display.spectral.M.url"),
+                'spectral_l': obj.locations("display.spectral.L.url"),
+            }
+        else:
+            return {
+                'waveform_m': obj.locations("display.wave.M.url").replace('http://', 'https://'),
+                'waveform_l': obj.locations("display.wave.L.url").replace('http://', 'https://'),
+                'spectral_m': obj.locations("display.spectral.M.url").replace('http://', 'https://'),
+                'spectral_l': obj.locations("display.spectral.L.url").replace('http://', 'https://'),
+            }
 
     analysis = serializers.SerializerMethodField('get_analysis')
     def get_analysis(self, obj):
@@ -156,23 +172,26 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     analysis_frames = serializers.SerializerMethodField('get_analysis_frames')
     def get_analysis_frames(self, obj):
-        return obj.locations('analysis.frames.url')
+        if not self.context['request'].is_secure():
+            return obj.locations('analysis.frames.url')
+        else:
+            return obj.locations('analysis.frames.url').replace('http://', 'https://')
 
     analysis_stats = serializers.SerializerMethodField('get_analysis_stats')
     def get_analysis_stats(self, obj):
-        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]))
+        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     similar_sounds = serializers.SerializerMethodField('get_similar_sounds')
     def get_similar_sounds(self, obj):
-        return prepend_base(reverse('apiv2-similarity-sound', args=[obj.id]))
+        return prepend_base(reverse('apiv2-similarity-sound', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     download = serializers.SerializerMethodField('get_download')
     def get_download(self, obj):
-        return prepend_base(reverse('apiv2-sound-download', args=[obj.id]))
+        return prepend_base(reverse('apiv2-sound-download', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     ratings = serializers.SerializerMethodField('get_ratings')
     def get_ratings(self, obj):
-        return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]))
+        return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     avg_rating = serializers.SerializerMethodField('get_avg_rating')
     def get_avg_rating(self, obj):
@@ -180,7 +199,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     comments = serializers.SerializerMethodField('get_comments')
     def get_comments(self, obj):
-        return prepend_base(reverse('apiv2-sound-comments', args=[obj.id]))
+        return prepend_base(reverse('apiv2-sound-comments', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     geotag = serializers.SerializerMethodField('get_geotag')
     def get_geotag(self, obj):
@@ -251,32 +270,39 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
-        return prepend_base(reverse('account', args=[obj.username]))
+        return prepend_base(reverse('account', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     uri = serializers.SerializerMethodField('get_uri')
     def get_uri(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.username]))
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]))
+        return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     packs = serializers.SerializerMethodField('get_packs')
     def get_packs(self, obj):
-        return prepend_base(reverse('apiv2-user-packs', args=[obj.username]))
+        return prepend_base(reverse('apiv2-user-packs', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     bookmark_categories = serializers.SerializerMethodField('get_bookmark_categories')
     def get_bookmark_categories(self, obj):
-        return prepend_base(reverse('apiv2-user-bookmark-categories', args=[obj.username]))
+        return prepend_base(reverse('apiv2-user-bookmark-categories', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     avatar = serializers.SerializerMethodField('get_avatar')
     def get_avatar(self, obj):
         if obj.profile.has_avatar:
-            return {
-                'Small': obj.profile.locations()['avatar']['S']['url'],
-                'Medium': obj.profile.locations()['avatar']['M']['url'],
-                'Large': obj.profile.locations()['avatar']['L']['url'],
-            }
+            if not self.context['request'].is_secure():
+                return {
+                    'Small': obj.profile.locations()['avatar']['S']['url'],
+                    'Medium': obj.profile.locations()['avatar']['M']['url'],
+                    'Large': obj.profile.locations()['avatar']['L']['url'],
+                }
+            else:
+                return {
+                    'Small': obj.profile.locations()['avatar']['S']['url'].replace('http://', 'https://'),
+                    'Medium': obj.profile.locations()['avatar']['M']['url'].replace('http://', 'https://'),
+                    'Large': obj.profile.locations()['avatar']['L']['url'].replace('http://', 'https://'),
+                }
         else:
             return None
 
@@ -326,11 +352,11 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
 
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
-        return prepend_base(reverse('pack', args=[obj.user.username, obj.id]))
+        return prepend_base(reverse('pack', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
 
     uri = serializers.SerializerMethodField('get_uri')
     def get_uri(self, obj):
-        return prepend_base(reverse('apiv2-pack-instance', args=[obj.id]))
+        return prepend_base(reverse('apiv2-pack-instance', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     num_sounds = serializers.SerializerMethodField('get_num_sounds')
     def get_num_sounds(self, obj):
@@ -338,7 +364,7 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]))
+        return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
 
 ##################
@@ -358,9 +384,9 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
         if obj.id != 0:
-            return prepend_base(reverse('bookmarks-for-user-for-category', args=[obj.user.username, obj.id]))
+            return prepend_base(reverse('bookmarks-for-user-for-category', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
         else:
-            return prepend_base(reverse('bookmarks-for-user', args=[obj.user.username]))
+            return prepend_base(reverse('bookmarks-for-user', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     num_sounds = serializers.SerializerMethodField('get_num_sounds')
     def get_num_sounds(self, obj):
@@ -371,7 +397,7 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]))
+        return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
         #if obj.id != 0: # Category is not 'uncategorized'
         #    return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]))
         #else:
@@ -397,7 +423,7 @@ class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]))
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     rating = serializers.SerializerMethodField('get_rating')
     def get_rating(self, obj):
@@ -431,7 +457,7 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]))
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
 
 

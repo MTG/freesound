@@ -436,7 +436,11 @@ def api_search(search_form, target_file=None):
 # General utils
 ###############
 
-def prepend_base(rel, dynamic_resolve=True, use_https=False):
+def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):
+
+    if request_is_secure:
+        use_https = True
+        dynamic_resolve = False  # don't need to dynamic resolve is request is https
 
     if dynamic_resolve:
         try:

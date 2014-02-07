@@ -142,6 +142,9 @@ MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE = 30
 SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 
+# COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 180 days)
+# $.cookie("cookieConsent", "yes", { expires: 180, path: '/' });
+
 DELETED_USER_ID = 1
 
 LOG_CLICKTHROUGH_DATA = False

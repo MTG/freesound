@@ -20,7 +20,12 @@
  */
 
 $(function() {
+    cookieValue = $.cookie("cookieConsent");
+    if (cookieValue == "yes")
+        $("#cookie-bar").remove();
+
     $("#cookie-accept").click(function() {
+        $.cookie("cookieConsent", "yes", { expires: 180, path: '/' });
         $("#cookie-bar").fadeOut(500);
     });
 });

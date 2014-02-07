@@ -51,13 +51,13 @@ examples = {
         ('Get sound comments', ['apiv2/sounds/14854/comments/', 'apiv2/sounds/14854/comments/?page=2']),
     ],
     'DownloadSound': [
-        ('Download a sound', ['apiv2/sounds/14854/download/']),
+        ('Download a sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" %s/apiv2/sounds/14854/download/']),
     ],
     'UploadSound': [
         ('Upload a sound', ['curl -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" %s/apiv2/sounds/upload/']),
     ],
     'NotYetDescribedUploadedSounds': [
-        ('Get sounds that have not been yet described', ['apiv2/sounds/not_yet_described/']),
+        ('Get sounds that have not been yet described', ['curl -X POST -H "Authorization: Bearer {{access_token}}" %s/apiv2/sounds/not_yet_described/']),
     ],
     'DescribeSound': [
         ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" %s/apiv2/sounds/describe/']),

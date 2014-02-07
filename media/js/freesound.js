@@ -19,6 +19,12 @@
  *   See AUTHORS file.
  */
 
+$(function() {
+    $("#cookie-accept").click(function() {
+        $("#cookie-bar").fadeOut(500);
+    });
+});
+
 function d()
 {
     if (window.console && window.console.log)

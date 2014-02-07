@@ -24,7 +24,7 @@ examples = {
     # Search
     'Search': [
         ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano&page=2']),
-        ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar']),
+        ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar', 'apiv2/search/?query=music&filter=type:(wav OR aiff)']),
         ('Simple search and selection of sound fields to return in the results', ['apiv2/search/?query=alarm&fields=name,previews']),
         ('Todo', ['apiv2/complete previous examples and add more...']),
     ],

@@ -31,6 +31,10 @@ from django.contrib.auth.views import login
 from apiv2 import views
 
 
+#
+# WATCH OUT! if changing url pattern names these should be changed in vews __doc__ too (to make sure examples work properly)
+#
+
 urlpatterns = patterns('apiv2.views',
     #############
     # READ ONLY #

@@ -436,15 +436,15 @@ def api_search(search_form, target_file=None):
 # General utils
 ###############
 
-def prepend_base(rel, use_https=False):
+def prepend_base(rel, dynamic_resolve=True, use_https=False):
 
-    if rel:
+    if dynamic_resolve:
         try:
             url_name = resolve(rel.replace('<sound_id>', '1').replace('<username', 'name').replace('<pack_id>', '1').replace('<category_id>', '1')).url_name
             if url_name in settings.APIV2_RESOURCES_REQUIRING_HTTPS:
                 use_https = True
         except Exception, e:
-            print e
+            pass
 
     if use_https:
         return "https://%s%s" % (Site.objects.get_current().domain, rel)
@@ -504,7 +504,7 @@ class ApiSearchPaginator(object):
 # Docs examples utils
 #####################
 
-def get_formatted_examples_for_view(view_name, max=10):
+def get_formatted_examples_for_view(view_name, url_name, max=10):
     try:
         data = examples[view_name]
     except:
@@ -513,15 +513,22 @@ def get_formatted_examples_for_view(view_name, max=10):
 
     count = 0
     output = 'Some quick examples:<div class="request-info" style="clear: both"><pre class="prettyprint">'
+
     for description, elements in data:
         for element in elements:
             if count >= max:
                 break
 
             if element[0:5] == 'apiv2':
-                output += '<span class="pln"><a href="%s">%s</a></span><br>' % (prepend_base('/' + element), prepend_base('/' + element))
+                if url_name in settings.APIV2_RESOURCES_REQUIRING_HTTPS:
+                    url = prepend_base('/' + element, dynamic_resolve=False, use_https=True)
+                else:
+                    url = prepend_base('/' + element, dynamic_resolve=False, use_https=False)
+                output += '<span class="pln"><a href="%s">%s</a></span><br>' % (url, url)
             else:
-                output += '<span class="pln">%s</span><br>' % (element % prepend_base('').replace('http', 'https'))
+                # This is only apiv2 oauth examples
+                url = prepend_base('', dynamic_resolve=False, use_https=True)
+                output += '<span class="pln">%s</span><br>' % (element % url)
             count += 1
 
     output += '</pre></div>'

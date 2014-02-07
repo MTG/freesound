@@ -70,7 +70,8 @@ class Search(GenericAPIView):
 
     __doc__ = 'Search sounds in Freesound based on their tags and other metadata.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#search' % resources_doc_filename, get_formatted_examples_for_view('Search', max=5))
+              % (docs_base_url, '%s#search' % resources_doc_filename,
+                 get_formatted_examples_for_view('Search', 'apiv2-sound-search', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))
@@ -133,9 +134,11 @@ class Search(GenericAPIView):
 
 
 class AdvancedSearch(GenericAPIView):
+
     __doc__ = 'Search sounds in Freesound based on their tags, metadata and content-based descriptors.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#advanced-search' % resources_doc_filename, get_formatted_examples_for_view('AdvancedSearch', max=5))
+              % (docs_base_url, '%s#advanced-search' % resources_doc_filename,
+                 get_formatted_examples_for_view('AdvancedSearch', 'apiv2-sound-combined-search', max=5))
 
     serializer_class = SimilarityFileSerializer
     analysis_file = None
@@ -216,7 +219,8 @@ class AdvancedSearch(GenericAPIView):
 class SoundInstance(RetrieveAPIView):
     __doc__ = 'Detailed sound information.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#sound-instance' % resources_doc_filename, get_formatted_examples_for_view('SoundInstance', max=5))
+              % (docs_base_url, '%s#sound-instance' % resources_doc_filename,
+                 get_formatted_examples_for_view('SoundInstance', 'apiv2-sound-instance', max=5))
 
     serializer_class = SoundSerializer
     queryset = Sound.objects.filter(moderation_state="OK", processing_state="OK")
@@ -229,7 +233,8 @@ class SoundInstance(RetrieveAPIView):
 class SoundAnalysis(GenericAPIView):
     __doc__ = 'Sound analysis information.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#sound-analysis' % resources_doc_filename, get_formatted_examples_for_view('SoundAnalysis', max=5))
+              % (docs_base_url, '%s#sound-analysis' % resources_doc_filename,
+                 get_formatted_examples_for_view('SoundAnalysis', 'apiv2-sound-analysis', max=5))
 
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -250,7 +255,8 @@ class SoundAnalysis(GenericAPIView):
 class SimilarSounds(GenericAPIView):
     __doc__ = 'Similar sounds to a given Freesound sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#similar-sounds' % resources_doc_filename, get_formatted_examples_for_view('SimilarSounds', max=5))
+              % (docs_base_url, '%s#similar-sounds' % resources_doc_filename,
+                 get_formatted_examples_for_view('SimilarSounds', 'apiv2-similarity-sound', max=5))
 
     def get(self, request,  *args, **kwargs):
 
@@ -305,7 +311,8 @@ class SimilarSounds(GenericAPIView):
 class SoundComments(ListAPIView):
     __doc__ = 'Sounds comments.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#sound-comments' % resources_doc_filename, get_formatted_examples_for_view('SoundComments', max=5))
+              % (docs_base_url, '%s#sound-comments' % resources_doc_filename,
+                 get_formatted_examples_for_view('SoundComments', 'apiv2-sound-comments', max=5))
     serializer_class = SoundCommentsSerializer
 
     def get(self, request,  *args, **kwargs):
@@ -319,7 +326,8 @@ class SoundComments(ListAPIView):
 class DownloadSound(DownloadAPIView):
     __doc__ = 'Download a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#download-sound' % resources_doc_filename, get_formatted_examples_for_view('DownloadSound', max=5))
+              % (docs_base_url, '%s#download-sound' % resources_doc_filename,
+                 get_formatted_examples_for_view('DownloadSound', 'apiv2-sound-download', max=5))
 
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -342,7 +350,8 @@ class DownloadSound(DownloadAPIView):
 class UserInstance(RetrieveAPIView):
     __doc__ = 'Detailed user information.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-instance' % resources_doc_filename, get_formatted_examples_for_view('UserInstance', max=5))
+              % (docs_base_url, '%s#user-instance' % resources_doc_filename,
+                 get_formatted_examples_for_view('UserInstance', 'apiv2-user-instance', max=5))
 
     lookup_field = "username"
     serializer_class = UserSerializer
@@ -356,7 +365,8 @@ class UserInstance(RetrieveAPIView):
 class UserSounds(ListAPIView):
     __doc__ = 'Sounds uploaded by a user.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-sounds' % resources_doc_filename, get_formatted_examples_for_view('UserSounds', max=5))
+              % (docs_base_url, '%s#user-sounds' % resources_doc_filename,
+                 get_formatted_examples_for_view('UserSounds', 'apiv2-user-sound-list', max=5))
 
     lookup_field = "username"
     serializer_class = SoundListSerializer
@@ -381,7 +391,8 @@ class UserSounds(ListAPIView):
 class UserPacks (ListAPIView):
     __doc__ = 'Packs created by a user.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-packs' % resources_doc_filename, get_formatted_examples_for_view('UserPacks', max=5))
+              % (docs_base_url, '%s#user-packs' % resources_doc_filename,
+                 get_formatted_examples_for_view('UserPacks', 'apiv2-user-packs', max=5))
 
     serializer_class = PackSerializer
     queryset = Pack.objects.all()
@@ -403,7 +414,8 @@ class UserPacks (ListAPIView):
 class UserBookmarkCategories(ListAPIView):
     __doc__ = 'Bookmark categories created by a user.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-bookmark-categories' % resources_doc_filename, get_formatted_examples_for_view('UserBookmarkCategories', max=5))
+              % (docs_base_url, '%s#user-bookmark-categories' % resources_doc_filename,
+                 get_formatted_examples_for_view('UserBookmarkCategories', 'apiv2-user-bookmark-categories', max=5))
 
     serializer_class = BookmarkCategorySerializer
 
@@ -428,7 +440,8 @@ class UserBookmarkCategories(ListAPIView):
 class UserBookmarkCategorySounds(ListAPIView):
     __doc__ = 'Sounds bookmarked by a user under a particular category.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#user-bookmark-category-sounds' % resources_doc_filename, get_formatted_examples_for_view('UserBookmarkCategorySounds', max=5))
+              % (docs_base_url, '%s#user-bookmark-category-sounds' % resources_doc_filename,
+                 get_formatted_examples_for_view('UserBookmarkCategorySounds', 'apiv2-user-bookmark-category-sounds', max=5))
 
     serializer_class = SoundListSerializer
 
@@ -467,7 +480,8 @@ class UserBookmarkCategorySounds(ListAPIView):
 class PackInstance(RetrieveAPIView):
     __doc__ = 'Detailed pack information.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#pack-instance' % resources_doc_filename, get_formatted_examples_for_view('PackInstance', max=5))
+              % (docs_base_url, '%s#pack-instance' % resources_doc_filename,
+                 get_formatted_examples_for_view('PackInstance', 'apiv2-pack-instance', max=5))
 
     serializer_class = PackSerializer
     queryset = Pack.objects.all()
@@ -480,7 +494,8 @@ class PackInstance(RetrieveAPIView):
 class PackSounds(ListAPIView):
     __doc__ = 'Sounds included in a pack.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#pack-sounds' % resources_doc_filename, get_formatted_examples_for_view('PackSounds', max=5))
+              % (docs_base_url, '%s#pack-sounds' % resources_doc_filename,
+                 get_formatted_examples_for_view('PackSounds', 'apiv2-pack-sound-list', max=5))
 
     serializer_class = SoundListSerializer
 
@@ -504,7 +519,8 @@ class PackSounds(ListAPIView):
 class DownloadPack(DownloadAPIView):
     __doc__ = 'Download a pack.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#download-pack' % resources_doc_filename, get_formatted_examples_for_view('DownloadPack', max=5))
+              % (docs_base_url, '%s#download-pack' % resources_doc_filename,
+                 get_formatted_examples_for_view('DownloadPack', 'apiv2-pack-download', max=5))
 
 
     def get(self, request,  *args, **kwargs):
@@ -545,7 +561,8 @@ class DownloadPack(DownloadAPIView):
 class UploadSound(WriteRequiredGenericAPIView):
     __doc__ = 'Upload a sound (only upload the file, without description/metadata).' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#upload-sound' % resources_doc_filename, get_formatted_examples_for_view('UploadSound', max=5))
+              % (docs_base_url, '%s#upload-sound' % resources_doc_filename,
+                 get_formatted_examples_for_view('UploadSound', 'apiv2-uploads-upload', max=5))
 
     serializer_class = UploadAudioFileSerializer
 
@@ -573,7 +590,8 @@ class UploadSound(WriteRequiredGenericAPIView):
 class NotYetDescribedUploadedSounds(WriteRequiredGenericAPIView):
     __doc__ = 'List of uploaded files which have not yet been described.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#not-yet-described-uploaded-sounds' % resources_doc_filename, get_formatted_examples_for_view('NotYetDescribedUploadedSounds', max=5))
+              % (docs_base_url, '%s#not-yet-described-uploaded-sounds' % resources_doc_filename,
+                 get_formatted_examples_for_view('NotYetDescribedUploadedSounds', 'apiv2-uploads-not-described', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('not_yet_described_uploaded_sounds'))
@@ -585,7 +603,8 @@ class NotYetDescribedUploadedSounds(WriteRequiredGenericAPIView):
 class DescribeSound(WriteRequiredGenericAPIView):
     __doc__ = 'Describe a previously uploaded sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#describe-sound' % resources_doc_filename, get_formatted_examples_for_view('DescribeSound', max=5))
+              % (docs_base_url, '%s#describe-sound' % resources_doc_filename,
+                 get_formatted_examples_for_view('DescribeSound', 'apiv2-uploads-describe', max=5))
 
     serializer_class = SoundDescriptionSerializer
 
@@ -610,7 +629,8 @@ class DescribeSound(WriteRequiredGenericAPIView):
 class UploadAndDescribeSound(WriteRequiredGenericAPIView):
     __doc__ = 'Upload and describe (add metadata) a sound file.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#upload-and-describe-sound' % resources_doc_filename, get_formatted_examples_for_view('UploadAndDescribeSound', max=5))
+              % (docs_base_url, '%s#upload-and-describe-sound' % resources_doc_filename,
+                 get_formatted_examples_for_view('UploadAndDescribeSound', 'apiv2-uploads-upload-and-describe', max=5))
 
     serializer_class = UploadAndDescribeAudioFileSerializer
 
@@ -640,7 +660,8 @@ class UploadAndDescribeSound(WriteRequiredGenericAPIView):
 class BookmarkSound(WriteRequiredGenericAPIView):
     __doc__ = 'Bookmark a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#bookmark-sound' % resources_doc_filename, get_formatted_examples_for_view('BookmarkSound', max=5))
+              % (docs_base_url, '%s#bookmark-sound' % resources_doc_filename,
+                 get_formatted_examples_for_view('BookmarkSound', 'apiv2-user-create-bookmark', max=5))
 
     serializer_class = CreateBookmarkSerializer
 
@@ -668,7 +689,8 @@ class BookmarkSound(WriteRequiredGenericAPIView):
 class RateSound(WriteRequiredGenericAPIView):
     __doc__ = 'Rate a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#rate-sound' % resources_doc_filename, get_formatted_examples_for_view('RateSound', max=5))
+              % (docs_base_url, '%s#rate-sound' % resources_doc_filename,
+                 get_formatted_examples_for_view('RateSound', 'apiv2-user-create-rating', max=5))
 
     serializer_class = CreateRatingSerializer
 
@@ -696,7 +718,8 @@ class RateSound(WriteRequiredGenericAPIView):
 class CommentSound(WriteRequiredGenericAPIView):
     __doc__ = 'Add a comment to a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#comment-sound' % resources_doc_filename, get_formatted_examples_for_view('CommentSound', max=5))
+              % (docs_base_url, '%s#comment-sound' % resources_doc_filename,
+                 get_formatted_examples_for_view('CommentSound', 'apiv2-user-create-comment', max=5))
 
     serializer_class = CreateCommentSerializer
 

@@ -2889,6 +2889,10 @@ ul.messages {
     background-color: #fff;
 }
 
+.mod-selected-row td {
+    background-color: #ececec;
+}
+
 #moderation-queue-left,#moderation-queue-right {
     width: 450px;
     float: left;

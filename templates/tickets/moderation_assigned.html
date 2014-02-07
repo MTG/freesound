@@ -16,6 +16,20 @@
         $("#moderation-ticket-link").get(0).innerHTML = '<p><a href="'+url+'">see full ticket</a>';
     }
 
+    function highlight_row(row_id) {
+
+        var table = document.getElementById('assigned-tickets-table');
+        var rowLength = table.rows.length;
+
+        for(var i=0; i<rowLength; i+=1){
+            var row = table.rows[i];
+
+            $('#' + row.id).removeClass('mod-selected-row');
+
+        }
+        $('#' + row_id).addClass('mod-selected-row');
+
+    }
 
     var set_uploader_id = function(uploader_id) {
         loadUrl = '{% url tickets-user-annotations 0 %}'.replace('0', ''+uploader_id);
@@ -23,12 +37,13 @@
     }
 
     $(document).ready(function() {
-        {% if moderator_tickets %}
+        {% if moderator_tickets_count %}
             soundManager.onready(function() {
-                moderate('{% url sound-display moderator_tickets.0.content.content_object.user.username moderator_tickets.0.content.object_id %}');
-                load_messages('{% url tickets-ticket moderator_tickets.0.key %}');
-                $('#id_ticket').get(0).value={{moderator_tickets.0.id}};
-                set_uploader_id({{moderator_tickets.0.sender.id}});
+                moderate('{% url sound-display page.object_list.0.content.content_object.user.username page.object_list.0.content.object_id %}');
+                load_messages('{% url tickets-ticket page.object_list.0.key %}');
+                highlight_row('row_{{ page.object_list.0.id }}');
+                $('#id_ticket').get(0).value={{page.object_list.0.id}};
+                set_uploader_id({{page.object_list.0.sender.id}});
             });
         {% endif %}
     });
@@ -81,13 +96,14 @@
             {% endif %}
             <div id="assigned-tickets-table-wrapper">
 
-                <table>
+                <table id="assigned-tickets-table">
                 {% for ticket in page.object_list %}
                     {% if ticket.content and ticket.content.content_object.is_sound %}
-                        <tr class="alternate-row-{% cycle 'odd' 'even' %}">
+                        <tr id="row_{{ ticket.id }}" class="alternate-row-{% cycle 'odd' 'even' %}">
                             <td><a onclick="
                                     moderate('{% url sound-display ticket.content.content_object.user.username ticket.content.object_id %}');
                                     load_messages('{% url tickets-ticket ticket.key %}');
+                                    highlight_row('row_{{ ticket.id }}');
                                     $('#id_ticket').get(0).value={{ticket.id}};
                                     set_uploader_id({{ticket.sender.id}});">
                                 {{ticket.content.content_object.original_filename|truncate_string:20}}</a></td>

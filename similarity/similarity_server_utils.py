@@ -186,7 +186,7 @@ def parse_filter_list(filter_list, coeffs):
 
                 else:
                     filter += " "
-                    if f['value']['min']:
+                    if f['value']['min'] is not None:
                         if coeffs:
                             if '[' in f['feature']:
                                 # if character [ is in feature name it means that is multidimensional filter
@@ -198,8 +198,8 @@ def parse_filter_list(filter_list, coeffs):
                         else:
                             norm_value = f['value']['min']
                         filter += prepend_value_label(f) + f['feature'] + ">" + str(norm_value) + " "
-                    if f['value']['max']:
-                        if f['value']['min']:
+                    if f['value']['max'] is not None:
+                        if f['value']['min'] is not None:
                             filter += "AND "
                         if coeffs:
                             if '[' in f['feature']:

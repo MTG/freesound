@@ -83,13 +83,16 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'user',
                   'pack',
                   'download',
+                  'bookmark',
                   'previews',
                   'images',
                   'num_downloads',
                   'avg_rating',
                   'num_ratings',
-                  'num_comments',
+                  'rate',
                   'comments',
+                  'num_comments',
+                  'comment',
                   'similar_sounds',
                   'analysis',
                   'analysis_frames',
@@ -188,6 +191,18 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     download = serializers.SerializerMethodField('get_download')
     def get_download(self, obj):
         return prepend_base(reverse('apiv2-sound-download', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+
+    rate = serializers.SerializerMethodField('get_rate')
+    def get_rate(self, obj):
+        return prepend_base(reverse('apiv2-user-create-rating', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+
+    bookmark = serializers.SerializerMethodField('get_bookmark')
+    def get_bookmark(self, obj):
+        return prepend_base(reverse('apiv2-user-create-bookmark', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
+
+    comment = serializers.SerializerMethodField('get_comment')
+    def get_comment(self, obj):
+        return prepend_base(reverse('apiv2-user-create-comment', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     ratings = serializers.SerializerMethodField('get_ratings')
     def get_ratings(self, obj):

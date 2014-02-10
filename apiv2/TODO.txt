@@ -1,4 +1,3 @@
-- add rate, bookmark and comment links to sound serializer
 - check api option to enforce ssl requests (in provider)... or restrict it on nginx?
 - fix examples generation in api docs for https
 - fix bug in similarity server filter parser that removes conditions with 0s

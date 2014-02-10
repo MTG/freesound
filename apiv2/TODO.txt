@@ -1,6 +1,5 @@
 - check api option to enforce ssl requests (in provider)... or restrict it on nginx?
 - Write documentation
-- Customize online interactive api
 - Clean code (imports, utils...)
 - Clean up expired grants from database with a django command
 - Sporadic server errors on combined search?

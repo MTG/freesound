@@ -39,6 +39,7 @@ from forum.models import Post
 from operator import itemgetter
 from sounds.models import Sound, Pack, Download, License
 from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm, RemixForm
+from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
 from utils.encryption import decrypt, encrypt, create_hash
@@ -52,7 +53,7 @@ from django.contrib import messages
 from settings import SOUNDS_PER_DESCRIBE_ROUND
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
-    TICKET_STATUS_NEW
+    TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED
 from utils.audioprocessing import get_sound_type
 from django.core.cache import cache
 import django.contrib.auth.views as authviews
@@ -73,6 +74,8 @@ import json
 from utils.tagrecommendation_utilities import get_recommended_tags
 from messages.models import Message
 from django.contrib.contenttypes.models import ContentType
+import tickets.views as TicketViews
+from django.contrib.auth.models import Group
 from provider.oauth2.models import AccessToken
 
 
@@ -217,9 +220,12 @@ def home(request):
     tags = list(user.profile.get_tagcloud())
     latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
-    unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
+    #unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
+    unmoderated_sounds = TicketViews.get_pending_sounds(request.user)
+    unmoderated_sounds_count = len(unmoderated_sounds)
+    unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
+    num_more_unmoderated_sounds = unmoderated_sounds_count - settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE
 
-    
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
     packs_without_sounds = Pack.objects.select_related().filter(user=user).annotate(num_sounds=Count('sound')).filter(num_sounds=0)
@@ -422,6 +428,7 @@ def describe_sounds(request):
 
     # If there are no files in the session redirect to the first describe page
     if len(sounds_to_describe) <= 0:
+        # Check if there is at least one message which is not saying that the sound was already part of freesound
         msg = 'You have finished describing your sounds.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
@@ -436,6 +443,7 @@ def describe_sounds(request):
             tag_recommendation_random_session_id = False
 
         # first get all the data
+        n_sounds_already_part_of_freesound = 0
         for i in range(len(sounds_to_describe)):
             prefix = str(i)
             forms.append({})
@@ -475,6 +483,7 @@ def describe_sounds(request):
             # check if file exists or not
             try:
                 existing_sound = Sound.objects.get(md5=sound.md5)
+                n_sounds_already_part_of_freesound += 1
                 msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>' % \
                     (forms[i]['sound'].name, reverse('sound', args=[existing_sound.user.username, existing_sound.id]))
                 messages.add_message(request, messages.WARNING, msg)
@@ -560,8 +569,16 @@ def describe_sounds(request):
                 tc.save()
                 # add notification that the file was described successfully
                 messages.add_message(request, messages.INFO,
-                                     'File <a href="%s">%s</a> has been described and is awaiting moderation.' % \
+                                     'File <a href="%s">%s</a> has been described and is now awaiting processing and moderation.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
+
+                # TODO: comment here
+                invalidate_template_cache("user_header", ticket.sender.id)
+                moderators = Group.objects.get(name='moderators').user_set.all()
+                for moderator in moderators:
+                    invalidate_template_cache("user_header", moderator.id)
+
+
             # compute crc
             # TEMPORARY
             try:
@@ -593,8 +610,12 @@ def describe_sounds(request):
             p.process()
                             
         if len(request.session['describe_sounds']) <= 0:
-            msg = 'You have described all the selected files.'
-            messages.add_message(request, messages.WARNING, msg)
+            if len(sounds_to_describe) != n_sounds_already_part_of_freesound:
+                msg = 'You have described all the selected files and are now awaiting processing and moderation. ' \
+                      'You can check the status of your uploaded sounds in your <a href="%s">home page</a>. ' \
+                      'Once your sounds have been processed, you can also get information about the moderation ' \
+                      'status in the <a href="%s">uploaded sounds awaiting moderation</a> page.' % (reverse('accounts-home'), reverse('accounts-pending'))
+                messages.add_message(request, messages.WARNING, msg)
             return HttpResponseRedirect(reverse('accounts-describe'))
         else:
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
@@ -1096,3 +1117,22 @@ def clear_flags_user(request, username):
 def donate_redirect(request):
     pledgie_campaign_url = "http://pledgie.com/campaigns/%d/" % settings.PLEDGIE_CAMPAIGN
     return HttpResponseRedirect(pledgie_campaign_url)
+
+@login_required
+def pending(request):
+    tickets_sounds = TicketViews.get_pending_sounds(request.user)
+    pendings = []
+    for ticket, sound in tickets_sounds:
+        last_comments = ticket.get_n_last_non_moderator_only_comments(3)
+        pendings.append( (ticket, sound, last_comments) )
+
+    show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
+
+    n_unprocessed_sounds = Sound.objects.select_related().filter(user=request.user).exclude(processing_state="OK").count()
+    if n_unprocessed_sounds:
+        messages.add_message(request, messages.WARNING, '%i of your recently uploaded sounds are still in processing '
+                                                        'phase and therefore are not yet ready for moderation. These '
+                                                        'sounds won\'t appear in this list until they are successfully '
+                                                        'processed. This process should take no more than a few minutes.' % n_unprocessed_sounds)
+
+    return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))

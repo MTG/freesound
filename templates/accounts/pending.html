@@ -1,0 +1,79 @@
+{% extends "accounts/_section.html" %}
+
+{% load display_sound %}
+{% load paginator %}
+{% load util %}
+
+{% block title %}Uploaded sounds awaiting moderation{% endblock title %}
+{% block section_content %}
+
+    <h2>Uploaded sounds awaiting moderation</h2>
+
+    {% if show_pagination %}
+        {% show_paginator paginator page current_page request "moderation ticket" %}
+    {% endif %}
+
+    {% for ticket, sound, comments in page.object_list %}
+
+        <div id="pending-ticket" style="margin-bottom:25px">
+            <div class="sample_player_small" style="width: 700px;" id="{{ sound.id }}">
+                <div class="sample_player">
+                    <div class="small_player">
+                        {% include "sounds/player_medium.html" %}
+                    </div><!-- .small_player -->
+
+                    <div class="sound_title">
+                        <div class="sound_filename">
+                            <a class="title" href="{% url sound sound.user.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
+                        </div><!-- .sound_filename -->
+
+                        <div class="sound_description">
+                            <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
+                        </div><!-- .sound_description -->
+
+                        <div class="sound_tags">
+                            <ul class="tags">
+                                {% for tag_link in sound.tags.all %}
+                                    <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                                {% endfor %}
+                            </ul>
+                            <br style="clear: both;"/>
+                        </div><!-- .sound_tags -->
+                    </div>
+                </div>
+                <div class="sample_information" style="width: 250px;">
+
+                    <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
+                    <a href="{% url sound-edit sound.user.username sound.id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a><br />
+                    See full <a href="{% url tickets-ticket ticket.key %}">moderation ticket</a><br />
+                    {% with comments|first as last_comment %}
+                        {% ifnotequal last_comment.sender_id user.id %}
+                            <br><img src="{{media_url}}images/info_red.png" width="12" height="12" valign="middle" />
+                            <span style="color:#c65c56">The moderator handling this upload is waiting you to answer his last comment on the ticket ({{ last_comment.created|timesince}} ago).</span>
+                        {% endifnotequal %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+
+        {% comment %}
+        <div class='last-ticket-comments'>
+            <p>Last comment{{ comments|length|pluralize}} on <a href="{% url tickets-ticket ticket.key %}">moderation ticket</a>:
+                <ul>
+                    {% for comment in comments %}
+                        <li><a href="{% url account comment.sender %}">{{ comment.sender }}</a> <span id="time-since">({{ comment.created|timesince}} ago)</span>: <i>{{ comment.text }}</i></li>
+                    {% endfor %}
+                </ul>
+            </p>
+        </div>
+        {% endcomment %}
+
+    {% empty %}
+        <p>Currently, you don't have any uploaded sounds awaiting moderation.</p>
+    {% endfor %}
+
+    {% if show_pagination %}
+        {% show_paginator paginator page current_page request "moderation ticket" %}
+    {% endif %}
+
+{% endblock %}

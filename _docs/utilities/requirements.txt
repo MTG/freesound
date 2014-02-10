@@ -21,3 +21,4 @@ gunicorn==0.13.4
 akismet==0.2.0
 django-oauth2-provider==0.2.6
 djangorestframework==2.3.8
+pil==1.1.7

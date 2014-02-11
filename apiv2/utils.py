@@ -522,7 +522,7 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
     try:
         data = examples[view_name]
     except:
-        print 'Could not find examples for view %s' % view_name
+        #print 'Could not find examples for view %s' % view_name
         return ''
 
     count = 0

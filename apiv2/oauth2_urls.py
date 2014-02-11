@@ -23,6 +23,7 @@
 from django.conf.urls.defaults import patterns, url
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
 from provider.oauth2.views import Redirect, Capture
 from apiv2.utils import AccessTokenView, Authorize
 import settings
@@ -33,16 +34,32 @@ We create oauth2_urls.py files and then include to the main apiv2/urls.py becaus
 otherwise. Apparently if namespace is defined manually (ex: name='oauth2:capture'), Django complains.
 '''
 
+
 if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
     login_url = '/apiv2/login/'
 else:
     login_url = settings.LOGIN_URL
 
 
-urlpatterns = patterns('',
-    url('^authorize/?$', login_required(Capture.as_view(), login_url=login_url), name='capture'),
-    url('^authorize/confirm/?$', login_required(Authorize.as_view(), login_url=login_url), name='authorize'),
-    url('^redirect/?$', login_required(Redirect.as_view(), login_url=login_url), name='redirect'),
-    url('^access_token/?$', csrf_exempt(AccessTokenView.as_view()), name='access_token'),
-)
+def https_and_login_required(view_func):
+    def _wrapped_view_func(request, *args, **kwargs):
+        if not request.using_https:
+            return HttpResponse("A secure connection is required.")
+        return view_func(request, *args, **kwargs)
+    return login_required(_wrapped_view_func, login_url=login_url)
 
+
+def https_required_and_crsf_exempt(view_func):
+    def _wrapped_view_func(request, *args, **kwargs):
+        if not request.using_https:
+            return HttpResponse("A secure connection is required.")
+        return view_func(request, *args, **kwargs)
+    return csrf_exempt(_wrapped_view_func)
+
+
+urlpatterns = patterns('',
+    url('^authorize/?$', https_and_login_required(Capture.as_view()), name='capture'),
+    url('^authorize/confirm/?$', https_and_login_required(Authorize.as_view()), name='authorize'),
+    url('^redirect/?$', https_and_login_required(Redirect.as_view()), name='redirect'),
+    url('^access_token/?$', https_required_and_crsf_exempt(AccessTokenView.as_view()), name='access_token'),
+)

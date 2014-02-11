@@ -136,37 +136,21 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     previews = serializers.SerializerMethodField('get_previews')
     def get_previews(self, obj):
-        if not self.context['request'].is_secure():
-            return {
-                'preview-hq-mp3': obj.locations("preview.HQ.mp3.url"),
-                'preview-hq-ogg': obj.locations("preview.HQ.ogg.url"),
-                'preview-lq-mp3': obj.locations("preview.LQ.mp3.url"),
-                'preview-lq-ogg': obj.locations("preview.LQ.ogg.url"),
-            }
-        else:
-            return {
-                'preview-hq-mp3': obj.locations("preview.HQ.mp3.url").replace('http://', 'https://'),
-                'preview-hq-ogg': obj.locations("preview.HQ.ogg.url").replace('http://', 'https://'),
-                'preview-lq-mp3': obj.locations("preview.LQ.mp3.url").replace('http://', 'https://'),
-                'preview-lq-ogg': obj.locations("preview.LQ.ogg.url").replace('http://', 'https://'),
-            }
+        return {
+                'preview-hq-mp3': prepend_base(obj.locations("preview.HQ.mp3.url"), request_is_secure=self.context['request'].is_secure()),
+                'preview-hq-ogg': prepend_base(obj.locations("preview.HQ.ogg.url"), request_is_secure=self.context['request'].is_secure()),
+                'preview-lq-mp3': prepend_base(obj.locations("preview.LQ.mp3.url"), request_is_secure=self.context['request'].is_secure()),
+                'preview-lq-ogg': prepend_base(obj.locations("preview.LQ.ogg.url"), request_is_secure=self.context['request'].is_secure()),
+        }
 
     images = serializers.SerializerMethodField('get_images')
     def get_images(self, obj):
-        if not self.context['request'].is_secure():
-            return {
-                'waveform_m': obj.locations("display.wave.M.url"),
-                'waveform_l': obj.locations("display.wave.L.url"),
-                'spectral_m': obj.locations("display.spectral.M.url"),
-                'spectral_l': obj.locations("display.spectral.L.url"),
-            }
-        else:
-            return {
-                'waveform_m': obj.locations("display.wave.M.url").replace('http://', 'https://'),
-                'waveform_l': obj.locations("display.wave.L.url").replace('http://', 'https://'),
-                'spectral_m': obj.locations("display.spectral.M.url").replace('http://', 'https://'),
-                'spectral_l': obj.locations("display.spectral.L.url").replace('http://', 'https://'),
-            }
+        return {
+                'waveform_m': prepend_base(obj.locations("display.wave.M.url"), request_is_secure=self.context['request'].is_secure()),
+                'waveform_l': prepend_base(obj.locations("display.wave.L.url"), request_is_secure=self.context['request'].is_secure()),
+                'spectral_m': prepend_base(obj.locations("display.spectral.M.url"), request_is_secure=self.context['request'].is_secure()),
+                'spectral_l': prepend_base(obj.locations("display.spectral.L.url"), request_is_secure=self.context['request'].is_secure()),
+        }
 
     analysis = serializers.SerializerMethodField('get_analysis')
     def get_analysis(self, obj):
@@ -175,10 +159,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     analysis_frames = serializers.SerializerMethodField('get_analysis_frames')
     def get_analysis_frames(self, obj):
-        if not self.context['request'].is_secure():
-            return obj.locations('analysis.frames.url')
-        else:
-            return obj.locations('analysis.frames.url').replace('http://', 'https://')
+        return prepend_base(obj.locations('analysis.frames.url'), request_is_secure=self.context['request'].is_secure())
 
     analysis_stats = serializers.SerializerMethodField('get_analysis_stats')
     def get_analysis_stats(self, obj):
@@ -306,18 +287,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     avatar = serializers.SerializerMethodField('get_avatar')
     def get_avatar(self, obj):
         if obj.profile.has_avatar:
-            if not self.context['request'].is_secure():
-                return {
-                    'Small': obj.profile.locations()['avatar']['S']['url'],
-                    'Medium': obj.profile.locations()['avatar']['M']['url'],
-                    'Large': obj.profile.locations()['avatar']['L']['url'],
-                }
-            else:
-                return {
-                    'Small': obj.profile.locations()['avatar']['S']['url'].replace('http://', 'https://'),
-                    'Medium': obj.profile.locations()['avatar']['M']['url'].replace('http://', 'https://'),
-                    'Large': obj.profile.locations()['avatar']['L']['url'].replace('http://', 'https://'),
-                }
+            return {
+                    'Small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].is_secure()),
+                    'Medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].is_secure()),
+                    'Large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].is_secure()),
+            }
         else:
             return None
 

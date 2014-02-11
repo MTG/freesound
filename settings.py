@@ -25,6 +25,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'middleware.TosAcceptanceHandler',
     'middleware.BulkChangeLicenseHandler',
+    'middleware.CheckIfRequestIsHttps',
     #'django.middleware.locale.LocaleMiddleware',
     'django.middleware.doc.XViewMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',

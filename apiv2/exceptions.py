@@ -48,6 +48,14 @@ class UnauthorizedException(APIException):
         self.detail = msg
 
 
+class RequiresHttpsException(APIException):
+    detail = None
+    status_code = status.HTTP_403_FORBIDDEN
+
+    def __init__(self, msg="This resource requires a secure connection (https)"):
+        self.detail = msg
+
+
 class ServerErrorException(APIException):
     detail = None
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

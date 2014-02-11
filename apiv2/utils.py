@@ -32,7 +32,7 @@ from freesound.utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from freesound.utils.filesystem import md5file
 from freesound.utils.text import slugify
-from exceptions import ServerErrorException, OtherException, UnauthorizedException, InvalidUrlException, NotFoundException
+from exceptions import ServerErrorException, OtherException, UnauthorizedException, InvalidUrlException, NotFoundException, RequiresHttpsException
 from examples import examples
 import shutil
 import settings
@@ -204,6 +204,9 @@ class DownloadAPIView(RestFrameworkGenericAPIView):
         # Get request information and store it as class variable
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
+        # Check if using https
+        throw_exception_if_not_https(request)
+
     def log_message(self, message):
         return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
@@ -215,6 +218,9 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
 
         # Get request informationa dn store it as class variable
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
+
+        # Check if using https
+        throw_exception_if_not_https(request)
 
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
@@ -435,6 +441,10 @@ def api_search(search_form, target_file=None):
 
 # General utils
 ###############
+
+def throw_exception_if_not_https(request):
+    if not request.using_https:
+        raise RequiresHttpsException
 
 def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):
 

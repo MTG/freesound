@@ -1,3 +1,4 @@
+- update api logs analyzer to handle apiv2 logs
 - check api option to enforce ssl requests (in provider)... or restrict it on nginx?
 - check the we correctly distinguish between http and https in nginx
 - Write documentation

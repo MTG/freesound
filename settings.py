@@ -267,7 +267,7 @@ OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)
 OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
 OAUTH_SINGLE_ACCESS_TOKEN = True
 USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
-OAUTH_ENFORCE_SECURE = True  # Does not seem to work properly
+#OAUTH_ENFORCE_SECURE = True  # We can not use this parameter because it does not work well with our current django version
 
 
 from logger import LOGGING

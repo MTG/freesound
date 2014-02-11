@@ -1,4 +1,5 @@
 - check api option to enforce ssl requests (in provider)... or restrict it on nginx?
+- check the we correctly distinguish between http and https in nginx
 - Write documentation
 - Clean code (imports, utils...)
 - Clean up expired grants from database with a django command

@@ -97,7 +97,7 @@ class Search(GenericAPIView):
 
             # Paginate results
             paginator = SolrResponseInterpreterPaginator(results, search_form.cleaned_data['page_size'])
-            if search_form.cleaned_data['page'] > paginator.num_pages:
+            if search_form.cleaned_data['page'] > paginator.num_pages and paginator.count != 0:
                 raise NotFoundException
             page = paginator.page(search_form.cleaned_data['page'])
             response_data = dict()
@@ -127,8 +127,15 @@ class Search(GenericAPIView):
                     sounds.append(None)
             response_data['results'] = sounds
 
-        except SolrException:
-                raise ServerErrorException
+        except SolrException, e:
+            raise InvalidUrlException(msg='Solr exception: %s' % e.message)
+        except NotFoundException, e:
+            raise NotFoundException
+        except Exception, e:
+            if settings.DEBUG:
+                raise ServerErrorException(msg=e.message)
+            else:
+                raise ServerErrorException()
 
         return Response(response_data, status=status.HTTP_200_OK)
 

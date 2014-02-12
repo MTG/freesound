@@ -16,7 +16,8 @@ def get_formatted_examples_for_view(view_name):
         output += '::\n\n'
         for element in elements:
             if element[0:5] == 'apiv2':
-                output += '  curl %s%s\n' % (base_url, element)
+                output += '  %s%s\n' % (base_url, element)
+                #output += '  curl -H "Authorization: Token {{token}}" \'%s%s\'\n' % (base_url, element)
             else:
                 output += '  %s\n' % (element % base_url[:-1].replace('http', 'https'))
 

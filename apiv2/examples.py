@@ -27,7 +27,16 @@ examples = {
         ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar', 'apiv2/search/?query=music&filter=type:(wav OR aiff)']),
         ('Simple search and selection of sound fields to return in the results', ['apiv2/search/?query=alarm&fields=name,previews']),
         ('Get geotagged sounds with tag field-recording. Return only geotag and tags for each result', ['apiv2/search/?filter=is_geotagged:1 tag:field-recording&fields=geotag,tags']),
+        ('Basic geospatial filtering', ['apiv2/search/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558)"', 'apiv2/search/?filter=geotag:"IsDisjointTo(-74.093 41.042 -69.347 44.558)"']),
+        ('Geospatial with customizable max error parameter (in degrees) and combinations of filters',
+                                 ['apiv2/search/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558)" distErr=20',
+                                  'apiv2/search/?filter=geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)"&fields=id,geotag,tags',
+                                  'apiv2/search/?filter=(geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)") AND tag:field-recording&fields=id,geotag,tags']),
+        ('Geospatial search for points at a maximum distance d from a latitude,longitude position and with a particular tag', ['apiv2/search/?query={!geofilt sfield=geotag pt=41.3833,2.1833 d=10}&filter=tag:barcelona&fields=id,geotag,tags',]),
         ('Todo', ['apiv2/complete previous examples and add more...']),
+
+
+
     ],
     'AdvancedSearch': [
         ('Todo...', ['apiv2/...todo sound advanced search examples...']),
@@ -52,32 +61,32 @@ examples = {
         ('Get sound comments', ['apiv2/sounds/14854/comments/', 'apiv2/sounds/14854/comments/?page=2']),
     ],
     'DownloadSound': [
-        ('Download a sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" %s/apiv2/sounds/14854/download/']),
+        ('Download a sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/14854/download/\'']),
     ],
     'UploadSound': [
-        ('Upload a sound', ['curl -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" %s/apiv2/sounds/upload/']),
+        ('Upload a sound', ['curl -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" \'%s/apiv2/sounds/upload/\'']),
     ],
     'NotYetDescribedUploadedSounds': [
-        ('Get sounds that have not been yet described', ['curl -X POST -H "Authorization: Bearer {{access_token}}" %s/apiv2/sounds/not_yet_described/']),
+        ('Get sounds that have not been yet described', ['curl -X POST -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/not_yet_described/\'']),
     ],
     'DescribeSound': [
-        ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" %s/apiv2/sounds/describe/']),
-        ('Also add a name to the sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" %s/apiv2/sounds/describe/']),
-        ('Include geotag and pack information', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution&pack=A birds pack&geotag=2.145677,3.22345,14" %s/apiv2/sounds/describe/']),
+        ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" \'%s/apiv2/sounds/describe/\'']),
+        ('Also add a name to the sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" \'%s/apiv2/sounds/describe/\'']),
+        ('Include geotag and pack information', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&name=A cool bird sound&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution&pack=A birds pack&geotag=2.145677,3.22345,14" \'%s/apiv2/sounds/describe/\'']),
     ],
     'UploadAndDescribeSound': [
-        ('Upload and describe a sound all at once', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" %s/apiv2/sounds/upload_and_describe/']),
-        ('Upload and describe a sound with name, pack and geotag', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "name=Another cool sound" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" -F "pack=A birds pack" -F "geotag=2.145677,3.22345,14" %s/apiv2/sounds/upload_and_describe/']),
+        ('Upload and describe a sound all at once', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" \'%s/apiv2/sounds/upload_and_describe/\'']),
+        ('Upload and describe a sound with name, pack and geotag', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "name=Another cool sound" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" -F "pack=A birds pack" -F "geotag=2.145677,3.22345,14" \'%s/apiv2/sounds/upload_and_describe/\'']),
     ],
     'BookmarkSound': [
-        ('Simple bookmark', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "name=Classic thunderstorm" %s/apiv2/sounds/2523/bookmark/']),
-        ('Bookmark with category', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "name=Nice loop&category=Nice loops" %s/apiv2/sounds/1234/bookmark/']),
+        ('Simple bookmark', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "name=Classic thunderstorm" \'%s/apiv2/sounds/2523/bookmark/\'']),
+        ('Bookmark with category', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "name=Nice loop&category=Nice loops" \'%s/apiv2/sounds/1234/bookmark/\'']),
     ],
     'RateSound': [
-        ('Rate sounds', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "rating=5" %s/apiv2/sounds/2523/rate/', 'curl -X POST -H "Authorization: Bearer {{access_token}}" --data "rating=4" %s/apiv2/sounds/1234/rate/']),
+        ('Rate sounds', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "rating=5" \'%s/apiv2/sounds/2523/rate/\'', 'curl -X POST -H "Authorization: Bearer {{access_token}}" --data "rating=4" \'%s/apiv2/sounds/1234/rate/\'']),
     ],
     'CommentSound': [
-        ('Comment sounds', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "comment=Cool! I understand now why this is the most downloaded sound in Freesound..." %s/apiv2/sounds/2523/comment/', 'curl -X POST -H "Authorization: Bearer {{access_token}}" --data "comment=A very cool sound!" %s/apiv2/sounds/1234/comment/']),
+        ('Comment sounds', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "comment=Cool! I understand now why this is the most downloaded sound in Freesound..." \'%s/apiv2/sounds/2523/comment/\'', 'curl -X POST -H "Authorization: Bearer {{access_token}}" --data "comment=A very cool sound!" \'%s/apiv2/sounds/1234/comment/\'']),
     ],
 
     # Users

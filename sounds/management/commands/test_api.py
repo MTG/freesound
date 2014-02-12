@@ -38,7 +38,7 @@ def api_request(full_url, type='GET', post_data=None, auth='token', token=None):
         params = dict()
         for param in full_url.split('?')[1].split('&'):
             name = param.split('=')[0]
-            value = param.split('=')[1]
+            value = '='.join(param.split('=')[1:])
             params[name] = value
 
     if post_data:
@@ -59,6 +59,11 @@ class Command(BaseCommand):
     help = "Test apiv2 with examples from apiv2/examples.py"
 
     def handle(self,  *args, **options):
+        if args:
+            section = str(args[0])
+        else:
+            section = False
+
         client = ApiV2Client.objects.filter(user__username='frederic.font')[0]
         token = client.client_secret
         base_url = "http://%s/" % Site.objects.get_current().domain
@@ -70,6 +75,10 @@ class Command(BaseCommand):
         print ''
         for key, items in examples.items():
             if 'Download' not in key:
+                if section:
+                    if section not in key:
+                        continue
+
                 print 'Testing %s' % key
                 print '--------------------------------------'
 

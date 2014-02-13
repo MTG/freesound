@@ -3454,9 +3454,11 @@ ul.messages {
     color: red;
 }
 
+/* COOOKIES BANNER */
+
 #cookie-bar {
     /*border: 1px solid green;*/
-    height: 30px;
+    height: 50px;
     line-height: 30px;
     z-index: 2;
     opacity: 0.95;
@@ -3476,4 +3478,14 @@ ul.messages {
     font-size: 12px;
     font-style: italic;
     color: white;
+}
+
+#cookie-bar a {
+    color: #AB4646;
+}
+
+#cookie-bar .cb-float_right {
+
+    margin-right: 10px;
+    width: 50px;
 }

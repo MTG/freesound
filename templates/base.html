@@ -1,4 +1,9 @@
-{% load google_analytics %}{% load message_count %}{% load cache %} {% load sound_tickets_count %} {% load pending_sounds %}
+{% load google_analytics %}
+{% load message_count %}
+{% load cache %}
+{% load sound_tickets_count %}
+{% load pending_sounds %}
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://ogp.me/ns#" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
 
@@ -13,6 +18,7 @@
         <title>Freesound.org - {% block title %}{% endblock %}</title>
         <script src="{{media_url}}js/jquery-1.5.2.min.js" type="text/javascript"></script>
         <script src="{{media_url}}js/jquery-ui-1.8.11.custom.min.js" type="text/javascript"></script>
+        <script src="{{media_url}}js/jquery.cookie.js" type="text/javascript"></script>
         <script src="{{media_url}}js/swfobject.js" type="text/javascript"></script>
         <script src="{{media_url}}js/jquery.watermarkinput.js" type="text/javascript"></script>
         <script type="text/javascript">
@@ -27,7 +33,7 @@
 			}
         </script>
         <script src="{{media_url}}js/freesound.js?v={{ last_restart_date }}" type="text/javascript"></script>
-	<script src="{{media_url}}js/ajax_utils.js" type="text/javascript"></script>
+    	<script src="{{media_url}}js/ajax_utils.js" type="text/javascript"></script>
         <!-- next couple of lines are used for the HTML player -->
         <link href='//fonts.googleapis.com/css?family=Inconsolata&v1' rel='stylesheet' type='text/css' />
         <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/player.css" />
@@ -68,30 +74,30 @@
                     <a href="{% url accounts-register %}">Register</a>
                     <a href="{% url accounts-login %}?next={% block next %}{{request.path}}{% endblock %}">Log In</a>
                 {% endif %}
-                <a href="{% url accounts-upload %}" id="upload_button"></a>
-            </div>
-
-            <a href="/" id="logo"></a>
-
-            <div id="search">
-            <form method="get" onsubmit="return clearWatermark()" action="{% url sounds-search %}">
-                <fieldset>
-                   <input type="text" name="q" value="" size="30" />
-                   <input type="submit" value="" id="search_submit" />
-                </fieldset>
-            </form>
-            </div>
-
-            <ul id="site_nav">
-                {% if user.is_authenticated %}
-                <li class="{% block tab_home_active %}{% endblock %}"><a href="{% url accounts-home %}" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
-                {% endif %}
-                <li class="{% block tab_sounds_active %}{% endblock %}"><a href="{% url sounds %}" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
-                <li class="{% block tab_forums_active %}{% endblock %}"><a href="{% url forums-forums %}" id="site_nav_forums"><span class="site_nav_icon"></span>Forums</a></li>
-                <li class="{% block tab_people_active %}{% endblock %}"><a href="{% url accounts %}" id="site_nav_people"><span class="site_nav_icon"></span>People</a></li>
-                <li class="{% block tab_help_active %}{% endblock %}"><a href="{% url wiki %}" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
-            </ul>
+            <a href="{% url accounts-upload %}" id="upload_button"></a>
         </div>
+
+        <a href="/" id="logo"></a>
+
+        <div id="search">
+        <form method="get" onsubmit="return clearWatermark()" action="{% url sounds-search %}">
+            <fieldset>
+               <input type="text" name="q" value="" size="30" />
+               <input type="submit" value="" id="search_submit" />
+            </fieldset>
+        </form>
+        </div>
+
+        <ul id="site_nav">
+            {% if user.is_authenticated %}
+            <li class="{% block tab_home_active %}{% endblock %}"><a href="{% url accounts-home %}" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
+            {% endif %}
+            <li class="{% block tab_sounds_active %}{% endblock %}"><a href="{% url sounds %}" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>
+            <li class="{% block tab_forums_active %}{% endblock %}"><a href="{% url forums-forums %}" id="site_nav_forums"><span class="site_nav_icon"></span>Forums</a></li>
+            <li class="{% block tab_people_active %}{% endblock %}"><a href="{% url accounts %}" id="site_nav_people"><span class="site_nav_icon"></span>People</a></li>
+            <li class="{% block tab_help_active %}{% endblock %}"><a href="{% url wiki %}" id="site_nav_help"><span class="site_nav_icon"></span>Help</a></li>
+        </ul>
+    </div>
 
         <div id="wrapper">
         <div id="container">
@@ -110,9 +116,23 @@
         </div>
         </div>
 
-        <div id="footer_wrapper">
-            <div id="footer">
-                <div id="footer_links">
+    <div id="footer_wrapper">
+        <div id="footer">
+            <div id="cookie-bar">
+                <div style="float:left">
+                    <p>
+                        We use cookies to ensure you get the best experience on our website. By browsing our site you agree to our use of cookies.
+                        <br>
+                        For more information check out our <a href="/help/cookies_policy">cookies policy</a>.
+                    </p>
+                </div>
+                <div style="float:right; margin-top:10px;margin-right:10px;">
+                    <button id="cookie-accept">Ok</button>
+                </div>
+                <br class="clear">
+
+            </div>
+            <div id="footer_links">
                     <a href="/help/developers/">Developers</a>	<a href="http://blog.freesound.org/">Blog</a> <a href="/help/about/">About</a>	<a href="/contact/">Contact</a> <a href="/help/tos_web/">Terms of use</a>
                 </div>
                 <div id="footer_credits">

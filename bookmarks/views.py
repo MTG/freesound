@@ -80,16 +80,16 @@ def delete_bookmark_category(request, category_id):
 @login_required
 def add_bookmark(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
-    
+
     if request.POST:
         form = BookmarkForm(request.POST, instance=Bookmark(user=request.user, sound=sound))
         form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
         if form.is_valid():
             form.save()
-    
+
     if request.is_ajax():
-        return HttpResponse()   
-    
+        return HttpResponse()
+
     else:
         msg = "Added new bookmark for sound \"" + sound.original_filename + "\"."
         messages.add_message(request, messages.WARNING, msg)
@@ -117,18 +117,18 @@ def delete_bookmark(request, bookmark_id):
 
 @login_required       
 def get_form_for_sound(request, sound_id):
-    
     sound = Sound.objects.get(id=sound_id)
     form = BookmarkForm(instance = Bookmark(name=sound.original_filename), prefix = sound.id)
     form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
-    categories_aready_containing_sound = BookmarkCategory.objects.filter(user=request.user, bookmarks__sound=sound).distinct()
-    
-    data_dict = {'bookmarks': Bookmark.objects.filter(user=request.user,sound=sound).count() != 0,
-                 'sound_id':sound.id,
-                 'form':form,
-                 'categories_aready_containing_sound':categories_aready_containing_sound}
-    
+    categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user, bookmarks__sound=sound).distinct()
+    add_bookmark_url = '/'.join(reverse('add-bookmark', args=[sound_id]).split('/')[:-2]) + '/'
+    data_dict = {
+        'bookmarks': Bookmark.objects.filter(user=request.user,sound=sound).count() != 0,
+        'sound_id':sound.id,
+        'form':form,
+        'categories_aready_containing_sound':categories_already_containing_sound,
+        'add_bookmark_url': add_bookmark_url
+    }
     template = 'bookmarks/bookmark_form.html'
-    
     return render_to_response(template, data_dict, context_instance = RequestContext(request))
     

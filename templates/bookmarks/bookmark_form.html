@@ -2,14 +2,13 @@
     
     function post_bookmark(id)
     {
-        
         $("#id_" + id.toString() + "-name").attr('disabled','disabled')
         $("#id_" + id.toString() + "-category").attr('disabled','disabled')
         $("#id_" + id.toString() + "-new_category_name").attr('disabled','disabled')
         
         $.ajax({
             type: 'POST',
-            url: '{% url add-bookmark sound_id %}',
+            url: '{{ add_bookmark_url }}' + id.toString() + '/',
             data: {
                 name: $("#id_" + id.toString() + "-name").val(),
                 category: $("#id_" + id.toString() + "-category").val(),

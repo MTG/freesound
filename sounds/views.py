@@ -42,7 +42,7 @@ from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from networkx import nx
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm
+    NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm, PackEditForm
 from sounds.management.commands.create_remix_groups import _create_nodes, \
     _create_and_save_remixgroup
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
@@ -398,6 +398,60 @@ def sound_edit(request, username, sound_id):
     google_api_key = settings.GOOGLE_API_KEY
 
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
+
+
+
+@login_required
+def pack_edit(request, username, pack_id):
+    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
+    pack_sounds = ",".join([str(s.id) for s in pack.sound_set.all()])
+    
+    if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = PackEditForm(request.POST,instance=pack)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(pack.get_absolute_url())
+    else:
+        form = PackEditForm(instance=pack,initial=dict(pack_sounds=pack_sounds))
+        current_sounds = pack.sound_set.all()
+    return render_to_response('sounds/pack_edit.html', locals(), context_instance=RequestContext(request)) # TODO: make edit page
+
+
+@login_required
+def pack_delete(request, username, pack_id):    
+    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
+
+    if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
+        raise PermissionDenied
+
+    encrypted_string = request.GET.get("pack", None)
+
+    waited_too_long = False
+
+    if encrypted_string != None:
+        pack_id, now = decrypt(encrypted_string).split("\t")
+        pack_id = int(pack_id)
+        link_generated_time = float(now)
+
+        if pack_id != pack.id:
+            raise PermissionDenied
+
+        if abs(time.time() - link_generated_time) < 10:
+            logger.debug("User %s requested to delete pack %s" % (request.user.username,pack_id))
+            print pack
+            pack.delete()
+            print "DELETED!"
+            return HttpResponseRedirect(reverse("accounts-home"))
+        else:
+            waited_too_long = True
+
+
+    encrypted_link = encrypt(u"%d\t%f" % (pack.id, time.time()))
+
+    return render_to_response('sounds/pack_delete.html', locals(), context_instance=RequestContext(request))
 
 
 @login_required

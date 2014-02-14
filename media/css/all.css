@@ -2570,7 +2570,11 @@ span.tag_addremove a:hover {
     display: inline;
 }
 
-.remove_sound {
+
+/*
+use classes from pack edition
+
+ .remove_sound {
     background-image: url(../images/cancel.png);
     background-repeat: no-repeat;
     float: right;
@@ -2588,7 +2592,7 @@ span.tag_addremove a:hover {
     right: 1px;
     position: relative;
     cursor: pointer;
-}
+}*/
 
 /* License form
 ------------------------------------------------------*/
@@ -3397,4 +3401,43 @@ ul.messages {
     font-size: 11px;
     font-weight: bold;
     background: url(../images/tag_edge.png) no-repeat left top;
+}
+
+
+/* Pack edit
+---------------------------------------------------------------*/
+#pack_edit_form{
+    display:block;
+    width:420px;
+}
+
+#current_pack_sounds{
+    display:block;
+    float:left;
+    width:420px;
+}
+
+#pack_edit_search{
+    float:right;
+    width:360px;
+    position:relative;
+    top:-26px;
+}
+
+.remove_sound {
+    background: url(../images/cancel.png) 0% center  no-repeat;
+    padding-left:20px;
+    text-indent:10px;
+}
+
+.add_sound {
+    background-image: url(../images/moderation_plus.png);
+    background-repeat: no-repeat;
+    padding-left:20px;
+    cursor: pointer;
+}
+
+
+#delete_pack {
+    background: url(../images/cancel.png) 0% center  no-repeat;
 }

@@ -25,7 +25,7 @@
         {
             sources.push(soundId);
 
-            $(element).closest("#search-results > div").clone().appendTo("#current-sources");
+            $(element).closest("#search-results > div").clone().appendTo("#current-sources").after("<a class=\"remove_sound\" onclick=\"removeSound(this, "+soundId+")\">remove </a>");
 
             $("#id_sources").val(sources.join(","));
         }
@@ -33,16 +33,30 @@
 
     function removeSound(element, soundId)
     {
+
         var index = $.inArray(soundId, sources);
 
         if (index != -1)
         {
+
             sources.splice(index, 1);
-
-            $(element).closest("#current-sources > div").remove();
-
+            $(element).prev().remove();
+            $(element).remove();
             $("#id_sources").val(sources.join(","));
         }
+    }
+    function appendLinks(){
+        $('#search-results .sample_player_small').each( function () {
+            var element = $(this);
+            var snd_id = element[0].id;
+            var link_id = "a"+snd_id;
+            var msg = "<a id=\""+link_id+"\" class=\"add_sound\" >add</a>";
+            msg = msg+"<br/>";
+            var result = $(this).after(msg);
+            $("#"+link_id).click(function(){
+                addSound(element, parseInt(snd_id));
+            });
+        });
     }
 
     $(function()
@@ -57,7 +71,9 @@
 
         $("#search-button").click(function ()
         {
-            $("#search-results").load("{% url sounds-search %}", $.param({"q": $("#search-q").val(), "ajax": 1}));
+            $("#search-results").load("{% url sounds-search %}", $.param({"q": $("#search-q").val(), "ajax": 1}),
+                    function(){makePlayer('.player');appendLinks();}
+                );
             return false;
         });
     });
@@ -94,15 +110,12 @@
 	<div id="current-sources" class="sound_list_minimal">
 	    <h3>Current sources:</h3>
 	    {% for source in current_sources %}
-	    <div class="sound_list_edit_sources">
-	        <div>
 	            {% display_sound source.id %}
-	        </div>
-	        <div class="add_remove_buttons">
-	            <a class="add" onclick="addSound(this, {{source.id}})">Add source</a>
-	            <a class="remove" onclick="removeSound(this, {{source.id}})">Remove source</a>
-	        </div>
-	    </div>
+	        
+
+	            <a class="remove_sound" onclick="removeSound(this, {{source.id}})">remove</a>
+
+	    <!--/div-->
 	    {% endfor %}
 	</div>
 

@@ -20,7 +20,7 @@
 
 from django import forms
 from django.db.models import Q
-from django.forms import ModelForm, Textarea
+from django.forms import ModelForm, Textarea, TextInput
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
@@ -158,6 +158,47 @@ class PackDescriptionForm(ModelForm):
         widgets = {
             'description': Textarea(attrs={'rows': 5, 'cols':60}),
         }
+
+class PackEditForm(ModelForm):
+    pack_sounds = forms.CharField(min_length=1, widget=forms.widgets.HiddenInput(attrs={'id':'pack_sounds','name':'pack_sounds'}), required=False)
+
+    def clean_pack_sounds(self):
+        pack_sounds = re.sub("[^0-9,]", "", self.cleaned_data['pack_sounds'])
+        pack_sounds = re.sub(",+", ",", pack_sounds)
+        pack_sounds = re.sub("^,+", "", pack_sounds)
+        pack_sounds = re.sub(",+$", "", pack_sounds)
+
+        if len(pack_sounds) > 0:
+            pack_sounds = set([int(sound) for sound in pack_sounds.split(",")])
+        else:
+            pack_sounds = set()
+
+        return pack_sounds
+
+    def save(self, force_insert=False, force_update=False, commit=True):
+        pack = super(PackEditForm, self).save(commit=False)
+        new_sounds = self.cleaned_data['pack_sounds']
+
+        for snd in pack.sound_set.all():
+            pack.sound_set.remove(snd)
+        for  snd in new_sounds:
+            sound = Sound.objects.get(id=snd)
+            pack.sound_set.add(sound)
+
+        if commit:
+            pack.save()
+        return pack
+
+
+    class Meta:
+        model = Pack
+        fields = ('name','description',)
+        widgets = {
+            'name': TextInput(),
+            'description': Textarea(attrs={'rows': 5, 'cols':50}),
+        }
+
+
 
 class LicenseForm(forms.Form):
     license = forms.ModelChoiceField(queryset=License.objects.filter(is_public=True), required=True, empty_label=None)

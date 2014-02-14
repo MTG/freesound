@@ -35,7 +35,7 @@ body {
     background: url(../images/body.png) repeat-x top #CECECE;
     font-family: Verdana, sans-serif;
     font-size: 100%;
-    margin-top: 7px;
+    /*margin-top: 7px;*/
 }
 
 a {
@@ -332,11 +332,13 @@ div.infowindow {
 /* Header and Navigation
 ------------------------------------------------------*/
 #header {
+    /*border: 1px solid red;*/
     height: 115px;
     width: 980px;
     margin: 0 auto;
     background: url(../images/header.png) repeat-x bottom #F8F8F8;
     position: relative;
+    margin-top: 7px;
 }
 
 #logo {
@@ -2320,6 +2322,26 @@ div.about {
     display:inline;
 }
 
+#unmoderated_sounds {
+    font-size: 10px;
+}
+
+#unmoderated_sounds li {
+    padding: 4px;
+}
+
+#unmoderated_sounds .date{
+    color: gray;
+}
+
+#unmoderated_sounds .filename{
+    font-weight: bold;
+}
+
+#unmoderated_sounds .ticket_link{
+    font-weight: bold;
+}
+
 #unprocessed_sounds {
     font-size: 10px;
 }
@@ -2871,6 +2893,10 @@ ul.messages {
 
 .alternate-row-odd td {
     background-color: #fff;
+}
+
+.mod-selected-row td {
+    background-color: #ececec;
 }
 
 #moderation-queue-left,#moderation-queue-right {
@@ -3440,4 +3466,69 @@ ul.messages {
 
 #delete_pack {
     background: url(../images/cancel.png) 0% center  no-repeat;
+}
+=======
+/* Pending sounds to moderate page
+--------------------------------------------------------------*/
+
+.last-ticket-comments p, li, a {
+    /*font-size: 11px;*/
+}
+
+.last-ticket-comments p {
+    margin: 0px;
+}
+
+.last-ticket-comments ul {
+    padding-left: 25px;
+    padding-bottom: 0px;
+}
+
+.last-ticket-comments {
+    margin-bottom: 65px;
+    margin-left: 20px;
+}
+
+#pending-ticket {
+    padding-left: 25px;
+}
+
+#user-do-sth {
+    color: red;
+}
+
+/* COOOKIES BANNER */
+
+#cookie-bar {
+    /*border: 1px solid green;*/
+    height: 50px;
+    line-height: 30px;
+    z-index: 2;
+    opacity: 0.95;
+    background: black;
+    background: rgb(46,46,46);
+    position: fixed;
+    width: 980px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    bottom: 0px;
+    margin: 0;
+    /*box-shadow: 0px 1px 50px #5E5E5E;*/
+}
+
+#cookie-bar p {
+    padding: 5px 15px;
+    font-size: 12px;
+    font-style: italic;
+    color: white;
+}
+
+#cookie-bar a {
+    color: #AB4646;
+}
+
+#cookie-bar .cb-float_right {
+
+    margin-right: 10px;
+    width: 50px;
 }

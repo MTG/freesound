@@ -7,6 +7,9 @@ ADMINS = (
     ('Your Email Here', 'abc@gmail.com'),
 )
 
+# If ALLOWED emails is not empty, only emails going to these destinations will be actually sent
+ALLOWED_EMAILS = []
+
 DATABASE_ENGINE = 'django.db.backends.postgresql_psycopg2' # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = 'freesound'             # Or path to database file if using sqlite3.
 DATABASE_USER = 'freesound'             # Not used with sqlite3.

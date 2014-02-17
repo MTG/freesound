@@ -7,7 +7,7 @@
 {% block title %}Uploaded sounds awaiting moderation{% endblock title %}
 {% block section_content %}
 
-    <h2>Uploaded sounds awaiting moderation</h2>
+    <h2>Uploaded sounds awaiting moderation {% if moderators_version %} by  <a class="title" href="{% url account user.username %}">{{user.username}}</a>{% endif %}</h2>
 
     {% if show_pagination %}
         {% show_paginator paginator page current_page request "moderation ticket" %}
@@ -44,7 +44,9 @@
                 <div class="sample_information" style="width: 250px;">
 
                     <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
-                    <a href="{% url sound-edit sound.user.username sound.id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a><br />
+                    {% if not moderators_version %}
+                        <a href="{% url sound-edit sound.user.username sound.id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a><br />
+                    {% endif %}
                     See full <a href="{% url tickets-ticket ticket.key %}">moderation ticket</a><br />
                     {% with comments|first as last_comment %}
                         {% ifnotequal last_comment.sender_id user.id %}

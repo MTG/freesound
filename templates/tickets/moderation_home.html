@@ -19,7 +19,7 @@
                     </div>
                     <div class="moderation-user-list-user-right">
                         <p><a href="{% url account user.username %}">{{ user.username }}</a>
-                        <br>{{ new_count }} new sounds, {{ time }} day{{ time|pluralize }} in queue
+                        <br><a href="{% url tickets-user-pending_sounds user.username %}">{{ new_count }} new sounds</a>, {{ time }} day{{ time|pluralize }} in queue
                         <br><a href="{% url tickets-moderation-assign-user user.id %}">
                             <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
                     </div>

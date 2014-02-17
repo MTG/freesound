@@ -1,4 +1,3 @@
-- set write persmission on by default
 - check returned error message when trying to write without permission
 - update api logs analyzer to handle apiv2 logs
 - Write documentation

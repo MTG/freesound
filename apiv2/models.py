@@ -36,7 +36,7 @@ class ApiV2Client(models.Model):
                      ('w', 'write'),
                      ('rw', 'read+write'))
 
-    DEFAULT_SCOPE = 'r'
+    DEFAULT_SCOPE = 'rw'
 
     oauth_client                = models.OneToOneField(Client, related_name='apiv2_client', default=None, null=True, blank=True)
     key                         = models.CharField(max_length=40, blank=True)

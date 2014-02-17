@@ -64,7 +64,7 @@ examples = {
         ('Download a sound', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/14854/download/\'']),
     ],
     'UploadSound': [
-        ('Upload a sound', ['curl -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" \'%s/apiv2/sounds/upload/\'']),
+        ('Upload a sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" \'%s/apiv2/sounds/upload/\'']),
     ],
     'NotYetDescribedUploadedSounds': [
         ('Get sounds that have not been yet described', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/not_yet_described/\'']),

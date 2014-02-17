@@ -75,6 +75,10 @@ urlpatterns = patterns('',
         user_annotations,
         name='tickets-user-annotations'),
 
+    url(r'^moderation/pending/(?P<username>[^//]+)/$',
+        pending_tickets_per_user,
+        name='tickets-user-pending_sounds'),
+
     url(r'^(?P<ticket_key>[\w\d]+)/$',
         ticket,
         name='tickets-ticket'),

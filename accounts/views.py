@@ -1120,7 +1120,8 @@ def donate_redirect(request):
 
 @login_required
 def pending(request):
-    tickets_sounds = TicketViews.get_pending_sounds(request.user)
+    user = request.user
+    tickets_sounds = TicketViews.get_pending_sounds(user)
     pendings = []
     for ticket, sound in tickets_sounds:
         last_comments = ticket.get_n_last_non_moderator_only_comments(3)
@@ -1128,11 +1129,12 @@ def pending(request):
 
     show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
 
-    n_unprocessed_sounds = Sound.objects.select_related().filter(user=request.user).exclude(processing_state="OK").count()
+    n_unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK").count()
     if n_unprocessed_sounds:
         messages.add_message(request, messages.WARNING, '%i of your recently uploaded sounds are still in processing '
                                                         'phase and therefore are not yet ready for moderation. These '
                                                         'sounds won\'t appear in this list until they are successfully '
                                                         'processed. This process should take no more than a few minutes.' % n_unprocessed_sounds)
 
+    moderators_version = False
     return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))

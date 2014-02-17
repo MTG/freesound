@@ -24,12 +24,18 @@
         if ($.inArray(soundId, sources) == -1)
         {
             sources.push(soundId);
-
-            $(element).closest("#search-results > div").clone().appendTo("#current-sources").after("<a class=\"remove_sound\" onclick=\"removeSound(this, "+soundId+")\">remove </a>");
-
+            var el = $(element).clone().appendTo("#current-sources");            
+            addRemoveLink(el,soundId);
+            $($(el[0]).children()).children(".add_sound").remove();
             $("#id_sources").val(sources.join(","));
         }
     }
+    function addRemoveLink(element, soundId){
+        var title = $($(element).children(".sample_player")[0]).children(".sound_title"); 
+        var msg = "<br/><a class=\"remove_sound\" onclick=\"removeSound(this, "+soundId+")\">remove </a>"
+        title.after(msg);
+    }
+
 
     function removeSound(element, soundId)
     {
@@ -40,8 +46,9 @@
         {
 
             sources.splice(index, 1);
-            $(element).prev().remove();
-            $(element).remove();
+            //$(element).prev().remove();
+            //$(element).remove();
+            $(element).parent().parent().remove();
             $("#id_sources").val(sources.join(","));
         }
     }
@@ -50,11 +57,16 @@
             var element = $(this);
             var snd_id = element[0].id;
             var link_id = "a"+snd_id;
-            var msg = "<a id=\""+link_id+"\" class=\"add_sound\" >add</a>";
-            msg = msg+"<br/>";
-            var result = $(this).after(msg);
+            var title = $($(this).children(".sample_player")[0]).children(".sound_title");            
+            var msg = "<br/><a id=\""+link_id+"\" class=\"add_sound\" >add";
+
+            msg = msg+"</a>";
+            
+            var result = $(title).after(msg);
             $("#"+link_id).click(function(){
                 addSound(element, parseInt(snd_id));
+                
+                return false;
             });
         });
     }
@@ -75,6 +87,10 @@
                     function(){makePlayer('.player');appendLinks();}
                 );
             return false;
+        });
+        $('#current-sources .sample_player_small').each( function () {
+            var snd_id = $(this)[0].id;
+            addRemoveLink($(this), snd_id);
         });
     });
 </script>
@@ -111,10 +127,6 @@
 	    <h3>Current sources:</h3>
 	    {% for source in current_sources %}
 	            {% display_sound source.id %}
-	        
-
-	            <a class="remove_sound" onclick="removeSound(this, {{source.id}})">remove</a>
-
 	    <!--/div-->
 	    {% endfor %}
 	</div>

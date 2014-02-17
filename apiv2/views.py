@@ -864,7 +864,8 @@ def create_apiv2_key(request):
         user_credentials = list(request.user.apiv2_client.all()) + list(request.user.api_keys.all())
     else:
         user_credentials = request.user.apiv2_client.all()
-    fs_callback_url = request.build_absolute_uri(reverse('permission-granted'))
+    fs_callback_url = prepend_base(reverse('permission-granted'), use_https=None)  #request.build_absolute_uri(reverse('permission-granted'))
+
 
     return render_to_response('api/apply_key_apiv2.html',
                               {'user': request.user,
@@ -929,7 +930,7 @@ def edit_api_credential(request, key):
                                         'accepted_tos': client.accepted_tos
                                         })
 
-    fs_callback_url = request.build_absolute_uri(reverse('permission-granted'))
+    fs_callback_url = prepend_base(reverse('permission-granted'), use_https=None)  # request.build_absolute_uri(reverse('permission-granted'))
     return render_to_response('api/edit_api_credential.html',
                               {'client': client,
                                'form': form,

@@ -615,9 +615,24 @@ class UploadedAndDescribedSoundsPendingModeration(OauthRequiredAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('uploadeds_pending_moderation'))
-        #file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
-        #filenames = [file_instance.name for file_id, file_instance in files.items()]
-        return Response(data={'sounds': ['a', 'b']}, status=status.HTTP_200_OK)
+        sounds_pending_processing = Sound.objects.filter(user=self.user, moderation_state='PE').exclude(processing_state='OK')
+        sounds_pending_moderation = Sound.objects.filter(user=self.user, processing_state='OK', moderation_state='PE')
+
+        data_response = dict()
+        data_response['sounds pending processing'] = [self.get_minimal_sound_info(sound) for sound in sounds_pending_processing]
+        data_response['sounds pending moderation'] = [self.get_minimal_sound_info(sound, images=True) for sound in sounds_pending_moderation]
+
+        return Response(data=data_response, status=status.HTTP_200_OK)
+
+    def get_minimal_sound_info(self, sound, images=False):
+        sound_data = dict()
+        for key, value in SoundSerializer(sound, context=self.get_serializer_context()).data.items():
+            if key in ['name', 'tags', 'description', 'created', 'license']:
+                sound_data[key] = value
+            if images:
+                if key == 'images':
+                    sound_data[key] = value
+        return sound_data
 
 
 class DescribeSound(WriteRequiredGenericAPIView):

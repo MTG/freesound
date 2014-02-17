@@ -61,16 +61,16 @@ examples = {
         ('Get sound comments', ['apiv2/sounds/14854/comments/', 'apiv2/sounds/14854/comments/?page=2']),
     ],
     'DownloadSound': [
-        ('Download a sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/14854/download/\'']),
+        ('Download a sound', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/14854/download/\'']),
     ],
     'UploadSound': [
         ('Upload a sound', ['curl -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" \'%s/apiv2/sounds/upload/\'']),
     ],
     'NotYetDescribedUploadedSounds': [
-        ('Get sounds that have not been yet described', ['curl -X POST -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/not_yet_described/\'']),
+        ('Get sounds that have not been yet described', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/not_yet_described/\'']),
     ],
     'UploadedAndDescribedSoundsPendingModeration': [
-        ('Get uploaded sounds that are awaiting moderation in Freesound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/uploads_pending_moderation/\'']),
+        ('Get uploaded sounds that are awaiting moderation in Freesound', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/uploads_pending_moderation/\'']),
     ],
     'DescribeSound': [
         ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" \'%s/apiv2/sounds/describe/\'']),
@@ -118,7 +118,7 @@ examples = {
         ('Getting pack sounds', ['apiv2/packs/9678/sounds/','apiv2/packs/9678/sounds/?fields=id,name']),
     ],
     'DownloadPack': [
-        ('Download a pack', ['apiv2/packs/9678/download/']),
+        ('Download a pack', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/packs/9678/download/\'']),
     ],
 
 }

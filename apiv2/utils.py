@@ -195,11 +195,11 @@ class GenericAPIView(RestFrameworkGenericAPIView):
         return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
 
-class DownloadAPIView(RestFrameworkGenericAPIView):
+class OauthRequiredAPIView(RestFrameworkGenericAPIView):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
-        super(DownloadAPIView, self).initial(request, *args, **kwargs)
+        super(OauthRequiredAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
@@ -209,6 +209,7 @@ class DownloadAPIView(RestFrameworkGenericAPIView):
 
     def log_message(self, message):
         return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
+
 
 class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
@@ -229,6 +230,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
 
     def log_message(self, message):
         return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
+
 
 
 class ListAPIView(RestFrameworkListAPIView):

@@ -27,7 +27,7 @@ from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -330,7 +330,7 @@ class SoundComments(ListAPIView):
         return Comment.objects.filter(object_id=self.kwargs['pk'])
 
 
-class DownloadSound(DownloadAPIView):
+class DownloadSound(OauthRequiredAPIView):
     __doc__ = 'Download a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#download-sound' % resources_doc_filename,
@@ -523,7 +523,7 @@ class PackSounds(ListAPIView):
         return queryset
 
 
-class DownloadPack(DownloadAPIView):
+class DownloadPack(OauthRequiredAPIView):
     __doc__ = 'Download a pack.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#download-pack' % resources_doc_filename,
@@ -594,7 +594,7 @@ class UploadSound(WriteRequiredGenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class NotYetDescribedUploadedSounds(WriteRequiredGenericAPIView):
+class NotYetDescribedUploadedSounds(OauthRequiredAPIView):
     __doc__ = 'List of uploaded files which have not yet been described.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#not-yet-described-uploaded-sounds' % resources_doc_filename,
@@ -607,7 +607,7 @@ class NotYetDescribedUploadedSounds(WriteRequiredGenericAPIView):
         return Response(data={'filenames': filenames}, status=status.HTTP_200_OK)
 
 
-class UploadedAndDescribedSoundsPendingModeration(WriteRequiredGenericAPIView):
+class UploadedAndDescribedSoundsPendingModeration(OauthRequiredAPIView):
     __doc__ = 'List of uploaded files which have already been descriebd and are awaiting moderation in Freesound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#uploadeds_pending_moderation' % resources_doc_filename,
@@ -768,7 +768,7 @@ class CommentSound(WriteRequiredGenericAPIView):
 #############
 
 ### Me View
-class Me(GenericAPIView):
+class Me(OauthRequiredAPIView):
     __doc__ = 'Get some information about the end-user logged into the api.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
               % (docs_base_url, '%s#me' % resources_doc_filename)

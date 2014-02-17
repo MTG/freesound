@@ -43,7 +43,7 @@ else:
 
 def https_and_login_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
-        if not request.using_https:
+        if not request.using_https and not settings.DEBUG:
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
         return view_func(request, *args, **kwargs)
     return login_required(_wrapped_view_func, login_url=login_url)
@@ -51,7 +51,7 @@ def https_and_login_required(view_func):
 
 def https_required_and_crsf_exempt(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
-        if not request.using_https:
+        if not request.using_https and not settings.DEBUG:
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
         return view_func(request, *args, **kwargs)
     return csrf_exempt(_wrapped_view_func)

@@ -778,7 +778,7 @@ class Me(OauthRequiredAPIView):
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('me'))
         if self.user:
-            response_data = UserSerializer(self.user).data
+            response_data = UserSerializer(self.user, context=self.get_serializer_context()).data
             response_data.update({
                  'email': self.user.email,
             })

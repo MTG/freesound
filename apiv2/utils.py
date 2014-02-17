@@ -445,8 +445,9 @@ def api_search(search_form, target_file=None):
 ###############
 
 def throw_exception_if_not_https(request):
-    if not request.using_https:
-        raise RequiresHttpsException
+    if not settings.DEBUG:
+        if not request.using_https:
+            raise RequiresHttpsException
 
 def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):
 

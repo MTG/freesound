@@ -183,6 +183,15 @@ Examples
 {{examples_UploadAndDescribeSound}}
 
 
+Uploaded Sounds awaiting moderation in Freesound
+=========================================================
+
+Examples
+--------
+
+{{examples_UploadedAndDescribedSoundsPendingModeration}}
+
+
 Bookmark Sound
 =========================================================
 

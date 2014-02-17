@@ -61,6 +61,7 @@ urlpatterns = patterns('apiv2.views',
     url(r'^sounds/not_yet_described/$', views.NotYetDescribedUploadedSounds.as_view(), name="apiv2-uploads-not-described"),
     url(r'^sounds/describe/$', views.DescribeSound.as_view(), name="apiv2-uploads-describe"),
     url(r'^sounds/upload_and_describe/$', views.UploadAndDescribeSound.as_view(), name="apiv2-uploads-upload-and-describe"),
+    url(r'^sounds/uploads_pending_moderation/$', views.UploadedAndDescribedSoundsPendingModeration.as_view(), name="apiv2-uploads-not-moderated"),
 
     # Users
     url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),

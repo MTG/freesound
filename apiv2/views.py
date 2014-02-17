@@ -607,6 +607,19 @@ class NotYetDescribedUploadedSounds(WriteRequiredGenericAPIView):
         return Response(data={'filenames': filenames}, status=status.HTTP_200_OK)
 
 
+class UploadedAndDescribedSoundsPendingModeration(WriteRequiredGenericAPIView):
+    __doc__ = 'List of uploaded files which have already been descriebd and are awaiting moderation in Freesound.' \
+              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+              % (docs_base_url, '%s#uploadeds_pending_moderation' % resources_doc_filename,
+                 get_formatted_examples_for_view('UploadedAndDescribedSoundsPendingModeration', 'apiv2-uploads-not-moderated', max=5))
+
+    def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('uploadeds_pending_moderation'))
+        #file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
+        #filenames = [file_instance.name for file_id, file_instance in files.items()]
+        return Response(data={'sounds': ['a', 'b']}, status=status.HTTP_200_OK)
+
+
 class DescribeSound(WriteRequiredGenericAPIView):
     __doc__ = 'Describe a previously uploaded sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
@@ -803,6 +816,7 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '10 Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
                     '11 Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
                     '12 Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
+                    '13 Uploaded and described sounds pending moderation': prepend_base(reverse('apiv2-uploads-not-moderated')),
                 }).items(), key=lambda t: t[0]))},
                 {'User resources': OrderedDict(sorted(dict({
                     '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),

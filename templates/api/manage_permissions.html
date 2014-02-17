@@ -1,0 +1,40 @@
+{% extends "accounts/_section.html" %}
+
+
+{% block title %}{{user.username}} - Manage API application permissions{% endblock %}
+
+{% block section_content %}
+    <h1>Manage API application permissions</h1>
+
+     {% if tokens %}
+        <p>This list shows all the API applications to which you have granted permission to access your data.
+        <br>Granting permission to access your data means that you allow the application to act on your behealf inside Freesound.</p>
+
+        <table>
+            <tr><th>Application name</th><th>Client id</th><th>Permission</th>{% comment %}<th>Expiration date</th>{% endcomment %}<th></th></tr>
+            {% for token in tokens %}
+                <tr><td>{{ token.client_name }}</td>
+                    <td>{{ token.client_id }}</td>
+                    <td>{{ token.scope }}</td>
+                    {% comment %}
+                        <td {% if token.expired %}style="background-color:#44AA44;{% endif %}">
+                            {{ token.expiration_date }}
+                        </td>
+                    {% endcomment %}
+                    <td>
+                       <a href="{% url revoke-permission token.client_id %}">Revoke permission</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        {% comment %}<p>Those permission marked in red correspond to expired permissions. However, API applications do have a mehcanism to renew them.</p>{% endcomment %}
+
+    {% else %}
+         <p>You have not granted any permission to any API application.</p>
+         <p>If you have granted permissions and yet the apps do not appear here, it can either mean that the app did
+             not successfully complete the authentication process or that the permissions yor granted have expired.</p>
+    {% endif %}
+
+
+{% endblock %}

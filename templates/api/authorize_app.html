@@ -1,0 +1,39 @@
+{% extends "accounts/_section.html" %}
+{% block title %}{{user.username}} - An application is requesting permission to access your data{% endblock %}
+
+{% load scope %}
+{% load url from future %}
+{% block content %}
+    {% if not error %}
+        <h1>An application is requesting permission to access your data</h1>
+
+        <p>The application <strong>{{ client.name }}</strong> has requested permission to access your data with the following permissions:</p>
+        <ul>
+            <li>{{ client.apiv2_client.get_scope_display }}</li>
+        </ul>
+        <p>
+            Granting permission to access your data means that you allow the application to act on your behealf inside Freesound.
+            You can revoke the permissions you have given to an application at any time by visiting your settings page.
+        </p>
+        <form method="post" action="{% url "oauth2:authorize" %}">
+            {% csrf_token %}
+            {{ form.errors }}
+            {{ form.non_field_errors }}
+            <fieldset>
+                <div style="display: none;" />
+                    <select type="select" name="scope" multiple="multiple">
+                    {% for scope in oauth_data.scope|scopes %}
+                        <option value="{{ scope }}" selected="selected">{{ scope }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+                <input type="submit" class="btn login large danger" value="Deny access" />
+                <input type="submit" class="btn login large primary" name="authorize" value="Authorize!" />
+            </fieldset>
+        </form>
+    {% else %}
+        <h1>Ops! there were some errors...</h1>
+        <p>{{ error_description }}</p>
+        <p>You should probably start again the authorization process from the 3rd party application!</p>
+    {% endif %}
+{% endblock %}

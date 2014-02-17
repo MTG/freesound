@@ -568,14 +568,54 @@ class GaiaWrapper:
             elif target_type == 'file':
                 # Target is specified as the attached file
                 # Create a point with the data in 'descriptors_data' and search for it
+                target_file_parsing_type = '-'
+
                 try:
+                    # Try directly loading the file
                     p, query = Point(), Point()
                     p.loadFromString(yaml.dump(target))
                     query = self.original_dataset.history().mapPoint(p)
-                except:
-                    msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout.'
-                    logger.info(msg)
-                    return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
+                    target_file_parsing_type = 'mapPoint'
+
+                except Exception, e:
+                    logger.info('Unable to create gaia point from uploaded file (%s). Trying addind descriptors one by one.' % e)
+
+                    # If does not work load descriptors one by one
+                    try:
+                        query = Point()
+                        query.setLayout(layout)
+
+                        feature_names = []
+                        get_nested_descriptor_names(target, feature_names)
+                        feature_names = ['.%s' % item for item in feature_names]
+                        nonused_features = []
+
+                        for param in feature_names:
+                            if param in coeffs.keys():
+                                value = get_nested_dictionary_value(param[1:].split('.'), target)
+                                if coeffs:
+                                    try:
+                                        a = coeffs[param]['a']
+                                        b = coeffs[param]['b']
+                                        if len(a) == 1:
+                                            norm_value = a[0]*value + b[0]
+                                        else:
+                                            norm_value = []
+                                            for i in range(0,len(a)):
+                                                norm_value.append(a[i]*value[i]+b[i])
+                                        query.setValue(str(param[1:]), norm_value)
+                                    except:
+                                        nonused_features.append(param)
+                                else:
+                                    query.setValue(str(param[1:]), value)
+                            else:
+                                nonused_features.append(param)
+
+                        target_file_parsing_type = 'walkDict'
+
+                    except Exception, e:
+                        logger.info('Unable to create gaia point from uploaded file and addind descriptors one by one (%s)' % e)
+                        return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout. Are you using the last version of Essentia\'s Freesound extractor?', 'status_code': SERVER_ERROR_CODE}
         else:
             query = Point()  # Empty target
             query.setLayout(layout)
@@ -594,7 +634,7 @@ class GaiaWrapper:
             elif target_type == 'descriptor_values':
                 log_target = '%s (descriptor values)' % str(target)
             elif target_type == 'file':
-                log_target = 'uploaded file'
+                log_target = 'uploaded file (%s)' % target_file_parsing_type
             log_message += ' with target: %s' % log_target
         if filter:
             log_message += ' with filter: %s' % str(filter)
@@ -605,7 +645,12 @@ class GaiaWrapper:
             search = self.view.nnSearch(query, metric, str(filter))
             results = search.get(num_results, offset=offset)
             count = search.size()
-        except:
+        except Exception, e:
             return {'error': True, 'result': 'Server error', 'status_code': SERVER_ERROR_CODE}
 
-        return {'error': False, 'result': {'results': results, 'count': count}}
+        note = None
+        if target_type == 'file':
+            if target_file_parsing_type == 'walkDict':
+                note = 'The layout of the given analysis file differed from what we expected. Similarity results might not be accurate. Was the file generated with the last version of Essentia\'s Freesound extractor?'
+
+        return {'error': False, 'result': {'results': results, 'count': count, 'note': note}}

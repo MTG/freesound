@@ -32,20 +32,24 @@
             sounds.push(soundId);
             
             var el = $(element).clone().appendTo("#current_pack_sounds");
-            el.after("<a class=\"remove_sound\" onclick=\"removeSound(this, "+soundId+")\">remove </a>");
+            addRemoveLink(el,soundId);
+            $($(el[0]).children()).children(".add_sound").remove();
             $("#pack_sounds").val(sounds.join(","));
         }
+    }
+    function addRemoveLink(element, soundId){
+        var title = $($(element).children(".sample_player")[0]).children(".sound_title"); 
+        var msg = "<br/><a class=\"remove_sound\" onclick=\"removeSound(this, "+soundId+")\">remove </a>"
+        title.after(msg);
     }
 
     function removeSound(element, soundId)
     {
         var index = $.inArray(soundId, sounds);
-
         if (index != -1)
         {
             sounds.splice(index, 1);
-            $(element).prev().remove();
-            $(element).remove();
+            $(element).parent().parent().remove();
             $("#pack_sounds").val(sounds.join(","));
         }
     }
@@ -67,23 +71,31 @@
             var snd_pack = element.children(".sample_information").find(".pack");
             var snd_id = element[0].id;
             var link_id = "a"+snd_id;
-            var msg = "<a id=\""+link_id+"\" class=\"add_sound\" >add</a>";
+            var title = $($(this).children(".sample_player")[0]).children(".sound_title");            
+            var msg = "<br/><a id=\""+link_id+"\" class=\"add_sound\" >add";
             if(snd_pack.length>0){
                 var pack_msg = snd_pack[0].children[0].title;
                 var pack_name = pack_msg.split(":")[1];
                 msg = msg + "<span style=\"font-size:11px\"> (remove from pack:"+pack_name+")</span>";
             };
-            msg = msg+"<br/>";
-            var result = $(this).after(msg);
+            msg = msg+"</a>";
+            
+            var result = $(title).after(msg);
             $("#"+link_id).click(function(){
+                //$(this).remove();
                 addSound(element, parseInt(snd_id));
+                return false;
             });
         });
     }
 
     function searchSounds(){
             $("#search-results").load("{% url sounds-search %}",
-             $.param({"q": $("#search-q").val(), "f":"username:\"{{user.username}}\"","ajax": 1}),
+             $.param({
+                "q": $("#search-q").val(), 
+                "f":"username:\"{{user.username}}\"",
+                "s":"created+desc",
+                "ajax": 1}),
                 function(){makePlayer('.player');removePackSounds();appendLinks();}    
                 );
     }
@@ -106,7 +118,13 @@
             searchSounds();
             return false;
         });
+        $('#current_pack_sounds .sample_player_small').each( function () {
+            var snd_id = $(this)[0].id;
+            addRemoveLink($(this), snd_id);
+
+        });
         searchSounds();
+
     });
 </script>
 
@@ -134,13 +152,13 @@
     <div id="current_pack_sounds" class="sound_list_minimal">
         <h4> Current sounds</h4>
         {% for sound in current_sounds %}
-                {% display_sound sound.id %}
-                <a class="remove_sound" onclick="removeSound(this, {{sound.id}})">remove </a>
+                {% display_sound sound.id %}               
         {% endfor %}
     </div>
 
     <div id="pack_edit_search" class="sound_list_minimal" >
-        <h4> Other sounds you uploaded</h4>
+        <h4> Other sounds</h4>
+        <p> Use the list and search box below to add some of your sounds to the pack. Remember that sounds can only be in one pack!
         <p>
             <input type="text" name="q" id="search-q" size="25" /> 
             <input type="button" name="submit" value="search" id="search-button"/>

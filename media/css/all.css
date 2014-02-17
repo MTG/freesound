@@ -3434,33 +3434,43 @@ ul.messages {
 ---------------------------------------------------------------*/
 #pack_edit_form{
     display:block;
-    width:420px;
+    width:400px;
 }
 
 #current_pack_sounds{
     display:block;
     float:left;
-    width:420px;
+    width:400px;
+    overflow:hidden;
+    
 }
 
 #pack_edit_search{
     float:right;
-    width:360px;
+    width:400px;
     position:relative;
-    top:-26px;
+    top:-80px;
+    overflow:hidden;
+    
+
 }
 
 .remove_sound {
     background: url(../images/cancel.png) 0% center  no-repeat;
-    padding-left:20px;
-    text-indent:10px;
+    background-size: 10px Auto;
+    padding-left:12px;
+    font-size: 11px;
+    cursor: pointer;
+
 }
 
 .add_sound {
     background-image: url(../images/moderation_plus.png);
     background-repeat: no-repeat;
-    padding-left:20px;
+    background-size: 10px Auto;
+    padding-left:12px;
     cursor: pointer;
+    font-size: 11px;
 }
 
 

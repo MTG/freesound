@@ -137,6 +137,7 @@ def parse_filter(filter_string, layout_descriptor_names):
                     max_v = None
                 f['value'] = {'min':min_v,'max':max_v}
 
+    #print final_filter_struct
     return final_filter_struct
 
 def prepend_value_label(f):
@@ -185,7 +186,7 @@ def parse_filter_list(filter_list, coeffs):
 
                 else:
                     filter += " "
-                    if f['value']['min']:
+                    if f['value']['min'] is not None:
                         if coeffs:
                             if '[' in f['feature']:
                                 # if character [ is in feature name it means that is multidimensional filter
@@ -197,8 +198,8 @@ def parse_filter_list(filter_list, coeffs):
                         else:
                             norm_value = f['value']['min']
                         filter += prepend_value_label(f) + f['feature'] + ">" + str(norm_value) + " "
-                    if f['value']['max']:
-                        if f['value']['min']:
+                    if f['value']['max'] is not None:
+                        if f['value']['min'] is not None:
                             filter += "AND "
                         if coeffs:
                             if '[' in f['feature']:

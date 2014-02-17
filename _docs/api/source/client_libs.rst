@@ -1,5 +1,12 @@
 Client Libraries
->>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<
+
+API V2 Clients
+______________
+
+
+API V1 Clients (deprecated)
+___________________________
 
 Python
   http://github.com/g-roma/freesound-python

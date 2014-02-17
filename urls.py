@@ -113,6 +113,9 @@ urlpatterns = patterns('',
     # api views
     (r'^api/', include('api.urls')),
 
+    # apiv2 views
+    (r'^apiv2/', include('apiv2.urls')),
+
     # tag recommendation
     url(r'^tagrecommendation/recommendtags/$', get_recommended_tags_view, name="recommend-tags"),
     url(r'^tagrecommendation/savelog/$', log_recommendation_info_view, name="log-recommendation-info"),

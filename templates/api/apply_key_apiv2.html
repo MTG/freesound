@@ -1,0 +1,64 @@
+{% extends "accounts/_section.html" %}
+{% load util %}
+
+{% block title %}{{user.username}} - Freesound Api access credentials{% endblock %}
+
+{% block section_content %}
+    <h1>Your Freesound Api access credentials {%  if not combined_apiv1_and_apiv2 %}(for Api V2){% endif %}</h1>
+
+    <h3>Existing credentials</h3>
+
+    <table>
+    <tr>
+        <th>App name</th>
+        <th>Api ver.</th>
+        <th>Client id</th>
+        <th>Client secret/Api key</th>
+        <th>Scope</th>
+        <th>Redirect url</th>
+        <th></th>
+        <th></th>
+        {% comment %}<th>Status</th>{% endcomment %}
+    </tr>
+    {% for credential in user_credentials %}
+        <tr>
+            <td>{{ credential.name|truncate_string:20 }}</td>
+            <td>{{ credential.version }}</td>
+            <td>{{ credential.client_id }}</td>
+            <td>{{ credential.client_secret }}</td>
+            <td>{{ credential.get_scope_display }}</td>
+            <td>{{ credential.redirect_uri|truncate_string:20 }}</td>
+            <td><a href="{% url apiv2-edit-credential credential.client_secret %}">edit</a></td>
+            <td><a href="{% url apiv2-delete-credential credential.client_secret %}">delete</a></td>
+
+            {% comment %}<td>{{ credential.status }}</td>{% endcomment %}
+        </tr>
+    {% endfor %}
+    </table>
+    
+    <h3>Get credentials for a new application</h3>
+    
+    <form action="" method="post" enctype="multipart/form-data">
+    
+        {% csrf_token %}
+        <table>
+            {{ form.as_table }}
+        </table>
+        <p>
+            <input type="submit" name="submit" value="Request access credentials" id="submit">
+        </p>
+        <p style="width:700px">
+            * This field is only used for OAuth2 protected API resources.
+            At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
+            In this way your application can be automatically notified when users have given the permissions to access thier data.
+        <br>
+            If you application does not support the use of a callback url (generally non web-based applications), you must
+            introduce the following url: <span style="font-family: 'Courier'">{{ fs_callback_url }}</span>.
+            <br>Using this url
+            users will be redirected to a page showing the authorization code so they can later enter it manually in your application.
+        </p>
+
+    </form>
+    
+
+{% endblock %}

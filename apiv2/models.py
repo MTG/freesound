@@ -1,0 +1,100 @@
+#
+# Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
+#
+# Freesound is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# Freesound is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#     See AUTHORS file.
+#
+
+from django.db import models
+from django.contrib.auth.models import User
+from provider.oauth2.models import Client
+
+
+class ApiV2Client(models.Model):
+
+    STATUS_CHOICES = (('OK',  'Approved'),
+                      ('REJ', 'Rejected'),
+                      ('REV', 'Revoked'),
+                      ('PEN', 'Pending'))
+
+    DEFAULT_STATUS = 'OK'
+
+    SCOPE_CHOICES = (('r', 'read'),
+                     ('w', 'write'),
+                     ('rw', 'read+write'))
+
+    DEFAULT_SCOPE = 'r'
+
+    oauth_client                = models.OneToOneField(Client, related_name='apiv2_client', default=None, null=True, blank=True)
+    key                         = models.CharField(max_length=40, blank=True)
+    user                        = models.ForeignKey(User, related_name='apiv2_client')
+    status                      = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)
+    name                        = models.CharField(max_length=64)
+    url                         = models.URLField()
+    redirect_uri                = models.URLField()
+    description                 = models.TextField(blank=True)
+    accepted_tos                = models.BooleanField(default=False)
+    allow_oauth_passoword_grant = models.BooleanField(default=False)
+    scope                       = models.CharField(max_length=3, default=DEFAULT_SCOPE, choices=SCOPE_CHOICES)
+    created                     = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "credentials for developer %s" % self.user.username
+
+    def save(self, *args, **kwargs):
+
+        # If oauth client does not exist create a new one (that means ApiV2Client is being saved for the first time)
+        # Otherwise update existing client
+
+        if not self.oauth_client:
+            # Set oauth client (create oauth client object)
+            oauth_cient = Client.objects.create(
+                user=self.user,
+                name=self.name,
+                url=self.url,
+                redirect_uri=self.redirect_uri,
+                client_type=1, # Public client
+            )
+            self.oauth_client = oauth_cient
+
+            # Set key (using same key as in oauth client to simplify work for developers)
+            self.key = self.oauth_client.client_secret
+
+        else:
+            # Update existing oauth client
+            self.oauth_client.name = self.name
+            self.oauth_client.url = self.url
+            self.oauth_client.redirect_uri = self.redirect_uri
+            self.oauth_client.save()
+
+        return super(ApiV2Client, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # On delete, delete also oauth client
+        self.oauth_client.delete()
+        super(ApiV2Client, self).delete(*args, **kwargs)
+
+    @property
+    def client_id(self):
+        return self.oauth_client.client_id
+
+    @property
+    def client_secret(self):
+        return self.oauth_client.client_secret
+
+    @property
+    def version(self):
+        return "V2"

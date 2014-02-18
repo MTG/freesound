@@ -32,7 +32,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.transaction.TransactionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'middleware.OnlineUsersHandler'
+    'middleware.OnlineUsersHandler',
+    'utils.corsheaders.middleware.CorsMiddleware',
 )
 
 INSTALLED_APPS = (
@@ -67,6 +68,7 @@ INSTALLED_APPS = (
     'apiv2',
     'provider',
     'provider.oauth2',
+    'utils.corsheaders',
     #'test_utils', # Don't use this in production!
 )
 

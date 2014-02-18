@@ -51,7 +51,7 @@ try:
     from collections import OrderedDict
 except:
     from freesound.utils.ordered_dict import OrderedDict
-from urllib import unquote
+from urllib import unquote, quote
 import settings
 import logging
 import datetime
@@ -1033,8 +1033,12 @@ def permission_granted(request):
     else:
         template = 'api/app_authorized.html'
 
+    logout_next = quote(request.GET.get('original_path', None))
+    if not logout_next:
+        logout_next = reverse('api-login')
+
     return render_to_response(template,
-                              {'code': code, 'app_name': app_name},
+                              {'code': code, 'app_name': app_name, 'logout_next': logout_next},
                               context_instance=RequestContext(request))
 
 

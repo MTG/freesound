@@ -22,7 +22,7 @@
 
 from provider.views import OAuthError
 from provider.scope import to_names, to_int
-from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView, Authorize as DjangoOauth2ProviderAuthorize
+from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView, Authorize as DjangoOauth2ProviderAuthorize, Capture as DjangoOauth2ProviderCapture, Redirect as DjangoOauth2ProviderRedirect
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
@@ -43,11 +43,12 @@ from search.views import search_prepare_query, search_prepare_sort
 from apiv2.forms import SEARCH_SORT_OPTIONS_API
 from freesound.utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
-from urllib import unquote
-from django.http import HttpResponseRedirect
+from urllib import unquote, quote
+from django.http import HttpResponseRedirect, QueryDict
 from django.utils.translation import ugettext as _
 from django.contrib.sites.models import Site
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import resolve, reverse
+import urlparse
 
 
 ############################
@@ -122,6 +123,11 @@ class AccessTokenView(DjangoRestFrameworkAccessTokenView):
         )
 
 
+class Capture(DjangoOauth2ProviderCapture):
+    def get_redirect_url(self, request):
+        return reverse('oauth2:authorize') + '/?original_path=%s' % quote(request.get_full_path())
+
+
 class Authorize(DjangoOauth2ProviderAuthorize):
     if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
         template_name = 'api/minimal_authorize_app.html'
@@ -130,6 +136,7 @@ class Authorize(DjangoOauth2ProviderAuthorize):
 
     def handle(self, request, post_data=None):
         data = self.get_data(request)
+        original_path = quote(request.GET.get('original_path', ''))
 
         if data is None:
             return self.error_response(request, {
@@ -157,7 +164,8 @@ class Authorize(DjangoOauth2ProviderAuthorize):
                 return self.render_to_response({
                     'client': client,
                     'form': authorization_form,
-                    'oauth_data': data, })
+                    'oauth_data': data,
+                    'original_path': original_path, })
         else:
             # If user has a valid token fill the authorization form with a newly created grant and continue
             post_data = {u'authorize': [u'Authorize!']}
@@ -166,7 +174,8 @@ class Authorize(DjangoOauth2ProviderAuthorize):
                 return self.render_to_response({
                     'client': client,
                     'form': authorization_form,
-                    'oauth_data': data, })
+                    'oauth_data': data,
+                    'original_path': original_path, })
 
         code = self.save_authorization(request, client, authorization_form, data)
 
@@ -174,7 +183,39 @@ class Authorize(DjangoOauth2ProviderAuthorize):
         self.cache_data(request, code, "code")
         self.cache_data(request, client, "client")
 
-        return HttpResponseRedirect(self.get_redirect_url(request))
+        return HttpResponseRedirect(self.get_redirect_url(request) + '/?original_path=%s' % original_path)
+
+
+class Redirect(DjangoOauth2ProviderRedirect):
+
+    def get(self, request):
+
+        data = self.get_data(request)
+        code = self.get_data(request, "code")
+        error = self.get_data(request, "error")
+        client = self.get_data(request, "client")
+
+        redirect_uri = data.get('redirect_uri', None) or client.redirect_uri
+        parsed = urlparse.urlparse(redirect_uri)
+        query = QueryDict('', mutable=True)
+
+        if 'state' in data:
+            query['state'] = data['state']
+
+        if error is not None:
+            query.update(error)
+        elif code is None:
+            query['error'] = 'access_denied'
+        else:
+            query['code'] = code
+
+        query['original_path'] = request.GET.get('original_path', '')
+
+        parsed = parsed[:4] + (query.urlencode(), '')
+        redirect_uri = urlparse.ParseResult(*parsed).geturl()
+        self.clear_data(request)
+
+        return HttpResponseRedirect(redirect_uri)
 
 
 #############################

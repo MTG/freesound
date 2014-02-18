@@ -27,7 +27,7 @@
 
 
 from django.conf.urls.defaults import patterns, url, include
-from django.contrib.auth.views import login
+from django.contrib.auth.views import login, logout
 from apiv2 import views
 
 #
@@ -88,12 +88,12 @@ urlpatterns = patterns('apiv2.views',
     # Oauth2
     url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2')),
     url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
+    url(r'^logout/$', logout, name="api-logout"),
 
 
     #########
     # OTHER #
     #########
-
     url(r'^$', views.FreesoundApiV2Resources.as_view()),
     url(r'/$', views.return_invalid_url),
 )

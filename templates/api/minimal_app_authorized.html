@@ -27,7 +27,7 @@
      {% if app_name and code %}
             <p>
                 Permission has been granted to application <strong>{{ app_name }}</strong>.
-                In order to comple the full authentication process the application will require you to introduce the following authorization code:
+                In order to complete the full authentication process the application will require you to introduce the following authorization code:
             </p>
 
             <div style="font-size:14px;font-family:'Courier';">{{ code }}</div>
@@ -38,6 +38,8 @@
             <p>In case you clicked on "Authorize!" some errors might have occurred. You should probably start again the authorization process from the 3rd party application!</p>
 
         {% endif %}
+
+        <p>(logged in as <strong>{{ request.user }}</strong>, <a href="{% url api-logout %}?next={{ logout_next }}">login with another user</a>).</p>
 
 </div>
 

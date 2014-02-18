@@ -34,7 +34,7 @@
             Granting permission to access your data means that you allow the application to act on your behealf inside Freesound.
             You can revoke the permissions you have given to an application at any time by visiting your Freesound settings page.
         </p>
-        <form method="post" action="{% url "oauth2:authorize" %}">
+        <form method="post" action="{% url "oauth2:authorize" %}/?original_path={{ original_path }}">
             {% csrf_token %}
             {{ form.errors }}
             {{ form.non_field_errors }}
@@ -46,6 +46,8 @@
         <p>{{ error_description }}</p>
         <p>You should probably start again the authorization process from the 3rd party application!</p>
     {% endif %}
+
+    <p>({% comment %}logged in as <strong>{{ request.user }}</strong>, {% endcomment %}<a href="{% url "api-logout" %}?next={{ original_path }}">login with another user</a>).</p>
 
 
 </div>

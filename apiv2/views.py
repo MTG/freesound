@@ -788,7 +788,7 @@ class Me(OauthRequiredAPIView):
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
               % (docs_base_url, '%s#me' % resources_doc_filename)
 
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
+    #authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('me'))
@@ -809,9 +809,10 @@ class FreesoundApiV2Resources(GenericAPIView):
               '<br>Note that urls containing elements in brackets (<>) should be replaced with the corresponding variables.' \
               % (docs_base_url, 'index.html')
 
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+    #authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def get(self, request,  *args, **kwargs):
+
         logger.info(self.log_message('api_root'))
         return Response([
             {'Search resources': OrderedDict(sorted(dict({

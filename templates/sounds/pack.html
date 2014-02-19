@@ -54,43 +54,32 @@
     <div id="pack_info" class="content_box">
     <h3>Pack info</h3>
     <div class="sound_list_normal">
-        
-	{% if pack.description %}
-	    <p>
-	    {{pack.description|safe|linebreaksbr}}
-	    {% if enable_description_form %}
-		
-		<div id="add_description_label">
-		<a onclick='showDescriptionForm();'  class="icon" id="edit_link" title="edit pack description"><span class="show_description_form_toggle">Edit current pack description...</span></a>
-		</div>
-	    {% endif %}
-	    </p>
-	{% else %}
-	    <p>
-	    {% if enable_description_form %}
-		<div id="add_description_label">
-		<a onclick='showDescriptionForm();' class="icon" id="edit_link" title="add pack description"><span class="show_description_form_toggle">Add a description for the pack...</span></a>
-		</div>
-	    {% endif %}
-	    </p>
-	{% endif %}
-	
-	<p> 
-	    <div id ="description_form" style="display:none">
-	    {% if enable_description_form %}
-	    <form action="" method="post">{% csrf_token %}
-		{{ form.as_p }}
-	    <input type="submit" value="Save description" />
-	    </form>
-	    {% endif %}
-	    </div>
-	</p>
-	
-	<ul>
+    <p>
+    {{pack.description|safe|linebreaksbr}}
+    </p>
+
+    <ul>
             <li>Pack created on: <b>{{ pack.created }}</b></li>
             <li>Number of sounds: <b>{{ pack.num_sounds }}</b></li>
             <li>Number of downloads: <b>{{ pack.num_downloads }}</b></li>
-	</ul>
+    </ul>
+
+    {% if perms.pack.can_edit or pack.user == request.user %}
+            <p>
+                <a href="{% url pack-edit pack.user.username pack.id %}" class="icon" id="edit_link" title="edit pack">
+                    Edit pack information
+                </a>
+                <br/>
+                <a href="{% url pack-delete pack.user.username pack.id %}"
+                    class="icon" id="delete_pack" title="edit pack">
+                    Delete this pack
+                </a>
+            </p>
+    {% endif %}
+
+
+
+
     </div>
 </div><!-- #pack_info -->
 

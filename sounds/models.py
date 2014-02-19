@@ -448,7 +448,7 @@ class Pack(SocialModel):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('pack', (smart_unicode(self.id),))
+        return ('pack', (self.user.username, smart_unicode(self.id),))
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name')
@@ -511,7 +511,7 @@ class Pack(SocialModel):
         # delete files
         delete_object_files(self, web_logger)
         # super class delete
-        super(Sound, self).delete()
+        super(SocialModel, self).delete()
 
 
 class Flag(models.Model):

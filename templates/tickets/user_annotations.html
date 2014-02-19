@@ -5,7 +5,7 @@
     <div class="user-annotations-info">
         <img src="{{ user.profile.locations.avatar.L.url }}"/>
         <p><a href="{% url account user.username %}">{{ user.username }}</a>
-        <br>{{ num_sounds_ok }} sounds, {{ num_sounds_pending }} pending
+        <br>{{ num_sounds_ok }} sounds ok, <a href="{% url tickets-user-pending_sounds user.username %}">{{ num_sounds_pending }} pending</a>
         {% if user.profile.home_page %}
             <br>home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a>
         {% endif %}

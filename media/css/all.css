@@ -35,7 +35,7 @@ body {
     background: url(../images/body.png) repeat-x top #CECECE;
     font-family: Verdana, sans-serif;
     font-size: 100%;
-    margin-top: 7px;
+    /*margin-top: 7px;*/
 }
 
 a {
@@ -332,11 +332,13 @@ div.infowindow {
 /* Header and Navigation
 ------------------------------------------------------*/
 #header {
+    /*border: 1px solid red;*/
     height: 115px;
     width: 980px;
     margin: 0 auto;
     background: url(../images/header.png) repeat-x bottom #F8F8F8;
     position: relative;
+    margin-top: 7px;
 }
 
 #logo {
@@ -396,7 +398,40 @@ div.infowindow {
     padding-right: 5px;
 }
 
+.new_tickets_count {
+    float: left;
+    background: url(../images/mod_count_bg.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 #message_indicator_0 {
+    float: left;
+    background: url(../images/messages_count_bg_zero.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#new_tickets_indicator_0 {
+    float: left;
+    background: url(../images/messages_count_bg_zero.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#pending_indicator_0 {
     float: left;
     background: url(../images/messages_count_bg_zero.png) no-repeat left;
     color: #FFF;
@@ -409,6 +444,13 @@ div.infowindow {
 
 #messages_count div {
     background: url(../images/messages_count_bg.png) no-repeat right;
+    height: 15px;
+    padding-right: 6px;
+    line-height: 14px;
+}
+
+#new_tickets_count div {
+    background: url(../images/mod_count_bg.png) no-repeat right;
     height: 15px;
     padding-right: 6px;
     line-height: 14px;
@@ -2590,7 +2632,11 @@ span.tag_addremove a:hover {
     display: inline;
 }
 
-.remove_sound {
+
+/*
+use classes from pack edition
+
+ .remove_sound {
     background-image: url(../images/cancel.png);
     background-repeat: no-repeat;
     float: right;
@@ -2608,7 +2654,7 @@ span.tag_addremove a:hover {
     right: 1px;
     position: relative;
     cursor: pointer;
-}
+}*/
 
 /* License form
 ------------------------------------------------------*/
@@ -3423,6 +3469,56 @@ ul.messages {
     background: url(../images/tag_edge.png) no-repeat left top;
 }
 
+
+/* Pack edit
+---------------------------------------------------------------*/
+#pack_edit_form{
+    display:block;
+    width:400px;
+}
+
+#current_pack_sounds{
+    display:block;
+    float:left;
+    width:400px;
+    overflow:hidden;
+
+}
+
+#pack_edit_search{
+    float:right;
+    width:400px;
+    position:relative;
+    top:-80px;
+    overflow:hidden;
+
+
+}
+
+.remove_sound {
+    background: url(../images/cancel.png) 0% center  no-repeat;
+    background-size: 10px Auto;
+    padding-left:12px;
+    font-size: 11px;
+    cursor: pointer;
+
+}
+
+.add_sound {
+    background-image: url(../images/moderation_plus.png);
+    background-repeat: no-repeat;
+    background-size: 10px Auto;
+    padding-left:12px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+
+#delete_pack {
+    background: url(../images/cancel.png) 0% center  no-repeat;
+}
+
+
 /* Pending sounds to moderate page
 --------------------------------------------------------------*/
 
@@ -3446,4 +3542,44 @@ ul.messages {
 
 #pending-ticket {
     padding-left: 25px;
+}
+
+#user-do-sth {
+    color: red;
+}
+
+/* COOOKIES BANNER */
+
+#cookie-bar {
+    /*border: 1px solid green;*/
+    height: 50px;
+    line-height: 30px;
+    z-index: 2;
+    opacity: 0.95;
+    background: black;
+    background: rgb(46,46,46);
+    position: fixed;
+    width: 980px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    bottom: 0px;
+    margin: 0;
+    /*box-shadow: 0px 1px 50px #5E5E5E;*/
+}
+
+#cookie-bar p {
+    padding: 5px 15px;
+    font-size: 12px;
+    font-style: italic;
+    color: white;
+}
+
+#cookie-bar a {
+    color: #AB4646;
+}
+
+#cookie-bar .cb-float_right {
+
+    margin-right: 10px;
+    width: 50px;
 }

@@ -19,6 +19,17 @@
  *   See AUTHORS file.
  */
 
+$(function() {
+    cookieValue = $.cookie("cookieConsent");
+    if (cookieValue == "yes")
+        $("#cookie-bar").remove();
+
+    $("#cookie-accept").click(function() {
+        $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
+        $("#cookie-bar").fadeOut(500);
+    });
+});
+
 function d()
 {
     if (window.console && window.console.log)

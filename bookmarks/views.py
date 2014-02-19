@@ -80,16 +80,16 @@ def delete_bookmark_category(request, category_id):
 @login_required
 def add_bookmark(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
-    
+
     if request.POST:
         form = BookmarkForm(request.POST, instance=Bookmark(user=request.user, sound=sound))
         form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
         if form.is_valid():
             form.save()
-    
+
     if request.is_ajax():
-        return HttpResponse()   
-    
+        return HttpResponse()
+
     else:
         msg = "Added new bookmark for sound \"" + sound.original_filename + "\"."
         messages.add_message(request, messages.WARNING, msg)

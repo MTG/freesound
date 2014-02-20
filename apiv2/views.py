@@ -992,10 +992,12 @@ def granted_permissions(request):
 
     for token in tokens_raw:
         if not token.client.apiv2_client.name in token_names:
+            td = (token.expires - datetime.datetime.today())
+            seconds_to_expiration_date = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
             tokens.append({
                 'client_name': token.client.apiv2_client.name,
                 'expiration_date': token.expires,
-                'expired': (token.expires - datetime.datetime.today()).total_seconds() < 0,
+                'expired': seconds_to_expiration_date < 0,
                 'scope': token.client.apiv2_client.get_scope_display,
                 'client_id': token.client.apiv2_client.client_id,
             })

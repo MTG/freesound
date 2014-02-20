@@ -146,6 +146,8 @@ class Authorize(DjangoOauth2ProviderAuthorize):
         try:
             client, data = self._validate_client(request, data)
         except OAuthError, e:
+            if 'redirect_uri' in e.message:
+                return self.error_response(request, {'error': 'The redirect_uri request parameter does not match the redirect_uri of ApiV2 client.'}, status=400)
             return self.error_response(request, e.args[0], status=400)
 
         # Check if request user already has validated access token for client

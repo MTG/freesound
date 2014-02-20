@@ -41,14 +41,14 @@
             <input type="submit" class="btn login large danger" value="Deny access" />
             <input type="submit" class="btn login large primary" name="authorize" value="Authorize!" />
         </form>
+
+        <p>({% comment %}logged in as <strong>{{ request.user }}</strong>, {% endcomment %}<a href="{% url "api-logout" %}?next={{ original_path }}">login with another user</a>).</p>
     {% else %}
         <p>Ops! there were some errors...</p>
+        {{ error }}
         <p>{{ error_description }}</p>
         <p>You should probably start again the authorization process from the 3rd party application!</p>
     {% endif %}
-
-    <p>({% comment %}logged in as <strong>{{ request.user }}</strong>, {% endcomment %}<a href="{% url "api-logout" %}?next={{ original_path }}">login with another user</a>).</p>
-
 
 </div>
 

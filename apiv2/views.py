@@ -1000,11 +1000,30 @@ def granted_permissions(request):
                 'expired': seconds_to_expiration_date < 0,
                 'scope': token.client.apiv2_client.get_scope_display,
                 'client_id': token.client.apiv2_client.client_id,
+                'developer': token.client.apiv2_client.user.username,
             })
-        token_names.append(token.client.apiv2_client.name)
+            token_names.append(token.client.apiv2_client.name)
+
+    grants_pending_access_token_request_raw = Grant.objects.select_related('client').filter(user=user).order_by('-expires')
+    grants = []
+    grant_and_token_names = token_names[:]
+    for grant in grants_pending_access_token_request_raw:
+        if not grant.client.apiv2_client.name in grant_and_token_names:
+            td = (grant.expires - datetime.datetime.today())
+            seconds_to_expiration_date = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+            if seconds_to_expiration_date > 0:
+                grants.append({
+                    'client_name': grant.client.apiv2_client.name,
+                    'expiration_date': grant.expires,
+                    'expired': seconds_to_expiration_date < 0,
+                    'scope': grant.client.apiv2_client.get_scope_display,
+                    'client_id': grant.client.apiv2_client.client_id,
+                    'developer': grant.client.apiv2_client.user.username,
+                })
+                grant_and_token_names.append(grant.client.apiv2_client.name)
 
     return render_to_response('api/manage_permissions.html',
-                              {'user': request.user, 'tokens': tokens},
+                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False},
                               context_instance=RequestContext(request))
 
 
@@ -1015,6 +1034,10 @@ def revoke_permission(request, client_id):
     tokens = AccessToken.objects.filter(user=user, client__client_id=client_id)
     for token in tokens:
         token.delete()
+
+    grants = Grant.objects.filter(user=user, client__client_id=client_id)
+    for grant in grants:
+        grant.delete()
 
     return HttpResponseRedirect(reverse("access-tokens"))
 

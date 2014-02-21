@@ -3477,7 +3477,7 @@ ul.messages {
 #delete_pack {
     background: url(../images/cancel.png) 0% center  no-repeat;
 }
-=======
+
 /* Pending sounds to moderate page
 --------------------------------------------------------------*/
 
@@ -3541,4 +3541,8 @@ ul.messages {
 
     margin-right: 10px;
     width: 50px;
+}
+
+.api-client-permissions-grant-row td {
+    background-color: #ffecec;
 }

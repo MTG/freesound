@@ -31,7 +31,7 @@
   <!-- Used to specify an alternate directory to hold all index data
        other than the default ./data under the Solr home.
        If replication is in use, this should match the replication configuration. -->
-  <dataDir>/Users/Sergio/webserver/solr-4.5.1/example/solr/fs2/data</dataDir>
+  <dataDir>/var/lib/solr/fs2/data</dataDir>
 
 
 <indexConfig>
@@ -45,9 +45,6 @@
     <!-- Defaults: 'native' is default for Solr3.6 and later, otherwise 'simple' is the default -->
     <lockType>native</lockType>
     <reopenReaders>true</reopenReaders>
-   ...
-   ...
- 
 </indexConfig>
 
   
@@ -85,7 +82,7 @@
     <maxTime>1000</maxTime>
 </autoSoftCommit>
 <updateLog>
-    <str name="dir">${solr.data.dir:}</str>
+    <str name="dir">/var/lib/solr/fs2/data</str>
 </updateLog>
 
     <!-- The RunExecutableListener executes an external command.

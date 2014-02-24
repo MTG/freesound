@@ -31,7 +31,7 @@
   <!-- Used to specify an alternate directory to hold all index data
        other than the default ./data under the Solr home.
        If replication is in use, this should match the replication configuration. -->
-  <dataDir>/Users/Sergio/webserver/apache-solr-3.3.0/example/solr/forum/data</dataDir>
+  <dataDir>/var/lib/solr/forum/data</dataDir>
 
 <indexConfig>
     <ramBufferSizeMB>32</ramBufferSizeMB>
@@ -44,9 +44,6 @@
     <!-- Defaults: 'native' is default for Solr3.6 and later, otherwise 'simple' is the default -->
     <lockType>native</lockType>
     <reopenReaders>true</reopenReaders>
-   ...
-   ...
- 
 </indexConfig>
   
   <!--	Enables JMX if and only if an existing MBeanServer is found, use 
@@ -83,7 +80,7 @@
     <maxTime>1000</maxTime>
 </autoSoftCommit>
 <updateLog>
-    <str name="dir">${solr.data.dir:}</str>
+    <str name="dir">/var/lib/solr/forum/data</str>
 </updateLog>
 
     <!-- The RunExecutableListener executes an external command.

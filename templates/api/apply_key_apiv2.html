@@ -4,7 +4,7 @@
 {% block title %}{{user.username}} - Freesound Api access credentials{% endblock %}
 
 {% block section_content %}
-    <h1>Your Freesound Api access credentials {%  if not combined_apiv1_and_apiv2 %}(for Api V2){% endif %}</h1>
+    <h1>Your Freesound Api (v1 and v2) access credentials {%  if not combined_apiv1_and_apiv2 %}(for Api V2){% endif %}</h1>
 
     <h3>Existing credentials</h3>
 
@@ -23,7 +23,7 @@
     {% for credential in user_credentials %}
         <tr>
             <td>{{ credential.name|truncate_string:20 }}</td>
-            <td>{{ credential.version }}</td>
+            <td>{% if credential.version == 'V2' %}V1/{% endif %}{{ credential.version }}</td>
             <td>{{ credential.client_id }}</td>
             <td>{{ credential.client_secret }}</td>
             <td>{{ credential.get_scope_display }}</td>
@@ -48,7 +48,7 @@
             <input type="submit" name="submit" value="Request access credentials" id="submit">
         </p>
         <p style="width:700px">
-            * This field is only used for OAuth2 protected API resources.
+            * This field is only used for OAuth2 protected APIv2 resources.
             At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
             In this way your application can be automatically notified when users have given the permissions to access thier data.
         <br>

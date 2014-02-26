@@ -1,5 +1,7 @@
-API V1 Resources (deprecated)
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.. _resources_apiv1:
+
+Resources (API v1)
+<<<<<<<<<<<<<<<<<<
 
 Sounds
 >>>>>>

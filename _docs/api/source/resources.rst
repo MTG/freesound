@@ -1,7 +1,7 @@
 .. _resources:
 
-API V2 Resources
-<<<<<<<<<<<<<<<<
+Resources (API v2)
+<<<<<<<<<<<<<<<<<<
 
 Search resources
 >>>>>>>>>>>>>>>>

@@ -405,7 +405,7 @@ def sound_edit(request, username, sound_id):
 def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
     pack_sounds = ",".join([str(s.id) for s in pack.sound_set.all()])
-    
+
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
         raise PermissionDenied
 
@@ -421,7 +421,8 @@ def pack_edit(request, username, pack_id):
 
 
 @login_required
-def pack_delete(request, username, pack_id):    
+def pack_delete(request, username, pack_id):
+
     pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
 
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):

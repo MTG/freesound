@@ -25,7 +25,7 @@ $(function() {
         $("#cookie-bar").remove();
 
     $("#cookie-accept").click(function() {
-        $.cookie("cookieConsent", "yes", { expires: 180, path: '/' });
+        $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
         $("#cookie-bar").fadeOut(500);
     });
 });

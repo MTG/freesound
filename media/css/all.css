@@ -398,7 +398,40 @@ div.infowindow {
     padding-right: 5px;
 }
 
+.new_tickets_count {
+    float: left;
+    background: url(../images/mod_count_bg.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 #message_indicator_0 {
+    float: left;
+    background: url(../images/messages_count_bg_zero.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#new_tickets_indicator_0 {
+    float: left;
+    background: url(../images/messages_count_bg_zero.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#pending_indicator_0 {
     float: left;
     background: url(../images/messages_count_bg_zero.png) no-repeat left;
     color: #FFF;
@@ -411,6 +444,13 @@ div.infowindow {
 
 #messages_count div {
     background: url(../images/messages_count_bg.png) no-repeat right;
+    height: 15px;
+    padding-right: 6px;
+    line-height: 14px;
+}
+
+#new_tickets_count div {
+    background: url(../images/mod_count_bg.png) no-repeat right;
     height: 15px;
     padding-right: 6px;
     line-height: 14px;
@@ -3442,7 +3482,6 @@ ul.messages {
     float:left;
     width:400px;
     overflow:hidden;
-    
 }
 
 #pack_edit_search{
@@ -3451,8 +3490,6 @@ ul.messages {
     position:relative;
     top:-80px;
     overflow:hidden;
-    
-
 }
 
 .remove_sound {
@@ -3477,6 +3514,7 @@ ul.messages {
 #delete_pack {
     background: url(../images/cancel.png) 0% center  no-repeat;
 }
+
 
 /* Pending sounds to moderate page
 --------------------------------------------------------------*/

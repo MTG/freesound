@@ -24,14 +24,14 @@
         if ($.inArray(soundId, sources) == -1)
         {
             sources.push(soundId);
-            var el = $(element).clone().appendTo("#current-sources");            
+            var el = $(element).clone().appendTo("#current-sources");
             addRemoveLink(el,soundId);
             $($(el[0]).children()).children(".add_sound").remove();
             $("#id_sources").val(sources.join(","));
         }
     }
     function addRemoveLink(element, soundId){
-        var title = $($(element).children(".sample_player")[0]).children(".sound_title"); 
+        var title = $($(element).children(".sample_player")[0]).children(".sound_title");
         var msg = "<br/><a class=\"remove_sound\" onclick=\"removeSound(this, "+soundId+")\">remove </a>"
         title.after(msg);
     }
@@ -57,15 +57,16 @@
             var element = $(this);
             var snd_id = element[0].id;
             var link_id = "a"+snd_id;
-            var title = $($(this).children(".sample_player")[0]).children(".sound_title");            
+
+            var title = $($(this).children(".sample_player")[0]).children(".sound_title");
             var msg = "<br/><a id=\""+link_id+"\" class=\"add_sound\" >add";
 
             msg = msg+"</a>";
-            
+
             var result = $(title).after(msg);
             $("#"+link_id).click(function(){
                 addSound(element, parseInt(snd_id));
-                
+
                 return false;
             });
         });

@@ -588,13 +588,26 @@ def moderation_assigned(request, user_id):
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(content=None) \
                        .order_by('status', '-created')
+    paginaion_response = paginate(request, qs, MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE)
+    paginaion_response['page'].object_list = list(paginaion_response['page'].object_list)
+    for ticket in paginaion_response['page'].object_list:
+        sound_id = ticket.content.object_id
+        try:
+            Sound.objects.get(id=sound_id)
+        except:
+            paginaion_response['page'].object_list.remove(ticket)
+            try:
+                # Try to delete ticket so error does not happen again
+                ticket.delete()
+            except:
+                pass
 
     moderator_tickets_count = qs.count()
     moderation_texts = MODERATION_TEXTS
     show_pagination = moderator_tickets_count > MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
 
     return render_to_response('tickets/moderation_assigned.html',
-                              combine_dicts(paginate(request, qs, MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE), locals()),
+                              combine_dicts(paginaion_response, locals()),
                               context_instance=RequestContext(request))
 
 

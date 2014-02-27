@@ -48,11 +48,11 @@
             <input type="submit" name="submit" value="Request access credentials" id="submit">
         </p>
         <p style="width:700px">
-            * This field is only used for OAuth2 protected APIv2 resources.
+            * This field is only used for the authorization process when accessing resources that require OAuth2.
             At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
-            In this way your application can be automatically notified when users have given the permissions to access thier data.
+            In this way your application can be automatically notified when users have given the permissions to access their data.
         <br>
-            If you application does not support the use of a callback url (generally non web-based applications), you must
+            If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
             introduce the following url: <span style="font-family: 'Courier'">{{ fs_callback_url }}</span>.
             <br>Using this url
             users will be redirected to a page showing the authorization code so they can later enter it manually in your application.

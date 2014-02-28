@@ -522,7 +522,7 @@ def get_authentication_details_form_request(request):
         if auth_method_name == "OAuth2":
             user = request.user
             developer = request.auth.client.user
-            client_id = request.auth.client_id
+            client_id = request.auth.client.apiv2_client.client_id
         elif auth_method_name == "Token":
             user = None
             developer = request.auth.user

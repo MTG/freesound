@@ -702,22 +702,24 @@ def create_sound_object(user, original_sound_fields):
 
     # 6 create pack if it does not exist
     if 'pack' in sound_fields:
-        if Pack.objects.filter(name=sound_fields['pack'], user=user).exists():
-            p = Pack.objects.get(name=sound_fields['pack'], user=user)
-        else:
-            p, created = Pack.objects.get_or_create(user=user, name=sound_fields['pack'])
-        sound.pack = p
+        if sound_fields['pack']:
+            if Pack.objects.filter(name=sound_fields['pack'], user=user).exists():
+                p = Pack.objects.get(name=sound_fields['pack'], user=user)
+            else:
+                p, created = Pack.objects.get_or_create(user=user, name=sound_fields['pack'])
+            sound.pack = p
 
     # 7 create geotag objects
     # format: lat#lon#zoom
     if 'geotag' in sound_fields:
-        lat, lon, zoom = sound_fields['geotag'].split(',')
-        geotag = GeoTag(user=user,
-            lat=float(lat),
-            lon=float(lon),
-            zoom=int(zoom))
-        geotag.save()
-        sound.geotag = geotag
+        if sound_fields['geotag']:
+            lat, lon, zoom = sound_fields['geotag'].split(',')
+            geotag = GeoTag(user=user,
+                lat=float(lat),
+                lon=float(lon),
+                zoom=int(zoom))
+            geotag.save()
+            sound.geotag = geotag
 
     # 8 set description, tags
     sound.description = sound_fields['description']

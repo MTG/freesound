@@ -90,6 +90,8 @@ urlpatterns = patterns('apiv2.views',
     url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
     url(r'^logout/$', logout, name="api-logout"),
 
+    # Browseable api login and logout
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
     #########
     # OTHER #

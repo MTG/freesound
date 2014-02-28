@@ -1,7 +1,6 @@
 - fix geotag validation to prevent 500 errors (  File "/home/fsweb/freesound/apiv2/utils.py", line 714, in create_sound_object
     lat, lon, zoom = sound_fields['geotag'].split(',')
 )
-- update api logs analyzer to handle apiv2 logs
 - Write documentation
 - Clean code (imports, utils...)
 - Clean up expired grants from database with a django command

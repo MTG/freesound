@@ -46,4 +46,5 @@ def add(request, content_type_id, object_id, rating):
             invalidate_template_cache("display_sound", object_id, True, 'OK')
             invalidate_template_cache("display_sound", object_id, False, 'OK')
             # if you want to invalidate some other caches for other content types add them here
-    return HttpResponse(Rating.objects.filter(object_id=object_id, content_type=content_type).count())
+
+    return HttpResponse(str(Rating.objects.filter(object_id=object_id, content_type=content_type).count()))

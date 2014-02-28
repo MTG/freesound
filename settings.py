@@ -65,9 +65,9 @@ INSTALLED_APPS = (
     'tickets',
     'gunicorn',
     'rest_framework',
+    'provider.oauth2',
     'apiv2',
     'provider',
-    'provider.oauth2',
     'utils.corsheaders',
     #'test_utils', # Don't use this in production!
 )

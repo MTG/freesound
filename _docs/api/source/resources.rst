@@ -145,7 +145,8 @@ Download Sound (OAuth required)
 
   GET /apiv2/sounds/{{sound_id}}/download/
 
-This resource allows to download the original quality file for a sound. It requires :ref:`oauth-authentication`.
+This resource allows you to download a sound in its original format/quality (the format/quality with which the sound was uploaded).
+It requires :ref:`oauth-authentication`.
 
 Examples
 --------
@@ -153,7 +154,7 @@ Examples
 {{examples_DownloadSound}}
 
 
-Upload Sound
+Upload Sound (OAuth required)
 =========================================================
 
 Examples
@@ -162,7 +163,7 @@ Examples
 {{examples_UploadSound}}
 
 
-Not Yet Described Uploaded Sounds
+Not Yet Described Uploaded Sounds (OAuth required)
 =========================================================
 
 Examples
@@ -171,7 +172,7 @@ Examples
 {{examples_NotYetDescribedUploadedSounds}}
 
 
-Describe Sound
+Describe Sound (OAuth required)
 =========================================================
 
 Examples
@@ -180,7 +181,7 @@ Examples
 {{examples_DescribeSound}}
 
 
-Upload and Describe Sound
+Upload and Describe Sound (OAuth required)
 =========================================================
 
 Examples
@@ -189,8 +190,8 @@ Examples
 {{examples_UploadAndDescribeSound}}
 
 
-Uploaded Sounds awaiting moderation in Freesound
-=========================================================
+Uploaded Sounds awaiting moderation in Freesound (OAuth required)
+=================================================================
 
 Examples
 --------
@@ -198,7 +199,7 @@ Examples
 {{examples_UploadedAndDescribedSoundsPendingModeration}}
 
 
-Bookmark Sound
+Bookmark Sound (OAuth required)
 =========================================================
 
 Examples
@@ -207,7 +208,7 @@ Examples
 {{examples_BookmarkSound}}
 
 
-Rate Sound
+Rate Sound (OAuth required)
 =========================================================
 
 Examples
@@ -216,7 +217,7 @@ Examples
 {{examples_RateSound}}
 
 
-Comment Sound
+Comment Sound (OAuth required)
 =========================================================
 
 Examples
@@ -298,7 +299,7 @@ Examples
 {{examples_PackSounds}}
 
 
-Download Pack
+Download Pack (OAuth required)
 =========================================================
 
 Examples

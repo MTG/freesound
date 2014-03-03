@@ -14,7 +14,7 @@
         <th>Api ver.</th>
         <th>Client id</th>
         <th>Client secret/Api key</th>
-        <th>Scope</th>
+        {% comment %}<th>Scope</th>{% endcomment %}
         <th>Redirect url</th>
         <th></th>
         <th></th>
@@ -26,7 +26,7 @@
             <td>{% if credential.version == 'V2' %}V1/{% endif %}{{ credential.version }}</td>
             <td>{{ credential.client_id }}</td>
             <td>{{ credential.client_secret }}</td>
-            <td>{{ credential.get_scope_display }}</td>
+            {% comment %}<td>{{ credential.get_scope_display }}</td>{% endcomment %}
             <td>{{ credential.redirect_uri|truncate_string:20 }}</td>
             <td><a href="{% url apiv2-edit-credential credential.client_secret %}">edit</a></td>
             <td><a href="{% url apiv2-delete-credential credential.client_secret %}">delete</a></td>

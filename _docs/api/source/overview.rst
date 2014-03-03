@@ -13,5 +13,5 @@ have a look at the browseable api (http://www.freesound.org/apiv2) to quickly un
 the new API works. You'll need to be logged in in Freesound to be able to use the browseable API.
 
 In order to start using APIv2 you'll need an API key that you can request in (http://www.freesound.org/apiv2/apply).
-API keys given for APIv2 can ALSO be used for APIv2.
+API keys given for APIv2 can ALSO be used for APIv1.
 If you have any questions or doubts you can post them in our mailing list http://groups.google.com/group/freesound-api.

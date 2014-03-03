@@ -12,3 +12,14 @@ from your application. This enables non "read-only" resources such as uploading 
 Most of the resources are accessible using both authentication strategies but some of them
 are restricted to the use of OAuth. These resources are marked as "OAuth required" in the :ref:`resources` page.
 
+
+
+Token authentication
+=========================================================
+
+
+
+.. _oauth-authentication:
+
+OAuth authentication
+=========================================================

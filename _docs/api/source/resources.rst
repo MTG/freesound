@@ -138,8 +138,14 @@ Examples
 {{examples_SoundComments}}
 
 
-Download Sound
+Download Sound (OAuth required)
 =========================================================
+
+::
+
+  GET /apiv2/sounds/{{sound_id}}/download/
+
+This resource allows to download the original quality file for a sound. It requires :ref:`oauth-authentication`.
 
 Examples
 --------

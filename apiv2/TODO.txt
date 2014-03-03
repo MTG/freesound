@@ -1,6 +1,4 @@
-- fix geotag validation to prevent 500 errors (  File "/home/fsweb/freesound/apiv2/utils.py", line 714, in create_sound_object
-    lat, lon, zoom = sound_fields['geotag'].split(',')
-)
+- check Authorization session has expired errors
 - Write documentation
 - Clean code (imports, utils...)
 - Clean up expired grants from database with a django command

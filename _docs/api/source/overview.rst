@@ -3,7 +3,7 @@ Overview (APIv2)
 
 Welcome to the Freesound APIv2 docummentation!
 
-The APIv2 brings many new features such as OAuth authentication, sound uploads and
+The APIv2 brings many new features such as OAuth2 authentication, sound uploads and
 improved search options. APIv2 is still in a beta phase so it might not be completely reliable.
 Docummentation is still incomplete and we haven't released any client libraries yet.
 Therefore, use it at your own risk! ;)

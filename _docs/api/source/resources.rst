@@ -138,7 +138,7 @@ Examples
 {{examples_SoundComments}}
 
 
-Download Sound (OAuth required)
+Download Sound (OAuth2 required)
 =========================================================
 
 ::
@@ -154,7 +154,7 @@ Examples
 {{examples_DownloadSound}}
 
 
-Upload Sound (OAuth required)
+Upload Sound (OAuth2 required)
 =========================================================
 
 Examples
@@ -163,7 +163,7 @@ Examples
 {{examples_UploadSound}}
 
 
-Not Yet Described Uploaded Sounds (OAuth required)
+Not Yet Described Uploaded Sounds (OAuth2 required)
 =========================================================
 
 Examples
@@ -172,7 +172,7 @@ Examples
 {{examples_NotYetDescribedUploadedSounds}}
 
 
-Describe Sound (OAuth required)
+Describe Sound (OAuth2 required)
 =========================================================
 
 Examples
@@ -181,7 +181,7 @@ Examples
 {{examples_DescribeSound}}
 
 
-Upload and Describe Sound (OAuth required)
+Upload and Describe Sound (OAuth2 required)
 =========================================================
 
 Examples
@@ -190,7 +190,7 @@ Examples
 {{examples_UploadAndDescribeSound}}
 
 
-Uploaded Sounds awaiting moderation in Freesound (OAuth required)
+Uploaded Sounds awaiting moderation in Freesound (OAuth2 required)
 =================================================================
 
 Examples
@@ -199,7 +199,7 @@ Examples
 {{examples_UploadedAndDescribedSoundsPendingModeration}}
 
 
-Bookmark Sound (OAuth required)
+Bookmark Sound (OAuth2 required)
 =========================================================
 
 Examples
@@ -208,7 +208,7 @@ Examples
 {{examples_BookmarkSound}}
 
 
-Rate Sound (OAuth required)
+Rate Sound (OAuth2 required)
 =========================================================
 
 Examples
@@ -217,7 +217,7 @@ Examples
 {{examples_RateSound}}
 
 
-Comment Sound (OAuth required)
+Comment Sound (OAuth2 required)
 =========================================================
 
 Examples
@@ -299,7 +299,7 @@ Examples
 {{examples_PackSounds}}
 
 
-Download Pack (OAuth required)
+Download Pack (OAuth2 required)
 =========================================================
 
 Examples

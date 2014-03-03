@@ -1,5 +1,5 @@
-Overview (APIv2)
->>>>>>>>>>>>>>>>
+Overview (API v2)
+>>>>>>>>>>>>>>>>>
 
 Welcome to the Freesound APIv2 docummentation!
 

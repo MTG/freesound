@@ -1,7 +1,7 @@
 .. _resources_apiv1:
 
-Resources (API v1)
-<<<<<<<<<<<<<<<<<<
+Resources (APIv1)
+<<<<<<<<<<<<<<<<<
 
 Sounds
 >>>>>>

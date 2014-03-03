@@ -31,6 +31,7 @@ we recommend you to use APIv1 for the moment.
 Contents
 --------
 
+
 APIv1 docummentation:
 
 .. toctree::
@@ -43,12 +44,18 @@ APIv1 docummentation:
 
    resources_apiv1.rst
 
+
 APIv2 docummentation:
 
 .. toctree::
    :maxdepth: 1
 
    overview.rst
+
+.. toctree::
+   :maxdepth: 3
+
+   authentication.rst
 
 .. toctree::
    :maxdepth: 3

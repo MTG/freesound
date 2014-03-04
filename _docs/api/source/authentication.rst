@@ -68,7 +68,7 @@ You should redirect user to the following url...
 
 ::
 
-  https://www.freesound.org/apiv2/oauth2/authorize
+  https://www.freesound.org/apiv2/oauth2/authorize/
 
 ... including as GET parameters:
 
@@ -84,7 +84,7 @@ Example:
 
 ::
 
-  https://www.freesound.org/apiv2/oauth2/authorize?client_id=YOUR_CLIENT_ID&response_type=code&state=xyz
+  https://www.freesound.org/apiv2/oauth2/authorize/?client_id=YOUR_CLIENT_ID&response_type=code&state=xyz
 
 
 In this page users will be prompted to log in into Freesund (if they are not already logged in) and will be asked to give

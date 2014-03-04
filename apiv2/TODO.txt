@@ -1,4 +1,5 @@
 - check Authorization session has expired errors
+- improve log handling (for errors, etc...)
 - Write documentation
 - Clean code (imports, utils...)
 - Clean up expired grants from database with a django command

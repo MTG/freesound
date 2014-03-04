@@ -125,7 +125,7 @@ class AccessTokenView(DjangoRestFrameworkAccessTokenView):
 
 class Capture(DjangoOauth2ProviderCapture):
     def get_redirect_url(self, request):
-        return reverse('oauth2:authorize') + '/?original_path=%s' % quote(request.get_full_path())
+        return prepend_base(reverse('oauth2:authorize') + '/?original_path=%s' % quote(request.get_full_path()), use_https=not settings.DEBUG, dynamic_resolve=False)
 
 
 class Authorize(DjangoOauth2ProviderAuthorize):
@@ -185,7 +185,7 @@ class Authorize(DjangoOauth2ProviderAuthorize):
         self.cache_data(request, code, "code")
         self.cache_data(request, client, "client")
 
-        return HttpResponseRedirect(self.get_redirect_url(request) + '/?original_path=%s' % original_path)
+        return HttpResponseRedirect(prepend_base(self.get_redirect_url(request) + '/?original_path=%s' % original_path, use_https=not settings.DEBUG, dynamic_resolve=False))
 
 
 class Redirect(DjangoOauth2ProviderRedirect):
@@ -197,7 +197,7 @@ class Redirect(DjangoOauth2ProviderRedirect):
         error = self.get_data(request, "error")
         client = self.get_data(request, "client")
 
-        redirect_uri = data.get('redirect_uri', None) or client.redirect_uri
+        redirect_uri = client.redirect_uri # data.get('redirect_uri', None) or
         parsed = urlparse.urlparse(redirect_uri)
         query = QueryDict('', mutable=True)
 

@@ -24,7 +24,7 @@ from django.conf.urls.defaults import patterns, url
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from apiv2.utils import AccessTokenView, Authorize, Capture, Redirect
+from apiv2.utils import AccessTokenView, Authorize, Capture, Redirect, prepend_base
 import settings
 
 
@@ -35,9 +35,9 @@ otherwise. Apparently if namespace is defined manually (ex: name='oauth2:capture
 
 
 if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
-    login_url = '/apiv2/login/'
+    login_url = prepend_base('/apiv2/login/', use_https=not settings.DEBUG, dynamic_resolve=False)
 else:
-    login_url = settings.LOGIN_URL
+    login_url = prepend_base(settings.LOGIN_URL, use_https=not settings.DEBUG, dynamic_resolve=False)
 
 
 def https_and_login_required(view_func):

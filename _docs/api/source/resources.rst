@@ -191,7 +191,7 @@ Examples
 
 
 Uploaded Sounds awaiting moderation in Freesound (OAuth2 required)
-=================================================================
+==================================================================
 
 Examples
 --------
@@ -275,6 +275,14 @@ Examples
 --------
 
 {{examples_UserBookmarkCategorySounds}}
+
+
+.. _me_resource:
+
+Me (information about user authenticated using OAuth2, OAuth2 required)
+=======================================================================
+
+
 
 
 Pack resources

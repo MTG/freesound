@@ -104,14 +104,14 @@ class AccessTokenView(DjangoRestFrameworkAccessTokenView):
 
     def create_access_token(self, request, user, scope, client):
 
-        # Filter out requested scopes and only leave those allowed to the client
+        # Use client scope
         client_scope = client.apiv2_client.get_scope_display()
-        allowed_scopes = [requested_scope for requested_scope in to_names(scope) if requested_scope in client_scope]
+        #allowed_scopes = [requested_scope for requested_scope in to_names(scope) if requested_scope in client_scope]
 
         return AccessToken.objects.create(
             user=user,
             client=client,
-            scope=to_int(*allowed_scopes)
+            scope=to_int(*client_scope.split('+'))
         )
 
     def create_refresh_token(self, request, user, scope, access_token, client):

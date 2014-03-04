@@ -72,13 +72,13 @@ You should redirect user to the following url...
 
 ... including as GET parameters:
 
-======================  ========================================================================
+======================  =====================================================
 Name                    Description
-======================  ========================================================================
+======================  =====================================================
 ``client_id``           Client id of your API credential (not the client secret!)
 ``response_type``       Must be 'code'
-``state``               Arbitrary string that will be included in the redirect call. This parameter is **not required**.
-======================  ========================================================================
+``state``               Arbitrary string that will be included as a GET parameter in the redirect call. This parameter is **not required**.
+======================  =====================================================
 
 Example:
 
@@ -86,6 +86,150 @@ Example:
 
   https://www.freesound.org/apiv2/oauth2/authorize/?client_id=YOUR_CLIENT_ID&response_type=code&state=xyz
 
+In this page users will be prompted to log in into Freesound (if they are not already logged in, Fig. 1) and will be asked to give
+permission to your application to access their data and act on their behalf (Fig. 2).
 
-In this page users will be prompted to log in into Freesund (if they are not already logged in) and will be asked to give
-permission to your application to access their data and act on their behalf.
+.. figure:: _static/authentication/api_login.png
+   :align: center
+
+   Fig 1. Login page (Step 1)
+
+.. figure:: _static/authentication/api_request_permission.png
+   :align: center
+
+   Fig 2. Permission request (Step 1)
+
+
+Step 2
+------
+
+After users either click on "Authorize!" or "Deny access", Freesound will redirect users to the 'Redirect url'
+that was specified when requesting the API credentials. That redirect can include the following GET parameters:
+
+======================  =====================================================
+Name                    Description
+======================  =====================================================
+``code``                In case user accepts, a ``code`` parameter will be included with a temporary authorization code that you will need to continue with the authentication process.
+``error``               In case user denies access to your application, an ``error`` parameter will be included with the value "access_denied".
+``state``               This parameter contains the string that you included in Step 1 (see above).
+``original_path``       This is just a parameter Freesound uses to provie the 'login with another user' option. You can forget about this one ;)
+======================  =====================================================
+
+If your application can not handle the request that Freesound does to the 'Redirect url', you can use Freesound itself
+as a redirection target when requesting the API credentials. In that case, the redirect will lead to a page where, if
+users have granted access to your application, the ``code`` will be displayed on screen so users can easily copy it (Fig. 3).
+You will need this code to continue with Step 3 of the authentication process.
+
+
+.. figure:: _static/authentication/api_permission_granted.png
+   :align: center
+
+   Fig 3. Use Freesound as redirect target (Step 2)
+
+
+Step 3
+------
+
+Once your application gets the authorization code, it exchanges it for an access token that relates your application
+with the user that has logged in and that you will have to add to all further API calls.
+
+To do that you need to make a POST request to the following url...
+
+::
+
+  https://www.freesound.org/apiv2/oauth2/access_token/
+
+... including as POST parameters:
+
+======================  =====================================================
+Name                    Description
+======================  =====================================================
+``client_id``           Client id of your API credential (not the client secret!)
+``client_secret``       The client secret ;)
+``grant_type``          Must be 'authorization_code'
+``code``                The authorization code you got in step 2 (see above)
+======================  =====================================================
+
+Example:
+
+::
+
+  curl -X POST -d "client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&grant_type=authorization_code&code=THE_GIVEN_CODE" https://www.freesound.org/apiv2/oauth2/access_token/
+
+The response to that request should look like the following:
+
+::
+
+  {
+    "access_token": "64c64660ceed813476b314f52136d9698e075622",
+    "scope": "read write read+write",
+    "expires_in": 86399,
+    "refresh_token": "0354489231f6a874331aer4927569297c7fea4d5"}
+  }
+
+Authorization codes obtained in Step 2 have a **lifetime of 10 minutes**, therefore the POST request to get the access token
+must be done at most 10 minutes after the authorization code has been issued. After that time the API will return a 400 (Bar request)
+response showing an 'Invalid grant' error. Authorization codes can only be exchanged for an access token **once**, therefore
+you can not use the same authorization grant two times to get an access token.
+
+Once you have the access token you will be able to access OAuth2 restricted API resources as described below.
+
+
+Once you have your access token...
+----------------------------------
+
+Every access token relates your application with a user from Freesound. Therefore, using this access token your application
+can act on users behalf and use all API resources that are restricted to OAuth2 authentication strategy.
+You must include the access token in API requests as an authorization header:
+
+::
+
+  curl -H "Authorization: Bearer ACCESS_TOKEN" "https://www.freesound.org/apiv2/sounds/not_yet_described/"
+
+You can also use this authentication mechanism to access non OAuth2 required API resources.
+
+Similarly to authorization codes, access tokens do have a limited **lifetime of 24 hours**. Notice that access token response
+from Step 3 includes a ``expires_in`` parameter that indicates that lifetime in seconds. After that time, the token will
+be invalidated and any request to the API using the token will return a 401 (Unauthorized) response showing an 'Invalid token' error.
+If that happens, you can obtain a new access token either by starting the whole authentication process again or by requesting
+a new access token using a **refresh token** that was also issued to you when you got the access token (``refresh_token`` parameter above).
+
+To get a new access token using your refresh token you basically need to repeat Step 3 setting the ``grant_type`` parameter to 'refresh_token'
+(instead of 'authorization_code') and adding a ``refresh_token`` parameter with your refresh token (instead of adding the ``code`` parameter
+with the authorization code). See the following example:
+
+::
+
+  curl -X POST -d "client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&grant_type=refresh_token&refresh_token=REFRESH_TOKEN" "https://www.freesound.org/apiv2/oauth2/access_token/"
+
+The response to this request will be a brand new access token that you can use in your further API calls. It will also include
+a new refresh token that you will need when the given access token expires. There can only exist one access token per
+application/user pair, therefore newly created access tokens overwrite existing ones if they relate the same application/user pair.
+
+
+Managing access tokens and multiple users
+-----------------------------------------
+
+Every access token relates one Freesound user with your application. If you are developing an application where multiple users
+could be logged in at the same time, you'll need a way to also relate your users with the access tokens they have generated.
+In that case we recommend to use the OAuth2 authorization flow as a 'Log in with Freesound' service that will allow you to
+identify the users of your application and provide access tokens for them. To do that you should follow the standard authorization
+flow and then make a call to the the API resource :ref:`me_resource`. With that information your application will find out who has logged
+and will be able to uniquely identify the user.
+
+If the authorization process is well implemented (using iframes for example and handling the redirect call with the authorization code),
+the process can be very fast and really transparent to the user, only having to log in Freesound and clicking the 'Authorize!' button (Fig. 2).
+If the user has already a valid session opened in Freesound, she won't even need to log in and will be directly redirected
+to the permission request page. And even more, if the user had previously granted permission to your application (if we see that
+there exists an either active or expired access token relating your application and the user), the permissions will be automatically
+granted and OAuth2 flow will go directly to the redirection step (Step 2), making the process even faster.
+
+Aaaaaand that is all you need to know about OAuth2 authentication strategy. If you have any further questions or doubts
+you can post them in our mailing list http://groups.google.com/group/freesound-api. Suggestions to improve this docummentation
+are also welcome!
+
+
+
+
+
+

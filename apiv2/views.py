@@ -873,6 +873,7 @@ def create_apiv2_key(request):
             api_client.accepted_tos = form.cleaned_data['accepted_tos']
             api_client.save()
             form = ApiV2ClientForm()
+            logger.info('%s <> (ApiV2 Auth:%s Dev:%s User:%s Client:%s)' % ('new_credential', None, request.user.username, None, api_client.client_id))
     else:
         form = ApiV2ClientForm()
 

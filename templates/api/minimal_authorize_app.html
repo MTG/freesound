@@ -28,12 +28,16 @@
 
     <img src="/media/images/logo.png"/>
     {% if not error %}
-        <p>Hi {{ user.username }}!</p>
-        <p>The application <strong>{{ client.name }}</strong> has requested permission to access your data with the following permissions: {{ client.apiv2_client.get_scope_display }}</p>
+        {% comment %}<p>Hi {{ user.username }}!</p>{% endcomment %}
+        <p>The application <strong>{{ client.name }}</strong> is requesting<br> permission to access your data.
+           {% comment %} with the following permissions: {{ client.apiv2_client.get_scope_display }} {% endcomment %}
+        </p>
+        {% comment %}
         <p>
             Granting permission to access your data means that you allow the application to act on your behealf inside Freesound.
             You can revoke the permissions you have given to an application at any time by visiting your Freesound settings page.
         </p>
+        {% endcomment %}
         <form method="post" action="{% url "oauth2:authorize" %}/?original_path={{ original_path }}">
             {% csrf_token %}
             {{ form.errors }}
@@ -42,12 +46,14 @@
             <input type="submit" class="btn login large primary" name="authorize" value="Authorize!" />
         </form>
 
-        <p>({% comment %}logged in as <strong>{{ request.user }}</strong>, {% endcomment %}<a href="{% url "api-logout" %}?next={{ original_path }}">login with another user</a>).</p>
+        <p>(logged in as <strong>{{ request.user }}</strong>, <a href="{% url "api-logout" %}?next={{ original_path }}">login as another user</a>)</p>
     {% else %}
         <p>Ops! there were some errors...</p>
-        {{ error }}
-        <p>{{ error_description }}</p>
-        <p>You should probably start again the authorization process from the 3rd party application!</p>
+
+        <!--error: {{ error }} -->
+        {% comment %}<p>{{ error_description }}</p>
+
+        <p>You should probably start again the authorization process from the 3rd party application!</p>{% endcomment %}
     {% endif %}
 
 </div>

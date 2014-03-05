@@ -97,7 +97,7 @@ urlpatterns = patterns('apiv2.views',
     # OTHER #
     #########
     url(r'^$', views.FreesoundApiV2Resources.as_view()),
-    url(r'/$', views.return_invalid_url),
+    url(r'/$', views.invalid_url),
 )
 
 

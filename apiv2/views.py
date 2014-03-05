@@ -853,7 +853,7 @@ class FreesoundApiV2Resources(GenericAPIView):
 ### View for returning "Invalid url" 400 responses
 @api_view(['GET'])
 @authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
-def return_invalid_url(request):
+def invalid_url(request):
     raise InvalidUrlException
 
 

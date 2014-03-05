@@ -46,13 +46,23 @@ class CachedCountProxy(object):
             cache.set(key, count, 300)
         return count
 
-def paginate(request, qs, items_per_page=20, page_get_name='page', cache_count=False):
+class CountProvidedPaginator(Paginator):
+    """ A django Paginator that takes an optional object_count
+        which is the length of object_list. This means that count() or
+        len() doesn't have to be called """
+
+    def __init__(self, object_list, per_page, orphans=0, allow_empty_first_page=True, object_count=None):
+        Paginator.__init__(self, object_list, per_page, orphans, allow_empty_first_page)
+        self._count = object_count
+
+
+def paginate(request, qs, items_per_page=20, page_get_name='page', cache_count=False, object_count=None):
     # monkeypatch solution to cache the count for performance
     # disabled for now, causes problems on comments.
     if cache_count:
         qs.count = CachedCountProxy(qs)
 
-    paginator = Paginator(qs, items_per_page)
+    paginator = CountProvidedPaginator(qs, items_per_page, object_count=object_count)
     try:
         current_page = int(request.GET.get(page_get_name, 1))
     except ValueError:

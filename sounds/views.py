@@ -727,14 +727,14 @@ def downloaders(request, username, sound_id):
     
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(sound=sound_id)
-    return render_to_response('sounds/downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
+    return render_to_response('sounds/downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=sound.num_downloads), locals()), context_instance=RequestContext(request))
 
 def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id = pack_id)
     
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
-    return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
+    return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()), context_instance=RequestContext(request))
 
 def click_log(request,click_type=None, sound_id="", pack_id="" ):
     

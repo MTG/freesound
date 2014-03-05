@@ -277,12 +277,13 @@ Examples
 {{examples_UserBookmarkCategorySounds}}
 
 
-.. _me_resource:
 
 Me (information about user authenticated using OAuth2, OAuth2 required)
 =======================================================================
 
+.. _me_resource:
 
+This resource...
 
 
 Pack resources

@@ -13,26 +13,22 @@ Important information
 ---------------------
 
 We are in the process of releasing a new version of the Freesound API which we
-call APIv2. APIv2 is currently deployed as a beta and might not be completely reliable.
+call APIv2. APIv2 is currently deployed as beta and might not be completely reliable.
 Documentation for APIv2 is not yet complete although you will find some examples
-in the APIv2 resources page and you can use the browseable api (http://www.freesound.org/apiv2)
+in the APIv2 resources page and you can use the browseable API (http://www.freesound.org/apiv2)
 to learn most of the stuff you will need.
 
-The APIv2 brings many new features such as OAuth authentication, sound uploads and
+The APIv2 brings many new features such as OAuth2 authentication, sound uploads and
 improved search options. The release date for APIv2 is scheduled for May/June 2014, but
 once APIv2 is released we will still maintain APIv1 for at least half a year. We will
 announce all related news in our mailing list http://groups.google.com/group/freesound-api.
-
-If you are starting a new project and do not need any of the new APIv2 functionalities,
-we recommend you to use APIv1 for the moment.
-
 
 
 Contents
 --------
 
 
-APIv1 docummentation:
+APIv1 documentation:
 
 .. toctree::
    :maxdepth: 1
@@ -45,7 +41,7 @@ APIv1 docummentation:
    resources_apiv1.rst
 
 
-APIv2 docummentation:
+APIv2 documentation:
 
 .. toctree::
    :maxdepth: 1
@@ -63,7 +59,7 @@ APIv2 docummentation:
    resources_apiv2.rst
 
 
-Analysis docummentaion (for APIv1 and APIv2) :
+Analysis documentation (for APIv1 and APIv2) :
 
 .. toctree::
    :maxdepth: 3

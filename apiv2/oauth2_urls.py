@@ -22,6 +22,8 @@
 
 from django.conf.urls.defaults import patterns, url
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.contrib.auth.views import redirect_to_login
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from apiv2.utils import AccessTokenView, Authorize, Capture, Redirect, prepend_base
@@ -44,8 +46,16 @@ def https_and_login_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
         if not request.using_https and not settings.DEBUG:
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
+        if not request.user.is_authenticated():
+            # Quick fix, should be implemented better
+            path = request.build_absolute_uri().replace('www.', '')
+            path = path.replace('http', 'https')
+            path = path.replace('https://', 'https://www.')
+            return redirect_to_login(path, login_url, REDIRECT_FIELD_NAME)
+
         return view_func(request, *args, **kwargs)
-    return login_required(_wrapped_view_func, login_url=login_url)
+    return _wrapped_view_func
+    #return login_required(_wrapped_view_func, login_url=login_url)
 
 
 def https_required_and_crsf_exempt(view_func):

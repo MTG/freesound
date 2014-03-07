@@ -48,9 +48,8 @@ def https_and_login_required(view_func):
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
         if not request.user.is_authenticated():
             # Quick fix, should be implemented better
-            path = request.build_absolute_uri().replace('www.', '')
-            path = path.replace('http', 'https')
-            path = path.replace('https://', 'https://www.')
+            path = request.build_absolute_uri().split('/apiv2/')[1]
+            path = prepend_base('/apiv2/' + path, use_https=not settings.DEBUG, dynamic_resolve=False)
             return redirect_to_login(path, login_url, REDIRECT_FIELD_NAME)
 
         return view_func(request, *args, **kwargs)

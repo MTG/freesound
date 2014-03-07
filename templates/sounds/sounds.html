@@ -96,7 +96,7 @@
                 </div>
         {% endfor %}
         </ul>
-        <p class="more_button" ><a href="{% url packs %}?order=-last_update">more...</a></p>
+        <p class="more_button" ><a href="{% url packs %}?order=-last_updated">more...</a></p>
     </div><!-- #latest_changed_packs -->
 {% endcache %}
 {% cache 3600 most_downloaded_packs  %}

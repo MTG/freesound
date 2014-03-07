@@ -87,7 +87,7 @@ def get_random_uploader():
 def sounds(request):
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
-    latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
+    latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).order_by("-last_updated")[0:20]
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
 
     # N.B. this two queries group by twice on sound id, if anyone ever find out why....
@@ -134,11 +134,10 @@ def random(request):
 
 def packs(request):
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
+    if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related() \
                      .filter(sound__moderation_state="OK", sound__processing_state="OK") \
-                     .annotate(num_sounds=Count('sound'), last_update=Max('sound__created')) \
                      .filter(num_sounds__gt=0) \
                      .order_by(order)
     return render_to_response('sounds/browse_packs.html',
@@ -581,7 +580,7 @@ def similar(request, username, sound_id):
 
 def pack(request, username, pack_id):
     try:
-        pack = Pack.objects.select_related().annotate(num_sounds=Count('sound')).get(user__username__iexact=username, id=pack_id)
+        pack = Pack.objects.select_related().get(user__username__iexact=username, id=pack_id)
     except Pack.DoesNotExist:
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
@@ -619,9 +618,9 @@ def pack(request, username, pack_id):
 def packs_for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
+    if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
-    qs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order)
+    qs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by(order)
     return render_to_response('sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 

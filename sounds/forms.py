@@ -187,6 +187,7 @@ class PackEditForm(ModelForm):
 
         if commit:
             pack.save()
+        pack.process()
         return pack
 
 

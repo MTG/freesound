@@ -173,7 +173,9 @@ def front_page(request):
 
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(user__username__iexact=username, id=sound_id)
+        sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(id=sound_id, user__username__iexact=username)
+        if sound.user.username.lower() != username.lower():
+            raise Http404
         user_is_owner = request.user.is_authenticated() and (sound.user == request.user or request.user.is_superuser \
                         or request.user.is_staff or Group.objects.get(name='moderators') in request.user.groups.all())
         # If the user is authenticated and this file is his, don't worry about moderation_state and processing_state
@@ -236,7 +238,9 @@ def sound_download(request, username, sound_id):
     if settings.LOG_CLICKTHROUGH_DATA:
         click_log(request,click_type='sounddownload',sound_id=sound_id)
     
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
@@ -260,7 +264,9 @@ def pack_download(request, username, pack_id):
     if settings.LOG_CLICKTHROUGH_DATA:
         click_log(request,click_type='packdownload',pack_id=pack_id)
         
-    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
+    pack = get_object_or_404(Pack, id=pack_id)
+    if pack.user.username.lower() != username.lower():
+        raise Http404
     Download.objects.get_or_create(user=request.user, pack=pack)
 
     filelist =  "%s %i %s %s\r\n" % (pack.license_crc,os.stat(pack.locations('license_path')).st_size, pack.locations('license_url'), "_readme_and_license.txt")
@@ -276,7 +282,9 @@ def pack_download(request, username, pack_id):
 
 @login_required
 def sound_edit(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, processing_state='OK')
+    sound = get_object_or_404(Sound, id=sound_id, processing_state='OK')
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
@@ -402,7 +410,9 @@ def sound_edit(request, username, sound_id):
 
 @login_required
 def pack_edit(request, username, pack_id):
-    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
+    pack = get_object_or_404(Pack, id=pack_id)
+    if pack.user.username.lower() != username.lower():
+        raise Http404
     pack_sounds = ",".join([str(s.id) for s in pack.sound_set.all()])
 
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
@@ -422,7 +432,9 @@ def pack_edit(request, username, pack_id):
 @login_required
 def pack_delete(request, username, pack_id):
 
-    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
+    pack = get_object_or_404(Pack, id=pack_id)
+    if pack.user.username.lower() != username.lower():
+        raise Http404
 
     if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
         raise PermissionDenied
@@ -456,8 +468,9 @@ def pack_delete(request, username, pack_id):
 
 @login_required
 def sound_edit_sources(request, username, sound_id):
-    print "=========== SOUND_ID: " + sound_id
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
@@ -541,7 +554,9 @@ def __nested_remixgroup(dg1, remix_group):
     return dg1
 
 def remixes(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
     try:
         remix_group = sound.remix_group.all()[0]
     except:
@@ -560,18 +575,22 @@ def remix_group(request, group_id):
 
 
 def geotag(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
     google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('sounds/geotag.html', locals(), context_instance=RequestContext(request))
 
 
 def similar(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username,
+    sound = get_object_or_404(Sound,
                               id=sound_id,
                               moderation_state="OK",
                               processing_state="OK",
                               analysis_state="OK",
                               similarity_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     similar_sounds, count = get_similar_sounds(sound,request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
     logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
@@ -580,7 +599,9 @@ def similar(request, username, sound_id):
 
 def pack(request, username, pack_id):
     try:
-        pack = Pack.objects.select_related().get(user__username__iexact=username, id=pack_id)
+        pack = Pack.objects.select_related().get(id=pack_id)
+        if pack.user.username.lower() != username.lower():
+            raise Http404
     except Pack.DoesNotExist:
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
@@ -632,7 +653,9 @@ def for_user(request, username):
 
 @login_required
 def delete(request, username, sound_id):    
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id)
+    sound = get_object_or_404(Sound, id=sound_id)
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
         raise PermissionDenied
@@ -663,7 +686,9 @@ def delete(request, username, sound_id):
 
 
 def flag(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     user = None
     email = None
@@ -709,7 +734,9 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 def display_sound_wrapper(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id) #TODO: test the 404 case
+    sound = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
+    if sound.user.username.lower() != username.lower():
+        raise Http404
     return render_to_response('sounds/display_sound.html', display_sound.display_sound(RequestContext(request), sound), context_instance=RequestContext(request))
 
 

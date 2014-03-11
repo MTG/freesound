@@ -721,8 +721,11 @@ def accounts(request):
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
     # select all time active users
-    all_time_uploaders = Sound.public.values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
-    all_time_posters = Post.objects.all().values("author_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+    # We store aggregate counts on the user profile for faster querying.
+    all_time_uploaders = Profile.objects.extra(select={'id__count': 'num_sounds'}).order_by("-num_sounds").values("user", "id__count")[:num_all_time_active_users]
+    all_time_posters = Profile.objects.extra(select={'id__count': 'num_posts', 'author_id': 'user_id'}).order_by("-num_posts").values("author_id", "id__count")[:num_all_time_active_users]
+    # Performing a count(*) on Comment table is slow
+    # TODO: Create num_comments on profile and query as above
     all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
 
     # rank

@@ -85,7 +85,9 @@ def geotags_box_json(request):
             sounds =qs.filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
         elif min_lat > max_lat and min_lon > max_lon:
             sounds = qs.exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))        
-        return generate_json(sounds)
+
+        sounds_data = [[s.id, s.geotag.lat, s.geotag.lon] for s in sounds]
+        return HttpResponse(json.dumps(sounds_data), mimetype="application/json")
     except ValueError:
         raise Http404
     

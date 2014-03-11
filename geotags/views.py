@@ -52,7 +52,7 @@ def generate_json(sound_queryset):
 
     sounds_data = [[s.id, s.lat, s.lon] for s in sound_queryset]
 
-    return HttpResponse(json.dumps(sounds_data))
+    return HttpResponse(json.dumps(sounds_data), mimetype="application/json")
 
 @cache_page(60 * 15)
 def geotags_json(request, tag=None):

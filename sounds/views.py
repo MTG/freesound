@@ -137,7 +137,6 @@ def packs(request):
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related() \
-                     .filter(sound__moderation_state="OK", sound__processing_state="OK") \
                      .filter(num_sounds__gt=0) \
                      .order_by(order)
     return render_to_response('sounds/browse_packs.html',

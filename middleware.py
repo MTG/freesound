@@ -50,6 +50,8 @@ class CheckIfRequestIsHttps:
             request.using_https = True
         else:
             request.using_https = False
+        # monkey patch request.is_secure()
+        request.is_secure = lambda: request.using_https
         return None
 
 class BulkChangeLicenseHandler:

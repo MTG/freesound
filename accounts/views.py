@@ -711,9 +711,9 @@ def accounts(request):
     user_rank,sort_list = create_user_rank(latest_uploaders,latest_posters,latest_commenters)
 
     #retrieve users lists
-    most_active_users = User.objects.select_related().filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_active_users]])
-    new_users = User.objects.select_related().filter(date_joined__gte=last_time).filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
-    logged_users = User.objects.select_related().filter(id__in=get_online_users())
+    most_active_users = User.objects.select_related("profile").filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_active_users]])
+    new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time).filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
+    logged_users = User.objects.select_related("profile").filter(id__in=get_online_users())
 
     # prepare for view
     most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
@@ -731,7 +731,7 @@ def accounts(request):
     # rank
     user_rank,sort_list = create_user_rank(all_time_uploaders,all_time_posters,all_time_commenters)
     #retrieve users list
-    all_time_most_active_users = User.objects.select_related().filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_all_time_active_users]])
+    all_time_most_active_users = User.objects.select_related("profile").filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_all_time_active_users]])
     all_time_most_active_users_display = [[u, user_rank[u.id]] for u in all_time_most_active_users]
     all_time_most_active_users_display=sorted(all_time_most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
 

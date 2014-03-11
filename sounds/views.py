@@ -173,7 +173,7 @@ def front_page(request):
 
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(id=sound_id, user__username__iexact=username)
+        sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(id=sound_id)
         if sound.user.username.lower() != username.lower():
             raise Http404
         user_is_owner = request.user.is_authenticated() and (sound.user == request.user or request.user.is_superuser \

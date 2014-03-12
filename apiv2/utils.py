@@ -49,7 +49,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import resolve, reverse
 import urlparse
-from utils.cache import invalidate_template_cache
+from freesound.utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW

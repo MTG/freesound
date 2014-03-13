@@ -135,7 +135,7 @@ function setMaxZoomCenter(map, lat, lng, zoom)
 function show_hide_bookmark_form(id)
 {
     if( $("#bookmark_form_"  + id.toString()).is(':hidden') ) { // Only do the request when expanding the div
-        var url = location.protocol + '//' + location.hostname + (location.port ? ':'+ location.port: '') + "/home/bookmarks/get_form_for_sound/" + id.toString();
+        var url = location.protocol + '//' + location.hostname + (location.port ? ':'+ location.port: '') + "/home/bookmarks/get_form_for_sound/" + id.toString() + '/';
         $("#bookmark_form_"  + id.toString()).html('&nbsp;').load(url)
     }
     $("#bookmark_form_"  + id.toString()).toggle();

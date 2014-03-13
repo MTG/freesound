@@ -43,8 +43,8 @@ class PledgieParserNode(template.Node):
         else:
             pledgie_id = int(self.pledgie_id)
 
-        api_url = "http://pledgie.com/campaigns/%d.json" % pledgie_id
-        pledge_url = "http://pledgie.com/campaigns/%d/" % pledgie_id
+        api_url = "https://pledgie.com/campaigns/%d.json" % pledgie_id
+        pledge_url = "https://pledgie.com/campaigns/%d/" % pledgie_id
 
         data = None
 

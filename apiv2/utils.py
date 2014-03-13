@@ -49,6 +49,10 @@ from django.utils.translation import ugettext as _
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import resolve, reverse
 import urlparse
+from freesound.utils.cache import invalidate_template_cache
+from django.contrib.auth.models import Group
+from tickets.models import Ticket, Queue, LinkedContent, TicketComment
+from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
 
 
 ############################
@@ -728,7 +732,35 @@ def create_sound_object(user, original_sound_fields):
     # 9 save!
     sound.save()
 
-    # 10 Proces
+    # 10 create moderation tickets if needed
+    if user.profile.is_whitelisted:
+        sound.moderation_state = 'OK'
+        sound.save()
+    else:
+        # create moderation ticket!
+        ticket = Ticket()
+        ticket.title = 'Moderate sound %s' % sound.original_filename
+        ticket.source = TICKET_SOURCE_NEW_SOUND
+        ticket.status = TICKET_STATUS_NEW
+        ticket.queue = Queue.objects.get(name='sound moderation')
+        ticket.sender = user
+        lc = LinkedContent()
+        lc.content_object = sound
+        lc.save()
+        ticket.content = lc
+        ticket.save()
+        tc = TicketComment()
+        tc.sender = user
+        tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
+        tc.ticket = ticket
+        tc.save()
+
+        invalidate_template_cache("user_header", ticket.sender.id)
+        moderators = Group.objects.get(name='moderators').user_set.all()
+        for moderator in moderators:
+            invalidate_template_cache("user_header", moderator.id)
+
+    # 11 proces
     try:
         sound.compute_crc()
     except:
@@ -738,10 +770,5 @@ def create_sound_object(user, original_sound_fields):
         sound.process()
     except Exception, e:
         pass
-
-    # Set moderation state to OK (this is just for testing)
-    #sound.moderation_state = 'OK'
-    #sound.processing_state = 'OK'
-    #sound.save()
 
     return sound

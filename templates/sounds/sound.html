@@ -180,16 +180,6 @@
         
         {% if user.is_authenticated %}
             <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
-            <!-- maybe move this code somewhere else? -->
-            <script type="text/javascript">
-                function show_hide_bookmark_form(id)
-                {
-                    if( $('#bookmark_form_'  + id.toString()).is(':hidden') ) { // Only do the request when expanding the div
-                        $("#bookmark_form_"  + id.toString()).html('&nbsp;').load('{% url bookmarks-add-form-for-sound sound.id %}')
-                    }
-                    $("#bookmark_form_"  + id.toString()).toggle('blind', {}, 500, function() {});
-                }
-            </script>
             <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
         {% endif %}
         

@@ -113,6 +113,22 @@ class Search(GenericAPIView):
             # Get analysis data and serialize sound results
             get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=[object['id'] for object in page['object_list']])
             sounds = []
+            objects_per_sound_ids = dict()
+            ids = []
+            for object in page['object_list']:
+                objects_per_sound_ids[object['id']] = object
+                ids.append(object['id'])
+
+            qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+            for s in qs:
+                sid = s.id
+                sound = SoundListSerializer(s, context=self.get_serializer_context()).data
+                if 'more_from_pack' in objects_per_sound_ids[sid].keys():
+                    if objects_per_sound_ids[sid]['more_from_pack'] > 0:
+                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(objects_per_sound_ids[sid]['pack_id']), objects_per_sound_ids[sid]['pack_name']), group_by_pack='0')
+                        sound['n_from_same_pack'] = objects_per_sound_ids[sid]['more_from_pack'] + 1  # we add one as is the sound itself
+                sounds.append(sound)
+            '''
             for object in page['object_list']:
                 try:
                     sound = SoundListSerializer(Sound.objects.select_related('user').get(id=object['id']), context=self.get_serializer_context()).data
@@ -125,6 +141,7 @@ class Search(GenericAPIView):
                     # This will happen if there are synchronization errors between solr index and the database.
                     # In that case sounds are are set to null
                     sounds.append(None)
+            '''
             response_data['results'] = sounds
 
         except SolrException, e:

@@ -111,37 +111,19 @@ class Search(GenericAPIView):
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['next_page_number'])
 
             # Get analysis data and serialize sound results
-            get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=[object['id'] for object in page['object_list']])
-            sounds = []
-            objects_per_sound_ids = dict()
-            ids = []
-            for object in page['object_list']:
-                objects_per_sound_ids[object['id']] = object
-                ids.append(object['id'])
-
+            ids = [object['id'] for object in page['object_list']]
+            get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
             qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
-            for s in qs:
-                sid = s.id
+            qs_ids = [s.id for s in qs]
+            sounds_extra_information = [object for object in page['object_list'] if object['id'] in qs_ids]  # we should make this check in case some sounds are in solr but not on db
+            sounds = []
+            for i, s in enumerate(qs):
                 sound = SoundListSerializer(s, context=self.get_serializer_context()).data
-                if 'more_from_pack' in objects_per_sound_ids[sid].keys():
-                    if objects_per_sound_ids[sid]['more_from_pack'] > 0:
-                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(objects_per_sound_ids[sid]['pack_id']), objects_per_sound_ids[sid]['pack_name']), group_by_pack='0')
-                        sound['n_from_same_pack'] = objects_per_sound_ids[sid]['more_from_pack'] + 1  # we add one as is the sound itself
+                if 'more_from_pack' in sounds_extra_information[i].keys():
+                    if sounds_extra_information[i]['more_from_pack'] > 0:
+                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(sounds_extra_information[i]['pack_id']), sounds_extra_information[i]['pack_name']), group_by_pack='0')
+                        sound['n_from_same_pack'] = sounds_extra_information[i]['more_from_pack'] + 1  # we add one as is the sound itself
                 sounds.append(sound)
-            '''
-            for object in page['object_list']:
-                try:
-                    sound = SoundListSerializer(Sound.objects.select_related('user').get(id=object['id']), context=self.get_serializer_context()).data
-                    if 'more_from_pack' in object.keys():
-                        if object['more_from_pack'] > 0:
-                            sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(object['pack_id']), object['pack_name']), group_by_pack='0')
-                            sound['n_from_same_pack'] = object['more_from_pack'] + 1  # we add one as is the sound itself
-                    sounds.append(sound)
-                except:
-                    # This will happen if there are synchronization errors between solr index and the database.
-                    # In that case sounds are are set to null
-                    sounds.append(None)
-            '''
             response_data['results'] = sounds
 
         except SolrException, e:

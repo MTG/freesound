@@ -53,6 +53,8 @@ def convert_to_solr_document(sound):
 
 
     document["is_geotagged"] = sound.geotag_id != None
+    if (sound.geotag_id != None):
+        document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
 
     document["type"] = sound.type
 

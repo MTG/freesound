@@ -40,3 +40,23 @@ class ApiKey(models.Model):
     url            = models.URLField()
     description    = models.TextField(blank=True)
     accepted_tos   = models.BooleanField(default=False)
+
+    @property
+    def client_id(self):
+        return "-"
+
+    @property
+    def client_secret(self):
+        return self.key
+
+    @property
+    def redirect_uri(self):
+        return "-"
+
+    @property
+    def get_scope_display(self):
+        return "-"
+
+    @property
+    def version(self):
+        return "V1"

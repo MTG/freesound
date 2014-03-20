@@ -21,9 +21,9 @@
 import django.forms as forms
 
 class ApiKeyForm(forms.Form):
-    name          = forms.CharField(label='Application name')
-    url           = forms.URLField(label='Application url')
-    description   = forms.CharField(label='Describe your application', widget=forms.Textarea)
+    name          = forms.CharField(label='Application name', widget=forms.TextInput(attrs={'style': 'width:500px'}))
+    url           = forms.URLField(label='Application url', widget=forms.TextInput(attrs={'style': 'width:500px'}))
+    description   = forms.CharField(label='Describe your application', widget=forms.Textarea(attrs={'style': 'width:500px'}))
     accepted_tos  = forms.BooleanField(label='',
                                        help_text='Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API',
                                        required=True,

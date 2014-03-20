@@ -76,7 +76,9 @@ from messages.models import Message
 from django.contrib.contenttypes.models import ContentType
 import tickets.views as TicketViews
 from django.contrib.auth.models import Group
+from provider.oauth2.models import AccessToken
 import follow.utils
+
 
 audio_logger = logging.getLogger('audio')
 # TAGRECOMMENDATION CODE
@@ -225,9 +227,11 @@ def home(request):
     unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
     num_more_unmoderated_sounds = unmoderated_sounds_count - settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE
 
-    latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
-    unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:5]
-    packs_without_sounds = Pack.objects.select_related().filter(user=user).annotate(num_sounds=Count('sound')).filter(num_sounds=0)
+    latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
+
+    # TODO: This might show a pack each time for each sound in it
+    unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
+    packs_without_sounds = Pack.objects.select_related().filter(user=user).filter(num_sounds=0)
     
     # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10].exists()
@@ -330,7 +334,13 @@ def edit(request):
     else:
         image_form = AvatarForm(prefix="image")
 
-    return render_to_response('accounts/edit.html', dict(profile=profile, profile_form=profile_form, image_form=image_form), context_instance=RequestContext(request))
+    has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
+
+    return render_to_response('accounts/edit.html', dict(profile=profile,
+                                                         profile_form=profile_form,
+                                                         image_form=image_form,
+                                                         has_granted_permissions=has_granted_permissions),
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -701,9 +711,9 @@ def accounts(request):
     user_rank,sort_list = create_user_rank(latest_uploaders,latest_posters,latest_commenters)
 
     #retrieve users lists
-    most_active_users = User.objects.select_related().filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_active_users]])
-    new_users = User.objects.select_related().filter(date_joined__gte=last_time).filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
-    logged_users = User.objects.select_related().filter(id__in=get_online_users())
+    most_active_users = User.objects.select_related("profile").filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_active_users]])
+    new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time).filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
+    logged_users = User.objects.select_related("profile").filter(id__in=get_online_users())
 
     # prepare for view
     most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
@@ -711,14 +721,17 @@ def accounts(request):
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
     # select all time active users
-    all_time_uploaders = Sound.public.values("user").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
-    all_time_posters = Post.objects.all().values("author_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+    # We store aggregate counts on the user profile for faster querying.
+    all_time_uploaders = Profile.objects.extra(select={'id__count': 'num_sounds'}).order_by("-num_sounds").values("user", "id__count")[:num_all_time_active_users]
+    all_time_posters = Profile.objects.extra(select={'id__count': 'num_posts', 'author_id': 'user_id'}).order_by("-num_posts").values("author_id", "id__count")[:num_all_time_active_users]
+    # Performing a count(*) on Comment table is slow
+    # TODO: Create num_comments on profile and query as above
     all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
 
     # rank
     user_rank,sort_list = create_user_rank(all_time_uploaders,all_time_posters,all_time_commenters)
     #retrieve users list
-    all_time_most_active_users = User.objects.select_related().filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_all_time_active_users]])
+    all_time_most_active_users = User.objects.select_related("profile").filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_all_time_active_users]])
     all_time_most_active_users_display = [[u, user_rank[u.id]] for u in all_time_most_active_users]
     all_time_most_active_users_display=sorted(all_time_most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
 
@@ -731,10 +744,10 @@ def account(request, username):
         user = User.objects.select_related('profile').get(username__iexact=username)
     except User.DoesNotExist:
         raise Http404
-        # expand tags because we will definitely be executing, and otherwise tags is called multiple times
+    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = list(user.profile.get_tagcloud() if user.profile else [])
     latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
-    latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
+    latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
 
@@ -1125,7 +1138,8 @@ def donate_redirect(request):
 
 @login_required
 def pending(request):
-    tickets_sounds = TicketViews.get_pending_sounds(request.user)
+    user = request.user
+    tickets_sounds = TicketViews.get_pending_sounds(user)
     pendings = []
     for ticket, sound in tickets_sounds:
         last_comments = ticket.get_n_last_non_moderator_only_comments(3)
@@ -1133,11 +1147,9 @@ def pending(request):
 
     show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
 
-    n_unprocessed_sounds = Sound.objects.select_related().filter(user=request.user).exclude(processing_state="OK").count()
+    n_unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK").count()
     if n_unprocessed_sounds:
-        messages.add_message(request, messages.WARNING, '%i of your recently uploaded sounds are still in processing '
-                                                        'phase and therefore are not yet ready for moderation. These '
-                                                        'sounds won\'t appear in this list until they are successfully '
-                                                        'processed. This process should take no more than a few minutes.' % n_unprocessed_sounds)
+        messages.add_message(request, messages.WARNING, '%i of your recently uploaded sounds are still in processing ')
 
+    moderators_version = False
     return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))

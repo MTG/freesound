@@ -122,6 +122,8 @@ def get_form_for_sound(request, sound_id):
     form.fields['category'].queryset = BookmarkCategory.objects.filter(user=request.user)
     categories_already_containing_sound = BookmarkCategory.objects.filter(user=request.user, bookmarks__sound=sound).distinct()
     add_bookmark_url = '/'.join(reverse('add-bookmark', args=[sound_id]).split('/')[:-2]) + '/'
+    add_bookmark_url = '/'.join(request.build_absolute_uri(reverse('add-bookmark', args=[sound_id])).split('/')[:-2]) + '/'
+
     data_dict = {
         'bookmarks': Bookmark.objects.filter(user=request.user,sound=sound).count() != 0,
         'sound_id':sound.id,
@@ -131,4 +133,3 @@ def get_form_for_sound(request, sound_id):
     }
     template = 'bookmarks/bookmark_form.html'
     return render_to_response(template, data_dict, context_instance = RequestContext(request))
-    

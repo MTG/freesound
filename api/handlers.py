@@ -21,7 +21,8 @@
 from django.conf import settings
 from piston.handler import BaseHandler
 from piston.utils import rc
-from search.forms import SoundSearchForm, SEARCH_SORT_OPTIONS_API
+from search.forms import SoundSearchForm
+from apiv2.forms import SEARCH_SORT_OPTIONS_API
 from search.views import search_prepare_sort, search_prepare_query
 from sounds.models import Sound, Pack, Download
 from bookmarks.models import Bookmark, BookmarkCategory
@@ -418,7 +419,7 @@ class SoundContentSearchHandler(BaseHandler):
         if not t and not f:
             raise ReturnError(400, "BadRequest", {"explanation": "Introduce either a target, a filter or both."})
         try:
-            results, count = api_search(target=t, filter=f, num_results=int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
+            results, count, note = api_search(target=t, filter=f, num_results=int(request.GET.get('max_results', settings.SOUNDS_PER_PAGE)))
         except SimilarityException, e:
             raise ReturnError(e.status_code, "SimilarityError", {"explanation": e.message})
         except Exception, e:
@@ -551,11 +552,9 @@ class SoundSimilarityHandler(BaseHandler):
             raise ReturnError(404, "NotFound", {"explanation": "Sound with id %s does not exist or similarity data is not ready." % sound_id})
 
         try:
-            similar_sounds, count = api_search(target=str(sound.id), preset=request.GET.get('preset', None), num_results=int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
+            similar_sounds, count, note = api_search(target=str(sound.id), preset=request.GET.get('preset', None), num_results=int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)))
         except SimilarityException, e:
             raise ReturnError(404, "NotFound", {"explanation": e})
-
-        #get_similar_sounds(sound,request.GET.get('preset', None), int(request.GET.get('num_results', settings.SOUNDS_PER_PAGE)) )
 
         sounds = []
         for similar_sound in similar_sounds:

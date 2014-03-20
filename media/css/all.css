@@ -398,7 +398,40 @@ div.infowindow {
     padding-right: 5px;
 }
 
+.new_tickets_count {
+    float: left;
+    background: url(../images/mod_count_bg.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 #message_indicator_0 {
+    float: left;
+    background: url(../images/messages_count_bg_zero.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#new_tickets_indicator_0 {
+    float: left;
+    background: url(../images/messages_count_bg_zero.png) no-repeat left;
+    color: #FFF;
+    margin: 10px 0 0 5px;
+    line-height: 15px;
+    font-size: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#pending_indicator_0 {
     float: left;
     background: url(../images/messages_count_bg_zero.png) no-repeat left;
     color: #FFF;
@@ -411,6 +444,13 @@ div.infowindow {
 
 #messages_count div {
     background: url(../images/messages_count_bg.png) no-repeat right;
+    height: 15px;
+    padding-right: 6px;
+    line-height: 14px;
+}
+
+#new_tickets_count div {
+    background: url(../images/mod_count_bg.png) no-repeat right;
     height: 15px;
     padding-right: 6px;
     line-height: 14px;
@@ -2592,7 +2632,11 @@ span.tag_addremove a:hover {
     display: inline;
 }
 
-.remove_sound {
+
+/*
+use classes from pack edition
+
+ .remove_sound {
     background-image: url(../images/cancel.png);
     background-repeat: no-repeat;
     float: right;
@@ -2610,7 +2654,7 @@ span.tag_addremove a:hover {
     right: 1px;
     position: relative;
     cursor: pointer;
-}
+}*/
 
 /* License form
 ------------------------------------------------------*/
@@ -2889,6 +2933,10 @@ ul.messages {
 
 .alternate-row-odd td {
     background-color: #fff;
+}
+
+.mod-selected-row td {
+    background-color: #ececec;
 }
 
 #moderation-queue-left,#moderation-queue-right {
@@ -3450,9 +3498,11 @@ ul.messages {
     color: red;
 }
 
+/* COOOKIES BANNER */
+
 #cookie-bar {
     /*border: 1px solid green;*/
-    height: 30px;
+    height: 50px;
     line-height: 30px;
     z-index: 2;
     opacity: 0.95;
@@ -3485,4 +3535,18 @@ ul.messages {
 
 .content_box {
     min-height: 80px;
+}
+
+#cookie-bar a {
+    color: #AB4646;
+}
+
+#cookie-bar .cb-float_right {
+
+    margin-right: 10px;
+    width: 50px;
+}
+
+.api-client-permissions-grant-row td {
+    background-color: #ffecec;
 }

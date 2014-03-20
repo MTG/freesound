@@ -443,12 +443,15 @@ class Pack(SocialModel):
     num_downloads = models.PositiveIntegerField(default=0)
     license_crc = models.CharField(max_length=8,blank=True)
 
+    num_sounds = models.PositiveIntegerField(default=0)
+    last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
+
     def __unicode__(self):
         return self.name
 
     @models.permalink
     def get_absolute_url(self):
-        return ('pack', (smart_unicode(self.id),))
+        return ('pack', (self.user.username, smart_unicode(self.id),))
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name')
@@ -469,9 +472,17 @@ class Pack(SocialModel):
                    )
 
     def process(self):
+        sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").order_by("-created")
+        self.num_sounds = sounds.count()
+        if self.num_sounds:
+            self.last_updated = sounds[0].created
         self.create_license_file()
+        self.save()
     
     def create_license_file(self):
+        """ Create a license file containing the licenses of all sounds in the
+            pack, and update the pack license_crc field, but DO NOT save the pack
+        """
         from django.template.loader import render_to_string
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
         if len(pack_sounds)>0:
@@ -483,7 +494,6 @@ class Pack(SocialModel):
              f.close()
              p = subprocess.Popen(["crc32",license_path],stdout=subprocess.PIPE)
              self.license_crc = p.communicate()[0].split(" ")[0][:-1]
-             self.save()
     
     def get_random_sound_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:1]
@@ -511,7 +521,7 @@ class Pack(SocialModel):
         # delete files
         delete_object_files(self, web_logger)
         # super class delete
-        super(Sound, self).delete()
+        super(SocialModel, self).delete()
 
 
 class Flag(models.Model):

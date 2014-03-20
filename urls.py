@@ -59,6 +59,8 @@ urlpatterns = patterns('',
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/downloaders/$', sounds.views.downloaders, name="sound-downloaders"),
     url(r'^people/(?P<username>[^//]+)/packs/$', sounds.views.packs_for_user, name="packs-for-user"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/$', sounds.views.pack, name="pack"),
+    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/edit/$', sounds.views.pack_edit, name="pack-edit"),
+    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/delete/$', sounds.views.pack_delete, name="pack-delete"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/downloaders/$', sounds.views.pack_downloaders, name="pack-downloaders"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/display/$', sounds.views.display_sound_wrapper, name="sound-display"),
@@ -110,6 +112,9 @@ urlpatterns = patterns('',
 
     # api views
     (r'^api/', include('api.urls')),
+
+    # apiv2 views
+    (r'^apiv2/', include('apiv2.urls')),
 
     # tag recommendation
     url(r'^tagrecommendation/recommendtags/$', get_recommended_tags_view, name="recommend-tags"),

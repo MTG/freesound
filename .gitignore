@@ -2,6 +2,7 @@
 *.pydevproject
 *.pyc
 *~
+*.DS_Store
 *settings_local.py
 \#*\#
 *.settings*

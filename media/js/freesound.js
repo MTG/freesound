@@ -25,7 +25,7 @@ $(function() {
         $("#cookie-bar").remove();
 
     $("#cookie-accept").click(function() {
-        $.cookie("cookieConsent", "yes", { expires: 180, path: '/' });
+        $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
         $("#cookie-bar").fadeOut(500);
     });
 });
@@ -129,3 +129,15 @@ function setMaxZoomCenter(map, lat, lng, zoom)
         }
     });
 }
+
+// BOOKMARKS related
+
+function show_hide_bookmark_form(id)
+{
+    if( $("#bookmark_form_"  + id.toString()).is(':hidden') ) { // Only do the request when expanding the div
+        var url = location.protocol + '//' + location.hostname + (location.port ? ':'+ location.port: '') + "/home/bookmarks/get_form_for_sound/" + id.toString() + '/';
+        $("#bookmark_form_"  + id.toString()).html('&nbsp;').load(url)
+    }
+    $("#bookmark_form_"  + id.toString()).toggle();
+}
+

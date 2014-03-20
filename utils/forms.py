@@ -56,6 +56,13 @@ class RecaptchaWidget(forms.Widget):
             return ''
         return captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY).strip()
 
+class RecaptchaWidgetSSL(forms.Widget):
+    """ A Widget which "renders" the output of captcha.displayhtml using SSL option"""
+    def render(self, *args, **kwargs):
+        if settings.RECAPTCHA_PUBLIC_KEY == '':
+            return ''
+        return captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY, use_ssl=True).strip()
+
 
 class DummyWidget(forms.Widget):
     """
@@ -85,6 +92,10 @@ class RecaptchaForm(forms.Form):
         recaptcha_response_field.label = ''
 
     def __init__(self, request, *args, **kwargs):
+        if request.using_https:
+            # If request is https present https form
+            self.base_fields['recaptcha_response_field'].widget = RecaptchaWidgetSSL()
+
         super(RecaptchaForm, self).__init__(*args, **kwargs)
         self._request = request
 

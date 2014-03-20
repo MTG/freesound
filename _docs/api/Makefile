@@ -31,9 +31,14 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 html:
+	@echo "Adding examples to api doc source files."
+	python add_examples_to_api_docs_source_files.py
+	mv source/resources.rst resources.rst
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+	rm source/resources_apiv2.rst
+	mv resources.rst source/resources.rst
 
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml

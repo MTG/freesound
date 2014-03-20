@@ -42,7 +42,7 @@ from freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from networkx import nx
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm
+    NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm, PackEditForm
 from sounds.management.commands.create_remix_groups import _create_nodes, \
     _create_and_save_remixgroup
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
@@ -87,7 +87,7 @@ def get_random_uploader():
 def sounds(request):
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
-    latest_packs = Pack.objects.select_related().filter(sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:20]
+    latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).order_by("-last_updated")[0:20]
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
 
     # N.B. this two queries group by twice on sound id, if anyone ever find out why....
@@ -134,11 +134,9 @@ def random(request):
 
 def packs(request):
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
+    if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related() \
-                     .filter(sound__moderation_state="OK", sound__processing_state="OK") \
-                     .annotate(num_sounds=Count('sound'), last_update=Max('sound__created')) \
                      .filter(num_sounds__gt=0) \
                      .order_by(order)
     return render_to_response('sounds/browse_packs.html',
@@ -174,7 +172,9 @@ def front_page(request):
 
 def sound(request, username, sound_id):
     try:
-        sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(user__username__iexact=username, id=sound_id)
+        sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(id=sound_id)
+        if sound.user.username.lower() != username.lower():
+            raise Http404
         user_is_owner = request.user.is_authenticated() and (sound.user == request.user or request.user.is_superuser \
                         or request.user.is_staff or Group.objects.get(name='moderators') in request.user.groups.all())
         # If the user is authenticated and this file is his, don't worry about moderation_state and processing_state
@@ -237,7 +237,9 @@ def sound_download(request, username, sound_id):
     if settings.LOG_CLICKTHROUGH_DATA:
         click_log(request,click_type='sounddownload',sound_id=sound_id)
     
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
     Download.objects.get_or_create(user=request.user, sound=sound)
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
@@ -261,7 +263,9 @@ def pack_download(request, username, pack_id):
     if settings.LOG_CLICKTHROUGH_DATA:
         click_log(request,click_type='packdownload',pack_id=pack_id)
         
-    pack = get_object_or_404(Pack, user__username__iexact=username, id=pack_id)
+    pack = get_object_or_404(Pack, id=pack_id)
+    if pack.user.username.lower() != username.lower():
+        raise Http404
     Download.objects.get_or_create(user=request.user, pack=pack)
 
     filelist =  "%s %i %s %s\r\n" % (pack.license_crc,os.stat(pack.locations('license_path')).st_size, pack.locations('license_url'), "_readme_and_license.txt")
@@ -277,7 +281,9 @@ def pack_download(request, username, pack_id):
 
 @login_required
 def sound_edit(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, processing_state='OK')
+    sound = get_object_or_404(Sound, id=sound_id, processing_state='OK')
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
@@ -400,10 +406,70 @@ def sound_edit(request, username, sound_id):
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
 
 
+
+@login_required
+def pack_edit(request, username, pack_id):
+    pack = get_object_or_404(Pack, id=pack_id)
+    if pack.user.username.lower() != username.lower():
+        raise Http404
+    pack_sounds = ",".join([str(s.id) for s in pack.sound_set.all()])
+
+    if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = PackEditForm(request.POST,instance=pack)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(pack.get_absolute_url())
+    else:
+        form = PackEditForm(instance=pack,initial=dict(pack_sounds=pack_sounds))
+        current_sounds = pack.sound_set.all()
+    return render_to_response('sounds/pack_edit.html', locals(), context_instance=RequestContext(request)) # TODO: make edit page
+
+
+@login_required
+def pack_delete(request, username, pack_id):
+
+    pack = get_object_or_404(Pack, id=pack_id)
+    if pack.user.username.lower() != username.lower():
+        raise Http404
+
+    if not (request.user.has_perm('pack.can_change') or pack.user == request.user):
+        raise PermissionDenied
+
+    encrypted_string = request.GET.get("pack", None)
+
+    waited_too_long = False
+
+    if encrypted_string != None:
+        pack_id, now = decrypt(encrypted_string).split("\t")
+        pack_id = int(pack_id)
+        link_generated_time = float(now)
+
+        if pack_id != pack.id:
+            raise PermissionDenied
+
+        if abs(time.time() - link_generated_time) < 10:
+            logger.debug("User %s requested to delete pack %s" % (request.user.username,pack_id))
+            print pack
+            pack.delete()
+            print "DELETED!"
+            return HttpResponseRedirect(reverse("accounts-home"))
+        else:
+            waited_too_long = True
+
+
+    encrypted_link = encrypt(u"%d\t%f" % (pack.id, time.time()))
+
+    return render_to_response('sounds/pack_delete.html', locals(), context_instance=RequestContext(request))
+
+
 @login_required
 def sound_edit_sources(request, username, sound_id):
-    print "=========== SOUND_ID: " + sound_id
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
@@ -487,7 +553,9 @@ def __nested_remixgroup(dg1, remix_group):
     return dg1
 
 def remixes(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
     try:
         remix_group = sound.remix_group.all()[0]
     except:
@@ -506,18 +574,22 @@ def remix_group(request, group_id):
 
 
 def geotag(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
     google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('sounds/geotag.html', locals(), context_instance=RequestContext(request))
 
 
 def similar(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username,
+    sound = get_object_or_404(Sound,
                               id=sound_id,
                               moderation_state="OK",
                               processing_state="OK",
                               analysis_state="OK",
                               similarity_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     similar_sounds, count = get_similar_sounds(sound,request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
     logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
@@ -526,7 +598,9 @@ def similar(request, username, sound_id):
 
 def pack(request, username, pack_id):
     try:
-        pack = Pack.objects.select_related().annotate(num_sounds=Count('sound')).get(user__username__iexact=username, id=pack_id)
+        pack = Pack.objects.select_related().get(id=pack_id)
+        if pack.user.username.lower() != username.lower():
+            raise Http404
     except Pack.DoesNotExist:
         raise Http404
     qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
@@ -564,9 +638,9 @@ def pack(request, username, pack_id):
 def packs_for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
     order = request.GET.get("order", "name")
-    if order not in ["name", "-last_update", "-created", "-num_sounds", "-num_downloads"]:
+    if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
-    qs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by(order)
+    qs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by(order)
     return render_to_response('sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 
@@ -578,7 +652,9 @@ def for_user(request, username):
 
 @login_required
 def delete(request, username, sound_id):    
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id)
+    sound = get_object_or_404(Sound, id=sound_id)
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
         raise PermissionDenied
@@ -609,7 +685,9 @@ def delete(request, username, sound_id):
 
 
 def flag(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    if sound.user.username.lower() != username.lower():
+        raise Http404
 
     user = None
     email = None
@@ -655,7 +733,9 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 def display_sound_wrapper(request, username, sound_id):
-    sound = get_object_or_404(Sound, user__username__iexact=username, id=sound_id) #TODO: test the 404 case
+    sound = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
+    if sound.user.username.lower() != username.lower():
+        raise Http404
     return render_to_response('sounds/display_sound.html', display_sound.display_sound(RequestContext(request), sound), context_instance=RequestContext(request))
 
 
@@ -672,14 +752,14 @@ def downloaders(request, username, sound_id):
     
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(sound=sound_id)
-    return render_to_response('sounds/downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
+    return render_to_response('sounds/downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=sound.num_downloads), locals()), context_instance=RequestContext(request))
 
 def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id = pack_id)
     
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
-    return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32), locals()), context_instance=RequestContext(request))
+    return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()), context_instance=RequestContext(request))
 
 def click_log(request,click_type=None, sound_id="", pack_id="" ):
     

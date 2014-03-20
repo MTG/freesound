@@ -19,6 +19,7 @@
 #
 
 import django.forms as forms
+
     
 SEARCH_SORT_OPTIONS_WEB = [
         ("Automatic by relevance", "score desc"),
@@ -32,19 +33,8 @@ SEARCH_SORT_OPTIONS_WEB = [
         ("Rating (lowest first)", "avg_rating asc")
     ]
 
-SEARCH_SORT_OPTIONS_API = [
-        ("score", "score desc"),
-        ("duration_desc", "duration desc"),
-        ("duration_asc", "duration asc"),
-        ("created_desc", "created desc"),
-        ("created_asc", "created asc"),
-        ("downloads_desc", "num_downloads desc"),
-        ("downloads_asc", "num_downloads asc"),
-        ("rating_desc", "avg_rating desc"),
-        ("rating_asc", "avg_rating asc")
-    ]
-
 SEARCH_DEFAULT_SORT = "score desc"
+
 
 class SoundSearchForm(forms.Form):
     q    = forms.CharField(required=False, label='query')

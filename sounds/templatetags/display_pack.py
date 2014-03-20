@@ -43,7 +43,7 @@ def display_pack(context, pack):
         num_sounds = pack.num_sounds
     else:
         num_sounds = Sound.objects.filter(pack=pack_id).count()
-    
+
     return { 'pack_id':     pack_id,
              'pack':        pack_obj,
              'media_url':   context['media_url'],

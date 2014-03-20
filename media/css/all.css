@@ -2311,10 +2311,10 @@ div.about {
 }
 
 .account_avatar {
-    float: left;
-    margin-right: 30px;
-    margin-left: 20px;
-    margin-bottom: 30px;
+    /*float: left;*/
+    /*margin-right: 30px;*/
+    /*margin-left: 20px;*/
+    /*margin-bottom: 30px;*/
 }
 
 .account_information_and_home_options{
@@ -3472,4 +3472,17 @@ ul.messages {
     font-size: 12px;
     font-style: italic;
     color: white;
+}
+
+#following_tags.content_box {
+    margin-bottom: 0px;
+    min-height: 0px;
+}
+
+#sidebar.content_box {
+    min-height: 0px;
+}
+
+.content_box {
+    min-height: 80px;
 }

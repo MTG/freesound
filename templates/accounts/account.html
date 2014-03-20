@@ -10,10 +10,8 @@
     <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
 {% endblock head %}
 
-
 {% block tab_home_active %}{% if home %}active_tab{% endif %}{% endblock %}
 {% block tab_people_active %}{% if not home %}active_tab{% endif %}{% endblock %}
-
 
 {% block section_content %}
 
@@ -43,58 +41,108 @@
         <br style="clear: both;" />
         <br>
     {% else %}
+
         <h1>{{user.username}}</h1>
+
 		{% if user.profile %}
-        <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
-        <div class="account_information_and_home_options">
-        <ul>
-            <li><a href="{% url messages-new user.username %}">Send a private message to this user</a></li>
-            {% if user.profile.home_page %}
-            <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
-            {% endif %}
-            <li>Has been a user for {{user.date_joined|timesince}}</li>
-            {% if user.profile.num_sounds %}
-            <li>Number of sounds: {{user.profile.num_sounds}}</li>
-            {% endif %}
-            {% if user.profile.num_posts %}
-            <li>Number of forum posts: {{user.profile.num_posts}}</li>
-            {% endif %}
-            <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
-            <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
-            {% if user.profile.num_sounds %}
-            <li><a href="{% url comments-for-user user.username %}">All comments</a> on {{user.username}}'s sounds</li>
-            {% endif %}
-            {% if has_bookmarks %}
-            <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>
-            {% endif %}
-            {% if request.user.is_staff %}
-                <li><a id="admin_link" class="icon" href="{% url admin:auth_user_change user.id %}">Edit user in the admin</a></li>
-            {% endif %}
-            
-        </ul>
-        </div>
-        <br style="clear: both;" />
-        {% if user.profile.about %}
-            <div class="about">            
-                {{user.profile.about|safe|linebreaksbr }}
+
+            <div id="account_info_left">
+
+                <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
+
+                {# don't allow a user to follow himself/herself #}
+                {% if user.username != request.user.username  and not show_unfollow_button %}
+                    <a href="{% url follow-user user.username %}"><button type="button" id="follow_button">Follow</button></a>
+                {% endif %}
+
+                {# show unfollow button instead if current page of user is being followed by logged in user already #}
+                {% if show_unfollow_button %}
+                    <a href="{% url unfollow-user user.username %}"><button type="button" id="follow_button">Unfollow</button></a>
+                {% endif %}
+
             </div>
-        {% endif %}
-        <br>        
-        {% else %}
-        	This user has been deleted
+            <div class="account_information_and_home_options">
+            <ul>
+                <li><a href="{% url messages-new user.username %}">Send a private message to this user</a></li>
+                {% if user.profile.home_page %}
+                <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
+                {% endif %}
+                <li>Has been a user for {{user.date_joined|timesince}}</li>
+                {% if user.profile.num_sounds %}
+                <li>Number of sounds: {{user.profile.num_sounds}}</li>
+                {% endif %}
+                {% if user.profile.num_posts %}
+                <li>Number of forum posts: {{user.profile.num_posts}}</li>
+                {% endif %}
+                <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
+                <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
+                {% if user.profile.num_sounds %}
+                <li><a href="{% url comments-for-user user.username %}">All comments</a> on {{user.username}}'s sounds</li>
+                {% endif %}
+                {% if has_bookmarks %}
+                <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>
+                {% endif %}
+                {% if request.user.is_staff %}
+                    <li><a id="admin_link" class="icon" href="{% url admin:auth_user_change user.id %}">Edit user in the admin</a></li>
+                {% endif %}
+
+            </ul>
+            </div>
+            <br style="clear: both;" />
+            {% if user.profile.about %}
+                <div class="about">
+                    {{user.profile.about|safe|linebreaksbr }}
+                </div>
+            {% endif %}
+            <br>
+            {% else %}
+                This user has been deleted
         {% endif %}
     {% endif %}
 
 <div id="content">
 
+    <div id="following_users" class="content_box">
+        <h3>Following</h3>
+        <ul>
+            {% for user in following %}
+                <li><a href="{% url account user %}">{{ user }}</a></li>
+            {% empty %}
+                <li class="empty">not following any user</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div id="followers_users" class="content_box">
+        <h3>Followers</h3>
+        <ul>
+            {% for user in followers %}
+                <li><a href="{% url account user %}">{{ user }}</a></li>
+            {% empty %}
+                <li class="empty">not being followed by any user</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+{#    <div id="following_tags" class="content_box">#}
+{#        <h3>Tags Following</h3>#}
+{#        <ul>#}
+{#            {% for tag in following_tags %}#}
+{#                <li><a href="#">{{ tag }}</a></li>#}
+{#            {% empty %}#}
+{#                <li class="empty">not following any tag</li>#}
+{#            {% endfor %}#}
+{#        </ul>#}
+{#    </div>#}
+
     {% if latest_sounds %}
-    <div id="latest_sounds" class="content_box">
-        <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest sounds</h3>
-        {% for sound in latest_sounds %}
-            {% display_sound sound %}
-        {% endfor %}
-        <p><a href="{% url sounds-for-user user.username %}?page=2">more...</a></p>
-    </div><!-- #latest_sounds -->
+        <div id="latest_sounds" class="content_box">
+            <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest sounds</h3>
+            {% for sound in latest_sounds %}
+                {% display_sound sound %}
+            {% endfor %}
+            <p><a href="{% url sounds-for-user user.username %}?page=2">more...</a></p>
+        </div>
     {% endif %}
 
     {% if home %}
@@ -153,6 +201,18 @@
 </div><!-- #content -->
 
 <div id="sidebar">
+
+    <div id="following_tags" class="content_box">
+        <h3>Tags Following</h3>
+        <ul>
+            {% for tag in following_tags %}
+                <li><a href="#">{{ tag }}</a></li>
+            {% empty %}
+                <li class="empty">not following any tag</li>
+            {% endfor %}
+        </ul>
+    </div>
+
     {% if tags %}
     <div id="user_most_used_tags" class="content_box">
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>

@@ -25,6 +25,7 @@ import django.contrib.auth.views as authviews
 import messages.views as messages
 import accounts.views as accounts
 import bookmarks.views as bookmarks
+import follow.views as follow
 
 urlpatterns = patterns('accounts.views',
 
@@ -123,3 +124,10 @@ urlpatterns = patterns('accounts.views',
     url(r'^messages/new/(?P<username>[^//]+)/$', messages.new_message, name='messages-new', kwargs=dict(message_id=None)),
     url(r'^messages/new/username_lookup$', messages.username_lookup, name='messages-username_lookup'),
 )
+
+# TODO: shouldn't this be in the follow/urls.py? How?
+urlpatterns += patterns('follow.views',
+    url(r'^follow_user/(?P<username>[^//]+)/$', follow.follow_user, name="follow-user"),
+    url(r'^unfollow_user/(?P<username>[^//]+)/$', follow.unfollow_user, name="unfollow-user"),
+)
+

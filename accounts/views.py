@@ -76,6 +76,7 @@ from messages.models import Message
 from django.contrib.contenttypes.models import ContentType
 import tickets.views as TicketViews
 from django.contrib.auth.models import Group
+import follow.utils
 
 audio_logger = logging.getLogger('audio')
 # TAGRECOMMENDATION CODE
@@ -730,14 +731,27 @@ def account(request, username):
         user = User.objects.select_related('profile').get(username__iexact=username)
     except User.DoesNotExist:
         raise Http404
-    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
+        # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = list(user.profile.get_tagcloud() if user.profile else [])
     latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
     latest_packs = Pack.objects.select_related().filter(user=user, sound__moderation_state="OK", sound__processing_state="OK").annotate(num_sounds=Count('sound'), last_update=Max('sound__created')).filter(num_sounds__gt=0).order_by("-last_update")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
+
+    following = follow.utils.get_users_following(user)
+    followers = follow.utils.get_users_followers(user)
+    following_tags = follow.utils.get_tags_following(user)
+
+    logged_user_following = follow.utils.get_users_following(request.user)
+
+    show_unfollow_button = False
+    for u in logged_user_following:
+        if u.username == username:
+            show_unfollow_button = True
+
     home = False
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
+
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
 

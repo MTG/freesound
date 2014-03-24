@@ -404,7 +404,7 @@ class UserSounds(ListAPIView):
         except User.DoesNotExist:
             raise NotFoundException
 
-        queryset = Sound.objects.select_related('user').filter(moderation_state="OK",
+        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
                                                                processing_state="OK",
                                                                user__username=self.kwargs['username'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)

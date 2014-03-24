@@ -183,25 +183,22 @@ class AdvancedSearch(GenericAPIView):
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
         sounds = []
-        for sound_id in page['object_list']:
-            try:
-                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
-                # Distance to target is present we add it to the serialized sound
-                if distance_to_target_data:
-                    sound['distance_to_target'] = distance_to_target_data[sound_id]
-                if more_from_pack_data:
-                    if more_from_pack_data[sound_id][0]:
-                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sound_id][1]), more_from_pack_data[sound_id][2]), group_by_pack='0')
-                        sound['n_from_same_pack'] = more_from_pack_data[sound_id][0] + 1  # we add one as is the sound itself
-                sounds.append(sound)
-
-            except:
-                # This will happen if there are synchronization errors between solr, gaia and and the database.
-                # In that case sounds are are set to null
-                sounds.append(None)
+        for i, s in enumerate(qs):
+            sound = SoundListSerializer(s, context=self.get_serializer_context()).data
+            # Distance to target is present we add it to the serialized sound
+            if distance_to_target_data:
+                sound['distance_to_target'] = distance_to_target_data[s.id]
+            if more_from_pack_data:
+                if more_from_pack_data[s.id][0]:
+                    sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[s.id][1]), more_from_pack_data[s.id][2]), group_by_pack='0')
+                    sound['n_from_same_pack'] = more_from_pack_data[s.id][0] + 1  # we add one as is the sound itself
+            sounds.append(sound)
         response_data['results'] = sounds
+
         if note:
             response_data['note'] = note
 

@@ -1,7 +1,5 @@
 - Fix problem with redirect_uri included in authorize/confirm request not matching redirect uri in client credentials. Maybe
  some quotation in the process provokes this problem.
-- Optimize sound serialization in search and similarity responses. We do not need to query for every sound.
-Use select related. See example for basic search.
 - Improve log handling (for errors, etc...)
 - Write documentation
 - Clean code (imports, utils...)

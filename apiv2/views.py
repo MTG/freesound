@@ -110,12 +110,18 @@ class Search(GenericAPIView):
                 if page['has_next']:
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['next_page_number'])
 
+
             # Get analysis data and serialize sound results
-            get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=[object['id'] for object in page['object_list']])
+            ids = [object['id'] for object in page['object_list']]
+            get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+            qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+            qs_sound_objects = dict()
+            for sound_object in qs:
+                qs_sound_objects[sound_object.id] = sound_object
             sounds = []
             for object in page['object_list']:
                 try:
-                    sound = SoundListSerializer(Sound.objects.select_related('user').get(id=object['id']), context=self.get_serializer_context()).data
+                    sound = SoundListSerializer(qs_sound_objects[object['id']], context=self.get_serializer_context()).data
                     if 'more_from_pack' in object.keys():
                         if object['more_from_pack'] > 0:
                             sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(object['pack_id']), object['pack_name']), group_by_pack='0')
@@ -184,25 +190,30 @@ class AdvancedSearch(GenericAPIView):
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
         sounds = []
-        for sound_id in page['object_list']:
+        for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
-                    sound['distance_to_target'] = distance_to_target_data[sound_id]
+                    sound['distance_to_target'] = distance_to_target_data[sid]
                 if more_from_pack_data:
-                    if more_from_pack_data[sound_id][0]:
-                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sound_id][1]), more_from_pack_data[sound_id][2]), group_by_pack='0')
-                        sound['n_from_same_pack'] = more_from_pack_data[sound_id][0] + 1  # we add one as is the sound itself
+                    if more_from_pack_data[sid][0]:
+                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
+                        sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
-
             except:
-                # This will happen if there are synchronization errors between solr, gaia and and the database.
+                # This will happen if there are synchronization errors between solr index, gaia and the database.
                 # In that case sounds are are set to null
                 sounds.append(None)
         response_data['results'] = sounds
+
         if note:
             response_data['note'] = note
 
@@ -297,21 +308,26 @@ class SimilarSounds(GenericAPIView):
                     response_data['next'] = similarity_sound_form.construct_link(reverse('apiv2-similarity-sound', args=[sound_id]), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
         sounds = []
-        for sound_id in page['object_list']:
+        for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
-                    sound['distance_to_target'] = distance_to_target_data[sound_id]
+                    sound['distance_to_target'] = distance_to_target_data[sid]
                 sounds.append(sound)
-
             except:
-                # This will happen if there are synchronization errors between gaia and and the database.
+                # This will happen if there are synchronization errors between gaia and the database.
                 # In that case sounds are are set to null
                 sounds.append(None)
         response_data['results'] = sounds
+
         return Response(response_data, status=status.HTTP_200_OK)
 
 
@@ -388,9 +404,9 @@ class UserSounds(ListAPIView):
         except User.DoesNotExist:
             raise NotFoundException
 
-        queryset = Sound.objects.select_related('user').filter(moderation_state="OK",
-                                                               processing_state="OK",
-                                                               user__username=self.kwargs['username'])
+        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
+                                                                                  processing_state="OK",
+                                                                                  user__username=self.kwargs['username'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
@@ -470,7 +486,7 @@ class UserBookmarkCategorySounds(ListAPIView):
             kwargs['category'] = None
 
         try:
-            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
+            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
         except:
             raise NotFoundException
 
@@ -516,9 +532,9 @@ class PackSounds(ListAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException
 
-        queryset = Sound.objects.select_related('pack').filter(moderation_state="OK",
-                                                               processing_state="OK",
-                                                               pack__id=self.kwargs['pk'])
+        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
+                                                                                  processing_state="OK",
+                                                                                  pack__id=self.kwargs['pk'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 

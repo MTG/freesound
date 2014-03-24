@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64
+import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64, settings
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm, TermsOfServiceForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag
@@ -409,6 +409,9 @@ def describe_pack(request):
 @login_required
 @transaction.autocommit
 def describe_sounds(request):
+    # Tag recommendation research code (can be deleted in future)
+    ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = settings.ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS
+
     sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)
     selected_license = request.session.get('describe_license', False)

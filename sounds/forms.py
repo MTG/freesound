@@ -183,8 +183,8 @@ class PackEditForm(ModelForm):
         for snd in current_sounds:
             if snd not in new_sounds:
                 pack.sound_set.remove(snd)
-        for  snd in new_sounds:
-            if snd not not in current_sounds:
+        for snd in new_sounds:
+            if snd not in current_sounds:
                 sound = Sound.objects.get(id=snd)
                 pack.sound_set.add(sound)
 

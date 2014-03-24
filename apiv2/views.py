@@ -293,21 +293,21 @@ class SimilarSounds(GenericAPIView):
                     response_data['next'] = similarity_sound_form.construct_link(reverse('apiv2-similarity-sound', args=[sound_id]), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
         sounds = []
-        for sound_id in page['object_list']:
-            try:
-                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
-                # Distance to target is present we add it to the serialized sound
-                if distance_to_target_data:
-                    sound['distance_to_target'] = distance_to_target_data[sound_id]
-                sounds.append(sound)
-
-            except:
-                # This will happen if there are synchronization errors between gaia and and the database.
-                # In that case sounds are are set to null
-                sounds.append(None)
+        for i, sid in enumerate(ids):
+            sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+            # Distance to target is present we add it to the serialized sound
+            if distance_to_target_data:
+                sound['distance_to_target'] = distance_to_target_data[sid]
+            sounds.append(sound)
         response_data['results'] = sounds
+
         return Response(response_data, status=status.HTTP_200_OK)
 
 

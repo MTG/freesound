@@ -348,10 +348,6 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     def get_uri(self, obj):
         return prepend_base(reverse('apiv2-pack-instance', args=[obj.id]), request_is_secure=self.context['request'].using_https)
 
-    num_sounds = serializers.SerializerMethodField('get_num_sounds')
-    def get_num_sounds(self, obj):
-        return obj.sound_set.filter(processing_state="OK", moderation_state="OK").count()
-
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
         return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]), request_is_secure=self.context['request'].using_https)

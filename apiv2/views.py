@@ -405,8 +405,8 @@ class UserSounds(ListAPIView):
             raise NotFoundException
 
         queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
-                                                               processing_state="OK",
-                                                               user__username=self.kwargs['username'])
+                                                                                  processing_state="OK",
+                                                                                  user__username=self.kwargs['username'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
@@ -486,7 +486,7 @@ class UserBookmarkCategorySounds(ListAPIView):
             kwargs['category'] = None
 
         try:
-            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
+            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
         except:
             raise NotFoundException
 
@@ -532,9 +532,9 @@ class PackSounds(ListAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException
 
-        queryset = Sound.objects.select_related('pack').filter(moderation_state="OK",
-                                                               processing_state="OK",
-                                                               pack__id=self.kwargs['pk'])
+        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
+                                                                                  processing_state="OK",
+                                                                                  pack__id=self.kwargs['pk'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 

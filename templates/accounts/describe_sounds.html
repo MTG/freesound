@@ -18,6 +18,13 @@
         var randomDescriptionSessionId = Math.floor(Math.random()*9999999).toString(10);
     {% endif %}
 
+    var doRecommend = true;
+    {% if ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS %}
+        if ((randomDescriptionSessionId % 2) == 0){
+            doRecommend = false;
+        }
+    {% endif %}
+
     var maps = {};
     var centerMarkers = {};
 
@@ -40,6 +47,11 @@
             names += "id_{{ forloop.counter0 }}|{{ form.sound.name }},"
         {% endfor %}
         log("StartedDescriptionOfSounds: " + names,"-")
+        if (doRecommend == true){
+            log("UsingRecommendation:Yes", "-");
+        } else {
+            log("UsingRecommendation:No", "-");
+        }
 
         // Listen to keyup events in tags textareas to display tags
         textarea_elements.keyup(function(event) {
@@ -188,20 +200,22 @@
     }
 
     function get_tags(textarea_id){
-        var textarea_element = $("#" + textarea_id);
-        log("GettingTagsForInputTags:" + textarea_element.val(), textarea_id);
+        if (doRecommend==true){
+            var textarea_element = $("#" + textarea_id);
+            log("GettingTagsForInputTags:" + textarea_element.val(), textarea_id);
 
-        $.ajax({
-            type: 'POST',
-            url: '/tagrecommendation/recommendtags/',
-            contentType:"application/x-www-form-urlencoded",
-            data: {
-                input_tags: textarea_element.val()
-            },
-            success: function(data) {
-                display_recommended_tags(textarea_id, data);
-            }
-        });
+            $.ajax({
+                type: 'POST',
+                url: '/tagrecommendation/recommendtags/',
+                contentType:"application/x-www-form-urlencoded",
+                data: {
+                    input_tags: textarea_element.val()
+                },
+                success: function(data) {
+                    display_recommended_tags(textarea_id, data);
+                }
+            });
+        }
     }
 
     function display_recommended_tags(textarea_id, data){

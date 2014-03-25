@@ -67,7 +67,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
 
 def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, target_file=None):
 
-    cache_key = 'api-search-t-%s-f-%s-nr-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results)
+    cache_key = 'api-search-t-%s-f-%s-nr-%s-o-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results, offset)
     note = False
 
     # Don't use the cache when we're debugging

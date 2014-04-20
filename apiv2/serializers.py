@@ -81,6 +81,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'duration',
                   'samplerate',
                   'user',
+                  'username',
                   'pack',
                   'download',
                   'bookmark',
@@ -111,6 +112,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+
+    username = serializers.SerializerMethodField('get_username')
+    def get_username(self, obj):
+        return obj.user.username
 
     name = serializers.SerializerMethodField('get_name')
     def get_name(self, obj):

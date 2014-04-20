@@ -44,6 +44,7 @@ examples = {
     # Sounds
     'SoundInstance': [
         ('Complete sound information', ['apiv2/sounds/1234/']),
+        ('Complete sound information plus some descriptors', ['apiv2/sounds/213524/?descriptors=.lowlevel.mfcc,.rhythm.bpm']),
         ('Getting only id and tags for a particular sound', ['apiv2/sounds/1234/?fields=id,tags']),
         ('Getting sound name and spectral centroid values (second example gets normalized centroid values)', ['apiv2/sounds/1234/?fields=name,analysis&descriptors=.lowlevel.spectral_centroid', 'apiv2/sounds/1234/?fields=name,analysis&descriptors=.lowlevel.spectral_centroid&normalized=1']),
     ],

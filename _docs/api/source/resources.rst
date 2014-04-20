@@ -194,44 +194,61 @@ Sound resources
 Sound Instance
 =========================================================
 
+::
+
+  GET /apiv2/sounds/<sound_id>
+
+This resource allows the retrieval of detailed information of a sound.
+
+Detailed information can include content-based features by using an extra request parameter ``descriptors``.
+``descriptors`` should include a comma separated list of descriptor names. Descriptors names can be any of those listed in :ref:`analysis-docs`, and must start with a dot '.' character (e.g. ``descriptors=.lowlevel.mfcc,.rhythm.bpm``, similar to what you would do to get descriptors in search responses :ref:`sound-list-response`).
+
 
 .. _sound-instance-response:
 
 Response (sound instance)
 -------------------------
 
+The sound instance response includes the following properties/fields:
 
-
-
-======================  ====================================================
-id		        integer, sound id on freesound
-username: 		string, not tokenized
-created: 		date
-original_filename: 	string, tokenized
-description: 		string, tokenized
-tag: 			string
-license: 		string ("Attribution", "Attribution Noncommercial" or "Creative Commons 0")
-is_remix: 		boolean
-was_remixed: 		boolean
-pack: 			string
-pack_tokenized: 	string, tokenized
-is_geotagged: 		boolean
-type: 			string, original file type, one of wav,
-    			aif, aiff, ogg, mp3, flac
-duration: 		numerical, duration of sound in seconds
-bitdepth: 		integer, WARNING is not to be trusted right now
-bitrate: 		numerical, WARNING is not to be trusted right now
-samplerate: 		integer
-filesize: 		integer, file size in bytes
-channels: 		integer, number of channels in sound,
-			mostly 1 or 2, sometimes more
-md5: 			string, 32-byte md5 hash of file
-num_downloads: 		integer, all zero right now (not imported data)
-avg_rating: 		numerical, average rating, from 0 to 5
-num_ratings: 		integer, number of ratings
-comment: 		string, tokenized
-comments: 		numerical, number of comments
-======================  ====================================================
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+id                    number            The sound's unique identifier.
+uri                   URI               The URI for this sound.
+url                   URI               The URI for this sound on the Freesound website.
+name                  string            The name user gave to the sound.
+tags                  array[strings]    An array of tags the user gave to the sound.
+description           string            The description the user gave to the sound.
+geotag                string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
+created               string            The date of when the sound was uploaded.
+license               string            The license under which the sound is available to you.
+type                  string            The type of sound (wav, aif, aiff, mp3, or flac).
+channels              number            The number of channels.
+filesize              number            The size of the file in bytes.
+bitrate               number            The bit rate of the sound in kbps.
+bitdepth              number            The bit depth of the sound.
+duration              number            The duration of the sound in seconds.
+samplerate            number            The samplerate of the sound.
+user                  URI               The URI for the uploader of the sound.
+username              string            The username of the uploader of the sound.
+pack                  URI               If the sound is part of a pack, this URI points to that pack's API resource.
+download              URI               The URI for retrieving the original sound.
+bookmark              URI               The URI for bookmarking the sound.
+previews              object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
+images                object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dinctionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
+num_downloads         number            The number of times the sound was downloaded.
+avg_rating            number            The average rating of the sound.
+num_ratings           number            The number of times the sound was rated.
+rate                  URI               The URI for rating the sound.
+comments              URI               The URI of a paginated list of the comments of the sound.
+num_comments          number            The number of comments.
+comment               URI               The URI to comment the sound.
+similar_sounds        URI               URI pointing to the similarity resource (to get a list of similar sounds).
+analysis              object            Object containing requested descriptors information. This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
+analysis_stats        URI               URI pointing to the complete analysis results of the sound (see :ref:`analysis-docs`).
+analysis_frames       URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
+====================  ================  ====================================================================================
 
 
 Examples

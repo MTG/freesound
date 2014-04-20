@@ -14,6 +14,9 @@ Freesound APIv2 is **still in a beta phase** so it might not be completely relia
 Documentation is still incomplete and we haven't released any client libraries yet.
 Therefore, use it at your own risk! ;)
 
+NOTE: Some of the examples in the API docummentation use the multi-platform command-line tool ``curl`` (http://curl.haxx.se).
+If you do not have ``curl`` installed, we recommend you to install it as it will help you in learning to use the Freesound API.
+
 
 Resources
 ---------

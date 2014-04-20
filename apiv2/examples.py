@@ -20,12 +20,14 @@
 #     See AUTHORS file.
 #
 
+
 examples = {
     # Search
     'Search': [
-        ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano&page=2']),
-        ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar', 'apiv2/search/?query=music&filter=type:(wav OR aiff)']),
-        ('Simple search and selection of sound fields to return in the results', ['apiv2/search/?query=alarm&fields=name,previews']),
+        ('Simple search', ['apiv2/search/?query=cars', 'apiv2/search/?query=piano&page=2', 'apiv2/search/?query=bass -drum', 'apiv2/search/?query="bass drum" -double']),
+        ('Search with a filter', ['apiv2/search/?query=music&filter=tag:guitar','apiv2/search/?query=music&filter=type:(wav OR aiff)','apiv2/search/?query=music&filter=tag:bass tag:drum','apiv2/search/?query=music&filter=tag:bass description:"heavy distortion"','apiv2/search/?query=music&filter=is_geotagged:true tag:field-recording duration:[60 TO 120]','apiv2/search/?query=music&filter=samplerate:44100 type:wav channels:2','apiv2/search/?query=music&filter=duration:[0.1 TO 0.3] avg_rating:[3 TO *]']),
+        ('Simple search and selection of sound fields to return in the results', ['apiv2/search/?query=alarm&fields=name,previews', 'apiv2/search/?query=alarm&fields=name,previews,analysis&descriptors=.lowlevel.spectral_centroid.mean,.lowlevel.pitch.mean', 'apiv2/search/?query=loop&fields=uri,analysis&descriptors=.rhythm.onset_times']),
+        ('Group search results by pack', ['apiv2/search/?query=piano&group_by_pack=1']),
         ('Get geotagged sounds with tag field-recording. Return only geotag and tags for each result', ['apiv2/search/?filter=is_geotagged:1 tag:field-recording&fields=geotag,tags']),
         ('Basic geospatial filtering', ['apiv2/search/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558)"', 'apiv2/search/?filter=geotag:"IsDisjointTo(-74.093 41.042 -69.347 44.558)"']),
         ('Geospatial with customizable max error parameter (in degrees) and combinations of filters',
@@ -33,10 +35,6 @@ examples = {
                                   'apiv2/search/?filter=geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)"&fields=id,geotag,tags',
                                   'apiv2/search/?filter=(geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)") AND tag:field-recording&fields=id,geotag,tags']),
         ('Geospatial search for points at a maximum distance d from a latitude,longitude position and with a particular tag', ['apiv2/search/?query={!geofilt sfield=geotag pt=41.3833,2.1833 d=10}&filter=tag:barcelona&fields=id,geotag,tags',]),
-        ('Todo', ['apiv2/complete previous examples and add more...']),
-
-
-
     ],
     'AdvancedSearch': [
         ('Todo...', ['apiv2/...todo sound advanced search examples...']),

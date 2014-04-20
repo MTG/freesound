@@ -58,9 +58,9 @@ information will be returned by default.
 ======================  =========================  ======================
 Name                    Type                       Description
 ======================  =========================  ======================
-``fields``              comma separated strings    text
-``descirptors``         comma separated strings    text
-``normalized``          bool (yes=1, no=0)         text
+``fields``              comma separated strings    Indicates which sound properties should be returned in the response.
+``descirptors``         comma separated strings    Indicates which sound content-based descriptors should be returned in the response.
+``normalized``          bool (yes=1, no=0)         Indicates whether the returned sound content-based descriptors should be normalized or not.
 ======================  =========================  ======================
 
 

@@ -28,7 +28,7 @@ adding the key as a ``token`` GET parameter...
 
 ::
 
-  curl "http://www.freesound.org/apiv2/search/?query=piano&token=YOUR_API_KEY
+  curl "http://www.freesound.org/apiv2/search/?query=piano&token=YOUR_API_KEY"
 
 ...or by adding it as an authorization header:
 

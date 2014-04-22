@@ -41,9 +41,9 @@ examples = {
         ('Using multidimensional descriptors in the target', ['apiv2/search/advanced/?target=.sfx.tristimulus.mean:0,1,0&fields=id,analysis&descriptors=.sfx.tristimulus.mean']),
         ('Using a Freesound sound id as target', ['apiv2/search/advanced/?target=1234&filter=tag:kick']),
         ('Using an Essentia analysis file as target', ['curl -X POST -H "Authorization: Token {{your_api_key}}" -F analysis_file=@"/path/to/your_file.json" \'%s/apiv2/search/advanced/\'']),
-        ('Combine descriptors target with normal filter', ['apiv2/search/advanced/?target=.rhythm.bpm:120&filter=tag:loop']),
-
-        ('Textual query plus filtering of multidiemnsional descriptors', ['apiv2/search/advanced/?query=music&fields=id,analysis&descriptors=.lowlevel.mfcc.mean&descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]']),
+        ('Using descriptors filter', ['apiv2/search/advanced/?descriptors_filter=.lowlevel.pitch.mean:[219.9 TO 220.1]', 'apiv2/search/advanced/?descriptors_filter=.lowlevel.pitch.mean:[219.9 TO 220.1] AND .lowlevel.pitch_salience.mean:[0.6 TO *]', 'apiv2/search/advanced/?descriptors_filter=.lowlevel.mfcc.mean[0]:[-1124 TO -1121]', 'apiv2/search/advanced/?descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]', 'apiv2/search/advanced/?descriptors_filter=.tonal.key_key:"Asharp"', 'apiv2/search/advanced/?descriptors_filter=.tonal.key_scale:"major"', 'apiv2/search/advanced/?descriptors_filter=(.tonal.key_key:"C" AND .tonal.key_scale:"major") OR (.tonal.key_key:"A" AND .tonal.key_scale:"minor")', 'apiv2/search/advanced/?descriptors_filter=.tonal.key_key:"C" .tonal.key_scale="major" .tonal.key_strength:[0.8 TO *]']),
+        ('Combining descriptors target with normal filter', ['apiv2/search/advanced/?target=.rhythm.bpm:120&filter=tag:loop']),
+        ('Combining normal query with multidimensional descriptors filter', ['apiv2/search/advanced/?query=music&fields=id,analysis&descriptors=.lowlevel.mfcc.mean&descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]']),
     ],
 
     # Sounds

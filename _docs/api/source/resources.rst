@@ -38,7 +38,7 @@ Name                    Type                       Description
 
 Search results can be filtered by specifying a series of properties that sounds should match.
 In other words, using the ``filter`` parameter you can specify the value that certain sound fields should have in order to be considered valid search results.
-Filter are defined as ``filter=fieldname:value fieldname:value`` or ``filter=fieldname:"value" fieldname:"value"`` if needed.
+Filter are defined with a syntax like ``filter=fieldname:value fieldname:value`` or ``filter=fieldname:"value" fieldname:"value"`` if needed.
 Fieldnames can be any of the following:
 
 
@@ -73,23 +73,23 @@ comments: 		numerical, number of comments
 Numeric or integer filters can have a range as a query, looking like this (the "TO" needs
 to be upper case!)::
 
-  [start TO end]
-  [* TO end]
-  [start to \*]
+  filter=fieldname:[start TO end]
+  filter=fieldname:[* TO end]
+  filter=fieldname:[start to \*]
 
 Dates can have ranges (and math) too (the "TO" needs to be upper case!)::
 
-  created:[* TO NOW]
-  created:[1976-03-06T23:59:59.999Z TO *]
-  created:[1995-12-31T23:59:59.999Z TO 2007-03-06T00:00:00Z]
-  created:[NOW-1YEAR/DAY TO NOW/DAY+1DAY]
-  created:[1976-03-06T23:59:59.999Z TO 1976-03-06T23:59:59.999Z+1YEAR]
-  created:[1976-03-06T23:59:59.999Z/YEAR TO 1976-03-06T23:59:59.999Z]
+  filter=created:[* TO NOW]
+  filter=created:[1976-03-06T23:59:59.999Z TO *]
+  filter=created:[1995-12-31T23:59:59.999Z TO 2007-03-06T00:00:00Z]
+  filter=created:[NOW-1YEAR/DAY TO NOW/DAY+1DAY]
+  filter=created:[1976-03-06T23:59:59.999Z TO 1976-03-06T23:59:59.999Z+1YEAR]
+  filter=created:[1976-03-06T23:59:59.999Z/YEAR TO 1976-03-06T23:59:59.999Z]
 
 Simple logic operators can also used in filters::
 
-  type:(wav OR aiff)
-  description:(piano AND note)
+  filter=type:(wav OR aiff)
+  filter=description:(piano AND note)
 
 See below for some examples!
 
@@ -197,7 +197,7 @@ Using ``target`` you can sort the query results so that the first results will t
 ``target`` parameter will always override the ``sort`` parameter.
 To specify a target you must use a syntax like ``target=descriptor_name:value``.
 You can also set multiple descriptor/value paris in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
-Descriptor names must be chosen from those listed in :ref:`analysis-docs`. Only numerical descriptors are allowed.
+Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.'). Only numerical descriptors are allowed.
 Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too, see below.
 Consider the following two ``target`` examples::
 
@@ -231,10 +231,37 @@ If ``target`` (or ``analysis_file``) is not used in combination with ``query``, 
 include all sounds from Freesound indexed in the similarity server.
 
 
-
 **The 'descriptors_filer' parameter**
 
-TODO
+The ``descriptors_filter`` parameter is used to restrict the query results to those sounds whose content descriptor values comply with the defined filter.
+To define ``descriptors_filter`` parameter you can use the same syntax as for the normal ``filter`` parameter, including numeric ranges and simple logic operators.
+For example, ``descriptors_filter=.lowlevel.pitch.mean:220`` will only return sounds that have an EXACT pitch mean of 220hz.
+Note that this would probably return no results as a sound will rarely have that exact pitch (might be very close like 219.999 or 220.000001 but not exactly 220).
+For this reason, in general it might be better to indicate ``descriptors_filter`` using ranges.
+Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.'). Non fixed-length descriptors are not allowed.
+Some examples of ``descriptors_filter`` for numerical descriptors::
+
+  descriptors_filter=.lowlevel.pitch.mean:[219.9 TO 220.1]
+  descriptors_filter=.lowlevel.pitch.mean:[219.9 TO 220.1] AND .lowlevel.pitch_salience.mean:[0.6 TO *]
+  descriptors_filter=.lowlevel.mfcc.mean[0]:[-1124 TO -1121]
+  descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]
+
+Note how in the last two examples the filter operates in a particular dimension of a multidimensional descriptor (with dimension index starting at 0).
+
+``descriptors_filter`` can also be defined using non numerical descriptors such as '.tonal.key_key' or '.tonal.key_scale'.
+In that case, the value but be enclosed in double quotes '"', and the character '#' (for example for an A# key) must be indicated with the string 'sharp'.
+Non numerical descriptors can not be indicated using ranges.
+For example::
+
+  descriptors_filter=.tonal.key_key:"Asharp"
+  descriptors_filter=.tonal.key_scale:"major"
+  descriptors_filter=(.tonal.key_key:"C" AND .tonal.key_scale:"major") OR (.tonal.key_key:"A" AND .tonal.key_scale:"minor")
+
+You can combine both numerical and non numerical descriptors as well::
+
+  descriptors_filter=.tonal.key_key:"C" .tonal.key_scale="major" .tonal.key_strength:[0.8 TO *]
+
+
 
 
 Response
@@ -271,7 +298,7 @@ Detailed information can include content-based features by using an extra reques
 Response (sound instance)
 -------------------------
 
-The sound instance response includes the following properties/fields:
+The sound instance response is a dictionary including the following properties/fields:
 
 ====================  ================  ====================================================================================
 Name                  Type              Description

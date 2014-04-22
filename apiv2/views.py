@@ -167,10 +167,11 @@ class AdvancedSearch(GenericAPIView):
                 raise NotFoundException
 
         # Get search results
+        fast_computation = request.QUERY_PARAMS.get('fast', False) != False
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
+        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, fast_computation=fast_computation)
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])

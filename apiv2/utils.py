@@ -310,7 +310,7 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 # Search utilities
 ##################
 
-def api_search(search_form, target_file=None):
+def api_search(search_form, target_file=None, fast_computation=False):
 
     distance_to_target_data = None
 
@@ -384,7 +384,7 @@ def api_search(search_form, target_file=None):
                 raise ServerErrorException()
 
     else:
-        # Combined search (there is at least one of query/filter and one of desriptors_filter/target)
+        # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
 
         # Get solr results
         solr = Solr(settings.SOLR_URL)
@@ -394,8 +394,12 @@ def api_search(search_form, target_file=None):
         if search_form.cleaned_data['group_by_pack']:
             more_from_pack_data = dict()
         PAGE_SIZE = 1000
+        if fast_computation:
+            PAGE_SIZE = 2000
         current_page = 1
         try:
+            # Iterate over solr results pages
+            # if fast_computation == true, we only get the first page but with a bigger size
             while len(solr_ids) < solr_count or solr_count == None:
                 query = search_prepare_query(unquote(search_form.cleaned_data['query']),
                                              unquote(search_form.cleaned_data['filter']),
@@ -412,6 +416,9 @@ def api_search(search_form, target_file=None):
                     # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
                     more_from_pack_data.update(dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name'], element['other_ids']]) for element in result.docs]))
                 current_page += 1
+                if fast_computation:
+                    break
+
         except SolrException, e:
             raise InvalidUrlException(msg='Solr exception: %s' % e.message)
         except Exception, e:

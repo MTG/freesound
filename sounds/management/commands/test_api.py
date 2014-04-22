@@ -71,6 +71,7 @@ class Command(BaseCommand):
         else:
             base_url = "http://%s/" % Site.objects.get_current().domain
             section = False
+            token = False
 
         if not token:
             from apiv2.models import ApiV2Client

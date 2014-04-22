@@ -186,18 +186,50 @@ Advanced search request parameters can include the basic search parameters (``qu
 Name                       Type                       Description
 =========================  =========================  ======================
 ``target``                 string or number           This parameter defines a target based on content-based descriptors to sort the search results. It can be set as a number of descriptor name and value pairs or a sound id. See below.
-``target_analysis_file``   file                       Alternatively, targets can be specified using file with the output of the Essentia Freesound Extractor analysis of any sound. This parameter overrides ``target``, and requires the use of POST method. See below.
+``analysis_file``          file                       Alternatively, targets can be specified using file with the output of the Essentia Freesound Extractor analysis of any sound (see below). This parameter overrides ``target``, and requires the use of POST method.
 ``descriptors_filer``      string                     This parameter allows filtering query results by values of the content-based descriptors. See below for more information.
 =========================  =========================  ======================
 
-**The 'target' parameter**
+**The 'target' and 'analysis_file' parameters**
 
-TODO
+The ``target`` parameter can be used to specify a content-based sorting of your advanced search results.
+Using ``target`` you can sort the query results so that the first results will the the ones featuring the most similar descriptors to the given target.
+``target`` parameter will always override the ``sort`` parameter.
+To specify a target you must use a syntax like ``target=descriptor_name:value``.
+You can also set multiple descriptor/value paris in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
+Descriptor names must be chosen from those listed in :ref:`analysis-docs`. Only numerical descriptors are allowed.
+Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too, see below.
+Consider the following two ``target`` examples::
+
+  (A) target=.lowlevel.pitch.mean:220
+  (B) target=.lowlevel.pitch.mean:220 .lowlevel.pitch.var:0
+
+Example A will sort the query results so that the first results will have a mean pitch as closest to 220Hz as possible.
+Example B will sort the query results so that the first results will have a mean pitch as closest to 220Hz as possible and a pitch variance as closes as possible to 0.
+In that case example B will promote sounds that have a steady pitch close to 220Hz.
+
+Multidimensional descriptors can also be used in the ``target`` parameter::
+
+  target=.sfx.tristimulus.mean:0,1,0
+
+Alternatively, ``target`` can also be set to point to a Freesound sound.
+In that case the descriptors of the sound will be used as the target for the query, therefore query results will be sorted according to their similarity to the targeted sound.
+To set a sound as a target of the query you must indicate it with the sound id. For example, to use sound with id 1234 as target::
+
+  target=1234
 
 
-**The 'target_analysis_file' parameter**
+There is even another way to specify a target for the query, which is by uploading an analysis file generated using the Essentia Freesound Extractor.
+For doing that you will need to download and compile Essentia, an open source feature extraction library developed at the Music Technology Group (https://github.com/mtg/essentia),
+and use the 'streaming_extractor_freesound' example to analyze any sound you have in your local computer.
+As a result, the extractor will create a JSON file that you can use as target in your Freesound API advanced search queries.
+To use this file as target you will need to use the POST method (instead of GET) and attach the file as an ``analysis_file`` POST parameter (see example below).
+Setting the target as an ``analysis_file`` allows you to to find sounds in Freesound that are similar to any other sound that you have in your local computer and that it is not part of Freesound.
+When using ``analysis_file``, the contents of ``target`` are ignored.
 
-TODO
+If ``target`` (or ``analysis_file``) is not used in combination with ``query``, ``filter`` or ``descriptors_filter``, the results of the query will
+include all sounds from Freesound indexed in the similarity server.
+
 
 
 **The 'descriptors_filer' parameter**

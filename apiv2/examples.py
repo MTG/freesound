@@ -37,7 +37,12 @@ examples = {
         ('Geospatial search for points at a maximum distance d from a latitude,longitude position and with a particular tag', ['apiv2/search/?query={!geofilt sfield=geotag pt=41.3833,2.1833 d=10}&filter=tag:barcelona&fields=id,geotag,tags',]),
     ],
     'AdvancedSearch': [
-        ('Todo...', ['apiv2/...todo sound advanced search examples...']),
+        ('Setting a target as some descriptor values', ['apiv2/search/advanced/?target=.lowlevel.pitch.mean:220', 'apiv2/search/advanced/?target=.lowlevel.pitch.mean:220 AND .lowlevel.pitch.var:0']),
+        ('Using multidimensional descriptors in the target', ['apiv2/search/advanced/?target=.sfx.tristimulus.mean:0,1,0&fields=id,analysis&descriptors=.sfx.tristimulus.mean']),
+        ('Using a Freesound sound id as target', ['apiv2/search/advanced/?target=1234&filter=tag:kick']),
+        ('Using an Essentia analysis file as target', ['curl -X POST -H "Authorization: Token {{your_api_key}}" -F analysis_file=@"/path/to/your_file.json" \'%s/apiv2/search/advanced/\'']),
+        ('Combine descriptors target with normal filter', ['apiv2/search/advanced/?target=.rhythm.bpm:120&filter=tag:loop']),
+
         ('Textual query plus filtering of multidiemnsional descriptors', ['apiv2/search/advanced/?query=music&fields=id,analysis&descriptors=.lowlevel.mfcc.mean&descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]']),
     ],
 

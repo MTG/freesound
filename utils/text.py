@@ -103,7 +103,7 @@ def startswithone(string, starts):
     reduce(lambda a,b: a or string.startswith(b), starts, False)
 
 
-url_regex = re.compile("(http://\S+)", re.IGNORECASE)
+url_regex = re.compile("(https?://\S+)", re.IGNORECASE)
 
 def replace_element_by_children(soup, element):
     """

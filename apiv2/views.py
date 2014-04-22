@@ -187,8 +187,13 @@ class AdvancedSearch(GenericAPIView):
         if page['has_other_pages']:
                 if page['has_previous']:
                     response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['previous_page_number'])
+                    if fast_computation:
+                        response_data['previous'] += '&fast=1'
                 if page['has_next']:
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
+                    if fast_computation:
+                        response_data['next'] += '&fast=1'
+
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]

@@ -183,6 +183,54 @@ STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '_sandbo
 
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 
+ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
+
+# APIV2 settings
+################
+
+APIV2KEYS_ALLOWED_FOR_APIV1 = True
+ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
+APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
+                                   'apiv2-user-create-bookmark',
+                                   'apiv2-user-create-rating',
+                                   'apiv2-user-create-comment',
+                                   'apiv2-uploads-upload',
+                                   'apiv2-uploads-not-described',
+                                   'apiv2-uploads-describe',
+                                   'apiv2-uploads-upload-and-describe',
+                                   'apiv2-uploads-not-moderated',
+                                   'apiv2-pack-download','apiv2-me',
+                                   'oauth2:capture',
+                                   'oauth2:authorize',
+                                   'oauth2:redirect',
+                                   'oauth2:access_token',
+                                   'api-login']
+
+REST_FRAMEWORK = {
+    'PAGINATE_BY': 15,
+    'PAGINATE_BY_PARAM': 'page_size',
+    'MAX_PAGINATE_BY': 100,
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.YAMLRenderer',
+        'rest_framework.renderers.JSONPRenderer',
+        'rest_framework.renderers.XMLRenderer',
+    )
+}
+
+
+# Oauth2 provider settings
+OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)
+OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
+OAUTH_SINGLE_ACCESS_TOKEN = True
+USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
+#OAUTH_ENFORCE_SECURE = True  # We can not use this parameter because it does not work well with our current django version
+
+# Temportal tag recommendation settings
+ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = False
+
 # leave at bottom starting here!
 from local_settings import *
 
@@ -240,59 +288,12 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
-ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
 
 # We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
 # settings were loaded). We add this variable to the context processor and use it in base.html as a
 # parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
-
-# APIV2 settings
-################
-
-APIV2KEYS_ALLOWED_FOR_APIV1 = True
-ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
-APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
-                                   'apiv2-user-create-bookmark',
-                                   'apiv2-user-create-rating',
-                                   'apiv2-user-create-comment',
-                                   'apiv2-uploads-upload',
-                                   'apiv2-uploads-not-described',
-                                   'apiv2-uploads-describe',
-                                   'apiv2-uploads-upload-and-describe',
-                                   'apiv2-uploads-not-moderated',
-                                   'apiv2-pack-download','apiv2-me',
-                                   'oauth2:capture',
-                                   'oauth2:authorize',
-                                   'oauth2:redirect',
-                                   'oauth2:access_token',
-                                   'api-login']
-
-REST_FRAMEWORK = {
-    'PAGINATE_BY': 15,
-    'PAGINATE_BY_PARAM': 'page_size',
-    'MAX_PAGINATE_BY': 100,
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework.renderers.YAMLRenderer',
-        'rest_framework.renderers.JSONPRenderer',
-        'rest_framework.renderers.XMLRenderer',
-    )
-}
-
-
-# Oauth2 provider settings
-OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)
-OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
-OAUTH_SINGLE_ACCESS_TOKEN = True
-USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
-#OAUTH_ENFORCE_SECURE = True  # We can not use this parameter because it does not work well with our current django version
-
-# Temportal tag recommendation settings
-ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = False
 
 
 from logger import LOGGING

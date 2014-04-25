@@ -231,6 +231,9 @@ USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
 # Temportal tag recommendation settings
 ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = False
 
+# Set DATA_URL. You can overwrite this to point to production data ("http://freesound.org/data/") in local settings if needed ;)
+DATA_URL = "/data/"
+
 # leave at bottom starting here!
 from local_settings import *
 
@@ -251,13 +254,6 @@ else:
             #'django.template.loaders.eggs.load_template_source',
         )),
     )
-
-# change the media url to tabasco to make the players work when testing
-if DEBUG:
-    DATA_URL = "http://freesound.org/data/"
-    #DATA_URL = "/data/"
-else:
-    DATA_URL = "/data/"
 
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"

@@ -94,23 +94,24 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return page
 
     def clean_sort(self):
-        sort = self.cleaned_data['sort']
-        for option in SEARCH_SORT_OPTIONS_API:
-            if option[0] == sort:
-                sort = option[1]
-                self.original_url_sort_value = option[0]
-        sort = SEARCH_DEFAULT_SORT
-        self.original_url_sort_value = SEARCH_DEFAULT_SORT.split(' ')[0]
 
-        if sort in [option[1] for option in SEARCH_SORT_OPTIONS_API]:
-            if sort == "avg_rating desc":
-                sort = [sort, "num_ratings desc"]
-            elif sort == "avg_rating asc":
-                sort = [sort, "num_ratings asc"]
-            else:
-                sort = [sort]
+        sort_option = None
+        for option in SEARCH_SORT_OPTIONS_API:
+            if option[0] == str(self.cleaned_data['sort']):
+                sort_option = option[1]
+                self.original_url_sort_value = option[0]
+
+        if not sort_option:
+            sort_option = SEARCH_DEFAULT_SORT
+            self.original_url_sort_value = SEARCH_DEFAULT_SORT.split(' ')[0]
+
+        if sort_option == "avg_rating desc":
+            sort = [sort_option, "num_ratings desc"]
+        elif sort_option == "avg_rating asc":
+            sort = [sort_option, "num_ratings asc"]
         else:
-            sort = [SEARCH_DEFAULT_SORT]
+            sort = [sort_option]
+
         return sort
 
     def clean_fields(self):

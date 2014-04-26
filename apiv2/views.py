@@ -236,16 +236,11 @@ class CombinedSearch(GenericAPIView):
                 raise NotFoundException
 
         # Get search results
-        fast_computation = request.QUERY_PARAMS.get('fast', False)
-        if fast_computation:
-            try:
-                fast_computation = int(fast_computation)
-            except:
-                fast_computation = 1000
+        max_repeat = int(request.QUERY_PARAMS.get('max_repeat', 0)) # Max repeat is an additional parameter to tweak performance in combined search
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, fast_computation=fast_computation)
+        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat)
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -261,12 +256,12 @@ class CombinedSearch(GenericAPIView):
         if page['has_other_pages']:
                 if page['has_previous']:
                     response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['previous_page_number'])
-                    if fast_computation:
-                        response_data['previous'] += '&fast=%i' % fast_computation
+                    if max_repeat:
+                        response_data['previous'] += '&max_repeat=%i' % max_repeat
                 if page['has_next']:
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
-                    if fast_computation:
-                        response_data['next'] += '&fast=%i' % fast_computation
+                    if max_repeat:
+                        response_data['next'] += '&max_repeat=%i' % max_repeat
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
@@ -285,7 +280,7 @@ class CombinedSearch(GenericAPIView):
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
                         sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
-                        sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
+                        sound['n_from_same_pack'] = None #more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
             except:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.

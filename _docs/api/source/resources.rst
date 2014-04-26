@@ -292,21 +292,23 @@ This resource is a combination of :ref:`sound-text-search` and :ref:`sound-conte
 Request parameters
 ------------------
 
-Combined search request parameters can include any of the parameters from text-based search queries (``query``, ``filter``, ``sort`` and ``group_by_pack``, :ref:`sound-text-search-parameters`)
+Combined search request parameters can include any of the parameters from text-based search queries (``query``, ``filter`` and ``sort``, :ref:`sound-text-search-parameters`)
 and content-based search queries (``target``, ``analysis_file`` and ``descriptors_filer`` and, :ref:`sound-content-search-parameters`).
+Note that ``group_by_pack`` **is not** available in combined search queries.
 
 In combined search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
 query results can be filtered either by values of sounds' metadata or sounds' content-descriptors... all at once!
 
 To perform a combined search query you need to use at least one of the request parameters from text-based search and at least one of the request parameters from content-based search.
-
-If the parameter ``target`` (or ``analysis_file``) is present in the query, it will override the ``sort`` parameter (if existing).
+Note that ``sort`` parameter must always be accompanied by a ``query`` or ``filter`` parameter (or both), otherwise it is ignored.
+``sort`` parameter will also be ignored if parameter ``target`` (or ``analysis_file``) is present in the query.
 
 
 Response
 --------
 
 Return a sound list just like :ref:`sound-list-response`. The same request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+
 
 
 Examples

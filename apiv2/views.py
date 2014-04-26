@@ -66,12 +66,12 @@ resources_doc_filename = 'resources_apiv2.html'
 # SEARCH AND SIMILARITY SEARCH VIEWS
 ####################################
 
-class Search(GenericAPIView):
+class TextSearch(GenericAPIView):
 
     __doc__ = 'Search sounds in Freesound based on their tags and other metadata.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#search' % resources_doc_filename,
-                 get_formatted_examples_for_view('Search', 'apiv2-sound-search', max=5))
+                 get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))
@@ -106,9 +106,9 @@ class Search(GenericAPIView):
             response_data['next'] = None
             if page['has_other_pages']:
                 if page['has_previous']:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['previous_page_number'])
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['previous_page_number'])
                 if page['has_next']:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['next_page_number'])
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['next_page_number'])
 
 
             # Get analysis data and serialize sound results
@@ -124,7 +124,7 @@ class Search(GenericAPIView):
                     sound = SoundListSerializer(qs_sound_objects[object['id']], context=self.get_serializer_context()).data
                     if 'more_from_pack' in object.keys():
                         if object['more_from_pack'] > 0:
-                            sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(object['pack_id']), object['pack_name']), group_by_pack='0')
+                            sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(object['pack_id']), object['pack_name']), group_by_pack='0')
                             sound['n_from_same_pack'] = object['more_from_pack'] + 1  # we add one as is the sound itself
                     sounds.append(sound)
                 except:
@@ -146,12 +146,12 @@ class Search(GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class AdvancedSearch(GenericAPIView):
+class CombinedSearch(GenericAPIView):
 
     __doc__ = 'Search sounds in Freesound based on their tags, metadata and content-based descriptors.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#advanced-search' % resources_doc_filename,
-                 get_formatted_examples_for_view('AdvancedSearch', 'apiv2-sound-combined-search', max=5))
+                 get_formatted_examples_for_view('CombinedSearch', 'apiv2-sound-combined-search', max=5))
 
     serializer_class = SimilarityFileSerializer
     analysis_file = None

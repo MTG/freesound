@@ -54,16 +54,18 @@ def my_quote(s):
     return quote(s,safe=",:[]*+()'")
 
 
-class SoundSearchFormAPI(forms.Form):
-    query           = forms.CharField(required=False, label='query')
-    page            = forms.CharField(required=False, label='page')
-    filter          = forms.CharField(required=False, label='filter')
-    sort            = forms.CharField(required=False, label='sort')
-    fields          = forms.CharField(required=False, label='fields')
-    descriptors     = forms.CharField(required=False, label='descriptors')
-    normalized      = forms.CharField(required=False, label='normalized')
-    page_size       = forms.CharField(required=False, label='page_size')
-    group_by_pack   = forms.CharField(required=False, label='group_by_pack')
+class SoundCombinedSearchFormAPI(forms.Form):
+    query               = forms.CharField(required=False, label='query')
+    page                = forms.CharField(required=False, label='page')
+    filter              = forms.CharField(required=False, label='filter')
+    sort                = forms.CharField(required=False, label='sort')
+    fields              = forms.CharField(required=False, label='fields')
+    descriptors         = forms.CharField(required=False, label='descriptors')
+    normalized          = forms.CharField(required=False, label='normalized')
+    page_size           = forms.CharField(required=False, label='page_size')
+    group_by_pack       = forms.CharField(required=False, label='group_by_pack')
+    descriptors_filter  = forms.CharField(required=False, label='descriptors_filter')
+    target              = forms.CharField(required=False, label='target')
 
     def clean_query(self):
         query = self.cleaned_data['query']
@@ -129,6 +131,14 @@ class SoundSearchFormAPI(forms.Form):
         requested_paginate_by = self.cleaned_data[settings.REST_FRAMEWORK['PAGINATE_BY_PARAM']] or settings.REST_FRAMEWORK['PAGINATE_BY']
         return min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
 
+    def clean_descriptors_filter(self):
+        descriptors_filter = self.cleaned_data['descriptors_filter']
+        return my_quote(descriptors_filter) if descriptors_filter != None else ""
+
+    def clean_target(self):
+        target = self.cleaned_data['target']
+        return my_quote(target) if target != None else ""
+
     def construct_link(self, base_url, page=None, filter=None, group_by_pack=None):
         link = "?"
         if self.cleaned_data['query']:
@@ -140,6 +150,10 @@ class SoundSearchFormAPI(forms.Form):
             link += '&filter=%s' % my_quote(filter)
         if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_DEFAULT_SORT.split(' ')[0]:
             link += '&sort=%s' % self.original_url_sort_value
+        if self.cleaned_data['descriptors_filter']:
+                link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
+        if self.cleaned_data['target']:
+                link += '&target=%s' % self.cleaned_data['target']
         if not page:
             if self.cleaned_data['page'] and self.cleaned_data['page'] != 1:
                 link += '&page=%s' % self.cleaned_data['page']
@@ -162,26 +176,17 @@ class SoundSearchFormAPI(forms.Form):
         return "http://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
 
 
-class SoundCombinedSearchFormAPI(SoundSearchFormAPI):
-    descriptors_filter = forms.CharField(required=False, label='descriptors_filter')
-    target = forms.CharField(required=False, label='target')
-
-    def clean_descriptors_filter(self):
-        descriptors_filter = self.cleaned_data['descriptors_filter']
-        return my_quote(descriptors_filter) if descriptors_filter != None else ""
+class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):
+    '''
+    This form is like CombinedSearch but disabling content-search-only fields
+    '''
 
     def clean_target(self):
-        target = self.cleaned_data['target']
-        return my_quote(target) if target != None else ""
+        return None
 
-    def construct_link(self, *args, **kwargs):
-        link = super(SoundCombinedSearchFormAPI, self).construct_link(*args, **kwargs)
-        if self.cleaned_data['descriptors_filter']:
-                link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
-        if self.cleaned_data['target']:
-                link += '&target=%s' % self.cleaned_data['target']
+    def clean_descriptors_filter(self):
+        return None
 
-        return link
 
 class SoundContentSearchFormAPI(SoundCombinedSearchFormAPI):
     '''

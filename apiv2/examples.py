@@ -46,7 +46,7 @@ examples = {
     'CombinedSearch': [
         ('Combining query with target descriptors and textual filter', ['apiv2/search/combined/?target=.rhythm.bpm:120&filter=tag:loop']),
         ('Combining textual query with descriptors filter', ['apiv2/search/combined/?filter=tag:loop&descriptors_filter=.rhythm.bpm:[119 TO 121]']),
-        ('Combining two filters (textual and descriptors)', ['/apiv2/search/combined/?descriptors_filter=.tonal.key_key:"A" .tonal.key_scale:"major"&filter=tag:chord']),
+        ('Combining two filters (textual and descriptors)', ['apiv2/search/combined/?descriptors_filter=.tonal.key_key:"A" .tonal.key_scale:"major"&filter=tag:chord']),
         ('Combining textual query with multidimensional descriptors filter', ['apiv2/search/combined/?query=music&fields=id,analysis&descriptors=.lowlevel.mfcc.mean&descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]']),
     ],
 

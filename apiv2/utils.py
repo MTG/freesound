@@ -313,7 +313,7 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_ids=False):
 
     MERGE_STRATEGY = 'filter_solr_results_repeat'
-    MAX_SOLR_FILTER_IDS = 400
+    MAX_SOLR_FILTER_IDS = 350
     if max_solr_filter_ids:
         MAX_SOLR_FILTER_IDS = min(int(max_solr_filter_ids), MAX_SOLR_FILTER_IDS)
     MAX_REPEAT = 7

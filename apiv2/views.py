@@ -80,6 +80,8 @@ class TextSearch(GenericAPIView):
         search_form = SoundTextSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
+        if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
+           raise InvalidUrlException(msg='At lesast one request parameter from Text Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException
 
@@ -146,6 +148,8 @@ class ContentSearch(GenericAPIView):
         search_form = SoundContentSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
+        if not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file:
+           raise InvalidUrlException(msg='At lesast one parameter from Content Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
                 raise NotFoundException
 
@@ -226,12 +230,10 @@ class CombinedSearch(GenericAPIView):
         search_form = SoundCombinedSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
+        if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
+           raise InvalidUrlException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
                 raise NotFoundException
-
-        # Check that at least there is one parameter of text search and one of content search, otherwise return bad request
-        if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
-           raise InvalidUrlException(msg='At lesast one request parameter from Text Search and one request parameter from Content Search should be used.')
 
         # Get search results
         fast_computation = request.QUERY_PARAMS.get('fast', False)

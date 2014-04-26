@@ -88,8 +88,8 @@ class TextSearch(GenericAPIView):
         # Get search results
         try:
             results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form)
-        except Exception:
-            raise Exception
+        except Exception, e:
+            raise e
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -162,8 +162,8 @@ class ContentSearch(GenericAPIView):
             analysis_file = self.analysis_file.read()
         try:
             results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
-        except Exception:
-            raise Exception
+        except Exception, e:
+            raise e
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -249,8 +249,8 @@ class CombinedSearch(GenericAPIView):
             analysis_file = self.analysis_file.read()
         try:
             results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat, max_solr_filter_ids=max_solr_filter_ids)
-        except Exception:
-            raise Exception
+        except Exception, e:
+            raise e
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])

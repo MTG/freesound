@@ -86,7 +86,10 @@ class TextSearch(GenericAPIView):
             raise NotFoundException
 
         # Get search results
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form)
+        try:
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form)
+        except:
+            raise ServerErrorException()
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -157,7 +160,10 @@ class ContentSearch(GenericAPIView):
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
+        try:
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
+        except:
+            raise ServerErrorException()
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -237,10 +243,14 @@ class CombinedSearch(GenericAPIView):
 
         # Get search results
         max_repeat = int(request.QUERY_PARAMS.get('max_repeat', 0)) # Max repeat is an additional parameter to tweak performance in combined search
+        max_solr_filter_ids = int(request.QUERY_PARAMS.get('max_solr_filter_ids', 0)) # Max repeat is an additional parameter to tweak performance in combined search
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat)
+        try:
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat, max_solr_filter_ids=max_solr_filter_ids)
+        except:
+            raise ServerErrorException()
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])

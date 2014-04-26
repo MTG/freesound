@@ -346,10 +346,11 @@ def api_search(search_form, target_file=None, fast_computation=False):
             else:
                 raise ServerErrorException(msg=e.message)
         except Exception, e:
-            if settings.DEBUG:
-                raise ServerErrorException(msg=e.message)
-            else:
-                raise ServerErrorException()
+            raise ServerErrorException(msg=e.message)
+            #if settings.DEBUG:
+            #    raise ServerErrorException(msg=e.message)
+            #else:
+            #    raise ServerErrorException()
 
 
     elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
@@ -378,10 +379,11 @@ def api_search(search_form, target_file=None, fast_computation=False):
         except SolrException, e:
             raise InvalidUrlException(msg='Solr exception: %s' % e.message)
         except Exception, e:
-            if settings.DEBUG:
-                raise ServerErrorException(msg=e.message)
-            else:
-                raise ServerErrorException()
+            raise ServerErrorException(msg=e.message)
+            #if settings.DEBUG:
+            #    raise ServerErrorException(msg=e.message)
+            #else:
+            #    raise ServerErrorException()
 
     else:
         # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
@@ -422,10 +424,12 @@ def api_search(search_form, target_file=None, fast_computation=False):
         except SolrException, e:
             raise InvalidUrlException(msg='Solr exception: %s' % e.message)
         except Exception, e:
-            if settings.DEBUG:
-                raise ServerErrorException(msg=e.message)
-            else:
-                raise ServerErrorException()
+            raise ServerErrorException(msg=e.message)
+            #if settings.DEBUG:
+            #    raise ServerErrorException(msg=e.message)
+            #else:
+            #    raise ServerErrorException()
+
 
         # Get gaia results
         try:
@@ -465,10 +469,11 @@ def api_search(search_form, target_file=None, fast_computation=False):
             else:
                 raise ServerErrorException(msg=e.message)
         except Exception, e:
-            if settings.DEBUG:
-                raise ServerErrorException(msg=e.message)
-            else:
-                raise ServerErrorException()
+            raise ServerErrorException(msg=e.message)
+            #if settings.DEBUG:
+            #    raise ServerErrorException(msg=e.message)
+            #else:
+            #    raise ServerErrorException()
 
 
         if search_form.cleaned_data['target'] or target_file:

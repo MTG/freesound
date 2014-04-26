@@ -6,23 +6,23 @@ Resources (APIv2)
 Search resources
 >>>>>>>>>>>>>>>>
 
-.. _sound-search:
+.. _sound-text-search:
 
-Search
+Text Search
 =========================================================
 
 ::
 
-  GET /apiv2/search/
+  GET /apiv2/search/text/
 
 This resource allows searching sounds in Freesound by matching their tags and other kinds of metadata.
 
-.. _sound-search-parameters:
+.. _sound-text-search-parameters:
 
-Request parameters (basic search parameters)
---------------------------------------------
+Request parameters (text search parameters)
+-------------------------------------------
 
-Queries are defined using the following request parameters:
+Text search queries are defined using the following request parameters:
 
 ======================  =========================  ======================
 Name                    Type                       Description
@@ -160,27 +160,29 @@ This includes information about the license and Freesound public url of the soun
 Examples
 --------
 
-{{examples_Search}}
+{{examples_TextSearch}}
 
 
 
-Advanced Search
+.. _sound-content-search:
+
+Content Search
 =========================================================
-
 
 ::
 
-  GET /apiv2/search/advanced/
-  POST /apiv2/search/advanced/
+  GET /apiv2/search/content/
+  POST /apiv2/search/content/
 
-This resource allows searching sounds in Freesound based on their tags, metadata and content-based descriptors.
+This resource allows searching sounds in Freesound based on their content descriptors.
 
-This resource extends the normal sound :ref:`sound-search` resource by adding the ability to filter results by content-based descriptors values and sort the result by similarity search given some content-based descriptors values or a sound target.
 
-Request parameters
-------------------
+.. _sound-content-search-parameters:
 
-Advanced search request parameters can include the basic search parameters (``query``, ``filter``, ``sort`` and ``group_by_pack``, :ref:`sound-search-parameters`), plus three new parameters named ``target``, ``target_analysis_file`` and ``descriptors_filter``:
+Request parameters (content search parameters)
+----------------------------------------------
+
+Content search queries are defined using the following request parameters:
 
 =========================  =========================  ======================
 Name                       Type                       Description
@@ -192,9 +194,8 @@ Name                       Type                       Description
 
 **The 'target' and 'analysis_file' parameters**
 
-The ``target`` parameter can be used to specify a content-based sorting of your advanced search results.
+The ``target`` parameter can be used to specify a content-based sorting of your search results.
 Using ``target`` you can sort the query results so that the first results will the the ones featuring the most similar descriptors to the given target.
-``target`` parameter will always override the ``sort`` parameter.
 To specify a target you must use a syntax like ``target=descriptor_name:value``.
 You can also set multiple descriptor/value paris in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
 Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.'). Only numerical descriptors are allowed.
@@ -222,12 +223,12 @@ To set a sound as a target of the query you must indicate it with the sound id. 
 There is even another way to specify a target for the query, which is by uploading an analysis file generated using the Essentia Freesound Extractor.
 For doing that you will need to download and compile Essentia, an open source feature extraction library developed at the Music Technology Group (https://github.com/mtg/essentia),
 and use the 'streaming_extractor_freesound' example to analyze any sound you have in your local computer.
-As a result, the extractor will create a JSON file that you can use as target in your Freesound API advanced search queries.
+As a result, the extractor will create a JSON file that you can use as target in your Freesound API content search queries.
 To use this file as target you will need to use the POST method (instead of GET) and attach the file as an ``analysis_file`` POST parameter (see example below).
 Setting the target as an ``analysis_file`` allows you to to find sounds in Freesound that are similar to any other sound that you have in your local computer and that it is not part of Freesound.
 When using ``analysis_file``, the contents of ``target`` are ignored.
 
-If ``target`` (or ``analysis_file``) is not used in combination with ``query``, ``filter`` or ``descriptors_filter``, the results of the query will
+If ``target`` (or ``analysis_file``) is not used in combination with ``descriptors_filter``, the results of the query will
 include all sounds from Freesound indexed in the similarity server.
 
 
@@ -273,7 +274,47 @@ Return a sound list just like :ref:`sound-list-response`. The same request param
 Examples
 --------
 
-{{examples_AdvancedSearch}}
+{{examples_ContentSearch}}
+
+
+
+Combined Search
+=========================================================
+
+::
+
+  GET /apiv2/search/combined/
+  POST /apiv2/search/combined/
+
+This resource is a combination of :ref:`sound-text-search` and :ref:`sound-content-search`, and allows searching sounds in Freesound based on their tags, metadata and content-based descriptors.
+
+
+Request parameters
+------------------
+
+Combined search request parameters can include any of the parameters from text-based search queries (``query``, ``filter`` and ``sort``, :ref:`sound-text-search-parameters`)
+and content-based search queries (``target``, ``analysis_file`` and ``descriptors_filer`` and, :ref:`sound-content-search-parameters`).
+Note that ``group_by_pack`` **is not** available in combined search queries.
+
+In combined search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
+query results can be filtered either by values of sounds' metadata or sounds' content-descriptors... all at once!
+
+To perform a combined search query you need to use at least one of the request parameters from text-based search and at least one of the request parameters from content-based search.
+Note that ``sort`` parameter must always be accompanied by a ``query`` or ``filter`` parameter (or both), otherwise it is ignored.
+``sort`` parameter will also be ignored if parameter ``target`` (or ``analysis_file``) is present in the query.
+
+
+Response
+--------
+
+Return a sound list just like :ref:`sound-list-response`. The same request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+
+
+
+Examples
+--------
+
+{{examples_CombinedSearch}}
 
 
 Sound resources

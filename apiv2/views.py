@@ -66,92 +66,165 @@ resources_doc_filename = 'resources_apiv2.html'
 # SEARCH AND SIMILARITY SEARCH VIEWS
 ####################################
 
-class Search(GenericAPIView):
+class TextSearch(GenericAPIView):
 
     __doc__ = 'Search sounds in Freesound based on their tags and other metadata.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#search' % resources_doc_filename,
-                 get_formatted_examples_for_view('Search', 'apiv2-sound-search', max=5))
+              % (docs_base_url, '%s#text-search' % resources_doc_filename,
+                 get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))
 
         # Validate search form and check page 0
-        search_form = SoundSearchFormAPI(request.QUERY_PARAMS)
+        search_form = SoundTextSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
+        if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
+           raise InvalidUrlException(msg='At lesast one request parameter from Text Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException
 
+        # Get search results
         try:
-            # Get search results
-            solr = Solr(settings.SOLR_URL)
-            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                         unquote(search_form.cleaned_data['filter']),
-                                         search_prepare_sort(search_form.cleaned_data['sort'], SEARCH_SORT_OPTIONS_API),
-                                         search_form.cleaned_data['page'],
-                                         search_form.cleaned_data['page_size'],
-                                         grouping=search_form.cleaned_data['group_by_pack'],
-                                         include_facets=False)
-            results = SolrResponseInterpreter(solr.select(unicode(query)))
-
-            # Paginate results
-            paginator = SolrResponseInterpreterPaginator(results, search_form.cleaned_data['page_size'])
-            if search_form.cleaned_data['page'] > paginator.num_pages and paginator.count != 0:
-                raise NotFoundException
-            page = paginator.page(search_form.cleaned_data['page'])
-            response_data = dict()
-            response_data['count'] = paginator.count
-            response_data['previous'] = None
-            response_data['next'] = None
-            if page['has_other_pages']:
-                if page['has_previous']:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['previous_page_number'])
-                if page['has_next']:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['next_page_number'])
-
-
-            # Get analysis data and serialize sound results
-            ids = [object['id'] for object in page['object_list']]
-            get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
-            qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
-            qs_sound_objects = dict()
-            for sound_object in qs:
-                qs_sound_objects[sound_object.id] = sound_object
-            sounds = []
-            for object in page['object_list']:
-                try:
-                    sound = SoundListSerializer(qs_sound_objects[object['id']], context=self.get_serializer_context()).data
-                    if 'more_from_pack' in object.keys():
-                        if object['more_from_pack'] > 0:
-                            sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(object['pack_id']), object['pack_name']), group_by_pack='0')
-                            sound['n_from_same_pack'] = object['more_from_pack'] + 1  # we add one as is the sound itself
-                    sounds.append(sound)
-                except:
-                    # This will happen if there are synchronization errors between solr index and the database.
-                    # In that case sounds are are set to null
-                    sounds.append(None)
-            response_data['results'] = sounds
-
-        except SolrException, e:
-            raise InvalidUrlException(msg='Solr exception: %s' % e.message)
-        except NotFoundException, e:
-            raise NotFoundException
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form)
         except Exception, e:
-            if settings.DEBUG:
-                raise ServerErrorException(msg=e.message)
-            else:
-                raise ServerErrorException()
+            raise e
+
+        # Paginate results
+        paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
+        if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
+            raise NotFoundException
+        page = paginator.page(search_form.cleaned_data['page'])
+        response_data = dict()
+        response_data['count'] = paginator.count
+        response_data['previous'] = None
+        response_data['next'] = None
+        if page['has_other_pages']:
+                if page['has_previous']:
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['previous_page_number'])
+                if page['has_next']:
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['next_page_number'])
+
+        # Get analysis data and serialize sound results
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
+        sounds = []
+        for i, sid in enumerate(ids):
+            try:
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                if more_from_pack_data:
+                    if more_from_pack_data[sid][0]:
+                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
+                        sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
+                sounds.append(sound)
+            except:
+                # This will happen if there are synchronization errors between solr index, gaia and the database.
+                # In that case sounds are are set to null
+                sounds.append(None)
+        response_data['results'] = sounds
+
+        if note:
+            response_data['note'] = note
 
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class AdvancedSearch(GenericAPIView):
+class ContentSearch(GenericAPIView):
+
+    __doc__ = 'Search sounds in Freesound based on their content descriptors.' \
+              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+              % (docs_base_url, '%s#content-search' % resources_doc_filename,
+                 get_formatted_examples_for_view('ContentSearch', 'apiv2-sound-content-search', max=5))
+
+    serializer_class = SimilarityFileSerializer
+    analysis_file = None
+
+    def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('content_search'))
+
+        # Validate search form and check page 0
+        search_form = SoundContentSearchFormAPI(request.QUERY_PARAMS)
+        if not search_form.is_valid():
+            raise ParseError
+        if not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file:
+           raise InvalidUrlException(msg='At lesast one parameter from Content Search should be included in the request.')
+        if search_form.cleaned_data['page'] < 1:
+                raise NotFoundException
+
+        # Get search results
+        analysis_file = None
+        if self.analysis_file:
+            analysis_file = self.analysis_file.read()
+        try:
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
+        except Exception, e:
+            raise e
+
+        # Paginate results
+        paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
+        if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
+            raise NotFoundException
+        page = paginator.page(search_form.cleaned_data['page'])
+        response_data = dict()
+        if self.analysis_file:
+            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name, self.analysis_file._size/1024)
+        response_data['count'] = paginator.count
+        response_data['previous'] = None
+        response_data['next'] = None
+        if page['has_other_pages']:
+                if page['has_previous']:
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-content-search'), page=page['previous_page_number'])
+                if page['has_next']:
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-content-search'), page=page['next_page_number'])
+
+        # Get analysis data and serialize sound results
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
+        sounds = []
+        for i, sid in enumerate(ids):
+            try:
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                # Distance to target is present we add it to the serialized sound
+                if distance_to_target_data:
+                    sound['distance_to_target'] = distance_to_target_data[sid]
+                sounds.append(sound)
+            except:
+                # This will happen if there are synchronization errors between solr index, gaia and the database.
+                # In that case sounds are are set to null
+                sounds.append(None)
+        response_data['results'] = sounds
+
+        if note:
+            response_data['note'] = note
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def post(self, request,  *args, **kwargs):
+        # This view has a post version to handle analysis file uploads
+        serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
+        if serializer.is_valid():
+            analysis_file = request.FILES['analysis_file']
+            self.analysis_file = analysis_file
+            return self.get(request,  *args, **kwargs)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CombinedSearch(GenericAPIView):
 
     __doc__ = 'Search sounds in Freesound based on their tags, metadata and content-based descriptors.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#advanced-search' % resources_doc_filename,
-                 get_formatted_examples_for_view('AdvancedSearch', 'apiv2-sound-combined-search', max=5))
+              % (docs_base_url, '%s#combined-search' % resources_doc_filename,
+                 get_formatted_examples_for_view('CombinedSearch', 'apiv2-sound-combined-search', max=5))
 
     serializer_class = SimilarityFileSerializer
     analysis_file = None
@@ -163,15 +236,21 @@ class AdvancedSearch(GenericAPIView):
         search_form = SoundCombinedSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
+        if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
+           raise InvalidUrlException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
                 raise NotFoundException
 
         # Get search results
-        fast_computation = request.QUERY_PARAMS.get('fast', False) != False
+        max_repeat = int(request.QUERY_PARAMS.get('max_repeat', 0)) # Max repeat is an additional parameter to tweak performance in combined search
+        max_solr_filter_ids = int(request.QUERY_PARAMS.get('max_solr_filter_ids', 0)) # Max repeat is an additional parameter to tweak performance in combined search
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, fast_computation=fast_computation)
+        try:
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat, max_solr_filter_ids=max_solr_filter_ids)
+        except Exception, e:
+            raise e
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -187,13 +266,12 @@ class AdvancedSearch(GenericAPIView):
         if page['has_other_pages']:
                 if page['has_previous']:
                     response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['previous_page_number'])
-                    if fast_computation:
-                        response_data['previous'] += '&fast=1'
+                    if max_repeat:
+                        response_data['previous'] += '&max_repeat=%i' % max_repeat
                 if page['has_next']:
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
-                    if fast_computation:
-                        response_data['next'] += '&fast=1'
-
+                    if max_repeat:
+                        response_data['next'] += '&max_repeat=%i' % max_repeat
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
@@ -212,7 +290,7 @@ class AdvancedSearch(GenericAPIView):
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
                         sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
-                        sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
+                        sound['n_from_same_pack'] = None #more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
             except:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.
@@ -838,8 +916,9 @@ class FreesoundApiV2Resources(GenericAPIView):
         logger.info(self.log_message('api_root'))
         return Response([
             {'Search resources': OrderedDict(sorted(dict({
-                    '01 Search': prepend_base(reverse('apiv2-sound-search'), request_is_secure=request.using_https),
-                    '02 Advanced Search': prepend_base(reverse('apiv2-sound-combined-search'), request_is_secure=request.using_https),
+                    '01 Text Search': prepend_base(reverse('apiv2-sound-text-search'), request_is_secure=request.using_https),
+                    '02 Content Search': prepend_base(reverse('apiv2-sound-content-search'), request_is_secure=request.using_https),
+                    '03 Combined Search': prepend_base(reverse('apiv2-sound-combined-search'), request_is_secure=request.using_https),
                 }).items(), key=lambda t: t[0]))},
                 {'Sound resources': OrderedDict(sorted(dict({
                     '01 Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.using_https),

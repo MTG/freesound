@@ -183,6 +183,24 @@ class SoundCombinedSearchFormAPI(SoundSearchFormAPI):
 
         return link
 
+class SoundContentSearchFormAPI(SoundCombinedSearchFormAPI):
+    '''
+    This form is like CombinedSearch but disabling text-search-only fields
+    '''
+
+    def clean_query(self):
+        return None
+
+    def clean_filter(self):
+        return None
+
+    def clean_sort(self):
+        self.original_url_sort_value = False
+        return None
+
+    def clean_group_by_pack(self):
+        return None
+
 
 class SimilarityFormAPI(SoundCombinedSearchFormAPI):
 

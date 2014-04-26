@@ -395,7 +395,7 @@ def api_search(search_form, target_file=None, fast_computation=False):
             more_from_pack_data = dict()
         PAGE_SIZE = 1000
         if fast_computation:
-            PAGE_SIZE = 2000
+            PAGE_SIZE = fast_computation
         current_page = 1
         try:
             # Iterate over solr results pages

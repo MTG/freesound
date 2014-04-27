@@ -140,7 +140,7 @@ Search resource returns a *sound list response*. Sound list responses have the f
   }
 
 
-There are some request parameters that you can use to determine some of the contents of the sound list response.
+There are some extra request parameters that you can use to determine some of the contents of the sound list response.
 These parameters are ``page`` and ``page_size`` (to deal with pagination), and ``fields``, ``descriptors`` and ``normalized`` to deal with the sound information that is returned for every sound in the results.
 
 ======================  =========================  ======================
@@ -149,7 +149,7 @@ Name                    Type                       Description
 ``page``                string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
 ``page_size``           string                     Indicates the number of sound to include in every query. By default ``page_size=30``, and the maximum is 100. Be careful with that parameter, bigger page sizes means that more data needs to be transferred.
 ``fields``              comma separated strings    Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response`, and must be separated by commas. For example, if ``fields=name,avg_rating,license``, results will include sound name, average rating and license for every returned sound. Use this parameter to optimize request times by only requesting the information you really need.
-``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. This parameter must be used in combination with the ``fields`` parameter. If ``fields`` includes the property ``analysis``, you will use ``descriptors`` parameter to indicate which descriptors should be included in every sound of the response. Descriptors names can be any of those listed in :ref:`analysis-docs`, and must be separated by commas and start with a dot '.' character. For example, if ``fields=analysis&descriptors=.lowlevel.spectral_centroid,.lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptors names were found of the analysis data of a particular sound is not available.
+``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. This parameter must be used in combination with the ``fields`` parameter. If ``fields`` includes the property ``analysis``, you will use ``descriptors`` parameter to indicate which descriptors should be included in every sound of the response. Descriptor names can be any of those listed in :ref:`analysis-docs`, and must be separated by commas and start with a dot '.' character. For example, if ``fields=analysis&descriptors=.lowlevel.spectral_centroid,.lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptor names were found of the analysis data of a particular sound is not available.
 ``normalized``          bool (yes=1, no=0)         Indicates whether the returned sound content-based descriptors should be normalized or not. ``normalized=1`` will return normalized descriptor values. By default, ``normalized=0``.
 ======================  =========================  ======================
 
@@ -239,7 +239,9 @@ To define ``descriptors_filter`` parameter you can use the same syntax as for th
 For example, ``descriptors_filter=.lowlevel.pitch.mean:220`` will only return sounds that have an EXACT pitch mean of 220hz.
 Note that this would probably return no results as a sound will rarely have that exact pitch (might be very close like 219.999 or 220.000001 but not exactly 220).
 For this reason, in general it might be better to indicate ``descriptors_filter`` using ranges.
-Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.'). Non fixed-length descriptors are not allowed.
+Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.').
+Note that most of the descriptors provide several statistics (var, mean, min, max...). In that case, the descriptor name must include also the desired statistic (see examples below).
+Non fixed-length descriptors are not allowed.
 Some examples of ``descriptors_filter`` for numerical descriptors::
 
   descriptors_filter=.lowlevel.pitch.mean:[219.9 TO 220.1]
@@ -268,7 +270,8 @@ You can combine both numerical and non numerical descriptors as well::
 Response
 --------
 
-Return a sound list just like :ref:`sound-list-response`. The same request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+The Content Search resource returns a sound list just like :ref:`sound-list-response`.
+The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
 
 
 Examples
@@ -277,6 +280,7 @@ Examples
 {{examples_ContentSearch}}
 
 
+.. _sound-combined-search:
 
 Combined Search
 =========================================================
@@ -307,7 +311,8 @@ Note that ``sort`` parameter must always be accompanied by a ``query`` or ``filt
 Response
 --------
 
-Return a sound list just like :ref:`sound-list-response`. The same request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+The Combined Search resource returns a sound list just like :ref:`sound-list-response`.
+The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
 
 
 
@@ -326,12 +331,9 @@ Sound Instance
 
 ::
 
-  GET /apiv2/sounds/<sound_id>
+  GET /apiv2/sounds/<sound_id>/
 
-This resource allows the retrieval of detailed information of a sound.
-
-Detailed information can include content-based features by using an extra request parameter ``descriptors``.
-``descriptors`` should include a comma separated list of descriptor names. Descriptors names can be any of those listed in :ref:`analysis-docs`, and must start with a dot '.' character (e.g. ``descriptors=.lowlevel.mfcc,.rhythm.bpm``, similar to what you would do to get descriptors in search responses :ref:`sound-list-response`).
+This resource allows the retrieval of detailed information about a sound.
 
 
 .. _sound-instance-response:
@@ -375,10 +377,18 @@ comments              URI               The URI of a paginated list of the comme
 num_comments          number            The number of comments.
 comment               URI               The URI to comment the sound.
 similar_sounds        URI               URI pointing to the similarity resource (to get a list of similar sounds).
-analysis              object            Object containing requested descriptors information. This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
+analysis              object            Object containing requested descriptors information according to the ``descriptors`` request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
 analysis_stats        URI               URI pointing to the complete analysis results of the sound (see :ref:`analysis-docs`).
 analysis_frames       URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
 ====================  ================  ====================================================================================
+
+
+The contents of the field ``analysis`` of the Sound Instance response can be determined using an additional request parameter ``descriptors``.
+The ``descriptors`` parameter should include a comma separated list of content-based descriptor names, just like in the :ref:`sound-list-response`.
+Descriptor names can be any of those listed in :ref:`analysis-docs`, and must start with a dot '.' character (e.g. ``descriptors=.lowlevel.mfcc,.rhythm.bpm``).
+The request parameter ``normalized`` can also be used to return content-based descriptor values in a normalized range instead of the absolute values.
+
+The parameter ``fields`` can also be used to restrict the number of fields returned in the response.
 
 
 Examples
@@ -390,6 +400,23 @@ Examples
 Sound Analysis
 =========================================================
 
+::
+
+  GET /apiv2/sounds/<sound_id>/analysis/
+
+This resource allows the retrieval of analysis information (content-based descriptors) of a sound.
+Although content-based descriptors can also be retrieved using the ``descriptors`` request parameter in any API resource that returns sound lists or with the Sound Instance resource,
+using the Sound Analysis resource you can retrieve **all sound descriptors** at once.
+
+
+Response
+--------
+
+The response to a Sound Analysis request is a dictionary with the values of all content-based descriptors listed in :ref:`analysis-docs`.
+That dictionary can be filtered using an extra ``descriptors`` request parameter which should include a list of comma separated descriptor names chosen from those listed in :ref:`analysis-docs`, and that must start with a dot '.' character (e.g. ``descriptors=.lowlevel.mfcc,.rhythm.bpm``).
+The request parameter ``normalized`` can also be used to return content-based descriptor values in a normalized range instead of the absolute values.
+
+
 Examples
 --------
 
@@ -399,6 +426,29 @@ Examples
 Similar Sounds
 =========================================================
 
+::
+
+  GET /apiv2/sounds/<sound_id>/similar/
+
+This resource allows the retrieval of sounds similar to the given target.
+
+
+Request parameters
+------------------
+
+Essentially, the Similar Sounds resource is like a :ref:`sound-content-search` resource with the parameter ``target`` fixed to the sound id indicated in the url.
+You can still use the ``descriptors_filter`` request parameter to restrict the query results to those sounds whose content descriptor values comply with the defined filter.
+Use ``descriptors_filter`` in the same way as in :ref:`sound-content-search` and :ref:`sound-combined-search` resources.
+
+
+
+Response
+--------
+
+Similar Sounds resource returns a sound list just like :ref:`sound-list-response`.
+The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+
+
 Examples
 --------
 
@@ -407,6 +457,46 @@ Examples
 
 Sound Comments
 =========================================================
+
+::
+
+  GET /apiv2/sounds/<sound_id>/comments/
+
+This resource allows the retrieval of the comments of a sound.
+
+
+Response
+--------
+
+Sound Comments resource returns a paginated list of the comments of a sound, with a similar structure as :ref:`sound-list-response`:
+
+::
+
+  {
+    "count": <total number of comments>,
+    "next": <link to the next page of comments (null if none)>,
+    "results": [
+        <most recent comment for sound_id>,
+        <second most recent comment for sound_id>,
+        ...
+    ],
+    "previous": <link to the previous page of comments (null if none)>
+  }
+
+Comments are sorted according to their creation date (recent comments in the top of the list).
+Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
+
+Each comment entry consists of a dictionary with the following structure:
+
+::
+
+  {
+    "user": <uri of user who made the comment>,
+    "comment": <the comment itself>,
+    "created": <the date when the comment was made, e.g. "2014-03-15T14:06:48.022">
+  }
+
+
 
 Examples
 --------

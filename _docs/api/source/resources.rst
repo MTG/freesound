@@ -3,6 +3,10 @@
 Resources (APIv2)
 <<<<<<<<<<<<<<<<<
 
+.. contents::
+    :depth: 3
+
+
 Search resources
 >>>>>>>>>>>>>>>>
 
@@ -346,40 +350,40 @@ The Sound Instance response is a dictionary including the following properties/f
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-id                    number            The sound's unique identifier.
-uri                   URI               The URI for this sound.
-url                   URI               The URI for this sound on the Freesound website.
-name                  string            The name user gave to the sound.
-tags                  array[strings]    An array of tags the user gave to the sound.
-description           string            The description the user gave to the sound.
-geotag                string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
-created               string            The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
-license               string            The license under which the sound is available to you.
-type                  string            The type of sound (wav, aif, aiff, mp3, or flac).
-channels              number            The number of channels.
-filesize              number            The size of the file in bytes.
-bitrate               number            The bit rate of the sound in kbps.
-bitdepth              number            The bit depth of the sound.
-duration              number            The duration of the sound in seconds.
-samplerate            number            The samplerate of the sound.
-user                  URI               The URI for the uploader of the sound.
-username              string            The username of the uploader of the sound.
-pack                  URI               If the sound is part of a pack, this URI points to that pack's API resource.
-download              URI               The URI for retrieving the original sound.
-bookmark              URI               The URI for bookmarking the sound.
-previews              object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
-images                object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dinctionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
-num_downloads         number            The number of times the sound was downloaded.
-avg_rating            number            The average rating of the sound.
-num_ratings           number            The number of times the sound was rated.
-rate                  URI               The URI for rating the sound.
-comments              URI               The URI of a paginated list of the comments of the sound.
-num_comments          number            The number of comments.
-comment               URI               The URI to comment the sound.
-similar_sounds        URI               URI pointing to the similarity resource (to get a list of similar sounds).
-analysis              object            Object containing requested descriptors information according to the ``descriptors`` request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
-analysis_stats        URI               URI pointing to the complete analysis results of the sound (see :ref:`analysis-docs`).
-analysis_frames       URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
+``id``                number            The sound's unique identifier.
+``uri``               URI               The URI for this sound.
+``url``               URI               The URI for this sound on the Freesound website.
+``name``              string            The name user gave to the sound.
+``tags``              array[strings]    An array of tags the user gave to the sound.
+``description``       string            The description the user gave to the sound.
+``geotag``            string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
+``created``           string            The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
+``license``           string            The license under which the sound is available to you.
+``type``              string            The type of sound (wav, aif, aiff, mp3, or flac).
+``channels``          number            The number of channels.
+``filesize``          number            The size of the file in bytes.
+``bitrate``           number            The bit rate of the sound in kbps.
+``bitdepth``          number            The bit depth of the sound.
+``duration``          number            The duration of the sound in seconds.
+``samplerate``        number            The samplerate of the sound.
+``user``              URI               The URI for the uploader of the sound.
+``username``          string            The username of the uploader of the sound.
+``pack``              URI               If the sound is part of a pack, this URI points to that pack's API resource.
+``download``          URI               The URI for retrieving the original sound.
+``bookmark``          URI               The URI for bookmarking the sound.
+``previews``          object            Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields ``preview-hq-mp3`` and ``preview-lq-mp3`` (for ~128kbps quality and ~64kbps quality mp3 respectively), and ``preview-hq-ogg`` and ``preview-lq-ogg`` (for ~192kbps quality and ~80kbps quality ogg respectively).
+``images``            object            Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dinctionary includes the fields ``waveform_l`` and ``waveform_m`` (for large and medium waveform images respectively), and ``spectral_l`` and ``spectral_m`` (for large and medium spectrogram images respectively).
+``num_downloads``     number            The number of times the sound was downloaded.
+``avg_rating``        number            The average rating of the sound.
+``num_ratings``       number            The number of times the sound was rated.
+``rate``              URI               The URI for rating the sound.
+``comments``          URI               The URI of a paginated list of the comments of the sound.
+``num_comments``      number            The number of comments.
+``comment``           URI               The URI to comment the sound.
+``similar_sounds``    URI               URI pointing to the similarity resource (to get a list of similar sounds).
+``analysis``          object            Object containing requested descriptors information according to the ``descriptors`` request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
+``analysis_stats``    URI               URI pointing to the complete analysis results of the sound (see :ref:`analysis-docs`).
+``analysis_frames``   URI               The URI for retrieving a JSON file with analysis information for each frame of the sound (see :ref:`analysis-docs`).
 ====================  ================  ====================================================================================
 
 
@@ -491,9 +495,9 @@ Each comment entry consists of a dictionary with the following structure:
 ::
 
   {
-    "user": <uri of user who made the comment>,
-    "comment": <the comment itself>,
-    "created": <the date when the comment was made, e.g. "2014-03-15T14:06:48.022">
+    "user": "<uri of user who made the comment>",
+    "comment": "<the comment itself>",
+    "created": "<the date when the comment was made, e.g. "2014-03-15T14:06:48.022">"
   }
 
 
@@ -520,17 +524,82 @@ Examples
 {{examples_DownloadSound}}
 
 
+.. _sound-upload:
+
 Upload Sound (OAuth2 required)
 =========================================================
+
+::
+
+  POST /apiv2/sounds/upload/
+
+This resource allows you to upload an audio file into Freesound.
+Note that this resource is only meant for uploading an audio file, not for describing it.
+In order for the file to appear in Freesound, it must be described using the :ref:`sound-describe` resource (after uploading),
+and it must be processed and moderated by the Freesound moderators just like any other sound uploaded using the Freessound website rather than the API.
+A list of uploaded files pending description can be obtained using the :ref:`sound-uploaded-files-pending-description` resource.
+
+The author of the uploaded sound will be the user authenticated via Oauth2, therefore this method requires :ref:`oauth-authentication`.
+
+
+Request parameters
+------------------
+
+The uploaded audio file must be attached to the request as a ``audiofile`` POST parameter.
+Supported file formats include .wav, .aif, .flac, .ogg and .mp3.
+
+
+Response
+--------
+
+On successful upload, the Upload Sound resource will return a dictionary with the following structure:
+
+::
+
+  {
+    "details": "File successfully uploaded (<file size>)",
+    "filename": "<filename of the uploaded audio file>"
+  }
+
+You will probably want to store the content of the ``filename`` field because it will be needed to later describe the sound.
+Alternatively, you can obtain a list of uploaded sounds pending description using the :ref:`sound-uploaded-files-pending-description` resource.
+
 
 Examples
 --------
 
 {{examples_UploadSound}}
 
+.. _sound-uploaded-files-pending-description:
 
-Not Yet Described Uploaded Sounds (OAuth2 required)
+Uploads Pending Description (OAuth2 required)
 =========================================================
+
+::
+
+  GET /apiv2/sounds/not_yet_described/
+
+This resource allows you to retrieve a list of audio files uploaded by a the Freesound user logged in using OAuth2 that have not yet been described.
+This method requires :ref:`oauth-authentication`.
+
+
+Response
+--------
+
+The Uploads Pending Description resource returns a dictionary with the following structure:
+
+::
+
+  {
+    "filenames": [
+        "<filename #1>",
+        "<filename #2>",
+        ...
+    ]
+  }
+
+The filenames returned by this resource are used as file identifiers in the :ref:`sound-describe` resource.
+
 
 Examples
 --------
@@ -538,8 +607,57 @@ Examples
 {{examples_NotYetDescribedUploadedSounds}}
 
 
+.. _sound-describe:
+
 Describe Sound (OAuth2 required)
 =========================================================
+
+::
+
+  POST /apiv2/sounds/describe/
+
+This resource allows you to describe a previously uploaded audio file.
+This method requires :ref:`oauth-authentication`.
+Note that after a sound is described, it still needs to be processed and moderated by the team of Freesound moderators, therefore it will not yet appear in Freesound.
+You can obtain a list of sounds uploaded and described by the user logged in using OAuth2 but still pending processing and moderation using the :ref:`sound-pending-moderation` resource.
+
+
+Request parameters
+------------------
+
+A request to the Describe Sound resource must include the following POST parameters:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-uploaded-files-pending-description` resource.
+``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
+``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
+``description``       string            A textual description of the sound.
+``license``           string            The license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
+``pack``              string            (OPTIONAL) The name of the pack were the sound should be included. If user has created no such pack with that name, a new one will be created.
+``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
+====================  ================  ====================================================================================
+
+
+Response
+--------
+
+If the audio file is described successfully, the Describe Sound resource will return a dictionary with the following structure:
+
+::
+
+  {
+    "details": "Sound successfully described (now pending moderation)",
+    "uri": "<URI of the described sound instance>"
+  }
+
+Note that after the sound is described, it still needs to be processed and moderated by the team of Freesound moderators.
+Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
+The dictionary will include and entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+
 
 Examples
 --------
@@ -547,22 +665,100 @@ Examples
 {{examples_DescribeSound}}
 
 
-Upload and Describe Sound (OAuth2 required)
-=========================================================
+.. _sound-pending-moderation:
 
-Examples
+Uploaded Sounds Awaiting Moderation in Freesound (OAuth2 required)
+==================================================================
+
+::
+
+  GET /apiv2/sounds/uploads_pending_moderation/
+
+This resource allows you to retrieve a list of sounds that have been uploaded and described by the user logged in using OAuth2, but that still need to be processed and moderated.
+This method requires :ref:`oauth-authentication`.
+
+Response
 --------
 
-{{examples_UploadAndDescribeSound}}
+The response to the Uploaded Sounds Awaiting Moderation in Freesound resource is a dictionary with the following structure:
 
+::
 
-Uploaded Sounds awaiting moderation in Freesound (OAuth2 required)
-==================================================================
+  {
+    "sounds pending processing": [
+        <sound #1>,
+        <sound #2>,
+        ...
+    ],
+    "sounds pending moderation": [
+        <sound #1>,
+        <sound #2>,
+        ...
+    ],
+  }
+
+Each sound entry either in "sounds pending processing" or "sounds pending moderation" fields consists of a minimal set
+of information about that sound including the ``name``, ``tags``, ``description``, ``created`` and ``license`` fields
+that you would find in a :ref:`sound-instance-response`.
+Sounds under "sounds pending moderation" also contain an extra ``images`` field containing the uris of the waveform and spectrogram
+images of the sound as described in :ref:`sound-instance-response`.
+
+Processing is done automatically in Freesound right after sounds are described, and it normally takes less than a minute.
+Therefore, you should normally see that the list of sounds under "sounds pending processing" is empty.
+
 
 Examples
 --------
 
 {{examples_UploadedAndDescribedSoundsPendingModeration}}
+
+
+.. _sound-upload-and-describe:
+
+Upload and Describe Sound (OAuth2 required)
+=========================================================
+
+::
+
+  POST /apiv2/sounds/upload_and_describe/
+
+This resource allows you to upload an audio file into Freesound and describe it at once.
+In order for the file to appear in Freesound, it will still need to be processed and moderated by the Freesound moderators
+just like any other sound uploaded using the Freessound website rather than the API.
+The author of the uploaded sound will be the user authenticated via Oauth2, therefore this method requires :ref:`oauth-authentication`.
+
+A list of uploaded and described sounds pending processing and moderation can be obtained using the :ref:`sound-pending-moderation` resource.
+
+Request
+-------
+
+A request to the Upload and Describe Sound resource must include the same POST parameters as in :ref:`sound-describe`,
+with the exception that instead of the parameter ``upload_filename``, you must attach an audio file using an ``audiofile`` parameter like in :ref:`sound-upload`.
+Supported file formats include .wav, .aif, .flac, .ogg and .mp3.
+
+Response
+--------
+
+If the audio file is upload and described successfully, the Upload and Describe Sound resource will return a dictionary with the following structure:
+
+::
+
+  {
+    "details": "Audio file successfully uploaded and described (now pending moderation)",
+    "uri": "<URI of the uploaded and described sound instance>"
+  }
+
+Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
+Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
+The dictionary will include and entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+
+
+Examples
+--------
+
+{{examples_UploadAndDescribeSound}}
 
 
 Bookmark Sound (OAuth2 required)
@@ -613,24 +809,24 @@ Response
 
 The User Instance response is a dictionary including the following properties/fields:
 
-====================  ================  ====================================================================================
-Name                  Type              Description
-====================  ================  ====================================================================================
-uri                   URI               The URI for this user.
-url                   URI               The URI for this users' profile on the Freesound website.
-username              string            The username.
-about                 string            The 'about' text of users' profile (if indicated).
-homepage              URI               The URI of users' homepage outside Freesound (if indicated).
-avatar                object            Dictionary including the URIs for the avatar of the user. The avatar is presented in three sizes ``Small``, ``Medium`` and ``Large``, which correspond to the three fields in the dictionary. If user has no avatar, this field is null.
-date_joined           string            The date when the user joined Freesound (e.g. "2008-08-07T17:39:00").
-num_sounds            number            The number of sounds uploaded by the user.
-sounds                URI               The URI for a list of sounds by the user.
-num_packs             number            The number of packs by the user.
-packs                 URI               The URI for a list of packs by the user.
-num_posts             number            The number of forum posts by the user.
-num_comments          number            The number of comments that user made in other users' sounds.
-bookmark_categories   URI               The URI for a list of bookmark categories by the user.
-====================  ================  ====================================================================================
+========================  ================  ====================================================================================
+Name                      Type              Description
+========================  ================  ====================================================================================
+``uri``                   URI               The URI for this user.
+``url``                   URI               The URI for this users' profile on the Freesound website.
+``username``              string            The username.
+``about``                 string            The 'about' text of users' profile (if indicated).
+``homepage``              URI               The URI of users' homepage outside Freesound (if indicated).
+``avatar``                object            Dictionary including the URIs for the avatar of the user. The avatar is presented in three sizes ``Small``, ``Medium`` and ``Large``, which correspond to the three fields in the dictionary. If user has no avatar, this field is null.
+``date_joined``           string            The date when the user joined Freesound (e.g. "2008-08-07T17:39:00").
+``num_sounds``            number            The number of sounds uploaded by the user.
+``sounds``                URI               The URI for a list of sounds by the user.
+``num_packs``             number            The number of packs by the user.
+``packs``                 URI               The URI for a list of packs by the user.
+``num_posts``             number            The number of forum posts by the user.
+``num_comments``          number            The number of comments that user made in other users' sounds.
+``bookmark_categories``   URI               The URI for a list of bookmark categories by the user.
+========================  ================  ====================================================================================
 
 
 Examples
@@ -690,10 +886,11 @@ User Packs resource returns a paginated list of the packs created by a user, wit
     "previous": <link to the previous page of packs (null if none)>
   }
 
+Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack-instance`: response.
 Packs are sorted according to their creation date (recent packs in the top of the list).
 Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
 
-Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack-instance`: response.
+
 
 
 Examples
@@ -737,10 +934,10 @@ Each bookmark category entry consists of a dictionary with the following structu
 ::
 
   {
-    "url": <URI of the bookmark category in Freesound>
-    "name": <name that the user has given to the bookmark category>
+    "url": "<URI of the bookmark category in Freesound>",
+    "name": "<name that the user has given to the bookmark category>",
     "num_sounds": <number of sounds under the bookmark category>,
-    "sounds": <URI to a page with the list of sounds in this bookmark category>,
+    "sounds": "<URI to a page with the list of sounds in this bookmark category>",
   }
 
 
@@ -813,15 +1010,15 @@ The Pack Instance response is a dictionary including the following properties/fi
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-id                    number            The unique identifier of this pack.
-uri                   URI               The URI for this pack.
-url                   URI               The URI for this pack on the Freesound website.
-description           string            The description the user gave to the pack (if any).
-created               string            The date when the pack was created (e.g. "2014-04-16T20:07:11.145").
-name                  string            The name user gave to the pack.
-num_sounds            number            The number of sounds in the pack.
-sounds                URI               The URI for a list of sounds in the pack.
-num_downloads         number            The number of times this pack has been downloaded.
+``id``                number            The unique identifier of this pack.
+``uri``               URI               The URI for this pack.
+``url``               URI               The URI for this pack on the Freesound website.
+``description``       string            The description the user gave to the pack (if any).
+``created``           string            The date when the pack was created (e.g. "2014-04-16T20:07:11.145").
+``name``              string            The name user gave to the pack.
+``num_sounds``        number            The number of sounds in the pack.
+``sounds``            URI               The URI for a list of sounds in the pack.
+``num_downloads``     number            The number of times this pack has been downloaded.
 ====================  ================  ====================================================================================
 
 

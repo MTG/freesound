@@ -697,7 +697,7 @@ class UploadSound(WriteRequiredGenericAPIView):
 class NotYetDescribedUploadedSounds(OauthRequiredAPIView):
     __doc__ = 'List of uploaded files which have not yet been described.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#not-yet-described-uploaded-sounds' % resources_doc_filename,
+              % (docs_base_url, '%s#uploads-pending-description' % resources_doc_filename,
                  get_formatted_examples_for_view('NotYetDescribedUploadedSounds', 'apiv2-uploads-not-described', max=5))
 
     def get(self, request,  *args, **kwargs):
@@ -708,7 +708,7 @@ class NotYetDescribedUploadedSounds(OauthRequiredAPIView):
 
 
 class UploadedAndDescribedSoundsPendingModeration(OauthRequiredAPIView):
-    __doc__ = 'List of uploaded files which have already been descriebd and are awaiting moderation in Freesound.' \
+    __doc__ = 'List of uploaded files which have already been descriebd and are procesing or awaiting moderation in Freesound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#uploadeds_pending_moderation' % resources_doc_filename,
                  get_formatted_examples_for_view('UploadedAndDescribedSoundsPendingModeration', 'apiv2-uploads-not-moderated', max=5))

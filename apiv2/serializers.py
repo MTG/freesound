@@ -486,11 +486,11 @@ class SoundDescriptionSerializer(serializers.Serializer):
         ('Attribution Noncommercial', 'Attribution Noncommercial'),
         ('Creative Commons 0', 'Creative Commons 0'),)
 
-    upload_filename = serializers.CharField(max_length=512, help_text='Must match a filename from \'Not Yet Described Uploaded Audio Files\' resource.')
+    upload_filename = serializers.CharField(max_length=512, help_text='Must match a filename from \'Uploaded sounds pending description\' resource.')
     name = serializers.CharField(max_length=512, required=False, help_text='Not required. Name you want to give to the sound (by default it will be the original filename).')
     tags = serializers.CharField(max_length=512, help_text='Separate tags with spaces. Join multi-word tags with dashes.')
     description = serializers.CharField(help_text='Textual description of the sound.')
-    license = serializers.ChoiceField(choices=LICENSE_CHOICES, help_text='License for the sound. Must be one either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
+    license = serializers.ChoiceField(choices=LICENSE_CHOICES, help_text='License for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
     pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new one will be created).', required=False)
     geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
 
@@ -498,7 +498,7 @@ class SoundDescriptionSerializer(serializers.Serializer):
         value = attrs.get(source, None)
         if 'not_yet_described_audio_files' in self.context:
             if value not in self.context['not_yet_described_audio_files']:
-                raise serializers.ValidationError('Upload filename (%s) must match with a filename from \'Not Yet Described Uploaded Audio Files\' resource.' % value)
+                raise serializers.ValidationError('Upload filename (%s) must match with a filename from \'Uploaded sounds pending description\' resource.' % value)
         return attrs
 
     def validate_geotag(self, attrs, source):

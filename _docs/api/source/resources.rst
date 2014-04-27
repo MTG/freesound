@@ -341,7 +341,7 @@ This resource allows the retrieval of detailed information about a sound.
 Response (sound instance)
 -------------------------
 
-The sound instance response is a dictionary including the following properties/fields:
+The Sound Instance response is a dictionary including the following properties/fields:
 
 ====================  ================  ====================================================================================
 Name                  Type              Description
@@ -353,7 +353,7 @@ name                  string            The name user gave to the sound.
 tags                  array[strings]    An array of tags the user gave to the sound.
 description           string            The description the user gave to the sound.
 geotag                string            Latitude and longitude of the geotag separated by spaces (e.g. "41.0082325664 28.9731252193", only for sounds that have been geotagged).
-created               string            The date of when the sound was uploaded.
+created               string            The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
 license               string            The license under which the sound is available to you.
 type                  string            The type of sound (wav, aif, aiff, mp3, or flac).
 channels              number            The number of channels.
@@ -509,7 +509,7 @@ Download Sound (OAuth2 required)
 
 ::
 
-  GET /apiv2/sounds/{{sound_id}}/download/
+  GET /apiv2/sounds/<sound_id>/download/
 
 This resource allows you to download a sound in its original format/quality (the format/quality with which the sound was uploaded).
 It requires :ref:`oauth-authentication`.
@@ -596,9 +596,42 @@ Examples
 User resources
 >>>>>>>>>>>>>>
 
+.. _user_instance:
 
 User Instance
 =========================================================
+
+::
+
+  GET /apiv2/users/<username>/
+
+This resource allows the retrieval of information about a particular Freesound user.
+
+
+Response
+--------
+
+The User Instance response is a dictionary including the following properties/fields:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+uri                   URI               The URI for this user.
+url                   URI               The URI for this users' profile on the Freesound website.
+username              string            The username.
+about                 string            The 'about' text of users' profile (if indicated).
+homepage              URI               The URI of users' homepage outside Freesound (if indicated).
+avatar                object            Dictionary including the URIs for the avatar of the user. The avatar is presented in three sizes ``Small``, ``Medium`` and ``Large``, which correspond to the three fields in the dictionary. If user has no avatar, this field is null.
+date_joined           string            The date when the user joined Freesound (e.g. "2008-08-07T17:39:00").
+num_sounds            number            The number of sounds uploaded by the user.
+sounds                URI               The URI for a list of sounds by the user.
+num_packs             number            The number of packs by the user.
+packs                 URI               The URI for a list of packs by the user.
+num_posts             number            The number of forum posts by the user.
+num_comments          number            The number of comments that user made in other users' sounds.
+bookmark_categories   URI               The URI for a list of bookmark categories by the user.
+====================  ================  ====================================================================================
+
 
 Examples
 --------
@@ -608,6 +641,19 @@ Examples
 
 User Sounds
 =========================================================
+
+::
+
+  GET /apiv2/users/<username>/sounds/
+
+This resource allows the retrieval of a list of sounds uploaded by a particular Freesound user.
+
+
+Response
+--------
+
+Similar Sounds resource returns a sound list just like :ref:`sound-list-response`.
+The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
 
 Examples
 --------
@@ -619,6 +665,37 @@ Examples
 User Packs
 =========================================================
 
+::
+
+  GET /apiv2/users/<username>/packs/
+
+This resource allows the retrieval of a list of packs created by a particular Freesound user.
+
+
+Response
+--------
+
+User Packs resource returns a paginated list of the packs created by a user, with a similar structure as :ref:`sound-list-response`:
+
+::
+
+  {
+    "count": <total number of packs>,
+    "next": <link to the next page of packs (null if none)>,
+    "results": [
+        <most recent pack created by the user>,
+        <second most recent pack created by the user>,
+        ...
+    ],
+    "previous": <link to the previous page of packs (null if none)>
+  }
+
+Packs are sorted according to their creation date (recent packs in the top of the list).
+Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
+
+Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack-instance`: response.
+
+
 Examples
 --------
 
@@ -627,6 +704,45 @@ Examples
 
 User Bookmark Categories
 =========================================================
+
+::
+
+  GET /apiv2/users/<username>/bookmark_categories/
+
+This resource allows the retrieval of a list of bookmark categories created by a particular Freesound user.
+
+
+Response
+--------
+
+User Bookmark Categories resource returns a paginated list of the bookmark categories created by a user, with a similar structure as :ref:`sound-list-response`:
+
+::
+
+  {
+    "count": <total number of bookmark categories>,
+    "next": <link to the next page of bookmark categories (null if none)>,
+    "results": [
+        <first bookmark category>,
+        <second bookmark category>,
+        ...
+    ],
+    "previous": <link to the previous page of bookmark categories (null if none)>
+  }
+
+Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
+
+Each bookmark category entry consists of a dictionary with the following structure:
+
+::
+
+  {
+    "url": <URI of the bookmark category in Freesound>
+    "name": <name that the user has given to the bookmark category>
+    "num_sounds": <number of sounds under the bookmark category>,
+    "sounds": <URI to a page with the list of sounds in this bookmark category>,
+  }
+
 
 Examples
 --------
@@ -637,11 +753,22 @@ Examples
 User Bookmark Category Sounds
 =========================================================
 
+::
+
+  GET /apiv2/users/<username>/bookmark_categories/<bookmark_category_id>/sounds/
+
+This resource allows the retrieval of a list of sounds from a bookmark category created by a particular Freesound user.
+
+Response
+--------
+
+User Bookmark Category Sounds resource returns a sound list just like :ref:`sound-list-response`.
+The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+
 Examples
 --------
 
 {{examples_UserBookmarkCategorySounds}}
-
 
 
 Me (information about user authenticated using OAuth2, OAuth2 required)
@@ -649,15 +776,54 @@ Me (information about user authenticated using OAuth2, OAuth2 required)
 
 .. _me_resource:
 
-This resource...
+::
+
+  GET /apiv2/me/
+
+This resource returns basic information of a user that has logged in using the Oauth2 procedure.
+It can be used by applications to be able to identify which Freesound user has logged in.
+
+Response
+--------
+
+The Me resource response consists of a dictionary with all the fields present in a standard :ref:`user_instance`, plus an additional ``email`` field that can be used by the application to uniquely identify the end user.
 
 
 Pack resources
 >>>>>>>>>>>>>>
 
 
+.. _pack_instance:
+
 Pack Instance
 =========================================================
+
+::
+
+  GET /apiv2/packs/<pack_id>/
+
+This resource allows the retrieval of information about a pack.
+
+
+Response
+--------
+
+The Pack Instance response is a dictionary including the following properties/fields:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+id                    number            The unique identifier of this pack.
+uri                   URI               The URI for this pack.
+url                   URI               The URI for this pack on the Freesound website.
+description           string            The description the user gave to the pack (if any).
+created               string            The date when the pack was created (e.g. "2014-04-16T20:07:11.145").
+name                  string            The name user gave to the pack.
+num_sounds            number            The number of sounds in the pack.
+sounds                URI               The URI for a list of sounds in the pack.
+num_downloads         number            The number of times this pack has been downloaded.
+====================  ================  ====================================================================================
+
 
 Examples
 --------
@@ -668,6 +834,18 @@ Examples
 Pack Sounds
 =========================================================
 
+::
+
+  GET /apiv2/packs/<pack_id>/
+
+This resource allows the retrieval of the list of sounds included in a pack.
+
+Response
+--------
+
+Pack Sounds resource returns a sound list just like :ref:`sound-list-response`.
+The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+
 Examples
 --------
 
@@ -676,6 +854,13 @@ Examples
 
 Download Pack (OAuth2 required)
 =========================================================
+
+::
+
+  GET /apiv2/packs/<pack_id>/download/
+
+This resource allows you to download all the sounds of a pack in a single zip file.
+It requires :ref:`oauth-authentication`.
 
 Examples
 --------

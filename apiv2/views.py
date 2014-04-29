@@ -1178,8 +1178,10 @@ def permission_granted(request):
     else:
         template = 'api/app_authorized.html'
 
-    logout_next = quote(request.GET.get('original_path', None))
-    if not logout_next:
+    logout_next = request.GET.get('original_path', None)
+    if logout_next:
+        logout_next = quote(logout_next)
+    else:
         logout_next = reverse('api-login')
 
     return render_to_response(template,

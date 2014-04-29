@@ -58,6 +58,7 @@ import datetime
 import os
 
 logger = logging.getLogger("api")
+logger_error = logging.getLogger("api_errors")
 docs_base_url = prepend_base('/docs/api')
 resources_doc_filename = 'resources_apiv2.html'
 
@@ -88,8 +89,11 @@ class TextSearch(GenericAPIView):
         # Get search results
         try:
             results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form)
-        except Exception, e:
+        except APIException, e:
             raise e
+        except Exception, e:
+            logger_error.error('<500 Server error unexpected> %s' % str(e))
+            raise ServerErrorException(msg='Unexpected error')
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -162,8 +166,11 @@ class ContentSearch(GenericAPIView):
             analysis_file = self.analysis_file.read()
         try:
             results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
-        except Exception, e:
+        except APIException, e:
             raise e
+        except Exception, e:
+            logger_error.error('<500 Server error unexpected> %s' % str(e))
+            raise ServerErrorException(msg='Unexpected error')
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -239,7 +246,7 @@ class CombinedSearch(GenericAPIView):
         if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
            raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
-                raise NotFoundException
+            raise NotFoundException
 
         # Get search results
         max_repeat = int(request.QUERY_PARAMS.get('max_repeat', 0)) # Max repeat is an additional parameter to tweak performance in combined search
@@ -249,8 +256,11 @@ class CombinedSearch(GenericAPIView):
             analysis_file = self.analysis_file.read()
         try:
             results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat, max_solr_filter_ids=max_solr_filter_ids)
-        except Exception, e:
+        except APIException, e:
             raise e
+        except Exception, e:
+            logger_error.error('<500 Server error unexpected> %s' % str(e))
+            raise ServerErrorException(msg='Unexpected error')
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])

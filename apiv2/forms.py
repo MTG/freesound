@@ -130,7 +130,11 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def clean_page_size(self):
         requested_paginate_by = self.cleaned_data[settings.REST_FRAMEWORK['PAGINATE_BY_PARAM']] or settings.REST_FRAMEWORK['PAGINATE_BY']
-        return min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
+        try:
+            paginate_by = min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
+        except:
+            paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
+        return paginate_by
 
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']

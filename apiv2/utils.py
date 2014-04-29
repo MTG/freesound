@@ -32,7 +32,7 @@ from freesound.utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from freesound.utils.filesystem import md5file
 from freesound.utils.text import slugify
-from exceptions import ServerErrorException, OtherException, UnauthorizedException, InvalidUrlException, NotFoundException, RequiresHttpsException
+from exceptions import ServerErrorException, OtherException, UnauthorizedException, InvalidUrlException, NotFoundException, RequiresHttpsException, BadRequestException
 from examples import examples
 import shutil
 import settings
@@ -363,17 +363,13 @@ def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_
             if e.status_code == 500:
                 raise ServerErrorException(msg=e.message)
             elif e.status_code == 400:
-                raise InvalidUrlException(msg=e.message)
+                raise BadRequestException(msg=e.message)
             elif e.status_code == 404:
                 raise NotFoundException(msg=e.message)
             else:
-                raise ServerErrorException(msg=e.message)
+                raise ServerErrorException(msg='Similarity server error: %s' % e.message)
         except Exception, e:
-            raise ServerErrorException(msg=e.message)
-            #if settings.DEBUG:
-            #    raise ServerErrorException(msg=e.message)
-            #else:
-            #    raise ServerErrorException()
+            raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.')
 
 
     elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
@@ -400,13 +396,9 @@ def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_
             return solr_ids, solr_count, None, more_from_pack_data, None
 
         except SolrException, e:
-            raise InvalidUrlException(msg='Solr exception: %s' % e.message)
+            raise BadRequestException(msg='Search server error: %s' % e.message)
         except Exception, e:
-            raise ServerErrorException(msg=e.message)
-            #if settings.DEBUG:
-            #    raise ServerErrorException(msg=e.message)
-            #else:
-            #    raise ServerErrorException()
+            raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
 
     else:
         # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
@@ -436,17 +428,14 @@ def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_
             if e.status_code == 500:
                 raise ServerErrorException(msg=e.message)
             elif e.status_code == 400:
-                raise InvalidUrlException(msg=e.message)
+                raise BadRequestException(msg=e.message)
             elif e.status_code == 404:
                 raise NotFoundException(msg=e.message)
             else:
-                raise ServerErrorException(msg=e.message)
+                raise ServerErrorException(msg='Similarity server error: %s' % e.message)
         except Exception, e:
-            raise ServerErrorException(msg=e.message)
-            #if settings.DEBUG:
-            #    raise ServerErrorException(msg=e.message)
-            #else:
-            #    raise ServerErrorException()
+            raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.')
+
 
         # Get solr results
         solr = Solr(settings.SOLR_URL)
@@ -458,10 +447,10 @@ def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_
         else:
             search_form.cleaned_data['group_by_pack'] = None
 
-        if MERGE_STRATEGY == 'merge_all':
-            PAGE_SIZE = 1000
-            current_page = 1
-            try:
+        try:
+            if MERGE_STRATEGY == 'merge_all':
+                PAGE_SIZE = 1000
+                current_page = 1
                 # Iterate over solr results pages
                 # if fast_computation == true, we only get the first page but with a bigger size
                 while len(solr_ids) < solr_count or solr_count == None:
@@ -481,55 +470,51 @@ def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_
                         more_from_pack_data.update(dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name'], element['other_ids']]) for element in result.docs]))
                     current_page += 1
 
-            except SolrException, e:
-                raise InvalidUrlException(msg='Solr exception: %s' % e.message)
-            except Exception, e:
-                raise ServerErrorException(msg=e.message)
-                #if settings.DEBUG:
-                #    raise ServerErrorException(msg=e.message)
-                #else:
-                #    raise ServerErrorException()
-        elif MERGE_STRATEGY == 'filter_solr_results':
-            PAGE_SIZE = MAX_SOLR_FILTER_IDS
-            # Update solr filter with first MAX_SOLR_FILTER_IDS ids from gaia and construct query
-            ids_filter = 'id:(' + ' OR '.join([str(item) for item  in gaia_ids[:MAX_SOLR_FILTER_IDS]]) + ')'
-            query_filter = search_form.cleaned_data['filter']
-            if query_filter:
-                query_filter += ' %s' % ids_filter
-            else:
-                query_filter = ids_filter
-            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                                 unquote(query_filter),
-                                                 search_form.cleaned_data['sort'],
-                                                 1,
-                                                 PAGE_SIZE,
-                                                 grouping=False,
-                                                 include_facets=False)
-            result = SolrResponseInterpreter(solr.select(unicode(query)))
-            solr_ids += [element['id'] for element in result.docs]
-        elif MERGE_STRATEGY == 'filter_solr_results_repeat':
-            PAGE_SIZE = MAX_SOLR_FILTER_IDS
-            ids_filters = []
-            for i in range(0,len(gaia_ids), MAX_SOLR_FILTER_IDS):
-                ids_filter = 'id:(' + ' OR '.join([str(item) for item  in gaia_ids[i:i + MAX_SOLR_FILTER_IDS]]) + ')'
-                ids_filters.append(ids_filter)
-            for count, ids_filter in enumerate(ids_filters):
-                if count == MAX_REPEAT:
-                    break
+            elif MERGE_STRATEGY == 'filter_solr_results':
+                PAGE_SIZE = MAX_SOLR_FILTER_IDS
+                # Update solr filter with first MAX_SOLR_FILTER_IDS ids from gaia and construct query
+                ids_filter = 'id:(' + ' OR '.join([str(item) for item  in gaia_ids[:MAX_SOLR_FILTER_IDS]]) + ')'
                 query_filter = search_form.cleaned_data['filter']
                 if query_filter:
                     query_filter += ' %s' % ids_filter
                 else:
                     query_filter = ids_filter
                 query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                                 unquote(query_filter),
-                                                 search_form.cleaned_data['sort'],
-                                                 1,
-                                                 PAGE_SIZE,
-                                                 grouping=False,
-                                                 include_facets=False)
+                                                     unquote(query_filter),
+                                                     search_form.cleaned_data['sort'],
+                                                     1,
+                                                     PAGE_SIZE,
+                                                     grouping=False,
+                                                     include_facets=False)
                 result = SolrResponseInterpreter(solr.select(unicode(query)))
                 solr_ids += [element['id'] for element in result.docs]
+            elif MERGE_STRATEGY == 'filter_solr_results_repeat':
+                PAGE_SIZE = MAX_SOLR_FILTER_IDS
+                ids_filters = []
+                for i in range(0,len(gaia_ids), MAX_SOLR_FILTER_IDS):
+                    ids_filter = 'id:(' + ' OR '.join([str(item) for item  in gaia_ids[i:i + MAX_SOLR_FILTER_IDS]]) + ')'
+                    ids_filters.append(ids_filter)
+                for count, ids_filter in enumerate(ids_filters):
+                    if count == MAX_REPEAT:
+                        break
+                    query_filter = search_form.cleaned_data['filter']
+                    if query_filter:
+                        query_filter += ' %s' % ids_filter
+                    else:
+                        query_filter = ids_filter
+                    query = search_prepare_query(unquote(search_form.cleaned_data['query']),
+                                                     unquote(query_filter),
+                                                     search_form.cleaned_data['sort'],
+                                                     1,
+                                                     PAGE_SIZE,
+                                                     grouping=False,
+                                                     include_facets=False)
+                    result = SolrResponseInterpreter(solr.select(unicode(query)))
+                    solr_ids += [element['id'] for element in result.docs]
+        except SolrException, e:
+            raise ServerErrorException(msg='Search server error: %s' % e.message)
+        except Exception, e:
+            raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
 
         if MERGE_STRATEGY == 'merge_all':
             # If results were grouped by pack, we need to update the counts of the 'more_from_pack' property, as they do not

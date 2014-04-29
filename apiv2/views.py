@@ -81,7 +81,7 @@ class TextSearch(GenericAPIView):
         if not search_form.is_valid():
             raise ParseError
         if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
-           raise InvalidUrlException(msg='At lesast one request parameter from Text Search should be included in the request.')
+           raise BadRequestException(msg='At lesast one request parameter from Text Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException
 
@@ -152,7 +152,7 @@ class ContentSearch(GenericAPIView):
         if not search_form.is_valid():
             raise ParseError
         if not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file:
-           raise InvalidUrlException(msg='At lesast one parameter from Content Search should be included in the request.')
+           raise BadRequestException(msg='At lesast one parameter from Content Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
                 raise NotFoundException
 
@@ -237,7 +237,7 @@ class CombinedSearch(GenericAPIView):
         if not search_form.is_valid():
             raise ParseError
         if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
-           raise InvalidUrlException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
+           raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
                 raise NotFoundException
 
@@ -843,7 +843,7 @@ class RateSound(WriteRequiredGenericAPIView):
                     Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
                     return Response(data={'details': 'Successfully rated sound %s' % sound_id}, status=status.HTTP_201_CREATED)
             except IntegrityError:
-                raise InvalidUrlException(msg='User has already rated sound %s' % sound_id)
+                raise BadRequestException(msg='User has already rated sound %s' % sound_id)
             except:
                 raise ServerErrorException
         else:

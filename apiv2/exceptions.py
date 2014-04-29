@@ -40,6 +40,15 @@ class InvalidUrlException(APIException):
     detail = None
     status_code = status.HTTP_400_BAD_REQUEST
 
+    def __init__(self, msg="Invalid url"):
+        logger.error('<%i Invalid url> %s' % (self.status_code, msg))
+        self.detail = msg
+
+
+class BadRequestException(APIException):
+    detail = None
+    status_code = status.HTTP_400_BAD_REQUEST
+
     def __init__(self, msg="Bad request"):
         logger.error('<%i Bad request> %s' % (self.status_code, msg))
         self.detail = msg

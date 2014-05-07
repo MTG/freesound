@@ -635,7 +635,7 @@ Name                  Type              Description
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
 ``license``           string            The license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
-``pack``              string            (OPTIONAL) The name of the pack were the sound should be included. If user has created no such pack with that name, a new one will be created.
+``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
 ``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
 ====================  ================  ====================================================================================
 
@@ -656,13 +656,69 @@ Note that after the sound is described, it still needs to be processed and moder
 Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
 
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
-The dictionary will include and entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
 
 
 Examples
 --------
 
 {{examples_DescribeSound}}
+
+
+.. _sound-edit-description:
+
+
+Edit Sound Description (OAuth2 required)
+=========================================================
+
+::
+
+  POST /apiv2/sounds/<sound_id>/edit/
+
+This resource allows you to edit the description of an already existing sound.
+Note that this resource can only be used to edit descriptions of sounds created by the Freesound user logged in using OAuth2.
+This method requires :ref:`oauth-authentication`.
+
+
+Request parameters
+------------------
+
+A request to the Edit Sound Description resource must include mostly the same POST parameters that would be included in a :ref:`sound-describe` request:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``name``              string            (OPTIONAL) The new name that will be given to the sound.
+``tags``              string            (OPTIONAL) The new tags that will be assigned to the sound. Note that if this parameter is filled, old tags will be deleted. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
+``description``       string            (OPTIONAL) The new textual description for the sound.
+``license``           string            (OPTIONAL) The new license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
+``pack``              string            (OPTIONAL) The new name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
+``geotag``            string            (OPTIONAL) New geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
+====================  ================  ====================================================================================
+
+Note that for that resource all parameters are optional.
+Only the fields included in the request will be used to update the sound description
+(e.g. if only ``name`` and ``tags`` are included in the request, these are the only properties that will be updated from sound description,
+the others will remain unchanged).
+
+
+Response
+--------
+
+If sound description is updated successfully, the Edit Sound Description resource will return a dictionary with the following structure:
+
+::
+
+  {
+    "details": "Description of sound <sound_id> successfully edited",
+    "uri": "<URI of the described sound instance>"
+  }
+
+
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
+The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+
+
 
 
 .. _sound-pending-moderation:
@@ -752,7 +808,7 @@ Note that after the sound is uploaded and described, it still needs to be proces
 Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
 
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
-The dictionary will include and entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
 
 
 Examples

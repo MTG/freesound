@@ -191,6 +191,7 @@ ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freeso
 APIV2KEYS_ALLOWED_FOR_APIV1 = True
 ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
 APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
+                                   'apiv2-user-sound-edit',
                                    'apiv2-user-create-bookmark',
                                    'apiv2-user-create-rating',
                                    'apiv2-user-create-comment',

@@ -1,6 +1,5 @@
-- Implement editing of sound description
 - Add option to "force logout"/"force login with another user" to the authorization request page
 - Clean up expired grants from database with a django command
 - Add throttling
-
+- Improve docummentation overview
 

@@ -1,5 +1,8 @@
-- Add option to "force logout"/"force login with another user" to the authorization request page
-- Clean up expired grants from database with a django command
+
 - Add throttling
-- Improve docummentation overview
+- Finish documentation
+    - bookmark/comment/rate resources
+    - geotags searching
+    - authorize oauth2 link with previous user logout
+- Improve documentation overview
 

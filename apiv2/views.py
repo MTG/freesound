@@ -996,23 +996,6 @@ class Me(OauthRequiredAPIView):
         else:
             raise ServerErrorException
 
-### Logout Oauth2 User
-class LogoutOauth2User(OauthRequiredAPIView):
-    __doc__ = 'Logout from Freesound the user currently logged in using OAuth2.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
-              % (docs_base_url, '%s#logout-oauth2-user-oauth2-required' % resources_doc_filename)
-
-    def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('logout-me'))
-        if self.user:
-            # TODO: not sure how to implement this, not even if we should actually implement that...
-            # Temporary workaround... this will not work on production both because of the cache and the size of the Session table
-            #from django.contrib.sessions.models import Session
-            #[s.delete() for s in Session.objects.all() if s.get_decoded().get('_auth_user_id') == self.user.id]
-            return Response({'details': 'User %s logged out successfully' % self.user.username}, status=status.HTTP_200_OK)
-        else:
-            raise ServerErrorException
-
 
 ### Root view
 class FreesoundApiV2Resources(GenericAPIView):

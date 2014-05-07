@@ -1,10 +1,6 @@
+- Implement editing of sound description
 - Add option to "force logout"/"force login with another user" to the authorization request page
-- Fix problem with redirect_uri included in authorize/confirm request not matching redirect uri in client credentials. Maybe
- some quotation in the process provokes this problem.
-- Improve log handling (for errors, etc...)
-- Write documentation
-- Clean code (imports, utils...)
 - Clean up expired grants from database with a django command
-- Sporadic server errors on combined search?
-- TEST TEST TEST!!!
+- Add throttling
+
 

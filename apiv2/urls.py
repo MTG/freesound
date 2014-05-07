@@ -41,6 +41,7 @@ urlpatterns = patterns('apiv2.views',
 
     # Me
     url(r'^me/$', views.Me.as_view(), name="apiv2-me"),
+    url(r'^logout_me/$', views.LogoutOauth2User.as_view(), name="apiv2-logout-oauth2-user"),
 
     # Text/content/combined search
     url(r'^search/text/$', views.TextSearch.as_view(), name="apiv2-sound-text-search"),

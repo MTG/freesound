@@ -33,7 +33,7 @@
 
             <div style="font-size:14px;font-family:'Courier';">{{ code }}</div>
 
-            {% comment %}<p>(logged in as <strong>{{ request.user }}</strong>, <a href="{% url api-logout %}?next={{ logout_next }}">login as another user</a>).</p>{% endcomment %}
+            <p>(logged in as <strong>{{ request.user }}</strong>, <a href="{% url api-logout %}?next={{ logout_next }}">login as another user</a>).</p>
 
         {% else %}
 

@@ -27,7 +27,7 @@ from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -441,7 +441,7 @@ class SoundComments(ListAPIView):
         return Comment.objects.filter(object_id=self.kwargs['pk'])
 
 
-class DownloadSound(OauthRequiredAPIView):
+class DownloadSound(DownloadAPIView):
     __doc__ = 'Download a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#download-sound-oauth2-required' % resources_doc_filename,
@@ -634,7 +634,7 @@ class PackSounds(ListAPIView):
         return queryset
 
 
-class DownloadPack(OauthRequiredAPIView):
+class DownloadPack(DownloadAPIView):
     __doc__ = 'Download a pack.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#download-pack-oauth2-required' % resources_doc_filename,

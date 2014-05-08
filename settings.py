@@ -225,22 +225,22 @@ REST_FRAMEWORK = {
     ),
 }
 
+# Define Api usage limit rates per defined throttling levels
+# Possible time units: second, minute, hour or day
+
 APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
-    # Possible time units: second, minute, hour or day
-    0: ['0/minute'],  # Client 'disabled'
-    1: ['1/minute'],
-    2: ['1000/day', '100/minute'],
+    0: ['0/day'],  # Client 'disabled'
+    1: ['1/second', '5000/day'],
+    2: ['5/second', '10000/day'],
     99: [],  # No limit of requests
 }
 
 APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
-    # Possible time units: second, minute, hour or day
-    0: ['0/minute'],  # Client 'disabled'
-    1: ['0/minute'],
-    2: ['1000/day', '100/minute'],
+    0: ['0/day'],  # Client 'disabled'
+    1: ['30/minute', '500/day'],
+    2: ['1/second', '1000/day'],
     99: [],  # No limit of requests
 }
-
 
 # Oauth2 provider settings
 OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)

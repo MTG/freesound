@@ -39,20 +39,22 @@ class ClientBasedThrottling(SimpleRateThrottle):
         pass
 
     def allow_request(self, request, view):
-        # Get the ApiV2Client that made the request
+        # Get the ApiV2Client that made the request and its throttling level
         auth_method_name = request.successful_authenticator.authentication_method_name
         if auth_method_name == "OAuth2":
             self.client = request.auth.client.apiv2_client
+            client_throttle_level = int(self.client.throttling_level)
         elif auth_method_name == "Token":
             self.client = request.auth
+            client_throttle_level = int(self.client.throttling_level)
         elif auth_method_name == "Session":
             self.client = None
+            client_throttle_level = 1
 
-        # Determine the rates of the client depending on its level
-        client_throttle_level = 1  # TODO: get level from client table
         try:
             limit_rates = view.throttling_rates_per_level[client_throttle_level]
         except:
+            # Fallback to basic throttling levels if the view has not defined the throttling rates per level
             limit_rates = APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
 
         # Apply all the limit rates for the corresponding level

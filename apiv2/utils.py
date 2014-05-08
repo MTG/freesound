@@ -260,6 +260,10 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView):
         return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
 
+class DownloadAPIView(OauthRequiredAPIView):
+    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
+
+
 class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
     throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)

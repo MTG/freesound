@@ -219,7 +219,18 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.YAMLRenderer',
         'rest_framework.renderers.JSONPRenderer',
         'rest_framework.renderers.XMLRenderer',
-    )
+    ),
+    'DEFAULT_THROTTLE_CLASSES': (
+        'apiv2.throttling.ClientBasedThrottling',
+    ),
+}
+
+APIV2_THROTTLING_RATES_PER_LEVELS = {
+    # Possible time units: second, minute, hour or day
+    0: ['0/minute'],  # Client 'disabled'
+    1: ['1/minute'],
+    2: ['1000/day', '100/minute'],
+    99: [],  # No limit of requests
 }
 
 

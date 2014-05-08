@@ -86,6 +86,16 @@ class OtherException(APIException):
     status_code = None
 
     def __init__(self, msg="Bad request", status=status.HTTP_400_BAD_REQUEST):
-        logger.error('<%i Other exception> %s' % (self.status_code, msg))
+        logger.error('<%i Other exception> %s' % (status, msg))
         self.detail = msg
-        self.status = status
+        self.status_code = status
+
+
+class Throttled(APIException):
+    detail = None
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+
+    def __init__(self, msg="Request was throttled"):
+        logger.error('<%i Throttled> %s' % (self.status_code, msg))
+        self.detail = msg
+

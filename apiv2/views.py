@@ -1007,7 +1007,6 @@ class FreesoundApiV2Resources(GenericAPIView):
     #authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def get(self, request,  *args, **kwargs):
-
         logger.info(self.log_message('api_root'))
         return Response([
             {'Search resources': OrderedDict(sorted(dict({

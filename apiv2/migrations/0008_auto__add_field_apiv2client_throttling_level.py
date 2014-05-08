@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'ApiV2Client.throttling_level'
-        db.add_column('apiv2_apiv2client', 'throttling_level', self.gf('django.db.models.fields.IntegerField')(default=99), keep_default=False)
+        db.add_column('apiv2_apiv2client', 'throttling_level', self.gf('django.db.models.fields.IntegerField')(default=1), keep_default=False)
 
 
     def backwards(self, orm):
@@ -32,7 +32,7 @@ class Migration(SchemaMigration):
             'redirect_uri': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
             'scope': ('django.db.models.fields.CharField', [], {'default': "'rw'", 'max_length': '3'}),
             'status': ('django.db.models.fields.CharField', [], {'default': "'OK'", 'max_length': '3'}),
-            'throttling_level': ('django.db.models.fields.IntegerField', [], {'default': '99'}),
+            'throttling_level': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'apiv2_client'", 'to': "orm['auth.User']"})
         },

@@ -3,4 +3,9 @@
     - geotags searching
     - authorize oauth2 link with previous user logout
 - Improve documentation overview
+- Show usage limit rates in api credential page
 
+Bugs reported:
+[08/05/14 13:24:22] gerard.roma: rating twice -> 500
+[08/05/14 13:24:57] gerard.roma: setting content type header without proper multipart boundary (in upload) ´-> 500
+[08/05/14 13:25:50] gerard.roma: the accepted content types vary, not sure about this

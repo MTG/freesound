@@ -50,6 +50,7 @@ class ApiV2Client(models.Model):
     allow_oauth_passoword_grant = models.BooleanField(default=False)
     scope                       = models.CharField(max_length=3, default=DEFAULT_SCOPE, choices=SCOPE_CHOICES)
     created                     = models.DateTimeField(auto_now_add=True)
+    throttling_level            = models.IntegerField(default=99)
 
     def __unicode__(self):
         return "credentials for developer %s" % self.user.username

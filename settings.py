@@ -225,10 +225,18 @@ REST_FRAMEWORK = {
     ),
 }
 
-APIV2_THROTTLING_RATES_PER_LEVELS = {
+APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
     # Possible time units: second, minute, hour or day
     0: ['0/minute'],  # Client 'disabled'
     1: ['1/minute'],
+    2: ['1000/day', '100/minute'],
+    99: [],  # No limit of requests
+}
+
+APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
+    # Possible time units: second, minute, hour or day
+    0: ['0/minute'],  # Client 'disabled'
+    1: ['0/minute'],
     2: ['1000/day', '100/minute'],
     99: [],  # No limit of requests
 }

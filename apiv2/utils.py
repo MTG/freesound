@@ -230,6 +230,7 @@ class Redirect(DjangoOauth2ProviderRedirect):
 
 
 class GenericAPIView(RestFrameworkGenericAPIView):
+    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
@@ -243,6 +244,7 @@ class GenericAPIView(RestFrameworkGenericAPIView):
 
 
 class OauthRequiredAPIView(RestFrameworkGenericAPIView):
+    throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
@@ -259,6 +261,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView):
 
 
 class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
+    throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
@@ -279,8 +282,8 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
         return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
 
 
-
 class ListAPIView(RestFrameworkListAPIView):
+    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
@@ -294,6 +297,7 @@ class ListAPIView(RestFrameworkListAPIView):
 
 
 class RetrieveAPIView(RestFrameworkRetrieveAPIView):
+    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):

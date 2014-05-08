@@ -22,7 +22,7 @@
 
 from rest_framework.throttling import SimpleRateThrottle
 from exceptions import Throttled
-from settings import APIV2_THROTTLING_RATES_PER_LEVELS
+from settings import APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
 
 
 class ClientBasedThrottling(SimpleRateThrottle):
@@ -50,7 +50,10 @@ class ClientBasedThrottling(SimpleRateThrottle):
 
         # Determine the rates of the client depending on its level
         client_throttle_level = 1  # TODO: get level from client table
-        limit_rates = APIV2_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
+        try:
+            limit_rates = view.throttling_rates_per_level[client_throttle_level]
+        except:
+            limit_rates = APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
 
         # Apply all the limit rates for the corresponding level
         if limit_rates:

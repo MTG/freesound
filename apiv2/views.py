@@ -225,7 +225,7 @@ class ContentSearch(GenericAPIView):
             self.analysis_file = analysis_file
             return self.get(request,  *args, **kwargs)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CombinedSearch(GenericAPIView):
@@ -323,7 +323,7 @@ class CombinedSearch(GenericAPIView):
             self.analysis_file = analysis_file
             return self.get(request,  *args, **kwargs)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############
@@ -704,7 +704,7 @@ class UploadSound(WriteRequiredGenericAPIView):
                     raise ServerErrorException
                 return Response(data={'filename': audiofile.name, 'details': 'File successfully uploaded (%i)' % audiofile.size}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class NotYetDescribedUploadedSounds(OauthRequiredAPIView):
@@ -771,7 +771,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
                 sound = create_sound_object(self.user, request.DATA)
                 return Response(data={'details': 'Sound successfully described (now pending moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EditSoundDescription(WriteRequiredGenericAPIView):
@@ -843,7 +843,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
 
                 return Response(data={'details': 'Description of sound %s successfully edited' % sound_id, 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UploadAndDescribeSound(WriteRequiredGenericAPIView):
@@ -875,7 +875,7 @@ class UploadAndDescribeSound(WriteRequiredGenericAPIView):
                 sound = create_sound_object(self.user, request.DATA)
                 return Response(data={'details': 'Audio file successfully uploaded and described (now pending moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookmarkSound(WriteRequiredGenericAPIView):
@@ -908,7 +908,7 @@ class BookmarkSound(WriteRequiredGenericAPIView):
                 bookmark.save()
                 return Response(data={'details': 'Successfully bookmarked sound %s' % sound_id}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RateSound(WriteRequiredGenericAPIView):
@@ -941,7 +941,7 @@ class RateSound(WriteRequiredGenericAPIView):
             except:
                 raise ServerErrorException
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentSound(WriteRequiredGenericAPIView):
@@ -973,7 +973,7 @@ class CommentSound(WriteRequiredGenericAPIView):
                     sound.save()
                 return Response(data={'details': 'Successfully commented sound %s' % sound_id}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############

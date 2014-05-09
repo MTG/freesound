@@ -265,6 +265,15 @@ class GaiaWrapper:
 
         logger.info('Getting descriptors for points %s' % ','.join([str(name) for name in point_names]))
 
+        # Add dot '.' at the beginning of descriptor names if not present
+        if descriptor_names:
+            descriptor_names_aux = list()
+            for name in descriptor_names:
+                if name[0] != '.':
+                    descriptor_names_aux.append('.' + name)
+                else:
+                    descriptor_names_aux.append(name)
+            descriptor_names = descriptor_names_aux[:]
         data = dict()
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names, only_leaf_descriptors=only_leaf_descriptors)
         for point_name in point_names:

@@ -22,6 +22,7 @@
 
 
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
@@ -683,6 +684,7 @@ class UploadSound(WriteRequiredGenericAPIView):
                  get_formatted_examples_for_view('UploadSound', 'apiv2-uploads-upload', max=5))
 
     serializer_class = UploadAudioFileSerializer
+    parser_classes = (MultiPartParser,)
 
     def post(self, request,  *args, **kwargs):
         logger.info(self.log_message('uploading_sound'))
@@ -851,6 +853,7 @@ class UploadAndDescribeSound(WriteRequiredGenericAPIView):
                  get_formatted_examples_for_view('UploadAndDescribeSound', 'apiv2-uploads-upload-and-describe', max=5))
 
     serializer_class = UploadAndDescribeAudioFileSerializer
+    parser_classes = (MultiPartParser,)
 
     def post(self, request,  *args, **kwargs):
         logger.info(self.log_message('upload_and_describe_sound'))

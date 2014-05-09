@@ -934,7 +934,7 @@ class RateSound(WriteRequiredGenericAPIView):
                     Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
                     return Response(data={'details': 'Successfully rated sound %s' % sound_id}, status=status.HTTP_201_CREATED)
             except IntegrityError:
-                raise BadRequestException(msg='User has already rated sound %s' % sound_id)
+                raise ConflictException(msg='User has already rated sound %s' % sound_id)
             except:
                 raise ServerErrorException
         else:

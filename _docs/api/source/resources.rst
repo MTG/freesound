@@ -153,7 +153,7 @@ Name                    Type                       Description
 ``page``                string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
 ``page_size``           string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=15``. Not that with bigger ``page_size``, more data will need to be transferred.
 ``fields``              comma separated strings    Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response`, and must be separated by commas. For example, if ``fields=name,avg_rating,license``, results will include sound name, average rating and license for every returned sound. Use this parameter to optimize request times by only requesting the information you really need.
-``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. This parameter must be used in combination with the ``fields`` parameter. If ``fields`` includes the property ``analysis``, you will use ``descriptors`` parameter to indicate which descriptors should be included in every sound of the response. Descriptor names can be any of those listed in :ref:`analysis-docs`, and must be separated by commas and start with a dot '.' character. For example, if ``fields=analysis&descriptors=.lowlevel.spectral_centroid,.lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptor names were found of the analysis data of a particular sound is not available.
+``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. This parameter must be used in combination with the ``fields`` parameter. If ``fields`` includes the property ``analysis``, you will use ``descriptors`` parameter to indicate which descriptors should be included in every sound of the response. Descriptor names can be any of those listed in :ref:`analysis-docs`, and must be separated by commas. For example, if ``fields=analysis&descriptors=lowlevel.spectral_centroid,lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptor names were found of the analysis data of a particular sound is not available.
 ``normalized``          bool (yes=1, no=0)         Indicates whether the returned sound content-based descriptors should be normalized or not. ``normalized=1`` will return normalized descriptor values. By default, ``normalized=0``.
 ======================  =========================  ======================
 
@@ -202,7 +202,7 @@ The ``target`` parameter can be used to specify a content-based sorting of your 
 Using ``target`` you can sort the query results so that the first results will the the ones featuring the most similar descriptors to the given target.
 To specify a target you must use a syntax like ``target=descriptor_name:value``.
 You can also set multiple descriptor/value paris in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
-Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.'). Only numerical descriptors are allowed.
+Descriptor names must be chosen from those listed in :ref:`analysis-docs`. Only numerical descriptors are allowed.
 Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too, see below.
 Consider the following two ``target`` examples::
 
@@ -243,7 +243,7 @@ To define ``descriptors_filter`` parameter you can use the same syntax as for th
 For example, ``descriptors_filter=.lowlevel.pitch.mean:220`` will only return sounds that have an EXACT pitch mean of 220hz.
 Note that this would probably return no results as a sound will rarely have that exact pitch (might be very close like 219.999 or 220.000001 but not exactly 220).
 For this reason, in general it might be better to indicate ``descriptors_filter`` using ranges.
-Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.').
+Descriptor names must be chosen from those listed in :ref:`analysis-docs`.
 Note that most of the descriptors provide several statistics (var, mean, min, max...). In that case, the descriptor name must include also the desired statistic (see examples below).
 Non fixed-length descriptors are not allowed.
 Some examples of ``descriptors_filter`` for numerical descriptors::
@@ -389,7 +389,7 @@ Name                  Type              Description
 
 The contents of the field ``analysis`` of the Sound Instance response can be determined using an additional request parameter ``descriptors``.
 The ``descriptors`` parameter should include a comma separated list of content-based descriptor names, just like in the :ref:`sound-list-response`.
-Descriptor names can be any of those listed in :ref:`analysis-docs`, and must start with a dot '.' character (e.g. ``descriptors=.lowlevel.mfcc,.rhythm.bpm``).
+Descriptor names can be any of those listed in :ref:`analysis-docs` (e.g. ``descriptors=lowlevel.mfcc,rhythm.bpm``).
 The request parameter ``normalized`` can also be used to return content-based descriptor values in a normalized range instead of the absolute values.
 
 The parameter ``fields`` can also be used to restrict the number of fields returned in the response.
@@ -417,7 +417,7 @@ Response
 --------
 
 The response to a Sound Analysis request is a dictionary with the values of all content-based descriptors listed in :ref:`analysis-docs`.
-That dictionary can be filtered using an extra ``descriptors`` request parameter which should include a list of comma separated descriptor names chosen from those listed in :ref:`analysis-docs`, and that must start with a dot '.' character (e.g. ``descriptors=.lowlevel.mfcc,.rhythm.bpm``).
+That dictionary can be filtered using an extra ``descriptors`` request parameter which should include a list of comma separated descriptor names chosen from those listed in :ref:`analysis-docs` (e.g. ``descriptors=lowlevel.mfcc,rhythm.bpm``).
 The request parameter ``normalized`` can also be used to return content-based descriptor values in a normalized range instead of the absolute values.
 
 

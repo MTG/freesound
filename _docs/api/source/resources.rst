@@ -655,8 +655,7 @@ If the audio file is described successfully, the Describe Sound resource will re
 Note that after the sound is described, it still needs to be processed and moderated by the team of Freesound moderators.
 Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
 
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
-The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
 
 
 Examples
@@ -715,8 +714,8 @@ If sound description is updated successfully, the Edit Sound Description resourc
   }
 
 
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
-The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
+
 
 
 
@@ -807,8 +806,8 @@ If the audio file is upload and described successfully, the Upload and Describe 
 Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
 Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
 
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
-The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
+
 
 
 Examples

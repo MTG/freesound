@@ -58,6 +58,11 @@ Specify the desired format in lowercase letters as follows:
   http://www.freesound.org/apiv2/sounds/1234/?format=yaml
 
 
+Errors
+------
+
+TODO (al wrapped into "details" message)
+
 
 More help
 ---------

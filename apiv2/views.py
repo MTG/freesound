@@ -707,33 +707,31 @@ class UploadSound(WriteRequiredGenericAPIView):
             return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class NotYetDescribedUploadedSounds(OauthRequiredAPIView):
-    __doc__ = 'List of uploaded files which have not yet been described.' \
+class PendingUploads(OauthRequiredAPIView):
+    __doc__ = 'List of uploaded files which have not yet been described, processed or moderated.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#uploads-pending-description-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('NotYetDescribedUploadedSounds', 'apiv2-uploads-not-described', max=5))
+              % (docs_base_url, '%s#pending-uploads-oauth2-required' % resources_doc_filename,
+                 get_formatted_examples_for_view('PendingUploads', 'apiv2-uploads-pending', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('not_yet_described_uploaded_sounds'))
+        logger.info(self.log_message('pending_uploads'))
+
+        # Look for sounds pending description
         file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
-        filenames = [file_instance.name for file_id, file_instance in files.items()]
-        return Response(data={'filenames': filenames}, status=status.HTTP_200_OK)
+        pending_description = [file_instance.name for file_id, file_instance in files.items()]
 
+        # Look for sounds pending processing
+        qs = Sound.objects.filter(user=self.user, moderation_state='PE').exclude(processing_state='OK')
+        pending_processing = [self.get_minimal_sound_info(sound) for sound in qs]
 
-class UploadedAndDescribedSoundsPendingModeration(OauthRequiredAPIView):
-    __doc__ = 'List of uploaded files which have already been descriebd and are procesing or awaiting moderation in Freesound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#uploadeds_pending_moderation-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('UploadedAndDescribedSoundsPendingModeration', 'apiv2-uploads-not-moderated', max=5))
-
-    def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('uploadeds_pending_moderation'))
-        sounds_pending_processing = Sound.objects.filter(user=self.user, moderation_state='PE').exclude(processing_state='OK')
-        sounds_pending_moderation = Sound.objects.filter(user=self.user, processing_state='OK', moderation_state='PE')
+        # Look for sounds pending moderation
+        qs = Sound.objects.filter(user=self.user, processing_state='OK', moderation_state='PE')
+        pending_moderation = [self.get_minimal_sound_info(sound, images=True) for sound in qs]
 
         data_response = dict()
-        data_response['sounds pending processing'] = [self.get_minimal_sound_info(sound) for sound in sounds_pending_processing]
-        data_response['sounds pending moderation'] = [self.get_minimal_sound_info(sound, images=True) for sound in sounds_pending_moderation]
+        data_response['pending_description'] = pending_description
+        data_response['pending_processing'] = pending_processing
+        data_response['pending_moderation'] = pending_moderation
 
         return Response(data=data_response, status=status.HTTP_200_OK)
 
@@ -1028,10 +1026,9 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '08 Comment sound': prepend_base(reverse('apiv2-user-create-comment', args=[0]).replace('0', '<sound_id>')),
                     '09 Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
                     '10 Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
-                    '11 Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
+                    '11 Pedning uploads': prepend_base(reverse('apiv2-uploads-pending')),
                     '12 Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
-                    '13 Uploaded and described sounds pending moderation': prepend_base(reverse('apiv2-uploads-not-moderated')),
-                    '14 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
+                    '13 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
                 }).items(), key=lambda t: t[0]))},
                 {'User resources': OrderedDict(sorted(dict({
                     '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),

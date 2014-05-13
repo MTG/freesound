@@ -537,7 +537,7 @@ This resource allows you to upload an audio file into Freesound.
 Note that this resource is only meant for uploading an audio file, not for describing it.
 In order for the file to appear in Freesound, it must be described using the :ref:`sound-describe` resource (after uploading),
 and it must be processed and moderated by the Freesound moderators just like any other sound uploaded using the Freessound website rather than the API.
-A list of uploaded files pending description can be obtained using the :ref:`sound-uploaded-files-pending-description` resource.
+A list of uploaded files pending description can be obtained using the :ref:`sound-pending-uploads` resource.
 
 The author of the uploaded sound will be the user authenticated via Oauth2, therefore this method requires :ref:`oauth-authentication`.
 
@@ -562,7 +562,7 @@ On successful upload, the Upload Sound resource will return a dictionary with th
   }
 
 You will probably want to store the content of the ``filename`` field because it will be needed to later describe the sound.
-Alternatively, you can obtain a list of uploaded sounds pending description using the :ref:`sound-uploaded-files-pending-description` resource.
+Alternatively, you can obtain a list of uploaded sounds pending description using the :ref:`sound-pending-uploads` resource.
 
 
 Examples
@@ -570,41 +570,62 @@ Examples
 
 {{examples_UploadSound}}
 
-.. _sound-uploaded-files-pending-description:
+.. _sound-pending-uploads:
 
-Uploads Pending Description (OAuth2 required)
+Pending Uploads (OAuth2 required)
 =========================================================
 
 ::
 
-  GET /apiv2/sounds/not_yet_described/
+  GET /apiv2/sounds/pending_uploads/
 
-This resource allows you to retrieve a list of audio files uploaded by a the Freesound user logged in using OAuth2 that have not yet been described.
+This resource allows you to retrieve a list of audio files uploaded by a the Freesound user logged in using OAuth2 that have not yet been described, processed or moderated.
+In Fressound, when sounds are uploaded they first need to be described by their uploaders.
+After the description step, sounds are automatically processed and then enter the moderation phase, where a team of human moderators either accepts or rejects the upload.
+Using this resource, your application can keep track of user uploads status in Freesound.
 This method requires :ref:`oauth-authentication`.
 
 
 Response
 --------
 
-The Uploads Pending Description resource returns a dictionary with the following structure:
+The Pending Uploads resource returns a dictionary with the following structure:
 
 ::
 
   {
-    "filenames": [
+    "pending_description": [
         "<filename #1>",
         "<filename #2>",
         ...
-    ]
+    ],
+    "pending_processing": [
+        <sound #1>,
+        <sound #2>,
+        ...
+    ],
+    "pending_moderation": [
+        <sound #1>,
+        <sound #2>,
+        ...
+    ],
   }
 
-The filenames returned by this resource are used as file identifiers in the :ref:`sound-describe` resource.
+The filenames returned under "pending_description" field are used as file identifiers in the :ref:`sound-describe` resource.
+Each sound entry either under "pending_processing" or "pending_moderation" fields consists of a minimal set
+of information about that sound including the ``name``, ``tags``, ``description``, ``created`` and ``license`` fields
+that you would find in a :ref:`sound-instance-response`.
+Sounds under "pending_moderation" also contain an extra ``images`` field containing the uris of the waveform and spectrogram
+images of the sound as described in :ref:`sound-instance-response`.
+
+Processing is done automatically in Freesound right after sounds are described, and it normally takes less than a minute.
+Therefore, you should normally see that the list of sounds under "sounds pending processing" is empty.
 
 
 Examples
 --------
 
-{{examples_NotYetDescribedUploadedSounds}}
+{{examples_PendingUploads}}
 
 
 .. _sound-describe:
@@ -619,7 +640,7 @@ Describe Sound (OAuth2 required)
 This resource allows you to describe a previously uploaded audio file.
 This method requires :ref:`oauth-authentication`.
 Note that after a sound is described, it still needs to be processed and moderated by the team of Freesound moderators, therefore it will not yet appear in Freesound.
-You can obtain a list of sounds uploaded and described by the user logged in using OAuth2 but still pending processing and moderation using the :ref:`sound-pending-moderation` resource.
+You can obtain a list of sounds uploaded and described by the user logged in using OAuth2 but still pending processing and moderation using the :ref:`sound-pending-uploads` resource.
 
 
 Request parameters
@@ -630,7 +651,7 @@ A request to the Describe Sound resource must include the following POST paramet
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-uploaded-files-pending-description` resource.
+``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-pending-uploads` resource.
 ``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
@@ -717,57 +738,6 @@ If sound description is updated successfully, the Edit Sound Description resourc
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
 
 
-
-
-
-.. _sound-pending-moderation:
-
-Uploaded Sounds Awaiting Moderation in Freesound (OAuth2 required)
-==================================================================
-
-::
-
-  GET /apiv2/sounds/uploads_pending_moderation/
-
-This resource allows you to retrieve a list of sounds that have been uploaded and described by the user logged in using OAuth2, but that still need to be processed and moderated.
-This method requires :ref:`oauth-authentication`.
-
-Response
---------
-
-The response to the Uploaded Sounds Awaiting Moderation in Freesound resource is a dictionary with the following structure:
-
-::
-
-  {
-    "sounds pending processing": [
-        <sound #1>,
-        <sound #2>,
-        ...
-    ],
-    "sounds pending moderation": [
-        <sound #1>,
-        <sound #2>,
-        ...
-    ],
-  }
-
-Each sound entry either in "sounds pending processing" or "sounds pending moderation" fields consists of a minimal set
-of information about that sound including the ``name``, ``tags``, ``description``, ``created`` and ``license`` fields
-that you would find in a :ref:`sound-instance-response`.
-Sounds under "sounds pending moderation" also contain an extra ``images`` field containing the uris of the waveform and spectrogram
-images of the sound as described in :ref:`sound-instance-response`.
-
-Processing is done automatically in Freesound right after sounds are described, and it normally takes less than a minute.
-Therefore, you should normally see that the list of sounds under "sounds pending processing" is empty.
-
-
-Examples
---------
-
-{{examples_UploadedAndDescribedSoundsPendingModeration}}
-
-
 .. _sound-upload-and-describe:
 
 Upload and Describe Sound (OAuth2 required)
@@ -782,7 +752,7 @@ In order for the file to appear in Freesound, it will still need to be processed
 just like any other sound uploaded using the Freessound website rather than the API.
 The author of the uploaded sound will be the user authenticated via Oauth2, therefore this method requires :ref:`oauth-authentication`.
 
-A list of uploaded and described sounds pending processing and moderation can be obtained using the :ref:`sound-pending-moderation` resource.
+A list of uploaded and described sounds pending processing and moderation can be obtained using the :ref:`sound-pending-uploads` resource.
 
 Request
 -------

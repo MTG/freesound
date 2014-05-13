@@ -74,11 +74,8 @@ examples = {
     'UploadSound': [
         ('Upload a sound', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" \'%s/apiv2/sounds/upload/\'']),
     ],
-    'NotYetDescribedUploadedSounds': [
-        ('Get sounds that have not been yet described', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/not_yet_described/\'']),
-    ],
-    'UploadedAndDescribedSoundsPendingModeration': [
-        ('Get uploaded sounds that are awaiting moderation in Freesound', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/uploads_pending_moderation/\'']),
+    'PendingUploads': [
+        ('Get uploaded uploads that are pending description, processing or moderation', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/pending_uploads/\'']),
     ],
     'DescribeSound': [
         ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" \'%s/apiv2/sounds/describe/\'']),

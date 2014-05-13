@@ -1003,7 +1003,7 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '07 Rate sound': prepend_base(reverse('apiv2-user-create-rating', args=[0]).replace('0', '<sound_id>')),
                     '08 Comment sound': prepend_base(reverse('apiv2-user-create-comment', args=[0]).replace('0', '<sound_id>')),
                     '09 Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
-                    '10 Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
+                    '10 Describe sound': prepend_base(reverse('apiv2-uploads-describe')),
                     '11 Pending uploads': prepend_base(reverse('apiv2-uploads-pending')),
                     '12 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
                 }).items(), key=lambda t: t[0]))},

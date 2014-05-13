@@ -190,7 +190,7 @@ You can also use this authentication mechanism to access non OAuth2 required API
 
 Similarly to authorization codes, access tokens do have a limited **lifetime of 24 hours**. Notice that access token response
 from Step 3 includes an ``expires_in`` parameter that indicates that lifetime in seconds. After that time, the token will
-be invalidated and any request to the API using the token will return a 401 (Unauthorized) response showing an 'Invalid token' error.
+be invalidated and any request to the API using the token will return a 401 (Unauthorized) response showing an 'Expired token' error.
 If that happens, you can obtain a new access token either by starting the whole authentication process again or by requesting
 a new access token using the **refresh token** that was also issued to you when you got the access token (``refresh_token`` parameter above).
 
@@ -205,6 +205,10 @@ with the authorization code). See the following example:
 The response to this request will be a brand new access token that you can use in further API calls. It will also include
 a new refresh token that you will need when the newly given access token expires. There can only exist one access token per
 application/user pair, therefore newly created access tokens overwrite existing ones if they relate the same application/user pair.
+
+Freesound users that have granted access to your application, can revoke this access at any time using their settings page in Freesound.org.
+Revoking the access means invalidating the access token (and refresh token) that was issued to your application.
+In that case, attepting to use the access token will result in a 401 (Unauthorized) response showing an 'Invalid token' error.
 
 
 Managing access tokens and multiple users

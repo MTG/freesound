@@ -87,7 +87,11 @@ class OAuth2Authentication(BaseAuthentication):
             # the oauth2_provider version supports to it.
             token = token.get(token=access_token, expires__gt=provider_now())
         except oauth2_provider.models.AccessToken.DoesNotExist:
-            raise exceptions.AuthenticationFailed('Invalid token')
+            if token.filter(token=access_token).exists():
+                # Expired token
+                raise exceptions.AuthenticationFailed('Expired token.')
+            else:
+                raise exceptions.AuthenticationFailed('Invalid token.')
 
         user = token.user
 

@@ -137,7 +137,7 @@ class Command(BaseCommand):
 
             # 8 set description, tags
             sound.description = descriptionf
-            sound.set_tags([t.lower() for t in tagsf.split(" ") if t])
+            sound.set_tags([t for t in tagsf.split(" ") if t])
 
             # 9 save!
             sound.save()

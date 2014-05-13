@@ -463,7 +463,7 @@ class CreateCommentSerializer(serializers.Serializer):
 
 ALLOWED_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
-
+'''
 class UploadAudioFileSerializer(serializers.Serializer):
     audiofile = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
 
@@ -478,6 +478,7 @@ class UploadAudioFileSerializer(serializers.Serializer):
             raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
 
         return attrs
+'''
 
 
 LICENSE_CHOICES = (
@@ -537,7 +538,7 @@ class SoundDescriptionSerializer(serializers.Serializer):
             raise serializers.ValidationError('Your should at least have 3 tags...')
         elif len(tags) > 30:
             raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
-
+        attrs[source] = tags
         return attrs
 
 
@@ -585,15 +586,24 @@ class EditSoundDescriptionSerializer(serializers.Serializer):
             raise serializers.ValidationError('Your should at least have 3 tags...')
         elif len(tags) > 30:
             raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
-
+        attrs[source] = tags
         return attrs
 
-class UploadAndDescribeAudioFileSerializer(SoundDescriptionSerializer):
-    audiofile = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
+class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
+    audiofile = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Required. Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
+    name = serializers.CharField(max_length=512, required=False, help_text='Not required. Name you want to give to the sound (by default it will be the original filename).')
+    tags = serializers.CharField(max_length=512, required=False, help_text='Only required if providing file description. Separate tags with spaces. Join multi-word tags with dashes.')
+    description = serializers.CharField(required=False, help_text='Only required if providing file description. Textual description of the sound.')
+    license = serializers.ChoiceField(required=False, choices=LICENSE_CHOICES, help_text='Only required if providing file description. License for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
+    pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new one will be created).', required=False)
+    geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
 
-    def __init__(self, *args, **kwargs):
-        super(UploadAndDescribeAudioFileSerializer, self).__init__(*args, **kwargs)
-        self.fields.pop('upload_filename')
+    def is_providing_description(self, attrs):
+        for key, value in attrs.items():
+            if key != 'audiofile' and key != 'upload_filename':
+                if value:
+                    return True
+        return False
 
     def validate_audiofile(self, attrs, source):
         value = attrs[source]
@@ -605,7 +615,76 @@ class UploadAndDescribeAudioFileSerializer(SoundDescriptionSerializer):
             raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
         return attrs
 
+    def validate_name(self, attrs, source):
+        if not self.is_providing_description(attrs):
+            attrs[source] = None
+        return attrs
 
+    def validate_tags(self, attrs, source):
+        if not self.is_providing_description(attrs):
+            attrs[source] = None
+        else:
+            value = attrs[source]
+            tags = clean_and_split_tags(value)
+            if len(tags) < 3:
+                raise serializers.ValidationError('Your should at least have 3 tags...')
+            elif len(tags) > 30:
+                raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
+            attrs[source] = tags
+        return attrs
+
+    def validate_description(self, attrs, source):
+        if not self.is_providing_description(attrs):
+            attrs[source] = None
+        else:
+            if not attrs[source]:
+                raise serializers.ValidationError('This field is required.')
+        return attrs
+
+    def validate_license(self, attrs, source):
+        if not self.is_providing_description(attrs):
+            attrs[source] = None
+        else:
+            if not attrs[source]:
+                raise serializers.ValidationError('This field is required.')
+        return attrs
+
+    def validate_pack(self, attrs, source):
+        if not self.is_providing_description(attrs):
+            attrs[source] = None
+        return attrs
+
+    def validate_geotag(self, attrs, source):
+        if not self.is_providing_description(attrs):
+            attrs[source] = None
+        else:
+            value = attrs.get(source, None)
+            if not value:
+                return attrs
+            fails = False
+            try:
+                data = value.split(',')
+            except:
+                fails = True
+            if len(data) != 3:
+                fails = True
+            try:
+                float(data[0])
+                float(data[1])
+                int(data[2])
+            except:
+                fails = True
+            if fails:
+                raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, longitude and zoom respectively)')
+            else:
+                # Check that ranges are corrent
+                if float(data[0]) > 90 or float(data[0]) < -90:
+                    raise serializers.ValidationError('Latitude must be in the range [-90,90].')
+                if float(data[1]) > 180 or float(data[0]) < -180:
+                    raise serializers.ValidationError('Longitude must be in the range [-180,180].')
+                if int(data[2]) < 11:
+                    raise serializers.ValidationError('Zoom must be at least 11.')
+        return attrs
 
 
 ########################

@@ -60,11 +60,8 @@ urlpatterns = patterns('apiv2.views',
     url(r'^sounds/(?P<pk>[0-9]+)/comment/$', views.CommentSound.as_view(), name='apiv2-user-create-comment'),
     # Upload and describe
     url(r'^sounds/upload/$', views.UploadSound.as_view(), name="apiv2-uploads-upload"),
-    url(r'^sounds/pending_uploads/$', views.PendingUploads.as_view(), name="apiv2-uploads-pending"),
     url(r'^sounds/describe/$', views.DescribeSound.as_view(), name="apiv2-uploads-describe"),
-    url(r'^sounds/upload_and_describe/$', views.UploadAndDescribeSound.as_view(), name="apiv2-uploads-upload-and-describe"),
-    #url(r'^sounds/not_yet_described/$', views.NotYetDescribedUploadedSounds.as_view(), name="apiv2-uploads-not-described"),
-    #url(r'^sounds/uploads_pending_moderation/$', views.UploadedAndDescribedSoundsPendingModeration.as_view(), name="apiv2-uploads-not-moderated"),
+    url(r'^sounds/pending_uploads/$', views.PendingUploads.as_view(), name="apiv2-uploads-pending"),
 
     # Users
     url(r'^users/(?P<username>[^//]+)/$', views.UserInstance.as_view(), name="apiv2-user-instance"),

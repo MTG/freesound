@@ -677,32 +677,42 @@ class DownloadPack(DownloadAPIView):
 # READ WRITE VIEWS
 ##################
 
+
 class UploadSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Upload a sound (only upload the file, without description/metadata).' \
+    __doc__ = 'Upload an audiofile and (optionally) describe  it.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#upload-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('UploadSound', 'apiv2-uploads-upload', max=5))
 
-    serializer_class = UploadAudioFileSerializer
+    serializer_class = UploadAndDescribeAudioFileSerializer
     parser_classes = (MultiPartParser,)
 
     def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('uploading_sound'))
-        serializer = UploadAudioFileSerializer(data=request.DATA, files=request.FILES)
+        logger.info(self.log_message('upload_sound'))
+        serializer = UploadAndDescribeAudioFileSerializer(data=request.DATA, files=request.FILES)
         if serializer.is_valid():
             audiofile = request.FILES['audiofile']
-            
+            try:
+                handle_uploaded_file(self.user.id, audiofile)
+            except:
+                raise ServerErrorException
+            serializer.data['upload_filename'] = request.FILES['audiofile'].name
+
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'filename': audiofile.name,
-                                      'details': 'File successfully uploaded (%i)' % audiofile.size,
-                                      'note': 'File has not been saved as browseable API is only for testing purposes.'},
+                if serializer.is_providing_description(serializer.data):
+                    msg = 'Audio file successfully uploaded and described (now pending processing and moderation)'
+                else:
+                    msg = 'File successfully uploaded (%i, now pending description)' % audiofile.size
+                return Response(data={'details': msg,
+                                      'uri': None,
+                                      'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                try:
-                    handle_uploaded_file(self.user.id, audiofile)
-                except:
-                    raise ServerErrorException
-                return Response(data={'filename': audiofile.name, 'details': 'File successfully uploaded (%i)' % audiofile.size}, status=status.HTTP_201_CREATED)
+                if serializer.is_providing_description(serializer.data):
+                    sound = create_sound_object(self.user, serializer.data)
+                    return Response(data={'details': 'Audio file successfully uploaded and described (now pending processing and moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
+                else:
+                    return Response(data={'filename': audiofile.name, 'details': 'File successfully uploaded (%i, now pending description)' % audiofile.size}, status=status.HTTP_201_CREATED)
         else:
             return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -721,11 +731,11 @@ class PendingUploads(OauthRequiredAPIView):
         pending_description = [file_instance.name for file_id, file_instance in files.items()]
 
         # Look for sounds pending processing
-        qs = Sound.objects.filter(user=self.user, moderation_state='PE').exclude(processing_state='OK')
+        qs = Sound.objects.filter(user=self.user).exclude(processing_state='OK', moderation_state='OK')
         pending_processing = [self.get_minimal_sound_info(sound) for sound in qs]
 
         # Look for sounds pending moderation
-        qs = Sound.objects.filter(user=self.user, processing_state='OK', moderation_state='PE')
+        qs = Sound.objects.filter(user=self.user, processing_state='OK').exclude(moderation_state='OK')
         pending_moderation = [self.get_minimal_sound_info(sound, images=True) for sound in qs]
 
         data_response = dict()
@@ -766,7 +776,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                sound = create_sound_object(self.user, request.DATA)
+                sound = create_sound_object(self.user, serializer.data)
                 return Response(data={'details': 'Sound successfully described (now pending moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
         else:
             return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -800,34 +810,34 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                                       'note': 'Description of sound %s has not been saved in the database as browseable API is only for testing purposes.' % sound_id},
                                 status=status.HTTP_200_OK)
             else:
-                if 'name' in request.DATA:
-                    if request.DATA['name']:
-                        sound.original_filename = request.DATA['name']
-                if 'description' in request.DATA:
-                    if request.DATA['description']:
-                        sound.description = request.DATA['description']
-                if 'tags' in request.DATA:
-                    if request.DATA['tags']:
-                        sound.set_tags([t.lower() for t in request.DATA['tags'].split(" ") if t])
-                if 'license' in request.DATA:
-                    if request.DATA['license']:
-                        license = License.objects.get(name=request.DATA['license'])
+                if 'name' in serializer.data:
+                    if serializer.data['name']:
+                        sound.original_filename = serializer.data['name']
+                if 'description' in serializer.data:
+                    if serializer.data['description']:
+                        sound.description = serializer.data['description']
+                if 'tags' in serializer.data:
+                    if serializer.data['tags']:
+                        sound.set_tags(serializer.data['tags'])
+                if 'license' in serializer.data:
+                    if serializer.data['license']:
+                        license = License.objects.get(name=serializer.data['license'])
                         sound.license = license
-                if 'geotag' in request.DATA:
-                    if request.DATA['geotag']:
-                        lat, lon, zoom = request.DATA['geotag'].split(',')
+                if 'geotag' in serializer.data:
+                    if serializer.data['geotag']:
+                        lat, lon, zoom = serializer.data['geotag'].split(',')
                         geotag = GeoTag(user=self.user,
                             lat=float(lat),
                             lon=float(lon),
                             zoom=int(zoom))
                         geotag.save()
                         sound.geotag = geotag
-                if 'pack' in request.DATA:
-                    if request.DATA['pack']:
-                        if Pack.objects.filter(name=request.DATA['pack'], user=self.user).exists():
-                            p = Pack.objects.get(name=request.DATA['pack'], user=self.user)
+                if 'pack' in serializer.data:
+                    if serializer.data['pack']:
+                        if Pack.objects.filter(name=serializer.data['pack'], user=self.user).exists():
+                            p = Pack.objects.get(name=serializer.data['pack'], user=self.user)
                         else:
-                            p, created = Pack.objects.get_or_create(user=self.user, name=request.DATA['pack'])
+                            p, created = Pack.objects.get_or_create(user=self.user, name=serializer.data['pack'])
                         sound.pack = p
                 sound.save()
 
@@ -840,38 +850,6 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
 
                 return Response(data={'details': 'Description of sound %s successfully edited' % sound_id, 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_200_OK)
-        else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UploadAndDescribeSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Upload and describe (add metadata) a sound file.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#upload-and-describe-sound-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('UploadAndDescribeSound', 'apiv2-uploads-upload-and-describe', max=5))
-
-    serializer_class = UploadAndDescribeAudioFileSerializer
-    parser_classes = (MultiPartParser,)
-
-    def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('upload_and_describe_sound'))
-        serializer = UploadAndDescribeAudioFileSerializer(data=request.DATA, files=request.FILES)
-        if serializer.is_valid():
-            audiofile = request.FILES['audiofile']
-            try:
-                handle_uploaded_file(self.user.id, audiofile)
-            except:
-                raise ServerErrorException
-            request.DATA['upload_filename'] = request.FILES['audiofile'].name
-
-            if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Audio file successfully uploaded and described (now pending moderation)',
-                                      'uri': None,
-                                      'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
-                                status=status.HTTP_201_CREATED)
-            else:
-                sound = create_sound_object(self.user, request.DATA)
-                return Response(data={'details': 'Audio file successfully uploaded and described (now pending moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
         else:
             return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1026,9 +1004,8 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '08 Comment sound': prepend_base(reverse('apiv2-user-create-comment', args=[0]).replace('0', '<sound_id>')),
                     '09 Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
                     '10 Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
-                    '11 Pedning uploads': prepend_base(reverse('apiv2-uploads-pending')),
-                    '12 Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
-                    '13 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
+                    '11 Pending uploads': prepend_base(reverse('apiv2-uploads-pending')),
+                    '12 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
                 }).items(), key=lambda t: t[0]))},
                 {'User resources': OrderedDict(sorted(dict({
                     '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),

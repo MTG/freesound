@@ -803,7 +803,8 @@ def create_sound_object(user, original_sound_fields):
 
     # 8 set description, tags
     sound.description = sound_fields['description']
-    sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
+    sound.set_tags(sound_fields['tags'])
+    #sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
 
     # 9 save!
     sound.save()

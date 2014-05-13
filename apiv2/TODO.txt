@@ -1,6 +1,0 @@
-- Finish documentation
-    - bookmark/comment/rate resources
-    - geotags searching
-    - authorize oauth2 link with previous user logout
-- Improve documentation overview
-- Show usage limit rates in api credential page

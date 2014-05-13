@@ -1088,7 +1088,7 @@ Pack Sounds
 
 ::
 
-  GET /apiv2/packs/<pack_id>/
+  GET /apiv2/packs/<pack_id>/sounds/
 
 This resource allows the retrieval of the list of sounds included in a pack.
 

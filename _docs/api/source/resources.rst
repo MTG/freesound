@@ -533,42 +533,130 @@ Upload Sound (OAuth2 required)
 
   POST /apiv2/sounds/upload/
 
-This resource allows you to upload an audio file into Freesound.
-Note that this resource is only meant for uploading an audio file, not for describing it.
-In order for the file to appear in Freesound, it must be described using the :ref:`sound-describe` resource (after uploading),
-and it must be processed and moderated by the Freesound moderators just like any other sound uploaded using the Freessound website rather than the API.
-A list of uploaded files pending description can be obtained using the :ref:`sound-pending-uploads` resource.
+This resource allows you to upload an audio file into Freesound and (optionally) describe it.
+If if no file description is provided (see below), only the audio file will be uploaded and you will need to describe it later using the :ref:`sound-describe` resource.
+If the file description is also provided, the uploaded file will be ready for processing and moderation stage.
+A list of uploaded files pending description, processing or moderation can be obtained using the :ref:`sound-pending-uploads` resource.
 
-The author of the uploaded sound will be the user authenticated via Oauth2, therefore this method requires :ref:`oauth-authentication`.
+The author of the uploaded sound will be the user authenticated via OAuth2, therefore this method requires :ref:`oauth-authentication`.
 
 
 Request parameters
 ------------------
 
-The uploaded audio file must be attached to the request as a ``audiofile`` POST parameter.
+The uploaded audio file must be attached to the request as an ``audiofile`` POST parameter.
 Supported file formats include .wav, .aif, .flac, .ogg and .mp3.
+
+Additionally, the request can include the following POST parameters to provide a description for the file:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
+``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
+``description``       string            A textual description of the sound.
+``license``           string            The license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
+``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
+``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
+====================  ================  ====================================================================================
+
+Note that ``tags``, ``description`` and ``license`` parameters are REQUIRED when providing a description for the file, but can be omitted if no description is provided.
+In other words, you can either only provide the ``audiofile`` parameter, or provide ``audiofile`` plus ``tags``, ``description``, ``license`` and any of the other optional parameters.
+In the first case, a file will be uploaded but not described (you will need to describe it later), and in the second case a file will both be uploaded and described.
 
 
 Response
 --------
 
-On successful upload, the Upload Sound resource will return a dictionary with the following structure:
+If file description was provided, on successful upload, the Upload Sound resource will return a dictionary with the following structure:
 
 ::
 
   {
-    "details": "File successfully uploaded (<file size>)",
+    "details": "Audio file successfully uploaded and described (now pending processing and moderation)",
+    "uri": "<URI of the uploaded and described sound instance>"
+  }
+
+Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
+Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
+
+If file description was NOT provided, on successful upload, the Upload Sound resource will return a dictionary with the following structure:
+
+::
+
+  {
+    "details": "Audio file successfully uploaded (<file size>, now pending description)",
     "filename": "<filename of the uploaded audio file>"
   }
 
-You will probably want to store the content of the ``filename`` field because it will be needed to later describe the sound.
-Alternatively, you can obtain a list of uploaded sounds pending description using the :ref:`sound-pending-uploads` resource.
+In that case, you will probably want to store the content of the ``filename`` field because
+it will be needed to later describe the sound using the :ref:`sound-describe` resource.
+Alternatively, you can retrieve later a the filenames of uploads pending description using the :ref:`sound-pending-uploads` resource.
 
 
 Examples
 --------
 
 {{examples_UploadSound}}
+
+
+.. _sound-describe:
+
+Describe Sound (OAuth2 required)
+=========================================================
+
+::
+
+  POST /apiv2/sounds/describe/
+
+This resource allows you to describe a previously uploaded audio file that has not yet been described.
+This method requires :ref:`oauth-authentication`.
+Note that after a sound is described, it still needs to be processed and moderated by the team of Freesound moderators, therefore it will not yet appear in Freesound.
+You can obtain a list of sounds uploaded and described by the user logged in using OAuth2 but still pending processing and moderation using the :ref:`sound-pending-uploads` resource.
+
+
+Request parameters
+------------------
+
+A request to the Describe Sound resource must include the following POST parameters:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-pending-uploads` resource.
+``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
+``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
+``description``       string            A textual description of the sound.
+``license``           string            The license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
+``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
+``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
+====================  ================  ====================================================================================
+
+
+Response
+--------
+
+If the audio file is described successfully, the Describe Sound resource will return a dictionary with the following structure:
+
+::
+
+  {
+    "details": "Sound successfully described (now pending processing and moderation)",
+    "uri": "<URI of the described sound instance>"
+  }
+
+Note that after the sound is described, it still needs to be processed and moderated by the team of Freesound moderators.
+Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
+
+
+Examples
+--------
+
+{{examples_DescribeSound}}
+
 
 .. _sound-pending-uploads:
 
@@ -628,65 +716,7 @@ Examples
 {{examples_PendingUploads}}
 
 
-.. _sound-describe:
-
-Describe Sound (OAuth2 required)
-=========================================================
-
-::
-
-  POST /apiv2/sounds/describe/
-
-This resource allows you to describe a previously uploaded audio file.
-This method requires :ref:`oauth-authentication`.
-Note that after a sound is described, it still needs to be processed and moderated by the team of Freesound moderators, therefore it will not yet appear in Freesound.
-You can obtain a list of sounds uploaded and described by the user logged in using OAuth2 but still pending processing and moderation using the :ref:`sound-pending-uploads` resource.
-
-
-Request parameters
-------------------
-
-A request to the Describe Sound resource must include the following POST parameters:
-
-====================  ================  ====================================================================================
-Name                  Type              Description
-====================  ================  ====================================================================================
-``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-pending-uploads` resource.
-``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
-``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
-``description``       string            A textual description of the sound.
-``license``           string            The license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
-``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
-``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
-====================  ================  ====================================================================================
-
-
-Response
---------
-
-If the audio file is described successfully, the Describe Sound resource will return a dictionary with the following structure:
-
-::
-
-  {
-    "details": "Sound successfully described (now pending moderation)",
-    "uri": "<URI of the described sound instance>"
-  }
-
-Note that after the sound is described, it still needs to be processed and moderated by the team of Freesound moderators.
-Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
-
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
-
-
-Examples
---------
-
-{{examples_DescribeSound}}
-
-
 .. _sound-edit-description:
-
 
 Edit Sound Description (OAuth2 required)
 =========================================================
@@ -736,54 +766,6 @@ If sound description is updated successfully, the Edit Sound Description resourc
 
 
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
-
-
-.. _sound-upload-and-describe:
-
-Upload and Describe Sound (OAuth2 required)
-=========================================================
-
-::
-
-  POST /apiv2/sounds/upload_and_describe/
-
-This resource allows you to upload an audio file into Freesound and describe it at once.
-In order for the file to appear in Freesound, it will still need to be processed and moderated by the Freesound moderators
-just like any other sound uploaded using the Freessound website rather than the API.
-The author of the uploaded sound will be the user authenticated via Oauth2, therefore this method requires :ref:`oauth-authentication`.
-
-A list of uploaded and described sounds pending processing and moderation can be obtained using the :ref:`sound-pending-uploads` resource.
-
-Request
--------
-
-A request to the Upload and Describe Sound resource must include the same POST parameters as in :ref:`sound-describe`,
-with the exception that instead of the parameter ``upload_filename``, you must attach an audio file using an ``audiofile`` parameter like in :ref:`sound-upload`.
-Supported file formats include .wav, .aif, .flac, .ogg and .mp3.
-
-Response
---------
-
-If the audio file is upload and described successfully, the Upload and Describe Sound resource will return a dictionary with the following structure:
-
-::
-
-  {
-    "details": "Audio file successfully uploaded and described (now pending moderation)",
-    "uri": "<URI of the uploaded and described sound instance>"
-  }
-
-Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
-Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
-
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
-
-
-
-Examples
---------
-
-{{examples_UploadAndDescribeSound}}
 
 
 Bookmark Sound (OAuth2 required)
@@ -1002,7 +984,7 @@ Me (information about user authenticated using OAuth2, OAuth2 required)
 
   GET /apiv2/me/
 
-This resource returns basic information of a user that has logged in using the Oauth2 procedure.
+This resource returns basic information of a user that has logged in using the OAuth2 procedure.
 It can be used by applications to be able to identify which Freesound user has logged in.
 
 Response

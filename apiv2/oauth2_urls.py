@@ -82,7 +82,7 @@ def https_required_and_crsf_exempt(view_func):
 
 urlpatterns = patterns('',
     url('^authorize/?$', https_and_login_required(Capture.as_view()), name='capture'),
-    url('^logout_current_user_and_authorize/?$', https_and_force_login(Capture.as_view()), name='capture'),
+    url('^logout_and_authorize/?$', https_and_force_login(Capture.as_view()), name='capture'),
     url('^authorize/confirm/?$', https_and_login_required(Authorize.as_view()), name='authorize'),
     url('^redirect/?$', https_and_login_required(Redirect.as_view()), name='redirect'),
     url('^access_token/?$', https_required_and_crsf_exempt(AccessTokenView.as_view()), name='access_token'),

@@ -99,6 +99,17 @@ permission to your application to access their data (Fig. 2).
    Fig 2. Permission request (Step 1)
 
 
+In some situations it might be desirable that users had to login in Freesound even if they are already logged in.
+If you want to implement this behaviour, you can use an alternative url for Step 1 of the OAuth2 flow which forces a user logout before proceeding to the authorization process.
+Therefore, instead of pointing users to ``https://www.freesound.org/apiv2/oauth2/authorize/`` (and adding the appropriate parameters),
+you should point users to:
+
+::
+
+  https://www.freesound.org/apiv2/oauth2/logout_and_authorize/?...
+
+
+
 Step 2
 ------
 

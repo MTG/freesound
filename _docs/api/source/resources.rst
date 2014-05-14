@@ -893,7 +893,7 @@ User Packs resource returns a paginated list of the packs created by a user, wit
     "previous": <link to the previous page of packs (null if none)>
   }
 
-Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack-instance`: response.
+Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack_instance`: response.
 Packs are sorted according to their creation date (recent packs in the top of the list).
 Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
 

@@ -463,24 +463,6 @@ class CreateCommentSerializer(serializers.Serializer):
 
 ALLOWED_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
-'''
-class UploadAudioFileSerializer(serializers.Serializer):
-    audiofile = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
-
-    def validate_audiofile(self, attrs, source):
-        value = attrs[source]
-        try:
-            extension = value.name.split('.')[-1]
-        except:
-            extension = None
-
-        if extension not in ALLOWED_EXTENSIONS or not extension:
-            raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
-
-        return attrs
-'''
-
-
 LICENSE_CHOICES = (
         ('Attribution', 'Attribution'),
         ('Attribution Noncommercial', 'Attribution Noncommercial'),

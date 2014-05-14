@@ -704,13 +704,13 @@ class UploadSound(WriteRequiredGenericAPIView):
                 else:
                     msg = 'Audio file successfully uploaded (%i, now pending description).' % audiofile.size
                 return Response(data={'detail': msg,
-                                      'uri': None,
+                                      'id': None,
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 if serializer.is_providing_description(serializer.data):
                     sound = create_sound_object(self.user, serializer.data)
-                    return Response(data={'detail': 'Audio file successfully uploaded and described (now pending processing and moderation).', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
+                    return Response(data={'detail': 'Audio file successfully uploaded and described (now pending processing and moderation).', 'id': int(sound.id) }, status=status.HTTP_201_CREATED)
                 else:
                     return Response(data={'filename': audiofile.name, 'detail': 'Audio file successfully uploaded (%i, now pending description).' % audiofile.size}, status=status.HTTP_201_CREATED)
         else:
@@ -748,7 +748,7 @@ class PendingUploads(OauthRequiredAPIView):
     def get_minimal_sound_info(self, sound, images=False):
         sound_data = dict()
         for key, value in SoundSerializer(sound, context=self.get_serializer_context()).data.items():
-            if key in ['name', 'tags', 'description', 'created', 'license']:
+            if key in ['id', 'name', 'tags', 'description', 'created', 'license']:
                 sound_data[key] = value
             if images:
                 if key == 'images':
@@ -772,12 +772,12 @@ class DescribeSound(WriteRequiredGenericAPIView):
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).',
-                                      'uri': None,
+                                      'id': None,
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 sound = create_sound_object(self.user, serializer.data)
-                return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
+                return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).', 'id': int(sound.id)}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -806,7 +806,6 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id,
-                                      'uri': None,
                                       'note': 'Description of sound %s has not been saved in the database as browseable API is only for testing purposes.' % sound_id},
                                 status=status.HTTP_200_OK)
             else:
@@ -849,7 +848,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
                 invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
 
-                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id, 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_200_OK)
+                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id}, status=status.HTTP_200_OK)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -36,7 +36,7 @@ from utils import prepend_base
 # SOUND SERIALIZERS
 ###################
 
-DEFAULT_FIELDS_IN_SOUND_LIST = 'uri,url,license,user,pack'  # Separated by commas (None = all)
+DEFAULT_FIELDS_IN_SOUND_LIST = 'id,url,license,user,pack'  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_SOUND_DETAIL = None  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
@@ -65,7 +65,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Sound
         fields = ('id',
-                  'uri',
+                  #'uri',
                   'url',
                   'name',
                   'tags',
@@ -254,7 +254,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ('uri',
+        fields = (#'uri',
                   'url',
                   'username',
                   'about',
@@ -336,11 +336,12 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Pack
         fields = ('id',
-                  'uri',
+                  #'uri',
                   'url',
                   'description',
                   'created',
                   'name',
+                  'user',
                   'num_sounds',
                   'sounds',
                   'num_downloads')
@@ -357,6 +358,9 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     def get_sounds(self, obj):
         return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]), request_is_secure=self.context['request'].using_https)
 
+    user = serializers.SerializerMethodField('get_user')
+    def get_user(self, obj):
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
 
 ##################
 # BOOKMARK SERIALIZERS

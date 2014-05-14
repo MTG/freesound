@@ -161,8 +161,8 @@ Name                    Type                       Description
 ``normalized``          bool (yes=1, no=0)         Indicates whether the returned sound content-based descriptors should be normalized or not. ``normalized=1`` will return normalized descriptor values. By default, ``normalized=0``.
 ======================  =========================  ======================
 
-If ``fields``  is not specified, a minimal set of information is returned by default.
-This includes information about the license and Freesound public url of the sound, and the uris of the sound itself, the user that uploaded it and its pack (in case the sound belongs to a pack).
+If ``fields``  is not specified, a minimal set of information for every sound result is returned by default.
+This includes information about the license and Freesound public url of the sound, and the id of the sound itself, the user that uploaded it and its pack (in case the sound belongs to a pack).
 
 
 Examples
@@ -356,7 +356,6 @@ The Sound Instance response is a dictionary including the following properties/f
 Name                  Type              Description
 ====================  ================  ====================================================================================
 ``id``                number            The sound's unique identifier.
-``uri``               URI               The URI for this sound.
 ``url``               URI               The URI for this sound on the Freesound website.
 ``name``              string            The name user gave to the sound.
 ``tags``              array[strings]    An array of tags the user gave to the sound.
@@ -580,11 +579,11 @@ If file description was provided, on successful upload, the Upload Sound resourc
 
   {
     "detail": "Audio file successfully uploaded and described (now pending processing and moderation)",
-    "uri": "<URI of the uploaded and described sound instance>"
+    "id": "<sound_id for the uploaded and described sound instance>"
   }
 
 Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
-Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+Therefore, accessing the Sound Instance using the returned ``id`` will lead to a 404 Not Found error until the sound is approved by the moderators.
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
 If file description was NOT provided, on successful upload, the Upload Sound resource will return a dictionary with the following structure:
@@ -649,11 +648,11 @@ If the audio file is described successfully, the Describe Sound resource will re
 
   {
     "detail": "Sound successfully described (now pending processing and moderation)",
-    "uri": "<URI of the described sound instance>"
+    "id": "<sound_id for the uploaded and described sound instance>"
   }
 
 Note that after the sound is described, it still needs to be processed and moderated by the team of Freesound moderators.
-Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+Therefore, accessing the Sound Instance using the returned ``id`` will lead to a 404 Not Found error until the sound is approved by the moderators.
 
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
@@ -707,7 +706,7 @@ The Pending Uploads resource returns a dictionary with the following structure:
 
 The filenames returned under "pending_description" field are used as file identifiers in the :ref:`sound-describe` resource.
 Each sound entry either under "pending_processing" or "pending_moderation" fields consists of a minimal set
-of information about that sound including the ``name``, ``tags``, ``description``, ``created`` and ``license`` fields
+of information about that sound including the ``id``, ``name``, ``tags``, ``description``, ``created`` and ``license`` fields
 that you would find in a :ref:`sound-instance-response`.
 Sounds under "pending_moderation" also contain an extra ``images`` field containing the uris of the waveform and spectrogram
 images of the sound as described in :ref:`sound-instance-response`.
@@ -766,8 +765,7 @@ If sound description is updated successfully, the Edit Sound Description resourc
 ::
 
   {
-    "detail": "Description of sound <sound_id> successfully edited",
-    "uri": "<URI of the described sound instance>"
+    "detail": "Description of sound <sound_id> successfully edited"
   }
 
 
@@ -905,7 +903,6 @@ The User Instance response is a dictionary including the following properties/fi
 ========================  ================  ====================================================================================
 Name                      Type              Description
 ========================  ================  ====================================================================================
-``uri``                   URI               The URI for this user.
 ``url``                   URI               The URI for this users' profile on the Freesound website.
 ``username``              string            The username.
 ``about``                 string            The 'about' text of users' profile (if indicated).
@@ -1104,11 +1101,11 @@ The Pack Instance response is a dictionary including the following properties/fi
 Name                  Type              Description
 ====================  ================  ====================================================================================
 ``id``                number            The unique identifier of this pack.
-``uri``               URI               The URI for this pack.
 ``url``               URI               The URI for this pack on the Freesound website.
 ``description``       string            The description the user gave to the pack (if any).
 ``created``           string            The date when the pack was created (e.g. "2014-04-16T20:07:11.145").
 ``name``              string            The name user gave to the pack.
+``user``              URI               The URI for the creator of the pack.
 ``num_sounds``        number            The number of sounds in the pack.
 ``sounds``            URI               The URI for a list of sounds in the pack.
 ``num_downloads``     number            The number of times this pack has been downloaded.

@@ -515,7 +515,7 @@ class GaiaWrapper:
         return {'error': False, 'result': {'results': results, 'count': count}}
 
 
-    def api_search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset):
+    def api_search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset, in_ids):
 
         # Check if index has sufficient points
         size = self.original_dataset.size()
@@ -652,6 +652,13 @@ class GaiaWrapper:
         if filter:
             log_message += ' with filter: %s' % str(filter)
         logger.info(log_message)
+
+        # if in_ids is specified, edit the filter accordingly
+        if in_ids:
+            if not filter:
+                filter = 'WHERE point.id IN ("' + '", "'.join(in_ids) + '")'
+            else:
+                filter += ' AND point.id IN ("' + '", "'.join(in_ids) + '")'
 
         # Do query!
         try:

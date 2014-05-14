@@ -333,6 +333,7 @@ Examples
 Sound resources
 >>>>>>>>>>>>>>>
 
+.. _sound-sound:
 
 Sound Instance
 =========================================================
@@ -511,6 +512,7 @@ Examples
 
 {{examples_SoundComments}}
 
+.. _sound-download:
 
 Download Sound (OAuth2 required)
 =========================================================

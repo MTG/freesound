@@ -244,7 +244,7 @@ class GenericAPIView(RestFrameworkGenericAPIView):
 
 
 class OauthRequiredAPIView(RestFrameworkGenericAPIView):
-    throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS
+    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):

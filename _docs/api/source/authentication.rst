@@ -76,7 +76,7 @@ Name                    Description
 ======================  =====================================================
 ``client_id``           Client id of your API credential (not the client secret!)
 ``response_type``       Must be 'code'
-``state``               Arbitrary string that will be included as a GET parameter in the redirect call. This parameter is **not required**.
+``state``               (OPTIONAL) Arbitrary string that will be included as a GET parameter in the redirect call.
 ======================  =====================================================
 
 Example:

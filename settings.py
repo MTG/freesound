@@ -215,7 +215,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
         'rest_framework.renderers.YAMLRenderer',
-        'rest_framework.renderers.JSONPRenderer',
+        #'rest_framework.renderers.JSONPRenderer',
         'rest_framework.renderers.XMLRenderer',
     ),
     'DEFAULT_THROTTLE_CLASSES': (

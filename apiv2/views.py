@@ -225,7 +225,7 @@ class ContentSearch(GenericAPIView):
             self.analysis_file = analysis_file
             return self.get(request,  *args, **kwargs)
         else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CombinedSearch(GenericAPIView):
@@ -323,7 +323,7 @@ class CombinedSearch(GenericAPIView):
             self.analysis_file = analysis_file
             return self.get(request,  *args, **kwargs)
         else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############
@@ -700,21 +700,21 @@ class UploadSound(WriteRequiredGenericAPIView):
 
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 if serializer.is_providing_description(serializer.data):
-                    msg = 'Audio file successfully uploaded and described (now pending processing and moderation)'
+                    msg = 'Audio file successfully uploaded and described (now pending processing and moderation).'
                 else:
-                    msg = 'Audio file successfully uploaded (%i, now pending description)' % audiofile.size
-                return Response(data={'details': msg,
+                    msg = 'Audio file successfully uploaded (%i, now pending description).' % audiofile.size
+                return Response(data={'detail': msg,
                                       'uri': None,
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 if serializer.is_providing_description(serializer.data):
                     sound = create_sound_object(self.user, serializer.data)
-                    return Response(data={'details': 'Audio file successfully uploaded and described (now pending processing and moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
+                    return Response(data={'detail': 'Audio file successfully uploaded and described (now pending processing and moderation).', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
                 else:
-                    return Response(data={'filename': audiofile.name, 'details': 'Audio file successfully uploaded (%i, now pending description)' % audiofile.size}, status=status.HTTP_201_CREATED)
+                    return Response(data={'filename': audiofile.name, 'detail': 'Audio file successfully uploaded (%i, now pending description).' % audiofile.size}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PendingUploads(OauthRequiredAPIView):
@@ -771,15 +771,15 @@ class DescribeSound(WriteRequiredGenericAPIView):
         serializer = SoundDescriptionSerializer(data=request.DATA, context={'not_yet_described_audio_files': filenames})
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Sound successfully described (now pending processing and moderation)',
+                return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).',
                                       'uri': None,
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
                 sound = create_sound_object(self.user, serializer.data)
-                return Response(data={'details': 'Sound successfully described (now pending processing and moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
+                return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EditSoundDescription(WriteRequiredGenericAPIView):
@@ -805,7 +805,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
         serializer = EditSoundDescriptionSerializer(data=request.DATA)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Description of sound %s successfully edited' % sound_id,
+                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id,
                                       'uri': None,
                                       'note': 'Description of sound %s has not been saved in the database as browseable API is only for testing purposes.' % sound_id},
                                 status=status.HTTP_200_OK)
@@ -849,9 +849,9 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
                 invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
 
-                return Response(data={'details': 'Description of sound %s successfully edited' % sound_id, 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_200_OK)
+                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id, 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_200_OK)
         else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookmarkSound(WriteRequiredGenericAPIView):
@@ -872,19 +872,23 @@ class BookmarkSound(WriteRequiredGenericAPIView):
         serializer = CreateBookmarkSerializer(data=request.DATA)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Successfully bookmarked sound %s' % sound_id,
+                return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id,
                                       'note': 'This bookmark has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                if ('category' in request.DATA):
-                    category = BookmarkCategory.objects.get_or_create(user=self.user, name=request.DATA['category'])
-                    bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=sound_id, category=category[0])
+                if serializer.data['name']:
+                    name = serializer.data['name']
                 else:
-                    bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=sound_id)
+                    name = sound.original_filename
+                if serializer.data['category']:
+                    category = BookmarkCategory.objects.get_or_create(user=self.user, name=serializer.data['category'])
+                    bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id, category=category[0])
+                else:
+                    bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id)
                 bookmark.save()
-                return Response(data={'details': 'Successfully bookmarked sound %s' % sound_id}, status=status.HTTP_201_CREATED)
+                return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RateSound(WriteRequiredGenericAPIView):
@@ -906,18 +910,18 @@ class RateSound(WriteRequiredGenericAPIView):
         if serializer.is_valid():
             try:
                 if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                    return Response(data={'details': 'Successfully rated sound %s' % sound_id,
+                    return Response(data={'detail': 'Successfully rated sound %s.' % sound_id,
                                           'note': 'This rating has not been saved in the database as browseable API is only for testing purposes.'},
                                     status=status.HTTP_201_CREATED)
                 else:
                     Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
-                    return Response(data={'details': 'Successfully rated sound %s' % sound_id}, status=status.HTTP_201_CREATED)
+                    return Response(data={'detail': 'Successfully rated sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
             except IntegrityError:
                 raise ConflictException(msg='User has already rated sound %s' % sound_id)
             except:
                 raise ServerErrorException
         else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentSound(WriteRequiredGenericAPIView):
@@ -938,7 +942,7 @@ class CommentSound(WriteRequiredGenericAPIView):
         serializer = CreateCommentSerializer(data=request.DATA)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Successfully commented sound %s' % sound_id,
+                return Response(data={'detail': 'Successfully commented sound %s.' % sound_id,
                                       'note': 'This comment has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
@@ -947,9 +951,9 @@ class CommentSound(WriteRequiredGenericAPIView):
                     sound = comment.content_object
                     sound.num_comments = sound.num_comments + 1
                     sound.save()
-                return Response(data={'details': 'Successfully commented sound %s' % sound_id}, status=status.HTTP_201_CREATED)
+                return Response(data={'detail': 'Successfully commented sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############

@@ -120,7 +120,11 @@ rating_asc      Same as above, but lowest rated sounds first.
 
 **Using geotagging data in queries**
 
-TODO... but you can already check the examples below ;)
+Queries and filters can also include geotagging data to perform spatial queries.
+For example, you can retrieve sounds that were recorded in a particular location or filter the results of a query to those sounds recorded in a geospatial area.
+Note that not all sounds in Freesound are geotagged, and the results of such queries will only include geotagged sounds.
+
+Please refer to the Solr docummentation on spatial queries (https://wiki.apache.org/solr/SpatialSearch) and check the examples below for more information.
 
 
 .. _sound-list-response:
@@ -573,20 +577,20 @@ If file description was provided, on successful upload, the Upload Sound resourc
 ::
 
   {
-    "details": "Audio file successfully uploaded and described (now pending processing and moderation)",
+    "detail": "Audio file successfully uploaded and described (now pending processing and moderation)",
     "uri": "<URI of the uploaded and described sound instance>"
   }
 
 Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
 Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
 If file description was NOT provided, on successful upload, the Upload Sound resource will return a dictionary with the following structure:
 
 ::
 
   {
-    "details": "Audio file successfully uploaded (<file size>, now pending description)",
+    "detail": "Audio file successfully uploaded (<file size>, now pending description)",
     "filename": "<filename of the uploaded audio file>"
   }
 
@@ -642,14 +646,14 @@ If the audio file is described successfully, the Describe Sound resource will re
 ::
 
   {
-    "details": "Sound successfully described (now pending processing and moderation)",
+    "detail": "Sound successfully described (now pending processing and moderation)",
     "uri": "<URI of the described sound instance>"
   }
 
 Note that after the sound is described, it still needs to be processed and moderated by the team of Freesound moderators.
 Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
 
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
 
 Examples
@@ -760,16 +764,43 @@ If sound description is updated successfully, the Edit Sound Description resourc
 ::
 
   {
-    "details": "Description of sound <sound_id> successfully edited",
+    "detail": "Description of sound <sound_id> successfully edited",
     "uri": "<URI of the described sound instance>"
   }
 
 
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned describing the errors.
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
 
 Bookmark Sound (OAuth2 required)
 =========================================================
+
+::
+
+  POST /apiv2/sounds/<sound_id>/bookmark/
+
+This resource allows you to bookmark an existing sound.
+The sound will be bookmarked by the Freesound user logged in using OAuth2, therefore this method requires :ref:`oauth-authentication`.
+
+
+Request parameters
+------------------
+
+A request to the Bookmark Sound resource can include the following POST parameters:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``name``              string            (OPTIONAL) The new name that will be given to the bookmark (if not specified, sound name will be used).
+``category``          string            (OPTIONAL) The name of the category under the bookmark will be classified (if not specified, bookmark will have no category). If the specified category does not correspond to any bookmark category of the user, a new one will be created.
+====================  ================  ====================================================================================
+
+
+Response
+--------
+
+If the bookmark is successfully created, the Bookmark Sound resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully bookmarked.
+
 
 Examples
 --------
@@ -780,6 +811,34 @@ Examples
 Rate Sound (OAuth2 required)
 =========================================================
 
+::
+
+  POST /apiv2/sounds/<sound_id>/rate/
+
+This resource allows you to rate an existing sound.
+The sound will be rated by the Freesound user logged in using OAuth2, therefore this method requires :ref:`oauth-authentication`.
+
+
+Request parameters
+------------------
+
+A request to the Rate Sound resource must only include a single POST parameter:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``rating``            integer           Integer between 0 and 5 (both included) representing the rating for the sound (i.e. 5 = maximum rating).
+====================  ================  ====================================================================================
+
+
+Response
+--------
+
+If the sound is successfully rated, the Rate Sound resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully rated.
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
+Note that in Freesound sounds can only be rated once by a single user. If attempting to rate a sound twice with the same user, a 409 Conflict response will be returned with a ``detail`` field indicating that user has already rated the sound.
+
+
 Examples
 --------
 
@@ -788,6 +847,31 @@ Examples
 
 Comment Sound (OAuth2 required)
 =========================================================
+
+::
+
+  POST /apiv2/sounds/<sound_id>/comment/
+
+This resource allows you to post a comment to an existing sound.
+The comment will appear to be made by the Freesound user logged in using OAuth2, therefore this method requires :ref:`oauth-authentication`.
+
+
+Request parameters
+------------------
+
+A request to the Comment Sound resource must only include a single POST parameter:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``comment``           string            Comment for the sound.
+====================  ================  ====================================================================================
+
+
+Response
+--------
+
+If the bookmark is successfully created, the Comment Sound resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully commented.
 
 Examples
 --------

@@ -72,7 +72,6 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
     if in_ids:
         in_ids = ','.join([str(sid) for sid in in_ids if sid])
 
-
     # Don't use the cache when we're debugging
     if settings.DEBUG or len(cache_key) >= 250 or in_ids:
         returned_sounds = False

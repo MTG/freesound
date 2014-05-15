@@ -251,13 +251,20 @@ class CombinedSearch(GenericAPIView):
             raise NotFoundException
 
         # Get search results
-        max_repeat = int(request.QUERY_PARAMS.get('max_repeat', 0)) # Max repeat is an additional parameter to tweak performance in combined search
-        max_solr_filter_ids = int(request.QUERY_PARAMS.get('max_solr_filter_ids', 0)) # Max repeat is an additional parameter to tweak performance in combined search
+        extra_parameters = dict()
+        extra_parameters_string = ''
+        for key, value in request.QUERY_PARAMS.items():
+            if key.startswith('cs_'):
+                extra_parameters_string += '%s=%s' % (key, value)
+                extra_parameters[key] = int(value)
+
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat, max_solr_filter_ids=max_solr_filter_ids)
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form,
+                                                                                            target_file=analysis_file,
+                                                                                            extra_parameters=extra_parameters)
         except APIException, e:
             raise e
         except Exception, e:
@@ -278,12 +285,12 @@ class CombinedSearch(GenericAPIView):
         if page['has_other_pages']:
                 if page['has_previous']:
                     response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['previous_page_number'])
-                    if max_repeat:
-                        response_data['previous'] += '&max_repeat=%i' % max_repeat
+                    if extra_parameters_string:
+                        response_data['previous'] += '&%s' % extra_parameters_string
                 if page['has_next']:
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
-                    if max_repeat:
-                        response_data['next'] += '&max_repeat=%i' % max_repeat
+                    if extra_parameters_string:
+                        response_data['next'] += '&%s' % extra_parameters_string
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]

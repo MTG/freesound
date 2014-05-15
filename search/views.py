@@ -58,7 +58,8 @@ def search_prepare_query(search_query,
                          original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename'],
                          grouping = False,
                          include_facets = True,
-                         grouping_pack_limit = 1):
+                         grouping_pack_limit = 1,
+                         offset = None):
     query = SolrQuery()
 
     field_weights = []
@@ -77,7 +78,11 @@ def search_prepare_query(search_query,
 
     query.set_dismax_query(search_query,
                            query_fields=field_weights,)
-    query.set_query_options(start=(current_page - 1) * sounds_per_page, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
+    if not offset:
+        start = (current_page - 1) * sounds_per_page
+    else:
+        start = offset
+    query.set_query_options(start=start, rows=sounds_per_page, field_list=["id"], filter_query=filter_query, sort=sort)
 
     if include_facets:
         query.add_facet_fields("samplerate", "grouping_pack", "username", "tag", "bitrate", "bitdepth", "type", "channels", "license")

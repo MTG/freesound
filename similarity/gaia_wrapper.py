@@ -666,7 +666,7 @@ class GaiaWrapper:
             results = search.get(num_results, offset=offset)
             count = search.size()
         except Exception, e:
-            return {'error': True, 'result': 'Server error', 'status_code': SERVER_ERROR_CODE}
+            return {'error': True, 'result': 'Similarity server error', 'status_code': SERVER_ERROR_CODE}
 
         note = None
         if target_type == 'file':

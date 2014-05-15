@@ -186,10 +186,12 @@ def filter_both_optimized(search_form, target_file=None, extra_parameters=None):
             for index, sid in enumerate(checked_gaia_ids):
                 if sid in solr_ids:
                     combined_ids.append(sid)
-                new_last_checked_valid_id_position = (count * solr_filter_id_block_size) + index + 1
+                new_last_checked_valid_id_position = index + 1
                 if len(combined_ids) == num_requested_results:
                     break
 
+            if len(checked_gaia_ids) == len(gaia_ids):
+                params_for_next_page['no_more_results'] = True
             params_for_next_page['cs_lcvidp'] = last_checked_valid_id_position + new_last_checked_valid_id_position
         else:
             # No more gaia ids to check against solr, no more possible results!

@@ -307,6 +307,8 @@ class CombinedSearch(GenericAPIView):
             response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), include_page=False)
             if extra_parameters_string:
                 response_data['more'] += '%s' % extra_parameters_string
+        else:
+            response_data['more'] = None
 
 
         # Get analysis data and serialize sound results

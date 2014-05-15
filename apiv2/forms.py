@@ -144,7 +144,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
         target = self.cleaned_data['target']
         return my_quote(target) if target != None else ""
 
-    def construct_link(self, base_url, page=None, filter=None, group_by_pack=None):
+    def construct_link(self, base_url, page=None, filter=None, group_by_pack=None, include_page=False):
         link = "?"
         if self.cleaned_data['query']:
             link += '&query=%s' % self.cleaned_data['query']
@@ -159,11 +159,12 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
         if self.cleaned_data['target']:
                 link += '&target=%s' % self.cleaned_data['target']
-        if not page:
-            if self.cleaned_data['page'] and self.cleaned_data['page'] != 1:
-                link += '&page=%s' % self.cleaned_data['page']
-        else:
-            link += '&page=%s' % str(page)
+        if include_page:
+            if not page:
+                if self.cleaned_data['page'] and self.cleaned_data['page'] != 1:
+                    link += '&page=%s' % self.cleaned_data['page']
+            else:
+                link += '&page=%s' % str(page)
         if self.cleaned_data['page_size'] and not self.cleaned_data['page_size'] == settings.REST_FRAMEWORK['PAGINATE_BY']:
             link += '&page_size=%s' % str(self.cleaned_data['page_size'])
         if self.cleaned_data['fields']:

@@ -67,7 +67,7 @@ def merge_all(search_form, target_file=None, extra_parameters=None):
     combined_ids = [id for id in results_a if id in results_b_set]
     combined_count = len(combined_ids)
     return combined_ids[(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size']:search_form.cleaned_data['page'] * search_form.cleaned_data['page_size']], \
-           combined_count, distance_to_target_data, None, note
+           combined_count, distance_to_target_data, None, note, None
 
 
 def filter_both(search_form, target_file=None, extra_parameters=None):
@@ -105,6 +105,7 @@ def filter_both(search_form, target_file=None, extra_parameters=None):
             pass
     else:
         # First search into solr and then into gaia
+        # This queries are SLOW because we need to get many pages from solr
         solr_ids, solr_count = get_solr_results(search_form, page_size=solr_page_size, max_pages=solr_max_pages)
         gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
         '''
@@ -136,7 +137,80 @@ def filter_both(search_form, target_file=None, extra_parameters=None):
     combined_ids = [id for id in results_a if id in results_b_set]
     combined_count = len(combined_ids)
     return combined_ids[(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size']:search_form.cleaned_data['page'] * search_form.cleaned_data['page_size']], \
-           combined_count, distance_to_target_data, None, note
+           combined_count, distance_to_target_data, None, note, None
+
+
+def filter_both_optimized(search_form, target_file=None, extra_parameters=None):
+    """
+    Filter both strategy will first get either some results from solr and then check if returned results are also
+    valid results in a gaia query, or the other way around.
+    In gaia and solr we can restrict the query to a particular set of results, but there are limitations both in the
+    length of the resulting url and in the number of OR clauses that solr can support.
+    """
+
+    if not extra_parameters:
+        extra_parameters = dict()
+    solr_filter_id_block_size = extra_parameters.get('cs_solr_filter_id_block_size', 350)  # !
+    solr_filter_id_max_pages = extra_parameters.get('cs_solr_filter_id_max_pages', 7)  # !
+    solr_max_pages = extra_parameters.get('cs_max_solr_pages', 7)
+    solr_page_size = extra_parameters.get('cs_solr_page_size', 1000)
+    gaia_max_pages = extra_parameters.get('cs_max_gaia_pages', 1)
+    gaia_page_size = extra_parameters.get('cs_gaia_page_size', 9999999)  # We can get ALL gaia results at once
+
+    num_requested_results = search_form.cleaned_data['page_size']
+    last_checked_valid_id_position = extra_parameters.get('cs_lcvidp', 0)
+    if last_checked_valid_id_position < 0:
+        last_checked_valid_id_position = 0
+    params_for_next_page = dict()
+
+    if search_form.cleaned_data['target'] or target_file:
+        # First search into gaia and then into solr (get all gaia results)
+        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
+        if last_checked_valid_id_position < len(gaia_ids):
+            gaia_ids = gaia_ids[last_checked_valid_id_position:]
+            valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size)]
+            solr_ids = list()
+            checked_gaia_ids = list()
+            solr = Solr(settings.SOLR_URL)
+            for count, valid_ids_page in enumerate(valid_ids_pages):
+                page_solr_ids, solr_count = get_solr_results(search_form, page_size=len(valid_ids_page), max_pages=1, valid_ids=valid_ids_page, solr=solr)
+                solr_ids += page_solr_ids
+                checked_gaia_ids += valid_ids_page
+                if len(solr_ids) >= num_requested_results:
+                    print 'did %i requests to solr' % (count + 1)
+                    break
+                if count + 1 > solr_filter_id_max_pages:
+                    print 'too many requests and not enough results'
+                    break
+
+            combined_ids = list()
+            for index, sid in enumerate(checked_gaia_ids):
+                if sid in solr_ids:
+                    combined_ids.append(sid)
+                new_last_checked_valid_id_position = (count * solr_filter_id_block_size) + index + 1
+                if len(combined_ids) == num_requested_results:
+                    break
+
+            params_for_next_page['cs_lcvidp'] = last_checked_valid_id_position + new_last_checked_valid_id_position
+        else:
+            combined_ids = list()
+            distance_to_target_data = dict()
+            note = None
+            params_for_next_page['no_more_results'] = True
+
+    else:
+        # First search into solr and then into gaia
+        solr_ids, solr_count = get_solr_results(search_form, page_size=solr_page_size, max_pages=solr_max_pages)
+        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
+
+        if solr_count <= solr_page_size * solr_max_pages and gaia_count < gaia_page_size * gaia_max_pages:
+            # Got complete results, maybe we should log that?
+            #print 'COMPLETE results (starting with solr)'
+            pass
+
+
+    # Combine results
+    return combined_ids, len(combined_ids), distance_to_target_data, None, note, params_for_next_page
 
 
 def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=1, valid_ids=None):

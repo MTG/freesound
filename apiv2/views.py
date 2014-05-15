@@ -90,7 +90,7 @@ class TextSearch(GenericAPIView):
 
         # Get search results
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form)
+            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page = api_search(search_form)
         except APIException, e:
             raise e
         except Exception, e:
@@ -167,7 +167,7 @@ class ContentSearch(GenericAPIView):
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
+            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page = api_search(search_form, target_file=analysis_file)
         except APIException, e:
             raise e
         except Exception, e:
@@ -252,33 +252,42 @@ class CombinedSearch(GenericAPIView):
 
         # Get search results
         extra_parameters = dict()
-        extra_parameters_string = ''
         for key, value in request.QUERY_PARAMS.items():
             if key.startswith('cs_'):
-                extra_parameters_string += '%s=%s' % (key, value)
                 extra_parameters[key] = int(value)
 
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form,
-                                                                                            target_file=analysis_file,
-                                                                                            extra_parameters=extra_parameters)
+            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page = api_search(search_form,
+                                                                                                                  target_file=analysis_file,
+                                                                                                                  extra_parameters=extra_parameters)
         except APIException, e:
             raise e
         except Exception, e:
             logger_error.error('<500 Server error unexpected> %s' % str(e))
             raise ServerErrorException(msg='Unexpected error')
 
+        extra_parameters.update(params_for_next_page)
+        extra_parameters_string = ''
+        if extra_parameters:
+            for key, value in extra_parameters.items():
+                extra_parameters_string += '&%s=%s' % (key, str(value))
+
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
         if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
             raise NotFoundException
         page = paginator.page(search_form.cleaned_data['page'])
+
+
         response_data = dict()
         if self.analysis_file:
             response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name, self.analysis_file._size/1024)
+
+        '''
+        # Refactor this so it works according to the merging strategy
         response_data['count'] = paginator.count
         response_data['previous'] = None
         response_data['next'] = None
@@ -286,11 +295,19 @@ class CombinedSearch(GenericAPIView):
                 if page['has_previous']:
                     response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['previous_page_number'])
                     if extra_parameters_string:
-                        response_data['previous'] += '&%s' % extra_parameters_string
+                        response_data['previous'] += '%s' % extra_parameters_string
                 if page['has_next']:
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
                     if extra_parameters_string:
-                        response_data['next'] += '&%s' % extra_parameters_string
+                        response_data['next'] += '%s' % extra_parameters_string
+        '''
+
+        # Build 'more' link (only add it if we know there might be more results)
+        if 'no_more_results' not in extra_parameters:
+            response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), include_page=False)
+            if extra_parameters_string:
+                response_data['more'] += '%s' % extra_parameters_string
+
 
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
@@ -393,7 +410,7 @@ class SimilarSounds(GenericAPIView):
 
         # Get search results
         similarity_sound_form.cleaned_data['target'] = str(sound_id)
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(similarity_sound_form)
+        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page = api_search(similarity_sound_form)
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, similarity_sound_form.cleaned_data['page_size'])

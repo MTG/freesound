@@ -165,9 +165,8 @@ def filter_both_optimized(search_form, target_file=None, extra_parameters=None):
 
     if search_form.cleaned_data['target'] or target_file:
         # First search into gaia and then into solr (get all gaia results)
-        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages)
-        if last_checked_valid_id_position < len(gaia_ids):
-            gaia_ids = gaia_ids[last_checked_valid_id_position:]
+        gaia_ids, gaia_count, distance_to_target_data, note = get_gaia_results(search_form, target_file, page_size=gaia_page_size, max_pages=gaia_max_pages, offset=last_checked_valid_id_position)
+        if len(gaia_ids):
             valid_ids_pages = [gaia_ids[i:i+solr_filter_id_block_size] for i in range(0, len(gaia_ids), solr_filter_id_block_size)]
             solr_ids = list()
             checked_gaia_ids = list()
@@ -193,6 +192,7 @@ def filter_both_optimized(search_form, target_file=None, extra_parameters=None):
 
             params_for_next_page['cs_lcvidp'] = last_checked_valid_id_position + new_last_checked_valid_id_position
         else:
+            # No more gaia ids to check against solr, no more possible results!
             combined_ids = list()
             distance_to_target_data = dict()
             note = None
@@ -213,7 +213,7 @@ def filter_both_optimized(search_form, target_file=None, extra_parameters=None):
     return combined_ids, len(combined_ids), distance_to_target_data, None, note, params_for_next_page
 
 
-def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=1, valid_ids=None):
+def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=1, valid_ids=None, offset=None):
 
     gaia_ids = list()
     gaia_count = None
@@ -225,7 +225,8 @@ def get_gaia_results(search_form, target_file, page_size, max_pages, start_page=
         n_page_requests = 1
         # Iterate over gaia result pages
         while (len(gaia_ids) < gaia_count or gaia_count == None) and n_page_requests <= max_pages:
-            offset = (current_page - 1) * page_size
+            if not offset:
+                offset = (current_page - 1) * page_size
             results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
                                                          filter=search_form.cleaned_data['descriptors_filter'],
                                                          num_results=page_size,

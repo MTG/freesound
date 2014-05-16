@@ -318,11 +318,11 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 # Search utilities
 ##################
 
-def api_search(search_form, target_file=None, extra_parameters=False):
+def api_search(search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized'):
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
         # No input data for search, return empty results
-        return [], 0, None, None, None
+        return [], 0, None, None, None, None, None
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
         # Standard content-based search
@@ -341,7 +341,7 @@ def api_search(search_form, target_file=None, extra_parameters=False):
                 distance_to_target_data = dict(results)
 
             gaia_count = count
-            return gaia_ids, gaia_count, distance_to_target_data, None, note, None
+            return gaia_ids, gaia_count, distance_to_target_data, None, note, None, None
         except SimilarityException, e:
             if e.status_code == 500:
                 raise ServerErrorException(msg=e.message)
@@ -376,7 +376,7 @@ def api_search(search_form, target_file=None, extra_parameters=False):
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
                 more_from_pack_data = dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs])
 
-            return solr_ids, solr_count, None, more_from_pack_data, None, None
+            return solr_ids, solr_count, None, more_from_pack_data, None, None, None
 
         except SolrException, e:
             raise BadRequestException(msg='Search server error: %s' % e.message)
@@ -386,8 +386,7 @@ def api_search(search_form, target_file=None, extra_parameters=False):
     else:
         # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
         # Strategies are implemented in 'combined_search_strategies'
-        strategy = combined_search_strategies.filter_both_optimized
-        #strategy = combined_search_strategies.merge_all
+        strategy = getattr(combined_search_strategies, merging_strategy)
         return strategy(search_form, target_file=target_file, extra_parameters=extra_parameters)
 
 

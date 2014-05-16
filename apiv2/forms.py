@@ -144,7 +144,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
         target = self.cleaned_data['target']
         return my_quote(target) if target != None else ""
 
-    def construct_link(self, base_url, page=None, filter=None, group_by_pack=None, include_page=False):
+    def construct_link(self, base_url, page=None, filter=None, group_by_pack=None, include_page=True):
         link = "?"
         if self.cleaned_data['query']:
             link += '&query=%s' % self.cleaned_data['query']

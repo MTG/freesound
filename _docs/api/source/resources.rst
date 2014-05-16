@@ -747,11 +747,14 @@ The filenames returned under "pending_description" field are used as file identi
 Each sound entry either under "pending_processing" or "pending_moderation" fields consists of a minimal set
 of information about that sound including the ``id``, ``name``, ``tags``, ``description``, ``created`` and ``license`` fields
 that you would find in a :ref:`sound-instance-response`.
+
+Sounds under "pending_processing" contain an extra ``processing_state`` field that indicates the status of the sound in the
+processing step. Processing is done automatically in Freesound right after sounds are described, and it normally takes less than a minute.
+Therefore, you should normally see that the list of sounds under "pending_processing" is empty. However, if there are
+errors during processing, uploaded sounds will remain in this category exhibiting a ``processing_state`` equal to ``Failed``.
+
 Sounds under "pending_moderation" also contain an extra ``images`` field containing the uris of the waveform and spectrogram
 images of the sound as described in :ref:`sound-instance-response`.
-
-Processing is done automatically in Freesound right after sounds are described, and it normally takes less than a minute.
-Therefore, you should normally see that the list of sounds under "sounds pending processing" is empty.
 
 
 Examples

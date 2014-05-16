@@ -753,8 +753,8 @@ class PendingUploads(OauthRequiredAPIView):
         pending_description = [file_instance.name for file_id, file_instance in files.items()]
 
         # Look for sounds pending processing
-        qs = Sound.objects.filter(user=self.user).exclude(processing_state='OK', moderation_state='OK')
-        pending_processing = [self.get_minimal_sound_info(sound) for sound in qs]
+        qs = Sound.objects.filter(user=self.user).exclude(processing_state='OK').exclude(moderation_state='OK')
+        pending_processing = [self.get_minimal_sound_info(sound, processing_state=True) for sound in qs]
 
         # Look for sounds pending moderation
         qs = Sound.objects.filter(user=self.user, processing_state='OK').exclude(moderation_state='OK')
@@ -767,7 +767,7 @@ class PendingUploads(OauthRequiredAPIView):
 
         return Response(data=data_response, status=status.HTTP_200_OK)
 
-    def get_minimal_sound_info(self, sound, images=False):
+    def get_minimal_sound_info(self, sound, images=False, processing_state=False):
         sound_data = dict()
         for key, value in SoundSerializer(sound, context=self.get_serializer_context()).data.items():
             if key in ['id', 'name', 'tags', 'description', 'created', 'license']:
@@ -775,6 +775,16 @@ class PendingUploads(OauthRequiredAPIView):
             if images:
                 if key == 'images':
                     sound_data[key] = value
+        if processing_state:
+            PROCESSING_STATE_API = {
+                'QU': 'Queued',
+                'PE': 'Pending',
+                'PR': 'Processing',
+                'FA': 'Failed',
+                'OK': 'Processed'
+            }
+            sound_data['processing_state'] = PROCESSING_STATE_API[str(sound.processing_state)]
+
         return sound_data
 
 

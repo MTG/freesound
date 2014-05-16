@@ -143,6 +143,7 @@ Search resource returns a *sound list response*. Sound list responses have the f
         <sound result #1 info>,
         <sound result #2 info>,
         ...
+        <sound result #page_size info>
     ],
     "previous": <link to the previous page of results (null if none)>
   }
@@ -304,24 +305,59 @@ This resource is a combination of :ref:`sound-text-search` and :ref:`sound-conte
 Request parameters
 ------------------
 
-Combined search request parameters can include any of the parameters from text-based search queries (``query``, ``filter`` and ``sort``, :ref:`sound-text-search-parameters`)
+Combined Search request parameters can include any of the parameters from text-based search queries (``query``, ``filter`` and ``sort``, :ref:`sound-text-search-parameters`)
 and content-based search queries (``target``, ``analysis_file`` and ``descriptors_filer`` and, :ref:`sound-content-search-parameters`).
 Note that ``group_by_pack`` **is not** available in combined search queries.
 
-In combined search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
+In Combined Search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
 query results can be filtered either by values of sounds' metadata or sounds' content-descriptors... all at once!
 
-To perform a combined search query you need to use at least one of the request parameters from text-based search and at least one of the request parameters from content-based search.
+To perform a Combined Search query you need to use at least one of the request parameters from text-based search and at least one of the request parameters from content-based search.
 Note that ``sort`` parameter must always be accompanied by a ``query`` or ``filter`` parameter (or both), otherwise it is ignored.
 ``sort`` parameter will also be ignored if parameter ``target`` (or ``analysis_file``) is present in the query.
+
+Combined Search requests might **require significant computational resources** on our servers depending on the particular
+query that is made. Therefore, responses might take longer than usual. Fortunately, response times can vary a lot
+with some modifications in the query, and this is in your hands ;).
+As a general rule, we recommend not to use the text-search parameter ``query``, and instead define metadata stuff in a ``filter``.
+For example, instead of setting the parameter ``query=loop``, try filtering results to sounds that have the tag loop (``filter=tag:loop``).
+Furthermore, you can try narrowing down your filter or filters (``filter`` and ``descriptors_filter``) and possibly make the queries faster.
+Best response times are normally obtained by specifying a content-based ``target`` in combination with text-based and
+content-based filters (``filter`` and ``descriptors_filter``).
+
 
 
 Response
 --------
 
-The Combined Search resource returns a sound list just like :ref:`sound-list-response`.
-The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+The Combined Search resource **returns a variation** of the standard sound list response :ref:`sound-list-response`.
+Combined Search responses are dictionaries with the following structure:
 
+::
+
+  {
+    "results": [
+        <sound result #1 info>,
+        <sound result #2 info>,
+        ...
+    ],
+    "more": <link to get more results (null if there are no more results)>,
+  }
+
+The ``results`` field will include a list of sounds just like in the normal sound list response.
+The length of this list can be defined using the ``page_size`` request parameter like in normal sound list responses.
+However, Combined Search responses **do not guarantee** that the number of elements inside ``results`` will be equal to
+the number specified in ``page_size``. In some cases, you might find less results, so **you should verify the length of the list**.
+
+Furthermore, instead of the ``next`` and ``previous`` links to navigate among results, Combined Search responses
+only offer a ``more`` link that you can use to obtain more results. You can think of the ``more`` link as a
+rough equivalent to ``next``, but it does not work by indicating page numbers as in normal sound list responses.
+
+Also, note that ``count`` field is not present in the Combined Search response, therefore you do not know the total
+amount of results that a query can return (but can iteratively follow the ``more`` link).
+
+Finally, Combined Search responses does allow you to use the ``page_size``, ``fields``, ``descriptors`` and ``normalized``
+parameters just like you would do in standard sound list responses.
 
 
 Examples

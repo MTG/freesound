@@ -310,9 +310,12 @@ and content-based search queries (``target``, ``analysis_file`` and ``descriptor
 Note that ``group_by_pack`` **is not** available in combined search queries.
 
 In Combined Search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
-query results can be filtered either by values of sounds' metadata or sounds' content-descriptors... all at once!
+query results can be filtered by values of sounds' metadata and sounds' content-descriptors... all at once!
 
-To perform a Combined Search query you need to use at least one of the request parameters from text-based search and at least one of the request parameters from content-based search.
+To perform a Combined Search query you must at least specify a ``query`` or a ``target`` parameter as you would do in text-based and content-based searches respectively,
+and at least one text-based or content-based filter (``filter`` and ``descriptors_filter``).
+Request parameters ``query`` and ``target`` can not be used at the same time, but ``filter`` and ``descriptors_filter`` can both be present in a single Combined Search query.
+In any case, you must always use at least one text-based search request parameter and one content-based search request parameter.
 Note that ``sort`` parameter must always be accompanied by a ``query`` or ``filter`` parameter (or both), otherwise it is ignored.
 ``sort`` parameter will also be ignored if parameter ``target`` (or ``analysis_file``) is present in the query.
 

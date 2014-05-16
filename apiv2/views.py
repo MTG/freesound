@@ -247,7 +247,9 @@ class CombinedSearch(GenericAPIView):
         if not search_form.is_valid():
             raise ParseError
         if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
-           raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
+            raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
+        if (search_form.cleaned_data['target'] and search_form.cleaned_data['query']):
+            raise BadRequestException(msg='Request parameters \'target\' and \'query\' can not be used at the same time.')
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException
 

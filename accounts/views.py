@@ -243,6 +243,13 @@ def home(request):
     if home and request.user.has_perm('forum.can_moderate_forum'):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
+    # only show up to three rows
+    following = follow.utils.get_users_following(user)[:21]
+    followers = follow.utils.get_users_followers(user)[:21]
+    following_tags = follow.utils.get_tags_following(user)[:21]
+
+    # logged_user_following = follow.utils.get_users_following(request.user)
+
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
 
@@ -751,10 +758,11 @@ def account(request, username):
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
 
-    following = follow.utils.get_users_following(user)
-    followers = follow.utils.get_users_followers(user)
-    following_tags = follow.utils.get_tags_following(user)
+    following = follow.utils.get_users_following(user)[:21]
+    followers = follow.utils.get_users_followers(user)[:21]
+    following_tags = follow.utils.get_tags_following(user)[:21]
 
+    # true if the logged user is following the user of the current viewed profile page
     logged_user_following = follow.utils.get_users_following(request.user)
 
     show_unfollow_button = False

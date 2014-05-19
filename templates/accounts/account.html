@@ -16,9 +16,13 @@
 {% block section_content %}
 
     {% if home %}
+
         <h1>Home</h1>
 
-        <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
+        <div id="account_info_left">
+            <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
+        </div>
+
         <div class="account_information_and_home_options">
         <ul>
             <li><a href="{% url account user.username %}">View</a> your public profile</li>
@@ -102,39 +106,6 @@
 
 <div id="content">
 
-    <div id="following_users" class="content_box">
-        <h3>Following</h3>
-        <ul>
-            {% for user in following %}
-                <li><a href="{% url account user %}">{{ user }}</a></li>
-            {% empty %}
-                <li class="empty">not following any user</li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <div id="followers_users" class="content_box">
-        <h3>Followers</h3>
-        <ul>
-            {% for user in followers %}
-                <li><a href="{% url account user %}">{{ user }}</a></li>
-            {% empty %}
-                <li class="empty">not being followed by any user</li>
-            {% endfor %}
-        </ul>
-    </div>
-
-{#    <div id="following_tags" class="content_box">#}
-{#        <h3>Tags Following</h3>#}
-{#        <ul>#}
-{#            {% for tag in following_tags %}#}
-{#                <li><a href="#">{{ tag }}</a></li>#}
-{#            {% empty %}#}
-{#                <li class="empty">not following any tag</li>#}
-{#            {% endfor %}#}
-{#        </ul>#}
-{#    </div>#}
-
     {% if latest_sounds %}
         <div id="latest_sounds" class="content_box">
             <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest sounds</h3>
@@ -202,13 +173,28 @@
 
 <div id="sidebar">
 
-    <div id="following_tags" class="content_box">
-        <h3>Tags Following</h3>
+    <div id="social" class="content_box">
+
+        <h3>Social</h3>
+
+        <h3>Following ({{ following|length }})</h3>
+        <ul>
+            {% for user in following %}
+                <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+            {% endfor %}
+            </ul>
+
+        <h3>Followers ({{ followers|length }})</h3>
+        <ul>
+            {% for user in followers %}
+                <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+            {% endfor %}
+            </ul>
+
+        <h3><i>Search Queries</i> Following</h3>
         <ul>
             {% for tag in following_tags %}
-                <li><a href="#">{{ tag }}</a></li>
-            {% empty %}
-                <li class="empty">not following any tag</li>
+                <li><a href="#">{{ tag }}</a>{% if not forloop.last %}, {% endif %}</li>
             {% endfor %}
         </ul>
     </div>

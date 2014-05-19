@@ -50,3 +50,9 @@ def unfollow_user(request, username):
     accounts.account(request, username)
     # TODO: is this ok?
     return redirect("/people/"+username)
+
+# @login_required
+# def follow_tag(request, tag):
+#     user = request.user
+#     FollowingTagItem(user=user, query=tag).save()
+#     return

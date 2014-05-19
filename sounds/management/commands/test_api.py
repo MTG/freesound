@@ -24,7 +24,6 @@ import requests
 import json
 from django.core.management.base import BaseCommand
 from django.contrib.sites.models import Site
-from apiv2.models import ApiV2Client
 from apiv2.examples import examples
 
 
@@ -56,17 +55,28 @@ def api_request(full_url, type='GET', post_data=None, auth='token', token=None):
 
 
 class Command(BaseCommand):
-    help = "Test apiv2 with examples from apiv2/examples.py"
+    help = "Test apiv2 with examples from apiv2/examples.py. Usage: python manage.py test_api [custom_base_url] [token] [section]"
 
     def handle(self,  *args, **options):
         if args:
-            section = str(args[0])
+            base_url = str(args[0])
+            if len(args) > 1:
+                token = str(args[1])
+            else:
+                token = False
+            if len(args) > 2:
+                section = str(args[2])
+            else:
+                section = False
         else:
+            base_url = "http://%s/" % Site.objects.get_current().domain
             section = False
+            token = False
 
-        client = ApiV2Client.objects.filter(user__username='frederic.font')[0]
-        token = client.client_secret
-        base_url = "http://%s/" % Site.objects.get_current().domain
+        if not token:
+            from apiv2.models import ApiV2Client
+            client = ApiV2Client.objects.filter(user__username='apitest')[0]
+            token = client.client_secret
 
         ok = list()
         failed = list()

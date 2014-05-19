@@ -1,8 +1,6 @@
-- check Authorization session has expired errors
-- improve log handling (for errors, etc...)
-- Write documentation
-- Clean code (imports, utils...)
-- Clean up expired grants from database with a django command
-- Sporadic server errors on combined search?
-- TEST TEST TEST!!!
+- Finish documentation
+    - bookmark/comment/rate resources
+    - geotags searching
+    - authorize oauth2 link with previous user logout
+- Improve documentation overview
 

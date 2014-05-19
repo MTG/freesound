@@ -81,6 +81,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'duration',
                   'samplerate',
                   'user',
+                  'username',
                   'pack',
                   'download',
                   'bookmark',
@@ -111,6 +112,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+
+    username = serializers.SerializerMethodField('get_username')
+    def get_username(self, obj):
+        return obj.user.username
 
     name = serializers.SerializerMethodField('get_name')
     def get_name(self, obj):
@@ -348,10 +353,6 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     def get_uri(self, obj):
         return prepend_base(reverse('apiv2-pack-instance', args=[obj.id]), request_is_secure=self.context['request'].using_https)
 
-    num_sounds = serializers.SerializerMethodField('get_num_sounds')
-    def get_num_sounds(self, obj):
-        return obj.sound_set.filter(processing_state="OK", moderation_state="OK").count()
-
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
         return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]), request_is_secure=self.context['request'].using_https)
@@ -479,17 +480,17 @@ class UploadAudioFileSerializer(serializers.Serializer):
         return attrs
 
 
-class SoundDescriptionSerializer(serializers.Serializer):
-    LICENSE_CHOICES = (
+LICENSE_CHOICES = (
         ('Attribution', 'Attribution'),
         ('Attribution Noncommercial', 'Attribution Noncommercial'),
         ('Creative Commons 0', 'Creative Commons 0'),)
 
-    upload_filename = serializers.CharField(max_length=512, help_text='Must match a filename from \'Not Yet Described Uploaded Audio Files\' resource.')
+class SoundDescriptionSerializer(serializers.Serializer):
+    upload_filename = serializers.CharField(max_length=512, help_text='Must match a filename from \'Uploaded sounds pending description\' resource.')
     name = serializers.CharField(max_length=512, required=False, help_text='Not required. Name you want to give to the sound (by default it will be the original filename).')
     tags = serializers.CharField(max_length=512, help_text='Separate tags with spaces. Join multi-word tags with dashes.')
     description = serializers.CharField(help_text='Textual description of the sound.')
-    license = serializers.ChoiceField(choices=LICENSE_CHOICES, help_text='License for the sound. Must be one either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
+    license = serializers.ChoiceField(choices=LICENSE_CHOICES, help_text='License for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
     pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new one will be created).', required=False)
     geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
 
@@ -497,7 +498,7 @@ class SoundDescriptionSerializer(serializers.Serializer):
         value = attrs.get(source, None)
         if 'not_yet_described_audio_files' in self.context:
             if value not in self.context['not_yet_described_audio_files']:
-                raise serializers.ValidationError('Upload filename (%s) must match with a filename from \'Not Yet Described Uploaded Audio Files\' resource.' % value)
+                raise serializers.ValidationError('Upload filename (%s) must match with a filename from \'Uploaded sounds pending description\' resource.' % value)
         return attrs
 
     def validate_geotag(self, attrs, source):
@@ -540,6 +541,53 @@ class SoundDescriptionSerializer(serializers.Serializer):
         return attrs
 
 
+class EditSoundDescriptionSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=512, required=False, help_text='Not required. New name you want to give to the sound.')
+    tags = serializers.CharField(max_length=512, required=False, help_text='Not required. Tags that should be assigned to the sound (note that existing ones will be deleted). Separate tags with spaces. Join multi-word tags with dashes.')
+    description = serializers.CharField(required=False, help_text='Not required. New textual description for the sound.')
+    license = serializers.ChoiceField(required=False, choices=LICENSE_CHOICES, help_text='Not required. New license for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
+    pack = serializers.CharField(required=False, help_text='Not required. New pack name for the sound (if there is no such pack with that name, a new one will be created).')
+    geotag = serializers.CharField(required=False, max_length=100, help_text='Not required. New geotag for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').')
+
+    def validate_geotag(self, attrs, source):
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
+        fails = False
+        try:
+            data = value.split(',')
+        except:
+            fails = True
+        if len(data) != 3:
+            fails = True
+        try:
+            float(data[0])
+            float(data[1])
+            int(data[2])
+        except:
+            fails = True
+        if fails:
+            raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, longitude and zoom respectively)')
+        else:
+            # Check that ranges are corrent
+            if float(data[0]) > 90 or float(data[0]) < -90:
+                raise serializers.ValidationError('Latitude must be in the range [-90,90].')
+            if float(data[1]) > 180 or float(data[0]) < -180:
+                raise serializers.ValidationError('Longitude must be in the range [-180,180].')
+            if int(data[2]) < 11:
+                raise serializers.ValidationError('Zoom must be at least 11.')
+        return attrs
+
+    def validate_tags(self, attrs, source):
+        value = attrs[source]
+        tags = clean_and_split_tags(value)
+        if 1 <= len(tags) < 3:
+            raise serializers.ValidationError('Your should at least have 3 tags...')
+        elif len(tags) > 30:
+            raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
+
+        return attrs
+
 class UploadAndDescribeAudioFileSerializer(SoundDescriptionSerializer):
     audiofile = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Must be in .wav, .aif, .flac, .ogg or .mp3 format.')
 
@@ -556,6 +604,8 @@ class UploadAndDescribeAudioFileSerializer(SoundDescriptionSerializer):
         if extension not in ALLOWED_EXTENSIONS or not extension:
             raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
         return attrs
+
+
 
 
 ########################

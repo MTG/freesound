@@ -9,6 +9,7 @@ Token based authentication is the simplest one as it only requires the developer
 (http://www.freesound.org/apiv2/apply) and add it to all requests (see below).
 The flow for OAuth2 authentication is a little bit more complicated but it allows users to log in Freesound
 from your application. This enables non "read-only" resources such as uploading or rating sounds.
+OAuth2 resources require the requests to be made over https.
 Most of the resources are accessible using both authentication strategies but some of them
 are restricted to the use of OAuth2. These resources are marked as "OAuth2 required" in the :ref:`resources` page.
 
@@ -28,7 +29,7 @@ adding the key as a ``token`` GET parameter...
 
 ::
 
-  curl "http://www.freesound.org/apiv2/search/?query=piano&token=YOUR_API_KEY
+  curl "http://www.freesound.org/apiv2/search/?query=piano&token=YOUR_API_KEY"
 
 ...or by adding it as an authorization header:
 

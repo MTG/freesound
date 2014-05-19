@@ -27,17 +27,18 @@ from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
+from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
 from exceptions import *
 from forms import *
 from models import ApiV2Client
 from api.models import ApiKey
+from sounds.models import Sound, Pack, License
+from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
 from api.forms import ApiKeyForm
 from accounts.views import handle_uploaded_file
-from search.views import search_prepare_query, search_prepare_sort
 from freesound.utils.filesystem import generate_tree
-from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from freesound.utils.cache import invalidate_template_cache
 from freesound.utils.nginxsendfile import sendfile
 from django.db import IntegrityError
 from django.contrib import messages
@@ -58,6 +59,7 @@ import datetime
 import os
 
 logger = logging.getLogger("api")
+logger_error = logging.getLogger("api_errors")
 docs_base_url = prepend_base('/docs/api')
 resources_doc_filename = 'resources_apiv2.html'
 
@@ -66,86 +68,171 @@ resources_doc_filename = 'resources_apiv2.html'
 # SEARCH AND SIMILARITY SEARCH VIEWS
 ####################################
 
-class Search(GenericAPIView):
+class TextSearch(GenericAPIView):
 
     __doc__ = 'Search sounds in Freesound based on their tags and other metadata.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#search' % resources_doc_filename,
-                 get_formatted_examples_for_view('Search', 'apiv2-sound-search', max=5))
+              % (docs_base_url, '%s#text-search' % resources_doc_filename,
+                 get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))
 
         # Validate search form and check page 0
-        search_form = SoundSearchFormAPI(request.QUERY_PARAMS)
+        search_form = SoundTextSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
+        if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
+           raise BadRequestException(msg='At lesast one request parameter from Text Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException
 
+        # Get search results
         try:
-            # Get search results
-            solr = Solr(settings.SOLR_URL)
-            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                         unquote(search_form.cleaned_data['filter']),
-                                         search_prepare_sort(search_form.cleaned_data['sort'], SEARCH_SORT_OPTIONS_API),
-                                         search_form.cleaned_data['page'],
-                                         search_form.cleaned_data['page_size'],
-                                         grouping=search_form.cleaned_data['group_by_pack'],
-                                         include_facets=False)
-            results = SolrResponseInterpreter(solr.select(unicode(query)))
-
-            # Paginate results
-            paginator = SolrResponseInterpreterPaginator(results, search_form.cleaned_data['page_size'])
-            if search_form.cleaned_data['page'] > paginator.num_pages and paginator.count != 0:
-                raise NotFoundException
-            page = paginator.page(search_form.cleaned_data['page'])
-            response_data = dict()
-            response_data['count'] = paginator.count
-            response_data['previous'] = None
-            response_data['next'] = None
-            if page['has_other_pages']:
-                if page['has_previous']:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['previous_page_number'])
-                if page['has_next']:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-search'), page=page['next_page_number'])
-
-            # Get analysis data and serialize sound results
-            get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=[object['id'] for object in page['object_list']])
-            sounds = []
-            for object in page['object_list']:
-                try:
-                    sound = SoundListSerializer(Sound.objects.select_related('user').get(id=object['id']), context=self.get_serializer_context()).data
-                    if 'more_from_pack' in object.keys():
-                        if object['more_from_pack'] > 0:
-                            sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(object['pack_id']), object['pack_name']), group_by_pack='0')
-                            sound['n_from_same_pack'] = object['more_from_pack'] + 1  # we add one as is the sound itself
-                    sounds.append(sound)
-                except:
-                    # This will happen if there are synchronization errors between solr index and the database.
-                    # In that case sounds are are set to null
-                    sounds.append(None)
-            response_data['results'] = sounds
-
-        except SolrException, e:
-            raise InvalidUrlException(msg='Solr exception: %s' % e.message)
-        except NotFoundException, e:
-            raise NotFoundException
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form)
+        except APIException, e:
+            raise e
         except Exception, e:
-            if settings.DEBUG:
-                raise ServerErrorException(msg=e.message)
-            else:
-                raise ServerErrorException()
+            logger_error.error('<500 Server error unexpected> %s' % str(e))
+            raise ServerErrorException(msg='Unexpected error')
+
+        # Paginate results
+        paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
+        if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
+            raise NotFoundException
+        page = paginator.page(search_form.cleaned_data['page'])
+        response_data = dict()
+        response_data['count'] = paginator.count
+        response_data['previous'] = None
+        response_data['next'] = None
+        if page['has_other_pages']:
+                if page['has_previous']:
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['previous_page_number'])
+                if page['has_next']:
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=page['next_page_number'])
+
+        # Get analysis data and serialize sound results
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
+        sounds = []
+        for i, sid in enumerate(ids):
+            try:
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                if more_from_pack_data:
+                    if more_from_pack_data[sid][0]:
+                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
+                        sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
+                sounds.append(sound)
+            except:
+                # This will happen if there are synchronization errors between solr index, gaia and the database.
+                # In that case sounds are are set to null
+                sounds.append(None)
+        response_data['results'] = sounds
+
+        if note:
+            response_data['note'] = note
 
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class AdvancedSearch(GenericAPIView):
+class ContentSearch(GenericAPIView):
+
+    __doc__ = 'Search sounds in Freesound based on their content descriptors.' \
+              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+              % (docs_base_url, '%s#content-search' % resources_doc_filename,
+                 get_formatted_examples_for_view('ContentSearch', 'apiv2-sound-content-search', max=5))
+
+    serializer_class = SimilarityFileSerializer
+    analysis_file = None
+
+    def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('content_search'))
+
+        # Validate search form and check page 0
+        search_form = SoundContentSearchFormAPI(request.QUERY_PARAMS)
+        if not search_form.is_valid():
+            raise ParseError
+        if not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file:
+           raise BadRequestException(msg='At lesast one parameter from Content Search should be included in the request.')
+        if search_form.cleaned_data['page'] < 1:
+                raise NotFoundException
+
+        # Get search results
+        analysis_file = None
+        if self.analysis_file:
+            analysis_file = self.analysis_file.read()
+        try:
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
+        except APIException, e:
+            raise e
+        except Exception, e:
+            logger_error.error('<500 Server error unexpected> %s' % str(e))
+            raise ServerErrorException(msg='Unexpected error')
+
+        # Paginate results
+        paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
+        if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
+            raise NotFoundException
+        page = paginator.page(search_form.cleaned_data['page'])
+        response_data = dict()
+        if self.analysis_file:
+            response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name, self.analysis_file._size/1024)
+        response_data['count'] = paginator.count
+        response_data['previous'] = None
+        response_data['next'] = None
+        if page['has_other_pages']:
+                if page['has_previous']:
+                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-content-search'), page=page['previous_page_number'])
+                if page['has_next']:
+                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-content-search'), page=page['next_page_number'])
+
+        # Get analysis data and serialize sound results
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
+        sounds = []
+        for i, sid in enumerate(ids):
+            try:
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                # Distance to target is present we add it to the serialized sound
+                if distance_to_target_data:
+                    sound['distance_to_target'] = distance_to_target_data[sid]
+                sounds.append(sound)
+            except:
+                # This will happen if there are synchronization errors between solr index, gaia and the database.
+                # In that case sounds are are set to null
+                sounds.append(None)
+        response_data['results'] = sounds
+
+        if note:
+            response_data['note'] = note
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def post(self, request,  *args, **kwargs):
+        # This view has a post version to handle analysis file uploads
+        serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
+        if serializer.is_valid():
+            analysis_file = request.FILES['analysis_file']
+            self.analysis_file = analysis_file
+            return self.get(request,  *args, **kwargs)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CombinedSearch(GenericAPIView):
 
     __doc__ = 'Search sounds in Freesound based on their tags, metadata and content-based descriptors.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#advanced-search' % resources_doc_filename,
-                 get_formatted_examples_for_view('AdvancedSearch', 'apiv2-sound-combined-search', max=5))
+              % (docs_base_url, '%s#combined-search' % resources_doc_filename,
+                 get_formatted_examples_for_view('CombinedSearch', 'apiv2-sound-combined-search', max=5))
 
     serializer_class = SimilarityFileSerializer
     analysis_file = None
@@ -157,14 +244,24 @@ class AdvancedSearch(GenericAPIView):
         search_form = SoundCombinedSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
+        if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
+           raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
-                raise NotFoundException
+            raise NotFoundException
 
         # Get search results
+        max_repeat = int(request.QUERY_PARAMS.get('max_repeat', 0)) # Max repeat is an additional parameter to tweak performance in combined search
+        max_solr_filter_ids = int(request.QUERY_PARAMS.get('max_solr_filter_ids', 0)) # Max repeat is an additional parameter to tweak performance in combined search
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
+        try:
+            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat, max_solr_filter_ids=max_solr_filter_ids)
+        except APIException, e:
+            raise e
+        except Exception, e:
+            logger_error.error('<500 Server error unexpected> %s' % str(e))
+            raise ServerErrorException(msg='Unexpected error')
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
@@ -180,29 +277,38 @@ class AdvancedSearch(GenericAPIView):
         if page['has_other_pages']:
                 if page['has_previous']:
                     response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['previous_page_number'])
+                    if max_repeat:
+                        response_data['previous'] += '&max_repeat=%i' % max_repeat
                 if page['has_next']:
                     response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
+                    if max_repeat:
+                        response_data['next'] += '&max_repeat=%i' % max_repeat
 
         # Get analysis data and serialize sound results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
         sounds = []
-        for sound_id in page['object_list']:
+        for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
-                    sound['distance_to_target'] = distance_to_target_data[sound_id]
+                    sound['distance_to_target'] = distance_to_target_data[sid]
                 if more_from_pack_data:
-                    if more_from_pack_data[sound_id][0]:
-                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sound_id][1]), more_from_pack_data[sound_id][2]), group_by_pack='0')
-                        sound['n_from_same_pack'] = more_from_pack_data[sound_id][0] + 1  # we add one as is the sound itself
+                    if more_from_pack_data[sid][0]:
+                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
+                        sound['n_from_same_pack'] = None #more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
-
             except:
-                # This will happen if there are synchronization errors between solr, gaia and and the database.
+                # This will happen if there are synchronization errors between solr index, gaia and the database.
                 # In that case sounds are are set to null
                 sounds.append(None)
         response_data['results'] = sounds
+
         if note:
             response_data['note'] = note
 
@@ -297,21 +403,26 @@ class SimilarSounds(GenericAPIView):
                     response_data['next'] = similarity_sound_form.construct_link(reverse('apiv2-similarity-sound', args=[sound_id]), page=page['next_page_number'])
 
         # Get analysis data and serialize sound results
-        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=page['object_list'])
+        ids = [id for id in page['object_list']]
+        get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
+        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
+        qs_sound_objects = dict()
+        for sound_object in qs:
+            qs_sound_objects[sound_object.id] = sound_object
         sounds = []
-        for sound_id in page['object_list']:
+        for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(Sound.objects.select_related('user').get(id=sound_id), context=self.get_serializer_context()).data
+                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
-                    sound['distance_to_target'] = distance_to_target_data[sound_id]
+                    sound['distance_to_target'] = distance_to_target_data[sid]
                 sounds.append(sound)
-
             except:
-                # This will happen if there are synchronization errors between gaia and and the database.
+                # This will happen if there are synchronization errors between gaia and the database.
                 # In that case sounds are are set to null
                 sounds.append(None)
         response_data['results'] = sounds
+
         return Response(response_data, status=status.HTTP_200_OK)
 
 
@@ -330,10 +441,10 @@ class SoundComments(ListAPIView):
         return Comment.objects.filter(object_id=self.kwargs['pk'])
 
 
-class DownloadSound(OauthRequiredAPIView):
+class DownloadSound(DownloadAPIView):
     __doc__ = 'Download a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#download-sound' % resources_doc_filename,
+              % (docs_base_url, '%s#download-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('DownloadSound', 'apiv2-sound-download', max=5))
 
     def get(self, request,  *args, **kwargs):
@@ -388,9 +499,9 @@ class UserSounds(ListAPIView):
         except User.DoesNotExist:
             raise NotFoundException
 
-        queryset = Sound.objects.select_related('user').filter(moderation_state="OK",
-                                                               processing_state="OK",
-                                                               user__username=self.kwargs['username'])
+        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
+                                                                                  processing_state="OK",
+                                                                                  user__username=self.kwargs['username'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
@@ -470,7 +581,7 @@ class UserBookmarkCategorySounds(ListAPIView):
             kwargs['category'] = None
 
         try:
-            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
+            queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related('sound').filter(**kwargs)]
         except:
             raise NotFoundException
 
@@ -516,17 +627,17 @@ class PackSounds(ListAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException
 
-        queryset = Sound.objects.select_related('pack').filter(moderation_state="OK",
-                                                               processing_state="OK",
-                                                               pack__id=self.kwargs['pk'])
+        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
+                                                                                  processing_state="OK",
+                                                                                  pack__id=self.kwargs['pk'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
         return queryset
 
 
-class DownloadPack(OauthRequiredAPIView):
+class DownloadPack(DownloadAPIView):
     __doc__ = 'Download a pack.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#download-pack' % resources_doc_filename,
+              % (docs_base_url, '%s#download-pack-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('DownloadPack', 'apiv2-pack-download', max=5))
 
 
@@ -568,7 +679,7 @@ class DownloadPack(OauthRequiredAPIView):
 class UploadSound(WriteRequiredGenericAPIView):
     __doc__ = 'Upload a sound (only upload the file, without description/metadata).' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#upload-sound' % resources_doc_filename,
+              % (docs_base_url, '%s#upload-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('UploadSound', 'apiv2-uploads-upload', max=5))
 
     serializer_class = UploadAudioFileSerializer
@@ -597,7 +708,7 @@ class UploadSound(WriteRequiredGenericAPIView):
 class NotYetDescribedUploadedSounds(OauthRequiredAPIView):
     __doc__ = 'List of uploaded files which have not yet been described.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#not-yet-described-uploaded-sounds' % resources_doc_filename,
+              % (docs_base_url, '%s#uploads-pending-description-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('NotYetDescribedUploadedSounds', 'apiv2-uploads-not-described', max=5))
 
     def get(self, request,  *args, **kwargs):
@@ -608,9 +719,9 @@ class NotYetDescribedUploadedSounds(OauthRequiredAPIView):
 
 
 class UploadedAndDescribedSoundsPendingModeration(OauthRequiredAPIView):
-    __doc__ = 'List of uploaded files which have already been descriebd and are awaiting moderation in Freesound.' \
+    __doc__ = 'List of uploaded files which have already been descriebd and are procesing or awaiting moderation in Freesound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#uploadeds_pending_moderation' % resources_doc_filename,
+              % (docs_base_url, '%s#uploadeds_pending_moderation-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('UploadedAndDescribedSoundsPendingModeration', 'apiv2-uploads-not-moderated', max=5))
 
     def get(self, request,  *args, **kwargs):
@@ -638,7 +749,7 @@ class UploadedAndDescribedSoundsPendingModeration(OauthRequiredAPIView):
 class DescribeSound(WriteRequiredGenericAPIView):
     __doc__ = 'Describe a previously uploaded sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#describe-sound' % resources_doc_filename,
+              % (docs_base_url, '%s#describe-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('DescribeSound', 'apiv2-uploads-describe', max=5))
 
     serializer_class = SoundDescriptionSerializer
@@ -661,10 +772,82 @@ class DescribeSound(WriteRequiredGenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class EditSoundDescription(WriteRequiredGenericAPIView):
+    __doc__ = 'Edit the description of an existing sound.' \
+              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
+              % (docs_base_url, '%s#edit-sound-description-oauth2-required' % resources_doc_filename,
+                 get_formatted_examples_for_view('EditSoundDescription', 'apiv2-sound-edit', max=5))
+
+    serializer_class = EditSoundDescriptionSerializer
+
+    def post(self, request,  *args, **kwargs):
+        sound_id = kwargs['pk']
+        # Check that sound exists
+        try:
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+        except Sound.DoesNotExist:
+            raise NotFoundException
+        # Check that sound belongs to current end user
+        if sound.user != self.user:
+            raise UnauthorizedException(msg='Not authorized. The sound you\'re trying to edit is not owned by the OAuth2 logged in user.')
+
+        logger.info(self.log_message('sound:%s edit_description' % sound_id))
+        serializer = EditSoundDescriptionSerializer(data=request.DATA)
+        if serializer.is_valid():
+            if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
+                return Response(data={'details': 'Description of sound %s successfully edited' % sound_id,
+                                      'uri': None,
+                                      'note': 'Description of sound %s has not been saved in the database as browseable API is only for testing purposes.' % sound_id},
+                                status=status.HTTP_200_OK)
+            else:
+                if 'name' in request.DATA:
+                    if request.DATA['name']:
+                        sound.original_filename = request.DATA['name']
+                if 'description' in request.DATA:
+                    if request.DATA['description']:
+                        sound.description = request.DATA['description']
+                if 'tags' in request.DATA:
+                    if request.DATA['tags']:
+                        sound.set_tags([t.lower() for t in request.DATA['tags'].split(" ") if t])
+                if 'license' in request.DATA:
+                    if request.DATA['license']:
+                        license = License.objects.get(name=request.DATA['license'])
+                        sound.license = license
+                if 'geotag' in request.DATA:
+                    if request.DATA['geotag']:
+                        lat, lon, zoom = request.DATA['geotag'].split(',')
+                        geotag = GeoTag(user=self.user,
+                            lat=float(lat),
+                            lon=float(lon),
+                            zoom=int(zoom))
+                        geotag.save()
+                        sound.geotag = geotag
+                if 'pack' in request.DATA:
+                    if request.DATA['pack']:
+                        if Pack.objects.filter(name=request.DATA['pack'], user=self.user).exists():
+                            p = Pack.objects.get(name=request.DATA['pack'], user=self.user)
+                        else:
+                            p, created = Pack.objects.get_or_create(user=self.user, name=request.DATA['pack'])
+                        sound.pack = p
+                sound.save()
+
+                # Invalidate caches
+                invalidate_template_cache("sound_header", sound.id, True)
+                invalidate_template_cache("sound_header", sound.id, False)
+                invalidate_template_cache("sound_footer_top", sound.id)
+                invalidate_template_cache("sound_footer_bottom", sound.id)
+                invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
+                invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
+
+                return Response(data={'details': 'Description of sound %s successfully edited' % sound_id, 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UploadAndDescribeSound(WriteRequiredGenericAPIView):
     __doc__ = 'Upload and describe (add metadata) a sound file.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#upload-and-describe-sound' % resources_doc_filename,
+              % (docs_base_url, '%s#upload-and-describe-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('UploadAndDescribeSound', 'apiv2-uploads-upload-and-describe', max=5))
 
     serializer_class = UploadAndDescribeAudioFileSerializer
@@ -695,13 +878,17 @@ class UploadAndDescribeSound(WriteRequiredGenericAPIView):
 class BookmarkSound(WriteRequiredGenericAPIView):
     __doc__ = 'Bookmark a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#bookmark-sound' % resources_doc_filename,
+              % (docs_base_url, '%s#bookmark-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('BookmarkSound', 'apiv2-user-create-bookmark', max=5))
 
     serializer_class = CreateBookmarkSerializer
 
     def post(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
+        try:
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+        except Sound.DoesNotExist:
+            raise NotFoundException
         logger.info(self.log_message('sound:%s create_bookmark' % sound_id))
         serializer = CreateBookmarkSerializer(data=request.DATA)
         if serializer.is_valid():
@@ -724,13 +911,17 @@ class BookmarkSound(WriteRequiredGenericAPIView):
 class RateSound(WriteRequiredGenericAPIView):
     __doc__ = 'Rate a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#rate-sound' % resources_doc_filename,
+              % (docs_base_url, '%s#rate-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('RateSound', 'apiv2-user-create-rating', max=5))
 
     serializer_class = CreateRatingSerializer
 
     def post(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
+        try:
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+        except Sound.DoesNotExist:
+            raise NotFoundException
         logger.info(self.log_message('sound:%s create_rating' % sound_id))
         serializer = CreateRatingSerializer(data=request.DATA)
         if serializer.is_valid():
@@ -743,7 +934,7 @@ class RateSound(WriteRequiredGenericAPIView):
                     Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
                     return Response(data={'details': 'Successfully rated sound %s' % sound_id}, status=status.HTTP_201_CREATED)
             except IntegrityError:
-                raise InvalidUrlException(msg='User has already rated sound %s' % sound_id)
+                raise BadRequestException(msg='User has already rated sound %s' % sound_id)
             except:
                 raise ServerErrorException
         else:
@@ -753,13 +944,17 @@ class RateSound(WriteRequiredGenericAPIView):
 class CommentSound(WriteRequiredGenericAPIView):
     __doc__ = 'Add a comment to a sound.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#comment-sound' % resources_doc_filename,
+              % (docs_base_url, '%s#comment-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('CommentSound', 'apiv2-user-create-comment', max=5))
 
     serializer_class = CreateCommentSerializer
 
     def post(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
+        try:
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+        except Sound.DoesNotExist:
+            raise NotFoundException
         logger.info(self.log_message('sound:%s create_comment' % sound_id))
         serializer = CreateCommentSerializer(data=request.DATA)
         if serializer.is_valid():
@@ -786,7 +981,7 @@ class CommentSound(WriteRequiredGenericAPIView):
 class Me(OauthRequiredAPIView):
     __doc__ = 'Get some information about the end-user logged into the api.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
-              % (docs_base_url, '%s#me' % resources_doc_filename)
+              % (docs_base_url, '%s#me-information-about-user-authenticated-using-oauth2-oauth2-required' % resources_doc_filename)
 
     #authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
@@ -812,12 +1007,12 @@ class FreesoundApiV2Resources(GenericAPIView):
     #authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
 
     def get(self, request,  *args, **kwargs):
-
         logger.info(self.log_message('api_root'))
         return Response([
             {'Search resources': OrderedDict(sorted(dict({
-                    '01 Search': prepend_base(reverse('apiv2-sound-search'), request_is_secure=request.using_https),
-                    '02 Advanced Search': prepend_base(reverse('apiv2-sound-combined-search'), request_is_secure=request.using_https),
+                    '01 Text Search': prepend_base(reverse('apiv2-sound-text-search'), request_is_secure=request.using_https),
+                    '02 Content Search': prepend_base(reverse('apiv2-sound-content-search'), request_is_secure=request.using_https),
+                    '03 Combined Search': prepend_base(reverse('apiv2-sound-combined-search'), request_is_secure=request.using_https),
                 }).items(), key=lambda t: t[0]))},
                 {'Sound resources': OrderedDict(sorted(dict({
                     '01 Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.using_https),
@@ -833,6 +1028,7 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '11 Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
                     '12 Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
                     '13 Uploaded and described sounds pending moderation': prepend_base(reverse('apiv2-uploads-not-moderated')),
+                    '14 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
                 }).items(), key=lambda t: t[0]))},
                 {'User resources': OrderedDict(sorted(dict({
                     '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
@@ -1067,8 +1263,10 @@ def permission_granted(request):
     else:
         template = 'api/app_authorized.html'
 
-    logout_next = quote(request.GET.get('original_path', None))
-    if not logout_next:
+    logout_next = request.GET.get('original_path', None)
+    if logout_next:
+        logout_next = quote(logout_next)
+    else:
         logout_next = reverse('api-login')
 
     return render_to_response(template,

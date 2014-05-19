@@ -54,16 +54,18 @@ def my_quote(s):
     return quote(s,safe=",:[]*+()'")
 
 
-class SoundSearchFormAPI(forms.Form):
-    query           = forms.CharField(required=False, label='query')
-    page            = forms.CharField(required=False, label='page')
-    filter          = forms.CharField(required=False, label='filter')
-    sort            = forms.CharField(required=False, label='sort')
-    fields          = forms.CharField(required=False, label='fields')
-    descriptors     = forms.CharField(required=False, label='descriptors')
-    normalized      = forms.CharField(required=False, label='normalized')
-    page_size       = forms.CharField(required=False, label='page_size')
-    group_by_pack   = forms.CharField(required=False, label='group_by_pack')
+class SoundCombinedSearchFormAPI(forms.Form):
+    query               = forms.CharField(required=False, label='query')
+    page                = forms.CharField(required=False, label='page')
+    filter              = forms.CharField(required=False, label='filter')
+    sort                = forms.CharField(required=False, label='sort')
+    fields              = forms.CharField(required=False, label='fields')
+    descriptors         = forms.CharField(required=False, label='descriptors')
+    normalized          = forms.CharField(required=False, label='normalized')
+    page_size           = forms.CharField(required=False, label='page_size')
+    group_by_pack       = forms.CharField(required=False, label='group_by_pack')
+    descriptors_filter  = forms.CharField(required=False, label='descriptors_filter')
+    target              = forms.CharField(required=False, label='target')
 
     def clean_query(self):
         query = self.cleaned_data['query']
@@ -92,23 +94,24 @@ class SoundSearchFormAPI(forms.Form):
         return page
 
     def clean_sort(self):
-        sort = self.cleaned_data['sort']
-        for option in SEARCH_SORT_OPTIONS_API:
-            if option[0] == sort:
-                sort = option[1]
-                self.original_url_sort_value = option[0]
-        sort = SEARCH_DEFAULT_SORT
-        self.original_url_sort_value = SEARCH_DEFAULT_SORT.split(' ')[0]
 
-        if sort in [option[1] for option in SEARCH_SORT_OPTIONS_API]:
-            if sort == "avg_rating desc":
-                sort = [sort, "num_ratings desc"]
-            elif sort == "avg_rating asc":
-                sort = [sort, "num_ratings asc"]
-            else:
-                sort = [sort]
+        sort_option = None
+        for option in SEARCH_SORT_OPTIONS_API:
+            if option[0] == str(self.cleaned_data['sort']):
+                sort_option = option[1]
+                self.original_url_sort_value = option[0]
+
+        if not sort_option:
+            sort_option = SEARCH_DEFAULT_SORT
+            self.original_url_sort_value = SEARCH_DEFAULT_SORT.split(' ')[0]
+
+        if sort_option == "avg_rating desc":
+            sort = [sort_option, "num_ratings desc"]
+        elif sort_option == "avg_rating asc":
+            sort = [sort_option, "num_ratings asc"]
         else:
-            sort = [SEARCH_DEFAULT_SORT]
+            sort = [sort_option]
+
         return sort
 
     def clean_fields(self):
@@ -127,7 +130,19 @@ class SoundSearchFormAPI(forms.Form):
 
     def clean_page_size(self):
         requested_paginate_by = self.cleaned_data[settings.REST_FRAMEWORK['PAGINATE_BY_PARAM']] or settings.REST_FRAMEWORK['PAGINATE_BY']
-        return min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
+        try:
+            paginate_by = min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
+        except:
+            paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
+        return paginate_by
+
+    def clean_descriptors_filter(self):
+        descriptors_filter = self.cleaned_data['descriptors_filter']
+        return my_quote(descriptors_filter) if descriptors_filter != None else ""
+
+    def clean_target(self):
+        target = self.cleaned_data['target']
+        return my_quote(target) if target != None else ""
 
     def construct_link(self, base_url, page=None, filter=None, group_by_pack=None):
         link = "?"
@@ -140,6 +155,10 @@ class SoundSearchFormAPI(forms.Form):
             link += '&filter=%s' % my_quote(filter)
         if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_DEFAULT_SORT.split(' ')[0]:
             link += '&sort=%s' % self.original_url_sort_value
+        if self.cleaned_data['descriptors_filter']:
+                link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
+        if self.cleaned_data['target']:
+                link += '&target=%s' % self.cleaned_data['target']
         if not page:
             if self.cleaned_data['page'] and self.cleaned_data['page'] != 1:
                 link += '&page=%s' % self.cleaned_data['page']
@@ -162,26 +181,35 @@ class SoundSearchFormAPI(forms.Form):
         return "http://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
 
 
-class SoundCombinedSearchFormAPI(SoundSearchFormAPI):
-    descriptors_filter = forms.CharField(required=False, label='descriptors_filter')
-    target = forms.CharField(required=False, label='target')
-
-    def clean_descriptors_filter(self):
-        descriptors_filter = self.cleaned_data['descriptors_filter']
-        return my_quote(descriptors_filter) if descriptors_filter != None else ""
+class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):
+    '''
+    This form is like CombinedSearch but disabling content-search-only fields
+    '''
 
     def clean_target(self):
-        target = self.cleaned_data['target']
-        return my_quote(target) if target != None else ""
+        return None
 
-    def construct_link(self, *args, **kwargs):
-        link = super(SoundCombinedSearchFormAPI, self).construct_link(*args, **kwargs)
-        if self.cleaned_data['descriptors_filter']:
-                link += '&descriptors_filter=%s' % self.cleaned_data['descriptors_filter']
-        if self.cleaned_data['target']:
-                link += '&target=%s' % self.cleaned_data['target']
+    def clean_descriptors_filter(self):
+        return None
 
-        return link
+
+class SoundContentSearchFormAPI(SoundCombinedSearchFormAPI):
+    '''
+    This form is like CombinedSearch but disabling text-search-only fields
+    '''
+
+    def clean_query(self):
+        return None
+
+    def clean_filter(self):
+        return None
+
+    def clean_sort(self):
+        self.original_url_sort_value = False
+        return None
+
+    def clean_group_by_pack(self):
+        return None
 
 
 class SimilarityFormAPI(SoundCombinedSearchFormAPI):

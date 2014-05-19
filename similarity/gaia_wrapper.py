@@ -40,6 +40,7 @@ class GaiaWrapper:
         self.descriptor_names           = {}
         self.metrics                    = {}
         self.view                       = None
+        self.transformations_history    = None
 
         self.__load_dataset()
 
@@ -75,7 +76,8 @@ class GaiaWrapper:
                 if not normalized:
                     self.__normalize_original_dataset()
                     self.original_dataset.save(self.original_dataset_path)
-
+                # Save transformation history so we do not need to compute it every time we need it
+                self.transformations_history = self.original_dataset.history().toPython()
                 # build metrics for the different similarity presets
                 self.__build_metrics()
                 # create view
@@ -192,6 +194,7 @@ class GaiaWrapper:
         if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
             self.__prepare_original_dataset()
             self.__normalize_original_dataset()
+            self.transformations_history = self.original_dataset.history().toPython()
             self.save_index(msg="(reaching 2000 points)")
 
             # build metrics for the different similarity presets
@@ -257,7 +260,7 @@ class GaiaWrapper:
 
     def get_sounds_descriptors(self, point_names, descriptor_names=None, normalization=True, only_leaf_descriptors=False):
         '''
-        Returns a list with the descritor values for all requested point names
+        Returns a list with the descriptor values for all requested point names
         '''
 
         logger.info('Getting descriptors for points %s' % ','.join([str(name) for name in point_names]))
@@ -273,9 +276,9 @@ class GaiaWrapper:
 
     def __calculate_complete_required_descriptor_names(self, descriptor_names, only_leaf_descriptors=False):
         if not descriptor_names:
-            descriptor_names = self.descriptor_names['all']
+            descriptor_names = self.descriptor_names['all'][:]
         try:
-            structured_layout = generate_structured_dict_from_layout(self.descriptor_names['all'])
+            structured_layout = generate_structured_dict_from_layout(self.descriptor_names['all'][:])
             processed_descriptor_names = []
             for name in descriptor_names:
                 nested_descriptors = get_nested_dictionary_value(name.split('.')[1:], structured_layout)
@@ -302,9 +305,10 @@ class GaiaWrapper:
 
         # Get normalization coefficients to transform the input data (get info from the last
         # transformation which has been a normalization)
+
         normalization_coeffs = None
         if not normalization:
-            trans_hist = self.original_dataset.history().toPython()
+            trans_hist = self.transformations_history
             for i in range(0, len(trans_hist)):
                 if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
                     normalization_coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
@@ -401,7 +405,7 @@ class GaiaWrapper:
             logger.info(msg)
             return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
 
-        trans_hist = self.original_dataset.history().toPython()
+        trans_hist = self.transformations_history
         layout = self.original_dataset.layout()
 
         # Get normalization coefficients to transform the input data (get info from the last transformation which has
@@ -512,7 +516,7 @@ class GaiaWrapper:
             return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
 
         # Get some dataset parameters that will be useful later
-        trans_hist = self.original_dataset.history().toPython()
+        trans_hist = self.transformations_history
         layout = self.original_dataset.layout()
         coeffs = None  # Get normalization coefficients
         for i in range(0,len(trans_hist)):

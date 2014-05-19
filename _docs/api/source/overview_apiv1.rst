@@ -177,4 +177,4 @@ will return:
 API's Resources
 ---------------
 
-Check out the API V1 :ref:`resources_apiv1`.
+Check out the APIv1 :ref:`resources_apiv1`.

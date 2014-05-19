@@ -67,11 +67,11 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
 
 def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, target_file=None):
 
-    cache_key = 'api-search-t-%s-f-%s-nr-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results)
+    cache_key = 'api-search-t-%s-f-%s-nr-%s-o-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results, offset)
     note = False
 
     # Don't use the cache when we're debugging
-    if settings.DEBUG:
+    if settings.DEBUG or len(cache_key) >= 250:
         returned_sounds = False
         count = False
     else:
@@ -111,7 +111,7 @@ def api_search(target=None, filter=None, preset=None, metric_descriptor_names=No
         note = result['note']
 
         if not target_file:
-            if len(returned_sounds) > 0:
+            if len(returned_sounds) > 0 and len(cache_key) < 250 and not settings.DEBUG:
                 cache.set(cache_key, result, SIMILARITY_CACHE_TIME)
 
     return returned_sounds[0:num_results], count, note

@@ -42,9 +42,10 @@ urlpatterns = patterns('apiv2.views',
     # Me
     url(r'^me/$', views.Me.as_view(), name="apiv2-me"),
 
-    # Search and similarity search
-    url(r'^search/$', views.Search.as_view(), name="apiv2-sound-search"),
-    url(r'^search/advanced/$', views.AdvancedSearch.as_view(), name="apiv2-sound-combined-search"),
+    # Text/content/combined search
+    url(r'^search/text/$', views.TextSearch.as_view(), name="apiv2-sound-text-search"),
+    url(r'^search/content/$', views.ContentSearch.as_view(), name="apiv2-sound-content-search"),
+    url(r'^search/combined/$', views.CombinedSearch.as_view(), name="apiv2-sound-combined-search"),
 
     # Sounds
     url(r'^sounds/(?P<pk>[0-9]+)/$', views.SoundInstance.as_view(), name="apiv2-sound-instance"),
@@ -52,11 +53,12 @@ urlpatterns = patterns('apiv2.views',
     url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysis.as_view(), name="apiv2-sound-analysis"),
     url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilarSounds.as_view(), name="apiv2-similarity-sound"),
     url(r'^sounds/(?P<pk>[0-9]+)/download/$', views.DownloadSound.as_view(), name="apiv2-sound-download"),
-    # Create
+    # Create or edit
+    url(r'^sounds/(?P<pk>[0-9]+)/edit/$', views.EditSoundDescription.as_view(), name='apiv2-sound-edit'),
     url(r'^sounds/(?P<pk>[0-9]+)/bookmark/$', views.BookmarkSound.as_view(), name='apiv2-user-create-bookmark'),
     url(r'^sounds/(?P<pk>[0-9]+)/rate/$', views.RateSound.as_view(), name='apiv2-user-create-rating'),
     url(r'^sounds/(?P<pk>[0-9]+)/comment/$', views.CommentSound.as_view(), name='apiv2-user-create-comment'),
-    # Upload
+    # Upload and describe
     url(r'^sounds/upload/$', views.UploadSound.as_view(), name="apiv2-uploads-upload"),
     url(r'^sounds/not_yet_described/$', views.NotYetDescribedUploadedSounds.as_view(), name="apiv2-uploads-not-described"),
     url(r'^sounds/describe/$', views.DescribeSound.as_view(), name="apiv2-uploads-describe"),

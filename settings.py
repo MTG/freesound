@@ -135,7 +135,7 @@ FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 # urls for which the "lasta ction time" needs updating
 LAST_ACTION_TIME_URLS = ('/forum/', )
 
-FREESOUND_RSS = "http://blog.freesound.org/?feed=rss2"
+FREESOUND_RSS = "http://10.55.0.51/?feed=rss2" #"http://blog.freesound.org/?feed=rss2"
 
 FORUM_POSTS_PER_PAGE = 20
 FORUM_THREADS_PER_PAGE = 40
@@ -183,6 +183,78 @@ STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '_sandbo
 
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 
+ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
+
+# APIV2 settings
+################
+
+APIV2KEYS_ALLOWED_FOR_APIV1 = True
+ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
+APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
+                                   'apiv2-user-sound-edit',
+                                   'apiv2-user-create-bookmark',
+                                   'apiv2-user-create-rating',
+                                   'apiv2-user-create-comment',
+                                   'apiv2-uploads-upload',
+                                   'apiv2-uploads-not-described',
+                                   'apiv2-uploads-describe',
+                                   'apiv2-uploads-upload-and-describe',
+                                   'apiv2-uploads-not-moderated',
+                                   'apiv2-pack-download','apiv2-me',
+                                   'apiv2-logout-oauth2-user',
+                                   'oauth2:capture',
+                                   'oauth2:authorize',
+                                   'oauth2:redirect',
+                                   'oauth2:access_token',
+                                   'api-login']
+
+REST_FRAMEWORK = {
+    'PAGINATE_BY': 15,
+    'PAGINATE_BY_PARAM': 'page_size',
+    'MAX_PAGINATE_BY': 100,
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.YAMLRenderer',
+        'rest_framework.renderers.JSONPRenderer',
+        'rest_framework.renderers.XMLRenderer',
+    ),
+    'DEFAULT_THROTTLE_CLASSES': (
+        'apiv2.throttling.ClientBasedThrottling',
+    ),
+}
+
+# Define Api usage limit rates per defined throttling levels
+# Possible time units: second, minute, hour or day
+
+APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
+    0: ['0/day'],  # Client 'disabled'
+    1: ['1/second', '5000/day'],
+    2: ['5/second', '10000/day'],
+    99: [],  # No limit of requests
+}
+
+APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
+    0: ['0/day'],  # Client 'disabled'
+    1: ['30/minute', '500/day'],
+    2: ['1/second', '1000/day'],
+    99: [],  # No limit of requests
+}
+
+# Oauth2 provider settings
+OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)
+OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
+OAUTH_SINGLE_ACCESS_TOKEN = True
+USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
+#OAUTH_ENFORCE_SECURE = True  # We can not use this parameter because it does not work well with our current django version
+
+# Temportal tag recommendation settings
+ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = False
+
+# Set DATA_URL. You can overwrite this to point to production data ("http://freesound.org/data/") in local settings if needed ;)
+DATA_URL = "/data/"
+
 # leave at bottom starting here!
 from local_settings import *
 
@@ -203,13 +275,6 @@ else:
             #'django.template.loaders.eggs.load_template_source',
         )),
     )
-
-# change the media url to tabasco to make the players work when testing
-if DEBUG:
-    DATA_URL = "http://freesound.org/data/"
-    #DATA_URL = "/data/"
-else:
-    DATA_URL = "/data/"
 
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"
@@ -240,56 +305,12 @@ if DEBUG and DISPLAY_DEBUG_TOOLBAR:
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
-ESSENTIA_EXECUTABLE = '/home/fsweb/freesound/essentia/streaming_extractor_freesound'
 
 # We use the last restart date as a timestamp of the last time freesound web was restarted (lat time
 # settings were loaded). We add this variable to the context processor and use it in base.html as a
 # parameter for the url of all.css and freesound.js files, so me make sure client browsers update these
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
-
-# APIV2 settings
-################
-
-APIV2KEYS_ALLOWED_FOR_APIV1 = True
-ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION = False
-APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
-                                   'apiv2-user-create-bookmark',
-                                   'apiv2-user-create-rating',
-                                   'apiv2-user-create-comment',
-                                   'apiv2-uploads-upload',
-                                   'apiv2-uploads-not-described',
-                                   'apiv2-uploads-describe',
-                                   'apiv2-uploads-upload-and-describe',
-                                   'apiv2-uploads-not-moderated',
-                                   'apiv2-pack-download','apiv2-me',
-                                   'oauth2:capture',
-                                   'oauth2:authorize',
-                                   'oauth2:redirect',
-                                   'oauth2:access_token',
-                                   'api-login']
-
-REST_FRAMEWORK = {
-    'PAGINATE_BY': 15,
-    'PAGINATE_BY_PARAM': 'page_size',
-    'MAX_PAGINATE_BY': 100,
-    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework.renderers.YAMLRenderer',
-        'rest_framework.renderers.JSONPRenderer',
-        'rest_framework.renderers.XMLRenderer',
-    )
-}
-
-
-# Oauth2 provider settings
-OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)
-OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
-OAUTH_SINGLE_ACCESS_TOKEN = True
-USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
-#OAUTH_ENFORCE_SECURE = True  # We can not use this parameter because it does not work well with our current django version
 
 
 from logger import LOGGING

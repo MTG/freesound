@@ -178,12 +178,15 @@ class PackEditForm(ModelForm):
     def save(self, force_insert=False, force_update=False, commit=True):
         pack = super(PackEditForm, self).save(commit=False)
         new_sounds = self.cleaned_data['pack_sounds']
+        current_sounds = [s.id for s in pack.sound_set.all()]
 
-        for snd in pack.sound_set.all():
-            pack.sound_set.remove(snd)
-        for  snd in new_sounds:
-            sound = Sound.objects.get(id=snd)
-            pack.sound_set.add(sound)
+        for snd in current_sounds:
+            if snd not in new_sounds:
+                pack.sound_set.remove(snd)
+        for snd in new_sounds:
+            if snd not in current_sounds:
+                sound = Sound.objects.get(id=snd)
+                pack.sound_set.add(sound)
 
         if commit:
             pack.save()

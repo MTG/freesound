@@ -35,13 +35,13 @@ class FollowingUserItem(models.Model):
         verbose_name_plural = "Users"
         unique_together = ("user_from", "user_to")
 
-class FollowingTagItem(models.Model):
+class FollowingQueryItem(models.Model):
     user = models.ForeignKey(User)
     query = models.CharField(max_length=200)
     created = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return u"%s following tag %s" % (self.user, self.query)
+        return u"%s following tag '%s'" % (self.user, self.query)
 
     class Meta:
         verbose_name_plural = 'Tags'

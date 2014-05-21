@@ -39,6 +39,7 @@
                 <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
             {% endif %}
             <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
+            <li>Your <a href="{% url stream %}">stream</a></li>
             {% comment %}<li>Your sound uploads <a href="{% url accounts-pending %}">pending moderation</a></li>{% endcomment %}
         </ul>
         </div>
@@ -193,8 +194,8 @@
 
         <h3><i>Search Queries</i> Following</h3>
         <ul>
-            {% for tag in following_tags %}
-                <li><a href="#">{{ tag }}</a>{% if not forloop.last %}, {% endif %}</li>
+            {% for query in following_queries %}
+                <li><a href="#">{{ query }}</a>{% if not forloop.last %}, {% endif %}</li>
             {% endfor %}
         </ul>
     </div>

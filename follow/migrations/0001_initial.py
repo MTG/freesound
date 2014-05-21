@@ -17,23 +17,35 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('follow', ['FollowingUserItem'])
 
-        # Adding model 'FollowingTagItem'
-        db.create_table('follow_followingtagitem', (
+        # Adding unique constraint on 'FollowingUserItem', fields ['user_from', 'user_to']
+        db.create_unique('follow_followinguseritem', ['user_from_id', 'user_to_id'])
+
+        # Adding model 'FollowingQueryItem'
+        db.create_table('follow_followingqueryitem', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
             ('query', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
         ))
-        db.send_create_signal('follow', ['FollowingTagItem'])
+        db.send_create_signal('follow', ['FollowingQueryItem'])
+
+        # Adding unique constraint on 'FollowingQueryItem', fields ['user', 'query']
+        db.create_unique('follow_followingqueryitem', ['user_id', 'query'])
 
 
     def backwards(self, orm):
         
+        # Removing unique constraint on 'FollowingQueryItem', fields ['user', 'query']
+        db.delete_unique('follow_followingqueryitem', ['user_id', 'query'])
+
+        # Removing unique constraint on 'FollowingUserItem', fields ['user_from', 'user_to']
+        db.delete_unique('follow_followinguseritem', ['user_from_id', 'user_to_id'])
+
         # Deleting model 'FollowingUserItem'
         db.delete_table('follow_followinguseritem')
 
-        # Deleting model 'FollowingTagItem'
-        db.delete_table('follow_followingtagitem')
+        # Deleting model 'FollowingQueryItem'
+        db.delete_table('follow_followingqueryitem')
 
 
     models = {
@@ -73,15 +85,15 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        'follow.followingtagitem': {
-            'Meta': {'object_name': 'FollowingTagItem'},
+        'follow.followingqueryitem': {
+            'Meta': {'unique_together': "(('user', 'query'),)", 'object_name': 'FollowingQueryItem'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'query': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
         'follow.followinguseritem': {
-            'Meta': {'object_name': 'FollowingUserItem'},
+            'Meta': {'unique_together': "(('user_from', 'user_to'),)", 'object_name': 'FollowingUserItem'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'user_from': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'following_items'", 'to': "orm['auth.User']"}),

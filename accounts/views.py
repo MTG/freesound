@@ -763,7 +763,7 @@ def account(request, username):
 
     following = follow.utils.get_users_following(user)[:21]
     followers = follow.utils.get_users_followers(user)[:21]
-    following_tags = follow.utils.get_tags_following(user)[:21]
+    following_queries = follow.utils.get_queries_following(user)[:21]
 
     # true if the logged user is following the user of the current viewed profile page
     logged_user_following = follow.utils.get_users_following(request.user)

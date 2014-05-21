@@ -27,7 +27,13 @@
 
        {% include "search/advanced_search_form.html" %}
 
-        <a href="#" id="follow_tag_link">Follow this search</a>
+        <br/>
+
+        {% if show_follow_link %}
+            <a href="{% url follow-query search_query %}" id="follow_tag_link">Follow this query</a>
+        {% else %}
+            <a href="{% url unfollow-query search_query %}" id="follow_tag_link">Unfollow this query</a>
+        {% endif %}
 
     </fieldset>
 </form>

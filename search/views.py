@@ -25,6 +25,7 @@ from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 from settings import DEFAULT_SEARCH_WEIGHTS
 from datetime import datetime
+import follow.utils
 import forms
 import logging
 
@@ -223,6 +224,8 @@ def search(request):
         error_text = 'The search server could not be reached, please try again later.'
     
     if request.GET.get("ajax", "") != "1":
+        following_queries = follow.utils.get_queries_following(request.user)
+        show_follow_link = search_query not in following_queries
         return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
     else:
         return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
@@ -329,6 +332,7 @@ def get_pack_tags(pack_obj):
         return False
 
     return results.facets
+
 
 def __add_date_range(filter_query, date_from, date_to):
     if filter_query != "":

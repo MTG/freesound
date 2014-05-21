@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls.defaults import patterns, url, include
 import django.contrib.auth.views as authviews
 import messages.views as messages
 import accounts.views as accounts
@@ -130,9 +130,7 @@ urlpatterns = patterns('accounts.views',
     url(r'^app_permissions/permission_granted/$', api.permission_granted, name='permission-granted'),
 )
 
-# TODO: shouldn't this be in the follow/urls.py? How?
-urlpatterns += patterns('follow.views',
-    url(r'^follow_user/(?P<username>[^//]+)/$', follow.follow_user, name="follow-user"),
-    url(r'^unfollow_user/(?P<username>[^//]+)/$', follow.unfollow_user, name="unfollow-user"),
+urlpatterns += patterns('',
+    (r'^follow/', include('follow.urls')),
 )
 

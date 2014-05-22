@@ -65,7 +65,7 @@ def https_and_force_login(view_func):
         # Quick fix, should be implemented better
         path = request.build_absolute_uri().split('/apiv2/')[1]
         path = prepend_base('/apiv2/' + path, use_https=not settings.DEBUG, dynamic_resolve=False)
-        path = path.replace('logout_current_user_and_', '')
+        path = path.replace('logout_and_', '')
         return redirect_to_login(path, login_url, REDIRECT_FIELD_NAME)
 
     return _wrapped_view_func

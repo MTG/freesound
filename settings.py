@@ -228,15 +228,15 @@ REST_FRAMEWORK = {
 
 APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
     0: ['0/day'],  # Client 'disabled'
-    1: ['1/second', '5000/day'],
-    2: ['5/second', '10000/day'],
+    1: ['60/minute', '5000/day'],
+    2: ['300/minute', '10000/day'],
     99: [],  # No limit of requests
 }
 
 APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
     0: ['0/day'],  # Client 'disabled'
     1: ['30/minute', '500/day'],
-    2: ['1/second', '1000/day'],
+    2: ['60/minute', '1000/day'],
     99: [],  # No limit of requests
 }
 

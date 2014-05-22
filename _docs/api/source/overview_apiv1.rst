@@ -1,5 +1,5 @@
-Overview (APIv1)
->>>>>>>>>>>>>>>>
+APIv1 Docummentation
+>>>>>>>>>>>>>>>>>>>>
 
 Welcome to the Freesound API (V1) docs!
 
@@ -7,6 +7,15 @@ With the Freesound API you can browse, search, and retrieve information
 about Freesound users, packs, and the sounds themselves of course. You
 can also find similar sounds to a given target (based on content analysis)
 and retrieve automatically extracted features from audio files.
+Check out the available :ref:`resources_apiv1`.
+
+
+Important information
+---------------------
+
+APIv1 is deprecated. It will continue working until the end of 2014, but from now on we recommend everyone
+to start using APIv2.
+
 
 More help
 ---------
@@ -177,4 +186,4 @@ will return:
 API's Resources
 ---------------
 
-Check out the APIv1 :ref:`resources_apiv1`.
+Check out the :ref:`resources_apiv1`.

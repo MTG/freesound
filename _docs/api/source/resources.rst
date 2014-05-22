@@ -1,7 +1,7 @@
 .. _resources:
 
-Resources (APIv2)
-<<<<<<<<<<<<<<<<<
+Resources
+<<<<<<<<<
 
 .. contents::
     :depth: 3
@@ -43,7 +43,7 @@ Name                    Type                       Description
 Search results can be filtered by specifying a series of properties that sounds should match.
 In other words, using the ``filter`` parameter you can specify the value that certain sound fields should have in order to be considered valid search results.
 Filter are defined with a syntax like ``filter=fieldname:value fieldname:value`` or ``filter=fieldname:"value" fieldname:"value"`` if needed.
-Fieldnames can be any of the following:
+Field names can be any of the following:
 
 
 ======================  ====================================================

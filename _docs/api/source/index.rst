@@ -5,40 +5,29 @@ Welcome to the Freesound API docs!
 
 With the Freesound API you can browse, search, and retrieve information
 about Freesound users, packs, and the sounds themselves of course. You
-can also find similar sounds to a given target (based on content analysis)
-and retrieve automatically extracted features from audio files.
+can find similar sounds to a given target (based on content analysis)
+and retrieve automatically extracted features from audio files, as well as perform
+advanced queries combining content analysis features and other metadata (tags, etc...).
+With the Freesound API, you can also upload, comment, rate and bookmark sounds!
+
 
 
 Important information
 ---------------------
 
-We are in the process of releasing a new version of the Freesound API which we
-call APIv2. APIv2 is currently deployed as beta and might not be completely reliable.
-Documentation for APIv2 is not yet complete although you will find some examples
-in the APIv2 resources page and you can use the browseable API (http://www.freesound.org/apiv2)
-to learn most of the stuff you will need.
-
+We have just released a **new version of the Freesound API which we call APIv2**.
+APIv2 is still in beta phase, but it is going to be officially released in mid June 2014.
 The APIv2 brings many new features such as OAuth2 authentication, sound uploads and
-improved search options. The release date for APIv2 is scheduled for May/June 2014, but
-once APIv2 is released we will still maintain APIv1 for at least half a year. We will
-announce all related news in our mailing list http://groups.google.com/group/freesound-api.
+improved search options.
+
+After APIv2 is officially released, we will still maintain the old api (APIv1) until
+the end of 2014. However, **APIv1 is now deprecated**.
+We recommend everyone to port their applications to APIv2 as in 2015 it won't be working any more.
+If you have any questions, don't hesitate to post them in our mailing list http://groups.google.com/group/freesound-api.
 
 
-Contents
---------
-
-
-APIv1 documentation:
-
-.. toctree::
-   :maxdepth: 1
-
-   overview_apiv1.rst
-
-.. toctree::
-   :maxdepth: 3
-
-   resources_apiv1.rst
+Contents of the docummentation
+------------------------------
 
 
 APIv2 documentation:
@@ -49,22 +38,30 @@ APIv2 documentation:
    overview.rst
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    authentication.rst
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    resources_apiv2.rst
 
 
-Analysis documentation (for APIv1 and APIv2) :
+Analysis documentation:
 
 .. toctree::
    :maxdepth: 3
 
    analysis_index.rst
+
+
+APIv1 documentation (deprecated):
+
+.. toctree::
+   :maxdepth: 1
+
+   overview_apiv1.rst
 
 
 API client libraries (for APIv1 and APIv2):

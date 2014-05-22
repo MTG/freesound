@@ -1,5 +1,5 @@
-Overview (APIv2)
->>>>>>>>>>>>>>>>
+Overview
+>>>>>>>>
 
 Welcome to the Freesound APIv2 documentation!
 
@@ -10,7 +10,6 @@ and retrieve automatically extracted features from audio files, as well as perfo
 advanced queries combining content analysis features and other metadata (tags, etc...).
 With the Freesound APIv2, you can also upload, comment, rate and bookmark sounds!
 
-Freesound APIv2 is **still in a beta phase** so it might not be completely reliable yet.
 
 NOTE: Some of the examples in the API docummentation use the multi-platform command-line tool ``curl`` (http://curl.haxx.se).
 If you do not have ``curl`` installed, we recommend you to install it as it will help you in learning to use the Freesound API.
@@ -20,7 +19,6 @@ Authentication
 --------------
 
 In order to start using APIv2 you'll need an API credential that you can request in http://www.freesound.org/apiv2/apply.
-API credentials given for APIv2 **can also be used for APIv1**.
 Basic API calls can be authenticated using a typical token/key mechanism in which you'll need to add the key given with your APIv2 credential into every request you make as a ``token`` request parameter.
 For example:
 
@@ -29,7 +27,7 @@ For example:
   curl "http://www.freesound.org/apiv2/search/text/?query=piano&token=YOUR_API_KEY"
 
 However, there are some APIv2 resources that require the use of OAuth2 authentication.
-Please, read the :ref:`authentication` docs for a complete description of both authentication methods and on how to use them.
+Please, read the :ref:`authentication` docs for a complete description of both authentication methods and how to use them.
 
 
 Resources

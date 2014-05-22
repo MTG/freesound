@@ -1,7 +1,7 @@
 .. _authentication:
 
-Authentication (APIv2)
-<<<<<<<<<<<<<<<<<<<<<<
+Authentication
+<<<<<<<<<<<<<<
 
 APIv2 offers two authentication strategies: Token based authentication and OAuth2.
 

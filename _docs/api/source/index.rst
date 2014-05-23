@@ -11,34 +11,11 @@ advanced queries combining content analysis features and other metadata (tags, e
 With the Freesound API, you can also upload, comment, rate and bookmark sounds!
 
 
-Usage of the Freesound API
---------------------------
-
-The usage of the api is subject to the Freesound API terms of use (http://freesound.org/help/tos_api/).
-Please read these terms and contact Freesound administrators at mtg *at* upf.edu if you have any doubts.
-As general rules, please take into account the following points:
-
-*  **You are free to use the Freesound API for non-commercial purposes only**. To use the Freesound API for commercial purposes,
-   please contact Freesound administrators at mtg *at* upf.edu and we will talk about licensing options.
-
-
-*  **Be fair with your usage of the Freesound API**. Do not use the api to replicate Freesound in another site or to present
-   Freesound data pretending it is yours. Remember to properly credit Freesound and Freesound users in accordance to sounds'
-   licenses.
-
-
-*  **Do not abuse server badwidth**. Make reasoable use of the API and respect request limits. Do not register multiple
-   API keys to circumvent request limitations. If your usage of the Freesound API requires more permissive limits,
-   please contact Freesound administrators at mtg *at* upf.edu.
-
-
-New API!
---------
-
 We have just released a **new version of the Freesound API which we call APIv2**.
 APIv2 is still in beta phase, but it is going to be officially released in mid June 2014.
 The APIv2 brings many new features such as OAuth2 authentication, sound uploads and
 improved search options.
+
 
 After APIv2 is officially released, we will still maintain the old api (APIv1) until
 the end of 2014. However, **APIv1 is now deprecated**.
@@ -50,12 +27,17 @@ Contents of the docummentation
 ------------------------------
 
 
-APIv2 documentation:
+API documentation (APIv2):
 
 .. toctree::
    :maxdepth: 1
 
    overview.rst
+
+.. toctree::
+   :maxdepth: 1
+
+   terms_of_use.rst
 
 .. toctree::
    :maxdepth: 2

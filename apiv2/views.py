@@ -1014,8 +1014,8 @@ class Me(OauthRequiredAPIView):
 
 ### Root view
 class FreesoundApiV2Resources(GenericAPIView):
-    __doc__ = 'List of resources available in the Freesound API V2. ' \
-              '<br>Full documentation API can be found <a href="%s/%s" target="_blank">here</a>.' \
+    __doc__ = 'List of resources available in the Freesound APIv2. ' \
+              '<br>Full APIv2 documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
               '<br>Note that urls containing elements in brackets (<>) should be replaced with the corresponding variables.' \
               % (docs_base_url, 'index.html')
 

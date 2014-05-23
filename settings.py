@@ -209,7 +209,7 @@ APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
 REST_FRAMEWORK = {
     'PAGINATE_BY': 15,
     'PAGINATE_BY_PARAM': 'page_size',
-    'MAX_PAGINATE_BY': 100,
+    'MAX_PAGINATE_BY': 150,
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',

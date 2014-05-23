@@ -180,7 +180,7 @@ Resources including uploading, describing, commenting, rating and bookmarking so
 If a request is throttled, the APIv2 will return a 429 Too many requests response error with a ``detail`` field indicating which rate limit has been exceeded.
 
 Although we have set the default usage limits so that they should be enough for most applications,
-if these usage limits are not enough for you, please contact Freesound administrators to request more permissive limits.
+if these usage limits are not enough for you, please contact Freesound administrators at mtg *at* upf.edu to request more permissive limits.
 
 
 More help

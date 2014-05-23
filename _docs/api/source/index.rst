@@ -11,9 +11,29 @@ advanced queries combining content analysis features and other metadata (tags, e
 With the Freesound API, you can also upload, comment, rate and bookmark sounds!
 
 
+Usage of the Freesound API
+--------------------------
 
-Important information
----------------------
+The usage of the api is subject to the Freesound API terms of use (http://freesound.org/help/tos_api/).
+Please read these terms and contact Freesound administrators at mtg *at* upf.edu if you have any doubts.
+As general rules, please take into account the following points:
+
+*  **You are free to use the Freesound API for non-commercial purposes only**. To use the Freesound API for commercial purposes,
+   please contact Freesound administrators at mtg *at* upf.edu and we will talk about licensing options.
+
+
+*  **Be fair with your usage of the Freesound API**. Do not use the api to replicate Freesound in another site or to present
+   Freesound data pretending it is yours. Remember to properly credit Freesound and Freesound users in accordance to sounds'
+   licenses.
+
+
+*  **Do not abuse server badwidth**. Make reasoable use of the API and respect request limits. Do not register multiple
+   API keys to circumvent request limitations. If your usage of the Freesound API requires more permissive limits,
+   please contact Freesound administrators at mtg *at* upf.edu.
+
+
+New API!
+--------
 
 We have just released a **new version of the Freesound API which we call APIv2**.
 APIv2 is still in beta phase, but it is going to be officially released in mid June 2014.

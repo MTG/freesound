@@ -31,10 +31,10 @@ Text search queries are defined using the following request parameters:
 ======================  =========================  ======================
 Name                    Type                       Description
 ======================  =========================  ======================
-``query``               string                     The query! The ``query`` is the main parameter used to define a query. You can type several terms separated by spaces or phrases wrapped inside quote '"' characters. For every term, you can also use '+' and '-' modifier characters to indicate that a term is "mandatory" or "prohibited" (by default, terms are considered to be "mandatory"). For example, in a query such as ``query=term_a -term_b``, sounds including ``term_b`` will not match the search criteria. The query does a weighted search over some sound properties including sound tags, the sound name, its description, pack name and the sound id. Therefore, searching for ``query=123`` will find you sounds with id 1234, sounds that have 1234 in the description, in tags, etc. You'll find some examples below.
+``query``               string                     The query! The ``query`` is the main parameter used to define a query. You can type several terms separated by spaces or phrases wrapped inside quote '"' characters. For every term, you can also use '+' and '-' modifier characters to indicate that a term is "mandatory" or "prohibited" (by default, terms are considered to be "mandatory"). For example, in a query such as ``query=term_a -term_b``, sounds including ``term_b`` will not match the search criteria. The query does a weighted search over some sound properties including sound tags, the sound name, its description, pack name and the sound id. Therefore, searching for ``query=123`` will find you sounds with id 1234, sounds that have 1234 in the description, in the tags, etc. You'll find some examples below.
 ``filter``              string                     Allows filtering query results. See below for more information.
 ``sort``                string                     Indicates how query results should be sorted. See below for a list of the sorting options. By default ``sort=score``.
-``group_by_pack``       bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). By default ``group_by_pack=0``.
+``group_by_pack``       bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
 ======================  =========================  ======================
 
 
@@ -42,7 +42,7 @@ Name                    Type                       Description
 
 Search results can be filtered by specifying a series of properties that sounds should match.
 In other words, using the ``filter`` parameter you can specify the value that certain sound fields should have in order to be considered valid search results.
-Filter are defined with a syntax like ``filter=fieldname:value fieldname:value`` or ``filter=fieldname:"value" fieldname:"value"`` if needed.
+Filter are defined with a syntax like ``filter=fieldname:value fieldname:value``. You can also use double quotes (``filter=fieldname:"value" fieldname:"value"``) if needed.
 Field names can be any of the following:
 
 
@@ -74,7 +74,7 @@ comment: 		string, tokenized (filter is satisfied if sound contains the specifie
 comments: 		numerical, number of comments
 ======================  ====================================================
 
-Numeric or integer filters can have a range as a query, looking like this (the "TO" needs
+For numeric or integer filters, a range can also be specified using the following syntax (the "TO" needs
 to be upper case!)::
 
   filter=fieldname:[start TO end]
@@ -90,7 +90,7 @@ Dates can have ranges (and math) too (the "TO" needs to be upper case!)::
   filter=created:[1976-03-06T23:59:59.999Z TO 1976-03-06T23:59:59.999Z+1YEAR]
   filter=created:[1976-03-06T23:59:59.999Z/YEAR TO 1976-03-06T23:59:59.999Z]
 
-Simple logic operators can also used in filters::
+Simple logic operators can also be used in filters::
 
   filter=type:(wav OR aiff)
   filter=description:(piano AND note)
@@ -121,7 +121,7 @@ rating_asc      Same as above, but lowest rated sounds first.
 **Using geotagging data in queries**
 
 Queries and filters can also include geotagging data to perform spatial queries.
-For example, you can retrieve sounds that were recorded in a particular location or filter the results of a query to those sounds recorded in a geospatial area.
+For example, you can retrieve sounds that were recorded near a particular location or filter the results of a query to those sounds recorded in a geospatial area.
 Note that not all sounds in Freesound are geotagged, and the results of such queries will only include geotagged sounds.
 
 Please refer to the Solr docummentation on spatial queries (https://wiki.apache.org/solr/SpatialSearch) and check the examples below for more information.
@@ -156,14 +156,14 @@ These parameters are ``page`` and ``page_size`` (to deal with pagination), and `
 Name                    Type                       Description
 ======================  =========================  ======================
 ``page``                string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
-``page_size``           string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=15``. Not that with bigger ``page_size``, more data will need to be transferred.
-``fields``              comma separated strings    Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response`, and must be separated by commas. For example, if ``fields=name,avg_rating,license``, results will include sound name, average rating and license for every returned sound. Use this parameter to optimize request times by only requesting the information you really need.
-``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. This parameter must be used in combination with the ``fields`` parameter. If ``fields`` includes the property ``analysis``, you will use ``descriptors`` parameter to indicate which descriptors should be included in every sound of the response. Descriptor names can be any of those listed in :ref:`analysis-docs`, and must be separated by commas. For example, if ``fields=analysis&descriptors=lowlevel.spectral_centroid,lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptor names were found of the analysis data of a particular sound is not available.
+``page_size``           string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Not that with bigger ``page_size``, more data will need to be transferred.
+``fields``              comma separated strings    Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response`, and must be separated by commas. For example, if ``fields=name,avg_rating,license``, results will include sound name, average rating and license for every returned sound. **Use this parameter to optimize request times by only requesting the information you really need**.
+``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. **This parameter will have no effect if** ``analysis`` **property is not included in the** ``fields`` **request parameter**. Descriptor names can be any of those listed in :ref:`analysis-docs`, and must be separated by commas. For example, if ``fields=analysis&descriptors=lowlevel.spectral_centroid,lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptor names are found or the analysis data of a particular sound is not available.
 ``normalized``          bool (yes=1, no=0)         Indicates whether the returned sound content-based descriptors should be normalized or not. ``normalized=1`` will return normalized descriptor values. By default, ``normalized=0``.
 ======================  =========================  ======================
 
 If ``fields``  is not specified, a minimal set of information for every sound result is returned by default.
-This includes information about the license and Freesound public url of the sound, and the id of the sound itself, the user that uploaded it and its pack (in case the sound belongs to a pack).
+This includes information about the license and Freesound public url of the sound, and the id of the sound itself, the user that uploaded it and its pack (in case the sound belongs to a pack, otherwise pack will be null).
 
 
 Examples
@@ -196,35 +196,35 @@ Content search queries are defined using the following request parameters:
 =========================  =========================  ======================
 Name                       Type                       Description
 =========================  =========================  ======================
-``target``                 string or number           This parameter defines a target based on content-based descriptors to sort the search results. It can be set as a number of descriptor name and value pairs or a sound id. See below.
-``analysis_file``          file                       Alternatively, targets can be specified using file with the output of the Essentia Freesound Extractor analysis of any sound (see below). This parameter overrides ``target``, and requires the use of POST method.
+``target``                 string or number           This parameter defines a target based on content-based descriptors to sort the search results. It can be set as a number of descriptor name and value pairs, or as a sound id. See below.
+``analysis_file``          file                       Alternatively, targets can be specified by uploading a file with the output of the Essentia Freesound Extractor analysis of any sound that you analized locally (see below). This parameter overrides ``target``, and requires the use of POST method.
 ``descriptors_filer``      string                     This parameter allows filtering query results by values of the content-based descriptors. See below for more information.
 =========================  =========================  ======================
 
 **The 'target' and 'analysis_file' parameters**
 
 The ``target`` parameter can be used to specify a content-based sorting of your search results.
-Using ``target`` you can sort the query results so that the first results will the the ones featuring the most similar descriptors to the given target.
+Using ``target`` you can sort the query results so that the first results will be the sounds featuring the most similar descriptors to the given target.
 To specify a target you must use a syntax like ``target=descriptor_name:value``.
 You can also set multiple descriptor/value paris in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
 Descriptor names must be chosen from those listed in :ref:`analysis-docs`. Only numerical descriptors are allowed.
-Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too, see below.
+Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too (see below).
 Consider the following two ``target`` examples::
 
-  (A) target=.lowlevel.pitch.mean:220
-  (B) target=.lowlevel.pitch.mean:220 .lowlevel.pitch.var:0
+  (A) target=lowlevel.pitch.mean:220
+  (B) target=lowlevel.pitch.mean:220 lowlevel.pitch.var:0
 
-Example A will sort the query results so that the first results will have a mean pitch as closest to 220Hz as possible.
-Example B will sort the query results so that the first results will have a mean pitch as closest to 220Hz as possible and a pitch variance as closes as possible to 0.
+Example A will sort the query results so that the first results will have a mean pitch as close to 220Hz as possible.
+Example B will sort the query results so that the first results will have a mean pitch as close to 220Hz as possible and a pitch variance as close as possible to 0.
 In that case example B will promote sounds that have a steady pitch close to 220Hz.
 
 Multidimensional descriptors can also be used in the ``target`` parameter::
 
-  target=.sfx.tristimulus.mean:0,1,0
+  target=sfx.tristimulus.mean:0,1,0
 
 Alternatively, ``target`` can also be set to point to a Freesound sound.
 In that case the descriptors of the sound will be used as the target for the query, therefore query results will be sorted according to their similarity to the targeted sound.
-To set a sound as a target of the query you must indicate it with the sound id. For example, to use sound with id 1234 as target::
+To set a sound as a target of the query you must use the sound id. For example, to use sound with id 1234 as target::
 
   target=1234
 
@@ -237,15 +237,15 @@ To use this file as target you will need to use the POST method (instead of GET)
 Setting the target as an ``analysis_file`` allows you to to find sounds in Freesound that are similar to any other sound that you have in your local computer and that it is not part of Freesound.
 When using ``analysis_file``, the contents of ``target`` are ignored.
 
-If ``target`` (or ``analysis_file``) is not used in combination with ``descriptors_filter``, the results of the query will
-include all sounds from Freesound indexed in the similarity server.
+Note that if ``target`` (or ``analysis_file``) is not used in combination with ``descriptors_filter``, the results of the query will
+include all sounds from Freesound indexed in the similarity server, sorted by similarity to the target.
 
 
 **The 'descriptors_filer' parameter**
 
-The ``descriptors_filter`` parameter is used to restrict the query results to those sounds whose content descriptor values comply with the defined filter.
+The ``descriptors_filter`` parameter is used to restrict the query results to those sounds whose content descriptor values match with the defined filter.
 To define ``descriptors_filter`` parameter you can use the same syntax as for the normal ``filter`` parameter, including numeric ranges and simple logic operators.
-For example, ``descriptors_filter=.lowlevel.pitch.mean:220`` will only return sounds that have an EXACT pitch mean of 220hz.
+For example, ``descriptors_filter=lowlevel.pitch.mean:220`` will only return sounds that have an EXACT pitch mean of 220hz.
 Note that this would probably return no results as a sound will rarely have that exact pitch (might be very close like 219.999 or 220.000001 but not exactly 220).
 For this reason, in general it might be better to indicate ``descriptors_filter`` using ranges.
 Descriptor names must be chosen from those listed in :ref:`analysis-docs`.
@@ -253,25 +253,25 @@ Note that most of the descriptors provide several statistics (var, mean, min, ma
 Non fixed-length descriptors are not allowed.
 Some examples of ``descriptors_filter`` for numerical descriptors::
 
-  descriptors_filter=.lowlevel.pitch.mean:[219.9 TO 220.1]
-  descriptors_filter=.lowlevel.pitch.mean:[219.9 TO 220.1] AND .lowlevel.pitch_salience.mean:[0.6 TO *]
-  descriptors_filter=.lowlevel.mfcc.mean[0]:[-1124 TO -1121]
-  descriptors_filter=.lowlevel.mfcc.mean[1]:[17 TO 20] AND .lowlevel.mfcc.mean[4]:[0 TO 20]
+  descriptors_filter=lowlevel.pitch.mean:[219.9 TO 220.1]
+  descriptors_filter=lowlevel.pitch.mean:[219.9 TO 220.1] AND lowlevel.pitch_salience.mean:[0.6 TO *]
+  descriptors_filter=lowlevel.mfcc.mean[0]:[-1124 TO -1121]
+  descriptors_filter=lowlevel.mfcc.mean[1]:[17 TO 20] AND lowlevel.mfcc.mean[4]:[0 TO 20]
 
 Note how in the last two examples the filter operates in a particular dimension of a multidimensional descriptor (with dimension index starting at 0).
 
-``descriptors_filter`` can also be defined using non numerical descriptors such as '.tonal.key_key' or '.tonal.key_scale'.
-In that case, the value but be enclosed in double quotes '"', and the character '#' (for example for an A# key) must be indicated with the string 'sharp'.
+``descriptors_filter`` can also be defined using non numerical descriptors such as 'tonal.key_key' or 'tonal.key_scale'.
+In that case, the value must be enclosed in double quotes '"', and the character '#' (for example for an A# key) must be indicated with the string 'sharp'.
 Non numerical descriptors can not be indicated using ranges.
 For example::
 
-  descriptors_filter=.tonal.key_key:"Asharp"
-  descriptors_filter=.tonal.key_scale:"major"
-  descriptors_filter=(.tonal.key_key:"C" AND .tonal.key_scale:"major") OR (.tonal.key_key:"A" AND .tonal.key_scale:"minor")
+  descriptors_filter=tonal.key_key:"Asharp"
+  descriptors_filter=tonal.key_scale:"major"
+  descriptors_filter=(tonal.key_key:"C" AND tonal.key_scale:"major") OR (tonal.key_key:"A" AND tonal.key_scale:"minor")
 
 You can combine both numerical and non numerical descriptors as well::
 
-  descriptors_filter=.tonal.key_key:"C" .tonal.key_scale="major" .tonal.key_strength:[0.8 TO *]
+  descriptors_filter=tonal.key_key:"C" tonal.key_scale="major" tonal.key_strength:[0.8 TO *]
 
 
 
@@ -312,7 +312,7 @@ Note that ``group_by_pack`` **is not** available in combined search queries.
 In Combined Search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
 query results can be filtered by values of sounds' metadata and sounds' content-descriptors... all at once!
 
-To perform a Combined Search query you must at least specify a ``query`` or a ``target`` parameter as you would do in text-based and content-based searches respectively,
+To perform a Combined Search query you must at least specify a ``query`` or a ``target`` parameter (as you would do in text-based and content-based searches respectively),
 and at least one text-based or content-based filter (``filter`` and ``descriptors_filter``).
 Request parameters ``query`` and ``target`` can not be used at the same time, but ``filter`` and ``descriptors_filter`` can both be present in a single Combined Search query.
 In any case, you must always use at least one text-based search request parameter and one content-based search request parameter.
@@ -321,7 +321,7 @@ Note that ``sort`` parameter must always be accompanied by a ``query`` or ``filt
 
 Combined Search requests might **require significant computational resources** on our servers depending on the particular
 query that is made. Therefore, responses might take longer than usual. Fortunately, response times can vary a lot
-with some modifications in the query, and this is in your hands ;).
+with some small modifications in the query, and this is in your hands ;).
 As a general rule, we recommend not to use the text-search parameter ``query``, and instead define metadata stuff in a ``filter``.
 For example, instead of setting the parameter ``query=loop``, try filtering results to sounds that have the tag loop (``filter=tag:loop``).
 Furthermore, you can try narrowing down your filter or filters (``filter`` and ``descriptors_filter``) and possibly make the queries faster.
@@ -356,10 +356,10 @@ Furthermore, instead of the ``next`` and ``previous`` links to navigate among re
 only offer a ``more`` link that you can use to obtain more results. You can think of the ``more`` link as a
 rough equivalent to ``next``, but it does not work by indicating page numbers as in normal sound list responses.
 
-Also, note that ``count`` field is not present in the Combined Search response, therefore you do not know the total
-amount of results that a query can return (but can iteratively follow the ``more`` link).
+Also, note that ``count`` field is not present in the Combined Search response, therefore you do not know in advance the total
+amount of results that a query can return.
 
-Finally, Combined Search responses does allow you to use the ``page_size``, ``fields``, ``descriptors`` and ``normalized``
+Finally, Combined Search responses does allow you to use the ``fields``, ``descriptors`` and ``normalized``
 parameters just like you would do in standard sound list responses.
 
 
@@ -452,7 +452,7 @@ Sound Analysis
   GET /apiv2/sounds/<sound_id>/analysis/
 
 This resource allows the retrieval of analysis information (content-based descriptors) of a sound.
-Although content-based descriptors can also be retrieved using the ``descriptors`` request parameter in any API resource that returns sound lists or with the Sound Instance resource,
+Although content-based descriptors can also be retrieved using the ``descriptors`` request parameter in any API resource that returns sound lists or with the :ref:`sound-sound` resource,
 using the Sound Analysis resource you can retrieve **all sound descriptors** at once.
 
 
@@ -477,7 +477,7 @@ Similar Sounds
 
   GET /apiv2/sounds/<sound_id>/similar/
 
-This resource allows the retrieval of sounds similar to the given target.
+This resource allows the retrieval of sounds similar to the given sound target.
 
 
 Request parameters
@@ -485,7 +485,7 @@ Request parameters
 
 Essentially, the Similar Sounds resource is like a :ref:`sound-content-search` resource with the parameter ``target`` fixed to the sound id indicated in the url.
 You can still use the ``descriptors_filter`` request parameter to restrict the query results to those sounds whose content descriptor values comply with the defined filter.
-Use ``descriptors_filter`` in the same way as in :ref:`sound-content-search` and :ref:`sound-combined-search` resources.
+Use ``descriptors_filter`` in the same way as in :ref:`sound-content-search`.
 
 
 
@@ -538,9 +538,10 @@ Each comment entry consists of a dictionary with the following structure:
 ::
 
   {
-    "user": "<uri of user who made the comment>",
-    "comment": "<the comment itself>",
-    "created": "<the date when the comment was made, e.g. "2014-03-15T14:06:48.022">"
+    "user": <uri of user who made the comment>,
+    "username": <username of the user who made the comment>
+    "comment": <the comment itself>,
+    "created": <the date when the comment was made, e.g. "2014-03-15T14:06:48.022">
   }
 
 
@@ -578,8 +579,8 @@ Upload Sound (OAuth2 required)
   POST /apiv2/sounds/upload/
 
 This resource allows you to upload an audio file into Freesound and (optionally) describe it.
-If if no file description is provided (see below), only the audio file will be uploaded and you will need to describe it later using the :ref:`sound-describe` resource.
-If the file description is also provided, the uploaded file will be ready for processing and moderation stage.
+If no file description is provided (see below), only the audio file will be uploaded and you will need to describe it later using the :ref:`sound-describe` resource.
+If the file description is also provided, the uploaded file will be ready for the processing and moderation stage.
 A list of uploaded files pending description, processing or moderation can be obtained using the :ref:`sound-pending-uploads` resource.
 
 The author of the uploaded sound will be the user authenticated via OAuth2, therefore this method requires :ref:`oauth-authentication`.
@@ -622,7 +623,7 @@ If file description was provided, on successful upload, the Upload Sound resourc
   }
 
 Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
-Therefore, accessing the Sound Instance using the returned ``id`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+Therefore, **accessing the Sound Instance using the returned ``id`` will lead to a 404 Not Found error until the sound is approved by the moderators**.
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
 If file description was NOT provided, on successful upload, the Upload Sound resource will return a dictionary with the following structure:
@@ -691,7 +692,7 @@ If the audio file is described successfully, the Describe Sound resource will re
   }
 
 Note that after the sound is described, it still needs to be processed and moderated by the team of Freesound moderators.
-Therefore, accessing the Sound Instance using the returned ``id`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+Therefore, **accessing the Sound Instance using the returned ``id`` will lead to a 404 Not Found error until the sound is approved by the moderators**.
 
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
@@ -711,7 +712,7 @@ Pending Uploads (OAuth2 required)
 
   GET /apiv2/sounds/pending_uploads/
 
-This resource allows you to retrieve a list of audio files uploaded by a the Freesound user logged in using OAuth2 that have not yet been described, processed or moderated.
+This resource allows you to retrieve a list of audio files uploaded by the Freesound user logged in using OAuth2 that have not yet been described, processed or moderated.
 In Fressound, when sounds are uploaded they first need to be described by their uploaders.
 After the description step, sounds are automatically processed and then enter the moderation phase, where a team of human moderators either accepts or rejects the upload.
 Using this resource, your application can keep track of user uploads status in Freesound.
@@ -802,15 +803,7 @@ the others will remain unchanged).
 Response
 --------
 
-If sound description is updated successfully, the Edit Sound Description resource will return a dictionary with the following structure:
-
-::
-
-  {
-    "detail": "Description of sound <sound_id> successfully edited"
-  }
-
-
+If sound description is updated successfully, the Edit Sound Description resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully edited.
 If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
 
@@ -1018,7 +1011,7 @@ User Packs resource returns a paginated list of the packs created by a user, wit
     "previous": <link to the previous page of packs (null if none)>
   }
 
-Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack_instance`: response.
+Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack_instance` response.
 Packs are sorted according to their creation date (recent packs in the top of the list).
 Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
 
@@ -1109,13 +1102,13 @@ Me (information about user authenticated using OAuth2, OAuth2 required)
 
   GET /apiv2/me/
 
-This resource returns basic information of a user that has logged in using the OAuth2 procedure.
+This resource returns basic information of the user that is logged in using the OAuth2 procedure.
 It can be used by applications to be able to identify which Freesound user has logged in.
 
 Response
 --------
 
-The Me resource response consists of a dictionary with all the fields present in a standard :ref:`user_instance`, plus an additional ``email`` field that can be used by the application to uniquely identify the end user.
+The Me resource response consists of a dictionary with all the fields present in a standard :ref:`user_instance`, plus additional ``email`` and ``unique_id`` fields that can be used by the application to uniquely identify the end user.
 
 
 Pack resources

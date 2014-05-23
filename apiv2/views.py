@@ -1005,6 +1005,7 @@ class Me(OauthRequiredAPIView):
             response_data = UserSerializer(self.user, context=self.get_serializer_context()).data
             response_data.update({
                  'email': self.user.email,
+                 'unique_id': self.user.id,
             })
             return Response(response_data, status=status.HTTP_200_OK)
         else:

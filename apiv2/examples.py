@@ -77,7 +77,7 @@ examples = {
         ('Upload and describe a sound with name, pack and geotag', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "name=Another cool sound" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" -F "pack=A birds pack" -F "geotag=2.145677,3.22345,14" \'%s/apiv2/sounds/upload/\'']),
     ],
     'PendingUploads': [
-        ('Get uploaded uploads that are pending description, processing or moderation', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/pending_uploads/\'']),
+        ('Get uploaded sounds that are pending description, processing or moderation', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/pending_uploads/\'']),
     ],
     'DescribeSound': [
         ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" \'%s/apiv2/sounds/describe/\'']),

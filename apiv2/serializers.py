@@ -454,6 +454,7 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Comment
         fields = ('user',
+                  'username',
                   'comment',
                   'created')
 
@@ -461,6 +462,9 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
 
+    username = serializers.SerializerMethodField('get_username')
+    def get_username(self, obj):
+        return obj.user.username
 
 
 class CreateCommentSerializer(serializers.Serializer):

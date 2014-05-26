@@ -20,7 +20,7 @@
 
 import django.forms as forms
 import settings
-from urllib import quote
+from urllib import quote, unquote
 from django.contrib.sites.models import Site
 from exceptions import BadRequestException
 
@@ -70,6 +70,8 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def clean_query(self):
         query = self.cleaned_data['query']
+        if unquote(query).replace('"','').isspace() or unquote(query).replace('"','') == '':
+            return ""
         return my_quote(query) if 'query' in self.data else None
 
     def clean_filter(self):

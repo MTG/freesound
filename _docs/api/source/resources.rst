@@ -163,7 +163,8 @@ Name                    Type                       Description
 ======================  =========================  ======================
 
 If ``fields``  is not specified, a minimal set of information for every sound result is returned by default.
-This includes information about the license and Freesound public url of the sound, and the id of the sound itself, the user that uploaded it and its pack (in case the sound belongs to a pack, otherwise pack will be null).
+This includes the id of the sound, the name and tags of the sound, the username of the user that uploaded the sound and the license
+(i.e. by default ``fields=id,name,tags,username,license``).
 
 
 Examples

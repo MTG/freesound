@@ -118,13 +118,38 @@ rating_asc      Same as above, but lowest rated sounds first.
 ==============  ====================================================================
 
 
-**Using geotagging data in queries**
+**Filter queries using geotagging data**
 
-Queries and filters can also include geotagging data to perform spatial queries.
+Text-based search also supports filtering query results using geotagging data.
 For example, you can retrieve sounds that were recorded near a particular location or filter the results of a query to those sounds recorded in a geospatial area.
 Note that not all sounds in Freesound are geotagged, and the results of such queries will only include geotagged sounds.
+In general, you can define geotagging queries in two ways:
 
-Please refer to the Solr docummentation on spatial queries (http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4) and check the examples below for more information.
+ 1) By specifying a point in space and a maximum distance: this way lets you specify a latitude and longitude target point,
+ and a maximum distance (in km) from that point. Query results will only include those points contained in the area.
+ You can use the ``filter`` parameter of a standard query to specify latitude, longitude and maximum distance using the
+ following syntax::
+
+  filter={!geofilt sfield=geotag pt=<LATITUDE>,<LONGITUDE> d=<MAX_DISTANCE_IN_KM>}
+
+
+ 2) By specifying an arbirtrary rectangle in space: this way lets you define a rectangle in space by specifying a
+ minimum latitude and longitude, and a maximum latitude and longitude.
+ Query results will only include those points contained in the area.
+ You can use the ``filter`` parameter of a standard query to specify minimum and maximum latitude and longitude using the
+ following syntax::
+
+  filter=geotag:"Intersects(<MINIMUM_LONGITUDE> <MINIMUM_LATITUDE> <MAXIMUM_LONGITUDE> <MAXIMUM_LATITUDE>)"
+
+
+ Minimum and maximum latitude and longitude define the lower left and upper right corners of the rectangle as shown below.
+ Besides ``Intersects`` you can also use ``IsDisjointTo``, which will return all sounds geotagged outside the rectangle.
+
+    .. image:: _static/geotags/geotag_normal.png
+        :align: center
+
+
+Please refer to the Solr docummentation on spatial queries for extra information (http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4) and check the examples below.
 
 
 .. _sound-list-response:

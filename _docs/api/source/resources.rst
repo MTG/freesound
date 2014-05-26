@@ -1,7 +1,7 @@
 .. _resources:
 
-Resources (APIv2)
-<<<<<<<<<<<<<<<<<
+Resources
+<<<<<<<<<
 
 .. contents::
     :depth: 3
@@ -43,7 +43,7 @@ Name                    Type                       Description
 Search results can be filtered by specifying a series of properties that sounds should match.
 In other words, using the ``filter`` parameter you can specify the value that certain sound fields should have in order to be considered valid search results.
 Filter are defined with a syntax like ``filter=fieldname:value fieldname:value`` or ``filter=fieldname:"value" fieldname:"value"`` if needed.
-Fieldnames can be any of the following:
+Field names can be any of the following:
 
 
 ======================  ====================================================
@@ -120,7 +120,11 @@ rating_asc      Same as above, but lowest rated sounds first.
 
 **Using geotagging data in queries**
 
-TODO... but you can already check the examples below ;)
+Queries and filters can also include geotagging data to perform spatial queries.
+For example, you can retrieve sounds that were recorded in a particular location or filter the results of a query to those sounds recorded in a geospatial area.
+Note that not all sounds in Freesound are geotagged, and the results of such queries will only include geotagged sounds.
+
+Please refer to the Solr docummentation on spatial queries (https://wiki.apache.org/solr/SpatialSearch) and check the examples below for more information.
 
 
 .. _sound-list-response:
@@ -139,6 +143,7 @@ Search resource returns a *sound list response*. Sound list responses have the f
         <sound result #1 info>,
         <sound result #2 info>,
         ...
+        <sound result #page_size info>
     ],
     "previous": <link to the previous page of results (null if none)>
   }
@@ -153,12 +158,12 @@ Name                    Type                       Description
 ``page``                string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
 ``page_size``           string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=15``. Not that with bigger ``page_size``, more data will need to be transferred.
 ``fields``              comma separated strings    Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response`, and must be separated by commas. For example, if ``fields=name,avg_rating,license``, results will include sound name, average rating and license for every returned sound. Use this parameter to optimize request times by only requesting the information you really need.
-``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. This parameter must be used in combination with the ``fields`` parameter. If ``fields`` includes the property ``analysis``, you will use ``descriptors`` parameter to indicate which descriptors should be included in every sound of the response. Descriptor names can be any of those listed in :ref:`analysis-docs`, and must be separated by commas and start with a dot '.' character. For example, if ``fields=analysis&descriptors=.lowlevel.spectral_centroid,.lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptor names were found of the analysis data of a particular sound is not available.
+``descriptors``         comma separated strings    Indicates which sound content-based descriptors should be included in every sound of the response. This parameter must be used in combination with the ``fields`` parameter. If ``fields`` includes the property ``analysis``, you will use ``descriptors`` parameter to indicate which descriptors should be included in every sound of the response. Descriptor names can be any of those listed in :ref:`analysis-docs`, and must be separated by commas. For example, if ``fields=analysis&descriptors=lowlevel.spectral_centroid,lowlevel.barkbands.mean``, the response will include, for every returned sound, all statistics of the spectral centroid descriptor and the mean of the barkbands. Descriptor values are included in the response inside the ``analysis`` sound property (see the examples). ``analysis`` might be null if no valid descriptor names were found of the analysis data of a particular sound is not available.
 ``normalized``          bool (yes=1, no=0)         Indicates whether the returned sound content-based descriptors should be normalized or not. ``normalized=1`` will return normalized descriptor values. By default, ``normalized=0``.
 ======================  =========================  ======================
 
-If ``fields``  is not specified, a minimal set of information is returned by default.
-This includes information about the license and Freesound public url of the sound, and the uris of the sound itself, the user that uploaded it and its pack (in case the sound belongs to a pack).
+If ``fields``  is not specified, a minimal set of information for every sound result is returned by default.
+This includes information about the license and Freesound public url of the sound, and the id of the sound itself, the user that uploaded it and its pack (in case the sound belongs to a pack).
 
 
 Examples
@@ -202,7 +207,7 @@ The ``target`` parameter can be used to specify a content-based sorting of your 
 Using ``target`` you can sort the query results so that the first results will the the ones featuring the most similar descriptors to the given target.
 To specify a target you must use a syntax like ``target=descriptor_name:value``.
 You can also set multiple descriptor/value paris in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
-Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.'). Only numerical descriptors are allowed.
+Descriptor names must be chosen from those listed in :ref:`analysis-docs`. Only numerical descriptors are allowed.
 Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too, see below.
 Consider the following two ``target`` examples::
 
@@ -243,7 +248,7 @@ To define ``descriptors_filter`` parameter you can use the same syntax as for th
 For example, ``descriptors_filter=.lowlevel.pitch.mean:220`` will only return sounds that have an EXACT pitch mean of 220hz.
 Note that this would probably return no results as a sound will rarely have that exact pitch (might be very close like 219.999 or 220.000001 but not exactly 220).
 For this reason, in general it might be better to indicate ``descriptors_filter`` using ranges.
-Descriptor names must be chosen from those listed in :ref:`analysis-docs` (and start with a dot '.').
+Descriptor names must be chosen from those listed in :ref:`analysis-docs`.
 Note that most of the descriptors provide several statistics (var, mean, min, max...). In that case, the descriptor name must include also the desired statistic (see examples below).
 Non fixed-length descriptors are not allowed.
 Some examples of ``descriptors_filter`` for numerical descriptors::
@@ -300,24 +305,62 @@ This resource is a combination of :ref:`sound-text-search` and :ref:`sound-conte
 Request parameters
 ------------------
 
-Combined search request parameters can include any of the parameters from text-based search queries (``query``, ``filter`` and ``sort``, :ref:`sound-text-search-parameters`)
+Combined Search request parameters can include any of the parameters from text-based search queries (``query``, ``filter`` and ``sort``, :ref:`sound-text-search-parameters`)
 and content-based search queries (``target``, ``analysis_file`` and ``descriptors_filer`` and, :ref:`sound-content-search-parameters`).
 Note that ``group_by_pack`` **is not** available in combined search queries.
 
-In combined search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
-query results can be filtered either by values of sounds' metadata or sounds' content-descriptors... all at once!
+In Combined Search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
+query results can be filtered by values of sounds' metadata and sounds' content-descriptors... all at once!
 
-To perform a combined search query you need to use at least one of the request parameters from text-based search and at least one of the request parameters from content-based search.
+To perform a Combined Search query you must at least specify a ``query`` or a ``target`` parameter as you would do in text-based and content-based searches respectively,
+and at least one text-based or content-based filter (``filter`` and ``descriptors_filter``).
+Request parameters ``query`` and ``target`` can not be used at the same time, but ``filter`` and ``descriptors_filter`` can both be present in a single Combined Search query.
+In any case, you must always use at least one text-based search request parameter and one content-based search request parameter.
 Note that ``sort`` parameter must always be accompanied by a ``query`` or ``filter`` parameter (or both), otherwise it is ignored.
 ``sort`` parameter will also be ignored if parameter ``target`` (or ``analysis_file``) is present in the query.
+
+Combined Search requests might **require significant computational resources** on our servers depending on the particular
+query that is made. Therefore, responses might take longer than usual. Fortunately, response times can vary a lot
+with some modifications in the query, and this is in your hands ;).
+As a general rule, we recommend not to use the text-search parameter ``query``, and instead define metadata stuff in a ``filter``.
+For example, instead of setting the parameter ``query=loop``, try filtering results to sounds that have the tag loop (``filter=tag:loop``).
+Furthermore, you can try narrowing down your filter or filters (``filter`` and ``descriptors_filter``) and possibly make the queries faster.
+Best response times are normally obtained by specifying a content-based ``target`` in combination with text-based and
+content-based filters (``filter`` and ``descriptors_filter``).
+
 
 
 Response
 --------
 
-The Combined Search resource returns a sound list just like :ref:`sound-list-response`.
-The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
+The Combined Search resource **returns a variation** of the standard sound list response :ref:`sound-list-response`.
+Combined Search responses are dictionaries with the following structure:
 
+::
+
+  {
+    "results": [
+        <sound result #1 info>,
+        <sound result #2 info>,
+        ...
+    ],
+    "more": <link to get more results (null if there are no more results)>,
+  }
+
+The ``results`` field will include a list of sounds just like in the normal sound list response.
+The length of this list can be defined using the ``page_size`` request parameter like in normal sound list responses.
+However, Combined Search responses **do not guarantee** that the number of elements inside ``results`` will be equal to
+the number specified in ``page_size``. In some cases, you might find less results, so **you should verify the length of the list**.
+
+Furthermore, instead of the ``next`` and ``previous`` links to navigate among results, Combined Search responses
+only offer a ``more`` link that you can use to obtain more results. You can think of the ``more`` link as a
+rough equivalent to ``next``, but it does not work by indicating page numbers as in normal sound list responses.
+
+Also, note that ``count`` field is not present in the Combined Search response, therefore you do not know the total
+amount of results that a query can return (but can iteratively follow the ``more`` link).
+
+Finally, Combined Search responses does allow you to use the ``page_size``, ``fields``, ``descriptors`` and ``normalized``
+parameters just like you would do in standard sound list responses.
 
 
 Examples
@@ -329,6 +372,7 @@ Examples
 Sound resources
 >>>>>>>>>>>>>>>
 
+.. _sound-sound:
 
 Sound Instance
 =========================================================
@@ -351,7 +395,6 @@ The Sound Instance response is a dictionary including the following properties/f
 Name                  Type              Description
 ====================  ================  ====================================================================================
 ``id``                number            The sound's unique identifier.
-``uri``               URI               The URI for this sound.
 ``url``               URI               The URI for this sound on the Freesound website.
 ``name``              string            The name user gave to the sound.
 ``tags``              array[strings]    An array of tags the user gave to the sound.
@@ -389,7 +432,7 @@ Name                  Type              Description
 
 The contents of the field ``analysis`` of the Sound Instance response can be determined using an additional request parameter ``descriptors``.
 The ``descriptors`` parameter should include a comma separated list of content-based descriptor names, just like in the :ref:`sound-list-response`.
-Descriptor names can be any of those listed in :ref:`analysis-docs`, and must start with a dot '.' character (e.g. ``descriptors=.lowlevel.mfcc,.rhythm.bpm``).
+Descriptor names can be any of those listed in :ref:`analysis-docs` (e.g. ``descriptors=lowlevel.mfcc,rhythm.bpm``).
 The request parameter ``normalized`` can also be used to return content-based descriptor values in a normalized range instead of the absolute values.
 
 The parameter ``fields`` can also be used to restrict the number of fields returned in the response.
@@ -417,7 +460,7 @@ Response
 --------
 
 The response to a Sound Analysis request is a dictionary with the values of all content-based descriptors listed in :ref:`analysis-docs`.
-That dictionary can be filtered using an extra ``descriptors`` request parameter which should include a list of comma separated descriptor names chosen from those listed in :ref:`analysis-docs`, and that must start with a dot '.' character (e.g. ``descriptors=.lowlevel.mfcc,.rhythm.bpm``).
+That dictionary can be filtered using an extra ``descriptors`` request parameter which should include a list of comma separated descriptor names chosen from those listed in :ref:`analysis-docs` (e.g. ``descriptors=lowlevel.mfcc,rhythm.bpm``).
 The request parameter ``normalized`` can also be used to return content-based descriptor values in a normalized range instead of the absolute values.
 
 
@@ -507,6 +550,7 @@ Examples
 
 {{examples_SoundComments}}
 
+.. _sound-download:
 
 Download Sound (OAuth2 required)
 =========================================================
@@ -533,78 +577,72 @@ Upload Sound (OAuth2 required)
 
   POST /apiv2/sounds/upload/
 
-This resource allows you to upload an audio file into Freesound.
-Note that this resource is only meant for uploading an audio file, not for describing it.
-In order for the file to appear in Freesound, it must be described using the :ref:`sound-describe` resource (after uploading),
-and it must be processed and moderated by the Freesound moderators just like any other sound uploaded using the Freessound website rather than the API.
-A list of uploaded files pending description can be obtained using the :ref:`sound-uploaded-files-pending-description` resource.
+This resource allows you to upload an audio file into Freesound and (optionally) describe it.
+If if no file description is provided (see below), only the audio file will be uploaded and you will need to describe it later using the :ref:`sound-describe` resource.
+If the file description is also provided, the uploaded file will be ready for processing and moderation stage.
+A list of uploaded files pending description, processing or moderation can be obtained using the :ref:`sound-pending-uploads` resource.
 
-The author of the uploaded sound will be the user authenticated via Oauth2, therefore this method requires :ref:`oauth-authentication`.
+The author of the uploaded sound will be the user authenticated via OAuth2, therefore this method requires :ref:`oauth-authentication`.
 
 
 Request parameters
 ------------------
 
-The uploaded audio file must be attached to the request as a ``audiofile`` POST parameter.
+The uploaded audio file must be attached to the request as an ``audiofile`` POST parameter.
 Supported file formats include .wav, .aif, .flac, .ogg and .mp3.
+
+Additionally, the request can include the following POST parameters to provide a description for the file:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
+``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
+``description``       string            A textual description of the sound.
+``license``           string            The license of the sound. Must be either "Attribution", "Attribution Noncommercial" or "Creative Commons 0".
+``pack``              string            (OPTIONAL) The name of the pack where the sound should be included. If user has created no such pack with that name, a new one will be created.
+``geotag``            string            (OPTIONAL) Geotag information for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (e.g. "2.145677,3.22345,14").
+====================  ================  ====================================================================================
+
+Note that ``tags``, ``description`` and ``license`` parameters are REQUIRED when providing a description for the file, but can be omitted if no description is provided.
+In other words, you can either only provide the ``audiofile`` parameter, or provide ``audiofile`` plus ``tags``, ``description``, ``license`` and any of the other optional parameters.
+In the first case, a file will be uploaded but not described (you will need to describe it later), and in the second case a file will both be uploaded and described.
 
 
 Response
 --------
 
-On successful upload, the Upload Sound resource will return a dictionary with the following structure:
+If file description was provided, on successful upload, the Upload Sound resource will return a dictionary with the following structure:
 
 ::
 
   {
-    "details": "File successfully uploaded (<file size>)",
+    "detail": "Audio file successfully uploaded and described (now pending processing and moderation)",
+    "id": "<sound_id for the uploaded and described sound instance>"
+  }
+
+Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
+Therefore, accessing the Sound Instance using the returned ``id`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
+
+If file description was NOT provided, on successful upload, the Upload Sound resource will return a dictionary with the following structure:
+
+::
+
+  {
+    "detail": "Audio file successfully uploaded (<file size>, now pending description)",
     "filename": "<filename of the uploaded audio file>"
   }
 
-You will probably want to store the content of the ``filename`` field because it will be needed to later describe the sound.
-Alternatively, you can obtain a list of uploaded sounds pending description using the :ref:`sound-uploaded-files-pending-description` resource.
+In that case, you will probably want to store the content of the ``filename`` field because
+it will be needed to later describe the sound using the :ref:`sound-describe` resource.
+Alternatively, you can retrieve later a the filenames of uploads pending description using the :ref:`sound-pending-uploads` resource.
 
 
 Examples
 --------
 
 {{examples_UploadSound}}
-
-.. _sound-uploaded-files-pending-description:
-
-Uploads Pending Description (OAuth2 required)
-=========================================================
-
-::
-
-  GET /apiv2/sounds/not_yet_described/
-
-This resource allows you to retrieve a list of audio files uploaded by a the Freesound user logged in using OAuth2 that have not yet been described.
-This method requires :ref:`oauth-authentication`.
-
-
-Response
---------
-
-The Uploads Pending Description resource returns a dictionary with the following structure:
-
-::
-
-  {
-    "filenames": [
-        "<filename #1>",
-        "<filename #2>",
-        ...
-    ]
-  }
-
-The filenames returned by this resource are used as file identifiers in the :ref:`sound-describe` resource.
-
-
-Examples
---------
-
-{{examples_NotYetDescribedUploadedSounds}}
 
 
 .. _sound-describe:
@@ -616,10 +654,10 @@ Describe Sound (OAuth2 required)
 
   POST /apiv2/sounds/describe/
 
-This resource allows you to describe a previously uploaded audio file.
+This resource allows you to describe a previously uploaded audio file that has not yet been described.
 This method requires :ref:`oauth-authentication`.
 Note that after a sound is described, it still needs to be processed and moderated by the team of Freesound moderators, therefore it will not yet appear in Freesound.
-You can obtain a list of sounds uploaded and described by the user logged in using OAuth2 but still pending processing and moderation using the :ref:`sound-pending-moderation` resource.
+You can obtain a list of sounds uploaded and described by the user logged in using OAuth2 but still pending processing and moderation using the :ref:`sound-pending-uploads` resource.
 
 
 Request parameters
@@ -630,7 +668,7 @@ A request to the Describe Sound resource must include the following POST paramet
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
-``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-uploaded-files-pending-description` resource.
+``upload_filename``   string            The filename of the sound to describe. Must match with one of the filenames returned in :ref:`sound-pending-uploads` resource.
 ``name``              string            (OPTIONAL) The name that will be given to the sound. If not provided, filename will be used.
 ``tags``              string            The tags that will be assigned to the sound. Separate tags with spaces and join multi-words with dashes (e.g. "tag1 tag2 tag3 cool-tag4").
 ``description``       string            A textual description of the sound.
@@ -648,15 +686,14 @@ If the audio file is described successfully, the Describe Sound resource will re
 ::
 
   {
-    "details": "Sound successfully described (now pending moderation)",
-    "uri": "<URI of the described sound instance>"
+    "detail": "Sound successfully described (now pending processing and moderation)",
+    "id": "<sound_id for the uploaded and described sound instance>"
   }
 
 Note that after the sound is described, it still needs to be processed and moderated by the team of Freesound moderators.
-Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
+Therefore, accessing the Sound Instance using the returned ``id`` will lead to a 404 Not Found error until the sound is approved by the moderators.
 
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
-The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
 
 Examples
@@ -665,8 +702,68 @@ Examples
 {{examples_DescribeSound}}
 
 
-.. _sound-edit-description:
+.. _sound-pending-uploads:
 
+Pending Uploads (OAuth2 required)
+=========================================================
+
+::
+
+  GET /apiv2/sounds/pending_uploads/
+
+This resource allows you to retrieve a list of audio files uploaded by a the Freesound user logged in using OAuth2 that have not yet been described, processed or moderated.
+In Fressound, when sounds are uploaded they first need to be described by their uploaders.
+After the description step, sounds are automatically processed and then enter the moderation phase, where a team of human moderators either accepts or rejects the upload.
+Using this resource, your application can keep track of user uploads status in Freesound.
+This method requires :ref:`oauth-authentication`.
+
+
+Response
+--------
+
+The Pending Uploads resource returns a dictionary with the following structure:
+
+::
+
+  {
+    "pending_description": [
+        "<filename #1>",
+        "<filename #2>",
+        ...
+    ],
+    "pending_processing": [
+        <sound #1>,
+        <sound #2>,
+        ...
+    ],
+    "pending_moderation": [
+        <sound #1>,
+        <sound #2>,
+        ...
+    ],
+  }
+
+The filenames returned under "pending_description" field are used as file identifiers in the :ref:`sound-describe` resource.
+Each sound entry either under "pending_processing" or "pending_moderation" fields consists of a minimal set
+of information about that sound including the ``id``, ``name``, ``tags``, ``description``, ``created`` and ``license`` fields
+that you would find in a :ref:`sound-instance-response`.
+
+Sounds under "pending_processing" contain an extra ``processing_state`` field that indicates the status of the sound in the
+processing step. Processing is done automatically in Freesound right after sounds are described, and it normally takes less than a minute.
+Therefore, you should normally see that the list of sounds under "pending_processing" is empty. However, if there are
+errors during processing, uploaded sounds will remain in this category exhibiting a ``processing_state`` equal to ``Failed``.
+
+Sounds under "pending_moderation" also contain an extra ``images`` field containing the uris of the waveform and spectrogram
+images of the sound as described in :ref:`sound-instance-response`.
+
+
+Examples
+--------
+
+{{examples_PendingUploads}}
+
+
+.. _sound-edit-description:
 
 Edit Sound Description (OAuth2 required)
 =========================================================
@@ -710,115 +807,42 @@ If sound description is updated successfully, the Edit Sound Description resourc
 ::
 
   {
-    "details": "Description of sound <sound_id> successfully edited",
-    "uri": "<URI of the described sound instance>"
+    "detail": "Description of sound <sound_id> successfully edited"
   }
 
 
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
-The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
-
-
-
-
-.. _sound-pending-moderation:
-
-Uploaded Sounds Awaiting Moderation in Freesound (OAuth2 required)
-==================================================================
-
-::
-
-  GET /apiv2/sounds/uploads_pending_moderation/
-
-This resource allows you to retrieve a list of sounds that have been uploaded and described by the user logged in using OAuth2, but that still need to be processed and moderated.
-This method requires :ref:`oauth-authentication`.
-
-Response
---------
-
-The response to the Uploaded Sounds Awaiting Moderation in Freesound resource is a dictionary with the following structure:
-
-::
-
-  {
-    "sounds pending processing": [
-        <sound #1>,
-        <sound #2>,
-        ...
-    ],
-    "sounds pending moderation": [
-        <sound #1>,
-        <sound #2>,
-        ...
-    ],
-  }
-
-Each sound entry either in "sounds pending processing" or "sounds pending moderation" fields consists of a minimal set
-of information about that sound including the ``name``, ``tags``, ``description``, ``created`` and ``license`` fields
-that you would find in a :ref:`sound-instance-response`.
-Sounds under "sounds pending moderation" also contain an extra ``images`` field containing the uris of the waveform and spectrogram
-images of the sound as described in :ref:`sound-instance-response`.
-
-Processing is done automatically in Freesound right after sounds are described, and it normally takes less than a minute.
-Therefore, you should normally see that the list of sounds under "sounds pending processing" is empty.
-
-
-Examples
---------
-
-{{examples_UploadedAndDescribedSoundsPendingModeration}}
-
-
-.. _sound-upload-and-describe:
-
-Upload and Describe Sound (OAuth2 required)
-=========================================================
-
-::
-
-  POST /apiv2/sounds/upload_and_describe/
-
-This resource allows you to upload an audio file into Freesound and describe it at once.
-In order for the file to appear in Freesound, it will still need to be processed and moderated by the Freesound moderators
-just like any other sound uploaded using the Freessound website rather than the API.
-The author of the uploaded sound will be the user authenticated via Oauth2, therefore this method requires :ref:`oauth-authentication`.
-
-A list of uploaded and described sounds pending processing and moderation can be obtained using the :ref:`sound-pending-moderation` resource.
-
-Request
--------
-
-A request to the Upload and Describe Sound resource must include the same POST parameters as in :ref:`sound-describe`,
-with the exception that instead of the parameter ``upload_filename``, you must attach an audio file using an ``audiofile`` parameter like in :ref:`sound-upload`.
-Supported file formats include .wav, .aif, .flac, .ogg and .mp3.
-
-Response
---------
-
-If the audio file is upload and described successfully, the Upload and Describe Sound resource will return a dictionary with the following structure:
-
-::
-
-  {
-    "details": "Audio file successfully uploaded and described (now pending moderation)",
-    "uri": "<URI of the uploaded and described sound instance>"
-  }
-
-Note that after the sound is uploaded and described, it still needs to be processed and moderated by the team of Freesound moderators.
-Therefore, the url returned in parameter ``uri`` will lead to a 404 Not Found error until the sound is approved by the moderators.
-
-If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned described the errors.
-The dictionary will include an entry for every parameter that returned errors. That entry will include a list of string containing the errors that occurred (normally it is only one error).
-
-
-Examples
---------
-
-{{examples_UploadAndDescribeSound}}
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
 
 
 Bookmark Sound (OAuth2 required)
 =========================================================
+
+::
+
+  POST /apiv2/sounds/<sound_id>/bookmark/
+
+This resource allows you to bookmark an existing sound.
+The sound will be bookmarked by the Freesound user logged in using OAuth2, therefore this method requires :ref:`oauth-authentication`.
+
+
+Request parameters
+------------------
+
+A request to the Bookmark Sound resource can include the following POST parameters:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``name``              string            (OPTIONAL) The new name that will be given to the bookmark (if not specified, sound name will be used).
+``category``          string            (OPTIONAL) The name of the category under the bookmark will be classified (if not specified, bookmark will have no category). If the specified category does not correspond to any bookmark category of the user, a new one will be created.
+====================  ================  ====================================================================================
+
+
+Response
+--------
+
+If the bookmark is successfully created, the Bookmark Sound resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully bookmarked.
+
 
 Examples
 --------
@@ -829,6 +853,34 @@ Examples
 Rate Sound (OAuth2 required)
 =========================================================
 
+::
+
+  POST /apiv2/sounds/<sound_id>/rate/
+
+This resource allows you to rate an existing sound.
+The sound will be rated by the Freesound user logged in using OAuth2, therefore this method requires :ref:`oauth-authentication`.
+
+
+Request parameters
+------------------
+
+A request to the Rate Sound resource must only include a single POST parameter:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``rating``            integer           Integer between 0 and 5 (both included) representing the rating for the sound (i.e. 5 = maximum rating).
+====================  ================  ====================================================================================
+
+
+Response
+--------
+
+If the sound is successfully rated, the Rate Sound resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully rated.
+If some of the required fields are missing or some of the provided fields are badly formatted, a 400 Bad Request response will be returned with a ``detail`` field describing the errors.
+Note that in Freesound sounds can only be rated once by a single user. If attempting to rate a sound twice with the same user, a 409 Conflict response will be returned with a ``detail`` field indicating that user has already rated the sound.
+
+
 Examples
 --------
 
@@ -837,6 +889,31 @@ Examples
 
 Comment Sound (OAuth2 required)
 =========================================================
+
+::
+
+  POST /apiv2/sounds/<sound_id>/comment/
+
+This resource allows you to post a comment to an existing sound.
+The comment will appear to be made by the Freesound user logged in using OAuth2, therefore this method requires :ref:`oauth-authentication`.
+
+
+Request parameters
+------------------
+
+A request to the Comment Sound resource must only include a single POST parameter:
+
+====================  ================  ====================================================================================
+Name                  Type              Description
+====================  ================  ====================================================================================
+``comment``           string            Comment for the sound.
+====================  ================  ====================================================================================
+
+
+Response
+--------
+
+If the bookmark is successfully created, the Comment Sound resource will return a dictionary with a single ``detail`` field indicating that the sound has been successfully commented.
 
 Examples
 --------
@@ -868,7 +945,6 @@ The User Instance response is a dictionary including the following properties/fi
 ========================  ================  ====================================================================================
 Name                      Type              Description
 ========================  ================  ====================================================================================
-``uri``                   URI               The URI for this user.
 ``url``                   URI               The URI for this users' profile on the Freesound website.
 ``username``              string            The username.
 ``about``                 string            The 'about' text of users' profile (if indicated).
@@ -942,7 +1018,7 @@ User Packs resource returns a paginated list of the packs created by a user, wit
     "previous": <link to the previous page of packs (null if none)>
   }
 
-Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack-instance`: response.
+Each pack entry consists of a dictionary with the same fields returned in the :ref:`pack_instance`: response.
 Packs are sorted according to their creation date (recent packs in the top of the list).
 Parameters ``page`` and ``page_size`` can be used just like in :ref:`sound-list-response` to deal with the pagination of the response.
 
@@ -1033,7 +1109,7 @@ Me (information about user authenticated using OAuth2, OAuth2 required)
 
   GET /apiv2/me/
 
-This resource returns basic information of a user that has logged in using the Oauth2 procedure.
+This resource returns basic information of a user that has logged in using the OAuth2 procedure.
 It can be used by applications to be able to identify which Freesound user has logged in.
 
 Response
@@ -1067,11 +1143,11 @@ The Pack Instance response is a dictionary including the following properties/fi
 Name                  Type              Description
 ====================  ================  ====================================================================================
 ``id``                number            The unique identifier of this pack.
-``uri``               URI               The URI for this pack.
 ``url``               URI               The URI for this pack on the Freesound website.
 ``description``       string            The description the user gave to the pack (if any).
 ``created``           string            The date when the pack was created (e.g. "2014-04-16T20:07:11.145").
 ``name``              string            The name user gave to the pack.
+``user``              URI               The URI for the creator of the pack.
 ``num_sounds``        number            The number of sounds in the pack.
 ``sounds``            URI               The URI for a list of sounds in the pack.
 ``num_downloads``     number            The number of times this pack has been downloaded.
@@ -1089,7 +1165,7 @@ Pack Sounds
 
 ::
 
-  GET /apiv2/packs/<pack_id>/
+  GET /apiv2/packs/<pack_id>/sounds/
 
 This resource allows the retrieval of the list of sounds included in a pack.
 

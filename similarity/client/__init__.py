@@ -98,7 +98,7 @@ class Similarity():
         return r
 
     @classmethod
-    def api_search(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None):
+    def api_search(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None, in_ids=None):
         url = _BASE_URL + _URL_API_SEARCH + '?'
         if target_type:
             url += '&target_type=' + str(target_type)
@@ -114,6 +114,8 @@ class Similarity():
             url += '&num_results=' + str(num_results)
         if offset:
             url += '&offset=' + str(offset)
+        if in_ids:
+            url += '&in_ids=' + str(in_ids)
 
         j = _get_url_as_json(url, data=file)
         r = _result_or_exception(j)
@@ -122,7 +124,7 @@ class Similarity():
 
     @classmethod
     def add(cls, sound_id, yaml_path):
-        url = _BASE_URL + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id)  + '&location=' + str(yaml_path)
+        url = _BASE_URL + _URL_ADD_POINT + '?' + 'sound_id=' + str(sound_id) + '&location=' + str(yaml_path)
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod

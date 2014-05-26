@@ -1,12 +1,14 @@
 .. _resources_apiv1:
 
-Resources (APIv1)
-<<<<<<<<<<<<<<<<<
+APIv1 Resources
+<<<<<<<<<<<<<<<
+
+.. contents::
+    :depth: 3
+
 
 Sounds
 >>>>>>
-
-
 
 
 Sound Search resource

@@ -265,6 +265,15 @@ class GaiaWrapper:
 
         logger.info('Getting descriptors for points %s' % ','.join([str(name) for name in point_names]))
 
+        # Add dot '.' at the beginning of descriptor names if not present
+        if descriptor_names:
+            descriptor_names_aux = list()
+            for name in descriptor_names:
+                if name[0] != '.':
+                    descriptor_names_aux.append('.' + name)
+                else:
+                    descriptor_names_aux.append(name)
+            descriptor_names = descriptor_names_aux[:]
         data = dict()
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names, only_leaf_descriptors=only_leaf_descriptors)
         for point_name in point_names:
@@ -506,7 +515,7 @@ class GaiaWrapper:
         return {'error': False, 'result': {'results': results, 'count': count}}
 
 
-    def api_search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset):
+    def api_search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset, in_ids):
 
         # Check if index has sufficient points
         size = self.original_dataset.size()
@@ -644,13 +653,20 @@ class GaiaWrapper:
             log_message += ' with filter: %s' % str(filter)
         logger.info(log_message)
 
+        # if in_ids is specified, edit the filter accordingly
+        if in_ids:
+            if not filter:
+                filter = 'WHERE point.id IN ("' + '", "'.join(in_ids) + '")'
+            else:
+                filter += ' AND point.id IN ("' + '", "'.join(in_ids) + '")'
+
         # Do query!
         try:
             search = self.view.nnSearch(query, metric, str(filter))
             results = search.get(num_results, offset=offset)
             count = search.size()
         except Exception, e:
-            return {'error': True, 'result': 'Server error', 'status_code': SERVER_ERROR_CODE}
+            return {'error': True, 'result': 'Similarity server error', 'status_code': SERVER_ERROR_CODE}
 
         note = None
         if target_type == 'file':

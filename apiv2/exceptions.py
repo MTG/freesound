@@ -54,6 +54,15 @@ class BadRequestException(APIException):
         self.detail = msg
 
 
+class ConflictException(APIException):
+    detail = None
+    status_code = status.HTTP_409_CONFLICT
+
+    def __init__(self, msg="Conflict"):
+        logger.error('<%i Conflict> %s' % (self.status_code, msg))
+        self.detail = msg
+
+
 class UnauthorizedException(APIException):
     detail = None
     status_code = status.HTTP_401_UNAUTHORIZED

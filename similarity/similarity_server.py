@@ -39,7 +39,7 @@ def server_interface(resource):
         'contains': resource.contains,  # sound_id
         'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descritor_names (optional), normalization (optional)
         'nnsearch': resource.nnsearch,  # sound_id, num_results (optional), preset (optional)
-        'nnrange': resource.nnrange,  # target, filter, num_results (optional), preset (optional)
+        'nnrange': resource.nnrange,  # target, filter, num_results (optional), preset (optional), in_ids (optional)
         'api_search': resource.api_search,
         'save': resource.save,  # filename (optional)
     }
@@ -175,7 +175,7 @@ class SimilarityServer(resource.Resource):
                                                   use_file_as_target=use_file_as_target,
                                                   descriptors_data=descriptors_data))
 
-    def api_search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0]):
+    def api_search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0], in_ids=None):
         '''
         This function is used as an interface to all search-related gaia funcionalities we use in freesound.
         This function allows the definition of a query point that will be used by gaia as the target for the search (i.e.
@@ -205,6 +205,9 @@ class SimilarityServer(resource.Resource):
                 * this parameter is bypassed with the descriptor_values target type, as the list is automatically built with the descriptors specified in the target
             - num_results, offset: to control the number of returned results and the offset since the first result (so pagination is possible)
         '''
+
+        if in_ids:
+            in_ids = in_ids[0].split(',')
 
         if not target and not filter:
             if target_type:
@@ -282,7 +285,8 @@ class SimilarityServer(resource.Resource):
                                               preset,
                                               metric_descriptor_names,
                                               num_results,
-                                              offset))
+                                              offset,
+                                              in_ids))
 
 
     def save(self, request, filename=None):

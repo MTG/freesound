@@ -1,7 +1,7 @@
 .. _authentication:
 
-Authentication (APIv2)
-<<<<<<<<<<<<<<<<<<<<<<
+Authentication
+<<<<<<<<<<<<<<
 
 APIv2 offers two authentication strategies: Token based authentication and OAuth2.
 
@@ -76,7 +76,7 @@ Name                    Description
 ======================  =====================================================
 ``client_id``           Client id of your API credential (not the client secret!)
 ``response_type``       Must be 'code'
-``state``               Arbitrary string that will be included as a GET parameter in the redirect call. This parameter is **not required**.
+``state``               (OPTIONAL) Arbitrary string that will be included as a GET parameter in the redirect call.
 ======================  =====================================================
 
 Example:
@@ -97,6 +97,17 @@ permission to your application to access their data (Fig. 2).
    :align: center
 
    Fig 2. Permission request (Step 1)
+
+
+In some situations it might be desirable that users had to login in Freesound even if they are already logged in.
+If you want to implement this behaviour, you can use an alternative url for Step 1 of the OAuth2 flow which forces a user logout before proceeding to the authorization process.
+Therefore, instead of pointing users to ``https://www.freesound.org/apiv2/oauth2/authorize/`` (and adding the appropriate parameters),
+you should point users to:
+
+::
+
+  https://www.freesound.org/apiv2/oauth2/logout_and_authorize/?...
+
 
 
 Step 2
@@ -190,7 +201,7 @@ You can also use this authentication mechanism to access non OAuth2 required API
 
 Similarly to authorization codes, access tokens do have a limited **lifetime of 24 hours**. Notice that access token response
 from Step 3 includes an ``expires_in`` parameter that indicates that lifetime in seconds. After that time, the token will
-be invalidated and any request to the API using the token will return a 401 (Unauthorized) response showing an 'Invalid token' error.
+be invalidated and any request to the API using the token will return a 401 (Unauthorized) response showing an 'Expired token' error.
 If that happens, you can obtain a new access token either by starting the whole authentication process again or by requesting
 a new access token using the **refresh token** that was also issued to you when you got the access token (``refresh_token`` parameter above).
 
@@ -205,6 +216,10 @@ with the authorization code). See the following example:
 The response to this request will be a brand new access token that you can use in further API calls. It will also include
 a new refresh token that you will need when the newly given access token expires. There can only exist one access token per
 application/user pair, therefore newly created access tokens overwrite existing ones if they relate the same application/user pair.
+
+Freesound users that have granted access to your application, can revoke this access at any time using their settings page in Freesound.org.
+Revoking the access means invalidating the access token (and refresh token) that was issued to your application.
+In that case, attepting to use the access token will result in a 401 (Unauthorized) response showing an 'Invalid token' error.
 
 
 Managing access tokens and multiple users

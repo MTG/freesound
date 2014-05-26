@@ -27,20 +27,20 @@ from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
+import combined_search_strategies
 from sounds.models import Sound, Pack, License
 from freesound.utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from freesound.utils.filesystem import md5file
 from freesound.utils.text import slugify
-from exceptions import ServerErrorException, OtherException, UnauthorizedException, InvalidUrlException, NotFoundException, RequiresHttpsException, BadRequestException
+from exceptions import *
 from examples import examples
 import shutil
 import settings
 import os
 from freesound.utils.similarity_utilities import get_sounds_descriptors
 from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter
-from search.views import search_prepare_query, search_prepare_sort
-from apiv2.forms import SEARCH_SORT_OPTIONS_API
+from search.views import search_prepare_query
 from freesound.utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
 from urllib import unquote, quote
@@ -244,7 +244,7 @@ class GenericAPIView(RestFrameworkGenericAPIView):
 
 
 class OauthRequiredAPIView(RestFrameworkGenericAPIView):
-    throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS
+    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
@@ -318,36 +318,11 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 # Search utilities
 ##################
 
-def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_ids=False):
-
-    MERGE_STRATEGY = 'filter_solr_results_repeat'
-    MAX_SOLR_FILTER_IDS = 350
-    if max_solr_filter_ids:
-        MAX_SOLR_FILTER_IDS = min(int(max_solr_filter_ids), MAX_SOLR_FILTER_IDS*2)
-    MAX_REPEAT = 7
-    if max_repeat:
-        MAX_REPEAT = min(int(max_repeat), MAX_REPEAT*2)
-    '''
-    In combined search queries we need to merge solr and gaia results.
-    MERGE_STRATEGY determines which strategy we follow to approach this:
-    - 'merge_all': merge all strategy will get all results from solr and all results from gaia and then combine the ids
-      in a unique list. The advantage of this strategy is that it returns the exact total number of matches for the query.
-      The disadvantage is that depending on the query it can become really slow, and sometimes throwing timeouts.
-    - 'filter_solr_results': in this strategy we first get gaia results and then perform a solr query restricted to the
-      results returned by gaia. Given that filtering in solr results must be done using OR clauses in a filter id field,
-      we can not pass a very big number of ids as the performance is severely affected. The standard limit of OR clauses in a
-      solr query is 1024 (parameter <maxBooleanClauses>1024</maxBooleanClauses> in solrconfig.xml). Therefore, the query can
-      return a maximum of 1024 results. We actually set this parameter using MAX_SOLR_FILTER_IDS, so we can control the performance.
-      This strategy is faster than 'merge_all' and the response time is under control, but we can not get all possible query matches.
-    - 'filter_solr_results_repeat': is like the previous strategy but repeating the whole process MAX_REPEAT times so
-      that we increase the probability of obtaining matches.
-    '''
-
-    distance_to_target_data = None
+def api_search(search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized'):
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
         # No input data for search, return empty results
-        return [], 0, None, None, None
+        return [], 0, None, None, None, None, None
 
     if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
         # Standard content-based search
@@ -366,7 +341,7 @@ def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_
                 distance_to_target_data = dict(results)
 
             gaia_count = count
-            return gaia_ids, gaia_count, distance_to_target_data, None, note
+            return gaia_ids, gaia_count, distance_to_target_data, None, note, None, None
         except SimilarityException, e:
             if e.status_code == 500:
                 raise ServerErrorException(msg=e.message)
@@ -401,7 +376,7 @@ def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_
                 # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
                 more_from_pack_data = dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name']]) for element in result.docs])
 
-            return solr_ids, solr_count, None, more_from_pack_data, None
+            return solr_ids, solr_count, None, more_from_pack_data, None, None, None
 
         except SolrException, e:
             raise BadRequestException(msg='Search server error: %s' % e.message)
@@ -410,154 +385,9 @@ def api_search(search_form, target_file=None, max_repeat=False, max_solr_filter_
 
     else:
         # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
-        # Get gaia results
-        try:
-            max_gaia_results = 99999999
-            if MERGE_STRATEGY == 'filter_solr_results':
-                # If using 'filter_solr_results' strategy there is no need to get all gaia results as we will only
-                # be able to use MAX_SOLR_FILTER_IDS when filtering in solr
-                max_gaia_results = MAX_SOLR_FILTER_IDS
-            elif MERGE_STRATEGY == 'filter_solr_results_repeat':
-                max_gaia_results = MAX_SOLR_FILTER_IDS * MAX_REPEAT
-
-            results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
-                                                         filter=search_form.cleaned_data['descriptors_filter'],
-                                                         num_results=max_gaia_results,
-                                                         offset=0,
-                                                         target_file=target_file)
-            gaia_ids = [id[0] for id in results]
-            distance_to_target_data = None
-            if search_form.cleaned_data['target'] or target_file:
-                # Save sound distance to target into view class so it can be accessed by the serializer
-                # We only do that when a target is specified (otherwise there is no meaningful distance value)
-                distance_to_target_data = dict(results)
-
-        except SimilarityException, e:
-            if e.status_code == 500:
-                raise ServerErrorException(msg=e.message)
-            elif e.status_code == 400:
-                raise BadRequestException(msg=e.message)
-            elif e.status_code == 404:
-                raise NotFoundException(msg=e.message)
-            else:
-                raise ServerErrorException(msg='Similarity server error: %s' % e.message)
-        except Exception, e:
-            raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.')
-
-
-        # Get solr results
-        solr = Solr(settings.SOLR_URL)
-        solr_ids = []
-        solr_count = None
-        more_from_pack_data = None
-        if MERGE_STRATEGY == 'merge_all' and search_form.cleaned_data['group_by_pack']:
-            more_from_pack_data = dict()
-        else:
-            search_form.cleaned_data['group_by_pack'] = None
-
-        try:
-            if MERGE_STRATEGY == 'merge_all':
-                PAGE_SIZE = 1000
-                current_page = 1
-                # Iterate over solr results pages
-                # if fast_computation == true, we only get the first page but with a bigger size
-                while len(solr_ids) < solr_count or solr_count == None:
-                    query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                                 unquote(search_form.cleaned_data['filter']),
-                                                 search_form.cleaned_data['sort'],
-                                                 current_page,
-                                                 PAGE_SIZE,
-                                                 grouping=search_form.cleaned_data['group_by_pack'],
-                                                 include_facets=False,
-                                                 grouping_pack_limit=1000)  # We want to get all results in the same group so we can filter them out with content data and provide accurate 'more_from_pack' counts
-                    result = SolrResponseInterpreter(solr.select(unicode(query)))
-                    solr_ids += [element['id'] for element in result.docs]
-                    solr_count = result.num_found
-                    if search_form.cleaned_data['group_by_pack']:
-                        # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
-                        more_from_pack_data.update(dict([(int(element['id']), [element['more_from_pack'], element['pack_id'], element['pack_name'], element['other_ids']]) for element in result.docs]))
-                    current_page += 1
-
-            elif MERGE_STRATEGY == 'filter_solr_results':
-                PAGE_SIZE = MAX_SOLR_FILTER_IDS
-                # Update solr filter with first MAX_SOLR_FILTER_IDS ids from gaia and construct query
-                ids_filter = 'id:(' + ' OR '.join([str(item) for item  in gaia_ids[:MAX_SOLR_FILTER_IDS]]) + ')'
-                query_filter = search_form.cleaned_data['filter']
-                if query_filter:
-                    query_filter += ' %s' % ids_filter
-                else:
-                    query_filter = ids_filter
-                query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                                     unquote(query_filter),
-                                                     search_form.cleaned_data['sort'],
-                                                     1,
-                                                     PAGE_SIZE,
-                                                     grouping=False,
-                                                     include_facets=False)
-                result = SolrResponseInterpreter(solr.select(unicode(query)))
-                solr_ids += [element['id'] for element in result.docs]
-            elif MERGE_STRATEGY == 'filter_solr_results_repeat':
-                PAGE_SIZE = MAX_SOLR_FILTER_IDS
-                ids_filters = []
-                for i in range(0,len(gaia_ids), MAX_SOLR_FILTER_IDS):
-                    ids_filter = 'id:(' + ' OR '.join([str(item) for item  in gaia_ids[i:i + MAX_SOLR_FILTER_IDS]]) + ')'
-                    ids_filters.append(ids_filter)
-                for count, ids_filter in enumerate(ids_filters):
-                    if count == MAX_REPEAT:
-                        break
-                    query_filter = search_form.cleaned_data['filter']
-                    if query_filter:
-                        query_filter += ' %s' % ids_filter
-                    else:
-                        query_filter = ids_filter
-                    query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                                     unquote(query_filter),
-                                                     search_form.cleaned_data['sort'],
-                                                     1,
-                                                     PAGE_SIZE,
-                                                     grouping=False,
-                                                     include_facets=False)
-                    result = SolrResponseInterpreter(solr.select(unicode(query)))
-                    solr_ids += [element['id'] for element in result.docs]
-        except SolrException, e:
-            raise ServerErrorException(msg='Search server error: %s' % e.message)
-        except Exception, e:
-            raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
-
-        if MERGE_STRATEGY == 'merge_all':
-            # If results were grouped by pack, we need to update the counts of the 'more_from_pack' property, as they do not
-            # consider the gaia search result and will not be accurate.
-            # If the merge strategy is not 'merge_all' we don't do that as group by pack is not enabled
-            if search_form.cleaned_data['group_by_pack']:
-                for key, value in more_from_pack_data.items():
-                    ids_from_pack_in_gaia_results = list(set(more_from_pack_data[key][3]).intersection(gaia_ids))
-                    if ids_from_pack_in_gaia_results:
-                        # Update more_from_pack_data values
-                        more_from_pack_data[key][0] = len(ids_from_pack_in_gaia_results)
-                        more_from_pack_data[key][3] = ids_from_pack_in_gaia_results
-                    else:
-                        # Set it to zero
-                        more_from_pack_data[key][0] = 0
-                        more_from_pack_data[key][3] = []
-
-        if search_form.cleaned_data['target'] or target_file:
-            # Combined search, sort by gaia_ids
-            results_a = gaia_ids
-            results_b = solr_ids
-        else:
-            # Combined search, sort by solr ids
-            results_a = solr_ids
-            results_b = gaia_ids
-
-        # Combine results
-        results_b_set = set(results_b)
-        combined_ids = [id for id in results_a if id in results_b_set]
-        combined_count = len(combined_ids)
-        return combined_ids[(search_form.cleaned_data['page'] - 1) * search_form.cleaned_data['page_size']:search_form.cleaned_data['page'] * search_form.cleaned_data['page_size']], \
-               combined_count, \
-               distance_to_target_data, \
-               more_from_pack_data, \
-               note
+        # Strategies are implemented in 'combined_search_strategies'
+        strategy = getattr(combined_search_strategies, merging_strategy)
+        return strategy(search_form, target_file=target_file, extra_parameters=extra_parameters)
 
 
 ###############
@@ -803,7 +633,8 @@ def create_sound_object(user, original_sound_fields):
 
     # 8 set description, tags
     sound.description = sound_fields['description']
-    sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
+    sound.set_tags(sound_fields['tags'])
+    #sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
 
     # 9 save!
     sound.save()

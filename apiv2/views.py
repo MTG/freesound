@@ -22,6 +22,7 @@
 
 
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
@@ -89,7 +90,7 @@ class TextSearch(GenericAPIView):
 
         # Get search results
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form)
+            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = api_search(search_form)
         except APIException, e:
             raise e
         except Exception, e:
@@ -166,7 +167,7 @@ class ContentSearch(GenericAPIView):
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file)
+            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = api_search(search_form, target_file=analysis_file)
         except APIException, e:
             raise e
         except Exception, e:
@@ -224,7 +225,7 @@ class ContentSearch(GenericAPIView):
             self.analysis_file = analysis_file
             return self.get(request,  *args, **kwargs)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CombinedSearch(GenericAPIView):
@@ -236,6 +237,7 @@ class CombinedSearch(GenericAPIView):
 
     serializer_class = SimilarityFileSerializer
     analysis_file = None
+    merging_strategy = 'merge_optimized'  # 'filter_both', 'merge_all'
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('combined_search'))
@@ -245,47 +247,69 @@ class CombinedSearch(GenericAPIView):
         if not search_form.is_valid():
             raise ParseError
         if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
-           raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
+            raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
+        if (search_form.cleaned_data['target'] and search_form.cleaned_data['query']):
+            raise BadRequestException(msg='Request parameters \'target\' and \'query\' can not be used at the same time.')
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException
 
         # Get search results
-        max_repeat = int(request.QUERY_PARAMS.get('max_repeat', 0)) # Max repeat is an additional parameter to tweak performance in combined search
-        max_solr_filter_ids = int(request.QUERY_PARAMS.get('max_solr_filter_ids', 0)) # Max repeat is an additional parameter to tweak performance in combined search
+        extra_parameters = dict()
+        for key, value in request.QUERY_PARAMS.items():
+            if key.startswith('cs_'):
+                extra_parameters[key] = int(value)
+
         analysis_file = None
         if self.analysis_file:
             analysis_file = self.analysis_file.read()
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note = api_search(search_form, target_file=analysis_file, max_repeat=max_repeat, max_solr_filter_ids=max_solr_filter_ids)
+            results, \
+            count, \
+            distance_to_target_data, \
+            more_from_pack_data, \
+            note, \
+            params_for_next_page, \
+            debug_note \
+                = api_search(search_form,
+                             target_file=analysis_file,
+                             extra_parameters=extra_parameters,
+                             merging_strategy=self.merging_strategy)
         except APIException, e:
             raise e
         except Exception, e:
             logger_error.error('<500 Server error unexpected> %s' % str(e))
             raise ServerErrorException(msg='Unexpected error')
 
-        # Paginate results
-        paginator = ApiSearchPaginator(results, count, search_form.cleaned_data['page_size'])
-        if search_form.cleaned_data['page'] > paginator.num_pages and count != 0:
-            raise NotFoundException
-        page = paginator.page(search_form.cleaned_data['page'])
+        if params_for_next_page:
+            extra_parameters.update(params_for_next_page)
+        if request.QUERY_PARAMS.get('debug', False):
+            extra_parameters.update({'debug': 1})
+        extra_parameters_string = ''
+        if extra_parameters:
+            for key, value in extra_parameters.items():
+                extra_parameters_string += '&%s=%s' % (key, str(value))
+
         response_data = dict()
         if self.analysis_file:
             response_data['target_analysis_file'] = '%s (%i KB)' % (self.analysis_file._name, self.analysis_file._size/1024)
-        response_data['count'] = paginator.count
-        response_data['previous'] = None
-        response_data['next'] = None
-        if page['has_other_pages']:
-                if page['has_previous']:
-                    response_data['previous'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['previous_page_number'])
-                    if max_repeat:
-                        response_data['previous'] += '&max_repeat=%i' % max_repeat
-                if page['has_next']:
-                    response_data['next'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=page['next_page_number'])
-                    if max_repeat:
-                        response_data['next'] += '&max_repeat=%i' % max_repeat
+
+        # Build 'more' link (only add it if we know there might be more results)
+        if 'no_more_results' not in extra_parameters:
+            if self.merging_strategy == 'merge_optimized':
+                response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), include_page=False)
+            else:
+                num_pages = count / search_form.cleaned_data['page_size'] + int(count % search_form.cleaned_data['page_size'] != 0)
+                if search_form.cleaned_data['page'] < num_pages:
+                    response_data['more'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=search_form.cleaned_data['page'] + 1)
+                else:
+                    response_data['more'] = None
+            if extra_parameters_string:
+                response_data['more'] += '%s' % extra_parameters_string
+        else:
+            response_data['more'] = None
 
         # Get analysis data and serialize sound results
-        ids = [id for id in page['object_list']]
+        ids = results
         get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
         qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
         qs_sound_objects = dict()
@@ -298,10 +322,6 @@ class CombinedSearch(GenericAPIView):
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
-                if more_from_pack_data:
-                    if more_from_pack_data[sid][0]:
-                        sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-combined-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
-                        sound['n_from_same_pack'] = None #more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
             except:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.
@@ -311,6 +331,9 @@ class CombinedSearch(GenericAPIView):
 
         if note:
             response_data['note'] = note
+
+        if request.QUERY_PARAMS.get('debug', False):
+            response_data['debug_note'] = debug_note
 
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -322,7 +345,7 @@ class CombinedSearch(GenericAPIView):
             self.analysis_file = analysis_file
             return self.get(request,  *args, **kwargs)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############
@@ -385,7 +408,7 @@ class SimilarSounds(GenericAPIView):
 
         # Get search results
         similarity_sound_form.cleaned_data['target'] = str(sound_id)
-        results, count, distance_to_target_data, more_from_pack_data, note = api_search(similarity_sound_form)
+        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = api_search(similarity_sound_form)
 
         # Paginate results
         paginator = ApiSearchPaginator(results, count, similarity_sound_form.cleaned_data['page_size'])
@@ -676,73 +699,92 @@ class DownloadPack(DownloadAPIView):
 # READ WRITE VIEWS
 ##################
 
+
 class UploadSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Upload a sound (only upload the file, without description/metadata).' \
+    __doc__ = 'Upload an audiofile and (optionally) describe  it.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#upload-sound-oauth2-required' % resources_doc_filename,
                  get_formatted_examples_for_view('UploadSound', 'apiv2-uploads-upload', max=5))
 
-    serializer_class = UploadAudioFileSerializer
+    serializer_class = UploadAndDescribeAudioFileSerializer
+    parser_classes = (MultiPartParser,)
 
     def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('uploading_sound'))
-        serializer = UploadAudioFileSerializer(data=request.DATA, files=request.FILES)
+        logger.info(self.log_message('upload_sound'))
+        serializer = UploadAndDescribeAudioFileSerializer(data=request.DATA, files=request.FILES)
         if serializer.is_valid():
             audiofile = request.FILES['audiofile']
-            
+            try:
+                handle_uploaded_file(self.user.id, audiofile)
+            except:
+                raise ServerErrorException
+            serializer.data['upload_filename'] = request.FILES['audiofile'].name
+
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'filename': audiofile.name,
-                                      'details': 'File successfully uploaded (%i)' % audiofile.size,
-                                      'note': 'File has not been saved as browseable API is only for testing purposes.'},
+                if serializer.is_providing_description(serializer.data):
+                    msg = 'Audio file successfully uploaded and described (now pending processing and moderation).'
+                else:
+                    msg = 'Audio file successfully uploaded (%i, now pending description).' % audiofile.size
+                return Response(data={'detail': msg,
+                                      'id': None,
+                                      'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                try:
-                    handle_uploaded_file(self.user.id, audiofile)
-                except:
-                    raise ServerErrorException
-                return Response(data={'filename': audiofile.name, 'details': 'File successfully uploaded (%i)' % audiofile.size}, status=status.HTTP_201_CREATED)
+                if serializer.is_providing_description(serializer.data):
+                    sound = create_sound_object(self.user, serializer.data)
+                    return Response(data={'detail': 'Audio file successfully uploaded and described (now pending processing and moderation).', 'id': int(sound.id) }, status=status.HTTP_201_CREATED)
+                else:
+                    return Response(data={'filename': audiofile.name, 'detail': 'Audio file successfully uploaded (%i, now pending description).' % audiofile.size}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class NotYetDescribedUploadedSounds(OauthRequiredAPIView):
-    __doc__ = 'List of uploaded files which have not yet been described.' \
+class PendingUploads(OauthRequiredAPIView):
+    __doc__ = 'List of uploaded files which have not yet been described, processed or moderated.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#uploads-pending-description-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('NotYetDescribedUploadedSounds', 'apiv2-uploads-not-described', max=5))
+              % (docs_base_url, '%s#pending-uploads-oauth2-required' % resources_doc_filename,
+                 get_formatted_examples_for_view('PendingUploads', 'apiv2-uploads-pending', max=5))
 
     def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('not_yet_described_uploaded_sounds'))
+        logger.info(self.log_message('pending_uploads'))
+
+        # Look for sounds pending description
         file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
-        filenames = [file_instance.name for file_id, file_instance in files.items()]
-        return Response(data={'filenames': filenames}, status=status.HTTP_200_OK)
+        pending_description = [file_instance.name for file_id, file_instance in files.items()]
 
+        # Look for sounds pending processing
+        qs = Sound.objects.filter(user=self.user).exclude(processing_state='OK').exclude(moderation_state='OK')
+        pending_processing = [self.get_minimal_sound_info(sound, processing_state=True) for sound in qs]
 
-class UploadedAndDescribedSoundsPendingModeration(OauthRequiredAPIView):
-    __doc__ = 'List of uploaded files which have already been descriebd and are procesing or awaiting moderation in Freesound.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#uploadeds_pending_moderation-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('UploadedAndDescribedSoundsPendingModeration', 'apiv2-uploads-not-moderated', max=5))
-
-    def get(self, request,  *args, **kwargs):
-        logger.info(self.log_message('uploadeds_pending_moderation'))
-        sounds_pending_processing = Sound.objects.filter(user=self.user, moderation_state='PE').exclude(processing_state='OK')
-        sounds_pending_moderation = Sound.objects.filter(user=self.user, processing_state='OK', moderation_state='PE')
+        # Look for sounds pending moderation
+        qs = Sound.objects.filter(user=self.user, processing_state='OK').exclude(moderation_state='OK')
+        pending_moderation = [self.get_minimal_sound_info(sound, images=True) for sound in qs]
 
         data_response = dict()
-        data_response['sounds pending processing'] = [self.get_minimal_sound_info(sound) for sound in sounds_pending_processing]
-        data_response['sounds pending moderation'] = [self.get_minimal_sound_info(sound, images=True) for sound in sounds_pending_moderation]
+        data_response['pending_description'] = pending_description
+        data_response['pending_processing'] = pending_processing
+        data_response['pending_moderation'] = pending_moderation
 
         return Response(data=data_response, status=status.HTTP_200_OK)
 
-    def get_minimal_sound_info(self, sound, images=False):
+    def get_minimal_sound_info(self, sound, images=False, processing_state=False):
         sound_data = dict()
         for key, value in SoundSerializer(sound, context=self.get_serializer_context()).data.items():
-            if key in ['name', 'tags', 'description', 'created', 'license']:
+            if key in ['id', 'name', 'tags', 'description', 'created', 'license']:
                 sound_data[key] = value
             if images:
                 if key == 'images':
                     sound_data[key] = value
+        if processing_state:
+            PROCESSING_STATE_API = {
+                'QU': 'Queued',
+                'PE': 'Pending',
+                'PR': 'Processing',
+                'FA': 'Failed',
+                'OK': 'Processed'
+            }
+            sound_data['processing_state'] = PROCESSING_STATE_API[str(sound.processing_state)]
+
         return sound_data
 
 
@@ -761,15 +803,15 @@ class DescribeSound(WriteRequiredGenericAPIView):
         serializer = SoundDescriptionSerializer(data=request.DATA, context={'not_yet_described_audio_files': filenames})
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Sound successfully described (now pending moderation)',
-                                      'uri': None,
+                return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).',
+                                      'id': None,
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                sound = create_sound_object(self.user, request.DATA)
-                return Response(data={'details': 'Sound successfully described (now pending moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_201_CREATED)
+                sound = create_sound_object(self.user, serializer.data)
+                return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).', 'id': int(sound.id)}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EditSoundDescription(WriteRequiredGenericAPIView):
@@ -795,39 +837,38 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
         serializer = EditSoundDescriptionSerializer(data=request.DATA)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Description of sound %s successfully edited' % sound_id,
-                                      'uri': None,
+                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id,
                                       'note': 'Description of sound %s has not been saved in the database as browseable API is only for testing purposes.' % sound_id},
                                 status=status.HTTP_200_OK)
             else:
-                if 'name' in request.DATA:
-                    if request.DATA['name']:
-                        sound.original_filename = request.DATA['name']
-                if 'description' in request.DATA:
-                    if request.DATA['description']:
-                        sound.description = request.DATA['description']
-                if 'tags' in request.DATA:
-                    if request.DATA['tags']:
-                        sound.set_tags([t.lower() for t in request.DATA['tags'].split(" ") if t])
-                if 'license' in request.DATA:
-                    if request.DATA['license']:
-                        license = License.objects.get(name=request.DATA['license'])
+                if 'name' in serializer.data:
+                    if serializer.data['name']:
+                        sound.original_filename = serializer.data['name']
+                if 'description' in serializer.data:
+                    if serializer.data['description']:
+                        sound.description = serializer.data['description']
+                if 'tags' in serializer.data:
+                    if serializer.data['tags']:
+                        sound.set_tags(serializer.data['tags'])
+                if 'license' in serializer.data:
+                    if serializer.data['license']:
+                        license = License.objects.get(name=serializer.data['license'])
                         sound.license = license
-                if 'geotag' in request.DATA:
-                    if request.DATA['geotag']:
-                        lat, lon, zoom = request.DATA['geotag'].split(',')
+                if 'geotag' in serializer.data:
+                    if serializer.data['geotag']:
+                        lat, lon, zoom = serializer.data['geotag'].split(',')
                         geotag = GeoTag(user=self.user,
                             lat=float(lat),
                             lon=float(lon),
                             zoom=int(zoom))
                         geotag.save()
                         sound.geotag = geotag
-                if 'pack' in request.DATA:
-                    if request.DATA['pack']:
-                        if Pack.objects.filter(name=request.DATA['pack'], user=self.user).exists():
-                            p = Pack.objects.get(name=request.DATA['pack'], user=self.user)
+                if 'pack' in serializer.data:
+                    if serializer.data['pack']:
+                        if Pack.objects.filter(name=serializer.data['pack'], user=self.user).exists():
+                            p = Pack.objects.get(name=serializer.data['pack'], user=self.user)
                         else:
-                            p, created = Pack.objects.get_or_create(user=self.user, name=request.DATA['pack'])
+                            p, created = Pack.objects.get_or_create(user=self.user, name=serializer.data['pack'])
                         sound.pack = p
                 sound.save()
 
@@ -839,40 +880,9 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
                 invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
 
-                return Response(data={'details': 'Description of sound %s successfully edited' % sound_id, 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id]))}, status=status.HTTP_200_OK)
+                return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id}, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UploadAndDescribeSound(WriteRequiredGenericAPIView):
-    __doc__ = 'Upload and describe (add metadata) a sound file.' \
-              '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
-              % (docs_base_url, '%s#upload-and-describe-sound-oauth2-required' % resources_doc_filename,
-                 get_formatted_examples_for_view('UploadAndDescribeSound', 'apiv2-uploads-upload-and-describe', max=5))
-
-    serializer_class = UploadAndDescribeAudioFileSerializer
-
-    def post(self, request,  *args, **kwargs):
-        logger.info(self.log_message('upload_and_describe_sound'))
-        serializer = UploadAndDescribeAudioFileSerializer(data=request.DATA, files=request.FILES)
-        if serializer.is_valid():
-            audiofile = request.FILES['audiofile']
-            try:
-                handle_uploaded_file(self.user.id, audiofile)
-            except:
-                raise ServerErrorException
-            request.DATA['upload_filename'] = request.FILES['audiofile'].name
-
-            if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Audio file successfully uploaded and described (now pending moderation)',
-                                      'uri': None,
-                                      'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
-                                status=status.HTTP_201_CREATED)
-            else:
-                sound = create_sound_object(self.user, request.DATA)
-                return Response(data={'details': 'Audio file successfully uploaded and described (now pending moderation)', 'uri': prepend_base(reverse('apiv2-sound-instance', args=[sound.id])) }, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookmarkSound(WriteRequiredGenericAPIView):
@@ -893,19 +903,23 @@ class BookmarkSound(WriteRequiredGenericAPIView):
         serializer = CreateBookmarkSerializer(data=request.DATA)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Successfully bookmarked sound %s' % sound_id,
+                return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id,
                                       'note': 'This bookmark has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                if ('category' in request.DATA):
-                    category = BookmarkCategory.objects.get_or_create(user=self.user, name=request.DATA['category'])
-                    bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=sound_id, category=category[0])
+                if serializer.data['name']:
+                    name = serializer.data['name']
                 else:
-                    bookmark = Bookmark(user=self.user, name=request.DATA['name'], sound_id=sound_id)
+                    name = sound.original_filename
+                if serializer.data['category']:
+                    category = BookmarkCategory.objects.get_or_create(user=self.user, name=serializer.data['category'])
+                    bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id, category=category[0])
+                else:
+                    bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id)
                 bookmark.save()
-                return Response(data={'details': 'Successfully bookmarked sound %s' % sound_id}, status=status.HTTP_201_CREATED)
+                return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RateSound(WriteRequiredGenericAPIView):
@@ -927,18 +941,18 @@ class RateSound(WriteRequiredGenericAPIView):
         if serializer.is_valid():
             try:
                 if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                    return Response(data={'details': 'Successfully rated sound %s' % sound_id,
+                    return Response(data={'detail': 'Successfully rated sound %s.' % sound_id,
                                           'note': 'This rating has not been saved in the database as browseable API is only for testing purposes.'},
                                     status=status.HTTP_201_CREATED)
                 else:
                     Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
-                    return Response(data={'details': 'Successfully rated sound %s' % sound_id}, status=status.HTTP_201_CREATED)
+                    return Response(data={'detail': 'Successfully rated sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
             except IntegrityError:
-                raise BadRequestException(msg='User has already rated sound %s' % sound_id)
+                raise ConflictException(msg='User has already rated sound %s' % sound_id)
             except:
                 raise ServerErrorException
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentSound(WriteRequiredGenericAPIView):
@@ -959,7 +973,7 @@ class CommentSound(WriteRequiredGenericAPIView):
         serializer = CreateCommentSerializer(data=request.DATA)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                return Response(data={'details': 'Successfully commented sound %s' % sound_id,
+                return Response(data={'detail': 'Successfully commented sound %s.' % sound_id,
                                       'note': 'This comment has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
@@ -968,9 +982,9 @@ class CommentSound(WriteRequiredGenericAPIView):
                     sound = comment.content_object
                     sound.num_comments = sound.num_comments + 1
                     sound.save()
-                return Response(data={'details': 'Successfully commented sound %s' % sound_id}, status=status.HTTP_201_CREATED)
+                return Response(data={'detail': 'Successfully commented sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 #############
@@ -1024,11 +1038,9 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '07 Rate sound': prepend_base(reverse('apiv2-user-create-rating', args=[0]).replace('0', '<sound_id>')),
                     '08 Comment sound': prepend_base(reverse('apiv2-user-create-comment', args=[0]).replace('0', '<sound_id>')),
                     '09 Upload sound': prepend_base(reverse('apiv2-uploads-upload')),
-                    '10 Describe uploaded sound': prepend_base(reverse('apiv2-uploads-describe')),
-                    '11 Uploaded sounds pending description': prepend_base(reverse('apiv2-uploads-not-described')),
-                    '12 Upload and describe sound': prepend_base(reverse('apiv2-uploads-upload-and-describe')),
-                    '13 Uploaded and described sounds pending moderation': prepend_base(reverse('apiv2-uploads-not-moderated')),
-                    '14 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
+                    '10 Describe sound': prepend_base(reverse('apiv2-uploads-describe')),
+                    '11 Pending uploads': prepend_base(reverse('apiv2-uploads-pending')),
+                    '12 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
                 }).items(), key=lambda t: t[0]))},
                 {'User resources': OrderedDict(sorted(dict({
                     '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),

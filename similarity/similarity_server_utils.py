@@ -35,6 +35,8 @@ def parse_filter(filter_string, layout_descriptor_names):
         # Left part (feature name)
         previous_space_pos = filter_string.rfind(' ',0,current_pos)
         feature_name = filter_string[previous_space_pos+1:current_pos]
+        if feature_name[0] != '.':
+            feature_name = '.' + feature_name
 
         # Right part (value, range)
         if filter_string[current_pos+1] == '[':
@@ -228,6 +230,8 @@ def parse_target(target_string, layout_descriptor_names):
         # Left part (feature name)
         previous_space_pos = target_string.rfind(' ',0,current_pos)
         feature_name = target_string[previous_space_pos+1:current_pos]
+        if feature_name[0] != '.':
+            feature_name = '.' + feature_name
 
         if feature_name not in ALLOWED_CONTENT_BASED_SEARCH_DESCRIPTORS:
             return 'Target error: At least one feature name does not match with any descirptor name in our database or the matched descriptor can not be used as target (' + str(feature_name) + '). '

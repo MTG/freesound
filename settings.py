@@ -196,10 +196,8 @@ APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
                                    'apiv2-user-create-rating',
                                    'apiv2-user-create-comment',
                                    'apiv2-uploads-upload',
-                                   'apiv2-uploads-not-described',
+                                   'apiv2-uploads-pending',
                                    'apiv2-uploads-describe',
-                                   'apiv2-uploads-upload-and-describe',
-                                   'apiv2-uploads-not-moderated',
                                    'apiv2-pack-download','apiv2-me',
                                    'apiv2-logout-oauth2-user',
                                    'oauth2:capture',
@@ -217,7 +215,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
         'rest_framework.renderers.YAMLRenderer',
-        'rest_framework.renderers.JSONPRenderer',
+        #'rest_framework.renderers.JSONPRenderer',
         'rest_framework.renderers.XMLRenderer',
     ),
     'DEFAULT_THROTTLE_CLASSES': (
@@ -230,15 +228,15 @@ REST_FRAMEWORK = {
 
 APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
     0: ['0/day'],  # Client 'disabled'
-    1: ['1/second', '5000/day'],
-    2: ['5/second', '10000/day'],
+    1: ['60/minute', '5000/day'],
+    2: ['300/minute', '10000/day'],
     99: [],  # No limit of requests
 }
 
 APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
     0: ['0/day'],  # Client 'disabled'
     1: ['30/minute', '500/day'],
-    2: ['1/second', '1000/day'],
+    2: ['60/minute', '1000/day'],
     99: [],  # No limit of requests
 }
 

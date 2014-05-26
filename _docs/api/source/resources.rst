@@ -410,7 +410,6 @@ Name                  Type              Description
 ``bitdepth``          number            The bit depth of the sound.
 ``duration``          number            The duration of the sound in seconds.
 ``samplerate``        number            The samplerate of the sound.
-``user``              URI               The URI for the uploader of the sound.
 ``username``          string            The username of the uploader of the sound.
 ``pack``              URI               If the sound is part of a pack, this URI points to that pack's API resource.
 ``download``          URI               The URI for retrieving the original sound.
@@ -539,7 +538,6 @@ Each comment entry consists of a dictionary with the following structure:
 ::
 
   {
-    "user": <uri of user who made the comment>,
     "username": <username of the user who made the comment>
     "comment": <the comment itself>,
     "created": <the date when the comment was made, e.g. "2014-03-15T14:06:48.022">
@@ -1141,7 +1139,7 @@ Name                  Type              Description
 ``description``       string            The description the user gave to the pack (if any).
 ``created``           string            The date when the pack was created (e.g. "2014-04-16T20:07:11.145").
 ``name``              string            The name user gave to the pack.
-``user``              URI               The URI for the creator of the pack.
+``username``          string            Username of the creator of the pack.
 ``num_sounds``        number            The number of sounds in the pack.
 ``sounds``            URI               The URI for a list of sounds in the pack.
 ``num_downloads``     number            The number of times this pack has been downloaded.

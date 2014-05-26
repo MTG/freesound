@@ -80,7 +80,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'bitdepth',
                   'duration',
                   'samplerate',
-                  'user',
+                  #'user',
                   'username',
                   'pack',
                   'download',
@@ -341,7 +341,8 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
                   'description',
                   'created',
                   'name',
-                  'user',
+                  #'user',
+                  'username',
                   'num_sounds',
                   'sounds',
                   'num_downloads')
@@ -361,6 +362,10 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+
+    username = serializers.SerializerMethodField('get_username')
+    def get_username(self, obj):
+        return obj.user.username
 
 ##################
 # BOOKMARK SERIALIZERS
@@ -420,13 +425,18 @@ class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Rating
-        fields = ('user',
+        fields = (#'user',
+                  'username',
                   'rating',
                   'created')
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+
+    username = serializers.SerializerMethodField('get_username')
+    def get_username(self, obj):
+        return obj.user.username
 
     rating = serializers.SerializerMethodField('get_rating')
     def get_rating(self, obj):
@@ -453,7 +463,7 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('user',
+        fields = (#'user',
                   'username',
                   'comment',
                   'created')

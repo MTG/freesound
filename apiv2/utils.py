@@ -320,11 +320,11 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 
 def api_search(search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized'):
 
-    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter'] and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
+    if search_form.cleaned_data['query']  == None and search_form.cleaned_data['filter'] == None and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
         # No input data for search, return empty results
         return [], 0, None, None, None, None, None
 
-    if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
+    if search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None:
         # Standard content-based search
         try:
             results, count, note = similarity_api_search(target=search_form.cleaned_data['target'],
@@ -359,8 +359,8 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
         # Standard text-based search
         try:
             solr = Solr(settings.SOLR_URL)
-            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                         unquote(search_form.cleaned_data['filter']),
+            query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
+                                         unquote(search_form.cleaned_data['filter'] or ""),
                                          search_form.cleaned_data['sort'],
                                          search_form.cleaned_data['page'],
                                          search_form.cleaned_data['page_size'],

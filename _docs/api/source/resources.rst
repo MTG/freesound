@@ -124,7 +124,7 @@ Queries and filters can also include geotagging data to perform spatial queries.
 For example, you can retrieve sounds that were recorded near a particular location or filter the results of a query to those sounds recorded in a geospatial area.
 Note that not all sounds in Freesound are geotagged, and the results of such queries will only include geotagged sounds.
 
-Please refer to the Solr docummentation on spatial queries (https://wiki.apache.org/solr/SpatialSearch) and check the examples below for more information.
+Please refer to the Solr docummentation on spatial queries (http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4) and check the examples below for more information.
 
 
 .. _sound-list-response:

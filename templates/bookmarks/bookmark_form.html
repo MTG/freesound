@@ -20,10 +20,10 @@
                 error: function(data) {
                     display_error_feedback(id,data);
                 },
-                
+
             });
     }
-    
+
     function display_bookmark_feedback(id, data){
         $("#bookmark_info_message_" + id.toString()).html("Bookmark correctly added!")
         $("#bookmark_info_message_" + id.toString()).show()
@@ -41,9 +41,9 @@
             show_hide_bookmark_form(id)
         }, 2000);
     }
-    
+
 </script>
-	
+
 	
 <div class = "bookmark_info_message" id="bookmark_info_message_{{sound_id}}" style="display:none"></div>
 <p>

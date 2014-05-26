@@ -30,6 +30,6 @@ def get_users_followers(user):
     items = FollowingUserItem.objects.filter(user_to=user)
     return [item.user_from for item in items]
 
-def get_queries_following(user):
+def get_tags_following(user):
     items = FollowingQueryItem.objects.filter(user=user)
     return [item.query for item in items]

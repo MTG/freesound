@@ -15,6 +15,69 @@
 
 {% block section_content %}
 
+    <script type="text/javascript">
+
+        $(document).ready(function() {
+
+            $("#follow_button").hover(
+                function () {
+                    val = $("#follow_button").text();
+                    if (val == "Following")
+                        $("#follow_button").text("Unfollow");
+                },
+                function () {
+                    val = $("#follow_button").text();
+                    if (val == "Unfollow")
+                        $("#follow_button").text("Following");
+                }
+            );
+        });
+
+        function follow_user() {
+            $.ajax({
+                type: 'POST',
+                url: '{{ follow_user_url }}',
+                success: function () {
+                    $("#follow_button").text("Following");
+                    $("#follow_link").removeAttr("onclick");
+                    $("#follow_link").unbind("click").click(unfollow_user);
+                },
+                error: function (data) {
+                    // console.log(data);
+                    $("#follow_button").text("Error");
+                    $("#follow_button").attr("disabled", "disabled");
+                    window.setTimeout(function() {
+                        $("#follow_button").removeAttr("disabled");
+                        $("#follow_button").text("Follow");
+                    }, 3000);
+                }
+            });
+        }
+
+        function unfollow_user() {
+            $.ajax({
+                type: 'POST',
+                url: '{{ unfollow_user_url }}',
+                success: function () {
+                    // console.log("unfollow success")
+                    $("#follow_button").text("Follow");
+                    $("#follow_link").removeAttr("onclick");
+                    $("#follow_link").unbind("click").click(follow_user);
+                },
+                error: function (data) {
+                    // console.log(data);
+                    $("#follow_button").attr("disabled", "disabled");
+                    $("#follow_button").text("Error");
+                    window.setTimeout(function() {
+                        $("#follow_button").removeAttr("disabled");
+                        $("#follow_button").text("Following");
+                    }, 3000);
+                }
+            });
+        }
+
+    </script>
+
     {% if home %}
 
         <h1>Home</h1>
@@ -39,7 +102,7 @@
                 <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
             {% endif %}
             <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
-            <li>Your <a href="{% url stream %}">stream</a></li>
+            {% comment %}<li>Your <a href="{% url stream %}">stream</a></li>{% endcomment %}
             {% comment %}<li>Your sound uploads <a href="{% url accounts-pending %}">pending moderation</a></li>{% endcomment %}
         </ul>
         </div>
@@ -57,12 +120,14 @@
 
                 {# don't allow a user to follow himself/herself #}
                 {% if user.username != request.user.username  and not show_unfollow_button %}
-                    <a href="{% url follow-user user.username %}"><button type="button" id="follow_button">Follow</button></a>
+                    {% comment %}<a href="{% url follow-user user.username %}"><button type="button" id="follow_button">Follow</button></a>{% endcomment %}
+                    <a href="javascript:void(0)" id="follow_link" onclick="follow_user()"><button type="button" id="follow_button">Follow</button></a>
                 {% endif %}
 
                 {# show unfollow button instead if current page of user is being followed by logged in user already #}
                 {% if show_unfollow_button %}
-                    <a href="{% url unfollow-user user.username %}"><button type="button" id="follow_button">Unfollow</button></a>
+                    {% comment %}<a href="{% url unfollow-user user.username %}"><button type="button" id="follow_button">Following</button></a>{% endcomment %}
+                    <a href="javascript:void(0)" id="follow_link" onclick="unfollow_user()"><button type="button" id="follow_button">Following</button></a>
                 {% endif %}
 
             </div>
@@ -174,31 +239,43 @@
 
 <div id="sidebar">
 
-    <div id="social" class="content_box">
+    {% if following or followers or following_tags %}
 
-        <h3>Social</h3>
+        <div id="social" class="content_box">
 
-        <h3>Following ({{ following|length }})</h3>
-        <ul>
-            {% for user in following %}
-                <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
-            {% endfor %}
-            </ul>
+            <h3>Social</h3>
 
-        <h3>Followers ({{ followers|length }})</h3>
-        <ul>
-            {% for user in followers %}
-                <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
-            {% endfor %}
-            </ul>
+            {% if following %}
+                <h3>Following ({{ following|length }})</h3>
+                <ul>
+                    {% for user in following %}
+                        <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                    {% endfor %}
+                </ul>
+            {% endif %}
 
-        <h3><i>Search Queries</i> Following</h3>
-        <ul>
-            {% for query in following_queries %}
-                <li><a href="#">{{ query }}</a>{% if not forloop.last %}, {% endif %}</li>
-            {% endfor %}
-        </ul>
-    </div>
+            {% if followers %}
+                <h3>Followers ({{ followers|length }})</h3>
+                <ul>
+                    {% for user in followers %}
+                        <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if following_tags %}
+                <h3><i>Tag Groups</i> following</h3>
+                <ul>
+                    {% for tag in following_tags %}
+                        <li><a href="{% url tags tag %}">{{ tag }}</a>{% if not forloop.last %}, {% endif %}</li>
+                    {% endfor %}
+                </ul>
+
+            {% endif %}
+
+        </div>
+
+    {% endif %}
 
     {% if tags %}
     <div id="user_most_used_tags" class="content_box">
@@ -226,7 +303,7 @@
             google.maps.event.addListener(infowindow, 'closeclick', function() {
                 stopAll();
             });
-            
+
             ajaxLoad('{% url geotags-for-user-latest-json user.username %}', function(data, responseCode)
             {
 
@@ -235,19 +312,19 @@
                 // in case there is only one sound with geotag
                 var nSounds = 0;
                 var lastPoint;
-    
+
                 $.each($.parseJSON(data.response), function(index, item)
                 {
                     nSounds = nSounds + 1;
                     var id = item[0];
                     var lat = item[1];
                     var lon = item[2];
-                    
+
                     var point = new google.maps.LatLng(lat, lon);
                     lastPoint = point;
                     bounds.extend(point);
                     var marker = new google.maps.Marker({'position': point, 'map': map});
-                    
+
                     google.maps.event.addListener(marker, 'click', function()
                     {
                         stopAll();
@@ -261,14 +338,14 @@
                         });
                     });
                 });
-                
+
                 if (nSounds > 1){
                     if (!bounds.isEmpty()) map.fitBounds(bounds);
                 }else{
                     // Center the map in the geotag
                     map.setCenter(lastPoint, 4);
                 }
-                
+
             });
 
         </script>

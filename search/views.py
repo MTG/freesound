@@ -224,8 +224,6 @@ def search(request):
         error_text = 'The search server could not be reached, please try again later.'
     
     if request.GET.get("ajax", "") != "1":
-        following_queries = follow.utils.get_queries_following(request.user)
-        show_follow_link = search_query not in following_queries
         return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
     else:
         return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))

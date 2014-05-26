@@ -29,12 +29,6 @@
 
         <br/>
 
-        {% if show_follow_link %}
-            <a href="{% url follow-query search_query %}" id="follow_tag_link">Follow this query</a>
-        {% else %}
-            <a href="{% url unfollow-query search_query %}" id="follow_tag_link">Unfollow this query</a>
-        {% endif %}
-
     </fieldset>
 </form>
 
@@ -48,7 +42,7 @@
 
         // Fill advanced search fields that were passen on the f parameter
         // Duration
-        
+
         if (getFilterValue("duration","min") == "")
             $("#filter_duration_min").val("0");
         else
@@ -57,25 +51,25 @@
         if (getFilterValue("duration","max") == "")
             $("#filter_duration_max").val("*");
         else
-            $("#filter_duration_max").val(getFilterValue("duration","max")); 
-        
+            $("#filter_duration_max").val(getFilterValue("duration","max"));
+
         // Geotagged
         if (getFilterValue("is_geotagged")==1)
                $("#filter_is_geotagged").attr('checked','checked')
-               
+
         // Extract terms from the query search box and highlight any of their occurrences in the descriptions
         terms = document.getElementById("query_input").value.split(" ");
-        
+
         for(var i=0;i<terms.length;i++)
         {
         	term = terms[i];
         	re = RegExp(term,"i"); // i for case-insensative
-        	
+
         	descriptions = document.getElementsByClassName("description");
         	for (var j=0;j<descriptions.length;j++)
         	{
         		descriptions[j].innerHTML = descriptions[j].innerHTML.replace(re,"<b>"+term+"</b>");
-        	}	
+        	}
         }
 
     });
@@ -85,7 +79,7 @@
         $("#advanced_search_hidden").val(1);
         $("#enableShowButton").hide();
         $("#advanced_search_options").show('blind', {}, 500, function() {});
-        
+
     }
 
     function hideAdvancedSearchOptions()
@@ -219,7 +213,7 @@
 
     function addFilter(name, filter)
     {
-        if (filter.search(" ") != -1)        	
+        if (filter.search(" ") != -1)
             filter = "\"" + filter.replace(/"/g,'\\\"') + "\""
         var tag = name + ":" + filter;
 
@@ -283,9 +277,9 @@
 
         scan(value, /[\w-]+:\"[^\"]+\"/g, function (index, filter) {
             add_filter(filter.replace(/---replace---/g,'\\\"'));
-         
+
         });
-        
+
     }
 
     update_filter_display();
@@ -329,12 +323,12 @@
             <h3>bitdepth</h3>
             {% display_facet "bitdepth" results.facets.bitdepth "list" %}
         {% endif %}
-        
+
         {% if results.facets.bitrate and results.facets.bitrate|length > 1 %}
             <h3>bitrate</h3>
             {% display_facet "bitrate" results.facets.bitrate "list" %}
         {% endif %}
-        
+
 
         {% if results.facets.channels and results.facets.channels|length > 1 %}
             <h3>channels</h3>

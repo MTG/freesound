@@ -31,7 +31,6 @@
     }
     h3 {
         margin: 0px;
-//        margin-left: 20px;
     }
     ul {
         padding: 0px;
@@ -41,11 +40,17 @@
             display: inline;
             font-size: 12px;
             font-style: italic;
-
             a {
                 font-size: 12px;
             }
         }
     }
+}
 
+.tagcloud {
+    margin-bottom: 20px;
+}
+
+#follow_tags_link {
+    float: right;
 }

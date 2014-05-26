@@ -25,7 +25,7 @@ from django.conf.urls.defaults import patterns, url
 urlpatterns = patterns('follow.views',
     url(r'^follow_user/(?P<username>[^//]+)/$', 'follow_user', name='follow-user'),
     url(r'^unfollow_user/(?P<username>[^//]+)/$', 'unfollow_user', name='unfollow-user'),
-    url(r'^follow_query/(?P<query>[^//]+)/$', 'follow_query', name='follow-query'),
-    url(r'^unfollow_query/(?P<query>[^//]+)/$', 'unfollow_query', name='unfollow-query'),
+    url(r'^follow_tags/(?P<tags>[\w//-]+)/$', 'follow_tags', name='follow-tags'),
+    url(r'^unfollow_tags/(?P<tags>[\w//-]+)/$', 'unfollow_tags', name='unfollow-tags'),
     # url(r'^stream/$', follow.stream, name="stream"),
 )

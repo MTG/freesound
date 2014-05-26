@@ -37,6 +37,7 @@ class FollowingUserItem(models.Model):
 
 class FollowingQueryItem(models.Model):
     user = models.ForeignKey(User)
+    # TODO: refactor to tags instead of query
     query = models.CharField(max_length=200)
     created = models.DateTimeField(auto_now_add=True)
 

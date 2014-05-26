@@ -761,9 +761,13 @@ def account(request, username):
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
 
+    # TODO: only showing the first 21 of each (like three rows); this is rather hardcoded...
     following = follow.utils.get_users_following(user)[:21]
     followers = follow.utils.get_users_followers(user)[:21]
-    following_queries = follow.utils.get_queries_following(user)[:21]
+    following_tags = follow.utils.get_tags_following(user)[:21]
+
+    follow_user_url = reverse('follow-user', args=[username])
+    unfollow_user_url = reverse('unfollow-user', args=[username])
 
     # true if the logged user is following the user of the current viewed profile page
     logged_user_following = follow.utils.get_users_following(request.user)

@@ -19,7 +19,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 
 import accounts.views as accounts
 
@@ -37,34 +37,27 @@ def follow_user(request, username):
     user_to = User.objects.get(username=username)
     fui = FollowingUserItem(user_from=user_from, user_to=user_to)
     fui.save()
-    # and then render the same page of the now followed user, with updated button information
-    accounts.account(request, username)
-    # TODO: is this ok?
-    return redirect("/people/"+username)
+    return HttpResponse()
 
 @login_required
 def unfollow_user(request, username):
     user_from = request.user
     user_to = User.objects.get(username=username)
     FollowingUserItem.objects.get(user_from=user_from, user_to=user_to).delete()
-    # and then render the same page of the now followed user, with updated button information
-    accounts.account(request, username)
-    # TODO: is this ok?
-    return redirect("/people/"+username)
+    return HttpResponse()
 
 @login_required
-def follow_query(request, query):
+def follow_tags(request, tags):
     user = request.user
-    print "QUERY IS", query
-    FollowingQueryItem(user=user, query=query).save()
-    # TODO: is this ok?
-    return redirect("/search/?q="+query.replace(" ", "+"))
+    print "tags", tags
+    FollowingQueryItem(user=user, query=tags).save()
+    return HttpResponse()
 
 @login_required
-def unfollow_query(request, query):
+def unfollow_tags(request, tags):
     user = request.user
-    FollowingQueryItem.objects.get(user=user, query=query).delete()
-    return redirect("/search/?q="+query.replace(" ", "+"))
+    FollowingQueryItem.objects.get(user=user, query=tags).delete()
+    return HttpResponse()
 
 # @login_required
 # def stream(request, tag):

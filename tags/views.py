@@ -27,6 +27,8 @@ from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
 import logging
+import follow.views
+import follow.utils
 
 search_logger = logging.getLogger("search")
 
@@ -55,10 +57,10 @@ def tags(request, multiple_tags=None):
     query.set_facet_options_default(limit=100, sort=True, mincount=1, count_missing=False)
     
     try:
-        
+
         results = SolrResponseInterpreter(solr.select(unicode(query)))
-        
-        
+
+
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
         page = paginator.page(current_page)
         error = False
@@ -68,6 +70,16 @@ def tags(request, multiple_tags=None):
         search_logger.error("SOLR ERROR - %s" % e)
     except :
         error = True
+
+
+    group_tag =  "/".join(multiple_tags)
+
+    follow_tags_url = reverse('follow-tags', args=[group_tag])
+    unfollow_tags_url = reverse('unfollow-tags', args=[group_tag])
+
+    logged_user_tags_following = follow.utils.get_tags_following(request.user)
+    show_unfollow_button = group_tag in logged_user_tags_following
+
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
 
 

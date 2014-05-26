@@ -379,6 +379,8 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
             return solr_ids, solr_count, None, more_from_pack_data, None, None, None
 
         except SolrException, e:
+            if search_form.cleaned_data['filter'] != None:
+                raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field names are correct)' % e.message)
             raise BadRequestException(msg='Search server error: %s' % e.message)
         except Exception, e:
             raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')

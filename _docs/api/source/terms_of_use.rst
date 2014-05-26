@@ -7,7 +7,7 @@ The usage of the api is subject to the Freesound API terms of use which you can 
 Please read these terms and contact mtg *at* upf.edu if you have any doubts.
 As general rules, please take into account the following points:
 
-   **You are free to use the Freesound API for non-commercial purposes only**. To use the Freesound API for commercial purposes,
+   **You can use the Freesound API for free only for non-commercial purposes**. To use the Freesound API for commercial purposes,
    please contact mtg *at* upf.edu and we will talk about licensing options.
 
 

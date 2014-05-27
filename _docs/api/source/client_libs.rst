@@ -8,7 +8,7 @@ Python
   comming very soon...
 
 Javascript
-  comming very soon...
+  https://github.com/g-roma/freesound.js
 
 
 
@@ -19,7 +19,7 @@ Python
   http://github.com/g-roma/freesound-python
 
 Javascript (recommended version)
-  http://github.com/g-roma/freesound.js
+  https://github.com/g-roma/freesound.js/tree/APIv1
 
 Javascript (old version)
   http://github.com/ffont/freesound-javascript

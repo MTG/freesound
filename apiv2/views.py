@@ -37,7 +37,8 @@ from sounds.models import Sound, Pack, License
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
 from api.forms import ApiKeyForm
-from accounts.views import handle_uploaded_file
+from accounts.views import handle_uploaded_file, send_activation2
+from accounts.forms import RegistrationForm
 from freesound.utils.filesystem import generate_tree
 from freesound.utils.cache import invalidate_template_cache
 from freesound.utils.nginxsendfile import sendfile
@@ -1287,3 +1288,16 @@ def permission_granted(request):
                               context_instance=RequestContext(request))
 
 
+### View for registration using minimal template
+def minimal_registration(request):
+
+    if request.method == "POST":
+        form = RegistrationForm(request, request.POST)
+        if form.is_valid():
+            user = form.save()
+            send_activation2(user)
+            return render_to_response('api/minimal_registration_done.html', locals(), context_instance=RequestContext(request))
+    else:
+        form = RegistrationForm(request)
+
+    return render_to_response('api/minimal_registration.html', locals(), context_instance=RequestContext(request))

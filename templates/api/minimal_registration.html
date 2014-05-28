@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Freesound - registration</title>
+    <style>
+        body {
+            background-color: #f3f3f3;
+            font-family: Verdana, sans-serif;
+            font-size: 70%;
+            margin:0px 0px;
+            padding:0px;
+        }
+        .helptext {
+            color:#aaaaaa;
+            width:220px;
+            display:inline-block;
+            text-align:left;
+            vertical-align:top;
+            margin-left:167px;
+        }
+        .label {
+            width:161px;
+            display:inline-block;
+            text-align:right;
+        }
+        .errorlist {
+            width:220px;
+            display:inline-block;
+            text-align:left;
+            vertical-align:top;
+            margin-left:167px;
+            margin-bottom:-2px;
+            list-style-type: none;
+            padding: 0 0 4px 0;
+            color: #bd2d33;
+            font-style: italic;
+        }
+        .error2 {
+            display:inline-block;
+            vertical-align:top;
+            color: #bd2d33;
+            font-style: italic;
+            backgounrd-color:red;
+        }
+
+    </style>
+</head>
+<body>
+
+<div style="text-align: center; position:fixed; left: 50%; top: 50%; height:700px; width:450px; margin-top:-350px; margin-left:-225px; overflow:scroll;">
+    &nbsp;<br>
+    <img src="/media/images/logo.png"/>
+    <form method="post" action=".">{% csrf_token %}
+        <div style="text-align:left">
+        <span class="error2">{{ form.non_field_errors }}</span>
+        <p> {{ form.username.errors }}
+            <span class="label"><label for="id_username">Username:</label></span> {{ form.username }}
+            <span class="helptext">Alphanumeric characters only (letters, digits and underscores)</span></p>
+        <p> {{ form.first_name.errors }}
+            <span class="label"><label for="id_first_name">First name:</label></span> {{ form.first_name }}
+            <span class="helptext">Optional</span></p>
+        <p> {{ form.last_name.errors }}
+            <span class="label"><label for="id_last_name">Last name:</label></span> {{ form.last_name }}
+            <span class="helptext">Optional</span></p>
+        <p> {{ form.email1.errors }}
+            <span class="label"><label for="id_email1">Email:</label></span> {{ form.email1 }}
+            <span class="helptext">We will send you an activation email, so make sure this is correct!</span></p>
+        <p> {{ form.email2.errors }}
+            <span class="label"><label for="id_email2">Email confirmation:</label></span> {{ form.email2 }}</p>
+        <p> {{ form.password1.errors }}
+            <span class="label"><label for="id_password1">Password:</label></span> {{ form.password1 }}</p>
+        <p> {{ form.password2.errors }}
+            <span class="label"><label for="id_password2">Password confirmation:</label></span> {{ form.password2 }}</p>
+        </div>
+        <p> {{ form.newsletter }} Sign up for the newsletter (only once every 4 months or so)?</p>
+        <p> {% if form.accepted_tos.errors %}<span class="error2">You must accept the terms of use to register to Freesound</span><br>{% endif %}
+            {{ form.accepted_tos }} Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the Freesound website</p>
+
+        <p>
+        {% if form.recaptcha_response_field.errors %}<span class="error2">Wrong captcha</span><br>{% endif %}
+        <label for="id_recaptcha_response_field">Please prove you are not a robot:</label>
+        {% autoescape off %}
+            <div style="margin-left:65px;">
+            {{ form.recaptcha_response_field }}
+            </div>
+        {% endautoescape %}
+        </p>
+        <input type="submit" value="Register" />
+    </form>
+    <br>&nbsp;
+
+</div>
+
+</body>
+</html>

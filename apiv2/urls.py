@@ -93,6 +93,9 @@ urlpatterns = patterns('apiv2.views',
     # Browseable api login and logout
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
+    # Minimal registration page
+    url(r'^registration/$', views.minimal_registration, name="apiv2-registration"),
+
     #########
     # OTHER #
     #########

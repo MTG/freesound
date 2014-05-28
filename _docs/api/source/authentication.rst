@@ -114,7 +114,7 @@ Step 2
 ------
 
 After users either click on "Authorize!" or "Deny access", Freesound will redirect users to a 'Redirect url'
-that you specified when requesting the API credentials. Thus, Freesound will perform a request to the specified url.
+that you specified when requesting the API credentials.
 That request will include the following GET parameters:
 
 ======================  =====================================================

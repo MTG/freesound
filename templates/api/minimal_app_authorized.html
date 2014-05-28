@@ -5,23 +5,28 @@
     <title>Freesound - app authorized</title>
     <style>
         body {
-            background-color: #f3f3f3;
             font-family: Verdana, sans-serif;
             font-size: 70%;
+            margin:0px 0px;
+            padding:0px;
+            text-align:center;
         }
-
-        ul.errorlist {
-            list-style-type: none;
-            padding: 0 0 4px 0;
-            color: #bd2d33;
-            font-style: italic;
+        .container {
+            margin: auto;
+            width:400px;
+            background-color: #f3f3f3;
+            border-radius:10px;
+            padding:20px;
+            margin-top:20px;
+            margin-bottom:20px;
+            border: solid 1px #e0e0e0;
         }
 
     </style>
 </head>
 <body>
 
-<div style="text-align: center; left: 50%; top: 50%; position: fixed; height:260px; width:400px; margin-top:-130px; margin-left:-200px;">
+<div class="container">
 
      <img src="/media/images/logo.png"/>
      {% if app_name and code %}

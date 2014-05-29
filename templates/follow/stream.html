@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Stream{% endblock title %}
+
+{% block content %}
+
+    <h1>Stream</h1>
+
+    Select time period:
+    <select name="" id="">
+        <option value="">Since last visit</option>
+        <option value="">Last week</option>
+        <option value="">Last month</option>
+        <option value="">Specify dates...</option>
+    </select>
+
+    View options:
+    <select name="" id="">
+        <option value="">order by date (newest to oldest)</option>
+        <option value="">order by date (oldest to newest)</option>
+        <option value="">group by type (users and tag group)</option>
+    </select>
+
+    <button>Go!</button>
+
+    <br/> <br/>
+
+
+    <div class="content_box large-box">
+        <h3>Updates</h3>
+    </div>
+
+    {% comment %}<div class="content_box">
+        <h3>Updates from <i>tag groups</i> you follow</h3>
+    </div>{% endcomment %}
+
+{% endblock %}

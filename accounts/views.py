@@ -761,21 +761,32 @@ def account(request, username):
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
 
-    # TODO: only showing the first 21 of each (like three rows); this is rather hardcoded...
-    following = follow.utils.get_users_following(user)[:21]
-    followers = follow.utils.get_users_followers(user)[:21]
-    following_tags = follow.utils.get_tags_following(user)[:21]
+    following = follow.utils.get_users_following(user)
+    followers = follow.utils.get_users_followers(user)
+    following_tags = follow.utils.get_tags_following(user)
+
+    following_count = len(following)
+    followers_count = len(followers)
+    following_tags_count = len(following_tags)
+
+    # show only the first 20 followers and following users and 5 following tags
+    following = following[:20]
+    followers = followers[:20]
+    following_tags = following_tags[:5]
+
+    space_tags = following_tags
+    split_tags = [tag.split(" ") for tag in space_tags]
+    slash_tags = [tag.replace(" ", "/") for tag in space_tags]
+
+    following_tags = []
+    for i in range(len(space_tags)):
+        following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
 
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
 
     # true if the logged user is following the user of the current viewed profile page
-    logged_user_following = follow.utils.get_users_following(request.user)
-
-    show_unfollow_button = False
-    for u in logged_user_following:
-        if u.username == username:
-            show_unfollow_button = True
+    show_unfollow_button = follow.utils.is_user_following_user(request.user, User.objects.get(username=username))
 
     home = False
     has_bookmarks = Bookmark.objects.filter(user=user).exists()

@@ -71,14 +71,13 @@ def tags(request, multiple_tags=None):
     except :
         error = True
 
+    slash_tag = "/".join(multiple_tags)
+    space_tag = " ".join(multiple_tags)
 
-    group_tag =  "/".join(multiple_tags)
+    follow_tags_url = reverse('follow-tags', args=[slash_tag])
+    unfollow_tags_url = reverse('unfollow-tags', args=[slash_tag])
 
-    follow_tags_url = reverse('follow-tags', args=[group_tag])
-    unfollow_tags_url = reverse('unfollow-tags', args=[group_tag])
-
-    logged_user_tags_following = follow.utils.get_tags_following(request.user)
-    show_unfollow_button = group_tag in logged_user_tags_following
+    show_unfollow_button = follow.utils.is_user_following_tag(request.user, slash_tag)
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
 

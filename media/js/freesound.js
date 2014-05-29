@@ -19,7 +19,7 @@
  *   See AUTHORS file.
  */
 
-$(function() {
+$(document).ready(function() {
     cookieValue = $.cookie("cookieConsent");
     if (cookieValue == "yes")
         $("#cookie-bar").remove();
@@ -28,6 +28,18 @@ $(function() {
         $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
         $("#cookie-bar").fadeOut(500);
     });
+
+    $(".tag_group").hover(
+        function() {
+            $(this).css("background", "rgb(230,230,230)");
+            $(this).find("a").css("background-image", "url(/media/images/tag_edge_group_hover.png)");
+        },
+        function() {
+            $(this).css("background", "rgb(244,244,244)");
+            $(this).find("a").css("background-image", "url(/media/images/tag_edge_group.png)");
+        }
+    );
+
 });
 
 function d()

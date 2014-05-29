@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 from django.http import HttpResponseRedirect, HttpResponse
+from django.template import RequestContext
 
 import accounts.views as accounts
 
@@ -27,8 +28,13 @@ from django.contrib.auth.decorators import login_required
 from follow.models import FollowingUserItem
 from follow.models import FollowingQueryItem
 from django.contrib.auth.models import User
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render_to_response
 import django.utils.http as utils
+
+from datetime import datetime, timedelta
+import follow.utils
+from sounds.models import Sound
+
 
 @login_required
 def follow_user(request, username):
@@ -47,20 +53,51 @@ def unfollow_user(request, username):
     return HttpResponse()
 
 @login_required
-def follow_tags(request, tags):
+def follow_tags(request, slash_tags):
     user = request.user
-    print "tags", tags
-    FollowingQueryItem(user=user, query=tags).save()
+    space_tags = slash_tags.replace("/", " ")
+    FollowingQueryItem(user=user, query=space_tags).save()
     return HttpResponse()
 
 @login_required
-def unfollow_tags(request, tags):
+def unfollow_tags(request, slash_tags):
     user = request.user
-    FollowingQueryItem.objects.get(user=user, query=tags).delete()
+    space_tags = slash_tags.replace("/", " ")
+    FollowingQueryItem.objects.get(user=user, query=space_tags).delete()
     return HttpResponse()
 
-# @login_required
-# def stream(request, tag):
-#     user = request.user
-#     FollowingTagItem(user=user, query=tag).save()
-#     return
+@login_required
+def stream(request):
+
+    user = request.user
+
+    # following_users = follow.utils.get_users_following(user)
+    #
+    # # TODO: change this to the form input
+    # start_date = datetime.now()
+    # end_date = start_date - timedelta(days=7)
+    #
+    # # TODO: which field to use for the query?
+    # # analysis_state
+    # # created
+    # # moderation_date
+    # # moderation_state
+    # # processing_date
+    # # processing_state
+    # solr = Solr(settings.SOLR_URL)
+    # query = search_prepare_query("",
+    #                              "username:Jovica created:[1976-03-06T00:00:00.999Z TO *]", # tag:tag1 tag:tag2 ... created:sdfsdf
+    #                              "created desc",
+    #                              1,
+    #                              5,
+    #                              grouping=False,
+    #                              include_facets=False)
+    #
+    # result = SolrResponseInterpreter(solr.select(unicode(query)))
+    # solr_ids = [element['id'] for element in result.docs]
+    #
+    # sounds = Sound.objects.filter(user__in=following_users, created__range=(start_date, end_date))
+    #
+    # Sound.objects.filter(user__in=following_users)
+
+    return render_to_response('follow/stream.html', locals(), context_instance=RequestContext(request))

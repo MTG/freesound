@@ -33,3 +33,14 @@ def get_users_followers(user):
 def get_tags_following(user):
     items = FollowingQueryItem.objects.filter(user=user)
     return [item.query for item in items]
+
+def is_user_following_user(user_from, user_to):
+    return user_to in get_users_following(user=user_from)
+
+def is_user_following_tag(user, slash_tag):
+    tags_following = get_tags_following(user)
+    space_tag = slash_tag.replace("/", " ")
+    return space_tag in tags_following
+
+def is_user_being_followed_by_user(user_from, user_to):
+    return user_to in get_users_followers(user_from)

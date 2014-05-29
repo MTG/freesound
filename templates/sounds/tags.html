@@ -10,19 +10,15 @@
 {% block section_content %}
 
     <script type="text/javascript">
-        $(document).ready(function() {
-            $("#follow_tags_button").hover(
-                function () {
-                    val = $("#follow_tags_button").text()
-                    if (val == "Following this tag group")
-                        $("#follow_tags_button").text("Unfollow this tag group");
-                },
-                function () {
-                    val = $("#follow_tags_button").text()
-                    if (val == "Unfollow this tag group")
-                        $("#follow_tags_button").text("Following this tag group");
-                }
-            );
+
+        $(function () {
+            if ('{{ show_unfollow_button }}' == 'False') {
+                $("#now_following_tags_div").hide();
+            }
+            if ({{ multiple_tags|length }} == 1) {
+                txt = $("#now_following_tags_span").text();
+                $("#now_following_tags_span").text(txt.replace("these", "this").replace("tags", "tag"));
+            }
         });
 
         function follow_tags() {
@@ -30,33 +26,34 @@
                 type: 'POST',
                 url: '{{ follow_tags_url }}',
                 success: function () {
-                    console.log("follow success");
-                    $("#follow_tags_button").text("Following this tag group");
+                    $("#now_following_tags_div").show();
+                    // console.log("follow success");
                     $("#follow_tags_link").removeAttr("onclick");
+                    $("#follow_tags_button").text("Unfollow");
                     $("#follow_tags_link").unbind("click").click(unfollow_tags);
                 },
                 error: function (data) {
-                    console.log(data);
+                    console.log(data.responseText);
                     $("#follow_tags_button").text("Error");
                     $("#follow_tags_button").attr("disabled", "disabled");
                     window.setTimeout(function() {
                         $("#follow_tags_button").removeAttr("disabled");
-                        $("#follow_tags_button").text("Follow");
+                        $("#follow_tags_button").text("Follow tag{{ multiple_tags|pluralize }}");
                     }, 3000);
                 }
             });
         }
 
         function unfollow_tags() {
-            txt = $("#follow_tags_button").text();
             $.ajax({
                 type: 'POST',
                 url: '{{ unfollow_tags_url }}',
                 success: function () {
-                    console.log("unfollow success")
-                    $("#follow_tags_button").text("Follow this tag group");
+                    // console.log("unfollow success")
                     $("#follow_tags_link").removeAttr("onclick");
+                    $("#follow_tags_button").text("Follow tag{{ multiple_tags|pluralize }}");
                     $("#follow_tags_link").unbind("click").click(follow_tags);
+                    $("#now_following_tags_div").hide();
                 },
                 error: function (data) {
                     console.log(data.responseText);
@@ -64,7 +61,7 @@
                     $("#follow_tags_button").text("Error");
                     window.setTimeout(function() {
                         $("#follow_tags_button").removeAttr("disabled");
-                        $("#follow_tags_button").text("Following this tag group");
+                        $("#follow_tags_button").text("Unfollow tag{{ multiple_tags|pluralize }}");
                     }, 3000);
                 }
             });
@@ -72,44 +69,81 @@
 
     </script>
 
-<h1>Tags</h1>
+    {% if page.object_list %}
+        <h1>Tags</h1>
+    {% endif %}
 
-{% if error %}
-The search server could not be reached, please try again later.
-{% else %}
-<div class="tagcloud">
-    {% for tag in tags|add_sizes:"True:0.7:1.8" %}
-        <span style="font-size:{{tag.size}}em;">
-            {% if tag.name|in_list:multiple_tags %}
-                {% if multiple_tags|join_tags_exclude:tag.name %}
-                {{tag.name}}<span class="tag_addremove"><a href="{% url tags multiple_tags|join_tags_exclude:tag.name %}">-</a></span>
+    {% if error %}
+
+        The search server could not be reached, please try again later.
+
+    {% else %}
+
+        {% if page.object_list %}
+
+            <div class="tagcloud">
+                {% for tag in tags|add_sizes:"True:0.7:1.8" %}
+                    <span style="font-size:{{tag.size}}em;">
+                        {% if tag.name|in_list:multiple_tags %}
+                            {% if multiple_tags|join_tags_exclude:tag.name %}
+                            {{tag.name}}<span class="tag_addremove"><a href="{% url tags multiple_tags|join_tags_exclude:tag.name %}">-</a></span>
+                            {% else %}
+                            {{tag.name}}<span class="tag_addremove"><a href="{% url tags %}">-</a></span>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url tags tag.name %}">{{tag.name}}</a><span class="tag_addremove"><a href="{% url tags multiple_tags|join_tags_include:tag.name %}">+</a></span>
+                        {% endif %}
+                    </span>
+                {% endfor %}
+            </div>
+
+        {% endif %}
+
+        <div id="follow_browse_tags">
+
+            <div class="tag_group">
+                <ul class="tags">
+                {% for tag in multiple_tags %}
+                    <li><a href="{% url tags tag %}">{{ tag }}</a></li>
+                {% endfor %}
+                </ul>
+            </div>
+
+            <div id="now_following_tags_div">
+                {% comment %}<br/><br/>{% endcomment %}
+                <span id="now_following_tags_span">You are following these tags</span>
+            </div>
+
+            <div id="follow_tabs_button_div">
+                {% if show_unfollow_button %}
+                    {% comment %}<br/>{% endcomment %}
+                    <a href="javascript:void(0)" id="follow_tags_link" onclick="unfollow_tags()"><button id="follow_tags_button">Unfollow</button></a>
                 {% else %}
-                {{tag.name}}<span class="tag_addremove"><a href="{% url tags %}">-</a></span>
+                    {% comment %}<br/>{% endcomment %}
+                    <a href="javascript:void(0)" id="follow_tags_link" onclick="follow_tags()"><button id="follow_tags_button">Follow tag{{ multiple_tags|pluralize }}</button></a>
                 {% endif %}
-            {% else %}
-                <a href="{% url tags tag.name %}">{{tag.name}}</a><span class="tag_addremove"><a href="{% url tags multiple_tags|join_tags_include:tag.name %}">+</a></span>
+            </div>
+
+        </div>
+
+        {% if multiple_tags %}
+            <h1>Sounds with these tags</h1>
+
+            {% if page.object_list %}
+                {% show_paginator paginator page current_page request "sound" %}
             {% endif %}
-        </span>
-    {% endfor %}
-</div>
 
-{% if show_unfollow_button %}
-    <a href="javascript:void(0)" id="follow_tags_link" onclick="unfollow_tags()"><button id="follow_tags_button">Following this tag group</button></a>
-{% else %}
-    <a href="javascript:void(0)" id="follow_tags_link" onclick="follow_tags()"><button id="follow_tags_button">Follow this tag group</button></a>
-{% endif %}
+            {% for sound in page.object_list %}
+                {% display_sound sound.id %}
+            {% empty %}
+                <p>Currently no sounds with these tags</p>
+            {% endfor %}
+        {% endif %}
 
-{% if multiple_tags %}
-<h1>Sounds with these tags</h1>
-{% show_paginator paginator page current_page request "sound" %}
+        {% if page.object_list %}
+            {% show_paginator paginator page current_page request "sound" %}
+        {% endif %}
 
-{% for sound in page.object_list %}
-    {% display_sound sound.id %}
-{% endfor %}
-
-{% show_paginator paginator page current_page request "sound" %}
-{% endif %}
-
-{% endif %}
+    {% endif %}
 
 {% endblock %}

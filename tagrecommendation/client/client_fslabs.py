@@ -34,7 +34,7 @@ def _result_or_exception(result):
         raise Exception(result['result'])
 
 
-class TagRecommendation():
+class NewTagRecommendation():
 
     @classmethod
     def recommend_tags_category(cls, input_tags, category, max_number_of_tags=None):

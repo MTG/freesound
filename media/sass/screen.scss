@@ -35,6 +35,7 @@
     ul {
         padding: 0px;
         list-style-type: none;
+        overflow: hidden;
         li {
             display: inline;
             font-size: 10px;
@@ -88,10 +89,6 @@
 
 #follow_tags_button {
     float: right;
-}
-
-#follow_tags_button_div {
-    width: 310px;
 }
 
 #following_tags, #follow_browse_tags {

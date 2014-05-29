@@ -126,36 +126,34 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
 
 
 ### Views for new tag recommendation interface experiment
+def new_tagrecommendation_interface_test(request):
+    return render_to_response('tagrecommendation/new_interface_test.html', locals(), context_instance=RequestContext(request))
 
 def get_recommended_tags_view_new(request):
     if request.is_ajax() and request.method == 'POST':
         input_tags = request.POST.get('input_tags', False)
-        if input_tags:
-            category = request.POST.get('category', False)
-            if category:
-                result = NewTagRecommendation.recommend_tags_category(input_tags, category)
-            else:
-                result = NewTagRecommendation.recommend_tags(input_tags)
-            return HttpResponse(json.dumps(result), mimetype='application/javascript')
+        category = request.POST.get('category', False)
+        if category:
+            result = NewTagRecommendation.recommend_tags_category(input_tags, category)
+        else:
+            result = NewTagRecommendation.recommend_tags(input_tags)
+        return HttpResponse(json.dumps(result), mimetype='application/javascript')
 
     return HttpResponse(json.dumps({'tags':[], 'audio_category':None}), mimetype='application/javascript')
 
 def get_recommended_categories_view(request):
     if request.is_ajax() and request.method == 'POST':
         input_tags = request.POST.get('input_tags', False)
-        if input_tags:
-            result = NewTagRecommendation.recommend_categories(input_tags)
-            categories = [str(category) for category in result['categories']]
-            return HttpResponse(json.dumps(categories), mimetype='application/javascript')
+        result = NewTagRecommendation.recommend_categories(input_tags)
+        categories = [str(category) for category in result['categories']]
+        return HttpResponse(json.dumps(categories), mimetype='application/javascript')
 
     return HttpResponse(json.dumps([]), mimetype='application/javascript')
 
 def get_all_categories_view(request):
     if request.is_ajax() and request.method == 'POST':
-        input_tags = request.POST.get('input_tags', False)
-        if input_tags:
-            result = NewTagRecommendation.all_tag_categories()
-            categories = [str(category) for category in result['categories']]
-            return HttpResponse(json.dumps(categories), mimetype='application/javascript')
+        result = NewTagRecommendation.all_tag_categories()
+        categories = [str(category) for category in result['categories']]
+        return HttpResponse(json.dumps(categories), mimetype='application/javascript')
 
     return HttpResponse(json.dumps([]), mimetype='application/javascript')

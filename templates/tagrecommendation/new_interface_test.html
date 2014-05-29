@@ -1,0 +1,35 @@
+{% extends "accounts/_section.html" %}
+
+{% block title %}Tag recommendation test{% endblock %}
+
+{% block section_content %}
+
+    <link rel=StyleSheet href="{{media_url}}css/tag_recommendation.css" type="text/css" >
+    <!--script type="text/javascript" src="/tagrecommendation/media/js/jquery-ui-1.10.4.min.js"></script-->
+    <script type="text/javascript" src="{{media_url}}js/tag_recommendation.js"></script>
+    <script type="text/javascript">
+        var MEDIA_URL = {{ media_url }};
+        var INTERFACE_IDS = [];
+        INTERFACE_IDS.push(0);
+
+        function log(){
+        }
+
+        var CURRENT_INTERFACE_ID;
+        if (INTERFACE_IDS.length > 0){
+            CURRENT_INTERFACE_ID = INTERFACE_IDS[0];
+        } else {
+            CURRENT_INTERFACE_ID = -1;
+        }
+        $(document).ready(function() {
+          for (var i in INTERFACE_IDS){
+              $("#interfaces").append(create_new_ontology_tag_recommendation_interface_basic_html(i));
+                RECOMMENDATION_INTERFACES.push(create_new_ontology_tag_recommendation_interface(INTERFACE_IDS[i]));
+            }
+        });
+
+    </script>
+
+    <div id="interfaces" class="tagrecommendation_body"></div>
+
+{% endblock %}

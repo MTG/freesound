@@ -117,6 +117,7 @@ urlpatterns = patterns('',
     (r'^apiv2/', include('apiv2.urls')),
 
     # tag recommendation
+    url(r'^tagrecommendation/test/$', new_tagrecommendation_interface_test, name="tagrecommendation-test"),
     url(r'^tagrecommendation/recommendtags/$', get_recommended_tags_view, name="recommend-tags"),
     url(r'^tagrecommendation/savelog/$', log_recommendation_info_view, name="log-recommendation-info"),
     # Urls for new tag recommendation interface experiment

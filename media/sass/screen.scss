@@ -75,6 +75,7 @@
     }
     .tag_group {
         float: right;
+        margin-right: 0px;
     }
 }
 
@@ -98,6 +99,11 @@
         margin-bottom: -20px;
         background-image: url(../images/tag_edge_group.png);
         font-size: 10px;
+        color: #000;
+        font-weight: normal;
+        &:hover {
+            text-decoration: none;
+        }
     }
 }
 
@@ -109,10 +115,13 @@
 
 .tag_group {
     background: rgb(244,244,244);
-    border-radius: 10px;
+    border-radius: 5px;
     text-align: justify;
     float: left;
-    padding: 6px 6px 6px;
+    padding: 2px;
     margin: 0px 6px 6px 0px;
 }
 
+.tagcloud {
+    border-radius: 5px;
+}

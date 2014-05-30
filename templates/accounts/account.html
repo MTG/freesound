@@ -22,9 +22,10 @@
                 type: 'POST',
                 url: '{{ follow_user_url }}',
                 success: function () {
-                    $("#follow_button").text("Unfollow");
+                    // $("#follow_button").text("Unfollow");
                     $("#follow_link").removeAttr("onclick");
                     $("#follow_link").unbind("click").click(unfollow_user);
+                    location.reload();
                 },
                 error: function (data) {
                     // console.log(data);
@@ -44,9 +45,10 @@
                 url: '{{ unfollow_user_url }}',
                 success: function () {
                     // console.log("unfollow success")
-                    $("#follow_button").text("Follow");
+                    //$("#follow_button").text("Follow");
                     $("#follow_link").removeAttr("onclick");
                     $("#follow_link").unbind("click").click(follow_user);
+                    location.reload();
                 },
                 error: function (data) {
                     // console.log(data);
@@ -228,7 +230,12 @@
             <h3>Social</h3>
 
             {% if following %}
-                <h3>Users you are following ({{ following_count}})</h3>
+                {% if request.user == user %}
+                    <h3>Users you are following ({{ following_count}})</h3>
+                {% else %}
+                    <h3>Users {{ user.username }} is following ({{ following_count}})</h3>
+                {% endif %}
+
                 <ul>
                     {% for user in following %}
                         <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
@@ -237,7 +244,12 @@
             {% endif %}
 
             {% if followers %}
-                <h3>Users that are following you ({{ followers_count }})</h3>
+                {% if request.user == user %}
+                    <h3>Users that are following you ({{ followers_count}})</h3>
+                {% else %}
+                    <h3>Users that are following {{ user.username }} ({{ followers_count}})</h3>
+                {% endif %}
+
                 <ul>
                     {% for user in followers %}
                         <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
@@ -247,13 +259,19 @@
 
             {% if following_tags %}
                 <div id="following_tags">
-                    <h3>Tags you are following ({{ following_tags_count }})</h3>
+                    {% if request.user == user %}
+                        <h3>Tags you are following ({{ following_tags_count }})</h3>
+                    {% else %}
+                        <h3>Tags {{ user.username }} is following ({{ following_tags_count }})</h3>
+                    {% endif %}
                     <ul>
                         {% for space_tags, slash_tags, split_tags in following_tags %}
                             <span class="tag_group" onclick="location.href='{% url tags slash_tags %}'">
                             <ul class="tags" id="following_tags">
                             {% for tag in split_tags %}
-                                <li><a href="{% url tags tag %}">{{ tag }}</a></li>
+                                {% comment %}<li><a href="{% url tags tag %}">{{ tag }}</a></li>{% endcomment %}
+                                <li><a>{{ tag }}</a></li>
+                                {% comment %}<li>{{ tag }}</li>{% endcomment %}
                             {% endfor %}
                             </ul></span>
                         {% endfor %}

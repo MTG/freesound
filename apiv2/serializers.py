@@ -292,14 +292,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     avatar = serializers.SerializerMethodField('get_avatar')
     def get_avatar(self, obj):
-        if obj.profile.has_avatar:
-            return {
-                    'Small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].using_https),
-                    'Medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].using_https),
-                    'Large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].using_https),
-            }
-        else:
-            return None
+        return {
+                'small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].using_https),
+                'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].using_https),
+                'large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].using_https),
+        }
 
     about = serializers.SerializerMethodField('get_about')
     def get_about(self, obj):

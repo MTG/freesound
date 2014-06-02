@@ -409,13 +409,18 @@ def describe_pack(request):
 @login_required
 @transaction.autocommit
 def describe_sounds(request):
-    # Tag recommendation research code (can be deleted in future)
-    ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = settings.ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS
 
     sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)
     selected_license = request.session.get('describe_license', False)
     selected_pack = request.session.get('describe_pack', False)
+
+    # For tag recommendation research only
+    ALTERNATIVE_INTERFACE = False
+    use_alternative_interface = request.GET.get("alt", False)
+    if use_alternative_interface:
+        ALTERNATIVE_INTERFACE = True
+    n_sounds = len(sounds)
 
     # This is to prevent people browsing to the /home/describe/sounds page
     # without going through the necessary steps.
@@ -539,7 +544,21 @@ def describe_sounds(request):
             # set the tags and descriptions
             data = forms[i]['description'].cleaned_data
             sound.description = remove_control_chars(data.get('description', ''))
-            sound.set_tags(data.get('tags'))
+            if ALTERNATIVE_INTERFACE:
+                tags_data = forms[i]['description'].data['%i-tags' % i]
+                print tags_data
+                processed_tags = list()
+                for tag in tags_data.split(' '):
+                    if not ':' in tag:
+                        processed_tags.append(tag)
+                    else:
+                        processed_tags += tag.split(':')[1:]
+                print processed_tags
+                from utils.tags import clean_and_split_tags
+                processed_tags = clean_and_split_tags(' '.join(processed_tags))
+                sound.set_tags(processed_tags)
+            else:
+                sound.set_tags(data.get('tags'))
             sound.save()
 
             # add sound info in tagrecommendation log

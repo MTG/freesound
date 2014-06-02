@@ -20,6 +20,7 @@ var ADD_TAGS_ON_FOCUSOUT = true;
 var ALLOW_INTRODUCING_CATEGORIES_BY_TYPING = true;
 var ALLOW_SHOW_HIDE_EXTRA_RECOMMENDED_CATEGORIES = false;
 var SHOW_RECOMMENDED_CATEGOIRES_WHEN_NO_INPUT_TAGS = true;
+var ALLOW_SHARP_CHARACTER = false;
 
 /*
 TAG RECOMMENDATION INTERFACE
@@ -37,7 +38,7 @@ function create_new_ontology_tag_recommendation_interface_basic_html(id, no_titl
 
     var html = '<div class="tr_tagging_interface_wrapper">'
     if (!no_titles){
-        html += '<div class="tr_instructions" style="width:700px;margin-bottom:15px;margin-top:-5px;">Separate tags with spaces. Join multi-word tags with dashes. For example: field-recording is a popular tag. <br>Use tags with categories to make your sound descriptions more meningful and easily findable to other Freesound users.<br><span style="font-size:80%;">(if you need help, read the <a href="/tagrecommendation/instructions/?b=1" target="_blank">tagging interface instructions</a>)</span></div>'
+        html += '<div class="tr_instructions" style="width:700px;margin-bottom:15px;margin-top:-5px;">Separate tags pressing \'space\' or \'enter\' keys. Join multi-word tags with dashes. For example: field-recording is a popular tag. Use tags with categories to make your sound descriptions more meningful and easily findable to other Freesound users.<br><span style="font-size:80%;">(if you need help, read the <a href="/tagrecommendation/instructions/?b=1" target="_blank">tagging interface instructions</a>)</span></div>'
     }
     html += '<div class="tr_tagging_interface_gray_area">' +
             '<div class="tr_tagline" id="tr_tagline_' + id + '"></div>' +
@@ -52,11 +53,28 @@ function create_new_ontology_tag_recommendation_interface_basic_html(id, no_titl
     return html;
 }
 
-function create_new_ontology_tag_recommendation_interface(id){
+function create_new_ontology_tag_recommendation_interface(id, initial_tags){
+
+    processed_initial_tags = [];
+    if (initial_tags != 'None'){
+        var inital_tags_parts = initial_tags.split(' ');
+        for (i in inital_tags_parts){
+            var tag = inital_tags_parts[i];
+            if (tag.indexOf(':') != -1){
+                var category = tag.split(':')[0];
+                var category_tags = tag.split(':').splice(1);
+                processed_initial_tags.push({'category':category, 'tags':category_tags});
+            } else {
+                if (tag) {
+                    processed_initial_tags.push({'category':false, 'tags':[tag]});
+                }
+            }
+        }
+    }
 
     var rec_interface = {
         id : id,
-        tags: [], // Tags is a list where every element is a dictionary with category name and tags associated
+        tags: processed_initial_tags, // Tags is a list where every element is a dictionary with category name and tags associated
         writting_category: false,
         adding_tag_for_existing_category: false,
         caret_position_in_input_box: 0,
@@ -99,7 +117,7 @@ function create_new_ontology_tag_recommendation_interface(id){
                     tags.push(this.tags[i].tags[j]);
                 }
             } return tags;},
-        get_input_tags: function(){
+        get_input_tags: function(separator){
             var input_tags = [];
             for (var i in this.tags){
                 if (!this.tags[i].category){
@@ -117,7 +135,11 @@ function create_new_ontology_tag_recommendation_interface(id){
                     input_tags.push(current_composed_tag);
                 }
             }
-            return input_tags.join(',');
+            if (!separator){
+                return input_tags.join(',');
+            } else {
+                return input_tags.join(separator);
+            }
         },
         get_category: function(){
             if ((this.writting_category) || (this.adding_tag_for_existing_category)){
@@ -131,7 +153,12 @@ function create_new_ontology_tag_recommendation_interface(id){
         },
         add_tag: function(tag, force_category){
             // Remove non alphanumeric characters and only presevre '-' and '#'
-            tag = tag.replace(/[^a-zA-Z0-9-#]/g,'');
+            if (ALLOW_SHARP_CHARACTER){
+                tag = tag.replace(/[^a-zA-Z0-9-#]/g,'');
+            } else {
+                tag = tag.replace(/[^a-zA-Z0-9-]/g,'');
+            }
+
             if (tag.length == 0){
                 // if after removal there is no tag, do not add it
                 return -1;
@@ -447,6 +474,11 @@ function render_tagline_html(rec_interface){
         html += '<span id="tr_ib_pos_' + rec_interface.id + '" class="tr_input_box_wrapper"><input type="text" placeholder="' + input_box_placeholder + '" class="' + input_box_css_class + '" autocomplete="off" id="' + input_box_base_id + rec_interface.id + '"></span>';
         html += '</span>';
     }
+
+    if (rec_interface.tags.length == 0){
+        html += '<span style="color:#bbbbbb;font-size:13px;">&nbsp;&nbsp;&nbsp;< start introducing tags by typing here...</span>';
+    }
+
     return html
 }
 

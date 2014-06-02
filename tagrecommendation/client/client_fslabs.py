@@ -2,7 +2,7 @@ import json
 import urllib2
 from urllib2 import quote
 
-TAGRECOMMENDATION_ADDRESS = 'fs-labs.s.upf.edu'
+TAGRECOMMENDATION_ADDRESS = 'localhost' #'fs-labs.s.upf.edu'
 TAGRECOMMENDATION_PORT = 8010
 
 _BASE_URL                      = 'http://%s:%i/tagrecommendation/' % (TAGRECOMMENDATION_ADDRESS, TAGRECOMMENDATION_PORT)

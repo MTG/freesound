@@ -300,11 +300,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     about = serializers.SerializerMethodField('get_about')
     def get_about(self, obj):
-        return obj.profile.about
+        return obj.profile.about or ""
 
     home_page = serializers.SerializerMethodField('get_home_page')
     def get_home_page(self, obj):
-        return obj.profile.home_page
+        return obj.profile.home_page or ""
 
     num_sounds = serializers.SerializerMethodField('get_num_sounds')
     def get_num_sounds(self, obj):
@@ -363,6 +363,10 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     username = serializers.SerializerMethodField('get_username')
     def get_username(self, obj):
         return obj.user.username
+
+    description = serializers.SerializerMethodField('get_description')
+    def get_description(self, obj):
+        return obj.description or ""
 
 ##################
 # BOOKMARK SERIALIZERS

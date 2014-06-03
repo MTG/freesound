@@ -36,9 +36,9 @@ function create_new_ontology_tag_recommendation_interface_basic_html(id, no_titl
         no_titles = false;
     }
 
-    var html = '<div class="tr_tagging_interface_wrapper">'
+    var html = '<div class="tr_tagging_interface_wrapper">';
     if (!no_titles){
-        html += '<div class="tr_instructions" style="width:700px;margin-bottom:15px;margin-top:-5px;">Separate tags pressing \'space\' or \'enter\' keys. Join multi-word tags with dashes. For example: field-recording is a popular tag. Use tags with categories to make your sound descriptions more meningful and easily findable to other Freesound users.<br><span style="font-size:80%;">(if you need help, read the <a href="/tagrecommendation/instructions/?b=1" target="_blank">tagging interface instructions</a>)</span></div>'
+        html += '<div class="tr_instructions" style="width:700px;margin-bottom:15px;margin-top:-5px;">Separate tags pressing \'space\' or \'enter\' keys. Join multi-word tags with dashes. For example: field-recording is a popular tag. Use tags with categories to make your sound descriptions more meningful and easily findable to other Freesound users.<br><span style="font-size:80%;">(if you need help, read the <a href="http://labs.freesound.org/tagrecommendation/instructions/?b=1" target="_blank">tagging interface instructions</a>)</span></div>'
     }
     html += '<div class="tr_tagging_interface_gray_area">' +
             '<div class="tr_tagline" id="tr_tagline_' + id + '"></div>' +
@@ -56,7 +56,7 @@ function create_new_ontology_tag_recommendation_interface_basic_html(id, no_titl
 function create_new_ontology_tag_recommendation_interface(id, initial_tags){
 
     processed_initial_tags = [];
-    if (initial_tags != 'None'){
+    if (initial_tags != 'None' && initial_tags){
         var inital_tags_parts = initial_tags.split(' ');
         for (i in inital_tags_parts){
             var tag = inital_tags_parts[i];
@@ -77,7 +77,6 @@ function create_new_ontology_tag_recommendation_interface(id, initial_tags){
         tags: processed_initial_tags, // Tags is a list where every element is a dictionary with category name and tags associated
         writting_category: false,
         adding_tag_for_existing_category: false,
-        caret_position_in_input_box: 0,
         current_recommended_tag_categories: [],
         show_more_categories: false,
         current_recommended_tags: false,
@@ -237,12 +236,17 @@ function create_new_ontology_tag_recommendation_interface(id, initial_tags){
                 }
             }
             return false;
+        },
+        reload_interface: function(){
+            rec_interface.writting_category = false;
+            rec_interface.adding_tag_for_existing_category = false;
+            rec_interface.draw();
+            rec_interface.add_event_handlers_to_input_box();
+            rec_interface.render_and_draw_copy_paste_icons();
         }
     };
 
-    rec_interface.draw();
-    rec_interface.add_event_handlers_to_input_box();
-    rec_interface.render_and_draw_copy_paste_icons();
+    rec_interface.reload_interface();
 
     // Get all valid tag categories from recommendation server
     $.ajax({

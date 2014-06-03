@@ -31,6 +31,7 @@
         var INTERFACE_IDS = [];
         var RECOMMENDATION_INTERFACES = [];
         var MEDIA_URL = {{ media_url }};
+        var CURRENT_INTERFACE_TYPE = "new";
     {% endif %}
 
     $(document).ready(function() {
@@ -310,10 +311,26 @@
 
     {% if ALTERNATIVE_INTERFACE %}
         function add_tags_to_hidden_field(){
-            for (var i=0; i<{{ n_sounds }}; i++){
-                var tags = RECOMMENDATION_INTERFACES[i].get_input_tags(separator=' ');
-                console.log(i)
-                $("#id_" + i + "-tags").val(tags);
+            if (CURRENT_INTERFACE_TYPE == "new"){
+                for (var i=0; i<{{ n_sounds }}; i++){
+                    var tags = RECOMMENDATION_INTERFACES[i].get_input_tags(separator=' ');
+                    $("#id_" + i + "-tags").val(tags);
+                }
+            }
+        }
+
+        function switch_interface(interface_id){
+            if (CURRENT_INTERFACE_TYPE == "new"){
+                $("#new_tr_interface_" + interface_id).hide();
+                $("#id_" + interface_id + "-tags").val("");
+                $("#old_tr_interface_" + interface_id).show();
+                CURRENT_INTERFACE_TYPE = "old";
+            } else {
+                $("#old_tr_interface_" + interface_id).hide();
+                get_recommendation_interface(interface_id).tags = [];
+                get_recommendation_interface(interface_id).reload_interface();
+                $("#new_tr_interface_" + interface_id).show();
+                CURRENT_INTERFACE_TYPE = "new";
             }
         }
     {% endif %}
@@ -371,9 +388,12 @@
                         {% if ALTERNATIVE_INTERFACE %}
                             {{form.description.tags.errors}}
                             <p>
-                                Tags:
+                                Tags <!--(<a href="javascript:void(0);" onclick="switch_interface({{ forloop.counter0  }});">switch interface</a>)-->:
                                 <div class="tagrecommendation_body" id="new_tr_interface_{{ forloop.counter0 }}"></div>
-                                <input type="hidden" id="id_{{ forloop.counter0 }}-tags" name="{{ forloop.counter0 }}-tags" value=""/>
+                                <div id="old_tr_interface_{{ forloop.counter0 }}" style="display:none;margin-top:-25px;font-size:12px;">
+                                    {{form.description.tags.help_text|safe}}<br>
+                                    {{form.description.tags}}
+                                </div>
                             </p>
                         {% else %}
                             {{form.description.tags.errors}}

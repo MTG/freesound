@@ -10,6 +10,9 @@ Python
 Javascript
   https://github.com/g-roma/freesound.js
 
+Objective-c (iOS)
+  https://github.com/ffont/Freesound-iOS (no oauth2 support yet)
+
 
 
 Freesound APIv1 Clients

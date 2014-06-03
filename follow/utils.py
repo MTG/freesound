@@ -45,7 +45,13 @@ def is_user_following_tag(user, slash_tag):
 def is_user_being_followed_by_user(user_from, user_to):
     return user_to in get_users_followers(user_from)
 
-def get_vars_in_view_for_social_stuff(user):
+def get_vars_for_account_view(user):
+    return get_vars_for_views_helper(user, clip=True)
+
+def get_vars_for_home_view(user):
+    return get_vars_for_views_helper(user, clip=False)
+
+def get_vars_for_views_helper(user, clip):
 
     following = get_users_following(user)
     followers = get_users_followers(user)
@@ -55,10 +61,11 @@ def get_vars_in_view_for_social_stuff(user):
     followers_count = len(followers)
     following_tags_count = len(following_tags)
 
-    # show only the first 20 followers and following users and 5 following tags
-    following = following[:20]
-    followers = followers[:20]
-    following_tags = following_tags[:5]
+    # show only the first 21 (3 rows) followers and following users and 5 following tags
+    if clip:
+        following = following[:21]
+        followers = followers[:21]
+        following_tags = following_tags[:5]
 
     space_tags = following_tags
     split_tags = [tag.split(" ") for tag in space_tags]

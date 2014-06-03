@@ -243,7 +243,7 @@ def home(request):
     if home and request.user.has_perm('forum.can_moderate_forum'):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
-    following, followers, following_tags, following_count, followers_count, following_tags_count = follow.utils.get_vars_in_view_for_social_stuff(user)
+    following, followers, following_tags, following_count, followers_count, following_tags_count = follow.utils.get_vars_for_home_view(user)
 
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
@@ -756,7 +756,7 @@ def account(request, username):
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
 
-    following, followers, following_tags, following_count, followers_count, following_tags_count = follow.utils.get_vars_in_view_for_social_stuff(user)
+    following, followers, following_tags, following_count, followers_count, following_tags_count = follow.utils.get_vars_for_account_view(user)
 
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])

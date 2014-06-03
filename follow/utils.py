@@ -44,3 +44,28 @@ def is_user_following_tag(user, slash_tag):
 
 def is_user_being_followed_by_user(user_from, user_to):
     return user_to in get_users_followers(user_from)
+
+def get_vars_in_view_for_social_stuff(user):
+
+    following = get_users_following(user)
+    followers = get_users_followers(user)
+    following_tags = get_tags_following(user)
+
+    following_count = len(following)
+    followers_count = len(followers)
+    following_tags_count = len(following_tags)
+
+    # show only the first 20 followers and following users and 5 following tags
+    following = following[:20]
+    followers = followers[:20]
+    following_tags = following_tags[:5]
+
+    space_tags = following_tags
+    split_tags = [tag.split(" ") for tag in space_tags]
+    slash_tags = [tag.replace(" ", "/") for tag in space_tags]
+
+    following_tags = []
+    for i in range(len(space_tags)):
+        following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
+
+    return following, followers, following_tags, following_count, followers_count, following_tags_count

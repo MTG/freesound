@@ -243,12 +243,7 @@ def home(request):
     if home and request.user.has_perm('forum.can_moderate_forum'):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
-    # only show up to three rows
-    following = follow.utils.get_users_following(user)[:21]
-    followers = follow.utils.get_users_followers(user)[:21]
-    following_tags = follow.utils.get_tags_following(user)[:21]
-
-    # logged_user_following = follow.utils.get_users_following(request.user)
+    following, followers, following_tags, following_count, followers_count, following_tags_count = follow.utils.get_vars_in_view_for_social_stuff(user)
 
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
@@ -761,26 +756,7 @@ def account(request, username):
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
 
-    following = follow.utils.get_users_following(user)
-    followers = follow.utils.get_users_followers(user)
-    following_tags = follow.utils.get_tags_following(user)
-
-    following_count = len(following)
-    followers_count = len(followers)
-    following_tags_count = len(following_tags)
-
-    # show only the first 20 followers and following users and 5 following tags
-    following = following[:20]
-    followers = followers[:20]
-    following_tags = following_tags[:5]
-
-    space_tags = following_tags
-    split_tags = [tag.split(" ") for tag in space_tags]
-    slash_tags = [tag.replace(" ", "/") for tag in space_tags]
-
-    following_tags = []
-    for i in range(len(space_tags)):
-        following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
+    following, followers, following_tags, following_count, followers_count, following_tags_count = follow.utils.get_vars_in_view_for_social_stuff(user)
 
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])

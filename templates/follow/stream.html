@@ -1,37 +1,87 @@
 {% extends "base.html" %}
 
+{% load display_sound %}
+
 {% block title %}Stream{% endblock title %}
 
 {% block content %}
 
+    <script type="text/javascript">
+        $(function () {
+            $('select option[value="{{ select_value }}"]').attr("selected", true);
+        });
+    </script>
+
     <h1>Stream</h1>
 
-    Select time period:
-    <select name="" id="">
-        <option value="">Since last visit</option>
-        <option value="">Last week</option>
-        <option value="">Last month</option>
-        <option value="">Specify dates...</option>
-    </select>
+    <form action="." method="post">
+        {% csrf_token %}
+        {% comment %}{{form.as_p}}{% endcomment %}
+        Select time period:
+        <select name="time_lapse">
+            {% for key, value in SELECT_OPTIONS.items %}
+                <option value="{{ key}}">{{ value }}</option>
+            {% endfor %}
 
-    View options:
-    <select name="" id="">
-        <option value="">order by date (newest to oldest)</option>
-        <option value="">order by date (oldest to newest)</option>
-        <option value="">group by type (users and tag group)</option>
-    </select>
+        </select>
+        <input type="hidden" value="ohyeahbaby"/>
+        <input type="submit" value="Go!"/>
+    </form>
 
-    <button>Go!</button>
+    <div id="stream_box" class="content_box">
 
-    <br/> <br/>
-
-
-    <div class="content_box large-box">
         <h3>Updates</h3>
-    </div>
 
-    {% comment %}<div class="content_box">
-        <h3>Updates from <i>tag groups</i> you follow</h3>
-    </div>{% endcomment %}
+        {% if not users_sound_ids and not tags_sound_ids %}
+
+            <div class="left">
+                <p>No updates...</p>
+            </div>
+
+        {% else %}
+
+            {% for user, more_count, more_url, sound_ids in users_sound_ids %}
+
+                <div class="left">
+                    {% for sound_id in sound_ids %}
+                        {% display_sound sound_id %}
+                    {% endfor %}
+                    {% if more_count > 0 %}
+                       <p><a href="{{ more_url }}">See all results ({{ more_count }} more)</a></p>
+                    {% endif %}
+                </div>
+
+                <div class="right">
+                    {% include "accounts/active_user.html" %}
+                </div>
+
+            {% endfor %}
+
+            {% for tags, more_count, more_url, sound_ids in tags_sound_ids %}
+
+                <div class="left">
+                    {% for sound_id in sound_ids %}
+                        {% display_sound sound_id %}
+                    {% endfor %}
+                    {% if more_count > 0 %}
+                       <p><a href="{{ more_url }}">See all results ({{ more_count }} more)</a></p>
+                    {% endif %}
+                </div>
+
+                <div class="right" id="following_tags">
+                    <span class="tag_group" onclick="location.href='{% url tags tags|join:"/" %}'">
+                        <ul class="tags" id="following_tags">
+                            {% for tag in tags %}
+                                <li><a href="">{{ tag }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </span>
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    </div>
 
 {% endblock %}

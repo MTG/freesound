@@ -5,6 +5,8 @@
 
 //@import "compass/reset";
 
+@import "../css/all.css";
+
 #account_info_left {
     float: left;
     width: 150px;
@@ -54,10 +56,6 @@
     float: right;
 }
 
-.large-box {
-    width: 800px;
-}
-
 #follow_tags {
     font-size: 11px;
     font-weight: bold;
@@ -92,7 +90,7 @@
     float: right;
 }
 
-#following_tags, #follow_browse_tags {
+#following_tags, #follow_browse_tags, #stream_following_tags {
     padding: 0px;
     margin: 0px;
     .tags li a {
@@ -124,4 +122,32 @@
 
 .tagcloud {
     border-radius: 5px;
+}
+
+#stream_box {
+    width: 944px;
+    background: url(../images/sub_sidebar_header_full_box_bg.png) no-repeat top;
+    margin: 0;
+    maring-left: 1px;
+    padding: 0px;
+    h3 {
+        margin-left: 0;
+        padding: 0px 18px;
+    }
+}
+
+.left {
+    width: 600px;
+    /*border-right: 1px solid red;*/
+    float: left;
+    margin-bottom: 40px;
+    margin-left: 20px;
+}
+
+.right {
+    /*border: 1px solid green;*/
+    float: right;
+    text-align: left;
+    margin: 0 auto;
+    width: 320px;
 }

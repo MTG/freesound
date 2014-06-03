@@ -663,7 +663,7 @@ h3.header,
     margin-top: 12px;
 }
 
-#latest_news .post_date,#latest_news .post_author {
+#latest_news .post_date, #latest_news .post_author {
     position: relative;
     top: -8px;
     line-height: 30px;

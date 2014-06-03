@@ -19,22 +19,23 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.http import HttpResponseRedirect, HttpResponse
+
+from django.http import HttpResponse
 from django.template import RequestContext
-
-import accounts.views as accounts
-
 from django.contrib.auth.decorators import login_required
+import follow.utils
 from follow.models import FollowingUserItem
 from follow.models import FollowingQueryItem
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render_to_response
-import django.utils.http as utils
-
 from datetime import datetime, timedelta
-import follow.utils
-from sounds.models import Sound
-
+from search.views import search_prepare_query, search_prepare_sort
+import settings
+from freesound.utils.search.solr import Solr, SolrResponseInterpreter
+from search.forms import SEARCH_SORT_OPTIONS_WEB
+# from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from collections import OrderedDict
+from django.core.urlresolvers import reverse
 
 @login_required
 def follow_user(request, username):
@@ -69,35 +70,106 @@ def unfollow_tags(request, slash_tags):
 @login_required
 def stream(request):
 
+    SELECT_OPTIONS = OrderedDict([
+        ("last_visit", "Last visit"),
+        ("last_week", "Last week"),
+        ("last_month", "Last month"),
+        ("specific_dates", "Specify dates...")
+    ])
+
+    todo = 100
+
+    SELECT_OPTIONS_DAYS = {
+        "last_visit": todo,
+        "last_week": 7,
+        "last_month": 10000,
+        "specific_dates": todo
+    }
+
+    SOLR_QUERY_LIMIT_PARAM = 3
+
     user = request.user
 
-    # following_users = follow.utils.get_users_following(user)
+    if request.method == "POST":
+        select_value = request.POST.get("time_lapse")
+        time_lapse_day_int = SELECT_OPTIONS_DAYS[select_value]
+    else:
+        time_lapse_day_int = SELECT_OPTIONS_DAYS["last_week"]
+
+    time_lapse = "[NOW-%sDAY TO NOW]" % str(time_lapse_day_int)
+
+    solr = Solr(settings.SOLR_URL)
+
+    sort_str = search_prepare_sort("created desc", SEARCH_SORT_OPTIONS_WEB)
+
     #
-    # # TODO: change this to the form input
-    # start_date = datetime.now()
-    # end_date = start_date - timedelta(days=7)
+    # USERS FOLLOWING
     #
-    # # TODO: which field to use for the query?
-    # # analysis_state
-    # # created
-    # # moderation_date
-    # # moderation_state
-    # # processing_date
-    # # processing_state
-    # solr = Solr(settings.SOLR_URL)
-    # query = search_prepare_query("",
-    #                              "username:Jovica created:[1976-03-06T00:00:00.999Z TO *]", # tag:tag1 tag:tag2 ... created:sdfsdf
-    #                              "created desc",
-    #                              1,
-    #                              5,
-    #                              grouping=False,
-    #                              include_facets=False)
+
+    users_following = follow.utils.get_users_following(user)
+
+    users_sound_ids = []
+    for user_following in users_following:
+
+        filter_str = "username:" + user_following.username + " created:" + time_lapse
+
+        query = search_prepare_query(
+            "",
+            filter_str,
+            sort_str,
+            1,
+            SOLR_QUERY_LIMIT_PARAM,
+            grouping=False,
+            include_facets=False
+        )
+
+        result = SolrResponseInterpreter(solr.select(unicode(query)))
+        more_count = result.num_found - SOLR_QUERY_LIMIT_PARAM
+        base_url = reverse("sounds-search")
+        more_url = base_url + "?f=" + filter_str + "&s=" + sort_str[0]
+
+        if result.num_rows != 0:
+            sound_ids = [element['id'] for element in result.docs]
+            users_sound_ids.append(((user_following, False), more_count, more_url, sound_ids))
+
+    # print users_sound_ids
+
     #
-    # result = SolrResponseInterpreter(solr.select(unicode(query)))
-    # solr_ids = [element['id'] for element in result.docs]
+    # TAGS FOLLOWING
     #
-    # sounds = Sound.objects.filter(user__in=following_users, created__range=(start_date, end_date))
-    #
-    # Sound.objects.filter(user__in=following_users)
+
+    tags_following = follow.utils.get_tags_following(user)
+
+    tags_sound_ids = []
+
+    for tag_following in tags_following:
+
+        tags = tag_following.split(" ")
+        tag_filter_query = ""
+        for tag in tags:
+            tag_filter_query += "tag:" + tag + " "
+
+        tag_filter_str = tag_filter_query + " created:" + time_lapse
+
+        query = search_prepare_query(
+            "",
+            tag_filter_str,
+            sort_str,
+            1,
+            SOLR_QUERY_LIMIT_PARAM,
+            grouping=False,
+            include_facets=False
+        )
+
+        result = SolrResponseInterpreter(solr.select(unicode(query)))
+        more_count = result.num_found - SOLR_QUERY_LIMIT_PARAM
+        base_url = reverse("sounds-search")
+        more_url = base_url + "?f=" + tag_filter_str + "&s=" + sort_str[0]
+
+        if result.num_rows != 0:
+            sound_ids = [element['id'] for element in result.docs]
+            tags_sound_ids.append((tags, more_count, more_url, sound_ids))
+
+    # print tags_sound_ids
 
     return render_to_response('follow/stream.html', locals(), context_instance=RequestContext(request))

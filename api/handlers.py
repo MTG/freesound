@@ -326,7 +326,7 @@ class SoundSearchHandler(BaseHandler):
             return resp
 
         cd = form.cleaned_data
-        grouping = request.GET.get('g', "")
+        grouping = request.GET.get("g", "")
         if grouping == "0":
             grouping = ""
 

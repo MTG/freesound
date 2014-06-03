@@ -292,22 +292,19 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     avatar = serializers.SerializerMethodField('get_avatar')
     def get_avatar(self, obj):
-        if obj.profile.has_avatar:
-            return {
-                    'Small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].using_https),
-                    'Medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].using_https),
-                    'Large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].using_https),
-            }
-        else:
-            return None
+        return {
+                'small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].using_https),
+                'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].using_https),
+                'large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].using_https),
+        }
 
     about = serializers.SerializerMethodField('get_about')
     def get_about(self, obj):
-        return obj.profile.about
+        return obj.profile.about or ""
 
     home_page = serializers.SerializerMethodField('get_home_page')
     def get_home_page(self, obj):
-        return obj.profile.home_page
+        return obj.profile.home_page or ""
 
     num_sounds = serializers.SerializerMethodField('get_num_sounds')
     def get_num_sounds(self, obj):
@@ -366,6 +363,10 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     username = serializers.SerializerMethodField('get_username')
     def get_username(self, obj):
         return obj.user.username
+
+    description = serializers.SerializerMethodField('get_description')
+    def get_description(self, obj):
+        return obj.description or ""
 
 ##################
 # BOOKMARK SERIALIZERS

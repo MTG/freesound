@@ -42,6 +42,7 @@ from accounts.forms import RegistrationForm
 from freesound.utils.filesystem import generate_tree
 from freesound.utils.cache import invalidate_template_cache
 from freesound.utils.nginxsendfile import sendfile
+from similarity.client import Similarity
 from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -1013,6 +1014,28 @@ class Me(OauthRequiredAPIView):
             raise ServerErrorException
 
 
+### Available descriptors view
+class AvailableAudioDescriptors(GenericAPIView):
+    __doc__ = 'Get a list of valid audio descriptor names that can be used in content/combined search, in sound analysis<br>and in the analysis field of any sound list response. ' \
+              'Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
+              % (docs_base_url, '%s#available-audio-descriptors' % resources_doc_filename)
+
+    #authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('available_audio_descriptors'))
+        try:
+            descriptor_names = Similarity.get_descriptor_names()
+            del descriptor_names['all']
+            for key, value in descriptor_names.items():
+                descriptor_names[key] = [item[1:] for item in value] #  remove initial dot from descriptor names
+
+            return Response({'fixed-length':{'one-dimensional':descriptor_names['fixed-length'], 'multi-dimensional':descriptor_names['multidimensional']}, 'variable-length':descriptor_names['variable-length']}, status=status.HTTP_200_OK)
+        except Exception, e:
+            raise ServerErrorException
+
+
+
 ### Root view
 class FreesoundApiV2Resources(GenericAPIView):
     __doc__ = 'List of resources available in the Freesound APIv2. ' \
@@ -1050,12 +1073,15 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '03 User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
                     '04 User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
                     '05 User bookmark category sounds': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>'), request_is_secure=request.using_https),
-                    '06 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
                 }).items(), key=lambda t: t[0]))},
                 {'Pack resources': OrderedDict(sorted(dict({
                     '01 Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.using_https),
                     '02 Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.using_https),
                     '03 Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
+                }).items(), key=lambda t: t[0]))},
+                {'Other resources': OrderedDict(sorted(dict({
+                    '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
+                    '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
                 }).items(), key=lambda t: t[0]))},
             ])
 

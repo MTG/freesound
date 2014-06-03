@@ -42,6 +42,9 @@ urlpatterns = patterns('apiv2.views',
     # Me
     url(r'^me/$', views.Me.as_view(), name="apiv2-me"),
 
+    # Available audio descriptors
+    url(r'^descriptors/$', views.AvailableAudioDescriptors.as_view(), name="apiv2-available-descriptors"),
+
     # Text/content/combined search
     url(r'^search/text/$', views.TextSearch.as_view(), name="apiv2-sound-text-search"),
     url(r'^search/content/$', views.ContentSearch.as_view(), name="apiv2-sound-content-search"),

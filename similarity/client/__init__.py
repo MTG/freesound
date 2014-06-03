@@ -26,7 +26,7 @@ _BASE_URL                     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS
 _BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS, SIMILARITY_INDEXING_SERVER_PORT)
 _URL_ADD_POINT                = 'add_point/'
 _URL_DELETE_POINT             = 'delete_point/'
-_URL_GET_DESCRIPTORS          = 'get_descriptors/'
+_URL_GET_DESCRIPTOR_NAMES     = 'get_descriptor_names/'
 _URL_GET_ALL_SOUND_IDS        = 'get_all_point_names/'
 _URL_CONTAINS_POINT           = 'contains/'
 _URL_NNSEARCH                 = 'nnsearch/'
@@ -138,8 +138,8 @@ class Similarity():
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def get_descriptors(cls):
-        url = _BASE_URL + _URL_GET_DESCRIPTORS
+    def get_descriptor_names(cls):
+        url = _BASE_URL + _URL_GET_DESCRIPTOR_NAMES
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod

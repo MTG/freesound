@@ -790,7 +790,7 @@ function handle_input_box_focusin_event(rec_interface, e, is_inline){
 
 function handle_dropping_tag_into_category_event(rec_interface, e, ui){
     log('DragAndDropTagIntoCategory');
-    var tag = ui.draggable[0].innerText;
+    var tag = ui.draggable[0].textContent;
     var tag_pos_id = ui.draggable[0].id;
     var category = e.target.id;
     rec_interface.add_dragged_tag_to_category(tag, category, tag_pos_id);
@@ -804,7 +804,7 @@ function handle_dropping_tag_into_category_event(rec_interface, e, ui){
 
 function handle_dropping_category_tag_outside_category_event(rec_interface, e, ui){
     log('DragAndDropTagOutsideCategory');
-    var tag = ui.draggable[0].innerText;
+    var tag = ui.draggable[0].textContent;
     var tag_pos_id = ui.draggable[0].id;
     var category = e.target.id;
     rec_interface.add_dragged_tag_to_outside_category(tag, category, tag_pos_id);

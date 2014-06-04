@@ -24,6 +24,18 @@
         else
             option.selected = false;
     }
+
+    {% if ask_for_interface %}
+        function show_popup(){
+            $("#ask_for_interface").show();
+        }
+
+        function submit(form, value){
+            $("#participate_in_experiment").val(value);
+            form.submit();
+        }
+    {% endif %}
+
 </script>
 {% endblock %}
 
@@ -42,8 +54,29 @@ selecting them and pressing the "delete" button.
     <div style="display:none">
     {{form.as_p}}
     </div>
-    <input type="submit" value="describe" name="describe" style="margin-left:10px">
+
+    {% if ask_for_interface %}
+        <input type="button" value="describe" onclick="show_popup()">
+    {% else %}
+        <input type="submit" value="describe" name="describe" style="margin-left:10px">
+    {% endif %}
     <input type="submit" value="delete" name="delete">
+
+        {% if ask_for_interface %}
+        <div id="ask_for_interface" style="display:none;margin-top:10px;margin-left:10px;">
+            <p>
+            Do you want to participate bla bla bla?
+                <br>
+
+                <input type="radio" name="participate_in_experiment" value="yes"/>Yes
+                <input type="radio" name="participate_in_experiment" value="no"/>No
+
+                <input type="submit" value="continue" name="describe" style="margin-left:10px">
+            </p>
+
+        </div>
+        {% endif %}
 </form>
+
 </div><!-- #describe_page -->
 {% endblock %}

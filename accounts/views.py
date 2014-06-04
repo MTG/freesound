@@ -50,7 +50,7 @@ from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
 from geotags.models import GeoTag
 from django.contrib import messages
-from settings import SOUNDS_PER_DESCRIBE_ROUND
+from settings import SOUNDS_PER_DESCRIBE_ROUND, ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED
@@ -346,11 +346,20 @@ def edit(request):
 @login_required
 def describe(request):
 
+    # Tag recommendation research code
+    ask_for_interface = ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
+
     file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
     file_structure.name = 'Your uploaded files'
 
     if request.method == 'POST':
         form = FileChoiceForm(files, request.POST)
+
+        # Tag recommendation research code
+        if ask_for_interface:
+            request.session['use_alternative_interface'] = False
+            if request.POST.get('participate_in_experiment', 'no') == 'yes':
+                request.session['use_alternative_interface'] = True
         
         if form.is_valid():
             if "delete" in request.POST: # If delete button is pressed
@@ -417,7 +426,7 @@ def describe_sounds(request):
 
     # For tag recommendation research only
     ALTERNATIVE_INTERFACE = False
-    use_alternative_interface = request.GET.get("alt", False)
+    use_alternative_interface = request.GET.get("alt", False) or request.session.get('use_alternative_interface', False)
     if use_alternative_interface:
         ALTERNATIVE_INTERFACE = True
     n_sounds = len(sounds)

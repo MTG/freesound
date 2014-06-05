@@ -72,14 +72,18 @@
                         In order to improve and facilitate the sound tagging process, we are experimenting with a new
                         interface for tagging your audio files. Do you want to use this experimental interface to describe
                         the selected sounds?
-
                     </p>
                     <p>
-                        <input type="radio" name="participate_in_experiment" value="yes"/> Yes&nbsp;&nbsp;&nbsp;
+                        <input type="radio" name="participate_in_experiment" value="yes" {% if is_ie %}disabled="disabled"{% endif %} /> Yes&nbsp;&nbsp;&nbsp;
                         <input type="radio" name="participate_in_experiment" checked="checked" value="no"/> No
 
                         <input type="submit" value="continue" name="describe" style="margin-left:90px">
                     </p>
+                    {% if is_ie %}
+                        <p><span style="font-size:90%;">
+                        (only works on Chrome, Safari and Firefox web browsers)
+                        </span></p>
+                     {% endif %}
 
                 </div>
             {% else %}

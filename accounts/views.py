@@ -348,6 +348,10 @@ def describe(request):
 
     # Tag recommendation research code
     ask_for_interface = ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
+    is_ie = False
+    if request.META.has_key('HTTP_USER_AGENT'):
+        user_agent = request.META['HTTP_USER_AGENT'].lower()
+        is_ie = ('trident' in user_agent) or ('msie' in user_agent)
 
     file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
     file_structure.name = 'Your uploaded files'

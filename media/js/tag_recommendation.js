@@ -498,7 +498,7 @@ function render_recommended_tags_html(rec_interface){
                 description = description.replace(category, '<span class="tr_category_name_in_description">' + category + '</span>');
             }
             html += '<div class="tr_recommended_tags_info"><div class="tr_tag_category_description">' + description + '</div>';
-            html += 'Tag suggestions: <span style="color:grey;font-size:10px;">(click on these tags or type your own)</span>';
+            html += 'Tag suggestions/examples: <span style="color:grey;font-size:10px;">(click on these tags or type your own)</span>';
             html += '</div>';
         } else {
             html += '<div class="tr_recommended_tags_info">Tag suggestions: <span style="color:grey;font-size:10px;">(click on these tags or type your own)</span></div>';

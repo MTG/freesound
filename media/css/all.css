@@ -3098,6 +3098,13 @@ ul.messages {
 #describe_page #fileform {
     padding: 0;
 }
+
+.describe_page_action_button {
+    margin-bottom: 5px;
+    padding: 5px;
+}
+
+
 /* Forum Search
 ------------------------------------------------------*/
 .multipost {

@@ -356,8 +356,8 @@ def describe(request):
         form = FileChoiceForm(files, request.POST)
 
         # Tag recommendation research code
+        request.session['use_alternative_interface'] = False
         if ask_for_interface:
-            request.session['use_alternative_interface'] = False
             if request.POST.get('participate_in_experiment', 'no') == 'yes':
                 request.session['use_alternative_interface'] = True
         

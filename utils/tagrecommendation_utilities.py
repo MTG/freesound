@@ -126,8 +126,8 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
 
 
 ### Views for new tag recommendation interface experiment
-def new_tagrecommendation_interface_test(request):
-    return render_to_response('tagrecommendation/new_interface_test.html', locals(), context_instance=RequestContext(request))
+def new_tagrecommendation_interface_instructions(request):
+    return render_to_response('tagrecommendation/new_interface_instructions.html', locals(), context_instance=RequestContext(request))
 
 def get_recommended_tags_view_new(request):
     if request.is_ajax() and request.method == 'POST':

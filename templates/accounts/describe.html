@@ -43,40 +43,53 @@
 <div id="describe_page">
 <h1>Describe</h1>
 <h3>Pick files</h3>
-<p>You've uploaded these files, but they won't appear on the website
-until you've described them. Select the files you want to describe and
-follow the instructions on the following pages. You can also delete files by
-selecting them and pressing the "delete" button.
-<ul id="root_file" class="upload">
-    {% show_file file_structure %}
-</ul>
-<form action="." method="post" id="fileform">{% csrf_token %}
-    <div style="display:none">
-    {{form.as_p}}
+<p>You've uploaded these files, but they won't appear on the website until you've described them.
+    <br>Select the files you want to describe, click on "describe selected files", and follow the instructions on the following pages.
+    <br> You can also delete files by selecting them and pressing the "delete selected files" button.
+<div id="content">
+    <div class="content_box">
+        <h3>&nbsp;</h3>
+        <p>
+        <ul id="root_file" class="upload">
+            {% show_file file_structure %}
+        </ul>
+        </p>
     </div>
+</div>
+<div id="sidebar">
+    <div class="content_box">
+        <h3>Actions</h3>
+        <p>
+        <form action="." method="post" id="fileform">{% csrf_token %}
+            <div style="display:none">
+            {{form.as_p}}
+            </div>
+            {% if ask_for_interface %}
+                <input class="describe_page_action_button" type="button" value="describe selected files" onclick="show_popup()">
+                <div id="ask_for_interface" style="display:none;margin-top:10px;margin-left:10px;padding: 16px 18px;border-left: 2px solid #eee;background: #fafafa;">
+                    <p>
 
-    {% if ask_for_interface %}
-        <input type="button" value="describe" onclick="show_popup()">
-    {% else %}
-        <input type="submit" value="describe" name="describe" style="margin-left:10px">
-    {% endif %}
-    <input type="submit" value="delete" name="delete">
+                        In order to improve and facilitate the sound tagging process, we are experimenting with a new
+                        interface for tagging your audio files. Do you want to use this experimental interface to describe
+                        the selected sounds?
 
-        {% if ask_for_interface %}
-        <div id="ask_for_interface" style="display:none;margin-top:10px;margin-left:10px;">
-            <p>
-            Do you want to participate bla bla bla?
-                <br>
+                    </p>
+                    <p>
+                        <input type="radio" name="participate_in_experiment" value="yes"/> Yes&nbsp;&nbsp;&nbsp;
+                        <input type="radio" name="participate_in_experiment" checked="checked" value="no"/> No
 
-                <input type="radio" name="participate_in_experiment" value="yes"/>Yes
-                <input type="radio" name="participate_in_experiment" value="no"/>No
+                        <input type="submit" value="continue" name="describe" style="margin-left:90px">
+                    </p>
 
-                <input type="submit" value="continue" name="describe" style="margin-left:10px">
-            </p>
-
-        </div>
-        {% endif %}
-</form>
-
+                </div>
+            {% else %}
+                <input class="describe_page_action_button" type="submit" value="describe selected files" name="describe">
+            {% endif %}
+            <br><input class="describe_page_action_button" type="submit" value="delete selected files" name="delete">
+        </form>
+        </p>
+    </div>
+</div>
+<br style="clear: both;">
 </div><!-- #describe_page -->
 {% endblock %}

@@ -64,11 +64,11 @@
             names += "id_{{ forloop.counter0 }}|{{ form.sound.name }},"
         {% endfor %}
         log("StartedDescriptionOfSounds: " + names,"-")
-        if (doRecommend == true){
-            log("UsingRecommendation:Yes", "-");
-        } else {
-            log("UsingRecommendation:No", "-");
-        }
+        {% if ALTERNATIVE_INTERFACE %}
+            log("UsingNewInterface:Yes", "-");
+        {% else %}
+            log("UsingNewInterface:No", "-");
+        {% endif %}
 
         // Listen to keyup events in tags textareas to display tags
         textarea_elements.keyup(function(event) {

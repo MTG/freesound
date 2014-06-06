@@ -33,6 +33,7 @@ class GaiaWrapper:
         self.indexing_only_mode = indexing_only_mode
         self.index_path                 = INDEX_DIR
         self.original_dataset           = DataSet()
+        self.pca_dataset                = DataSet()
         if not self.indexing_only_mode:
             self.original_dataset_path  = self.__get_dataset_path(INDEX_NAME)
         else:
@@ -40,6 +41,7 @@ class GaiaWrapper:
         self.descriptor_names           = {}
         self.metrics                    = {}
         self.view                       = None
+        self.view_pca                   = None
         self.transformations_history    = None
 
         self.__load_dataset()
@@ -83,6 +85,13 @@ class GaiaWrapper:
                 # create view
                 view = View(self.original_dataset)
                 self.view = view
+
+                # do pca and create pca view and metric
+                self.pca_dataset = transform(self.original_dataset, 'pca', {'descriptorNames': PCA_DESCRIPTORS, 'dimension': PCA_DIMENSIONS, 'resultName':'pca'})
+                self.pca_dataset.setReferenceDataSet(self.original_dataset)
+                self.view_pca = View(self.pca_dataset)
+                self.__build_pca_metric()
+
 
             if self.original_dataset.history().size() <= 0:
                 logger.info('Dataset loaded, size: %s points' % (self.original_dataset.size()))
@@ -150,16 +159,26 @@ class GaiaWrapper:
 
     def __build_metrics(self):
         for preset in PRESETS:
-            logger.info('Bulding metric for preset %s' % preset)
-            name = preset
-            path = PRESET_DIR + name + ".yaml"
-            preset_file = yaml.load(open(path))
-            distance = preset_file['distance']['type']
-            parameters = preset_file['distance']['parameters']
-            search_metric = DistanceFunctionFactory.create(str(distance), self.original_dataset.layout(), parameters)
-            self.metrics[name] = search_metric
+            if preset != 'pca':  # PCA metric is built only after pca dataset is created
+                logger.info('Bulding metric for preset %s' % preset)
+                name = preset
+                path = PRESET_DIR + name + ".yaml"
+                preset_file = yaml.load(open(path))
+                distance = preset_file['distance']['type']
+                parameters = preset_file['distance']['parameters']
+                search_metric = DistanceFunctionFactory.create(str(distance), self.original_dataset.layout(), parameters)
+                self.metrics[name] = search_metric
+
+    def __build_pca_metric(self):
+        logger.info('Bulding metric for preset pca')
+        preset_file = yaml.load(open(PRESET_DIR + "pca.yaml"))
+        distance = preset_file['distance']['type']
+        parameters = preset_file['distance']['parameters']
+        search_metric = DistanceFunctionFactory.create(str(distance), self.pca_dataset.layout(), parameters)
+        self.metrics['pca'] = search_metric
 
     def add_point(self, point_location, point_name):
+
         if self.original_dataset.contains(str(point_name)):
                 self.original_dataset.removePoint(str(point_name))
 
@@ -168,9 +187,17 @@ class GaiaWrapper:
             try:
                 p.load(str(point_location))
                 p.setName(str(point_name))
-                self.original_dataset.addPoint(p)
-                msg = 'Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size())
-                logger.info('Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size()))
+                if self.original_dataset.size() <= SIMILARITY_MINIMUM_POINTS:
+                    # Add point to original_dataset
+                    self.original_dataset.addPoint(p)
+                    msg = 'Added point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size())
+                    logger.info(msg)
+                else:
+                    # Add point to pca dataset (as it has been already created). Pca dataset will take are of add it to the original too
+                    self.pca_dataset.addPoint(p)
+                    msg = 'Added point with name %s. Index has now %i points (pca index has %i points).' % (str(point_name), self.original_dataset.size(), self.pca_dataset.size())
+                    logger.info(msg)
+
             except Exception, e:
                 msg = 'Point with name %s could NOT be added (%s).' % (str(point_name), str(e))
                 logger.info(msg)
@@ -179,7 +206,6 @@ class GaiaWrapper:
             msg = 'Point with name %s could NOT be added because analysis file does not exist (%s).' % (str(point_name), str(point_location))
             logger.info(msg)
             return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
-
 
         if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS:
             # Do enumerate
@@ -202,13 +228,23 @@ class GaiaWrapper:
             # create view
             view = View(self.original_dataset)
             self.view = view
+            # do pca and create pca view and metric
+            self.pca_dataset = transform(self.original_dataset, 'pca', {'descriptorNames': PCA_DESCRIPTORS, 'dimension': PCA_DIMENSIONS, 'resultName':'pca'})
+            self.pca_dataset.setReferenceDataSet(self.original_dataset)
+            self.view_pca = View(self.pca_dataset)
+            self.__build_pca_metric()
 
         return {'error': False, 'result': msg}
 
     def delete_point(self, point_name):
         if self.original_dataset.contains(str(point_name)):
-            self.original_dataset.removePoint(str(point_name))
-            logger.info('Deleted point with name %s. Index has now %i points.' % (str(point_name), self.original_dataset.size()))
+            if self.original_dataset.size() <= SIMILARITY_MINIMUM_POINTS:
+                # Remove from original dataset
+                self.original_dataset.removePoint(str(point_name))
+            else:
+                # Remove from pca dataset (pca dataset will take care of removing from original dataset too)
+                self.pca_dataset.removePoint(str(point_name))
+            logger.info('Deleted point with name %s. Index has now %i points (pca index has %i points).' % (str(point_name), self.original_dataset.size()), self.pca_dataset.size())
             return {'error': False, 'result': True}
         else:
             msg = 'Can\'t delete point with name %s because it does not exist.' % str(point_name)
@@ -235,24 +271,6 @@ class GaiaWrapper:
         toc = time.time()
         logger.info('Finished saving index (done in %.2f seconds, index has now %i points).' % ((toc - tic), self.original_dataset.size()))
         return {'error': False, 'result': path}
-
-    def clear_index_memory(self):
-
-        if self.original_dataset.size() > 0:
-            logger.info('Clearing index memory...')
-            self.original_dataset.clear()
-            self.original_dataset = None
-            self.original_dataset = DataSet()
-            self.descriptor_names = {}
-            self.metrics = {}
-            self.view = None
-            msg = 'Cleared indexing dataset memory, current dataset has %i points' % self.original_dataset.size()
-            logger.info(msg)
-            return {'error': False, 'result': msg}
-        else:
-            msg = 'Not clearing index because dataset size = 0'
-            logger.info(msg)
-            return {'error': False, 'result': msg}
 
     def contains(self, point_name):
         logger.info('Checking if index has point with name %s' % str(point_name))
@@ -356,7 +374,7 @@ class GaiaWrapper:
 
     # SIMILARITY SEARCH and CONTENT SEARCH
 
-    def search_dataset(self, query_point, number_of_results, preset_name, offset=0, descriptors_data=None):
+    def search_dataset(self, query_point, number_of_results, preset_name, offset=0):
         preset_name = str(preset_name)
         results = []
         count = 0
@@ -366,44 +384,22 @@ class GaiaWrapper:
             logger.info(msg)
             return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
 
-        if query_point:
-            query_point = str(query_point)
-            logger.info('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
-            results = []
+        query_point = str(query_point)
+        logger.info('NN search for point with name %s (preset = %s)' % (query_point,preset_name))
+        results = []
 
-            if query_point.endswith('.yaml'):
-                # The point doesn't exist in the dataset....
-                # So, make a temporary point, add all the transformations
-                # to it and search for it
-                p, p1 = Point(), Point()
-                p.load(query_point)
-                p1 = self.original_dataset.history().mapPoint(p)
-                search = self.view.nnSearch(p1, self.metrics[preset_name])
-                results = search.get(int(number_of_results), offset=int(offset))
-                count = search.size()
-            else:
-                if not self.original_dataset.contains(query_point):
-                    msg = "Sound with id %s doesn't exist in the dataset." % query_point
-                    logger.info(msg)
-                    return {'error':True,'result':msg, 'status_code': NOT_FOUND_CODE}
-                search = self.view.nnSearch(query_point, self.metrics[preset_name])
-                results = search.get(int(number_of_results), offset=int(offset))
-                count = search.size()
-
-        if descriptors_data:
-            # Create a point with the data in 'descriptors_data' and search for it
-            try:
-                logger.info('NN search for point of uploaded file')
-                p, p1 = Point(), Point()
-                p.loadFromString(yaml.dump(descriptors_data))
-                p1 = self.original_dataset.history().mapPoint(p)
-                search = self.view.nnSearch(p1, self.metrics[preset_name])
-                results = search.get(int(number_of_results), offset=int(offset))
-                count = search.size()
-            except:
-                msg = 'Unable to create gaia point from uploaded file.'
-                logger.info(msg)
-                return {'error': True, 'result': msg}
+        if not self.original_dataset.contains(query_point):
+            msg = "Sound with id %s doesn't exist in the dataset." % query_point
+            logger.info(msg)
+            return {'error':True,'result':msg, 'status_code': NOT_FOUND_CODE}
+        if preset_name == 'pca':
+            # Search on PCA view
+            search = self.view_pca.nnSearch(query_point, self.metrics[preset_name])
+        else:
+            # Search on original dataset view
+            search = self.view.nnSearch(query_point, self.metrics[preset_name])
+        results = search.get(int(number_of_results), offset=int(offset))
+        count = search.size()
 
         return {'error': False, 'result': {'results': results, 'count': count}}
 

@@ -1,0 +1,11 @@
+{
+    "presetdetails": "Pca similarity preset.",
+    "distance": {
+        "type": "euclidean",
+        "parameters": {
+            "descriptorNames": [
+                ".pca"
+            ]
+        }
+    }
+}

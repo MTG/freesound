@@ -88,29 +88,13 @@ class SimilarityServer(resource.Resource):
         return json.dumps(self.gaia.get_sounds_descriptors(sound_ids[0].split(','), **kwargs))
 
     def nnsearch(self, request, sound_id=None, num_results=None, preset=None, offset=[0]):
-        descriptors_data = None
-        if not sound_id:
-            # Check if attached file
-            data = request.content.getvalue().split('&')[0]  # If more than one file attached, just get the first one
-            if not data:
-                return json.dumps({'error': True, 'result': 'Either specify a point id or attach an analysis file.', 'status_code': BAD_REQUEST_CODE})
 
-            # If not sound id but file attached found, parse file and pass as a dict
-            sound_id = [None]
-            try:
-                descriptors_data = yaml.load(data)
-            except:
-                return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.', 'status_code': BAD_REQUEST_CODE})
+        preset = ['pca']  # For the moment we only admit pca preset, in the future we may allow more presets
 
-        if not preset:
-            preset = [DEFAULT_PRESET]
-        else:
-            if preset[0] not in PRESETS:
-                preset = [DEFAULT_PRESET]
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
 
-        return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name=preset[0], offset=offset[0], descriptors_data=descriptors_data))
+        return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name=preset[0], offset=offset[0]))
 
     def api_search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0], in_ids=None):
         '''

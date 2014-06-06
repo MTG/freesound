@@ -71,19 +71,15 @@ def unfollow_tags(request, slash_tags):
 def stream(request):
 
     SELECT_OPTIONS = OrderedDict([
-        ("last_visit", "Last visit"),
         ("last_week", "Last week"),
         ("last_month", "Last month"),
         ("specific_dates", "Specify dates...")
     ])
 
-    todo = 100
-
     SELECT_OPTIONS_DAYS = {
-        "last_visit": todo,
         "last_week": 7,
-        "last_month": 10000,
-        "specific_dates": todo
+        "last_month": 30,
+        "specific_dates": 0
     }
 
     SOLR_QUERY_LIMIT_PARAM = 3
@@ -92,11 +88,23 @@ def stream(request):
 
     if request.method == "POST":
         select_value = request.POST.get("time_lapse")
-        time_lapse_day_int = SELECT_OPTIONS_DAYS[select_value]
+        if select_value == "specific_dates":
+            date_from = request.POST.get("date_from")
+            date_to = request.POST.get("date_to")
+            time_lapse = "[%sT00:00:00Z TO %sT23:59:59.999Z]" % (date_from, date_to)
+        else:
+            time_lapse_day_int = SELECT_OPTIONS_DAYS[select_value]
+            time_lapse = "[NOW-%sDAY TO NOW]" % str(time_lapse_day_int)
     else:
         time_lapse_day_int = SELECT_OPTIONS_DAYS["last_week"]
+        time_lapse = "[NOW-%sDAY TO NOW]" % str(time_lapse_day_int)
 
-    time_lapse = "[NOW-%sDAY TO NOW]" % str(time_lapse_day_int)
+    print time_lapse
+    print time_lapse
+    print time_lapse
+    print time_lapse
+    print time_lapse
+    print time_lapse
 
     solr = Solr(settings.SOLR_URL)
 

@@ -151,3 +151,32 @@
     margin: 0 auto;
     width: 320px;
 }
+
+#date_pickers {
+    display: inline-block;
+    label {
+        display: inline-block;
+        font-size: 11px;
+    }
+    input {
+        font-size: 11px;
+        margin-right: 3px;
+    }
+    .ui-datepicker-trigger {
+        /*padding-top: 5px;*/
+    }
+    select {
+        display: inline-block;
+    }
+    #lbl_date_from, #lbl_date_to {
+        margin-left: 20px;
+    }
+}
+
+#date_submit {
+    margin-left: 10px;
+}
+
+#stream_period {
+    font-size: 13px;
+}

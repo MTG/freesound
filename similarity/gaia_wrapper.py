@@ -354,7 +354,7 @@ class GaiaWrapper:
         return required_layout
 
 
-    # SIMILARITY SEARCH (WEB and API)
+    # SIMILARITY SEARCH and CONTENT SEARCH
 
     def search_dataset(self, query_point, number_of_results, preset_name, offset=0, descriptors_data=None):
         preset_name = str(preset_name)
@@ -403,117 +403,6 @@ class GaiaWrapper:
                 return {'error': True, 'result': msg}
 
         return {'error': False, 'result': {'results': results, 'count': count}}
-
-
-    # CONTENT-BASED SEARCH (API)
-    def query_dataset(self, query_parameters, number_of_results, preset_name, offset=0, target_sound_id=False, use_file_as_target=False, descriptors_data=None):
-
-        size = self.original_dataset.size()
-        if size < SIMILARITY_MINIMUM_POINTS:
-            msg = 'Not enough datapoints in the dataset (%s < %s).' % (size, SIMILARITY_MINIMUM_POINTS)
-            logger.info(msg)
-            return {'error': True, 'result': msg, 'status_code': SERVER_ERROR_CODE}
-
-        trans_hist = self.transformations_history
-        layout = self.original_dataset.layout()
-
-        # Get normalization coefficients to transform the input data (get info from the last transformation which has
-        # been a normalization)
-        coeffs = None
-        for i in range(0,len(trans_hist)):
-            if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
-                coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
-
-        ##############
-        # PARSE TARGET
-        ##############
-
-        if not use_file_as_target:
-            # If the target is a sound id (target_sound_id!=False), we get the point of this sound and set as target.
-            # Otherwise we create a point and add the descriptors provided
-            if target_sound_id:
-                query_point = str(target_sound_id)
-                if not self.original_dataset.contains(query_point):
-                    msg = "Sound with id %s doesn't exist in the dataset and can not be set as descriptors_target." % query_point
-                    logger.info(msg)
-                    return {'error':True,'result':msg, 'status_code':NOT_FOUND_CODE}
-                else:
-                    q = query_point
-
-            else:
-                # Transform input params to the normalized feature space and add them to a query point
-                # If there are no params specified in the target, the point is set as empty (probably random sounds are returned)
-                q = Point()
-                q.setLayout(layout)
-                feature_names = []
-                # If some target has been specified...
-                if query_parameters['target'].keys():
-                    for param in query_parameters['target'].keys():
-                        # Only add numerical parameters. Non numerical ones (like key) are only used as filters
-                        if param in coeffs.keys():
-                            feature_names.append(str(param))
-                            value = query_parameters['target'][param]
-                            if coeffs:
-                                a = coeffs[param]['a']
-                                b = coeffs[param]['b']
-                                if len(a) == 1:
-                                    norm_value = a[0]*value + b[0]
-                                else:
-                                    norm_value = []
-                                    for i in range(0,len(a)):
-                                        norm_value.append(a[i]*value[i]+b[i])
-                                #text = str(type(param)) + " " + str(type(norm_value))
-                                q.setValue(str(param), norm_value)
-                            else:
-                                q.setValue(str(param), value)
-        else:
-            # Target is specified as the attached file
-            # Create a point with the data in 'descriptors_data' and search for it
-            try:
-                p, q = Point(), Point()
-                p.loadFromString(yaml.dump(descriptors_data))
-                q = self.original_dataset.history().mapPoint(p)
-            except:
-                msg = 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout.'
-                logger.info(msg)
-                return {'error': True, 'result': msg, 'status_code':SERVER_ERROR_CODE}
-
-        ##############
-        # PARSE FILTER
-        ##############
-
-        filter = ""
-        # If some filter has been specified...
-        if query_parameters['filter']:
-            if type(query_parameters['filter'][0:5]) == str:
-                filter = query_parameters['filter']
-            else:
-                filter = parse_filter_list(query_parameters['filter'], coeffs)
-
-
-        #############
-        # DO QUERY!!!
-        #############
-        if not use_file_as_target:
-            if target_sound_id:
-                logger.info("Content based search with target: " + str(target_sound_id) + " (sound id) and filter: " + str(filter) )
-            else:
-                logger.info("Content based search with target: " + str(query_parameters['target']) + " and filter: " + str(filter) )
-        else:
-            logger.info("Content based search with give analysis file as target.")
-
-        # If target is a sound id or a file, we use the metric of the preset specified in preset parameter. Otherwise we create a
-        # metric with the calculated feature_names
-        if target_sound_id or use_file_as_target:
-            metric = self.metrics[preset_name]
-        else:
-            metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': feature_names})
-
-        results = self.view.nnSearch(q, metric, str(filter)).get(int(number_of_results), offset=int(offset))
-        count = self.view.nnSearch(q, metric, str(filter)).size()
-
-        return {'error': False, 'result': {'results': results, 'count': count}}
-
 
     def api_search(self, target_type, target, filter, preset_name, metric_descriptor_names, num_results, offset, in_ids):
 

@@ -378,15 +378,17 @@ class GaiaWrapper:
                 p, p1 = Point(), Point()
                 p.load(query_point)
                 p1 = self.original_dataset.history().mapPoint(p)
-                results = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
-                count = self.view.nnSearch(p1, self.metrics[preset_name]).size()
+                search = self.view.nnSearch(p1, self.metrics[preset_name])
+                results = search.get(int(number_of_results), offset=int(offset))
+                count = search.size()
             else:
                 if not self.original_dataset.contains(query_point):
                     msg = "Sound with id %s doesn't exist in the dataset." % query_point
                     logger.info(msg)
                     return {'error':True,'result':msg, 'status_code': NOT_FOUND_CODE}
-                results = self.view.nnSearch(query_point, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
-                count = self.view.nnSearch(query_point, self.metrics[preset_name]).size()
+                search = self.view.nnSearch(query_point, self.metrics[preset_name])
+                results = search.get(int(number_of_results), offset=int(offset))
+                count = search.size()
 
         if descriptors_data:
             # Create a point with the data in 'descriptors_data' and search for it
@@ -395,8 +397,9 @@ class GaiaWrapper:
                 p, p1 = Point(), Point()
                 p.loadFromString(yaml.dump(descriptors_data))
                 p1 = self.original_dataset.history().mapPoint(p)
-                results = self.view.nnSearch(p1, self.metrics[preset_name]).get(int(number_of_results), offset=int(offset))
-                count = self.view.nnSearch(p1, self.metrics[preset_name]).size()
+                search = self.view.nnSearch(p1, self.metrics[preset_name])
+                results = search.get(int(number_of_results), offset=int(offset))
+                count = search.size()
             except:
                 msg = 'Unable to create gaia point from uploaded file.'
                 logger.info(msg)

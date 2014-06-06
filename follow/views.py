@@ -99,12 +99,7 @@ def stream(request):
         time_lapse_day_int = SELECT_OPTIONS_DAYS["last_week"]
         time_lapse = "[NOW-%sDAY TO NOW]" % str(time_lapse_day_int)
 
-    print time_lapse
-    print time_lapse
-    print time_lapse
-    print time_lapse
-    print time_lapse
-    print time_lapse
+    # print time_lapse
 
     solr = Solr(settings.SOLR_URL)
 

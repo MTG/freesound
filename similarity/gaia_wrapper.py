@@ -415,15 +415,11 @@ class GaiaWrapper:
         # Get some dataset parameters that will be useful later
         trans_hist = self.transformations_history
         layout = self.original_dataset.layout()
+        pca_layout = self.pca_dataset.layout()
         coeffs = None  # Get normalization coefficients
         for i in range(0,len(trans_hist)):
             if trans_hist[-(i+1)]['Analyzer name'] == 'normalize':
                 coeffs = trans_hist[-(i+1)]['Applier parameters']['coeffs']
-                
-        # Set query metric
-        metric = self.metrics[preset_name]
-        if metric_descriptor_names:
-            metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': metric_descriptor_names})
 
         # Process target
         if target:
@@ -475,7 +471,8 @@ class GaiaWrapper:
                     # Try directly loading the file
                     p, query = Point(), Point()
                     p.loadFromString(yaml.dump(target))
-                    query = self.original_dataset.history().mapPoint(p)
+                    original_dataset_query = self.original_dataset.history().mapPoint(p)  # map point to original dataset
+                    query = self.pca_dataset.history().mapPoint(original_dataset_query)  # map point to pca dataset
                     target_file_parsing_type = 'mapPoint'
 
                 except Exception, e:
@@ -512,6 +509,7 @@ class GaiaWrapper:
                             else:
                                 nonused_features.append(param)
 
+                        query = self.pca_dataset.history().mapPoint(original_dataset_query)  # map point to pca dataset
                         target_file_parsing_type = 'walkDict'
 
                     except Exception, e:
@@ -519,7 +517,7 @@ class GaiaWrapper:
                         return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout. Are you using the last version of Essentia\'s Freesound extractor?', 'status_code': SERVER_ERROR_CODE}
         else:
             query = Point()  # Empty target
-            query.setLayout(layout)
+            query.setLayout(pca_layout)
 
         # Process filter
         if filter:
@@ -548,12 +546,24 @@ class GaiaWrapper:
             else:
                 filter += ' AND point.id IN ("' + '", "'.join(in_ids) + '")'
 
+         # Set query metric
+        metric = self.metrics[preset_name]
+        if metric_descriptor_names:
+            metric = DistanceFunctionFactory.create('euclidean', layout, {'descriptorNames': metric_descriptor_names})
+
         # Do query!
         try:
-            search = self.view.nnSearch(query, metric, str(filter))
+            if target_type == 'descriptor_values' and target:
+                search = self.view.nnSearch(query, metric, str(filter))
+            else:
+                if preset_name == 'pca':
+                    search = self.view_pca.nnSearch(query, metric, str(filter))
+                else:
+                    search = self.view.nnSearch(query, metric, str(filter))
             results = search.get(num_results, offset=offset)
             count = search.size()
         except Exception, e:
+            print e
             return {'error': True, 'result': 'Similarity server error', 'status_code': SERVER_ERROR_CODE}
 
         note = None

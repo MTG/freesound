@@ -127,6 +127,7 @@ class SimilarityServer(resource.Resource):
             - num_results, offset: to control the number of returned results and the offset since the first result (so pagination is possible)
         '''
 
+
         if in_ids:
             in_ids = in_ids[0].split(',')
 
@@ -181,11 +182,14 @@ class SimilarityServer(resource.Resource):
             except Exception, e:
                 return json.dumps({'error': True, 'result': 'Invalid filter.', 'status_code': BAD_REQUEST_CODE})
 
+        '''
         if preset:
             if preset[0] not in PRESETS:
                 preset = DEFAULT_PRESET
             else:
                 preset = preset[0]
+        '''
+        preset = 'pca'  # For the moment we only admit pca preset, in the future we may allow more presets
 
         if not num_results[0]:
             num_results = int(DEFAULT_NUMBER_OF_RESULTS)
@@ -197,8 +201,10 @@ class SimilarityServer(resource.Resource):
         else:
             offset = int(offset[0])
 
-        if metric_descriptor_names:
-            metric_descriptor_names = parse_metric_descriptors(metric_descriptor_names[0], self.gaia.descriptor_names['fixed-length'])
+        if target_type == 'descriptor_values' and target:
+            metric_descriptor_names = parse_metric_descriptors(','.join(target.keys()), self.gaia.descriptor_names['fixed-length'])
+        else:
+            metric_descriptor_names = False  # For the moment metric_descriptor_names can only be set by us
 
         return json.dumps(self.gaia.api_search(target_type,
                                               target,

@@ -244,7 +244,7 @@ class GaiaWrapper:
             else:
                 # Remove from pca dataset (pca dataset will take care of removing from original dataset too)
                 self.pca_dataset.removePoint(str(point_name))
-            logger.info('Deleted point with name %s. Index has now %i points (pca index has %i points).' % (str(point_name), self.original_dataset.size()), self.pca_dataset.size())
+            logger.info('Deleted point with name %s. Index has now %i points (pca index has %i points).' % (str(point_name), self.original_dataset.size(), self.pca_dataset.size()))
             return {'error': False, 'result': True}
         else:
             msg = 'Can\'t delete point with name %s because it does not exist.' % str(point_name)
@@ -471,17 +471,19 @@ class GaiaWrapper:
                     # Try directly loading the file
                     p, query = Point(), Point()
                     p.loadFromString(yaml.dump(target))
-                    original_dataset_query = self.original_dataset.history().mapPoint(p)  # map point to original dataset
-                    query = self.pca_dataset.history().mapPoint(original_dataset_query)  # map point to pca dataset
+                    if preset_name == 'pca':
+                        query = self.pca_dataset.history().mapPoint(p)  # map point to pca dataset
+                    else:
+                        query = self.original_dataset.history().mapPoint(p)  # map point to original dataset
                     target_file_parsing_type = 'mapPoint'
 
                 except Exception, e:
-                    logger.info('Unable to create gaia point from uploaded file (%s). Trying addind descriptors one by one.' % e)
+                    logger.info('Unable to create gaia point from uploaded file (%s). Trying adding descriptors one by one.' % e)
 
                     # If does not work load descriptors one by one
                     try:
                         query = Point()
-                        query.setLayout(layout)
+                        #query.setLayout(layout)
 
                         feature_names = []
                         get_nested_descriptor_names(target, feature_names)
@@ -509,15 +511,22 @@ class GaiaWrapper:
                             else:
                                 nonused_features.append(param)
 
-                        query = self.pca_dataset.history().mapPoint(original_dataset_query)  # map point to pca dataset
+                        if preset_name == 'pca':
+                            query = self.pca_dataset.history().mapPoint(query)  # map point to pca dataset
+                        else:
+                            query = self.original_dataset.history().mapPoint(p)  # map point to original dataset
+
                         target_file_parsing_type = 'walkDict'
 
                     except Exception, e:
-                        logger.info('Unable to create gaia point from uploaded file and addind descriptors one by one (%s)' % e)
-                        return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout. Are you using the last version of Essentia\'s Freesound extractor?', 'status_code': SERVER_ERROR_CODE}
+                        logger.info('Unable to create gaia point from uploaded file and adding descriptors one by one (%s)' % e)
+                        return {'error': True, 'result': 'Unable to create gaia point from uploaded file. Probably the file does not have the required layout. Are you using the correct version of Essentia\'s Freesound extractor?', 'status_code': SERVER_ERROR_CODE}
         else:
             query = Point()  # Empty target
-            query.setLayout(pca_layout)
+            if preset_name == 'pca':
+                query.setLayout(pca_layout)
+            else:
+                query.setLayout(layout)
 
         # Process filter
         if filter:
@@ -563,7 +572,6 @@ class GaiaWrapper:
             results = search.get(num_results, offset=offset)
             count = search.size()
         except Exception, e:
-            print e
             return {'error': True, 'result': 'Similarity server error', 'status_code': SERVER_ERROR_CODE}
 
         note = None

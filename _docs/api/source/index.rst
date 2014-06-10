@@ -11,7 +11,7 @@ advanced queries combining content analysis features and other metadata (tags, e
 With the Freesound API, you can also upload, comment, rate and bookmark sounds!
 
 
-We have just released a **new version of the Freesound API, APIv2**.
+As of June 2014, we have just released a **new version of the Freesound API, APIv2**.
 The APIv2 brings many new features such as OAuth2 authentication, sound uploads and
 improved search options.
 Take into account that the previous api (APIv1) is **now deprecated**.

@@ -256,7 +256,7 @@ To set a sound as a target of the query you must use the sound id. For example, 
 
 
 There is even another way to specify a target for the query, which is by uploading an analysis file generated using the Essentia Freesound Extractor.
-For doing that you will need to download and compile Essentia, an open source feature extraction library developed at the Music Technology Group (https://github.com/mtg/essentia),
+For doing that you will need to download and compile Essentia (we recommend using release 2.0.1), an open source feature extraction library developed at the Music Technology Group (https://github.com/mtg/essentia/tree/2.0.1),
 and use the 'streaming_extractor_freesound' example to analyze any sound you have in your local computer.
 As a result, the extractor will create a JSON file that you can use as target in your Freesound API content search queries.
 To use this file as target you will need to use the POST method (instead of GET) and attach the file as an ``analysis_file`` POST parameter (see example below).

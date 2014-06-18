@@ -43,7 +43,7 @@ function create_new_ontology_tag_recommendation_interface_basic_html(id, no_titl
     html += '<div class="tr_tagging_interface_gray_area">' +
             '<div class="tr_tagline" id="tr_tagline_' + id + '"></div>' +
             '<div class="tr_copypaste" id="tr_copypaste_' + id + '"></div>' +
-            '<br style="clear:both">' +
+            '<br style="clear:both;">' +
         '</div>' +
         '<div class="tr_recommended_tags tr_hide" id="tr_recommended_tags_' + id + '"></div>' +
         '<div class="tr_category_information" id="tr_category_information_' + id + '"></div>' +
@@ -466,6 +466,9 @@ function render_tagline_html(rec_interface){
             input_box_css_class = 'tr_input_box'; //'tr_first_input_box';
             input_box_placeholder = '...'; //'type here...';
         }
+        if (rec_interface.writting_category != false){
+            input_box_css_class = 'tr_input_box_inline';
+        }
         var input_box_base_id = 'tr_input_box_';
         if ((!rec_interface.adding_tag_for_existing_category) || (CONTINUOUS_ADD_TAGS_FROM_EXISTING_CATEGORY)){
             if (rec_interface.writting_category){
@@ -479,37 +482,35 @@ function render_tagline_html(rec_interface){
         html += '</span>';
     }
 
-    if (rec_interface.tags.length == 0){
-        html += '<span style="color:#bbbbbb;font-size:13px;">&nbsp;&nbsp;&nbsp;< start introducing tags by typing here...</span>';
+    if (rec_interface.tags.length == 0 && !rec_interface.writting_category){
+        html += '<span style="color:#bbbbbb;font-size:13px;">&nbsp;&nbsp;&nbsp;< <a href="javascript:void(0);" onclick=set_focus_to_first_input_box("' + input_box_base_id + rec_interface.id + '"); style="text-decoration:none;color:#bbbbbb;">start here...</a></span>';
     }
 
     return html
 }
 
+function set_focus_to_first_input_box(id){
+    $("#" + id).focus();
+}
+
+function close_recommended_tags_window(rec_interface_id){
+    var recommended_tags_element = $('#tr_recommended_tags_' + rec_interface_id);
+    recommended_tags_element.addClass('tr_hide');
+}
+
 function render_recommended_tags_html(rec_interface){
     if (rec_interface.current_recommended_tags){
         var already_present = rec_interface.get_already_present_tags();
-        html = '';
-        html += '<div class="tag_recommendation_close_button"><a href="javascript:void(0)" onclick="this.addClass(\'tr_hide\');">x</a></div>';
-        if (SHOW_CATEGORY_DESCRIPTION_IN_RECOMMENDATIONS_WINDOW){
-            var category = rec_interface.current_recommended_tags_category;
-            var description = rec_interface.categories_info[category];
-            if (description){
-                description = description.replace(category, '<span class="tr_category_name_in_description">' + category + '</span>');
-            }
-            html += '<div class="tr_recommended_tags_info"><div class="tr_tag_category_description">' + description + '</div>';
-            html += 'Tag suggestions/examples: <span style="color:grey;font-size:10px;">(click on these tags or type your own)</span>';
-            html += '</div>';
-        } else {
-            html += '<div class="tr_recommended_tags_info">Tag suggestions: <span style="color:grey;font-size:10px;">(click on these tags or type your own)</span></div>';
-        }
-        html += '<br style="clear:both">';
+        var html = '';
+
+        html += '<div class="tag_recommendation_close_button"><a href="javascript:void(0)" onclick=close_recommended_tags_window(' + rec_interface.id + ');>x</a></div>';
+        html += '<div class="tr_recommended_tags_info">Click below or write your own:</div>';
+        html += '<br style="clear:both;">';
         var added = 0;
         for (var i in rec_interface.current_recommended_tags){
             var tag = rec_interface.current_recommended_tags[i];
             if (already_present.indexOf(tag) == -1){
-                html += '<a href="javascript:void(0)" onclick=add_tag_from_recommendation(' + rec_interface.id + ',"' + tag + '","' + rec_interface.current_recommended_tags_category + '")>' +
-                    '<span class="tr_tag_in_recommendation_list">' + tag + '</span></a> ';
+                html += '<a href="javascript:void(0);" onclick=add_tag_from_recommendation(' + rec_interface.id + ',"' + tag + '","' + rec_interface.current_recommended_tags_category + '");>' + '<span class="tr_tag_in_recommendation_list">' + tag + '</span></a> ';
                 added += 1;
                 if (added == MAX_NUMBER_OF_RECOMMENDED_TAGS){
                     break;
@@ -518,12 +519,23 @@ function render_recommended_tags_html(rec_interface){
         }
         if (added == 0){
             if (SHOW_CATEGORY_DESCRIPTION_IN_RECOMMENDATIONS_WINDOW){
-                html += 'no recommended tags...'
+                html += 'no recommended tags...';
             } else {
                 return '';
             }
         }
+
+        if (SHOW_CATEGORY_DESCRIPTION_IN_RECOMMENDATIONS_WINDOW){
+            var category = rec_interface.current_recommended_tags_category;
+            var description = rec_interface.categories_info[category];
+            if (description){
+                description = description.replace(category, '<span class="tr_category_name_in_description">' + category + '</span>');
+            }
+            html += '<div class="tr_tag_category_description">' + description + '</div>';
+        }
+
         return html;
+
     } else {
         return '';
     }
@@ -643,7 +655,7 @@ function render_and_draw_copy_paste_icons(rec_interface){
         html += '<a class="tr_button_icon" href="javascript:void(0)" onclick=copy_current_tagline(' + rec_interface.id + ')><img src="' + MEDIA_URL + 'images/tagrecommendation/document-copy.png" alt="copy" title="copy"/></a>'
         html +='<a class="tr_button_icon" href="javascript:void(0)" onclick=paste_current_tagline(' + rec_interface.id + ')><img src="' + MEDIA_URL + 'images/tagrecommendation/clipboard-paste.png" alt="paste" title="paste"/></a>'
     }
-    html +='<a class="tr_button_icon" href="javascript:void(0)" onclick=reset_current_tagline(' + rec_interface.id + ')><img src="' + MEDIA_URL + 'images/tagrecommendation/mail_delete.png" alt="delete" title="delete"/></a>'
+    //html +='<a class="tr_button_icon" href="javascript:void(0)" onclick=reset_current_tagline(' + rec_interface.id + ')><img src="' + MEDIA_URL + 'images/tagrecommendation/mail_delete.png" alt="delete" title="delete"/></a>'
     $('#tr_copypaste_' + rec_interface.id).empty().append(html);
 }
 
@@ -827,6 +839,8 @@ function delete_tag_from_tag_id(rec_interface_id, tag_struct_id, tag_id){
     }
     rec_interface.current_recommended_tags = false;
     rec_interface.current_recommended_tags_category = false;
+    rec_interface.writting_category = false; // WATCHOUT
+    rec_interface.adding_tag_for_existing_category = false;
     rec_interface.draw();
     rec_interface.add_event_handlers_to_input_box();
     rec_interface.get_recommended_categories();
@@ -837,6 +851,8 @@ function delete_tag_struct_from_tag_struct_id(rec_interface_id, tag_struct_id){
     rec_interface.tags.splice(tag_struct_id, 1);
     rec_interface.current_recommended_tags = false;
     rec_interface.current_recommended_tags_category = false;
+    rec_interface.writting_category = false; // WATCHOUT
+    rec_interface.adding_tag_for_existing_category = false;
     rec_interface.draw();
     rec_interface.add_event_handlers_to_input_box();
     rec_interface.get_recommended_categories();
@@ -847,6 +863,7 @@ function delete_tag_writting_category(rec_interface_id){
     rec_interface.writting_category = false;
     rec_interface.current_recommended_tags = false;
     rec_interface.current_recommended_tags_category = false;
+    rec_interface.adding_tag_for_existing_category = false;
     rec_interface.draw();
     rec_interface.add_event_handlers_to_input_box();
 }
@@ -867,6 +884,7 @@ function add_new_tag_for_category(rec_interface_id, category){
     rec_interface.adding_tag_for_existing_category = category;
     rec_interface.current_recommended_tags = false;
     rec_interface.current_recommended_tags_category = false;
+    clearTimeout(FOCUSOUT_ADD_TAG_TIMER);
     rec_interface.draw();
     rec_interface.add_event_handlers_to_input_box();
     $('#tr_input_box_inline_' + rec_interface.id).focus();
@@ -1032,16 +1050,6 @@ function get_recommended_tags(rec_interface){
             var recommended_tags_element = $('#tr_recommended_tags_' + rec_interface.id);
             recommended_tags_element.addClass('tr_hide');
         }
-        /*
-        var rendered_recommended_tags = rec_interface.render_recommended_tags_html();
-        var recommended_tags_element = $('#tr_recommended_tags_' + rec_interface.id);
-        recommended_tags_element.empty().append(rendered_recommended_tags);
-        var input_box_ref_element = $('#tr_ib_pos_' + rec_interface.id);
-        var x=input_box_ref_element.offset().left;
-        var y=input_box_ref_element.offset().top;
-        recommended_tags_element.css({left:x,top:y+28});
-        recommended_tags_element.removeClass('tr_hide');
-        */
     }
 }
 
@@ -1079,8 +1087,8 @@ function create_new_current_tag_recommendation_interface(id){
         clear_recommendations: function(){current_draw_recommended_tags(this, [], null)},
         draw_recommended_tags: function(recommendations, audio_category){current_draw_recommended_tags(this, recommendations, audio_category)},
         get_input_tags: function(){
-            var raw_input_tags = $('#cur_interface_it_' + rec_interface.id).val().replace(/\n/g, " ");;
-            var parsed_input_tags = raw_input_tags.match(/[^ ]+/g)
+            var raw_input_tags = $('#cur_interface_it_' + rec_interface.id).val().replace(/\n/g, " ");
+            var parsed_input_tags = raw_input_tags.match(/[^ ]+/g);
             var input_tags = false;
             if (parsed_input_tags){
                 return parsed_input_tags.join(',');

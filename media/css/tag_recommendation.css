@@ -327,6 +327,9 @@ a:hover {
 .tr_tag_category_description{
     color:#bccb79;
     margin-bottom:5px;
+    margin-top: 20px;
+    line-height: 22px;
+    font-size:13px;
 }
 
 .tr_category_name_in_description{

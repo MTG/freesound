@@ -38,7 +38,7 @@ function create_new_ontology_tag_recommendation_interface_basic_html(id, no_titl
 
     var html = '<div class="tr_tagging_interface_wrapper">';
     if (!no_titles){
-        html += '<div class="tr_instructions" style="width:700px;margin-bottom:15px;margin-top:-5px;">Separate tags pressing \'space\' or \'enter\' keys. Join multi-word tags with dashes (eg. "field-recording"). Use tags with categories to make your sound descriptions more meningful and easily findable to other Freesound users.<br>Need help? check the <a href="/tagrecommendation/instructions/" target="_blank">tagging instructions</a>.</div>'
+        html += '<div class="tr_instructions" style="width:700px;margin-bottom:15px;margin-top:-5px;">Separate tags pressing \'space\' or \'enter\' keys. Join multi-word tags with dashes (eg. "field-recording"). Use tags with categories to make your sound descriptions more meaningful and easily findable to other Freesound users.<br>Need help? check the <a href="/tagrecommendation/instructions/" target="_blank">tagging instructions</a>.</div>'
     }
     html += '<div class="tr_tagging_interface_gray_area">' +
             '<div class="tr_tagline" id="tr_tagline_' + id + '"></div>' +

@@ -38,7 +38,7 @@ function create_new_ontology_tag_recommendation_interface_basic_html(id, no_titl
 
     var html = '<div class="tr_tagging_interface_wrapper">';
     if (!no_titles){
-        html += '<div class="tr_instructions" style="width:700px;margin-bottom:15px;margin-top:-5px;">Separate tags pressing \'space\' or \'enter\' keys. Join multi-word tags with dashes. For example: field-recording is a popular tag. Use tags with categories to make your sound descriptions more meningful and easily findable to other Freesound users.<br><span style="font-size:80%;">If this is your first time using this tagging interface, please read the <a href="/tagrecommendation/instructions/" target="_blank">tagging interface instructions</a>.</span></div>'
+        html += '<div class="tr_instructions" style="width:700px;margin-bottom:15px;margin-top:-5px;">Separate tags pressing \'space\' or \'enter\' keys. Join multi-word tags with dashes (eg. "field-recording"). Use tags with categories to make your sound descriptions more meningful and easily findable to other Freesound users.<br>Need help? check the <a href="/tagrecommendation/instructions/" target="_blank">tagging instructions</a>.</div>'
     }
     html += '<div class="tr_tagging_interface_gray_area">' +
             '<div class="tr_tagline" id="tr_tagline_' + id + '"></div>' +
@@ -504,7 +504,7 @@ function render_recommended_tags_html(rec_interface){
         var html = '';
 
         html += '<div class="tag_recommendation_close_button"><a href="javascript:void(0)" onclick=close_recommended_tags_window(' + rec_interface.id + ');>x</a></div>';
-        html += '<div class="tr_recommended_tags_info">Click below or write your own:</div>';
+        html += '<div class="tr_recommended_tags_info">Click on tags below or type your own:</div>';
         html += '<br style="clear:both;">';
         var added = 0;
         for (var i in rec_interface.current_recommended_tags){

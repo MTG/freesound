@@ -112,6 +112,7 @@ def stream(request):
     users_following = follow.utils.get_users_following(user)
 
     users_sound_ids = []
+    all_users = []
     for user_following in users_following:
 
         filter_str = "username:" + user_following.username + " created:" + time_lapse
@@ -127,13 +128,14 @@ def stream(request):
         )
 
         result = SolrResponseInterpreter(solr.select(unicode(query)))
-        more_count = result.num_found - SOLR_QUERY_LIMIT_PARAM
+        more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
         base_url = reverse("sounds-search")
         more_url = base_url + "?f=" + filter_str + "&s=" + sort_str[0]
 
         if result.num_rows != 0:
             sound_ids = [element['id'] for element in result.docs]
             users_sound_ids.append(((user_following, False), more_count, more_url, sound_ids))
+            all_users.append((user_following, more_count + len(sound_ids)))
 
     # print users_sound_ids
 
@@ -144,7 +146,7 @@ def stream(request):
     tags_following = follow.utils.get_tags_following(user)
 
     tags_sound_ids = []
-
+    all_tags = []
     for tag_following in tags_following:
 
         tags = tag_following.split(" ")
@@ -165,13 +167,14 @@ def stream(request):
         )
 
         result = SolrResponseInterpreter(solr.select(unicode(query)))
-        more_count = result.num_found - SOLR_QUERY_LIMIT_PARAM
+        more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
         base_url = reverse("sounds-search")
         more_url = base_url + "?f=" + tag_filter_str + "&s=" + sort_str[0]
 
         if result.num_rows != 0:
             sound_ids = [element['id'] for element in result.docs]
             tags_sound_ids.append((tags, more_count, more_url, sound_ids))
+            all_tags.append((tags, more_count + len(sound_ids)))
 
     # print tags_sound_ids
 

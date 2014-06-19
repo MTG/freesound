@@ -22,34 +22,43 @@
 
 from follow.models import FollowingUserItem, FollowingQueryItem
 
+
 def get_users_following(user):
     items = FollowingUserItem.objects.filter(user_from=user)
     return [item.user_to for item in items]
+
 
 def get_users_followers(user):
     items = FollowingUserItem.objects.filter(user_to=user)
     return [item.user_from for item in items]
 
+
 def get_tags_following(user):
     items = FollowingQueryItem.objects.filter(user=user)
     return [item.query for item in items]
 
+
 def is_user_following_user(user_from, user_to):
     return user_to in get_users_following(user=user_from)
+
 
 def is_user_following_tag(user, slash_tag):
     tags_following = get_tags_following(user)
     space_tag = slash_tag.replace("/", " ")
     return space_tag in tags_following
 
+
 def is_user_being_followed_by_user(user_from, user_to):
     return user_to in get_users_followers(user_from)
+
 
 def get_vars_for_account_view(user):
     return get_vars_for_views_helper(user, clip=True)
 
+
 def get_vars_for_home_view(user):
     return get_vars_for_views_helper(user, clip=False)
+
 
 def get_vars_for_views_helper(user, clip):
 

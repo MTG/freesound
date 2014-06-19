@@ -84,11 +84,67 @@
         <input type="submit" id="date_submit" value="Go!"/>
     </form>
 
-    <div id="stream_box" class="content_box">
+{% comment %}
+    {% if all_users %}
 
-        <h3>Updates</h3>
+        <div id="stream_users" class="stream_box">
 
-        {% if not users_sound_ids and not tags_sound_ids %}
+            <h3>Users</h3>
+
+        {% for user, new_sounds_count in all_users %}
+            <div class="active_user">
+                <div class="active_user_info">
+                    <a href="#{{ user.username }}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+
+                    <div class="post_author">{{user.username}}</div>
+
+                    <div class="people_user_info">
+                        {{ new_sounds_count }} new sound{{ new_sounds_count|pluralize }}
+                    </div>
+                </div>
+            <br class="clear" />
+            </div>
+
+        {% endfor %}
+        </div>
+        <br class="clear" />
+
+    {% endif %}
+
+    {% if all_tags %}
+
+        <div id="stream_tags" class="stream_box">
+            <h3>Tags</h3>
+
+            {% for tags, new_sounds_count in all_tags %}
+                <div class="active_user">
+                    <div id="following_tags">
+                        <div class="tag_group">
+                            <ul class="tags" id="following_tags">
+                                {% for tag in tags %}
+                                    <li><a href="#{{ tags|join:"/" }}">{{ tag }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="people_user_info">{{ new_sounds_count }} new sound{{ new_sounds_count|pluralize }}</div>
+                </div>
+            {% endfor %}
+
+            <br class="clear"/>
+
+    {% endif %}
+{% endcomment %}
+
+    <div class="stream_box">
+
+        <a id="new_sounds_users"></a>
+
+        <h3>New sounds by users</h3>
+
+        <a class="link-to-section" href="#new_sounds_tags">Go to new sounds by tag</a>
+
+        {% if not users_sound_ids %}
 
             <div class="left">
                 <p>No updates...</p>
@@ -108,10 +164,29 @@
                 </div>
 
                 <div class="right">
+                    <a id="{{ user.0 }}" ></a>
                     {% include "accounts/active_user.html" %}
+                    {% comment %}<a href="#" class="link-top">Go to Top</a>{% endcomment %}
                 </div>
 
             {% endfor %}
+        {% endif %}
+        <br class="clear"/>
+    </div>
+
+    <div class="stream_box">
+        <a id="new_sounds_tags"></a>
+        <h3>New sounds by tags</h3>
+
+        <a class="link-to-section" href="#new_sounds_users">Go to new sounds by users</a>
+
+        {% if not tags_sound_ids %}
+
+            <div class="left">
+                <p>No updates...</p>
+            </div>
+
+        {% else %}
 
             {% for tags, more_count, more_url, sound_ids in tags_sound_ids %}
 
@@ -125,19 +200,21 @@
                 </div>
 
                 <div class="right" id="following_tags">
-                    <span class="tag_group" onclick="location.href='{% url tags tags|join:"/" %}'">
+                    <a id="{{ tags|join:"/" }}"></a>
+                    <div class="tag_group" onclick="location.href='{% url tags tags|join:"/" %}'">
                         <ul class="tags" id="following_tags">
                             {% for tag in tags %}
-                                <li><a href="">{{ tag }}</a></li>
+                                <li><a>{{ tag }}</a></li>
                             {% endfor %}
                         </ul>
-                    </span>
+                    </div>
+
                 </div>
 
             {% endfor %}
 
         {% endif %}
-
+        <br class="clear"/>
     </div>
 
 {% endblock %}

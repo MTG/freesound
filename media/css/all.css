@@ -2055,7 +2055,7 @@ a.donation_button:hover {
     height: 30px;
 }
 
-#meter {
+#donation_meter {
     display: block;
     background: url(../images/donation_meter_bar.png) repeat-x top left;
     border: 1px solid #565656;

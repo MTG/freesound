@@ -53,7 +53,7 @@ def delete(request, comment_id):
         
         
     next = request.GET.get("next")
-    next = request.GET.get("page")
+    page = request.GET.get("page")
     return HttpResponseRedirect(next+"?page="+page)
 
 def for_user(request, username):

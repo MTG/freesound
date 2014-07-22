@@ -649,7 +649,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
 
     def is_providing_description(self, attrs):
         for key, value in attrs.items():
-            if key != 'audiofile' and key != 'upload_filename':
+            if key != 'audiofile':
                 if value:
                     return True
         return False
@@ -667,7 +667,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
     def validate_name(self, attrs, source):
         if not self.is_providing_description(attrs):
             attrs[source] = None
-        if attrs[source].isspace():
+        elif attrs[source].isspace():
             attrs[source] = None
         return attrs
 

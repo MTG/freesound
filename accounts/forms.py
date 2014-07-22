@@ -165,6 +165,7 @@ class ProfileForm(forms.ModelForm):
     about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     signature = HtmlCleaningCharField(label="Forum signature", widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     wants_newsletter = forms.BooleanField(label="Subscribed to newsletter", required=False)
+    enabled_stream_emails = forms.BooleanField(label="Get weekly email notifications in sounds interested", required=False)
     not_shown_in_online_users_list = forms.BooleanField(label="Hide from \"users currently online\" list in the People page", required=False)
     
     def __init__(self, request, *args, **kwargs):
@@ -185,7 +186,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ('home_page', 'wants_newsletter', 'about', 'signature', 'not_shown_in_online_users_list')
+        fields = ('home_page', 'wants_newsletter', 'enabled_stream_emails', 'about', 'signature', 'not_shown_in_online_users_list')
         
 
 class EmailResetForm(forms.Form):   

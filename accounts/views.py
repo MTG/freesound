@@ -79,7 +79,6 @@ from django.contrib.auth.models import Group
 from provider.oauth2.models import AccessToken
 import follow.utils
 
-
 audio_logger = logging.getLogger('audio')
 # TAGRECOMMENDATION CODE
 research_logger = logging.getLogger('tagrecommendation_research')
@@ -315,9 +314,18 @@ def edit(request):
         return False
 
     if is_selected("profile"):
+        enabled_stream_emails_previous = profile.enabled_stream_emails
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         if profile_form.is_valid():
-            profile_form.save()
+            enabled_stream_emails_current = profile_form.cleaned_data.get("enabled_stream_emails")
+            # if had notifications active before and now has them, set last_stream_email_sent to None (NULL)
+            if enabled_stream_emails_previous and not enabled_stream_emails_current:
+                profile.last_stream_email_sent = None
+            # if is activating for the first time, then set last_stream_email_sent to now
+            # (will send in a week)
+            if not enabled_stream_emails_previous and enabled_stream_emails_current:
+                profile.last_stream_email_sent = datetime.datetime.now()
+            profile.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
         profile_form = ProfileForm(request,instance=profile, prefix="profile")

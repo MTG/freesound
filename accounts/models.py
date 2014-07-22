@@ -72,6 +72,9 @@ class Profile(SocialModel):
 
     accepted_tos = models.BooleanField(default=False)
 
+    enabled_stream_emails = models.BooleanField(db_index=True, default=False)
+    last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
+
     objects = ProfileManager()
 
     def __unicode__(self):

@@ -22,6 +22,7 @@ from django.conf import settings
 from django.core.mail import send_mail as core_send_mail
 from django.core.mail import send_mass_mail
 from django.template.loader import render_to_string
+from django.core.mail import get_connection, EmailMultiAlternatives
 
 def send_mail(subject, email_body, email_from=None, email_to=[]):
     """ Sends email with a lot of defaults"""
@@ -39,13 +40,44 @@ def send_mail(subject, email_body, email_from=None, email_to=[]):
     try:
         #core_send_mail(settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, email_to, fail_silently=False)
         emails = tuple(( (settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email]) for email in email_to ))
-        send_mass_mail( emails, fail_silently = False)
+        send_mass_mail( emails, fail_silently=False)
 
         return True
     except:
         return False
-    
+
+
 
 def send_mail_template(subject, template, context, email_from=None, email_to=[]):
     context["settings"] = settings
     return send_mail(subject, render_to_string(template, context), email_from, email_to)
+
+
+def render_mail_template(template, context):
+    context["settings"] = settings
+    return render_to_string(template, context)
+
+
+def send_mass_html_mail(datatuple, fail_silently=False, user=None, password=None, connection=None):
+    """
+    Given a datatuple of (subject, text_content, html_content, from_email,
+    recipient_list), sends each message to each recipient list. Returns the
+    number of emails sent.
+
+    If from_email is None, the DEFAULT_FROM_EMAIL setting is used.
+    If auth_user and auth_password are set, they're used to log in.
+    If auth_user is None, the EMAIL_HOST_USER setting is used.
+    If auth_password is None, the EMAIL_HOST_PASSWORD setting is used.
+
+    """
+    connection = connection or get_connection(
+        username=user, password=password, fail_silently=fail_silently
+    )
+
+    messages = []
+    for subject, text, html, from_email, recipient in datatuple:
+        message = EmailMultiAlternatives(subject, text, from_email, recipient)
+        message.attach_alternative(html, 'text/html')
+        messages.append(message)
+
+    return connection.send_messages(messages)

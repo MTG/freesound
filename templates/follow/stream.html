@@ -144,7 +144,7 @@
 
         <a class="link-to-section" href="#new_sounds_tags">Go to new sounds by tag</a>
 
-        {% if not users_sound_ids %}
+        {% if not users_sounds %}
 
             <div class="left">
                 <p>No updates...</p>
@@ -152,14 +152,14 @@
 
         {% else %}
 
-            {% for user, more_count, more_url, sound_ids in users_sound_ids %}
+            {% for user, sound_objs, more_url, more_count, new_count in users_sounds %}
 
                 <div class="left">
-                    {% for sound_id in sound_ids %}
-                        {% display_sound sound_id %}
+                    {% for sound_obj in sound_objs %}
+                        {% display_sound sound_obj.id %}
                     {% endfor %}
                     {% if more_count > 0 %}
-                       <p><a href="{{ more_url }}">See all results ({{ more_count }} more)</a></p>
+                       <p><a href="{% url sounds-search %}{{ more_url }}">See all results ({{ more_count }} more)</a></p>
                     {% endif %}
                 </div>
 
@@ -180,7 +180,7 @@
 
         <a class="link-to-section" href="#new_sounds_users">Go to new sounds by users</a>
 
-        {% if not tags_sound_ids %}
+        {% if not tags_sounds %}
 
             <div class="left">
                 <p>No updates...</p>
@@ -188,14 +188,14 @@
 
         {% else %}
 
-            {% for tags, more_count, more_url, sound_ids in tags_sound_ids %}
+            {% for tags, sound_objs, more_url, more_count, new_count in tags_sounds %}
 
                 <div class="left">
-                    {% for sound_id in sound_ids %}
-                        {% display_sound sound_id %}
+                    {% for sound_obj in sound_objs %}
+                        {% display_sound sound_obj.id %}
                     {% endfor %}
                     {% if more_count > 0 %}
-                       <p><a href="{{ more_url }}">See all results ({{ more_count }} more)</a></p>
+                       <p><a href="{% url sounds-search %}{{ more_url }}">See all results ({{ more_count }} more)</a></p>
                     {% endif %}
                 </div>
 

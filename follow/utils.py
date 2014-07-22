@@ -21,6 +21,16 @@
 #
 
 from follow.models import FollowingUserItem, FollowingQueryItem
+import sounds
+from search.views import search_prepare_query, search_prepare_sort
+import settings
+from freesound.utils.search.solr import Solr, SolrResponseInterpreter
+from search.forms import SEARCH_SORT_OPTIONS_WEB
+# from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
+from django.core.urlresolvers import reverse
+import urllib
+
+SOLR_QUERY_LIMIT_PARAM = 3
 
 
 def get_users_following(user):
@@ -85,3 +95,89 @@ def get_vars_for_views_helper(user, clip):
         following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
 
     return following, followers, following_tags, following_count, followers_count, following_tags_count
+
+
+def get_stream_sounds(user, time_lapse):
+
+    solr = Solr(settings.SOLR_URL)
+
+    sort_str = search_prepare_sort("created desc", SEARCH_SORT_OPTIONS_WEB)
+
+    #
+    # USERS FOLLOWING
+    #
+
+    users_following = get_users_following(user)
+
+    users_sounds = []
+    for user_following in users_following:
+
+        filter_str = "username:" + user_following.username + " created:" + time_lapse
+
+        query = search_prepare_query(
+            "",
+            filter_str,
+            sort_str,
+            1,
+            SOLR_QUERY_LIMIT_PARAM,
+            grouping=False,
+            include_facets=False
+        )
+
+        result = SolrResponseInterpreter(solr.select(unicode(query)))
+        more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
+        more_url = "?f=" + filter_str + "&s=" + sort_str[0]
+        more_url = urllib.quote(more_url)
+
+        if result.num_rows != 0:
+            sound_ids = [element['id'] for element in result.docs]
+            sound_objs = sounds.models.Sound.objects.filter(id__in=sound_ids)
+            new_count = more_count + len(sound_ids)
+            users_sounds.append(((user_following, False), sound_objs, more_url, more_count, new_count))
+
+    #
+    # TAGS FOLLOWING
+    #
+
+    tags_following = get_tags_following(user)
+
+    tags_sounds = []
+    for tag_following in tags_following:
+
+        tags = tag_following.split(" ")
+        tag_filter_query = ""
+        for tag in tags:
+            tag_filter_query += "tag:" + tag + " "
+
+        tag_filter_str = tag_filter_query + " created:" + time_lapse
+
+        query = search_prepare_query(
+            "",
+            tag_filter_str,
+            sort_str,
+            1,
+            SOLR_QUERY_LIMIT_PARAM,
+            grouping=False,
+            include_facets=False
+        )
+
+        result = SolrResponseInterpreter(solr.select(unicode(query)))
+        more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
+        more_url = "?f=" + tag_filter_str + "&s=" + sort_str[0]
+        more_url = urllib.quote(more_url)
+
+        if result.num_rows != 0:
+            sound_ids = [element['id'] for element in result.docs]
+            sound_objs = sounds.models.Sound.objects.filter(id__in=sound_ids)
+            new_count = more_count + len(sound_ids)
+            tags_sounds.append((tags, sound_objs, more_url, more_count, new_count))
+
+    return users_sounds, tags_sounds
+
+
+def build_time_lapse(date_from, date_to):
+    date_from = date_from.strftime("%Y-%m-%d")
+    date_to = date_to.strftime("%Y-%m-%d")
+    time_lapse = "[%sT00:00:00Z TO %sT23:59:59.999Z]" % (date_from, date_to)
+    return time_lapse
+

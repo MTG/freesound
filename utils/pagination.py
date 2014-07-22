@@ -71,7 +71,8 @@ def paginate(request, qs, items_per_page=20, page_get_name='page', cache_count=F
     try:
         page = paginator.page(current_page)
     except InvalidPage:
-        page = paginator.page(1)
-        current_page = 1
+        current_page = paginator.num_pages        
+        page = paginator.page(current_page)
+        
 
     return dict(paginator=paginator, current_page=current_page, page=page)

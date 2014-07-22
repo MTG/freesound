@@ -703,7 +703,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
     def validate_pack(self, attrs, source):
         if not self.is_providing_description(attrs):
             attrs[source] = None
-        if attrs[source].isspace():
+        elif attrs[source].isspace():
             attrs[source] = None
         return attrs
 

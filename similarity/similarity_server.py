@@ -39,7 +39,6 @@ def server_interface(resource):
         'contains': resource.contains,  # sound_id
         'get_sounds_descriptors': resource.get_sounds_descriptors,  # sound_ids, descritor_names (optional), normalization (optional)
         'nnsearch': resource.nnsearch,  # sound_id, num_results (optional), preset (optional)
-        'nnrange': resource.nnrange,  # target, filter, num_results (optional), preset (optional), in_ids (optional)
         'api_search': resource.api_search,
         'save': resource.save,  # filename (optional)
     }
@@ -89,91 +88,13 @@ class SimilarityServer(resource.Resource):
         return json.dumps(self.gaia.get_sounds_descriptors(sound_ids[0].split(','), **kwargs))
 
     def nnsearch(self, request, sound_id=None, num_results=None, preset=None, offset=[0]):
-        descriptors_data = None
-        if not sound_id:
-            # Check if attached file
-            data = request.content.getvalue().split('&')[0]  # If more than one file attached, just get the first one
-            if not data:
-                return json.dumps({'error': True, 'result': 'Either specify a point id or attach an analysis file.', 'status_code': BAD_REQUEST_CODE})
 
-            # If not sound id but file attached found, parse file and pass as a dict
-            sound_id = [None]
-            try:
-                descriptors_data = yaml.load(data)
-            except:
-                return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.', 'status_code': BAD_REQUEST_CODE})
-
-        if not preset:
-            preset = [DEFAULT_PRESET]
-        else:
-            if preset[0] not in PRESETS:
-                preset = [DEFAULT_PRESET]
-        if not num_results:
-            num_results = [DEFAULT_NUMBER_OF_RESULTS]
-
-        return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name=preset[0], offset=offset[0], descriptors_data=descriptors_data))
-
-    def nnrange(self, request, target=None, filter=None, num_results=None, offset=[0], preset=None):
-        descriptors_data = None
-        if not filter:
-            if not target:
-                # check if instead of a target, an analysis file was attached
-                data = request.content.getvalue().split('&')[0]  # If more than one file attached, just get the first one
-                if not data:
-                    return json.dumps({'error': True, 'result': 'You should at least specify a descriptors_filter, descriptors_target or attach an analysis file for content based search.', 'status_code': BAD_REQUEST_CODE})
-                try:
-                    descriptors_data = yaml.load(data)
-                except:
-                    return json.dumps({'error': True, 'result': 'Analysis file could not be parsed.', 'status_code': BAD_REQUEST_CODE})
+        preset = ['pca']  # For the moment we only admit pca preset, in the future we may allow more presets
 
         if not num_results:
             num_results = [DEFAULT_NUMBER_OF_RESULTS]
-        if not preset:
-            preset = [DEFAULT_PRESET]
-        else:
-            if preset[0] not in PRESETS:
-                preset = [DEFAULT_PRESET]
 
-        if filter:
-            filter = filter[0]
-            pf = parse_filter(filter.replace("'", '"'), self.gaia.descriptor_names['fixed-length'])
-        else:
-            pf = []
-
-        target_sound_id = False
-        use_file_as_target = False
-        if target:
-            target = target[0]
-            try:
-                # If target can be parsed as an integer, we assume it corresponds to a sound_id
-                target_sound_id = int(target)
-                pt = {}
-            except:
-                pt = parse_target(target.replace("'", '"'), self.gaia.descriptor_names['fixed-length'])
-        else:
-            pt = {}
-            if descriptors_data:
-                use_file_as_target = True
-
-        if type(pf) != list or type(pt) != dict:
-            message = ""
-            if type(pf) == str:
-                message += pf
-            if type(pt) == str:
-                message += pt
-            if message == "":
-                message = "Invalid filter or target."
-
-            return json.dumps({'error': True, 'result': message, 'status_code': BAD_REQUEST_CODE})
-
-
-        return json.dumps(self.gaia.query_dataset({'target': pt, 'filter': pf},
-                                                  num_results[0],
-                                                  preset_name=preset[0],
-                                                  offset=offset[0],
-                                                  target_sound_id=target_sound_id,
-                                                  use_file_as_target=use_file_as_target,
-                                                  descriptors_data=descriptors_data))
+        return json.dumps(self.gaia.search_dataset(sound_id[0], num_results[0], preset_name=preset[0], offset=offset[0]))
 
     def api_search(self, request, target_type=None, target=None, filter=None, preset=[DEFAULT_PRESET], metric_descriptor_names=None, num_results=[DEFAULT_NUMBER_OF_RESULTS], offset=[0], in_ids=None):
         '''
@@ -205,6 +126,7 @@ class SimilarityServer(resource.Resource):
                 * this parameter is bypassed with the descriptor_values target type, as the list is automatically built with the descriptors specified in the target
             - num_results, offset: to control the number of returned results and the offset since the first result (so pagination is possible)
         '''
+
 
         if in_ids:
             in_ids = in_ids[0].split(',')
@@ -260,11 +182,14 @@ class SimilarityServer(resource.Resource):
             except Exception, e:
                 return json.dumps({'error': True, 'result': 'Invalid filter.', 'status_code': BAD_REQUEST_CODE})
 
+        '''
         if preset:
             if preset[0] not in PRESETS:
                 preset = DEFAULT_PRESET
             else:
                 preset = preset[0]
+        '''
+        preset = 'pca'  # For the moment we only admit pca preset, in the future we may allow more presets
 
         if not num_results[0]:
             num_results = int(DEFAULT_NUMBER_OF_RESULTS)
@@ -276,8 +201,10 @@ class SimilarityServer(resource.Resource):
         else:
             offset = int(offset[0])
 
-        if metric_descriptor_names:
-            metric_descriptor_names = parse_metric_descriptors(metric_descriptor_names[0], self.gaia.descriptor_names['fixed-length'])
+        if target_type == 'descriptor_values' and target:
+            metric_descriptor_names = parse_metric_descriptors(','.join(target.keys()), self.gaia.descriptor_names['fixed-length'])
+        else:
+            metric_descriptor_names = False  # For the moment metric_descriptor_names can only be set by us
 
         return json.dumps(self.gaia.api_search(target_type,
                                               target,

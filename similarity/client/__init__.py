@@ -26,11 +26,10 @@ _BASE_URL                     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS
 _BASE_INDEXING_SERVER_URL     = 'http://%s:%i/similarity/' % (SIMILARITY_ADDRESS, SIMILARITY_INDEXING_SERVER_PORT)
 _URL_ADD_POINT                = 'add_point/'
 _URL_DELETE_POINT             = 'delete_point/'
-_URL_GET_DESCRIPTORS          = 'get_descriptors/'
+_URL_GET_DESCRIPTOR_NAMES     = 'get_descriptor_names/'
 _URL_GET_ALL_SOUND_IDS        = 'get_all_point_names/'
 _URL_CONTAINS_POINT           = 'contains/'
 _URL_NNSEARCH                 = 'nnsearch/'
-_URL_NNRANGE                  = 'nnrange/'
 _URL_API_SEARCH               = 'api_search/'
 _URL_SOUNDS_DESCRIPTORS       = 'get_sounds_descriptors/'
 _URL_SAVE                     = 'save/'
@@ -79,25 +78,6 @@ class Similarity():
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def query(cls, target = None, filter = None, num_results = None, offset = None):
-        if not target and not filter:
-            raise Exception("At least descriptors_target or descriptors_filter should be specified")
-        url = _BASE_URL + _URL_NNRANGE + '?'
-        if target:
-            url += '&target=' + str(target)
-        if filter:
-            url += '&filter=' + str(filter)
-        if num_results:
-            url += '&num_results=' + str(num_results)
-        if offset:
-            url += '&offset=' + str(offset)
-
-        j = _get_url_as_json(url)
-        r = _result_or_exception(j)
-
-        return r
-
-    @classmethod
     def api_search(cls, target_type=None, target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, file=None, in_ids=None):
         url = _BASE_URL + _URL_API_SEARCH + '?'
         if target_type:
@@ -138,8 +118,8 @@ class Similarity():
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod
-    def get_descriptors(cls):
-        url = _BASE_URL + _URL_GET_DESCRIPTORS
+    def get_descriptor_names(cls):
+        url = _BASE_URL + _URL_GET_DESCRIPTOR_NAMES
         return _result_or_exception(_get_url_as_json(url))
 
     @classmethod

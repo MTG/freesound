@@ -20,8 +20,9 @@
 
 import django.forms as forms
 import settings
-from urllib import quote
+from urllib import quote, unquote
 from django.contrib.sites.models import Site
+from exceptions import BadRequestException
 
 
 class ApiV2ClientForm(forms.Form):
@@ -69,11 +70,15 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def clean_query(self):
         query = self.cleaned_data['query']
-        return my_quote(query) if query != None else ""
+        if unquote(query).replace('"','').isspace() or unquote(query).replace('"','') == '':
+            return ""
+        return my_quote(query) if 'query' in self.data else None
 
     def clean_filter(self):
         filter = self.cleaned_data['filter']
-        return my_quote(filter) if filter != None else ""
+        if 'filter' in self.data and (not filter or filter.isspace()):
+            raise BadRequestException('Invalid filter.')
+        return my_quote(filter) if 'filter' in self.data else None
 
     def clean_descriptors(self):
         descriptors = self.cleaned_data['descriptors']
@@ -138,15 +143,19 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']
+        if 'descriptors_filter' in self.data and (not descriptors_filter or descriptors_filter.isspace()):
+            raise BadRequestException('Invalid descriptiors_filter.')
         return my_quote(descriptors_filter) if descriptors_filter != None else ""
 
     def clean_target(self):
         target = self.cleaned_data['target']
+        if 'target' in self.data and (not target or target.isspace()):
+            raise BadRequestException('Invalid target.')
         return my_quote(target) if target != None else ""
 
     def construct_link(self, base_url, page=None, filter=None, group_by_pack=None, include_page=True):
         link = "?"
-        if self.cleaned_data['query']:
+        if self.cleaned_data['query'] != None:
             link += '&query=%s' % self.cleaned_data['query']
         if not filter:
             if self.cleaned_data['filter']:

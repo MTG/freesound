@@ -333,8 +333,8 @@ def get_solr_results(search_form, page_size, max_pages, start_page=1, valid_ids=
         n_page_requests = 1
         # Iterate over solr result pages
         while (len(solr_ids) < solr_count or solr_count == None) and n_page_requests <= max_pages:
-            query = search_prepare_query(unquote(search_form.cleaned_data['query']),
-                                         unquote(query_filter),
+            query = search_prepare_query(unquote(search_form.cleaned_data['query'] or ""),
+                                         unquote(query_filter or ""),
                                          search_form.cleaned_data['sort'],
                                          current_page,
                                          page_size,

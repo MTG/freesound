@@ -37,10 +37,12 @@ from sounds.models import Sound, Pack, License
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
 from api.forms import ApiKeyForm
-from accounts.views import handle_uploaded_file
+from accounts.views import handle_uploaded_file, send_activation2
+from accounts.forms import RegistrationForm
 from freesound.utils.filesystem import generate_tree
 from freesound.utils.cache import invalidate_template_cache
 from freesound.utils.nginxsendfile import sendfile
+from similarity.client import Similarity
 from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -83,7 +85,7 @@ class TextSearch(GenericAPIView):
         search_form = SoundTextSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
-        if not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']:
+        if search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None:
            raise BadRequestException(msg='At lesast one request parameter from Text Search should be included in the request.')
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException
@@ -246,7 +248,7 @@ class CombinedSearch(GenericAPIView):
         search_form = SoundCombinedSearchFormAPI(request.QUERY_PARAMS)
         if not search_form.is_valid():
             raise ParseError
-        if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (not search_form.cleaned_data['query'] and not search_form.cleaned_data['filter']):
+        if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None):
             raise BadRequestException(msg='At lesast one parameter from Text Search and one parameter from Content Search should be included in the request.')
         if (search_form.cleaned_data['target'] and search_form.cleaned_data['query']):
             raise BadRequestException(msg='Request parameters \'target\' and \'query\' can not be used at the same time.')
@@ -1005,16 +1007,39 @@ class Me(OauthRequiredAPIView):
             response_data = UserSerializer(self.user, context=self.get_serializer_context()).data
             response_data.update({
                  'email': self.user.email,
+                 'unique_id': self.user.id,
             })
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             raise ServerErrorException
 
 
+### Available descriptors view
+class AvailableAudioDescriptors(GenericAPIView):
+    __doc__ = 'Get a list of valid audio descriptor names that can be used in content/combined search, in sound analysis<br>and in the analysis field of any sound list response. ' \
+              'Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
+              % (docs_base_url, '%s#available-audio-descriptors' % resources_doc_filename)
+
+    #authentication_classes = (OAuth2Authentication, SessionAuthentication)
+
+    def get(self, request,  *args, **kwargs):
+        logger.info(self.log_message('available_audio_descriptors'))
+        try:
+            descriptor_names = Similarity.get_descriptor_names()
+            del descriptor_names['all']
+            for key, value in descriptor_names.items():
+                descriptor_names[key] = [item[1:] for item in value] #  remove initial dot from descriptor names
+
+            return Response({'fixed-length':{'one-dimensional':descriptor_names['fixed-length'], 'multi-dimensional':descriptor_names['multidimensional']}, 'variable-length':descriptor_names['variable-length']}, status=status.HTTP_200_OK)
+        except Exception, e:
+            raise ServerErrorException
+
+
+
 ### Root view
 class FreesoundApiV2Resources(GenericAPIView):
-    __doc__ = 'List of resources available in the Freesound API V2. ' \
-              '<br>Full documentation API can be found <a href="%s/%s" target="_blank">here</a>.' \
+    __doc__ = 'List of resources available in the Freesound APIv2. ' \
+              '<br>Full APIv2 documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
               '<br>Note that urls containing elements in brackets (<>) should be replaced with the corresponding variables.' \
               % (docs_base_url, 'index.html')
 
@@ -1048,12 +1073,15 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '03 User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
                     '04 User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
                     '05 User bookmark category sounds': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>'), request_is_secure=request.using_https),
-                    '06 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
                 }).items(), key=lambda t: t[0]))},
                 {'Pack resources': OrderedDict(sorted(dict({
                     '01 Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.using_https),
                     '02 Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.using_https),
                     '03 Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
+                }).items(), key=lambda t: t[0]))},
+                {'Other resources': OrderedDict(sorted(dict({
+                    '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
+                    '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
                 }).items(), key=lambda t: t[0]))},
             ])
 
@@ -1286,3 +1314,16 @@ def permission_granted(request):
                               context_instance=RequestContext(request))
 
 
+### View for registration using minimal template
+def minimal_registration(request):
+
+    if request.method == "POST":
+        form = RegistrationForm(request, request.POST)
+        if form.is_valid():
+            user = form.save()
+            send_activation2(user)
+            return render_to_response('api/minimal_registration_done.html', locals(), context_instance=RequestContext(request))
+    else:
+        form = RegistrationForm(request)
+
+    return render_to_response('api/minimal_registration.html', locals(), context_instance=RequestContext(request))

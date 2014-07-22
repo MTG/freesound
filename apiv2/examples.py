@@ -34,7 +34,7 @@ examples = {
                                  ['apiv2/search/text/?filter=geotag:"Intersects(-74.093 41.042 -69.347 44.558)" distErr=20',
                                   'apiv2/search/text/?filter=geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)"&fields=id,geotag,tags',
                                   'apiv2/search/text/?filter=(geotag:"Intersects(-80 40 -60 50)" OR geotag:"Intersects(60 40 100 50)") AND tag:field-recording&fields=id,geotag,tags']),
-        ('Geospatial search for points at a maximum distance d (in km) from a latitude,longitude position and with a particular tag', ['apiv2/search/text/?query={!geofilt sfield=geotag pt=41.3833,2.1833 d=10}&filter=tag:barcelona&fields=id,geotag,tags',]),
+        ('Geospatial search for points at a maximum distance d (in km) from a latitude,longitude position and with a particular tag', ['apiv2/search/text/?filter={!geofilt sfield=geotag pt=41.3833,2.1833 d=10} tag:barcelona&fields=id,geotag,tags',]),
     ],
     'ContentSearch': [
         ('Setting a target as some descriptor values', ['apiv2/search/content/?target=lowlevel.pitch.mean:220', 'apiv2/search/content/?target=lowlevel.pitch.mean:220 AND lowlevel.pitch.var:0']),
@@ -77,7 +77,7 @@ examples = {
         ('Upload and describe a sound with name, pack and geotag', ['curl -X POST -H "Authorization: Bearer {{access_token}}" -F audiofile=@"/path/to/your_file.wav" -F "name=Another cool sound" -F "tags=field-recording birds nature h4n" -F "description=This sound was recorded...<br>bla bla bla..." -F "license=Attribution" -F "pack=A birds pack" -F "geotag=2.145677,3.22345,14" \'%s/apiv2/sounds/upload/\'']),
     ],
     'PendingUploads': [
-        ('Get uploaded uploads that are pending description, processing or moderation', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/pending_uploads/\'']),
+        ('Get uploaded sounds that are pending description, processing or moderation', ['curl -H "Authorization: Bearer {{access_token}}" \'%s/apiv2/sounds/pending_uploads/\'']),
     ],
     'DescribeSound': [
         ('Describe a sound (only with required fields)', ['curl -X POST -H "Authorization: Bearer {{access_token}}" --data "upload_filename=your_file.wav&tags=field-recording birds nature h4n&description=This sound was recorded...<br>bla bla bla...&license=Attribution" \'%s/apiv2/sounds/describe/\'']),

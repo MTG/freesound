@@ -36,7 +36,7 @@ from utils import prepend_base
 # SOUND SERIALIZERS
 ###################
 
-DEFAULT_FIELDS_IN_SOUND_LIST = 'id,url,license,user,pack'  # Separated by commas (None = all)
+DEFAULT_FIELDS_IN_SOUND_LIST = 'id,name,tags,username,license'  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_SOUND_DETAIL = None  # Separated by commas (None = all)
 DEFAULT_FIELDS_IN_PACK_DETAIL = None  # Separated by commas (None = all)
 
@@ -80,7 +80,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   'bitdepth',
                   'duration',
                   'samplerate',
-                  'user',
+                  #'user',
                   'username',
                   'pack',
                   'download',
@@ -292,22 +292,19 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     avatar = serializers.SerializerMethodField('get_avatar')
     def get_avatar(self, obj):
-        if obj.profile.has_avatar:
-            return {
-                    'Small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].using_https),
-                    'Medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].using_https),
-                    'Large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].using_https),
-            }
-        else:
-            return None
+        return {
+                'small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].using_https),
+                'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].using_https),
+                'large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].using_https),
+        }
 
     about = serializers.SerializerMethodField('get_about')
     def get_about(self, obj):
-        return obj.profile.about
+        return obj.profile.about or ""
 
     home_page = serializers.SerializerMethodField('get_home_page')
     def get_home_page(self, obj):
-        return obj.profile.home_page
+        return obj.profile.home_page or ""
 
     num_sounds = serializers.SerializerMethodField('get_num_sounds')
     def get_num_sounds(self, obj):
@@ -341,7 +338,8 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
                   'description',
                   'created',
                   'name',
-                  'user',
+                  #'user',
+                  'username',
                   'num_sounds',
                   'sounds',
                   'num_downloads')
@@ -361,6 +359,14 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+
+    username = serializers.SerializerMethodField('get_username')
+    def get_username(self, obj):
+        return obj.user.username
+
+    description = serializers.SerializerMethodField('get_description')
+    def get_description(self, obj):
+        return obj.description or ""
 
 ##################
 # BOOKMARK SERIALIZERS
@@ -420,13 +426,18 @@ class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Rating
-        fields = ('user',
+        fields = (#'user',
+                  'username',
                   'rating',
                   'created')
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+
+    username = serializers.SerializerMethodField('get_username')
+    def get_username(self, obj):
+        return obj.user.username
 
     rating = serializers.SerializerMethodField('get_rating')
     def get_rating(self, obj):
@@ -453,7 +464,8 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('user',
+        fields = (#'user',
+                  'username',
                   'comment',
                   'created')
 
@@ -461,6 +473,9 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
     def get_user(self, obj):
         return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
 
+    username = serializers.SerializerMethodField('get_username')
+    def get_username(self, obj):
+        return obj.user.username
 
 
 class CreateCommentSerializer(serializers.Serializer):
@@ -634,7 +649,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
 
     def is_providing_description(self, attrs):
         for key, value in attrs.items():
-            if key != 'audiofile' and key != 'upload_filename':
+            if key != 'audiofile':
                 if value:
                     return True
         return False
@@ -652,8 +667,10 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
     def validate_name(self, attrs, source):
         if not self.is_providing_description(attrs):
             attrs[source] = None
-        if attrs[source].isspace():
-            attrs[source] = None
+        else:
+            if source in attrs:
+                if attrs[source].isspace():
+                    attrs[source] = None
         return attrs
 
     def validate_tags(self, attrs, source):
@@ -688,8 +705,10 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
     def validate_pack(self, attrs, source):
         if not self.is_providing_description(attrs):
             attrs[source] = None
-        if attrs[source].isspace():
-            attrs[source] = None
+        else:
+            if source in attrs:
+                if attrs[source].isspace():
+                    attrs[source] = None
         return attrs
 
     def validate_geotag(self, attrs, source):

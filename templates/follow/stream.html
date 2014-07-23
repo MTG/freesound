@@ -148,7 +148,7 @@
 
         {% if not users_sounds %}
 
-            <div class="left">
+            <div class="stream-left">
                 <p>No updates...</p>
             </div>
 
@@ -156,7 +156,7 @@
 
             {% for user, sound_objs, more_url, more_count, new_count in users_sounds %}
 
-                <div class="left">
+                <div class="stream-left">
                     {% for sound_obj in sound_objs %}
                         {% display_sound sound_obj.id %}
                     {% endfor %}
@@ -165,7 +165,7 @@
                     {% endif %}
                 </div>
 
-                <div class="right">
+                <div class="stream-right">
                     <a id="{{ user.0 }}" ></a>
                     {% include "accounts/active_user.html" %}
                     {% comment %}<a href="#" class="link-top">Go to Top</a>{% endcomment %}
@@ -184,7 +184,7 @@
 
         {% if not tags_sounds %}
 
-            <div class="left">
+            <div class="stream-left">
                 <p>No updates...</p>
             </div>
 
@@ -192,7 +192,7 @@
 
             {% for tags, sound_objs, more_url, more_count, new_count in tags_sounds %}
 
-                <div class="left">
+                <div class="stream-left">
                     {% for sound_obj in sound_objs %}
                         {% display_sound sound_obj.id %}
                     {% endfor %}
@@ -201,7 +201,7 @@
                     {% endif %}
                 </div>
 
-                <div class="right" id="following_tags">
+                <div class="stream-right" id="following_tags">
                     <a id="{{ tags|join:"/" }}"></a>
                     <div class="tag_group" onclick="location.href='{% url tags tags|join:"/" %}'">
                         <ul class="tags" id="following_tags">

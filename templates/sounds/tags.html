@@ -22,10 +22,12 @@
         });
 
         function follow_tags() {
+            $("#follow_tags_button").attr("disabled", "disabled");
             $.ajax({
                 type: 'POST',
                 url: '{{ follow_tags_url }}',
                 success: function () {
+                    $("#follow_tags_button").removeAttr("disabled");
                     $("#now_following_tags_div").show();
                     // console.log("follow success");
                     $("#follow_tags_link").removeAttr("onclick");
@@ -33,22 +35,22 @@
                     $("#follow_tags_link").unbind("click").click(unfollow_tags);
                 },
                 error: function (data) {
-                    console.log(data.responseText);
-                    $("#follow_tags_button").text("Error");
-                    $("#follow_tags_button").attr("disabled", "disabled");
+                    $("#follow_tags_button").removeAttr("disabled");
+                    $("#follow_tags_error_message").show();
                     window.setTimeout(function() {
-                        $("#follow_tags_button").removeAttr("disabled");
-                        $("#follow_tags_button").text("Follow tag{{ multiple_tags|pluralize }}");
+                        $("#follow_tags_error_message").hide();
                     }, 3000);
                 }
             });
         }
 
         function unfollow_tags() {
+            $("#follow_tags_button").attr("disabled", "disabled");
             $.ajax({
                 type: 'POST',
                 url: '{{ unfollow_tags_url }}',
                 success: function () {
+                    $("#follow_tags_button").removeAttr("disabled");
                     // console.log("unfollow success")
                     $("#follow_tags_link").removeAttr("onclick");
                     $("#follow_tags_button").text("Follow tag{{ multiple_tags|pluralize }}");
@@ -56,12 +58,10 @@
                     $("#now_following_tags_div").hide();
                 },
                 error: function (data) {
-                    console.log(data.responseText);
-                    $("#follow_tags_button").attr("disabled", "disabled");
-                    $("#follow_tags_button").text("Error");
+                    $("#follow_tags_button").removeAttr("disabled");
+                    $("#follow_tags_error_message").show();
                     window.setTimeout(function() {
-                        $("#follow_tags_button").removeAttr("disabled");
-                        $("#follow_tags_button").text("Unfollow tag{{ multiple_tags|pluralize }}");
+                        $("#follow_tags_error_message").hide();
                     }, 3000);
                 }
             });
@@ -99,7 +99,7 @@
 
         {% endif %}
 
-        {% if page.object_list %}
+        {% if page.object_list and slash_tag %}
             <div id="follow_browse_tags">
 
                 <div class="tag_group">
@@ -118,14 +118,16 @@
                 {% endcomment %}
 
                 <div id="follow_tags_button_div">
+                <span id="follow_tags_error_message">An error ocurred, please try again</span>
                     {% if show_unfollow_button %}
-                        <a href="javascript:void(0)" id="follow_tags_link" onclick="unfollow_tags()"><button id="follow_tags_button">Unfollow tags</button></a>
+                        <a href="javascript:void(0)" id="follow_tags_link" onclick="unfollow_tags()"><button id="follow_tags_button">Unfollow tag{{ multiple_tags|pluralize }}</button></a>
                     {% else %}
                         <a href="javascript:void(0)" id="follow_tags_link" onclick="follow_tags()"><button id="follow_tags_button">Follow tag{{ multiple_tags|pluralize }}</button></a>
                     {% endif %}
                 </div>
 
             </div>
+
         {% endif %}
 
         {% if multiple_tags %}
@@ -142,9 +144,6 @@
             {% endfor %}
         {% endif %}
 
-        {% if page.object_list %}
-            {% show_paginator paginator page current_page request "sound" %}
-        {% endif %}
 
     {% endif %}
 

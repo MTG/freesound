@@ -278,6 +278,9 @@ div.infowindow {
     min-height: 16px;
 }
 
+#stream_sound_button {
+    background-image: url(../images/fugue-icons/icons/share.png);
+}
 #random_sound_button {
     background-image: url(../images/fugue-icons/icons/speaker-volume.png);
 }

@@ -110,10 +110,11 @@ def delete_bookmark(request, bookmark_id):
     messages.add_message(request, messages.WARNING, msg)
     
     next = request.GET.get("next","")
+    page = request.GET.get("page", "1")
     if next:
-        return HttpResponseRedirect(next)
+        return HttpResponseRedirect(next + "?page=" + str(page))
     else:
-        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
+        return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]) + "?page=" + str(page))
 
 @login_required       
 def get_form_for_sound(request, sound_id):

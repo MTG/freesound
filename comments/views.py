@@ -50,8 +50,11 @@ def delete(request, comment_id):
         sound = comment.content_object
         sound.num_comments = sound.num_comments - 1
         sound.save()
-
-    return HttpResponseRedirect(sound.get_absolute_url())
+        
+        
+    next = request.GET.get("next")
+    page = request.GET.get("page")
+    return HttpResponseRedirect(next+"?page="+page)
 
 def for_user(request, username):
     """ This is all very hacky because GenericRelations don't allow you to span

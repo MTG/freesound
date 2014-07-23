@@ -6,6 +6,15 @@
 
 <h1>Settings</h1>
 
+{# to hide the checkbox for weekly stream emails when the user is not following anything #}
+<script type="text/javascript">
+    $(function() {
+        if ({{ hide_stream_emails_field  }}) {
+            $("#id_profile-enabled_stream_emails").parent().hide()
+        }
+    });
+</script>
+
 <div id="content">
     <div id="edit_account" class="content_box">
         <h3>Edit your account</h3>

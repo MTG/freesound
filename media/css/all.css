@@ -311,6 +311,9 @@ div.infowindow {
 #admin_link {
     background-image: url(../images/fugue-icons/icons/application-detail.png);
 }
+#follow_link_sound {
+    background-image: url(../images/fugue-icons/icons/user--plus.png);
+}
 
 
 
@@ -3646,7 +3649,7 @@ ul.messages {
 #follow_tags_error_message {
     color:red;
     font-size: 10px;
-    display: none;
+    /*display: none;*/
 }
 
 .tag_group {

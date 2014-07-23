@@ -152,4 +152,3 @@ function show_hide_bookmark_form(id)
     }
     $("#bookmark_form_"  + id.toString()).toggle();
 }
-

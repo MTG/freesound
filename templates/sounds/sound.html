@@ -180,6 +180,7 @@
         
         {% if user.is_authenticated %}
             <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
+            <li><a id="follow_link_sound" class="icon">Follow this user</a></li>
             <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
         {% endif %}
         
@@ -270,6 +271,30 @@
     tumblr_button.setAttribute("style", "display:inline-block; text-indent:-9999px; overflow:hidden; width:61px; height:20px; background:url('https://platform.tumblr.com/v1/share_2.png') top left no-repeat transparent;");
     tumblr_button.innerHTML = "Share on Tumblr";
     document.getElementById("tumblr_button_abc123").appendChild(tumblr_button);
+
+    $(function() {
+        $("#follow_link_sound").click(function() {
+            console.log("clicking");
+            $.ajax({
+                type: 'POST',
+                url: '{% url follow-user sound.user.username %}',
+                success: function () {
+                    console.log("follow success");
+                    $("#follow_link_sound").text("Unfollow this user");
+                },
+                error: function (data) {
+                    console.log("error");
+                }
+{#                    $("#follow_tags_button").removeAttr("disabled");#}
+{#                    $("#follow_tags_error_message").show();#}
+{#                    window.setTimeout(function() {#}
+{#                        $("#follow_tags_error_message").hide();#}
+{#                    }, 3000);#}
+{#                }#}
+            });
+        });
+    });
+
 </script>
 
 {% endblock section_content %}

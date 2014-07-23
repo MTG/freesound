@@ -99,32 +99,34 @@
 
         {% endif %}
 
-        <div id="follow_browse_tags">
+        {% if page.object_list %}
+            <div id="follow_browse_tags">
 
-            <div class="tag_group">
-                <ul class="tags">
-                {% for tag in multiple_tags %}
-                    {% comment %}<li><a href="{% url tags tag %}">{{ tag }}</a></li>{% endcomment %}
-                    <li><a>{{ tag }}</a></li>
-                {% endfor %}
-                </ul>
+                <div class="tag_group">
+                    <ul class="tags">
+                    {% for tag in multiple_tags %}
+                        {% comment %}<li><a href="{% url tags tag %}">{{ tag }}</a></li>{% endcomment %}
+                        <li><a>{{ tag }}</a></li>
+                    {% endfor %}
+                    </ul>
+                </div>
+
+                {% comment %}
+                <div id="now_following_tags_div">
+                    <span id="now_following_tags_span">You are following these tags</span>
+                </div>
+                {% endcomment %}
+
+                <div id="follow_tags_button_div">
+                    {% if show_unfollow_button %}
+                        <a href="javascript:void(0)" id="follow_tags_link" onclick="unfollow_tags()"><button id="follow_tags_button">Unfollow tags</button></a>
+                    {% else %}
+                        <a href="javascript:void(0)" id="follow_tags_link" onclick="follow_tags()"><button id="follow_tags_button">Follow tag{{ multiple_tags|pluralize }}</button></a>
+                    {% endif %}
+                </div>
+
             </div>
-
-            {% comment %}
-            <div id="now_following_tags_div">
-                <span id="now_following_tags_span">You are following these tags</span>
-            </div>
-            {% endcomment %}
-
-            <div id="follow_tags_button_div">
-                {% if show_unfollow_button %}
-                    <a href="javascript:void(0)" id="follow_tags_link" onclick="unfollow_tags()"><button id="follow_tags_button">Unfollow tags</button></a>
-                {% else %}
-                    <a href="javascript:void(0)" id="follow_tags_link" onclick="follow_tags()"><button id="follow_tags_button">Follow tag{{ multiple_tags|pluralize }}</button></a>
-                {% endif %}
-            </div>
-
-        </div>
+        {% endif %}
 
         {% if multiple_tags %}
             <h1>Sounds with these tags</h1>

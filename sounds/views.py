@@ -63,6 +63,7 @@ import time
 import logging
 import json
 import os
+import follow.utils
 
 logger = logging.getLogger('web')
 logger_click = logging.getLogger('clickusage')
@@ -226,6 +227,12 @@ def sound(request, username, sound_id):
     qs = Comment.objects.select_related("user", "user__profile").filter(content_type=sound_content_type, object_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
     do_log = settings.LOG_CLICKTHROUGH_DATA
+
+    users_following = follow.utils.get_users_following(request.user)
+    if sound.user in users_following:
+        is_following = True
+    else:
+        is_following = False
 
     #facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
     return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))

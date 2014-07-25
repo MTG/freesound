@@ -180,7 +180,12 @@
         
         {% if user.is_authenticated %}
             <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
-            <li><a id="follow_link_sound" class="icon">Follow this user</a></li>
+            <li>
+            {% if is_following %}
+                <a id="follow_link_sound" class="icon">Unfollow this user</a><span id="follow_error"><br/>An error occurred. Please try again.</span></li>
+            {% else %}
+                <a id="follow_link_sound" class="icon">Follow this user</a><span id="follow_error"><br/>An error occurred. Please try again.</span></li>
+            {% endif %}
             <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
         {% endif %}
         
@@ -273,27 +278,52 @@
     document.getElementById("tumblr_button_abc123").appendChild(tumblr_button);
 
     $(function() {
+        var is_following;
+        if ("{{ is_following }}" == "True") is_following = true;
+        else is_following = false;
         $("#follow_link_sound").click(function() {
-            console.log("clicking");
-            $.ajax({
-                type: 'POST',
-                url: '{% url follow-user sound.user.username %}',
-                success: function () {
-                    console.log("follow success");
-                    $("#follow_link_sound").text("Unfollow this user");
-                },
-                error: function (data) {
-                    console.log("error");
-                }
-{#                    $("#follow_tags_button").removeAttr("disabled");#}
-{#                    $("#follow_tags_error_message").show();#}
-{#                    window.setTimeout(function() {#}
-{#                        $("#follow_tags_error_message").hide();#}
-{#                    }, 3000);#}
-{#                }#}
-            });
+            follow_unfollow_user(is_following);
         });
     });
+
+    function follow_unfollow_user(is_following) {
+
+        $("#follow_link_sound").unbind("click");
+
+        var url;
+        if (is_following) {
+            url = '{% url unfollow-user sound.user.username %}';
+        }
+        else {
+            url = '{% url follow-user sound.user.username %}';
+        }
+
+        $.ajax({
+
+            type: 'POST',
+            url: url,
+
+        success: function () {
+
+                is_following = !is_following;
+                $("#follow_error").hide();
+
+                if (is_following)
+                    $("#follow_link_sound").text("Unfollow this user");
+                else
+                    $("#follow_link_sound").text("Follow this user");
+
+                $("#follow_link_sound").click(function() {
+                    follow_unfollow_user(is_following);
+                });
+            },
+
+            error: function (data) {
+                $("#follow_error").show();
+            }
+
+        });
+    }
 
 </script>
 

@@ -3760,3 +3760,9 @@ ul.messages {
     font-size: 10px;
     margin-right: 20px;
 }
+
+#follow_error {
+    color: red;
+    font-size: 10px;
+    display: none;
+}

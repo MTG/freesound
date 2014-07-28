@@ -11,7 +11,7 @@
 
     <script type="text/javascript">
 
-        $(function () {
+        $(function() {
             if ('{{ show_unfollow_button }}' == 'False') {
                 $("#now_following_tags_div").hide();
             }
@@ -26,20 +26,16 @@
             $.ajax({
                 type: 'POST',
                 url: '{{ follow_tags_url }}',
-                success: function () {
+                success: function() {
                     $("#follow_tags_button").removeAttr("disabled");
                     $("#now_following_tags_div").show();
-                    // console.log("follow success");
                     $("#follow_tags_link").removeAttr("onclick");
                     $("#follow_tags_button").text("Unfollow tags");
                     $("#follow_tags_link").unbind("click").click(unfollow_tags);
                 },
-                error: function (data) {
+                error: function(data) {
                     $("#follow_tags_button").removeAttr("disabled");
                     $("#follow_tags_error_message").show();
-                    window.setTimeout(function() {
-                        $("#follow_tags_error_message").hide();
-                    }, 3000);
                 }
             });
         }
@@ -49,20 +45,16 @@
             $.ajax({
                 type: 'POST',
                 url: '{{ unfollow_tags_url }}',
-                success: function () {
+                success: function() {
                     $("#follow_tags_button").removeAttr("disabled");
-                    // console.log("unfollow success")
                     $("#follow_tags_link").removeAttr("onclick");
                     $("#follow_tags_button").text("Follow tag{{ multiple_tags|pluralize }}");
                     $("#follow_tags_link").unbind("click").click(follow_tags);
                     $("#now_following_tags_div").hide();
                 },
-                error: function (data) {
+                error: function(data) {
                     $("#follow_tags_button").removeAttr("disabled");
                     $("#follow_tags_error_message").show();
-                    window.setTimeout(function() {
-                        $("#follow_tags_error_message").hide();
-                    }, 3000);
                 }
             });
         }
@@ -117,7 +109,7 @@
                 </div>
                 {% endcomment %}
 
-                <div id="follow_tags_error_message">An error ocurred, please try again</div>
+                <div style="clear: both"></div>
 
                 <div id="follow_tags_button_div">
                     {% if show_unfollow_button %}
@@ -126,6 +118,12 @@
                         <a href="javascript:void(0)" id="follow_tags_link" onclick="follow_tags()"><button id="follow_tags_button">Follow tag{{ multiple_tags|pluralize }}</button></a>
                     {% endif %}
                 </div>
+
+                <div style="clear: both"></div>
+
+                <div id="follow_tags_error_message">An error occurred, please try again</div>
+
+            <div style="clear: both"></div>
 
             </div>
 

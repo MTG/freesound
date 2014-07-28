@@ -18,46 +18,33 @@
     <script type="text/javascript">
 
         function follow_user() {
+            $("#follow_button").attr("disabled", "disabled");
+            $("#follow_user_error_message").hide();
             $.ajax({
                 type: 'POST',
                 url: '{{ follow_user_url }}',
-                success: function () {
-                    // $("#follow_button").text("Unfollow");
-                    $("#follow_link").removeAttr("onclick");
-                    $("#follow_link").unbind("click").click(unfollow_user);
+                success: function() {
                     location.reload();
                 },
-                error: function (data) {
-                    // console.log(data);
-                    $("#follow_button").text("Error");
-                    $("#follow_button").attr("disabled", "disabled");
-                    window.setTimeout(function() {
-                        $("#follow_button").removeAttr("disabled");
-                        $("#follow_button").text("Follow");
-                    }, 3000);
+                error: function(data) {
+                    $("#follow_button").removeAttr("disabled");
+                    $("#follow_user_error_message").show();
                 }
             });
         }
 
         function unfollow_user() {
+            $("#follow_button").attr("disabled", "disabled");
+            $("#follow_user_error_message").hide();
             $.ajax({
                 type: 'POST',
                 url: '{{ unfollow_user_url }}',
-                success: function () {
-                    // console.log("unfollow success")
-                    //$("#follow_button").text("Follow");
-                    $("#follow_link").removeAttr("onclick");
-                    $("#follow_link").unbind("click").click(follow_user);
+                success: function() {
                     location.reload();
                 },
-                error: function (data) {
-                    // console.log(data);
-                    $("#follow_button").attr("disabled", "disabled");
-                    $("#follow_button").text("Error");
-                    window.setTimeout(function() {
-                        $("#follow_button").removeAttr("disabled");
-                        $("#follow_button").text("Following");
-                    }, 3000);
+                error: function(data) {
+                    $("#follow_button").removeAttr("disabled");
+                    $("#follow_user_error_message").show();
                 }
             });
         }
@@ -113,6 +100,8 @@
                 {% if show_unfollow_button %}
                     <a href="javascript:void(0)" id="follow_link" onclick="unfollow_user()"><button type="button" id="follow_button">Unfollow</button></a>
                 {% endif %}
+
+                <div id="follow_user_error_message">An error occurred,<br/> please try again.</div>
 
             </div>
             <div class="account_information_and_home_options">

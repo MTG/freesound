@@ -3647,9 +3647,21 @@ ul.messages {
 }
 
 #follow_tags_error_message {
-    color:red;
+    color: red;
     font-size: 10px;
-    /*display: none;*/
+    float: right;
+    margin-top: 5px;
+    display: none;
+}
+
+#follow_user_error_message {
+    color: red;
+    font-size: 10px;
+    display: none;
+}
+
+#follow_tags_button_div {
+    float: right;
 }
 
 .tag_group {

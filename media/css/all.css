@@ -3503,6 +3503,10 @@ ul.messages {
     padding-left: 25px;
 }
 
+
+/* Cookies bar
+--------------------------------------------------------------*/
+
 #cookie-bar {
     height: 50px;
     line-height: 30px;
@@ -3524,6 +3528,10 @@ ul.messages {
     font-style: italic;
     color: white;
 }
+
+
+/* Following and followers, etc. stuff
+--------------------------------------------------------------*/
 
 #following_tags .content_box {
     margin-bottom: 0;

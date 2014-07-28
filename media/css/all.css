@@ -308,12 +308,14 @@ div.infowindow {
 }
 #bookmark_link {
     background-image: url(../images/fugue-icons/icons/address-book-blue.png);
+    cursor: pointer;
 }
 #admin_link {
     background-image: url(../images/fugue-icons/icons/application-detail.png);
 }
 #follow_link_sound {
     background-image: url(../images/fugue-icons/icons/user--plus.png);
+    cursor: pointer;
 }
 
 

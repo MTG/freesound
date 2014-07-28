@@ -29,6 +29,9 @@
                 error: function(data) {
                     $("#follow_button").removeAttr("disabled");
                     $("#follow_user_error_message").show();
+                    window.setTimeout(function(){
+                        $("#follow_user_error_message").fadeOut(200);
+                    }, 3000);
                 }
             });
         }
@@ -45,6 +48,9 @@
                 error: function(data) {
                     $("#follow_button").removeAttr("disabled");
                     $("#follow_user_error_message").show();
+                    window.setTimeout(function(){
+                        $("#follow_user_error_message").fadeOut(200);
+                    }, 3000);
                 }
             });
         }

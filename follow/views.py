@@ -34,7 +34,10 @@ import settings
 from freesound.utils.search.solr import Solr, SolrResponseInterpreter
 from search.forms import SEARCH_SORT_OPTIONS_WEB
 # from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except:
+    from freesound.utils.ordered_dict import OrderedDict
 from django.core.urlresolvers import reverse
 
 @login_required

@@ -143,8 +143,9 @@
         <a id="new_sounds_users"></a>
 
         <h3>Sounds by users you follow</h3>
-
-        <a class="link-to-section" href="#new_sounds_tags">Go to sounds by tags you follow</a>
+        {% if users_sounds %}
+            <a class="link-to-section" href="#new_sounds_tags">Go to sounds by tags you follow</a>
+        {% endif %}
 
         {% if not users_sounds %}
 
@@ -161,7 +162,7 @@
                         {% display_sound sound_obj.id %}
                     {% endfor %}
                     {% if more_count > 0 %}
-                       <p><a href="{% url sounds-search %}{{ more_url }}">See all results ({{ more_count }} more)</a></p>
+                       <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href="{% url sounds-search %}{{ more_url }}">See all results ({{ more_count }} more)</a></p>
                     {% endif %}
                 </div>
 
@@ -180,7 +181,9 @@
         <a id="new_sounds_tags"></a>
         <h3>Sounds by tags you follow</h3>
 
-        <a class="link-to-section" href="#new_sounds_users">Go to sounds by users you follow</a>
+        {% if users_sounds %}
+            <a class="link-to-section" href="#new_sounds_users">Go to sounds by users you follow</a>
+        {% endif %}
 
         {% if not tags_sounds %}
 
@@ -197,7 +200,7 @@
                         {% display_sound sound_obj.id %}
                     {% endfor %}
                     {% if more_count > 0 %}
-                       <p><a href="{% url sounds-search %}{{ more_url }}">See all results ({{ more_count }} more)</a></p>
+                       <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href="{% url sounds-search %}{{ more_url }}">See all results ({{ more_count }} more)</a></p>
                     {% endif %}
                 </div>
 

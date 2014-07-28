@@ -30,7 +30,7 @@
                     $("#follow_tags_button").removeAttr("disabled");
                     $("#now_following_tags_div").show();
                     $("#follow_tags_link").removeAttr("onclick");
-                    $("#follow_tags_button").text("Unfollow tags");
+                    $("#follow_tags_button").text("Unfollow tag{{ multiple_tags|pluralize }}");
                     $("#follow_tags_link").unbind("click").click(unfollow_tags);
                 },
                 error: function(data) {

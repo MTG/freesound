@@ -64,7 +64,7 @@ Duration between <input class="inputtext" id="filter_duration_min" type="text" v
 <input id="grouping_geotagged_hidden" type="hidden" name="g" {% ifequal grouping "1" %}value="1"{% else %}value=""{% endifequal %} />
 
 <br>
-<span class="advanced_search_options_button"><a onclick='hideAdvancedSearchOptions();'>Hide advanced search options</a></span>
+<span class="advanced_search_options_button"><a style="cursor:pointer;" onclick='hideAdvancedSearchOptions();'>Hide advanced search options</a></span>
 </div>
 
 {% if advanced == "1" %}
@@ -75,5 +75,5 @@ Duration between <input class="inputtext" id="filter_duration_min" type="text" v
 
 
 <div style="margin-top:4px;"></div>
-<a onclick='showAdvancedSearchOptions();'>Show advanced search options</a>
+<a style="cursor:pointer;" onclick='showAdvancedSearchOptions();'>Show advanced search options</a>
 </span>

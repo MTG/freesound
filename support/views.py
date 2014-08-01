@@ -23,6 +23,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from support.forms import ContactForm
 from utils.mail import send_mail_template
+import settings
 
 def contact(request):
     email_sent = False
@@ -35,7 +36,7 @@ def contact(request):
         form = ContactForm(request, request.POST)
         if form.is_valid():
             subject = u"[support] " + form.cleaned_data['subject']
-            email_from = form.cleaned_data['your_email']
+            email_from = settings.DEFAULT_FROM_EMAIL
             message = form.cleaned_data['message']
 
             # append some useful admin information to the email:
@@ -45,7 +46,7 @@ def contact(request):
                 except User.DoesNotExist: #@UndefinedVariable
                     pass
             
-            send_mail_template(subject, "support/email_support.txt", locals(), email_from)
+            send_mail_template(subject, "support/email_support.txt", locals(), email_from, reply_to=form.cleaned_data['your_email'])
 
             email_sent = True
     else:

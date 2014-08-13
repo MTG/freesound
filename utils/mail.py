@@ -20,11 +20,16 @@
 
 from django.conf import settings
 from django.core.mail import send_mail as core_send_mail
-from django.core.mail import send_mass_mail
+from django.core.mail.message import EmailMessage
+from django.core.mail import send_mass_mail, get_connection
 from django.template.loader import render_to_string
 
-def send_mail(subject, email_body, email_from=None, email_to=[]):
-    """ Sends email with a lot of defaults"""
+def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=None):
+    """
+    Sends email with a lot of defaults
+    'reply_to' parameter can only be a single email address that will be added as a header
+    to all mails being sent.
+    """
     if not email_from:
         email_from = settings.DEFAULT_FROM_EMAIL
     
@@ -39,13 +44,24 @@ def send_mail(subject, email_body, email_from=None, email_to=[]):
     try:
         #core_send_mail(settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, email_to, fail_silently=False)
         emails = tuple(( (settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email]) for email in email_to ))
-        send_mass_mail( emails, fail_silently = False)
+
+        # Replicating send_mass_mail functionality and adding reply-to header if requires
+        connection = get_connection(username=None,
+                                    password=None,
+                                    fail_silently=False)
+        headers = None
+        if reply_to:
+            headers = {'Reply-To': reply_to}
+        messages = [EmailMessage(subject, message, sender, recipient, headers=headers)
+                    for subject, message, sender, recipient in emails]
+
+        connection.send_messages(messages)
 
         return True
     except:
         return False
     
 
-def send_mail_template(subject, template, context, email_from=None, email_to=[]):
+def send_mail_template(subject, template, context, email_from=None, email_to=[], reply_to=None):
     context["settings"] = settings
-    return send_mail(subject, render_to_string(template, context), email_from, email_to)
+    return send_mail(subject, render_to_string(template, context), email_from, email_to, reply_to=reply_to)

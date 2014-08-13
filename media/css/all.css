@@ -78,16 +78,17 @@ a.external_link:hover {
 ------------------------------------------------------*/
 
 body {
-    /*background-position: 0 105px;*/ /* uncomment this one when adding banners */
+    /*background-position: 0 90px;*/ /* uncomment this one when adding banners */
     background-color: #fff;
 }
 #banner_wrapper {
     width: 728px;
     margin: 0 auto;
+    /*margin-top:2px;*/ /* uncomment this one when adding banners */
 }
 
 #warning_banner {
-    margin-bottom: 10px;
+    /*margin-bottom: -7px; */ /* uncomment this one when adding banners */
 }
 
 

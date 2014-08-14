@@ -310,7 +310,7 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 # files when we do a deploy (the url changes)
 LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
-ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT = False
+ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT = True
 
 
 from logger import LOGGING

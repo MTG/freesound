@@ -557,9 +557,9 @@ def describe_sounds(request):
             # set the tags and descriptions
             data = forms[i]['description'].cleaned_data
             sound.description = remove_control_chars(data.get('description', ''))
+
             if ALTERNATIVE_INTERFACE:
                 tags_data = forms[i]['description'].data['%i-tags' % i]
-                print tags_data
                 processed_tags = list()
                 for tag in tags_data.split(' '):
                     if not ':' in tag:
@@ -630,7 +630,8 @@ def describe_sounds(request):
                                                                tag_recommendation_random_session_id,
                                                                sound.user.id,
                                                                ','.join(['%s|%i' % (div_id, sound_id)  for div_id, sound_id in tag_recommendation_session_sound_id_links])))
-
+            original_tags = forms[i]['description'].data['%i-tags' % i]
+            research_logger.info('%s000#describing#%s#%i#-#OriginalSoundTags:%s' % (original_tags))
 
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]

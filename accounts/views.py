@@ -630,10 +630,11 @@ def describe_sounds(request):
                                                                tag_recommendation_random_session_id,
                                                                sound.user.id,
                                                                ','.join(['%s|%i' % (div_id, sound_id)  for div_id, sound_id in tag_recommendation_session_sound_id_links])))
-            original_tags = forms[i]['description'].data['%i-tags' % i]
-            research_logger.info('%s000#describing#%s#%i#-#OriginalSoundTags:%s' % (datetime.datetime.today().strftime('%s'),
+            for i in range(len(sounds_to_describe)):
+                original_tags = forms[i]['description'].data['%i-tags' % i]
+                research_logger.info('%s000#describing#%s#%i#-#OriginalSoundTagsSound%i:%s' % (datetime.datetime.today().strftime('%s'),
                                                                tag_recommendation_random_session_id,
-                                                               sound.user.id, original_tags))
+                                                               sound.user.id, sound.id, original_tags))
 
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]

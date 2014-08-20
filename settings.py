@@ -219,22 +219,25 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.XMLRenderer',
     ),
     'DEFAULT_THROTTLE_CLASSES': (
-        'apiv2.throttling.ClientBasedThrottling',
+        'apiv2.throttling.ClientBasedThrottlingBurst',
+        'apiv2.throttling.ClientBasedThrottlingSustained',
     ),
 }
 
 # Define Api usage limit rates per defined throttling levels
 # Possible time units: second, minute, hour or day
+# Every level must include two limits, a burst limit and a sustained limit which are checked separately
+# Burst limits are typically applied per minute and sustained limits per day
 
 APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/day'],  # Client 'disabled'
+    0: ['0/day', '0/day'],  # Client 'disabled' (burst and sustained limits are the same)
     1: ['60/minute', '5000/day'],
     2: ['300/minute', '10000/day'],
     99: [],  # No limit of requests
 }
 
 APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/day'],  # Client 'disabled'
+    0: ['0/day', '0/day'],  # Client 'disabled' (burst and sustained limits are the same)
     1: ['30/minute', '500/day'],
     2: ['60/minute', '1000/day'],
     99: [],  # No limit of requests

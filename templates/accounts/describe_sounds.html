@@ -5,6 +5,11 @@
     {{ block.super }}
     <script src="{{media_url}}/js/jquery-ui-1.8.11.custom.min.js" type="text/javascript"></script>
     <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
+    {%  if ALTERNATIVE_INTERFACE %}
+        <link rel=StyleSheet href="{{media_url}}css/tag_recommendation.css" type="text/css" >
+        <script type="text/javascript" src="{{media_url}}js/tag_recommendation.js"></script>
+    {% endif %}
+
     <script>
 
     var doLog = true;
@@ -19,14 +24,15 @@
     {% endif %}
 
     var doRecommend = true;
-    {% if ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS %}
-        if ((randomDescriptionSessionId % 2) == 0){
-            doRecommend = false;
-        }
-    {% endif %}
-
     var maps = {};
     var centerMarkers = {};
+
+    {% if ALTERNATIVE_INTERFACE %}
+        var INTERFACE_IDS = [];
+        var RECOMMENDATION_INTERFACES = [];
+        var MEDIA_URL = {{ media_url }};
+        var CURRENT_INTERFACE_TYPE = "new";
+    {% endif %}
 
     $(document).ready(function() {
 
@@ -38,6 +44,17 @@
             $('#sound-accordion-sound-'+i).hide();
         }
 
+        {% if ALTERNATIVE_INTERFACE %}
+            // Create new rec interfaces
+            for (var i=0; i<{{ n_sounds }}; i++){
+                INTERFACE_IDS.push(i);
+            }
+            {% for form in forms %}
+                $("#new_tr_interface_{{ forloop.counter0 }}").append(create_new_ontology_tag_recommendation_interface_basic_html({{ forloop.counter0 }}));
+                RECOMMENDATION_INTERFACES.push(create_new_ontology_tag_recommendation_interface(INTERFACE_IDS[{{ forloop.counter0 }}], "{{form.description.tags.value}}"));
+            {% endfor %}
+        {% endif %}
+
         // Init tag recommendation
         var textarea_elements = $("textarea[id$='-tags']");
 
@@ -47,11 +64,11 @@
             names += "id_{{ forloop.counter0 }}|{{ form.sound.name }},"
         {% endfor %}
         log("StartedDescriptionOfSounds: " + names,"-")
-        if (doRecommend == true){
-            log("UsingRecommendation:Yes", "-");
-        } else {
-            log("UsingRecommendation:No", "-");
-        }
+        {% if ALTERNATIVE_INTERFACE %}
+            log("UsingNewInterface:Yes", "-");
+        {% else %}
+            log("UsingNewInterface:No", "-");
+        {% endif %}
 
         // Listen to keyup events in tags textareas to display tags
         textarea_elements.keyup(function(event) {
@@ -292,6 +309,32 @@
         $("#" + textarea_id + "-recommended").text("")
     }
 
+    {% if ALTERNATIVE_INTERFACE %}
+        function add_tags_to_hidden_field(){
+            if (CURRENT_INTERFACE_TYPE == "new"){
+                for (var i=0; i<{{ n_sounds }}; i++){
+                    var tags = RECOMMENDATION_INTERFACES[i].get_input_tags(separator=' ');
+                    $("#id_" + i + "-tags").val(tags);
+                }
+            }
+        }
+
+        function switch_interface(interface_id){
+            if (CURRENT_INTERFACE_TYPE == "new"){
+                $("#new_tr_interface_" + interface_id).hide();
+                $("#id_" + interface_id + "-tags").val("");
+                $("#old_tr_interface_" + interface_id).show();
+                CURRENT_INTERFACE_TYPE = "old";
+            } else {
+                $("#old_tr_interface_" + interface_id).hide();
+                get_recommendation_interface(interface_id).tags = [];
+                get_recommendation_interface(interface_id).reload_interface();
+                $("#new_tr_interface_" + interface_id).show();
+                CURRENT_INTERFACE_TYPE = "new";
+            }
+        }
+    {% endif %}
+
 
     </script>
     <style type="text/css">
@@ -320,7 +363,11 @@
     <p>You are not required to specify a geolocation for each sound, but if the sound is a
         field-recording it's probably a good idea to specify the location.
 
+    {% if ALTERNATIVE_INTERFACE %}
+    <form id="describe_form" action=".?alt=1" onsubmit="return add_tags_to_hidden_field()" method="post">{% csrf_token %}
+    {% else %}
     <form id="describe_form" action="." method="post">{% csrf_token %}
+    {% endif %}
         <input type="hidden" id="random_session_id" name="random_session_id" value="-">
         <div id="sound-accordion-alternate">
             {% for form in forms %}
@@ -338,14 +385,25 @@
                             {{form.description.name}}
                         </p>
 
-                        {{form.description.tags.errors}}
-                        <p>
-                            Tags:
-                            {{form.description.tags.help_text|safe}}<br>
-                            {{form.description.tags}}
-                            <div id="id_{{ forloop.counter0 }}-tags-recommended" style="font-size: 10px;margin-top:-5px;width: 670px;"></div>
-
-                        </p>
+                        {% if ALTERNATIVE_INTERFACE %}
+                            {{form.description.tags.errors}}
+                            <p>
+                                Tags <!--(<a href="javascript:void(0);" onclick="switch_interface({{ forloop.counter0  }});">switch interface</a>)-->:
+                                <div class="tagrecommendation_body" id="new_tr_interface_{{ forloop.counter0 }}"></div>
+                                <div id="old_tr_interface_{{ forloop.counter0 }}" style="display:none;margin-top:-25px;font-size:12px;">
+                                    {{form.description.tags.help_text|safe}}<br>
+                                    {{form.description.tags}}
+                                </div>
+                            </p>
+                        {% else %}
+                            {{form.description.tags.errors}}
+                            <p>
+                                Tags:
+                                {{form.description.tags.help_text|safe}}<br>
+                                {{form.description.tags}}
+                                <div id="id_{{ forloop.counter0 }}-tags-recommended" style="font-size: 10px;margin-top:-5px;width: 670px;"></div>
+                            </p>
+                        {% endif %}
 
                         {{form.description.description.errors }}
                         <p>

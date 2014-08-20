@@ -20,6 +20,7 @@
 
 import logging, traceback, settings
 from tagrecommendation.client import TagRecommendation
+from tagrecommendation.client.client_fslabs import NewTagRecommendation
 from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME
 from django.core.cache import cache
 from django.shortcuts import render_to_response
@@ -122,3 +123,37 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
         TagRecommendation.add_to_index(ids, tagss)
 
     print "Finished!"
+
+
+### Views for new tag recommendation interface experiment
+def new_tagrecommendation_interface_instructions(request):
+    return render_to_response('tagrecommendation/new_interface_instructions.html', locals(), context_instance=RequestContext(request))
+
+def get_recommended_tags_view_new(request):
+    if request.is_ajax() and request.method == 'POST':
+        input_tags = request.POST.get('input_tags', False)
+        category = request.POST.get('category', False)
+        if category:
+            result = NewTagRecommendation.recommend_tags_category(input_tags, category)
+        else:
+            result = NewTagRecommendation.recommend_tags(input_tags)
+        return HttpResponse(json.dumps(result), mimetype='application/javascript')
+
+    return HttpResponse(json.dumps({'tags':[], 'audio_category':None}), mimetype='application/javascript')
+
+def get_recommended_categories_view(request):
+    if request.is_ajax() and request.method == 'POST':
+        input_tags = request.POST.get('input_tags', False)
+        result = NewTagRecommendation.recommend_categories(input_tags)
+        categories = [str(category) for category in result['categories']]
+        return HttpResponse(json.dumps(categories), mimetype='application/javascript')
+
+    return HttpResponse(json.dumps([]), mimetype='application/javascript')
+
+def get_all_categories_view(request):
+    if request.is_ajax() and request.method == 'POST':
+        result = NewTagRecommendation.all_tag_categories()
+        categories = [str(category) for category in result['categories']]
+        return HttpResponse(json.dumps(categories), mimetype='application/javascript')
+
+    return HttpResponse(json.dumps([]), mimetype='application/javascript')

@@ -50,7 +50,7 @@ from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
 from geotags.models import GeoTag
 from django.contrib import messages
-from settings import SOUNDS_PER_DESCRIBE_ROUND
+from settings import SOUNDS_PER_DESCRIBE_ROUND, ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED
@@ -363,11 +363,24 @@ def edit(request):
 @login_required
 def describe(request):
 
+    # Tag recommendation research code
+    ask_for_interface = ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
+    is_ie = False
+    if request.META.has_key('HTTP_USER_AGENT'):
+        user_agent = request.META['HTTP_USER_AGENT'].lower()
+        is_ie = ('trident' in user_agent) or ('msie' in user_agent)
+
     file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
     file_structure.name = 'Your uploaded files'
 
     if request.method == 'POST':
         form = FileChoiceForm(files, request.POST)
+
+        # Tag recommendation research code
+        request.session['use_alternative_interface'] = False
+        if ask_for_interface:
+            if request.POST.get('participate_in_experiment', 'no') == 'yes':
+                request.session['use_alternative_interface'] = True
         
         if form.is_valid():
             if "delete" in request.POST: # If delete button is pressed
@@ -426,13 +439,18 @@ def describe_pack(request):
 @login_required
 @transaction.autocommit
 def describe_sounds(request):
-    # Tag recommendation research code (can be deleted in future)
-    ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = settings.ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS
 
     sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)
     selected_license = request.session.get('describe_license', False)
     selected_pack = request.session.get('describe_pack', False)
+
+    # For tag recommendation research only
+    ALTERNATIVE_INTERFACE = False
+    use_alternative_interface = request.GET.get("alt", False) or request.session.get('use_alternative_interface', False)
+    if use_alternative_interface:
+        ALTERNATIVE_INTERFACE = True
+    n_sounds = len(sounds)
 
     # This is to prevent people browsing to the /home/describe/sounds page
     # without going through the necessary steps.
@@ -556,7 +574,21 @@ def describe_sounds(request):
             # set the tags and descriptions
             data = forms[i]['description'].cleaned_data
             sound.description = remove_control_chars(data.get('description', ''))
-            sound.set_tags(data.get('tags'))
+
+            if ALTERNATIVE_INTERFACE:
+                tags_data = forms[i]['description'].data['%i-tags' % i]
+                processed_tags = list()
+                for tag in tags_data.split(' '):
+                    if not ':' in tag:
+                        processed_tags.append(tag)
+                    else:
+                        processed_tags += tag.split(':')[1:]
+                print processed_tags
+                from utils.tags import clean_and_split_tags
+                processed_tags = clean_and_split_tags(' '.join(processed_tags))
+                sound.set_tags(processed_tags)
+            else:
+                sound.set_tags(data.get('tags'))
             sound.save()
 
             # add sound info in tagrecommendation log
@@ -615,7 +647,11 @@ def describe_sounds(request):
                                                                tag_recommendation_random_session_id,
                                                                sound.user.id,
                                                                ','.join(['%s|%i' % (div_id, sound_id)  for div_id, sound_id in tag_recommendation_session_sound_id_links])))
-
+            for i in range(len(sounds_to_describe)):
+                original_tags = forms[i]['description'].data['%i-tags' % i]
+                research_logger.info('%s000#describing#%s#%i#-#OriginalSoundTagsSound%i:%s' % (datetime.datetime.today().strftime('%s'),
+                                                               tag_recommendation_random_session_id,
+                                                               sound.user.id, int(tag_recommendation_session_sound_id_links[i][1]), original_tags))
 
         # remove the files we described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]

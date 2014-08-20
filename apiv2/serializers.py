@@ -548,7 +548,7 @@ class SoundDescriptionSerializer(serializers.Serializer):
         value = attrs[source]
         tags = clean_and_split_tags(value)
         if len(tags) < 3:
-            raise serializers.ValidationError('Your should at least have 3 tags...')
+            raise serializers.ValidationError('You should at least have 3 tags...')
         elif len(tags) > 30:
             raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
         attrs[source] = tags
@@ -613,7 +613,7 @@ class EditSoundDescriptionSerializer(serializers.Serializer):
         value = attrs[source]
         tags = clean_and_split_tags(value)
         if 1 <= len(tags) < 3:
-            raise serializers.ValidationError('Your should at least have 3 tags...')
+            raise serializers.ValidationError('You should at least have 3 tags...')
         elif len(tags) > 30:
             raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
         attrs[source] = tags
@@ -680,7 +680,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
             value = attrs[source]
             tags = clean_and_split_tags(value)
             if len(tags) < 3:
-                raise serializers.ValidationError('Your should at least have 3 tags...')
+                raise serializers.ValidationError('You should at least have 3 tags...')
             elif len(tags) > 30:
                 raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
             attrs[source] = tags

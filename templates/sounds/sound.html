@@ -320,6 +320,9 @@
 
             error: function (data) {
                 $("#follow_error").show();
+                window.setTimeout(function(){
+                    $("#follow_error").fadeOut(200);
+                }, 3000);
             }
 
         });

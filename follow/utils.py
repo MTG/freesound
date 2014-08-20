@@ -125,15 +125,22 @@ def get_stream_sounds(user, time_lapse):
         )
 
         result = SolrResponseInterpreter(solr.select(unicode(query)))
-        more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
-        more_url = "?f=" + filter_str + "&s=" + sort_str[0]
-        more_url = urllib.quote(more_url)
 
         if result.num_rows != 0:
+
+            more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
+
+            # the sorting only works if done like this!
+            more_url_params = [urllib.quote(filter_str), urllib.quote(sort_str[0])]
+
+            # this is the same link but for the email has to be "quoted"
+            more_url = u"?f=" + filter_str + u"&s=" + sort_str[0]
+            # more_url_quoted = urllib.quote(more_url)
+
             sound_ids = [element['id'] for element in result.docs]
             sound_objs = sounds.models.Sound.objects.filter(id__in=sound_ids)
             new_count = more_count + len(sound_ids)
-            users_sounds.append(((user_following, False), sound_objs, more_url, more_count, new_count))
+            users_sounds.append(((user_following, False), sound_objs, more_url_params, more_count, new_count))
 
     #
     # TAGS FOLLOWING
@@ -162,15 +169,22 @@ def get_stream_sounds(user, time_lapse):
         )
 
         result = SolrResponseInterpreter(solr.select(unicode(query)))
-        more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
-        more_url = "?f=" + tag_filter_str + "&s=" + sort_str[0]
-        more_url = urllib.quote(more_url)
 
         if result.num_rows != 0:
+
+            more_count = max(0, result.num_found - SOLR_QUERY_LIMIT_PARAM)
+
+            # the sorting only works if done like this!
+            more_url_params = [urllib.quote(tag_filter_str), urllib.quote(sort_str[0])]
+
+            # this is the same link but for the email has to be "quoted"
+            more_url = u"?f=" + tag_filter_str + u"&s=" + sort_str[0]
+            # more_url_quoted = urllib.quote(more_url)
+
             sound_ids = [element['id'] for element in result.docs]
             sound_objs = sounds.models.Sound.objects.filter(id__in=sound_ids)
             new_count = more_count + len(sound_ids)
-            tags_sounds.append((tags, sound_objs, more_url, more_count, new_count))
+            tags_sounds.append((tags, sound_objs, more_url_params, more_count, new_count))
 
     return users_sounds, tags_sounds
 

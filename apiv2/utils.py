@@ -237,10 +237,11 @@ class GenericAPIView(RestFrameworkGenericAPIView):
         super(GenericAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
+        self.end_user_ip = get_client_ip(request)
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 class OauthRequiredAPIView(RestFrameworkGenericAPIView):
@@ -404,6 +405,14 @@ def throw_exception_if_not_https(request):
         if not request.using_https:
             raise RequiresHttpsException
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = '-' #request.META.get('REMOTE_ADDR')
+    return ip
+
 def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):
 
     if request_is_secure:
@@ -447,8 +456,8 @@ def get_authentication_details_form_request(request):
     return auth_method_name, developer, user, client_id
 
 
-def basic_request_info_for_log_message(auth_method_name, developer, user, client_id):
-    return 'ApiV2 Auth:%s Dev:%s User:%s Client:%s' % (auth_method_name, developer, user, str(client_id))
+def basic_request_info_for_log_message(auth_method_name, developer, user, client_id, ip):
+    return 'ApiV2 Auth:%s Dev:%s User:%s Client:%s Ip:%s' % (auth_method_name, developer, user, str(client_id), ip)
 
 
 def request_parameters_info_for_log_message(get_parameters):

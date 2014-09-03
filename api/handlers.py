@@ -43,6 +43,7 @@ from django.contrib.syndication.views import Feed
 from urllib import quote
 from django.core.cache import cache
 from similarity.client import SimilarityException
+from freesound.apiv2.utils import get_client_ip
 
 logger = logging.getLogger("api")
 
@@ -318,7 +319,7 @@ class SoundSearchHandler(BaseHandler):
 
     @auth()
     def read(self, request):
-        
+        ip = get_client_ip(request)
         form = SoundSearchForm(SEARCH_SORT_OPTIONS_API, request.GET)
         if not form.is_valid():
             resp = rc.BAD_REQUEST
@@ -381,7 +382,7 @@ class SoundSearchHandler(BaseHandler):
                                                                       request.GET.get('fields', False),
                                                                       grouping)
             add_request_id(request,result)
-            logger.info("Searching,q=" + cd['q'] + ",f=" + cd['f'] + ",p=" + str(cd['p']) + ",sounds_per_page=" + str(sounds_per_page) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+            logger.info("Searching,q=" + cd['q'] + ",f=" + cd['f'] + ",p=" + str(cd['p']) + ",sounds_per_page=" + str(sounds_per_page) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
             return result
 
         except SolrException, e:
@@ -413,6 +414,7 @@ class SoundContentSearchHandler(BaseHandler):
 
     @auth()
     def read(self, request):
+        ip = get_client_ip(request)
         t = request.GET.get("t", "")
         f = request.GET.get("f", "")
 
@@ -456,7 +458,7 @@ class SoundContentSearchHandler(BaseHandler):
 
         add_request_id(request,result)
 
-        logger.info("Content searching, t=" + str(t) + ", f=" + str(f) + ", api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Content searching, t=" + str(t) + ", f=" + str(f) + ", api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
     def __construct_pagination_link(self, t, f, p, spp, num_results, fields):
@@ -485,7 +487,7 @@ class SoundHandler(BaseHandler):
 
     @auth()
     def read(self, request, sound_id):
-
+        ip = get_client_ip(request)
         try:
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
@@ -494,7 +496,7 @@ class SoundHandler(BaseHandler):
         result = prepare_single_sound(sound)
 
         add_request_id(request,result)
-        logger.info("Sound info,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Sound info,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
 class SoundServeHandler(BaseHandler):
@@ -511,7 +513,7 @@ class SoundServeHandler(BaseHandler):
 
     @auth()
     def read(self, request, sound_id):
-        
+        ip = get_client_ip(request)
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")            
         except Sound.DoesNotExist: #@UndefinedVariable
@@ -524,7 +526,7 @@ class SoundServeHandler(BaseHandler):
         # DISABLED (FOR THE MOMENT WE DON'T UPDATE DOWNLOADS TABLE THROUGH API)
         #Download.objects.get_or_create(user=request.user, sound=sound, interface='A')
         
-        logger.info("Serving sound,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Serving sound,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
@@ -542,7 +544,7 @@ class SoundSimilarityHandler(BaseHandler):
 
     @auth()
     def read(self, request, sound_id):
-        
+        ip = get_client_ip(request)
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK", similarity_state="OK")
             #TODO: similarity_state="OK"
@@ -572,7 +574,7 @@ class SoundSimilarityHandler(BaseHandler):
 
         result = {'sounds': sounds, 'num_results': len(sounds)}
         add_request_id(request,result)
-        logger.info("Sound similarity,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Sound similarity,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
 
@@ -591,7 +593,7 @@ class SoundAnalysisHandler(BaseHandler):
 
     @auth()
     def read(self, request, sound_id, filter=False):
-
+        ip = get_client_ip(request)
         try:
             sound = Sound.objects.select_related('geotag', 'user', 'license', 'tags').get(id=sound_id, moderation_state="OK", analysis_state="OK")
         except Sound.DoesNotExist: #@UndefinedVariable
@@ -602,7 +604,7 @@ class SoundAnalysisHandler(BaseHandler):
         result = prepare_single_sound_analysis(sound,request,filter)
 
         add_request_id(request,result)
-        logger.info("Sound analysis,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Sound analysis,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
 """
@@ -645,7 +647,7 @@ class SoundGeotagHandler(BaseHandler):
 
     @auth()
     def read(self, request):
-        
+        ip = get_client_ip(request)
         min_lat = request.GET.get('min_lat', 0.0)
         max_lat = request.GET.get('max_lat', 0.0)
         min_lon = request.GET.get('min_lon', 0.0)
@@ -677,7 +679,7 @@ class SoundGeotagHandler(BaseHandler):
                     result['next'] = self.__construct_pagination_link(page.next_page_number(), min_lon, max_lon, min_lat, max_lat, request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
 
         add_request_id(request,result)
-        logger.info("Geotags search,min_lat=" + str(min_lat) + ",max_lat=" + str(max_lat) + ",min_lon=" + str(min_lon) + ",max_lon=" + str(max_lon) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Geotags search,min_lat=" + str(min_lat) + ",max_lat=" + str(max_lat) + ",min_lon=" + str(min_lon) + ",max_lon=" + str(max_lon) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
     def __construct_pagination_link(self, p, min_lon, max_lon, min_lat, max_lat, spp, fields):
@@ -702,6 +704,7 @@ class UserHandler(BaseHandler):
 
     @auth()
     def read(self, request, username):
+        ip = get_client_ip(request)
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
@@ -710,7 +713,7 @@ class UserHandler(BaseHandler):
         result = prepare_single_user(user)
 
         add_request_id(request,result)
-        logger.info("User info,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("User info,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
 class UserSoundsHandler(BaseHandler):
@@ -727,6 +730,7 @@ class UserSoundsHandler(BaseHandler):
 
     @auth()
     def read(self, request, username):
+        ip = get_client_ip(request)
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
@@ -748,7 +752,7 @@ class UserSoundsHandler(BaseHandler):
                     result['next'] = self.__construct_pagination_link(username, page.next_page_number(), request.GET.get('sounds_per_page',None), request.GET.get('fields', False))
 
         add_request_id(request,result)
-        logger.info("User sounds,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("User sounds,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
     #TODO: auth() ?
@@ -774,6 +778,7 @@ class UserPacksHandler(BaseHandler):
 
     @auth()
     def read(self, request, username):
+        ip = get_client_ip(request)
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
@@ -783,7 +788,7 @@ class UserPacksHandler(BaseHandler):
         result = {'packs': packs, 'num_results': len(packs)}
 
         add_request_id(request,result)
-        logger.info("User packs,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("User packs,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
 class UserBookmarkCategoriesHandler(BaseHandler):
@@ -800,6 +805,7 @@ class UserBookmarkCategoriesHandler(BaseHandler):
 
     @auth()
     def read(self, request, username):
+        ip = get_client_ip(request)
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
@@ -817,7 +823,7 @@ class UserBookmarkCategoriesHandler(BaseHandler):
         result = {'categories': categories, 'num_results': len(categories)}
 
         add_request_id(request,result)
-        logger.info("User bookmark categories,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("User bookmark categories,username=" + username + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
 class UserBookmarkCategoryHandler(BaseHandler):
@@ -834,6 +840,7 @@ class UserBookmarkCategoryHandler(BaseHandler):
 
     @auth()
     def read(self, request, username, category_id = None):
+        ip = get_client_ip(request)
         try:
             user = User.objects.get(username__iexact=username)
             if category_id:
@@ -863,7 +870,7 @@ class UserBookmarkCategoryHandler(BaseHandler):
                     result['next'] = self.__construct_pagination_link(username, category_id, page.next_page_number())
 
         add_request_id(request,result)
-        logger.info("User bookmarks for category,username=" + username + ",category_id=" + str(category_id) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("User bookmarks for category,username=" + username + ",category_id=" + str(category_id) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
     def __construct_pagination_link(self, username, category_id, p):
@@ -883,6 +890,7 @@ class PackHandler(BaseHandler):
 
     @auth()
     def read(self, request, pack_id):
+        ip = get_client_ip(request)
         try:
             pack = Pack.objects.get(id=pack_id)
         except Pack.DoesNotExist:
@@ -891,7 +899,7 @@ class PackHandler(BaseHandler):
         result = prepare_single_pack(pack, include_description=True)
 
         add_request_id(request,result)
-        logger.info("Pack info,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Pack info,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
 class PackSoundsHandler(BaseHandler):
@@ -908,6 +916,7 @@ class PackSoundsHandler(BaseHandler):
 
     @auth()
     def read(self, request, pack_id):
+        ip = get_client_ip(request)
         try:
             pack = Pack.objects.get(id=pack_id)
         except User.DoesNotExist:
@@ -928,7 +937,7 @@ class PackSoundsHandler(BaseHandler):
                     result['next'] = self.__construct_pagination_link(pack_id, page.next_page_number(),request.GET.get('sounds_per_page', None), request.GET.get('fields', False))
 
         add_request_id(request,result)
-        logger.info("Pack sounds,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Pack sounds,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return result
 
     def __construct_pagination_link(self, pack_id, p, spp, fields):
@@ -955,12 +964,13 @@ class PackServeHandler(BaseHandler):
 
     @auth()
     def read(self, request, pack_id):
+        ip = get_client_ip(request)
         try:
             pack = Pack.objects.get(id=pack_id)
         except Pack.DoesNotExist:
             raise ReturnError(404, "NotFound", {"explanation": "Pack with id %s does not exist." % pack_id})
 
-        logger.info("Serving pack,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username)
+        logger.info("Serving pack,id=" + pack_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return sendfile(pack.locations("path"), pack.friendly_filename(), pack.locations("sendfile_url"))
 
 

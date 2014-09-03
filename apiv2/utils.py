@@ -252,13 +252,14 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView):
         super(OauthRequiredAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
+        self.end_user_ip = get_client_ip(request)
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
         # Check if using https
         throw_exception_if_not_https(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 class DownloadAPIView(OauthRequiredAPIView):
@@ -273,6 +274,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
         super(WriteRequiredGenericAPIView, self).initial(request, *args, **kwargs)
 
         # Get request informationa dn store it as class variable
+        self.end_user_ip = get_client_ip(request)
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
         # Check if using https
@@ -284,7 +286,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
                 raise UnauthorizedException
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 class ListAPIView(RestFrameworkListAPIView):
@@ -295,10 +297,11 @@ class ListAPIView(RestFrameworkListAPIView):
         super(ListAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
+        self.end_user_ip = get_client_ip(request)
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 class RetrieveAPIView(RestFrameworkRetrieveAPIView):
@@ -309,10 +312,11 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
         super(RetrieveAPIView, self).initial(request, *args, **kwargs)
 
         # Get request information and store it as class variable
+        self.end_user_ip = get_client_ip(request)
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 ##################

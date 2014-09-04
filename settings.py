@@ -221,18 +221,21 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': (
         'apiv2.throttling.ClientBasedThrottlingBurst',
         'apiv2.throttling.ClientBasedThrottlingSustained',
+        'apiv2.throttling.IpBasedThrottling',
     ),
 }
 
 # Define Api usage limit rates per defined throttling levels
 # Possible time units: second, minute, hour or day
-# Every level must include two limits, a burst limit and a sustained limit which are checked separately
-# Burst limits are typically applied per minute and sustained limits per day
+# Every level must include three limits, a burst limit, a sustained limit andan ip which are checked separately
+# Burst limit sets the maximum number of requests that an api client can do in a minute
+# Sustained limit sets the maximum number of requests that an api client can do in a day
+# Ip limit sets the maximum number of requests from different ips that a client can do in an hour
 
 APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
-    0: ['0/day', '0/day'],  # Client 'disabled' (burst and sustained limits are the same)
-    1: ['60/minute', '5000/day'],
-    2: ['300/minute', '10000/day'],
+    0: ['0/minute', '0/day', '0/hour'],  # Client 'disabled'
+    1: ['60/minute', '2000/day', None],  # Ip limit not yet enabled
+    2: ['300/minute', '5000/day', None],  # Ip limit not yet enabled
     99: [],  # No limit of requests
 }
 

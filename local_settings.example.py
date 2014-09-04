@@ -41,8 +41,6 @@ PLEDGIE_CAMPAIGN=14560
 
 LOG_CLICKTHROUGH_DATA = False
 
-
-#-------------------------------------------------------------------------------
 # SOLR ranking weights
 DEFAULT_SEARCH_WEIGHTS = {
     'id' : 4,
@@ -51,4 +49,26 @@ DEFAULT_SEARCH_WEIGHTS = {
     'username' : 1,
     'pack_tokenized' : 2,
     'original_filename' : 2
+}
+
+# APIv2 throttling limits
+# Define Api usage limit rates per defined throttling levels
+# Possible time units: second, minute, hour or day
+# Every level must include three limits, a burst limit, a sustained limit andan ip which are checked separately
+# Burst limit sets the maximum number of requests that an api client can do in a minute
+# Sustained limit sets the maximum number of requests that an api client can do in a day
+# Ip limit sets the maximum number of requests from different ips that a client can do in an hour
+
+APIV2_BASIC_THROTTLING_RATES_PER_LEVELS = {
+    0: ['0/minute', '0/day', '0/hour'],  # Client 'disabled'
+    1: ['60/minute', '2000/day', None],  # Ip limit not yet enabled
+    2: ['300/minute', '5000/day', None],  # Ip limit not yet enabled
+    99: [],  # No limit of requests
+}
+
+APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
+    0: ['0/minute', '0/day',  '0/hour'],  # Client 'disabled'
+    1: ['30/minute', '500/day', None],  # Ip limit not yet enabled
+    2: ['60/minute', '1000/day', None],  # Ip limit not yet enabled
+    99: [],  # No limit of requests
 }

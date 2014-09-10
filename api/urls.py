@@ -47,6 +47,7 @@ urlpatterns = patterns('',
     # For future use (when we serve analysis files through autenthication)
     #url(r'^sounds/(?P<sound_id>\d+)/analysis_frames/$',            AR(SoundAnalysisFramesHandler), name='api-sound-analysis-frames'),
     url(r'^sounds/(?P<sound_id>\d+)/serve/$',                       AR(SoundServeHandler),          name='api-sound-serve'),
+    url(r'^sounds/(?P<sound_id>\d+)/previews/(?P<filename>[^//]+)/$', AR(SoundPreviewHandler),      name='api-sound-preview'),
     url(r'^sounds/(?P<sound_id>\d+)/similar/$',                     AR(SoundSimilarityHandler),     name='api-sound-similarity'),
     url(r'^sounds/geotag/$',                                        AR(SoundGeotagHandler),         name='api-sound-geotag'),
     

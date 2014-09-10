@@ -44,6 +44,7 @@ from urllib import quote
 from django.core.cache import cache
 from similarity.client import SimilarityException
 from freesound.apiv2.utils import get_client_ip
+from django.http import Http404
 
 logger = logging.getLogger("api")
 
@@ -94,6 +95,9 @@ def get_pack_web_url(username, pack_id):
 def get_pack_sounds_api_url(pack_id):
     return prepend_base(reverse('api-pack-sounds', args=[pack_id]))
 
+def get_sound_preview_url(sound_id, preview_filename):
+    return prepend_base(reverse('api-sound-preview', args=[sound_id, preview_filename]))
+
 def get_sound_links(sound):
     ref = get_sound_api_url(sound.id)
 
@@ -101,10 +105,10 @@ def get_sound_links(sound):
         'ref': ref,
         'url': get_sound_web_url(sound.user.username, sound.id),
         'serve': ref+'serve/',
-        'preview-hq-mp3'   : prepend_base(sound.locations("preview.HQ.mp3.url")),
-        'preview-hq-ogg'   : prepend_base(sound.locations("preview.HQ.ogg.url")),
-        'preview-lq-mp3'   : prepend_base(sound.locations("preview.LQ.mp3.url")),
-        'preview-lq-ogg'   : prepend_base(sound.locations("preview.LQ.ogg.url")),
+        'preview-hq-mp3'   : get_sound_preview_url(sound.id, sound.locations("preview.HQ.mp3.filename")),
+        'preview-hq-ogg'   : get_sound_preview_url(sound.id, sound.locations("preview.HQ.ogg.filename")),
+        'preview-lq-mp3'   : get_sound_preview_url(sound.id, sound.locations("preview.LQ.mp3.filename")),
+        'preview-lq-ogg'   : get_sound_preview_url(sound.id, sound.locations("preview.LQ.ogg.filename")),
         'waveform_m': prepend_base(sound.locations("display.wave.M.url")),
         'waveform_l': prepend_base(sound.locations("display.wave.L.url")),
         'spectral_m': prepend_base(sound.locations("display.spectral.M.url")),
@@ -501,7 +505,7 @@ class SoundHandler(BaseHandler):
 
 class SoundServeHandler(BaseHandler):
     '''
-    api endpoint:    /sounds/serve|preview
+    api endpoint:    /sounds/<sound_id>/serve
     '''
     allowed_methods = ('GET',)
 
@@ -528,6 +532,34 @@ class SoundServeHandler(BaseHandler):
         
         logger.info("Serving sound,id=" + sound_id + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
+class SoundPreviewHandler(BaseHandler):
+    '''
+    api endpoint:    /sounds/<sound_id>/previews/filename
+    '''
+    allowed_methods = ('GET',)
+
+    '''
+    input:        n.a.
+    output:       binary file
+    curl:         curl http://www.freesound.org/api/sounds/1234/previews1234_600-hq.mp3
+    '''
+
+    @auth()
+    def read(self, request, sound_id, filename):
+        ip = get_client_ip(request)
+        sound_id = int(sound_id)
+        id_folder = str(sound_id/1000)
+        path = os.path.join(settings.PREVIEWS_PATH, id_folder, filename)
+        preview_url = os.path.join(settings.PREVIEWS_URL, id_folder, filename)
+
+        try:
+            response = sendfile(path, filename, preview_url)
+        except Http404:
+            raise ReturnError(404, "NotFound", {"explanation": "Requested preview for sound %i does not exist." % sound_id})
+
+        logger.info("Preview sound,id=" + str(sound_id) + ",api_key=" + request.GET.get("api_key", False) + ",api_key_username=" + request.user.username + ",ip=" + ip)
+        return response
 
 
 class SoundSimilarityHandler(BaseHandler):

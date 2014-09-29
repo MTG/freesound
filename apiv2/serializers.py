@@ -141,6 +141,14 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     previews = serializers.SerializerMethodField('get_previews')
     def get_previews(self, obj):
+        prepend_base(reverse('api-sound-preview', args=[obj.id, obj.locations("preview.HQ.mp3.filename")]))
+        # Uncomment the following code when we enable preview retrieval thourgh api instead of static file
+        #return {
+        #        'preview-hq-mp3': prepend_base(reverse('apiv2-sound-preview', args=[obj.id, obj.locations("preview.HQ.mp3.filename")]), request_is_secure=self.context['request'].using_https),
+        #        'preview-hq-ogg': prepend_base(reverse('apiv2-sound-preview', args=[obj.id, obj.locations("preview.HQ.ogg.filename")]), request_is_secure=self.context['request'].using_https),
+        #        'preview-lq-mp3': prepend_base(reverse('apiv2-sound-preview', args=[obj.id, obj.locations("preview.LQ.mp3.filename")]), request_is_secure=self.context['request'].using_https),
+        #        'preview-lq-ogg': prepend_base(reverse('apiv2-sound-preview', args=[obj.id, obj.locations("preview.LQ.ogg.filename")]), request_is_secure=self.context['request'].using_https),
+        #}
         return {
                 'preview-hq-mp3': prepend_base(obj.locations("preview.HQ.mp3.url"), request_is_secure=self.context['request'].using_https),
                 'preview-hq-ogg': prepend_base(obj.locations("preview.HQ.ogg.url"), request_is_secure=self.context['request'].using_https),

@@ -486,6 +486,29 @@ class DownloadSound(DownloadAPIView):
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
+class PreviewSound(GenericAPIView):
+    __doc__ = 'Preview a sound in either ogg or mp3 formats, and with high or low quality.'
+
+    def get(self, request,  *args, **kwargs):
+        sound_id = kwargs['pk']
+        id_folder = str(int(sound_id)/1000)
+        filename = self.kwargs['filename']
+        path = os.path.join(settings.PREVIEWS_PATH, id_folder, filename)
+        preview_url = os.path.join(settings.PREVIEWS_URL, id_folder, filename)
+        format_label = 'mp3'
+        if 'ogg' in filename:
+            format_label = 'ogg'
+        quality_label = 'lq'
+        if 'hq' in filename:
+            quality_label = 'hq'
+        logger.info(self.log_message('sound:%i preview-%s-%s' % (int(sound_id), quality_label, format_label)))
+
+        if not os.path.exists(path):
+            raise NotFoundException
+
+        return sendfile(path, filename, preview_url)
+
+
 ############
 # USER VIEWS
 ############

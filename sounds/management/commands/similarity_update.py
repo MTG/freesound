@@ -71,12 +71,16 @@ class Command(BaseCommand):
                     print 'Sound with id %i was not indexed (no yaml file found when checking for extractor version)' % sound.id
                     continue
 
-                if 'freesound_extractor' in data['metadata']['version']:
-                    if data['metadata']['version']['freesound_extractor'] != freesound_extractor_version:
-                        print 'Sound with id %i was not indexed (it was analyzed with extractor version %s)' % (sound.id, data['metadata']['version']['freesound_extractor'])
+                if data:
+                    if 'freesound_extractor' in data['metadata']['version']:
+                        if data['metadata']['version']['freesound_extractor'] != freesound_extractor_version:
+                            print 'Sound with id %i was not indexed (it was analyzed with extractor version %s)' % (sound.id, data['metadata']['version']['freesound_extractor'])
+                            continue
+                    else:
+                        print 'Sound with id %i was not indexed (it was analyzed with an unknown extractor)' % sound.id
                         continue
                 else:
-                    print 'Sound with id %i was not indexed (it was analyzed with an unknown extractor)' % sound.id
+                    print 'Sound with id %i was not indexed (most probably empty yaml file)' % sound.id
                     continue
 
             try:

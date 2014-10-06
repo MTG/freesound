@@ -99,7 +99,7 @@ class Command(BaseCommand):
                     solr.delete_by_id(sid)
 
         print "\n***************\nGAIA INDEX\n***************\n"
-        in_gaia_not_in_fs = list(set(gaia_ids).intersection(set(set(gaia_ids).difference(fs_mp))))
+        in_gaia_not_in_fs = list(set(gaia_ids).intersection(set(set(gaia_ids).difference(fs_mpa))))
         in_fs_not_in_gaia = list(set(fs_mpa).intersection(set(set(fs_mpa).difference(gaia_ids))))
         print "Sounds in gaia but not in fs:\t%i" % len(in_gaia_not_in_fs)
         print "Sounds in fs but not in gaia:\t%i  (only considering sounds correctly analyzed)" % len(in_fs_not_in_gaia)

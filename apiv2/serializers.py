@@ -27,9 +27,9 @@ from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from rest_framework import serializers
-from freesound.utils.tags import clean_and_split_tags
-from freesound.utils.similarity_utilities import get_sounds_descriptors
-from utils import prepend_base
+from utils.tags import clean_and_split_tags
+from utils.similarity_utilities import get_sounds_descriptors
+from apiv2_utils import prepend_base
 
 
 ###################

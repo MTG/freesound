@@ -20,9 +20,9 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import patterns, url, include, handler404, handler500
+from django.conf.urls import patterns, url, include
 from django.contrib import admin
-from django.views.generic.simple import direct_to_template
+from django.views.generic import TemplateView, RedirectView
 import accounts.views
 import geotags.views
 import search.views
@@ -32,7 +32,6 @@ import tags.views
 import forum.views
 import comments.views
 import bookmarks.views
-from django.views.generic.simple import redirect_to
 from utils.tagrecommendation_utilities import *
 
 admin.autodiscover()
@@ -102,8 +101,8 @@ urlpatterns = patterns('',
     (r'^home/', include('accounts.urls')),
     (r'^tickets/', include('tickets.urls')),
 
-    url(r'^blog/$', "django.views.generic.simple.redirect_to", kwargs={'url': "http://blog.freesound.org/"}, name="blog"),
-    url(r'^crossdomain\.xml$', direct_to_template, kwargs={'template':'crossdomain.xml'}, name="crossdomain"),
+    url(r'^blog/$', RedirectView.as_view(url='http://blog.freesound.org/'), name="blog"),
+    url(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views
     url(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$', 'general.views.admin_move_ordered_model', name="admin-move"),
@@ -142,7 +141,7 @@ urlpatterns = patterns('',
     
 
     # dead season redirect (THIS IS TEMPORAL)
-    url(r'^deadseason/$', redirect_to, {'url': 'http://www.freesound.org/people/Slave2theLight/bookmarks/category/4730/'}),
+    url(r'^deadseason/$', RedirectView.as_view(url='http://www.freesound.org/people/Slave2theLight/bookmarks/category/4730/')),
 )
 
 #if you need django to host the admin files...

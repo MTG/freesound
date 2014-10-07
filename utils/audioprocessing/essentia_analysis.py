@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from settings import ESSENTIA_EXECUTABLE
+from django.conf.settings import ESSENTIA_EXECUTABLE
 import os, shutil, subprocess, signal, sys
 
 def analyze(sound):

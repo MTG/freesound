@@ -21,11 +21,11 @@
 
 from django.core.management.base import BaseCommand
 from optparse import make_option
-from utils.search.search import get_all_sound_ids_from_solr
+from utils.search.search_general import get_all_sound_ids_from_solr
 from utils.similarity_utilities import Similarity
 from sounds.models import Sound
 from utils.search.solr import Solr
-import settings
+from django.conf import settings
 import sys
 
 class Command(BaseCommand):

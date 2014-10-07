@@ -5,6 +5,7 @@
 # Django settings for freesound project.
 import os
 import datetime
+import re
 import logging.config
 
 DEBUG = False
@@ -15,26 +16,30 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.debug',
     'django.core.context_processors.i18n',
     'django.contrib.messages.context_processors.messages',
-    'context_processor.context_extra',
+    'freesound.context_processor.context_extra',
 )
 
 MIDDLEWARE_CLASSES = (
-    'middleware.PermissionDeniedHandler',
+    'freesound.middleware.PermissionDeniedHandler',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'middleware.TosAcceptanceHandler',
-    'middleware.BulkChangeLicenseHandler',
-    'middleware.CheckIfRequestIsHttps',
+    'freesound.middleware.TosAcceptanceHandler',
+    'freesound.middleware.BulkChangeLicenseHandler',
+    'freesound.middleware.CheckIfRequestIsHttps',
     #'django.middleware.locale.LocaleMiddleware',
     'django.middleware.doc.XViewMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'middleware.OnlineUsersHandler',
+    'freesound.middleware.OnlineUsersHandler',
     'utils.corsheaders.middleware.CorsMiddleware',
 )
+
+SOUTH_DATABASE_ADAPTERS = {
+    'default': 'south.db.postgresql_psycopg2',
+}
 
 INSTALLED_APPS = (
     'messages',
@@ -77,7 +82,7 @@ AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 TEMPLATE_DIRS = (
     # Myles' template directory is here because it allows him to work on tabasco.
     '/home/mdebastion/templates',
-    os.path.join(os.path.dirname(__file__), 'templates'),
+    os.path.join(os.path.dirname(__file__), '../freesound/../templates'),
 )
 
 # Email settings
@@ -96,6 +101,9 @@ SITE_ID = 1
 
 USE_X_FORWARDED_HOST = True
 
+# Not using django timezones as project originally with Django 1.3. We might fix this in the future:  https://docs.djangoproject.com/en/1.5/topics/i18n/timezones/#time-zones-migration-guide
+USE_TZ = False
+
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = False
@@ -106,15 +114,32 @@ CACHE_MIDDLEWARE_KEY_PREFIX = 'freesound'
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'freesound.urls'
+
+WSGI_APPLICATION = 'freesound.wsgi.application'
 
 AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/home/login/'
 LOGOUT_URL = '/home/logout/'
 LOGIN_REDIRECT_URL = '/home/'
 
-IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf', '/favicon')
-IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', 'similar')
+#IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf', '/favicon')
+#IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', 'similar')
+IGNORABLE_404_URLS = (
+    # for each <prefix> in IGNORABLE_404_STARTS
+    re.compile(r'^/cgi-bin/'),
+    re.compile(r'^/_vti_bin'),
+    re.compile(r'^/_vti_inf'),
+    re.compile(r'^/favicon'),
+    # for each <suffix> in IGNORABLE_404_ENDS
+    re.compile(r'.jsp$'),
+    re.compile(r'mail.pl$'),
+    re.compile(r'mailform.pl$'),
+    re.compile(r'mail.cgi$'),
+    re.compile(r'mailform.cgi$'),
+    re.compile(r'.php$'),
+    re.compile(r'similar$'),
+)
 
 # A tuple of IP addresses, as strings, that:
 # See debug comments, when DEBUG is True
@@ -122,12 +147,12 @@ INTERNAL_IPS = ['localhost', '127.0.0.1']
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
+MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../freesound/../media')
 MEDIA_URL = "/media/"
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 ADMIN_MEDIA_PREFIX = '/media/admin_media/'
-
+STATIC_URL = '/media/admin_media/'
 
 FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
@@ -164,7 +189,7 @@ DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 #-------------------------------------------------------------------------------
 # freesound paths and urls:
 
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../freesound-data/'))
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../freesound-data/'))
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
 DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum views
@@ -249,14 +274,14 @@ MANAGERS = ADMINS
 # Only cache templates in production
 if DEBUG:
     TEMPLATE_LOADERS = (
-        'django.template.loaders.filesystem.load_template_source',
-        'django.template.loaders.app_directories.load_template_source',
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
     )
 else:
     TEMPLATE_LOADERS = (
         ('django.template.loaders.cached.Loader', (
-            'django.template.loaders.filesystem.load_template_source',
-            'django.template.loaders.app_directories.load_template_source',
+            'django.template.loaders.filesystem.Loader',
+            'django.template.loaders.app_directories.Loader',
             #'django.template.loaders.eggs.load_template_source',
         )),
     )

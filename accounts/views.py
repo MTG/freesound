@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64, settings
+import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64
 from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
     ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm, TermsOfServiceForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag
@@ -50,7 +50,6 @@ from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
 from geotags.models import GeoTag
 from django.contrib import messages
-from settings import SOUNDS_PER_DESCRIBE_ROUND, ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
     TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED
@@ -347,7 +346,7 @@ def edit(request):
 def describe(request):
 
     # Tag recommendation research code
-    ask_for_interface = ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
+    ask_for_interface = settings.ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
     is_ie = False
     if request.META.has_key('HTTP_USER_AGENT'):
         user_agent = request.META['HTTP_USER_AGENT'].lower()
@@ -443,8 +442,8 @@ def describe_sounds(request):
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
 
-    # So SOUNDS_PER_DESCRIBE_ROUND is available in the template
-    sounds_per_round = SOUNDS_PER_DESCRIBE_ROUND
+    # So settings.SOUNDS_PER_DESCRIBE_ROUND is available in the template
+    sounds_per_round = settings.SOUNDS_PER_DESCRIBE_ROUND
     sounds_to_describe = sounds[0:sounds_per_round]
     forms = []
     request.session['describe_sounds_number'] = len(request.session.get('describe_sounds'))

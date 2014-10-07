@@ -23,7 +23,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from support.forms import ContactForm
 from utils.mail import send_mail_template
-import settings
+from django.conf import settings
 
 def contact(request):
     email_sent = False

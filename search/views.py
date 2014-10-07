@@ -23,7 +23,6 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-from settings import DEFAULT_SEARCH_WEIGHTS
 from datetime import datetime
 import forms
 import logging
@@ -50,12 +49,12 @@ def search_prepare_query(search_query,
                          sort,
                          current_page,
                          sounds_per_page,
-                         id_weight = DEFAULT_SEARCH_WEIGHTS['id'],
-                         tag_weight = DEFAULT_SEARCH_WEIGHTS['tag'],
-                         description_weight = DEFAULT_SEARCH_WEIGHTS['description'],
-                         username_weight = DEFAULT_SEARCH_WEIGHTS['username'],
-                         pack_tokenized_weight = DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
-                         original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename'],
+                         id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id'],
+                         tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag'],
+                         description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description'],
+                         username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username'],
+                         pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized'],
+                         original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename'],
                          grouping = False,
                          include_facets = True,
                          grouping_pack_limit = 1,
@@ -131,12 +130,12 @@ def search(request):
         actual_groupnig = ""
 
     # Set default values
-    id_weight = DEFAULT_SEARCH_WEIGHTS['id']
-    tag_weight = DEFAULT_SEARCH_WEIGHTS['tag']
-    description_weight = DEFAULT_SEARCH_WEIGHTS['description']
-    username_weight = DEFAULT_SEARCH_WEIGHTS['username']
-    pack_tokenized_weight = DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
-    original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename']
+    id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
+    tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
+    description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
+    username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
+    pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
+    original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
 
     # Parse advanced search options
     advanced = request.GET.get("advanced", "")
@@ -163,17 +162,17 @@ def search(request):
 
             # Set the weights of selected checkboxes
             if a_soundid != "" :
-                id_weight = DEFAULT_SEARCH_WEIGHTS['id']
+                id_weight = settings.DEFAULT_SEARCH_WEIGHTS['id']
             if a_tag != "" :
-                tag_weight = DEFAULT_SEARCH_WEIGHTS['tag']
+                tag_weight = settings.DEFAULT_SEARCH_WEIGHTS['tag']
             if a_description != "" :
-                description_weight = DEFAULT_SEARCH_WEIGHTS['description']
+                description_weight = settings.DEFAULT_SEARCH_WEIGHTS['description']
             if a_username != "" :
-                username_weight = DEFAULT_SEARCH_WEIGHTS['username']
+                username_weight = settings.DEFAULT_SEARCH_WEIGHTS['username']
             if a_packname != "" :
-                pack_tokenized_weight = DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
+                pack_tokenized_weight = settings.DEFAULT_SEARCH_WEIGHTS['pack_tokenized']
             if a_filename != "" :
-                original_filename_weight = DEFAULT_SEARCH_WEIGHTS['original_filename']
+                original_filename_weight = settings.DEFAULT_SEARCH_WEIGHTS['original_filename']
 
     # ALLOW "q" empty queries
     #if search_query.strip() == ""

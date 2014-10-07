@@ -24,7 +24,7 @@ from tags.models import TaggedItem as ti
 from django.contrib.contenttypes.models import ContentType
 from sounds.models import Sound
 from django import template
-import settings
+from django.conf import settings
 
 register = template.Library()
 sound_content_type = ContentType.objects.get_for_model(Sound)

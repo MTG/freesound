@@ -29,19 +29,19 @@ from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIVie
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import combined_search_strategies
 from sounds.models import Sound, Pack, License
-from freesound.utils.audioprocessing import get_sound_type
+from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
-from freesound.utils.filesystem import md5file
-from freesound.utils.text import slugify
+from utils.filesystem import md5file
+from utils.text import slugify
 from exceptions import *
 from examples import examples
 import shutil
-import settings
+from django.conf import settings
 import os
-from freesound.utils.similarity_utilities import get_sounds_descriptors
-from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter
+from utils.similarity_utilities import get_sounds_descriptors
+from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from search.views import search_prepare_query
-from freesound.utils.similarity_utilities import api_search as similarity_api_search
+from utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
 from urllib import unquote, quote
 from django.http import HttpResponseRedirect, QueryDict
@@ -49,7 +49,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import resolve, reverse
 import urlparse
-from freesound.utils.cache import invalidate_template_cache
+from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW

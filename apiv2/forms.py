@@ -19,7 +19,7 @@
 #
 
 import django.forms as forms
-import settings
+from django.conf import settings
 from urllib import quote, unquote
 from django.contrib.sites.models import Site
 from exceptions import BadRequestException

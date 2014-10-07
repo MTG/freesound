@@ -22,7 +22,7 @@
 
 from rest_framework.throttling import SimpleRateThrottle
 from exceptions import Throttled
-from settings import APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
+from django.conf import settings
 
 class ClientBasedThrottlingBurst(SimpleRateThrottle):
     """
@@ -55,7 +55,7 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
             limit_rates = view.throttling_rates_per_level[client_throttle_level]
         except:
             # Fallback to basic throttling levels if the view has not defined the throttling rates per level
-            limit_rates = APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
+            limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
 
         # Apply the burst limit rate (the first of the list if there are limit rates. No limit rates means unlimited api usage)
         if limit_rates:
@@ -113,7 +113,7 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
             limit_rates = view.throttling_rates_per_level[client_throttle_level]
         except:
             # Fallback to basic throttling levels if the view has not defined the throttling rates per level
-            limit_rates = APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
+            limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
 
         # Apply the sustained limit rate (the second of the list if there are limit rates. No limit rates means unlimited api usage)
         if limit_rates:
@@ -181,7 +181,7 @@ class IpBasedThrottling(SimpleRateThrottle):
             limit_rates = view.throttling_rates_per_level[client_throttle_level]
         except:
             # Fallback to basic throttling levels if the view has not defined the throttling rates per level
-            limit_rates = APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
+            limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
 
         # Apply the ip limit rate (No limit rates means unlimited api usage)
         if limit_rates:

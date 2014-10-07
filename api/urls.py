@@ -18,11 +18,11 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from piston.resource import Resource
 from handlers import *
 from api_utils import build_invalid_url
-import settings
+from django.conf import settings
 
 if not settings.APIV2KEYS_ALLOWED_FOR_APIV1:
     from views import create_api_key as apply_for_api_key_view

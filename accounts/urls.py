@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 import django.contrib.auth.views as authviews
 import messages.views as messages
 import accounts.views as accounts

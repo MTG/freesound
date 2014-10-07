@@ -26,7 +26,7 @@
 #   - markdown (for browseable api)
 
 
-from django.conf.urls.defaults import patterns, url, include
+from django.conf.urls import patterns, url, include
 from django.contrib.auth.views import login, logout
 from apiv2 import views
 

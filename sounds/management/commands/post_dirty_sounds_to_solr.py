@@ -20,7 +20,7 @@
 
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
-from utils.search.search import add_all_sounds_to_solr
+from utils.search.search_general import add_all_sounds_to_solr
 
 class Command(BaseCommand):
     args = ''

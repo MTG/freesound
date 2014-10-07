@@ -32,7 +32,7 @@ def smiley_replace(matchobj):
 
 smiley_replacer = re.compile("=\)|;\-?\)|8\-?\)|:'\(|:\-?[OoPpSsDd\)\(\|]")
 
-@register.filter
+@register.filter(is_safe=True)
 def smileys(string):
     return smiley_replacer.sub(smiley_replace, string)
-smileys.is_safe = True
+#smileys.is_safe = True # Moved to filter definition (for Django 1.4 upgrade)

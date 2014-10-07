@@ -29,7 +29,7 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 import logging
 from django.contrib.auth.models import User
-from utils.search.search import add_all_sounds_to_solr
+from utils.search.search_general import add_all_sounds_to_solr
 from django.contrib.sites.models import Site
 from utils.pagination import paginate
 from django.core.urlresolvers import reverse
@@ -43,7 +43,7 @@ from django.contrib.syndication.views import Feed
 from urllib import quote
 from django.core.cache import cache
 from similarity.client import SimilarityException
-from freesound.apiv2.utils import get_client_ip
+from apiv2.apiv2_utils import get_client_ip
 from django.http import Http404
 
 logger = logging.getLogger("api")

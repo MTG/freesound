@@ -18,7 +18,8 @@
 #     See AUTHORS file.
 #
 
-import settings, traceback, logging
+import traceback, logging
+from django.conf import settings
 from sounds.models import Sound
 from django.core.cache import cache
 from similarity.client import Similarity

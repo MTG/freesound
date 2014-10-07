@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import url, patterns
+from django.conf.urls import url, patterns
 import geotags.views as geotags
 
 urlpatterns = patterns('',

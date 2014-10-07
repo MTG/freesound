@@ -21,8 +21,8 @@
 from solr import Solr, SolrException, SolrResponseInterpreter
 import sounds
 from django.conf import settings
-from freesound.search.views import search_prepare_sort, search_prepare_query
-from freesound.search.forms import SEARCH_SORT_OPTIONS_WEB
+from search.views import search_prepare_sort, search_prepare_query
+from search.forms import SEARCH_SORT_OPTIONS_WEB
 import logging
 
 logger = logging.getLogger("search")

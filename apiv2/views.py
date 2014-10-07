@@ -28,7 +28,7 @@ from rest_framework.exceptions import ParseError
 from provider.oauth2.models import AccessToken, Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
+from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -39,9 +39,9 @@ from bookmarks.models import Bookmark, BookmarkCategory
 from api.forms import ApiKeyForm
 from accounts.views import handle_uploaded_file, send_activation2
 from accounts.forms import RegistrationForm
-from freesound.utils.filesystem import generate_tree
-from freesound.utils.cache import invalidate_template_cache
-from freesound.utils.nginxsendfile import sendfile
+from utils.filesystem import generate_tree
+from utils.cache import invalidate_template_cache
+from utils.nginxsendfile import sendfile
 from similarity.client import Similarity
 from django.db import IntegrityError
 from django.contrib import messages
@@ -56,7 +56,7 @@ try:
 except:
     from freesound.utils.ordered_dict import OrderedDict
 from urllib import unquote, quote
-import settings
+from django.conf import settings
 import logging
 import datetime
 import os

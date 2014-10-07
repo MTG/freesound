@@ -20,14 +20,14 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.contrib.auth import logout
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import redirect_to_login
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from apiv2.utils import AccessTokenView, Authorize, Capture, Redirect, prepend_base
-import settings
+from apiv2.apiv2_utils import AccessTokenView, Authorize, Capture, Redirect, prepend_base
+from django.conf import settings
 
 
 '''

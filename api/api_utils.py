@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-import settings
+from django.conf import settings
 from piston.utils import rc
 import traceback
 from models import ApiKey

@@ -18,7 +18,8 @@
 #     See AUTHORS file.
 #
 
-import logging, traceback, settings
+import logging, traceback
+from django.conf import settings
 from tagrecommendation.client import TagRecommendation
 from tagrecommendation.client.client_fslabs import NewTagRecommendation
 from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME

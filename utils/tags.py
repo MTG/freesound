@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-from sets import Set
 import re
 
 def size_generator(small_size, large_size, num_items):
@@ -41,7 +40,7 @@ def annotate_tags(tags, sort=True, small_size=0.7, large_size=1.8):
     after this function the list will look like this:
     [ {"name": "tag1", "count": 1, "size": 0.7}, {"name": "tag2", "count": 200, "size": 1.8}, {"name": "tag3", "count": 200, "size": 1.8}]
     """
-    unique_counts = sorted(Set(tag["count"] for tag in tags))
+    unique_counts = sorted(set(tag["count"] for tag in tags))
     lookup = dict(zip(unique_counts, size_generator(small_size, large_size, len(unique_counts))))
     tags = [annotate(tag, size=lookup[tag["count"]]) for tag in tags]
     if sort:

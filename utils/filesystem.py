@@ -18,8 +18,7 @@
 #     See AUTHORS file.
 #
 
-import os, zlib
-from hashlib import md5
+import os, zlib, md5
 
 class File:
 

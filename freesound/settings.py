@@ -269,7 +269,6 @@ DATA_URL = "/data/"
 from local_settings import *
 
 TEMPLATE_DEBUG = DEBUG
-MANAGERS = ADMINS
 
 # Only cache templates in production
 if DEBUG:

@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.settings import ESSENTIA_EXECUTABLE
+from django.conf import settings
 import os, shutil, subprocess, signal, sys
 
 def analyze(sound):
@@ -70,9 +70,9 @@ def analyze(sound):
                 return False
             input_path = tmp_wav_path
         tmp_ana_path = '/tmp/analysis_%s' % sound.id
-        essentia_dir = os.path.dirname(os.path.abspath(ESSENTIA_EXECUTABLE))
+        essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
         os.chdir(essentia_dir)
-        exec_array = [ESSENTIA_EXECUTABLE, input_path, tmp_ana_path]
+        exec_array = [settings.ESSENTIA_EXECUTABLE, input_path, tmp_ana_path]
 
         try:
             p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

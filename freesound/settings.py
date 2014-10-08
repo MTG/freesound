@@ -293,7 +293,7 @@ ANALYSIS_URL = DATA_URL + "analysis/"
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
-    INSTALLED_APPS += ('debug_toolbar')
+    INSTALLED_APPS += ('debug_toolbar',)
     INTERNAL_IPS +=('127.0.0.1', 'localhost')
 
     DEBUG_TOOLBAR_PANELS = [

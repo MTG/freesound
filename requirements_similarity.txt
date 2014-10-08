@@ -2,6 +2,6 @@ PyYAML==3.11
 Twisted==14.0.2
 graypy==0.2.11
 numpy==1.9.0
+scipy==0.14.0
+scikit-learn==0.15.2
 #gaia2
-#scipy
-#scikits.learn

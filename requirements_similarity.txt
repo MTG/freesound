@@ -1,5 +1,4 @@
+PyYAML==3.11
+Twisted==14.0.2
+graypy==0.2.11
 #gaia2
-#twisted
-#graypy
-#yaml
-#numpy

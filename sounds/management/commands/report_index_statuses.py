@@ -125,7 +125,7 @@ class Command(BaseCommand):
                     sys.stdout.flush()
                     Similarity.delete(sid)
 
-                Similarity.save()
+                #Similarity.save()
 
 
 

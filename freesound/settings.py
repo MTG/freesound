@@ -190,7 +190,7 @@ DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 #-------------------------------------------------------------------------------
 # freesound paths and urls:
 
-DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../freesound-data/'))
+DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../freesound-data/'))
 AVATARS_PATH = os.path.join(DATA_PATH, "avatars/")
 PREVIEWS_PATH = os.path.join(DATA_PATH, "previews/")
 DISPLAYS_PATH = os.path.join(DATA_PATH, "displays/") # waveform and spectrum views
@@ -205,7 +205,7 @@ PACKS_SENDFILE_URL = SENDFILE_SECRET_URL + "packs/"
 
 #-------------------------------------------------------------------------------
 
-STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '_sandbox/stereofy/stereofy'))
+STEREOFY_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../_sandbox/stereofy/stereofy'))
 
 SESSION_COOKIE_DOMAIN = None # leave this until you know what you are doing
 

@@ -174,7 +174,7 @@ Throttling
 ----------
 
 The usage of the APIv2 is limited to certain usage rates.
-The standard usage rate is set to 60 requests per minute and 5000 requests per day.
+The standard usage rate is set to 60 requests per minute and 2000 requests per day.
 Resources including uploading, describing, commenting, rating and bookmarking sounds have a more strict rate of 30 requests per minute and 500 requests per day.
 
 If a request is throttled, the APIv2 will return a 429 Too many requests response error with a ``detail`` field indicating which rate limit has been exceeded.

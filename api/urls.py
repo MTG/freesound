@@ -34,7 +34,7 @@ else:
 class AR(Resource):
     def __call__(self, *args, **kwargs):
         response = super(AR, self).__call__(*args, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
+        #response['Access-Control-Allow-Origin'] = '*'
         return response
 
 urlpatterns = patterns('',

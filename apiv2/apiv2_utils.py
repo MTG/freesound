@@ -283,7 +283,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
             if "write" not in request.auth.client.apiv2_client.get_scope_display():
-                raise UnauthorizedException
+                raise UnauthorizedException(resource=self)
 
     def log_message(self, message):
         return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
@@ -323,7 +323,7 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 # Search utilities
 ##################
 
-def api_search(search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized'):
+def api_search(search_form, target_file=None, extra_parameters=False, merging_strategy='merge_optimized', resource=None):
 
     if search_form.cleaned_data['query']  == None and search_form.cleaned_data['filter'] == None and not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
         # No input data for search, return empty results
@@ -349,15 +349,15 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
             return gaia_ids, gaia_count, distance_to_target_data, None, note, None, None
         except SimilarityException, e:
             if e.status_code == 500:
-                raise ServerErrorException(msg=e.message)
+                raise ServerErrorException(msg=e.message, resource=resource)
             elif e.status_code == 400:
-                raise BadRequestException(msg=e.message)
+                raise BadRequestException(msg=e.message, resource=resource)
             elif e.status_code == 404:
-                raise NotFoundException(msg=e.message)
+                raise NotFoundException(msg=e.message, resource=resource)
             else:
-                raise ServerErrorException(msg='Similarity server error: %s' % e.message)
+                raise ServerErrorException(msg='Similarity server error: %s' % e.message, resource=resource)
         except Exception, e:
-            raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.')
+            raise ServerErrorException(msg='The similarity server could not be reached or some unexpected error occurred.', resource=resource)
 
 
     elif not search_form.cleaned_data['descriptors_filter'] and not search_form.cleaned_data['target'] and not target_file:
@@ -385,10 +385,10 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
 
         except SolrException, e:
             if search_form.cleaned_data['filter'] != None:
-                raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field names are correct)' % e.message)
-            raise BadRequestException(msg='Search server error: %s' % e.message)
+                raise BadRequestException(msg='Search server error: %s (please check that your filter syntax and field names are correct)' % e.message, resource=resource)
+            raise BadRequestException(msg='Search server error: %s' % e.message, resource=resource)
         except Exception, e:
-            raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.')
+            raise ServerErrorException(msg='The search server could not be reached or some unexpected error occurred.', resource=resource)
 
     else:
         # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
@@ -407,7 +407,10 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
 def throw_exception_if_not_https(request):
     if not settings.DEBUG:
         if not request.using_https:
-            raise RequiresHttpsException
+            auth_method_name, developer, user, client_id = get_authentication_details_form_request(request)
+            end_user_ip = get_client_ip(request)
+            request_info = basic_request_info_for_log_message(auth_method_name, developer, user, client_id, end_user_ip)
+            raise RequiresHttpsException(request_info=request_info)
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -556,7 +559,7 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
 # Upload handler utils
 ######################
 
-def create_sound_object(user, original_sound_fields):
+def create_sound_object(user, original_sound_fields, resource=None):
     '''
     This function is used by the upload handler to create a sound object with the information provided through post
     parameters.
@@ -595,12 +598,12 @@ def create_sound_object(user, original_sound_fields):
             msg = "Md5 could not be computed."
         else:
             msg = "Server error."
-        raise ServerErrorException(msg=msg)
+        raise ServerErrorException(msg=msg, resource=resource)
 
     sound_already_exists = Sound.objects.filter(md5=sound.md5).exists()
     if sound_already_exists:
         os.remove(sound.original_path)
-        raise OtherException("Sound could not be created because the uploaded file is already part of freesound.")
+        raise OtherException("Sound could not be created because the uploaded file is already part of freesound.", resource=resource)
 
     # 4 save
     sound.save()
@@ -621,7 +624,7 @@ def create_sound_object(user, original_sound_fields):
                 msg = "File could not be copied to the correct destination."
             else:
                 msg = "Server error."
-            raise ServerErrorException(msg=msg)
+            raise ServerErrorException(msg=msg, resource=resource)
         sound.original_path = new_original_path
         sound.save()
 

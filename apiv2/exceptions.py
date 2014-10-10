@@ -127,9 +127,6 @@ class Throttled(APIException):
     detail = None
     status_code = status.HTTP_429_TOO_MANY_REQUESTS
 
-    def __init__(self, msg="Request was throttled", resource=None):
-        request_info = '-'
-        if resource:
-            request_info = basic_request_info_for_log_message(resource.auth_method_name, resource.developer, resource.user, resource.client_id, resource.end_user_ip)
+    def __init__(self, msg="Request was throttled", request_info='-'):
         logger.error('<%i Throttled> %s (%s)' % (self.status_code, msg, request_info))
         self.detail = msg

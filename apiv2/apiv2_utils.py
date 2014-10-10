@@ -404,12 +404,16 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
 # General utils
 ###############
 
+def build_request_info_string_for_error_logging(request):
+    auth_method_name, developer, user, client_id = get_authentication_details_form_request(request)
+    end_user_ip = get_client_ip(request)
+    request_info = basic_request_info_for_log_message(auth_method_name, developer, user, client_id, end_user_ip)
+    return request_info
+
 def throw_exception_if_not_https(request):
     if not settings.DEBUG:
         if not request.using_https:
-            auth_method_name, developer, user, client_id = get_authentication_details_form_request(request)
-            end_user_ip = get_client_ip(request)
-            request_info = basic_request_info_for_log_message(auth_method_name, developer, user, client_id, end_user_ip)
+            request_info = build_request_info_string_for_error_logging(request)
             raise RequiresHttpsException(request_info=request_info)
 
 def get_client_ip(request):

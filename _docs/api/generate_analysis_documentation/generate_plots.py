@@ -46,13 +46,12 @@ for i in range(0,len(transformation_history)):
 descriptor_names = ds.layout().descriptorNames()
 point_names = ds.pointNames()
 example_point = ds.point(point_names[0])
-stats = ['dmean', 'dmean2', 'dvar', 'dvar2', 'max', 'mean', 'min', 'var']
+plot_stats = ['mean']
 
 
 for descriptor_name in descriptor_names:
 
-    if descriptor_name.split('.')[-1] in stats:
-        if descriptor_name.split('.')[-1] != 'mean':
+    if descriptor_name.split('.')[-1] not in plot_stats:
             continue
 
     try:
@@ -61,7 +60,7 @@ for descriptor_name in descriptor_names:
         try:
             example_value = example_point.label(descriptor_name)
         except:
-            print "ERROR: %s could not be processd" % descriptor_name
+            print "ERROR: %s could not be processed" % descriptor_name
             continue
 
     print "Histogram for descriptor: %s" % descriptor_name

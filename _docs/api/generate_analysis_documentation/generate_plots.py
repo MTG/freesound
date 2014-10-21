@@ -43,16 +43,17 @@ normalization_coeffs = None
 for i in range(0,len(transformation_history)):
     if transformation_history[-(i+1)]['Analyzer name'] == 'normalize':
         normalization_coeffs = transformation_history[-(i+1)]['Applier parameters']['coeffs']
+print [x for x in normalization_coeffs.keys() if (".tonal" in x and "chords" in x)]
 descriptor_names = ds.layout().descriptorNames()
 point_names = ds.pointNames()
 example_point = ds.point(point_names[0])
-plot_stats = ['mean']
+reject_stats = ['dmean', 'dmean2', 'dvar', 'dvar2', 'max',  'min', 'var']
 
 
 for descriptor_name in descriptor_names:
-
-    if descriptor_name.split('.')[-1] not in plot_stats:
-            continue
+    region = ds.layout().descriptorLocation(descriptor_name)
+    if region.lengthType() == gaia2.VariableLength or descriptor_name.split('.')[-1] in reject_stats:
+	continue
 
     try:
         example_value = example_point.value(descriptor_name)
@@ -87,7 +88,7 @@ for descriptor_name in descriptor_names:
             for point_name in point_names:
                 point = ds.point(point_name)
                 normalized_value = point.value(descriptor_name)[i]
-                if not normalization_coeffs:
+                if not normalization_coeffs or descriptor_name not in normalization_coeffs.keys():
                     value = normalized_value
                 else:
                     a = normalization_coeffs[descriptor_name]['a']

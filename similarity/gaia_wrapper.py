@@ -65,11 +65,12 @@ class GaiaWrapper:
 
                 # if we have loaded a dataset of the correct size but it is unprepared, prepare it
                 if self.original_dataset.history().size() <= 0:
-                    self.__prepare_original_dataset()
-                    self.__normalize_original_dataset()
+                    #self.__prepare_original_dataset()
+                    #self.__normalize_original_dataset()
                     self.original_dataset.save(self.original_dataset_path)
 
                 # if we have loaded a dataset which has not been normalized, normalize it
+                '''
                 normalized = False
                 for element in self.original_dataset.history().toPython():
                     if element['Analyzer name'] == 'normalize':
@@ -78,6 +79,7 @@ class GaiaWrapper:
                 if not normalized:
                     self.__normalize_original_dataset()
                     self.original_dataset.save(self.original_dataset_path)
+                '''
                 # Save transformation history so we do not need to compute it every time we need it
                 self.transformations_history = self.original_dataset.history().toPython()
                 # build metrics for the different similarity presets
@@ -218,8 +220,8 @@ class GaiaWrapper:
         # If when adding a new point we reach the minimum points for similarity, prepare the dataset, save and create view and distance metrics
         #   This will most never happen, only the first time we start similarity server, there is no index created and we add 2000 points.
         if self.original_dataset.size() == SIMILARITY_MINIMUM_POINTS and not self.indexing_only_mode:
-            self.__prepare_original_dataset()
-            self.__normalize_original_dataset()
+            #self.__prepare_original_dataset()
+            #self.__normalize_original_dataset()
             self.transformations_history = self.original_dataset.history().toPython()
             self.save_index(msg="(reaching 2000 points)")
 

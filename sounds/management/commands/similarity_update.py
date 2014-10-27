@@ -104,7 +104,7 @@ class Command(BaseCommand):
                 print 'Sound could not be added (id: %i, %i of %i): \n\t%s' % (sound.id, count+1, N ,str(e))
 
         # At the end save the index
-        if options['indexing_server']:
-            Similarity.save_indexing_server()
-        else:
-            Similarity.save()
+        #if options['indexing_server']:
+        #    Similarity.save_indexing_server()
+        #else:
+        #    Similarity.save()

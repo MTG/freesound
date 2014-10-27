@@ -28,10 +28,14 @@ class Command(BaseCommand):
     help = 'Process sounds which are at pending or queued processing state'
 
     def handle(self, *args, **options):
+        count = 0
         pending_sounds = Sound.objects.filter(processing_state="PE")
         for sound in pending_sounds:
+            count += 1
             sound.process()
         queued_sounds = Sound.objects.filter(processing_state="QU")
         for sound in queued_sounds:
+            count += 1
             sound.process()
+        print 'Done! (%i sounds processed)' % count
 

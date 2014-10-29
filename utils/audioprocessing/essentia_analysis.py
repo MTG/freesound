@@ -87,9 +87,9 @@ def analyze(sound):
 
         __create_dir(statistics_path)
         __create_dir(frames_path)
-        shutil.move('%s.yaml' % tmp_ana_path, statistics_path)
+        shutil.move('%s_statistics.yaml' % tmp_ana_path, statistics_path)
         shutil.move('%s_frames.json' % tmp_ana_path, frames_path)
-        os.remove('%s.json' % tmp_ana_path)
+        #os.remove('%s.json' % tmp_ana_path)  # Current extractor does not produce the json file
         sound.set_analysis_state('OK')
     except Exception, e:
         failure("Unexpected error in analysis ",e)

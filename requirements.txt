@@ -1,5 +1,6 @@
 django==1.4.15
 BeautifulSoup==3.2.0
+#apt-get install libyaml-dev (to allow the cloader) 
 PyYAML==3.11
 pycrypto==2.6.1
 feedparser==5.1.3

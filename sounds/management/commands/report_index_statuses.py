@@ -103,7 +103,7 @@ class Command(BaseCommand):
         in_fs_not_in_gaia = list(set(fs_mpa).intersection(set(set(fs_mpa).difference(gaia_ids))))
         print "Sounds in gaia but not in fs:\t%i" % len(in_gaia_not_in_fs)
         print "Sounds in fs but not in gaia:\t%i  (only considering sounds correctly analyzed)" % len(in_fs_not_in_gaia)
-        Similarity.save()
+        #Similarity.save()
 
         if not options['no-changes']:
             # Mark fs sounds to go processing

@@ -106,6 +106,7 @@ class Command(BaseCommand):
                     sound.set_similarity_state('FA')
                 print 'Sound could not be added (id: %i, %i of %i): \n\t%s' % (sound.id, count+1, N ,str(e))
 
+        logger.info("Finished similarity update. %i sounds added to the similarity index" % to_be_added.count())
         # At the end save the index
         #if options['indexing_server']:
         #    Similarity.save_indexing_server()

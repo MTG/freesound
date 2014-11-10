@@ -8,7 +8,7 @@ python-cjson==1.1.0
 python-memcached==1.53
 markdown==2.5.1
 pygments==1.6
-#django-piston==0.2.2
+django-piston==0.2.2.1
 psycopg2==2.5.4
 networkx==1.5
 gearman==2.0.2

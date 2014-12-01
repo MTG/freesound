@@ -1075,7 +1075,7 @@ class FreesoundApiV2Resources(GenericAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('api_root'))
-        return Response([
+        api_index = [
             {'Search resources': OrderedDict(sorted(dict({
                     '01 Text Search': prepend_base(reverse('apiv2-sound-text-search'), request_is_secure=request.using_https),
                     '02 Content Search': prepend_base(reverse('apiv2-sound-content-search'), request_is_secure=request.using_https),
@@ -1111,7 +1111,32 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
                     '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
                 }).items(), key=lambda t: t[0]))},
-            ])
+            ]
+
+        # Yaml format can not represent ordered dicts, so turn ordered dict to dict if these formats are requested
+        if request.accepted_renderer.format in [u'yaml']:
+            for element in api_index:
+                for key, ordered_dict in element.items():
+                    element[key] = dict(ordered_dict)
+
+        # Xml format seems to have problems with white spaces and numbers in dict keys...
+        def key_to_valid_xml(key):
+            # Remove white spaces, parenthesis, and add underscore in the beggining
+            return '_' + key.replace(' ', '_').replace('(', '').replace(')', '')
+
+        if request.accepted_renderer.format == u'xml':
+            aux_api_index = list()
+            for element in api_index:
+                aux_dict_a = dict()
+                for key_a, ordered_dict in element.items():
+                    aux_dict_b = dict()
+                    for key_b, value in ordered_dict.items():
+                        aux_dict_b[key_to_valid_xml(key_b)] = value
+                    aux_dict_a[key_to_valid_xml(key_a)] = aux_dict_b
+                aux_api_index.append(aux_dict_a)
+            api_index = aux_api_index
+
+        return Response(api_index)
 
 
 ### View for returning "Invalid url" 400 responses

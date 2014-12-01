@@ -52,7 +52,9 @@ SEARCH_DEFAULT_SORT = "score desc"
 
 
 def my_quote(s):
-    return quote(s,safe=",:[]*+()'")
+    # First encode to ut8 to avoid problems with non standard characters
+    s = s.encode('utf8')
+    return unicode(quote(s,safe=",:[]*+()'"))
 
 
 class SoundCombinedSearchFormAPI(forms.Form):

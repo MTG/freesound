@@ -92,7 +92,7 @@ class RecaptchaForm(forms.Form):
         recaptcha_response_field.label = ''
 
     def __init__(self, request, *args, **kwargs):
-        if request.using_https:
+        if request.is_secure():
             # If request is https present https form
             self.base_fields['recaptcha_response_field'].widget = RecaptchaWidgetSSL()
 

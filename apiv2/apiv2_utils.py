@@ -412,7 +412,7 @@ def build_request_info_string_for_error_logging(request):
 
 def throw_exception_if_not_https(request):
     if not settings.DEBUG:
-        if not request.using_https:
+        if not request.is_secure():
             request_info = build_request_info_string_for_error_logging(request)
             raise RequiresHttpsException(request_info=request_info)
 

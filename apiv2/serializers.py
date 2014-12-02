@@ -618,29 +618,38 @@ class EditSoundDescriptionSerializer(serializers.Serializer):
         return attrs
 
     def validate_tags(self, attrs, source):
-        value = attrs[source]
-        tags = clean_and_split_tags(value)
-        if 1 <= len(tags) < 3:
-            raise serializers.ValidationError('You should at least have 3 tags...')
-        elif len(tags) > 30:
-            raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
-        attrs[source] = tags
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
+        else:
+            tags = clean_and_split_tags(value)
+            if 1 <= len(tags) < 3:
+                raise serializers.ValidationError('You should at least have 3 tags...')
+            elif len(tags) > 30:
+                raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
+            attrs[source] = tags
         return attrs
 
     def validate_name(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
 
     def validate_description(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
 
     def validate_pack(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs

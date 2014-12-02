@@ -26,7 +26,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
-    'freesound.middleware.CheckIfRequestIsHttps',
     #'django.middleware.locale.LocaleMiddleware',
     'django.middleware.doc.XViewMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
@@ -123,6 +122,8 @@ AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/home/login/'
 LOGOUT_URL = '/home/logout/'
 LOGIN_REDIRECT_URL = '/home/'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
 
 #IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf', '/favicon')
 #IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', 'similar')

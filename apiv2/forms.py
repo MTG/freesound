@@ -54,7 +54,7 @@ SEARCH_DEFAULT_SORT = "score desc"
 def my_quote(s):
     # First encode to ut8 to avoid problems with non standard characters
     s = s.encode('utf8')
-    return unicode(quote(s,safe=",:[]*+()'"))
+    return quote(s,safe=",:[]*+()'")
 
 
 class SoundCombinedSearchFormAPI(forms.Form):
@@ -72,15 +72,16 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def clean_query(self):
         query = self.cleaned_data['query']
-        if unquote(query).replace('"','').isspace() or unquote(query).replace('"','') == '':
+        # If query parameter is blank or white space (with or without quote or double quote), treat it as empty query (returns all results)
+        if unquote(query).replace('"','').isspace() or unquote(query).replace('"','') == '' or query.replace('\'','').isspace() or query == '\'\'':
             return ""
-        return my_quote(query) if 'query' in self.data else None
+        return query
 
     def clean_filter(self):
         filter = self.cleaned_data['filter']
         if 'filter' in self.data and (not filter or filter.isspace()):
             raise BadRequestException('Invalid filter.')
-        return my_quote(filter) if 'filter' in self.data else None
+        return filter
 
     def clean_descriptors(self):
         descriptors = self.cleaned_data['descriptors']
@@ -123,7 +124,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
 
     def clean_fields(self):
         fields = self.cleaned_data['fields']
-        return my_quote(fields) if fields != None else ""
+        return fields
 
     def clean_group_by_pack(self):
         requested_group_by_pack = self.cleaned_data['group_by_pack']
@@ -158,10 +159,10 @@ class SoundCombinedSearchFormAPI(forms.Form):
     def construct_link(self, base_url, page=None, filter=None, group_by_pack=None, include_page=True):
         link = "?"
         if self.cleaned_data['query'] != None:
-            link += '&query=%s' % self.cleaned_data['query']
+            link += '&query=%s' % my_quote(self.cleaned_data['query'])
         if not filter:
             if self.cleaned_data['filter']:
-                link += '&filter=%s' % self.cleaned_data['filter']
+                link += '&filter=%s' % my_quote(self.cleaned_data['filter'])
         else:
             link += '&filter=%s' % my_quote(filter)
         if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_DEFAULT_SORT.split(' ')[0]:
@@ -179,7 +180,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
         if self.cleaned_data['page_size'] and not self.cleaned_data['page_size'] == settings.REST_FRAMEWORK['PAGINATE_BY']:
             link += '&page_size=%s' % str(self.cleaned_data['page_size'])
         if self.cleaned_data['fields']:
-            link += '&fields=%s' % self.cleaned_data['fields']
+            link += '&fields=%s' % my_quote(self.cleaned_data['fields'])
         if self.cleaned_data['descriptors']:
             link += '&descriptors=%s' % self.cleaned_data['descriptors']
         if self.cleaned_data['normalized']:

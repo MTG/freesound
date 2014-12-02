@@ -414,13 +414,17 @@ class CreateBookmarkSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=128, required=False, help_text='Not required. Name you want to give to the bookmark (if empty, sound name will be used).')
 
     def validate_category(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
 
     def validate_name(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs

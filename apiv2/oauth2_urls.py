@@ -44,7 +44,7 @@ else:
 
 def https_and_login_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
-        if not request.using_https and not settings.DEBUG:
+        if not request.is_secure() and not settings.DEBUG:
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
         if not request.user.is_authenticated():
             # Quick fix, should be implemented better
@@ -58,7 +58,7 @@ def https_and_login_required(view_func):
 
 def https_and_force_login(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
-        if not request.using_https and not settings.DEBUG:
+        if not request.is_secure() and not settings.DEBUG:
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
         # Logout the user so we make sure he needs to login again
         logout(request)
@@ -74,7 +74,7 @@ def https_and_force_login(view_func):
 
 def https_required_and_crsf_exempt(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
-        if not request.using_https and not settings.DEBUG:
+        if not request.is_secure() and not settings.DEBUG:
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
         return view_func(request, *args, **kwargs)
     return csrf_exempt(_wrapped_view_func)

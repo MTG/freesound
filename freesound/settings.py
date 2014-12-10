@@ -26,7 +26,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'freesound.middleware.TosAcceptanceHandler',
     'freesound.middleware.BulkChangeLicenseHandler',
-    'freesound.middleware.CheckIfRequestIsHttps',
     #'django.middleware.locale.LocaleMiddleware',
     'django.middleware.doc.XViewMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
@@ -123,6 +122,8 @@ AUTH_PROFILE_MODULE = 'accounts.Profile'
 LOGIN_URL = '/home/login/'
 LOGOUT_URL = '/home/logout/'
 LOGIN_REDIRECT_URL = '/home/'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
 
 #IGNORABLE_404_STARTS = ('/cgi-bin/', '/_vti_bin', '/_vti_inf', '/favicon')
 #IGNORABLE_404_ENDS = ('.jsp', 'mail.pl', 'mailform.pl', 'mail.cgi', 'mailform.cgi', '.php', 'similar')
@@ -255,6 +256,7 @@ REST_FRAMEWORK = {
 
 # Oauth2 provider settings
 OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)
+OAUTH_EXPIRE_DELTA_PUBLIC = OAUTH_EXPIRE_DELTA
 OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
 OAUTH_SINGLE_ACCESS_TOKEN = True
 USE_MINIMAL_TEMPLATES_FOR_OAUTH = True

@@ -42,18 +42,6 @@ class OnlineUsersHandler:
         cache_online_users(request)
         return None
 
-class CheckIfRequestIsHttps:
-    def process_request(self,request):
-        # header HTTP_X_FORWARDED_PROTOCOL is set by nginx in loadbalancer
-        forwarded_protocol = request.META.get('HTTP_X_FORWARDED_PROTOCOL', None)
-        if forwarded_protocol == 'https':
-            request.using_https = True
-        else:
-            request.using_https = False
-        # monkey patch request.is_secure()
-        request.is_secure = lambda: request.using_https
-        return None
-
 class BulkChangeLicenseHandler:
     def process_request(self, request):
         # check for authentication,

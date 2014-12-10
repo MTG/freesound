@@ -1075,17 +1075,17 @@ class FreesoundApiV2Resources(GenericAPIView):
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('api_root'))
-        return Response([
+        api_index = [
             {'Search resources': OrderedDict(sorted(dict({
-                    '01 Text Search': prepend_base(reverse('apiv2-sound-text-search'), request_is_secure=request.using_https),
-                    '02 Content Search': prepend_base(reverse('apiv2-sound-content-search'), request_is_secure=request.using_https),
-                    '03 Combined Search': prepend_base(reverse('apiv2-sound-combined-search'), request_is_secure=request.using_https),
+                    '01 Text Search': prepend_base(reverse('apiv2-sound-text-search'), request_is_secure=request.is_secure()),
+                    '02 Content Search': prepend_base(reverse('apiv2-sound-content-search'), request_is_secure=request.is_secure()),
+                    '03 Combined Search': prepend_base(reverse('apiv2-sound-combined-search'), request_is_secure=request.is_secure()),
                 }).items(), key=lambda t: t[0]))},
                 {'Sound resources': OrderedDict(sorted(dict({
-                    '01 Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.using_https),
-                    '02 Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.using_https),
-                    '03 Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.using_https),
-                    '04 Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.using_https),
+                    '01 Sound instance': prepend_base(reverse('apiv2-sound-instance', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.is_secure()),
+                    '02 Similar sounds': prepend_base(reverse('apiv2-similarity-sound', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.is_secure()),
+                    '03 Sound analysis': prepend_base(reverse('apiv2-sound-analysis', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.is_secure()),
+                    '04 Sound comments': prepend_base(reverse('apiv2-sound-comments', args=[0]).replace('0', '<sound_id>'), request_is_secure=request.is_secure()),
                     '05 Download sound': prepend_base(reverse('apiv2-sound-download', args=[0]).replace('0', '<sound_id>')),
                     '06 Bookmark sound': prepend_base(reverse('apiv2-user-create-bookmark', args=[0]).replace('0', '<sound_id>')),
                     '07 Rate sound': prepend_base(reverse('apiv2-user-create-rating', args=[0]).replace('0', '<sound_id>')),
@@ -1096,22 +1096,47 @@ class FreesoundApiV2Resources(GenericAPIView):
                     '12 Edit sound description': prepend_base(reverse('apiv2-sound-edit', args=[0]).replace('0', '<sound_id>')),
                 }).items(), key=lambda t: t[0]))},
                 {'User resources': OrderedDict(sorted(dict({
-                    '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
-                    '02 User sounds': prepend_base(reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
-                    '03 User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
-                    '04 User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>'), request_is_secure=request.using_https),
-                    '05 User bookmark category sounds': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>'), request_is_secure=request.using_https),
+                    '01 User instance': prepend_base(reverse('apiv2-user-instance', args=['uname']).replace('uname', '<username>'), request_is_secure=request.is_secure()),
+                    '02 User sounds': prepend_base(reverse('apiv2-user-sound-list', args=['uname']).replace('uname', '<username>'), request_is_secure=request.is_secure()),
+                    '03 User packs': prepend_base(reverse('apiv2-user-packs', args=['uname']).replace('uname', '<username>'), request_is_secure=request.is_secure()),
+                    '04 User bookmark categories': prepend_base(reverse('apiv2-user-bookmark-categories', args=['uname']).replace('uname', '<username>'), request_is_secure=request.is_secure()),
+                    '05 User bookmark category sounds': prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=['uname', 0]).replace('0', '<category_id>').replace('uname', '<username>'), request_is_secure=request.is_secure()),
                 }).items(), key=lambda t: t[0]))},
                 {'Pack resources': OrderedDict(sorted(dict({
-                    '01 Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.using_https),
-                    '02 Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.using_https),
+                    '01 Pack instance': prepend_base(reverse('apiv2-pack-instance', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.is_secure()),
+                    '02 Pack sounds': prepend_base(reverse('apiv2-pack-sound-list', args=[0]).replace('0', '<pack_id>'), request_is_secure=request.is_secure()),
                     '03 Download pack': prepend_base(reverse('apiv2-pack-download', args=[0]).replace('0', '<pack_id>')),
                 }).items(), key=lambda t: t[0]))},
                 {'Other resources': OrderedDict(sorted(dict({
                     '01 Me (information about user authenticated using oauth)': prepend_base(reverse('apiv2-me')),
                     '02 Available audio descriptors': prepend_base(reverse('apiv2-available-descriptors')),
                 }).items(), key=lambda t: t[0]))},
-            ])
+            ]
+
+        # Yaml format can not represent ordered dicts, so turn ordered dict to dict if these formats are requested
+        if request.accepted_renderer.format in [u'yaml']:
+            for element in api_index:
+                for key, ordered_dict in element.items():
+                    element[key] = dict(ordered_dict)
+
+        # Xml format seems to have problems with white spaces and numbers in dict keys...
+        def key_to_valid_xml(key):
+            # Remove white spaces, parenthesis, and add underscore in the beggining
+            return '_' + key.replace(' ', '_').replace('(', '').replace(')', '')
+
+        if request.accepted_renderer.format == u'xml':
+            aux_api_index = list()
+            for element in api_index:
+                aux_dict_a = dict()
+                for key_a, ordered_dict in element.items():
+                    aux_dict_b = dict()
+                    for key_b, value in ordered_dict.items():
+                        aux_dict_b[key_to_valid_xml(key_b)] = value
+                    aux_dict_a[key_to_valid_xml(key_a)] = aux_dict_b
+                aux_api_index.append(aux_dict_a)
+            api_index = aux_api_index
+
+        return Response(api_index)
 
 
 ### View for returning "Invalid url" 400 responses

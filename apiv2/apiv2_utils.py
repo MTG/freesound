@@ -53,6 +53,9 @@ from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from tickets.models import Ticket, Queue, LinkedContent, TicketComment
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
+import logging
+
+logger_error = logging.getLogger("api_errors")
 
 
 ############################
@@ -412,7 +415,7 @@ def build_request_info_string_for_error_logging(request):
 
 def throw_exception_if_not_https(request):
     if not settings.DEBUG:
-        if not request.using_https:
+        if not request.is_secure():
             request_info = build_request_info_string_for_error_logging(request)
             raise RequiresHttpsException(request_info=request_info)
 
@@ -698,6 +701,10 @@ def create_sound_object(user, original_sound_fields, resource=None):
     try:
         sound.process()
     except Exception, e:
+        # Log that sound could not be processed, but do not throw any exception
+        request_info = basic_request_info_for_log_message(resource.auth_method_name, resource.developer, resource.user, resource.client_id, resource.end_user_ip)
+        msg = str(e)
+        logger.error('<%i API uploaded sound could not be processed> %s (%s)' % (status.HTTP_500_INTERNAL_SERVER_ERROR, msg, request_info))
         pass
 
     return sound

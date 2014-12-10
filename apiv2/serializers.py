@@ -567,13 +567,17 @@ class SoundDescriptionSerializer(serializers.Serializer):
         return attrs
 
     def validate_name(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
 
     def validate_pack(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
@@ -698,6 +702,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
         if not self.is_providing_description(attrs):
             attrs[source] = None
         else:
+            if source not in attrs:
+                raise serializers.ValidationError('This field is required.')
             value = attrs[source]
             tags = clean_and_split_tags(value)
             if len(tags) < 3:
@@ -711,6 +717,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
         if not self.is_providing_description(attrs):
             attrs[source] = None
         else:
+            if source not in attrs:
+                raise serializers.ValidationError('This field is required.')
             if attrs[source].isspace():
                 raise serializers.ValidationError('This field is required.')
         return attrs
@@ -719,6 +727,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
         if not self.is_providing_description(attrs):
             attrs[source] = None
         else:
+            if source not in attrs:
+                raise serializers.ValidationError('This field is required.')
             if not attrs[source]:
                 raise serializers.ValidationError('This field is required.')
         return attrs

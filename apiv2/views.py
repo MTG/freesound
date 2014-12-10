@@ -748,7 +748,7 @@ class UploadSound(WriteRequiredGenericAPIView):
                 if serializer.is_providing_description(serializer.data):
                     msg = 'Audio file successfully uploaded and described (now pending processing and moderation).'
                 else:
-                    msg = 'Audio file successfully uploaded (%i, now pending description).' % audiofile.size
+                    msg = 'Audio file successfully uploaded (%i Bytes, now pending description).' % audiofile.size
                 return Response(data={'detail': msg,
                                       'id': None,
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
@@ -764,7 +764,7 @@ class UploadSound(WriteRequiredGenericAPIView):
 
                     return Response(data={'detail': 'Audio file successfully uploaded and described (now pending processing and moderation).', 'id': int(sound.id) }, status=status.HTTP_201_CREATED)
                 else:
-                    return Response(data={'filename': audiofile.name, 'detail': 'Audio file successfully uploaded (%i, now pending description).' % audiofile.size}, status=status.HTTP_201_CREATED)
+                    return Response(data={'filename': audiofile.name, 'detail': 'Audio file successfully uploaded (%i Bytes, now pending description).' % audiofile.size}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 

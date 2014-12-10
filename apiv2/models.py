@@ -22,6 +22,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from provider.oauth2.models import Client
 
+# Monkeypatch __unicode__ in provider.oauth2.models.Client class as it is not very informative (and it shows better in the admin)
+Client.__unicode__ = lambda self: u'%s, %s, %s' % (self.name, self.user, self.client_id) #new_unicode
+
 
 class ApiV2Client(models.Model):
 

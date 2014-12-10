@@ -756,7 +756,10 @@ class UploadSound(WriteRequiredGenericAPIView):
             else:
                 if serializer.is_providing_description(serializer.data):
                     try:
-                        sound = create_sound_object(self.user, serializer.data, resource=self)
+                        apiv2_client = None
+                        if self.auth_method_name == 'OAuth2': # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
+                            apiv2_client = request.auth.client.apiv2_client
+                        sound = create_sound_object(self.user, serializer.data, resource=self, apiv2_client=apiv2_client)
                     except APIException, e:
                         raise e # TODO pass correct resource variable
                     except Exception, e:
@@ -838,7 +841,10 @@ class DescribeSound(WriteRequiredGenericAPIView):
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                sound = create_sound_object(self.user, serializer.data, resource=self)
+                apiv2_client = None
+                if self.auth_method_name == 'OAuth2': # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
+                    apiv2_client = request.auth.client.apiv2_client
+                sound = create_sound_object(self.user, serializer.data, resource=self, apiv2_client=apiv2_client)
                 return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).', 'id': int(sound.id)}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

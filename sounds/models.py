@@ -40,6 +40,7 @@ from django.db.models import Count
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.contrib.contenttypes import generic
 from similarity.client import Similarity
+from apiv2.models import ApiV2Client
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -118,6 +119,9 @@ class Sound(SocialModel):
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
+
+    # uploaded with apiv2 client id (None if the sound was not uploaded using the api)
+    uploaded_with_apiv2_client = models.ForeignKey(ApiV2Client, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
     # file properties
     SOUND_TYPE_CHOICES = (

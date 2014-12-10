@@ -566,7 +566,7 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
 # Upload handler utils
 ######################
 
-def create_sound_object(user, original_sound_fields, resource=None):
+def create_sound_object(user, original_sound_fields, resource=None, apiv2_client=None):
     '''
     This function is used by the upload handler to create a sound object with the information provided through post
     parameters.
@@ -660,6 +660,9 @@ def create_sound_object(user, original_sound_fields, resource=None):
     sound.description = sound_fields['description']
     sound.set_tags(sound_fields['tags'])
     #sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
+
+    # 8.5 set uploaded apiv2 client
+    sound.uploaded_with_apiv2_client = apiv2_client
 
     # 9 save!
     sound.save()

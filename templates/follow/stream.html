@@ -155,14 +155,14 @@
 
         {% else %}
 
-            {% for user, sound_objs, more_url, more_count, new_count in users_sounds %}
+            {% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}
 
                 <div class="stream-left">
                     {% for sound_obj in sound_objs %}
                         {% display_sound sound_obj.id %}
                     {% endfor %}
                     {% if more_count > 0 %}
-                       <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href="{% url sounds-search %}{{ more_url }}">See all results ({{ more_count }} more)</a></p>
+                       <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
                     {% endif %}
                 </div>
 
@@ -193,14 +193,14 @@
 
         {% else %}
 
-            {% for tags, sound_objs, more_url, more_count, new_count in tags_sounds %}
+            {% for tags, sound_objs, more_url_params, more_count, new_count in tags_sounds %}
 
                 <div class="stream-left">
                     {% for sound_obj in sound_objs %}
                         {% display_sound sound_obj.id %}
                     {% endfor %}
                     {% if more_count > 0 %}
-                       <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href="{% url sounds-search %}{{ more_url }}">See all results ({{ more_count }} more)</a></p>
+                       <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
                     {% endif %}
                 </div>
 

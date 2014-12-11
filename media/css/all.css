@@ -78,17 +78,17 @@ a.external_link:hover {
 ------------------------------------------------------*/
 
 body {
-    background-position: 0 90px; /* uncomment this one when adding banners */
+    /*background-position: 0 90px;*/ /* uncomment this one when adding banners */
     background-color: #fff;
 }
 #banner_wrapper {
     width: 728px;
     margin: 0 auto;
-    margin-top:2px;
+    /*margin-top:2px;*/ /* uncomment this one when adding banners */
 }
 
 #warning_banner {
-    margin-bottom: -7px;
+    /*margin-bottom: -7px; */ /* uncomment this one when adding banners */
 }
 
 
@@ -2064,7 +2064,7 @@ a.donation_button:hover {
     height: 30px;
 }
 
-#meter {
+#donation_meter {
     display: block;
     background: url(../images/donation_meter_bar.png) repeat-x top left;
     border: 1px solid #565656;
@@ -3109,6 +3109,13 @@ ul.messages {
 #describe_page #fileform {
     padding: 0;
 }
+
+.describe_page_action_button {
+    margin-bottom: 5px;
+    padding: 5px;
+}
+
+
 /* Forum Search
 ------------------------------------------------------*/
 .multipost {

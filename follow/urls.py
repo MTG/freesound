@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 
 urlpatterns = patterns('follow.views',
     url(r'^follow_user/(?P<username>[^//]+)/$', 'follow_user', name='follow-user'),

@@ -23,11 +23,11 @@
 from follow.models import FollowingUserItem, FollowingQueryItem
 import sounds
 from search.views import search_prepare_query, search_prepare_sort
-import settings
-from freesound.utils.search.solr import Solr, SolrResponseInterpreter
+from django.conf import settings
+from utils.search.solr import Solr, SolrResponseInterpreter
 from search.forms import SEARCH_SORT_OPTIONS_WEB
 # from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
-from django.core.urlresolvers import reverse
+#from django.core.urlresolvers import reverse
 import urllib
 
 SOLR_QUERY_LIMIT_PARAM = 3

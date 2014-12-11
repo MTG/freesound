@@ -24,7 +24,6 @@ from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
 from datetime import datetime
-import follow.utils
 import forms
 import logging
 

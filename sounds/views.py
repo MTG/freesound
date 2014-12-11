@@ -62,7 +62,7 @@ import time
 import logging
 import json
 import os
-import follow.utils
+from follow import follow_utils
 
 logger = logging.getLogger('web')
 logger_click = logging.getLogger('clickusage')
@@ -227,7 +227,7 @@ def sound(request, username, sound_id):
     display_random_link = request.GET.get('random_browsing')
     do_log = settings.LOG_CLICKTHROUGH_DATA
 
-    users_following = follow.utils.get_users_following(request.user)
+    users_following = follow_utils.get_users_following(request.user)
     if sound.user in users_following:
         is_following = True
     else:

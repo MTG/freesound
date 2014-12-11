@@ -20,13 +20,13 @@
 from django.core.mail import send_mass_mail
 
 from django.core.management.base import BaseCommand
-import settings
-from utils.mail import send_mail_template, send_mass_html_mail, render_mail_template
+from django.conf import settings
+from utils.mail import render_mail_template #send_mail_template, send_mass_html_mail,
 from accounts.models import Profile
 import datetime
-import follow.utils
+from follow import follow_utils
 from django.contrib.auth.models import User
-import sys
+#import sys
 
 MAX_EMAILS_PER_RUN = 100
 
@@ -73,11 +73,11 @@ class Command(BaseCommand):
 
             # TODO: change this, this is only for test purposes
             time_lapse = "[2013-09-22T00:00:00Z TO 2014-07-02T23:59:59.999Z]"
-            # time_lapse = follow.utils.build_time_lapse(week_first_day, week_last_day)
+            # time_lapse = follow_utils.build_time_lapse(week_first_day, week_last_day)
 
             # construct message
             user = User.objects.get(username=username)
-            users_sounds, tags_sounds = follow.utils.get_stream_sounds(user, time_lapse)
+            users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
 
             if not users_sounds and not tags_sounds:
                 print "no news sounds for", username

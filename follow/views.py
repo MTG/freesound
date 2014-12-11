@@ -23,22 +23,19 @@
 from django.http import HttpResponse
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
-import follow.utils
+from follow import follow_utils
 from follow.models import FollowingUserItem
 from follow.models import FollowingQueryItem
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render_to_response
 from datetime import datetime, timedelta
-from search.views import search_prepare_query, search_prepare_sort
-import settings
-from freesound.utils.search.solr import Solr, SolrResponseInterpreter
-from search.forms import SEARCH_SORT_OPTIONS_WEB
+#from search.views import search_prepare_query, search_prepare_sort
+#from django.conf import settings
+#from utils.search.solr import Solr, SolrResponseInterpreter
+#from search.forms import SEARCH_SORT_OPTIONS_WEB
 # from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
-try:
-    from collections import OrderedDict
-except:
-    from freesound.utils.ordered_dict import OrderedDict
-from django.core.urlresolvers import reverse
+from collections import OrderedDict
+#from django.core.urlresolvers import reverse
 
 @login_required
 def follow_user(request, username):
@@ -92,7 +89,7 @@ def stream(request):
         if select_value != "specific_dates":
             date_from = datetime.now() - timedelta(days=SELECT_OPTIONS_DAYS[select_value])
             date_to = datetime.now()
-            time_lapse = follow.utils.build_time_lapse(date_from, date_to)
+            time_lapse = follow_utils.build_time_lapse(date_from, date_to)
         else:
             date_from = request.POST.get("date_from")
             date_to = request.POST.get("date_to")
@@ -102,8 +99,8 @@ def stream(request):
     else:
         date_from = datetime.now() - timedelta(days=SELECT_OPTIONS_DAYS["last_week"])
         date_to = datetime.now()
-        time_lapse = follow.utils.build_time_lapse(date_from, date_to)
+        time_lapse = follow_utils.build_time_lapse(date_from, date_to)
 
-    users_sounds, tags_sounds = follow.utils.get_stream_sounds(user, time_lapse)
+    users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
 
     return render_to_response('follow/stream.html', locals(), context_instance=RequestContext(request))

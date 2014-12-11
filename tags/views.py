@@ -27,8 +27,7 @@ from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
 import logging
-import follow.views
-import follow.utils
+from follow import follow_utils
 
 search_logger = logging.getLogger("search")
 
@@ -77,7 +76,7 @@ def tags(request, multiple_tags=None):
     if slash_tag:
         follow_tags_url = reverse('follow-tags', args=[slash_tag])
         unfollow_tags_url = reverse('unfollow-tags', args=[slash_tag])
-        show_unfollow_button = follow.utils.is_user_following_tag(request.user, slash_tag)
+        show_unfollow_button = follow_utils.is_user_following_tag(request.user, slash_tag)
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
 

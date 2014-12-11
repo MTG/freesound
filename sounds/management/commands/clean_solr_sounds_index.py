@@ -21,7 +21,7 @@
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
 from utils.search.solr import Solr, SolrResponseInterpreter, SolrQuery
-import settings
+from django.conf import settings
 import sys
 
 def list_of_dicts_to_list_of_ids(ldicts):

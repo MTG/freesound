@@ -27,9 +27,9 @@ from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from rest_framework import serializers
-from freesound.utils.tags import clean_and_split_tags
-from freesound.utils.similarity_utilities import get_sounds_descriptors
-from utils import prepend_base
+from utils.tags import clean_and_split_tags
+from utils.similarity_utilities import get_sounds_descriptors
+from apiv2_utils import prepend_base
 
 
 ###################
@@ -103,15 +103,15 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     uri = serializers.SerializerMethodField('get_uri')
     def get_uri(self, obj):
-        return prepend_base(reverse('apiv2-sound-instance', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-sound-instance', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
-        return prepend_base(reverse('sound', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('sound', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     username = serializers.SerializerMethodField('get_username')
     def get_username(self, obj):
@@ -133,7 +133,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
     def get_pack(self, obj):
         try:
             if obj.pack:
-                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]), request_is_secure=self.context['request'].using_https)
+                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]), request_is_secure=self.context['request'].is_secure())
             else:
                 return None
         except:
@@ -141,20 +141,28 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     previews = serializers.SerializerMethodField('get_previews')
     def get_previews(self, obj):
+        prepend_base(reverse('api-sound-preview', args=[obj.id, obj.locations("preview.HQ.mp3.filename")]))
+        # Uncomment the following code when we enable preview retrieval thourgh api instead of static file
+        #return {
+        #        'preview-hq-mp3': prepend_base(reverse('apiv2-sound-preview', args=[obj.id, obj.locations("preview.HQ.mp3.filename")]), request_is_secure=self.context['request'].is_secure()),
+        #        'preview-hq-ogg': prepend_base(reverse('apiv2-sound-preview', args=[obj.id, obj.locations("preview.HQ.ogg.filename")]), request_is_secure=self.context['request'].is_secure()),
+        #        'preview-lq-mp3': prepend_base(reverse('apiv2-sound-preview', args=[obj.id, obj.locations("preview.LQ.mp3.filename")]), request_is_secure=self.context['request'].is_secure()),
+        #        'preview-lq-ogg': prepend_base(reverse('apiv2-sound-preview', args=[obj.id, obj.locations("preview.LQ.ogg.filename")]), request_is_secure=self.context['request'].is_secure()),
+        #}
         return {
-                'preview-hq-mp3': prepend_base(obj.locations("preview.HQ.mp3.url"), request_is_secure=self.context['request'].using_https),
-                'preview-hq-ogg': prepend_base(obj.locations("preview.HQ.ogg.url"), request_is_secure=self.context['request'].using_https),
-                'preview-lq-mp3': prepend_base(obj.locations("preview.LQ.mp3.url"), request_is_secure=self.context['request'].using_https),
-                'preview-lq-ogg': prepend_base(obj.locations("preview.LQ.ogg.url"), request_is_secure=self.context['request'].using_https),
+                'preview-hq-mp3': prepend_base(obj.locations("preview.HQ.mp3.url"), request_is_secure=self.context['request'].is_secure()),
+                'preview-hq-ogg': prepend_base(obj.locations("preview.HQ.ogg.url"), request_is_secure=self.context['request'].is_secure()),
+                'preview-lq-mp3': prepend_base(obj.locations("preview.LQ.mp3.url"), request_is_secure=self.context['request'].is_secure()),
+                'preview-lq-ogg': prepend_base(obj.locations("preview.LQ.ogg.url"), request_is_secure=self.context['request'].is_secure()),
         }
 
     images = serializers.SerializerMethodField('get_images')
     def get_images(self, obj):
         return {
-                'waveform_m': prepend_base(obj.locations("display.wave.M.url"), request_is_secure=self.context['request'].using_https),
-                'waveform_l': prepend_base(obj.locations("display.wave.L.url"), request_is_secure=self.context['request'].using_https),
-                'spectral_m': prepend_base(obj.locations("display.spectral.M.url"), request_is_secure=self.context['request'].using_https),
-                'spectral_l': prepend_base(obj.locations("display.spectral.L.url"), request_is_secure=self.context['request'].using_https),
+                'waveform_m': prepend_base(obj.locations("display.wave.M.url"), request_is_secure=self.context['request'].is_secure()),
+                'waveform_l': prepend_base(obj.locations("display.wave.L.url"), request_is_secure=self.context['request'].is_secure()),
+                'spectral_m': prepend_base(obj.locations("display.spectral.M.url"), request_is_secure=self.context['request'].is_secure()),
+                'spectral_l': prepend_base(obj.locations("display.spectral.L.url"), request_is_secure=self.context['request'].is_secure()),
         }
 
     analysis = serializers.SerializerMethodField('get_analysis')
@@ -164,35 +172,35 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     analysis_frames = serializers.SerializerMethodField('get_analysis_frames')
     def get_analysis_frames(self, obj):
-        return prepend_base(obj.locations('analysis.frames.url'), request_is_secure=self.context['request'].using_https)
+        return prepend_base(obj.locations('analysis.frames.url'), request_is_secure=self.context['request'].is_secure())
 
     analysis_stats = serializers.SerializerMethodField('get_analysis_stats')
     def get_analysis_stats(self, obj):
-        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-sound-analysis', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     similar_sounds = serializers.SerializerMethodField('get_similar_sounds')
     def get_similar_sounds(self, obj):
-        return prepend_base(reverse('apiv2-similarity-sound', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-similarity-sound', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     download = serializers.SerializerMethodField('get_download')
     def get_download(self, obj):
-        return prepend_base(reverse('apiv2-sound-download', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-sound-download', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     rate = serializers.SerializerMethodField('get_rate')
     def get_rate(self, obj):
-        return prepend_base(reverse('apiv2-user-create-rating', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-create-rating', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     bookmark = serializers.SerializerMethodField('get_bookmark')
     def get_bookmark(self, obj):
-        return prepend_base(reverse('apiv2-user-create-bookmark', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-create-bookmark', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     comment = serializers.SerializerMethodField('get_comment')
     def get_comment(self, obj):
-        return prepend_base(reverse('apiv2-user-create-comment', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-create-comment', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     ratings = serializers.SerializerMethodField('get_ratings')
     def get_ratings(self, obj):
-        return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-sound-ratings', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     avg_rating = serializers.SerializerMethodField('get_avg_rating')
     def get_avg_rating(self, obj):
@@ -200,7 +208,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     comments = serializers.SerializerMethodField('get_comments')
     def get_comments(self, obj):
-        return prepend_base(reverse('apiv2-sound-comments', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-sound-comments', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     geotag = serializers.SerializerMethodField('get_geotag')
     def get_geotag(self, obj):
@@ -272,30 +280,30 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
-        return prepend_base(reverse('account', args=[obj.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('account', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     uri = serializers.SerializerMethodField('get_uri')
     def get_uri(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-sound-list', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     packs = serializers.SerializerMethodField('get_packs')
     def get_packs(self, obj):
-        return prepend_base(reverse('apiv2-user-packs', args=[obj.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-packs', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     bookmark_categories = serializers.SerializerMethodField('get_bookmark_categories')
     def get_bookmark_categories(self, obj):
-        return prepend_base(reverse('apiv2-user-bookmark-categories', args=[obj.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-bookmark-categories', args=[obj.username]), request_is_secure=self.context['request'].is_secure())
 
     avatar = serializers.SerializerMethodField('get_avatar')
     def get_avatar(self, obj):
         return {
-                'small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].using_https),
-                'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].using_https),
-                'large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].using_https),
+                'small': prepend_base(obj.profile.locations()['avatar']['S']['url'], request_is_secure=self.context['request'].is_secure()),
+                'medium': prepend_base(obj.profile.locations()['avatar']['M']['url'], request_is_secure=self.context['request'].is_secure()),
+                'large': prepend_base(obj.profile.locations()['avatar']['L']['url'], request_is_secure=self.context['request'].is_secure()),
         }
 
     about = serializers.SerializerMethodField('get_about')
@@ -346,19 +354,19 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
 
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
-        return prepend_base(reverse('pack', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('pack', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
 
     uri = serializers.SerializerMethodField('get_uri')
     def get_uri(self, obj):
-        return prepend_base(reverse('apiv2-pack-instance', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-pack-instance', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-pack-sound-list', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     username = serializers.SerializerMethodField('get_username')
     def get_username(self, obj):
@@ -385,9 +393,9 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.SerializerMethodField('get_url')
     def get_url(self, obj):
         if obj.id != 0:
-            return prepend_base(reverse('bookmarks-for-user-for-category', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].using_https)
+            return prepend_base(reverse('bookmarks-for-user-for-category', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
         else:
-            return prepend_base(reverse('bookmarks-for-user', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+            return prepend_base(reverse('bookmarks-for-user', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     num_sounds = serializers.SerializerMethodField('get_num_sounds')
     def get_num_sounds(self, obj):
@@ -398,7 +406,7 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
     sounds = serializers.SerializerMethodField('get_sounds')
     def get_sounds(self, obj):
-        return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-bookmark-category-sounds', args=[obj.user.username, obj.id]), request_is_secure=self.context['request'].is_secure())
 
 
 class CreateBookmarkSerializer(serializers.Serializer):
@@ -406,13 +414,17 @@ class CreateBookmarkSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=128, required=False, help_text='Not required. Name you want to give to the bookmark (if empty, sound name will be used).')
 
     def validate_category(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
 
     def validate_name(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
@@ -433,7 +445,7 @@ class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     username = serializers.SerializerMethodField('get_username')
     def get_username(self, obj):
@@ -471,7 +483,7 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 
     user = serializers.SerializerMethodField('get_user')
     def get_user(self, obj):
-        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].using_https)
+        return prepend_base(reverse('apiv2-user-instance', args=[obj.user.username]), request_is_secure=self.context['request'].is_secure())
 
     username = serializers.SerializerMethodField('get_username')
     def get_username(self, obj):
@@ -555,13 +567,17 @@ class SoundDescriptionSerializer(serializers.Serializer):
         return attrs
 
     def validate_name(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
 
     def validate_pack(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
@@ -610,29 +626,38 @@ class EditSoundDescriptionSerializer(serializers.Serializer):
         return attrs
 
     def validate_tags(self, attrs, source):
-        value = attrs[source]
-        tags = clean_and_split_tags(value)
-        if 1 <= len(tags) < 3:
-            raise serializers.ValidationError('You should at least have 3 tags...')
-        elif len(tags) > 30:
-            raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
-        attrs[source] = tags
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
+        else:
+            tags = clean_and_split_tags(value)
+            if 1 <= len(tags) < 3:
+                raise serializers.ValidationError('You should at least have 3 tags...')
+            elif len(tags) > 30:
+                raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
+            attrs[source] = tags
         return attrs
 
     def validate_name(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
 
     def validate_description(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
 
     def validate_pack(self, attrs, source):
-        value = attrs[source]
+        value = attrs.get(source, None)
+        if not value:
+            return attrs
         if value.isspace():
             attrs[source] = None
         return attrs
@@ -677,6 +702,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
         if not self.is_providing_description(attrs):
             attrs[source] = None
         else:
+            if source not in attrs:
+                raise serializers.ValidationError('This field is required.')
             value = attrs[source]
             tags = clean_and_split_tags(value)
             if len(tags) < 3:
@@ -690,6 +717,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
         if not self.is_providing_description(attrs):
             attrs[source] = None
         else:
+            if source not in attrs:
+                raise serializers.ValidationError('This field is required.')
             if attrs[source].isspace():
                 raise serializers.ValidationError('This field is required.')
         return attrs
@@ -698,6 +727,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
         if not self.is_providing_description(attrs):
             attrs[source] = None
         else:
+            if source not in attrs:
+                raise serializers.ValidationError('This field is required.')
             if not attrs[source]:
                 raise serializers.ValidationError('This field is required.')
         return attrs

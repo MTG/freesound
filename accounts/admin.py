@@ -27,7 +27,7 @@ from forum.models import Post, Thread
 from comments.models import Comment
 from sounds.models import Sound,DeletedSound
 from accounts.models import User
-import settings
+from django.conf import settings
 
 
 from django.contrib.auth.models import User

@@ -1,0 +1,8 @@
+PyYAML==3.11
+Twisted==14.0.2
+graypy==0.2.11
+numpy==1.9.0
+#scipy==0.10.1
+#apt-get build-dep python-scipy
+#scikit-learn==0.15.2
+#gaia2

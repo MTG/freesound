@@ -38,7 +38,7 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse, \
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from forum.models import Post, Thread
-from freesound_exceptions import PermissionDenied
+from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from networkx import nx
 from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
@@ -58,7 +58,6 @@ from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 import datetime
-import settings
 import time
 import logging
 import json

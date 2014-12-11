@@ -20,13 +20,13 @@
 #     See AUTHORS file.
 #
 
-from freesound.utils.similarity_utilities import api_search as similarity_api_search
-from freesound.utils.search.solr import Solr, SolrException, SolrResponseInterpreter
+from utils.similarity_utilities import api_search as similarity_api_search
+from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from similarity.client import SimilarityException
 from search.views import search_prepare_query
 from exceptions import ServerErrorException, BadRequestException, NotFoundException
 from urllib import unquote
-import settings
+from django.conf import settings
 
 
 def merge_all(search_form, target_file=None, extra_parameters=None):

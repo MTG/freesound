@@ -18,11 +18,11 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from piston.resource import Resource
 from handlers import *
 from api_utils import build_invalid_url
-import settings
+from django.conf import settings
 
 if not settings.APIV2KEYS_ALLOWED_FOR_APIV1:
     from views import create_api_key as apply_for_api_key_view
@@ -34,7 +34,7 @@ else:
 class AR(Resource):
     def __call__(self, *args, **kwargs):
         response = super(AR, self).__call__(*args, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
+        #response['Access-Control-Allow-Origin'] = '*'
         return response
 
 urlpatterns = patterns('',
@@ -47,6 +47,7 @@ urlpatterns = patterns('',
     # For future use (when we serve analysis files through autenthication)
     #url(r'^sounds/(?P<sound_id>\d+)/analysis_frames/$',            AR(SoundAnalysisFramesHandler), name='api-sound-analysis-frames'),
     url(r'^sounds/(?P<sound_id>\d+)/serve/$',                       AR(SoundServeHandler),          name='api-sound-serve'),
+    url(r'^sounds/(?P<sound_id>\d+)/previews/(?P<filename>[^//]+)/$', AR(SoundPreviewHandler),      name='api-sound-preview'),
     url(r'^sounds/(?P<sound_id>\d+)/similar/$',                     AR(SoundSimilarityHandler),     name='api-sound-similarity'),
     url(r'^sounds/geotag/$',                                        AR(SoundGeotagHandler),         name='api-sound-geotag'),
     

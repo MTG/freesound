@@ -26,7 +26,7 @@
 #   - markdown (for browseable api)
 
 
-from django.conf.urls.defaults import patterns, url, include
+from django.conf.urls import patterns, url, include
 from django.contrib.auth.views import login, logout
 from apiv2 import views
 
@@ -56,6 +56,7 @@ urlpatterns = patterns('apiv2.views',
     url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysis.as_view(), name="apiv2-sound-analysis"),
     url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilarSounds.as_view(), name="apiv2-similarity-sound"),
     url(r'^sounds/(?P<pk>[0-9]+)/download/$', views.DownloadSound.as_view(), name="apiv2-sound-download"),
+    url(r'^sounds/(?P<pk>[0-9]+)/previews/(?P<filename>[^//]+)/$', views.PreviewSound.as_view(), name='apiv2-sound-preview'),
     # Create or edit
     url(r'^sounds/(?P<pk>[0-9]+)/edit/$', views.EditSoundDescription.as_view(), name='apiv2-sound-edit'),
     url(r'^sounds/(?P<pk>[0-9]+)/bookmark/$', views.BookmarkSound.as_view(), name='apiv2-user-create-bookmark'),

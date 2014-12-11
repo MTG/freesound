@@ -32,7 +32,7 @@ from utils.sql import DelayedQueryExecuter
 from utils.text import slugify
 from utils.locations import locations_decorator
 import os, logging, random, datetime, gearman, tempfile, shutil, subprocess
-from utils.search.search import delete_sound_from_solr
+from utils.search.search_general import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from django.db import connection, transaction
 from search.views import get_pack_tags
@@ -40,6 +40,7 @@ from django.db.models import Count
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.contrib.contenttypes import generic
 from similarity.client import Similarity
+from apiv2.models import ApiV2Client
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -119,6 +120,9 @@ class Sound(SocialModel):
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
 
+    # uploaded with apiv2 client id (None if the sound was not uploaded using the api)
+    uploaded_with_apiv2_client = models.ForeignKey(ApiV2Client, null=True, blank=True, default=None, on_delete=models.SET_NULL)
+
     # file properties
     SOUND_TYPE_CHOICES = (
         ('wav', 'Wave'),
@@ -192,17 +196,20 @@ class Sound(SocialModel):
                 HQ = dict(
                     mp3 = dict(
                         path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.mp3" % (self.id, sound_user_id)),
-                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.mp3" % (id_folder, self.id, sound_user_id)
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.mp3" % (id_folder, self.id, sound_user_id),
+                        filename = "%d_%d-hq.mp3" % (self.id, sound_user_id),
                     ),
                     ogg = dict(
                         path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-hq.ogg" % (self.id, sound_user_id)),
-                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.ogg" % (id_folder, self.id, sound_user_id)
+                        url = settings.PREVIEWS_URL + "%s/%d_%d-hq.ogg" % (id_folder, self.id, sound_user_id),
+                        filename = "%d_%d-hq.ogg" % (self.id, sound_user_id),
                     )
                 ),
                 LQ = dict(
                     mp3 = dict(
                         path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, sound_user_id)),
                         url = settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id),
+                        filename = "%d_%d-lq.mp3" % (self.id, sound_user_id),
                         # The alternative url is sent to the requesting browser if the clickthrough logger is activated
                         # After logging the clickthrough data, the reponse is redirected to a url stripped of the _alt part.
                         # the redirect will be handled by nginx
@@ -211,6 +218,7 @@ class Sound(SocialModel):
                     ogg = dict(
                         path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
                         url = settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
+                        filename = "%d_%d-lq.ogg" % (self.id, sound_user_id),
                         # Refer to comments in mp3.url_alt 
                         url_alt = settings.PREVIEWS_URL.replace("previews","previews_alt") + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id)
                     ),

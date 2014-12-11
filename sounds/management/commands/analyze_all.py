@@ -21,7 +21,7 @@
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
 import gearman
-import settings
+from django.conf import settings
 
 class Command(BaseCommand):
     help = 'Analyze all sounds that have passed moderation and have already been analyzed OK. This command is intended to run it when a new essentia extractor is deployed'

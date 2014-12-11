@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 import wiki.views as wiki
 
 urlpatterns = patterns('',

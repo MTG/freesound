@@ -19,6 +19,7 @@
 #
 
 from django.core.cache import cache
+#from hashlib import md5
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
 from functional import compose

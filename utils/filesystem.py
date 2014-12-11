@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-import md5, os, zlib
+import os, zlib, md5
 
 class File:
 

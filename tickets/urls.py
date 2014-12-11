@@ -20,8 +20,8 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls.defaults import patterns, url
-from django.views.generic.simple import direct_to_template
+from django.conf.urls import patterns, url
+from django.views.generic import TemplateView
 from views import *
 
 urlpatterns = patterns('',
@@ -39,8 +39,7 @@ urlpatterns = patterns('',
         name='tickets-home'),
 
     url(r'^guide/$',
-        direct_to_template,
-        {'template': 'tickets/guide.html'},
+        TemplateView.as_view(template_name='tickets/guide.html'),
         name='tickets-moderation-guide'),
 
     url(r'^moderation/$',

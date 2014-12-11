@@ -23,6 +23,8 @@ from sounds.models import Sound
 from similarity.client import Similarity
 from optparse import make_option
 import yaml
+import logging
+logger = logging.getLogger("web")
 
 
 class Command(BaseCommand):
@@ -60,6 +62,7 @@ class Command(BaseCommand):
         else:
             to_be_added = Sound.objects.filter(analysis_state='OK', similarity_state='PE', moderation_state='OK').order_by('id')[:limit]
 
+        logger.info("Starting similarity update. %i sounds to be added to the similarity index" % to_be_added.count())
         N = len(to_be_added)
         for count, sound in enumerate(to_be_added):
 
@@ -71,12 +74,16 @@ class Command(BaseCommand):
                     print 'Sound with id %i was not indexed (no yaml file found when checking for extractor version)' % sound.id
                     continue
 
-                if 'freesound_extractor' in data['metadata']['version']:
-                    if data['metadata']['version']['freesound_extractor'] != freesound_extractor_version:
-                        print 'Sound with id %i was not indexed (it was analyzed with extractor version %s)' % (sound.id, data['metadata']['version']['freesound_extractor'])
+                if data:
+                    if 'freesound_extractor' in data['metadata']['version']:
+                        if data['metadata']['version']['freesound_extractor'] != freesound_extractor_version:
+                            print 'Sound with id %i was not indexed (it was analyzed with extractor version %s)' % (sound.id, data['metadata']['version']['freesound_extractor'])
+                            continue
+                    else:
+                        print 'Sound with id %i was not indexed (it was analyzed with an unknown extractor)' % sound.id
                         continue
                 else:
-                    print 'Sound with id %i was not indexed (it was analyzed with an unknown extractor)' % sound.id
+                    print 'Sound with id %i was not indexed (most probably empty yaml file)' % sound.id
                     continue
 
             try:
@@ -88,19 +95,20 @@ class Command(BaseCommand):
                 print "%s (%i of %i)" % (result, count+1, N)
 
                 # Every 2000 added sounds, save the index
-                if count % 2000 == 0:
-                    if options['indexing_server']:
-                        Similarity.save_indexing_server()
-                    else:
-                        Similarity.save()
+                #if count % 2000 == 0:
+                #    if options['indexing_server']:
+                #        Similarity.save_indexing_server()
+                #    else:
+                #        Similarity.save()
 
             except Exception, e:
                 if not options['indexing_server']:
                     sound.set_similarity_state('FA')
                 print 'Sound could not be added (id: %i, %i of %i): \n\t%s' % (sound.id, count+1, N ,str(e))
 
+        logger.info("Finished similarity update. %i sounds added to the similarity index" % to_be_added.count())
         # At the end save the index
-        if options['indexing_server']:
-            Similarity.save_indexing_server()
-        else:
-            Similarity.save()
+        #if options['indexing_server']:
+        #    Similarity.save_indexing_server()
+        #else:
+        #    Similarity.save()

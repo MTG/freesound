@@ -34,10 +34,10 @@ import datetime
 from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 from utils.functional import combine_dicts
-from settings import MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+from django.conf import settings
 from django.core.management import call_command
 from threading import Thread
-import settings
+from django.conf import settings
 
 
 def __get_contact_form(request, use_post=True):
@@ -588,7 +588,7 @@ def moderation_assigned(request, user_id):
                        .exclude(status=TICKET_STATUS_CLOSED) \
                        .exclude(content=None) \
                        .order_by('status', '-created')
-    paginaion_response = paginate(request, qs, MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE)
+    paginaion_response = paginate(request, qs, settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE)
     paginaion_response['page'].object_list = list(paginaion_response['page'].object_list)
     for ticket in paginaion_response['page'].object_list:
         sound_id = ticket.content.object_id
@@ -604,7 +604,7 @@ def moderation_assigned(request, user_id):
 
     moderator_tickets_count = qs.count()
     moderation_texts = MODERATION_TEXTS
-    show_pagination = moderator_tickets_count > MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
+    show_pagination = moderator_tickets_count > settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
 
     return render_to_response('tickets/moderation_assigned.html',
                               combine_dicts(paginaion_response, locals()),

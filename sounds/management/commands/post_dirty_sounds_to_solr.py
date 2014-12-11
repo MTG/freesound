@@ -20,7 +20,8 @@
 
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
-from utils.search.search import add_all_sounds_to_solr
+from utils.search.search_general import add_all_sounds_to_solr
+logger = logging.getLogger("web")
 
 class Command(BaseCommand):
     args = ''
@@ -32,4 +33,6 @@ class Command(BaseCommand):
                                         moderation_state='OK',
                                         processing_state='OK')
 
+        logger.info("Starting posting dirty sounds to solr. %i sounds to be added/updated to the solr index" % sound_qs.count())
         add_all_sounds_to_solr(sound_qs, mark_index_clean=True)
+        logger.info("Finished posting dirty sounds to solr. %i sounds have been added/updated" % sound_qs.count())

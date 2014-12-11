@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from settings import ESSENTIA_EXECUTABLE
+from django.conf import settings
 import os, shutil, subprocess, signal, sys
 
 def analyze(sound):
@@ -70,9 +70,9 @@ def analyze(sound):
                 return False
             input_path = tmp_wav_path
         tmp_ana_path = '/tmp/analysis_%s' % sound.id
-        essentia_dir = os.path.dirname(os.path.abspath(ESSENTIA_EXECUTABLE))
+        essentia_dir = os.path.dirname(os.path.abspath(settings.ESSENTIA_EXECUTABLE))
         os.chdir(essentia_dir)
-        exec_array = [ESSENTIA_EXECUTABLE, input_path, tmp_ana_path]
+        exec_array = [settings.ESSENTIA_EXECUTABLE, input_path, tmp_ana_path]
 
         try:
             p = subprocess.Popen(exec_array, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -87,9 +87,9 @@ def analyze(sound):
 
         __create_dir(statistics_path)
         __create_dir(frames_path)
-        shutil.move('%s.yaml' % tmp_ana_path, statistics_path)
+        shutil.move('%s_statistics.yaml' % tmp_ana_path, statistics_path)
         shutil.move('%s_frames.json' % tmp_ana_path, frames_path)
-        os.remove('%s.json' % tmp_ana_path)
+        #os.remove('%s.json' % tmp_ana_path)  # Current extractor does not produce the json file
         sound.set_analysis_state('OK')
     except Exception, e:
         failure("Unexpected error in analysis ",e)

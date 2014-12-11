@@ -242,9 +242,15 @@ def parse_target(target_string, layout_descriptor_names):
             next_space_pos = len(target_string)
         right_part = target_string[current_pos+1:next_space_pos + 1]
         if not "," in right_part:
-            value = float(right_part)
+            try:
+                value = float(right_part)
+            except:
+                return 'Target error: Using non-numerical descriptor values in target parameter.'
         else:
-            value = [float(x) for x in right_part.split(',')]
+            try:
+                value = [float(x) for x in right_part.split(',')]
+            except:
+                return 'Target error: Using non-numerical descriptor values in target parameter.'
 
         target_struct[feature_name] = value
 

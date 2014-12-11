@@ -19,7 +19,7 @@
  *   See AUTHORS file.
  */
 
-$(document).ready(function() {
+$(function() {
     cookieValue = $.cookie("cookieConsent");
     if (cookieValue == "yes")
         $("#cookie-bar").remove();

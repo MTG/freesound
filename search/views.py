@@ -335,7 +335,6 @@ def get_pack_tags(pack_obj):
 
     return results.facets
 
-
 def __add_date_range(filter_query, date_from, date_to):
     if filter_query != "":
         filter_query += " "

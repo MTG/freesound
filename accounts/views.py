@@ -326,6 +326,7 @@ def edit(request):
             if not enabled_stream_emails_previous and enabled_stream_emails_current:
                 profile.last_stream_email_sent = datetime.datetime.now()
             profile.save()
+            # TODO: check if not including profile_form.save() breaks stuff
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
         profile_form = ProfileForm(request, instance=profile, prefix="profile")

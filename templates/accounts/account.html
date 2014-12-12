@@ -159,6 +159,15 @@
             {% endfor %}
             <p><a href="{% url sounds-for-user user.username %}?page=2">more...</a></p>
         </div>
+    {% else %}
+        <div id="latest_sounds" class="content_box">
+            <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest sounds</h3>
+            <p>
+            {% if home %}You have not uploaded any sounds...
+            {% else %}{{ user.username }} has not uploaded any sounds...
+            {% endif %}</p>
+        </div>
+
     {% endif %}
 
     {% if home %}

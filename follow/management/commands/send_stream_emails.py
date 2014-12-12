@@ -18,30 +18,30 @@
 #     See AUTHORS file.
 #
 from django.core.mail import send_mass_mail
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from utils.mail import render_mail_template #send_mail_template, send_mass_html_mail,
+from utils.mail import render_mail_template
 from accounts.models import Profile
 import datetime
 from follow import follow_utils
 from django.contrib.auth.models import User
-#import sys
 
-MAX_EMAILS_PER_RUN = 100
 
 class Command(BaseCommand):
+    '''
+    This command should be run periodically several times a day, and it will only send emails to users that "require it"
+    '''
     args = ''
-    help = 'Send stream new weekly sounds to users that are subscribed'
+    help = 'Send stream notifications to users who have not been notified for the last settings.NOTIFICATION_TIMEDELTA_PERIOD period and whose stream has new sounds for that period'
 
     def handle(self, *args, **options):
 
-        date_week_before = datetime.datetime.now() - datetime.timedelta(days=7)
+        date_today_minus_notification_timedelta = datetime.datetime.now() - settings.NOTIFICATION_TIMEDELTA_PERIOD
 
         # Get all the users that have notifications active
-        # and exclude the ones that have the last email sent for less than 7 days
+        # and exclude the ones that have the last email sent for less than settings.NOTIFICATION_TIMEDELTA_PERIOD
         # (because they have been sent an email already)
-        users_enabled_notifications = Profile.objects.filter(enabled_stream_emails=True).exclude(last_stream_email_sent__gt=date_week_before).order_by("last_stream_email_sent")[:MAX_EMAILS_PER_RUN]
+        users_enabled_notifications = Profile.objects.filter(enabled_stream_emails=True).exclude(last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by("last_stream_email_sent")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
 
         print "Checking new sounds for", len(users_enabled_notifications), "users"
         print [str(profile.user.username) for profile in users_enabled_notifications]
@@ -53,27 +53,19 @@ class Command(BaseCommand):
             username = profile.user.username
             email_to = profile.user.email
 
-            # construct subject
+            # Variable names use the terminology "week" because settings.NOTIFICATION_TIMEDELTA_PERIOD defaults to a
+            # week, but a more generic terminology could be used
             week_first_day = profile.last_stream_email_sent
             week_last_day = datetime.datetime.now()
-
-            # print week_first_day
-            # print week_last_day
 
             week_first_day_str = week_first_day.strftime("%d %b").lstrip("0")
             week_last_day_str = week_last_day.strftime("%d %b").lstrip("0")
 
-            # print week_first_day_str
-            # print week_last_day_str
-
             subject_str = u'new sounds from users you are following ('
             subject_str += unicode(week_first_day_str) + u' - ' + unicode(week_last_day_str) + u')'
 
-            # print subject_str
-
-            # TODO: change this, this is only for test purposes
-            time_lapse = "[2013-09-22T00:00:00Z TO 2014-07-02T23:59:59.999Z]"
-            # time_lapse = follow_utils.build_time_lapse(week_first_day, week_last_day)
+            # Set date range from which to get upload notifications
+            time_lapse = follow_utils.build_time_lapse(week_first_day, week_last_day)
 
             # construct message
             user = User.objects.get(username=username)
@@ -91,9 +83,8 @@ class Command(BaseCommand):
             email_tuples += (subject_str, text_content, settings.DEFAULT_FROM_EMAIL, [email_to]),
 
             # update last stream email sent date
-            # TODO: uncomment this later, for testing purposes only
-            # profile.last_stream_email_sent = datetime.datetime.now()
-            # profile.save()
+            profile.last_stream_email_sent = datetime.datetime.now()
+            profile.save()
 
         # mass email all messages
         send_mass_mail(email_tuples, fail_silently=False)

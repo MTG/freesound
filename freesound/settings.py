@@ -328,5 +328,9 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 
 ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT = False
 
+# Followers notifications
+MAX_EMAILS_PER_COMMAND_RUN = 100
+NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
+
 
 from logger import LOGGING

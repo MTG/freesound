@@ -90,9 +90,20 @@ def stream(request):
             date_from = datetime.now() - timedelta(days=SELECT_OPTIONS_DAYS[select_value])
             date_to = datetime.now()
             time_lapse = follow_utils.build_time_lapse(date_from, date_to)
+            date_to = date_to.strftime("%Y-%m-%d")
+            date_from = date_from.strftime("%Y-%m-%d")
         else:
             date_from = request.POST.get("date_from")
             date_to = request.POST.get("date_to")
+            if not date_from or not date_to:
+                if not date_from and not date_to: # Set it to last week (default)
+                    date_to = datetime.now().strftime("%Y-%m-%d")
+                    date_from = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+                else:
+                    if not date_from:
+                        date_from = (datetime.strptime(date_to,"%Y-%m-%d") - timedelta(days=7)).strftime("%Y-%m-%d") # A week before date to
+                    if not date_to:
+                        date_to = (datetime.strptime(date_from,"%Y-%m-%d") + timedelta(days=7)).strftime("%Y-%m-%d") # A week after date from
             time_lapse = "[%sT00:00:00Z TO %sT23:59:59.999Z]" % (date_from, date_to)
 
     # if first time going into the page, the default is last week
@@ -100,6 +111,8 @@ def stream(request):
         date_from = datetime.now() - timedelta(days=SELECT_OPTIONS_DAYS["last_week"])
         date_to = datetime.now()
         time_lapse = follow_utils.build_time_lapse(date_from, date_to)
+        date_to = date_to.strftime("%Y-%m-%d")
+        date_from = date_from.strftime("%Y-%m-%d")
 
     users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
 

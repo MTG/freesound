@@ -11,15 +11,13 @@
 
             $('select option[value="{{ select_value }}"]').attr("selected", true);
 
+            $("#date_to").val('{{ date_to }}');
+            $("#date_from").val('{{ date_from }}');
+
             if ('{{ select_value }}' != "specific_dates") {
                 $("#date_pickers").hide();
                 $("#date_submit").css("margin-left", "0");
             }
-            else {
-                $("#date_to").val('{{ date_to }}');
-                $("#date_from").val('{{ date_from }}');
-            }
-
 
             $("#time_lapse").change(function() {
                 select_value = $("#time_lapse option:selected").val();
@@ -36,7 +34,7 @@
                 buttonImage: "/media/images/calendar.gif",
                 // buttonImage: "{{ MEDIA_URL }}images/calendar.gif",
                 buttonImageOnly: true,
-                defaultDate: "-1w",
+                //defaultDate: "-1w",
                 dateFormat: "yy-mm-dd",
                 changeYear: true,
                 minDate: new Date(2005, 1 - 1, 1),
@@ -48,12 +46,14 @@
             });
 
             $("#date_to").datepicker({
+                //defaultDate: 0,
                 showOn: "button",
                 buttonImage: "/media/images/calendar.gif",
                 buttonImageOnly: true,
                 dateFormat: "yy-mm-dd",
                 // changeMonth: true,
                 changeYear: true,
+                minDate: new Date(2005, 1 - 1, 1),
                 maxDate: 0, // for today
                 onClose: function(selectedDate) {
                     $("#date_from").datepicker("option", "maxDate", selectedDate);
@@ -77,9 +77,9 @@
 
         <div id="date_pickers">
             <label id="lbl_date_from" for="date_from">From:</label>
-            <input id="date_from" name="date_from" type="text" placeholder="yyyy-mm-dd"/>
+            <input id="date_from" name="date_from" type="text"/>
             <label id="lbl_date_to" for="date_to">To:</label>
-            <input id="date_to" name="date_to" type="text" placeholder="yyyy-mm-dd"/>
+            <input id="date_to" name="date_to" type="text"/>
         </div>
 
         {% comment %}<input type="submit" id="date_submit" style="margin-left:20px" value="Go!"/>{% endcomment %}

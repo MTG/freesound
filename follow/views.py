@@ -114,6 +114,12 @@ def stream(request):
         date_to = date_to.strftime("%Y-%m-%d")
         date_from = date_from.strftime("%Y-%m-%d")
 
-    users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
+    errors_getting_data = False
+    try:
+        users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
+    except Exception, e:
+        # Could not connect to solr
+        errors_getting_data = True
+
 
     return render_to_response('follow/stream.html', locals(), context_instance=RequestContext(request))

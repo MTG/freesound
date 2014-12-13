@@ -86,140 +86,94 @@
         <input type="submit" id="date_submit" value="Go!"/>
     </form>
 
-{% comment %}
-    {% if all_users %}
+    {% if not errors_getting_data %}
 
-        <div id="stream_users" class="stream_box">
+        <div class="stream_box">
 
-            <h3>Users</h3>
+            <a id="new_sounds_users"></a>
 
-        {% for user, new_sounds_count in all_users %}
-            <div class="active_user">
-                <div class="active_user_info">
-                    <a href="#{{ user.username }}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+            <h3>Sounds by users you follow</h3>
+            {% if users_sounds %}
+                <a class="link-to-section" href="#new_sounds_tags">Go to sounds by tags you follow</a>
+            {% endif %}
 
-                    <div class="post_author">{{user.username}}</div>
+            {% if not users_sounds %}
 
-                    <div class="people_user_info">
-                        {{ new_sounds_count }} new sound{{ new_sounds_count|pluralize }}
-                    </div>
+                <div class="stream-left">
+                    <p>No updates...</p>
                 </div>
-            <br class="clear" />
-            </div>
 
-        {% endfor %}
+            {% else %}
+
+                {% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}
+
+                    <div class="stream-left">
+                        {% for sound_obj in sound_objs %}
+                            {% display_sound sound_obj.id %}
+                        {% endfor %}
+                        {% if more_count > 0 %}
+                           <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
+                        {% endif %}
+                    </div>
+
+                    <div class="stream-right">
+                        <a id="{{ user.0 }}" ></a>
+                        {% include "accounts/active_user.html" %}
+                        {% comment %}<a href="#" class="link-top">Go to Top</a>{% endcomment %}
+                    </div>
+
+                {% endfor %}
+            {% endif %}
+            <br class="clear"/>
         </div>
-        <br class="clear" />
 
-    {% endif %}
+        <div class="stream_box">
+            <a id="new_sounds_tags"></a>
+            <h3>Sounds by tags you follow</h3>
 
-    {% if all_tags %}
+            {% if users_sounds %}
+                <a class="link-to-section" href="#new_sounds_users">Go to sounds by users you follow</a>
+            {% endif %}
 
-        <div id="stream_tags" class="stream_box">
-            <h3>Tags</h3>
+            {% if not tags_sounds %}
 
-            {% for tags, new_sounds_count in all_tags %}
-                <div class="active_user">
-                    <div id="following_tags">
-                        <div class="tag_group">
+                <div class="stream-left">
+                    <p>No updates...</p>
+                </div>
+
+            {% else %}
+
+                {% for tags, sound_objs, more_url_params, more_count, new_count in tags_sounds %}
+
+                    <div class="stream-left">
+                        {% for sound_obj in sound_objs %}
+                            {% display_sound sound_obj.id %}
+                        {% endfor %}
+                        {% if more_count > 0 %}
+                           <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
+                        {% endif %}
+                    </div>
+
+                    <div class="stream-right" id="following_tags">
+                        <a id="{{ tags|join:"/" }}"></a>
+                        <div class="tag_group" onclick="location.href='{% url tags tags|join:"/" %}'">
                             <ul class="tags" id="following_tags">
                                 {% for tag in tags %}
-                                    <li><a href="#{{ tags|join:"/" }}">{{ tag }}</a></li>
+                                    <li><a>{{ tag }}</a></li>
                                 {% endfor %}
                             </ul>
                         </div>
-                    </div>
-                    <div class="people_user_info">{{ new_sounds_count }} new sound{{ new_sounds_count|pluralize }}</div>
-                </div>
-            {% endfor %}
 
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
             <br class="clear"/>
+        </div>
 
+    {% else %}
+        <p>An error occurred while getting the requested data. Please try again later.</p>
     {% endif %}
-{% endcomment %}
-
-    <div class="stream_box">
-
-        <a id="new_sounds_users"></a>
-
-        <h3>Sounds by users you follow</h3>
-        {% if users_sounds %}
-            <a class="link-to-section" href="#new_sounds_tags">Go to sounds by tags you follow</a>
-        {% endif %}
-
-        {% if not users_sounds %}
-
-            <div class="stream-left">
-                <p>No updates...</p>
-            </div>
-
-        {% else %}
-
-            {% for user, sound_objs, more_url_params, more_count, new_count in users_sounds %}
-
-                <div class="stream-left">
-                    {% for sound_obj in sound_objs %}
-                        {% display_sound sound_obj.id %}
-                    {% endfor %}
-                    {% if more_count > 0 %}
-                       <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
-                    {% endif %}
-                </div>
-
-                <div class="stream-right">
-                    <a id="{{ user.0 }}" ></a>
-                    {% include "accounts/active_user.html" %}
-                    {% comment %}<a href="#" class="link-top">Go to Top</a>{% endcomment %}
-                </div>
-
-            {% endfor %}
-        {% endif %}
-        <br class="clear"/>
-    </div>
-
-    <div class="stream_box">
-        <a id="new_sounds_tags"></a>
-        <h3>Sounds by tags you follow</h3>
-
-        {% if users_sounds %}
-            <a class="link-to-section" href="#new_sounds_users">Go to sounds by users you follow</a>
-        {% endif %}
-
-        {% if not tags_sounds %}
-
-            <div class="stream-left">
-                <p>No updates...</p>
-            </div>
-
-        {% else %}
-
-            {% for tags, sound_objs, more_url_params, more_count, new_count in tags_sounds %}
-
-                <div class="stream-left">
-                    {% for sound_obj in sound_objs %}
-                        {% display_sound sound_obj.id %}
-                    {% endfor %}
-                    {% if more_count > 0 %}
-                       <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
-                    {% endif %}
-                </div>
-
-                <div class="stream-right" id="following_tags">
-                    <a id="{{ tags|join:"/" }}"></a>
-                    <div class="tag_group" onclick="location.href='{% url tags tags|join:"/" %}'">
-                        <ul class="tags" id="following_tags">
-                            {% for tag in tags %}
-                                <li><a>{{ tag }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
-                </div>
-
-            {% endfor %}
-
-        {% endif %}
-        <br class="clear"/>
-    </div>
 
 {% endblock %}

@@ -69,7 +69,12 @@ class Command(BaseCommand):
 
             # construct message
             user = User.objects.get(username=username)
-            users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
+            try:
+                users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
+            except Exception, e:
+                # If error occur do not send the email
+                print "could not get new sounds data for", username
+                continue
 
             if not users_sounds and not tags_sounds:
                 print "no news sounds for", username

@@ -29,13 +29,38 @@ from follow.models import FollowingQueryItem
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render_to_response
 from datetime import datetime, timedelta
-#from search.views import search_prepare_query, search_prepare_sort
-#from django.conf import settings
-#from utils.search.solr import Solr, SolrResponseInterpreter
-#from search.forms import SEARCH_SORT_OPTIONS_WEB
-# from utils.search.solr import Solr, SolrQuery, SolrException, SolrResponseInterpreter, SolrResponseInterpreterPaginator
 from collections import OrderedDict
-#from django.core.urlresolvers import reverse
+
+
+def following_users(request, username):
+    is_owner = False
+    if request.user.is_authenticated():
+        is_owner = request.user.username == username
+    following = follow_utils.get_users_following(User.objects.get(username=username))
+    return render_to_response('follow/following_users.html', locals(), context_instance=RequestContext(request))
+
+def followers(request, username):
+    is_owner = False
+    if request.user.is_authenticated():
+        is_owner = request.user.username == username
+    following = follow_utils.get_users_followers(User.objects.get(username=username))
+    return render_to_response('follow/followers.html', locals(), context_instance=RequestContext(request))
+
+
+def following_tags(request, username):
+    is_owner = False
+    if request.user.is_authenticated():
+        is_owner = request.user.username == username
+    following = follow_utils.get_tags_following(User.objects.get(username=username))
+    space_tags = following
+    split_tags = [tag.split(" ") for tag in space_tags]
+    slash_tags = [tag.replace(" ", "/") for tag in space_tags]
+
+    following_tags = []
+    for i in range(len(space_tags)):
+        following_tags.append((space_tags[i], slash_tags[i], split_tags[i]))
+    return render_to_response('follow/following_tags.html', locals(), context_instance=RequestContext(request))
+
 
 @login_required
 def follow_user(request, username):

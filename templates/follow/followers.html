@@ -1,0 +1,41 @@
+{% extends "accounts/_notab.html" %}
+
+{% block title %}{% if is_owner %}Users following you{% else %}Users following {{username}}{% endif %}{% endblock %}
+
+{% block tab_home_active %}{% if is_owner %}active_tab{% endif %}{% endblock %}
+{% block tab_people_active %}{% if not is_owner %}active_tab{% endif %}{% endblock %}
+
+{% block section_content %}
+
+
+<h1>{% if is_owner %}Users following you{% else %}Users following <a href="{% url account username%}">{{username}}</a>{% endif %}</h1>
+
+
+
+{% if following %}
+<div class="stream_box">
+	<h3>{% if is_owner %}You have{% else %}{{username}} has {% endif %} {{ following|length }} follower{{ following|pluralize }}</h3>	
+
+	<ul>
+        {% for user in following %}
+		 	    <div class="followers_page_user_info">
+			        <img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" />
+			        <div class="post_author"><a href="{% url account user.username %}">{{user.username}}</a></div>
+			        <div class="people_user_info">
+			            {{user.profile.num_sounds}} sound{{user.profile.num_sounds|pluralize}}<br>
+			            {{user.profile.num_posts}} post{{user.profile.num_posts|pluralize}}<br> 
+			        </div>
+		    	</div>
+        {% endfor %}
+    </ul>
+</div><!-- #content -->    
+{% else %}
+
+	<p>{% if is_owner %}You have{% else %}{{username}} has {% endif %} no followers yet.</p>
+
+{% endif %}
+
+
+<br class="clear" /><!-- Clearing element -->
+
+{% endblock %}

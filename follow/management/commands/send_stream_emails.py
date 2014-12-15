@@ -62,7 +62,7 @@ class Command(BaseCommand):
             week_first_day_str = week_first_day.strftime("%d %b").lstrip("0")
             week_last_day_str = week_last_day.strftime("%d %b").lstrip("0")
 
-            subject_str = u'new sounds from users you are following ('
+            subject_str = u'new sounds from users and tags you are following ('
             subject_str += unicode(week_first_day_str) + u' - ' + unicode(week_last_day_str) + u')'
 
             # Set date range from which to get upload notifications

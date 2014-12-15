@@ -27,5 +27,4 @@ urlpatterns = patterns('follow.views',
     url(r'^unfollow_user/(?P<username>[^//]+)/$', 'unfollow_user', name='unfollow-user'),
     url(r'^follow_tags/(?P<slash_tags>[\w//-]+)/$', 'follow_tags', name='follow-tags'),
     url(r'^unfollow_tags/(?P<slash_tags>[\w//-]+)/$', 'unfollow_tags', name='unfollow-tags'),
-    url(r'^stream/$', 'stream', name='stream'),
 )

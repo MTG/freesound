@@ -1,0 +1,42 @@
+{% extends "accounts/_notab.html" %}
+
+{% block title %}{% if is_owner %}Tags you are following{% else %}Tags followed by {{username}}{% endif %}{% endblock %}
+
+{% block tab_home_active %}{% if is_owner %}active_tab{% endif %}{% endblock %}
+{% block tab_people_active %}{% if not is_owner %}active_tab{% endif %}{% endblock %}
+
+{% block section_content %}
+
+
+<h1>{% if is_owner %}Tags that you are following{% else %}Tags followed by <a href="{% url account username%}">{{username}}</a>{% endif %}</h1>
+
+
+
+{% if following %}
+<div class="stream_box">
+	<div id="following_tags">
+	<h3>{% if is_owner %}You are{% else %}{{username}} is {% endif %} following {{ following|length }} tag{{ following|pluralize }} (or tag group{{ following|pluralize }})</h3>	
+
+	<ul>
+        {% for space_tags, slash_tags, split_tags in following_tags %}
+            <span class="tag_group" onclick="location.href='{% url tags slash_tags %}'">
+            <ul class="tags" id="following_tags">
+            {% for tag in split_tags %}
+                <li><a>{{ tag }}</a></li>
+            {% endfor %}
+            </ul></span>
+        {% endfor %}
+
+    </ul>
+	</div>
+</div><!-- #content -->    
+{% else %}
+
+	<p>{% if is_owner %}You are{% else %}{{username}} is {% endif %} not following any tags yet.</p>
+
+{% endif %}
+
+
+<br class="clear" /><!-- Clearing element -->
+
+{% endblock %}

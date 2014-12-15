@@ -165,7 +165,7 @@ class ProfileForm(forms.ModelForm):
     about = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     signature = HtmlCleaningCharField(label="Forum signature", widget=forms.Textarea(attrs=dict(rows=20, cols=70)), required=False)
     wants_newsletter = forms.BooleanField(label="Subscribed to newsletter", required=False)
-    enabled_stream_emails = forms.BooleanField(label="Receive weekly email notifications with new uploaded sounds by users and tags you follow", required=False)
+    enabled_stream_emails = forms.BooleanField(label="Receive weekly stream update email notifications (only when new sounds are uploaded by users you follow or that have tags you follow)", required=False)
     not_shown_in_online_users_list = forms.BooleanField(label="Hide from \"users currently online\" list in the People page", required=False)
     
     def __init__(self, request, *args, **kwargs):

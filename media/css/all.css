@@ -3796,3 +3796,18 @@ ul.messages {
     font-size: 10px;
     display: none;
 }
+
+
+.followers_page_user_info img {
+    float: left;
+    margin-right: 8px;
+    margin-top: 4px;
+}
+
+.followers_page_user_info {
+    float: left;
+    display: block;
+    width: 130px;
+    height: 50px;
+    margin-right: 15px;
+}

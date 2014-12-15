@@ -81,7 +81,7 @@
                 <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
             {% endif %}
             <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
-            {% if following or following_tags %}<li>Your <a href="{% url stream %}">stream</a></li>{% endif %}
+            {% if following or following_tags %}<li>Activity <a href="{% url stream %}">stream</a></li>{% endif %}
             {% comment %}<li>Your sound uploads <a href="{% url accounts-pending %}">pending moderation</a></li>{% endcomment %}
         </ul>
         </div>
@@ -243,7 +243,7 @@
             <h3>Following users and tags</h3>
 
             {% if following %}
-                {% if request.user == user %}
+                {% if home %}
                     <h3>Users you are following ({{ following_count}})</h3>
                 {% else %}
                     <h3>Users {{ user.username }} is following ({{ following_count}})</h3>
@@ -254,10 +254,11 @@
                         <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
                     {% endfor %}
                 </ul>
+                <p><a href="{% url user-following-users request.user %}">more...</a></p>
             {% endif %}
 
             {% if followers %}
-                {% if request.user == user %}
+                {% if home %}
                     <h3>Users that are following you ({{ followers_count}})</h3>
                 {% else %}
                     <h3>Users that are following {{ user.username }} ({{ followers_count}})</h3>
@@ -268,11 +269,12 @@
                         <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
                     {% endfor %}
                 </ul>
+                <p><a href="{% url user-followers request.user %}">more...</a></p>
             {% endif %}
 
             {% if following_tags %}
                 <div id="following_tags">
-                    {% if request.user == user %}
+                    {% if home %}
                         <h3>Tags you are following ({{ following_tags_count }})</h3>
                     {% else %}
                         <h3>Tags {{ user.username }} is following ({{ following_tags_count }})</h3>
@@ -289,6 +291,7 @@
                             </ul></span>
                         {% endfor %}
                     </ul>
+                    <p><a href="{% url user-following-tags request.user %}">more...</a></p>
                 </div>
             {% endif %}
 

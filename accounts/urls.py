@@ -113,7 +113,7 @@ urlpatterns = patterns('accounts.views',
     url(r'^bookmarks/get_form_for_sound/(?P<sound_id>\d+)/$', bookmarks.get_form_for_sound, name="bookmarks-add-form-for-sound"),
     url(r'^bookmarks/category/(?P<category_id>\d+)/delete/$', bookmarks.delete_bookmark_category, name="delete-bookmark-category"),    
     url(r'^bookmarks/(?P<bookmark_id>\d+)/delete/$', bookmarks.delete_bookmark, name="delete-bookmark"),
-
+    url(r'^stream/$', follow.stream, name='stream'),
 
     url(r'^messages/$', messages.inbox, name='messages'),
     url(r'^messages/sent/$', messages.sent_messages, name='messages-sent'),
@@ -128,9 +128,5 @@ urlpatterns = patterns('accounts.views',
     url(r'^app_permissions/$', api.granted_permissions, name='access-tokens'),
     url(r'^app_permissions/revoke_permission/(?P<client_id>[^//]+)/$', api.revoke_permission, name='revoke-permission'),
     url(r'^app_permissions/permission_granted/$', api.permission_granted, name='permission-granted'),
-)
-
-urlpatterns += patterns('',
-    (r'^follow/', include('follow.urls')),
 )
 

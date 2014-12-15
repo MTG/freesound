@@ -2,7 +2,10 @@
 
 {% load display_sound %}
 
-{% block title %}Stream{% endblock title %}
+{% block title %}Activity stream{% endblock title %}
+
+{% block tab_home_active %}active_tab{% endblock %}
+
 
 {% block content %}
 
@@ -63,7 +66,9 @@
         });
     </script>
 
-    <h1>Stream</h1>
+    <h1>Activity stream</h1>
+    <p>In this page you'll see new sounds uploaded by <a href="{% url user-following-users request.user %}">users you follow</a> and new sounds tagged with the <a href="{% url user-following-tags request.user %}">tags you follow</a>.<br>
+       You can configure email notifications for updates in your activity stream through your <a href="{% url accounts-edit %}">settings</a> page.</p>
 
     <form action="." method="post">
         {% csrf_token %}
@@ -92,7 +97,7 @@
 
             <a id="new_sounds_users"></a>
 
-            <h3>Sounds by users you follow</h3>
+            <h3>New sounds by users you follow</h3>
             {% if users_sounds %}
                 <a class="link-to-section" href="#new_sounds_tags">Go to sounds by tags you follow</a>
             {% endif %}
@@ -129,7 +134,7 @@
 
         <div class="stream_box">
             <a id="new_sounds_tags"></a>
-            <h3>Sounds by tags you follow</h3>
+            <h3>New sounds with tags you follow</h3>
 
             {% if users_sounds %}
                 <a class="link-to-section" href="#new_sounds_users">Go to sounds by users you follow</a>

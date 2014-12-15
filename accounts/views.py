@@ -1106,11 +1106,12 @@ def flag_user(request, username = None):
         else:
             return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
 
+        previous_reports_count = UserFlag.objects.filter(user__username = flagged_user.username).values('reporting_user').distinct().count()
         uflag = UserFlag(user = flagged_user, reporting_user = reporting_user, content_object = flagged_object)
         uflag.save()
 
         reports_count = UserFlag.objects.filter(user__username = flagged_user.username).values('reporting_user').distinct().count()
-        if  reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or reports_count == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING:
+        if  reports_count != previous_reports_count and (reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or reports_count == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING):
             # Get all flagged objects by the user, create links to admin pages and send email
             flagged_objects = UserFlag.objects.filter(user__username = flagged_user.username)
             urls = []

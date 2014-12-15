@@ -21,6 +21,7 @@
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
 from utils.search.search_general import add_all_sounds_to_solr
+import logging
 logger = logging.getLogger("web")
 
 class Command(BaseCommand):

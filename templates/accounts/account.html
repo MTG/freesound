@@ -250,11 +250,11 @@
                 {% endif %}
 
                 <ul>
-                    {% for user in following %}
-                        <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                    {% for suser in following %}
+                        <a href="{% url account suser %}" title="{{suser}}"><img src="{{suser.profile.locations.avatar.M.url}}" alt="avatar" /></a>
                     {% endfor %}
                 </ul>
-                <p><a href="{% url user-following-users request.user %}">more...</a></p>
+                <p><a href="{% url user-following-users user %}">more...</a></p>
             {% endif %}
 
             {% if followers %}
@@ -265,11 +265,11 @@
                 {% endif %}
 
                 <ul>
-                    {% for user in followers %}
-                        <a href="{% url account user %}" title="{{user}}"><img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                    {% for suser in followers %}
+                        <a href="{% url account suser %}" title="{{suser}}"><img src="{{suser.profile.locations.avatar.M.url}}" alt="avatar" /></a>
                     {% endfor %}
                 </ul>
-                <p><a href="{% url user-followers request.user %}">more...</a></p>
+                <p><a href="{% url user-followers user %}">more...</a></p>
             {% endif %}
 
             {% if following_tags %}
@@ -291,7 +291,7 @@
                             </ul></span>
                         {% endfor %}
                     </ul>
-                    <p><a href="{% url user-following-tags request.user %}">more...</a></p>
+                    <p><a href="{% url user-following-tags user %}">more...</a></p>
                 </div>
             {% endif %}
 

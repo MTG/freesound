@@ -3807,8 +3807,7 @@ ul.messages {
 .followers_page_user_info {
     float: left;
     display: block;
-    width: 130px;
+    width: 140px;
     height: 50px;
     margin-right: 15px;
-    overflow: hidden;
 }

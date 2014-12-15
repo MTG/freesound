@@ -238,6 +238,7 @@ def new_thread(request, forum_name_slug):
                 text = form.cleaned_data["body"]
                 if "http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]: mayBeSpam = True
                 if re.search("[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)",  form.cleaned_data["body"]): mayBeSpam = True
+                if re.search("\(|\)|\d{7}",  form.cleaned_data["body"]): mayBeSpam = True # Find consecutive 7 numbers
                 if not request.user.post_set.all().count() and mayBeSpam:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated

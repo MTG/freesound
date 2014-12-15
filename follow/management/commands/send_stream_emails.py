@@ -17,7 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.core.mail import send_mass_mail
+from utils.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from utils.mail import render_mail_template
@@ -90,8 +90,9 @@ class Command(BaseCommand):
 
             # send email
             try:
-                send_mail(subject_str, text_content, email_from=email_from, email_to=email_to, reply_to=None)
+                send_mail(subject_str, text_content, email_from=settings.DEFAULT_FROM_EMAIL, email_to=[email_to], reply_to=None)
             except Exception, e:
+                logger.info("An error occurred sending notification stream email to %s (%s)" % (str(email_to),str(e)) )
                 # Do not send the email and do not update the profile
                 continue
             n_emails_sent += 1

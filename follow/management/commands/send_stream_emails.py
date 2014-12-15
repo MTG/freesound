@@ -48,6 +48,7 @@ class Command(BaseCommand):
         logger.info("Sending stream updates notification for %i potential users" % len(users_enabled_notifications))
 
         email_tuples = ()
+        n_emails_sent = 0
         for profile in users_enabled_notifications:
 
             username = profile.user.username
@@ -87,13 +88,19 @@ class Command(BaseCommand):
 
             email_tuples += (subject_str, text_content, settings.DEFAULT_FROM_EMAIL, [email_to]),
 
+            # send email
+            try:
+                send_mail(subject_str, text_content, email_from=email_from, email_to=email_to, reply_to=None)
+            except Exception, e:
+                # Do not send the email and do not update the profile
+                continue
+            n_emails_sent += 1
+
             # update last stream email sent date
             profile.last_stream_email_sent = datetime.datetime.now()
             profile.save()
 
+
         # mass email all messages
         #send_mass_mail(email_tuples, fail_silently=False)
-        for subject_str, text_content, email_from, email_to in email_tuples:
-            send_mail(subject_str, text_content, email_from=email_from, email_to=email_to, reply_to=None):
-       
-        logger.info("Sent stream updates notification to %i users (others had no updates)" % len(email_tuples))
+        logger.info("Sent stream updates notification to %i users (others had no updates)" % n_emails_sent)

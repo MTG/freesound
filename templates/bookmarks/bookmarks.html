@@ -12,6 +12,9 @@
 <h1>{% if is_owner %}Your bookmarks{% else %}Bookmarks by <a href="{% url account user.username%}">{{user.username}}</a>{% endif %}</h1>
 
 <div id="content">
+	
+	<div id="latest_sounds" class="content_box">
+
     {% if category %}
         <h3>Bookmarks in "{{category.name}}"</h3>
     {% else %}
@@ -53,7 +56,7 @@
 	</p>	
     {% endif %}
 
-        
+    </div>
 </div><!-- #content -->
 
 <div id="sidebar">

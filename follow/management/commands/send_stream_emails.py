@@ -25,6 +25,8 @@ from accounts.models import Profile
 import datetime
 from follow import follow_utils
 from django.contrib.auth.models import User
+import logging
+logger = logging.getLogger("web")
 
 
 class Command(BaseCommand):
@@ -43,11 +45,9 @@ class Command(BaseCommand):
         # (because they have been sent an email already)
         users_enabled_notifications = Profile.objects.filter(enabled_stream_emails=True).exclude(last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by("last_stream_email_sent")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
 
-        print "Checking new sounds for", len(users_enabled_notifications), "users"
-        print [str(profile.user.username) for profile in users_enabled_notifications]
+        logger.info("Sending stream updates notification for %i potential users" % len(users_enabled_notifications))
 
         email_tuples = ()
-
         for profile in users_enabled_notifications:
 
             username = profile.user.username
@@ -93,3 +93,4 @@ class Command(BaseCommand):
 
         # mass email all messages
         send_mass_mail(email_tuples, fail_silently=False)
+        logger.info("Sent stream updates notification to %i users (others had no updates)" % len(email_tuples))

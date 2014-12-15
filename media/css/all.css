@@ -3810,4 +3810,5 @@ ul.messages {
     width: 130px;
     height: 50px;
     margin-right: 15px;
+    overflow: hidden;
 }

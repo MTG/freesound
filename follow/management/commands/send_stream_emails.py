@@ -92,5 +92,8 @@ class Command(BaseCommand):
             profile.save()
 
         # mass email all messages
-        send_mass_mail(email_tuples, fail_silently=False)
+        #send_mass_mail(email_tuples, fail_silently=False)
+        for subject_str, text_content, email_from, email_to in email_tuples:
+            send_mail(subject_str, text_content, email_from=email_from, email_to=email_to, reply_to=None):
+       
         logger.info("Sent stream updates notification to %i users (others had no updates)" % len(email_tuples))

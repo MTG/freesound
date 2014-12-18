@@ -180,11 +180,13 @@
         
         {% if user.is_authenticated %}
             <li><a id="bookmark_link" onclick="show_hide_bookmark_form({{sound.id}})" class="icon">Bookmark this sound</a></li>
-            <li>
-            {% if is_following %}
-                <a id="follow_link_sound" class="icon">Unfollow this user</a><span id="follow_error"><br/>An error occurred. Please try again.</span></li>
-            {% else %}
-                <a id="follow_link_sound" class="icon">Follow this user</a><span id="follow_error"><br/>An error occurred. Please try again.</span></li>
+            {% if request.user != sound.user %}
+                <li>
+                {% if is_following %}
+                    <a id="follow_link_sound" class="icon">Unfollow this user</a><span id="follow_error"><br/>An error occurred. Please try again.</span></li>
+                {% else %}
+                    <a id="follow_link_sound" class="icon">Follow this user</a><span id="follow_error"><br/>An error occurred. Please try again.</span></li>
+                {% endif %}
             {% endif %}
             <div id="bookmark_form_{{sound.id}}" class="bookmark_form"></div> <!-- to be filled dynamically with ajax -->
         {% endif %}

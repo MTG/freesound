@@ -43,7 +43,7 @@ def followers(request, username):
     is_owner = False
     if request.user.is_authenticated():
         is_owner = request.user.username == username
-    following = follow_utils.get_users_followers(User.objects.get(username=username))
+    followers = follow_utils.get_users_followers(User.objects.get(username=username))
     return render_to_response('follow/followers.html', locals(), context_instance=RequestContext(request))
 
 

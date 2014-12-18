@@ -2479,6 +2479,7 @@ div.about {
 .active_user_info img {
     float: left;
     margin-right: 8px;
+    margin-top: 4px;
 }
 
 .active_user_info {

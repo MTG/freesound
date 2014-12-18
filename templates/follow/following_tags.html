@@ -12,8 +12,9 @@
 
 
 
+<div id="content">
+<div class="content_box">
 {% if following %}
-<div class="stream_box">
 	<div id="following_tags">
 	<h3>{% if is_owner %}You are{% else %}{{username}} is {% endif %} following {{ following|length }} tag{{ following|pluralize }} (or tag group{{ following|pluralize }})</h3>	
 
@@ -28,13 +29,22 @@
         {% endfor %}
 
     </ul>
-	</div>
-</div><!-- #content -->    
+	</div>  
 {% else %}
-
+    <h3>&nbsp;</h3>  
 	<p>{% if is_owner %}You are{% else %}{{username}} is {% endif %} not following any tags yet.</p>
-
 {% endif %}
+</div>
+</div><!-- #content -->
+<div id="sidebar">
+<div class="content_box">
+    <h3>More...</h3>
+    <ul>
+        <li><a href="{% url user-following-users username %}">Users that {% if is_owner %}you are{% else %}{{username}} is{% endif %} following</a></li>
+        <li><a href="{% url user-followers username %}">Users following {% if is_owner %}you{% else %}{{username}}{% endif %}</a></li>
+    </ul>
+</div>
+</div>
 
 
 <br class="clear" /><!-- Clearing element -->

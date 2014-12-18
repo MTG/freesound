@@ -11,13 +11,12 @@
 <h1>{% if is_owner %}Users following you{% else %}Users following <a href="{% url account username%}">{{username}}</a>{% endif %}</h1>
 
 
-
-{% if following %}
-<div class="stream_box">
-	<h3>{% if is_owner %}You have{% else %}{{username}} has {% endif %} {{ following|length }} follower{{ following|pluralize }}</h3>	
-
+<div id="content">
+<div class="content_box">
+{% if followers %}
+	<h3>{% if is_owner %}You have{% else %}{{username}} has {% endif %} {{ followers|length }} follower{{ followers|pluralize }}</h3>	
 	<ul>
-        {% for user in following %}
+        {% for user in followers %}
 		 	    <div class="followers_page_user_info">
 			        <img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" />
 			        <div class="post_author"><a href="{% url account user.username %}">{{user.username}}</a></div>
@@ -28,13 +27,21 @@
 		    	</div>
         {% endfor %}
     </ul>
-</div><!-- #content -->    
 {% else %}
-
+	<h3>&nbsp;</h3>
 	<p>{% if is_owner %}You have{% else %}{{username}} has {% endif %} no followers yet.</p>
-
 {% endif %}
-
+</div>
+</div><!-- #content -->  
+<div id="sidebar">
+<div class="content_box">
+	<h3>More...</h3>
+	<ul>
+	    <li><a href="{% url user-following-users username %}">Users that {% if is_owner %}you are{% else %}{{username}} is{% endif %} following</a></li>
+	    <li><a href="{% url user-following-tags username %}">Tags that {% if is_owner %}you are{% else %}{{username}} is{% endif %} following</a></li>
+	</ul>
+</div>
+</div>
 
 <br class="clear" /><!-- Clearing element -->
 

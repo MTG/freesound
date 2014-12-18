@@ -1,4 +1,5 @@
 {% extends "accounts/_notab.html" %}
+{% load util %}
 
 {% block title %}{% if is_owner %}Users you are following{% else %}Users followed by {{username}}{% endif %}{% endblock %}
 
@@ -10,31 +11,38 @@
 
 <h1>{% if is_owner %}Users that you are following{% else %}Users followed by <a href="{% url account username%}">{{username}}</a>{% endif %}</h1>
 
-
+<div id="content">
+<div class="content_box">
 
 {% if following %}
-<div class="stream_box">
 	<h3>{% if is_owner %}You are{% else %}{{username}} is {% endif %} following {{ following|length }} user{{ following|pluralize }}</h3>	
-
 	<ul>
         {% for user in following %}
 		 	    <div class="followers_page_user_info">
 			        <img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" />
-			        <div class="post_author"><a href="{% url account user.username %}">{{user.username}}</a></div>
+			        <div class="post_author"><a href="{% url account user.username %}">{{user.username|truncate_string:12}}</a></div>
 			        <div class="people_user_info">
 			            {{user.profile.num_sounds}} sound{{user.profile.num_sounds|pluralize}}<br>
 			            {{user.profile.num_posts}} post{{user.profile.num_posts|pluralize}}<br> 
 			        </div>
 		    	</div>
         {% endfor %}
-    </ul>
-</div><!-- #content -->    
+    </ul>  
 {% else %}
-
+	<h3>&nbsp;</h3>
 	<p>{% if is_owner %}You are{% else %}{{username}} is {% endif %} not following any users yet.</p>
-
 {% endif %}
-
+</div>
+</div><!-- #content -->  
+<div id="sidebar">
+<div class="content_box">
+	<h3>More...</h3>
+	<ul>
+	    <li><a href="{% url user-followers username %}">Users following {% if is_owner %}you{% else %}{{username}}{% endif %}</a></li>
+	    <li><a href="{% url user-following-tags username %}">Tags that {% if is_owner %}you are{% else %}{{username}} is{% endif %} following</a></li>
+	</ul>
+</div>
+</div>
 
 <br class="clear" /><!-- Clearing element -->
 

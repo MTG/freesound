@@ -117,6 +117,7 @@
 
                 <div style="clear: both"></div>
 
+                {% if request.user.is_authenticated %}
                 <div id="follow_tags_button_div">
                     {% if show_unfollow_button %}
                         <a href="javascript:void(0)" id="follow_tags_link" onclick="unfollow_tags()"><button id="follow_tags_button">Unfollow tag{{ multiple_tags|pluralize }}</button></a>
@@ -124,6 +125,7 @@
                         <a href="javascript:void(0)" id="follow_tags_link" onclick="follow_tags()"><button id="follow_tags_button">Follow tag{{ multiple_tags|pluralize }}</button></a>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 <div style="clear: both"></div>
 

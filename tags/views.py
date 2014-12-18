@@ -76,7 +76,9 @@ def tags(request, multiple_tags=None):
     if slash_tag:
         follow_tags_url = reverse('follow-tags', args=[slash_tag])
         unfollow_tags_url = reverse('unfollow-tags', args=[slash_tag])
-        show_unfollow_button = follow_utils.is_user_following_tag(request.user, slash_tag)
+        show_unfollow_button = False
+        if request.user.is_authenticated():
+            show_unfollow_button = follow_utils.is_user_following_tag(request.user, slash_tag)
 
     return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
 

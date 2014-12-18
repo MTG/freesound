@@ -97,14 +97,16 @@
 
                 <img src="{{user.profile.locations.avatar.L.url}}" class="account_avatar" />
 
-                {# don't allow a user to follow himself/herself #}
-                {% if user.username != request.user.username  and not show_unfollow_button %}
-                    <a href="javascript:void(0)" id="follow_link" onclick="follow_user()"><button type="button" id="follow_button">Follow</button></a>
-                {% endif %}
+                {% if request.user.is_authenticated %}
+                    {# don't allow a user to follow himself/herself #}
+                    {% if user.username != request.user.username  and not show_unfollow_button %}
+                        <a href="javascript:void(0)" id="follow_link" onclick="follow_user()"><button type="button" id="follow_button">Follow</button></a>
+                    {% endif %}
 
-                {# show unfollow button instead if current page of user is being followed by logged in user already #}
-                {% if show_unfollow_button %}
-                    <a href="javascript:void(0)" id="follow_link" onclick="unfollow_user()"><button type="button" id="follow_button">Unfollow</button></a>
+                    {# show unfollow button instead if current page of user is being followed by logged in user already #}
+                    {% if show_unfollow_button %}
+                        <a href="javascript:void(0)" id="follow_link" onclick="unfollow_user()"><button type="button" id="follow_button">Unfollow</button></a>
+                    {% endif %}
                 {% endif %}
 
                 <div id="follow_user_error_message">An error occurred,<br/> please try again.</div>

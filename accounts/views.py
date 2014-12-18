@@ -806,7 +806,9 @@ def account(request, username):
     unfollow_user_url = reverse('unfollow-user', args=[username])
 
     # true if the logged user is following the user of the current viewed profile page
-    show_unfollow_button = follow_utils.is_user_following_user(request.user, User.objects.get(username=username))
+    show_unfollow_button = False
+    if request.user.is_authenticated():
+        show_unfollow_button = follow_utils.is_user_following_user(request.user, User.objects.get(username=username))
 
     home = False
     has_bookmarks = Bookmark.objects.filter(user=user).exists()

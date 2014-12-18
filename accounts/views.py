@@ -346,17 +346,10 @@ def edit(request):
 
     has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
 
-    hide_stream_emails_field_bool = len(follow_utils.get_users_following(request.user)) == 0 and len(follow_utils.get_tags_following(request.user)) == 0
-    if hide_stream_emails_field_bool:
-        hide_stream_emails_field = "true"
-    else:
-        hide_stream_emails_field = "false"
-
     return render_to_response('accounts/edit.html', dict(profile=profile,
                                                          profile_form=profile_form,
                                                          image_form=image_form,
-                                                         has_granted_permissions=has_granted_permissions,
-                                                         hide_stream_emails_field=hide_stream_emails_field),
+                                                         has_granted_permissions=has_granted_permissions),
                               context_instance=RequestContext(request))
 
 

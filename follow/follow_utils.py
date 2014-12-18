@@ -34,12 +34,12 @@ SOLR_QUERY_LIMIT_PARAM = 3
 
 
 def get_users_following(user):
-    items = FollowingUserItem.objects.filter(user_from=user)
+    items = FollowingUserItem.objects.select_related('user_to__profile').filter(user_from=user)
     return [item.user_to for item in items]
 
 
 def get_users_followers(user):
-    items = FollowingUserItem.objects.filter(user_to=user)
+    items = FollowingUserItem.objects.select_related('user_from__profile').filter(user_to=user)
     return [item.user_from for item in items]
 
 

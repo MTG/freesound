@@ -24,6 +24,7 @@
                 type: 'POST',
                 url: '{{ follow_user_url }}',
                 success: function() {
+                    $("#follow_button").removeAttr("disabled");
                     location.reload();
                 },
                 error: function(data) {
@@ -43,6 +44,7 @@
                 type: 'POST',
                 url: '{{ unfollow_user_url }}',
                 success: function() {
+                    $("#follow_button").removeAttr("disabled");
                     location.reload();
                 },
                 error: function(data) {

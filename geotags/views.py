@@ -26,6 +26,7 @@ from sounds.models import Sound
 from django.views.decorators.cache import cache_page
 from django.contrib.auth.models import User
 import json
+import math
 
 """
 SQL queries in this file are done manually in order to force an INNER JOIN,
@@ -50,7 +51,7 @@ def generate_json(sound_queryset):
     # When using Django Sound queries:
     #sounds_data = [[s.id, s.geotag.lat, s.geotag.lon] for s in sound_queryset]
 
-    sounds_data = [[s.id, s.lat, s.lon] for s in sound_queryset]
+    sounds_data = [[s.id, s.lat, s.lon] for s in sound_queryset if not math.isnan(s.lat) and not math.isnan(s.lon)]
 
     return HttpResponse(json.dumps(sounds_data), mimetype="application/json")
 
@@ -69,9 +70,7 @@ def geotags_json(request, tag=None):
         #sounds = Sound.public.select_related('geotag').all().exclude(geotag=None)
         q = geoquery % {"join": "", "where": "", "end": ""}
         sounds = Sound.objects.raw(q)
-    
-    LIMIT = 10000 # This is just a temporary fix so the map loads. We should use a different strategy to get the sounds (with multiple requests probably) - See Issue #652
-    return generate_json(sounds[0:LIMIT])
+    return generate_json(sounds)
 
 def geotags_box_json(request):    
     box = request.GET.get("box","-180,-90,180,90")

@@ -17,6 +17,15 @@
             $("#share_controls").hide('blind', {}, 500, function() {});
         }
     }
+    
+    function toggleIndicator(){
+        if ($("#indicator").css('display') == 'none'){
+            $("#indicator").show('blind', {}, 500, function() {});
+        }else{
+            $("#indicator").hide('blind', {}, 500, function() {});
+        }
+    }
+
 </script>
 
 {% endblock head %}
@@ -34,6 +43,7 @@
 {% endif %}
 
 <div id="map_canvas" style="width: 910px; height: 600px; border: 1px solid black;"></div>
+<div id="indicator"><img width="12px" height="12px" src="{{ media_url }}images/indicator.gif"/></div>
 {% if for_user or tag %}
     <p>You can also view <a href="{% url geotags %}">all geotags</a></p>
 {% endif %}
@@ -122,6 +132,9 @@
         if (!bounds.isEmpty()) map.fitBounds(bounds);
         var mcOptions = { gridSize: 50, maxZoom: 12 };
         var markerCluster = new MarkerClusterer(map, markers, mcOptions);
+        
+        // Hide loading indicator
+        toggleIndicator();
 
     });
     

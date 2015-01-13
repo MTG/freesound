@@ -69,8 +69,9 @@ def geotags_json(request, tag=None):
         #sounds = Sound.public.select_related('geotag').all().exclude(geotag=None)
         q = geoquery % {"join": "", "where": "", "end": ""}
         sounds = Sound.objects.raw(q)
-
-    return generate_json(sounds)
+    
+    LIMIT = 14000 # This is just a temporary fix so the map loads. We should use a different strategy to get the sounds (with multiple requests probably) - See Issue #652
+    return generate_json(sounds[0:LIMIT])
 
 def geotags_box_json(request):    
     box = request.GET.get("box","-180,-90,180,90")

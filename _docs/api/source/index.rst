@@ -15,7 +15,7 @@ As of June 2014, we have just released a **new version of the Freesound API, API
 The APIv2 brings many new features such as OAuth2 authentication, sound uploads and
 improved search options.
 Take into account that the previous api (APIv1) is **now deprecated**.
-Although it will continue online until the end of 2014, we recommend everyone to port 
+Although it will continue online until May 2015, we recommend everyone to port 
 your existing applications to APIv2 as soon as possible.
 If you have any questions, don't hesitate to post them in our 
 mailing list http://groups.google.com/group/freesound-api.

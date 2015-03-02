@@ -65,7 +65,7 @@ def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=No
 
 def send_mail_template(subject, template, context, email_from=None, email_to=[], reply_to=None):
     context["settings"] = settings
-    return send_mail(subject, render_to_string(template, context), email_from, email_to)
+    return send_mail(subject, render_to_string(template, context), email_from, email_to, reply_to=reply_to)
 
 
 def render_mail_template(template, context):

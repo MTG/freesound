@@ -136,6 +136,13 @@ def post(request, forum_name_slug, thread_id, post_id):
     return HttpResponseRedirect(url)
 
 
+def text_may_be_spam(text):
+    if "http://" in text or "https://" in text: return True
+    if re.search("[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)",  text): return True
+    if re.search("\(|\)|\d{7}",  text): return True # Find consecutive 7 numbers
+    if len(re.sub("[^A-Za-z0-9 ]", "", text, flags=re.UNICODE)) < len(text): return True # If there are non ascii characters in pots, might be spam
+    return False
+
 @login_required
 def reply(request, forum_name_slug, thread_id, post_id=None):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
@@ -174,7 +181,8 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 
         if user_can_post_in_forum[0] and not user_is_blocked_for_spam_reports:
             if form.is_valid():
-                if not request.user.post_set.all().count() and ("http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]): # first post has urls
+                mayBeSpam = text_may_be_spam(form.cleaned_data["body"])
+                if not request.user.post_set.filter(moderation_state="OK").count() and mayBeSpam: # first post has urls
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
                     set_to_moderation = True
@@ -234,12 +242,7 @@ def new_thread(request, forum_name_slug):
         if user_can_post_in_forum[0] and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-                mayBeSpam = False
-                text = form.cleaned_data["body"]
-                if "http://" in form.cleaned_data["body"] or "https://" in form.cleaned_data["body"]: mayBeSpam = True
-                if re.search("[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)",  form.cleaned_data["body"]): mayBeSpam = True
-                if re.search("\(|\)|\d{7}",  form.cleaned_data["body"]): mayBeSpam = True # Find consecutive 7 numbers
-                if len(re.sub("[^A-Za-z0-9 ]", "", form.cleaned_data["body"], flags=re.UNICODE)) < len(form.cleaned_data["body"]): mayBeSpam = True # If there are non ascii characters in pots, might be spam
+                mayBeSpam = text_may_be_spam(form.cleaned_data["body"])
 
                 if not request.user.post_set.filter(moderation_state="OK").count() and mayBeSpam:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")

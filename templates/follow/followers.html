@@ -19,7 +19,7 @@
         {% for user in followers %}
 		 	    <div class="followers_page_user_info">
 			        <img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" />
-			        <div class="post_author"><a href="{% url account user.username %}">{{user.username}}</a></div>
+			        <div class="post_author"><a href="{% url account user.username %}">{{user.username|truncate_string:12}}</a></div>
 			        <div class="people_user_info">
 			            {{user.profile.num_sounds}} sound{{user.profile.num_sounds|pluralize}}<br>
 			            {{user.profile.num_posts}} post{{user.profile.num_posts|pluralize}}<br> 

@@ -22,6 +22,7 @@
 
 from django.http import HttpResponse
 from django.template import RequestContext
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from follow import follow_utils
 from follow.models import FollowingUserItem
@@ -36,6 +37,7 @@ def following_users(request, username):
     is_owner = False
     if request.user.is_authenticated():
         is_owner = request.user.username == username
+    user = get_object_or_404(User, username=username)
     following = follow_utils.get_users_following(User.objects.get(username=username))
     return render_to_response('follow/following_users.html', locals(), context_instance=RequestContext(request))
 

@@ -20,22 +20,39 @@
 #     See AUTHORS file.
 #
 from django.test import TestCase
-from django.contrib.auth.models import User
 from django.test.client import Client
 
-from accounts.models import Profile
 
 class FollowTestCase(TestCase):
+
+    fixtures = ['users.json', 'follow.json']
+
     def setUp(self):
-        self.user = User.objects.create_user("testuser", password="testpass")
-        self.profile = Profile.objects.create(user=self.user, wants_newsletter=True, accepted_tos=True)
         self.client = Client()
 
     def test_following_users(self):
         # If we get following users for someone who exists, OK
-        resp = self.client.get("/people/testuser/following_users/")
+        resp = self.client.get("/people/User1/following_users/")
         self.assertEqual(resp.status_code, 200)
 
         # Someone who doesn't exist should give 404
         resp = self.client.get("/people/nouser/following_users/")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_followers(self):
+        # If we get following users for someone who exists, OK
+        resp = self.client.get("/people/User1/followers/")
+        self.assertEqual(resp.status_code, 200)
+
+        # Someone who doesn't exist should give 404
+        resp = self.client.get("/people/nouser/followers/")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_following_tags(self):
+        # If we get following users for someone who exists, OK
+        resp = self.client.get("/people/User1/following_tags/")
+        self.assertEqual(resp.status_code, 200)
+
+        # Someone who doesn't exist should give 404
+        resp = self.client.get("/people/nouser/following_tags/")
         self.assertEqual(resp.status_code, 404)

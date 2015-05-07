@@ -1,7 +1,7 @@
 {% extends "accounts/_notab.html" %}
 {% load util %}
 
-{% block title %}{% if is_owner %}Users following you{% else %}Users following {{username}}{% endif %}{% endblock %}
+{% block title %}{% if is_owner %}Users following you{% else %}Users following {{ user.username }}{% endif %}{% endblock %}
 
 {% block tab_home_active %}{% if is_owner %}active_tab{% endif %}{% endblock %}
 {% block tab_people_active %}{% if not is_owner %}active_tab{% endif %}{% endblock %}
@@ -9,13 +9,13 @@
 {% block section_content %}
 
 
-<h1>{% if is_owner %}Users following you{% else %}Users following <a href="{% url account username%}">{{username}}</a>{% endif %}</h1>
+<h1>{% if is_owner %}Users following you{% else %}Users following <a href="{% url account user.username %}">{{ user.username }}</a>{% endif %}</h1>
 
 
 <div id="content">
 <div class="content_box">
 {% if followers %}
-	<h3>{% if is_owner %}You have{% else %}{{username}} has {% endif %} {{ followers|length }} follower{{ followers|pluralize }}</h3>	
+	<h3>{% if is_owner %}You have{% else %}{{ user.username }} has {% endif %} {{ followers|length }} follower{{ followers|pluralize }}</h3>
 	<ul>
         {% for user in followers %}
 		 	    <div class="followers_page_user_info">
@@ -30,7 +30,7 @@
     </ul>
 {% else %}
 	<h3>&nbsp;</h3>
-	<p>{% if is_owner %}You have{% else %}{{username}} has {% endif %} no followers yet.</p>
+	<p>{% if is_owner %}You have{% else %}{{ user.username }} has {% endif %} no followers yet.</p>
 {% endif %}
 </div>
 </div><!-- #content -->  
@@ -38,8 +38,8 @@
 <div class="content_box">
 	<h3>More...</h3>
 	<ul>
-	    <li><a href="{% url user-following-users username %}">Users that {% if is_owner %}you are{% else %}{{username}} is{% endif %} following</a></li>
-	    <li><a href="{% url user-following-tags username %}">Tags that {% if is_owner %}you are{% else %}{{username}} is{% endif %} following</a></li>
+	    <li><a href="{% url user-following-users user.username %}">Users that {% if is_owner %}you are{% else %}{{ user.username }} is{% endif %} following</a></li>
+	    <li><a href="{% url user-following-tags user.username %}">Tags that {% if is_owner %}you are{% else %}{{ user.username }} is{% endif %} following</a></li>
 	</ul>
 </div>
 </div>

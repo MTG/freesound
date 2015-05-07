@@ -21,8 +21,7 @@
 #
 
 from django.http import HttpResponse
-from django.template import RequestContext
-from django.shortcuts import get_object_or_404, render, render_to_response
+from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from follow import follow_utils
 from follow.models import FollowingUserItem
@@ -86,17 +85,20 @@ def following_tags(request, username):
 def follow_user(request, username):
     # create following user item relation
     user_from = request.user
-    user_to = User.objects.get(username=username)
-    fui = FollowingUserItem(user_from=user_from, user_to=user_to)
-    fui.save()
+    user_to = get_object_or_404(User, username=username)
+    FollowingUserItem.objects.get_or_create(user_from=user_from, user_to=user_to)
     return HttpResponse()
 
 
 @login_required
 def unfollow_user(request, username):
     user_from = request.user
-    user_to = User.objects.get(username=username)
-    FollowingUserItem.objects.get(user_from=user_from, user_to=user_to).delete()
+    user_to = get_object_or_404(User, username=username)
+    try:
+        FollowingUserItem.objects.get(user_from=user_from, user_to=user_to).delete()
+    except FollowingUserItem.DoesNotExist:
+        # If the relation does not exist we're fine, should have never got to here...
+        pass
     return HttpResponse()
 
 
@@ -104,7 +106,7 @@ def unfollow_user(request, username):
 def follow_tags(request, slash_tags):
     user = request.user
     space_tags = slash_tags.replace("/", " ")
-    FollowingQueryItem(user=user, query=space_tags).save()
+    FollowingQueryItem.objects.get_or_create(user=user, query=space_tags)
     return HttpResponse()
 
 
@@ -112,7 +114,11 @@ def follow_tags(request, slash_tags):
 def unfollow_tags(request, slash_tags):
     user = request.user
     space_tags = slash_tags.replace("/", " ")
-    FollowingQueryItem.objects.get(user=user, query=space_tags).delete()
+    try:
+        FollowingQueryItem.objects.get(user=user, query=space_tags).delete()
+    except FollowingQueryItem.DoesNotExist:
+        # If the relation does not exist we're fine, should have never got to here...
+        pass
     return HttpResponse()
 
 
@@ -157,6 +163,7 @@ def stream(request):
 
     # if first time going into the page, the default is last week
     else:
+        select_value = ''
         date_from = datetime.now() - timedelta(days=SELECT_OPTIONS_DAYS["last_week"])
         date_to = datetime.now()
         time_lapse = follow_utils.build_time_lapse(date_from, date_to)
@@ -170,4 +177,13 @@ def stream(request):
         # Could not connect to solr
         errors_getting_data = True
 
-    return render_to_response('follow/stream.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'SELECT_OPTIONS': SELECT_OPTIONS,
+        'date_to': date_to,
+        'date_from': date_from,
+        'select_value': select_value,
+        'errors_getting_data': errors_getting_data,
+        'users_sounds': users_sounds,
+        'tags_sounds': tags_sounds,
+    }
+    return render(request, 'follow/stream.html', tvars)

@@ -19,10 +19,13 @@
 #
 
 from django.conf import settings
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, render
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
+
+import sounds
+
 from datetime import datetime
 import forms
 import logging
@@ -225,11 +228,20 @@ def search(request):
         logger.error("Could probably not connect to Solr - %s" % e)
         error = True
         error_text = 'The search server could not be reached, please try again later.'
-    
+
+    docs = results.docs
+    resultids = [d.get("id") for d in docs]
+    resultsounds = sounds.models.Sound.objects.filter(id__in=resultids).select_related("user", "pack", "license", "geotag", "tags").prefetch_related("remix_group")
+    allsounds = {}
+    for s in resultsounds:
+        allsounds[s.id] = s
+    for d in docs:
+        d["sound"] = allsounds[d["id"]]
+
     if request.GET.get("ajax", "") != "1":
-        return render_to_response('search/search.html', locals(), context_instance=RequestContext(request))
+        return render(request, 'search/search.html', locals())
     else:
-        return render_to_response('search/search_ajax.html', locals(), context_instance = RequestContext(request))
+        return render_to_response('search/search_ajax.html', locals(), context_instance=RequestContext(request))
 
 def search_forum(request):
     search_query = request.GET.get("q", "")

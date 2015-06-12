@@ -1,9 +1,27 @@
 [
     {
+        "pk": 1,
+        "model": "auth.user",
+        "fields": {
+            "username": "User1",
+            "first_name": "",
+            "last_name": "",
+            "is_active": true,
+            "is_superuser": true,
+            "is_staff": true,
+            "last_login": "2010-10-13 15:46:20",
+            "groups": [],
+            "user_permissions": [],
+            "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
+            "email": "anon@xmpl.org",
+            "date_joined": "2005-02-07 16:42:00"
+        }
+    },
+    {
         "pk": 2, 
         "model": "auth.user", 
         "fields": {
-            "username": "Bram", 
+            "username": "User2",
             "first_name": "", 
             "last_name": "", 
             "is_active": true, 
@@ -16,5 +34,59 @@
             "email": "anon@xmpl.org", 
             "date_joined": "2005-02-07 16:42:00"
         }
+    },
+    {
+          "pk": 3,
+          "model": "auth.user",
+          "fields": {
+              "username": "User3",
+              "first_name": "",
+              "last_name": "",
+              "is_active": true,
+              "is_superuser": false,
+              "is_staff": false,
+              "last_login": "2010-10-13 15:46:20",
+              "groups": [],
+              "user_permissions": [],
+              "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
+              "email": "anon@xmpl.org",
+              "date_joined": "2005-02-07 16:42:00"
+          }
+    },
+    {
+          "pk": 4,
+          "model": "auth.user",
+          "fields": {
+              "username": "User4",
+              "first_name": "",
+              "last_name": "",
+              "is_active": true,
+              "is_superuser": false,
+              "is_staff": false,
+              "last_login": "2010-10-13 15:46:20",
+              "groups": [],
+              "user_permissions": [],
+              "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
+              "email": "anon@xmpl.org",
+              "date_joined": "2005-02-07 16:42:00"
+          }
+    },
+    {
+          "pk": 5,
+          "model": "auth.user",
+          "fields": {
+              "username": "User5",
+              "first_name": "",
+              "last_name": "",
+              "is_active": true,
+              "is_superuser": false,
+              "is_staff": false,
+              "last_login": "2010-10-13 15:46:20",
+              "groups": [],
+              "user_permissions": [],
+              "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
+              "email": "anon@xmpl.org",
+              "date_joined": "2005-02-07 16:42:00"
+          }
     }
 ]

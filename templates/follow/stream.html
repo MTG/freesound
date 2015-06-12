@@ -1,12 +1,7 @@
 {% extends "base.html" %}
-
 {% load display_sound %}
-
 {% block title %}Activity stream{% endblock title %}
-
 {% block tab_home_active %}active_tab{% endblock %}
-
-
 {% block content %}
 
     <script type="text/javascript">
@@ -35,9 +30,7 @@
             $("#date_from").datepicker({
                 showOn: "button",
                 buttonImage: "/media/images/calendar.gif",
-                // buttonImage: "{{ MEDIA_URL }}images/calendar.gif",
                 buttonImageOnly: true,
-                //defaultDate: "-1w",
                 dateFormat: "yy-mm-dd",
                 changeYear: true,
                 minDate: new Date(2005, 1 - 1, 1),
@@ -49,12 +42,10 @@
             });
 
             $("#date_to").datepicker({
-                //defaultDate: 0,
                 showOn: "button",
                 buttonImage: "/media/images/calendar.gif",
                 buttonImageOnly: true,
                 dateFormat: "yy-mm-dd",
-                // changeMonth: true,
                 changeYear: true,
                 minDate: new Date(2005, 1 - 1, 1),
                 maxDate: 0, // for today
@@ -87,7 +78,6 @@
             <input id="date_to" name="date_to" type="text"/>
         </div>
 
-        {% comment %}<input type="submit" id="date_submit" style="margin-left:20px" value="Go!"/>{% endcomment %}
         <input type="submit" id="date_submit" value="Go!"/>
     </form>
 

@@ -1,0 +1,65 @@
+[
+    {
+        "pk": 1,
+        "model": "follow.followinguseritem",
+        "fields": {
+            "user_to": 2,
+            "user_from": 3,
+            "created": "2015-05-06T16:56:09.523"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "follow.followinguseritem",
+        "fields": {
+            "user_to": 2,
+            "user_from": 4,
+            "created": "2015-05-06T16:56:11.310"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "follow.followinguseritem",
+        "fields": {
+            "user_to": 2,
+            "user_from": 5,
+            "created": "2015-05-06T16:56:13.145"
+        }
+    },
+    {
+        "pk": 4,
+        "model": "follow.followinguseritem",
+        "fields": {
+            "user_to": 4,
+            "user_from": 2,
+            "created": "2015-05-06T16:57:02.795"
+        }
+    },
+    {
+        "pk": 5,
+        "model": "follow.followinguseritem",
+        "fields": {
+            "user_to": 3,
+            "user_from": 2,
+            "created": "2015-05-07T16:37:25.442"
+        }
+    },
+    {
+        "pk": 4,
+        "model": "follow.followingqueryitem",
+        "fields": {
+            "query": "field-recording",
+            "user": 2,
+            "created": "2015-05-07T17:01:50.734"
+        }
+    },
+    {
+        "pk": 5,
+        "model": "follow.followingqueryitem",
+        "fields": {
+            "query": "field-recording binaural",
+            "user": 2,
+            "created": "2015-05-07T17:02:02.294"
+        }
+    }
+]

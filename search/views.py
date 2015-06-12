@@ -205,7 +205,16 @@ def search(request):
         non_grouped_number_of_results = results.non_grouped_number_of_matches
         page = paginator.page(current_page)
         error = False
-       
+
+        docs = results.docs
+        resultids = [d.get("id") for d in docs]
+        resultsounds = sounds.models.Sound.objects.filter(id__in=resultids).select_related("user", "pack", "license", "geotag", "tags").prefetch_related("remix_group")
+        allsounds = {}
+        for s in resultsounds:
+            allsounds[s.id] = s
+        for d in docs:
+            d["sound"] = allsounds[d["id"]]
+
         # clickusage tracking           
         if settings.LOG_CLICKTHROUGH_DATA:
             request_full_path = request.get_full_path()
@@ -228,15 +237,6 @@ def search(request):
         logger.error("Could probably not connect to Solr - %s" % e)
         error = True
         error_text = 'The search server could not be reached, please try again later.'
-
-    docs = results.docs
-    resultids = [d.get("id") for d in docs]
-    resultsounds = sounds.models.Sound.objects.filter(id__in=resultids).select_related("user", "pack", "license", "geotag", "tags").prefetch_related("remix_group")
-    allsounds = {}
-    for s in resultsounds:
-        allsounds[s.id] = s
-    for d in docs:
-        d["sound"] = allsounds[d["id"]]
 
     if request.GET.get("ajax", "") != "1":
         return render(request, 'search/search.html', locals())

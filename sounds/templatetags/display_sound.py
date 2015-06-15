@@ -40,9 +40,13 @@ def display_sound(context, sound):
         except Sound.DoesNotExist:
             sound_obj = None
 
+    sound_tags = []
+    if sound_obj is not None:
+        sound_tags = sound_obj.tags.select_related("tag").all()[0:12]
+
     return { 'sound_id':     sound_id,
              'sound':        sound_obj,
-             'sound_tags':   sound_obj.tags.select_related("tag").all()[0:12],
+             'sound_tags':   sound_tags,
              'do_log':       settings.LOG_CLICKTHROUGH_DATA,
              'media_url':    context['media_url'],
              'request':      context['request']

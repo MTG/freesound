@@ -10,19 +10,15 @@
 <h1>Sounds downloaded by <a href="{% url account username %}">{{ username }}</a></h1>
 
 {% if paginator.count > 0 %}
-    
+
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "sound" %}
     </div>
 
-	{% for download_item in page.object_list %}
-		{% if download_item.sound %}
-			{% with download_item.sound as sound %}
-        		{% display_sound sound %}
-        	{% endwith %}
-        {% endif %}
+	{% for sound in sounds %}
+        {% display_sound sound %}
     {% endfor %}
-    
+
 	{% comment %}
 	{% regroup page.object_list by created|date:"F jS, Y" as downloads %}
 	{% for group in downloads %}
@@ -37,12 +33,12 @@
 		{% endfor %}
 	{% endfor %}
 	{% endcomment %}
-	
+
 	<br>
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "sound" %}
     </div>
-    
+
 {% else %}
     <p>{{ username }} hasn't downloaded any sounds yet...</p>
 {% endif %}

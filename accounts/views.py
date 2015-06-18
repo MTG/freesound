@@ -32,7 +32,7 @@ from django.db.models import Count, Max
 from django.http import HttpResponseRedirect, HttpResponse, \
     HttpResponseBadRequest, HttpResponseNotFound, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, HttpRequest
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, render
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 from forum.models import Post
@@ -95,7 +95,7 @@ def bulk_license_change(request):
         if form.is_valid():
             license = form.cleaned_data['license']
             Sound.objects.filter(user=request.user).update(license=license, is_index_dirty=True)
-            
+
             # update old license flag
             Profile.objects.filter(user=request.user).update(has_old_license=False)
             # update cache
@@ -150,7 +150,7 @@ def activate_user2(request, username, hash):
         return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
     user.is_active = True
     user.save()
-    
+
     return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
 
 def send_activation(user):
@@ -230,7 +230,7 @@ def home(request):
     # TODO: This might show a pack each time for each sound in it
     unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
     packs_without_sounds = Pack.objects.select_related().filter(user=user).filter(num_sounds=0)
-    
+
     # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10].exists()
     google_api_key = settings.GOOGLE_API_KEY
@@ -374,7 +374,7 @@ def describe(request):
         if ask_for_interface:
             if request.POST.get('participate_in_experiment', 'no') == 'yes':
                 request.session['use_alternative_interface'] = True
-        
+
         if form.is_valid():
             if "delete" in request.POST: # If delete button is pressed
                 filenames = [files[x].name for x in form.cleaned_data["files"]]
@@ -659,7 +659,7 @@ def describe_sounds(request):
             audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
         for p in dirty_packs:
             p.process()
-                            
+
         if len(request.session['describe_sounds']) <= 0:
             if len(sounds_to_describe) != n_sounds_already_part_of_freesound:
                 msg = 'You have described all the selected files and are now awaiting processing and moderation. ' \
@@ -703,9 +703,22 @@ def attribution(request):
 
 
 def downloaded_sounds(request, username):
-    user=get_object_or_404(User, username__iexact=username)
-    qs = Download.objects.filter(user=user.id, sound__isnull=False)
-    return render_to_response('accounts/downloaded_sounds.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
+    user = get_object_or_404(User, username__iexact=username)
+    qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
+
+    paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    page = paginator["page"]
+
+    sound_ids = [d.sound_id for d in page]
+    sounds = Sound.objects.filter(id__in=sound_ids).select_related("pack", "user", "license")
+
+    tvars = {"username": username,
+             "user": user,
+             "sounds": sounds
+            }
+    tvars.update(paginator)
+
+    return render(request, 'accounts/downloaded_sounds.html', tvars)
 
 def downloaded_packs(request, username):
     user=get_object_or_404(User, username__iexact=username)
@@ -911,7 +924,7 @@ def delete(request):
     encrypted_string = request.GET.get("user", None)
 
     waited_too_long = False
-    
+
     num_sounds = request.user.sounds.all().count()
 
     if encrypted_string != None:
@@ -927,17 +940,17 @@ def delete(request):
                 from forum.models import Post, Thread
                 from comments.models import Comment
                 from sounds.models import DeletedSound
-            
+
                 deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
-            
+
                 for post in Post.objects.filter(author=request.user):
                     post.author = deleted_user
                     post.save()
-                
+
                 for thread in Thread.objects.filter(author=request.user):
                     thread.author = deleted_user
                     thread.save()
-                    
+
                 for comment in Comment.objects.filter(user=request.user):
                     comment.user = deleted_user
                     comment.save()

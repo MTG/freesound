@@ -353,7 +353,7 @@
             </div>
 
             {% for result in docs %}
-                {% display_sound result.sound %}
+                {% display_raw_sound result.sound %}
 
                 {% if result.more_from_pack %}
                         {% comment %}<div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='javascript:addFilter("pack", "{{result.pack_name|escapejs}}")'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>{% endcomment %}

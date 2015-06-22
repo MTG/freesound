@@ -195,9 +195,9 @@ def search(request):
                                  original_filename_weight,
                                  grouping = actual_groupnig
                                  )
-    
-    solr = Solr(settings.SOLR_URL) 
-        
+
+    solr = Solr(settings.SOLR_URL)
+
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
@@ -208,14 +208,14 @@ def search(request):
 
         docs = results.docs
         resultids = [d.get("id") for d in docs]
-        resultsounds = sounds.models.Sound.objects.filter(id__in=resultids).select_related("user", "pack", "license", "geotag", "tags").prefetch_related("remix_group")
+        resultsounds = sounds.models.Sound.objects.bulk_query(resultids)
         allsounds = {}
         for s in resultsounds:
             allsounds[s.id] = s
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
-        # clickusage tracking           
+        # clickusage tracking
         if settings.LOG_CLICKTHROUGH_DATA:
             request_full_path = request.get_full_path()
             # The session id of an unauthenticated user is different from the session id of the same user when
@@ -251,56 +251,56 @@ def search_forum(request):
     except ValueError:
         current_page = 1
     current_forum_name_slug = request.GET.get("current_forum_name_slug", "").strip()    # for context sensitive search
-    current_forum_name = request.GET.get("current_forum_name", "").strip()              # used in breadcrumb  
+    current_forum_name = request.GET.get("current_forum_name", "").strip()              # used in breadcrumb
     sort = ["thread_created asc"]
-    
+
     # Parse advanced search options
     advanced_search = request.GET.get("advanced_search", "")
     date_from = request.GET.get("dt_from", "")
     date_to = request.GET.get("dt_to", "")
-    
+
     # TEMPORAL WORKAROUND!!! to prevent using watermark as the query for forum search.. (in only happens in some situations)
     if "search in " in search_query :
         invalid = 1
-    
+
     if search_query.strip() != "":
         # add current forum
         if current_forum_name_slug.strip() != "":
             filter_query =  "forum_name_slug:" + current_forum_name_slug
-            
+
         # add date range
         if advanced_search == "1" and date_from != "" or date_to != "":
             filter_query = __add_date_range(filter_query, date_from, date_to)
-        
+
         query = SolrQuery()
         query.set_dismax_query(search_query, query_fields=[("thread_title", 4), ("post_body",3), ("thread_author",3), ("forum_name",2)])
         query.set_highlighting_options_default(field_list=["post_body"],
-                                               fragment_size=200, 
+                                               fragment_size=200,
                                                alternate_field="post_body", # TODO: revise this param
-                                               require_field_match=False, 
-                                               pre="<strong>", 
+                                               require_field_match=False,
+                                               pre="<strong>",
                                                post="</strong>")
         query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE,
-                                rows=settings.SOUNDS_PER_PAGE, 
-                                field_list=["id", 
+                                rows=settings.SOUNDS_PER_PAGE,
+                                field_list=["id",
                                             "forum_name",
                                             "forum_name_slug",
-                                            "thread_id", 
-                                            "thread_title", 
+                                            "thread_id",
+                                            "thread_title",
                                             "thread_author",
-                                            "thread_created", 
+                                            "thread_created",
                                             "post_body",
                                             "post_author",
-                                            "post_created", 
+                                            "post_created",
                                             "num_posts"],
-                                filter_query=filter_query, 
+                                filter_query=filter_query,
                                 sort=sort)
-        
+
         query.set_group_field("thread_title_grouped")
         query.set_group_options(group_limit=3)
-        
-        solr = Solr(settings.SOLR_FORUM_URL) 
-        
+
+        solr = Solr(settings.SOLR_FORUM_URL)
+
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
@@ -317,7 +317,7 @@ def search_forum(request):
             error_text = 'The search server could not be reached, please try again later.'
     else:
         results = []
-    
+
     return render_to_response('search/search_forum.html', locals(), context_instance=RequestContext(request))
 
 
@@ -349,9 +349,9 @@ def get_pack_tags(pack_obj):
 def __add_date_range(filter_query, date_from, date_to):
     if filter_query != "":
         filter_query += " "
-    
+
     filter_query += "thread_created:["
     date_from = date_from + "T00:00:00Z" if date_from != "" else "*"
     date_to = date_to + "T00:00:00Z]" if date_to != "" else "*]"
-    
+
     return filter_query + date_from + " TO " + date_to

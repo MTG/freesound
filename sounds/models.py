@@ -97,6 +97,41 @@ class SoundManager(models.Manager):
             return None
 
 
+    def bulk_query(self, sound_id):
+        query = """SELECT
+          auth_user.username,
+          sound.id,
+          sound.user_id,
+          sound.original_filename,
+          sound.avg_rating,
+          sound.description,
+          sound.moderation_state,
+          sound.processing_state,
+          sound.created,
+          sound.num_downloads,
+          sound.num_comments,
+          sound.pack_id,
+          sounds_pack.name as pack_name,
+          sound.license_id,
+          sounds_license.name as license_name,
+          sound.geotag_id,
+          sounds_remixgroup_sounds.id as remixgroup,
+          ARRAY(
+            SELECT tags_tag.name
+            FROM tags_tag
+            LEFT JOIN tags_taggeditem ON tags_taggeditem.object_id = sound.id
+          WHERE tags_tag.id = tags_taggeditem.tag_id
+           AND tags_taggeditem.content_type_id=20) AS tag_array
+        FROM
+          sounds_sound sound
+          LEFT JOIN auth_user ON auth_user.id = sound.user_id
+          LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
+          LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT OUTER JOIN sounds_remixgroup_sounds
+               ON sounds_remixgroup_sounds.sound_id = sound.id
+        WHERE sound.id IN (%s)"""
+        return self.raw(query, [sound_id])
+
 class PublicSoundManager(models.Manager):
     """ a class which only returns public sounds """
     def get_query_set(self):
@@ -219,7 +254,7 @@ class Sound(SocialModel):
                         path = os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
                         url = settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
                         filename = "%d_%d-lq.ogg" % (self.id, sound_user_id),
-                        # Refer to comments in mp3.url_alt 
+                        # Refer to comments in mp3.url_alt
                         url_alt = settings.PREVIEWS_URL.replace("previews","previews_alt") + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id)
                     ),
                 )
@@ -372,7 +407,7 @@ class Sound(SocialModel):
         field_names = ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']
         field_values = [[field, info[field] if info[field] is not None else "null", False] for field in field_names]
         self.set_fields(field_values)
-    
+
     def compute_crc(self):
         p = subprocess.Popen(["crc32",self.locations('path')],stdout=subprocess.PIPE)
         self.crc= p.communicate()[0].split(" ")[0][:-1]
@@ -407,15 +442,15 @@ def on_delete_sound(sender,instance, **kwargs):
         except User.DoesNotExist:
             deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
             DeletedSound.objects.get_or_create(sound_id=instance.id, user=deleted_user)
-        
-    try:            
+
+    try:
         if instance.geotag:
             instance.geotag.delete()
     except:
         pass
     if instance.pack:
         instance.pack.process()
-    
+
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)
     if instance.similarity_state=='OK':
@@ -424,7 +459,7 @@ def on_delete_sound(sender,instance, **kwargs):
         		Similarity.delete(instance.id)
 	except:
 		web_logger.warn("ommitting similarity deletion for deleted sound %d"%instance.id)
-		
+
     web_logger.debug("Deleted sound with id %i"%instance.id)
 
 post_delete.connect(on_delete_sound, sender=Sound)
@@ -432,7 +467,7 @@ post_delete.connect(on_delete_sound, sender=Sound)
 def recreate_pack(sender,instance,**kwargs):
     if instance.moderation_state=="OK" and instance.pack:
         instance.pack.process()
- 
+
 post_save.connect(recreate_pack, sender=Sound)
 
 def set_dirty(sender,instance,**kwargs):
@@ -486,7 +521,7 @@ class Pack(SocialModel):
             self.last_updated = sounds[0].created
         self.create_license_file()
         self.save()
-    
+
     def create_license_file(self):
         """ Create a license file containing the licenses of all sounds in the
             pack, and update the pack license_crc field, but DO NOT save the pack
@@ -502,7 +537,7 @@ class Pack(SocialModel):
              f.close()
              p = subprocess.Popen(["crc32",license_path],stdout=subprocess.PIPE)
              self.license_crc = p.communicate()[0].split(" ")[0][:-1]
-    
+
     def get_random_sound_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK").order_by('?')[0:1]
         return pack_sounds[0]
@@ -522,7 +557,7 @@ class Pack(SocialModel):
     def remove_sounds_from_pack(self):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
         self.process()
-  
+
     def delete(self):
         """ This deletes all sounds in the pack as well. """
         # TODO: remove from solr?
@@ -574,7 +609,7 @@ class RemixGroup(models.Model):
     protovis_data = models.TextField(null=True, blank=True, default=None)
     # facilitate recreating the remixgroup
     # FIXME: temp commented to not fuckup the deployment in tabasco
-    # networkx_data = models.TextField(null=True, blank=True, default=None)   
+    # networkx_data = models.TextField(null=True, blank=True, default=None)
 
     sounds = models.ManyToManyField(Sound,
                                     symmetrical=False,

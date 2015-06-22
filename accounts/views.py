@@ -710,7 +710,7 @@ def downloaded_sounds(request, username):
     page = paginator["page"]
 
     sound_ids = [d.sound_id for d in page]
-    sounds = Sound.objects.filter(id__in=sound_ids).select_related("pack", "user", "license")
+    sounds = Sound.objects.bulk_query(sound_ids)
 
     tvars = {"username": username,
              "user": user,

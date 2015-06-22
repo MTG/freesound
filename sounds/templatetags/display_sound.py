@@ -51,3 +51,15 @@ def display_sound(context, sound):
              'media_url':    context['media_url'],
              'request':      context['request']
            }
+
+@register.inclusion_tag('sounds/display_raw_sound.html', takes_context=True)
+def display_raw_sound(context, sound):
+    sound_id = sound.id
+
+    return { 'sound_id':     sound_id,
+             'sound':        sound,
+             'sound_tags':   sound.tag_array,
+             'do_log':       settings.LOG_CLICKTHROUGH_DATA,
+             'media_url':    context['media_url'],
+             'request':      context['request']
+           }

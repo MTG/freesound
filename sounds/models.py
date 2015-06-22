@@ -97,25 +97,28 @@ class SoundManager(models.Manager):
             return None
 
 
-    def bulk_query(self, sound_id):
+    def bulk_query(self, sound_ids):
         query = """SELECT
           auth_user.username,
           sound.id,
+          sound.type,
           sound.user_id,
           sound.original_filename,
           sound.avg_rating,
           sound.description,
           sound.moderation_state,
           sound.processing_state,
+          sound.similarity_state,
           sound.created,
           sound.num_downloads,
           sound.num_comments,
           sound.pack_id,
+          sound.duration,
           sounds_pack.name as pack_name,
           sound.license_id,
           sounds_license.name as license_name,
           sound.geotag_id,
-          sounds_remixgroup_sounds.id as remixgroup,
+          sounds_remixgroup_sounds.id as remixgroup_id,
           ARRAY(
             SELECT tags_tag.name
             FROM tags_tag
@@ -129,8 +132,10 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE sound.id IN (%s)"""
-        return self.raw(query, [sound_id])
+        WHERE sound.id = ANY(%s)"""
+        if not isinstance(sound_ids, list):
+            sound_ids = [sound_ids]
+        return self.raw(query, (sound_ids, ))
 
 class PublicSoundManager(models.Manager):
     """ a class which only returns public sounds """

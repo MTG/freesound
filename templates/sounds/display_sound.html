@@ -7,9 +7,8 @@
     If you change this cache index, be sure to change the invalidation in
     ratings/views.py as well
 {% endcomment %}
-{% cache 43200 display_sound sound_id request.user.is_authenticated sound.0.processing_state sound.0.moderation_state %}
+{% cache 43200 display_sound sound_id request.user.is_authenticated sound.processing_state sound.moderation_state %}
 
-{% with sound.0 as sound %}
 <div class="sample_player_small" id="{{ sound_id }}">
 
     <div class="sample_player">
@@ -115,7 +114,7 @@
                 <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to the pack: {{ sound.pack.name }}" />
             </a>
             {% endif %}
-            {% if sound.remix_group.all.count %}
+            {% if sound.remix_group.exists %}
              <a class="remixes" href="{% url sound-remixes sound.user.username sound.id %}">
                 <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
             </a>
@@ -144,7 +143,6 @@
 
     </div><!-- .sample_information -->
 </div><!-- .sample_player_small -->
-{% endwith %}
 
 {% endcache %}
 

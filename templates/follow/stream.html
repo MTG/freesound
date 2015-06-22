@@ -104,7 +104,7 @@
 
                     <div class="stream-left">
                         {% for sound_obj in sound_objs %}
-                            {% display_sound sound_obj.id %}
+                            {% display_sound sound_obj %}
                         {% endfor %}
                         {% if more_count > 0 %}
                            <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
@@ -142,7 +142,7 @@
 
                     <div class="stream-left">
                         {% for sound_obj in sound_objs %}
-                            {% display_sound sound_obj.id %}
+                            {% display_sound sound_obj %}
                         {% endfor %}
                         {% if more_count > 0 %}
                            <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>

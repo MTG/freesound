@@ -35,7 +35,7 @@ from django.db import connection, transaction
 from django.db.models import Count, Max, Q
 from django.http import HttpResponseRedirect, Http404, HttpResponse, \
     HttpResponsePermanentRedirect
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, render
 from django.template import RequestContext
 from forum.models import Post, Thread
 from freesound.freesound_exceptions import PermissionDenied
@@ -57,11 +57,14 @@ from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
+import collections
 import datetime
 import time
 import logging
 import json
 import os
+from operator import itemgetter
+import itertools
 from follow import follow_utils
 
 logger = logging.getLogger('web')
@@ -107,13 +110,13 @@ def sounds(request):
                             .order_by("-num_d")[0:5]
 
     #packs = []
-    popular_packs = []                              
+    popular_packs = []
     for pack in packs:
         pack_obj = Pack.objects.select_related().get(id=pack['pack_id'])
         popular_packs.append({'pack': pack_obj,
                               'num_d': pack['num_d']
                               })
-    
+
     random_sound = get_random_sound()
     random_uploader = get_random_uploader()
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
@@ -240,10 +243,10 @@ def sound(request, username, sound_id):
 def sound_download(request, username, sound_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
-                                                    reverse("sound", args=[username, sound_id])))   
+                                                    reverse("sound", args=[username, sound_id])))
     if settings.LOG_CLICKTHROUGH_DATA:
         click_log(request,click_type='sounddownload',sound_id=sound_id)
-    
+
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
@@ -266,10 +269,10 @@ def pack_download(request, username, pack_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
-        
+
     if settings.LOG_CLICKTHROUGH_DATA:
         click_log(request,click_type='packdownload',pack_id=pack_id)
-        
+
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
@@ -321,7 +324,7 @@ def sound_edit(request, username, sound_id):
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
-            
+
             # also update any possible related sound ticket
             tickets = Ticket.objects.filter(content__object_id=sound.id,
                                             source=TICKET_SOURCE_NEW_SOUND) \
@@ -373,10 +376,10 @@ def sound_edit(request, username, sound_id):
 
     if is_selected("geotag"):
         geotag_form = GeotaggingForm(request.POST, prefix="geotag")
-        
+
         if geotag_form.is_valid():
             data = geotag_form.cleaned_data
-            
+
             if data["remove_geotag"]:
                 if sound.geotag:
                     geotag = sound.geotag.delete()
@@ -393,7 +396,7 @@ def sound_edit(request, username, sound_id):
                     sound.mark_index_dirty()
 
             invalidate_sound_cache(sound)
-            
+
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -409,7 +412,7 @@ def sound_edit(request, username, sound_id):
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license})
-    
+
     google_api_key = settings.GOOGLE_API_KEY
 
     return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
@@ -496,7 +499,7 @@ def sound_edit_sources(request, username, sound_id):
         if form.is_valid():
             form.save()
             # FIXME: temp solution to not fuckup the deployment in tabasco
-            # remix_group = RemixGroup.objects.filter(sounds=sound) 
+            # remix_group = RemixGroup.objects.filter(sounds=sound)
             # if remix_group:
             #     __recalc_remixgroup(remix_group[0], sound)
         else:
@@ -514,12 +517,12 @@ def __recalc_remixgroup(remixgroup, sound):
     data = json.loads(remixgroup.networkx_data)
     dg.add_nodes_from(data['nodes'])
     dg.add_edges_from(data['edges'])
-    
+
     # print "========= NODES =========="
     print dg.nodes()
     # print "========= EDGES =========="
     print dg.edges()
-    
+
     # add new nodes/edges (sources in this case)
     for source in sound.sources.all():
         if source.id not in dg.successors(sound.id) \
@@ -529,13 +532,13 @@ def __recalc_remixgroup(remixgroup, sound):
             remix_group = RemixGroup.objects.filter(sounds=source)
             if remix_group:
                 dg = __nested_remixgroup(dg, remix_group[0])
-            
+
     try:
         # remove old nodes/edges
         for source in dg.successors(sound.id):
             if source not in [s.id for s in sound.sources.all()]:
                 dg.remove_node(source) # TODO: check if edges are removed automatically
-        
+
         # create and save the modified remixgroup
         dg = _create_nodes(dg)
         print "============ NODES AND EDGES =============="
@@ -543,7 +546,7 @@ def __recalc_remixgroup(remixgroup, sound):
         print dg.edges()
         _create_and_save_remixgroup(dg, remixgroup)
     except Exception, e:
-        logger.warning(e)    
+        logger.warning(e)
 
 def __nested_remixgroup(dg1, remix_group):
     print "============= nested remix_group ================ \n"
@@ -551,7 +554,7 @@ def __nested_remixgroup(dg1, remix_group):
     data = json.loads(remix_group.networkx_data)
     dg2.add_nodes_from(data['nodes'])
     dg2.add_edges_from(data['edges'])
-        
+
     print "========== MERGED GROUP NODES: " + str(dg1.nodes())
 
     # FIXME: this combines the graphs correctly
@@ -617,7 +620,7 @@ def pack(request, username, pack_id):
     # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
     pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None).exists()
     google_api_key = settings.GOOGLE_API_KEY
-    
+
     if num_sounds_ok == 0 and pack.num_sounds != 0:
         messages.add_message(request, messages.INFO, 'The sounds of this pack have <b>not been moderated</b> yet.')
     else :
@@ -660,7 +663,7 @@ def for_user(request, username):
 
 
 @login_required
-def delete(request, username, sound_id):    
+def delete(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
         raise Http404
@@ -758,20 +761,42 @@ def embed_iframe(request, sound_id, player_size):
 
 def downloaders(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
-    
+
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(sound=sound_id)
-    return render_to_response('sounds/downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=sound.num_downloads), locals()), context_instance=RequestContext(request))
+
+    pagination = paginate(request, qs, 32, object_count=sound.num_downloads)
+    page = pagination["page"]
+
+    # Get all users+profiles for the user ids
+    sounds = list(page)
+    userids = [s.user_id for s in sounds]
+    users = User.objects.filter(pk__in=userids).select_related("profile")
+    user_map = {}
+    for u in users:
+        user_map[u.id] = u
+
+    download_list = []
+    for s in page:
+        download_list.append({"created":s.created, "user": user_map[s.user_id]})
+    download_list = sorted(download_list, key=itemgetter("created"), reverse=True)
+
+    tvars = {"sound": sound,
+             "username": username,
+             "download_list": download_list}
+    tvars.update(pagination)
+
+    return render(request, 'sounds/downloaders.html', tvars)
 
 def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id = pack_id)
-    
+
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
     return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()), context_instance=RequestContext(request))
 
 def click_log(request,click_type=None, sound_id="", pack_id="" ):
-    
+
     searchtime_session_key = request.session.get("searchtime_session_key", "")
     authenticated_session_key = ""
     if request.user.is_authenticated():

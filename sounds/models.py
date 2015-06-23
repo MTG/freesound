@@ -96,8 +96,7 @@ class SoundManager(models.Manager):
         else:
             return None
 
-
-    def bulk_query(self, sound_ids):
+    def bulk_query(self, where, order_by, limit, args):
         query = """SELECT
           auth_user.username,
           sound.id,
@@ -132,10 +131,27 @@ class SoundManager(models.Manager):
           LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
-        WHERE sound.id = ANY(%s)"""
+        WHERE %s """ % (where, )
+        if order_by:
+            query = "%s ORDER BY %s" % (query, order_by)
+        if limit:
+            query = "%s LIMIT %s" % (query, limit)
+        return self.raw(query, args)
+
+    def bulk_sounds_for_user(self, user_id, limit=None):
+        where = """sound.moderation_state = 'OK'
+            AND sound.processing_state = 'OK'
+            AND sound.user_id = %s"""
+        order_by = "sound.created DESC"
+        if limit:
+            limit = str(limit)
+        return self.bulk_query(where, order_by, limit, (user_id, ))
+
+    def bulk_query_id(self, sound_ids):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]
-        return self.raw(query, (sound_ids, ))
+        where = "sound.id = ANY(%s)"
+        return self.bulk_query(where, "", "", (sound_ids, ))
 
 class PublicSoundManager(models.Manager):
     """ a class which only returns public sounds """

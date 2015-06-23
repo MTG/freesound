@@ -710,7 +710,7 @@ def downloaded_sounds(request, username):
     page = paginator["page"]
 
     sound_ids = [d.sound_id for d in page]
-    sounds = Sound.objects.bulk_query(sound_ids)
+    sounds = Sound.objects.bulk_query_id(sound_ids)
 
     tvars = {"username": username,
              "user": user,
@@ -808,7 +808,7 @@ def account(request, username):
         raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = list(user.profile.get_tagcloud() if user.profile else [])
-    latest_sounds = Sound.public.filter(user=user).select_related('license', 'pack', 'geotag', 'user', 'user__profile')[0:settings.SOUNDS_PER_PAGE]
+    latest_sounds = Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE)
     latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY

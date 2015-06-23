@@ -208,7 +208,7 @@ def search(request):
 
         docs = results.docs
         resultids = [d.get("id") for d in docs]
-        resultsounds = sounds.models.Sound.objects.bulk_query(resultids)
+        resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
         allsounds = {}
         for s in resultsounds:
             allsounds[s.id] = s

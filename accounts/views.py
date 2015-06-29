@@ -712,7 +712,7 @@ def downloaded_sounds(request, username):
     page = paginator["page"]
 
     sound_ids = [d.sound_id for d in page]
-    sounds = Sound.objects.bulk_query_id(sound_ids)
+    sounds = Sound.objects.ordered_ids(sound_ids)
 
     tvars = {"username": username,
              "user": user,

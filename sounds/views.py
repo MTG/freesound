@@ -616,7 +616,15 @@ def pack(request, username, pack_id):
             raise Http404
     except Pack.DoesNotExist:
         raise Http404
-    qs = Sound.objects.select_related('pack', 'user', 'license', 'geotag').filter(pack=pack, moderation_state="OK", processing_state="OK")
+
+    qs = Sound.objects.only('id').filter(pack=pack, moderation_state="OK", processing_state="OK")
+    paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    paginator = paginate_data['paginator']
+    current_page = paginate_data['current_page']
+    page = paginate_data['page']
+    sound_ids = [sound_obj.id for sound_obj in page]
+    pack_sounds = Sound.objects.ordered_ids(sound_ids)
+
     num_sounds_ok = len(qs)
     # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
     pack_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(pack=pack).exclude(geotag=None).exists()
@@ -645,7 +653,7 @@ def pack(request, username, pack_id):
 
     file_exists = os.path.exists(pack.locations("license_path"))
 
-    return render_to_response('sounds/pack.html', combine_dicts(locals(), paginate(request, qs, settings.SOUNDS_PER_PAGE)), context_instance=RequestContext(request))
+    return render_to_response('sounds/pack.html', locals(), context_instance=RequestContext(request))
 
 
 def packs_for_user(request, username):

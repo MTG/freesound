@@ -89,8 +89,8 @@
 {% if pack.num_sounds > 0 %}
 	{% show_paginator paginator page current_page request "sound" %}
 	
-	{% for sound in page.object_list %}
-    	{% display_sound sound %}
+	{% for sound in pack_sounds %}
+    	{% display_raw_sound sound %}
 	{% endfor %}
 	
 	{% show_paginator paginator page current_page request "sound" %}

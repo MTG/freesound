@@ -153,9 +153,13 @@ class SoundManager(models.Manager):
         where = "sound.id = ANY(%s)"
         return self.bulk_query(where, "", "", (sound_ids, ))
 
+    def dict_ids(self, sound_ids):
+        return {sound_obj.id:sound_obj for sound_obj in self.bulk_query_id(sound_ids)}
+
     def ordered_ids(self, sound_ids):
-        sounds = {sound_obj.id:sound_obj for sound_obj in self.bulk_query_id(sound_ids)}
+        sounds = self.dict_ids(sound_ids)
         return [sounds[sound_id] for sound_id in sound_ids]
+
 
 class PublicSoundManager(models.Manager):
     """ a class which only returns public sounds """

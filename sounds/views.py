@@ -603,8 +603,12 @@ def similar(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    similar_sounds, count = get_similar_sounds(sound,request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
-    logger.debug('Got similar_sounds for %s: %s' % (sound_id, similar_sounds))
+    similarity_results, count = get_similar_sounds(sound, request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
+    logger.debug('Got similar_sounds for %s: %s' % (sound_id, similarity_results))
+    sound_ids = [sound_id for sound_id, distance in similarity_results]
+    similar_sounds_dict = {sound_obj.id:sound_obj for sound_obj in Sound.objects.bulk_query_id(sound_ids)}
+    similar_sounds = [similar_sounds_dict[sound_id] for sound_id in sound_ids]
+
     return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
 
 

@@ -74,7 +74,7 @@
             <li><a href="{% url accounts-describe %}">Describe</a> your sounds</li>
             <li><a href="{% url accounts-attribution %}">Attribution</a> - the sounds you downloaded</li>
             {% if perms.tickets.can_moderate %}
-                <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_sounds }} new sound{{ new_sounds|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
+                <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_tickets_count }} new sound{{ new_tickets_count|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
             {% endif %}
             {% if perms.forum.can_moderate_forum %}
                 <li><a href="{% url forums-moderate %}">Moderate posts</a> - {{ new_posts }} new post{{ new_posts|pluralize}} </li>

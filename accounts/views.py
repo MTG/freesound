@@ -236,7 +236,9 @@ def home(request):
     google_api_key = settings.GOOGLE_API_KEY
     home = True
     if home and request.user.has_perm('tickets.can_moderate'):
-        new_sounds = new_sound_tickets_count()
+        #new_sounds = new_sound_tickets_count()
+        #  No need to get 'new_sounds' count, it is already present int context processor
+        #  Leaving this message here as relevant info for future refactoring
         new_support = new_support_tickets_count()
     if home and request.user.has_perm('forum.can_moderate_forum'):
         new_posts = Post.objects.filter(moderation_state='NM').count()

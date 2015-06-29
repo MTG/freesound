@@ -32,7 +32,7 @@ import datetime
 import os
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
-from tickets.views import get_pending_sounds
+from tickets.views import get_num_pending_sounds
 
 
 class ResetEmailRequest(models.Model):
@@ -168,7 +168,7 @@ class Profile(SocialModel):
             return True
 
     def num_sounds_pending_moderation(self):
-        return len(get_pending_sounds(self.user))
+        return get_num_pending_sounds(self.user)
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

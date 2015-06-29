@@ -207,20 +207,21 @@ def new_sound_tickets_count():
 #    return Ticket.objects.filter(status=TICKET_STATUS_NEW,
 #                                 source=TICKET_SOURCE_NEW_SOUND)
     return len(list(Ticket.objects.raw("""
-SELECT
-ticket.id
-FROM
-tickets_ticket AS ticket,
-sounds_sound AS sound,
-tickets_linkedcontent AS content
-WHERE
-    ticket.content_id = content.id
-AND ticket.assignee_id is NULL
-AND content.object_id = sound.id
-AND sound.moderation_state = 'PE'
-AND sound.processing_state = 'OK'
-AND ticket.status = '%s'
-""" % TICKET_STATUS_NEW)))
+        SELECT
+        ticket.id
+        FROM
+        tickets_ticket AS ticket,
+        sounds_sound AS sound,
+        tickets_linkedcontent AS content
+        WHERE
+            ticket.content_id = content.id
+        AND ticket.assignee_id is NULL
+        AND content.object_id = sound.id
+        AND sound.moderation_state = 'PE'
+        AND sound.processing_state = 'OK'
+        AND ticket.status = '%s'
+        """ % TICKET_STATUS_NEW)))
+
 
 def new_support_tickets_count():
     return Ticket.objects.filter(assignee=None,
@@ -654,6 +655,21 @@ def get_pending_sounds(user):
             pass
 
     return ret
+
+
+def get_num_pending_sounds(user):
+    # Get non closed tickets with linked content objects refering to sounds that have not been deleted
+    tickets = Ticket.objects.raw("""
+                SELECT ticket.id
+                  FROM tickets_ticket AS ticket
+             LEFT JOIN tickets_linkedcontent AS content ON content.id = ticket.content_id
+            RIGHT JOIN sounds_sound AS sound ON sound.id=content.object_id
+                 WHERE (ticket.sender_id = %i
+                   AND NOT (ticket.status = 'closed' ))
+                   AND sound.moderation_state = 'PE'
+                   AND sound.processing_state = 'OK'
+    """ % user.id)
+    return len(list(tickets))
 
 
 @permission_required('tickets.can_moderate')

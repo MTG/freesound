@@ -667,8 +667,14 @@ def packs_for_user(request, username):
 
 def for_user(request, username):
     user = get_object_or_404(User, username__iexact=username)
-    qs = Sound.public.filter(user=user)
-    return render_to_response('sounds/for_user.html', combine_dicts(paginate(request, qs, settings.SOUNDS_PER_PAGE), locals()), context_instance=RequestContext(request))
+    qs = Sound.public.only('id').filter(user=user)
+    paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
+    paginator = paginate_data['paginator']
+    current_page = paginate_data['current_page']
+    page = paginate_data['page']
+    sound_ids = [sound_obj.id for sound_obj in page]
+    user_sounds = Sound.objects.ordered_ids(sound_ids)
+    return render_to_response('sounds/for_user.html', locals(), context_instance=RequestContext(request))
 
 
 @login_required

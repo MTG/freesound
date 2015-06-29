@@ -115,7 +115,10 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     username = serializers.SerializerMethodField('get_username')
     def get_username(self, obj):
-        return obj.user.username
+        try:
+            return obj.username
+        except AttributeError:
+            return obj.user.username
 
     name = serializers.SerializerMethodField('get_name')
     def get_name(self, obj):
@@ -123,17 +126,23 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     tags = serializers.SerializerMethodField('get_tags')
     def get_tags(self, obj):
-        return [tagged.tag.name for tagged in obj.tags.select_related("tag").all()]
+        try:
+            return obj.tag_array
+        except AttributeError:
+            return [tagged.tag.name for tagged in obj.tags.select_related("tag").all()]
 
     license = serializers.SerializerMethodField('get_license')
     def get_license(self, obj):
-        return obj.license.deed_url
+        try:
+            return obj.license_deed_url
+        except AttributeError:
+            return obj.license.deed_url
 
     pack = serializers.SerializerMethodField('get_pack')
     def get_pack(self, obj):
         try:
-            if obj.pack:
-                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack.id]), request_is_secure=self.context['request'].is_secure())
+            if obj.pack_id:
+                return prepend_base(reverse('apiv2-pack-instance', args=[obj.pack_id]), request_is_secure=self.context['request'].is_secure())
             else:
                 return None
         except:

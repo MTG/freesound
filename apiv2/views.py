@@ -115,14 +115,12 @@ class TextSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
-        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
-        qs_sound_objects = dict()
-        for sound_object in qs:
-            qs_sound_objects[sound_object.id] = sound_object
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
+
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
                 if more_from_pack_data:
                     if more_from_pack_data[sid][0]:
                         sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=1, filter='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
@@ -194,14 +192,12 @@ class ContentSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = [id for id in page['object_list']]
         get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
-        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
-        qs_sound_objects = dict()
-        for sound_object in qs:
-            qs_sound_objects[sound_object.id] = sound_object
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
+
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]
@@ -312,14 +308,12 @@ class CombinedSearch(GenericAPIView):
         # Get analysis data and serialize sound results
         ids = results
         get_analysis_data_for_queryset_or_sound_ids(self, sound_ids=ids)
-        qs = Sound.objects.select_related('user', 'pack', 'license').filter(id__in=ids)
-        qs_sound_objects = dict()
-        for sound_object in qs:
-            qs_sound_objects[sound_object.id] = sound_object
+        sounds_dict = Sound.objects.dict_ids(sound_ids=ids)
+
         sounds = []
         for i, sid in enumerate(ids):
             try:
-                sound = SoundListSerializer(qs_sound_objects[sid], context=self.get_serializer_context()).data
+                sound = SoundListSerializer(sounds_dict[sid], context=self.get_serializer_context()).data
                 # Distance to target is present we add it to the serialized sound
                 if distance_to_target_data:
                     sound['distance_to_target'] = distance_to_target_data[sid]

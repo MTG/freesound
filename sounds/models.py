@@ -116,6 +116,7 @@ class SoundManager(models.Manager):
           sounds_pack.name as pack_name,
           sound.license_id,
           sounds_license.name as license_name,
+          sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
           sounds_remixgroup_sounds.id as remixgroup_id,
           ARRAY(

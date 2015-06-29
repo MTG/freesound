@@ -217,7 +217,8 @@ def home(request):
     user = request.user
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = list(user.profile.get_tagcloud())
-    latest_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK",moderation_state="OK")[0:5]
+    #latest_sounds = Sound.objects.select_related().filter(user=user, processing_state="OK", moderation_state="OK")[0:5]
+    latest_sounds = Sound.objects.bulk_sounds_for_user(user_id=user.id, limit=5)
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
     #unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
     unmoderated_sounds = TicketViews.get_pending_sounds(request.user)

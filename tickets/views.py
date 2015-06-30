@@ -663,7 +663,7 @@ def get_num_pending_sounds(user):
                 SELECT ticket.id
                   FROM tickets_ticket AS ticket
              LEFT JOIN tickets_linkedcontent AS content ON content.id = ticket.content_id
-            RIGHT JOIN sounds_sound AS sound ON sound.id=content.object_id
+             LEFT JOIN sounds_sound AS sound ON sound.id=content.object_id
                  WHERE (ticket.sender_id = %i
                    AND NOT (ticket.status = 'closed' ))
                    AND sound.moderation_state = 'PE'

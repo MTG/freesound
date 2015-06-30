@@ -666,6 +666,7 @@ def get_num_pending_sounds(user):
              LEFT JOIN sounds_sound AS sound ON sound.id=content.object_id
                  WHERE (ticket.sender_id = %i
                    AND NOT (ticket.status = 'closed' ))
+                   AND sound.id IS NOT NULL
                    AND sound.moderation_state = 'PE'
                    AND sound.processing_state = 'OK'
     """ % user.id)

@@ -159,7 +159,7 @@ class SoundManager(models.Manager):
 
     def ordered_ids(self, sound_ids):
         sounds = self.dict_ids(sound_ids)
-        return [sounds[sound_id] for sound_id in sound_ids]
+        return [sounds[sound_id] for sound_id in sound_ids if sound_id in sounds]
 
 
 class PublicSoundManager(models.Manager):

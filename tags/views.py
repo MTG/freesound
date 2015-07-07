@@ -28,6 +28,7 @@ from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
 import logging
 from follow import follow_utils
+import sounds
 
 search_logger = logging.getLogger("search")
 
@@ -37,7 +38,7 @@ def tags(request, multiple_tags=None):
     else:
         multiple_tags = []
     
-    multiple_tags = sorted(filter(lambda x:x, multiple_tags))
+    multiple_tags = sorted(filter(lambda x: x, multiple_tags))
     
     try:
         current_page = int(request.GET.get("page", 1))
@@ -45,7 +46,6 @@ def tags(request, multiple_tags=None):
         current_page = 1
 
     solr = Solr(settings.SOLR_URL)
-    
     query = SolrQuery()
     if multiple_tags:
         query.set_query(" ".join("tag:\"" + tag + "\"" for tag in multiple_tags))
@@ -54,16 +54,39 @@ def tags(request, multiple_tags=None):
     query.set_query_options(start=(current_page - 1) * settings.SOUNDS_PER_PAGE, rows=settings.SOUNDS_PER_PAGE, field_list=["id"], sort=["num_downloads desc"])
     query.add_facet_fields("tag")
     query.set_facet_options_default(limit=100, sort=True, mincount=1, count_missing=False)
-    
+    query.set_group_field(group_field="grouping_pack")
+    query.set_group_options(group_func=None,
+        group_query=None,
+        group_rows=10,
+        group_start=0,
+        group_limit=1,
+        group_offset=0,
+        group_sort=None,
+        group_sort_ingroup=None,
+        group_format='grouped',
+        group_main=False,
+        group_num_groups=True,
+        group_cache_percent=0,
+        group_truncate=True)  # Sets how many results from the same grup are taken into account for computing the facets
+
     try:
-
         results = SolrResponseInterpreter(solr.select(unicode(query)))
-
-
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
+        num_results = paginator.count
+        non_grouped_number_of_results = results.non_grouped_number_of_matches
         page = paginator.page(current_page)
         error = False
         tags = [dict(name=f[0], count=f[1]) for f in results.facets["tag"]]
+
+        docs = results.docs
+        resultids = [d.get("id") for d in docs]
+        resultsounds = sounds.models.Sound.objects.bulk_query_id(resultids)
+        allsounds = {}
+        for s in resultsounds:
+            allsounds[s.id] = s
+        for d in docs:
+            d["sound"] = allsounds[d["id"]]
+
     except SolrException, e:
         error = True
         search_logger.error("SOLR ERROR - %s" % e)

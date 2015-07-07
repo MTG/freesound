@@ -19,22 +19,6 @@
         {% display_raw_sound sound %}
     {% endfor %}
 
-	{% comment %}
-	{% regroup page.object_list by created|date:"F jS, Y" as downloads %}
-	{% for group in downloads %}
-
-		<h3>Downloaded on {{group.grouper}}</h3>
-		{% for download_item in group.list %}
-			{% if download_item.sound %}
-				{% with download_item.sound as sound %}
-	        		{% display_sound sound %}
-	        	{% endwith %}
-	        {% endif %}
-		{% endfor %}
-	{% endfor %}
-	{% endcomment %}
-
-	<br>
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "sound" %}
     </div>

@@ -607,6 +607,8 @@ div.infowindow {
     background: transparent;
 }
 
+
+
 /* Content Wrappers
 ------------------------------------------------------*/
 #wrapper {
@@ -2581,6 +2583,11 @@ div.about {
 
 .advanced_search_options_button {
     font-size:10px;
+}
+
+.search_paginator .pagination {
+    padding-bottom: 3px;
+    padding-top: 8px;
 }
 
 /* Tagclouds

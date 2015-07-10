@@ -89,7 +89,7 @@ class Command(BaseCommand):
                     print 'The file %s is already part of freesound, we re-add it again' % (sound.original_filename)
                 else:
                     os.remove(sound.original_path)
-                    print 'The file %s is already part of freesound, we re-add it again' % (sound.original_filename)
+                    print 'The file %s is already part of freesound, not uploading it' % (sound.original_filename)
                     continue
 
             # 4 save

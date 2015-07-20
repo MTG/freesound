@@ -194,7 +194,7 @@ def create_user_profile(sender, instance, created, **kwargs):
     try:
         instance.profile
     except Profile.DoesNotExist:
-        profile = Profile(user=instance, wants_newsletter=False, accepted_tos=False)
+        profile = Profile(user=instance, wants_newsletter=False, accepted_tos=True)
         profile.save()
 
 post_save.connect(create_user_profile, sender=User)

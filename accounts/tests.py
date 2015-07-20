@@ -21,6 +21,9 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from accounts.forms import RecaptchaForm
+from accounts.models import Profile
+
 
 # Test old user links redirect
 class OldUserLinksRedirectTestCase(TestCase):
@@ -33,15 +36,49 @@ class OldUserLinksRedirectTestCase(TestCase):
         
     def test_old_user_link_redirect_ok(self):
         # 301 permanent redirect, result exists
-        response = self.client.get(reverse('old-account-page'), data={'id' : self.user.id})
-        self.assertEqual(response.status_code, 301)
+        resp = self.client.get(reverse('old-account-page'), data={'id': self.user.id})
+        self.assertEqual(resp.status_code, 301)
         
     def test_old_user_link_redirect_not_exists_id(self):
         # 404 id does not exist
-        response = self.client.get(reverse('old-account-page'), data={'id' : 0}, follow=True)
-        self.assertEqual(response.status_code, 404)
+        resp = self.client.get(reverse('old-account-page'), data={'id': 0}, follow=True)
+        self.assertEqual(resp.status_code, 404)
         
     def test_old_user_link_redirect_invalid_id(self):
         # 404 invalid id
-        response = self.client.get(reverse('old-account-page'), data={'id' : 'invalid_id'}, follow=True)
-        self.assertEqual(response.status_code, 404)    
+        resp = self.client.get(reverse('old-account-page'), data={'id': 'invalid_id'}, follow=True)
+        self.assertEqual(resp.status_code, 404)
+
+
+class AccountsTestCase(TestCase):
+
+    def test_user_registration(self):
+        RecaptchaForm.validate_captcha = lambda x: True  # Monkeypatch recaptcha validation so the form validates
+        resp = self.client.post("/home/register/", {'username': 'testuser',
+                                                    'first_name': 'test_first_name',
+                                                    'last_name': 'test_last_name',
+                                                    'email1': 'email@example.com',
+                                                    'email2': 'email@example.com',
+                                                    'password1': 'testpass',
+                                                    'password2': 'testpass',
+                                                    'newsletter': '1',
+                                                    'accepted_tos': '1',
+                                                    'recaptcha_challenge_field': 'a',
+                                                    'recaptcha_response_field': 'a'})
+
+        self.assertEqual(resp.status_code, 200)
+
+        u = User.objects.get(username='testuser')
+        self.assertEqual(u.profile.wants_newsletter, True)  # Check profile parameters are set correctly
+        self.assertEqual(u.profile.accepted_tos, True)
+
+        u.is_active = True  # Set user active and check it can login
+        u.save()
+        self.client.login(username='testuser', password='testpass')
+        resp = self.client.get("/home/")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_save(self):
+        u = User.objects.create_user("testuser2", password="testpass")
+        self.assertEqual(Profile.objects.filter(user=u).exists(), True)
+        u.save()  # Check saving user again (with existing profile) does not fail

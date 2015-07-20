@@ -1778,6 +1778,10 @@ ul.pagination {
     color: #444;
 }
 
+.attribution_objects .pagination{
+    padding-bottom: 0px;
+}
+
 /* Posts formatting
 ------------------------------------------------------*/
 #posts {

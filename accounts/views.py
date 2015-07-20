@@ -700,10 +700,11 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs = Download.objects.filter(user=request.user)
+    qs = Download.objects.select_related('sound', 'sound__user__username', 'sound__license', 'pack', 'pack__user__username').filter(user=request.user)
     format = request.GET.get("format", "regular")
-    return render_to_response('accounts/attribution.html', combine_dicts(paginate(request, qs, 40), locals()), context_instance=RequestContext(request))
-
+    tvars = {'format': format}
+    tvars.update(paginate(request, qs, 40))
+    return render(request, 'accounts/attribution.html', tvars)
 
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)

@@ -32,7 +32,6 @@ class FollowTestCase(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user("testuser", password="testpass")
-        self.profile = Profile.objects.create(user=self.user, wants_newsletter=True, accepted_tos=True)
         self.client = Client()
         self.client.login(username='testuser', password='testpass')
 

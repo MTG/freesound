@@ -943,10 +943,11 @@ h3.header,
 .pack_display .pack_description {
     float:left;
     width:430px;
-    height: 120px;
+    height: 116px;
     padding-left: 0;
     margin-left:0;
     padding: 0px 0px 0px 5px;
+    overflow: hidden;
 }
 
 .pack_display .pack_description .text {

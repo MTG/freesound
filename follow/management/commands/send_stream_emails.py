@@ -43,7 +43,7 @@ class Command(BaseCommand):
         # Get all the users that have notifications active
         # and exclude the ones that have the last email sent for less than settings.NOTIFICATION_TIMEDELTA_PERIOD
         # (because they have been sent an email already)
-        users_enabled_notifications = Profile.objects.filter(enabled_stream_emails=True).exclude(last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by("last_stream_email_sent")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
+        users_enabled_notifications = Profile.objects.filter(enabled_stream_emails=True).exclude(last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by("-last_attempt_of_sending_stream_email")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
 
         logger.info("Sending stream updates notification for %i potential users" % len(users_enabled_notifications))
 
@@ -53,6 +53,7 @@ class Command(BaseCommand):
 
             username = profile.user.username
             email_to = profile.user.email
+            profile.last_attempt_of_sending_stream_email = datetime.datetime.now()
 
             # Variable names use the terminology "week" because settings.NOTIFICATION_TIMEDELTA_PERIOD defaults to a
             # week, but a more generic terminology could be used
@@ -75,25 +76,24 @@ class Command(BaseCommand):
             except Exception, e:
                 # If error occur do not send the email
                 print "could not get new sounds data for", username
+                profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 
             if not users_sounds and not tags_sounds:
                 print "no news sounds for", username
+                profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 
-            # print users_sound_ids
-            # print tags_sound_ids
-
             text_content = render_mail_template('follow/email_stream.txt', locals())
-
             email_tuples += (subject_str, text_content, settings.DEFAULT_FROM_EMAIL, [email_to]),
 
-            # send email
+            # Send email
             try:
                 send_mail(subject_str, text_content, email_from=settings.DEFAULT_FROM_EMAIL, email_to=[email_to], reply_to=None)
             except Exception, e:
                 logger.info("An error occurred sending notification stream email to %s (%s)" % (str(email_to),str(e)) )
-                # Do not send the email and do not update the profile
+                # Do not send the email and do not update the last email sent field in the profile
+                profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
             n_emails_sent += 1
 
@@ -101,7 +101,4 @@ class Command(BaseCommand):
             profile.last_stream_email_sent = datetime.datetime.now()
             profile.save()
 
-
-        # mass email all messages
-        #send_mass_mail(email_tuples, fail_silently=False)
         logger.info("Sent stream updates notification to %i users (others had no updates)" % n_emails_sent)

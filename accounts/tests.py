@@ -80,5 +80,5 @@ class AccountsTestCase(TestCase):
 
     def test_user_save(self):
         u = User.objects.create_user("testuser2", password="testpass")
-        self.assertEqual(Profile.objects.filter(user=u).exists(), True)
+        self.assertEqual(Profile.objects.filter(user=u).count() > 0, True)
         u.save()  # Check saving user again (with existing profile) does not fail

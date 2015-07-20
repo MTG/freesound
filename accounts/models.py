@@ -22,6 +22,7 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save
 from django.utils.encoding import smart_unicode
 from general.models import SocialModel
 from geotags.models import GeoTag
@@ -180,8 +181,6 @@ class UserFlag(models.Model):
     content_type = models.ForeignKey(ContentType, null=True)
     object_id = models.PositiveIntegerField(null=True)
     content_object = generic.GenericForeignKey('content_type', 'object_id')
-
-
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):
@@ -189,3 +188,13 @@ class UserFlag(models.Model):
 
     class Meta:
         ordering = ("-user__username",)
+
+
+def create_user_profile(sender, instance, created, **kwargs):
+    try:
+        instance.profile
+    except Profile.DoesNotExist:
+        profile = Profile(user=instance, wants_newsletter=False, accepted_tos=False)
+        profile.save()
+
+post_save.connect(create_user_profile, sender=User)

@@ -124,8 +124,11 @@ class RegistrationForm(RecaptchaForm):
         user = User(username=username, first_name=first_name, last_name=last_name, email=email, password=password,is_staff=False, is_active=False, is_superuser=False)
         user.set_password(password)
         user.save()
-        
-        profile = Profile(user=user, wants_newsletter=newsletter, accepted_tos=accepted_tos)
+
+        # On user.save(), the profile object is created, so now we only update relevant fields
+        profile = user.profile
+        profile.wants_newsletter = newsletter
+        profile.accepted_tos = accepted_tos
         profile.save()
 
         return user

@@ -83,7 +83,7 @@ research_logger = logging.getLogger('tagrecommendation_research')
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def crash_me(request):
     raise Exception
 
@@ -93,10 +93,10 @@ def bulk_license_change(request):
     if request.method == 'POST':
         form = NewLicenseForm(request.POST)
         if form.is_valid():
-            license = form.cleaned_data['license']
-            Sound.objects.filter(user=request.user).update(license=license, is_index_dirty=True)
+            selected_license = form.cleaned_data['license']
+            Sound.objects.filter(user=request.user).update(license=selected_license, is_index_dirty=True)
             Profile.objects.filter(user=request.user).update(has_old_license=False)
-            cache.set("has-old-license-%s" % request.user.id,
+            cache.set('has-old-license-%s' % request.user.id,
                       [False, Sound.objects.filter(user=request.user).exists()], 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
@@ -111,7 +111,7 @@ def tos_acceptance(request):
         form = TermsOfServiceForm(request.POST)
         if form.is_valid():
             Profile.objects.filter(user=request.user).update(accepted_tos=True)
-            cache.set("has-accepted-tos-%s" % request.user.id, 'yes', 2592000)
+            cache.set('has-accepted-tos-%s' % request.user.id, 'yes', 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = TermsOfServiceForm()
@@ -121,9 +121,9 @@ def tos_acceptance(request):
 
 def registration(request):
     if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
+        return HttpResponseRedirect(reverse('accounts-home'))
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
             user = form.save()
@@ -135,9 +135,9 @@ def registration(request):
     return render(request, 'accounts/registration.html', {'form': form})
 
 
-def activate_user(request, username, hash):
+def activate_user(request, username, uid_hash):
     if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
+        return HttpResponseRedirect(reverse('accounts-home'))
 
     try:
         user = User.objects.get(username__iexact=username)
@@ -145,7 +145,7 @@ def activate_user(request, username, hash):
         return render(request, 'accounts/activate.html', {'user_does_not_exist': True})
 
     new_hash = create_hash(user.id)
-    if new_hash != hash:
+    if new_hash != uid_hash:
         return render(request, 'accounts/activate.html', {'decode_error': True})
 
     user.is_active = True
@@ -154,24 +154,24 @@ def activate_user(request, username, hash):
 
 
 def send_activation(user):
-    hash = create_hash(user.id)
+    uid_hash = create_hash(user.id)
     username = user.username
     tvars = {
         'user': user,
         'username': username,
-        'hash': hash
+        'hash': uid_hash
     }
     send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, None, user.email)
 
 
 def resend_activation(request):
     if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
+        return HttpResponseRedirect(reverse('accounts-home'))
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form = ReactivationForm(request.POST)
         if form.is_valid():
-            user = form.cleaned_data["user"]
+            user = form.cleaned_data['user']
             send_activation(user)
             return render(request, 'accounts/registration_done.html')
     else:
@@ -182,12 +182,12 @@ def resend_activation(request):
 
 def username_reminder(request):
     if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
+        return HttpResponseRedirect(reverse('accounts-home'))
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form = UsernameReminderForm(request.POST)
         if form.is_valid():
-            user = form.cleaned_data["user"]
+            user = form.cleaned_data['user']
             send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt', {'user': user},
                                None, user.email)
 

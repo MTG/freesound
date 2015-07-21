@@ -94,8 +94,8 @@ class UserRegistrationAndActivation(TestCase):
 
         # Test calling accounts-activate with good hash, user should be activated
         from utils.encryption import create_hash
-        hash = create_hash(user.id)
-        resp = self.client.get(reverse('accounts-activate', args=[user.username, hash]))
+        good_hash = create_hash(user.id)
+        resp = self.client.get(reverse('accounts-activate', args=[user.username, good_hash]))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['all_ok'], True)
         self.assertEqual(User.objects.get(username="User6Inactive").is_active, True)

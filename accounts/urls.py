@@ -34,7 +34,7 @@ urlpatterns = patterns('accounts.views',
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),
     url(r'^username/$', accounts.username_reminder, name="accounts-username-reminder"),
-    url(r'^activate/(?P<username>[^\/]+)/(?P<hash>[^\/]+)/.*$', accounts.activate_user, name="accounts-activate"),
+    url(r'^activate/(?P<username>[^\/]+)/(?P<uid_hash>[^\/]+)/.*$', accounts.activate_user, name="accounts-activate"),
     url(r'^resetpassword/$',
         authviews.password_reset, {
             'template_name': 'accounts/password_reset_form.html',

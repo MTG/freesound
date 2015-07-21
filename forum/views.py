@@ -198,15 +198,16 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                         subscription.save()
 
                 # figure out if there are active subscriptions in this thread
-                emails_to_notify = []
-                for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
-                    emails_to_notify.append(subscription.subscriber.email)
-                    logger.info("NOTIFY %s" % subscription.subscriber.email)
-                    subscription.is_active = False
-                    subscription.save()
+                if not set_to_moderation:
+                    emails_to_notify = []
+                    for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
+                        emails_to_notify.append(subscription.subscriber.email)
+                        logger.info("NOTIFY %s" % subscription.subscriber.email)
+                        subscription.is_active = False
+                        subscription.save()
 
-                if emails_to_notify:
-                    send_mail_template(u"topic reply notification - " + thread.title, "forum/email_new_post_notification.txt", dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify)
+                    if emails_to_notify:
+                        send_mail_template(u"topic reply notification - " + thread.title, "forum/email_new_post_notification.txt", dict(post=post, thread=thread, forum=forum), email_from=None, email_to=emails_to_notify)
 
                 if not set_to_moderation:
                     return HttpResponseRedirect(post.get_absolute_url())

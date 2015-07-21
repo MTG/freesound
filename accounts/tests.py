@@ -75,9 +75,7 @@ class UserRegistrationAndActivation(TestCase):
 
         u.is_active = True  # Set user active and check it can login
         u.save()
-        self.client.login(username='testuser', password='testpass')
-        resp = self.client.get("/home/")
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(self.client.login(username='testuser', password='testpass'), True)
 
     def test_user_save(self):
         u = User.objects.create_user("testuser2", password="testpass")

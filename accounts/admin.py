@@ -21,16 +21,14 @@
 #
 
 from django.contrib import admin
-from accounts.models import Profile, UserFlag
-
-from forum.models import Post, Thread
-from comments.models import Comment
-from sounds.models import Sound,DeletedSound
-from accounts.models import User
-from django.conf import settings
-
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
+from django.conf import settings
+from accounts.models import Profile, UserFlag
+from forum.models import Post, Thread
+from comments.models import Comment
+from sounds.models import DeletedSound
+
 
 def delete_active_user(modeladmin, request, queryset):
     deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
@@ -52,7 +50,8 @@ def delete_active_user(modeladmin, request, queryset):
             sound.save()
         user.delete()
 
-delete_active_user.description="Delete user(s), not posts etc"
+delete_active_user.description = "Delete user(s), not posts etc"
+
 
 class ProfileAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'geotag')
@@ -67,6 +66,7 @@ admin.site.register(Profile, ProfileAdmin)
 class UserFlagAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'reporting_user', 'content_type')
     list_display = ('user', 'reporting_user', 'content_type')
+
 admin.site.register(UserFlag, UserFlagAdmin)
 
 

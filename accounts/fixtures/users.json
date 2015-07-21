@@ -88,5 +88,23 @@
               "email": "anon@xmpl.org",
               "date_joined": "2005-02-07 16:42:00"
           }
+    },
+    {
+          "pk": 6,
+          "model": "auth.user",
+          "fields": {
+              "username": "User6Inactive",
+              "first_name": "",
+              "last_name": "",
+              "is_active": false,
+              "is_superuser": false,
+              "is_staff": false,
+              "last_login": "2010-10-13 15:46:20",
+              "groups": [],
+              "user_permissions": [],
+              "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
+              "email": "anon@xmpl.org",
+              "date_joined": "2005-02-07 16:42:00"
+          }
     }
 ]

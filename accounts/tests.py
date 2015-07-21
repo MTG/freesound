@@ -25,7 +25,6 @@ from accounts.forms import RecaptchaForm
 from accounts.models import Profile
 
 
-# Test old user links redirect
 class OldUserLinksRedirectTestCase(TestCase):
     
     fixtures = ['users.json']
@@ -50,7 +49,9 @@ class OldUserLinksRedirectTestCase(TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
-class AccountsTestCase(TestCase):
+class UserRegistrationAndActivation(TestCase):
+
+    fixtures = ['users.json']
 
     def test_user_registration(self):
         RecaptchaForm.validate_captcha = lambda x: True  # Monkeypatch recaptcha validation so the form validates
@@ -82,3 +83,28 @@ class AccountsTestCase(TestCase):
         u = User.objects.create_user("testuser2", password="testpass")
         self.assertEqual(Profile.objects.filter(user=u).count() > 0, True)
         u.save()  # Check saving user again (with existing profile) does not fail
+
+    def test_user_activation(self):
+        user = User.objects.get(username="User6Inactive")  # Inactive user in fixture
+
+        # Test calling accounts-activate with wrong hash, user should not be activated
+        bad_hash = '4dad3dft'
+        resp = self.client.get(reverse('accounts-activate', args=[user.username, bad_hash]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['decode_error'], True)
+        self.assertEqual(User.objects.get(username="User6Inactive").is_active, False)
+
+        # Test calling accounts-activate with good hash, user should be activated
+        from utils.encryption import create_hash
+        hash = create_hash(user.id)
+        resp = self.client.get(reverse('accounts-activate', args=[user.username, hash]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['all_ok'], True)
+        self.assertEqual(User.objects.get(username="User6Inactive").is_active, True)
+
+        # Test calling accounts-activate for a user that does not exist
+        resp = self.client.get(reverse('accounts-activate', args=["noone", hash]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['user_does_not_exist'], True)
+
+

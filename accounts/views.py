@@ -126,18 +126,15 @@ def activate_user(request, username, hash):
     try:
         user = User.objects.get(username__iexact=username)
     except User.DoesNotExist:
-        return render_to_response('accounts/activate.html', {'user_does_not_exist': True},
-                                  context_instance=RequestContext(request))
+        return render(request, 'accounts/activate.html', {'user_does_not_exist': True})
 
     new_hash = create_hash(user.id)
     if new_hash != hash:
-        return render_to_response('accounts/activate.html', {'decode_error': True},
-                                  context_instance=RequestContext(request))
+        return render(request, 'accounts/activate.html', {'decode_error': True})
+
     user.is_active = True
     user.save()
-
-    return render_to_response('accounts/activate.html', {'all_ok': True},
-                              context_instance=RequestContext(request))
+    return render(request, 'accounts/activate.html', {'all_ok': True})
 
 
 def send_activation(user):

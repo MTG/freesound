@@ -9,7 +9,7 @@ Thank you for signing up at Freesound.org!
 
 In order to activate your Freesound account, please click this link:
 
-<{% absurl accounts-activate encrypted_user_id username %}>
+<{% absurl accounts-activate username hash %}>
 
 If for some reason this fails, try copy-pasting the complete link into you browser. Some mail clients break up long lines, or do strange things to URL's!
 {% endblock %}

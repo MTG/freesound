@@ -79,11 +79,11 @@ from provider.oauth2.models import AccessToken
 from follow import follow_utils
 
 audio_logger = logging.getLogger('audio')
-# TAGRECOMMENDATION CODE
 research_logger = logging.getLogger('tagrecommendation_research')
 
+
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url = "/")
+@user_passes_test(lambda u: u.is_staff, login_url="/")
 def crash_me(request):
     raise Exception
 
@@ -95,73 +95,56 @@ def bulk_license_change(request):
         if form.is_valid():
             license = form.cleaned_data['license']
             Sound.objects.filter(user=request.user).update(license=license, is_index_dirty=True)
-
-            # update old license flag
             Profile.objects.filter(user=request.user).update(has_old_license=False)
-            # update cache
-            cache.set("has-old-license-%s" % request.user.id, [False,Sound.objects.filter(user=request.user).exists()], 2592000)
+            cache.set("has-old-license-%s" % request.user.id,
+                      [False, Sound.objects.filter(user=request.user).exists()], 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = NewLicenseForm()
-    return render_to_response('accounts/choose_new_license.html', locals(), context_instance=RequestContext(request))
+    tvars = {'form': form}
+    return render(request, 'accounts/choose_new_license.html', tvars)
+
 
 @login_required
 def tos_acceptance(request):
     if request.method == 'POST':
         form = TermsOfServiceForm(request.POST)
         if form.is_valid():
-            # update accepted tos field in user profile
             Profile.objects.filter(user=request.user).update(accepted_tos=True)
-            # update cache
             cache.set("has-accepted-tos-%s" % request.user.id, 'yes', 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = TermsOfServiceForm()
-    return render_to_response('accounts/accept_terms_of_service.html', locals(), context_instance=RequestContext(request))
+    tvars = {'form': form}
+    return render(request, 'accounts/accept_terms_of_service.html', tvars)
 
 
-
-def activate_user(request, activation_key, username):
-    if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
-
-    try:
-        user_id = decrypt(activation_key)
-        user = User.objects.get(id=int(user_id))
-        user.is_active = True
-        user.save()
-        return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
-    except User.DoesNotExist: #@UndefinedVariable
-        return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
-    except TypeError, ValueError:
-        return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
-
-def activate_user2(request, username, hash):
+def activate_user(request, username, hash):
     if request.user.is_authenticated():
         return HttpResponseRedirect(reverse("accounts-home"))
 
     try:
         user = User.objects.get(username__iexact=username)
-    except User.DoesNotExist: #@UndefinedVariable
-        return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
+    except User.DoesNotExist:
+        return render_to_response('accounts/activate.html', {'user_does_not_exist': True},
+                                  context_instance=RequestContext(request))
 
     new_hash = create_hash(user.id)
     if new_hash != hash:
-        return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
+        return render_to_response('accounts/activate.html', {'decode_error': True},
+                                  context_instance=RequestContext(request))
     user.is_active = True
     user.save()
 
-    return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
+    return render_to_response('accounts/activate.html', {'all_ok': True},
+                              context_instance=RequestContext(request))
+
 
 def send_activation(user):
-    encrypted_user_id = encrypt(str(user.id))
-    username = user.username
-    send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
-
-def send_activation2(user):
     hash = create_hash(user.id)
     username = user.username
     send_mail_template(u'activation link.', 'accounts/email_activation2.txt', locals(), None, user.email)
+
 
 def registration(request):
     if request.user.is_authenticated():
@@ -171,7 +154,7 @@ def registration(request):
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
             user = form.save()
-            send_activation2(user)
+            send_activation(user)
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = RegistrationForm(request)
@@ -187,7 +170,7 @@ def resend_activation(request):
         form = ReactivationForm(request.POST)
         if form.is_valid():
             user = form.cleaned_data["user"]
-            send_activation2(user)
+            send_activation(user)
             return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = ReactivationForm()

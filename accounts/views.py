@@ -119,6 +119,22 @@ def tos_acceptance(request):
     return render(request, 'accounts/accept_terms_of_service.html', tvars)
 
 
+def registration(request):
+    if request.user.is_authenticated():
+        return HttpResponseRedirect(reverse("accounts-home"))
+
+    if request.method == "POST":
+        form = RegistrationForm(request, request.POST)
+        if form.is_valid():
+            user = form.save()
+            send_activation(user)
+            return render(request, 'accounts/registration_done.html')
+    else:
+        form = RegistrationForm(request)
+
+    return render(request, 'accounts/registration.html', {'form': form})
+
+
 def activate_user(request, username, hash):
     if request.user.is_authenticated():
         return HttpResponseRedirect(reverse("accounts-home"))
@@ -140,23 +156,12 @@ def activate_user(request, username, hash):
 def send_activation(user):
     hash = create_hash(user.id)
     username = user.username
-    send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
-
-
-def registration(request):
-    if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
-
-    if request.method == "POST":
-        form = RegistrationForm(request, request.POST)
-        if form.is_valid():
-            user = form.save()
-            send_activation(user)
-            return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
-    else:
-        form = RegistrationForm(request)
-
-    return render_to_response('accounts/registration.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'user': user,
+        'username': username,
+        'hash': hash
+    }
+    send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, None, user.email)
 
 
 def resend_activation(request):
@@ -168,11 +173,11 @@ def resend_activation(request):
         if form.is_valid():
             user = form.cleaned_data["user"]
             send_activation(user)
-            return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
+            return render(request, 'accounts/registration_done.html')
     else:
         form = ReactivationForm()
 
-    return render_to_response('accounts/resend_activation.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'accounts/resend_activation.html', {'form': form})
 
 
 def username_reminder(request):
@@ -183,13 +188,14 @@ def username_reminder(request):
         form = UsernameReminderForm(request.POST)
         if form.is_valid():
             user = form.cleaned_data["user"]
-            send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt', dict(user=user), None, user.email)
+            send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt', {'user': user},
+                               None, user.email)
 
-            return render_to_response('accounts/username_reminder.html', dict(form=form, sent=True), context_instance=RequestContext(request))
+            return render(request, 'accounts/username_reminder.html', {'form': form, 'sent': True})
     else:
         form = UsernameReminderForm()
 
-    return render_to_response('accounts/username_reminder.html', dict(form=form, sent=False), context_instance=RequestContext(request))
+    return render(request, 'accounts/username_reminder.html', {'form': form, 'sent': False})
 
 
 @login_required

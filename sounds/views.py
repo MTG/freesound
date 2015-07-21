@@ -315,6 +315,19 @@ def sound_edit(request, username, sound_id):
                     return True
         return False
 
+    def update_sound_tickets(sound, text):
+        tickets = Ticket.objects.filter(content__object_id=sound.id,
+                                        source=TICKET_SOURCE_NEW_SOUND) \
+                               .exclude(status=TICKET_STATUS_CLOSED)
+        for ticket in tickets:
+            tc = TicketComment(sender=request.user,
+                               ticket=ticket,
+                               moderator_only=False,
+                               text=text)
+            tc.save()
+            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED,
+                                            ticket.MODERATOR_ONLY)
+
     if is_selected("description"):
         description_form = SoundDescriptionForm(request.POST, prefix="description")
         if description_form.is_valid():
@@ -324,19 +337,7 @@ def sound_edit(request, username, sound_id):
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
-
-            # also update any possible related sound ticket
-            tickets = Ticket.objects.filter(content__object_id=sound.id,
-                                            source=TICKET_SOURCE_NEW_SOUND) \
-                                   .exclude(status=TICKET_STATUS_CLOSED)
-            for ticket in tickets:
-                tc = TicketComment(sender=request.user,
-                                   ticket=ticket,
-                                   moderator_only=False,
-                                   text='%s updated the sound description and/or tags.' % request.user.username)
-                tc.save()
-                ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED,
-                                                ticket.MODERATOR_ONLY)
+            update_sound_tickets(sound, '%s updated the sound description and/or tags.' % request.user.username)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
@@ -346,7 +347,6 @@ def sound_edit(request, username, sound_id):
                                                              name=sound.original_filename))
 
     packs = Pack.objects.filter(user=request.user)
-
     if is_selected("pack"):
         pack_form = PackForm(packs, request.POST, prefix="pack")
         if pack_form.is_valid():
@@ -370,6 +370,7 @@ def sound_edit(request, username, sound_id):
 
             sound.mark_index_dirty()
             invalidate_sound_cache(sound)
+            update_sound_tickets(sound, '%s updated the sound pack.' % request.user.username)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)
@@ -395,8 +396,9 @@ def sound_edit(request, username, sound_id):
                     sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
                     sound.mark_index_dirty()
 
+            sound.mark_index_dirty()
             invalidate_sound_cache(sound)
-
+            update_sound_tickets(sound, '%s updated the sound geotag.' % request.user.username)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
@@ -409,6 +411,7 @@ def sound_edit(request, username, sound_id):
         sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
         invalidate_sound_cache(sound)
+        update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:
         license_form = NewLicenseForm(initial={'license': sound.license})

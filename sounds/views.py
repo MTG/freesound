@@ -433,14 +433,16 @@ def pack_edit(request, username, pack_id):
         raise PermissionDenied
 
     if request.method == "POST":
-        form = PackEditForm(request.POST,instance=pack)
+        form = PackEditForm(request.POST, instance=pack)
         if form.is_valid():
             form.save()
+            pack.sound_set.all().update(is_index_dirty=True)
             return HttpResponseRedirect(pack.get_absolute_url())
+
     else:
         form = PackEditForm(instance=pack,initial=dict(pack_sounds=pack_sounds))
         current_sounds = pack.sound_set.all()
-    return render_to_response('sounds/pack_edit.html', locals(), context_instance=RequestContext(request)) # TODO: make edit page
+    return render_to_response('sounds/pack_edit.html', locals(), context_instance=RequestContext(request))
 
 
 @login_required

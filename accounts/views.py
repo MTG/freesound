@@ -143,7 +143,7 @@ def activate_user(request, username, hash):
 def send_activation(user):
     hash = create_hash(user.id)
     username = user.username
-    send_mail_template(u'activation link.', 'accounts/email_activation2.txt', locals(), None, user.email)
+    send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
 
 
 def registration(request):

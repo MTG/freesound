@@ -1,6 +1,8 @@
 APIv1 Docummentation
 >>>>>>>>>>>>>>>>>>>>
 
+**NOTE**: Freesound APIv1 has reached its end of life and is no longer available.
+
 Welcome to the Freesound API (V1) docs!
 
 With the Freesound API you can browse, search, and retrieve information
@@ -187,3 +189,30 @@ API's Resources
 ---------------
 
 Check out the :ref:`resources_apiv1`.
+
+
+Clients Libraries
+-----------------
+
+Python
+  https://github.com/g-roma/freesound-python/tree/APIv1
+
+Javascript (recommended version)
+  https://github.com/g-roma/freesound.js/tree/APIv1
+
+Javascript (old version)
+  https://github.com/ffont/freesound-javascript
+
+As3 (Flash, Flex)
+  https://github.com/ffont/freesound-flex
+
+Php
+  https://github.com/nocive/freesound-php (by nocive_)
+
+.. _nocive: https://github.com/nocive
+
+Supercollider
+  Download through the Quarks system from within supercollider
+
+C#
+  https://github.com/EricSchayes/freesound-CSharp

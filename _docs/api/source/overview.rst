@@ -1,5 +1,5 @@
-Overview
->>>>>>>>
+APIv2 Overview
+>>>>>>>>>>>>>>
 
 Welcome to the Freesound APIv2 documentation!
 
@@ -11,7 +11,7 @@ advanced queries combining content analysis features and other metadata (tags, e
 With the Freesound APIv2, you can also upload, comment, rate and bookmark sounds!
 
 
-NOTE: Some of the examples in the API docummentation use the multi-platform command-line tool ``curl`` (http://curl.haxx.se).
+**NOTE**: Some of the examples in the API docummentation use the multi-platform command-line tool ``curl`` (http://curl.haxx.se).
 If you do not have ``curl`` installed, we recommend you to install it as it will help you learning how to use the Freesound API.
 
 

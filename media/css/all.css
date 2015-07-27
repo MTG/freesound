@@ -2156,15 +2156,8 @@ a.donation_button:hover {
 
 /* Freesound Projects
 ------------------------------------------------------*/
-#freesoundradio {
-    position: relative;
-    left: 10px;
-}
-
-#sonsdebarcelona {
-    position: relative;
-    top: -10px;
-    left: 34px;
+#freesound_projects {
+    text-align: center;
 }
 
 /* Credits

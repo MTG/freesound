@@ -220,10 +220,6 @@ def home(request):
     packs_without_sounds = Pack.objects.select_related().filter(user=user).filter(num_sounds=0)
     # 'packs_without_sounds' also includes packs that only contain unmoderated or unprocessed sounds
 
-    # Geotags
-    # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
-    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10].exists()
-
     # Moderation stats
     new_support = new_posts = 0
     if request.user.has_perm('tickets.can_moderate'):
@@ -822,7 +818,6 @@ def account(request, username):
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE)
     latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:10]
-    latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
 
     following, followers, following_tags, following_count, followers_count, following_tags_count = follow_utils.get_vars_for_account_view(user)

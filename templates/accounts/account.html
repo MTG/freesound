@@ -303,7 +303,6 @@
 
     {% endif %}
 
-    {% if latest_geotags %}
     <div id="latest_geotags" class="content_box">
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest geotags</h3>
         <div id="map_canvas"></div>
@@ -323,10 +322,7 @@
 
             ajaxLoad('{% url geotags-for-user-latest-json user.username %}', function(data, responseCode)
             {
-
                 var bounds = new google.maps.LatLngBounds();
-                // We'll need to know the number of sounds to correctly display the map
-                // in case there is only one sound with geotag
                 var nSounds = 0;
                 var lastPoint;
 
@@ -356,19 +352,19 @@
                     });
                 });
 
+                // Show map div if sounds in it
+                if (nSounds > 0) { $("#latest_geotags").show(); }
+
                 if (nSounds > 1){
                     if (!bounds.isEmpty()) map.fitBounds(bounds);
                 }else{
-                    // Center the map in the geotag
-                    map.setCenter(lastPoint, 4);
+                    map.setCenter(lastPoint, 4); // Center the map in the geotag
                 }
-
             });
-
         </script>
         <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
     </div><!-- #latest_geotags -->
-    {% endif %}
+
 
     {% if latest_packs %}
     <div id="latest_packs" class="content_box">
@@ -386,7 +382,7 @@
         {% if packs_without_sounds %}
         <div id="unmoderated_packs" class="content_box">
             <h3>Non visible packs</h3>
-            <p>This list contains empty packs that are empty or packs whose sounds are unmoderated or unprocessed.</p>
+            <p>This list contains packs that are empty or packs whose sounds are unmoderated or unprocessed.</p>
             <ul>
             {% for pack in packs_without_sounds %}
                 <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a>, created on <span class="date">{{pack.created}}</span></li>

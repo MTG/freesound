@@ -201,38 +201,59 @@ def username_reminder(request):
 @login_required
 def home(request):
     user = request.user
-    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
+
+    # TODO: get tagcloud from solr (#589)
     tags = list(user.profile.get_tagcloud())
-    #latest_sounds = Sound.objects.select_related().filter(user=user, processing_state="OK", moderation_state="OK")[0:5]
+
+    # Sounds
     latest_sounds = Sound.objects.bulk_sounds_for_user(user_id=user.id, limit=5)
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
-    #unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
     unmoderated_sounds = TicketViews.get_pending_sounds(request.user)
     unmoderated_sounds_count = len(unmoderated_sounds)
-    unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
-    num_more_unmoderated_sounds = unmoderated_sounds_count - settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE
+    num_more_unmoderated_sounds = 0
+    if unmoderated_sounds_count > settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE:
+        num_more_unmoderated_sounds = unmoderated_sounds_count - settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE
+        unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
 
+    # Packs
     latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
-
-    # TODO: This might show a pack each time for each sound in it
-    unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
     packs_without_sounds = Pack.objects.select_related().filter(user=user).filter(num_sounds=0)
+    # 'packs_without_sounds' also includes packs that only contain unmoderated or unprocessed sounds
 
+    # Geotags
     # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
     latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10].exists()
-    google_api_key = settings.GOOGLE_API_KEY
-    home = True
-    if home and request.user.has_perm('tickets.can_moderate'):
-        #new_sounds = new_sound_tickets_count()
-        #  No need to get 'new_sounds' count, it is already present int context processor
-        #  Leaving this message here as relevant info for future refactoring
+
+    # Moderation stats
+    new_support = new_posts = 0
+    if request.user.has_perm('tickets.can_moderate'):
         new_support = new_support_tickets_count()
-    if home and request.user.has_perm('forum.can_moderate_forum'):
+    if request.user.has_perm('forum.can_moderate_forum'):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
-    following, followers, following_tags, following_count, followers_count, following_tags_count = follow_utils.get_vars_for_home_view(user)
+    # Followers
+    following, followers, following_tags, following_count, followers_count, following_tags_count \
+        = follow_utils.get_vars_for_home_view(user)
 
-    return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'home': True,
+        'latest_sounds': latest_sounds,
+        'unprocessed_sounds': unprocessed_sounds,
+        'unmoderated_sounds': unmoderated_sounds,
+        'unmoderated_sounds_count': unmoderated_sounds_count,
+        'num_more_unmoderated_sounds': num_more_unmoderated_sounds,
+        'latest_packs': latest_packs,
+        'packs_without_sounds': packs_without_sounds,
+        'new_support': new_support,
+        'new_posts': new_posts,
+        'following': following,
+        'followers': followers,
+        'following_tags': following_tags,
+        'following_count': following_count,
+        'followers_count': followers_count,
+        'following_tags_count': following_tags_count
+    }
+    return render(request, 'accounts/account.html', tvars)
 
 
 def handle_uploaded_image(profile, f):

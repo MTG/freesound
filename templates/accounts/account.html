@@ -7,7 +7,7 @@
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
+    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{ GOOGLE_API_KEY }}&sensor=false"></script>
 {% endblock head %}
 
 {% block tab_home_active %}{% if home %}active_tab{% endif %}{% endblock %}
@@ -377,27 +377,16 @@
         {% for pack in latest_packs %}
             <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
         {% endfor %}
-        <ul>
+        </ul>
         <p><a href="{% url packs-for-user user.username %}">more...</a></p>
     </div><!-- #latest_packs -->
     {% endif %}
 
     {% if home %}
-        {% if unmoderated_packs %}
-        <div id="unmoderated_packs" class="content_box">
-            <h3>"Uncomplete" Packs</h3>
-            <p>Packs in this list won't be visible because none of their sounds has been moderated yet.</p>
-            <ul>
-            {% for pack in unmoderated_packs %}
-                <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a>, created on <span class="date">{{pack.created}}</span></li>
-            {% endfor %}
-            <ul>
-        </div><!-- #unmoderated_packs -->
-        {% endif %}
-
         {% if packs_without_sounds %}
         <div id="unmoderated_packs" class="content_box">
-            <h3>Packs without sounds</h3>
+            <h3>Non visible packs</h3>
+            <p>This list contains empty packs that are empty or packs whose sounds are unmoderated or unprocessed.</p>
             <ul>
             {% for pack in packs_without_sounds %}
                 <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a>, created on <span class="date">{{pack.created}}</span></li>

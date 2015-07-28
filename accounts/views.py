@@ -202,8 +202,8 @@ def username_reminder(request):
 def home(request):
     user = request.user
 
-    # TODO: get tagcloud from solr (#589)
-    tags = list(user.profile.get_tagcloud())
+    # Tagcloud
+    tags = user.profile.get_user_tags()
 
     # Sounds
     latest_sounds = Sound.objects.bulk_sounds_for_user(user_id=user.id, limit=5)
@@ -251,7 +251,8 @@ def home(request):
         'following_tags': following_tags,
         'following_count': following_count,
         'followers_count': followers_count,
-        'following_tags_count': following_tags_count
+        'following_tags_count': following_tags_count,
+        'tags': tags,
     }
     return render(request, 'accounts/account.html', tvars)
 
@@ -818,7 +819,7 @@ def account(request, username):
     except User.DoesNotExist:
         raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    tags = list(user.profile.get_tagcloud() if user.profile else [])
+    tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE)
     latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:10]
     latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]

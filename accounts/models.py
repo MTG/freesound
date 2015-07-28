@@ -29,6 +29,7 @@ from django.utils.encoding import smart_unicode
 from django.conf import settings
 from general.models import SocialModel
 from geotags.models import GeoTag
+from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
 from utils.sql import DelayedQueryExecuter
 from utils.locations import locations_decorator
 from tickets.views import get_num_pending_sounds
@@ -109,27 +110,46 @@ class Profile(SocialModel):
             )
         )
 
-    def get_tagcloud(self):
-        return DelayedQueryExecuter("""
-            SELECT
-                tags_tag.name AS name,
-                X.c AS count
-            FROM (
+    def get_user_tags(self, use_solr=True):
+        if use_solr:
+            query = SolrQuery()
+            query.set_dismax_query('')
+            filter_query = 'username:\"%s\"' % self.user.username
+            query.set_query_options(field_list=["id"], filter_query=filter_query)
+            query.add_facet_fields("tag")
+            query.set_facet_options("tag", limit=10, mincount=1)
+            solr = Solr(settings.SOLR_URL)
+
+            try:
+                results = SolrResponseInterpreter(solr.select(unicode(query)))
+            except SolrException, e:
+                return False
+            except Exception, e:
+                return False
+
+            return [{'name': tag, 'count': count} for tag, count in results.facets['tag']]
+
+        else:
+            return DelayedQueryExecuter("""
                 SELECT
-                    tag_id,
-                    count(*) as c
-                FROM tags_taggeditem
-                LEFT JOIN sounds_sound ON object_id=sounds_sound.id
-                WHERE
-                    tags_taggeditem.user_id=%d AND
-                    sounds_sound.moderation_state='OK' AND
-                    sounds_sound.processing_state='OK'
-                GROUP BY tag_id
-                ORDER BY c
-                DESC LIMIT 10
-            ) AS X
-            LEFT JOIN tags_tag ON tags_tag.id=X.tag_id
-            ORDER BY tags_tag.name;""" % self.user_id)
+                    tags_tag.name AS name,
+                    X.c AS count
+                FROM (
+                    SELECT
+                        tag_id,
+                        count(*) as c
+                    FROM tags_taggeditem
+                    LEFT JOIN sounds_sound ON object_id=sounds_sound.id
+                    WHERE
+                        tags_taggeditem.user_id=%d AND
+                        sounds_sound.moderation_state='OK' AND
+                        sounds_sound.processing_state='OK'
+                    GROUP BY tag_id
+                    ORDER BY c
+                    DESC LIMIT 10
+                ) AS X
+                LEFT JOIN tags_tag ON tags_tag.id=X.tag_id
+                ORDER BY tags_tag.name;""" % self.user_id)
 
     def can_post_in_forum(self):
         user_has_posts_pending_to_moderate = self.user.post_set.filter(moderation_state="NM").count() > 0

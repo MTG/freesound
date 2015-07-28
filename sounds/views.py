@@ -351,26 +351,27 @@ def sound_edit(request, username, sound_id):
         pack_form = PackForm(packs, request.POST, prefix="pack")
         if pack_form.is_valid():
             data = pack_form.cleaned_data
-            dirty_packs = []
+            affected_packs = []
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
                 sound.pack = pack
+                affected_packs.append(pack)
             else:
                 new_pack = data["pack"]
                 old_pack = sound.pack
                 if new_pack != old_pack:
                     sound.pack = new_pack
-                if new_pack:
-                    dirty_packs.append(new_pack)
-                if old_pack:
-                    dirty_packs.append(old_pack)
+                    if new_pack:
+                        affected_packs.append(new_pack)
+                    if old_pack:
+                        affected_packs.append(old_pack)
 
-            for p in dirty_packs:
-               p.process()
-
-            sound.mark_index_dirty()
+            sound.mark_index_dirty()  # Marks as dirty and saves
             invalidate_sound_cache(sound)
             update_sound_tickets(sound, '%s updated the sound pack.' % request.user.username)
+            for affected_pack in affected_packs:  # Process affected packs
+                affected_pack.process()
+
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         pack_form = PackForm(packs, prefix="pack", initial=dict(pack=sound.pack.id) if sound.pack else None)

@@ -90,7 +90,7 @@
         </div>
 
         <ul id="site_nav">
-            {% if user.is_authenticated %}
+            {% if request.user.is_authenticated %}
             <li class="{% block tab_home_active %}{% endblock %}"><a href="{% url accounts-home %}" id="site_nav_home"><span class="site_nav_icon"></span>Home</a></li>
             {% endif %}
             <li class="{% block tab_sounds_active %}{% endblock %}"><a href="{% url sounds %}" id="site_nav_sounds"><span class="site_nav_icon"></span>Sounds</a></li>

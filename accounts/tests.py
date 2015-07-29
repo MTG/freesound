@@ -23,10 +23,12 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
+from tags.models import TaggedItem
+import accounts.models
+import mock
 
 
-# Test old user links redirect
-class OldUserLinksRedirectTestCase(TestCase):
+class OldUserLinksRedirect(TestCase):
     
     fixtures = ['users.json']
     
@@ -50,7 +52,9 @@ class OldUserLinksRedirectTestCase(TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
-class AccountsTestCase(TestCase):
+class UserRegistrationAndActivation(TestCase):
+
+    fixtures = ['users.json']
 
     def test_user_registration(self):
         RecaptchaForm.validate_captcha = lambda x: True  # Monkeypatch recaptcha validation so the form validates
@@ -74,11 +78,83 @@ class AccountsTestCase(TestCase):
 
         u.is_active = True  # Set user active and check it can login
         u.save()
-        self.client.login(username='testuser', password='testpass')
-        resp = self.client.get("/home/")
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(self.client.login(username='testuser', password='testpass'), True)
 
     def test_user_save(self):
         u = User.objects.create_user("testuser2", password="testpass")
         self.assertEqual(Profile.objects.filter(user=u).count() > 0, True)
         u.save()  # Check saving user again (with existing profile) does not fail
+
+    def test_user_activation(self):
+        user = User.objects.get(username="User6Inactive")  # Inactive user in fixture
+
+        # Test calling accounts-activate with wrong hash, user should not be activated
+        bad_hash = '4dad3dft'
+        resp = self.client.get(reverse('accounts-activate', args=[user.username, bad_hash]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['decode_error'], True)
+        self.assertEqual(User.objects.get(username="User6Inactive").is_active, False)
+
+        # Test calling accounts-activate with good hash, user should be activated
+        from utils.encryption import create_hash
+        good_hash = create_hash(user.id)
+        resp = self.client.get(reverse('accounts-activate', args=[user.username, good_hash]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['all_ok'], True)
+        self.assertEqual(User.objects.get(username="User6Inactive").is_active, True)
+
+        # Test calling accounts-activate for a user that does not exist
+        resp = self.client.get(reverse('accounts-activate', args=["noone", hash]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['user_does_not_exist'], True)
+
+
+class ProfileGetUserTags(TestCase):
+
+    fixtures = ['sounds_with_tags.json']
+
+    def test_user_tagcloud_solr(self):
+        user = User.objects.get(username="Anton")
+        mock_solr = mock.Mock()
+        conf = {
+            'select.return_value': {
+                'facet_counts': {
+                    'facet_ranges': {},
+                    'facet_fields': {'tag': ['conversation', 1, 'dutch', 1, 'glas', 1, 'glass', 1, 'instrument', 2,
+                                             'laughter', 1, 'sine-like', 1, 'struck', 1, 'tone', 1, 'water', 1]},
+                    'facet_dates': {},
+                    'facet_queries': {}
+                },
+                'responseHeader': {
+                    'status': 0,
+                    'QTime': 4,
+                    'params': {'fq': 'username:\"Anton\"', 'facet.field': 'tag', 'f.tag.facet.limit': '10',
+                               'facet': 'true', 'wt': 'json', 'f.tag.facet.mincount': '1', 'fl': 'id', 'qt': 'dismax'}
+                },
+                'response': {'start': 0, 'numFound': 48, 'docs': []}
+            }
+        }
+        mock_solr.return_value.configure_mock(**conf)
+        accounts.models.Solr = mock_solr
+        tag_names = [item["name"] for item in list(user.profile.get_user_tags(use_solr=True))]
+        used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
+        non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
+
+        # Test that tags retrieved with get_user_tags are those found in db
+        self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
+        self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)
+
+        # Test solr not available return False
+        conf = {'select.return_value': Exception}
+        mock_solr.return_value.configure_mock(**conf)
+        self.assertEqual(user.profile.get_user_tags(use_solr=True), False)
+
+    def test_user_tagcloud_db(self):
+        user = User.objects.get(username="Anton")
+        tag_names = [item["name"] for item in list(user.profile.get_user_tags(use_solr=False))]
+        used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
+        non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
+
+        # Test that tags retrieved with get_user_tags are those found in db
+        self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
+        self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)

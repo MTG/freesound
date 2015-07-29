@@ -79,11 +79,11 @@ from provider.oauth2.models import AccessToken
 from follow import follow_utils
 
 audio_logger = logging.getLogger('audio')
-# TAGRECOMMENDATION CODE
 research_logger = logging.getLogger('tagrecommendation_research')
 
+
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url = "/")
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def crash_me(request):
     raise Exception
 
@@ -93,160 +93,164 @@ def bulk_license_change(request):
     if request.method == 'POST':
         form = NewLicenseForm(request.POST)
         if form.is_valid():
-            license = form.cleaned_data['license']
-            Sound.objects.filter(user=request.user).update(license=license, is_index_dirty=True)
-
-            # update old license flag
+            selected_license = form.cleaned_data['license']
+            Sound.objects.filter(user=request.user).update(license=selected_license, is_index_dirty=True)
             Profile.objects.filter(user=request.user).update(has_old_license=False)
-            # update cache
-            cache.set("has-old-license-%s" % request.user.id, [False,Sound.objects.filter(user=request.user).exists()], 2592000)
+            cache.set('has-old-license-%s' % request.user.id,
+                      [False, Sound.objects.filter(user=request.user).exists()], 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = NewLicenseForm()
-    return render_to_response('accounts/choose_new_license.html', locals(), context_instance=RequestContext(request))
+    tvars = {'form': form}
+    return render(request, 'accounts/choose_new_license.html', tvars)
+
 
 @login_required
 def tos_acceptance(request):
     if request.method == 'POST':
         form = TermsOfServiceForm(request.POST)
         if form.is_valid():
-            # update accepted tos field in user profile
             Profile.objects.filter(user=request.user).update(accepted_tos=True)
-            # update cache
-            cache.set("has-accepted-tos-%s" % request.user.id, 'yes', 2592000)
+            cache.set('has-accepted-tos-%s' % request.user.id, 'yes', 2592000)
             return HttpResponseRedirect(reverse('accounts-home'))
     else:
         form = TermsOfServiceForm()
-    return render_to_response('accounts/accept_terms_of_service.html', locals(), context_instance=RequestContext(request))
+    tvars = {'form': form}
+    return render(request, 'accounts/accept_terms_of_service.html', tvars)
 
-
-
-def activate_user(request, activation_key, username):
-    if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
-
-    try:
-        user_id = decrypt(activation_key)
-        user = User.objects.get(id=int(user_id))
-        user.is_active = True
-        user.save()
-        return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
-    except User.DoesNotExist: #@UndefinedVariable
-        return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
-    except TypeError, ValueError:
-        return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
-
-def activate_user2(request, username, hash):
-    if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
-
-    try:
-        user = User.objects.get(username__iexact=username)
-    except User.DoesNotExist: #@UndefinedVariable
-        return render_to_response('accounts/activate.html', { 'user_does_not_exist': True }, context_instance=RequestContext(request))
-
-    new_hash = create_hash(user.id)
-    if new_hash != hash:
-        return render_to_response('accounts/activate.html', { 'decode_error': True }, context_instance=RequestContext(request))
-    user.is_active = True
-    user.save()
-
-    return render_to_response('accounts/activate.html', { 'all_ok': True }, context_instance=RequestContext(request))
-
-def send_activation(user):
-    encrypted_user_id = encrypt(str(user.id))
-    username = user.username
-    send_mail_template(u'activation link.', 'accounts/email_activation.txt', locals(), None, user.email)
-
-def send_activation2(user):
-    hash = create_hash(user.id)
-    username = user.username
-    send_mail_template(u'activation link.', 'accounts/email_activation2.txt', locals(), None, user.email)
 
 def registration(request):
     if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
+        return HttpResponseRedirect(reverse('accounts-home'))
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
             user = form.save()
-            send_activation2(user)
-            return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
+            send_activation(user)
+            return render(request, 'accounts/registration_done.html')
     else:
         form = RegistrationForm(request)
 
-    return render_to_response('accounts/registration.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'accounts/registration.html', {'form': form})
+
+
+def activate_user(request, username, uid_hash):
+    if request.user.is_authenticated():
+        return HttpResponseRedirect(reverse('accounts-home'))
+
+    try:
+        user = User.objects.get(username__iexact=username)
+    except User.DoesNotExist:
+        return render(request, 'accounts/activate.html', {'user_does_not_exist': True})
+
+    new_hash = create_hash(user.id)
+    if new_hash != uid_hash:
+        return render(request, 'accounts/activate.html', {'decode_error': True})
+
+    user.is_active = True
+    user.save()
+    return render(request, 'accounts/activate.html', {'all_ok': True})
+
+
+def send_activation(user):
+    uid_hash = create_hash(user.id)
+    username = user.username
+    tvars = {
+        'user': user,
+        'username': username,
+        'hash': uid_hash
+    }
+    send_mail_template(u'activation link.', 'accounts/email_activation.txt', tvars, None, user.email)
 
 
 def resend_activation(request):
     if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
+        return HttpResponseRedirect(reverse('accounts-home'))
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form = ReactivationForm(request.POST)
         if form.is_valid():
-            user = form.cleaned_data["user"]
-            send_activation2(user)
-            return render_to_response('accounts/registration_done.html', locals(), context_instance=RequestContext(request))
+            user = form.cleaned_data['user']
+            send_activation(user)
+            return render(request, 'accounts/registration_done.html')
     else:
         form = ReactivationForm()
 
-    return render_to_response('accounts/resend_activation.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'accounts/resend_activation.html', {'form': form})
 
 
 def username_reminder(request):
     if request.user.is_authenticated():
-        return HttpResponseRedirect(reverse("accounts-home"))
+        return HttpResponseRedirect(reverse('accounts-home'))
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form = UsernameReminderForm(request.POST)
         if form.is_valid():
-            user = form.cleaned_data["user"]
-            send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt', dict(user=user), None, user.email)
+            user = form.cleaned_data['user']
+            send_mail_template(u'username reminder.', 'accounts/email_username_reminder.txt', {'user': user},
+                               None, user.email)
 
-            return render_to_response('accounts/username_reminder.html', dict(form=form, sent=True), context_instance=RequestContext(request))
+            return render(request, 'accounts/username_reminder.html', {'form': form, 'sent': True})
     else:
         form = UsernameReminderForm()
 
-    return render_to_response('accounts/username_reminder.html', dict(form=form, sent=False), context_instance=RequestContext(request))
+    return render(request, 'accounts/username_reminder.html', {'form': form, 'sent': False})
 
 
 @login_required
 def home(request):
     user = request.user
-    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    tags = list(user.profile.get_tagcloud())
-    #latest_sounds = Sound.objects.select_related().filter(user=user, processing_state="OK", moderation_state="OK")[0:5]
+
+    # Tagcloud
+    tags = user.profile.get_user_tags()
+
+    # Sounds
     latest_sounds = Sound.objects.bulk_sounds_for_user(user_id=user.id, limit=5)
     unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK")
-    #unmoderated_sounds = Sound.objects.select_related().filter(user=user,processing_state="OK").exclude(moderation_state="OK")
     unmoderated_sounds = TicketViews.get_pending_sounds(request.user)
     unmoderated_sounds_count = len(unmoderated_sounds)
-    unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
-    num_more_unmoderated_sounds = unmoderated_sounds_count - settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE
+    num_more_unmoderated_sounds = 0
+    if unmoderated_sounds_count > settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE:
+        num_more_unmoderated_sounds = unmoderated_sounds_count - settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE
+        unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
 
+    # Packs
     latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
-
-    # TODO: This might show a pack each time for each sound in it
-    unmoderated_packs = Pack.objects.select_related().filter(user=user).exclude(sound__moderation_state="OK", sound__processing_state="OK").filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
     packs_without_sounds = Pack.objects.select_related().filter(user=user).filter(num_sounds=0)
+    # 'packs_without_sounds' also includes packs that only contain unmoderated or unprocessed sounds
 
-    # TODO: refactor: This list of geotags is only used to determine if we need to show the geotag map or not
-    latest_geotags = Sound.public.filter(user=user).exclude(geotag=None)[0:10].exists()
-    google_api_key = settings.GOOGLE_API_KEY
-    home = True
-    if home and request.user.has_perm('tickets.can_moderate'):
-        #new_sounds = new_sound_tickets_count()
-        #  No need to get 'new_sounds' count, it is already present int context processor
-        #  Leaving this message here as relevant info for future refactoring
+    # Moderation stats
+    new_support = new_posts = 0
+    if request.user.has_perm('tickets.can_moderate'):
         new_support = new_support_tickets_count()
-    if home and request.user.has_perm('forum.can_moderate_forum'):
+    if request.user.has_perm('forum.can_moderate_forum'):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
-    following, followers, following_tags, following_count, followers_count, following_tags_count = follow_utils.get_vars_for_home_view(user)
+    # Followers
+    following, followers, following_tags, following_count, followers_count, following_tags_count \
+        = follow_utils.get_vars_for_home_view(user)
 
-    return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'home': True,
+        'latest_sounds': latest_sounds,
+        'unprocessed_sounds': unprocessed_sounds,
+        'unmoderated_sounds': unmoderated_sounds,
+        'unmoderated_sounds_count': unmoderated_sounds_count,
+        'num_more_unmoderated_sounds': num_more_unmoderated_sounds,
+        'latest_packs': latest_packs,
+        'packs_without_sounds': packs_without_sounds,
+        'new_support': new_support,
+        'new_posts': new_posts,
+        'following': following,
+        'followers': followers,
+        'following_tags': following_tags,
+        'following_count': following_count,
+        'followers_count': followers_count,
+        'following_tags_count': following_tags_count,
+        'tags': tags,
+    }
+    return render(request, 'accounts/account.html', tvars)
 
 
 def handle_uploaded_image(profile, f):
@@ -811,10 +815,9 @@ def account(request, username):
     except User.DoesNotExist:
         raise Http404
     # expand tags because we will definitely be executing, and otherwise tags is called multiple times
-    tags = list(user.profile.get_tagcloud() if user.profile else [])
+    tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE)
     latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:10]
-    latest_geotags = Sound.public.select_related('license', 'pack', 'geotag', 'user', 'user__profile').filter(user=user).exclude(geotag=None)[0:10]
     google_api_key = settings.GOOGLE_API_KEY
 
     following, followers, following_tags, following_count, followers_count, following_tags_count = follow_utils.get_vars_for_account_view(user)

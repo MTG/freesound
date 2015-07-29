@@ -36,7 +36,7 @@ from sounds.models import Sound, Pack, License
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
 from api.forms import ApiKeyForm
-from accounts.views import handle_uploaded_file, send_activation2
+from accounts.views import handle_uploaded_file, send_activation
 from accounts.forms import RegistrationForm
 from utils.filesystem import generate_tree
 from utils.cache import invalidate_template_cache
@@ -1375,7 +1375,7 @@ def minimal_registration(request):
         form = RegistrationForm(request, request.POST)
         if form.is_valid():
             user = form.save()
-            send_activation2(user)
+            send_activation(user)
             return render_to_response('api/minimal_registration_done.html', locals(), context_instance=RequestContext(request))
     else:
         form = RegistrationForm(request)

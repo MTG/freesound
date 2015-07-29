@@ -22,6 +22,7 @@ from django.core.management.base import BaseCommand
 from tickets.models import Ticket
 from tickets import TICKET_STATUS_CLOSED
 
+
 class Command(BaseCommand):
     help = "Whitelist a user and close all pending tickets. Take as argument a ticket_id"
 

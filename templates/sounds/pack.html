@@ -7,7 +7,7 @@
 
 {% block head %}
     {{ block.super }}
-    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
+    <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{ GOOGLE_API_KEY }}&sensor=false"></script>
 {% endblock head %}
 
 {% block section_content %}
@@ -101,8 +101,7 @@
 </div> <!-- end CONTENT -->
 
 <div id="sidebar">
-    
-    {% if pack_geotags %}
+
     <div id="latest_geotags" class="content_box">
         <h3>Geotags in this pack</h3>
         <div id="map_canvas"></div>
@@ -152,6 +151,12 @@
                     });
                 });
 
+                // Show map div if sounds in it
+                if (nSounds > 0) {
+                    $("#latest_geotags").show();
+                    google.maps.event.trigger(map, 'resize');
+                }
+
                 if (nSounds > 1){
                     if (!bounds.isEmpty()) map.fitBounds(bounds);
                 }else{
@@ -163,7 +168,6 @@
 
         </script>
     </div><!-- #pack_geotags -->
-    {% endif %}
     
     {% if not pack.is_dirty %}
 	{% if num_sounds_ok > 0  and file_exists %}

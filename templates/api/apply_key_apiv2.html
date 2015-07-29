@@ -10,7 +10,7 @@
 
     <table>
     <tr>
-        <th>App name</th>
+        <th>Name</th>
         {% comment %}<th>Api ver.</th>{% endcomment %}
         <th>Client id</th>
         <th>Client secret/Api key</th>
@@ -36,7 +36,7 @@
     {% endfor %}
     </table>
     
-    <h3>Get credentials for a new application</h3>
+    <h3>Get a new credential</h3>
     
     <form action="" method="post" enctype="multipart/form-data">
     
@@ -48,14 +48,12 @@
             <input type="submit" name="submit" value="Request access credentials" id="submit">
         </p>
         <p style="width:700px">
-            * This field is only used for the authorization process when accessing resources that require OAuth2.
+            The <b> OAuth2 callback URL</b> is only used for the authorization process when accessing resources that require OAuth2.
             At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
             In this way your application can be automatically notified when users have given the permissions to access their data.
-        <br>
             If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
             introduce the following url: <span style="font-family: 'Courier'">{{ fs_callback_url }}</span>.
-            <br>Using this url
-            users will be redirected to a page showing the authorization code so they can later enter it manually in your application.
+            <br>See the <a href="/docs/api" target="_blank">API docummentation</a> for more information.
         </p>
 
     </form>

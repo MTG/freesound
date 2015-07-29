@@ -152,7 +152,10 @@
                 });
 
                 // Show map div if sounds in it
-                if (nSounds > 0) { $("#latest_geotags").show(); }
+                if (nSounds > 0) {
+                    $("#latest_geotags").show();
+                    google.maps.event.trigger(map, 'resize');
+                }
 
                 if (nSounds > 1){
                     if (!bounds.isEmpty()) map.fitBounds(bounds);

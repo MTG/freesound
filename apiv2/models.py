@@ -21,6 +21,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 from provider.oauth2.models import Client
+from django.conf import settings
+from django.core.urlresolvers import reverse
+from django.contrib.sites.models import Site
+
 
 # Monkeypatch __unicode__ in provider.oauth2.models.Client class as it is not very informative (and it shows better in the admin)
 Client.__unicode__ = lambda self: u'%s, %s, %s' % (self.name, self.user, self.client_id) #new_unicode
@@ -62,6 +66,13 @@ class ApiV2Client(models.Model):
 
         # If oauth client does not exist create a new one (that means ApiV2Client is being saved for the first time)
         # Otherwise update existing client
+
+        # If redirect_uri has not been set, use Freesound redirect uri by default
+        if not self.redirect_uri:
+            redirect_uri_base = "https://%s%s"
+            if settings.DEBUG:
+                redirect_uri_base = "http://%s%s"
+            self.redirect_uri = redirect_uri_base % (Site.objects.get_current().domain, reverse('permission-granted'))
 
         if not self.oauth_client:
             # Set oauth client (create oauth client object)

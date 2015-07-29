@@ -1,17 +1,17 @@
 {% extends "accounts/_section.html" %}
 {% load util %}
 
-{% block title %}{{user.username}} - Freesound Api access credentials{% endblock %}
+{% block title %}{{user.username}} - Freesound API access credentials{% endblock %}
 
 {% block section_content %}
-    <h1>Your Freesound Api (v1 and v2) access credentials {%  if not combined_apiv1_and_apiv2 %}(for Api V2){% endif %}</h1>
+    <h1>Your Freesound API access credentials</h1>
 
     <h3>Existing credentials</h3>
 
     <table>
     <tr>
-        <th>App name</th>
-        <th>Api ver.</th>
+        <th>Name</th>
+        {% comment %}<th>Api ver.</th>{% endcomment %}
         <th>Client id</th>
         <th>Client secret/Api key</th>
         {% comment %}<th>Scope</th>{% endcomment %}
@@ -23,7 +23,7 @@
     {% for credential in user_credentials %}
         <tr>
             <td>{{ credential.name|truncate_string:20 }}</td>
-            <td>{% if credential.version == 'V2' %}V1/{% endif %}{{ credential.version }}</td>
+            {% comment %}<td>{% if credential.version == 'V2' %}V1/{% endif %}{{ credential.version }}</td>{% endcomment %}
             <td>{{ credential.client_id }}</td>
             <td>{{ credential.client_secret }}</td>
             {% comment %}<td>{{ credential.get_scope_display }}</td>{% endcomment %}
@@ -36,7 +36,7 @@
     {% endfor %}
     </table>
     
-    <h3>Get credentials for a new application</h3>
+    <h3>Get a new credential</h3>
     
     <form action="" method="post" enctype="multipart/form-data">
     
@@ -48,14 +48,12 @@
             <input type="submit" name="submit" value="Request access credentials" id="submit">
         </p>
         <p style="width:700px">
-            * This field is only used for the authorization process when accessing resources that require OAuth2.
+            The <b> OAuth2 callback URL</b> is only used for the authorization process when accessing resources that require OAuth2.
             At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
             In this way your application can be automatically notified when users have given the permissions to access their data.
-        <br>
             If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
             introduce the following url: <span style="font-family: 'Courier'">{{ fs_callback_url }}</span>.
-            <br>Using this url
-            users will be redirected to a page showing the authorization code so they can later enter it manually in your application.
+            <br>See the <a href="/docs/api" target="_blank">API docummentation</a> for more information.
         </p>
 
     </form>

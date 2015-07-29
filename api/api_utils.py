@@ -90,6 +90,17 @@ def build_invalid_url(e):
                                              "The introduced url is invalid.",}
                                              ), e)
 
+def end_of_life_message(e):
+    logger.error('410 API error: End of life')
+
+    return build_error_response(ReturnError(410,
+                                            "Gone",
+                                            {"explanation":
+                                             "Freesound APIv1 has reached its end of life and is no longer available. "
+                                             "Please, upgrade to Freesound APIv2. More information: "
+                                             "http://www.freesound.org/docs/api/",}
+                                             ), e)
+
 class auth():
 
     def __init__(self, get_parameter='api_key'): # FROM FREESOUND

@@ -1182,7 +1182,6 @@ def create_apiv2_key(request):
                               {'user': request.user,
                                'form': form,
                                'user_credentials': user_credentials,
-                               'combined_apiv1_and_apiv2': settings.APIV2KEYS_ALLOWED_FOR_APIV1,
                                'fs_callback_url': fs_callback_url,
                                }, context_instance=RequestContext(request))
 

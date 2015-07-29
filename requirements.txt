@@ -27,3 +27,4 @@ pillow==2.6.0
 ipython
 Sphinx
 django-fixture-magic
+mock

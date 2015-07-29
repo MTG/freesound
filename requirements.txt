@@ -26,3 +26,4 @@ pillow==2.6.0
 #apt-get install libpng12-dev
 ipython
 Sphinx
+django-fixture-magic

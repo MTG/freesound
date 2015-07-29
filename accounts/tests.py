@@ -24,6 +24,8 @@ from django.core.urlresolvers import reverse
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
 from tags.models import TaggedItem
+import accounts.models
+import mock
 
 
 class OldUserLinksRedirectTestCase(TestCase):
@@ -111,13 +113,48 @@ class UserTagcloud(TestCase):
 
     fixtures = ['sounds_with_tags.json']
 
-    #def test_user_tagcloud_solr(self):
-    #    pass
+    def test_user_tagcloud_solr(self):
+        user = User.objects.get(username="Anton")
+        mock_solr = mock.Mock()
+        conf = {
+            'select.return_value': {
+                'facet_counts': {
+                    'facet_ranges': {},
+                    'facet_fields': {'tag': ['conversation', 1, 'dutch', 1, 'glas', 1, 'glass', 1, 'instrument', 2,
+                                             'laughter', 1, 'sine-like', 1, 'struck', 1, 'tone', 1, 'water', 1]},
+                    'facet_dates': {},
+                    'facet_queries': {}
+                },
+                'responseHeader': {
+                    'status': 0,
+                    'QTime': 4,
+                    'params': {'fq': 'username:\"Anton\"', 'facet.field': 'tag', 'f.tag.facet.limit': '10',
+                               'facet': 'true', 'wt': 'json', 'f.tag.facet.mincount': '1', 'fl': 'id', 'qt': 'dismax'}
+                },
+                'response': {'start': 0, 'numFound': 48, 'docs': []}
+            }
+        }
+        mock_solr.return_value.configure_mock(**conf)
+        accounts.models.Solr = mock_solr
+        tag_names = [item["name"] for item in list(user.profile.get_user_tags(use_solr=True))]
+        used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
+        non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
+
+        # Test that tags retrieved with get_user_tags are those found in db
+        self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
+        self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)
+
+        # Test solr not available return False
+        conf = {'select.return_value': Exception}
+        mock_solr.return_value.configure_mock(**conf)
+        self.assertEqual(user.profile.get_user_tags(use_solr=True), False)
 
     def test_user_tagcloud_db(self):
         user = User.objects.get(username="Anton")
         tag_names = [item["name"] for item in list(user.profile.get_user_tags(use_solr=False))]
         used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
         non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
+
+        # Test that tags retrieved with get_user_tags are those found in db
         self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
         self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)

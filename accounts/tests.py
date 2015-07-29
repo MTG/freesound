@@ -23,6 +23,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
+from tags.models import TaggedItem
 
 
 class OldUserLinksRedirectTestCase(TestCase):
@@ -106,3 +107,17 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(resp.context['user_does_not_exist'], True)
 
 
+class UserTagcloud(TestCase):
+
+    fixtures = ['sounds_with_tags.json']
+
+    #def test_user_tagcloud_solr(self):
+    #    pass
+
+    def test_user_tagcloud_db(self):
+        user = User.objects.get(username="Anton")
+        tag_names = [item["name"] for item in list(user.profile.get_user_tags(use_solr=False))]
+        used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.filter(user=user)]))
+        non_used_tag_names = list(set([item.tag.name for item in TaggedItem.objects.exclude(user=user)]))
+        self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
+        self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)

@@ -28,7 +28,7 @@ import accounts.models
 import mock
 
 
-class OldUserLinksRedirectTestCase(TestCase):
+class OldUserLinksRedirect(TestCase):
     
     fixtures = ['users.json']
     
@@ -109,7 +109,7 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(resp.context['user_does_not_exist'], True)
 
 
-class UserTagcloud(TestCase):
+class ProfileGetUserTags(TestCase):
 
     fixtures = ['sounds_with_tags.json']
 

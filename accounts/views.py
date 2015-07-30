@@ -327,31 +327,30 @@ def handle_uploaded_image(profile, f):
     except Exception, e:
         logger.error("\tfailed writing file error: %s", str(e))
 
+    logger.info("\tcreating thumbnails")
     path_s = profile.locations("avatar.S.path")
     path_m = profile.locations("avatar.M.path")
     path_l = profile.locations("avatar.L.path")
-
-    logger.info("\tcreating thumbnails")
     try:
         extract_square(tmp_image_path, path_s, 32)
+        logger.info("\tcreated small thumbnail")
         profile.has_avatar = True
         profile.save()
     except Exception, e:
         logger.error("\tfailed creating small thumbnails: " + str(e))
 
-    logger.info("\tcreated small thumbnail")
-
     try:
         extract_square(tmp_image_path, path_m, 40)
+        logger.info("\tcreated medium thumbnail")
     except Exception, e:
         logger.error("\tfailed creating medium thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_l, 70)
+        logger.info("\tcreated large thumbnail")
     except Exception, e:
         logger.error("\tfailed creating large thumbnails: " + str(e))
 
-    logger.info("\tcreated medium thumbnail")
     os.unlink(tmp_image_path)
 
 

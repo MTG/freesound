@@ -110,6 +110,7 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
     # Pass in a queryset to avoid needing a reference to
     # the Sound class, it causes circular imports.
     num_sounds = sound_queryset.count()
+    num_correctly_indexed_sounds = 0
     for i in range(0, num_sounds, slice_size):
         print "Adding %i sounds to solr, slice %i"%(slice_size,i)
         try:
@@ -118,9 +119,10 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
             if mark_index_clean:
                 logger.info("Marking sounds as clean.")
                 sounds.models.Sound.objects.filter(pk__in=[snd.id for snd in sounds_to_update]).update(is_index_dirty=False)
+                num_correctly_indexed_sounds += len(sounds_to_update)
         except SolrException, e:
             logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
-
+    return num_correctly_indexed_sounds
 
 def get_all_sound_ids_from_solr(limit=False):
     logger.info("getting all sound ids from solr.")

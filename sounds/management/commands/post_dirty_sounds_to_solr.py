@@ -35,5 +35,5 @@ class Command(BaseCommand):
                                         processing_state='OK')
 
         logger.info("Starting posting dirty sounds to solr. %i sounds to be added/updated to the solr index" % sound_qs.count())
-        add_all_sounds_to_solr(sound_qs, mark_index_clean=True)
-        logger.info("Finished posting dirty sounds to solr. %i sounds have been added/updated" % sound_qs.count())
+        num_correctly_indexed_sounds = add_all_sounds_to_solr(sound_qs, mark_index_clean=True)
+        logger.info("Finished posting dirty sounds to solr. %i sounds have been added/updated" % num_correctly_indexed_sounds)

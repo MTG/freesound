@@ -21,7 +21,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.conf import settings
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
@@ -172,10 +172,47 @@ class UserEditProfile(TestCase):
         handle_uploaded_image(user.profile, f)
 
         # Test that avatar files were created
-        path_s = user.profile.locations("avatar.S.path")
-        path_m = user.profile.locations("avatar.M.path")
-        path_l = user.profile.locations("avatar.L.path")
+        self.assertEqual(os.path.exists(user.profile.locations("avatar.S.path")), True)
+        self.assertEqual(os.path.exists(user.profile.locations("avatar.M.path")), True)
+        self.assertEqual(os.path.exists(user.profile.locations("avatar.L.path")), True)
 
-        self.assertEqual(os.path.exists(path_s), True)
-        self.assertEqual(os.path.exists(path_m), True)
-        self.assertEqual(os.path.exists(path_l), True)
+    def test_edit_user_profile(self):
+        User.objects.create_user("testuser", password="testpass")
+        self.client.login(username='testuser', password='testpass')
+        self.client.post("/home/edit/", {
+            'profile-home_page': 'http://www.example.com/',
+            'profile-wants_newsletter': True,
+            'profile-enabled_stream_emails': True,
+            'profile-about': 'About test text',
+            'profile-signature': 'Signature test text',
+            'profile-not_shown_in_online_users_list': True,
+        })
+
+        user = User.objects.select_related('profile').get(username="testuser")
+        self.assertEqual(user.profile.home_page, 'http://www.example.com/')
+        self.assertEqual(user.profile.wants_newsletter, True)
+        self.assertEqual(user.profile.enabled_stream_emails, True)
+        self.assertEqual(user.profile.about, 'About test text')
+        self.assertEqual(user.profile.signature, 'Signature test text')
+        self.assertEqual(user.profile.not_shown_in_online_users_list, True)
+
+    def test_edit_user_avatar(self):
+        User.objects.create_user("testuser", password="testpass")
+        self.client.login(username='testuser', password='testpass')
+        self.client.post("/home/edit/", {
+            'image-file': open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'),
+            'image-remove': False,
+        })
+
+        user = User.objects.select_related('profile').get(username="testuser")
+        self.assertEqual(user.profile.has_avatar, True)
+        self.assertEqual(os.path.exists(user.profile.locations("avatar.S.path")), True)
+        self.assertEqual(os.path.exists(user.profile.locations("avatar.M.path")), True)
+        self.assertEqual(os.path.exists(user.profile.locations("avatar.L.path")), True)
+
+        self.client.post("/home/edit/", {
+            'image-file': '',
+            'image-remove': True,
+        })
+        user = User.objects.select_related('profile').get(username="testuser")
+        self.assertEqual(user.profile.has_avatar, False)

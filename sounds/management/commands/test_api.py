@@ -20,7 +20,11 @@
 #     See AUTHORS file.
 #
 
-import requests
+try:
+    import requests
+except:
+    pass  # Ignore requests and let the command fail if requests not installed. This tests will eventually be moved
+          # into unit tests using the standard django framework.
 import json
 from django.core.management.base import BaseCommand
 from django.contrib.sites.models import Site

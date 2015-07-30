@@ -8,7 +8,7 @@
 
 <div id="content">
     <div id="edit_account" class="content_box">
-        <h3>Edit your account</h3>
+        <h3>Edit your account information</h3>
         <form method="post" action=".">{% csrf_token %}
             {{profile_form.as_p}}
             {% include 'forum/html_explanation.html' %}

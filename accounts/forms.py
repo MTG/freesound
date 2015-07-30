@@ -41,8 +41,8 @@ class TermsOfServiceForm(forms.Form):
 
 
 class AvatarForm(forms.Form):
-    file = forms.FileField(required=False)
-    remove = forms.BooleanField(label="Remove avatar", required=False)
+    file = forms.FileField(required=False, label="")
+    remove = forms.BooleanField(help_text="Remove avatar", label="", required=False)
     
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -188,14 +188,16 @@ class ProfileForm(forms.ModelForm):
         widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
         required=False
     )
-    wants_newsletter = forms.BooleanField(label="Subscribed to newsletter", required=False)
+    wants_newsletter = forms.BooleanField(help_text="Subscribed to newsletter", label="", required=False)
     enabled_stream_emails = forms.BooleanField(
-        label="Receive weekly stream update email notifications (only when new sounds are uploaded by users you follow "
-              "or that have tags you follow)",
+        help_text="Receive weekly stream update email notifications (only when new sounds are uploaded by "
+                  "users you follow or that have tags you follow)",
+        label = "",
         required=False
     )
     not_shown_in_online_users_list = forms.BooleanField(
-        label="Hide from \"users currently online\" list in the People page",
+        help_text="Hide from \"users currently online\" list in the People page",
+        label = "",
         required=False
     )
     

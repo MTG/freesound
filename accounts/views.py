@@ -79,6 +79,7 @@ from provider.oauth2.models import AccessToken
 from follow import follow_utils
 
 audio_logger = logging.getLogger('audio')
+logger = logging.getLogger("upload")
 research_logger = logging.getLogger('tagrecommendation_research')
 
 
@@ -253,18 +254,69 @@ def home(request):
     return render(request, 'accounts/account.html', tvars)
 
 
+@login_required
+def edit(request):
+    profile = request.user.profile
+
+    def is_selected(prefix):
+        if request.method == "POST":
+            for name in request.POST.keys():
+                if name.startswith(prefix + '-'):
+                    return True
+            if request.FILES:
+                for name in request.FILES.keys():
+                    if name.startswith(prefix + '-'):
+                        return True
+        return False
+
+    if is_selected("profile"):
+        had_enabled_stream_emails = profile.enabled_stream_emails
+        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
+        if profile_form.is_valid():
+            enabled_stream_emails = profile_form.cleaned_data.get("enabled_stream_emails")
+            # If is enabling stream emails, set last_stream_email_sent to now
+            if not had_enabled_stream_emails and enabled_stream_emails:
+                profile.last_stream_email_sent = datetime.datetime.now()
+            profile.save()
+            return HttpResponseRedirect(reverse("accounts-home"))
+    else:
+        profile_form = ProfileForm(request, instance=profile, prefix="profile")
+
+    if is_selected("image"):
+        image_form = AvatarForm(request.POST, request.FILES, prefix="image")
+        if image_form.is_valid():
+            if image_form.cleaned_data["remove"]:
+                profile.has_avatar = False
+                profile.save()
+            else:
+                handle_uploaded_image(profile, image_form.cleaned_data["file"])
+                profile.has_avatar = True
+                profile.save()
+            return HttpResponseRedirect(reverse("accounts-home"))
+    else:
+        image_form = AvatarForm(prefix="image")
+
+    has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
+
+    tvars = {
+        'profile': profile,
+        'profile_form': profile_form,
+        'image_form': image_form,
+        'has_granted_permissions': has_granted_permissions
+    }
+    return render(request, 'accounts/edit.html', tvars)
+
+
 def handle_uploaded_image(profile, f):
-    # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
     logger.info("\thandling profile image upload")
     try:
         os.mkdir(os.path.dirname(profile.locations("avatar.L.path")))
-    except:
-        logger.info("\tfailed creating directory, probably already exist")
+    except Exception, e:
+        logger.info("\tfailed creating directory with error: %s" % str(e))
         pass
 
     ext = os.path.splitext(os.path.basename(f.name))[1]
     tmp_image_path = tempfile.mktemp(suffix=ext, prefix=str(profile.user.id))
-
     try:
         logger.info("\topening file: %s", tmp_image_path)
         destination = open(tmp_image_path, 'wb')
@@ -300,64 +352,7 @@ def handle_uploaded_image(profile, f):
         logger.error("\tfailed creating large thumbnails: " + str(e))
 
     logger.info("\tcreated medium thumbnail")
-
     os.unlink(tmp_image_path)
-
-
-@login_required
-def edit(request):
-    profile = request.user.profile
-
-    def is_selected(prefix):
-        if request.method == "POST":
-            for name in request.POST.keys():
-                if name.startswith(prefix + '-'):
-                    return True
-            if request.FILES:
-                for name in request.FILES.keys():
-                    if name.startswith(prefix + '-'):
-                        return True
-        return False
-
-    if is_selected("profile"):
-        enabled_stream_emails_previous = profile.enabled_stream_emails
-        profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
-        if profile_form.is_valid():
-            enabled_stream_emails_current = profile_form.cleaned_data.get("enabled_stream_emails")
-            # if had notifications active before and now has them, set last_stream_email_sent to None (NULL)
-            if enabled_stream_emails_previous and not enabled_stream_emails_current:
-                profile.last_stream_email_sent = None
-            # if is activating for the first time, then set last_stream_email_sent to now
-            # (will send in a week)
-            if not enabled_stream_emails_previous and enabled_stream_emails_current:
-                profile.last_stream_email_sent = datetime.datetime.now()
-            profile.save()
-            # TODO: check if not including profile_form.save() breaks stuff
-            return HttpResponseRedirect(reverse("accounts-home"))
-    else:
-        profile_form = ProfileForm(request, instance=profile, prefix="profile")
-
-    if is_selected("image"):
-        image_form = AvatarForm(request.POST, request.FILES, prefix="image")
-        if image_form.is_valid():
-            if image_form.cleaned_data["remove"]:
-                profile.has_avatar = False
-                profile.save()
-            else:
-                handle_uploaded_image(profile, image_form.cleaned_data["file"])
-                profile.has_avatar = True
-                profile.save()
-            return HttpResponseRedirect(reverse("accounts-home"))
-    else:
-        image_form = AvatarForm(prefix="image")
-
-    has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
-
-    return render_to_response('accounts/edit.html', dict(profile=profile,
-                                                         profile_form=profile_form,
-                                                         image_form=image_form,
-                                                         has_granted_permissions=has_granted_permissions),
-                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -838,7 +833,6 @@ def account(request, username):
 
     return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
 
-logger = logging.getLogger("upload")
 
 def handle_uploaded_file(user_id, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP

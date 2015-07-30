@@ -21,11 +21,15 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.conf import settings
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
+from accounts.views import handle_uploaded_image
 from tags.models import TaggedItem
 import accounts.models
 import mock
+import os
 
 
 class OldUserLinksRedirect(TestCase):
@@ -158,3 +162,20 @@ class ProfileGetUserTags(TestCase):
         # Test that tags retrieved with get_user_tags are those found in db
         self.assertEqual(len(set(tag_names).intersection(used_tag_names)), len(tag_names))
         self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)
+
+
+class UserEditProfile(TestCase):
+
+    def test_handle_uploaded_image(self):
+        user = User.objects.create_user("testuser", password="testpass")
+        f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'), None, None, None, None, None)
+        handle_uploaded_image(user.profile, f)
+
+        # Test that avatar files were created
+        path_s = user.profile.locations("avatar.S.path")
+        path_m = user.profile.locations("avatar.M.path")
+        path_l = user.profile.locations("avatar.L.path")
+
+        self.assertEqual(os.path.exists(path_s), True)
+        self.assertEqual(os.path.exists(path_m), True)
+        self.assertEqual(os.path.exists(path_l), True)

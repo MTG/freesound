@@ -25,17 +25,6 @@
             option.selected = false;
     }
 
-    {% if ask_for_interface %}
-        function show_popup(){
-            $("#ask_for_interface").show();
-        }
-
-        function submit(form, value){
-            $("#participate_in_experiment").val(value);
-            form.submit();
-        }
-    {% endif %}
-
 </script>
 {% endblock %}
 
@@ -48,10 +37,10 @@
     <br> You can also delete files by selecting them and pressing the "delete selected files" button.
 <div id="content">
     <div class="content_box">
-        <h3>&nbsp;</h3>
+        <h3>Your uploaded files</h3>
         <p>
         <ul id="root_file" class="upload">
-            {% show_file file_structure %}
+            {% show_file file_structure 1 %}
         </ul>
         </p>
     </div>
@@ -64,31 +53,7 @@
             <div style="display:none">
             {{form.as_p}}
             </div>
-            {% if ask_for_interface %}
-                <input class="describe_page_action_button" type="button" value="describe selected files" onclick="show_popup()">
-                <div id="ask_for_interface" style="display:none;margin-top:10px;margin-left:10px;padding: 16px 18px;border-left: 2px solid #eee;background: #fafafa;">
-                    <p>
-
-                        In order to improve and facilitate the sound tagging process, we are experimenting with a new
-                        interface for tagging your audio files. Do you want to use this experimental interface to describe
-                        the selected sounds?
-                    </p>
-                    <p>
-                        <input type="radio" name="participate_in_experiment" value="yes" {% if is_ie %}disabled="disabled"{% endif %} /> Yes&nbsp;&nbsp;&nbsp;
-                        <input type="radio" name="participate_in_experiment" checked="checked" value="no"/> No
-
-                        <input type="submit" value="continue" name="describe" style="margin-left:90px">
-                    </p>
-                    {% if is_ie %}
-                        <p><span style="font-size:90%;">
-                        (only works on Chrome, Safari and Firefox web browsers)
-                        </span></p>
-                     {% endif %}
-
-                </div>
-            {% else %}
-                <input class="describe_page_action_button" type="submit" value="describe selected files" name="describe">
-            {% endif %}
+            <input class="describe_page_action_button" type="submit" value="describe selected files" name="describe">
             <br><input class="describe_page_action_button" type="submit" value="delete selected files" name="delete">
         </form>
         </p>

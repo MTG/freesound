@@ -356,48 +356,38 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def describe(request):
-
-    # Tag recommendation research code
-    ask_for_interface = settings.ENABLE_TAG_RECOMMENDATION_INTERFACE_EXPERIMENT
-    is_ie = False
-    if request.META.has_key('HTTP_USER_AGENT'):
-        user_agent = request.META['HTTP_USER_AGENT'].lower()
-        is_ie = ('trident' in user_agent) or ('msie' in user_agent)
-
     file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
-    file_structure.name = 'Your uploaded files'
+    file_structure.name = ''
 
     if request.method == 'POST':
         form = FileChoiceForm(files, request.POST)
-
-        # Tag recommendation research code
-        request.session['use_alternative_interface'] = False
-        if ask_for_interface:
-            if request.POST.get('participate_in_experiment', 'no') == 'yes':
-                request.session['use_alternative_interface'] = True
-
         if form.is_valid():
-            if "delete" in request.POST: # If delete button is pressed
+            if "delete" in request.POST:
                 filenames = [files[x].name for x in form.cleaned_data["files"]]
-                return render_to_response('accounts/confirm_delete_undescribed_files.html', locals(), context_instance=RequestContext(request))
-            elif "delete_confirm" in request.POST: # If confirmation delete button is pressed
-                for file in form.cleaned_data["files"]:
-                    os.remove(files[file].full_path)
+                tvars = {'form': form, 'filenames': filenames}
+                return render(request, 'accounts/confirm_delete_undescribed_files.html', tvars)
+            elif "delete_confirm" in request.POST:
+                for f in form.cleaned_data["files"]:
+                    os.remove(files[f].full_path)
                 return HttpResponseRedirect(reverse('accounts-describe'))
-            elif "describe" in request.POST: # If describe button is pressed
-                # If only one file is choosen, go straight to the last step of the describe process, otherwise go to license selection step
-                if len(form.cleaned_data["files"]) > 1 :
-                    request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+            elif "describe" in request.POST:
+                request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+
+                # If only one file is choosen, go straight to the last step of the describe process,
+                # otherwise go to license selection step
+                if len(request.session['describe_sounds']) > 1:
                     return HttpResponseRedirect(reverse('accounts-describe-license'))
-                else :
-                    request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
+                else:
                     return HttpResponseRedirect(reverse('accounts-describe-sounds'))
             else:
-                form = FileChoiceForm(files) # Reset form
-                return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
+                form = FileChoiceForm(files)
+                tvars = {'form': form, 'file_structure': file_structure}
+                return render(request, 'accounts/describe.html', tvars)
     else:
         form = FileChoiceForm(files)
-    return render_to_response('accounts/describe.html', locals(), context_instance=RequestContext(request))
+    tvars = {'form': form, 'file_structure': file_structure}
+    return render(request, 'accounts/describe.html', tvars)
+
 
 @login_required
 def describe_license(request):
@@ -408,7 +398,9 @@ def describe_license(request):
             return HttpResponseRedirect(reverse('accounts-describe-pack'))
     else:
         form = NewLicenseForm({'license': License.objects.get(name='Attribution')})
-    return render_to_response('accounts/describe_license.html', locals(), context_instance=RequestContext(request))
+    tvars = {'form': form}
+    return render(request, 'accounts/describe_license.html', tvars)
+
 
 @login_required
 def describe_pack(request):
@@ -427,7 +419,8 @@ def describe_pack(request):
             return HttpResponseRedirect(reverse('accounts-describe-sounds'))
     else:
         form = PackForm(packs, prefix="pack")
-    return render_to_response('accounts/describe_pack.html', locals(), context_instance=RequestContext(request))
+    tvars = {'form': form}
+    return render(request, 'accounts/describe_pack.html', tvars)
 
 
 @login_required

@@ -176,6 +176,11 @@ class UserEditProfile(TestCase):
         self.assertEqual(os.path.exists(user.profile.locations("avatar.M.path")), True)
         self.assertEqual(os.path.exists(user.profile.locations("avatar.L.path")), True)
 
+        # Delete created avatar files
+        os.remove(user.profile.locations("avatar.S.path"))
+        os.remove(user.profile.locations("avatar.M.path"))
+        os.remove(user.profile.locations("avatar.L.path"))
+
     def test_edit_user_profile(self):
         User.objects.create_user("testuser", password="testpass")
         self.client.login(username='testuser', password='testpass')
@@ -216,3 +221,8 @@ class UserEditProfile(TestCase):
         })
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.has_avatar, False)
+
+        # Delete created avatar files
+        os.remove(user.profile.locations("avatar.S.path"))
+        os.remove(user.profile.locations("avatar.M.path"))
+        os.remove(user.profile.locations("avatar.L.path"))

@@ -80,7 +80,6 @@ from follow import follow_utils
 
 audio_logger = logging.getLogger('audio')
 logger = logging.getLogger("upload")
-research_logger = logging.getLogger('tagrecommendation_research')
 
 
 @login_required
@@ -372,7 +371,6 @@ def describe(request):
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
                 request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
-
                 # If only one file is choosen, go straight to the last step of the describe process,
                 # otherwise go to license selection step
                 if len(request.session['describe_sounds']) > 1:
@@ -426,50 +424,33 @@ def describe_pack(request):
 @login_required
 @transaction.autocommit
 def describe_sounds(request):
-
+    forms = []
     sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)
+    sounds_to_describe = sounds[0:settings.SOUNDS_PER_DESCRIBE_ROUND]
+    request.session['describe_sounds_number'] = len(request.session.get('describe_sounds'))
     selected_license = request.session.get('describe_license', False)
     selected_pack = request.session.get('describe_pack', False)
-
-    # For tag recommendation research only
-    ALTERNATIVE_INTERFACE = False
-    use_alternative_interface = request.GET.get("alt", False) or request.session.get('use_alternative_interface', False)
-    if use_alternative_interface:
-        ALTERNATIVE_INTERFACE = True
-    n_sounds = len(sounds)
-
     # This is to prevent people browsing to the /home/describe/sounds page
     # without going through the necessary steps.
     # selected_pack can be False, but license and sounds have to be picked at least
-    if not (sounds):
+    if not sounds:
         msg = 'Please pick at least one sound.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
-
-    # So settings.SOUNDS_PER_DESCRIBE_ROUND is available in the template
-    sounds_per_round = settings.SOUNDS_PER_DESCRIBE_ROUND
-    sounds_to_describe = sounds[0:sounds_per_round]
-    forms = []
-    request.session['describe_sounds_number'] = len(request.session.get('describe_sounds'))
-
     # If there are no files in the session redirect to the first describe page
     if len(sounds_to_describe) <= 0:
-        # Check if there is at least one message which is not saying that the sound was already part of freesound
         msg = 'You have finished describing your sounds.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
 
+    tvars = {
+        'sounds_per_round': settings.SOUNDS_PER_DESCRIBE_ROUND,
+        'forms': forms,
+    }
+
     if request.method == 'POST':
-
-        # this is for tag recommendation logging purposes. can be deleted in a future
-        # TAGRECOMMENDATION CODE
-        try:
-            tag_recommendation_random_session_id = int(request.POST['random_session_id'])
-        except:
-            tag_recommendation_random_session_id = False
-
-        # first get all the data
+        # First get all the data
         n_sounds_already_part_of_freesound = 0
         for i in range(len(sounds_to_describe)):
             prefix = str(i)
@@ -481,34 +462,32 @@ def describe_sounds(request):
                                         request.POST,
                                         prefix=prefix)
             forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
-        # validate each form
+        # Validate each form
         for i in range(len(sounds_to_describe)):
             for f in ['license', 'geotag', 'pack', 'description']:
                 if not forms[i][f].is_valid():
-                    return render_to_response('accounts/describe_sounds.html',
-                                              locals(),
-                                              context_instance=RequestContext(request))
+                    # If at least one form is not valid, render template with form errors
+                    return render(request, 'accounts/describe_sounds.html', tvars)
 
-        # all valid, then create sounds and moderation tickets
+        # All valid, then create sounds and moderation tickets
         dirty_packs = []
-        # TAGRECOMMENDATION CODE
-        tag_recommendation_session_sound_id_links = []
-
         for i in range(len(sounds_to_describe)):
+            # Create sound object and set basic properties
             sound = Sound()
             sound.user = request.user
             sound.original_filename = forms[i]['description'].cleaned_data['name']
             sound.original_path = forms[i]['sound'].full_path
             sound.filesize = os.path.getsize(sound.original_path)
-
             try:
                 sound.md5 = md5file(forms[i]['sound'].full_path)
             except IOError:
-                messages.add_message(request, messages.ERROR, 'Something went wrong with accessing the file %s.' % sound.original_path)
+                messages.add_message(request, messages.ERROR,
+                                     'Something went wrong with accessing the file %s.' % sound.original_path)
                 continue
             sound.type = get_sound_type(sound.original_path)
-            # check if file exists or not
+            sound.license = forms[i]['license'].cleaned_data['license']
             try:
+                # Check if another file with same md5 already exists, if it does, delete the sound and post a message
                 existing_sound = Sound.objects.get(md5=sound.md5)
                 n_sounds_already_part_of_freesound += 1
                 msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>' % \
@@ -516,13 +495,12 @@ def describe_sounds(request):
                 messages.add_message(request, messages.WARNING, msg)
                 os.remove(forms[i]['sound'].full_path)
                 continue
-            except Sound.DoesNotExist, e:
+            except Sound.DoesNotExist:
+                # Reaching here means that no other sound already exists with the same md5
                 pass
-
-            # set the license
-            sound.license = forms[i]['license'].cleaned_data['license']
             sound.save()
-            # now move the original
+
+            # Move the original audio file
             orig = os.path.splitext(os.path.basename(sound.original_filename))[0]
             sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
             new_original_path = sound.locations("path")
@@ -533,14 +511,13 @@ def describe_sounds(request):
                     pass
                 try:
                     shutil.move(sound.original_path, new_original_path)
-                    #shutil.copy(sound.original_path, new_original_path)
                 except IOError, e:
-                    logger.info("failed to move file from %s to %s" % (sound.original_path, new_original_path), e)
-                logger.info("moved original file from %s to %s" % (sound.original_path, new_original_path))
+                    logger.info("Failed to move file from %s to %s" % (sound.original_path, new_original_path), e)
+                logger.info("Moved original file from %s to %s" % (sound.original_path, new_original_path))
                 sound.original_path = new_original_path
                 sound.save()
 
-            # set the pack (optional)
+            # Set pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)
             new_pack = forms[i]['pack'].cleaned_data.get('new_pack', False)
             if not pack and new_pack:
@@ -548,9 +525,10 @@ def describe_sounds(request):
             if pack:
                 sound.pack = pack
                 dirty_packs.append(sound.pack)
-            # set the geotag (if 'lat' is there, all fields are)
+
+            # Set geotag
             data = forms[i]['geotag'].cleaned_data
-            if not data.get('remove_geotag') and data.get('lat'):
+            if not data.get('remove_geotag') and data.get('lat'):  # if 'lat' is in data, we assume other fields are too
                 geotag = GeoTag(user=request.user,
                                 lat=data.get('lat'),
                                 lon=data.get('lon'),
@@ -558,31 +536,13 @@ def describe_sounds(request):
                 geotag.save()
                 sound.geotag = geotag
 
-            # set the tags and descriptions
+            # Set the tags and description
             data = forms[i]['description'].cleaned_data
             sound.description = remove_control_chars(data.get('description', ''))
-
-            if ALTERNATIVE_INTERFACE:
-                tags_data = forms[i]['description'].data['%i-tags' % i]
-                processed_tags = list()
-                for tag in tags_data.split(' '):
-                    if not ':' in tag:
-                        processed_tags.append(tag)
-                    else:
-                        processed_tags += tag.split(':')[1:]
-                print processed_tags
-                from utils.tags import clean_and_split_tags
-                processed_tags = clean_and_split_tags(' '.join(processed_tags))
-                sound.set_tags(processed_tags)
-            else:
-                sound.set_tags(data.get('tags'))
+            sound.set_tags(data.get('tags'))
             sound.save()
 
-            # add sound info in tagrecommendation log
-            # TAGRECOMMENDATION CODE
-            tag_recommendation_session_sound_id_links.append((forms[i]['description'].auto_id % i, sound.id))
-
-            # remember to process the file
+            # Remember to process the file and create moderation ticket if user is not whitelisted
             sounds_to_process.append(sound)
             if request.user.profile.is_whitelisted:
                 sound.moderation_state = 'OK'
@@ -591,7 +551,6 @@ def describe_sounds(request):
                                      'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
             else:
-                # create moderation ticket!
                 ticket = Ticket()
                 ticket.title = 'Moderate sound %s' % sound.original_filename
                 ticket.source = TICKET_SOURCE_NEW_SOUND
@@ -608,58 +567,45 @@ def describe_sounds(request):
                 tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
                 tc.ticket = ticket
                 tc.save()
-                # add notification that the file was described successfully
                 messages.add_message(request, messages.INFO,
                                      'File <a href="%s">%s</a> has been described and is now awaiting processing and moderation.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
 
-                # TODO: comment here
+                # Invalidate affected caches in user header
                 invalidate_template_cache("user_header", ticket.sender.id)
-                moderators = Group.objects.get(name='moderators').user_set.all()
-                for moderator in moderators:
+                for moderator in Group.objects.get(name='moderators').user_set.all():
                     invalidate_template_cache("user_header", moderator.id)
 
-
-            # compute crc
-            # TEMPORARY
+            # Compute sound crc
             try:
                 sound.compute_crc()
             except:
                 pass
 
-        # Save tag recommendation info in tagrecommendationresearch log
-        # TAGRECOMMENDATION CODE
-        if tag_recommendation_session_sound_id_links:
-            research_logger.info('%s000#describing#%s#%i#-#SoundsSaved:%s' % (datetime.datetime.today().strftime('%s'),
-                                                               tag_recommendation_random_session_id,
-                                                               sound.user.id,
-                                                               ','.join(['%s|%i' % (div_id, sound_id)  for div_id, sound_id in tag_recommendation_session_sound_id_links])))
-            for i in range(len(sounds_to_describe)):
-                original_tags = forms[i]['description'].data['%i-tags' % i]
-                research_logger.info('%s000#describing#%s#%i#-#OriginalSoundTagsSound%i:%s' % (datetime.datetime.today().strftime('%s'),
-                                                               tag_recommendation_random_session_id,
-                                                               sound.user.id, int(tag_recommendation_session_sound_id_links[i][1]), original_tags))
-
-        # remove the files we described from the session and redirect to this page
+        # Remove the files we just described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]
-        # Process the sound
+
+        # Process sounds and packs
         # N.B. we do this at the end to avoid conflicts between django-web and django-workers
         # If we're not careful django's save() functions will overwrite any processing we
         # do on the workers.
+        # In the future if django-workers do not write to the db this might be changed
         try:
-            for sound in sounds_to_process:
-                sound.process()
+            for s in sounds_to_process:
+                s.process()
         except Exception, e:
-            audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e)))
+            audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
         for p in dirty_packs:
             p.process()
 
+        # Check if all sounds have been described after that round and redirect accordingly
         if len(request.session['describe_sounds']) <= 0:
             if len(sounds_to_describe) != n_sounds_already_part_of_freesound:
                 msg = 'You have described all the selected files and are now awaiting processing and moderation. ' \
                       'You can check the status of your uploaded sounds in your <a href="%s">home page</a>. ' \
                       'Once your sounds have been processed, you can also get information about the moderation ' \
-                      'status in the <a href="%s">uploaded sounds awaiting moderation</a> page.' % (reverse('accounts-home'), reverse('accounts-pending'))
+                      'status in the <a href="%s">uploaded sounds awaiting moderation' \
+                      '</a> page.' % (reverse('accounts-home'), reverse('accounts-pending'))
                 messages.add_message(request, messages.WARNING, msg)
             return HttpResponseRedirect(reverse('accounts-describe'))
         else:
@@ -683,10 +629,8 @@ def describe_sounds(request):
                                                      prefix=prefix)
             else:
                 forms[i]['license'] = NewLicenseForm(prefix=prefix)
-            # cannot include this right now because the remix sources form needs a sound object
-            #forms[prefix]['remix'] = RemixForm(prefix=prefix)
-        #request.session['describe_sounds'] = request.session['describe_sounds'][5:]
-    return render_to_response('accounts/describe_sounds.html', locals(), context_instance=RequestContext(request))
+
+    return render(request, 'accounts/describe_sounds.html', tvars)
 
 
 @login_required
@@ -1204,7 +1148,7 @@ def pending(request):
 
     n_unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK").count()
     if n_unprocessed_sounds:
-        messages.add_message(request, messages.WARNING, '%i of your recently uploaded sounds are still in processing ')
+        messages.add_message(request, messages.WARNING, '%i of your recently uploaded sounds are still in processing' % n_unprocessed_sounds)
 
     moderators_version = False
     return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))

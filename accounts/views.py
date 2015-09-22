@@ -551,28 +551,13 @@ def describe_sounds(request):
                                      'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
             else:
-                ticket = Ticket()
-                ticket.title = 'Moderate sound %s' % sound.original_filename
-                ticket.source = TICKET_SOURCE_NEW_SOUND
-                ticket.status = TICKET_STATUS_NEW
-                ticket.queue = Queue.objects.get(name='sound moderation')
-                ticket.sender = request.user
-                lc = LinkedContent()
-                lc.content_object = sound
-                lc.save()
-                ticket.content = lc
-                ticket.save()
-                tc = TicketComment()
-                tc.sender = request.user
-                tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
-                tc.ticket = ticket
-                tc.save()
+                sound.create_moderation_ticket()
                 messages.add_message(request, messages.INFO,
                                      'File <a href="%s">%s</a> has been described and is now awaiting processing and moderation.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))
 
                 # Invalidate affected caches in user header
-                invalidate_template_cache("user_header", ticket.sender.id)
+                invalidate_template_cache("user_header", request.user.id)
                 for moderator in Group.objects.get(name='moderators').user_set.all():
                     invalidate_template_cache("user_header", moderator.id)
 

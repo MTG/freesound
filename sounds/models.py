@@ -41,6 +41,8 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.contrib.contenttypes import generic
 from similarity.client import Similarity
 from apiv2.models import ApiV2Client
+from tickets.models import Ticket, Queue, TicketComment, LinkedContent
+from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
 
 search_logger = logging.getLogger('search')
 web_logger = logging.getLogger('web')
@@ -446,6 +448,24 @@ class Sound(SocialModel):
     # N.B. This is used in the ticket template (ugly, but a quick fix)
     def is_sound(self):
         return True
+
+    def create_moderation_ticket(self):
+        ticket = Ticket()
+        ticket.title = 'Moderate sound %s' % self.original_filename
+        ticket.source = TICKET_SOURCE_NEW_SOUND
+        ticket.status = TICKET_STATUS_NEW
+        ticket.queue = Queue.objects.get(name='sound moderation')
+        ticket.sender = self.user
+        lc = LinkedContent()
+        lc.content_object = self
+        lc.save()
+        ticket.content = lc
+        ticket.save()
+        tc = TicketComment()
+        tc.sender = self.user
+        tc.text = "I've uploaded %s. Please moderate!" % self.original_filename
+        tc.ticket = ticket
+        tc.save()
 
     # N.B. Temporary, so we can get rid of the original_path which breaks things in migration
     #@property

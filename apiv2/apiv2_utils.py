@@ -673,24 +673,8 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
         sound.save()
     else:
         # create moderation ticket!
-        ticket = Ticket()
-        ticket.title = 'Moderate sound %s' % sound.original_filename
-        ticket.source = TICKET_SOURCE_NEW_SOUND
-        ticket.status = TICKET_STATUS_NEW
-        ticket.queue = Queue.objects.get(name='sound moderation')
-        ticket.sender = user
-        lc = LinkedContent()
-        lc.content_object = sound
-        lc.save()
-        ticket.content = lc
-        ticket.save()
-        tc = TicketComment()
-        tc.sender = user
-        tc.text = "I've uploaded %s. Please moderate!" % sound.original_filename
-        tc.ticket = ticket
-        tc.save()
-
-        invalidate_template_cache("user_header", ticket.sender.id)
+        sound.create_moderation_ticket()
+        invalidate_template_cache("user_header", user.id)
         moderators = Group.objects.get(name='moderators').user_set.all()
         for moderator in moderators:
             invalidate_template_cache("user_header", moderator.id)

@@ -18,16 +18,6 @@
         {% display_pack pack %}
     {% endfor %}
 
-    {% comment %}
-	{% for download_item in page.object_list %}
-		{% if download_item.pack %}
-			{% with download_item.pack as pack %}
-        		{% display_pack pack %}
-        	{% endwith %}
-        {% endif %}
-    {% endfor %}
-    {% endcomment %}
-
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "pack" %}
     </div>

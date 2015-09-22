@@ -13,7 +13,12 @@
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "pack" %}
     </div>
-	
+
+    {% for pack in packs %}
+        {% display_pack pack %}
+    {% endfor %}
+
+    {% comment %}
 	{% for download_item in page.object_list %}
 		{% if download_item.pack %}
 			{% with download_item.pack as pack %}
@@ -21,6 +26,7 @@
         	{% endwith %}
         {% endif %}
     {% endfor %}
+    {% endcomment %}
 
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "pack" %}

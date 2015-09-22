@@ -526,6 +526,14 @@ def set_dirty(sender,instance,**kwargs):
 pre_save.connect(set_dirty, sender=Sound)
 
 
+class PackManager(models.Manager):
+
+    def ordered_ids(self, pack_ids, select_related=''):
+        # Simplified version of ordered_ids in SoundManager (no need for custom SQL here)
+        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.select_related(select_related).filter(id__in=pack_ids)}
+        return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
+
+
 class Pack(SocialModel):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
@@ -538,6 +546,8 @@ class Pack(SocialModel):
 
     num_sounds = models.PositiveIntegerField(default=0)
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    objects = PackManager()
 
     def __unicode__(self):
         return self.name

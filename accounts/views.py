@@ -553,8 +553,8 @@ def describe_sounds(request):
             else:
                 sound.create_moderation_ticket()
                 messages.add_message(request, messages.INFO,
-                                     'File <a href="%s">%s</a> has been described and is now awaiting processing and moderation.' % \
-                                     (sound.get_absolute_url(), forms[i]['sound'].name))
+                                     'File <a href="%s">%s</a> has been described and is now awaiting processing '
+                                     'and moderation.' % (sound.get_absolute_url(), forms[i]['sound'].name))
 
                 # Invalidate affected caches in user header
                 invalidate_template_cache("user_header", request.user.id)
@@ -620,34 +620,38 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs = Download.objects.select_related('sound', 'sound__user__username', 'sound__license', 'pack', 'pack__user__username').filter(user=request.user)
-    format = request.GET.get("format", "regular")
-    tvars = {'format': format}
+    qs = Download.objects.select_related('sound', 'sound__user__username', 'sound__license', 'pack',
+                                         'pack__user__username').filter(user=request.user)
+    tvars = {'format': request.GET.get("format", "regular")}
     tvars.update(paginate(request, qs, 40))
     return render(request, 'accounts/attribution.html', tvars)
+
 
 def downloaded_sounds(request, username):
     user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user_id=user.id, sound_id__isnull=False)
-
     paginator = paginate(request, qs, settings.SOUNDS_PER_PAGE)
     page = paginator["page"]
-
     sound_ids = [d.sound_id for d in page]
     sounds = Sound.objects.ordered_ids(sound_ids)
-
     tvars = {"username": username,
              "user": user,
-             "sounds": sounds
-            }
+             "sounds": sounds}
     tvars.update(paginator)
-
     return render(request, 'accounts/downloaded_sounds.html', tvars)
 
+
 def downloaded_packs(request, username):
-    user=get_object_or_404(User, username__iexact=username)
+    user = get_object_or_404(User, username__iexact=username)
     qs = Download.objects.filter(user=user.id, pack__isnull=False)
-    return render_to_response('accounts/downloaded_packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
+    paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
+    page = paginator["page"]
+    pack_ids = [d.pack_id for d in page]
+    packs = Pack.objects.ordered_ids(pack_ids, select_related="user__username")
+    tvars = {"username": username,
+             "packs": packs}
+    tvars.update(paginator)
+    return render(request, 'accounts/downloaded_packs.html', tvars)
 
 
 def latest_content_type(scores):

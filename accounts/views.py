@@ -655,12 +655,13 @@ def downloaded_packs(request, username):
 
 
 def latest_content_type(scores):
-        if  scores['uploads']>=scores['posts']and scores['uploads']>=scores['comments']:
-            return 'sound'
-        elif scores['posts']>=scores['uploads'] and scores['posts']>scores['comments']:
-            return 'post'
-        elif scores['comments']>=scores['uploads'] and scores['comments']>scores['posts']:
-            return 'comment'
+    if scores['uploads'] >= scores['posts'] and scores['uploads'] >= scores['comments']:
+        return 'sound'
+    elif scores['posts'] >= scores['uploads'] and scores['posts'] > scores['comments']:
+        return 'post'
+    elif scores['comments'] >= scores['uploads'] and scores['comments'] > scores['posts']:
+        return 'comment'
+
 
 def create_user_rank(uploaders, posters, commenters):
     upload_weight = 1
@@ -669,23 +670,24 @@ def create_user_rank(uploaders, posters, commenters):
 
     user_rank = {}
     for user in uploaders:
-        user_rank[user['user']] = {'uploads':user['id__count'], 'posts':0, 'comments':0, 'score':0}
+        user_rank[user['user']] = {'uploads': user['id__count'], 'posts': 0, 'comments':0, 'score':0}
     for user in posters:
         if user['author_id'] in user_rank.keys():
             user_rank[user['author_id']]['posts'] = user['id__count']
         else:
-             user_rank[user['author_id']] = {'uploads':0, 'posts':user['id__count'], 'comments':0, 'score':0}
+            user_rank[user['author_id']] = {'uploads': 0, 'posts': user['id__count'], 'comments': 0, 'score': 0}
     for user in commenters:
         if user['user_id'] in user_rank.keys():
             user_rank[user['user_id']]['comments'] = user['id__count']
         else:
-             user_rank[user['user_id']] = {'uploads':0, 'posts':0, 'comments':user['id__count'], 'score':0}
+            user_rank[user['user_id']] = {'uploads': 0, 'posts': 0, 'comments': user['id__count'], 'score': 0}
     sort_list = []
     for user in user_rank.keys():
-        user_rank[user]['score'] =  user_rank[user]['uploads'] * upload_weight + \
+        user_rank[user]['score'] = user_rank[user]['uploads'] * upload_weight + \
             user_rank[user]['posts'] * post_weight + user_rank[user]['comments'] * comment_weight
-        sort_list.append([user_rank[user]['score'],user])
+        sort_list.append([user_rank[user]['score'], user])
     return user_rank, sort_list
+
 
 def accounts(request):
     num_days = 14
@@ -726,7 +728,6 @@ def accounts(request):
     all_time_most_active_users_display=sorted(all_time_most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
 
     return render_to_response('accounts/accounts.html', dict(most_active_users=most_active_users_display, all_time_most_active_users= all_time_most_active_users_display, new_users = new_users_display, logged_users = logged_users, user_rank=user_rank,num_days=num_days), context_instance=RequestContext(request))
-
 
 
 def account(request, username):
@@ -784,6 +785,7 @@ def handle_uploaded_file(user_id, f):
 
     return True
 
+
 @csrf_exempt
 def upload_file(request):
     """ upload a file. This function does something weird: it gets the session id from the
@@ -825,6 +827,7 @@ def upload_file(request):
     else:
         logger.warning("no data in post")
         return HttpResponseBadRequest("No POST data in request")
+
 
 @login_required
 def upload(request, no_flash = False):
@@ -1048,6 +1051,7 @@ def email_reset_complete(request, uidb36=None, token=None):
 
     return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))
 
+
 @login_required
 def flag_user(request, username = None):
 
@@ -1108,6 +1112,7 @@ def flag_user(request, username = None):
     else:
         return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
 
+
 @login_required
 def clear_flags_user(request, username):
     if request.user.is_superuser or request.user.is_staff:
@@ -1120,9 +1125,11 @@ def clear_flags_user(request, username):
     else:
         return HttpResponseRedirect(reverse('accounts-login'))
 
+
 def donate_redirect(request):
     pledgie_campaign_url = "http://pledgie.com/campaigns/%d/" % settings.PLEDGIE_CAMPAIGN
     return HttpResponseRedirect(pledgie_campaign_url)
+
 
 @login_required
 def pending(request):

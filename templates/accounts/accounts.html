@@ -32,14 +32,6 @@
     
      {% for user in all_time_most_active_users %}
         {% include "accounts/active_user.html" %}
-        {% comment %}
-        <div class="online_user">
-            <a href="{% url account user.0.username %}">
-                <img src="{{user.0.profile.locations.avatar.M.url}}" alt="avatar" class="currently_online_avatar" title="{{user.0.username}}" />
-                {{user.0.username}}
-            </a>
-        </div><!-- .online_user -->
-        {% endcomment %}
      {% endfor %} <br class="clear" />
     </div><!-- #users_currently_online -->
 
@@ -51,7 +43,6 @@
         <div class="online_user">
             <a href="{% url account user.username %}">
                 <img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" class="currently_online_avatar" title="{{user.username}}" />
-                {% comment %}{{user.username}}{% endcomment %}
             </a>
         </div>
         

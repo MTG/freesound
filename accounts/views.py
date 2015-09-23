@@ -667,22 +667,21 @@ def create_user_rank(uploaders, posters, commenters):
     upload_weight = 1
     post_weight = 0.7
     comment_weight = 0.0
-
     user_rank = {}
     for user in uploaders:
-        user_rank[user['user']] = {'uploads': user['id__count'], 'posts': 0, 'comments':0, 'score':0}
+        user_rank[user['user']] = {'uploads': user['id__count'], 'posts': 0, 'comments': 0, 'score': 0}
     for user in posters:
-        if user['author_id'] in user_rank.keys():
+        if user['author_id'] in user_rank:
             user_rank[user['author_id']]['posts'] = user['id__count']
         else:
             user_rank[user['author_id']] = {'uploads': 0, 'posts': user['id__count'], 'comments': 0, 'score': 0}
     for user in commenters:
-        if user['user_id'] in user_rank.keys():
+        if user['user_id'] in user_rank:
             user_rank[user['user_id']]['comments'] = user['id__count']
         else:
             user_rank[user['user_id']] = {'uploads': 0, 'posts': 0, 'comments': user['id__count'], 'score': 0}
     sort_list = []
-    for user in user_rank.keys():
+    for user in user_rank:
         user_rank[user]['score'] = user_rank[user]['uploads'] * upload_weight + \
             user_rank[user]['posts'] * post_weight + user_rank[user]['comments'] * comment_weight
         sort_list.append([user_rank[user]['score'], user])
@@ -695,39 +694,49 @@ def accounts(request):
     num_all_time_active_users = 10
     last_time = DBTime.get_last_time() - datetime.timedelta(num_days)
 
-    # select active users last num_days
-    latest_uploaders = Sound.public.filter(created__gte=last_time).values("user").annotate(Count('id')).order_by("-id__count")
-    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id')).order_by("-id__count")
-    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id')).order_by("-id__count")
-    # rank
-    user_rank,sort_list = create_user_rank(latest_uploaders,latest_posters,latest_commenters)
-
-    #retrieve users lists
-    most_active_users = User.objects.select_related("profile").filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_active_users]])
-    new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time).filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
+    # Most active users in last num_days, newest active users in last num_days and logged in users
+    latest_uploaders = Sound.public.filter(created__gte=last_time).values("user").annotate(Count('id'))\
+        .order_by("-id__count")
+    latest_posters = Post.objects.filter(created__gte=last_time).values("author_id").annotate(Count('id'))\
+        .order_by("-id__count")
+    latest_commenters = Comment.objects.filter(created__gte=last_time).values("user_id").annotate(Count('id'))\
+        .order_by("-id__count")
+    user_rank, sort_list = create_user_rank(latest_uploaders, latest_posters, latest_commenters)
+    most_active_users = User.objects.select_related("profile")\
+        .filter(id__in=[u[1] for u in sorted(sort_list, reverse=True)[:num_active_users]])
+    new_users = User.objects.select_related("profile").filter(date_joined__gte=last_time)\
+        .filter(id__in=user_rank.keys()).order_by('-date_joined')[:num_active_users+5]
     logged_users = User.objects.select_related("profile").filter(id__in=get_online_users())
-
-    # prepare for view
     most_active_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in most_active_users]
-    most_active_users_display=sorted(most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
+    most_active_users_display = sorted(most_active_users_display,
+                                       key=lambda usr: user_rank[usr[0].id]['score'],
+                                       reverse=True)
     new_users_display = [[u, latest_content_type(user_rank[u.id]), user_rank[u.id]] for u in new_users]
 
-    # select all time active users
-    # We store aggregate counts on the user profile for faster querying.
-    all_time_uploaders = Profile.objects.extra(select={'id__count': 'num_sounds'}).order_by("-num_sounds").values("user", "id__count")[:num_all_time_active_users]
-    all_time_posters = Profile.objects.extra(select={'id__count': 'num_posts', 'author_id': 'user_id'}).order_by("-num_posts").values("author_id", "id__count")[:num_all_time_active_users]
-    # Performing a count(*) on Comment table is slow
-    # TODO: Create num_comments on profile and query as above
-    all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id')).order_by("-id__count")[:num_all_time_active_users]
+    # All time most active users (these queries are kind of slow, but page is cached)
+    all_time_uploaders = Profile.objects.extra(select={'id__count': 'num_sounds'})\
+        .order_by("-num_sounds").values("user", "id__count")[:num_all_time_active_users]
+    all_time_posters = Profile.objects.extra(select={'id__count': 'num_posts', 'author_id': 'user_id'})\
+        .order_by("-num_posts").values("author_id", "id__count")[:num_all_time_active_users]
+    # Performing a count(*) on Comment table is slow, we could add 'num_comments' to user profile
+    all_time_commenters = Comment.objects.all().values("user_id").annotate(Count('id'))\
+        .order_by("-id__count")[:num_all_time_active_users]
+    all_time_user_rank, all_time_sort_list = create_user_rank(all_time_uploaders, all_time_posters, all_time_commenters)
+    all_time_most_active_users = User.objects.select_related("profile")\
+        .filter(id__in=[u[1] for u in sorted(all_time_sort_list, reverse=True)[:num_all_time_active_users]])
+    all_time_most_active_users_display = [[u, all_time_user_rank[u.id]] for u in all_time_most_active_users]
+    all_time_most_active_users_display = sorted(all_time_most_active_users_display,
+                                                key=lambda usr: all_time_user_rank[usr[0].id]['score'],
+                                                reverse=True)
 
-    # rank
-    user_rank,sort_list = create_user_rank(all_time_uploaders,all_time_posters,all_time_commenters)
-    #retrieve users list
-    all_time_most_active_users = User.objects.select_related("profile").filter(id__in=[u[1] for u in sorted(sort_list,reverse=True)[:num_all_time_active_users]])
-    all_time_most_active_users_display = [[u, user_rank[u.id]] for u in all_time_most_active_users]
-    all_time_most_active_users_display=sorted(all_time_most_active_users_display, key=lambda usr: user_rank[usr[0].id]['score'],reverse=True)
-
-    return render_to_response('accounts/accounts.html', dict(most_active_users=most_active_users_display, all_time_most_active_users= all_time_most_active_users_display, new_users = new_users_display, logged_users = logged_users, user_rank=user_rank,num_days=num_days), context_instance=RequestContext(request))
+    tvars = {
+        'num_days': num_days,
+        'most_active_users': most_active_users_display,
+        'all_time_most_active_users': all_time_most_active_users_display,
+        'new_users': new_users_display,
+        'logged_users': logged_users,
+    }
+    return render(request, 'accounts/accounts.html', tvars)
 
 
 def account(request, username):

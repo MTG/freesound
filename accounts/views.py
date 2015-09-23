@@ -744,29 +744,36 @@ def account(request, username):
         user = User.objects.select_related('profile').get(username__iexact=username)
     except User.DoesNotExist:
         raise Http404
-    # expand tags because we will definitely be executing, and otherwise tags is called multiple times
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE)
     latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:10]
-    google_api_key = settings.GOOGLE_API_KEY
-
-    following, followers, following_tags, following_count, followers_count, following_tags_count = follow_utils.get_vars_for_account_view(user)
-
+    following, followers, following_tags, following_count, followers_count, following_tags_count = \
+        follow_utils.get_vars_for_account_view(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
-
-    # true if the logged user is following the user of the current viewed profile page
-    show_unfollow_button = False
-    if request.user.is_authenticated():
-        show_unfollow_button = follow_utils.is_user_following_user(request.user, user)
-
-    home = False
+    show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
-
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
 
-    return render_to_response('accounts/account.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'home': False,
+        'user': user,
+        'tags': tags,
+        'latest_sounds': latest_sounds,
+        'latest_packs': latest_packs,
+        'following': following,
+        'followers': followers,
+        'following_tags': following_tags,
+        'following_count': following_count,
+        'followers_count': followers_count,
+        'following_tags_count': following_tags_count,
+        'follow_user_url': follow_user_url,
+        'unfollow_user_url': unfollow_user_url,
+        'show_unfollow_button': show_unfollow_button,
+        'has_bookmarks': has_bookmarks,
+    }
+    return render(request, 'accounts/account.html', tvars)
 
 
 def handle_uploaded_file(user_id, f):

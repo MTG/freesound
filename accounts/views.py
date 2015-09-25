@@ -18,66 +18,55 @@
 #     See AUTHORS file.
 #
 
-import datetime, logging, os, tempfile, uuid, shutil, hashlib, base64
-from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, \
-    ReactivationForm, UsernameReminderForm, ProfileForm, AvatarForm, TermsOfServiceForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag
-from comments.models import Comment
+import datetime, logging, os, tempfile, shutil, hashlib, base64, json, time
+import tickets.views as TicketViews
+import django.contrib.auth.views as authviews
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db.models import Count, Max
-from django.http import HttpResponseRedirect, HttpResponse, \
-    HttpResponseBadRequest, HttpResponseNotFound, Http404, \
-    HttpResponsePermanentRedirect, HttpResponseServerError, HttpRequest
-from django.shortcuts import render_to_response, get_object_or_404, render
-from django.template import RequestContext
+from django.db.models import Count
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
+    HttpResponsePermanentRedirect, HttpResponseServerError
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
-from forum.models import Post
-from operator import itemgetter
-from sounds.models import Sound, Pack, Download, License
-from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm, RemixForm
-from utils.cache import invalidate_template_cache
-from utils.dbtime import DBTime
-from utils.onlineusers import get_online_users
-from utils.encryption import decrypt, encrypt, create_hash
-from utils.filesystem import generate_tree, md5file
-from utils.functional import combine_dicts
-from utils.images import extract_square
-from utils.pagination import paginate
-from utils.text import slugify, remove_control_chars
-from geotags.models import GeoTag
 from django.contrib import messages
-from tickets.models import Ticket, Queue, LinkedContent, TicketComment
-from tickets import QUEUE_SOUND_MODERATION, TICKET_SOURCE_NEW_SOUND, \
-    TICKET_STATUS_NEW, TICKET_STATUS_ACCEPTED
-from utils.audioprocessing import get_sound_type
 from django.core.cache import cache
-import django.contrib.auth.views as authviews
-from django.contrib.auth.forms import AuthenticationForm
-from tickets.views import new_sound_tickets_count, new_support_tickets_count
 from django.contrib.auth.tokens import default_token_generator
-from accounts.forms import EmailResetForm
 from django.views.decorators.cache import never_cache
 from django.utils.http import base36_to_int
 from django.template import loader
 from django.utils.http import int_to_base36
 from django.contrib.sites.models import get_current_site
-from utils.mail import send_mail, send_mail_template
 from django.db import transaction
-from bookmarks.models import Bookmark
-from django.contrib.auth.decorators import user_passes_test
-import json
-from utils.tagrecommendation_utilities import get_recommended_tags
-from messages.models import Message
-from django.contrib.contenttypes.models import ContentType
-import tickets.views as TicketViews
 from django.contrib.auth.models import Group
+from django.contrib.auth.decorators import user_passes_test
+from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
+    ProfileForm, AvatarForm, TermsOfServiceForm
+from accounts.models import Profile, ResetEmailRequest, UserFlag
+from accounts.forms import EmailResetForm
+from comments.models import Comment
+from forum.models import Post
+from sounds.models import Sound, Pack, Download, License
+from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, GeotaggingForm
+from utils.cache import invalidate_template_cache
+from utils.dbtime import DBTime
+from utils.onlineusers import get_online_users
+from utils.encryption import decrypt, encrypt, create_hash
+from utils.filesystem import generate_tree, md5file
+from utils.images import extract_square
+from utils.pagination import paginate
+from utils.text import slugify, remove_control_chars
+from utils.audioprocessing import get_sound_type
+from utils.mail import send_mail, send_mail_template
+from geotags.models import GeoTag
+from tickets.views import new_support_tickets_count
+from bookmarks.models import Bookmark
+from messages.models import Message
 from provider.oauth2.models import AccessToken
 from follow import follow_utils
-import time
+
 
 audio_logger = logging.getLogger('audio')
 logger = logging.getLogger("upload")

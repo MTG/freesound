@@ -779,15 +779,12 @@ def account(request, username):
 def handle_uploaded_file(user_id, f):
     # handle a file uploaded to the app. Basically act as if this file was uploaded through FTP
     directory = os.path.join(settings.UPLOADS_PATH, str(user_id))
-
     logger.info("\thandling file upload")
-
     try:
         os.mkdir(directory)
     except:
         logger.info("\tfailed creating directory, probably already exist")
         pass
-
     path = os.path.join(directory, os.path.basename(f.name))
     try:
         logger.info("\topening file: %s", path)
@@ -798,7 +795,6 @@ def handle_uploaded_file(user_id, f):
     except Exception, e:
         logger.warning("failed writing file error: %s", str(e))
         return False
-
     return True
 
 
@@ -809,18 +805,14 @@ def upload_file(request):
     the user login """
 
     logger.info("start uploading file")
-
-    # get the current session engine
-    engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])
+    engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])  # get the current session engine
     session_data = engine.SessionStore(request.POST.get('sessionid', ''))
-
     try:
         user_id = session_data['_auth_user_id']
         logger.info("\tuser id %s", str(user_id))
     except KeyError:
         logger.warning("failed to get user id from session")
         return HttpResponseBadRequest("You're not logged in. Log in and try again.")
-
     try:
         request.user = User.objects.get(id=user_id)
         logger.info("\tfound user: %s", request.user.username)
@@ -830,7 +822,6 @@ def upload_file(request):
 
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
-
         if form.is_valid():
             logger.info("\tform data is valid")
             if handle_uploaded_file(user_id, request.FILES["file"]):
@@ -846,20 +837,28 @@ def upload_file(request):
 
 
 @login_required
-def upload(request, no_flash = False):
+def upload(request, no_flash=False):
     form = UploadFileForm()
     success = False
     error = False
+    uploaded_file = None
     if no_flash:
         if request.method == 'POST':
             form = UploadFileForm(request.POST, request.FILES)
             if form.is_valid():
                 if handle_uploaded_file(request.user.id, request.FILES["file"]):
-                    uploaded_file=request.FILES["file"]
+                    uploaded_file = request.FILES["file"]
                     success = True
                 else:
                     error = True
-    return render_to_response('accounts/upload.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'form': form,
+        'uploaded_file': uploaded_file,
+        'success': success,
+        'error': error,
+        'no_flash': no_flash,
+    }
+    return render(request, 'accounts/upload.html', tvars)
 
 
 @login_required

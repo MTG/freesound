@@ -1104,7 +1104,8 @@ def flag_user(request, username=None):
             to_emails = []
             for mail in settings.ADMINS:
                 to_emails.append(mail[1])
-            send_mail_template(u'Spam report for user ' + flagged_user.username , template_to_use, locals(), None, to_emails)
+            send_mail_template(u'Spam report for user ' + flagged_user.username,
+                               template_to_use, locals(), None, to_emails)
         return HttpResponse(json.dumps({"errors": None}), mimetype='application/javascript')
     else:
         return HttpResponse(json.dumps({"errors": True}), mimetype='application/javascript')
@@ -1135,13 +1136,17 @@ def pending(request):
     pendings = []
     for ticket, sound in tickets_sounds:
         last_comments = ticket.get_n_last_non_moderator_only_comments(3)
-        pendings.append( (ticket, sound, last_comments) )
-
+        pendings.append((ticket, sound, last_comments))
     show_pagination = len(pendings) > settings.SOUNDS_PENDING_MODERATION_PER_PAGE
-
     n_unprocessed_sounds = Sound.objects.select_related().filter(user=user).exclude(processing_state="OK").count()
     if n_unprocessed_sounds:
-        messages.add_message(request, messages.WARNING, '%i of your recently uploaded sounds are still in processing' % n_unprocessed_sounds)
-
+        messages.add_message(request, messages.WARNING,
+                             '%i of your recently uploaded sounds are still in processing' % n_unprocessed_sounds)
     moderators_version = False
-    return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))
+    tvars = {
+        'user': user,
+        'show_pagination': show_pagination,
+        'moderators_version': moderators_version,
+    }
+    tvars.update(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE))
+    return render(request, 'accounts/pending.html', tvars)

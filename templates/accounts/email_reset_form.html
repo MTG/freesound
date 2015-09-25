@@ -10,20 +10,7 @@
 
 <form action="." method="post">{% csrf_token %}
 
-{% comment %} 
-<p>
-{{ form.email.label_tag }}
-{{ form.email }}
-</p>
-
-<p>
-{{ form.password.label_tag }}
-{{ form.password }}
-</p>
-{% endcomment %}
-
 {{form.as_p}}
-
 
 <input type="submit" value="Reset my email" />
 </form>

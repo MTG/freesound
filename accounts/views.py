@@ -77,6 +77,7 @@ import tickets.views as TicketViews
 from django.contrib.auth.models import Group
 from provider.oauth2.models import AccessToken
 from follow import follow_utils
+import time
 
 audio_logger = logging.getLogger('audio')
 logger = logging.getLogger("upload")
@@ -863,56 +864,46 @@ def upload(request, no_flash=False):
 
 @login_required
 def delete(request):
-    import time
-
     encrypted_string = request.GET.get("user", None)
-
     waited_too_long = False
-
     num_sounds = request.user.sounds.all().count()
-
-    if encrypted_string != None:
+    if encrypted_string is not None:
         try:
             user_id, now = decrypt(encrypted_string).split("\t")
             user_id = int(user_id)
-
             if user_id != request.user.id:
                 raise PermissionDenied
-
             link_generated_time = float(now)
             if abs(time.time() - link_generated_time) < 10:
                 from forum.models import Post, Thread
                 from comments.models import Comment
                 from sounds.models import DeletedSound
-
                 deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
-
                 for post in Post.objects.filter(author=request.user):
                     post.author = deleted_user
                     post.save()
-
                 for thread in Thread.objects.filter(author=request.user):
                     thread.author = deleted_user
                     thread.save()
-
                 for comment in Comment.objects.filter(user=request.user):
                     comment.user = deleted_user
                     comment.save()
-
                 for sound in DeletedSound.objects.filter(user=request.user):
                     sound.user = deleted_user
                     sound.save()
-
                 request.user.delete()
                 return HttpResponseRedirect(reverse("front-page"))
             else:
                 waited_too_long = True
         except:
             pass
-
     encrypted_link = encrypt(u"%d\t%f" % (request.user.id, time.time()))
-
-    return render_to_response('accounts/delete.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'waited_too_long': waited_too_long,
+        'encrypted_link': encrypted_link,
+        'num_sounds': num_sounds,
+    }
+    return render(request, 'accounts/delete.html', tvars)
 
 
 def old_user_link_redirect(request):
@@ -927,33 +918,31 @@ def old_user_link_redirect(request):
         raise Http404
 
 
-# got characters from rfc3986 (minus @, + which are valid for django usernames)
-BAD_USERNAME_CHARACTERS = {':': '_colon_',
-                           '/': '_slash_',
-                           '?': '_qmark_',
-                           '#': '_hash_',
-                           '[': '_lbrack1_',
-                           ']': '_rbrack1_',
-                           '!': '_emark_',
-                           '$': '_dollar_',
-                           '&': '_amper_',
-                           "'": '_quote_',
-                           '(': '_lbrack2_',
-                           ')': '_rbrack2_',
-                           '*': '_stardom_',
-                           ',': '_comma_',
-                           ';': '_scolon_',
-                           '=': '_equal_',
-                           '{': '_lbrack3_',
-                           '}': '_rbrack3_'
-                           }
-
-
 def transform_username_fs1fs2(fs1_name, fs2_append=''):
     """ Returns a tuple (changed, name) where changed is a boolean
         indicating the name was transformed and name a string
         with the correct username for freesound 2
     """
+    BAD_USERNAME_CHARACTERS = {  # got characters from rfc3986 (minus @, + which are valid for django usernames)
+        ':': '_colon_',
+        '/': '_slash_',
+        '?': '_qmark_',
+        '#': '_hash_',
+        '[': '_lbrack1_',
+        ']': '_rbrack1_',
+        '!': '_emark_',
+        '$': '_dollar_',
+        '&': '_amper_',
+        "'": '_quote_',
+        '(': '_lbrack2_',
+        ')': '_rbrack2_',
+        '*': '_stardom_',
+        ',': '_comma_',
+        ';': '_scolon_',
+        '=': '_equal_',
+        '{': '_lbrack3_',
+        '}': '_rbrack3_'
+    }
     if any([x in fs1_name for x in BAD_USERNAME_CHARACTERS.keys()]):
         fs2_name = fs1_name
         for bad_char, replacement in BAD_USERNAME_CHARACTERS.items():
@@ -978,11 +967,10 @@ def login_wrapper(request):
             changed, new_name = transform_username_fs1fs2(old_name)
             if changed:
                 try:
-                    # check if the new name actually exists
+                    # Check if the new name actually exists
                     _ = User.objects.get(username=new_name)
-                    msg = """Hi there! Your old username had some weird
-    characters in it and we had to change it. It is now <b>%s</b>. If you don't like
-    it, please contact us and we'll change it for you.""" % new_name
+                    msg = """Hi there! Your old username had some weird characters in it and we had to change it. It is
+                    now <b>%s</b>. If you don't like it, please contact us and we'll change it for you.""" % new_name
                     messages.add_message(request, messages.WARNING, msg)
                 except User.DoesNotExist:
                     pass
@@ -991,28 +979,23 @@ def login_wrapper(request):
 
 @login_required
 def email_reset(request):
-
     if request.method == "POST":
-        form = EmailResetForm(request.POST, user = request.user)
+        form = EmailResetForm(request.POST, user=request.user)
         if form.is_valid():
-
-            # save new email info to DB (temporal)
+            # Save new email info to DB (temporal)
             try:
                 rer = ResetEmailRequest.objects.get(user=request.user)
                 rer.email = form.cleaned_data['email']
             except ResetEmailRequest.DoesNotExist:
                 rer = ResetEmailRequest(user=request.user, email=form.cleaned_data['email'])
-
             rer.save()
 
-
-            # send email to the new address
+            # Send email to the new address
             user = request.user
             email = form.cleaned_data["email"]
             current_site = get_current_site(request)
             site_name = current_site.name
             domain = current_site.domain
-
             c = {
                 'email': email,
                 'domain': domain,
@@ -1022,28 +1005,25 @@ def email_reset(request):
                 'token': default_token_generator.make_token(user),
                 'protocol': 'http',
             }
-
             subject = loader.render_to_string('accounts/email_reset_subject.txt', c)
             subject = ''.join(subject.splitlines())
             email_body = loader.render_to_string('accounts/email_reset_email.html', c)
             send_mail(subject=subject, email_body=email_body, email_to=[email])
-
             return HttpResponseRedirect(reverse('accounts.views.email_reset_done'))
     else:
         form = EmailResetForm(user = request.user)
-
-    return render_to_response('accounts/email_reset_form.html',locals(),context_instance=RequestContext(request))
+    tvars = {'form': form}
+    return render(request, 'accounts/email_reset_form.html', tvars)
 
 
 def email_reset_done(request):
-    return render_to_response('accounts/email_reset_done.html',locals(),context_instance=RequestContext(request))
+    return render(request, 'accounts/email_reset_done.html')
 
 
 @never_cache
 def email_reset_complete(request, uidb36=None, token=None):
-
     # Check that the link is valid and the base36 corresponds to a user id
-    assert uidb36 is not None and token is not None # checked by URLconf
+    assert uidb36 is not None and token is not None  # checked by URLconf
     try:
         uid_int = base36_to_int(uidb36)
         user = User.objects.get(id=uid_int)
@@ -1064,7 +1044,8 @@ def email_reset_complete(request, uidb36=None, token=None):
     # Remove temporal mail change information ftom the DB
     ResetEmailRequest.objects.get(user=user).delete()
 
-    return render_to_response('accounts/email_reset_complete.html',locals(),context_instance=RequestContext(request))
+    tvars = {'old_email': old_email, 'user': user}
+    return render(request, 'accounts/email_reset_complete.html', tvars)
 
 
 @login_required

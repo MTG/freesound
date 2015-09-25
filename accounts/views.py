@@ -1049,13 +1049,11 @@ def email_reset_complete(request, uidb36=None, token=None):
 
 
 @login_required
-def flag_user(request, username = None):
-
+def flag_user(request, username=None):
     if request.POST:
         flagged_user = User.objects.get(username__iexact=request.POST["username"])
         reporting_user = request.user
         object_id = request.POST["object_id"]
-
         if object_id:
             if request.POST["flag_type"] == "PM":
                 flagged_object = Message.objects.get(id = object_id)
@@ -1068,45 +1066,48 @@ def flag_user(request, username = None):
         else:
             return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
 
-        previous_reports_count = UserFlag.objects.filter(user__username = flagged_user.username).values('reporting_user').distinct().count()
-        uflag = UserFlag(user = flagged_user, reporting_user = reporting_user, content_object = flagged_object)
+        previous_reports_count = UserFlag.objects.filter(user__username=flagged_user.username)\
+            .values('reporting_user').distinct().count()
+        uflag = UserFlag(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
         uflag.save()
 
-        reports_count = UserFlag.objects.filter(user__username = flagged_user.username).values('reporting_user').distinct().count()
-        if  reports_count != previous_reports_count and (reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or reports_count == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING):
+        reports_count = UserFlag.objects.filter(user__username = flagged_user.username)\
+            .values('reporting_user').distinct().count()
+        if reports_count != previous_reports_count and \
+                (reports_count == settings.USERFLAG_THRESHOLD_FOR_NOTIFICATION or
+                 reports_count == settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING):
+
             # Get all flagged objects by the user, create links to admin pages and send email
-            flagged_objects = UserFlag.objects.filter(user__username = flagged_user.username)
+            flagged_objects = UserFlag.objects.filter(user__username=flagged_user.username)
             urls = []
             added_objects = []
-            for object in flagged_objects:
-                key = str(object.content_type) + str(object.object_id)
-                if not key in added_objects:
+            for f_object in flagged_objects:
+                key = str(f_object.content_type) + str(f_object.object_id)
+                if key not in added_objects:
                     added_objects.append(key)
                     try:
-                        obj = object.content_type.get_object_for_this_type(id=object.object_id)
-                        url = reverse('admin:%s_%s_change' %(obj._meta.app_label,  obj._meta.module_name),  args=[obj.id] )
-                        urls.append([str(object.content_type),request.build_absolute_uri(url)])
+                        obj = f_object.content_type.get_object_for_this_type(id=f_object.object_id)
+                        url = reverse('admin:%s_%s_change' %
+                                      (obj._meta.app_label,  obj._meta.module_name), args=[obj.id])
+                        urls.append([str(f_object.content_type), request.build_absolute_uri(url)])
                     except Exception:
-                        urls.append([str(object.content_type),"url not available"])
-
-            user_url = reverse('admin:%s_%s_delete' %(flagged_user._meta.app_label,  flagged_user._meta.module_name),  args=[flagged_user.id] )
+                        urls.append([str(f_object.content_type), "url not available"])
+            user_url = reverse('admin:%s_%s_delete' %
+                               (flagged_user._meta.app_label, flagged_user._meta.module_name), args=[flagged_user.id])
             user_url = request.build_absolute_uri(user_url)
             clear_url = reverse("clear-flags-user", args=[flagged_user.username])
             clear_url = request.build_absolute_uri(clear_url)
-
             if reports_count < settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING:
                 template_to_use = 'accounts/report_spammer_admins.txt'
             else:
                 template_to_use = 'accounts/report_blocked_spammer_admins.txt'
-
             to_emails = []
             for mail in settings.ADMINS:
                 to_emails.append(mail[1])
             send_mail_template(u'Spam report for user ' + flagged_user.username , template_to_use, locals(), None, to_emails)
-
-        return HttpResponse(json.dumps({"errors":None}), mimetype='application/javascript')
+        return HttpResponse(json.dumps({"errors": None}), mimetype='application/javascript')
     else:
-        return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+        return HttpResponse(json.dumps({"errors": True}), mimetype='application/javascript')
 
 
 @login_required
@@ -1116,8 +1117,8 @@ def clear_flags_user(request, username):
         num = len(flags)
         for flag in flags:
             flag.delete()
-
-        return render_to_response('accounts/flags_cleared.html',locals(),context_instance=RequestContext(request))
+        tvars = {'num': num, 'username': username}
+        return render(request, 'accounts/flags_cleared.html', tvars)
     else:
         return HttpResponseRedirect(reverse('accounts-login'))
 

@@ -149,7 +149,7 @@ class ProfileGetUserTags(TestCase):
         self.assertEqual(len(set(tag_names).intersection(non_used_tag_names)), 0)
 
         # Test solr not available return False
-        conf = {'select.return_value': Exception}
+        conf = {'select.side_effect': Exception}
         mock_solr.return_value.configure_mock(**conf)
         self.assertEqual(user.profile.get_user_tags(use_solr=True), False)
 

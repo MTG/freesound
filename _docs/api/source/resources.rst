@@ -42,7 +42,8 @@ Name                    Type                       Description
 
 Search results can be filtered by specifying a series of properties that sounds should match.
 In other words, using the ``filter`` parameter you can specify the value that certain sound fields should have in order to be considered valid search results.
-Filter are defined with a syntax like ``filter=fieldname:value fieldname:value``. You can also use double quotes (``filter=fieldname:"value" fieldname:"value"``) if needed.
+Filters are defined with a syntax like ``filter=fieldname:value fieldname:value`` (that is the Solr filter syntax).
+Use double quotes for multi-word queries (``filter=fieldname:"val ue"``).
 Field names can be any of the following:
 
 

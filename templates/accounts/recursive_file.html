@@ -16,13 +16,15 @@
     </li>
     {% endif %}
 {% else %}
-    <ul> <a id="select_all" href="#" onclick="select_ul(this)">select all</a>
-    {% for child in file.children %}
-        <li class="filenode">
-            <span class="filename">
-                <input class="filecheckbox" type="checkbox" name="{{child.id}}" onchange="checkboxChange(this);"><strong>{{child.name}}</strong>
-            </span>
-        </li>
-    {% endfor %}
-    </ul>
+    {% if file.children %}
+        <ul> <a id="select_all" href="#" onclick="select_ul(this)">select all</a>
+        {% for child in file.children %}
+            <li class="filenode">
+                <span class="filename">
+                    <input class="filecheckbox" type="checkbox" name="{{child.id}}" onchange="checkboxChange(this);"><strong>{{child.name}}</strong>
+                </span>
+            </li>
+        {% endfor %}
+        </ul>
+    {% endif %}
 {% endif %}

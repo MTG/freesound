@@ -28,7 +28,7 @@ from follow.models import FollowingUserItem, FollowingQueryItem
 
 class FollowTestCase(TestCase):
 
-    fixtures = ['users.json', 'follow.json']
+    fixtures = ['users', 'follow']
 
     def setUp(self):
         self.user = User.objects.create_user("testuser", password="testpass")

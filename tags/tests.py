@@ -25,7 +25,7 @@ from django.core.urlresolvers import reverse
 
 class OldTagLinksRedirectTestCase(TestCase):
     
-    fixtures = ['fs1tags.json']
+    fixtures = ['fs1tags']
     
     def setUp(self):
         self.client = Client()

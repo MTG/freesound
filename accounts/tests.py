@@ -37,7 +37,7 @@ import shutil
 
 class OldUserLinksRedirect(TestCase):
     
-    fixtures = ['users.json']
+    fixtures = ['users']
     
     def setUp(self):
         self.client = Client()
@@ -61,7 +61,7 @@ class OldUserLinksRedirect(TestCase):
 
 class UserRegistrationAndActivation(TestCase):
 
-    fixtures = ['users.json']
+    fixtures = ['users']
 
     def test_user_registration(self):
         RecaptchaForm.validate_captcha = lambda x: True  # Monkeypatch recaptcha validation so the form validates
@@ -118,7 +118,7 @@ class UserRegistrationAndActivation(TestCase):
 
 class ProfileGetUserTags(TestCase):
 
-    fixtures = ['sounds_with_tags.json']
+    fixtures = ['sounds_with_tags']
 
     def test_user_tagcloud_solr(self):
         user = User.objects.get(username="Anton")

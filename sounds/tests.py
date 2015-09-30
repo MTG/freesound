@@ -25,7 +25,7 @@ from django.core.urlresolvers import reverse
 # Test old sound links redirect
 class OldSoundLinksRedirectTestCase(TestCase):
     
-    fixtures = ['sounds.json']
+    fixtures = ['sounds']
     
     def setUp(self):
         self.client = Client()
@@ -49,7 +49,7 @@ class OldSoundLinksRedirectTestCase(TestCase):
 # Test old pack links redirect
 class OldPackLinksRedirectTestCase(TestCase):
     
-    fixtures = ['packs.json']
+    fixtures = ['packs']
             
     def setUp(self):
         self.client = Client()

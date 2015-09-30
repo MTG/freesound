@@ -26,6 +26,7 @@ from comments.models import Comment
 from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.conf.settings import ALLOWED_AUDIOFILE_EXTENSIONS
 from rest_framework import serializers
 from utils.tags import clean_and_split_tags
 from utils.similarity_utilities import get_sounds_descriptors
@@ -512,8 +513,6 @@ class CreateCommentSerializer(serializers.Serializer):
 # UPLOAD SERIALIZERS
 ####################
 
-ALLOWED_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
-
 LICENSE_CHOICES = (
         ('Attribution', 'Attribution'),
         ('Attribution Noncommercial', 'Attribution Noncommercial'),
@@ -693,7 +692,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
             extension = value.name.split('.')[-1]
         except:
             extension = None
-        if extension not in ALLOWED_EXTENSIONS or not extension:
+        if extension not in ALLOWED_AUDIOFILE_EXTENSIONS or not extension:
             raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
         return attrs
 

@@ -228,7 +228,7 @@ class UserEditProfile(TestCase):
         shutil.rmtree(settings.AVATARS_PATH)
 
 
-class UserDescribeSounds(TestCase):
+class UserUploadAndDescribeSounds(TestCase):
 
     @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
     def test_handle_uploaded_file_html(self):
@@ -243,7 +243,7 @@ class UserDescribeSounds(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), True)
 
-        # Test failed file upload
+        # Test file upload that should fail
         filename = "file.xyz"
         f = SimpleUploadedFile(filename, "file_content")
         resp = self.client.post("/home/upload/html/", {'file': f})

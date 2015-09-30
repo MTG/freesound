@@ -139,7 +139,6 @@ class RegistrationForm(RecaptchaForm):
                     first_name=first_name,
                     last_name=last_name,
                     email=email,
-                    password=password,
                     is_staff=False,
                     is_active=False,
                     is_superuser=False)

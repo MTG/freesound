@@ -28,7 +28,6 @@ class OldSoundLinksRedirectTestCase(TestCase):
     fixtures = ['sounds']
     
     def setUp(self):
-        self.client = Client()
         self.sound = Sound.objects.all()[0]
         
     def test_old_sound_link_redirect_ok(self):

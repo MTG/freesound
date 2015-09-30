@@ -28,7 +28,6 @@ class OldTagLinksRedirectTestCase(TestCase):
     fixtures = ['fs1tags']
     
     def setUp(self):
-        self.client = Client()
         self.fs1tags = [tag.fs1_id for tag in FS1Tag.objects.all()[0:2]]
         
     def test_old_tag_link_redirect_single_ok(self):

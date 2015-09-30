@@ -32,7 +32,6 @@ class FollowTestCase(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user("testuser", password="testpass")
-        self.client = Client()
         self.client.login(username='testuser', password='testpass')
 
     def test_following_users(self):

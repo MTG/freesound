@@ -40,7 +40,6 @@ class OldUserLinksRedirect(TestCase):
     fixtures = ['users']
     
     def setUp(self):
-        self.client = Client()
         self.user = User.objects.all()[0]
         
     def test_old_user_link_redirect_ok(self):

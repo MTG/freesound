@@ -300,7 +300,7 @@ def handle_uploaded_image(profile, f):
     logger.info("\thandling profile image upload")
     try:
         os.mkdir(os.path.dirname(profile.locations("avatar.L.path")))
-    except Exception, e:
+    except Exception as e:
         logger.info("\tfailed creating directory with error: %s" % str(e))
         pass
 
@@ -313,7 +313,7 @@ def handle_uploaded_image(profile, f):
             destination.write(chunk)
         destination.close()
         logger.info("\tfile upload done")
-    except Exception, e:
+    except Exception as e:
         logger.error("\tfailed writing file error: %s", str(e))
 
     logger.info("\tcreating thumbnails")
@@ -325,19 +325,19 @@ def handle_uploaded_image(profile, f):
         logger.info("\tcreated small thumbnail")
         profile.has_avatar = True
         profile.save()
-    except Exception, e:
+    except Exception as e:
         logger.error("\tfailed creating small thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_m, 40)
         logger.info("\tcreated medium thumbnail")
-    except Exception, e:
+    except Exception as e:
         logger.error("\tfailed creating medium thumbnails: " + str(e))
 
     try:
         extract_square(tmp_image_path, path_l, 70)
         logger.info("\tcreated large thumbnail")
-    except Exception, e:
+    except Exception as e:
         logger.error("\tfailed creating large thumbnails: " + str(e))
 
     os.unlink(tmp_image_path)
@@ -568,7 +568,7 @@ def describe_sounds(request):
         try:
             for s in sounds_to_process:
                 s.process()
-        except Exception, e:
+        except Exception as e:
             audio_logger.error('Sound with id %s could not be scheduled. (%s)' % (s.id, str(e)))
         for p in dirty_packs:
             p.process()
@@ -782,7 +782,7 @@ def handle_uploaded_file(user_id, f):
         for chunk in f.chunks():
             destination.write(chunk)
         logger.info("file upload done")
-    except Exception, e:
+    except Exception as e:
         logger.warning("failed writing file error: %s", str(e))
         return False
     return True

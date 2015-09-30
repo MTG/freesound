@@ -22,12 +22,17 @@ from django import forms
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 from accounts.models import Profile
-from utils.forms import RecaptchaForm, HtmlCleaningCharField
+from utils.forms import RecaptchaForm, HtmlCleaningCharField, filename_has_valid_extension
 from utils.spam import is_spam
 
 
+def validate_file_extension(value):
+    if not filename_has_valid_extension(str(value)):
+        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+
+
 class UploadFileForm(forms.Form):
-    file = forms.FileField()
+    file = forms.FileField(validators=[validate_file_extension])
 
 
 class TermsOfServiceForm(forms.Form):

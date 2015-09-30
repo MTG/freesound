@@ -26,9 +26,10 @@ from comments.models import Comment
 from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.conf.settings import ALLOWED_AUDIOFILE_EXTENSIONS
+from django.conf import settings
 from rest_framework import serializers
 from utils.tags import clean_and_split_tags
+from utils.forms import filename_has_valid_extension
 from utils.similarity_utilities import get_sounds_descriptors
 from apiv2_utils import prepend_base
 
@@ -688,12 +689,8 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
 
     def validate_audiofile(self, attrs, source):
         value = attrs[source]
-        try:
-            extension = value.name.split('.')[-1]
-        except:
-            extension = None
-        if extension not in ALLOWED_AUDIOFILE_EXTENSIONS or not extension:
-            raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
+        if not filename_has_valid_extension(str(value)):
+            serializers.ValidationError('Uploaded file format not supported or not an audio file.')
         return attrs
 
     def validate_name(self, attrs, source):

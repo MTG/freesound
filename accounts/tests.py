@@ -19,9 +19,10 @@
 #
 
 from django.test import TestCase, Client
+from django.test.utils import override_settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.conf import settings
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
@@ -30,6 +31,8 @@ from tags.models import TaggedItem
 import accounts.models
 import mock
 import os
+import tempfile
+import shutil
 
 
 class OldUserLinksRedirect(TestCase):
@@ -166,6 +169,7 @@ class ProfileGetUserTags(TestCase):
 
 class UserEditProfile(TestCase):
 
+    @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_handle_uploaded_image(self):
         user = User.objects.create_user("testuser", password="testpass")
         f = InMemoryUploadedFile(open(settings.MEDIA_ROOT + '/images/70x70_avatar.png'), None, None, None, None, None)
@@ -176,10 +180,8 @@ class UserEditProfile(TestCase):
         self.assertEqual(os.path.exists(user.profile.locations("avatar.M.path")), True)
         self.assertEqual(os.path.exists(user.profile.locations("avatar.L.path")), True)
 
-        # Delete created avatar files
-        os.remove(user.profile.locations("avatar.S.path"))
-        os.remove(user.profile.locations("avatar.M.path"))
-        os.remove(user.profile.locations("avatar.L.path"))
+        # Delete tmp directory
+        shutil.rmtree(settings.AVATARS_PATH)
 
     def test_edit_user_profile(self):
         User.objects.create_user("testuser", password="testpass")
@@ -201,6 +203,7 @@ class UserEditProfile(TestCase):
         self.assertEqual(user.profile.signature, 'Signature test text')
         self.assertEqual(user.profile.not_shown_in_online_users_list, True)
 
+    @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_edit_user_avatar(self):
         User.objects.create_user("testuser", password="testpass")
         self.client.login(username='testuser', password='testpass')
@@ -222,7 +225,5 @@ class UserEditProfile(TestCase):
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.has_avatar, False)
 
-        # Delete created avatar files
-        os.remove(user.profile.locations("avatar.S.path"))
-        os.remove(user.profile.locations("avatar.M.path"))
-        os.remove(user.profile.locations("avatar.L.path"))
+        # Delete tmp directory
+        shutil.rmtree(settings.AVATARS_PATH)

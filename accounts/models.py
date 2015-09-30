@@ -131,25 +131,18 @@ class Profile(SocialModel):
 
         else:
             return DelayedQueryExecuter("""
-                SELECT
-                    tags_tag.name AS name,
-                    X.c AS count
-                FROM (
-                    SELECT
-                        tag_id,
-                        count(*) as c
-                    FROM tags_taggeditem
-                    LEFT JOIN sounds_sound ON object_id=sounds_sound.id
-                    WHERE
-                        tags_taggeditem.user_id=%d AND
-                        sounds_sound.moderation_state='OK' AND
-                        sounds_sound.processing_state='OK'
-                    GROUP BY tag_id
-                    ORDER BY c
-                    DESC LIMIT 10
-                ) AS X
+                   SELECT tags_tag.name AS name, X.c AS count
+                     FROM ( SELECT tag_id, count(*) as c
+                              FROM tags_taggeditem
+                         LEFT JOIN sounds_sound ON object_id=sounds_sound.id
+                             WHERE tags_taggeditem.user_id=%d AND
+                                   sounds_sound.moderation_state='OK' AND
+                                   sounds_sound.processing_state='OK'
+                          GROUP BY tag_id
+                          ORDER BY c
+                        DESC LIMIT 10) AS X
                 LEFT JOIN tags_tag ON tags_tag.id=X.tag_id
-                ORDER BY tags_tag.name;""" % self.user_id)
+                 ORDER BY tags_tag.name;""" % self.user_id)
 
     def can_post_in_forum(self):
         user_has_posts_pending_to_moderate = self.user.post_set.filter(moderation_state="NM").count() > 0

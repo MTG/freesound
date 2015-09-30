@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.test.utils import override_settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -235,11 +235,20 @@ class UserDescribeSounds(TestCase):
         # TODO: test html5 file uploads when we change uploader
         user = User.objects.create_user("testuser", password="testpass")
         self.client.login(username='testuser', password='testpass')
+
+        # Test successful file upload
         filename = "file.wav"
         f = SimpleUploadedFile(filename, "file_content")
         resp = self.client.post("/home/upload/html/", {'file': f})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), True)
+
+        # Test failed file upload
+        filename = "file.xyz"
+        f = SimpleUploadedFile(filename, "file_content")
+        resp = self.client.post("/home/upload/html/", {'file': f})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), False)
 
         # Delete tmp directory
         shutil.rmtree(settings.UPLOADS_PATH)

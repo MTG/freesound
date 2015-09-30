@@ -22,7 +22,7 @@ from django.test import TestCase, Client
 from django.test.utils import override_settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.conf import settings
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
@@ -226,3 +226,20 @@ class UserEditProfile(TestCase):
 
         # Delete tmp directory
         shutil.rmtree(settings.AVATARS_PATH)
+
+
+class UserDescribeSounds(TestCase):
+
+    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    def test_handle_uploaded_file_html(self):
+        # TODO: test html5 file uploads when we change uploader
+        user = User.objects.create_user("testuser", password="testpass")
+        self.client.login(username='testuser', password='testpass')
+        filename = "file.wav"
+        f = SimpleUploadedFile(filename, "file_content")
+        resp = self.client.post("/home/upload/html/", {'file': f})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), True)
+
+        # Delete tmp directory
+        shutil.rmtree(settings.UPLOADS_PATH)

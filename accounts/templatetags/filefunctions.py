@@ -24,5 +24,4 @@ register = template.Library()
 
 @register.inclusion_tag('accounts/recursive_file.html')
 def show_file(file_structure, non_recursive=False):
-    print non_recursive
     return {'file': file_structure, 'non_recursive': non_recursive}

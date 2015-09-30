@@ -25,6 +25,11 @@ from recaptcha.client import captcha
 from utils.tags import clean_and_split_tags
 from HTMLParser import HTMLParseError
 
+
+def filename_has_valid_extension(filename):
+    return '.' in filename and filename.rsplit('.', 1)[-1] in settings.ALLOWED_AUDIOFILE_EXTENSIONS
+
+
 class HtmlCleaningCharField(forms.CharField):
     def clean(self, value):
         value = super(HtmlCleaningCharField, self).clean(value)

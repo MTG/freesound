@@ -76,6 +76,7 @@ INSTALLED_APPS = (
     'utils.corsheaders',
     'follow',
     'fixture_magic',
+    'utils',  # So that we also run utils tests
     #'test_utils', # Don't use this in production!
 )
 

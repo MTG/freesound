@@ -230,6 +230,8 @@ class UserEditProfile(TestCase):
 
 class UserUploadAndDescribeSounds(TestCase):
 
+    fixtures = ['initial_data']
+
     @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
     def test_handle_uploaded_file_html(self):
         # TODO: test html5 file uploads when we change uploader
@@ -249,6 +251,56 @@ class UserUploadAndDescribeSounds(TestCase):
         resp = self.client.post("/home/upload/html/", {'file': f})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(os.path.exists(settings.UPLOADS_PATH + '/%i/%s' % (user.id, filename)), False)
+
+        # Delete tmp directory
+        shutil.rmtree(settings.UPLOADS_PATH)
+
+    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    def test_select_uploaded_files_to_describe(self):
+        # Create files
+        filenames = ['file1.wav', 'file2.wav', 'file3.wav']
+        user = User.objects.create_user("testuser", password="testpass")
+        self.client.login(username='testuser', password='testpass')
+        user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        os.mkdir(user_upload_path)
+        for filename in filenames:
+            open(user_upload_path + '%s' % filename, 'a').close()
+
+        # Check that files are displayed in the template
+        resp = self.client.get('/home/describe/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context['file_structure'].children), len(filenames))
+
+        # Selecting one file redirects to /home/describe/sounds/
+        resp = self.client.post('/home/describe/', {
+            'describe': [u'Describe selected files'],
+            'files': [u'file1'],
+        })
+        self.assertRedirects(resp, '/home/describe/sounds/')
+
+        # Selecting multiple file redirects to /home/describe/license/
+        resp = self.client.post('/home/describe/', {
+            'describe': [u'Describe selected files'],
+            'files': [u'file1', u'file0'],
+        })
+        self.assertRedirects(resp, '/home/describe/license/')
+
+        # Selecting files to delete, redirecte to delete confirmation
+        filenames_to_delete = [u'file1', u'file0']
+        resp = self.client.post('/home/describe/', {
+            'delete': [u'Delete selected files'],
+            'files': filenames_to_delete,
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context['filenames']), len(filenames_to_delete))
+
+        # Selecting confirmation of files to delete
+        resp = self.client.post('/home/describe/', {
+            'delete_confirm': [u'delete_confirm'],
+            'files': filenames_to_delete,
+        })
+        self.assertRedirects(resp, '/home/describe/')
+        self.assertEqual(len(os.listdir(user_upload_path)), len(filenames) - len(filenames_to_delete))
 
         # Delete tmp directory
         shutil.rmtree(settings.UPLOADS_PATH)

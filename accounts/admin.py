@@ -23,34 +23,23 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from django.conf import settings
 from accounts.models import Profile, UserFlag
-from forum.models import Post, Thread
-from comments.models import Comment
-from sounds.models import DeletedSound
 
 
 def delete_active_user(modeladmin, request, queryset):
-    deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
     for user in queryset:
-        for post in Post.objects.filter(author=user):
-            post.author = deleted_user
-            post.save()
-
-        for thread in Thread.objects.filter(author=user):
-            thread.author = deleted_user
-            thread.save()
-
-        for comment in Comment.objects.filter(user=user):
-            comment.user = deleted_user
-            comment.save()
-
-        for sound in DeletedSound.objects.filter(user=user):
-            sound.user = deleted_user
-            sound.save()
+        user.profile.change_ownership_of_user_content()
         user.delete()
 
-delete_active_user.description = "Delete user(s), not posts etc"
+delete_active_user.short_description = "Delete selected users, preserve posts, threads and comments"
+
+
+def delete_active_user_preserve_sounds(modeladmin, request, queryset):
+    for user in queryset:
+        user.profile.change_ownership_of_user_content(include_sounds=True)
+        user.delete()
+
+delete_active_user_preserve_sounds.short_description = "Delete selected users, preserve all their content"
 
 
 class ProfileAdmin(admin.ModelAdmin):
@@ -72,7 +61,7 @@ admin.site.register(UserFlag, UserFlagAdmin)
 
 class FreesoundUserAdmin(UserAdmin):
     search_fields = ('username', 'email')
-    actions = (delete_active_user, )
+    actions = (delete_active_user, delete_active_user_preserve_sounds, )
 
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)

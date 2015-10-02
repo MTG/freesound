@@ -1,5 +1,23 @@
 [
     {
+        "pk": 0,
+        "model": "auth.user",
+        "fields": {
+            "username": "deleted_user",
+            "first_name": "",
+            "last_name": "",
+            "is_active": true,
+            "is_superuser": false,
+            "is_staff": false,
+            "last_login": "2010-10-19 18:19:42",
+            "groups": [],
+            "user_permissions": [],
+            "password": "0187a748eed8aa2bd82576dc2cce0a6d",
+            "email": "anon@xmpl.org",
+            "date_joined": "2005-03-09 09:50:34"
+        }
+    },
+    {
         "pk": 43,
         "model": "auth.user",
         "fields": {

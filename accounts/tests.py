@@ -27,10 +27,13 @@ from django.conf import settings
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
 from accounts.views import handle_uploaded_image
-from sounds.models import License
+from accounts.admin import delete_active_user, delete_active_user_preserve_sounds
+from sounds.models import License, Sound, Pack, DeletedSound
 from tags.models import TaggedItem
 from utils.filesystem import File
 from tags.models import Tag
+from comments.models import Comment
+from forum.models import Thread, Post, Forum
 import accounts.models
 import mock
 import os
@@ -363,3 +366,69 @@ class UserUploadAndDescribeSounds(TestCase):
         self.assertEqual(user.pack_set.filter(name='Name of a new pack').exists(), True)
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)
+
+
+class UserDelete(TestCase):
+
+    fixtures = ['sounds']
+
+    def create_user_and_content(self):
+        user = User.objects.create_user("testuser", password="testpass")
+        # Create comments
+        for i in range(0, 3):
+            Comment.objects.create(comment="Comment %i" % i, user=user, content_object=Sound.objects.all()[0])
+        # Create threads and posts
+        thread = Thread.objects.create(author=user, title="Test thread", forum=Forum.objects.create(name="Test forum"))
+        for i in range(0, 3):
+            Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
+        # Create deleted sounds
+        for i in range(0, 3):
+            DeletedSound.objects.create(user=user, sound_id=i)  # Using fake sound id here
+        # Create sounds and packs
+        pack = Pack.objects.create(user=user, name="Test pack")
+        for i in range(0, 3):
+            Sound.objects.create(user=user,
+                                 original_filename="Test sound %i" % i,
+                                 pack=pack,
+                                 license=License.objects.all()[0],
+                                 md5="fakemd5%i" % i)
+
+        return user
+
+    def test_user_delete(self):
+        # This should delete all user related objects
+        user = self.create_user_and_content()
+        user.delete()
+        self.assertEqual(User.objects.filter(id=user.id).exists(), False)
+        self.assertEqual(Comment.objects.filter(user__id=user.id).exists(), False)
+        self.assertEqual(Thread.objects.filter(author__id=user.id).exists(), False)
+        self.assertEqual(Post.objects.filter(author__id=user.id).exists(), False)
+        self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), False)
+        self.assertEqual(Pack.objects.filter(user__id=user.id).exists(), False)
+        self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), False)
+
+    @override_settings(DELETED_USER_ID=0)  # 0 = deleted_user id in fixture
+    def test_user_delete_active_user(self):
+        # This should delete all user related objects except for Comments, Threads, Posts and DeletedSounds
+        user = self.create_user_and_content()
+        delete_active_user(None, None, User.objects.filter(id=user.id))
+        self.assertEqual(User.objects.filter(id=user.id).exists(), False)
+        self.assertEqual(Comment.objects.filter(user__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(Thread.objects.filter(author__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(Post.objects.filter(author__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(DeletedSound.objects.filter(user__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(Pack.objects.filter(user__id=user.id).exists(), False)
+        self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), False)
+
+    @override_settings(DELETED_USER_ID=0)  # 0 = deleted_user id in fixture
+    def test_user_delete_active_user_preserve_sounds(self):
+        # This should delete all user related objects except for Comments, Threads, Posts, DeletedSounds, Sound and Packs
+        user = self.create_user_and_content()
+        delete_active_user_preserve_sounds(None, None, User.objects.filter(id=user.id))
+        self.assertEqual(User.objects.filter(id=user.id).exists(), False)
+        self.assertEqual(Comment.objects.filter(user__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(Thread.objects.filter(author__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(Post.objects.filter(author__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(DeletedSound.objects.filter(user__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(Pack.objects.filter(user__id=settings.DELETED_USER_ID).exists(), True)
+        self.assertEqual(Sound.objects.filter(user__id=settings.DELETED_USER_ID).exists(), True)

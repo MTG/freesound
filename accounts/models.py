@@ -33,6 +33,9 @@ from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrExce
 from utils.sql import DelayedQueryExecuter
 from utils.locations import locations_decorator
 from tickets.views import get_num_pending_sounds
+from forum.models import Post, Thread
+from comments.models import Comment
+from sounds.models import DeletedSound, Sound, Pack
 import datetime
 import random
 import os
@@ -178,6 +181,24 @@ class Profile(SocialModel):
 
     def num_sounds_pending_moderation(self):
         return get_num_pending_sounds(self.user)
+
+    def change_ownership_of_user_content(self, target_user=None, include_sounds=False):
+        """
+        This method iterates over all Posts, Threads, Comments and DeletedSound objects of a user and assigns them to
+        another user (the 'target_user').
+        :param target_user: defaults to DELETED_USER_ID
+        :param include_sounds: whether or not to change the ownership of sounds too (including packs)
+        :return:
+        """
+        if not target_user:
+            target_user = User.objects.get(id=settings.DELETED_USER_ID)
+        Post.objects.filter(author=self.user).update(author=target_user)
+        Thread.objects.filter(author=self.user).update(author=target_user)
+        Comment.objects.filter(user=self.user).update(user=target_user)
+        DeletedSound.objects.filter(user=self.user).update(user=target_user)
+        if include_sounds:
+            Pack.objects.filter(user=self.user).update(user=target_user)
+            Sound.objects.filter(user=self.user).update(user=target_user)
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

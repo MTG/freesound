@@ -857,35 +857,19 @@ def delete(request):
     waited_too_long = False
     num_sounds = request.user.sounds.all().count()
     if encrypted_string is not None:
-        try:
-            user_id, now = decrypt(encrypted_string).split("\t")
-            user_id = int(user_id)
-            if user_id != request.user.id:
-                raise PermissionDenied
-            link_generated_time = float(now)
-            if abs(time.time() - link_generated_time) < 10:
-                from forum.models import Post, Thread
-                from comments.models import Comment
-                from sounds.models import DeletedSound
-                deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
-                for post in Post.objects.filter(author=request.user):
-                    post.author = deleted_user
-                    post.save()
-                for thread in Thread.objects.filter(author=request.user):
-                    thread.author = deleted_user
-                    thread.save()
-                for comment in Comment.objects.filter(user=request.user):
-                    comment.user = deleted_user
-                    comment.save()
-                for sound in DeletedSound.objects.filter(user=request.user):
-                    sound.user = deleted_user
-                    sound.save()
+        user_id, now = decrypt(encrypted_string).split("\t")
+        user_id = int(user_id)
+        if user_id != request.user.id:
+            raise PermissionDenied
+        link_generated_time = float(now)
+        if abs(time.time() - link_generated_time) < 10:
+            if num_sounds == 0:
+                request.user.profile.change_ownership_of_user_content()
                 request.user.delete()
                 return HttpResponseRedirect(reverse("front-page"))
-            else:
-                waited_too_long = True
-        except:
-            pass
+        else:
+            waited_too_long = True
+
     encrypted_link = encrypt(u"%d\t%f" % (request.user.id, time.time()))
     tvars = {
         'waited_too_long': waited_too_long,

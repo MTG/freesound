@@ -233,7 +233,6 @@
         field-recording it's probably a good idea to specify the location.
 
     <form id="describe_form" action="." method="post">{% csrf_token %}
-    <input type="hidden" id="random_session_id" name="random_session_id" value="-">
     <div id="sound-accordion-alternate">
     {% for form in forms %}
         <div onclick="toggleSound({{ forloop.counter }})" class="sound-accordion-sound-alternate-header{% if form.description.errors or form.geotag.errors or form.pack.errors or form.license.errors %}-errors{% endif %}" id="sound-accordion-sound-header-{{ forloop.counter }}">

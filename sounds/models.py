@@ -498,8 +498,21 @@ def on_delete_sound(sender,instance, **kwargs):
             instance.geotag.delete()
     except:
         pass
-    if instance.pack:
-        instance.pack.process()
+
+    try:
+        if instance.pack:
+            instance.pack.process()
+    except:
+        '''
+        It might happen when we do user.delete() to a user that has several sounds in packs that when post_delete
+        signals for sounds are called, the packs have already been deleted. This is because the way in which django
+        deletes all the related objects with foreign keys. When a user is deleted, its packs and sounds must be deleted
+        too. Django first runs pre_delete on all objects to be deleted, then delete and then post_delete. Therefore
+        it can happen that when the post_delete signal for a sound is called, the pack has already been deleted but the
+        instance passed to the post_delete function still points to that pack. We can therefore safely use try/except
+        here and we'll still be doing the job correctly.
+        '''
+        pass
 
     delete_sound_from_solr(instance)
     delete_object_files(instance, web_logger)

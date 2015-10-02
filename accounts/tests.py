@@ -27,7 +27,10 @@ from django.conf import settings
 from accounts.forms import RecaptchaForm
 from accounts.models import Profile
 from accounts.views import handle_uploaded_image
+from sounds.models import License
 from tags.models import TaggedItem
+from utils.filesystem import File
+from tags.models import Tag
 import accounts.models
 import mock
 import os
@@ -257,14 +260,16 @@ class UserUploadAndDescribeSounds(TestCase):
 
     @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
     def test_select_uploaded_files_to_describe(self):
-        # Create files
+        # Create audio files
         filenames = ['file1.wav', 'file2.wav', 'file3.wav']
         user = User.objects.create_user("testuser", password="testpass")
         self.client.login(username='testuser', password='testpass')
         user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
         os.mkdir(user_upload_path)
         for filename in filenames:
-            open(user_upload_path + '%s' % filename, 'a').close()
+            f = open(user_upload_path + filename, 'a')
+            f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
+            f.close()
 
         # Check that files are displayed in the template
         resp = self.client.get('/home/describe/')
@@ -304,3 +309,57 @@ class UserUploadAndDescribeSounds(TestCase):
 
         # Delete tmp directory
         shutil.rmtree(settings.UPLOADS_PATH)
+
+    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    def test_describe_selected_files(self):
+        # Create audio files
+        filenames = ['file1.wav', 'file2.wav']
+        user = User.objects.create_user("testuser", password="testpass")
+        self.client.login(username='testuser', password='testpass')
+        user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        os.mkdir(user_upload_path)
+        for filename in filenames:
+            f = open(user_upload_path + filename, 'a')
+            f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
+            f.close()
+
+        # Set license and pack data in session
+        session = self.client.session
+        session['describe_license'] = License.objects.all()[0]
+        session['describe_pack'] = False
+        session['describe_sounds'] = [File(1, filenames[0], user_upload_path + filenames[0], False),
+                                      File(2, filenames[1], user_upload_path + filenames[1], False)]
+        session.save()
+
+        # Post description information
+        resp = self.client.post('/home/describe/sounds/', {
+            'submit': [u'Submit and continue'],
+            '0-lat': [u'46.31658418182218'],
+            '0-lon': [u'3.515625'],
+            '0-zoom': [u'16'],
+            '0-tags': [u'testtag1 testtag2 testtag3'],
+            '0-pack': [u''],
+            '0-license': [u'3'],
+            '0-description': [u'a test description for the sound file'],
+            '0-new_pack': [u''],
+            '0-name': [u'%s' % filenames[0]],
+            '1-license': [u'3'],
+            '1-description': [u'another test description'],
+            '1-lat': [u''],
+            '1-pack': [u''],
+            '1-lon': [u''],
+            '1-name': [u'%s' % filenames[1]],
+            '1-new_pack': [u'Name of a new pack'],
+            '1-zoom': [u''],
+            '1-tags': [u'testtag1 testtag4 testtag5'],
+        })
+
+        # Check that post redirected to first describe page with confirmation message on sounds described
+        self.assertRedirects(resp, '/home/describe/')
+        self.assertEqual('You have described all the selected files' in resp.cookies['messages'].value, True)
+
+        # Check that sounds have been created along with related tags, geotags and packs
+        self.assertEqual(user.sounds.all().count(), 2)
+        self.assertEqual(user.pack_set.filter(name='Name of a new pack').exists(), True)
+        self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
+        self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)

@@ -907,65 +907,6 @@ def old_user_link_redirect(request):
         raise Http404
 
 
-def transform_username_fs1fs2(fs1_name, fs2_append=''):
-    """ Returns a tuple (changed, name) where changed is a boolean
-        indicating the name was transformed and name a string
-        with the correct username for freesound 2
-    """
-    BAD_USERNAME_CHARACTERS = {  # got characters from rfc3986 (minus @, + which are valid for django usernames)
-        ':': '_colon_',
-        '/': '_slash_',
-        '?': '_qmark_',
-        '#': '_hash_',
-        '[': '_lbrack1_',
-        ']': '_rbrack1_',
-        '!': '_emark_',
-        '$': '_dollar_',
-        '&': '_amper_',
-        "'": '_quote_',
-        '(': '_lbrack2_',
-        ')': '_rbrack2_',
-        '*': '_stardom_',
-        ',': '_comma_',
-        ';': '_scolon_',
-        '=': '_equal_',
-        '{': '_lbrack3_',
-        '}': '_rbrack3_'
-    }
-    if any([x in fs1_name for x in BAD_USERNAME_CHARACTERS.keys()]):
-        fs2_name = fs1_name
-        for bad_char, replacement in BAD_USERNAME_CHARACTERS.items():
-            fs2_name = fs2_name.replace(bad_char, replacement)
-        fs2_name = '%s%s' % (fs2_name, fs2_append)
-
-        # If the transformed name is too long, create a hash.
-        if len(fs2_name) > 30:
-            m = hashlib.md5()
-            m.update(fs2_name.encode('utf-8'))
-            # Hack: m.hexdigest() is too long.
-            fs2_name = base64.urlsafe_b64encode(m.digest())
-        return True, fs2_name
-    else:
-        return False, fs1_name
-
-
-def login_wrapper(request):
-    if request.method == "POST":
-        old_name = request.POST.get('username', False)
-        if old_name:
-            changed, new_name = transform_username_fs1fs2(old_name)
-            if changed:
-                try:
-                    # Check if the new name actually exists
-                    _ = User.objects.get(username=new_name)
-                    msg = """Hi there! Your old username had some weird characters in it and we had to change it. It is
-                    now <b>%s</b>. If you don't like it, please contact us and we'll change it for you.""" % new_name
-                    messages.add_message(request, messages.WARNING, msg)
-                except User.DoesNotExist:
-                    pass
-    return authviews.login(request, template_name='accounts/login.html')
-
-
 @login_required
 def email_reset(request):
     if request.method == "POST":

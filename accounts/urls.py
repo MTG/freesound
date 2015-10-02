@@ -29,7 +29,7 @@ import follow.views as follow
 import apiv2.views as api
 
 urlpatterns = patterns('accounts.views',
-    url(r'^login/$', accounts.login_wrapper, name="accounts-login"),
+    url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html'}, name="accounts-login"),
     url(r'^logout/$', authviews.logout, {'template_name': 'accounts/logout.html'}, name="accounts-logout"),
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),

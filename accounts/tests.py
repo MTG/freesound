@@ -54,8 +54,8 @@ class OldUserLinksRedirect(TestCase):
         self.assertEqual(resp.status_code, 301)
         
     def test_old_user_link_redirect_not_exists_id(self):
-        # 404 id does not exist
-        resp = self.client.get(reverse('old-account-page'), data={'id': 0}, follow=True)
+        # 404 id does not exist (user with id 999 does not exist in fixture)
+        resp = self.client.get(reverse('old-account-page'), data={'id': 999}, follow=True)
         self.assertEqual(resp.status_code, 404)
         
     def test_old_user_link_redirect_invalid_id(self):

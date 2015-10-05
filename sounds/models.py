@@ -502,7 +502,7 @@ def on_delete_sound(sender,instance, **kwargs):
     try:
         if instance.pack:
             instance.pack.process()
-    except:
+    except Pack.DoesNotExist:
         '''
         It might happen when we do user.delete() to a user that has several sounds in packs that when post_delete
         signals for sounds are called, the packs have already been deleted. This is because the way in which django

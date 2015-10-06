@@ -23,6 +23,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from sounds.models import Sound, Pack
 from sounds.views import get_random_sound, get_random_uploader
+from comments.models import Comment
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
@@ -85,3 +86,29 @@ class RandomSoundAndUploaderTestCase(TestCase):
             profile.save()
         random_uploader = get_random_uploader()
         self.assertEqual(isinstance(random_uploader, User), True)
+
+
+class CommentSoundsTestCase(TestCase):
+
+    fixtures = ['sounds']
+
+    def test_add_comment(self):
+        sound = Sound.objects.get(id=19)
+        user = User.objects.get(id=2)
+        current_num_comments = sound.num_comments
+        comment = Comment(content_object=sound,
+                          user=user,
+                          comment="Test comment")
+        sound.add_comment(comment)
+        self.assertEqual(comment.id in [c.id for c in sound.comments.all()], True)
+        self.assertEqual(current_num_comments + 1, sound.num_comments)
+        self.assertEqual(sound.is_index_dirty, True)
+
+    def test_post_delete_comment(self):
+        sound = Sound.objects.get(id=19)
+        sound.is_index_dirty = False
+        sound.num_comments = 3
+        sound.save()
+        sound.post_delete_comment()
+        self.assertEqual(2, sound.num_comments)
+        self.assertEqual(sound.is_index_dirty, True)

@@ -568,10 +568,12 @@ class Pack(SocialModel):
     description = models.TextField(null=True, blank=True, default=None)
     is_dirty = models.BooleanField(db_index=True, default=False)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    num_downloads = models.PositiveIntegerField(default=0)
     license_crc = models.CharField(max_length=8,blank=True)
-    num_sounds = models.PositiveIntegerField(default=0)
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
+    num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
+    num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
+                                                         # NOTE: Pack.num_sounds is supposed to count aldo non-moderated
+                                                         # or processed sounds (as opposed to Profile.num_sounds)
 
     objects = PackManager()
 

@@ -18,33 +18,27 @@
 #     See AUTHORS file.
 #
 
-from accounts.models import Profile
-from comments.forms import CommentForm
-from comments.models import Comment
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.models import Site
 from django.core.cache import cache
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.db import connection, transaction
-from django.db.models import Count, Max, Q
-from django.http import HttpResponseRedirect, Http404, HttpResponse, \
-    HttpResponsePermanentRedirect
+from django.db import connection
+from django.db.models import Count
+from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404, render
 from django.template import RequestContext
-from forum.models import Post, Thread
+from accounts.models import Profile
+from comments.forms import CommentForm
+from comments.models import Comment
+from forum.models import Thread
 from freesound.freesound_exceptions import PermissionDenied
 from geotags.models import GeoTag
 from networkx import nx
-from sounds.forms import SoundDescriptionForm, PackForm, GeotaggingForm, \
-    NewLicenseForm, FlagForm, RemixForm, PackDescriptionForm, PackEditForm
-from sounds.management.commands.create_remix_groups import _create_nodes, \
-    _create_and_save_remixgroup
+from sounds.forms import *
+from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
@@ -57,22 +51,25 @@ from utils.nginxsendfile import sendfile
 from utils.pagination import paginate
 from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
-import collections
+from follow import follow_utils
+from operator import itemgetter
 import datetime
 import time
 import logging
 import json
 import os
-from operator import itemgetter
-import itertools
-from follow import follow_utils
+
 
 logger = logging.getLogger('web')
 logger_click = logging.getLogger('clickusage')
 
 sound_content_type = ContentType.objects.get_for_model(Sound)
 
+
 def get_random_sound():
+    """
+    Returns random id of sound (int)
+    """
     cache_key = "random_sound"
     random_sound = cache.get(cache_key)
     if not random_sound:
@@ -80,13 +77,18 @@ def get_random_sound():
         cache.set(cache_key, random_sound, 60*60*24)
     return random_sound
 
+
 def get_random_uploader():
+    """
+    Returns random User object (among users that have uploaded at least one sound)
+    """
     cache_key = "random_uploader"
     random_uploader = cache.get(cache_key)
     if not random_uploader:
         random_uploader = Profile.objects.random_uploader()
         cache.set(cache_key, random_uploader, 60*60*24)
     return random_uploader
+
 
 def sounds(request):
     n_weeks_back = 1

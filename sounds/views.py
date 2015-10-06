@@ -207,12 +207,10 @@ def sound(request, username, sound_id):
             messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your account has been temporaly blocked after multiple spam reports")
         else:
             if form.is_valid():
-                comment_text=form.cleaned_data["comment"]
-                sound.comments.add(Comment(content_object=sound,
-                                           user=request.user,
-                                           comment=comment_text))
-                sound.num_comments = sound.num_comments + 1
-                sound.save()
+                comment_text = form.cleaned_data["comment"]
+                sound.add_comment(Comment(content_object=sound,
+                                          user=request.user,
+                                          comment=comment_text))
                 try:
                     # send the user an email to notify him of the new comment!
                     logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username, request.user.username))

@@ -453,6 +453,17 @@ class Sound(SocialModel):
         field_values = [[field, info[field] if info[field] is not None else "null", False] for field in field_names]
         self.set_fields(field_values)
 
+    def add_comment(self, comment):
+        self.comments.add(comment)
+        self.num_comments += 1
+        self.is_index_dirty = True
+        self.save()
+
+    def post_delete_comment(self):
+        self.num_comments -= 1
+        self.is_index_dirty = True
+        self.save()
+
     def compute_crc(self):
         p = subprocess.Popen(["crc32", self.locations('path')], stdout=subprocess.PIPE)
         self.crc= p.communicate()[0].split(" ")[0][:-1]

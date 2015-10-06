@@ -24,6 +24,7 @@ from django.db.models.signals import post_syncdb
 from django.dispatch import receiver
 from django.conf import settings
 
+
 @receiver(post_syncdb)
 def create_locations(sender, **kwargs):
     for folder in [settings.SOUNDS_PATH,
@@ -31,7 +32,8 @@ def create_locations(sender, **kwargs):
                    settings.AVATARS_PATH,
                    settings.UPLOADS_PATH,
                    settings.PREVIEWS_PATH,
-                   settings.DISPLAYS_PATH]:
+                   settings.DISPLAYS_PATH,
+                   settings.FILE_UPLOAD_TEMP_DIR]:
         if not os.path.isdir(folder):
             try:
                 os.mkdir(folder)

@@ -19,8 +19,10 @@
 #
 
 from django.test import TestCase, Client
-from sounds.models import Sound, Pack
 from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
+from sounds.models import Sound, Pack
+from sounds.views import get_random_sound, get_random_uploader
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
@@ -65,3 +67,21 @@ class OldPackLinksRedirectTestCase(TestCase):
     def test_old_pack_link_redirect_invalid_id(self):
         response = self.client.get(reverse('old-pack-page'), data={'id': 'invalid_id'}, follow=True)
         self.assertEqual(response.status_code, 404)
+
+
+class RandomSoundAndUploaderTestCase(TestCase):
+
+    fixtures = ['sounds']
+
+    def test_random_sound(self):
+        random_sound = get_random_sound()
+        self.assertEqual(isinstance(random_sound, int), True)
+
+    def test_random_uploader(self):
+        # Update num_sounds in user profile data
+        for u in User.objects.all():
+            profile = u.profile
+            profile.num_sounds = u.sounds.all().count()
+            profile.save()
+        random_uploader = get_random_uploader()
+        self.assertEqual(isinstance(random_uploader, User), True)

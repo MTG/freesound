@@ -603,15 +603,14 @@ class Pack(SocialModel):
         self.num_sounds = sounds.count()
         if self.num_sounds:
             self.last_updated = sounds[0].created
-        self.create_license_file()
+        self.create_license_file(pack_sounds=sounds)
         self.save()
 
-    def create_license_file(self):
+    def create_license_file(self, pack_sounds):
         """ Create a license file containing the licenses of all sounds in the
             pack, and update the pack license_crc field, but DO NOT save the pack
         """
         from django.template.loader import render_to_string
-        pack_sounds = Sound.objects.filter(pack=self.id,processing_state="OK", moderation_state="OK")
         if len(pack_sounds)>0:
             licenses = License.objects.all()
             license_path = self.locations("license_path")

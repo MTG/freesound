@@ -900,6 +900,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         else:
                             p, created = Pack.objects.get_or_create(user=self.user, name=serializer.data['pack'])
                         sound.pack = p
+                sound.is_index_dirty = True
                 sound.save()
 
                 # Invalidate caches

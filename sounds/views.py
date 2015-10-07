@@ -411,6 +411,8 @@ def sound_edit(request, username, sound_id):
     if request.POST and license_form.is_valid():
         sound.license = license_form.cleaned_data["license"]
         sound.mark_index_dirty()
+        if sound.pack:
+            sound.pack.process()  # Sound license changed, process pack (is sound has pack)
         invalidate_sound_cache(sound)
         update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
         return HttpResponseRedirect(sound.get_absolute_url())

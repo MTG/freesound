@@ -40,8 +40,8 @@ class Command(BaseCommand):
         for pending_ticket in pending_tickets:
             if pending_ticket.content:
                 pending_ticket.content.content_object.moderation_state = "OK"
-                pending_ticket.content.content_object.save()
-                pending_ticket.content.content_object.mark_index_dirty()
+                pending_ticket.content.content_object.mark_index_dirty()  # .mark_index_dirty() already saves the sound
+
             # This could be done with a single update, but there's a chance
             # we lose a sound that way (a newly created ticket who's sound
             # is not set to OK, but the ticket is closed).

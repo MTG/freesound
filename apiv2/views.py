@@ -1008,11 +1008,9 @@ class CommentSound(WriteRequiredGenericAPIView):
                                       'note': 'This comment has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                comment = Comment.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), comment=request.DATA['comment'])
-                if comment.content_type == ContentType.objects.get_for_model(Sound):
-                    sound = comment.content_object
-                    sound.num_comments = sound.num_comments + 1
-                    sound.save()
+                sound.add_comment(Comment(content_object=sound,
+                                          user=self.user,
+                                          comment=request.DATA['comment']))
                 return Response(data={'detail': 'Successfully commented sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

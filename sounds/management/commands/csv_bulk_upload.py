@@ -122,7 +122,6 @@ class Command(BaseCommand):
                     p, created = Pack.objects.get_or_create(user=u, name=packnamef)
 
                 sound.pack = p
-                #dirty_packs.append(sound.pack)
 
             # 7 create geotag objects
             # format: lat#lon#zoom
@@ -156,5 +155,8 @@ class Command(BaseCommand):
                 sound.process()
             except Exception, e:
                 print 'Sound with id %s could not be scheduled. (%s)' % (sound.id, str(e))
+
+            if sound.pack:
+                sound.pack.process()
 
             print "Successfully uploaded sound " + sound.original_filename

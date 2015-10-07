@@ -679,7 +679,7 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
         for moderator in moderators:
             invalidate_template_cache("user_header", moderator.id)
 
-    # 11 proces
+    # 11 proces sound and packs
     try:
         sound.compute_crc()
     except:
@@ -693,5 +693,8 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
         msg = str(e)
         logger.error('<%i API uploaded sound could not be processed> %s (%s)' % (status.HTTP_500_INTERNAL_SERVER_ERROR, msg, request_info))
         pass
+
+    if sound.pack:
+        sound.pack.process()
 
     return sound

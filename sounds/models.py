@@ -572,8 +572,6 @@ class Pack(SocialModel):
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
-                                                         # NOTE: Pack.num_sounds is supposed to count aldo non-moderated
-                                                         # or processed sounds (as opposed to Profile.num_sounds)
 
     objects = PackManager()
 

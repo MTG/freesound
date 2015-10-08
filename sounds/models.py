@@ -397,10 +397,6 @@ class Sound(SocialModel):
             gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
-    def mark_index_dirty(self):
-        self.is_index_dirty = True
-        self.save()
-
     @models.permalink
     def get_absolute_url(self):
         return 'sound', (self.user.username, smart_unicode(self.id),)
@@ -453,21 +449,29 @@ class Sound(SocialModel):
         field_values = [[field, info[field] if info[field] is not None else "null", False] for field in field_names]
         self.set_fields(field_values)
 
-    def add_comment(self, comment):
+    def mark_index_dirty(self, commit=True):
+        self.is_index_dirty = True
+        if commit:
+            self.save()
+
+    def add_comment(self, comment, commit=True):
         self.comments.add(comment)
         self.num_comments += 1
         self.is_index_dirty = True
-        self.save()
+        if commit:
+            self.save()
 
-    def post_delete_comment(self):
+    def post_delete_comment(self, commit=True):
         self.num_comments -= 1
         self.is_index_dirty = True
-        self.save()
+        if commit:
+            self.save()
 
-    def compute_crc(self):
+    def compute_crc(self, commit=True):
         p = subprocess.Popen(["crc32", self.locations('path')], stdout=subprocess.PIPE)
-        self.crc= p.communicate()[0].split(" ")[0][:-1]
-        self.save()
+        self.crc = p.communicate()[0].split(" ")[0][:-1]
+        if commit:
+            self.save()
 
     # N.B. This is used in the ticket template (ugly, but a quick fix)
     def is_sound(self):

@@ -456,15 +456,34 @@ class Sound(SocialModel):
             self.moderation_state = new_state
             if commit:
                 self.save()
-            if current_state == 'OK' and new_state != 'OK':
-                # Sound passed from being approved to not being approved
-                # TODO: decrease authors' num_sounds (when not handled via trigger)
-                pass
-            elif current_state != 'OK' and new_state == 'OK':
-                # Sound has just been approved
-                if self.pack and self.processing_state == "OK":
+            if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
+                # Sound either passed from being approved to not being approved, or from not being approved to
+                # being appoved
+                # TODO: update authors' num_sounds (when not handled via trigger)
+                if self.pack:
                     self.pack.process()
-                    # TODO: increase authors' num_sounds (when not handled via trigger)
+
+    def change_processing_state(self, new_state, commit=True, use_set_instead_of_save=False):
+        """
+        Change the processing state of a sound and perform related tasks such as set the sound as index dirty if
+        required. The 'use_set_instead_of_save' can be used to directly set the change of state in the db as an
+        update command without affecting other fields of the Sound model. This is needed when the processing tasks
+        change the processing state of the sound to avoid potential collisions when saving the whole object.
+        """
+        current_state = self.processing_state
+        if current_state != new_state:
+            self.mark_index_dirty(commit=False)
+            if use_set_instead_of_save:
+                self.set_processing_state(new_state)
+            else:
+                self.processing_state = new_state
+                if commit:
+                    self.save()
+            if new_state == "FA" or new_state == "OK":
+                # TODO: update authors' num_sounds (when not handled via trigger)
+                # TODO: when sounds are bulk reprocessed, this might provoke a lot of pack reprocessings too
+                if self.pack:
+                    self.pack.process()
 
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True

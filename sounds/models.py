@@ -443,6 +443,28 @@ class Sound(SocialModel):
         field_values = [[field, info[field] if info[field] is not None else "null", False] for field in field_names]
         self.set_fields(field_values)
 
+    def change_moderation_state(self, new_state, commit=True):
+        """
+        Change the moderation state of a sound and perform related tasks such as marking the sound as index dirty
+        or sending a pack to process if required. We do not use the similar function above 'set_moderation_state'
+        to maintain consistency wich other set_xxx methods in Sound model.
+        """
+        current_state = self.moderation_state
+        if current_state != new_state:
+            self.mark_index_dirty(commit=False)
+            self.moderation_state = new_state
+            if commit:
+                self.save()
+            if current_state == 'OK' and new_state != 'OK':
+                # Sound passed from being approved to not being approved
+                # TODO: decrease authors' num_comments (when not handled via trigger)
+                pass
+            elif current_state != 'OK' and new_state == 'OK':
+                # Sound has just been approved
+                if self.pack:
+                    self.pack.process()
+                    # TODO: increase authors' num_comments (when not handled via trigger)
+
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True
         if commit:
@@ -451,13 +473,13 @@ class Sound(SocialModel):
     def add_comment(self, comment, commit=True):
         self.comments.add(comment)
         self.num_comments += 1
-        self.is_index_dirty = True
+        self.mark_index_dirty(commit=False)
         if commit:
             self.save()
 
     def post_delete_comment(self, commit=True):
         self.num_comments -= 1
-        self.is_index_dirty = True
+        self.mark_index_dirty(commit=False)
         if commit:
             self.save()
 

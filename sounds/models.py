@@ -260,6 +260,11 @@ class Sound(SocialModel):
     def __unicode__(self):
         return self.base_filename_slug
 
+    @staticmethod
+    def is_sound():
+        # N.B. This is used in the ticket template (ugly, but a quick fix)
+        return True
+
     def friendly_filename(self):
         filename_slug = slugify(os.path.splitext(self.original_filename)[0])
         username_slug = slugify(self.user.username)
@@ -472,10 +477,6 @@ class Sound(SocialModel):
         self.crc = p.communicate()[0].split(" ")[0][:-1]
         if commit:
             self.save()
-
-    # N.B. This is used in the ticket template (ugly, but a quick fix)
-    def is_sound(self):
-        return True
 
     def create_moderation_ticket(self):
         ticket = Ticket()

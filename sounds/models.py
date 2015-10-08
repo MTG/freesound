@@ -458,13 +458,13 @@ class Sound(SocialModel):
                 self.save()
             if current_state == 'OK' and new_state != 'OK':
                 # Sound passed from being approved to not being approved
-                # TODO: decrease authors' num_comments (when not handled via trigger)
+                # TODO: decrease authors' num_sounds (when not handled via trigger)
                 pass
             elif current_state != 'OK' and new_state == 'OK':
                 # Sound has just been approved
-                if self.pack:
+                if self.pack and self.processing_state == "OK":
                     self.pack.process()
-                    # TODO: increase authors' num_comments (when not handled via trigger)
+                    # TODO: increase authors' num_sounds (when not handled via trigger)
 
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True

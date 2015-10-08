@@ -447,7 +447,8 @@ class Sound(SocialModel):
         """
         Change the moderation state of a sound and perform related tasks such as marking the sound as index dirty
         or sending a pack to process if required. We do not use the similar function above 'set_moderation_state'
-        to maintain consistency wich other set_xxx methods in Sound model.
+        to maintain consistency wich other set_xxx methods in Sound model (set_xxx methods only do low-level update
+        of the field, with no other checks).
         """
         current_state = self.moderation_state
         if current_state != new_state:

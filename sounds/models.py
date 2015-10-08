@@ -391,17 +391,6 @@ class Sound(SocialModel):
     def rating_percent(self):
         return int(self.avg_rating*10)
 
-    def process(self, force=False):
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        if force or self.processing_state != "OK":
-            self.set_processing_state("QU")
-            gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
-            audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
-        if force or self.analysis_state != "OK":
-            self.set_analysis_state("QU")
-            gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
-            audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
-
     @models.permalink
     def get_absolute_url(self):
         return 'sound', (self.user.username, smart_unicode(self.id),)
@@ -479,22 +468,30 @@ class Sound(SocialModel):
             self.save()
 
     def create_moderation_ticket(self):
-        ticket = Ticket()
-        ticket.title = 'Moderate sound %s' % self.original_filename
-        ticket.source = TICKET_SOURCE_NEW_SOUND
-        ticket.status = TICKET_STATUS_NEW
-        ticket.queue = Queue.objects.get(name='sound moderation')
-        ticket.sender = self.user
-        lc = LinkedContent()
-        lc.content_object = self
-        lc.save()
-        ticket.content = lc
-        ticket.save()
-        tc = TicketComment()
-        tc.sender = self.user
-        tc.text = "I've uploaded %s. Please moderate!" % self.original_filename
-        tc.ticket = ticket
-        tc.save()
+        ticket = Ticket.objects.create(
+            title='Moderate sound %s' % self.original_filename,
+            source=TICKET_SOURCE_NEW_SOUND,
+            status=TICKET_STATUS_NEW,
+            queue=Queue.objects.get(name='sound moderation'),
+            sender=self.user,
+            content=LinkedContent.objects.create(content_object=self),
+        )
+        TicketComment.objects.create(
+            sender=self.user,
+            text="I've uploaded %s. Please moderate!" % self.original_filename,
+            ticket=ticket,
+        )
+
+    def process(self, force=False):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        if force or self.processing_state != "OK":
+            self.set_processing_state("QU")
+            gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
+            audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
+        if force or self.analysis_state != "OK":
+            self.set_analysis_state("QU")
+            gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
+            audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

@@ -240,13 +240,14 @@ class Sound(SocialModel):
         ("FA", _('Failed')),
     )
     PROCESSING_ONGOING_STATE_CHOICES = (
+        ("NO", _('None')),
         ("QU", _('Queued')),
         ("PR", _('Processing')),
         ("FI", _('Finished')),
     )
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
     processing_ongoing_state = models.CharField(db_index=True, max_length=2,
-                                                choices=PROCESSING_ONGOING_STATE_CHOICES, default="QU")
+                                                choices=PROCESSING_ONGOING_STATE_CHOICES, default="NO")
     processing_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last processing attempt
     processing_log = models.TextField(null=True, blank=True, default=None)  # Currently unused
 

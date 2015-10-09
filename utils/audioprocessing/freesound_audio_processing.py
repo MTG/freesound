@@ -36,7 +36,7 @@ def process(sound):
 
     def failure(message, error=None):
         sound.set_processing_ongoing_state("FI")
-        sound.set_processing_state("FA")
+        sound.change_processing_state("FA", use_set_instead_of_save=True)
         logging_message = "Failed to process sound with id %s\n" % sound.id
         logging_message += "\tmessage: %s\n" % message
         if error:
@@ -212,6 +212,6 @@ def process(sound):
 
     cleanup(to_cleanup)
     sound.set_processing_ongoing_state("FI")
-    sound.set_processing_state("OK")
+    sound.change_processing_state("OK", use_set_instead_of_save=True)
 
     return True

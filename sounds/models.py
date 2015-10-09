@@ -478,7 +478,7 @@ class Sound(SocialModel):
                 if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
                     # Sound either passed from being approved to not being approved, or from not being approved to
                     # being appoved. Update related stuff (must be done after save)
-                    # TODO: update authors' num_sounds (when not handled via trigger)
+                    self.user.profile.update_num_sounds()
                     if self.pack:
                         self.pack.process()
         else:
@@ -510,7 +510,7 @@ class Sound(SocialModel):
                 # Update related stuff such as users' num_counts or reprocessing affected pack
                 # We only do these updates if commit=True as otherwise the changes would have not been saved
                 # in the DB and updates would have no effect.
-                # TODO: update authors' num_sounds (when not handled via trigger)
+                self.user.profile.update_num_sounds()
                 if self.pack:
                     self.pack.process()
         else:
@@ -587,6 +587,8 @@ def on_delete_sound(sender, instance, **kwargs):
         except User.DoesNotExist:
             deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
             DeletedSound.objects.get_or_create(sound_id=instance.id, user=deleted_user)
+
+    instance.user.profile.update_num_sounds()
 
     try:
         if instance.geotag:

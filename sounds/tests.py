@@ -21,9 +21,11 @@
 from django.test import TestCase, Client
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
-from sounds.models import Sound, Pack
+from sounds.models import Sound, Pack, License
 from sounds.views import get_random_sound, get_random_uploader
 from comments.models import Comment
+import mock
+import gearman
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
@@ -112,3 +114,58 @@ class CommentSoundsTestCase(TestCase):
         sound.post_delete_comment()
         self.assertEqual(2, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
+
+
+def create_user_and_sounds(num_sounds=1):
+    user = User.objects.create_user("testuser", password="testpass")
+    sounds = list()
+    for i in range(0, num_sounds):
+        sound = Sound.objects.create(user=user,
+                                     original_filename="Test sound %i" % i,
+                                     license=License.objects.all()[0],
+                                     md5="fakemd5_%i" % i)
+        sounds.append(sound)
+    return user, sounds
+
+
+class ProfileNumSoundsTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    # TODO: Test that num_sounds in user profile is updated acordingly when:
+    #   4) num_sounds NOT updated when a sound is reprocessed and processing_state does not change
+    #   5) A pack is deleted
+
+    def test_moderation_and_processing_state_changes(self):
+        user, sounds = create_user_and_sounds()
+        sound = sounds[0]
+        self.assertEqual(user.profile.num_sounds, 0)  # Sound not yet moderated or processed
+        sound.change_moderation_state("OK")
+        self.assertEqual(user.profile.num_sounds, 0)  # Sound not yet processed
+        sound.change_processing_state("OK")
+        self.assertEqual(user.profile.num_sounds, 1)  # Sound now processed and moderated
+        sound.change_processing_state("OK")
+        self.assertEqual(user.profile.num_sounds, 1)  # Sound reprocessed and again set as ok
+        sound.change_processing_state("FA")
+        self.assertEqual(user.profile.num_sounds, 0)  # Sound failed processing
+        sound.change_processing_state("OK")
+        self.assertEqual(user.profile.num_sounds, 1)  # Sound processed again as ok
+        sound.change_moderation_state("DE")
+        self.assertEqual(user.profile.num_sounds, 0)  # Sound unmoderated
+
+    def test_sound_delete(self):
+        user, sounds = create_user_and_sounds()
+        sound = sounds[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+        self.assertEqual(user.profile.num_sounds, 1)
+        sound.delete()
+        self.assertEqual(user.profile.num_sounds, 0)
+
+
+
+
+
+
+
+

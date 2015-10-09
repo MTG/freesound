@@ -459,7 +459,7 @@ class Sound(SocialModel):
         field_values = [[field, info[field] if info[field] is not None else "null", False] for field in field_names]
         self.set_fields(field_values)
 
-    def change_moderation_state(self, new_state, commit=True):
+    def change_moderation_state(self, new_state, commit=True, do_not_update_related_stuff=False):
         """
         Change the moderation state of a sound and perform related tasks such as marking the sound as index dirty
         or sending a pack to process if required. We do not use the similar function above 'set_moderation_state'
@@ -473,12 +473,13 @@ class Sound(SocialModel):
             self.moderation_date = datetime.datetime.now()
             if commit:
                 self.save()
-            if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
-                # Sound either passed from being approved to not being approved, or from not being approved to
-                # being appoved. Update related stuff (must be done after save)
-                # TODO: update authors' num_sounds (when not handled via trigger)
-                if self.pack:
-                    self.pack.process()
+            if not do_not_update_related_stuff and commit:
+                if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
+                    # Sound either passed from being approved to not being approved, or from not being approved to
+                    # being appoved. Update related stuff (must be done after save)
+                    # TODO: update authors' num_sounds (when not handled via trigger)
+                    if self.pack:
+                        self.pack.process()
         else:
             # Only set moderation date
             self.moderation_date = datetime.datetime.now()

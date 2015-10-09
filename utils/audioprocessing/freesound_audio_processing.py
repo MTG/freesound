@@ -35,6 +35,7 @@ def process(sound):
         sys.stdout.flush()
 
     def failure(message, error=None):
+        sound.set_processing_ongoing_state("FI")
         sound.set_processing_state("FA")
         logging_message = "Failed to process sound with id %s\n" % sound.id
         logging_message += "\tmessage: %s\n" % message
@@ -54,7 +55,7 @@ def process(sound):
                 pass
 
     # not saving the date of the processing attempt anymore
-    sound.set_processing_state("PR")
+    sound.set_processing_ongoing_state("PR")
 
     new_path = sound.locations('path')
     # Is the file at its new location?
@@ -210,6 +211,7 @@ def process(sound):
     success("created previews, large")
 
     cleanup(to_cleanup)
+    sound.set_processing_ongoing_state("FI")
     sound.set_processing_state("OK")
 
     return True

@@ -621,7 +621,7 @@ def on_delete_sound(sender, instance, **kwargs):
     web_logger.debug("Deleted sound with id %i" % instance.id)
 post_delete.connect(on_delete_sound, sender=Sound)
 
-
+"""
 def recreate_pack(sender, instance, **kwargs):
     if instance.moderation_state == "OK" and instance.pack:
         instance.pack.process()
@@ -631,7 +631,7 @@ post_save.connect(recreate_pack, sender=Sound)
 def set_dirty(sender, instance, **kwargs):
     instance.is_index_dirty=True
 pre_save.connect(set_dirty, sender=Sound)
-
+"""
 
 class PackManager(models.Manager):
 

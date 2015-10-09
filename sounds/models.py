@@ -118,6 +118,7 @@ class SoundManager(models.Manager):
           sound.description,
           sound.moderation_state,
           sound.processing_state,
+          sound.processing_ongoing_state,
           sound.similarity_state,
           sound.created,
           sound.num_downloads,

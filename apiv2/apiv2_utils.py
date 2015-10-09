@@ -669,8 +669,7 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
 
     # 10 create moderation tickets if needed
     if user.profile.is_whitelisted:
-        sound.moderation_state = 'OK'
-        sound.save()
+        sound.change_moderation_state('OK', do_not_update_related_stuff=True)
     else:
         # create moderation ticket!
         sound.create_moderation_ticket()

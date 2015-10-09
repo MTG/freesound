@@ -539,8 +539,7 @@ def moderation_assigned(request, user_id):
 
             if action == "Approve":
                 ticket.status = TICKET_STATUS_CLOSED
-                ticket.content.content_object.moderation_state = "OK"
-                ticket.content.content_object.save()
+                ticket.content.content_object.change_moderation_state("OK")  # change_moderation_state does the saving
                 ticket.save()
                 ticket.content.content_object.mark_index_dirty()
                 if msg:

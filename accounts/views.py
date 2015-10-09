@@ -535,8 +535,7 @@ def describe_sounds(request):
             # Remember to process the file and create moderation ticket if user is not whitelisted
             sounds_to_process.append(sound)
             if request.user.profile.is_whitelisted:
-                sound.moderation_state = 'OK'
-                sound.save()
+                sound.change_moderation_state('OK', do_not_update_related_stuff=True)
                 messages.add_message(request, messages.INFO,
                                      'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
                                      (sound.get_absolute_url(), forms[i]['sound'].name))

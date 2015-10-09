@@ -233,15 +233,20 @@ class Sound(SocialModel):
 
     # processing
     PROCESSING_STATE_CHOICES = (
-        ("QU", _('Queued')),
-        ("PE", _('Pending')),
-        ("PR", _('Processing')),
+        ("PE", _('Pending')),  # Sounds will only be in "PE" before the very first time they are processed
         ("OK", _('OK')),
         ("FA", _('Failed')),
     )
+    PROCESSING_ONGOING_STATE_CHOICES = (
+        ("QU", _('Queued')),
+        ("PR", _('Processing')),
+        ("FI", _('Finished')),
+    )
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
-    processing_date = models.DateTimeField(null=True, blank=True, default=None)
-    processing_log = models.TextField(null=True, blank=True, default=None)
+    processing_ongoing_state = models.CharField(db_index=True, max_length=2,
+                                                choices=PROCESSING_ONGOING_STATE_CHOICES, default="QU")
+    processing_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last processing attempt
+    processing_log = models.TextField(null=True, blank=True, default=None)  # Currently unused
 
     # state
     is_index_dirty = models.BooleanField(null=False, default=True)

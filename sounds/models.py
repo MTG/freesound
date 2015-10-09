@@ -466,18 +466,23 @@ class Sound(SocialModel):
         of the field, with no other checks).
         """
         current_state = self.moderation_state
-        self.set_moderation_date(date=datetime.datetime.now())
         if current_state != new_state:
             self.mark_index_dirty(commit=False)
             self.moderation_state = new_state
+            self.moderation_date = datetime.datetime.now()
             if commit:
                 self.save()
             if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
                 # Sound either passed from being approved to not being approved, or from not being approved to
-                # being appoved
+                # being appoved. Update related stuff (must be done after save)
                 # TODO: update authors' num_sounds (when not handled via trigger)
                 if self.pack:
                     self.pack.process()
+        else:
+            # Only set moderation date
+            self.moderation_date = datetime.datetime.now()
+            if commit:
+                self.save()
 
     def change_processing_state(self, new_state, commit=True, use_set_instead_of_save=False):
         """
@@ -487,14 +492,15 @@ class Sound(SocialModel):
         change the processing state of the sound to avoid potential collisions when saving the whole object.
         """
         current_state = self.processing_state
-        self.set_processing_date(date=datetime.datetime.now())
         if current_state != new_state:
             # Sound either went from PE to OK, from PE to FA, from OK to FA, or from FA to OK (never from OK/FA to PE)
             self.mark_index_dirty(commit=False)
             if use_set_instead_of_save and commit:
                 self.set_processing_state(new_state)
+                self.set_processing_date(datetime.datetime.now())
             else:
                 self.processing_state = new_state
+                self.processing_date = datetime.datetime.now()
                 if commit:
                     self.save()
             if commit:
@@ -504,6 +510,13 @@ class Sound(SocialModel):
                 # TODO: update authors' num_sounds (when not handled via trigger)
                 if self.pack:
                     self.pack.process()
+        else:
+            if use_set_instead_of_save:
+                self.set_processing_date(datetime.datetime.now())
+            else:
+                self.processing_date = datetime.datetime.now()
+                if commit:
+                    self.save()
 
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True

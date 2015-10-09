@@ -431,6 +431,9 @@ class Sound(SocialModel):
     def set_processing_state(self, state):
         self.set_single_field('processing_state', state)
 
+    def set_processing_ongoing_state(self, state):
+        self.set_single_field('processing_ongoing_state', state)
+
     def set_analysis_state(self, state):
         self.set_single_field('analysis_state', state)
 
@@ -532,7 +535,7 @@ class Sound(SocialModel):
     def process(self, force=False):
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
-            self.set_processing_state("QU")
+            self.set_processing_ongoing_state("QU")
             gm_client.submit_job("process_sound", str(self.id), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'process'" % self.id)
         if force or self.analysis_state != "OK":

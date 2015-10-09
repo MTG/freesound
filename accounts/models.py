@@ -200,6 +200,14 @@ class Profile(SocialModel):
             Pack.objects.filter(user=self.user).update(user=target_user)
             Sound.objects.filter(user=self.user).update(user=target_user)
 
+    def update_num_sounds(self, commit=True):
+        """
+        Updates the num_sounds property by counting the number of moderated and processed sounds
+        """
+        self.num_sounds = self.user.sounds.filter(processing_state="OK", moderation_state="OK").count()
+        if commit:
+            self.save()
+
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )
 

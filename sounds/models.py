@@ -45,6 +45,7 @@ import logging
 import random
 import gearman
 import subprocess
+import datetime
 
 
 search_logger = logging.getLogger('search')
@@ -227,7 +228,7 @@ class Sound(SocialModel):
         ("DE", _('Deferred')),
     )
     moderation_state = models.CharField(db_index=True, max_length=2, choices=MODERATION_STATE_CHOICES, default="PE")
-    moderation_date = models.DateTimeField(null=True, blank=True, default=None)
+    moderation_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last moderation state change
     moderation_note = models.TextField(null=True, blank=True, default=None)
     has_bad_description = models.BooleanField(default=False)
 
@@ -434,6 +435,9 @@ class Sound(SocialModel):
     def set_processing_ongoing_state(self, state):
         self.set_single_field('processing_ongoing_state', state)
 
+    def set_processing_date(self, date):
+        self.set_single_field('processing_date', str(date))  # Date should be datetime object
+
     def set_analysis_state(self, state):
         self.set_single_field('analysis_state', state)
 
@@ -442,6 +446,9 @@ class Sound(SocialModel):
 
     def set_moderation_state(self, state):
         self.set_single_field('moderation_state', state)
+
+    def set_moderation_date(self, date):
+        self.set_single_field('moderation_date', str(date))  # Date should be datetime object
 
     def set_original_path(self, path):
         self.set_single_field('original_path', path)
@@ -455,10 +462,11 @@ class Sound(SocialModel):
         """
         Change the moderation state of a sound and perform related tasks such as marking the sound as index dirty
         or sending a pack to process if required. We do not use the similar function above 'set_moderation_state'
-        to maintain consistency wich other set_xxx methods in Sound model (set_xxx methods only do low-level update
+        to maintain consistency with other set_xxx methods in Sound model (set_xxx methods only do low-level update
         of the field, with no other checks).
         """
         current_state = self.moderation_state
+        self.set_moderation_date(date=datetime.datetime.now())
         if current_state != new_state:
             self.mark_index_dirty(commit=False)
             self.moderation_state = new_state
@@ -479,17 +487,21 @@ class Sound(SocialModel):
         change the processing state of the sound to avoid potential collisions when saving the whole object.
         """
         current_state = self.processing_state
+        self.set_processing_date(date=datetime.datetime.now())
         if current_state != new_state:
+            # Sound either went from PE to OK, from PE to FA, from OK to FA, or from FA to OK (never from OK/FA to PE)
             self.mark_index_dirty(commit=False)
-            if use_set_instead_of_save:
+            if use_set_instead_of_save and commit:
                 self.set_processing_state(new_state)
             else:
                 self.processing_state = new_state
                 if commit:
                     self.save()
-            if new_state == "FA" or new_state == "OK":
+            if commit:
+                # Update related stuff such as users' num_counts or reprocessing affected pack
+                # We only do these updates if commit=True as otherwise the changes would have not been saved
+                # in the DB and updates would have no effect.
                 # TODO: update authors' num_sounds (when not handled via trigger)
-                # TODO: when sounds are bulk reprocessed, this might provoke a lot of pack reprocessings too
                 if self.pack:
                     self.pack.process()
 

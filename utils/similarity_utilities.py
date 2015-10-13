@@ -148,3 +148,11 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     returned_data.update(cached_data)
 
     return returned_data
+
+
+def delete_sound_from_gaia(sound):
+    logger.info("Deleting sound with id %d" % sound.id)
+    try:
+        Similarity.delete(sound.id)
+    except Exception, e:
+        logger.warn("Could not delete sound wid id %d (%s)" % (sound.id, str(e)))

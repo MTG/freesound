@@ -450,7 +450,6 @@ def pack_edit(request, username, pack_id):
 
 @login_required
 def pack_delete(request, username, pack_id):
-
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
@@ -459,29 +458,21 @@ def pack_delete(request, username, pack_id):
         raise PermissionDenied
 
     encrypted_string = request.GET.get("pack", None)
-
     waited_too_long = False
-
-    if encrypted_string != None:
+    if encrypted_string is not None:
         pack_id, now = decrypt(encrypted_string).split("\t")
         pack_id = int(pack_id)
         link_generated_time = float(now)
-
         if pack_id != pack.id:
             raise PermissionDenied
-
         if abs(time.time() - link_generated_time) < 10:
-            logger.debug("User %s requested to delete pack %s" % (request.user.username,pack_id))
-            print pack
+            logger.debug("User %s requested to delete pack %s" % (request.user.username, pack_id))
             pack.delete()
-            print "DELETED!"
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
             waited_too_long = True
 
-
     encrypted_link = encrypt(u"%d\t%f" % (pack.id, time.time()))
-
     return render_to_response('sounds/pack_delete.html', locals(), context_instance=RequestContext(request))
 
 

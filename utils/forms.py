@@ -27,7 +27,7 @@ from HTMLParser import HTMLParseError
 
 
 def filename_has_valid_extension(filename):
-    return '.' in filename and filename.rsplit('.', 1)[-1] in settings.ALLOWED_AUDIOFILE_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[-1].lower() in settings.ALLOWED_AUDIOFILE_EXTENSIONS
 
 
 class HtmlCleaningCharField(forms.CharField):

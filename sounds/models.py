@@ -729,8 +729,8 @@ class Pack(SocialModel):
 
     def delete(self, using=None):
         """ This deletes all sounds in the pack as well. """
-        # TODO: remove from solr?
-        # delete files
+        for sound in self.sound_set.all():
+            sound.delete()
         delete_object_files(self, web_logger)
         super(SocialModel, self).delete(using=using)  # super class delete
 

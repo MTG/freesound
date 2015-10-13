@@ -116,28 +116,33 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(sound.is_index_dirty, True)
 
 
-def create_user_and_sounds(num_sounds=1):
+def create_user_and_sounds(num_sounds=1, num_packs=0):
     user = User.objects.create_user("testuser", password="testpass")
+    packs = list()
+    for i in range(0, num_packs):
+        pack = Pack.objects.create(user=user, name="Test pack %i" % i)
+        packs.append(pack)
     sounds = list()
     for i in range(0, num_sounds):
+        pack = None
+        if packs:
+            pack = packs[i % len(packs)]
         sound = Sound.objects.create(user=user,
                                      original_filename="Test sound %i" % i,
+                                     base_filename_slug="test_sound_%i" % i,
                                      license=License.objects.all()[0],
+                                     pack=pack,
                                      md5="fakemd5_%i" % i)
         sounds.append(sound)
-    return user, sounds
+    return user, packs, sounds
 
 
 class ProfileNumSoundsTestCase(TestCase):
 
     fixtures = ['initial_data']
 
-    # TODO: Test that num_sounds in user profile is updated acordingly when:
-    #   4) num_sounds NOT updated when a sound is reprocessed and processing_state does not change
-    #   5) A pack is deleted
-
     def test_moderation_and_processing_state_changes(self):
-        user, sounds = create_user_and_sounds()
+        user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         self.assertEqual(user.profile.num_sounds, 0)  # Sound not yet moderated or processed
         sound.change_moderation_state("OK")
@@ -146,6 +151,8 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(user.profile.num_sounds, 1)  # Sound now processed and moderated
         sound.change_processing_state("OK")
         self.assertEqual(user.profile.num_sounds, 1)  # Sound reprocessed and again set as ok
+        sound.change_processing_state("OK")
+        self.assertEqual(user.profile.num_sounds, 1)  # Sound reprocessed second time and again set as ok
         sound.change_processing_state("FA")
         self.assertEqual(user.profile.num_sounds, 0)  # Sound failed processing
         sound.change_processing_state("OK")
@@ -154,13 +161,24 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(user.profile.num_sounds, 0)  # Sound unmoderated
 
     def test_sound_delete(self):
-        user, sounds = create_user_and_sounds()
+        user, packs, sounds = create_user_and_sounds()
         sound = sounds[0]
         sound.change_processing_state("OK")
         sound.change_moderation_state("OK")
         self.assertEqual(user.profile.num_sounds, 1)
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
+
+    def test_pack_delete(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
+        for sound in sounds:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+        self.assertEqual(user.profile.num_sounds, 5)
+        pack = packs[0]
+        pack.delete()
+        self.assertEqual(User.objects.get(id=user.id).profile.num_sounds, 0)
+
 
 
 

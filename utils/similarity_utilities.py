@@ -20,7 +20,6 @@
 
 import traceback, logging
 from django.conf import settings
-from sounds.models import Sound
 from django.core.cache import cache
 from similarity.client import Similarity
 from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILAR_SOUNDS_TO_CACHE, SIMILARITY_CACHE_TIME
@@ -151,8 +150,8 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
 
 
 def delete_sound_from_gaia(sound):
-    logger.info("Deleting sound with id %d" % sound.id)
+    logger.info("Deleting sound from gaia with id %d" % sound.id)
     try:
         Similarity.delete(sound.id)
     except Exception, e:
-        logger.warn("Could not delete sound wid id %d (%s)" % (sound.id, str(e)))
+        logger.warn("Could not delete sound from gaia with id %d (%s)" % (sound.id, str(e)))

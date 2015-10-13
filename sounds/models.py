@@ -35,8 +35,8 @@ from utils.text import slugify
 from utils.locations import locations_decorator
 from utils.search.search_general import delete_sound_from_solr
 from utils.filesystem import delete_object_files
+from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
-from similarity.client import Similarity
 from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment, LinkedContent
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
@@ -571,6 +571,10 @@ class Sound(SocialModel):
             gm_client.submit_job("analyze_sound", str(self.id), wait_until_complete=False, background=True)
             audio_logger.info("Send sound with id %s to queue 'analyze'" % self.id)
 
+    def delete_from_indexes(self):
+        delete_sound_from_solr(self)
+        delete_sound_from_gaia(self)
+
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 
@@ -611,15 +615,8 @@ def on_delete_sound(sender, instance, **kwargs):
         '''
         pass
 
-    delete_sound_from_solr(instance)
+    instance.delete_from_indexes()
     delete_object_files(instance, web_logger)
-
-    if instance.similarity_state == 'OK':
-        try:
-            if Similarity.contains(instance.id):
-                Similarity.delete(instance.id)
-        except:
-            web_logger.warn("ommitting similarity deletion for deleted sound %d" % instance.id)
 
     web_logger.debug("Deleted sound with id %i" % instance.id)
 post_delete.connect(on_delete_sound, sender=Sound)

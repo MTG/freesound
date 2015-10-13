@@ -417,17 +417,15 @@ def describe_sounds(request):
     forms = []
     sounds_to_process = []
     sounds = request.session.get('describe_sounds', False)
-    sounds_to_describe = sounds[0:settings.SOUNDS_PER_DESCRIBE_ROUND]
-    request.session['describe_sounds_number'] = len(request.session.get('describe_sounds'))
-    selected_license = request.session.get('describe_license', False)
-    selected_pack = request.session.get('describe_pack', False)
-    # This is to prevent people browsing to the /home/describe/sounds page
-    # without going through the necessary steps.
-    # selected_pack can be False, but license and sounds have to be picked at least
     if not sounds:
         msg = 'Please pick at least one sound.'
         messages.add_message(request, messages.WARNING, msg)
         return HttpResponseRedirect(reverse('accounts-describe'))
+    sounds_to_describe = sounds[0:settings.SOUNDS_PER_DESCRIBE_ROUND]
+    request.session['describe_sounds_number'] = len(request.session.get('describe_sounds'))
+    selected_license = request.session.get('describe_license', False)
+    selected_pack = request.session.get('describe_pack', False)
+
     # If there are no files in the session redirect to the first describe page
     if len(sounds_to_describe) <= 0:
         msg = 'You have finished describing your sounds.'

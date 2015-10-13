@@ -474,6 +474,9 @@ class Sound(SocialModel):
             self.moderation_date = datetime.datetime.now()
             if commit:
                 self.save()
+            if new_state != "OK":
+                # Sound became non approved
+                self.delete_from_indexes()
             if not do_not_update_related_stuff and commit:
                 if (current_state == 'OK' and new_state != 'OK') or (current_state != 'OK' and new_state == 'OK'):
                     # Sound either passed from being approved to not being approved, or from not being approved to
@@ -506,6 +509,9 @@ class Sound(SocialModel):
                 self.processing_date = datetime.datetime.now()
                 if commit:
                     self.save()
+            if new_state == "FA":
+                # Sound became processing failed
+                self.delete_from_indexes()
             if commit:
                 # Update related stuff such as users' num_counts or reprocessing affected pack
                 # We only do these updates if commit=True as otherwise the changes would have not been saved

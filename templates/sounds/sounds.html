@@ -13,7 +13,7 @@
     <div id="sound_of_the_day" class="content_box">
         <h3>Random sound of the day</h3>
             {% if random_sound != None %}
-                {% display_sound random_sound %}
+                {% display_raw_sound random_sound %}
             {% else %}
                 <p>Could not pick random sound.
             {% endif %}
@@ -23,8 +23,8 @@
     <div id="latest_sounds" class="content_box">
         <h3>Latest sounds</h3>
         <div>
-        {% for latest_addition in latest_sounds %}
-            {% display_sound latest_addition.sound_id %}
+        {% for latest_addition, sound_obj in latest_sounds %}
+            {% display_raw_sound sound_obj %}
             {% if latest_addition.extra %}
                 <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
             {% endif %}
@@ -40,12 +40,7 @@
     <div id="most_downloaded_sounds" class="content_box">
         <h3>Most downloaded sounds (uploaded in the last week)</h3>
         {% for sound in popular_sounds %}
-            {% display_sound sound %}
-            {% comment %}
-            <div class="sample_more">
-                <img src="{{media_url}}images/plus.png" alt="" /> {{sound.num_downloads}} downloads
-            </div>
-            {% endcomment %}
+            {% display_raw_sound sound %}
         {% empty %}
             <p>No sounds in the database!
         {% endfor %}
@@ -85,12 +80,12 @@
 {% endcache %}
 {% cache 3600 most_downloaded_packs  %}
     <div id="most_downloaded_packs" class="content_box">
-        <h3>Most downloaded packs (in the last week)</h3>
+        <h3>Most downloaded packs (created in the last week)</h3>
         <ul>
         {% for pack in popular_packs %}
-            <li><a href="{% url pack pack.pack.user.username pack.pack.id %}">{{pack.pack.name}}</a>
-                by <a href="{% url account pack.pack.user.username %}">{{pack.pack.user.username}}</a>
-                (<span class="pack_count">{{pack.num_d}}</span> downloads)
+            <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a>
+                by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
+                (<span class="pack_count">{{pack.num_downloads}}</span> downloads)
             </li>
         {% empty %}
             <p>No packs in the database!

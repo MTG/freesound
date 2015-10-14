@@ -93,35 +93,22 @@ def get_random_uploader():
 def sounds(request):
     n_weeks_back = 1
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
+    latest_sound_objects = Sound.objects.ordered_ids([latest_sound['sound_id'] for latest_sound in latest_sounds])
+    latest_sounds = [(latest_sound, latest_sound_objects[index],) for index, latest_sound in enumerate(latest_sounds)]
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).order_by("-last_updated")[0:20]
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
-
-    last_week = datetime.datetime(year=2012,month=1,day=1)-datetime.timedelta(weeks=n_weeks_back)
-    # N.B. this two queries group by twice on sound id, if anyone ever find out why....
-    #popular_sounds = Download.objects.filter(created__gte=last_week)  \
-    #                                 .exclude(sound=None)             \
-    #                                 .values('sound_id')              \
-    #                                 .annotate(num_d=Count('sound'))  \
-    #                                 .order_by("-num_d")[0:5]
-    popular_sounds = Sound.objects.filter(created__gte=last_week).order_by("-num_downloads")[0:5]
-
-
-    packs = Download.objects.filter(created__gte=last_week)  \
-                            .exclude(pack=None)              \
-                            .values('pack_id')               \
-                            .annotate(num_d=Count('pack'))   \
-                            .order_by("-num_d")[0:5]
-
-    #packs = []
-    popular_packs = []
-    for pack in packs:
-        pack_obj = Pack.objects.select_related().get(id=pack['pack_id'])
-        popular_packs.append({'pack': pack_obj,
-                              'num_d': pack['num_d']
-                              })
-
-    random_sound = get_random_sound()
-    return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
+    popular_sound_ids = [snd.id for snd in Sound.objects.filter(created__gte=last_week).order_by("-num_downloads")[0:5]]
+    popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
+    popular_packs = Pack.objects.filter(created__gte=last_week).order_by("-num_downloads")[0:5]
+    random_sound = Sound.objects.bulk_query_id([get_random_sound()])[0]
+    tvars = {
+        'latest_sounds': latest_sounds,
+        'latest_packs': latest_packs,
+        'popular_sounds': popular_sounds,
+        'popular_packs': popular_packs,
+        'random_sound': random_sound
+    }
+    return render(request, 'sounds/sounds.html', tvars)
 
 
 def remixed(request):

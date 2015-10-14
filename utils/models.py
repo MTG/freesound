@@ -18,4 +18,6 @@
 #     See AUTHORS file.
 #
 
-# This
+# This file is only present here so that utils can be loaded as a django app
+# Future versions of django do not seem to require this file to be present so we'll be
+# able to delete it when we upgrade django version

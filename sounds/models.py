@@ -424,11 +424,12 @@ class Sound(SocialModel):
 
     def set_fields(self, fields):
         query = "UPDATE sounds_sound SET "
-        query += ", ".join([('%s = %s' %
-                             (field[0], (field[1] if not field[2] else ("'%s'" % field[1])))) for field in fields])
-        query += " WHERE id = %s" % self.id
+        params = [field[1] for field in fields]
+        query += ", ".join([('%s = %%s' % field[0]) for field in fields])
+        query += " WHERE id = %s"
+        params += [self.id]
         cursor = connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, params=params)
         transaction.commit_unless_managed()
 
     def set_processing_state(self, state):
@@ -457,7 +458,7 @@ class Sound(SocialModel):
 
     def set_audio_info_fields(self, info):
         field_names = ['samplerate', 'bitrate', 'bitdepth', 'channels', 'duration']
-        field_values = [[field, info[field] if info[field] is not None else "null", False] for field in field_names]
+        field_values = [[field, info[field], False] for field in field_names]
         self.set_fields(field_values)
 
     def change_moderation_state(self, new_state, commit=True, do_not_update_related_stuff=False):

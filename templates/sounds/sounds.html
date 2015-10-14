@@ -56,22 +56,6 @@
 </div><!-- #content -->
 
 <div id="sidebar">
-    {% comment %}
-    <div id="uploader_of_the_day" class="content_box">
-        {% if random_uploader != None %}
-        <h3 class="header">Uploader of the day</h3>
-        <img src="{{random_uploader.profile.locations.avatar.L.url}}" />
-        <h2><a href="{% url account random_uploader.username %}">{{random_uploader.username}}</a></h2>
-        <ul>
-            <li>Has a been a user for {{random_uploader.date_joined|timesince}}</li>
-            <li>{{random_uploader.profile.num_sounds}} sound{{random_uploader.profile.num_sounds|pluralize}} uploaded</li>
-            <li>{{random_uploader.profile.num_posts}} forum post{{random_uploader.profile.num_posts|pluralize}}</li>
-        </ul>
-        {% else %}
-            random uploader is none
-            {% endif %}
-    </div><!-- #uploader_of_the_day -->
-    {% endcomment %}
     
     <div id="other_sounds" class="content_box">
         <h3>More Sounds</h3>

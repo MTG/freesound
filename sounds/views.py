@@ -96,6 +96,7 @@ def sounds(request):
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).order_by("-last_updated")[0:20]
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
 
+    last_week = datetime.datetime(year=2012,month=1,day=1)-datetime.timedelta(weeks=n_weeks_back)
     # N.B. this two queries group by twice on sound id, if anyone ever find out why....
     #popular_sounds = Download.objects.filter(created__gte=last_week)  \
     #                                 .exclude(sound=None)             \
@@ -120,7 +121,6 @@ def sounds(request):
                               })
 
     random_sound = get_random_sound()
-    random_uploader = get_random_uploader()
     return render_to_response('sounds/sounds.html', locals(), context_instance=RequestContext(request))
 
 

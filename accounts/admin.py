@@ -62,6 +62,9 @@ admin.site.register(UserFlag, UserFlagAdmin)
 class FreesoundUserAdmin(UserAdmin):
     search_fields = ('username', 'email')
     actions = (delete_active_user, delete_active_user_preserve_sounds, )
+    list_display = ('username', 'email')
+    list_filter = ()
+    ordering = ('id', )
 
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)

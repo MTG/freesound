@@ -424,12 +424,11 @@ class Sound(SocialModel):
 
     def set_fields(self, fields):
         query = "UPDATE sounds_sound SET "
-        params = [field[1] for field in fields]
-        query += ", ".join([('%s = %%s' % field[0]) for field in fields])
-        query += " WHERE id = %s"
-        params += [self.id]
+        query += ", ".join([('%s = %s' %
+                             (field[0], (field[1] if not field[2] else ("'%s'" % field[1])))) for field in fields])
+        query += " WHERE id = %s" % self.id
         cursor = connection.cursor()
-        cursor.execute(query, params=params)
+        cursor.execute(query)
         transaction.commit_unless_managed()
 
     def set_processing_state(self, state):

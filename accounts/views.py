@@ -465,7 +465,13 @@ def describe_sounds(request):
             sound.user = request.user
             sound.original_filename = forms[i]['description'].cleaned_data['name']
             sound.original_path = forms[i]['sound'].full_path
-            sound.filesize = os.path.getsize(sound.original_path)
+            try:
+                sound.filesize = os.path.getsize(sound.original_path)
+            except OSError:
+                # If for some reason audio file does not exist, skip creating this sound
+                messages.add_message(request, messages.ERROR,
+                                     'Something went wrong with accessing the file %s.' % sound.original_path)
+                continue
             try:
                 sound.md5 = md5file(forms[i]['sound'].full_path)
             except IOError:

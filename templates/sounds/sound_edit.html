@@ -15,13 +15,7 @@
     var doneAddingTagInterval = 0;  //time in ms
     var doneTypingInterval = 500;     //time in ms
     var randomDescriptionSessionId = Math.floor(Math.random()*99999).toString(10);
-
     var doRecommend = true;
-    {% if ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS %}
-        if ((randomDescriptionSessionId % 2) == 0){
-            doRecommend = false;
-        }
-    {% endif %}
 
     $(document).ready(function() {
 

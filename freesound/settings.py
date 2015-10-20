@@ -266,9 +266,6 @@ OAUTH_SINGLE_ACCESS_TOKEN = True
 USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
 #OAUTH_ENFORCE_SECURE = True  # We can not use this parameter because it does not work well with our current django version
 
-# Temportal tag recommendation settings
-ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = False
-
 # Set DATA_URL. You can overwrite this to point to production data ("http://freesound.org/data/") in local settings if needed ;)
 DATA_URL = "/data/"
 

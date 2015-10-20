@@ -301,8 +301,6 @@ def pack_download(request, username, pack_id):
 
 @login_required
 def sound_edit(request, username, sound_id):
-    ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS = settings.ONLY_RECOMMEND_TAGS_TO_HALF_OF_UPLOADS
-
     sound = get_object_or_404(Sound, id=sound_id, processing_state='OK')
     if sound.user.username.lower() != username.lower():
         raise Http404

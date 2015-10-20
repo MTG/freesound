@@ -180,8 +180,9 @@ def sound(request, username, sound_id):
         sound = Sound.objects.select_related("license", "user", "user__profile", "pack", "remix_group").get(id=sound_id)
         if sound.user.username.lower() != username.lower():
             raise Http404
-        user_is_owner = request.user.is_authenticated() and (sound.user == request.user or request.user.is_superuser \
-                        or request.user.is_staff or Group.objects.get(name='moderators') in request.user.groups.all())
+        user_is_owner = request.user.is_authenticated() and \
+            (sound.user == request.user or request.user.is_superuser or request.user.is_staff or
+             Group.objects.get(name='moderators') in request.user.groups.all())
         # If the user is authenticated and this file is his, don't worry about moderation_state and processing_state
         if user_is_owner:
             if sound.moderation_state != "OK":
@@ -191,11 +192,10 @@ def sound(request, username, sound_id):
         else:
             if sound.moderation_state != 'OK' or sound.processing_state != 'OK':
                 raise Http404
-    except Sound.DoesNotExist: #@UndefinedVariable
-        try:
-            DeletedSound.objects.get(sound_id=sound_id)
-            return render_to_response('sounds/deleted_sound.html', {}, context_instance=RequestContext(request))
-        except DeletedSound.DoesNotExist:
+    except Sound.DoesNotExist:
+        if DeletedSound.objects.filter(sound_id=sound_id).exists():
+            return render(request, 'sounds/deleted_sound.html')
+        else:
             raise Http404
 
     tags = sound.tags.select_related("tag__name")
@@ -203,7 +203,8 @@ def sound(request, username, sound_id):
     if request.method == "POST":
         form = CommentForm(request, request.POST)
         if request.user.profile.is_blocked_for_spam_reports():
-            messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your account has been temporaly blocked after multiple spam reports")
+            messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your account "
+                                                         "has been temporaly blocked after multiple spam reports")
         else:
             if form.is_valid():
                 comment_text = form.cleaned_data["comment"]
@@ -211,32 +212,41 @@ def sound(request, username, sound_id):
                                           user=request.user,
                                           comment=comment_text))
                 try:
-                    # send the user an email to notify him of the new comment!
-                    logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username, request.user.username))
+                    # Send the user an email to notify him of the new comment!
+                    logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username,
+                                                                               request.user.username))
                     send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
                                        {'sound': sound, 'user': request.user, 'comment': comment_text},
                                        None, sound.user.email)
                 except Exception, e:
-                    # if the email sending fails, ignore...
-                    logger.error("Problem sending email to '%s' about new comment: %s" \
-                                 % (request.user.email, e))
+                    # If the email sending fails, ignore...
+                    logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.email, e))
 
                 return HttpResponseRedirect(sound.get_absolute_url())
     else:
         form = CommentForm(request)
 
-    qs = Comment.objects.select_related("user", "user__profile").filter(content_type=sound_content_type, object_id=sound_id)
+    qs = Comment.objects.select_related("user", "user__profile").filter(content_type=sound_content_type,
+                                                                        object_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
     do_log = settings.LOG_CLICKTHROUGH_DATA
-
     is_following = False
     if request.user.is_authenticated():
         users_following = follow_utils.get_users_following(request.user)
         if sound.user in users_following:
             is_following = True
 
-    #facebook_like_link = urllib.quote_plus('http://%s%s' % (Site.objects.get_current().domain, reverse('sound', args=[sound.user.username, sound.id])))
-    return render_to_response('sounds/sound.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
+    tvars = {
+        'sound': sound,
+        'username': username,
+        'tags': tags,
+        'form': form,
+        'display_random_link': display_random_link,
+        'do_log': do_log,
+        'is_following': is_following,
+    }
+    tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
+    return render(request, 'sounds/sound.html', tvars)
 
 
 def sound_download(request, username, sound_id):

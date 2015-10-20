@@ -26,10 +26,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import connection
-from django.db.models import Count
 from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404, render
 from django.template import RequestContext
+from django.http import HttpResponse
 from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
@@ -254,7 +254,7 @@ def sound_download(request, username, sound_id):
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("sound", args=[username, sound_id])))
     if settings.LOG_CLICKTHROUGH_DATA:
-        click_log(request,click_type='sounddownload',sound_id=sound_id)
+        click_log(request, click_type='sounddownload', sound_id=sound_id)
 
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
@@ -264,37 +264,38 @@ def sound_download(request, username, sound_id):
 
 
 def sound_preview(request, folder_id, sound_id, user_id):
-
+    """
+    This function is only used when LOG_CLICKTHROUGH_DATA is enabled. It intercepts preview requests and logs
+    the data before redirecting to the actual preview file.
+    """
     if settings.LOG_CLICKTHROUGH_DATA:
-        click_log(request,click_type='soundpreview',sound_id=sound_id)
-
-    url = request.get_full_path().replace("data/previews_alt/","data/previews/")
+        click_log(request, click_type='soundpreview', sound_id=sound_id)
+    url = request.get_full_path().replace("data/previews_alt/", "data/previews/")
     return HttpResponseRedirect(url)
 
 
 def pack_download(request, username, pack_id):
-    from django.http import HttpResponse
-
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
-
     if settings.LOG_CLICKTHROUGH_DATA:
-        click_log(request,click_type='packdownload',pack_id=pack_id)
+        click_log(request, click_type='packdownload', pack_id=pack_id)
 
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
     Download.objects.get_or_create(user=request.user, pack=pack)
-
-    filelist =  "%s %i %s %s\r\n" % (pack.license_crc,os.stat(pack.locations('license_path')).st_size, pack.locations('license_url'), "_readme_and_license.txt")
+    filelist = "%s %i %s %s\r\n" % (pack.license_crc,
+                                    os.stat(pack.locations('license_path')).st_size,
+                                    pack.locations('license_url'), "_readme_and_license.txt")
     for sound in pack.sound_set.filter(processing_state="OK", moderation_state="OK"):
         url = sound.locations("sendfile_url")
         name = sound.friendly_filename()
-        if sound.crc=='': continue
-        filelist = filelist + "%s %i %s %s\r\n"%(sound.crc, sound.filesize,url,name)
+        if sound.crc == '':
+            continue
+        filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
     response = HttpResponse(filelist, content_type="text/plain")
-    response['X-Archive-Files']='zip'
+    response['X-Archive-Files'] = 'zip'
     return response
 
 

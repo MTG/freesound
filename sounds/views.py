@@ -377,13 +377,11 @@ def sound_edit(request, username, sound_id):
 
     if is_selected("geotag"):
         geotag_form = GeotaggingForm(request.POST, prefix="geotag")
-
         if geotag_form.is_valid():
             data = geotag_form.cleaned_data
-
             if data["remove_geotag"]:
                 if sound.geotag:
-                    geotag = sound.geotag.delete()
+                    sound.geotag.delete()
                     sound.geotag = None
                     sound.mark_index_dirty()
             else:
@@ -393,7 +391,8 @@ def sound_edit(request, username, sound_id):
                     sound.geotag.zoom = data["zoom"]
                     sound.geotag.save()
                 else:
-                    sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"], user=request.user)
+                    sound.geotag = GeoTag.objects.create(lat=data["lat"], lon=data["lon"], zoom=data["zoom"],
+                                                         user=request.user)
                     sound.mark_index_dirty()
 
             sound.mark_index_dirty()
@@ -402,7 +401,8 @@ def sound_edit(request, username, sound_id):
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
         if sound.geotag:
-            geotag_form = GeotaggingForm(prefix="geotag", initial=dict(lat=sound.geotag.lat, lon=sound.geotag.lon, zoom=sound.geotag.zoom))
+            geotag_form = GeotaggingForm(prefix="geotag", initial=dict(lat=sound.geotag.lat, lon=sound.geotag.lon,
+                                                                       zoom=sound.geotag.zoom))
         else:
             geotag_form = GeotaggingForm(prefix="geotag")
 
@@ -418,10 +418,14 @@ def sound_edit(request, username, sound_id):
     else:
         license_form = NewLicenseForm(initial={'license': sound.license})
 
-    google_api_key = settings.GOOGLE_API_KEY
-
-    return render_to_response('sounds/sound_edit.html', locals(), context_instance=RequestContext(request))
-
+    tvars = {
+        'sound': sound,
+        'description_form': description_form,
+        'pack_form': pack_form,
+        'geotag_form': geotag_form,
+        'license_form': license_form
+    }
+    return render(request, 'sounds/sound_edit.html', tvars)
 
 
 @login_required

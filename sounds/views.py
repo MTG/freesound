@@ -141,12 +141,11 @@ def packs(request):
 def get_current_thread_ids():
     cursor = connection.cursor()
     cursor.execute("""
-SELECT forum_thread.id
-FROM forum_thread, forum_post
-WHERE forum_thread.last_post_id = forum_post.id
-ORDER BY forum_post.id DESC
-LIMIT 10
-""")
+          SELECT forum_thread.id
+            FROM forum_thread, forum_post
+           WHERE forum_thread.last_post_id = forum_post.id
+        ORDER BY forum_post.id DESC LIMIT 10
+    """)
     return [x[0] for x in cursor.fetchall()]
 
 

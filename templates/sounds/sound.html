@@ -75,31 +75,35 @@
     <div id="comments_container">
         <h4 id="comments_heading">Comments</h4>
         <a name="comments"></a>
-        <ul id="comments">
-            {% for comment in page.object_list %}
-            <li>
-                <img src="{{comment.user.profile.locations.avatar.S.url}}" alt="avatar" class="comment_avatar" />
-                <div class="comment_info">
-                    <span class="comment_author"><a href="{% url account comment.user.username %}">{{comment.user.username}}</a></span>
-                    <span class="comment_date">{{comment.created|timesince}} ago</span>
+        {% if page.object_list %}
+            <ul id="comments">
+                {% for comment in page.object_list %}
+                <li>
+                    <img src="{{comment.user.profile.locations.avatar.S.url}}" alt="avatar" class="comment_avatar" />
+                    <div class="comment_info">
+                        <span class="comment_author"><a href="{% url account comment.user.username %}">{{comment.user.username}}</a></span>
+                        <span class="comment_date">{{comment.created|timesince}} ago</span>
 
-                    {% if perms.comments.delete_comment or sound.user == request.user %}
-                    <span class="comment_delete"><a href="{% url comment-delete comment.id %}?next={{request.path}}&page={{current_page}}" id="delete_button" title="delete comment">delete comment</a>
-                    {% endif %}
-                </div>
-                {{comment.comment|safe|linebreaks}}
+                        {% if perms.comments.delete_comment or sound.user == request.user %}
+                        <span class="comment_delete"><a href="{% url comment-delete comment.id %}?next={{request.path}}&page={{current_page}}" id="delete_button" title="delete comment">delete comment</a>
+                        {% endif %}
+                    </div>
+                    {{comment.comment|safe|linebreaks}}
 
-                <div style="text-align: right; font-size: 10px; margin-bottom: -8px">
-                    {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
-                </div>
+                    <div style="text-align: right; font-size: 10px; margin-bottom: -8px">
+                        {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                    </div>
 
-            </li>
-            {% endfor %}
-        </ul>
+                </li>
+                {% endfor %}
+            </ul>
 
-        <div id="comments_pagination">
-            {% show_paginator paginator page current_page request "comment" %}
-        </div>
+            <div id="comments_pagination">
+                {% show_paginator paginator page current_page request "comment" %}
+            </div>
+        {%  else %}
+            <p><br>This sound has not been commented yet, be the first to comment!</p>
+        {% endif %}
     </div> <!-- comments_container -->
 
     {% if request.user.is_authenticated %}

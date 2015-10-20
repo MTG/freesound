@@ -113,7 +113,7 @@ def sounds(request):
 
 def remixed(request):
     qs = RemixGroup.objects.all().order_by('-group_size')
-    tvars = {'qs': qs}
+    tvars = dict()
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/remixed.html', tvars)
 
@@ -133,7 +133,7 @@ def packs(request):
     qs = Pack.objects.select_related() \
                      .filter(num_sounds__gt=0) \
                      .order_by(order)
-    tvars = {'qs': qs, 'order': order}
+    tvars = {'order': order}
     tvars.update(paginate(request, qs, settings.PACKS_PER_PAGE, cache_count=True))
     return render(request, 'sounds/browse_packs.html', tvars)
 

@@ -2856,9 +2856,11 @@ use classes from pack edition
 /* Notification messages
 ------------------------------------------------------*/
 ul.messages {
-    border: 1px solid #ffff00;
+    border: 1px solid #f8e982;
     background-color: #F7F8E0;
-    margin: 20px 70px 20px 70px;
+    padding: 10px;
+    padding-left: 30px;
+    margin-bottom: 20px;
 }
 
 /* User Settings Page
@@ -3462,7 +3464,7 @@ ul.messages {
 }
 
 .bookmark_info_message{
-    border: 1px solid #ffff00;
+    border: 1px solid #f8e982;
     background-color: #F7F8E0;
     font-size:11px;
     padding:2px;

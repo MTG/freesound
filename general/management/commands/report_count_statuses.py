@@ -66,6 +66,15 @@ class Command(BaseCommand):
             'User.num_sounds': 0,
             'User.num_posts': 0,
         }
+        mismatches_object_ids = {
+            'Sound.num_comments': list(),
+            'Sound.num_downloads': list(),
+            'Sound.num_ratings': list(),
+            'Pack.num_sounds': list(),
+            'Pack.num_downloads': list(),
+            'User.num_sounds': list(),
+            'User.num_posts': list(),
+        }
 
         # Sounds
         total = Sound.objects.all().count()
@@ -82,6 +91,7 @@ class Command(BaseCommand):
             real_num_comments = Comment.objects.filter(object_id=sound.id, content_type=sound_content_type).count()
             if real_num_comments != sound.num_comments:
                 mismatches_report['Sound.num_comments'] += 1
+                mismatches_object_ids['Sound.num_comments'].append(sound.id)
                 sound.num_comments = real_num_comments
                 needs_save = True
 
@@ -90,6 +100,7 @@ class Command(BaseCommand):
                 real_num_downloads = sound.download_set.all().count()
                 if real_num_downloads != sound.num_downloads:
                     mismatches_report['Sound.num_downloads'] += 1
+                    mismatches_object_ids['Sound.num_downloads'].append(sound.id)
                     sound.num_downloads = real_num_downloads
                     needs_save = True
 
@@ -97,6 +108,7 @@ class Command(BaseCommand):
             real_num_ratings = sound.ratings.all().count()
             if real_num_ratings != sound.num_ratings:
                 mismatches_report['Sound.num_ratings'] += 1
+                mismatches_object_ids['Sound.num_ratings'].append(sound.id)
                 sound.num_ratings = real_num_ratings
                 real_avg_rating = float(sum([r.rating for r in sound.ratings.all()]))/real_num_ratings
                 sound.avg_rating = real_avg_rating
@@ -126,6 +138,7 @@ class Command(BaseCommand):
                                                    moderation_state="OK").count()
             if real_num_sounds != pack.num_sounds:
                 mismatches_report['Pack.num_sounds'] += 1
+                mismatches_object_ids['Pack.num_sounds'].append(pack.id)
                 pack.num_sounds = real_num_sounds
                 needs_save = True
 
@@ -134,6 +147,7 @@ class Command(BaseCommand):
                 real_num_downloads = pack.download_set.all().count()
                 if real_num_downloads != pack.num_downloads:
                     mismatches_report['Pack.num_downloads'] += 1
+                    mismatches_object_ids['Pack.num_downloads'].append(pack.id)
                     pack.num_downloads = real_num_downloads
                     needs_save = True
 
@@ -160,6 +174,7 @@ class Command(BaseCommand):
                                                    moderation_state="OK").count()
             if real_num_sounds != user_profile.num_sounds:
                 mismatches_report['User.num_sounds'] += 1
+                mismatches_object_ids['User.num_sounds'].append(user_id)
                 user_profile.num_sounds = real_num_sounds
                 needs_save = True
 
@@ -167,6 +182,7 @@ class Command(BaseCommand):
             real_num_posts = Post.objects.filter(author_id=user_id).count()
             if real_num_posts != user_profile.num_posts:
                 mismatches_report['User.num_posts'] += 1
+                mismatches_object_ids['User.num_posts'].append(user_id)
                 user_profile.num_posts = real_num_posts
                 needs_save = True
 
@@ -181,3 +197,5 @@ class Command(BaseCommand):
 
         print "\nNumber of mismatched counts: "
         pprint(mismatches_report)
+        mismatches_object_ids = {key:value for key, value in mismatches_object_ids.items() if value}
+        pprint(mismatches_object_ids)

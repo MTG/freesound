@@ -152,15 +152,27 @@ def get_current_thread_ids():
 def front_page(request):
     rss_cache = cache.get("rss_cache", None)
     pledgie_cache = cache.get("pledgie_cache", None)
-    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),first_post__moderation_state="OK",last_post__moderation_state="OK") \
+    current_forum_threads = Thread.objects.filter(pk__in=get_current_thread_ids(),
+                                                  first_post__moderation_state="OK",
+                                                  last_post__moderation_state="OK") \
                                           .order_by('-last_post__created') \
                                           .select_related('author',
                                                           'thread',
-                                                          'last_post', 'last_post__author', 'last_post__thread', 'last_post__thread__forum',
+                                                          'last_post',
+                                                          'last_post__author',
+                                                          'last_post__thread',
+                                                          'last_post__thread__forum',
                                                           'forum', 'forum__name_slug')
     latest_additions = Sound.objects.latest_additions(5, '2 days')
     random_sound = get_random_sound()
-    return render_to_response('index.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'rss_cache': rss_cache,
+        'pledgie_cache': pledgie_cache,
+        'current_forum_threads': current_forum_threads,
+        'latest_additions': latest_additions,
+        'random_sound': random_sound
+    }
+    return render(request, 'index.html', tvars)
 
 
 def sound(request, username, sound_id):

@@ -31,6 +31,7 @@ from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
+from utils.cache import invalidate_template_cache
 from utils.text import slugify
 from utils.locations import locations_decorator
 from utils.search.search_general import delete_sound_from_solr
@@ -580,6 +581,14 @@ class Sound(SocialModel):
     def delete_from_indexes(self):
         delete_sound_from_solr(self)
         delete_sound_from_gaia(self)
+
+    def invalidate_template_caches(self):
+        invalidate_template_cache("sound_header", self.id, True)
+        invalidate_template_cache("sound_header", self.id, False)
+        invalidate_template_cache("sound_footer_top", self.id)
+        invalidate_template_cache("sound_footer_bottom", self.id)
+        invalidate_template_cache("display_sound", self.id, True, self.processing_state, self.moderation_state)
+        invalidate_template_cache("display_sound", self.id, False, self.processing_state, self.moderation_state)
 
     class Meta(SocialModel.Meta):
         ordering = ("-created", )

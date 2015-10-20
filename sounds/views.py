@@ -43,7 +43,6 @@ from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
-from utils.cache import invalidate_template_cache
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
@@ -308,14 +307,6 @@ def sound_edit(request, username, sound_id):
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
 
-    def invalidate_sound_cache(sound):
-        invalidate_template_cache("sound_header", sound.id, True)
-        invalidate_template_cache("sound_header", sound.id, False)
-        invalidate_template_cache("sound_footer_top", sound.id)
-        invalidate_template_cache("sound_footer_bottom", sound.id)
-        invalidate_template_cache("display_sound", sound.id, True, sound.processing_state, sound.moderation_state)
-        invalidate_template_cache("display_sound", sound.id, False, sound.processing_state, sound.moderation_state)
-
     def is_selected(prefix):
         if request.method == "POST":
             for name in request.POST.keys():
@@ -344,7 +335,7 @@ def sound_edit(request, username, sound_id):
             sound.description = remove_control_chars(data["description"])
             sound.original_filename = data["name"]
             sound.mark_index_dirty()
-            invalidate_sound_cache(sound)
+            sound.invalidate_template_caches()
             update_sound_tickets(sound, '%s updated the sound description and/or tags.' % request.user.username)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -375,7 +366,7 @@ def sound_edit(request, username, sound_id):
                         affected_packs.append(old_pack)
 
             sound.mark_index_dirty()  # Marks as dirty and saves
-            invalidate_sound_cache(sound)
+            sound.invalidate_template_caches()
             update_sound_tickets(sound, '%s updated the sound pack.' % request.user.username)
             for affected_pack in affected_packs:  # Process affected packs
                 affected_pack.process()
@@ -406,7 +397,7 @@ def sound_edit(request, username, sound_id):
                     sound.mark_index_dirty()
 
             sound.mark_index_dirty()
-            invalidate_sound_cache(sound)
+            sound.invalidate_template_caches()
             update_sound_tickets(sound, '%s updated the sound geotag.' % request.user.username)
             return HttpResponseRedirect(sound.get_absolute_url())
     else:
@@ -421,7 +412,7 @@ def sound_edit(request, username, sound_id):
         sound.mark_index_dirty()
         if sound.pack:
             sound.pack.process()  # Sound license changed, process pack (is sound has pack)
-        invalidate_sound_cache(sound)
+        sound.invalidate_template_caches()
         update_sound_tickets(sound, '%s updated the sound license.' % request.user.username)
         return HttpResponseRedirect(sound.get_absolute_url())
     else:

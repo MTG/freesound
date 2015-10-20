@@ -112,9 +112,10 @@ def sounds(request):
 
 
 def remixed(request):
-    # TODO: this doesn't return the right results after remix_group merge
     qs = RemixGroup.objects.all().order_by('-group_size')
-    return render_to_response('sounds/remixed.html', combine_dicts(locals(), paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE)), context_instance=RequestContext(request))
+    tvars = {'qs': qs}
+    tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
+    return render(request, 'sounds/remixed.html', tvars)
 
 
 def random(request):

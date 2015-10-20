@@ -133,9 +133,9 @@ def packs(request):
     qs = Pack.objects.select_related() \
                      .filter(num_sounds__gt=0) \
                      .order_by(order)
-    return render_to_response('sounds/browse_packs.html',
-                              combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE, cache_count=True), locals()),
-                              context_instance=RequestContext(request))
+    tvars = {'qs': qs, 'order': order}
+    tvars.update(paginate(request, qs, settings.PACKS_PER_PAGE, cache_count=True))
+    return render(request, 'sounds/browse_packs.html', tvars)
 
 
 def get_current_thread_ids():

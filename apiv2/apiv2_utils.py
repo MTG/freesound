@@ -596,16 +596,7 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
     sound.type = get_sound_type(sound.original_path)
     license = License.objects.get(name=sound_fields['license'])
     sound.license = license
-
-    # 3 md5, check
-    try:
-        sound.md5 = md5file(sound.original_path)
-    except IOError:
-        if settings.DEBUG:
-            msg = "Md5 could not be computed."
-        else:
-            msg = "Server error."
-        raise ServerErrorException(msg=msg, resource=resource)
+    sound.md5 = md5file(sound.original_path)
 
     sound_already_exists = Sound.objects.filter(md5=sound.md5).exists()
     if sound_already_exists:

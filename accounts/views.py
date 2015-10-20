@@ -472,12 +472,7 @@ def describe_sounds(request):
                 messages.add_message(request, messages.ERROR,
                                      'Something went wrong with accessing the file %s.' % sound.original_path)
                 continue
-            try:
-                sound.md5 = md5file(forms[i]['sound'].full_path)
-            except IOError:
-                messages.add_message(request, messages.ERROR,
-                                     'Something went wrong with accessing the file %s.' % sound.original_path)
-                continue
+            sound.md5 = md5file(forms[i]['sound'].full_path)
             sound.type = get_sound_type(sound.original_path)
             sound.license = forms[i]['license'].cleaned_data['license']
             try:

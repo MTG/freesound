@@ -24,6 +24,7 @@ from django.conf import settings
 from recaptcha.client import captcha
 from utils.tags import clean_and_split_tags
 from HTMLParser import HTMLParseError
+from urllib2 import URLError
 
 
 def filename_has_valid_extension(filename):
@@ -125,7 +126,11 @@ class RecaptchaForm(forms.Form):
 
         # only submit captcha information if it is enabled
         if self.captcha_enabled:
-            check = captcha.submit(rcf, rrf, settings.RECAPTCHA_PRIVATE_KEY, ip_address)
-
-            if not check.is_valid:
-                raise forms.ValidationError('You have not entered the correct words')
+            try:
+                check = captcha.submit(rcf, rrf, settings.RECAPTCHA_PRIVATE_KEY, ip_address)
+                if not check.is_valid:
+                    raise forms.ValidationError('You have not entered the correct words')
+            except URLError:
+                # We often sometimes see error messages that recaptcha url is unreachable and
+                # this causes 500 errors. If recaptcha is unreachable, just skip captcha validation.
+                pass

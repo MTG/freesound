@@ -129,7 +129,10 @@ class Command(BaseCommand):
         total = len(pack_ids)
         print "Iterating over existing %i packs..." % total,
         for count, pack_id in enumerate(pack_ids):
-            pack = Pack.objects.get(id=pack_id)
+            try:
+                pack = Pack.objects.get(id=pack_id)
+            except Pack.DoesNotExist:
+                continue
             needs_save = False
 
             # Check num_sounds
@@ -165,7 +168,10 @@ class Command(BaseCommand):
         total = len(user_ids)
         print "Iterating over existing %i users..." % total,
         for count, user_id in enumerate(user_ids):
-            user_profile = Profile.objects.get(user_id=user_id)
+            try:
+                user_profile = Profile.objects.get(user_id=user_id)
+            except Profile.DoesNotExist:
+                continue
             needs_save = False
 
             # Check num_sounds

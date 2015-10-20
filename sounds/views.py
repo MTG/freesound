@@ -123,7 +123,7 @@ def random(request):
     if sound_id is None:
         raise Http404
     sound_obj = Sound.objects.get(pk=sound_id)
-    return HttpResponseRedirect(reverse("sound",args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
+    return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
 
 
 def packs(request):

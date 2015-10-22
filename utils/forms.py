@@ -25,6 +25,7 @@ from recaptcha.client import captcha
 from utils.tags import clean_and_split_tags
 from HTMLParser import HTMLParseError
 from urllib2 import URLError
+from socket import timeout
 
 
 def filename_has_valid_extension(filename):
@@ -130,7 +131,7 @@ class RecaptchaForm(forms.Form):
                 check = captcha.submit(rcf, rrf, settings.RECAPTCHA_PRIVATE_KEY, ip_address)
                 if not check.is_valid:
                     raise forms.ValidationError('You have not entered the correct words')
-            except URLError:
+            except URLError, timeout:
                 # We often sometimes see error messages that recaptcha url is unreachable and
                 # this causes 500 errors. If recaptcha is unreachable, just skip captcha validation.
                 pass

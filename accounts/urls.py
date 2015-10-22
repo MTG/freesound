@@ -24,13 +24,14 @@ from django.conf.urls import patterns, url
 import django.contrib.auth.views as authviews
 import messages.views as messages
 import accounts.views as accounts
-from accounts.forms import FsPasswordResetForm
+from accounts.forms import FsPasswordResetForm, FsAuthenticationForm
 import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
 
 urlpatterns = patterns('accounts.views',
-    url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html'}, name="accounts-login"),
+    url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html',
+                                       'authentication_form': FsAuthenticationForm}, name="accounts-login"),
     url(r'^logout/$', authviews.logout, {'template_name': 'accounts/logout.html'}, name="accounts-logout"),
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),

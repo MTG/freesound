@@ -20,7 +20,7 @@
 
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, UNUSABLE_PASSWORD
+from django.contrib.auth.forms import PasswordResetForm, UNUSABLE_PASSWORD, AuthenticationForm
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
@@ -182,8 +182,9 @@ class FsPasswordResetForm(PasswordResetForm):
     def __init__(self, *args, **kwargs):
         super(FsPasswordResetForm, self).__init__(*args, **kwargs)
         self.error_messages.update({
-            'nonactivated': _("You are trying to change your password, but your account was not activated yet, please "
-                              "first <a href=\"%s\">activate your account</a>." % reverse("accounts-resend-activation"))
+            'nonactivated': mark_safe(_("You are trying to change your password, but your account was not activated "
+                                        "yet, please <a href=\"%s\">activate your account</a> first."
+                                        % reverse("accounts-resend-activation")))
         })
 
     def clean_email(self):
@@ -197,11 +198,21 @@ class FsPasswordResetForm(PasswordResetForm):
         if not len(self.users_cache):
             raise forms.ValidationError(self.error_messages['unknown'])
         if not len(self.users_cache.filter(is_active=True)):
-            raise forms.ValidationError(mark_safe(self.error_messages['nonactivated']))
+            raise forms.ValidationError(self.error_messages['nonactivated'])
         if any((user.password == UNUSABLE_PASSWORD)
                for user in self.users_cache):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
+
+
+class FsAuthenticationForm(AuthenticationForm):
+
+    def __init__(self, *args, **kwargs):
+        super(FsAuthenticationForm, self).__init__(*args, **kwargs)
+        self.error_messages.update({
+            'inactive': mark_safe(_("You are trying to log in with an inactive account, please <a href=\"%s\">activate "
+                                    "your account</a> first." % reverse("accounts-resend-activation")))
+        })
 
 
 class UsernameReminderForm(forms.Form):

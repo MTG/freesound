@@ -24,6 +24,7 @@ from django.conf.urls import patterns, url
 import django.contrib.auth.views as authviews
 import messages.views as messages
 import accounts.views as accounts
+from accounts.forms import FsPasswordResetForm
 import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
@@ -38,7 +39,8 @@ urlpatterns = patterns('accounts.views',
     url(r'^resetpassword/$',
         authviews.password_reset, {
             'template_name': 'accounts/password_reset_form.html',
-            'email_template_name': 'accounts/password_reset_email.html'
+            'email_template_name': 'accounts/password_reset_email.html',
+            'password_reset_form': FsPasswordResetForm,
         }, name="accounts-password-reset"),
     url(r'^resetpassword/sent/$', authviews.password_reset_done, {
         'template_name': 'accounts/password_reset_done.html'

@@ -20,7 +20,10 @@
 
 from django import forms
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import PasswordResetForm, UNUSABLE_PASSWORD
 from django.utils.translation import ugettext as _
+from django.utils.safestring import mark_safe
+from django.core.urlresolvers import reverse
 from accounts.models import Profile
 from utils.forms import RecaptchaForm, HtmlCleaningCharField, filename_has_valid_extension
 from utils.spam import is_spam
@@ -172,6 +175,33 @@ class ReactivationForm(forms.Form):
         except User.DoesNotExist:
             pass
         raise forms.ValidationError(_("No non-active user with such email or username exists."))
+
+
+class FsPasswordResetForm(PasswordResetForm):
+
+    def __init__(self, *args, **kwargs):
+        super(FsPasswordResetForm, self).__init__(*args, **kwargs)
+        self.error_messages.update({
+            'nonactivated': _("You are trying to change your password, but your account was not activated yet, please "
+                              "first <a href=\"%s\">activate your account</a>." % reverse("accounts-resend-activation"))
+        })
+
+    def clean_email(self):
+        """
+        Validates that an active user exists with the given email address.
+        We overwrite djangos clean_email method to particularly check the user non-activated case
+        """
+        email = self.cleaned_data["email"]
+        self.users_cache = User.objects.filter(email__iexact=email)
+
+        if not len(self.users_cache):
+            raise forms.ValidationError(self.error_messages['unknown'])
+        if not len(self.users_cache.filter(is_active=True)):
+            raise forms.ValidationError(mark_safe(self.error_messages['nonactivated']))
+        if any((user.password == UNUSABLE_PASSWORD)
+               for user in self.users_cache):
+            raise forms.ValidationError(self.error_messages['unusable'])
+        return email
 
 
 class UsernameReminderForm(forms.Form):

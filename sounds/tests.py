@@ -129,11 +129,12 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(sound.is_index_dirty, True)
 
 
-def create_user_and_sounds(num_sounds=1, num_packs=0):
-    user = User.objects.create_user("testuser", password="testpass")
+def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0):
+    if user is None:
+        user = User.objects.create_user("testuser", password="testpass")
     packs = list()
     for i in range(0, num_packs):
-        pack = Pack.objects.create(user=user, name="Test pack %i" % i)
+        pack = Pack.objects.create(user=user, name="Test pack %i" % (i + count_offset))
         packs.append(pack)
     sounds = list()
     for i in range(0, num_sounds):
@@ -141,11 +142,11 @@ def create_user_and_sounds(num_sounds=1, num_packs=0):
         if packs:
             pack = packs[i % len(packs)]
         sound = Sound.objects.create(user=user,
-                                     original_filename="Test sound %i" % i,
-                                     base_filename_slug="test_sound_%i" % i,
+                                     original_filename="Test sound %i" % (i + count_offset),
+                                     base_filename_slug="test_sound_%i" % (i + count_offset),
                                      license=License.objects.all()[0],
                                      pack=pack,
-                                     md5="fakemd5_%i" % i)
+                                     md5="fakemd5_%i" % (i + count_offset))
         sounds.append(sound)
     return user, packs, sounds
 
@@ -193,10 +194,82 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(User.objects.get(id=user.id).profile.num_sounds, 0)
 
 
+class PackNumSoundsTestCase(TestCase):
 
+    fixtures = ['initial_data']
 
+    def test_create_and_delete_sounds(self):
+        N_SOUNDS = 5
+        user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
+        pack = packs[0]
+        self.assertEqual(pack.num_sounds, 0)
+        for count, sound in enumerate(pack.sound_set.all()):
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+            self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, count + 1)  # Check pack has all sounds
 
+        sounds[0].delete()
+        self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, N_SOUNDS - 1)  # Check num_sounds on delete sound
 
+    def test_edit_sound(self):
+        N_SOUNDS = 1
+        user, packs, sounds = create_user_and_sounds(num_sounds=N_SOUNDS, num_packs=1)
+        pack = packs[0]
+        sound = sounds[0]
+        self.assertEqual(pack.num_sounds, 0)
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+        self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 1)  # Check pack has all sounds
 
+        self.client.login(username=user.username, password='testpass')
+        resp = self.client.post(reverse('sound-edit', args=[sound.user.username, sound.id]), {
+            'submit': [u'submit'],
+            'pack-new_pack': [u'new pack name'],
+            'pack-pack': [u''],
+        })
+        self.assertRedirects(resp, reverse('sound', args=[sound.user.username, sound.id]))
+        self.assertEqual(Pack.objects.get(id=pack.id).num_sounds, 0)  # Sound changed from pack
+
+    def test_edit_pack(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=4, num_packs=2)
+        for sound in sounds:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+        pack1 = packs[0]
+        pack2 = packs[1]
+        self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 2)
+        self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 2)
+
+        # Move one sound from one pack to the other
+        sound_ids_pack1 = [s.id for s in pack1.sound_set.all()]
+        sound_ids_pack2 = [s.id for s in pack2.sound_set.all()]
+        sound_ids_pack2.append(sound_ids_pack1.pop())
+        self.client.login(username=user.username, password='testpass')
+        resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
+            'submit': [u'submit'],
+            'pack_sounds': u','.join([str(sid) for sid in sound_ids_pack2]),
+            'name': [u'Test pack 1 (edited)'],
+            'description': [u'A new description']
+        })
+        self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
+        self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
+        self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 3)
+
+        # Move one sound that had no pack
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=0, user=user, count_offset=5)
+        sound = sounds[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+        resp = self.client.post(reverse('pack-edit', args=[pack2.user.username, pack2.id]), {
+            'submit': [u'submit'],
+            'pack_sounds':
+                u','.join([str(snd.id) for snd in Pack.objects.get(id=pack2.id).sound_set.all()] + [str(sound.id)]),
+            'name': [u'Test pack 1 (edited again)'],
+            'description': [u'A new description']
+        })
+        self.assertRedirects(resp, reverse('pack', args=[pack2.user.username, pack2.id]))
+        self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
+        self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 4)
+        self.assertEqual(Sound.objects.get(id=sound.id).pack.id, pack2.id)
 
 

@@ -19,7 +19,6 @@
 #
 
 from comments.models import Comment
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -43,11 +42,6 @@ def delete(request, comment_id):
         raise PermissionDenied
     comment.delete()
     messages.success(request, 'Comment deleted.')
-
-    if comment.content_type == ContentType.objects.get_for_model(Sound):
-        sound = comment.content_object
-        sound.post_delete_comment()
-        
     next = request.GET.get("next")
     page = request.GET.get("page")
     return HttpResponseRedirect(next+"?page="+page)
@@ -68,6 +62,7 @@ def for_user(request, username):
     for comment in comments:
         comment.sound_object = sound_lookup[comment.object_id]
     return render_to_response('sounds/comments_for_user.html', combine_dicts(paginator_obj, locals()), context_instance=RequestContext(request))
+
 
 def all(request):
     """ This is all very hacky because GenericRelations don't allow you to span

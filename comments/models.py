@@ -24,18 +24,16 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models.signals import post_delete
+
 
 class Comment(models.Model):
     user = models.ForeignKey(User)
-
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField(db_index=True)
     content_object = generic.GenericForeignKey()
-
     comment = models.TextField()
-
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', default=None) 
-
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
     
     def __unicode__(self):
@@ -43,3 +41,9 @@ class Comment(models.Model):
     
     class Meta:
         ordering = ('-created', )
+
+
+def on_delete_comment(sender, instance, **kwargs):
+    if instance.content_object.__class__.__name__ == 'Sound':
+        instance.content_object.post_delete_comment()
+post_delete.connect(on_delete_comment, sender=Comment)

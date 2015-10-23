@@ -115,6 +115,19 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(2, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
 
+    def test_delete_comment(self):
+        sound = Sound.objects.get(id=19)
+        user = User.objects.get(id=2)
+        current_num_comments = sound.num_comments
+        comment = Comment(content_object=sound,
+                          user=user,
+                          comment="Test comment")
+        sound.add_comment(comment)
+        comment.delete()
+        sound = Sound.objects.get(id=19)
+        self.assertEqual(current_num_comments, sound.num_comments)
+        self.assertEqual(sound.is_index_dirty, True)
+
 
 def create_user_and_sounds(num_sounds=1, num_packs=0):
     user = User.objects.create_user("testuser", password="testpass")

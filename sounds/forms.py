@@ -162,18 +162,26 @@ class PackEditForm(ModelForm):
 
     def save(self, force_insert=False, force_update=False, commit=True):
         pack = super(PackEditForm, self).save(commit=False)
+        affected_packs = list()
+        affected_packs.append(pack)
         new_sounds = self.cleaned_data['pack_sounds']
-        current_sounds = [s.id for s in pack.sound_set.all()]
+        current_sounds = pack.sound_set.all()
         for snd in current_sounds:
-            if snd not in new_sounds:
-                pack.sound_set.remove(snd)
+            if snd.id not in new_sounds:
+                snd.pack = None
+                snd.mark_index_dirty(commit=True)
         for snd in new_sounds:
-            if snd not in current_sounds:
+            current_sounds_ids = [s.id for s in current_sounds]
+            if snd not in current_sounds_ids:
                 sound = Sound.objects.get(id=snd)
-                pack.sound_set.add(sound)
+                if sound.pack:
+                    affected_packs.append(sound.pack)
+                sound.pack = pack
+                sound.mark_index_dirty(commit=True)
         if commit:
             pack.save()
-        pack.process()
+        for affected_pack in affected_packs:
+            affected_pack.process()
         return pack
 
     class Meta:

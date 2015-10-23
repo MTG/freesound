@@ -353,6 +353,8 @@ def sound_edit(request, username, sound_id):
             affected_packs = []
             if data['new_pack']:
                 (pack, created) = Pack.objects.get_or_create(user=sound.user, name=data['new_pack'])
+                if sound.pack:
+                    affected_packs.append(sound.pack)  # Append previous sound pack if exists
                 sound.pack = pack
                 affected_packs.append(pack)
             else:

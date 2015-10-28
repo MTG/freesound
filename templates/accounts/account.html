@@ -161,7 +161,7 @@
             {% for sound in latest_sounds %}
                     {% display_raw_sound sound %}
             {% endfor %}
-            <p><a href="{% url sounds-for-user user.username %}?page=2">more...</a></p>
+            <p><a href="{% url sounds-for-user user.username %}?page={% if home %}1{% else %}2{% endif %}">more...</a></p>
         </div>
     {% else %}
         <div id="latest_sounds" class="content_box">

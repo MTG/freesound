@@ -19,13 +19,12 @@
 #
 
 from __future__ import absolute_import
-from django.contrib.contenttypes.models import ContentType
 from sounds.models import Sound
 from django import template
 from django.conf import settings
 
 register = template.Library()
-sound_content_type = ContentType.objects.get_for_model(Sound)
+
 
 @register.inclusion_tag('sounds/display_sound.html', takes_context=True)
 def display_sound(context, sound):
@@ -44,22 +43,24 @@ def display_sound(context, sound):
     if sound_obj is not None:
         sound_tags = sound_obj.tags.select_related("tag").all()[0:12]
 
-    return { 'sound_id':     sound_id,
-             'sound':        sound_obj,
-             'sound_tags':   sound_tags,
-             'do_log':       settings.LOG_CLICKTHROUGH_DATA,
-             'media_url':    context['media_url'],
-             'request':      context['request']
-           }
+    return {
+     'sound_id':     sound_id,
+     'sound':        sound_obj,
+     'sound_tags':   sound_tags,
+     'do_log':       settings.LOG_CLICKTHROUGH_DATA,
+     'media_url':    context['media_url'],
+     'request':      context['request']
+    }
+
 
 @register.inclusion_tag('sounds/display_raw_sound.html', takes_context=True)
 def display_raw_sound(context, sound):
     sound_id = sound.id
-
-    return { 'sound_id':     sound_id,
-             'sound':        sound,
-             'sound_tags':   sound.tag_array,
-             'do_log':       settings.LOG_CLICKTHROUGH_DATA,
-             'media_url':    context['media_url'],
-             'request':      context['request']
-           }
+    return {
+        'sound_id':     sound_id,
+        'sound':        sound,
+        'sound_tags':   sound.tag_array,
+        'do_log':       settings.LOG_CLICKTHROUGH_DATA,
+        'media_url':    context['media_url'],
+        'request':      context['request']
+    }

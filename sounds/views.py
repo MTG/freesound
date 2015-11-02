@@ -62,8 +62,6 @@ import os
 logger = logging.getLogger('web')
 logger_click = logging.getLogger('clickusage')
 
-sound_content_type = ContentType.objects.get_for_model(Sound)
-
 
 def get_random_sound():
     """
@@ -226,8 +224,8 @@ def sound(request, username, sound_id):
     else:
         form = CommentForm(request)
 
-    qs = Comment.objects.select_related("user", "user__profile").filter(content_type=sound_content_type,
-                                                                        object_id=sound_id)
+    qs = Comment.objects.select_related("user", "user__profile")\
+        .filter(content_type=ContentType.objects.get_for_model(Sound), object_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
     do_log = settings.LOG_CLICKTHROUGH_DATA
     is_following = False

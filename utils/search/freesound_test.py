@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-__TEST__ = False
+__test__ = False
 
 import time
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter

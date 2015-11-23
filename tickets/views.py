@@ -711,6 +711,5 @@ def process_sounds(request, processing_status):
             .exclude(processing_ongoing_state='QU')
         for sound in sounds_to_process:
             sound.process()
-        print '%i sounds sent to process' % sounds_to_process.count()
 
     return HttpResponseRedirect(reverse("tickets-home"))

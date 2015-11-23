@@ -78,4 +78,14 @@
         {% show_paginator paginator page current_page request "moderation ticket" %}
     {% endif %}
 
+    {% if moderators_version %}
+        <script type="text/javascript">
+            $(document).ready(function (){
+                var loadUrl = '{% url tickets-user-annotations 0 %}'.replace('0', ''+ {{ user.id }});
+                $('#user-annotations-section').load(loadUrl);
+            });
+        </script>
+        <div id="user-annotations-section"></div>
+    {% endif %}
+
 {% endblock %}

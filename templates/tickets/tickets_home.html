@@ -23,9 +23,9 @@
 
     <h3>Processing system status</h3>
     <ul>
+        <li>{{ sounds_pending_count }} sound{{ sounds_pending_count|pluralize }} pending to process{% if request.user.is_staff %} - <a href="{% url tickets-processing-process "PE" %}">send pending to process</a>{% endif %}</li>
         <li>{{ sounds_queued_count }} sound{{ sounds_queued_count|pluralize }} are queued for processing</li>
-        <li>{{ sounds_pending_count }} sound{{ sounds_pending_count|pluralize }} pending to process</li>
         <li>{{ sounds_processing_count }} sound{{ sounds_processing_count|pluralize }} currently processing</li>
-        <li>{{ sounds_failed_count }} sound{{ sounds_failed_count|pluralize }} failed processing</li>
+        <li>{{ sounds_failed_count }} sound{{ sounds_failed_count|pluralize }} failed processing{% if request.user.is_staff %} - <a href="{% url tickets-processing-process "FA" %}">send failed to process</a>{% endif %}</li>
     </ul>
 {% endblock section_content %}

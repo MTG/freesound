@@ -86,4 +86,8 @@ urlpatterns = patterns('',
         sound_ticket_messages,
         name='tickets-ticket-messages'),
 
+    url(r'^processing/process_sounds/(?P<processing_status>[\w\d]+)/$',
+        process_sounds,
+        name='tickets-processing-process'),
+
 )

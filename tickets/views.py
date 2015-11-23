@@ -34,10 +34,10 @@ import datetime
 from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 from utils.functional import combine_dicts
-from django.conf import settings
 from django.core.management import call_command
 from threading import Thread
 from django.conf import settings
+import gearman
 
 
 def __get_contact_form(request, use_post=True):
@@ -247,6 +247,14 @@ def tickets_home(request):
     sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
     sounds_processing_count = Sound.objects.filter(processing_ongoing_state='PR').count()
     sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
+
+    # Get gearmann status
+    try:
+        gm_admin_client = gearman.GearmanAdminClient(settings.GEARMAN_JOB_SERVERS)
+        gearman_status = gm_admin_client.get_status()
+    except gearman.errors.ServerUnavailable:
+        gearman_status = list()
+
     return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
 
 

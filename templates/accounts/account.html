@@ -127,8 +127,10 @@
                 {% if user.profile.num_posts %}
                 <li>Number of forum posts: {{user.profile.num_posts}}</li>
                 {% endif %}
+                {% if not user.profile.hide_downloads %}
                 <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
                 <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
+                {% endif %}
                 {% if user.profile.num_sounds %}
                 <li><a href="{% url comments-for-user user.username %}">All comments</a> on {{user.username}}'s sounds</li>
                 {% endif %}

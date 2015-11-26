@@ -245,7 +245,12 @@ class ProfileForm(forms.ModelForm):
         label = "",
         required=False
     )
-    
+    hide_downloads = forms.BooleanField(
+        help_text="Hide sounds/packs downloaded on your Profile page",
+        label = "",
+        required=False
+    )
+
     def __init__(self, request, *args, **kwargs):
         self.request = request
         super(ProfileForm, self).__init__(*args, **kwargs)

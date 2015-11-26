@@ -9,8 +9,7 @@
 
 <h1>Sounds downloaded by <a href="{% url account username %}">{{ username }}</a></h1>
 
-{% if paginator.count > 0 %}
-
+{% if paginator.count > 0 and not user.profile.hide_downloads %}
     <div class="search_paginator">
         {% show_paginator paginator page current_page request "sound" %}
     </div>
@@ -24,7 +23,7 @@
     </div>
 
 {% else %}
-    <p>{{ username }} hasn't downloaded any sounds yet...</p>
+    <p>{{ username }} has hidden their downloads or hasn't downloaded any sounds yet...</p>
 {% endif %}
 
 {% endblock %}

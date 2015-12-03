@@ -161,6 +161,15 @@ class SoundManager(models.Manager):
             limit = str(limit)
         return self.bulk_query(where, order_by, limit, (user_id, ))
 
+    def bulk_sounds_for_pack(self, pack_id, limit=None):
+        where = """sound.moderation_state = 'OK'
+            AND sound.processing_state = 'OK'
+            AND sound.pack_id = %s"""
+        order_by = "sound.created DESC"
+        if limit:
+            limit = str(limit)
+        return self.bulk_query(where, order_by, limit, (pack_id, ))
+
     def bulk_query_id(self, sound_ids):
         if not isinstance(sound_ids, list):
             sound_ids = [sound_ids]

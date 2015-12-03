@@ -10,9 +10,7 @@
     function saveSources()
     {
         $("#save-button").attr("disabled", "disabled");
-
         $("#id_sources").val(sources.join(","))
-
         $.post("{% url sound-edit-sources sound.user.username sound.id %}", $("#save-form").serialize(), function ()
         {
             $("#save-button").removeAttr("disabled");
@@ -30,43 +28,35 @@
             $("#id_sources").val(sources.join(","));
         }
     }
+
     function addRemoveLink(element, soundId){
         var title = $($(element).children(".sample_player")[0]).children(".sound_title");
         var msg = "<br/><a class=\"remove_sound\" onclick=\"removeSound(this, "+soundId+")\">remove </a>"
         title.after(msg);
     }
 
-
     function removeSound(element, soundId)
     {
-
         var index = $.inArray(soundId, sources);
-
         if (index != -1)
         {
-
             sources.splice(index, 1);
-            //$(element).prev().remove();
-            //$(element).remove();
             $(element).parent().parent().remove();
             $("#id_sources").val(sources.join(","));
         }
     }
+
     function appendLinks(){
         $('#search-results .sample_player_small').each( function () {
             var element = $(this);
             var snd_id = element[0].id;
             var link_id = "a"+snd_id;
-
             var title = $($(this).children(".sample_player")[0]).children(".sound_title");
             var msg = "<br/><a id=\""+link_id+"\" class=\"add_sound\" >add";
-
             msg = msg+"</a>";
-
-            var result = $(title).after(msg);
+            $(title).after(msg);
             $("#"+link_id).click(function(){
                 addSound(element, parseInt(snd_id));
-
                 return false;
             });
         });
@@ -75,7 +65,6 @@
     $(function()
     {
         sources = $.map($("#id_sources").val().split(","), function (soundId) { return parseInt(soundId) });
-
         $("#save-button").click(function ()
         {
             saveSources();
@@ -95,10 +84,9 @@
         });
     });
 </script>
+
 {% endblock head %}
-
 {% block title %}Editing remixes of {{sound.original_filename}}{% endblock title %}
-
 {% block section_content %}
 
 <h2>Editing sources of <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a></h2>
@@ -127,13 +115,11 @@
 	<div id="current-sources" class="sound_list_minimal">
 	    <h3>Current sources:</h3>
 	    {% for source in current_sources %}
-	            {% display_sound source.id %}
+	            {% display_raw_sound source %}
 	    <!--/div-->
 	    {% endfor %}
 	</div>
 
-	
-		
 	<br style="clear:both;"/>
 
     </div>

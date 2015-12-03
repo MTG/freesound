@@ -501,28 +501,21 @@ def sound_edit_sources(request, username, sound_id):
     if not (request.user.has_perm('sound.can_change') or sound.user == request.user):
         raise PermissionDenied
 
-    current_sources = sound.sources.all()
+    current_sources = Sound.objects.ordered_ids([element['id'] for element in sound.sources.all().values('id')])
     sources_string = ",".join(map(str, [source.id for source in current_sources]))
-
-    remix_group = RemixGroup.objects.filter(sounds=current_sources)
-    # No prints in production code!
-    #print ("======== remix group id following ===========")
-    #print (remix_group[0].id)
-
     if request.method == 'POST':
         form = RemixForm(sound, request.POST)
         if form.is_valid():
             form.save()
-            # FIXME: temp solution to not fuckup the deployment in tabasco
-            # remix_group = RemixGroup.objects.filter(sounds=sound)
-            # if remix_group:
-            #     __recalc_remixgroup(remix_group[0], sound)
-        else:
-            # TODO: Don't use prints! Either use logging or return the error to the user. ~~ Vincent
-            pass #print ("Form is not valid!!!!!!! %s" % ( form.errors))
     else:
-        form = RemixForm(sound,initial=dict(sources=sources_string))
-    return render_to_response('sounds/sound_edit_sources.html', locals(), context_instance=RequestContext(request))
+        form = RemixForm(sound, initial=dict(sources=sources_string))
+    tvars = {
+        'sound': sound,
+        'form': form,
+        'current_sources': current_sources
+    }
+    return render(request, 'sounds/sound_edit_sources.html', tvars)
+
 
 # TODO: handle case were added/removed sound is part of remixgroup
 def __recalc_remixgroup(remixgroup, sound):

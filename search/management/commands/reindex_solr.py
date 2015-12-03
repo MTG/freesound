@@ -31,7 +31,7 @@ class Command(BaseCommand):
         # Get all sounds moderated and processed ok
         sound_qs = Sound.objects.select_related("pack", "user", "license") \
                                 .filter(processing_state="OK", moderation_state="OK")
-        add_all_sounds_to_solr(sound_qs)
+        add_all_sounds_to_solr(sound_qs, mark_index_clean=True)
 
         # Get all sounds that should not be in solr and remove them if they are
         sound_qs = Sound.objects.exclude(processing_state="OK", moderation_state="OK")

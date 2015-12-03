@@ -482,7 +482,7 @@ def pack_delete(request, username, pack_id):
 
 @login_required
 def sound_edit_sources(request, username, sound_id):
-    sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
+    sound = get_object_or_404(Sound, id=sound_id)
     if sound.user.username.lower() != username.lower():
         raise Http404
 

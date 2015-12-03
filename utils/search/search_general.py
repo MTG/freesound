@@ -24,6 +24,7 @@ from django.conf import settings
 from search.views import search_prepare_sort, search_prepare_query
 from search.forms import SEARCH_SORT_OPTIONS_WEB
 import logging
+import math
 logger = logging.getLogger("search")
 
 
@@ -46,7 +47,8 @@ def convert_to_solr_document(sound):
         document["grouping_pack"] = str(sound.id)
     document["is_geotagged"] = sound.geotag_id is not None
     if sound.geotag_id is not None:
-        document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
+        if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
+            document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
     document["type"] = sound.type
     document["duration"] = sound.duration
     document["bitdepth"] = sound.bitdepth if sound.bitdepth != None else 0

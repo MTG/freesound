@@ -527,15 +527,19 @@ def remixes(request, username, sound_id):
         raise Http404
     return HttpResponseRedirect(reverse("remix-group", args=[remix_group.id]))
 
+
 def remix_group(request, group_id):
     group = get_object_or_404(RemixGroup, id=group_id)
     data = group.protovis_data
-    sounds = group.sounds.all().order_by('created')
-    last_sound = sounds[len(sounds)-1]
-    group_sound = sounds[0]
-    return render_to_response('sounds/remixes.html',
-                              locals(),
-                              context_instance=RequestContext(request))
+    sounds = Sound.objects.ordered_ids(
+        [element['id'] for element in group.sounds.all().order_by('created').values('id')])
+    tvars = {
+        'sounds': sounds,
+        'last_sound': sounds[len(sounds)-1],
+        'group_sound': sounds[0],
+        'data': data,
+    }
+    return render(request, 'sounds/remixes.html', tvars)
 
 
 def geotag(request, username, sound_id):

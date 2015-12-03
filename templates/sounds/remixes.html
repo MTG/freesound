@@ -37,15 +37,13 @@
 	}
     </script>
 {% endblock head %}
-
 {% load display_sound %}
-
 {% block title %}Remix Group {{ group_sound.original_filename }}{% endblock title %}
-
 {% block section_content %}
+
 <h1>Remix Group <em>{{ group_sound.original_filename }}</em></h1>
 
-<div id="remix_group_info" class="content_box">
+<div id="remix_group_info" class="stream_box">
 	<h3>Remix group info</h3>
 	<div class="sound_list_normal">
 		<ul>
@@ -138,7 +136,7 @@ function clearBackgrounds() {
 
 <div class="details">
 {% for sound in sounds %}
-    {% display_sound sound %}
+    {% display_raw_sound sound %}
 {% endfor %}
 </div>
 </div>

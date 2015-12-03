@@ -517,61 +517,6 @@ def sound_edit_sources(request, username, sound_id):
     return render(request, 'sounds/sound_edit_sources.html', tvars)
 
 
-# TODO: handle case were added/removed sound is part of remixgroup
-def __recalc_remixgroup(remixgroup, sound):
-
-    # recreate remixgroup
-    dg = nx.DiGraph()
-    data = json.loads(remixgroup.networkx_data)
-    dg.add_nodes_from(data['nodes'])
-    dg.add_edges_from(data['edges'])
-
-    # print "========= NODES =========="
-    print dg.nodes()
-    # print "========= EDGES =========="
-    print dg.edges()
-
-    # add new nodes/edges (sources in this case)
-    for source in sound.sources.all():
-        if source.id not in dg.successors(sound.id) \
-                    and source.created < sound.created: # time-bound, avoid illegal source assignment
-            dg.add_node(source.id)
-            dg.add_edge(sound.id, source.id)
-            remix_group = RemixGroup.objects.filter(sounds=source)
-            if remix_group:
-                dg = __nested_remixgroup(dg, remix_group[0])
-
-    try:
-        # remove old nodes/edges
-        for source in dg.successors(sound.id):
-            if source not in [s.id for s in sound.sources.all()]:
-                dg.remove_node(source) # TODO: check if edges are removed automatically
-
-        # create and save the modified remixgroup
-        dg = _create_nodes(dg)
-        print "============ NODES AND EDGES =============="
-        print dg.nodes()
-        print dg.edges()
-        _create_and_save_remixgroup(dg, remixgroup)
-    except Exception, e:
-        logger.warning(e)
-
-def __nested_remixgroup(dg1, remix_group):
-    print "============= nested remix_group ================ \n"
-    dg2 = nx.DiGraph()
-    data = json.loads(remix_group.networkx_data)
-    dg2.add_nodes_from(data['nodes'])
-    dg2.add_edges_from(data['edges'])
-
-    print "========== MERGED GROUP NODES: " + str(dg1.nodes())
-
-    # FIXME: this combines the graphs correctly
-    #        recheck the time-bound concept
-    dg1 = nx.compose(dg1, dg2)
-    print dg1.nodes()
-
-    return dg1
-
 def remixes(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():

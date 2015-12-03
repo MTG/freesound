@@ -20,13 +20,20 @@
 
 from django.core.management.base import BaseCommand
 from sounds.models import Sound
-from utils.search.search_general import add_all_sounds_to_solr
+from utils.search.search_general import add_all_sounds_to_solr, delete_sound_from_solr
+
 
 class Command(BaseCommand):
     args = ''
     help = 'Take all sounds and send them to Solr'
 
     def handle(self, *args, **options):
+        # Get all sounds moderated and processed ok
         sound_qs = Sound.objects.select_related("pack", "user", "license") \
                                 .filter(processing_state="OK", moderation_state="OK")
-        add_all_sounds_to_solr(sound_qs)
+        add_all_sounds_to_solr(sound_qs, mark_index_clean=True)
+
+        # Get all sounds that should not be in solr and remove them if they are
+        sound_qs = Sound.objects.exclude(processing_state="OK", moderation_state="OK")
+        for sound in sound_qs:
+            delete_sound_from_solr(sound)  # Will only do something if sound in fact exists in solr

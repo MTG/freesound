@@ -375,8 +375,10 @@ class UserDelete(TestCase):
     def create_user_and_content(self):
         user = User.objects.create_user("testuser", password="testpass")
         # Create comments
+        target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
-            Comment.objects.create(comment="Comment %i" % i, user=user, content_object=Sound.objects.all()[0])
+            comment = Comment(comment="Comment %i" % i, user=user)
+            target_sound.add_comment(comment)
         # Create threads and posts
         thread = Thread.objects.create(author=user, title="Test thread", forum=Forum.objects.create(name="Test forum"))
         for i in range(0, 3):

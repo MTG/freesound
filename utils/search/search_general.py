@@ -24,40 +24,32 @@ from django.conf import settings
 from search.views import search_prepare_sort, search_prepare_query
 from search.forms import SEARCH_SORT_OPTIONS_WEB
 import logging
-
+import math
 logger = logging.getLogger("search")
+
 
 def convert_to_solr_document(sound):
     logger.info("creating solr XML from sound %d" % sound.id)
-    document = {}
-
+    document = dict()
     document["id"] = sound.id
     document["username"] = sound.user.username
     document["created"] = sound.created
     document["original_filename"] = sound.original_filename
-
     document["description"] = sound.description
     document["tag"] = list(sound.tags.select_related("tag").values_list('tag__name', flat=True))
-
     document["license"] = sound.license.name
-
     document["is_remix"] = bool(sound.sources.count())
     document["was_remixed"] = bool(sound.remixes.count())
-
-
     if sound.pack:
         document["pack"] = sound.pack.name
         document["grouping_pack"] = str(sound.pack.id) + "_" + sound.pack.name
     else:
         document["grouping_pack"] = str(sound.id)
-
-
-    document["is_geotagged"] = sound.geotag_id != None
-    if (sound.geotag_id != None):
-        document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
-
+    document["is_geotagged"] = sound.geotag_id is not None
+    if sound.geotag_id is not None:
+        if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
+            document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
     document["type"] = sound.type
-
     document["duration"] = sound.duration
     document["bitdepth"] = sound.bitdepth if sound.bitdepth != None else 0
     document["bitrate"] = sound.bitrate if sound.bitrate != None else 0
@@ -65,21 +57,16 @@ def convert_to_solr_document(sound):
     document["filesize"] = sound.filesize
     document["channels"] = sound.channels
     document["md5"] = sound.md5
-
     document["num_downloads"] = sound.num_downloads
-
     document["avg_rating"] = sound.avg_rating
     document["num_ratings"] = sound.num_ratings
-
     document["comment"] = list(sound.comments.values_list('comment', flat=True))
     document["comments"] = sound.num_comments
-
     document["waveform_path_m"] = sound.locations()["display"]["wave"]["M"]["path"]
     document["waveform_path_l"] = sound.locations()["display"]["wave"]["L"]["path"]
     document["spectral_path_m"] = sound.locations()["display"]["spectral"]["M"]["path"]
     document["spectral_path_l"] = sound.locations()["display"]["spectral"]["L"]["path"]
     document["preview_path"] = sound.locations()["preview"]["LQ"]["mp3"]["path"]
-
     return document
 
 
@@ -94,16 +81,10 @@ def add_sound_to_solr(sound):
 def add_sounds_to_solr(sounds):
     logger.info("adding multiple sounds to solr index")
     solr = Solr(settings.SOLR_URL)
-
-
     logger.info("creating XML")
     documents = map(convert_to_solr_document, sounds)
     logger.info("posting to Solr")
     solr.add(documents)
-
-    logger.info("optimizing solr index")
-    #solr.optimize()
-    logger.info("done")
 
 
 def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=False):
@@ -118,11 +99,13 @@ def add_all_sounds_to_solr(sound_queryset, slice_size=4000, mark_index_clean=Fal
             add_sounds_to_solr(sounds_to_update)
             if mark_index_clean:
                 logger.info("Marking sounds as clean.")
-                sounds.models.Sound.objects.filter(pk__in=[snd.id for snd in sounds_to_update]).update(is_index_dirty=False)
+                sounds.models.Sound.objects.filter(pk__in=[snd.id for snd in sounds_to_update])\
+                    .update(is_index_dirty=False)
                 num_correctly_indexed_sounds += len(sounds_to_update)
         except SolrException, e:
             logger.error("failed to add sound batch to solr index, reason: %s" % str(e))
     return num_correctly_indexed_sounds
+
 
 def get_all_sound_ids_from_solr(limit=False):
     logger.info("getting all sound ids from solr.")
@@ -134,16 +117,25 @@ def get_all_sound_ids_from_solr(limit=False):
     PAGE_SIZE = 2000
     current_page = 1
     try:
-        while (len(solr_ids) < solr_count or solr_count == None) and len(solr_ids) < limit:
-            #print "Getting page %i" % current_page
-            response = SolrResponseInterpreter(solr.select(unicode(search_prepare_query('', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), current_page, PAGE_SIZE, include_facets=False))))
+        while (len(solr_ids) < solr_count or solr_count is None) and len(solr_ids) < limit:
+            response = SolrResponseInterpreter(
+                solr.select(unicode(search_prepare_query(
+                    '', '', search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), current_page, PAGE_SIZE,
+                    include_facets=False))))
             solr_ids += [element['id'] for element in response.docs]
             solr_count = response.num_found
             current_page += 1
     except Exception, e:
         raise Exception(e)
-
     return sorted(solr_ids)
+
+
+def check_if_sound_exists_in_solr(sound):
+    solr = Solr(settings.SOLR_URL)
+    response = SolrResponseInterpreter(
+        solr.select(unicode(search_prepare_query(
+            '', 'id:%i' % sound.id, search_prepare_sort('created asc', SEARCH_SORT_OPTIONS_WEB), 1, 1))))
+    return response.num_found > 0
 
 
 def delete_sound_from_solr(sound):

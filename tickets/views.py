@@ -20,7 +20,7 @@
 
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
@@ -34,10 +34,10 @@ import datetime
 from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 from utils.functional import combine_dicts
-from django.conf import settings
 from django.core.management import call_command
 from threading import Thread
 from django.conf import settings
+import gearman
 
 
 def __get_contact_form(request, use_post=True):
@@ -247,6 +247,14 @@ def tickets_home(request):
     sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
     sounds_processing_count = Sound.objects.filter(processing_ongoing_state='PR').count()
     sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
+
+    # Get gearmann status
+    try:
+        gm_admin_client = gearman.GearmanAdminClient(settings.GEARMAN_JOB_SERVERS)
+        gearman_status = gm_admin_client.get_status()
+    except gearman.errors.ServerUnavailable:
+        gearman_status = list()
+
     return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
 
 
@@ -694,3 +702,22 @@ def pending_tickets_per_user(request, username):
     moderators_version = True
     return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))
 
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def process_sounds(request, processing_status):
+
+    sounds_to_process = False
+    if processing_status == "FA":
+        sounds_to_process = Sound.objects.filter(processing_state='FA')
+    elif processing_status == "PE":
+        sounds_to_process = Sound.objects.filter(processing_state='PE')
+
+    # Remove sounds from the list that are already in the queue or are being processed right now
+    if sounds_to_process:
+        sounds_to_process = sounds_to_process.exclude(processing_ongoing_state='PR')\
+            .exclude(processing_ongoing_state='QU')
+        for sound in sounds_to_process:
+            sound.process()
+
+    return HttpResponseRedirect(reverse("tickets-home"))

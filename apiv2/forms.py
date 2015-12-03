@@ -26,14 +26,22 @@ from exceptions import BadRequestException
 
 
 class ApiV2ClientForm(forms.Form):
-    name          = forms.CharField(label='Name*', widget=forms.TextInput(attrs={'style': 'width:500px', 'placeholder': 'The name of the application or project where the credential will be used'}))
-    url           = forms.URLField(required=False, label='URL', widget=forms.TextInput(attrs={'style': 'width:500px', 'placeholder': 'URL of your application, project, institution or other related page'}))
-    redirect_uri  = forms.URLField(required=False, label='Callback URL', widget=forms.TextInput(attrs={'style': 'width:500px', 'placeholder': 'OAuth2 callback URL (see note below)'}))
-    description   = forms.CharField(label='Description*', widget=forms.Textarea(attrs={'style': 'width:500px', 'placeholder': 'Tell us something about what you\'re planning to do with this API credential (i.e. what kind of project or application you\'re going to build)'}))
-    accepted_tos  = forms.BooleanField(label='',
-                                       help_text='Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API',
-                                       required=True,
-                                       error_messages={'required': 'You must accept the terms of use in order to get access to the API.'})
+    name = forms.CharField(label='Name*', max_length='60', widget=forms.TextInput(attrs={'style': 'width:500px',
+                           'placeholder': 'The name of the application or project where the credential will be used'}))
+    url = forms.URLField(required=False, label='URL', widget=forms.TextInput(attrs={'style': 'width:500px',
+                         'placeholder': 'URL of your application, project, institution or other related page'}))
+    redirect_uri = forms.URLField(required=False, label='Callback URL', widget=forms.TextInput(
+        attrs={'style': 'width:500px', 'placeholder': 'OAuth2 callback URL (see note below)'}))
+    description = forms.CharField(label='Description*', widget=forms.Textarea(
+        attrs={'style': 'width:500px', 'placeholder': 'Tell us something about what you\'re planning to do with this '
+                                                      'API credential (i.e. what kind of project or application you\'re'
+                                                      ' going to build)'}))
+    accepted_tos = forms.BooleanField(label='',
+                                      help_text='Check this box to accept the <a href="/help/tos_api/" '
+                                                'target="_blank">terms of use</a> of the Freesound API',
+                                      required=True,
+                                      error_messages={'required': 'You must accept the terms of use in order to '
+                                                                  'get access to the API.'})
 
 
 SEARCH_SORT_OPTIONS_API = [
@@ -52,40 +60,43 @@ SEARCH_DEFAULT_SORT = "score desc"
 
 
 def my_quote(s):
-    # First encode to ut8 to avoid problems with non standard characters
+    # First encode to utf8 to avoid problems with non standard characters
     s = s.encode('utf8')
-    return quote(s,safe=",:[]*+()'")
+    return quote(s, safe=",:[]*+()'")
 
 
 class SoundCombinedSearchFormAPI(forms.Form):
-    query               = forms.CharField(required=False, label='query')
-    page                = forms.CharField(required=False, label='page')
-    filter              = forms.CharField(required=False, label='filter')
-    sort                = forms.CharField(required=False, label='sort')
-    fields              = forms.CharField(required=False, label='fields')
-    descriptors         = forms.CharField(required=False, label='descriptors')
-    normalized          = forms.CharField(required=False, label='normalized')
-    page_size           = forms.CharField(required=False, label='page_size')
-    group_by_pack       = forms.CharField(required=False, label='group_by_pack')
-    descriptors_filter  = forms.CharField(required=False, label='descriptors_filter')
-    target              = forms.CharField(required=False, label='target')
+    query = forms.CharField(required=False, label='query')
+    page = forms.CharField(required=False, label='page')
+    filter = forms.CharField(required=False, label='filter')
+    sort = forms.CharField(required=False, label='sort')
+    fields = forms.CharField(required=False, label='fields')
+    descriptors = forms.CharField(required=False, label='descriptors')
+    normalized = forms.CharField(required=False, label='normalized')
+    page_size = forms.CharField(required=False, label='page_size')
+    group_by_pack = forms.CharField(required=False, label='group_by_pack')
+    descriptors_filter = forms.CharField(required=False, label='descriptors_filter')
+    target = forms.CharField(required=False, label='target')
+    original_url_sort_value = None
 
     def clean_query(self):
         query = self.cleaned_data['query']
-        # If query parameter is blank or white space (with or without quote or double quote), treat it as empty query (returns all results)
-        if unquote(query).replace('"','').isspace() or unquote(query).replace('"','') == '' or query.replace('\'','').isspace() or query == '\'\'':
+        # If query parameter is blank or white space (with or without quote or double quote),
+        # treat it as empty query (returns all results)
+        if unquote(query).replace('"', '').isspace() or unquote(query).replace('"', '') == '' or \
+                query.replace('\'', '').isspace() or query == '\'\'':
             return ""
         return query
 
     def clean_filter(self):
-        filter = self.cleaned_data['filter']
-        if 'filter' in self.data and (not filter or filter.isspace()):
+        filt = self.cleaned_data['filter']
+        if 'filter' in self.data and (not filt or filt.isspace()):
             raise BadRequestException('Invalid filter.')
-        return filter
+        return filt
 
     def clean_descriptors(self):
         descriptors = self.cleaned_data['descriptors']
-        return my_quote(descriptors) if descriptors != None else ""
+        return my_quote(descriptors) if descriptors is not None else ""
 
     def clean_normalized(self):
         requested_normalized = self.cleaned_data['normalized']
@@ -97,29 +108,25 @@ class SoundCombinedSearchFormAPI(forms.Form):
     def clean_page(self):
         try:
             page = int(self.cleaned_data['page'])
-        except:
+        except ValueError:
             return 1
         return page
 
     def clean_sort(self):
-
         sort_option = None
         for option in SEARCH_SORT_OPTIONS_API:
             if option[0] == str(self.cleaned_data['sort']):
                 sort_option = option[1]
                 self.original_url_sort_value = option[0]
-
         if not sort_option:
             sort_option = SEARCH_DEFAULT_SORT
             self.original_url_sort_value = SEARCH_DEFAULT_SORT.split(' ')[0]
-
         if sort_option == "avg_rating desc":
             sort = [sort_option, "num_ratings desc"]
         elif sort_option == "avg_rating asc":
             sort = [sort_option, "num_ratings asc"]
         else:
             sort = [sort_option]
-
         return sort
 
     def clean_fields(self):
@@ -132,39 +139,36 @@ class SoundCombinedSearchFormAPI(forms.Form):
         try:
             if int(requested_group_by_pack):
                 group_by_pack = '1'
-        except:
+        except ValueError:
             pass
         return group_by_pack
 
     def clean_page_size(self):
-        requested_paginate_by = self.cleaned_data[settings.REST_FRAMEWORK['PAGINATE_BY_PARAM']] or settings.REST_FRAMEWORK['PAGINATE_BY']
-        try:
-            paginate_by = min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
-        except:
-            paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
-        return paginate_by
+        requested_paginate_by = self.cleaned_data[settings.REST_FRAMEWORK['PAGINATE_BY_PARAM']] or \
+                                settings.REST_FRAMEWORK['PAGINATE_BY']
+        return min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
 
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']
         if 'descriptors_filter' in self.data and (not descriptors_filter or descriptors_filter.isspace()):
             raise BadRequestException('Invalid descriptiors_filter.')
-        return my_quote(descriptors_filter) if descriptors_filter != None else ""
+        return my_quote(descriptors_filter) if descriptors_filter is not None else ""
 
     def clean_target(self):
         target = self.cleaned_data['target']
         if 'target' in self.data and (not target or target.isspace()):
             raise BadRequestException('Invalid target.')
-        return my_quote(target) if target != None else ""
+        return my_quote(target) if target is not None else ""
 
-    def construct_link(self, base_url, page=None, filter=None, group_by_pack=None, include_page=True):
+    def construct_link(self, base_url, page=None, filt=None, group_by_pack=None, include_page=True):
         link = "?"
-        if self.cleaned_data['query'] != None:
+        if self.cleaned_data['query'] is not None:
             link += '&query=%s' % my_quote(self.cleaned_data['query'])
-        if not filter:
+        if not filt:
             if self.cleaned_data['filter']:
                 link += '&filter=%s' % my_quote(self.cleaned_data['filter'])
         else:
-            link += '&filter=%s' % my_quote(filter)
+            link += '&filter=%s' % my_quote(filt)
         if self.original_url_sort_value and not self.original_url_sort_value == SEARCH_DEFAULT_SORT.split(' ')[0]:
             link += '&sort=%s' % self.original_url_sort_value
         if self.cleaned_data['descriptors_filter']:
@@ -177,7 +181,8 @@ class SoundCombinedSearchFormAPI(forms.Form):
                     link += '&page=%s' % self.cleaned_data['page']
             else:
                 link += '&page=%s' % str(page)
-        if self.cleaned_data['page_size'] and not self.cleaned_data['page_size'] == settings.REST_FRAMEWORK['PAGINATE_BY']:
+        if self.cleaned_data['page_size'] and \
+                not self.cleaned_data['page_size'] == settings.REST_FRAMEWORK['PAGINATE_BY']:
             link += '&page_size=%s' % str(self.cleaned_data['page_size'])
         if self.cleaned_data['fields']:
             link += '&fields=%s' % my_quote(self.cleaned_data['fields'])
@@ -190,14 +195,13 @@ class SoundCombinedSearchFormAPI(forms.Form):
                 link += '&group_by_pack=%s' % self.cleaned_data['group_by_pack']
         else:
             link += '&group_by_pack=%s' % group_by_pack
-
         return "http://%s%s%s" % (Site.objects.get_current().domain, base_url, link)
 
 
 class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):
-    '''
+    """
     This form is like CombinedSearch but disabling content-search-only fields
-    '''
+    """
 
     def clean_target(self):
         return None
@@ -207,9 +211,9 @@ class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):
 
 
 class SoundContentSearchFormAPI(SoundCombinedSearchFormAPI):
-    '''
+    """
     This form is like CombinedSearch but disabling text-search-only fields
-    '''
+    """
 
     def clean_query(self):
         return None

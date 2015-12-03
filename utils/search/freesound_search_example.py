@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+__test__ = False
+
 import time
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter
 

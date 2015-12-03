@@ -484,7 +484,12 @@ def pack_delete(request, username, pack_id):
             waited_too_long = True
 
     encrypted_link = encrypt(u"%d\t%f" % (pack.id, time.time()))
-    return render_to_response('sounds/pack_delete.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'pack': pack,
+        'encrypted_link': encrypted_link,
+        'waited_too_long': waited_too_long
+    }
+    return render(request, 'sounds/pack_delete.html', tvars)
 
 
 @login_required

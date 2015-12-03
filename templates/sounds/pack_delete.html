@@ -1,10 +1,8 @@
 {% extends "sounds/_section.html" %}
-
 {% load paginator %}
-
 {% block title %}Delete {{pack.name}}{% endblock title %}
-
 {% block section_content %}
+
 <h1>Delete <a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a></h1>
 
 <p>

@@ -22,18 +22,19 @@ from __future__ import division
 from django.core.management.base import BaseCommand
 from django.db import connection
 from networkx import nx
-from pprint import pprint as pp
 from sounds.models import Sound, RemixGroup
 import json
+import logging
+logger = logging.getLogger("web")
 
-# TODO: 1) test me!!! if sound not found in more than 1 groups we should be OK
-#       2) save to RemixGroup model
-#       3) group number?
+
 class Command(BaseCommand):
     args = ''
     help = 'Create the groups used for rendering the global remix page'
 
     def handle(self, *args, **options):
+        logger.info("Starting to create remix grooups")
+
         # 1) Get all the sounds that have remixes
         cursor = connection.cursor()
         cursor.execute("""
@@ -55,49 +56,35 @@ class Command(BaseCommand):
         for row in cursor:
             dg.add_edge(row[0], row[1])
 
-        # 3) Add date to nodes for sorting (FIXME: how can we avoid this query???)
-        """
-        for node in dg.nodes():
-            cursor.execute("SELECT snd.created, snd.original_filename, au.username " \
-                           "FROM sounds_sound snd, auth_user au WHERE au.id=snd.user_id AND snd.id = %s", [node])
-            temp = cursor.fetchone()
-            dg.add_node(node, {'date':temp[0],
-                               'nodeName': temp[1],
-                               'username': temp[2]})
-        """
+        # 3) Create nodes with dates and metadata
         dg = _create_nodes(dg)
-        
-        # print dg.nodes(data=True)
+
         # 4) Find weakly connected components (single direction)
         subgraphs = nx.weakly_connected_component_subgraphs(dg)
-        node_list = []
         
         # 5) delete all remixgroup objects to recalculate
         RemixGroup.objects.all().delete()
         
-        # 6) Loop through all connected graphs in the dataset
-        #    and create the groups
+        # 6) Loop through all connected graphs in the dataset and create the groups
+        n_groups_created = 0
         for sg in subgraphs:
-            # _create_and_save_remixgroup(sg_idx, sg)
             _create_and_save_remixgroup(sg, RemixGroup())
-            
-            """
-            print ' ========== NODES ========='
-            pp(nodes)
-            print ' ========== LINKS ========='
-            pp(links)
-            """
+            n_groups_created += 1
+
+        logger.info("Finished createing remix grooups (%i groups created)" % n_groups_created)
+
 
 def _create_nodes(dg):
     for node in dg.nodes():
         sound = Sound.objects.get(id=node)
         dg.add_node(node, {'date': sound.created,
-						   'nodeName': sound.original_filename,
+                           'nodeName': sound.original_filename,
                            'username': sound.user.username,
                            'sound_url_mp3': sound.locations()['preview']['LQ']['mp3']['url'],
                            'sound_url_ogg': sound.locations()['preview']['LQ']['ogg']['url'],
                            'waveform_url': sound.locations()['display']['wave']['M']['url']})
     return dg
+
 
 def _create_and_save_remixgroup(sg, remixgroup): 
     # print ' ========================================= '
@@ -140,7 +127,7 @@ def _create_and_save_remixgroup(sg, remixgroup):
                     link = {'target': container[int(line.split(" ")[0])]['index'],
                             'source': container[int(l)]['index']}
                     links.append(link)
-                    #print link
+
     remixgroup.protovis_data = "{\"color\": \"#F1D9FF\"," \
                                "\"length\":" + str(len(node_list)) + "," \
                                "\"nodes\": " + json.dumps(nodes) + "," \
@@ -148,5 +135,3 @@ def _create_and_save_remixgroup(sg, remixgroup):
                                
     remixgroup.networkx_data = json.dumps(dict(nodes=sg.nodes(), edges=sg.edges()))                         
     remixgroup.save()   
-    print remixgroup.id
-    print remixgroup.networkx_data

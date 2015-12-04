@@ -25,10 +25,9 @@ from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.encoding import smart_unicode
-import uuid, logging
+import uuid
 from utils.mail import send_mail_template
 
-logger = logging.getLogger("web")
 
 class Queue(models.Model):
     name            = models.CharField(max_length=128)

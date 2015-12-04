@@ -32,12 +32,10 @@ from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
 from utils.search.search_forum import add_post_to_solr
-import logging
 import re
 import datetime
 from django.contrib import messages
 
-logger = logging.getLogger("web")
 
 def deactivate_spammer(user_id):
     from django.contrib.auth.models import User
@@ -202,7 +200,6 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     emails_to_notify = []
                     for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
                         emails_to_notify.append(subscription.subscriber.email)
-                        logger.info("NOTIFY %s" % subscription.subscriber.email)
                         subscription.is_active = False
                         subscription.save()
 

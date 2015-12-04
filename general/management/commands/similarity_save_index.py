@@ -21,6 +21,8 @@
 from django.core.management.base import BaseCommand
 from similarity.client import Similarity
 from optparse import make_option
+import logging
+logger = logging.getLogger("web")
 
 
 class Command(BaseCommand):
@@ -35,6 +37,8 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        logger.info('Saving current similarity index')
+
         if options['indexing_server']:
             Similarity.save_indexing_server()
         else:

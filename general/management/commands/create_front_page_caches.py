@@ -22,11 +22,16 @@ from django.core.management.base import NoArgsCommand
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.cache import cache
+import logging
+logger = logging.getLogger("web")
+
 
 class Command(NoArgsCommand):
     help = "Create front page RSS and Pledgie cache."
 
     def handle(self, **options):
+        logger.info("Updating front page caches")
+
         rss_url = settings.FREESOUND_RSS
         pledgie_campaign = settings.PLEDGIE_CAMPAIGN
         

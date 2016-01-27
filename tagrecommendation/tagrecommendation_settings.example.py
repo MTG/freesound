@@ -32,6 +32,9 @@ TAGRECOMMENDATION_ADDRESS          = 'localhost'
 TAGRECOMMENDATION_PORT             = 8010
 TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 
+LOGSERVER_IP_ADDRESS = 'ID_ADDRESS'
+LOGSERVER_PORT = 0000
+
 
 # This tag recommendation server needs some data files to be in the data folder
 #

@@ -21,7 +21,7 @@
 from twisted.web import server, resource
 from twisted.internet import reactor
 from gaia_wrapper import GaiaWrapper
-from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE
+from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT
 import logging
 import graypy
 from logging.handlers import RotatingFileHandler
@@ -236,7 +236,7 @@ if __name__ == '__main__':
     logger.addHandler(handler)
     std_handler.setFormatter(formatter)
     logger.addHandler(std_handler)
-    handler_graypy = graypy.GELFHandler('10.55.0.48', 12201)
+    handler_graypy = graypy.GELFHandler(LOGSERVER_IP_ADDRESS, LOGSERVER_PORT)
     logger.addHandler(handler_graypy)
 
     # Start service

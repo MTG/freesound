@@ -156,7 +156,7 @@ if __name__ == '__main__':
     logger.addHandler(handler)
     std_handler.setFormatter(formatter)
     logger.addHandler(std_handler)
-    handler_graypy = graypy.GELFHandler('10.55.0.48', 12201)
+    handler_graypy = graypy.GELFHandler(LOGSERVER_IP_ADDRESS, LOGSERVER_PORT)
     logger.addHandler(handler_graypy)
 
     # Start service

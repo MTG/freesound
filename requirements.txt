@@ -28,3 +28,4 @@ ipython
 Sphinx
 django-fixture-magic
 mock
+raven==5.10.1

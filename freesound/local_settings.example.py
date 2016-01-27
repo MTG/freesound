@@ -85,3 +85,10 @@ APIV2_POST_THROTTLING_RATES_PER_LEVELS = {
     2: ['60/minute', '1000/day', None],  # Ip limit not yet enabled
     99: [],  # No limit of requests
 }
+
+
+# Sentry
+
+RAVEN_CONFIG = {
+    'dsn': 'DSN_PROVIDED_BY_SENTRY',
+}

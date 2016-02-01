@@ -40,16 +40,16 @@ from django.conf import settings
 import gearman
 
 
-def __get_contact_form(request, use_post=True):
-    return __get_anon_or_user_form(request, AnonymousContactForm, UserContactForm, use_post)
+def _get_contact_form(request, use_post=True):
+    return _get_anon_or_user_form(request, AnonymousContactForm, UserContactForm, use_post)
 
 
-def __get_tc_form(request, use_post=True):
-    return __get_anon_or_user_form(request, AnonymousMessageForm, UserMessageForm, use_post, True)
+def _get_tc_form(request, use_post=True):
+    return _get_anon_or_user_form(request, AnonymousMessageForm, UserMessageForm, use_post, True)
 
 
-def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, include_mod=False):
-    if __can_view_mod_msg(request) and anonymous_form != AnonymousContactForm:
+def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, include_mod=False):
+    if _can_view_mod_msg(request) and anonymous_form != AnonymousContactForm:
         user_form = ModeratorMessageForm
     if len(request.POST.keys()) > 0 and use_post:
         if request.user.is_authenticated():
@@ -59,7 +59,7 @@ def __get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, i
     else:
         return user_form() if request.user.is_authenticated() else anonymous_form(request)
 
-def __can_view_mod_msg(request):
+def _can_view_mod_msg(request):
     return request.user.is_authenticated() \
             and (request.user.is_superuser or request.user.is_staff \
                  or Group.objects.get(name='moderators') in request.user.groups.all())
@@ -77,7 +77,7 @@ def invalidate_all_moderators_header_cache():
         invalidate_template_cache("user_header", mod.id)
 
 def ticket(request, ticket_key):
-    can_view_moderator_only_messages = __can_view_mod_msg(request)
+    can_view_moderator_only_messages = _can_view_mod_msg(request)
     clean_status_forms = True
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
@@ -88,7 +88,7 @@ def ticket(request, ticket_key):
 
         # Left ticket message
         if is_selected(request, 'recaptcha') or (request.user.is_authenticated() and is_selected(request, 'message')):
-            tc_form = __get_tc_form(request)
+            tc_form = _get_tc_form(request)
             if tc_form.is_valid():
                 tc = TicketComment()
                 tc.text = tc_form.cleaned_data['message']
@@ -158,7 +158,7 @@ def ticket(request, ticket_key):
                                              if ticket.content else 'DE'},
                                              prefix="ss")
     if clean_comment_form:
-        tc_form = __get_tc_form(request, False)
+        tc_form = _get_tc_form(request, False)
     return render_to_response('tickets/ticket.html',
                               locals(),
                               context_instance=RequestContext(request))
@@ -166,7 +166,7 @@ def ticket(request, ticket_key):
 
 @login_required
 def sound_ticket_messages(request, ticket_key):
-    can_view_moderator_only_messages = __can_view_mod_msg(request)
+    can_view_moderator_only_messages = _can_view_mod_msg(request)
     ticket = get_object_or_404(Ticket, key=ticket_key)
     return render_to_response('tickets/message_list.html',
                               locals(),
@@ -176,7 +176,7 @@ def sound_ticket_messages(request, ticket_key):
 def new_contact_ticket(request):
     ticket_created = False
     if request.POST:
-        form = __get_contact_form(request)
+        form = _get_contact_form(request)
         if form.is_valid():
             ticket = Ticket()
             ticket.title = form.cleaned_data['title']
@@ -196,7 +196,7 @@ def new_contact_ticket(request):
             ticket_created = True
             # TODO: send email
     else:
-        form = __get_contact_form(request, False)
+        form = _get_contact_form(request, False)
     return render_to_response('tickets/contact.html', locals(), context_instance=RequestContext(request))
 
 
@@ -240,8 +240,8 @@ def tickets_home(request):
         sounds_in_moderators_queue_count = -1
         
     new_upload_count = new_sound_tickets_count()
-    tardy_moderator_sounds_count = len(list(__get_tardy_moderator_tickets_all()))
-    tardy_user_sounds_count = len(list(__get_tardy_user_tickets_all()))
+    tardy_moderator_sounds_count = len(list(_get_tardy_moderator_tickets_all()))
+    tardy_user_sounds_count = len(list(_get_tardy_user_tickets_all()))
     new_support_count = new_support_tickets_count()
     sounds_queued_count = Sound.objects.filter(processing_ongoing_state='QU').count()
     sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
@@ -258,7 +258,7 @@ def tickets_home(request):
     return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
 
 
-def __get_new_uploaders_by_ticket():
+def _get_new_uploaders_by_ticket():
 #AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     cursor = connection.cursor()
     cursor.execute("""
@@ -304,7 +304,7 @@ GROUP BY sender_id""" % TICKET_STATUS_NEW)
     return new_sounds_users
 
 
-def __get_unsure_sound_tickets():
+def _get_unsure_sound_tickets():
     '''Query to get tickets that were returned to the queue by moderators that
     didn't know what to do with the sound.'''
     return Ticket.objects.filter(source=TICKET_SOURCE_NEW_SOUND,
@@ -312,7 +312,7 @@ def __get_unsure_sound_tickets():
                                  status=TICKET_STATUS_ACCEPTED)
 
 
-def __get_tardy_moderator_tickets():
+def _get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last day"""
     return Ticket.objects.raw("""
 SELECT
@@ -333,7 +333,7 @@ LIMIT 5
 """ % TICKET_STATUS_CLOSED)
 
 
-def __get_tardy_moderator_tickets_all():
+def _get_tardy_moderator_tickets_all():
     """Get tickets for moderators that haven't responded in the last day"""
     return Ticket.objects.raw("""
 SELECT
@@ -353,7 +353,7 @@ AND ticket.status != '%s'
 """ % TICKET_STATUS_CLOSED)
 
 
-def __get_tardy_user_tickets():
+def _get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
@@ -372,7 +372,7 @@ AND now() - comment.created > INTERVAL '2 days'
 LIMIT 5
 """ % TICKET_STATUS_CLOSED)
     
-def __get_tardy_user_tickets_all():
+def _get_tardy_user_tickets_all():
     """Get tickets for users that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
 SELECT
@@ -402,12 +402,12 @@ def moderation_home(request):
     else :
         sounds_in_moderators_queue_count = -1
 
-    new_sounds_users = __get_new_uploaders_by_ticket()
-    unsure_tickets = list(__get_unsure_sound_tickets()) #TODO: shouldn't appear
-    tardy_moderator_tickets = list(__get_tardy_moderator_tickets())
-    tardy_user_tickets = list(__get_tardy_user_tickets())
-    tardy_moderator_tickets_count = len(list(__get_tardy_moderator_tickets_all()))
-    tardy_user_tickets_count = len(list(__get_tardy_user_tickets_all()))
+    new_sounds_users = _get_new_uploaders_by_ticket()
+    unsure_tickets = list(_get_unsure_sound_tickets()) #TODO: shouldn't appear
+    tardy_moderator_tickets = list(_get_tardy_moderator_tickets())
+    tardy_user_tickets = list(_get_tardy_user_tickets())
+    tardy_moderator_tickets_count = len(list(_get_tardy_moderator_tickets_all()))
+    tardy_user_tickets_count = len(list(_get_tardy_user_tickets_all()))
     
     return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
@@ -418,7 +418,7 @@ def moderation_tary_users_sounds(request):
     else :
         sounds_in_moderators_queue_count = -1
 
-    tardy_user_tickets = list(__get_tardy_user_tickets_all())
+    tardy_user_tickets = list(_get_tardy_user_tickets_all())
 
     return render_to_response('tickets/moderation_tardy_users.html', combine_dicts(paginate(request, tardy_user_tickets, 10), locals()), context_instance=RequestContext(request))
 
@@ -429,7 +429,7 @@ def moderation_tary_moderators_sounds(request):
     else :
         sounds_in_moderators_queue_count = -1
 
-    tardy_moderators_tickets = list(__get_tardy_moderator_tickets_all())
+    tardy_moderators_tickets = list(_get_tardy_moderator_tickets_all())
 
     return render_to_response('tickets/moderation_tardy_moderators.html', combine_dicts(paginate(request, tardy_moderators_tickets, 10), locals()), context_instance=RequestContext(request))
 
@@ -523,7 +523,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
 @permission_required('tickets.can_moderate')
 def moderation_assigned(request, user_id):
     
-    can_view_moderator_only_messages = __can_view_mod_msg(request)
+    can_view_moderator_only_messages = _can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
         mod_sound_form = SoundModerationForm(request.POST)

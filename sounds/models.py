@@ -22,6 +22,7 @@
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
@@ -40,7 +41,7 @@ from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment, LinkedContent
-from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
+from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW, TICKET_STATUS_CLOSED
 import os
 import logging
 import random
@@ -576,6 +577,17 @@ class Sound(SocialModel):
             ticket=ticket,
         )
 
+    def unlink_moderation_ticket(self):
+        # If sound has an assigned ticket, set its content to None and status to closed
+        try:
+            ticket = Ticket.objects.get(content__object_id=self.id,
+                                        content__content_type=ContentType.objects.get_for_model(self))
+            ticket.content = None
+            ticket.status = TICKET_STATUS_CLOSED
+            ticket.save()
+        except Ticket.DoesNotExist:
+            pass
+
     def process(self, force=False):
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
         if force or self.processing_state != "OK":
@@ -647,9 +659,10 @@ def on_delete_sound(sender, instance, **kwargs):
         pass
 
     instance.delete_from_indexes()
+    instance.unlink_moderation_ticket()
     delete_object_files(instance, web_logger)
-
     web_logger.debug("Deleted sound with id %i" % instance.id)
+
 post_delete.connect(on_delete_sound, sender=Sound)
 
 

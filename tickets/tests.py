@@ -18,20 +18,15 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase, Client
-from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
+from django.test import TestCase
 from models import Ticket, Queue, LinkedContent
-from django.contrib.auth.models import User, Group
-from tickets import QUEUE_BUG_REPORTS, QUEUE_MANAGEMENT, \
-    QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
+from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
 
-class CreateTickets(TestCase):
+
+class TicketsTest(TestCase):
     
-    fixtures = ['moderation_test_users']
-    
-    def setUp(self):
-        # test client
-        self.client      = Client()
+    fixtures = ['initial_data.json', 'moderation_test_users.json']
     
     def test_new_ticket(self):
         ticket = Ticket()

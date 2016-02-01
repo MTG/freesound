@@ -252,31 +252,36 @@ def search_forum(request):
         current_page = 1
     current_forum_name_slug = request.GET.get("current_forum_name_slug", "").strip()    # for context sensitive search
     current_forum_name = request.GET.get("current_forum_name", "").strip()              # used in breadcrumb
-    sort = ["thread_created asc"]
+    sort = ["thread_created desc"]
 
     # Parse advanced search options
     advanced_search = request.GET.get("advanced_search", "")
     date_from = request.GET.get("dt_from", "")
     date_to = request.GET.get("dt_to", "")
 
-    # TEMPORAL WORKAROUND!!! to prevent using watermark as the query for forum search.. (in only happens in some situations)
-    if "search in " in search_query :
+    # TEMPORAL WORKAROUND!!! to prevent using watermark as the query for forum search...
+    # It only happens in some situations.
+    if "search in " in search_query:
         invalid = 1
 
-    if search_query.strip() != "":
+    if search_query.strip() != "" or filter_query:
         # add current forum
         if current_forum_name_slug.strip() != "":
-            filter_query =  "forum_name_slug:" + current_forum_name_slug
+            filter_query += "forum_name_slug:" + current_forum_name_slug
 
         # add date range
         if advanced_search == "1" and date_from != "" or date_to != "":
             filter_query = __add_date_range(filter_query, date_from, date_to)
 
         query = SolrQuery()
-        query.set_dismax_query(search_query, query_fields=[("thread_title", 4), ("post_body",3), ("thread_author",3), ("forum_name",2)])
+        query.set_dismax_query(search_query, query_fields=[("thread_title", 4),
+                                                           ("post_body", 3),
+                                                           ("thread_author", 3),
+                                                           ("post_author", 3),
+                                                           ("forum_name", 2)])
         query.set_highlighting_options_default(field_list=["post_body"],
                                                fragment_size=200,
-                                               alternate_field="post_body", # TODO: revise this param
+                                               alternate_field="post_body",  # TODO: revise this param
                                                require_field_match=False,
                                                pre="<strong>",
                                                post="</strong>")
@@ -297,7 +302,7 @@ def search_forum(request):
                                 sort=sort)
 
         query.set_group_field("thread_title_grouped")
-        query.set_group_options(group_limit=3)
+        query.set_group_options(group_limit=30)
 
         solr = Solr(settings.SOLR_FORUM_URL)
 

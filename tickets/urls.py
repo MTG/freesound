@@ -47,11 +47,11 @@ urlpatterns = patterns('',
         name='tickets-moderation-home'),
 
     url(r'^moderation/tardy_users_sounds/$',
-        moderation_tary_users_sounds,
+        moderation_tardy_users_sounds,
         name='tickets-moderation-tardy-users'),
 
     url(r'^moderation/tardy_moderators_sounds/$',
-        moderation_tary_moderators_sounds,
+        moderation_tardy_moderators_sounds,
         name='tickets-moderation-tardy-moderators'),
 
     url(r'^moderation/assign/(?P<user_id>\d+)/$',

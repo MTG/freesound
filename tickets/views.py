@@ -602,15 +602,21 @@ def moderation_assigned(request, user_id):
                        .order_by('status', '-created')
     paginaion_response = paginate(request, qs, settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE)
     paginaion_response['page'].object_list = list(paginaion_response['page'].object_list)
+
+    # Becuase it can happen that some tickets have linked content which has dissapeared or on deletion time the ticket
+    # has not been propertly updated, we need to check whether the sound that is linked does in fact exist. If it does
+    # not, we set the linked content to None and the status of the ticket to closed as should have been set at sound
+    # deletion time.
     for ticket in paginaion_response['page'].object_list:
         sound_id = ticket.content.object_id
         try:
             Sound.objects.get(id=sound_id)
-        except:
+        except Sound.DoesNotExist:
             paginaion_response['page'].object_list.remove(ticket)
             try:
-                # Try to delete ticket so error does not happen again
-                ticket.delete()
+                ticket.content = None
+                ticket.status = TICKET_STATUS_CLOSED
+                ticket.save()
             except:
                 pass
 

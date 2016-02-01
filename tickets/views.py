@@ -81,6 +81,19 @@ def ticket(request, ticket_key):
     clean_status_forms = True
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
+
+    # Becuase it can happen that some tickets have linked content which has dissapeared or on deletion time the ticket
+    # has not been propertly updated, we need to check whether the sound that is linked does in fact exist. If it does
+    # not, we set the linked content to None and the status of the ticket to closed as should have been set at sound
+    # deletion time.
+    sound_id = ticket.content.object_id
+    try:
+        Sound.objects.get(id=sound_id)
+    except Sound.DoesNotExist:
+        ticket.content = None
+        ticket.status = TICKET_STATUS_CLOSED
+        ticket.save()
+
     if request.method == 'POST':
 
         invalidate_template_cache("user_header", ticket.sender.id)

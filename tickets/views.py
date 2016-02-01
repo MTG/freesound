@@ -59,10 +59,12 @@ def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True, in
     else:
         return user_form() if request.user.is_authenticated() else anonymous_form(request)
 
+
 def _can_view_mod_msg(request):
     return request.user.is_authenticated() \
             and (request.user.is_superuser or request.user.is_staff \
                  or Group.objects.get(name='moderators') in request.user.groups.all())
+
 
 # TODO: copied from sound_edit view,
 def is_selected(request, prefix):
@@ -71,10 +73,12 @@ def is_selected(request, prefix):
             return True
     return False
 
+
 def invalidate_all_moderators_header_cache():
     mods = Group.objects.get(name='moderators').user_set.all()
     for mod in mods:
         invalidate_template_cache("user_header", mod.id)
+
 
 def ticket(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
@@ -203,9 +207,6 @@ def new_contact_ticket(request):
 # In the next 2 functions we return a queryset os the evaluation is lazy.
 # N.B. these functions are used in the home page as well.
 def new_sound_tickets_count():
-#AND (sound.processing_state = 'OK' OR sound.processing_state = 'FA')
-#    return Ticket.objects.filter(status=TICKET_STATUS_NEW,
-#                                 source=TICKET_SOURCE_NEW_SOUND)
     return len(list(Ticket.objects.raw("""
         SELECT
         ticket.id
@@ -219,13 +220,14 @@ def new_sound_tickets_count():
         AND content.object_id = sound.id
         AND sound.moderation_state = 'PE'
         AND sound.processing_state = 'OK'
-        AND ticket.status = '%s'
-        """ % TICKET_STATUS_NEW)))
+        AND ticket.status = %s
+        """, [TICKET_STATUS_NEW])))
 
 
 def new_support_tickets_count():
     return Ticket.objects.filter(assignee=None,
                                  source=TICKET_SOURCE_CONTACT_FORM).count()
+
 
 @permission_required('tickets.can_moderate')
 def tickets_home(request):
@@ -259,7 +261,6 @@ def tickets_home(request):
 
 
 def _get_new_uploaders_by_ticket():
-#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     cursor = connection.cursor()
     cursor.execute("""
 SELECT
@@ -273,8 +274,8 @@ WHERE
     AND tickets_linkedcontent.object_id = sounds_sound.id
     AND tickets_ticket.content_id = tickets_linkedcontent.id
     AND tickets_ticket.assignee_id is NULL
-    AND tickets_ticket.status = '%s'
-GROUP BY sender_id""" % TICKET_STATUS_NEW)
+    AND tickets_ticket.status = %s
+GROUP BY sender_id""", [TICKET_STATUS_NEW])
     user_ids_plus_new_count = dict(cursor.fetchall())
     user_objects = User.objects.filter(id__in=user_ids_plus_new_count.keys())
 
@@ -330,7 +331,7 @@ AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
 AND now() - modified > INTERVAL '24 hours'
 AND ticket.status != '%s'
 LIMIT 5
-""" % TICKET_STATUS_CLOSED)
+""", [TICKET_STATUS_CLOSED])
 
 
 def _get_tardy_moderator_tickets_all():
@@ -350,7 +351,7 @@ AND comment.ticket_id = ticket.id
 AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
 AND now() - modified > INTERVAL '24 hours'
 AND ticket.status != '%s'
-""" % TICKET_STATUS_CLOSED)
+""", [TICKET_STATUS_CLOSED])
 
 
 def _get_tardy_user_tickets():
@@ -370,8 +371,9 @@ AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
 AND now() - comment.created > INTERVAL '2 days'
 LIMIT 5
-""" % TICKET_STATUS_CLOSED)
-    
+""", [TICKET_STATUS_CLOSED])
+
+
 def _get_tardy_user_tickets_all():
     """Get tickets for users that haven't responded in the last 2 days"""
     return Ticket.objects.raw("""
@@ -388,7 +390,7 @@ AND ticket.status != '%s'
 AND comment.ticket_id = ticket.id
 AND comment.sender_id != ticket.sender_id
 AND now() - comment.created > INTERVAL '2 days'
-""" % TICKET_STATUS_CLOSED)
+""", [TICKET_STATUS_CLOSED])
 
 
 @permission_required('tickets.can_moderate')
@@ -411,6 +413,7 @@ def moderation_home(request):
     
     return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
 
+
 @permission_required('tickets.can_moderate')
 def moderation_tary_users_sounds(request):
     if request.user.id :
@@ -421,6 +424,7 @@ def moderation_tary_users_sounds(request):
     tardy_user_tickets = list(_get_tardy_user_tickets_all())
 
     return render_to_response('tickets/moderation_tardy_users.html', combine_dicts(paginate(request, tardy_user_tickets, 10), locals()), context_instance=RequestContext(request))
+
 
 @permission_required('tickets.can_moderate')
 def moderation_tary_moderators_sounds(request):
@@ -436,17 +440,14 @@ def moderation_tary_moderators_sounds(request):
 
 @permission_required('tickets.can_moderate')
 def moderation_assign_user(request, user_id):
-#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
     sender = User.objects.get(id=user_id)
-#    Ticket.objects.filter(assignee=None, sender=sender, source=TICKET_SOURCE_NEW_SOUND) \
-#        .update(assignee=request.user, status=TICKET_STATUS_ACCEPTED)
     cursor = connection.cursor()
     cursor.execute("""
 UPDATE
     tickets_ticket
 SET
     assignee_id = %s,
-    status = '%s',
+    status = %s,
     modified = now()
 FROM
     sounds_sound,
@@ -458,9 +459,9 @@ AND sounds_sound.moderation_state = 'PE'
 AND tickets_linkedcontent.object_id = sounds_sound.id
 AND tickets_ticket.content_id = tickets_linkedcontent.id
 AND tickets_ticket.assignee_id is NULL
-AND tickets_ticket.status = '%s'
-AND sounds_sound.user_id = %s""" % \
-(request.user.id, TICKET_STATUS_ACCEPTED, TICKET_STATUS_NEW, sender.id))
+AND tickets_ticket.status = %s
+AND sounds_sound.user_id = %s""",
+[request.user.id, TICKET_STATUS_ACCEPTED, TICKET_STATUS_NEW, sender.id])
     transaction.commit_unless_managed()
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
@@ -468,36 +469,15 @@ AND sounds_sound.user_id = %s""" % \
 
     return HttpResponseRedirect(reverse("tickets-moderation-home"))
 
+
 # TODO: ongoing work
 @permission_required('tickets.can_moderate')
 def moderation_assign_single_ticket(request, user_id, ticket_id):
-#AND (sounds_sound.processing_state = 'OK' OR sounds_sound.processing_state = 'FA')
-    
     # REASSIGN SINGLE TICKET
     ticket = Ticket.objects.get(id=ticket_id)
     sender = User.objects.get(id=user_id)
     ticket.assignee = User.objects.get(id=request.user.id)
-    
-    '''
-    cursor = connection.cursor()
-    cursor.execute("""
-    UPDATE 
-        tickets_ticket 
-    SET 
-        assignee_id = %s
-    WHERE 
-        tickets_ticket.id = %s
-    """ % \
-    (request.user.id, ticket.id))
-    transaction.commit_unless_managed()
-    '''
-    '''
-    tc = TicketComment(sender=request.user,
-                       text="Reassigned ticket to moderator %s" % request.user.username,
-                       ticket=ticket,
-                       moderator_only=False)
-    tc.save()
-    '''
+
     # update modified date, so it doesn't appear in tardy moderator's sounds
     ticket.modified = datetime.datetime.now()
     ticket.save()
@@ -671,12 +651,12 @@ def get_num_pending_sounds(user):
                   FROM tickets_ticket AS ticket
              LEFT JOIN tickets_linkedcontent AS content ON content.id = ticket.content_id
              LEFT JOIN sounds_sound AS sound ON sound.id=content.object_id
-                 WHERE (ticket.sender_id = %i
+                 WHERE (ticket.sender_id = %s
                    AND NOT (ticket.status = 'closed' ))
                    AND sound.id IS NOT NULL
                    AND sound.moderation_state = 'PE'
                    AND sound.processing_state = 'OK'
-    """ % user.id)
+    """, [user.id])
     return len(list(tickets))
 
 

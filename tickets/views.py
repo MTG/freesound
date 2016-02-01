@@ -613,12 +613,9 @@ def moderation_assigned(request, user_id):
             Sound.objects.get(id=sound_id)
         except Sound.DoesNotExist:
             paginaion_response['page'].object_list.remove(ticket)
-            try:
-                ticket.content = None
-                ticket.status = TICKET_STATUS_CLOSED
-                ticket.save()
-            except:
-                pass
+            ticket.content = None
+            ticket.status = TICKET_STATUS_CLOSED
+            ticket.save()
 
     moderator_tickets_count = qs.count()
     moderation_texts = MODERATION_TEXTS

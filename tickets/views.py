@@ -174,31 +174,6 @@ def sound_ticket_messages(request, ticket_key):
                               context_instance=RequestContext(request))
 
 
-def new_contact_ticket(request):
-    ticket_created = False
-    if request.POST:
-        form = _get_contact_form(request)
-        if form.is_valid():
-            ticket = Ticket()
-            ticket.title = form.cleaned_data['title']
-            ticket.source = TICKET_SOURCE_CONTACT_FORM
-            ticket.status = TICKET_STATUS_NEW
-            ticket.queue = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
-            tc = TicketComment()
-            if request.user.is_authenticated():
-                ticket.sender = request.user
-                tc.sender = request.user
-            else:
-                ticket.sender_email = form.cleaned_data['email']
-            tc.text = form.cleaned_data['message']
-            ticket.save()
-            tc.ticket = ticket
-            tc.save()
-            ticket_created = True
-            # TODO: send email
-    else:
-        form = _get_contact_form(request, False)
-    return render_to_response('tickets/contact.html', locals(), context_instance=RequestContext(request))
 
 
 # In the next 2 functions we return a queryset os the evaluation is lazy.

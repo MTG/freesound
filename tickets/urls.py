@@ -26,14 +26,6 @@ from views import *
 
 urlpatterns = patterns('',
 
-    #url(r'^new/$',
-    #    new_ticket,
-    #    name="tickets-new"),
-
-    url(r'^contact/$',
-        new_contact_ticket,
-        name='tickets-contact'),
-
     url(r'^$',
         tickets_home,
         name='tickets-home'),
@@ -65,10 +57,6 @@ urlpatterns = patterns('',
     url(r'^moderation/assigned/(?P<user_id>\d+)/$',
         moderation_assigned,
         name='tickets-moderation-assigned'),
-
-    url(r'^support/$',
-        support_home,
-        name='tickets-support-home'),
 
     url(r'^moderation/annotations/(?P<user_id>\d+)/$',
         user_annotations,

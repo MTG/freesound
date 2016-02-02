@@ -340,7 +340,7 @@ def _get_tardy_user_tickets(limit=None):
                                 FROM tickets_ticketcomment
                                 GROUP BY ticket_id    )
         AND ticket.assignee_id is Not Null
-        AND ticket.status != '%s'
+        AND ticket.status != %s
         AND comment.ticket_id = ticket.id
         AND comment.sender_id != ticket.sender_id
         AND now() - comment.created > INTERVAL '2 days'

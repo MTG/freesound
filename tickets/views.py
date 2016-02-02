@@ -18,8 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.shortcuts import render_to_response, get_object_or_404, redirect
-from django.template import RequestContext
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
@@ -160,20 +159,22 @@ def ticket(request, ticket_key):
         sound_form = SoundStateForm(initial={'state': state}, prefix="ss")
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
-    return render_to_response('tickets/ticket.html',
-                              locals(),
-                              context_instance=RequestContext(request))
+
+    tvars = {"ticket": ticket,
+             "tc_form": tc_form,
+             "ticket_form": ticket_form,
+             "sound_form": sound_form,
+             "can_view_moderator_only_messages": can_view_moderator_only_messages}
+    return render(request, 'tickets/ticket.html', tvars)
 
 
 @login_required
 def sound_ticket_messages(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
     ticket = get_object_or_404(Ticket, key=ticket_key)
-    return render_to_response('tickets/message_list.html',
-                              locals(),
-                              context_instance=RequestContext(request))
-
-
+    tvars = {"can_view_moderator_only_messages": can_view_moderator_only_messages,
+             "ticket": ticket}
+    return render(request, 'tickets/message_list.html', tvars)
 
 
 # In the next 2 functions we return a queryset os the evaluation is lazy.
@@ -203,20 +204,11 @@ def new_support_tickets_count():
 
 @permission_required('tickets.can_moderate')
 def tickets_home(request):
-    
-    if request.user.id:
-        sounds_in_moderators_queue_count = Ticket.objects.select_related()\
-                                                         .filter(assignee=request.user.id)\
-                                                         .exclude(status='closed')\
-                                                         .exclude(content=None)\
-                                                         .order_by('status', '-created').count()
-    else:
-        sounds_in_moderators_queue_count = -1
-        
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
+
     new_upload_count = new_sound_tickets_count()
     tardy_moderator_sounds_count = len(list(_get_tardy_moderator_tickets()))
     tardy_user_sounds_count = len(list(_get_tardy_user_tickets()))
-    new_support_count = new_support_tickets_count()
     sounds_queued_count = Sound.objects.filter(processing_ongoing_state='QU').count()
     sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
     sounds_processing_count = Sound.objects.filter(processing_ongoing_state='PR').count()
@@ -229,7 +221,17 @@ def tickets_home(request):
     except gearman.errors.ServerUnavailable:
         gearman_status = list()
 
-    return render_to_response('tickets/tickets_home.html', locals(), context_instance=RequestContext(request))
+    tvars = {"new_upload_count": new_upload_count,
+             "tardy_moderator_sounds_count": tardy_moderator_sounds_count,
+             "tardy_user_sounds_count": tardy_user_sounds_count,
+             "sounds_queued_count": sounds_queued_count,
+             "sounds_pending_count": sounds_pending_count,
+             "sounds_processing_count": sounds_processing_count,
+             "sounds_failed_count": sounds_failed_count,
+             "gearman_status": gearman_status,
+             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
+
+    return render(request, 'tickets/tickets_home.html', tvars)
 
 
 def _get_new_uploaders_by_ticket():
@@ -333,16 +335,17 @@ def _get_tardy_user_tickets(limit=None):
     return Ticket.objects.raw(query, [TICKET_STATUS_CLOSED])
 
 
+def _get_sounds_in_moderators_queue_count(user):
+    return Ticket.objects.select_related() \
+        .filter(assignee=user.id) \
+        .exclude(status='closed') \
+        .exclude(content=None) \
+        .order_by('status', '-created').count()
+
+
 @permission_required('tickets.can_moderate')
 def moderation_home(request):
-    if request.user.id:
-        sounds_in_moderators_queue_count = Ticket.objects.select_related()\
-                                                         .filter(assignee=request.user.id)\
-                                                         .exclude(status='closed')\
-                                                         .exclude(content=None)\
-                                                         .order_by('status', '-created').count()
-    else :
-        sounds_in_moderators_queue_count = -1
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
 
     new_sounds_users = _get_new_uploaders_by_ticket()
     unsure_tickets = list(_get_unsure_sound_tickets())  # TODO: shouldn't appear
@@ -350,42 +353,42 @@ def moderation_home(request):
     tardy_user_tickets = list(_get_tardy_user_tickets(5))
     tardy_moderator_tickets_count = len(list(_get_tardy_moderator_tickets()))
     tardy_user_tickets_count = len(list(_get_tardy_user_tickets()))
-    
-    return render_to_response('tickets/moderation_home.html', locals(), context_instance=RequestContext(request))
+
+    tvars = {"new_sounds_users": new_sounds_users,
+             "unsure_tickets": unsure_tickets,
+             "tardy_moderator_tickets": tardy_moderator_tickets,
+             "tardy_user_tickets": tardy_user_tickets,
+             "tardy_moderator_tickets_count": tardy_moderator_tickets_count,
+             "tardy_user_tickets_count": tardy_user_tickets_count,
+             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
+
+    return render(request, 'tickets/moderation_home.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
 def moderation_tardy_users_sounds(request):
-    if request.user.id:
-        sounds_in_moderators_queue_count = Ticket.objects.select_related()\
-            .filter(assignee=request.user.id)\
-            .exclude(status='closed')\
-            .exclude(content=None)\
-            .order_by('status', '-created')\
-            .count()
-    else:
-        sounds_in_moderators_queue_count = -1
-
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
     tardy_user_tickets = list(_get_tardy_user_tickets())
+    paginated = paginate(request, tardy_user_tickets, 10)
 
-    return render_to_response('tickets/moderation_tardy_users.html', combine_dicts(paginate(request, tardy_user_tickets, 10), locals()), context_instance=RequestContext(request))
+    tvars = {"sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
+             "tardy_user_tickets": tardy_user_tickets}
+    tvars.update(paginated)
+
+    return render(request, 'tickets/moderation_tardy_users.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
 def moderation_tardy_moderators_sounds(request):
-    if request.user.id:
-        sounds_in_moderators_queue_count = Ticket.objects.select_related()\
-            .filter(assignee=request.user.id)\
-            .exclude(status='closed')\
-            .exclude(content=None)\
-            .order_by('status', '-created')\
-            .count()
-    else:
-        sounds_in_moderators_queue_count = -1
-
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
     tardy_moderators_tickets = list(_get_tardy_moderator_tickets())
+    paginated = paginate(request, tardy_moderators_tickets, 10)
 
-    return render_to_response('tickets/moderation_tardy_moderators.html', combine_dicts(paginate(request, tardy_moderators_tickets, 10), locals()), context_instance=RequestContext(request))
+    tvars = {"sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
+             "tardy_moderators_tickets": tardy_moderators_tickets}
+    tvars.update(paginated)
+
+    return render(request, 'tickets/moderation_tardy_moderators.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -548,9 +551,10 @@ def moderation_assigned(request, user_id):
     moderation_texts = MODERATION_TEXTS
     show_pagination = moderator_tickets_count > settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
 
-    return render_to_response('tickets/moderation_assigned.html',
-                              combine_dicts(pagination_response, locals()),
-                              context_instance=RequestContext(request))
+    tvars = locals()
+    tvars.update(pagination_response)
+
+    return render(request, 'tickets/moderation_assigned.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -568,9 +572,14 @@ def user_annotations(request, user_id):
     else:
         form = UserAnnotationForm()
     annotations = UserAnnotation.objects.filter(user=user)
-    return render_to_response('tickets/user_annotations.html',
-                              locals(),
-                              context_instance=RequestContext(request))
+
+    tvars = {"user": user,
+             "num_sounds_ok": num_sounds_ok,
+             "num_sounds_pending": num_sounds_pending,
+             "form": form,
+             "annotations": annotations}
+
+    return render(request, 'tickets/user_annotations.html', tvars)
 
 
 def get_pending_sounds(user):
@@ -626,7 +635,14 @@ def pending_tickets_per_user(request, username):
                              processed.""" % (n_unprocessed_sounds, user.username))
 
     moderators_version = True
-    return render_to_response('accounts/pending.html', combine_dicts(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE), locals()), context_instance=RequestContext(request))
+
+    paginated = paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
+    tvars = {"show_pagination": show_pagination,
+             "moderators_version": moderators_version,
+             "user": user}
+    tvars.update(paginated)
+
+    return render(request, 'accounts/pending.html', tvars)
 
 
 @login_required

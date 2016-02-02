@@ -136,10 +136,13 @@
                 <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>
                 {% endif %}
                 {% if perms.can_moderate %}
+                    <li class="separator">Moderators only links</li>
                     <li>Uploaded sounds <a href="{% url tickets-user-pending_sounds user.username %}">pending moderation</a></li>
                     <li><a href="{% url forums-search %}?f=post_author:%22{{ user.username }}%22">All forum posts</a> by {{ user.username }}</li>
+                    <li><a href="{% url comments-by-user user.username %}">All comments</a> by {{ user.username }}</li>
                 {% endif %}
                 {% if request.user.is_staff %}
+                    <li class="separator">Admin only links</li>
                     <li><a id="admin_link" class="icon" href="{% url admin:auth_user_change user.id %}">Edit user in the admin</a></li>
                 {% endif %}
 

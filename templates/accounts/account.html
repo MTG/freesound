@@ -124,12 +124,6 @@
                 {% if user.profile.num_sounds %}
                 <li>Number of sounds: {{user.profile.num_sounds}}
                 {% endif %}
-                {% if perms.can_moderate %}
-                    {% if not user.profile.num_sounds %}
-                        <li>Number of sounds: {{user.profile.num_sounds}}</li>
-                    {% endif %}
-                    (<a href="{% url tickets-user-pending_sounds user.username %}">pending sounds</a>)
-                {% endif %}
                 {% if user.profile.num_posts %}
                 <li>Number of forum posts: {{user.profile.num_posts}}</li>
                 {% endif %}

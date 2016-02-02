@@ -743,6 +743,10 @@ def account(request, username):
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
+    if request.user.has_perm('tickets.can_moderate'):
+        num_sounds_pending_count = user.profile.num_sounds_pending_moderation()
+    else:
+        num_sounds_pending_count = None
 
     tvars = {
         'home': False,
@@ -760,6 +764,7 @@ def account(request, username):
         'unfollow_user_url': unfollow_user_url,
         'show_unfollow_button': show_unfollow_button,
         'has_bookmarks': has_bookmarks,
+        'num_sounds_pending_count': num_sounds_pending_count,
     }
     return render(request, 'accounts/account.html', tvars)
 

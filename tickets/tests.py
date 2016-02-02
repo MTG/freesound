@@ -18,10 +18,16 @@
 #     See AUTHORS file.
 #
 
+import hashlib
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from models import Ticket, Queue, LinkedContent
 from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
+from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
+
+import sounds
+import tickets
 
 
 class TicketsTest(TestCase):
@@ -53,3 +59,53 @@ class TicketsTest(TestCase):
         ticket.content.save()
         self.assertEqual(User.objects.get(username='test_admin').id, 
                          ticket.content.object_id)
+
+    def _create_test_sound(self, moderation_state, processing_state, user, filename):
+        sound = sounds.models.Sound.objects.create(
+                moderation_state=moderation_state,
+                processing_state=processing_state,
+                license=sounds.models.License.objects.get(pk=1),
+                user=user,
+                md5=hashlib.md5(filename).hexdigest(),
+                original_filename=filename)
+        return sound
+
+    def _create_ticket(self, sound, user):
+        ticket = tickets.models.Ticket.objects.create(
+                title='Moderate sound test_sound.wav',
+                source=TICKET_SOURCE_NEW_SOUND,
+                status=TICKET_STATUS_NEW,
+                queue=Queue.objects.get(name='sound moderation'),
+                sender=user,
+                content=LinkedContent.objects.create(content_object=sound),
+        )
+        return ticket
+
+    def test_new_sound_tickets_count(self):
+        test_user = User.objects.get(username='test_user')
+        sound = self._create_test_sound(moderation_state='PE', processing_state='OK',
+                                        user=test_user, filename='test_sound1.wav')
+        self._create_ticket(sound, test_user)
+
+        # New ticket for a moderated sound doesn't count
+        moderated_sound = self._create_test_sound(moderation_state='OK', processing_state='OK',
+                                                  user=test_user, filename='test_sound2.wav')
+        self._create_ticket(moderated_sound, test_user)
+
+        # Accepted ticket doesn't count
+        accepted_sound = self._create_test_sound(moderation_state='PE', processing_state='OK',
+                                                 user=test_user, filename='test_sound3.wav')
+        acc_ticket = self._create_ticket(accepted_sound, test_user)
+        acc_ticket.status = tickets.TICKET_STATUS_ACCEPTED
+        acc_ticket.save()
+
+        # Ticket with an assigned moderator doesn't count
+        assigned_sound = self._create_test_sound(moderation_state='PE', processing_state='OK',
+                                                 user=test_user, filename='test_sound4.wav')
+        assigned_ticket = self._create_ticket(assigned_sound, test_user)
+        test_moderator = User.objects.get(username='test_moderator')
+        assigned_ticket.assignee = test_moderator
+        assigned_ticket.save()
+
+        count = tickets.views.new_sound_tickets_count()
+        self.assertEqual(1, count)

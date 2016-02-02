@@ -1020,6 +1020,17 @@ h3.header,
     font-family: Arial, sans-serif;
 }
 
+#single_sample_ratings {
+    margin-top: 30px;
+    margin-bottom: -10px;
+    color: #CECECE;
+    font-weight: bold;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
 #single_sample_player {
     clear: both;
     padding: 12px 10px 7px 10px;
@@ -1105,7 +1116,7 @@ ul.tags {
 }
 
 #download {
-    padding: 20px 0 20px 25px;
+    padding: 20px 0px 20px 25px;
 }
 
 #not_yet_downloadable {

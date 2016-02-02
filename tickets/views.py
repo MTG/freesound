@@ -83,6 +83,19 @@ def ticket(request, ticket_key):
     clean_status_forms = True
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
+    if ticket.content:
+        # Becuase it can happen that some tickets have linked content which has dissapeared or on deletion time the ticket
+        # has not been propertly updated, we need to check whether the sound that is linked does in fact exist. If it does
+        # not, we set the linked content to None and the status of the ticket to closed as should have been set at sound
+        # deletion time.
+        sound_id = ticket.content.object_id
+        try:
+            Sound.objects.get(id=sound_id)
+        except Sound.DoesNotExist:
+            ticket.content = None
+            ticket.status = TICKET_STATUS_CLOSED
+            ticket.save()
+
     if request.method == 'POST':
 
         invalidate_template_cache("user_header", ticket.sender.id)
@@ -535,17 +548,19 @@ def moderation_assigned(request, user_id):
                        .order_by('status', '-created')
     pagination_response = paginate(request, qs, settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE)
     pagination_response['page'].object_list = list(pagination_response['page'].object_list)
+    # Because some tickets can have linked content which has disappeared or on deletion time the ticket
+    # has not been properly updated, we need to check whether the sound that is linked does in fact exist. If it does
+    # not, we set the linked content to None and the status of the ticket to closed as should have been set at sound
+    # deletion time.
     for ticket in pagination_response['page'].object_list:
         sound_id = ticket.content.object_id
         try:
             Sound.objects.get(id=sound_id)
         except Sound.DoesNotExist:
             pagination_response['page'].object_list.remove(ticket)
-            try:
-                # Try to delete ticket so error does not happen again
-                ticket.delete()
-            except:
-                pass
+            ticket.content = None
+            ticket.status = TICKET_STATUS_CLOSED
+            ticket.save()
 
     moderator_tickets_count = qs.count()
     moderation_texts = MODERATION_TEXTS

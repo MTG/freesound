@@ -2386,6 +2386,13 @@ div.about {
     display:inline;
 }
 
+.account_information_and_home_options li.separator {
+    list-style-type: none;
+    color: gray;
+    margin-top: 5px;
+    margin-left: -18px;
+}
+
 #unmoderated_sounds {
     font-size: 10px;
 }

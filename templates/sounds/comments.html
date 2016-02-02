@@ -5,15 +5,28 @@
 {% load display_sound %}
 {% load flag_user %}
 
-{% block title %}Latest comments{% endblock title %}
+{% block title %}
+    {% if mode == "by_user" %}
+        Comments by {{ user.username }}
+    {% elif mode == "for_user" %}
+        Comments for sounds by {{ user.username }}
+    {% elif mode == "latest" %}
+        Latest comments
+    {% endif %}
+{% endblock title %}
 
 {% block section_content %}
 
-<h1>Latest comments</h1>
+{% if mode == "by_user" %}
+    <h1>Comments by <a href="{% url account user.username %}">{{user.username}}</a></h1>
+{% elif mode == "for_user" %}
+    <h1>Comments for sounds by <a href="{% url account user.username %}">{{user.username}}</a></h1>
+{% elif mode == "latest" %}
+    <h1>Latest comments</h1>
+{% endif %}
 
-<p>{% show_paginator paginator page current_page request "comments" %}</p>
-
-<ul id="comments">
+{% show_paginator paginator page current_page request "comment" %}
+<ul id="comments" style="margin-top:-20px;">
     {% for comment in comments %}
     <li>
         <div style="float:right; text-align: right; font-size: 10px">
@@ -28,14 +41,8 @@
         <div style="margin-top:10px;">
             On sound:  <a class="title" href="{% url sound comment.sound_object.user.username comment.sound_object.id %}" title="{{comment.sound_object.original_filename}}">{{comment.sound_object.original_filename|truncate_string:27}}</a> by <a href="{% url account comment.sound_object.user.username %}">{{comment.sound_object.user.username}}</a>
         </div>
-
-
-
     </li>
     {% endfor %}
-</ul>
-<p></p>
-
-{% show_paginator paginator page current_page request "comments" %}
-
+</ul><p></p>
+{% show_paginator paginator page current_page request "comment" %}
 {% endblock %}

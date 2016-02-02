@@ -625,7 +625,7 @@ def get_num_pending_sounds(user):
                  WHERE (ticket.sender_id = %s
                    AND NOT (ticket.status = 'closed' ))
                    AND sound.id IS NOT NULL
-                   AND sound.moderation_state = 'PE'
+                   AND sound.moderation_state != 'OK'
                    AND sound.processing_state = 'OK'
     """, [user.id])
     return len(list(tickets))

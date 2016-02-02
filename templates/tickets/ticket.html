@@ -14,6 +14,7 @@
             <li><em>created by</em>
                  {% if ticket.sender %}
                         <a href="{% url account ticket.sender.username %}">{{ ticket.sender.username }}</a>
+                        (<a href="{% url tickets-user-pending_sounds ticket.sender.username %}">{{ num_sounds_pending }} pending</a>)
                  {% else %}
                      anonymous
                  {% endif %}</li>

@@ -219,4 +219,5 @@ class FlagForm(RecaptchaForm):
         f = Flag()
         f.reason_type = self.cleaned_data['reason_type']
         f.reason = self.cleaned_data['reason']
+        f.email = self.cleaned_data['email']
         return f

@@ -27,7 +27,7 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import connection
 from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
-from django.shortcuts import render_to_response, get_object_or_404, render
+from django.shortcuts import render_to_response, get_object_or_404, render, redirect
 from django.template import RequestContext
 from django.http import HttpResponse
 from accounts.models import Profile
@@ -668,29 +668,37 @@ def flag(request, username, sound_id):
         raise Http404
 
     user = None
-    email = None
     if request.user.is_authenticated():
         user = request.user
-        email = request.user.email
 
     if request.method == "POST":
         flag_form = FlagForm(request, request.POST)
         if flag_form.is_valid():
             flag = flag_form.save()
-            flag.reporting_user=user
+            flag.reporting_user = user
             flag.sound = sound
             flag.save()
 
-            send_mail_template(u"[flag] flagged file", "sounds/email_flag.txt", dict(flag=flag), flag.email)
+            if user:
+                user_email = user.email
+            else:
+                user_email = flag_form.cleaned_data["email"]
 
-            return HttpResponseRedirect(sound.get_absolute_url())
+            from_email = settings.DEFAULT_FROM_EMAIL
+            send_mail_template(u"[flag] flagged file", "sounds/email_flag.txt",
+                               {"flag": flag}, from_email, reply_to=user_email)
+
+            return redirect(sound)
     else:
+        initial = {}
         if user:
-            flag_form = FlagForm(request,initial=dict(email=email))
-        else:
-            flag_form = FlagForm(request)
+            initial["email"] = user.email
+        flag_form = FlagForm(request, initial=initial)
 
-    return render_to_response('sounds/sound_flag.html', locals(), context_instance=RequestContext(request))
+    tvars = {"sound": sound,
+             "flag_form": flag_form}
+
+    return render(request, 'sounds/sound_flag.html', tvars)
 
 
 def __redirect_old_link(request, cls, url_name):

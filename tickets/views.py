@@ -173,7 +173,7 @@ def ticket(request, ticket_key):
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
 
-    num_sounds_pending = Sound.objects.filter(user=ticket.sender).exclude(moderation_state="OK").count()
+    num_sounds_pending = ticket.sender.profile.num_sounds_pending_moderation()
     tvars = {"ticket": ticket,
              "num_sounds_pending": num_sounds_pending,
              "tc_form": tc_form,

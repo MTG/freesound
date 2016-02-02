@@ -65,9 +65,13 @@
                 {% if ticket.content.content_object.is_sound %}
                     <div class="sound_list_moderation">
                         {% display_sound ticket.content.content_object %}
-
-                        <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><a href="{% url sound-edit ticket.sender.username ticket.content.object_id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a></li></ul>
-
+                        {% if perms.sound.can_edit or ticket.content.content_object.user == request.user %}
+                            {% if ticket.content.content_object.processing_state == 'OK' %}
+                                <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><a href="{% url sound-edit ticket.sender.username ticket.content.object_id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a></li></ul>
+                            {% else %}
+                                <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><em>Sound is processing, cannot edit.</em></li></ul>
+                            {% endif %}
+                        {% endif %}
                     </div>
                     <p>Sound's moderation state is set to <b>{% if ticket.content.content_object.moderation_state == 'PE' %}
                                                                 Pending {% else %} OK {% endif %}</b>

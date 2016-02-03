@@ -135,7 +135,7 @@
                 {% if has_bookmarks %}
                 <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>
                 {% endif %}
-                {% if perms.can_moderate %}
+                {% if perms.tickets.can_moderate %}
                     <li class="separator">Moderators only links</li>
                     <li>Uploaded sounds <a href="{% url tickets-user-pending_sounds user.username %}">pending moderation ({{ num_sounds_pending_count }})</a></li>
                     <li><a href="{% url forums-search %}?f=post_author:%22{{ user.username }}%22">All forum posts</a> by {{ user.username }}</li>

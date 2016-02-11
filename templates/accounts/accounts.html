@@ -17,7 +17,7 @@
         {% include "accounts/active_user_and_content.html" %}
      {% endfor %} <br class="clear" /><!-- clear #most_active_users -->
     </div><!-- #most_active_users -->
-    
+
     <div id="newest_active_users" class="content_box">
     <h3>Newest active users</h3>
      {% for user in new_users %}
@@ -27,25 +27,25 @@
 
 </div><!-- #content -->
 <div id="sidebar">
-    <div id="all_time_most_active_users" class="content_box">   
+    <div id="all_time_most_active_users" class="content_box">
     <h3>All time most active users</h3>
-    
+
      {% for user in all_time_most_active_users %}
         {% include "accounts/active_user.html" %}
      {% endfor %} <br class="clear" />
     </div><!-- #users_currently_online -->
 
-    <div id="users_currently_online" class="content_box">   
+    <div id="users_currently_online" class="content_box">
     <h3>Users currently online ({{logged_users|length}})</h3>
     <div id="users_currently_online_box">
-    {% for user in logged_users %}     
-        
+    {% for user in logged_users %}
+
         <div class="online_user">
-            <a href="{% url account user.username %}">
+            <a href="{% url "account" user.username %}">
                 <img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" class="currently_online_avatar" title="{{user.username}}" />
             </a>
         </div>
-        
+
     {% endfor %}
     </div>
     </div><!-- #users_currently_online -->

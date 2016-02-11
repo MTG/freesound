@@ -7,7 +7,7 @@
 {% block title %}Uploaded sounds awaiting moderation{% endblock title %}
 {% block section_content %}
 
-    <h2>Uploaded sounds awaiting moderation {% if moderators_version %} by  <a class="title" href="{% url account user.username %}">{{user.username}}</a>{% endif %}</h2>
+    <h2>Uploaded sounds awaiting moderation {% if moderators_version %} by  <a class="title" href="{% url "account" user.username %}">{{user.username}}</a>{% endif %}</h2>
 
     {% if show_pagination %}
         {% show_paginator paginator page current_page request "moderation ticket" %}
@@ -24,7 +24,7 @@
 
                     <div class="sound_title">
                         <div class="sound_filename">
-                            <a class="title" href="{% url sound sound.user.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
+                            <a class="title" href="{% url "sound" sound.user.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
                         </div><!-- .sound_filename -->
 
                         <div class="sound_description">
@@ -34,7 +34,7 @@
                         <div class="sound_tags">
                             <ul class="tags">
                                 {% for tag_link in sound.tags.all %}
-                                    <li><a href="{% url tags tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
+                                    <li><a href="{% url "tags" tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
                                 {% endfor %}
                             </ul>
                             <br style="clear: both;"/>
@@ -45,9 +45,9 @@
 
                     <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
                     {% if not moderators_version %}
-                        <a href="{% url sound-edit sound.user.username sound.id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a><br />
+                        <a href="{% url "sound-edit" sound.user.username sound.id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a><br />
                     {% endif %}
-                    See full <a href="{% url tickets-ticket ticket.key %}">moderation ticket</a><br />
+                    See full <a href="{% url "tickets-ticket" ticket.key %}">moderation ticket</a><br />
                     {% with comments|first as last_comment %}
                         {% ifnotequal last_comment.sender_id user.id %}
                             <br><img src="{{media_url}}images/info_red.png" width="12" height="12" valign="middle" />
@@ -60,10 +60,10 @@
 
         {% comment %}
         <div class='last-ticket-comments'>
-            <p>Last comment{{ comments|length|pluralize}} on <a href="{% url tickets-ticket ticket.key %}">moderation ticket</a>:
+            <p>Last comment{{ comments|length|pluralize}} on <a href="{% url "tickets-ticket" ticket.key %}">moderation ticket</a>:
                 <ul>
                     {% for comment in comments %}
-                        <li><a href="{% url account comment.sender %}">{{ comment.sender }}</a> <span id="time-since">({{ comment.created|timesince}} ago)</span>: <i>{{ comment.text }}</i></li>
+                        <li><a href="{% url "account" comment.sender %}">{{ comment.sender }}</a> <span id="time-since">({{ comment.created|timesince}} ago)</span>: <i>{{ comment.text }}</i></li>
                     {% endfor %}
                 </ul>
             </p>
@@ -81,7 +81,7 @@
     {% if moderators_version %}
         <script type="text/javascript">
             $(document).ready(function (){
-                var loadUrl = '{% url tickets-user-annotations 0 %}'.replace('0', ''+ {{ user.id }});
+                var loadUrl = '{% url "tickets-user-annotations" 0 %}'.replace('0', ''+ {{ user.id }});
                 $('#user-annotations-section').load(loadUrl);
             });
         </script>

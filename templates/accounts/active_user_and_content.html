@@ -1,5 +1,6 @@
 {% load cache %}
 {% cache 3600 active_user_and_content user.0.id %}
+{% load url from future %}
 
 {% load active_user_content %}
 

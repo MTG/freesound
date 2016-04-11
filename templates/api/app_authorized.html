@@ -1,5 +1,5 @@
 {% extends "accounts/_section.html" %}
-{% block title %}{{user.username}} - Acces granted{% endblock %}
+{% block title %}{{user.username}} - Access granted{% endblock %}
 
 {% block content %}
 
@@ -15,14 +15,14 @@
             <div style="font-size:20px;font-family:'Courier';text-align: center; margin-bottom: 20px">{{ code }}</div>
 
             <p>
-                Once the code is introduced, the API application will have permissions to acces your data.
+                Once the code is introduced, the API application will have permissions to access your data.
                 Permissions can be revoked at any time by visiting your settings page.
             </p>
 
         {% else %}
 
             <h1>Ops! there were some errors...</h1>
-            <p>You should probably start again the authorization process from the 3rd party application!</p>
+            <p>You should probably start the authorization process from the 3rd party application again!</p>
 
         {% endif %}
 

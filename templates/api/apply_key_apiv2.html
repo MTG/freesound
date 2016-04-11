@@ -1,5 +1,6 @@
 {% extends "accounts/_section.html" %}
 {% load util %}
+{% load url from future %}
 
 {% block title %}{{user.username}} - Freesound API access credentials{% endblock %}
 
@@ -28,18 +29,18 @@
             <td>{{ credential.client_secret }}</td>
             {% comment %}<td>{{ credential.get_scope_display }}</td>{% endcomment %}
             <td>{{ credential.redirect_uri|truncate_string:20 }}</td>
-            <td><a href="{% url apiv2-edit-credential credential.client_secret %}">edit</a></td>
-            <td><a href="{% url apiv2-delete-credential credential.client_secret %}">delete</a></td>
+            <td><a href="{% url "apiv2-edit-credential" credential.client_secret %}">edit</a></td>
+            <td><a href="{% url "apiv2-delete-credential" credential.client_secret %}">delete</a></td>
 
             {% comment %}<td>{{ credential.status }}</td>{% endcomment %}
         </tr>
     {% endfor %}
     </table>
-    
+
     <h3>Get a new credential</h3>
-    
+
     <form action="" method="post" enctype="multipart/form-data">
-    
+
         {% csrf_token %}
         <table>
             {{ form.as_table }}
@@ -57,6 +58,6 @@
         </p>
 
     </form>
-    
+
 
 {% endblock %}

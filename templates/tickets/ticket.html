@@ -1,4 +1,5 @@
 {% extends "tickets/_section.html" %}
+{% load url from future %}
 {% load display_sound %}
 
 {% block title %}
@@ -13,8 +14,8 @@
         <ul id="ticket-details-left">
             <li><em>created by</em>
                  {% if ticket.sender %}
-                        <a href="{% url account ticket.sender.username %}">{{ ticket.sender.username }}</a>
-                        (<a href="{% url tickets-user-pending_sounds ticket.sender.username %}">{{ num_sounds_pending }} pending</a>)
+                        <a href="{% url "account" ticket.sender.username %}">{{ ticket.sender.username }}</a>
+                        (<a href="{% url "tickets-user-pending_sounds" ticket.sender.username %}">{{ num_sounds_pending }} pending</a>)
                  {% else %}
                      anonymous
                  {% endif %}</li>
@@ -53,9 +54,9 @@
                 </form>
             </div>
             {% else %}
-            <p>Please <a href="{% url accounts-login %}?next={% url tickets-ticket ticket.key %}">log in</a> to add messages</center>
+            <p>Please <a href="{% url "accounts-login" %}?next={% url "tickets-ticket" ticket.key %}">log in</a> to add messages</center>
             {% endif %}
-            
+
         </div> <!-- /#ticket-left -->
 
         <div id="ticket-right">
@@ -67,7 +68,7 @@
                         {% display_sound ticket.content.content_object %}
                         {% if perms.sound.can_edit or ticket.content.content_object.user == request.user %}
                             {% if ticket.content.content_object.processing_state == 'OK' %}
-                                <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><a href="{% url sound-edit ticket.sender.username ticket.content.object_id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a></li></ul>
+                                <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><a href="{% url "sound-edit" ticket.sender.username ticket.content.object_id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a></li></ul>
                             {% else %}
                                 <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><em>Sound is processing, cannot edit.</em></li></ul>
                             {% endif %}

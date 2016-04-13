@@ -1,4 +1,5 @@
 {% extends "tickets/_section.html" %}
+{% load url from future %}
 
 {% block title %}
     Sound Moderation
@@ -18,9 +19,9 @@
                     <img src="{{user.profile.locations.avatar.L.url}}"/>
                     </div>
                     <div class="moderation-user-list-user-right">
-                        <p><a href="{% url account user.username %}">{{ user.username }}</a>
-                        <br><a href="{% url tickets-user-pending_sounds user.username %}">{{ new_count }} new sounds</a>, {{ time }} day{{ time|pluralize }} in queue
-                        <br><a href="{% url tickets-moderation-assign-user user.id %}">
+                        <p><a href="{% url "account" user.username %}">{{ user.username }}</a>
+                        <br><a href="{% url "tickets-user-pending_sounds" user.username %}">{{ new_count }} new sounds</a>, {{ time }} day{{ time|pluralize }} in queue
+                        <br><a href="{% url "tickets-moderation-assign-user" user.id %}">
                             <img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
                     </div>
                 </div>
@@ -34,40 +35,40 @@
     {% endif %}
 
     {% if tardy_moderator_tickets %}
-        <h3>Sounds by tardy moderators {% if tardy_moderator_tickets_count > 5 %} (only showing first 5, {{tardy_moderator_tickets_count}} in total, <a href="{% url tickets-moderation-tardy-moderators %}">see all</a>) {% endif %}</h3>
+        <h3>Sounds by tardy moderators {% if tardy_moderator_tickets_count > 5 %} (only showing first 5, {{tardy_moderator_tickets_count}} in total, <a href="{% url "tickets-moderation-tardy-moderators" %}">see all</a>) {% endif %}</h3>
         <p>Sounds in this list have already been assigned to a moderator but have still not been moderated. Feel free to moderate any of these sounds.</p>
         {% for ticket in tardy_moderator_tickets %}
-            
+
             <div style="height:90px;">
             {% include 'tickets/ticket_sound.html' %}
             </div>
-            
+
             <div style="margin-top:-17px;height:30px;width:100px;margin-bottom:20px">
             {% if ticket.assignee.id != request.user.id %}
-            	<a style="font-size:10px" href="{% url tickets-moderation-assign-signle-ticket user.id ticket.id %}">
+            	<a style="font-size:10px" href="{% url "tickets-moderation-assign-signle-ticket" user.id ticket.id %}">
             	<img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
             {% endif %}
             </div>
-            
+
         {% endfor %}
         <br>
     {% endif %}
 
     {% if tardy_user_tickets %}
-        <h3>Sounds by tardy users {% if tardy_user_tickets_count > 5 %} (only showing first 5, {{tardy_user_tickets_count}} in total, <a href="{% url tickets-moderation-tardy-users %}">see all</a>) {% endif %}</h3>
+        <h3>Sounds by tardy users {% if tardy_user_tickets_count > 5 %} (only showing first 5, {{tardy_user_tickets_count}} in total, <a href="{% url "tickets-moderation-tardy-users" %}">see all</a>) {% endif %}</h3>
         <p>Sounds in this list belong to users that are not responding to moderators requests.</p>
         {% for ticket in tardy_user_tickets %}
             <div style="height:90px;">
             {% include 'tickets/ticket_sound.html' %}<br>
             </div>
-            
+
             <div style="margin-top:-17px;height:30px;width:100px;margin-bottom:20px">
             {% if ticket.assignee.id != request.user.id %}
-            	<a style="font-size:10px" href="{% url tickets-moderation-assign-signle-ticket user.id ticket.id %}">
+            	<a style="font-size:10px" href="{% url "tickets-moderation-assign-signle-ticket" user.id ticket.id %}">
             	<img src="{{media_url}}images/moderation_plus.png"/>Assign to me</a>
             {% endif %}
             </div>
-            
+
         {% endfor %}
     {% endif %}
 
@@ -82,6 +83,6 @@
 
     <h3>Moderate your assigned sounds</h3>
     <p>After assigning new sounds to yourself, go to
-    <a href="{% url tickets-moderation-assigned request.user.id %}">your sound queue</a>
+    <a href="{% url "tickets-moderation-assigned" request.user.id %}">your sound queue</a>
     to start moderating.</p>
 {% endblock section_content %}

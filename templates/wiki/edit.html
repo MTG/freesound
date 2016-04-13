@@ -1,4 +1,5 @@
 {% extends "wiki/_section.html" %}
+{% load url from future %}
 
 {% block title %}help - {{name}}{% endblock %}
 
@@ -7,7 +8,7 @@
 <h1>Editing {{name}}</h1>
 {% if content %}
 <ul>
-    <li><strong>version</strong>: {{content.id}} - <a href="{% url wiki-page-history name %}">history and comparison</a></li>
+    <li><strong>version</strong>: {{content.id}} - <a href="{% url "wiki-page-history" name %}">history and comparison</a></li>
 	<li><strong>previous edit date</strong>: {{content.created}}</li>
 	{% if content.author %}
 	<li><strong>previous author</strong>: {{content.author.username}}</li>

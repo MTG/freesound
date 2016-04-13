@@ -1,4 +1,5 @@
 {% extends "messages/_section.html" %}
+{% load url from future %}
 
 {% block tab_messages_new_active %}active{% endblock %}
 
@@ -9,9 +10,9 @@
 <script type="text/javascript" src="{{media_url}}js/jquery.autocomplete.min.js"></script>
 <script>
     $(function() {
-        $('#id_to').autocomplete('{% url messages-username_lookup %}', {
+        $('#id_to').autocomplete('{% url "messages-username_lookup" %}', {
             dataType: 'json',
-            width: 500,  
+            width: 500,
             max: 50,
             parse: function(data) {
                 return $.map(data, function(row) {

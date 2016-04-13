@@ -1,8 +1,9 @@
 {% extends "forum/_section.html" %}
+{% load url from future %}
 
 {% block title %}forum - reply{% endblock %}
 
-{% block breadcrumb %} &#187; <a href="{% url forums-reply forum.name_slug thread.id %}">Post Reply</a>{% endblock %}
+{% block breadcrumb %} &#187; <a href="{% url "forums-reply" forum.name_slug thread.id %}">Post Reply</a>{% endblock %}
 
 {% block forum_search %}{% endblock %}
 
@@ -17,7 +18,7 @@
 <div style="height:400px; overflow: auto; margin: 10px;">
 {% for post in latest_posts %}
     <p>
-    <a href="{% url account post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago:</br>
+    <a href="{% url "account" post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago:</br>
     {{post.body|safe|linebreaks}}
     </p>
 {% endfor %}

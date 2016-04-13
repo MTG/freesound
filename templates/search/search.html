@@ -1,4 +1,5 @@
 {% extends "sounds/_section.html" %}
+{% load url from future %}
 
 {% load display_sound %}
 {% load paginator %}
@@ -9,7 +10,7 @@
 
 {% block section_content %}
 
-<form id="search_form" method="get" onsubmit="return addAdvancedSearchOptionsFilters()"  action="{% url sounds-search %}">
+<form id="search_form" method="get" onsubmit="return addAdvancedSearchOptionsFilters()"  action="{% url "sounds-search" %}">
     <fieldset>
 
        <input id="query_input" type="text" name="q" value="{{search_query}}" size="30" />
@@ -357,7 +358,7 @@
 
                 {% if result.more_from_pack %}
                         {% comment %}<div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='javascript:addFilter("pack", "{{result.pack_name|escapejs}}")'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>{% endcomment %}
-                        <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url sounds-search  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>
+                        <div class="sample_more_search_results"><img src="{{media_url}}images/plus.png" alt="" /> <a href='{% url "sounds-search"  %}?q={{ search_query }}&f=grouping_pack:"{{ result.pack_id }}_{{ result.pack_name }}" {{filter_query_link_more_when_grouping_packs }}&s="{{ sort.0 }}"&g={{ grouping }}&advanced={{ advanced }}&a_tag={{ a_tag }}&a_filename={{ a_filename }}&a_description={{ a_description }}&a_packname={{ a_packname }}&a_soundid={{ a_soundid }}&a_username={{ a_username }}'>{{result.more_from_pack}} more result{{ result.more_from_pack|pluralize  }}</a> in the same pack "{{ result.pack_name|truncate_string:35 }}"</div>
                 {% endif %}
             {% endfor %}
 

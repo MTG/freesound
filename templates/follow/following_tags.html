@@ -1,4 +1,5 @@
 {% extends "accounts/_notab.html" %}
+{% load url from future %}
 
 {% block title %}{% if is_owner %}Tags you are following{% else %}Tags followed by {{ user.username }}{% endif %}{% endblock %}
 
@@ -8,7 +9,7 @@
 {% block section_content %}
 
 
-<h1>{% if is_owner %}Tags that you are following{% else %}Tags followed by <a href="{% url account user.username %}">{{ user.username }}</a>{% endif %}</h1>
+<h1>{% if is_owner %}Tags that you are following{% else %}Tags followed by <a href="{% url "account" user.username %}">{{ user.username }}</a>{% endif %}</h1>
 
 
 
@@ -20,7 +21,7 @@
 
 	<ul>
         {% for space_tags, slash_tags, split_tags in following_tags %}
-            <span class="tag_group" onclick="location.href='{% url tags slash_tags %}'">
+            <span class="tag_group" onclick="location.href='{% url "tags" slash_tags %}'">
             <ul class="tags" id="following_tags">
             {% for tag in split_tags %}
                 <li><a>{{ tag }}</a></li>
@@ -29,9 +30,9 @@
         {% endfor %}
 
     </ul>
-	</div>  
+	</div>
 {% else %}
-    <h3>&nbsp;</h3>  
+    <h3>&nbsp;</h3>
 	<p>{% if is_owner %}You are{% else %}{{ user.username }} is {% endif %} not following any tags yet.</p>
 {% endif %}
 </div>
@@ -40,8 +41,8 @@
 <div class="content_box">
     <h3>More...</h3>
     <ul>
-        <li><a href="{% url user-following-users user.username  %}">Users that {% if is_owner %}you are{% else %}{{ user.username }} is{% endif %} following</a></li>
-        <li><a href="{% url user-followers user.username  %}">Users following {% if is_owner %}you{% else %}{{ user.username }}{% endif %}</a></li>
+        <li><a href="{% url "user-following-users" user.username  %}">Users that {% if is_owner %}you are{% else %}{{ user.username }} is{% endif %} following</a></li>
+        <li><a href="{% url "user-followers" user.username  %}">Users following {% if is_owner %}you{% else %}{{ user.username }}{% endif %}</a></li>
     </ul>
 </div>
 </div>

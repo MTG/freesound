@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load url from future %}
 {% load display_sound %}
 {% block title %}Activity stream{% endblock title %}
 {% block tab_home_active %}active_tab{% endblock %}
@@ -58,8 +59,8 @@
     </script>
 
     <h1>Activity stream</h1>
-    <p>In this page you'll see new sounds uploaded by <a href="{% url user-following-users request.user %}">users you follow</a> and new sounds tagged with the <a href="{% url user-following-tags request.user %}">tags you follow</a>.<br>
-       You can configure email notifications for updates in your activity stream through your <a href="{% url accounts-edit %}">settings</a> page.</p>
+    <p>In this page you'll see new sounds uploaded by <a href="{% url "user-following-users" request.user %}">users you follow</a> and new sounds tagged with the <a href="{% url "user-following-tags" request.user %}">tags you follow</a>.<br>
+       You can configure email notifications for updates in your activity stream through your <a href="{% url "accounts-edit" %}">settings</a> page.</p>
 
     <form action="." method="post">
         {% csrf_token %}
@@ -107,7 +108,7 @@
                             {% display_sound sound_obj %}
                         {% endfor %}
                         {% if more_count > 0 %}
-                           <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
+                           <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
                         {% endif %}
                     </div>
 
@@ -145,13 +146,13 @@
                             {% display_sound sound_obj %}
                         {% endfor %}
                         {% if more_count > 0 %}
-                           <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url sounds-search %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
+                           <p><img src="{{media_url}}images/plus.png" alt="">&nbsp;<a href='{% url "sounds-search" %}?f={{ more_url_params.0 }}&s={{ more_url_params.1 }}'>See all results ({{ more_count }} more)</a></p>
                         {% endif %}
                     </div>
 
                     <div class="stream-right" id="following_tags">
                         <a id="{{ tags|join:"/" }}"></a>
-                        <div class="tag_group" onclick="location.href='{% url tags tags|join:"/" %}'">
+                        <div class="tag_group" onclick="location.href='{% url "tags" tags|join:"/" %}'">
                             <ul class="tags" id="following_tags">
                                 {% for tag in tags %}
                                     <li><a>{{ tag }}</a></li>

@@ -1,4 +1,5 @@
 {% extends "accounts/_section.html" %}
+{% load url from future %}
 
 {% load paginator %}
 
@@ -6,7 +7,7 @@
 
 {% block content %}
 
-<h1>Users that downloaded <a href="{% url sound username sound.id %}">{{ sound.original_filename }}</a></h1>
+<h1>Users that downloaded <a href="{% url "sound" username sound.id %}">{{ sound.original_filename }}</a></h1>
 
 {% if paginator.count > 0 %}
     <div class="search_paginator">
@@ -21,7 +22,7 @@
 		        <div class="active_user">
 		    		<div class="active_user_info">
 		        		<img src="{{user.profile.locations.avatar.M.url}}" alt="avatar" />
-		        		<div class="post_author"><a href="{% url account user.username %}">{{user.username}}</a></div><!-- .post_author -->
+		        		<div class="post_author"><a href="{% url "account" user.username %}">{{user.username}}</a></div><!-- .post_author -->
 		        			<div class="people_user_info">
 					            {{user.profile.num_sounds}} sound{{user.profile.num_sounds|pluralize}} ,
 					            {{user.profile.num_posts}} post{{user.profile.num_posts|pluralize}}<br>

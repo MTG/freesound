@@ -1,4 +1,5 @@
 {% extends "sounds/_section.html" %}
+{% load url from future %}
 
 {% block title %}&quot;{{sound.original_filename}}&quot; by {{sound.user.username}} - geotag{% endblock title %}
 
@@ -10,8 +11,8 @@
 {% block section_content %}
 <h1>Geotag</h1>
 <p>
-    This map displays the geotag of the sound <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a>.<br />
-    For the full map of all geotags see our <a href="{% url geotags %}">global geotag map</a>
+    This map displays the geotag of the sound <a href="{% url "sound" sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url "account" sound.user.username %}">{{sound.user.username}}</a>.<br />
+    For the full map of all geotags see our <a href="{% url "geotags" %}">global geotag map</a>
 </p>
 <div id="map_canvas" style="width: 800px; height: 600px; border: 1px solid black;"></div>
 <script type="text/javascript">
@@ -34,7 +35,7 @@
     google.maps.event.addListener(marker, 'click', function()
     {
         stopAll();
-        ajaxLoad( "{% url geotags-infowindow sound.id %}", function(data, responseCode)
+        ajaxLoad( "{% url "geotags-infowindow" sound.id %}", function(data, responseCode)
         {
             infowindow.setContent(data.response);
             infowindow.open(map, marker);

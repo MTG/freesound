@@ -1,3 +1,4 @@
+{% load url from future %}
 {% load cache %}
 {% load util %}
 {% load ratings %}
@@ -19,7 +20,7 @@
 
         <div class="sound_title">
             <div class="sound_filename">
-               <a class="title" href="{% url sound sound.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
+               <a class="title" href="{% url "sound" sound.username sound.id %}" title="{{sound.original_filename}}">{{sound.original_filename|truncate_string:27}}</a>
             </div><!-- .sound_filename -->
             <div class="sound_stars">
                <ul class="star-rating">
@@ -40,7 +41,7 @@
 
                 <ul class="tags">
                     {% for tag in sound.tag_array %}
-                        <li><a href="{% url tags tag %}">{{tag}}</a></li>
+                        <li><a href="{% url "tags" tag %}">{{tag}}</a></li>
                     {% endfor %}
                 </ul>
                 <br style="clear: both;"/>
@@ -83,10 +84,10 @@
     </div><!-- .sample_player -->
 
     <div class="sample_information">
-        <a class="user" href="{% url account sound.username %}">{{sound.username}}</a><br />
+        <a class="user" href="{% url "account" sound.username %}">{{sound.username}}</a><br />
         <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
-        <span class="download_count"><a href="{% url sound-downloaders sound.username sound.id %}">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</a></span><br />
-        <a class="comments" href="{% url sound sound.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
+        <span class="download_count"><a href="{% url "sound-downloaders" sound.username sound.id %}">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</a></span><br />
+        <a class="comments" href="{% url "sound" sound.username sound.id %}#comments">{{sound.num_comments}} comment{{sound.num_comments|pluralize}}</a>
 
         <div class="sound_attributes">
 
@@ -97,22 +98,22 @@
             {% endif %}
 
             {% if sound.similarity_state == 'OK' %}
-            <a class="similar" rel="nofollow" href="{% url sound-similar sound.username sound.id %}">
+            <a class="similar" rel="nofollow" href="{% url "sound-similar" sound.username sound.id %}">
                 <img src="{{media_url}}images/fugue-icons/icons/headphone--plus.png" width="16" height="16" alt="Similar" title="Similar Sounds" />
             </a>
             {% endif %}
             {% if sound.pack_id %}
-            <a class="pack" href="{% url pack sound.username sound.pack_id %}">
+            <a class="pack" href="{% url "pack" sound.username sound.pack_id %}">
                 <img src="{{media_url}}images/fugue-icons/icons/folder-open-document-music.png" width="16" height="16" alt="Pack" title="This sound belongs to the pack: {{ sound.pack_name }}" />
             </a>
             {% endif %}
             {% if sound.remixgroup_id %}
-             <a class="remixes" href="{% url sound-remixes sound.username sound.id %}">
+             <a class="remixes" href="{% url "sound-remixes" sound.username sound.id %}">
                 <img src="{{media_url}}images/remixes.png" width="16" height="16" alt="Remixes" title="This sound has remixes" />
             </a>
             {% endif %}
             {% if sound.geotag_id %}
-            <a class="geotag" href="{% url sound-geotag sound.username sound.id %}">
+            <a class="geotag" href="{% url "sound-geotag" sound.username sound.id %}">
                 <img src="{{media_url}}images/geotag.png" width="16" height="16" alt="Geotagged" title="This sound has a geotag" />
             </a>
             {% endif %}

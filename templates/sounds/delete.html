@@ -1,11 +1,12 @@
 {% extends "sounds/_section.html" %}
+{% load url from future %}
 
 {% load paginator %}
 
 {% block title %}Delete {{sound.original_filename}}{% endblock title %}
 
 {% block section_content %}
-<h1>Delete <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a></h1>
+<h1>Delete <a href="{% url "sound" sound.user.username sound.id %}">{{sound.original_filename}}</a></h1>
 
 <p>
     {% if waited_too_long %}

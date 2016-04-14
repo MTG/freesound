@@ -1,4 +1,5 @@
 {% extends "support/_section.html" %}
+{% load url from future %}
 
 {% block title %}email support{% endblock %}
 
@@ -9,7 +10,7 @@
 {% else %}
 <h1>Contact us...</h1>
 <div style="text-align: left; margin-bottom:30px; margin-top:20px;">
-    <h3>Please read the <a href="{% url wiki %}faq">Frequently Asked Questions</a> page before you send an email</h3>
+    <h3>Please read the <a href="{% url "wiki" %}faq">Frequently Asked Questions</a> page before you send an email</h3>
 </div>
 <form method="post" action=".">{% csrf_token %}
 {{form.as_p}}

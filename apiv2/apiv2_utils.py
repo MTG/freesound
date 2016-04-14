@@ -243,7 +243,7 @@ class GenericAPIView(RestFrameworkGenericAPIView):
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 class OauthRequiredAPIView(RestFrameworkGenericAPIView):
@@ -261,7 +261,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView):
         throw_exception_if_not_https(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 class DownloadAPIView(OauthRequiredAPIView):
@@ -288,7 +288,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
                 raise UnauthorizedException(resource=self)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 class ListAPIView(RestFrameworkListAPIView):
@@ -303,7 +303,7 @@ class ListAPIView(RestFrameworkListAPIView):
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 class RetrieveAPIView(RestFrameworkRetrieveAPIView):
@@ -318,7 +318,7 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
         self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.QUERY_PARAMS), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
 
 
 ##################
@@ -536,7 +536,7 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
     # Get analysis data for all requested sounds and save it to a class variable so the serializer can access it and
     # we only need one request to the similarity service
 
-    analysis_data_required = 'analysis' in view.request.QUERY_PARAMS.get('fields', '').split(',')
+    analysis_data_required = 'analysis' in view.request.query_params.get('fields', '').split(',')
     if analysis_data_required:
         # Get ids of the particular sounds we need
         if queryset:
@@ -547,13 +547,13 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
 
         # Get descriptor values for the required ids
         # Required descriptors are indicated with the parameter 'descriptors'. If 'descriptors' is empty, we return nothing
-        descriptors = view.request.QUERY_PARAMS.get('descriptors', [])
+        descriptors = view.request.query_params.get('descriptors', [])
         view.sound_analysis_data = {}
         if descriptors:
             try:
                 view.sound_analysis_data = get_sounds_descriptors(ids,
                                                                   descriptors.split(','),
-                                                                  view.request.QUERY_PARAMS.get('normalized', '0') == '1',
+                                                                  view.request.query_params.get('normalized', '0') == '1',
                                                                   only_leaf_descriptors=True)
             except:
                 pass

@@ -77,11 +77,14 @@ class TextSearch(GenericAPIView):
               % (docs_base_url, '%s#text-search' % resources_doc_filename,
                  get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
 
+    def get_queryset(self):
+        return self.get(self.request)
+
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))
 
         # Validate search form and check page 0
-        search_form = SoundTextSearchFormAPI(request.QUERY_PARAMS)
+        search_form = SoundTextSearchFormAPI(request.query_params)
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
         if search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None:
@@ -148,11 +151,14 @@ class ContentSearch(GenericAPIView):
     serializer_class = SimilarityFileSerializer
     analysis_file = None
 
+    def get_queryset(self):
+        return self.get(self.request)
+
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('content_search'))
 
         # Validate search form and check page 0
-        search_form = SoundContentSearchFormAPI(request.QUERY_PARAMS)
+        search_form = SoundContentSearchFormAPI(request.query_params)
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
         if not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file:
@@ -235,11 +241,14 @@ class CombinedSearch(GenericAPIView):
     analysis_file = None
     merging_strategy = 'merge_optimized'  # 'filter_both', 'merge_all'
 
+    def get_queryset(self):
+        return self.get(self.request)
+
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('combined_search'))
 
         # Validate search form and check page 0
-        search_form = SoundCombinedSearchFormAPI(request.QUERY_PARAMS)
+        search_form = SoundCombinedSearchFormAPI(request.query_params)
         if not search_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
         if (not search_form.cleaned_data['target'] and not search_form.cleaned_data['descriptors_filter'] and not self.analysis_file) or (search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None):
@@ -251,7 +260,7 @@ class CombinedSearch(GenericAPIView):
 
         # Get search results
         extra_parameters = dict()
-        for key, value in request.QUERY_PARAMS.items():
+        for key, value in request.query_params.items():
             if key.startswith('cs_'):
                 extra_parameters[key] = int(value)
 
@@ -279,7 +288,7 @@ class CombinedSearch(GenericAPIView):
 
         if params_for_next_page:
             extra_parameters.update(params_for_next_page)
-        if request.QUERY_PARAMS.get('debug', False):
+        if request.query_params.get('debug', False):
             extra_parameters.update({'debug': 1})
         extra_parameters_string = ''
         if extra_parameters:
@@ -327,7 +336,7 @@ class CombinedSearch(GenericAPIView):
         if note:
             response_data['note'] = note
 
-        if request.QUERY_PARAMS.get('debug', False):
+        if request.query_params.get('debug', False):
             response_data['debug_note'] = debug_note
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -367,15 +376,18 @@ class SoundAnalysis(GenericAPIView):
               % (docs_base_url, '%s#sound-analysis' % resources_doc_filename,
                  get_formatted_examples_for_view('SoundAnalysis', 'apiv2-sound-analysis', max=5))
 
+    def get_queryset(self):
+        return self.get(self.request)
+
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
         descriptors = []
-        if request.QUERY_PARAMS.get('descriptors', False):
-            descriptors = request.QUERY_PARAMS['descriptors'].split(',')
+        if request.query_params.get('descriptors', False):
+            descriptors = request.query_params['descriptors'].split(',')
         logger.info(self.log_message('sound:%i analysis' % (int(sound_id))))
         response_data = get_sounds_descriptors([sound_id],
                                                 descriptors,
-                                                request.QUERY_PARAMS.get('normalized', '0') == '1',
+                                                request.query_params.get('normalized', '0') == '1',
                                                 only_leaf_descriptors=True)
         if response_data:
             return Response(response_data[str(sound_id)], status=status.HTTP_200_OK)
@@ -389,13 +401,16 @@ class SimilarSounds(GenericAPIView):
               % (docs_base_url, '%s#similar-sounds' % resources_doc_filename,
                  get_formatted_examples_for_view('SimilarSounds', 'apiv2-similarity-sound', max=5))
 
+    def get_queryset(self):
+        return self.get(self.request)
+
     def get(self, request,  *args, **kwargs):
 
         sound_id = self.kwargs['pk']
         logger.info(self.log_message('sound:%i similar_sounds' % (int(sound_id))))
 
         # Validate search form and check page 0
-        similarity_sound_form = SimilarityFormAPI(request.QUERY_PARAMS)
+        similarity_sound_form = SimilarityFormAPI(request.query_params)
         if not similarity_sound_form.is_valid():
             raise BadRequestException(msg='Malformed request.', resource=self)
         if similarity_sound_form.cleaned_data['page'] < 1:
@@ -481,6 +496,9 @@ class DownloadSound(DownloadAPIView):
 
 class PreviewSound(GenericAPIView):
     __doc__ = 'Preview a sound in either ogg or mp3 formats, and with high or low quality.'
+
+    def get_queryset(self):
+        return self.get(self.request)
 
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
@@ -1049,6 +1067,9 @@ class AvailableAudioDescriptors(GenericAPIView):
 
     #authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
+    def get_queryset(self):
+        return self.get(self.request)
+
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('available_audio_descriptors'))
         try:
@@ -1071,6 +1092,9 @@ class FreesoundApiV2Resources(GenericAPIView):
               % (docs_base_url, 'index.html')
 
     #authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+
+    def get_queryset(self):
+        return self.get(self.request)
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('api_root'))

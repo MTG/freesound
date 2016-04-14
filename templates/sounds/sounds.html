@@ -26,12 +26,12 @@
         {% for latest_addition, sound_obj in latest_sounds %}
             {% display_raw_sound sound_obj %}
             {% if latest_addition.extra %}
-                <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
+                <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url "account" latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
             {% endif %}
             {% empty %}
             <p>No sounds in the database!
         {% endfor %}
-        <p class="more_button" ><a href="{% url sounds-search %}?q=&f=&s=created+desc&g=0">more...</a></p>
+        <p class="more_button" ><a href="{% url "sounds-search" %}?q=&f=&s=created+desc&g=0">more...</a></p>
         </div>
     </div><!-- #latest_sounds -->
 {% endcache %}
@@ -44,7 +44,7 @@
         {% empty %}
             <p>No sounds in the database!
         {% endfor %}
-        <p class="more_button"><a href="{% url sounds-search %}?q=&f=created:[NOW-7DAY%20TO%20NOW]&s=num_downloads+desc&g=0">more...</a></p>
+        <p class="more_button"><a href="{% url "sounds-search" %}?q=&f=created:[NOW-7DAY%20TO%20NOW]&s=num_downloads+desc&g=0">more...</a></p>
 
     </div><!-- #most_downloaded_sounds -->
 {% endcache %}
@@ -55,12 +55,12 @@
     <div id="other_sounds" class="content_box">
         <h3>More Sounds</h3>
         <ul style="margin-left: 0; padding-left: 0; list-style: none;">
-            <li><b><a class="icon" id ="comments_link" href="{% url comments %}">Browse latest comments</a></b></li>
-            <li><b><a class="icon" id ="tag_button" href="{% url tags %}">Browse tags</a></b></li>
-            <li><b><a class="icon" id ="geotag_link" href="{% url geotags %}">Browse geotags</a></b></li>
-            <li><b><a class="icon" id ="pack_link" href="{% url packs %}">Browse packs</a></b></li>
-            <li><b><a class="icon" id ="remixes_link" href="{% url remix-groups %}">Browse remix-groups</a></b></li>
-            <li><b><a class="icon" id ="random_sound_button" href="{% url sounds-random %}">Give me a random sound!</a></b></li>
+            <li><b><a class="icon" id ="comments_link" href="{% url "comments" %}">Browse latest comments</a></b></li>
+            <li><b><a class="icon" id ="tag_button" href="{% url "tags" %}">Browse tags</a></b></li>
+            <li><b><a class="icon" id ="geotag_link" href="{% url "geotags" %}">Browse geotags</a></b></li>
+            <li><b><a class="icon" id ="pack_link" href="{% url "packs" %}">Browse packs</a></b></li>
+            <li><b><a class="icon" id ="remixes_link" href="{% url "remix-groups" %}">Browse remix-groups</a></b></li>
+            <li><b><a class="icon" id ="random_sound_button" href="{% url "sounds-random" %}">Give me a random sound!</a></b></li>
         </ul>
     </div><!-- #other_sounds -->
 {% cache 3600 latest_changed_packs  %}
@@ -68,14 +68,14 @@
         <h3>Latest changed packs</h3>
         <ul>
         {% for pack in latest_packs %}
-            <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
+            <li><a href="{% url "pack" pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% url "account" pack.user.username %}">{{pack.user.username}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
         {% empty %}
                 <div class="sample_player_small">
                   No packs in the database!
                 </div>
         {% endfor %}
         </ul>
-        <p class="more_button" ><a href="{% url packs %}?order=-last_updated">more...</a></p>
+        <p class="more_button" ><a href="{% url "packs" %}?order=-last_updated">more...</a></p>
     </div><!-- #latest_changed_packs -->
 {% endcache %}
 {% cache 3600 most_downloaded_packs  %}
@@ -83,15 +83,15 @@
         <h3>Most downloaded packs (created in the last week)</h3>
         <ul>
         {% for pack in popular_packs %}
-            <li><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a>
-                by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
+            <li><a href="{% url "pack" pack.user.username pack.id %}">{{pack.name}}</a>
+                by <a href="{% url "account" pack.user.username %}">{{pack.user.username}}</a>
                 (<span class="pack_count">{{pack.num_downloads}}</span> downloads)
             </li>
         {% empty %}
             <p>No packs in the database!
         {% endfor %}
         </ul>
-        <p class="more_button"><a href="{% url packs %}?order=-num_downloads">more...</a></p>
+        <p class="more_button"><a href="{% url "packs" %}?order=-num_downloads">more...</a></p>
 
     </div><!-- #most_downloaded_packs -->
 {% endcache %}

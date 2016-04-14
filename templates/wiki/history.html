@@ -1,4 +1,5 @@
 {% extends "wiki/_section.html" %}
+{% load url from future %}
 
 {% block title %}{{page.name}} - History{% endblock %}
 
@@ -27,7 +28,7 @@
             {% if version.author %}
             by {{version.author}}
             {% endif %}
-            <a href="{% url wiki-page page.name %}?version={{version.id}}">version {{version.id}}</a> ({{version.created|timesince}} ago)</li>
+            <a href="{% url "wiki-page" page.name %}?version={{version.id}}">version {{version.id}}</a> ({{version.created|timesince}} ago)</li>
     {% endfor %}
     </ul>
     <input type="submit" value="Compare" />

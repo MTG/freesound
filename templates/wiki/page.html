@@ -1,4 +1,5 @@
 {% extends "wiki/_section.html" %}
+{% load url from future %}
 
 {% load markup_freesound %}
 
@@ -13,6 +14,6 @@
 
 {{content.body|markdown:"wikilinks,codehilite,markdown.extensions.toc"}}
 
-{% if perms.wiki.edit_page %}<div id="wiki-edit"><a href="{% url wiki-page-edit name %}"><p>edit this page</p></a><br></div>{% endif %}
+{% if perms.wiki.edit_page %}<div id="wiki-edit"><a href="{% url "wiki-page-edit" name %}"><p>edit this page</p></a><br></div>{% endif %}
 
 {% endblock %}

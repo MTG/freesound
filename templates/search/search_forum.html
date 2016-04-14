@@ -1,4 +1,5 @@
 {% extends "forum/_section.html" %}
+{% load url from future %}
 
 {% load display_forum_result %}
 {% load paginator %}
@@ -8,7 +9,7 @@
 
 {% block breadcrumb %}
     {% if current_forum_name_slug and current_forum_name_slug.strip %}
-        &#187; <a href="{% url forums-forum current_forum_name_slug %}">{{current_forum_name}}</a>
+        &#187; <a href="{% url "forums-forum" current_forum_name_slug %}">{{current_forum_name}}</a>
     {% endif %}
 {%  endblock %}
 

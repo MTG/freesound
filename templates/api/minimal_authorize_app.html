@@ -1,3 +1,4 @@
+{% load url from future %}
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -39,9 +40,6 @@
 
 <div class="container_main">
 <div class="container">
-
-    {% load url from future %}
-
     <img src="/media/images/logo.png"/>
     {% if not error %}
         {% comment %}<p>Hi {{ user.username }}!</p>{% endcomment %}

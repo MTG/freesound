@@ -1,3 +1,4 @@
+{% load url from future %}
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -60,7 +61,7 @@
         <input type="submit" value="Login" />
         <input type="hidden" name="next" value="{{ next }}" />
     </form>
-    <p>Do not have a Freesound account? <a href="{% url apiv2-registration %}">Register here</a>.</p>
+    <p>Do not have a Freesound account? <a href="{% url "apiv2-registration" %}">Register here</a>.</p>
 </div>
 </div>
 

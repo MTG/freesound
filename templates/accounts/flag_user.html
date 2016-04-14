@@ -1,3 +1,4 @@
+{% load url from future %}
 {% if no_show %}
     <!-- do noting -->
 {% else %}
@@ -54,7 +55,7 @@
     {% if flagged %}
         <span style="color:#808080;">{{ done_text }}</span>
     {% else %}
-        <a onclick="post_flag('{{content_obj_id}}{{flag_type}}','{{username}}','{{ flag_type }}',{{ content_obj_id }},'{% url flag-user username %}')" href="javascript:void(0)">{{ link_text }}</a>
+        <a onclick="post_flag('{{content_obj_id}}{{flag_type}}','{{username}}','{{ flag_type }}',{{ content_obj_id }},'{% url "flag-user" username %}')" href="javascript:void(0)">{{ link_text }}</a>
     {% endif %}
     </span>
 

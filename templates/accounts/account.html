@@ -2,6 +2,7 @@
 
 {% load display_sound %}
 {% load tags %}
+{% load url from future %}
 
 {% block title %}{% if home %}home{% else %}{{user.username}}{% endif %}{% endblock %}
 
@@ -69,22 +70,22 @@
 
         <div class="account_information_and_home_options">
         <ul>
-            <li><a href="{% url account user.username %}">View</a> your public profile</li>
-            <li><a href="{% url accounts-edit %}">Edit</a> your public profile</li>
-            <li><a href="{% url accounts-describe %}">Describe</a> your sounds</li>
-            <li><a href="{% url accounts-attribution %}">Attribution</a> - the sounds you downloaded</li>
+            <li><a href="{% url "account" user.username %}">View</a> your public profile</li>
+            <li><a href="{% url "accounts-edit" %}">Edit</a> your public profile</li>
+            <li><a href="{% url "accounts-describe" %}">Describe</a> your sounds</li>
+            <li><a href="{% url "accounts-attribution" %}">Attribution</a> - the sounds you downloaded</li>
             {% if perms.tickets.can_moderate %}
-                <li><a href="{% url tickets-home %}">Moderate sounds</a> - {{ new_tickets_count }} new sound{{ new_tickets_count|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
+                <li><a href="{% url "tickets-home" %}">Moderate sounds</a> - {{ new_tickets_count }} new sound{{ new_tickets_count|pluralize}} {% comment %}, {{ new_support }} support requests{% endcomment %}</li>
             {% endif %}
             {% if perms.forum.can_moderate_forum %}
-                <li><a href="{% url forums-moderate %}">Moderate posts</a> - {{ new_posts }} new post{{ new_posts|pluralize}} </li>
+                <li><a href="{% url "forums-moderate" %}">Moderate posts</a> - {{ new_posts }} new post{{ new_posts|pluralize}} </li>
             {% endif %}
             {% if user.profile.num_sounds %}
-                <li><a href="{% url comments-for-user user.username %}">All comments</a> on your sounds</li>
+                <li><a href="{% url "comments-for-user" user.username %}">All comments</a> on your sounds</li>
             {% endif %}
-            <li>Your <a href="{% url bookmarks-for-user user.username %}">bookmarks</a></li>
-            <li>Activity <a href="{% url stream %}">stream</a></li>
-            {% comment %}<li>Your sound uploads <a href="{% url accounts-pending %}">pending moderation</a></li>{% endcomment %}
+            <li>Your <a href="{% url "bookmarks-for-user" user.username %}">bookmarks</a></li>
+            <li>Activity <a href="{% url "stream" %}">stream</a></li>
+            {% comment %}<li>Your sound uploads <a href="{% url "accounts-pending" %}">pending moderation</a></li>{% endcomment %}
         </ul>
         </div>
         <br style="clear: both;" />
@@ -116,7 +117,7 @@
             </div>
             <div class="account_information_and_home_options">
             <ul>
-                <li><a href="{% url messages-new user.username %}">Send a private message to this user</a></li>
+                <li><a href="{% url "messages-new" user.username %}">Send a private message to this user</a></li>
                 {% if user.profile.home_page %}
                 <li>Home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a></li>
                 {% endif %}
@@ -127,23 +128,23 @@
                 {% if user.profile.num_posts %}
                 <li>Number of forum posts: {{user.profile.num_posts}}</li>
                 {% endif %}
-                <li><a href="{% url user-downloaded-sounds user.username %}">Sounds downloaded</a> by {{user.username}}</li>
-                <li><a href="{% url user-downloaded-packs user.username %}">Packs downloaded</a> by {{user.username}}</li>
+                <li><a href="{% url "user-downloaded-sounds" user.username %}">Sounds downloaded</a> by {{user.username}}</li>
+                <li><a href="{% url "user-downloaded-packs" user.username %}">Packs downloaded</a> by {{user.username}}</li>
                 {% if user.profile.num_sounds %}
-                <li><a href="{% url comments-for-user user.username %}">All comments</a> on {{user.username}}'s sounds</li>
+                <li><a href="{% url "comments-for-user" user.username %}">All comments</a> on {{user.username}}'s sounds</li>
                 {% endif %}
                 {% if has_bookmarks %}
-                <li><a href="{% url bookmarks-for-user user.username %}">Bookmarks</a> by {{user.username}}</li>
+                <li><a href="{% url "bookmarks-for-user" user.username %}">Bookmarks</a> by {{user.username}}</li>
                 {% endif %}
                 {% if perms.tickets.can_moderate %}
                     <li class="separator">Moderators only links</li>
-                    <li>Uploaded sounds <a href="{% url tickets-user-pending_sounds user.username %}">pending moderation ({{ num_sounds_pending_count }})</a></li>
-                    <li><a href="{% url forums-search %}?f=post_author:%22{{ user.username }}%22">All forum posts</a> by {{ user.username }}</li>
-                    <li><a href="{% url comments-by-user user.username %}">All comments</a> by {{ user.username }}</li>
+                    <li>Uploaded sounds <a href="{% url "tickets-user-pending_sounds" user.username %}">pending moderation ({{ num_sounds_pending_count }})</a></li>
+                    <li><a href="{% url "forums-search" %}?f=post_author:%22{{ user.username }}%22">All forum posts</a> by {{ user.username }}</li>
+                    <li><a href="{% url "comments-by-user" user.username %}">All comments</a> by {{ user.username }}</li>
                 {% endif %}
                 {% if request.user.is_staff %}
                     <li class="separator">Admin only links</li>
-                    <li><a id="admin_link" class="icon" href="{% url admin:auth_user_change user.id %}">Edit user in the admin</a></li>
+                    <li><a id="admin_link" class="icon" href="{% url "admin:auth_user_change" user.id %}">Edit user in the admin</a></li>
                 {% endif %}
 
             </ul>
@@ -168,7 +169,7 @@
             {% for sound in latest_sounds %}
                     {% display_raw_sound sound %}
             {% endfor %}
-            <p><a href="{% url sounds-for-user user.username %}?page={% if home %}1{% else %}2{% endif %}">more...</a></p>
+            <p><a href="{% url "sounds-for-user" user.username %}?page={% if home %}1{% else %}2{% endif %}">more...</a></p>
         </div>
     {% else %}
         <div id="latest_sounds" class="content_box">
@@ -185,14 +186,14 @@
             <div id="unmoderated_sounds" class="content_box">
                 <h3>Uploaded sounds awaiting moderation ({{ unmoderated_sounds_count }})</h3>
                 {% for ticket, sound in unmoderated_sounds %}
-                    <li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span> <span class="ticket_link"><a href="{% url tickets-ticket ticket.key %}">Go to ticket</a></span></li>
+                    <li><span class="filename">{{sound.original_filename}}</span>, uploaded on <span class="date">{{sound.created}}</span> <span class="ticket_link"><a href="{% url "tickets-ticket" ticket.key %}">Go to ticket</a></span></li>
                 {% endfor %}
                 {% if num_more_unmoderated_sounds > 0 %}
                     <li> And {{ num_more_unmoderated_sounds }} other uploaded sound{{ num_more_unmoderated_sounds|pluralize}}
                 {% endif %}
 
             </div><!-- #unmoderated_sounds -->
-            <p style='margin-left:20px'><a href="{% url accounts-pending %}">more...</a></p>
+            <p style='margin-left:20px'><a href="{% url "accounts-pending" %}">more...</a></p>
 
         {% endif %}
 
@@ -225,7 +226,7 @@
                         {% endif %}
                     {% endif %}
                 {% endif %}
-                <a href="{% url sound-delete sound.user.username sound.id %}" >x</a>
+                <a href="{% url "sound-delete" sound.user.username sound.id %}" >x</a>
                 </li>
             {% endfor %}
 
@@ -241,7 +242,7 @@
         <div id="user_most_used_tags" class="content_box">
             <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} most used tags</h3>
             <p class="user_tagcloud">
-            {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url tags tag.name %}">{{tag.name}}</a></span> {% endfor %}
+            {% for tag in tags|add_sizes:"True:0.5:2.5" %}<span style="font-size:{{tag.size}}em"><a href="{% url "tags" tag.name %}">{{tag.name}}</a></span> {% endfor %}
             </p>
         </div><!-- #user_most_used_tags -->
     {% endif %}
@@ -261,10 +262,10 @@
 
                 <ul>
                     {% for suser in following %}
-                        <a href="{% url account suser %}" title="{{suser}}"><img src="{{suser.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                        <a href="{% url "account" suser %}" title="{{suser}}"><img src="{{suser.profile.locations.avatar.M.url}}" alt="avatar" /></a>
                     {% endfor %}
                 </ul>
-                <p><a href="{% url user-following-users user %}">more...</a></p>
+                <p><a href="{% url "user-following-users" user %}">more...</a></p>
             {% endif %}
 
             {% if followers %}
@@ -276,10 +277,10 @@
 
                 <ul>
                     {% for suser in followers %}
-                        <a href="{% url account suser %}" title="{{suser}}"><img src="{{suser.profile.locations.avatar.M.url}}" alt="avatar" /></a>
+                        <a href="{% url "account" suser %}" title="{{suser}}"><img src="{{suser.profile.locations.avatar.M.url}}" alt="avatar" /></a>
                     {% endfor %}
                 </ul>
-                <p><a href="{% url user-followers user %}">more...</a></p>
+                <p><a href="{% url "user-followers" user %}">more...</a></p>
             {% endif %}
 
             {% if following_tags %}
@@ -291,17 +292,17 @@
                     {% endif %}
                     <ul>
                         {% for space_tags, slash_tags, split_tags in following_tags %}
-                            <span class="tag_group" onclick="location.href='{% url tags slash_tags %}'">
+                            <span class="tag_group" onclick="location.href='{% url "tags" slash_tags %}'">
                             <ul class="tags" id="following_tags">
                             {% for tag in split_tags %}
-                                {% comment %}<li><a href="{% url tags tag %}">{{ tag }}</a></li>{% endcomment %}
+                                {% comment %}<li><a href="{% url "tags"tag %}">{{ tag }}</a></li>{% endcomment %}
                                 <li><a>{{ tag }}</a></li>
                                 {% comment %}<li>{{ tag }}</li>{% endcomment %}
                             {% endfor %}
                             </ul></span>
                         {% endfor %}
                     </ul>
-                    <p><a href="{% url user-following-tags user %}">more...</a></p>
+                    <p><a href="{% url "user-following-tags" user %}">more...</a></p>
                 </div>
             {% endif %}
 
@@ -326,7 +327,7 @@
                 stopAll();
             });
 
-            ajaxLoad('{% url geotags-for-user-latest-json user.username %}', function(data, responseCode)
+            ajaxLoad('{% url "geotags-for-user-latest-json" user.username %}', function(data, responseCode)
             {
                 var bounds = new google.maps.LatLngBounds();
                 var nSounds = 0;
@@ -371,7 +372,7 @@
                 }
             });
         </script>
-        <p><a href="{% url geotags-for-user user.username %}">more...</a></p>
+        <p><a href="{% url "geotags-for-user" user.username %}">more...</a></p>
     </div><!-- #latest_geotags -->
 
 
@@ -380,10 +381,10 @@
         <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest packs</h3>
         <ul>
         {% for pack in latest_packs %}
-            <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
+            <li><a href="{% url "pack" user.username pack.id %}">{{pack.name}}</a> (<span class="pack_count">{{pack.num_sounds}}</span>)</li>
         {% endfor %}
         </ul>
-        <p><a href="{% url packs-for-user user.username %}">more...</a></p>
+        <p><a href="{% url "packs-for-user" user.username %}">more...</a></p>
     </div><!-- #latest_packs -->
     {% endif %}
 
@@ -394,7 +395,7 @@
             <p>This list contains packs that are empty or packs whose sounds are unmoderated or unprocessed.</p>
             <ul>
             {% for pack in packs_without_sounds %}
-                <li><a href="{% url pack user.username pack.id %}">{{pack.name}}</a>, created on <span class="date">{{pack.created}}</span></li>
+                <li><a href="{% url "pack" user.username pack.id %}">{{pack.name}}</a>, created on <span class="date">{{pack.created}}</span></li>
             {% endfor %}
             <ul>
         </div><!-- #unmoderated_packs -->

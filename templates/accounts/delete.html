@@ -1,6 +1,7 @@
 {% extends "sounds/_section.html" %}
 
 {% load paginator %}
+{% load url from future %}
 
 {% block title %}Delete yourself{% endblock title %}
 
@@ -10,7 +11,7 @@
 {% if num_sounds > 0 %}
 <p>
     Because you have sounds on freesound, deleting your user is not a trivial task.
-    As such, we ask you to please contact the administrators via the <a href="{% url contact %}">Contact Form</a>.
+    As such, we ask you to please contact the administrators via the <a href="{% url "contact" %}">Contact Form</a>.
     They will help you with the deletion of your account.
 </p>
 {% else %}

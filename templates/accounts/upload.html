@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load absurl %}
+{% load url from future %}
 
 {% block title %}upload files{% endblock %}
 
@@ -85,7 +86,7 @@
         margin-right:120px;
         width:320px;
         color:gray;
-    
+
     }
     #upload_button_block{
         display:block;
@@ -94,28 +95,28 @@
         margin-left:120px;
         width:320px;
         color:gray;
-    
+
     }
-    
+
     #buttons_container
     {
-    
+
         width: 100%;
         height: 130px;
     }
-    
+
     .html_upload_form{
     	margin-left: 0px;
 		padding: 0px;
 		border-left: none;
 		background: white;
-		margin-bottom: 0px;  
-		text-align:left;  	
+		margin-bottom: 0px;
+		text-align:left;
     }
     .centered{
     	text-align:center;
     }
-    
+
     </style>
 {% endblock %}
 
@@ -129,7 +130,7 @@
 <div>
     <div class="please_note content_box">
         <h3>Legality</h3>
-        <p>Only upload sounds created or recorded <strong>by you</strong>. <em><a href="{% url wiki-page "faq" %}#sounds-4">More details...</a></em>
+        <p>Only upload sounds created or recorded <strong>by you</strong>. <em><a href="{% url "wiki-page" "faq" %}#sounds-4">More details...</a></em>
     </div>
     <div class="please_note content_box">
         <h3>Sounds only</h3>
@@ -138,13 +139,13 @@
     </div>
     <div class="please_note content_box">
         <h3>Moderation</h3>
-        <p>All files are <strong>moderated</strong>. If you upload illegal files or files that don't follow the <a href="{% url wiki-page "faq" %}#sounds">guidelines</a> they will be removed.
+        <p>All files are <strong>moderated</strong>. If you upload illegal files or files that don't follow the <a href="{% url "wiki-page" "faq" %}#sounds">guidelines</a> they will be removed.
     </div>
     <div class="please_note content_box">
         <h3>Formats</h3>
         <p>We prefer <strong>wav, aif and flac</strong>, but we support ogg and mp3 too. For very large files please use some compressed format. Uploading more than 1GB at once will fail.
     </div>
-    
+
     <br style="clear: both;">
 </div>
 <br>
@@ -165,7 +166,7 @@
         if(queue.length==0){
             $("#describe_img").attr("src", "{{media_url}}images/describe_sounds.png");
             $("#describe_a").mouseover(function () {$(this).css('cursor', 'pointer')});
-            $("#describe_a").attr("href", "{% url accounts-describe %}");
+            $("#describe_a").attr("href", "{% url "accounts-describe" %}");
         }
     }
 
@@ -216,8 +217,8 @@
         removeFromQueue(fileId);
 
     }
-    
-    
+
+
 </script>
   {% if no_flash %}
         <form method="POST" enctype="multipart/form-data" action="/home/upload/html/" class="html_upload_form"
@@ -264,12 +265,12 @@
 <img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
 Hint: you can upload multiple files at once</p>
 {% endif %}
-  
+
 </div>
 
 <div id="describe_button_block">
 
-<p><a id="describe_a" href="{% url accounts-describe %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
+<p><a id="describe_a" href="{% url "accounts-describe" %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
 <p>Before your sounds show up on the web site you'll have to describe them</p>
 </div>
 </div>
@@ -281,9 +282,9 @@ Hint: you can upload multiple files at once</p>
 
 <p class="centered">
 {% if no_flash %}
-<a href="{% url accounts-upload %}"> switch to flash version </a>
+<a href="{% url "accounts-upload" %}"> switch to flash version </a>
 {% else %}
-<a href="{% url accounts-upload-html %}"> switch to non-flash version </a>
+<a href="{% url "accounts-upload-html" %}"> switch to non-flash version </a>
 {% endif %}
 </p>
 </div><!-- #upload_page -->

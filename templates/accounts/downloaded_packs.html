@@ -2,12 +2,13 @@
 
 {% load display_pack %}
 {% load paginator %}
+{% load url from future %}
 
 {% block title %}Packs downloaded by {{ username }}{% endblock %}
 
 {% block content %}
 
-<h1>Packs downloaded by <a href="{% url account username %}">{{ username }}</a></h1>
+<h1>Packs downloaded by <a href="{% url "account" username %}">{{ username }}</a></h1>
 
 {% if paginator.count > 0 %}
     <div class="search_paginator">

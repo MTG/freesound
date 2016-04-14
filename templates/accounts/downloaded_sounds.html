@@ -2,12 +2,13 @@
 
 {% load display_sound %}
 {% load paginator %}
+{% load url from future %}
 
 {% block title %}Sounds downloaded by {{ username }}{% endblock %}
 
 {% block content %}
 
-<h1>Sounds downloaded by <a href="{% url account username %}">{{ username }}</a></h1>
+<h1>Sounds downloaded by <a href="{% url "account" username %}">{{ username }}</a></h1>
 
 {% if paginator.count > 0 %}
 

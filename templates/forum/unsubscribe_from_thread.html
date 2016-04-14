@@ -1,8 +1,9 @@
 {% extends "forum/_section.html" %}
+{% load url from future %}
 
 {% block title %}forum - thread unsubscription{% endblock %}
 
-{% block breadcrumb %} &#187; <a href="{% url forums-forums %}">Forums</a>{% endblock %}
+{% block breadcrumb %} &#187; <a href="{% url "forums-forums" %}">Forums</a>{% endblock %}
 
 {% block forum_search %}{% endblock %}
 

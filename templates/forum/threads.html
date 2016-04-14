@@ -1,4 +1,5 @@
 {% extends "forum/_section.html" %}
+{% load url from future %}
 
 {% load paginator %}
 {% load util %}
@@ -11,8 +12,8 @@
 
 {% block section_content %}
 <div class="forum_pagination">
-	<div class="forum_button"><a href="{% url forums-new-thread forum.name_slug %}">New Topic</a></div>
-	{% show_paginator paginator page current_page request "thread"%} 
+	<div class="forum_button"><a href="{% url "forums-new-thread" forum.name_slug %}">New Topic</a></div>
+	{% show_paginator paginator page current_page request "thread"%}
 </div>
 
 <ul id="topics">
@@ -20,7 +21,7 @@
 	<li{% if thread.status == 2 %} class="highlighted"{% endif %}>
 		<div class="latest_post">
 			{% if thread.last_post.id %}
-			<a href="{% url forums-post forum.name_slug thread.id thread.last_post.id %}">Latest post</a> by <a href="{% url account thread.last_post.author.username %}">{{thread.last_post.author.username}}</a><br />
+			<a href="{% url "forums-post" forum.name_slug thread.id thread.last_post.id %}">Latest post</a> by <a href="{% url "account" thread.last_post.author.username %}">{{thread.last_post.author.username}}</a><br />
 			{{thread.last_post.created|timesince}} ago
 			{% endif %}
 		</div>
@@ -32,14 +33,14 @@
 		{% endif %}
 
 		{% comment %}use url tag here because get_absolute_url does more queries!{% endcomment %}
-		<a href="{% url forums-thread forum.name_slug thread.id %}" class="topic_subject">{{thread.title|safe}}</a><br />
+		<a href="{% url "forums-thread" forum.name_slug thread.id %}" class="topic_subject">{{thread.title|safe}}</a><br />
 		{{thread.num_posts}} post{{thread.num_posts|pluralize}}
 	</li>
 {% endfor %}
 </ul>
 
 <div class="forum_pagination">
-	<div class="forum_button"><a href="{% url forums-new-thread forum.name_slug %}">New Topic</a></div>
-	{% show_paginator paginator page current_page request "thread" %} 
+	<div class="forum_button"><a href="{% url "forums-new-thread" forum.name_slug %}">New Topic</a></div>
+	{% show_paginator paginator page current_page request "thread" %}
 </div>
 {% endblock %}

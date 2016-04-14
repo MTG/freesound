@@ -38,7 +38,7 @@ from django.views.decorators.cache import never_cache
 from django.utils.http import base36_to_int
 from django.template import loader
 from django.utils.http import int_to_base36
-from django.contrib.sites.models import get_current_site
+from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
@@ -412,7 +412,7 @@ def describe_pack(request):
 
 
 @login_required
-@transaction.autocommit
+@transaction.atomic()
 def describe_sounds(request):
     forms = []
     sounds_to_process = []

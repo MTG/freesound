@@ -32,12 +32,12 @@
         {% for latest_addition in latest_additions %}
             {% display_sound latest_addition.sound_id %}
             {% if latest_addition.extra %}
-            <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url account latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
+            <div class="sample_more"><img src="{{media_url}}images/plus.png" alt="" /> {{latest_addition.extra}} more sounds from <a href="{% url 'account' latest_addition.username %}">{{latest_addition.username}}</a> in the last 48 hours</div>
             {% endif %}
         {% empty %}
           <p>No sounds in the database!
         {% endfor %}
-    	<p class="more_button" ><a href="{% url sounds-search %}?q=&f=&s=created+desc">more...</a></p>
+    	<p class="more_button" ><a href="{% url 'sounds-search' %}?q=&f=&s=created+desc">more...</a></p>
     </div>
     {% endcache %}
 </div>
@@ -72,15 +72,15 @@
     <div id="latest_forum_posts" class="sidebar_box">
         <h3>Active Forum Threads</h3>
         <ul>
-            {% for thread in current_forum_threads %}
+            {% for forum in current_forum_threads %}
             <li class="{% cycle 'odd' 'even' %}">
-                <a class="post_title" href="{{thread.last_post.get_absolute_url}}">{{thread.title}}</a><br />
-                in <a href="{{thread.forum.get_absolute_url}}">{{thread.forum}}</a><br />
-                by <a href="{% url account thread.last_post.author.username %}">{{thread.last_post.author.username}}</a>, {{thread.last_post.created|timesince}} ago
+                <a class="post_title" href="{{forum.last_post.get_absolute_url}}">{{forum.title}}</a><br />
+                in <a href="{{forum.forum.get_absolute_url}}">{{forum.forum}}</a><br />
+                by <a href="{% url 'account' forum.last_post.author.username %}">{{forum.last_post.author.username}}</a>, {{forum.last_post.created|timesince}} ago
             </li>
             {% endfor %}
         </ul>
-        <a class="more_posts_button" href="{% url forums-forums %}"><img src="{{media_url}}images/arrow_down.png" alt="arrow" />More Posts</a>
+        <a class="more_posts_button" href="{% url 'forums-forums' %}"><img src="{{media_url}}images/arrow_down.png" alt="arrow" />More Posts</a>
     </div>
     {% endcache %}
 

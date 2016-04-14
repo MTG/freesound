@@ -22,7 +22,7 @@
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes import fields
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.encoding import smart_unicode
@@ -217,7 +217,7 @@ class UserFlag(models.Model):
     reporting_user = models.ForeignKey(User, null=True, blank=True, default=None)
     content_type = models.ForeignKey(ContentType, null=True)
     object_id = models.PositiveIntegerField(null=True)
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     def __unicode__(self):

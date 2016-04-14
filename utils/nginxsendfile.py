@@ -19,8 +19,8 @@
 #
 
 from django.http import HttpResponse,Http404
-from django.core.servers.basehttp import FileWrapper
 from django.conf import settings
+from wsgiref.util import FileWrapper
 
 import os
 

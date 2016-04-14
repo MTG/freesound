@@ -20,7 +20,7 @@
 
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, UNUSABLE_PASSWORD, AuthenticationForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
@@ -199,8 +199,7 @@ class FsPasswordResetForm(PasswordResetForm):
             raise forms.ValidationError(self.error_messages['unknown'])
         if not len(self.users_cache.filter(is_active=True)):
             raise forms.ValidationError(self.error_messages['nonactivated'])
-        if any((user.password == UNUSABLE_PASSWORD)
-               for user in self.users_cache):
+        if any((user.has_usable_password()) for user in self.users_cache):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
 

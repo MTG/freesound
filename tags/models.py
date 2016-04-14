@@ -21,7 +21,7 @@
 #
 
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.encoding import smart_unicode
@@ -44,7 +44,7 @@ class TaggedItem(models.Model):
     #content_type = models.ForeignKey(ContentType, related_name='tags')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField(db_index=True)
-    content_object = generic.GenericForeignKey()
+    content_object = fields.GenericForeignKey()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 

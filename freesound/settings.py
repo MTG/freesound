@@ -10,50 +10,30 @@ import logging.config
 
 DEBUG = False
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    # 'django.core.context_processors.auth',
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.debug',
-    'django.core.context_processors.i18n',
-    'django.contrib.messages.context_processors.messages',
-    'freesound.context_processor.context_extra',
-)
-
 MIDDLEWARE_CLASSES = (
     'freesound.middleware.PermissionDeniedHandler',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'freesound.middleware.TosAcceptanceHandler',
-    'freesound.middleware.BulkChangeLicenseHandler',
-    #'django.middleware.locale.LocaleMiddleware',
-    'django.middleware.doc.XViewMiddleware',
-    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'freesound.middleware.OnlineUsersHandler',
     'utils.corsheaders.middleware.CorsMiddleware',
 )
 
-SOUTH_DATABASE_ADAPTERS = {
-    'default': 'south.db.postgresql_psycopg2',
-}
 
 INSTALLED_APPS = (
-    'messages',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.flatpages',
-    'django.contrib.markup',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'provider.oauth2',
+    'messages.apps.MessagesConfig',
+    #'provider.oauth2',
     'apiv2',
-    'south',
     'geotags',
     'accounts',
     'comments',
@@ -82,12 +62,6 @@ INSTALLED_APPS = (
 )
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
-
-TEMPLATE_DIRS = (
-    # Myles' template directory is here because it allows him to work on tabasco.
-    '/home/mdebastion/templates',
-    os.path.join(os.path.dirname(__file__), '../freesound/../templates'),
-)
 
 # Email settings
 SERVER_EMAIL = 'noreply@freesound.org'
@@ -246,9 +220,9 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework.renderers.YAMLRenderer',
+        #'rest_framework.renderers.YAMLRenderer',
         #'rest_framework.renderers.JSONPRenderer',
-        'rest_framework.renderers.XMLRenderer',
+        #'rest_framework.renderers.XMLRenderer',
     ),
     'DEFAULT_THROTTLE_CLASSES': (
         'apiv2.throttling.ClientBasedThrottlingBurst',
@@ -273,22 +247,29 @@ DATA_URL = "/data/"
 # leave at bottom starting here!
 from local_settings import *
 
-TEMPLATE_DEBUG = DEBUG
-
-# Only cache templates in production
-if DEBUG:
-    TEMPLATE_LOADERS = (
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    )
-else:
-    TEMPLATE_LOADERS = (
-        ('django.template.loaders.cached.Loader', (
-            'django.template.loaders.filesystem.Loader',
-            'django.template.loaders.app_directories.Loader',
-            #'django.template.loaders.eggs.load_template_source',
-        )),
-    )
+#TEMPLATE_DEBUG = DEBUG
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(os.path.dirname(__file__), '../templates')
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.template.context_processors.request',
+                'django.contrib.messages.context_processors.messages',
+                'freesound.context_processor.context_extra',
+            ],
+        },
+    },
+]
 
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"

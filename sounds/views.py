@@ -154,7 +154,7 @@ def front_page(request):
                                                   last_post__moderation_state="OK") \
                                           .order_by('-last_post__created') \
                                           .select_related('author',
-                                                          'thread',
+                                                          'forum',
                                                           'last_post',
                                                           'last_post__author',
                                                           'last_post__thread',

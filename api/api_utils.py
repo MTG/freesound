@@ -23,72 +23,9 @@ from piston.utils import rc
 import traceback
 from models import ApiKey
 from apiv2.models import ApiV2Client
-from piston.emitters import Emitter
-from piston.handler import typemapper
 import logging
 
 logger = logging.getLogger("api")
-
-def build_error_response(e, request):
-    
-    #logger.error(str(e.status_code) + ' API error: ' + e.type)
-    content = {"error": True,
-               "type": e.type,
-               "status_code": e.status_code,
-               "explanation": ""}
-    content.update(e.extra)
-    response = rc.BAD_REQUEST
-    format = request.GET.get("format", "json")
-    
-    em_info = Emitter.get(format)
-    RequestEmitter = em_info[0]
-    emitter = RequestEmitter(content, typemapper, "", "", False)
-    response.content = emitter.render(request)
-    response['Content-Type'] = em_info[1]
-
-    return response
-    
-
-class ReturnError(Exception):
-    def __init__(self, status_code, type, extra):
-        self.status_code = status_code
-        self.type = type
-        self.extra = extra
-
-def build_unexpected(e, request):
-    debug = traceback.format_exc() if settings.DEBUG else str(e)
-    logger.error('500 API error: Unexpected')
-    
-    return build_error_response(ReturnError(500,
-                                            "InternalError",
-                                            {"explanation":
-                                             "An internal Freesound error ocurred.",
-                                             "really_really_sorry": True,
-                                             "debug": debug}
-                                             ), request)
-
-def create_unexpected_error(e):
-    if settings.DEBUG:
-        debug = traceback.format_exc() if settings.DEBUG else str(e)
-    else:
-        debug = "-"
-        #logger.error('500 API error: Unexpected')
-    return ReturnError(500,
-                       "InternalError",
-                       {"explanation": "An internal Freesound error ocurred.",
-                        "really_really_sorry": True,
-                        "debug": debug})
-
-
-def build_invalid_url(e):
-    format = e.GET.get("format", "json")
-    logger.error('404 API error: Invalid Url')
-    
-    return build_error_response(ReturnError(404,
-                                            "InvalidUrl",
-                                            {"explanation":
-                                             "The introduced url is invalid.",}
-                                             ), e)
 
 def end_of_life_message(e):
     logger.error('410 API error: End of life')

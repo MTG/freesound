@@ -25,7 +25,7 @@ from general.models import OrderedModel
 from django.db import transaction
 
 @staff_member_required
-@transaction.commit_on_success
+@transaction.atomic()
 def admin_move_ordered_model(request, direction, model_type_id, model_id):
     OrderedModel.move(direction, model_type_id, model_id)
     

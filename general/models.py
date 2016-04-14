@@ -22,7 +22,7 @@
 
 from comments.models import Comment
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.db import models
@@ -31,10 +31,10 @@ from ratings.models import Rating
 from tags.models import TaggedItem
 
 class SocialModel(models.Model):
-    tags = generic.GenericRelation(TaggedItem)
-    comments = generic.GenericRelation(Comment)
-    ratings = generic.GenericRelation(Rating)
-    fans = generic.GenericRelation(Favorite)
+    tags = fields.GenericRelation(TaggedItem)
+    comments = fields.GenericRelation(Comment)
+    ratings = fields.GenericRelation(Rating)
+    fans = fields.GenericRelation(Favorite)
 
     class Meta:
         abstract = True

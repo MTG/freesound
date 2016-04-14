@@ -7,16 +7,16 @@
 <div class="pack_display" id="{{pack.id}}">
 <div class="pack_description">
 
-<h4><a href="{% url pack pack.user.username pack.id %}">{{pack.name}}</a> <span style="font-weight:normal;">({{num_sounds}} sound{{ num_sounds|pluralize }}) </span></h4>
-<p class="text">by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>.
-<a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded {{pack.num_downloads}} times.</a>
+<h4><a href="{% url "pack" pack.user.username pack.id %}">{{pack.name}}</a> <span style="font-weight:normal;">({{num_sounds}} sound{{ num_sounds|pluralize }}) </span></h4>
+<p class="text">by <a href="{% url "account" pack.user.username %}">{{pack.user.username}}</a>.
+<a href="{% url "pack-downloaders" pack.user.username pack.id %}">Downloaded {{pack.num_downloads}} times.</a>
 <br>Tags of sounds inside the pack:
 {% with pack.get_pack_tags as tags %}
     {% if tags == -1 %}
             Tag information is not available right now.
     {% else %}
         {% for tag in tags.tags %}
-            <a href="{% url tags tag %}" class="tags" >{{ tag }}</a>
+            <a href="{% url "tags" tag %}" class="tags" >{{ tag }}</a>
         {% endfor %}
         {% if tags.num_tags == 20 %}
             <span class="dots">...</span>

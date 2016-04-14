@@ -76,9 +76,7 @@ class TextSearch(GenericAPIView):
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#text-search' % resources_doc_filename,
                  get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
-
-    def get_queryset(self):
-        return self.get(self.request)
+    queryset = 'Hola'
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))
@@ -129,7 +127,7 @@ class TextSearch(GenericAPIView):
                         sound['more_from_same_pack'] = search_form.construct_link(reverse('apiv2-sound-text-search'), page=1, filt='grouping_pack:"%i_%s"' % (int(more_from_pack_data[sid][1]), more_from_pack_data[sid][2]), group_by_pack='0')
                         sound['n_from_same_pack'] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
                 sounds.append(sound)
-            except:
+            except KeyError:
                 # This will happen if there are synchronization errors between solr index, gaia and the database.
                 # In that case sounds are are set to null
                 sounds.append(None)

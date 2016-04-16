@@ -33,7 +33,7 @@ from utils.spam import is_spam
 def validate_file_extension(audiofiles):
     for file_ in audiofiles:
         content_type = file_.content_type
-        if not content_type.startswith("audio") or not filename_has_valid_extension(str(file_)):
+        if not content_type.startswith("audio") and not filename_has_valid_extension(str(file_)):
             raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
 
 

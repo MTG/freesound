@@ -29,6 +29,7 @@
         width: 250px;
         margin-top:8px;
         margin-right: 5px;
+        margin-bottom: 30px;
     }
     div.progress
     {
@@ -239,6 +240,61 @@ Hint: you can upload multiple files at once</p>
 {% endif %}
 </p>
 </div><!-- #upload_page -->
+
+<script type="text/javascript">
+    var queue = Array();
+    swfobject.registerObject("uploader", "10.1");
+    function removeFromQueue(fileId){
+        queue.splice(queue.indexOf(fileId),1)
+        if(queue.length==0){
+            $("#describe_img").attr("src", "{{media_url}}images/describe_sounds.png");
+            $("#describe_a").mouseover(function () {$(this).css('cursor', 'pointer')});
+            $("#describe_a").attr("href", "{% url accounts-describe %}");
+        }
+    }
+    function uploadError(fileId, message)
+    {
+        if (fileId < 0)
+            alert("Upload error: " + message);
+        else
+        {
+            $('#file_' + fileId).find(".status").html("Failed: " + message);
+            $('#file_' + fileId).find(".cancel-container").hide();
+            $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-failed').css("width", "100%");
+            removeFromQueue(fileId);
+        }
+    }
+    function uploadAdd(fileId, filename)
+    {
+        $("#upload-progress-container").show().append(
+                '<div id="file_' + fileId + '" class="queue-container">\
+                    <div class="progress-container">\
+                        <div class="progress"></div>\
+                    </div>\
+                    <!-- <span class="cancel-container"><img src="{{media_url}}images/cancel.png" /></span> -->\
+                    <span class="filename"><strong class="status">queued</strong>: ' + filename + '</span>\
+                </div>');
+        queue.push(fileId);
+        $("#describe_img").attr("src", "{{media_url}}images/describe_sounds_disabled.png");
+        $("#describe_a").mouseover(function () {$(this).css('cursor', 'default');});
+        $("#describe_a").attr("href", "#");
+        /*$('#file_' + fileId).select('span.cancel-container img').click(function (event) {
+            swfu.cancelUpload(file.id);
+        });*/
+    }
+    function uploadProgress(fileId, percentage)
+    {
+        $('#file_' + fileId).find(".status").html("uploading");
+        $('#file_' + fileId).find('.progress').css("width", percentage + "%");
+    }
+    function uploadDone(fileId)
+    {
+        $('#file_' + fileId).find(".status").html('done');
+        //$('#file_' + fileId).select("span.cancel-container").hide();
+        $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-done').css("width", "100%");
+        removeFromQueue(fileId);
+    }
+</script>
 {% if no_flash %}
 <script>
   (function() {

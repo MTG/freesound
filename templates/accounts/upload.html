@@ -85,7 +85,6 @@
         margin-right:120px;
         width:320px;
         color:gray;
-
     }
     #upload_button_block{
         display:block;
@@ -94,12 +93,10 @@
         margin-left:120px;
         width:320px;
         color:gray;
-
     }
 
     #buttons_container
     {
-
         width: 100%;
         height: 130px;
     }
@@ -156,13 +153,13 @@
 <div id="upload_button_block">
 
 {% if no_flash %}
-  <form method="POST" enctype="multipart/form-data" action="/home/upload/html/" class="html_upload_form"
-  onSubmit="document.getElementById('html_upload_button').disabled = true">{% csrf_token %}
+  <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form">{% csrf_token %}
     {{ form.as_p }}
     <ul id="file-list" class="file-list"></ul>
     <input type="button" id="add-files-btn" value="Add files" />
     <input type="submit" value="Upload" id="html_upload_button" />
   </form>
+  <div class="progress-container" id="progress-container"></div>
 {% if successes %}
   <p>
   <br/>
@@ -229,34 +226,69 @@ Hint: you can upload multiple files at once</p>
 </div><!-- #upload_page -->
 {% if no_flash %}
 <script>
-  function getCookie(c_name) {
-      var c_value = " " + document.cookie;
-      var c_start = c_value.indexOf(" " + c_name + "=");
-      if (c_start == -1) {
-          c_value = null;
-      }
-      else {
-          c_start = c_value.indexOf("=", c_start) + 1;
-          var c_end = c_value.indexOf(";", c_start);
-          if (c_end == -1) {
-              c_end = c_value.length;
+  (function() {
+    var csrftoken = (function getCookie(key) {
+      var result;
+      /*!
+       * Snippet adapted from JavaScript Cookie v2.1.1
+       * https://github.com/js-cookie/js-cookie
+       *
+       * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
+       * Released under the MIT license
+       */
+      // To prevent the for loop in the first place assign an empty array
+      // in case there are no cookies at all. Also prevents odd result when
+      // calling "get()"
+      var cookies = document.cookie ? document.cookie.split('; ') : [];
+      var rdecode = /(%[0-9A-Z]{2})+/g;
+      var i = 0;
+
+      for (; i < cookies.length; i++) {
+        var parts = cookies[i].split('=');
+        var name = parts[0].replace(rdecode, decodeURIComponent);
+        var cookie = parts.slice(1).join('=');
+
+        if (cookie.charAt(0) === '"') {
+          cookie = cookie.slice(1, -1);
+        }
+
+        try {
+          cookie = cookie.replace(rdecode, decodeURIComponent);
+
+          if (this.json) {
+            try {
+              cookie = JSON.parse(cookie);
+            } catch (e) {}
           }
-          c_value = decodeURI(c_value.substring(c_start,c_end));
+
+          if (key === name) {
+            result = cookie;
+            break;
+          }
+
+          if (!key) {
+            result[name] = cookie;
+          }
+        } catch (e) {}
       }
-      return c_value;
-  }
-  var appState = (function appState() {
-    var removeDuplicates = function removeDuplicates(array, currentFile) {
+
+      return result;
+    })('csrftoken');
+
+    // the list of files to upload shouldn't have duplicates, use this method with reduce() to ensure it
+    var removeDuplicates = function removeDuplicates(queue, currentFile) {
       var isSameFile = function isSameFile(file) {
         return file.size === currentFile.size && file.name === currentFile.name;
       };
-      var isSoundInSoundsQueue = !!array.filter(isSameFile).length;
+      var isSoundInSoundsQueue = !!queue.filter(isSameFile).length;
       if (!isSoundInSoundsQueue) {
-        return array.concat(currentFile);
+        return queue.concat(currentFile);
       } else {
-        return array;
+        return queue;
       }
     };
+
+    // add new (or 'dropped') files to the list of files to upload, avoiding duplicates
     var onFileInputChange = function onFileInputChange(event) {
       var receivedFiles = event.target.files || event.dataTransfer.files;
       for (var i = 0; i < receivedFiles.length; i++) {
@@ -266,24 +298,65 @@ Hint: you can upload multiple files at once</p>
       var ul = document.getElementById('file-list');
       ul.innerHTML = '';
       soundsQueue.forEach(function(soundFile) {
-        var node = document.createElement("LI");
+        var node = document.createElement("li");
         var textNode = document.createTextNode(soundFile.name);
         node.appendChild(textNode);
         ul.appendChild(node);
       });
     };
 
-    var soundsQueue = [];
+    var soundsQueue = [];  // the files we will upload
+    var submitForm = function submitForm(event) {
+      event.preventDefault();
+      var uploadButton = document.getElementById('html_upload_button');
+      var addFilesButton = document.getElementById('add-files-btn');
+      uploadButton.disabled = true;
+      addFilesButton.disabled = true;
+      var formData = new FormData();
+      soundsQueue.forEach(function addSound(sound) {
+        formData.append('files', sound);
+      });
+      formData.append('csrfmiddlewaretoken', csrftoken);
+      var submitURL = '/home/upload/html/';
+      var request = new XMLHttpRequest();
+      request.open("POST", submitURL);
+      request.onreadystatechange = function() {
+        // TODO: consider returning a JSON response to avoid using document.write
+        document.open();
+        document.write(request.response);
+        document.close();
+      };
+      // create and fill the progress bar while uploading
+      request.upload.onprogress = function updateProgress(event) {
+        // function for creating the progress bar
+        var addProgressDiv = function() {
+          var progressNode = document.createElement('div');
+          progressNode.className = 'progress';
+          progressContainer.appendChild(progressNode);
+          return progressNode;
+        };
+        var progress = (event.lengthComputable) ? event.loaded / event.total : 0;
+        progressContainer.style.display = 'block';
+        // add the progress bar if not there already
+        var progressNode = progressContainer.firstElementChild || addProgressDiv();
+        // change its width to show the progress update
+        progressNode.style.width = progress * 100 + '%';
+        if (progress === 1) {
+          progressNode.className = 'progress-done';
+        }
+      };
+      request.send(formData);
+    };
+
+    var uploadForm = document.getElementById('upload-form');
+    uploadForm.onsubmit = submitForm;
     var fileInput = document.getElementById('id_files');
     var addFilesButton = document.getElementById('add-files-btn');
+    var progressContainer = document.getElementById('progress-container');
     addFilesButton.onclick = function onclick() { fileInput.click(); };
     fileInput.onchange = onFileInputChange;
     fileInput.style.display = 'none';
-    return {
-      get soundsQueue() {
-        return soundsQueue;
-      }
-    }
+    progressContainer.style.display = 'none';
   })();
 </script>
 {% endif %}

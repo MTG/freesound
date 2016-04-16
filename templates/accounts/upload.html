@@ -112,6 +112,19 @@
     .centered{
     	text-align:center;
     }
+    .file-list {
+      max-height: 110px;
+      overflow: auto;
+    }
+    .drop-area {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      box-shadow: inset 0 0 30px #bd2d33;
+      display: none;
+    }
 
     </style>
 {% endblock %}
@@ -155,11 +168,13 @@
 {% if no_flash %}
   <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form">{% csrf_token %}
     {{ form.as_p }}
+    {% if not successes and not errors %}<div id="drag-tip">Drag files here or click on 'Add files'</div>{% endif %}
     <ul id="file-list" class="file-list"></ul>
     <input type="button" id="add-files-btn" value="Add files" />
     <input type="submit" value="Upload" id="html_upload_button" />
   </form>
   <div class="progress-container" id="progress-container"></div>
+  <div class="drop-area" id="drop-area"></div>
 {% if successes %}
   <p>
   <br/>
@@ -290,6 +305,8 @@ Hint: you can upload multiple files at once</p>
 
     // add new (or 'dropped') files to the list of files to upload, avoiding duplicates
     var onFileInputChange = function onFileInputChange(event) {
+      event.preventDefault();
+      dropArea.style.display = 'none';  // hide red borders shown while dragging
       var receivedFiles = event.target.files || event.dataTransfer.files;
       for (var i = 0; i < receivedFiles.length; i++) {
         soundsQueue.push(receivedFiles[i]);
@@ -297,12 +314,23 @@ Hint: you can upload multiple files at once</p>
       soundsQueue = soundsQueue.reduce(removeDuplicates, []);
       var ul = document.getElementById('file-list');
       ul.innerHTML = '';
+      if (!!soundsQueue.length) {
+        dragTip.style.display = 'none';
+      } else {
+        dragTip.style.display = 'block';
+      }
       soundsQueue.forEach(function(soundFile) {
         var node = document.createElement("li");
         var textNode = document.createTextNode(soundFile.name);
         node.appendChild(textNode);
         ul.appendChild(node);
       });
+    };
+
+    var onDrag = function onDrag(event) {
+      event.stopPropagation();
+      event.preventDefault();
+      dropArea.style.display = 'block';
     };
 
     var soundsQueue = [];  // the files we will upload
@@ -329,7 +357,7 @@ Hint: you can upload multiple files at once</p>
       // create and fill the progress bar while uploading
       request.upload.onprogress = function updateProgress(event) {
         // function for creating the progress bar
-        var addProgressDiv = function() {
+        var addProgressBar = function() {
           var progressNode = document.createElement('div');
           progressNode.className = 'progress';
           progressContainer.appendChild(progressNode);
@@ -338,7 +366,7 @@ Hint: you can upload multiple files at once</p>
         var progress = (event.lengthComputable) ? event.loaded / event.total : 0;
         progressContainer.style.display = 'block';
         // add the progress bar if not there already
-        var progressNode = progressContainer.firstElementChild || addProgressDiv();
+        var progressNode = progressContainer.firstElementChild || addProgressBar();
         // change its width to show the progress update
         progressNode.style.width = progress * 100 + '%';
         if (progress === 1) {
@@ -353,10 +381,18 @@ Hint: you can upload multiple files at once</p>
     var fileInput = document.getElementById('id_files');
     var addFilesButton = document.getElementById('add-files-btn');
     var progressContainer = document.getElementById('progress-container');
+    var dragTip = document.getElementById('drag-tip');
+    var dropArea = document.getElementById('drop-area');
     addFilesButton.onclick = function onclick() { fileInput.click(); };
     fileInput.onchange = onFileInputChange;
     fileInput.style.display = 'none';
     progressContainer.style.display = 'none';
+
+    // drag and drop
+    document.addEventListener('dragenter', onDrag, false);
+    document.addEventListener('dragover', function(e) {e.preventDefault();}, false);
+    document.addEventListener('dragleave', onDrag, false);
+    document.addEventListener('drop', onFileInputChange, false);
   })();
 </script>
 {% endif %}

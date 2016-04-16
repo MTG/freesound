@@ -29,3 +29,4 @@ Sphinx
 django-fixture-magic
 mock
 raven==5.10.1
+django-multiupload==0.5

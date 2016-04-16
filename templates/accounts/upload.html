@@ -85,7 +85,7 @@
         margin-right:120px;
         width:320px;
         color:gray;
-    
+
     }
     #upload_button_block{
         display:block;
@@ -94,28 +94,28 @@
         margin-left:120px;
         width:320px;
         color:gray;
-    
+
     }
-    
+
     #buttons_container
     {
-    
+
         width: 100%;
         height: 130px;
     }
-    
+
     .html_upload_form{
     	margin-left: 0px;
 		padding: 0px;
 		border-left: none;
 		background: white;
-		margin-bottom: 0px;  
-		text-align:left;  	
+		margin-bottom: 20px;
+		text-align:left;
     }
     .centered{
     	text-align:center;
     }
-    
+
     </style>
 {% endblock %}
 
@@ -144,7 +144,7 @@
         <h3>Formats</h3>
         <p>We prefer <strong>wav, aif and flac</strong>, but we support ogg and mp3 too. For very large files please use some compressed format. Uploading more than 1GB at once will fail.
     </div>
-    
+
     <br style="clear: both;">
 </div>
 <br>
@@ -155,88 +155,28 @@
 <div id="buttons_container">
 <div id="upload_button_block">
 
-<script type="text/javascript">
-    var queue = Array();
-
-    swfobject.registerObject("uploader", "10.1");
-
-    function removeFromQueue(fileId){
-        queue.splice(queue.indexOf(fileId),1)
-        if(queue.length==0){
-            $("#describe_img").attr("src", "{{media_url}}images/describe_sounds.png");
-            $("#describe_a").mouseover(function () {$(this).css('cursor', 'pointer')});
-            $("#describe_a").attr("href", "{% url accounts-describe %}");
-        }
-    }
-
-    function uploadError(fileId, message)
-    {
-        if (fileId < 0)
-            alert("Upload error: " + message);
-        else
-        {
-            $('#file_' + fileId).find(".status").html("Failed: " + message);
-            $('#file_' + fileId).find(".cancel-container").hide();
-            $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-failed').css("width", "100%");
-            removeFromQueue(fileId);
-        }
-    }
-
-    function uploadAdd(fileId, filename)
-    {
-        $("#upload-progress-container").show().append(
-                '<div id="file_' + fileId + '" class="queue-container">\
-                    <div class="progress-container">\
-                        <div class="progress"></div>\
-                    </div>\
-                    <!-- <span class="cancel-container"><img src="{{media_url}}images/cancel.png" /></span> -->\
-                    <span class="filename"><strong class="status">queued</strong>: ' + filename + '</span>\
-                </div>');
-        queue.push(fileId);
-        $("#describe_img").attr("src", "{{media_url}}images/describe_sounds_disabled.png");
-        $("#describe_a").mouseover(function () {$(this).css('cursor', 'default');});
-        $("#describe_a").attr("href", "#");
-
-        /*$('#file_' + fileId).select('span.cancel-container img').click(function (event) {
-            swfu.cancelUpload(file.id);
-        });*/
-    }
-
-    function uploadProgress(fileId, percentage)
-    {
-        $('#file_' + fileId).find(".status").html("uploading");
-        $('#file_' + fileId).find('.progress').css("width", percentage + "%");
-    }
-
-    function uploadDone(fileId)
-    {
-        $('#file_' + fileId).find(".status").html('done');
-        //$('#file_' + fileId).select("span.cancel-container").hide();
-        $('#file_' + fileId).find(".progress").removeClass('progress').addClass('progress-done').css("width", "100%");
-        removeFromQueue(fileId);
-
-    }
-    
-    
-</script>
-  {% if no_flash %}
-        <form method="POST" enctype="multipart/form-data" action="/home/upload/html/" class="html_upload_form"
-        onSubmit="$('#html_upload_button').attr('disabled', 'true');">{% csrf_token %}
-        {{form.as_p}}
-         <input type="submit" value="Upload file" id="html_upload_button" />
-        </form>
-        {% if success %}
-<p>
-<br/>
-<b>{{uploaded_file}} uploaded successfully</b>
-</p>
+{% if no_flash %}
+  <form method="POST" enctype="multipart/form-data" action="/home/upload/html/" class="html_upload_form"
+  onSubmit="document.getElementById('html_upload_button').disabled = true">{% csrf_token %}
+    {{ form.as_p }}
+    <ul id="file-list" class="file-list"></ul>
+    <input type="button" id="add-files-btn" value="Add files" />
+    <input type="submit" value="Upload" id="html_upload_button" />
+  </form>
+{% if successes %}
+  <p>
+  <br/>
+  <b>{{ successes }} file{{ successes|pluralize }} uploaded successfully</b>
+  </p>
 {% endif %}
 
-
-{% if error %}
-<p>
-<b>There was an error uploading the file</b>
-</p>
+{% if errors %}
+  {% with count=errors.count %}
+  <p>
+  <b>There was an error uploading the file{{ count|pluralize }}:</b>
+    <ul> {% for file in errors %}<li>{{ file }}</li>{% endfor %}</ul>
+  </p>
+  {% endwith %}
 {% endif %}
 {% else %}
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
@@ -264,7 +204,7 @@
 <img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
 Hint: you can upload multiple files at once</p>
 {% endif %}
-  
+
 </div>
 
 <div id="describe_button_block">
@@ -287,4 +227,64 @@ Hint: you can upload multiple files at once</p>
 {% endif %}
 </p>
 </div><!-- #upload_page -->
+{% if no_flash %}
+<script>
+  function getCookie(c_name) {
+      var c_value = " " + document.cookie;
+      var c_start = c_value.indexOf(" " + c_name + "=");
+      if (c_start == -1) {
+          c_value = null;
+      }
+      else {
+          c_start = c_value.indexOf("=", c_start) + 1;
+          var c_end = c_value.indexOf(";", c_start);
+          if (c_end == -1) {
+              c_end = c_value.length;
+          }
+          c_value = decodeURI(c_value.substring(c_start,c_end));
+      }
+      return c_value;
+  }
+  var appState = (function appState() {
+    var removeDuplicates = function removeDuplicates(array, currentFile) {
+      var isSameFile = function isSameFile(file) {
+        return file.size === currentFile.size && file.name === currentFile.name;
+      };
+      var isSoundInSoundsQueue = !!array.filter(isSameFile).length;
+      if (!isSoundInSoundsQueue) {
+        return array.concat(currentFile);
+      } else {
+        return array;
+      }
+    };
+    var onFileInputChange = function onFileInputChange(event) {
+      var receivedFiles = event.target.files || event.dataTransfer.files;
+      for (var i = 0; i < receivedFiles.length; i++) {
+        soundsQueue.push(receivedFiles[i]);
+      }
+      soundsQueue = soundsQueue.reduce(removeDuplicates, []);
+      var ul = document.getElementById('file-list');
+      ul.innerHTML = '';
+      soundsQueue.forEach(function(soundFile) {
+        var node = document.createElement("LI");
+        var textNode = document.createTextNode(soundFile.name);
+        node.appendChild(textNode);
+        ul.appendChild(node);
+      });
+    };
+
+    var soundsQueue = [];
+    var fileInput = document.getElementById('id_files');
+    var addFilesButton = document.getElementById('add-files-btn');
+    addFilesButton.onclick = function onclick() { fileInput.click(); };
+    fileInput.onchange = onFileInputChange;
+    fileInput.style.display = 'none';
+    return {
+      get soundsQueue() {
+        return soundsQueue;
+      }
+    }
+  })();
+</script>
+{% endif %}
 {% endblock %}

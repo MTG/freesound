@@ -832,23 +832,25 @@ def upload_file(request):
 @login_required
 def upload(request, no_flash=False):
     form = UploadFileForm()
-    success = False
-    error = False
+    successes = 0
+    errors = []
     uploaded_file = None
     if no_flash:
         if request.method == 'POST':
             form = UploadFileForm(request.POST, request.FILES)
             if form.is_valid():
-                if handle_uploaded_file(request.user.id, request.FILES["file"]):
-                    uploaded_file = request.FILES["file"]
-                    success = True
-                else:
-                    error = True
+                submitted_files = request.FILES.getlist('files')
+                for file_ in submitted_files:
+                    if handle_uploaded_file(request.user.id, file_):
+                        uploaded_file = file_
+                        successes += 1
+                    else:
+                        errors.append(file_)
     tvars = {
         'form': form,
         'uploaded_file': uploaded_file,
-        'success': success,
-        'error': error,
+        'successes': successes,
+        'errors': errors,
         'no_flash': no_flash,
     }
     return render(request, 'accounts/upload.html', tvars)

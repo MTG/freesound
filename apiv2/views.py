@@ -25,7 +25,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework.decorators import api_view, authentication_classes
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
-from oauth2_provider.models import Grant
+from oauth2_provider.models import Grant, AccessToken
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view, build_request_info_string_for_error_logging
@@ -1303,7 +1303,7 @@ def delete_api_credential(request, key):
 @login_required
 def granted_permissions(request):
     user = request.user
-    tokens_raw = [] #AccessToken.objects.select_related('client').filter(user=user).order_by('-expires')
+    tokens_raw = AccessToken.objects.select_related('application').filter(user=user).order_by('-expires')
     tokens = []
     token_names = []
 
@@ -1313,36 +1313,36 @@ def granted_permissions(request):
     # there can only be one access token per client-user pair. Nevertheless the code below works in both cases.
 
     for token in tokens_raw:
-        if not token.client.apiv2_client.name in token_names:
+        if not token.application.apiv2_client.name in token_names:
             td = (token.expires - datetime.datetime.today())
             seconds_to_expiration_date = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
             tokens.append({
-                'client_name': token.client.apiv2_client.name,
+                'client_name': token.application.apiv2_client.name,
                 'expiration_date': token.expires,
                 'expired': seconds_to_expiration_date < 0,
-                'scope': token.client.apiv2_client.get_scope_display,
-                'client_id': token.client.apiv2_client.client_id,
-                'developer': token.client.apiv2_client.user.username,
+                'scope': token.application.apiv2_client.get_scope_display,
+                'client_id': token.application.apiv2_client.client_id,
+                'developer': token.application.apiv2_client.user.username,
             })
-            token_names.append(token.client.apiv2_client.name)
+            token_names.append(token.application.apiv2_client.name)
 
-    grants_pending_access_token_request_raw = [] #Grant.objects.select_related('client').filter(user=user).order_by('-expires')
+    grants_pending_access_token_request_raw = Grant.objects.select_related('application').filter(user=user).order_by('-expires')
     grants = []
     grant_and_token_names = token_names[:]
     for grant in grants_pending_access_token_request_raw:
-        if not grant.client.apiv2_client.name in grant_and_token_names:
+        if not grant.application.apiv2_client.name in grant_and_token_names:
             td = (grant.expires - datetime.datetime.today())
             seconds_to_expiration_date = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
             if seconds_to_expiration_date > 0:
                 grants.append({
-                    'client_name': grant.client.apiv2_client.name,
+                    'client_name': grant.application.apiv2_client.name,
                     'expiration_date': grant.expires,
                     'expired': seconds_to_expiration_date < 0,
-                    'scope': grant.client.apiv2_client.get_scope_display,
-                    'client_id': grant.client.apiv2_client.client_id,
-                    'developer': grant.client.apiv2_client.user.username,
+                    'scope': grant.application.apiv2_client.get_scope_display,
+                    'client_id': grant.application.apiv2_client.client_id,
+                    'developer': grant.application.apiv2_client.user.username,
                 })
-                grant_and_token_names.append(grant.client.apiv2_client.name)
+                grant_and_token_names.append(grant.application.apiv2_client.name)
 
     return render_to_response('api/manage_permissions.html',
                               {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False},
@@ -1353,11 +1353,11 @@ def granted_permissions(request):
 @login_required
 def revoke_permission(request, client_id):
     user = request.user
-    tokens = [] #AccessToken.objects.filter(user=user, client__client_id=client_id)
+    tokens = AccessToken.objects.filter(user=user, application__client_id=client_id)
     for token in tokens:
         token.delete()
 
-    grants = [] #Grant.objects.filter(user=user, client__client_id=client_id)
+    grants = Grant.objects.filter(user=user, application__client_id=client_id)
     for grant in grants:
         grant.delete()
 

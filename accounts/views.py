@@ -64,7 +64,7 @@ from geotags.models import GeoTag
 from tickets.views import new_support_tickets_count
 from bookmarks.models import Bookmark
 from messages.models import Message
-#from provider.oauth2.models import AccessToken
+from oauth2_provider.models import AccessToken
 from follow import follow_utils
 
 
@@ -285,7 +285,7 @@ def edit(request):
     else:
         image_form = AvatarForm(prefix="image")
 
-    has_granted_permissions = 0 #AccessToken.objects.filter(user=request.user).count()
+    has_granted_permissions = AccessToken.objects.filter(user=request.user).count()
 
     tvars = {
         'profile': profile,

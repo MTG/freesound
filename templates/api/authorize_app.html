@@ -2,7 +2,7 @@
 {% block title %}{{user.username}} - An application is requesting permission to access your data{% endblock %}
 
 {% load scope %}
-{% load url from future %}
+
 {% block content %}
     {% if not error %}
         <h1>An application is requesting permission to access your data</h1>
@@ -15,7 +15,7 @@
             Granting permission to access your data means that you allow the application to act on your behealf inside Freesound.
             You can revoke the permissions you have given to an application at any time by visiting your settings page.
         </p>
-        <form method="post" action="{% url "oauth2:authorize" %}">
+        <form method="post" >
             {% csrf_token %}
             {{ form.errors }}
             {{ form.non_field_errors }}

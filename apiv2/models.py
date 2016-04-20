@@ -20,14 +20,14 @@
 
 from django.db import models
 from django.contrib.auth.models import User
-from provider.oauth2.models import Client
+from oauth2_provider.models import Application
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
 
 
 # Monkeypatch __unicode__ in provider.oauth2.models.Client class as it is not very informative (and it shows better in the admin)
-Client.__unicode__ = lambda self: u'%s, %s, %s' % (self.name, self.user, self.client_id) #new_unicode
+#Client.__unicode__ = lambda self: u'%s, %s, %s' % (self.name, self.user, self.client_id) #new_unicode
 
 
 class ApiV2Client(models.Model):
@@ -45,7 +45,7 @@ class ApiV2Client(models.Model):
 
     DEFAULT_SCOPE = 'rw'
 
-    oauth_client                = models.OneToOneField(Client, related_name='apiv2_client', default=None, null=True, blank=True)
+    oauth_client                = models.OneToOneField(Application, related_name='apiv2_client', default=None, null=True, blank=True)
     key                         = models.CharField(max_length=40, blank=True)
     user                        = models.ForeignKey(User, related_name='apiv2_client')
     status                      = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)
@@ -76,12 +76,12 @@ class ApiV2Client(models.Model):
 
         if not self.oauth_client:
             # Set oauth client (create oauth client object)
-            oauth_cient = Client.objects.create(
+            oauth_cient = Application.objects.create(
                 user=self.user,
                 name=self.name,
-                url=self.url,
-                redirect_uri=self.redirect_uri,
-                client_type=1, # Public client
+                redirect_uris=self.redirect_uri,
+                client_type=Application.CLIENT_PUBLIC,
+                authorization_grant_type=Application.GRANT_AUTHORIZATION_CODE,
             )
             self.oauth_client = oauth_cient
 
@@ -91,8 +91,7 @@ class ApiV2Client(models.Model):
         else:
             # Update existing oauth client
             self.oauth_client.name = self.name
-            self.oauth_client.url = self.url
-            self.oauth_client.redirect_uri = self.redirect_uri
+            self.oauth_client.redirect_uris = self.redirect_uri
             self.oauth_client.save()
 
         return super(ApiV2Client, self).save(*args, **kwargs)
@@ -101,7 +100,7 @@ class ApiV2Client(models.Model):
         # On delete, delete also oauth client
         self.oauth_client.delete()
         super(ApiV2Client, self).delete(*args, **kwargs)
-
+    
     @property
     def client_id(self):
         return self.oauth_client.client_id
@@ -109,7 +108,7 @@ class ApiV2Client(models.Model):
     @property
     def client_secret(self):
         return self.oauth_client.client_secret
-
+    
     @property
     def version(self):
         return "V2"

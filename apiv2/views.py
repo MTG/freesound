@@ -24,7 +24,8 @@
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework.decorators import api_view, authentication_classes
-from provider.oauth2.models import AccessToken, Grant
+from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
+from oauth2_provider.models import Grant
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view, build_request_info_string_for_error_logging
@@ -65,6 +66,9 @@ logger = logging.getLogger("api")
 docs_base_url = prepend_base('/docs/api')
 resources_doc_filename = 'resources_apiv2.html'
 
+
+class AuthorizationView(ProviderAuthorizationView):
+    login_url='/apiv2/login/'
 
 ####################################
 # SEARCH AND SIMILARITY SEARCH VIEWS
@@ -1299,7 +1303,7 @@ def delete_api_credential(request, key):
 @login_required
 def granted_permissions(request):
     user = request.user
-    tokens_raw = AccessToken.objects.select_related('client').filter(user=user).order_by('-expires')
+    tokens_raw = [] #AccessToken.objects.select_related('client').filter(user=user).order_by('-expires')
     tokens = []
     token_names = []
 
@@ -1322,7 +1326,7 @@ def granted_permissions(request):
             })
             token_names.append(token.client.apiv2_client.name)
 
-    grants_pending_access_token_request_raw = Grant.objects.select_related('client').filter(user=user).order_by('-expires')
+    grants_pending_access_token_request_raw = [] #Grant.objects.select_related('client').filter(user=user).order_by('-expires')
     grants = []
     grant_and_token_names = token_names[:]
     for grant in grants_pending_access_token_request_raw:
@@ -1349,11 +1353,11 @@ def granted_permissions(request):
 @login_required
 def revoke_permission(request, client_id):
     user = request.user
-    tokens = AccessToken.objects.filter(user=user, client__client_id=client_id)
+    tokens = [] #AccessToken.objects.filter(user=user, client__client_id=client_id)
     for token in tokens:
         token.delete()
 
-    grants = Grant.objects.filter(user=user, client__client_id=client_id)
+    grants = [] #Grant.objects.filter(user=user, client__client_id=client_id)
     for grant in grants:
         grant.delete()
 
@@ -1368,8 +1372,8 @@ def permission_granted(request):
     app_name = None
     try:
         grant = Grant.objects.get(user=user, code=code)
-        app_name = grant.client.apiv2_client.name
-    except:
+        app_name = grant.application.apiv2_client.name
+    except Grant.DoesNotExist:
         grant = None
 
     if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:

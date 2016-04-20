@@ -19,12 +19,13 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+'''
 from provider.views import OAuthError
 from provider.scope import to_names, to_int
 from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView, Authorize as DjangoOauth2ProviderAuthorize, Capture as DjangoOauth2ProviderCapture, Redirect as DjangoOauth2ProviderRedirect
 from provider.oauth2.forms import PasswordGrantForm
 from provider.oauth2.models import RefreshToken, AccessToken
+'''
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import combined_search_strategies
@@ -61,13 +62,13 @@ logger_error = logging.getLogger("api_errors")
 # Authentication util tweaks
 ############################
 
-
+'''
 class AccessTokenView(DjangoRestFrameworkAccessTokenView):
 
-    '''
+    """
     We override only a function of the AccessTokenView class in order to be able to set different
     allowed grant types per API client and to resctrict scopes on a client basis.
-    '''
+    """
 
     def get_password_grant(self, request, data, client):
         if not client.apiv2_client.allow_oauth_passoword_grant:
@@ -225,7 +226,7 @@ class Redirect(DjangoOauth2ProviderRedirect):
 
         return HttpResponseRedirect(redirect_uri)
 
-
+'''
 #############################
 # Rest Framework custom views
 #############################

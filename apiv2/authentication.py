@@ -24,8 +24,8 @@ from django.core.exceptions import ImproperlyConfigured
 from rest_framework import exceptions
 from rest_framework.authentication import get_authorization_header
 from rest_framework.authentication import BaseAuthentication, SessionAuthentication as DjangoRestFrameworkSessionAuthentication
+from oauth2_provider.ext.rest_framework import OAuth2Authentication as Oauth2ProviderOauth2Authentication
 from apiv2.models import ApiV2Client
-import provider.oauth2 as oauth2_provider
 import datetime
 provider_now = datetime.datetime.now
 
@@ -38,7 +38,20 @@ We may use this overwritten class to add some extra funcitonality.
 '''
 
 
-class OAuth2Authentication(BaseAuthentication):
+class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
+
+    @property
+    def authentication_method_name(self):
+        return "OAuth2"
+    
+    def authenticate(self, request):
+        """
+        Returns two-tuple of (user, token) if authentication succeeds,
+        or None otherwise.
+        """
+        return super(OAuth2Authentication, self).authenticate(request)
+
+'''
     """
     OAuth 2 authentication backend using `django-oauth2-provider`
     """
@@ -111,7 +124,7 @@ class OAuth2Authentication(BaseAuthentication):
         """
         return 'Bearer realm="%s"' % self.www_authenticate_realm
 
-
+'''
 '''
 We also overwrite TokenAuthentication so we can add extra features and change the default Token model.
 '''

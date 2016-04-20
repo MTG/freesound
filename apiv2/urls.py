@@ -90,7 +90,8 @@ urlpatterns = patterns('apiv2.views',
     url(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
 
     # Oauth2
-    url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2')),
+    url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2_provider')),
+    #url(r'^oauth2/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
     url(r'^logout/$', logout, {'next_page': '/apiv2/'}, name="api-logout"),
 

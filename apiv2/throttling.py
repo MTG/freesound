@@ -50,8 +50,8 @@ def get_authentication_details_form_request(request):
         auth_method_name = request.successful_authenticator.authentication_method_name
         if auth_method_name == "OAuth2":
             user = request.user
-            developer = request.auth.client.user
-            client_id = request.auth.client.apiv2_client.client_id
+            developer = request.auth.application.user
+            client_id = request.auth.application.apiv2_client.client_id
         elif auth_method_name == "Token":
             user = None
             developer = request.auth.user
@@ -86,7 +86,7 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
         # Get the ApiV2Client that made the request and its throttling level
         auth_method_name = request.successful_authenticator.authentication_method_name
         if auth_method_name == "OAuth2":
-            self.client = request.auth.client.apiv2_client
+            self.client = request.auth.application.apiv2_client
             client_throttle_level = int(self.client.throttling_level)
         elif auth_method_name == "Token":
             self.client = request.auth
@@ -144,7 +144,7 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
         # Get the ApiV2Client that made the request and its throttling level
         auth_method_name = request.successful_authenticator.authentication_method_name
         if auth_method_name == "OAuth2":
-            self.client = request.auth.client.apiv2_client
+            self.client = request.auth.application.apiv2_client
             client_throttle_level = int(self.client.throttling_level)
         elif auth_method_name == "Token":
             self.client = request.auth
@@ -205,7 +205,7 @@ class IpBasedThrottling(SimpleRateThrottle):
         # Get the ApiV2Client that made the request and its throttling level
         auth_method_name = request.successful_authenticator.authentication_method_name
         if auth_method_name == "OAuth2":
-            self.client = request.auth.client.apiv2_client
+            self.client = request.auth.application.apiv2_client
             client_throttle_level = int(self.client.throttling_level)
         elif auth_method_name == "Token":
             self.client = request.auth

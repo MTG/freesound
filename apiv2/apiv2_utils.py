@@ -285,7 +285,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
 
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
-            if "write" not in request.auth.client.apiv2_client.get_scope_display():
+            if "write" not in request.auth.application.scope:
                 raise UnauthorizedException(resource=self)
 
     def log_message(self, message):
@@ -456,8 +456,8 @@ def get_authentication_details_form_request(request):
         auth_method_name = request.successful_authenticator.authentication_method_name
         if auth_method_name == "OAuth2":
             user = request.user
-            developer = request.auth.client.user
-            client_id = request.auth.client.apiv2_client.client_id
+            developer = request.auth.application.user
+            client_id = request.auth.application.apiv2_client.client_id
         elif auth_method_name == "Token":
             user = None
             developer = request.auth.user

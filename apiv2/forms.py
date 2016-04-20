@@ -144,9 +144,9 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return group_by_pack
 
     def clean_page_size(self):
-        requested_paginate_by = self.cleaned_data[settings.REST_FRAMEWORK['PAGINATE_BY_PARAM']] or \
-                                settings.REST_FRAMEWORK['PAGINATE_BY']
-        return min(int(requested_paginate_by), settings.REST_FRAMEWORK['MAX_PAGINATE_BY'])
+        requested_paginate_by = self.cleaned_data[settings.APIV2['PAGE_SIZE_QUERY_PARAM']] or \
+                                settings.APIV2['PAGE_SIZE']
+        return min(int(requested_paginate_by), settings.APIV2['MAX_PAGE_SIZE'])
 
     def clean_descriptors_filter(self):
         descriptors_filter = self.cleaned_data['descriptors_filter']
@@ -182,7 +182,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
             else:
                 link += '&page=%s' % str(page)
         if self.cleaned_data['page_size'] and \
-                not self.cleaned_data['page_size'] == settings.REST_FRAMEWORK['PAGINATE_BY']:
+                not self.cleaned_data['page_size'] == settings.APIV2['PAGE_SIZE']:
             link += '&page_size=%s' % str(self.cleaned_data['page_size'])
         if self.cleaned_data['fields']:
             link += '&fields=%s' % my_quote(self.cleaned_data['fields'])

@@ -211,10 +211,14 @@ APIV2_RESOURCES_REQUIRING_HTTPS = ['apiv2-sound-download',
                                    'oauth2:access_token',
                                    'api-login']
 
+APIV2 = {
+    'PAGE_SIZE': 15,
+    'PAGE_SIZE_QUERY_PARAM': 'page_size',
+    'MAX_PAGE_SIZE': 150,
+}
+
 REST_FRAMEWORK = {
-    'PAGINATE_BY': 15,
-    'PAGINATE_BY_PARAM': 'page_size',
-    'MAX_PAGINATE_BY': 150,
+    'DEFAULT_PAGINATION_CLASS': 'apiv2.pagination.CustomPagination',
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',

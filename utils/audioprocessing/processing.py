@@ -32,7 +32,7 @@ from . import get_sound_type
 try:
     import scikits.audiolab as audiolab
 except ImportError:
-    print("WARNING: audiolab is not installed so wav2png will not work")
+    print "WARNING: audiolab is not installed so wav2png will not work"
 import subprocess
 
 class AudioProcessingException(Exception):
@@ -289,7 +289,7 @@ class WaveformImage(object):
     """
     def __init__(self, image_width, image_height, palette=1):
         if image_height % 2 == 0:
-            raise AudioProcessingException("Height should be uneven: images look much better at uneven height")
+            raise AudioProcessingException, "Height should be uneven: images look much better at uneven height"
 
         if palette == 1:
             background_color = (0,0,0)
@@ -482,7 +482,7 @@ def convert_to_pcm(input_filename, output_filename):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException, "file %s does not exist" % input_filename
 
     sound_type = get_sound_type(input_filename)
 
@@ -501,7 +501,7 @@ def convert_to_pcm(input_filename, output_filename):
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
-        raise AudioProcessingException("failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+        raise AudioProcessingException, "failed converting to pcm data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout
 
     return True
 
@@ -512,7 +512,7 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException, "file %s does not exist" % input_filename
 
     cmd = [stereofy_executble_path, "--input", input_filename, "--output", output_filename]
 
@@ -522,7 +522,7 @@ def stereofy_and_find_info(stereofy_executble_path, input_filename, output_filen
     if process.returncode != 0 or not os.path.exists(output_filename):
         if "No space left on device" in stderr + " " + stdout:
             raise NoSpaceLeftException
-        raise AudioProcessingException("failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout)
+        raise AudioProcessingException, "failed calling stereofy data:\n" + " ".join(cmd) + "\n" + stderr + "\n" + stdout
 
     stdout = (stdout + " " + stderr).replace("\n", " ")
 
@@ -557,7 +557,7 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException, "file %s does not exist" % input_filename
 
     command = ["lame", "--silent", "--abr", str(quality), input_filename, output_filename]
 
@@ -565,7 +565,7 @@ def convert_to_mp3(input_filename, output_filename, quality=70):
     (stdout, stderr) = process.communicate()
 
     if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException(stdout)
+        raise AudioProcessingException, stdout
 
 def convert_to_ogg(input_filename, output_filename, quality=1):
     """
@@ -573,7 +573,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     """
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException, "file %s does not exist" % input_filename
 
     command = ["oggenc", "-q", str(quality), input_filename, "-o", output_filename]
 
@@ -581,7 +581,7 @@ def convert_to_ogg(input_filename, output_filename, quality=1):
     (stdout, stderr) = process.communicate()
 
     if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException(stdout)
+        raise AudioProcessingException, stdout
 
 def convert_using_ffmpeg(input_filename, output_filename):
     """
@@ -589,10 +589,10 @@ def convert_using_ffmpeg(input_filename, output_filename):
     """
     TIMEOUT = 3 * 60
     def  alarm_handler(signum, frame):
-        raise AudioProcessingException("timeout while waiting for ffmpeg")
+        raise AudioProcessingException, "timeout while waiting for ffmpeg"
 
     if not os.path.exists(input_filename):
-        raise AudioProcessingException("file %s does not exist" % input_filename)
+        raise AudioProcessingException, "file %s does not exist" % input_filename
 
     command = ["ffmpeg", "-y", "-i", input_filename, "-ac","1","-acodec", "pcm_s16le", "-ar", "44100", output_filename]
 
@@ -602,4 +602,4 @@ def convert_using_ffmpeg(input_filename, output_filename):
     (stdout, stderr) = process.communicate()
     signal.alarm(0)
     if process.returncode != 0 or not os.path.exists(output_filename):
-        raise AudioProcessingException(stdout)
+        raise AudioProcessingException, stdout

@@ -1,5 +1,5 @@
 {% extends "accounts/_notab.html" %}
-{% load url from future %}
+
 
 {% load paginator %}
 {% block title %}{% if is_owner %}Your bookmarks{% else %}Bookmarks by {{user.username}}{% endif %}{% endblock %}

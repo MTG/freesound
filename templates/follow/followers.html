@@ -1,5 +1,5 @@
 {% extends "accounts/_notab.html" %}
-{% load url from future %}
+
 {% load util %}
 
 {% block title %}{% if is_owner %}Users following you{% else %}Users following {{ user.username }}{% endif %}{% endblock %}

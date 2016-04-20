@@ -59,23 +59,35 @@ def api_request(full_url, type='GET', post_data=None, auth='token', token=None):
 
 
 class Command(BaseCommand):
-    help = "Test apiv2 with examples from apiv2/examples.py. Usage: python manage.py test_api [custom_base_url] [token] [section]"
+    help = "Test apiv2 with examples from apiv2/examples.py. Usage: python manage.py basic_api_tests [custom_base_url] [token] [section]"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--base_url',
+            action='store',
+            dest='base_url',
+            default=False,
+            help='base url where to run the tests')
+        parser.add_argument(
+            '--token',
+            action='store',
+            dest='token',
+            default=False,
+            help='api token (client secret) to use')
+        parser.add_argument(
+            '--section',
+            action='store',
+            dest='section',
+            default=False,
+            help='section of the tests to run')
 
     def handle(self,  *args, **options):
-        if args:
-            base_url = str(args[0])
-            if len(args) > 1:
-                token = str(args[1])
-            else:
-                token = False
-            if len(args) > 2:
-                section = str(args[2])
-            else:
-                section = False
-        else:
+        base_url = options['base_url']
+        token = options['token']
+        section = options['section']
+
+        if not base_url:
             base_url = "http://%s/" % Site.objects.get_current().domain
-            section = False
-            token = False
 
         if not token:
             from apiv2.models import ApiV2Client

@@ -20,6 +20,7 @@ akismet==0.2.0
 django-oauth2-provider==0.2.6.1
 djangorestframework==3.3.3
 djangorestframework-yaml==1.0.3
+django-oauth-toolkit==0.10.0
 pillow==2.6.0
 #apt-get install libjpeg-dev
 #apt-get install zlib1g-dev

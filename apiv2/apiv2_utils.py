@@ -62,6 +62,8 @@ logger_error = logging.getLogger("api_errors")
 # Authentication util tweaks
 ############################
 
+
+
 '''
 class AccessTokenView(DjangoRestFrameworkAccessTokenView):
 
@@ -130,10 +132,6 @@ class AccessTokenView(DjangoRestFrameworkAccessTokenView):
         )
 
 
-class Capture(DjangoOauth2ProviderCapture):
-    def get_redirect_url(self, request):
-        return prepend_base(reverse('oauth2:authorize') + '/?original_path=%s' % quote(request.get_full_path()), use_https=not settings.DEBUG, dynamic_resolve=False)
-
 
 class Authorize(DjangoOauth2ProviderAuthorize):
     if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
@@ -194,37 +192,6 @@ class Authorize(DjangoOauth2ProviderAuthorize):
 
         return HttpResponseRedirect(prepend_base(self.get_redirect_url(request) + '/?original_path=%s' % original_path, use_https=not settings.DEBUG, dynamic_resolve=False))
 
-
-class Redirect(DjangoOauth2ProviderRedirect):
-
-    def get(self, request):
-
-        data = self.get_data(request)
-        code = self.get_data(request, "code")
-        error = self.get_data(request, "error")
-        client = self.get_data(request, "client")
-
-        redirect_uri = client.redirect_uri # data.get('redirect_uri', None) or
-        parsed = urlparse.urlparse(redirect_uri)
-        query = QueryDict('', mutable=True)
-
-        if 'state' in data:
-            query['state'] = data['state']
-
-        if error is not None:
-            query.update(error)
-        elif code is None:
-            query['error'] = 'access_denied'
-        else:
-            query['code'] = code
-
-        query['original_path'] = request.GET.get('original_path', '')
-
-        parsed = parsed[:4] + (query.urlencode(), '')
-        redirect_uri = urlparse.ParseResult(*parsed).geturl()
-        self.clear_data(request)
-
-        return HttpResponseRedirect(redirect_uri)
 
 '''
 #############################

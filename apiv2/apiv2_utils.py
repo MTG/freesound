@@ -19,13 +19,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-'''
-from provider.views import OAuthError
-from provider.scope import to_names, to_int
-from provider.oauth2.views import AccessTokenView as DjangoRestFrameworkAccessTokenView, Authorize as DjangoOauth2ProviderAuthorize, Capture as DjangoOauth2ProviderCapture, Redirect as DjangoOauth2ProviderRedirect
-from provider.oauth2.forms import PasswordGrantForm
-from provider.oauth2.models import RefreshToken, AccessToken
-'''
+
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import combined_search_strategies
@@ -44,12 +38,9 @@ from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from search.views import search_prepare_query
 from utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
-from urllib import unquote, quote
-from django.http import HttpResponseRedirect, QueryDict
-from django.utils.translation import ugettext as _
+from urllib import unquote
 from django.contrib.sites.models import Site
-from django.core.urlresolvers import resolve, reverse
-import urlparse
+from django.core.urlresolvers import resolve
 from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from django.db import transaction
@@ -57,143 +48,6 @@ import logging
 
 logger_error = logging.getLogger("api_errors")
 
-
-############################
-# Authentication util tweaks
-############################
-
-
-
-'''
-class AccessTokenView(DjangoRestFrameworkAccessTokenView):
-
-    """
-    We override only a function of the AccessTokenView class in order to be able to set different
-    allowed grant types per API client and to resctrict scopes on a client basis.
-    """
-
-    def get_password_grant(self, request, data, client):
-        if not client.apiv2_client.allow_oauth_passoword_grant:
-            raise OAuthError({'error': 'unsupported_grant_type'})
-
-        form = PasswordGrantForm(data, client=client)
-        if not form.is_valid():
-            raise OAuthError(form.errors)
-        return form.cleaned_data
-
-    def get_access_token(self, request, user, scope, client):
-        # If previous access tokens exist, delete them
-        at = AccessToken.objects.filter(user=user, client=client)
-        for ati in at:
-            ati.delete()
-
-        # Create a new access token
-        at = self.create_access_token(request, user, scope, client)
-        self.create_refresh_token(request, user, scope, at, client)
-        return at
-
-    def refresh_token(self, request, data, client):
-        """
-        Handle ``grant_type=refresh_token`` requests as defined in :draft:`6`.
-        We overwrite this function so that old access tokens are deleted when refreshed. Otherwise multiple access tokens
-        can be created, leading to errors.
-        """
-        rt = self.get_refresh_token_grant(request, data, client)
-
-        #self.invalidate_refresh_token(rt)
-        #self.invalidate_access_token(rt.access_token)
-        scope = rt.access_token.scope
-        rt.access_token.delete()
-
-        at = self.create_access_token(request, rt.user, scope, client)
-        rt.delete()
-        rt = self.create_refresh_token(request, at.user, at.scope, at, client)
-
-        return self.access_token_response(at)
-
-    def create_access_token(self, request, user, scope, client):
-
-        # Use client scope
-        client_scope = client.apiv2_client.get_scope_display()
-        #allowed_scopes = [requested_scope for requested_scope in to_names(scope) if requested_scope in client_scope]
-
-        return AccessToken.objects.create(
-            user=user,
-            client=client,
-            scope=to_int(*client_scope.split('+'))
-        )
-
-    def create_refresh_token(self, request, user, scope, access_token, client):
-
-        return RefreshToken.objects.create(
-            user=user,
-            access_token=access_token,
-            client=client
-        )
-
-
-
-class Authorize(DjangoOauth2ProviderAuthorize):
-    if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
-        template_name = 'api/minimal_authorize_app.html'
-    else:
-        template_name = 'api/authorize_app.html'
-
-    def handle(self, request, post_data=None):
-        data = self.get_data(request)
-        original_path = quote(request.GET.get('original_path', ''))
-
-        if data is None:
-            return self.error_response(request, {
-                'error': 'expired_authorization',
-                'error_description': _('Authorization session has expired.')})
-
-        try:
-            client, data = self._validate_client(request, data)
-        except OAuthError, e:
-            if 'redirect_uri' in e.message:
-                return self.error_response(request, {'error': 'The redirect_uri request parameter does not match the redirect_uri of ApiV2 client.'}, status=400)
-            return self.error_response(request, e.args[0], status=400)
-
-        # Check if request user already has validated access token for client
-        has_valid_token = False
-        try:
-            if AccessToken.objects.filter(user=request.user, client=client).count():
-                has_valid_token = True
-        except:
-            pass
-
-        if not has_valid_token:
-            # If user has no valid token display the authorization form as normal
-            authorization_form = self.get_authorization_form(request, client, post_data, data)
-
-            if not authorization_form.is_bound or not authorization_form.is_valid():
-                return self.render_to_response({
-                    'client': client,
-                    'form': authorization_form,
-                    'oauth_data': data,
-                    'original_path': original_path, })
-        else:
-            # If user has a valid token fill the authorization form with a newly created grant and continue
-            post_data = {u'authorize': [u'Authorize!']}
-            authorization_form = self.get_authorization_form(request, client, post_data, data)
-            if not authorization_form.is_valid():
-                return self.render_to_response({
-                    'client': client,
-                    'form': authorization_form,
-                    'oauth_data': data,
-                    'original_path': original_path, })
-
-        code = self.save_authorization(request, client, authorization_form, data)
-
-        self.cache_data(request, data)
-        self.cache_data(request, code, "code")
-        self.cache_data(request, client, "client")
-
-        return HttpResponseRedirect(prepend_base(self.get_redirect_url(request) + '/?original_path=%s' % original_path, use_https=not settings.DEBUG, dynamic_resolve=False))
-
-
-'''
 #############################
 # Rest Framework custom views
 #############################

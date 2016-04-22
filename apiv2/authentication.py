@@ -27,6 +27,13 @@ from oauth2_provider.ext.rest_framework import OAuth2Authentication as Oauth2Pro
 from apiv2.models import ApiV2Client
 
 
+class SessionAuthentication(DjangoRestFrameworkSessionAuthentication):
+
+    @property
+    def authentication_method_name(self):
+        return "Session"
+
+
 class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
 
     @property
@@ -45,88 +52,10 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
                 raise exceptions.AuthenticationFailed('Suspended token or token pending for approval')
         return super_response
 
-'''
-    """
-    OAuth 2 authentication backend using `django-oauth2-provider`
-    """
-    www_authenticate_realm = 'api'
-
-    def __init__(self, *args, **kwargs):
-        super(OAuth2Authentication, self).__init__(*args, **kwargs)
-
-        if oauth2_provider is None:
-            raise ImproperlyConfigured(
-                "The 'django-oauth2-provider' package could not be imported. "
-                "It is required for use with the 'OAuth2Authentication' class.")
-
-    @property
-    def authentication_method_name(self):
-        return "OAuth2"
-
-    def authenticate(self, request):
-        """
-        Returns two-tuple of (user, token) if authentication succeeds,
-        or None otherwise.
-        """
-
-        auth = get_authorization_header(request).split()
-
-        if not auth or auth[0].lower() != b'bearer':
-            return None
-
-        if len(auth) == 1:
-            msg = 'Invalid bearer header. No credentials provided.'
-            raise exceptions.AuthenticationFailed(msg)
-        elif len(auth) > 2:
-            msg = 'Invalid bearer header. Token string should not contain spaces.'
-            raise exceptions.AuthenticationFailed(msg)
-
-        return self.authenticate_credentials(request, auth[1])
-
-    def authenticate_credentials(self, request, access_token):
-        """
-        Authenticate the request, given the access token.
-        """
-
-        try:
-            token = oauth2_provider.models.AccessToken.objects.select_related('user','client')
-            # provider_now switches to timezone aware datetime when
-            # the oauth2_provider version supports to it.
-            token = token.get(token=access_token, expires__gt=provider_now())
-        except oauth2_provider.models.AccessToken.DoesNotExist:
-            if token.filter(token=access_token).exists():
-                # Expired token
-                raise exceptions.AuthenticationFailed('Expired token.')
-            else:
-                raise exceptions.AuthenticationFailed('Invalid token.')
-
-        user = token.user
-
-        if not user.is_active:
-            raise exceptions.AuthenticationFailed('User inactive or deleted')
-
-        if not token.client.apiv2_client.status == 'OK':
-            raise exceptions.AuthenticationFailed('Suspended token or token pending for approval')
-
-        return (user, token)
-
-    def authenticate_header(self, request):
-        """
-        Bearer is the only finalized type currently
-
-        Check details on the `OAuth2Authentication.authenticate` method
-        """
-        return 'Bearer realm="%s"' % self.www_authenticate_realm
-
-'''
-'''
-We also overwrite TokenAuthentication so we can add extra features and change the default Token model.
-'''
-
-
 class TokenAuthentication(BaseAuthentication):
     """
     Simple token based authentication.
+    We overwrite TokenAuthentication so we can add extra features and change the default Token model.
 
     Clients should authenticate by passing the token key in the "Authorization"
     HTTP header, prepended with the string "Token ".  For example:
@@ -177,14 +106,3 @@ class TokenAuthentication(BaseAuthentication):
 
     def authenticate_header(self, request):
         return 'Token'
-
-
-class SessionAuthentication(DjangoRestFrameworkSessionAuthentication):
-
-    """
-    Use Django's session framework for authentication.
-    """
-
-    @property
-    def authentication_method_name(self):
-        return "Session"

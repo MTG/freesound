@@ -20,22 +20,11 @@
 #     See AUTHORS file.
 #
 
-from django.core.exceptions import ImproperlyConfigured
 from rest_framework import exceptions
 from rest_framework.authentication import get_authorization_header
 from rest_framework.authentication import BaseAuthentication, SessionAuthentication as DjangoRestFrameworkSessionAuthentication
 from oauth2_provider.ext.rest_framework import OAuth2Authentication as Oauth2ProviderOauth2Authentication
 from apiv2.models import ApiV2Client
-import datetime
-provider_now = datetime.datetime.now
-
-'''
-We overwrite OAuth2Authentication from rest_framework.authentication because of a problem when importing provider_now.
-Django-oauth2-provider tries to import a function only present in django >= 1.4 (django.utils.timezone), and we
-are using 1.3.
-
-We may use this overwritten class to add some extra funcitonality.
-'''
 
 
 class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
@@ -46,10 +35,15 @@ class OAuth2Authentication(Oauth2ProviderOauth2Authentication):
     
     def authenticate(self, request):
         """
-        Returns two-tuple of (user, token) if authentication succeeds,
-        or None otherwise.
+        We override this method to check the status of related ApiV2Client.
+        Check that ApiV2Client associatied to the given acess_token has not been disabled.
         """
-        return super(OAuth2Authentication, self).authenticate(request)
+        super_response = super(OAuth2Authentication, self).authenticate(request)
+        if super_response is not None:
+            # super_response[1] -> access_token
+            if super_response[1].application.apiv2_client.status != "OK":
+                raise exceptions.AuthenticationFailed('Suspended token or token pending for approval')
+        return super_response
 
 '''
     """

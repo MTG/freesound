@@ -21,6 +21,7 @@
 #
 
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
+from rest_framework.exceptions import AuthenticationFailed
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import combined_search_strategies
 from sounds.models import Sound, Pack, License

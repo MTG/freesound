@@ -101,3 +101,57 @@ class CaptchaWidget(forms.Widget):
 
     def value_from_datadict(self, data, files, name):
         return data.get(self.recaptcha_response_field, None)
+
+
+class RecaptchaForm(forms.Form):
+    """
+    A form class which uses reCAPTCHA for user validation.
+    If the captcha is not guessed correctly, a ValidationError is raised
+    for the appropriate field
+    """
+
+    captcha_enabled = settings.RECAPTCHA_PUBLIC_KEY != ''
+
+    recaptcha_challenge_field = forms.CharField(widget=DummyWidget, required=captcha_enabled)
+    recaptcha_response_field = forms.CharField(widget=RecaptchaWidget, required=captcha_enabled, label="Please prove you are not a robot:")
+
+    if not captcha_enabled:
+        recaptcha_response_field.label = ''
+
+    def __init__(self, request, *args, **kwargs):
+        if request.is_secure():
+            # If request is https present https form
+            self.base_fields['recaptcha_response_field'].widget = RecaptchaWidgetSSL()
+
+        super(RecaptchaForm, self).__init__(*args, **kwargs)
+        self._request = request
+
+        # move the captcha to the bottom of the list of fields
+        recaptcha_fields = ['recaptcha_challenge_field', 'recaptcha_response_field']
+        self.fields.keyOrder = [key for key in self.fields.keys() if key not in recaptcha_fields] + recaptcha_fields
+
+    def clean_recaptcha_response_field(self):
+        if 'recaptcha_challenge_field' in self.cleaned_data:
+            self.validate_captcha()
+        return self.cleaned_data['recaptcha_response_field']
+
+    def clean_recaptcha_challenge_field(self):
+        if 'recaptcha_response_field' in self.cleaned_data:
+            self.validate_captcha()
+        return self.cleaned_data['recaptcha_challenge_field']
+
+    def validate_captcha(self):
+        rcf = self.cleaned_data['recaptcha_challenge_field']
+        rrf = self.cleaned_data['recaptcha_response_field']
+        ip_address = self._request.META['REMOTE_ADDR']
+
+        # only submit captcha information if it is enabled
+        if self.captcha_enabled:
+            try:
+                check = captcha.submit(rcf, rrf, settings.RECAPTCHA_PRIVATE_KEY, ip_address)
+                if not check.is_valid:
+                    raise forms.ValidationError('You have not entered the correct words')
+            except URLError, timeout:
+                # We often sometimes see error messages that recaptcha url is unreachable and
+                # this causes 500 errors. If recaptcha is unreachable, just skip captcha validation.
+                pass

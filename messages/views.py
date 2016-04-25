@@ -106,7 +106,7 @@ def new_message(request, username=None, message_id=None):
         if request.user.profile.num_sounds:
             form = MessageReplyFormNoCaptcha(request.POST)
         else:
-            form = MessageReplyForm(request,request.POST)
+            form = MessageReplyForm(request.POST)
 
         if request.user.profile.is_blocked_for_spam_reports():
             messages.add_message(request, messages.INFO, "You're not allowed to send the message because your account has been temporaly blocked after multiple spam reports")
@@ -134,7 +134,7 @@ def new_message(request, username=None, message_id=None):
         if request.user.profile.num_sounds:
             form = MessageReplyFormNoCaptcha()
         else:
-            form = MessageReplyForm(request)
+            form = MessageReplyForm()
 
         if message_id:
             try:
@@ -154,14 +154,14 @@ def new_message(request, username=None, message_id=None):
                 if request.user.profile.num_sounds:
                     form = MessageReplyFormNoCaptcha(initial=dict(to=to, subject=subject, body=body))
                 else:
-                    form = MessageReplyForm(request,initial=dict(to=to, subject=subject, body=body))
+                    form = MessageReplyForm(initial=dict(to=to, subject=subject, body=body))
             except Message.DoesNotExist:
                 pass
         elif username:
             if request.user.profile.num_sounds:
                 form = MessageReplyFormNoCaptcha(initial=dict(to=username))
             else:
-                form = MessageReplyForm(request, initial=dict(to=username))
+                form = MessageReplyForm(initial=dict(to=username))
     
     return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))
 

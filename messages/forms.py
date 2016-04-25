@@ -19,8 +19,10 @@
 #
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.models import User
-from utils.forms import RecaptchaForm, HtmlCleaningCharField
+from utils.forms import CaptchaWidget, HtmlCleaningCharField
+
 
 class ManualUserField(forms.CharField):
     def clean(self, value):
@@ -28,15 +30,27 @@ class ManualUserField(forms.CharField):
             raise forms.ValidationError('Please enter a username.')
         try:
             return User.objects.get(username__iexact=value)
-        except User.DoesNotExist: #@UndefinedVariable
+        except User.DoesNotExist:  # @UndefinedVariable
             raise forms.ValidationError("We are sorry, but this username does not exist...")
 
-def MessageReplyClassCreator(baseclass):
+
+def MessageReplyClassCreator(baseclass, enable_captcha):
+
     class MessageReplyForm(baseclass):
         to = ManualUserField(widget=forms.TextInput(attrs={'size':'40'}))
         subject = forms.CharField(min_length=3, max_length=128, widget=forms.TextInput(attrs={'size':'80'}))
         body = HtmlCleaningCharField(widget=forms.Textarea(attrs=dict(cols=100, rows=30)))
+        if enable_captcha:
+            captcha_key = settings.RECAPTCHA_PUBLIC_KEY
+            recaptcha_response = forms.CharField(widget=CaptchaWidget)
+
+            def clean_recaptcha_response(self):
+                captcha_response = self.cleaned_data.get("recaptcha_response")
+                if not captcha_response:
+                    raise forms.ValidationError(_("Captcha is not correct"))
+                return captcha_response
+
     return MessageReplyForm
 
-MessageReplyForm = MessageReplyClassCreator(RecaptchaForm)
-MessageReplyFormNoCaptcha = MessageReplyClassCreator(forms.Form)
+MessageReplyForm = MessageReplyClassCreator(forms.Form, True)
+MessageReplyFormNoCaptcha = MessageReplyClassCreator(forms.Form, False)

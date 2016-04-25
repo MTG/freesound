@@ -11,9 +11,17 @@
 <div style="text-align: left; margin-bottom:30px; margin-top:20px;">
     <h3>Please read the <a href="{% url wiki %}faq">Frequently Asked Questions</a> page before you send an email</h3>
 </div>
-<form method="post" action=".">{% csrf_token %}
-{{form.as_p}}
-<input type="submit" value="send" />
-</form>
+    <form method="post" action=".">{% csrf_token %}
+    {{form.as_p}}
+        <div class="form-group">
+                <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
+                <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
+            </div>
+
+
+    <input type="submit" value="send" />
+    </form>
+</div>
 {% endif %}
 {% endblock %}

@@ -22,6 +22,7 @@ from django import forms
 from utils.text import clean_html, is_shouting
 from django.conf import settings
 from recaptcha.client import captcha
+from urllib2 import URLError
 from utils.tags import clean_and_split_tags
 from HTMLParser import HTMLParseError
 

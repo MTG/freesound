@@ -84,3 +84,20 @@ class DummyWidget(forms.Widget):
 
     def value_from_datadict(self, data, files, name):
         return data.get(self.recaptcha_response_field, None)
+    
+
+class CaptchaWidget(forms.Widget):
+    """
+    A Widget class for captcha. Converts the recaptcha response field into a readable field for the form
+    """
+
+    # make sure that labels are not displayed either
+    is_hidden = True
+
+    recaptcha_response_field = 'g-recaptcha-response'
+
+    def render(self, *args, **kwargs):
+        return ''
+
+    def value_from_datadict(self, data, files, name):
+        return data.get(self.recaptcha_response_field, None)

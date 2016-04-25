@@ -26,7 +26,7 @@ from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from accounts.models import Profile
-from utils.forms import RecaptchaForm, HtmlCleaningCharField, filename_has_valid_extension
+from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 
 
@@ -73,23 +73,6 @@ class FileChoiceForm(forms.Form):
         super(FileChoiceForm, self).__init__(*args, **kwargs)
         choices = files.items()
         self.fields['files'].choices = choices
-
-
-class CaptchaWidget(forms.Widget):
-    """
-    A Widget class for captcha. Converts the recaptcha response field into a readable field for the form
-    """
-
-    # make sure that labels are not displayed either
-    is_hidden = True
-
-    recaptcha_response_field = 'g-recaptcha-response'
-
-    def render(self, *args, **kwargs):
-        return ''
-
-    def value_from_datadict(self, data, files, name):
-        return data.get(self.recaptcha_response_field, None)
 
 
 class RegistrationForm(forms.Form):

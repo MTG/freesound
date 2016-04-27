@@ -23,6 +23,6 @@
 from django.conf.urls import patterns, url
 import ratings.views as ratings
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^add/(?P<content_type_id>\d+)/(?P<object_id>\d+)/(?P<rating>\d)/$', ratings.add, name="ratings-add"),
-)
+]

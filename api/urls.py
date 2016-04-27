@@ -23,9 +23,9 @@ from api_utils import end_of_life_message
 from apiv2.views import create_apiv2_key as apply_for_api_key_view
 
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^apply/$', apply_for_api_key_view),
     url(r'/$', end_of_life_message ),
-)
+]
 
 

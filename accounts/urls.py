@@ -29,7 +29,7 @@ import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
 
-urlpatterns = patterns('accounts.views',
+urlpatterns = [
     url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html',
                                        'authentication_form': FsAuthenticationForm}, name="accounts-login"),
     url(r'^logout/$', authviews.logout, {'template_name': 'accounts/logout.html'}, name="accounts-logout"),
@@ -94,5 +94,5 @@ urlpatterns = patterns('accounts.views',
     url(r'^app_permissions/$', api.granted_permissions, name='access-tokens'),
     url(r'^app_permissions/revoke_permission/(?P<client_id>[^//]+)/$', api.revoke_permission, name='revoke-permission'),
     url(r'^app_permissions/permission_granted/$', api.permission_granted, name='permission-granted'),
-)
+]
 

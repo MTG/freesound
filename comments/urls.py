@@ -23,6 +23,6 @@
 from django.conf.urls import patterns, url
 import comments.views as comments
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^delete/(?P<comment_id>\d+)/$', comments.delete, name="comment-delete"),
-)
+]

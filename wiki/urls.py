@@ -24,10 +24,10 @@ from django.conf.urls import patterns, url
 from django.views.generic import TemplateView, RedirectView
 import wiki.views as wiki
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', RedirectView.as_view(url="/help/main/"), name="wiki"),
     url(r'^$',RedirectView.as_view(url="/help/developers/"), name="wiki_developers"),
     url(r'^(?P<name>[//\w_-]+)/history/$', wiki.history, name="wiki-page-history"),
     url(r'^(?P<name>[//\w_-]+)/edit/$', wiki.editpage, name="wiki-page-edit"),
     url(r'^(?P<name>[//\w_-]+)/$', wiki.page, name="wiki-page"),
-)
+]

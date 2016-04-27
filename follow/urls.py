@@ -21,10 +21,11 @@
 #
 
 from django.conf.urls import patterns, url
+from follow import views
 
-urlpatterns = patterns('follow.views',
-    url(r'^follow_user/(?P<username>[^//]+)/$', 'follow_user', name='follow-user'),
-    url(r'^unfollow_user/(?P<username>[^//]+)/$', 'unfollow_user', name='unfollow-user'),
-    url(r'^follow_tags/(?P<slash_tags>[\w//-]+)/$', 'follow_tags', name='follow-tags'),
-    url(r'^unfollow_tags/(?P<slash_tags>[\w//-]+)/$', 'unfollow_tags', name='unfollow-tags'),
-)
+urlpatterns = [
+    url(r'^follow_user/(?P<username>[^//]+)/$', views.follow_user, name='follow-user'),
+    url(r'^unfollow_user/(?P<username>[^//]+)/$', views.unfollow_user, name='unfollow-user'),
+    url(r'^follow_tags/(?P<slash_tags>[\w//-]+)/$', views.follow_tags, name='follow-tags'),
+    url(r'^unfollow_tags/(?P<slash_tags>[\w//-]+)/$', views.unfollow_tags, name='unfollow-tags'),
+]

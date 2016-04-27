@@ -24,7 +24,7 @@ from django.conf.urls import patterns, url
 import forum.views as forum
 from search.views import search_forum
 
-urlpatterns = patterns('forum.views',
+urlpatterns = [
     url(r'^$', forum.forums, name='forums-forums'),
     url(r'^moderate/$', forum.moderate_posts, name="forums-moderate"),
     url(r'^forums-search/$', search_forum, name="forums-search"),
@@ -40,4 +40,4 @@ urlpatterns = patterns('forum.views',
     url(r'^post/(?P<post_id>\d+)/edit/$', forum.post_edit, name="forums-post-edit"),
     url(r'^post/(?P<post_id>\d+)/delete/$', forum.post_delete, name="forums-post-delete"),
     url(r'^post/(?P<post_id>\d+)/delete-confirm/$', forum.post_delete_confirm, name="forums-post-delete-confirm"),
-)
+]

@@ -24,7 +24,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import TemplateView
 from views import *
 
-urlpatterns = patterns('',
+urlpatterns = [
 
     url(r'^$',
         tickets_home,
@@ -78,4 +78,4 @@ urlpatterns = patterns('',
         process_sounds,
         name='tickets-processing-process'),
 
-)
+]

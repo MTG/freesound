@@ -33,11 +33,12 @@ import forum.views
 import comments.views
 import bookmarks.views
 import follow.views
+import general.views
 from utils.tagrecommendation_utilities import *
 
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', sounds.views.front_page, name='front-page'),
 
     url(r'^people/$', accounts.views.accounts, name="accounts"),
@@ -100,28 +101,28 @@ urlpatterns = patterns('',
     # Alternative previews url for logging clickthrough data
     url(r'^data/previews_alt/(?P<folder_id>\d+)/(?P<sound_id>\d+)_(?P<user_id>\d+)', sounds.views.sound_preview,name="sound-preview"),
 
-    (r'^ratings/', include('ratings.urls')),
-    (r'^comments/', include('comments.urls')),
-    (r'^help/', include('wiki.urls')),
-    (r'^forum/', include('forum.urls')),
-    (r'^geotags/', include('geotags.urls')),
-    (r'^home/', include('accounts.urls')),
-    (r'^tickets/', include('tickets.urls')),
-    (r'^follow/', include('follow.urls')),
+    url(r'^ratings/', include('ratings.urls')),
+    url(r'^comments/', include('comments.urls')),
+    url(r'^help/', include('wiki.urls')),
+    url(r'^forum/', include('forum.urls')),
+    url(r'^geotags/', include('geotags.urls')),
+    url(r'^home/', include('accounts.urls')),
+    url(r'^tickets/', include('tickets.urls')),
+    url(r'^follow/', include('follow.urls')),
 
     url(r'^blog/$', RedirectView.as_view(url='http://blog.freesound.org/'), name="blog"),
     url(r'^crossdomain\.xml$', TemplateView.as_view(template_name='crossdomain.xml'), name="crossdomain"),
 
     # admin views
-    url(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$', 'general.views.admin_move_ordered_model', name="admin-move"),
-    (r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    (r'^admin/', admin.site.urls),
+    url(r'^admin/orderedmove/(?P<direction>up|down)/(?P<model_type_id>\d+)/(?P<model_id>\d+)/$', general.views.admin_move_ordered_model, name="admin-move"),
+    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+    url(r'^admin/', admin.site.urls),
 
     # api views
-    (r'^api/', include('api.urls')),
+    url(r'^api/', include('api.urls')),
 
     # apiv2 views
-    (r'^apiv2/', include('apiv2.urls')),
+    url(r'^apiv2/', include('apiv2.urls')),
 
     # tag recommendation
     url(r'^tagrecommendation/instructions/$', new_tagrecommendation_interface_instructions, name="tagrecommendation-instructions"),
@@ -150,12 +151,13 @@ urlpatterns = patterns('',
 
     # dead season redirect (THIS IS TEMPORAL)
     url(r'^deadseason/$', RedirectView.as_view(url='http://www.freesound.org/people/Slave2theLight/bookmarks/category/4730/')),
-)
+]
 
 #if you need django to host the admin files...
 from django.conf import settings
+from django.views.static import serve
 if settings.DEBUG:
-    urlpatterns += patterns('',
-        (r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
-        (r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), 'django.views.static.serve', {'document_root': settings.DATA_PATH, 'show_indexes': True}),
-    )
+    urlpatterns += [
+        url(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve, {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
+        url(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {'document_root': settings.DATA_PATH, 'show_indexes': True}),
+    ]

@@ -124,7 +124,7 @@ class TicketComment(models.Model):
     text            = models.TextField()
     created         = models.DateTimeField(auto_now_add=True)
     ticket          = models.ForeignKey(Ticket, related_name='messages')
-    moderator_only  = models.BooleanField()
+    moderator_only  = models.BooleanField(default=False)
 
     def __unicode__(self):
         return u"<# Message - ticket_id: %s, ticket_key: %s>" % \

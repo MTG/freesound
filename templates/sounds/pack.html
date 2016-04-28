@@ -25,7 +25,7 @@
     //}
 </script>
 
-<h1>Pack: {{pack.name}} by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a></h1>
+<h1>Pack: {{pack.name}} by <a href="{% url 'account' pack.user.username %}">{{pack.user.username}}</a></h1>
 
 
 {% comment %}
@@ -66,11 +66,11 @@
 
     {% if perms.pack.can_edit or pack.user == request.user %}
             <p>
-                <a href="{% url pack-edit pack.user.username pack.id %}" class="icon" id="edit_link" title="edit pack">
+                <a href="{% url 'pack-edit' pack.user.username pack.id %}" class="icon" id="edit_link" title="edit pack">
                     Edit pack information
                 </a>
                 <br/>
-                <a href="{% url pack-delete pack.user.username pack.id %}"
+                <a href="{% url 'pack-delete' pack.user.username pack.id %}"
                     class="icon" id="delete_pack" title="edit pack">
                     Delete this pack
                 </a>
@@ -82,7 +82,7 @@
 </div><!-- #pack_info -->
 
 <p>
-    See <a href="{% url packs-for-user pack.user.username %}">more packs</a> by <a href="{% url account pack.user.username %}">{{pack.user.username}}</a>
+    See <a href="{% url 'packs-for-user' pack.user.username %}">more packs</a> by <a href="{% url 'account' pack.user.username %}">{{pack.user.username}}</a>
 </p>
     
     
@@ -117,7 +117,7 @@
                 stopAll();
             });
 
-            ajaxLoad('{% url geotags-for-pack-json pack.id %}', function(data, responseCode)
+            ajaxLoad('{% url 'geotags-for-pack-json' pack.id %}', function(data, responseCode)
             {
                 var bounds = new google.maps.LatLngBounds();
                 // We'll need to know the number of sounds to correctly display the map
@@ -178,11 +178,11 @@
 		    <div id="download">
 		{% endif %}
 		    {% if request.user.is_authenticated %}
-		    	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
-		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
+		    	<a href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Pack', 'Download', 'pack_id:{{ pack.id }}']);" id="download_button" title="download pack"></a>
+		    	<div id="download_text"><a href="{% url 'pack-downloaders' pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
 		    {% else %}
-		    	<a href="{% url pack-download pack.user.username pack.id %}{{ pack.friendly_filename }}" id="download_login_button" title="download pack"></a>
-		    	<div id="download_text"><a href="{% url pack-downloaders pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
+		    	<a href="{% url 'pack-download' pack.user.username pack.id %}{{ pack.friendly_filename }}" id="download_login_button" title="download pack"></a>
+		    	<div id="download_text"><a href="{% url 'pack-downloaders' pack.user.username pack.id %}">Downloaded<br /><b>{{pack.num_downloads}}</b> times</a></div>
 		    {% endif %}
 		</div>
 		

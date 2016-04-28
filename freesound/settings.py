@@ -70,6 +70,11 @@ DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 
+# This was the default serializer in django 1.6. Now we keep using it because 
+# we saw some erros when running tests, in the future we should change to the
+# new one.
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+
 TIME_ZONE = 'Europe/Brussels'
 
 LANGUAGE_CODE = 'en-us'
@@ -95,7 +100,9 @@ ROOT_URLCONF = 'freesound.urls'
 
 WSGI_APPLICATION = 'freesound.wsgi.application'
 
+# This configuration is not used by django anymore
 AUTH_PROFILE_MODULE = 'accounts.Profile'
+
 LOGIN_URL = '/home/login/'
 LOGOUT_URL = '/home/logout/'
 LOGIN_REDIRECT_URL = '/home/'

@@ -544,6 +544,8 @@ class Sound(SocialModel):
             self.save()
 
     def add_comment(self, comment, commit=True):
+        # From django 1.8.4 is required to save the object before adding the relation
+        comment.save()
         self.comments.add(comment)
         self.num_comments += 1
         self.mark_index_dirty(commit=False)

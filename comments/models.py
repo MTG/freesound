@@ -31,7 +31,7 @@ class Comment(models.Model):
     user = models.ForeignKey(User)
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField(db_index=True)
-    content_object = fields.GenericForeignKey()
+    content_object = fields.GenericForeignKey('content_type', 'object_id')
     comment = models.TextField()
     parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', default=None)
     created = models.DateTimeField(db_index=True, auto_now_add=True)

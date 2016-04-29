@@ -629,7 +629,12 @@ def on_delete_sound(sender, instance, **kwargs):
             DeletedSound.objects.get_or_create(sound_id=instance.id, user=deleted_user)
 
     try:
-        instance.user.profile.update_num_sounds()
+        '''
+        When deleting the sound is possible that the profile has already been deleted (because of django on cascade
+        delete order). See comment below after 'except Pack.DoesNotExist'
+        '''
+        if hasattr(instance.user, 'profile'):
+            instance.user.profile.update_num_sounds()
     except User.DoesNotExist:
         '''
         It might happen that on deleting sound the user does not exist because of the way django deletes objects

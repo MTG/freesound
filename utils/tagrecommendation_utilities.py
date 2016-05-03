@@ -76,9 +76,9 @@ def get_recommended_tags_view(request):
             input_tags = list(clean_and_split_tags(input_tags))
             if len(input_tags) > 0:
                 tags, community = get_recommended_tags(input_tags)
-                return HttpResponse(json.dumps([tags, community]), mimetype='application/javascript')
+                return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
 
-    return HttpResponse(json.dumps([[],"-"]), mimetype='application/javascript')
+    return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')
 
 
 def log_recommendation_info_view(request):
@@ -87,7 +87,7 @@ def log_recommendation_info_view(request):
         if log:
             research_logger.info(log)
 
-    return HttpResponse(json.dumps(""), mimetype='application/javascript')
+    return HttpResponse(json.dumps(""), content_type='application/javascript')
 
 
 def get_id_of_last_indexed_sound():
@@ -138,23 +138,23 @@ def get_recommended_tags_view_new(request):
             result = NewTagRecommendation.recommend_tags_category(input_tags, category)
         else:
             result = NewTagRecommendation.recommend_tags(input_tags)
-        return HttpResponse(json.dumps(result), mimetype='application/javascript')
+        return HttpResponse(json.dumps(result), content_type='application/javascript')
 
-    return HttpResponse(json.dumps({'tags':[], 'audio_category':None}), mimetype='application/javascript')
+    return HttpResponse(json.dumps({'tags':[], 'audio_category':None}), content_type='application/javascript')
 
 def get_recommended_categories_view(request):
     if request.is_ajax() and request.method == 'POST':
         input_tags = request.POST.get('input_tags', False)
         result = NewTagRecommendation.recommend_categories(input_tags)
         categories = [str(category) for category in result['categories']]
-        return HttpResponse(json.dumps(categories), mimetype='application/javascript')
+        return HttpResponse(json.dumps(categories), content_type='application/javascript')
 
-    return HttpResponse(json.dumps([]), mimetype='application/javascript')
+    return HttpResponse(json.dumps([]), content_type='application/javascript')
 
 def get_all_categories_view(request):
     if request.is_ajax() and request.method == 'POST':
         result = NewTagRecommendation.all_tag_categories()
         categories = [str(category) for category in result['categories']]
-        return HttpResponse(json.dumps(categories), mimetype='application/javascript')
+        return HttpResponse(json.dumps(categories), content_type='application/javascript')
 
-    return HttpResponse(json.dumps([]), mimetype='application/javascript')
+    return HttpResponse(json.dumps([]), content_type='application/javascript')

@@ -979,9 +979,9 @@ def flag_user(request, username=None):
             elif request.POST["flag_type"] == "SC":
                 flagged_object = Comment.objects.get(id = object_id)
             else:
-                return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+                return HttpResponse(json.dumps({"errors":True}), content_type='application/javascript')
         else:
-            return HttpResponse(json.dumps({"errors":True}), mimetype='application/javascript')
+            return HttpResponse(json.dumps({"errors":True}), content_type='application/javascript')
 
         previous_reports_count = UserFlag.objects.filter(user__username=flagged_user.username)\
             .values('reporting_user').distinct().count()
@@ -1023,9 +1023,9 @@ def flag_user(request, username=None):
                 to_emails.append(mail[1])
             send_mail_template(u'Spam report for user ' + flagged_user.username,
                                template_to_use, locals(), None, to_emails)
-        return HttpResponse(json.dumps({"errors": None}), mimetype='application/javascript')
+        return HttpResponse(json.dumps({"errors": None}), content_type='application/javascript')
     else:
-        return HttpResponse(json.dumps({"errors": True}), mimetype='application/javascript')
+        return HttpResponse(json.dumps({"errors": True}), content_type='application/javascript')
 
 
 @login_required

@@ -41,6 +41,149 @@ import tempfile
 import shutil
 
 
+class SimpleUserTest(TestCase):
+    
+    fixtures = ['users', 'sounds_with_tags']
+    
+    def setUp(self):
+        self.user = User.objects.all()[0]
+        self.sound = Sound.objects.all()[0] 
+
+    def test_account_response_ok(self):
+        # 200 response on account access
+        print self.user.username
+        resp = self.client.get(reverse('account', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+     
+    def test_user_sounds_response_ok(self):
+        # 200 response on user sounds access
+        resp = self.client.get(reverse('sounds-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_user_flag_response_ok(self):
+        # 200 response on user flag and clear flag access
+        self.user.set_password('12345')
+        self.user.is_superuser = True
+        self.user.save()
+        a =self.client.login(username=self.user.username, password='12345')
+        resp = self.client.get(reverse('flag-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('clear-flags-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_comments_response_ok(self):
+        # 200 response on user comments and comments for user access
+        resp = self.client.get(reverse('comments-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('comments-by-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        
+    def test_user_geotags_response_ok(self):
+        # 200 response on user geotags access
+        resp = self.client.get(reverse('geotags-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_user_packs_response_ok(self):
+        # 200 response on user packs access
+        resp = self.client.get(reverse('packs-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_user_downloaded_response_ok(self):
+        # 200 response on user downloaded sounds and packs access
+        resp = self.client.get(reverse('user-downloaded-sounds', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('user-downloaded-packs', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_user_bookmarks_response_ok(self):
+        # 200 response on user bookmarks sounds and packs access
+        resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_user_follow_response_ok(self):
+        # 200 response on user user bookmarks sounds and packs access
+        resp = self.client.get(reverse('user-following-users', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('user-followers', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('user-following-tags', kwargs={'username': self.user.username}))
+        self.assertEqual(resp.status_code, 200)
+  
+    def test_sounds_response_ok(self):
+        # 200 response on sounds page access
+        resp = self.client.get(reverse('sounds'))
+        self.assertEqual(resp.status_code, 200)
+
+        self.sound.moderation_state="OK"
+        self.sound.processing_state="OK"
+        self.sound.save()
+        user = self.sound.user
+        user.set_password('12345')
+        user.is_superuser = True
+        user.save()
+        self.client.login(username=user.username, password='12345')
+        resp = self.client.get(reverse('sound', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-flag', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-edit-sources', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-edit', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-geotag', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-delete', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-similar', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.get(reverse('sound-downloaders', kwargs={'username': user.username, "sound_id": self.sound.id}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_tags_response_ok(self):
+        # 200 response on tags page access
+        resp = self.client.get(reverse('tags'))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_packs_response_ok(self):
+        # 200 response on packs page access
+        resp = self.client.get(reverse('packs'))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_comments_response_ok(self):
+        # 200 response on comments page access
+        resp = self.client.get(reverse('comments'))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_random_sound_response_ok(self):
+        # 302 response on random sound access
+        resp = self.client.get(reverse('sounds-random'))
+        self.assertEqual(resp.status_code, 302)
+ 
+    def test_remixed_response_ok(self):
+        # 200 response on remixed sounds page access
+        resp = self.client.get(reverse('remix-groups'))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_contact_response_ok(self):
+        # 200 response on contact page access
+        resp = self.client.get(reverse('contact'))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_sound_search_response_ok(self):
+        # 200 response on sound search page access
+        resp = self.client.get(reverse('sounds-search'))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_geotags_box_response_ok(self):
+        # 200 response on geotag box page access
+        resp = self.client.get(reverse('geotags-box'))
+        self.assertEqual(resp.status_code, 200)
+ 
+    def test_geotags_box_iframe_response_ok(self):
+        # 200 response on geotag box iframe
+        resp = self.client.get(reverse('embed-geotags-box-iframe'))
+        self.assertEqual(resp.status_code, 200)
+ 
 class OldUserLinksRedirect(TestCase):
     
     fixtures = ['users']

@@ -6,7 +6,7 @@
 {% block title %}Sources for {{sound.original_filename}}{% endblock title %}
 
 {% block section_content %}
-<h1>Sources for <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url account sound.user.username %}">{{sound.user.username}}</a></h1>
+<h1>Sources for <a href="{% url 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% url 'account' sound.user.username %}">{{sound.user.username}}</a></h1>
 
 {% show_paginator paginator page current_page request "source" %}
 

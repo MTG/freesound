@@ -11,7 +11,7 @@
     {
         $("#save-button").attr("disabled", "disabled");
         $("#id_sources").val(sources.join(","))
-        $.post("{% url sound-edit-sources sound.user.username sound.id %}", $("#save-form").serialize(), function ()
+        $.post("{% url 'sound-edit-sources' sound.user.username sound.id %}", $("#save-form").serialize(), function ()
         {
             $("#save-button").removeAttr("disabled");
         });
@@ -73,7 +73,7 @@
 
         $("#search-button").click(function ()
         {
-            $("#search-results").load("{% url sounds-search %}", $.param({"q": $("#search-q").val(), "ajax": 1}),
+            $("#search-results").load("{% url 'sounds-search' %}", $.param({"q": $("#search-q").val(), "ajax": 1}),
                     function(){makePlayer('.player');appendLinks();}
                 );
             return false;
@@ -89,7 +89,7 @@
 {% block title %}Editing remixes of {{sound.original_filename}}{% endblock title %}
 {% block section_content %}
 
-<h2>Editing sources of <a href="{% url sound sound.user.username sound.id %}">{{sound.original_filename}}</a></h2>
+<h2>Editing sources of <a href="{% url "sound" sound.user.username sound.id %}">{{sound.original_filename}}</a></h2>
 <p>
 </p>
 
@@ -102,7 +102,7 @@
 
 	<div id="submit_button_for_edit_sources" >
 		<p><input type="submit" name="save" value="save..." id="save-button"/></p>
-    	<p><a href="{% url sound-edit sound.user.username sound.id %}">Go back to edit page</a></p>
+    	<p><a href="{% url "sound-edit" sound.user.username sound.id %}">Go back to edit page</a></p>
 	</div>
 
 	<div id="search-results-title" class="sound_list_minimal">

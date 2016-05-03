@@ -216,7 +216,7 @@
     can click through the remix graph and browse Freesound like this.
 </p>
 <p>
-    <a href="{% url sound-edit-sources sound.user.username sound.id %}">Edit sound sources</a>
+    <a href="{% url "sound-edit-sources" sound.user.username sound.id %}">Edit sound sources</a>
 </p>
 
 <h3>Sound license</h3>
@@ -250,7 +250,7 @@
 <h3>Delete</h3>
 <a id="delete"></a>
 <p>
-    <a href="{% url sound-delete sound.user.username sound.id %}">Delete this sound</a>
+    <a href="{% url "sound-delete" sound.user.username sound.id %}">Delete this sound</a>
 </p>
 
 <script type="text/javascript">

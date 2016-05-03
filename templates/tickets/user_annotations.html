@@ -4,7 +4,7 @@
     <br>
     <div class="user-annotations-info">
         <img src="{{ user.profile.locations.avatar.L.url }}"/>
-        <p><a href="{% url account user.username %}">{{ user.username }}</a>
+        <p><a href="{% url 'account' user.username %}">{{ user.username }}</a>
         <br>{{ num_sounds_ok }} sounds ok, <a href="{% url tickets-user-pending_sounds user.username %}">{{ num_sounds_pending }} pending</a>
         {% if user.profile.home_page %}
             <br>home page: <a href="{{user.profile.home_page}}" rel="nofollow">{{user.profile.home_page}}</a>
@@ -18,7 +18,7 @@
     <br>
     {% for annotation in annotations %}
         <div class="user-annotation">
-            <p><a href="{% url account annotation.sender.username %}">{{ annotation.sender }}</a> wrote:
+            <p><a href="{% url 'account' annotation.sender.username %}">{{ annotation.sender }}</a> wrote:
             <p class="message-list-message">{{ annotation.text|linebreaksbr|safe }}
         </div>
     {% endfor %}
@@ -29,7 +29,7 @@
            onClick="
                var text = $('#id_text').get(0).value;
                console.debug(text);
-            $.post('{% url tickets-user-annotations user.id %}',
+            $.post('{% url "tickets-user-annotations" user.id %}',
                    { text: text },
                    function(data) { $('#user-annotations-section').html(data); });">
     </form>

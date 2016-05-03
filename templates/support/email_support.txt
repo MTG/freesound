@@ -8,7 +8,7 @@
 
 {% if user %}
 --
-user: {% absurl account user.username %}
+user: {% absurl "account" user.username %}
 is_active: {{user.is_active|yesno}}
 joined: {{user.date_joined|date:"F jS, Y"}}
 num sounds: {{user.get_profile.num_sounds}}

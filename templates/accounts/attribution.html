@@ -48,11 +48,11 @@
 				&nbsp;&nbsp;&nbsp;&nbsp;{% filter force_escape %}
 				{% if download_item.sound %}
 					{% with download_item.sound as sound %}
-						<li>S: <a href="{% absurl sound sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% absurl account sound.user.username %}">{{sound.user.username}}</a> | License: {{ sound.license }}</li>
+						<li>S: <a href="{% absurl 'sound' sound.user.username sound.id %}">{{sound.original_filename}}</a> by <a href="{% absurl 'account' sound.user.username %}">{{sound.user.username}}</a> | License: {{ sound.license }}</li>
 					{% endwith %}
 				{% else %}
 					{% with download_item.pack as pack %}
-						<li>P: <a href="{% absurl pack pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% absurl account pack.user.username %}">{{pack.user.username}}</a></li>
+						<li>P: <a href="{% absurl 'pack' pack.user.username pack.id %}">{{pack.name}}</a> by <a href="{% absurl 'account' pack.user.username %}">{{pack.user.username}}</a></li>
 					{% endwith %}
 				{% endif %}
 				{% endfilter %}<br />
@@ -70,11 +70,11 @@
 			    &nbsp;&nbsp;&nbsp;&nbsp;
 				{% if download_item.sound %}
 					{% with download_item.sound as sound %}
-		                S: {{sound.original_filename}} by {{sound.user.username}} -- {% absurl sound sound.user.username sound.id %} -- License: {{ sound.license }}<br />
+		                S: {{sound.original_filename}} by {{sound.user.username}} -- {% absurl 'sound' sound.user.username sound.id %} -- License: {{ sound.license }}<br />
 					{% endwith %}
 				{% else %}
 					{% with download_item.pack as pack %}
-		                P: {{pack.name}} by {{pack.user.username}} -- {% absurl pack pack.user.username pack.id %}<br/>
+		                P: {{pack.name}} by {{pack.user.username}} -- {% absurl 'pack' pack.user.username pack.id %}<br/>
 					{% endwith %}
 				{% endif %}
 			{% endfor %}

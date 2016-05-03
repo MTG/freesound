@@ -151,10 +151,10 @@
             bounds.getNorthEast().lat()+","+
             bounds.getNorthEast().lng()
 
-            var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl embed-geotags-box-iframe %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + {% if username %} "&username={{ username }}" +{% endif %}
+            var embed_code = "<iframe frameborder=\"0\" scrolling=\"no\" src=\"{% absurl 'embed-geotags-box-iframe' %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + {% if username %} "&username={{ username }}" +{% endif %}
             box + "\" width=\"" + width + "\" height=\"" + height + "\"></iframe>"
 
-            var link_code = "{% absurl geotags-box %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + {% if username %} "&username={{ username }}" +{% endif %}
+            var link_code = "{% absurl 'geotags-box' %}?c_lat=" + map.getCenter().lat() + "&c_lon=" + map.getCenter().lng() + "&z=" + map.getZoom() + {% if username %} "&username={{ username }}" +{% endif %}
             box
 
             if (map.getZoom() > 2){

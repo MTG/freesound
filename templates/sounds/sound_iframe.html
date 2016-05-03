@@ -25,7 +25,7 @@
                 <img class="avatar" src="{{sound.user.profile.locations.avatar.S.url}}" alt="avatar" />
                 <h3>{{ sound.user.username }} - {{ sound.original_filename|truncate_string:120 }}</h3>
                     {% include "sounds/widget_license.html" %}
-                    <a href="{% absurl sound sound.user.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
+                    <a href="{% absurl 'sound' sound.user.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
             </nobr>
             <br style="clear: both;" />
         </div>
@@ -63,7 +63,7 @@
             <div class="sample_info_left">
                  <img class="avatar" src="{{sound.user.profile.locations.avatar.M.url}}" alt="avatar" />
                  <span class="username">{{ sound.user.username|truncate_string:16 }}</span>
-                 <a href="{% absurl sound sound.user.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
+                 <a href="{% absurl 'sound' sound.user.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
             </div>
             <div class="sample_info_right">
                 <ul id="tags">
@@ -90,7 +90,7 @@
                 </div>
             </div>
             <div class="sample_info">
-                <a href="{% absurl sound sound.user.username sound.id %}" target="_parent"><h3>{{ username_and_filename|truncate_string:53 }}</h3></a>
+                <a href="{% absurl 'sound' sound.user.username sound.id %}" target="_parent"><h3>{{ username_and_filename|truncate_string:53 }}</h3></a>
                 <img src="{{ media_url }}images/widgets/external.png" />
             </div>
         </nobr>

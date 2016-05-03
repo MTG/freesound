@@ -10,7 +10,7 @@ approved by a Freesound moderator and is now available in Freesound.
 
 You can access the sound's page here:
 
-<{% absurl sound ticket.content.content_object.user ticket.content.object_id %}>
+<{% absurl "sound" ticket.content.content_object.user ticket.content.object_id %}>
 
 Thank you for adding to Freesound!
 {% endblock %}

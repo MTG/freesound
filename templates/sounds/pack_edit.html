@@ -79,7 +79,7 @@
     }
 
     function searchSounds(){
-        $("#search-results").load("{% url sounds-search %}",
+        $("#search-results").load("{% url 'sounds-search' %}",
          $.param({
             "q": $("#search-q").val(),
             "f":"username:\"{{user.username}}\"",

@@ -54,7 +54,9 @@ def for_user(request, username):
     the page generates about 90+ queries, with it we only generate 4 queries :-) """
     user = get_object_or_404(User, username__iexact=username)
     sound_type = ContentType.objects.get_for_model(Sound)
-    qs = Comment.objects.filter(content_type=sound_type, sound__user=user).select_related("user", "user__profile")
+    # TODO: after de migration this is not optimized anymore
+    sounds = Sound.objects.filter(user=user)
+    qs = Comment.objects.filter(content_type=sound_type, object_id__in=sounds.values('id')).select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list
     sound_ids = set([comment.object_id for comment in comments])
@@ -112,3 +114,4 @@ def all(request):
     }
     tvars.update(paginator)
     return render(request, 'sounds/comments.html', tvars)
+

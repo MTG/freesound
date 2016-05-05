@@ -409,28 +409,28 @@ def moderation_tardy_moderators_sounds(request):
 @permission_required('tickets.can_moderate')
 def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
-    cursor = connection.cursor()
-    cursor.execute("""
-        UPDATE
-            tickets_ticket
-        SET
-            assignee_id = %s,
-            status = %s,
-            modified = now()
-        FROM
-            sounds_sound,
-            tickets_linkedcontent
-        WHERE
-            tickets_ticket.source = 'new sound'
-        AND sounds_sound.processing_state = 'OK'
-        AND sounds_sound.moderation_state = 'PE'
-        AND tickets_linkedcontent.object_id = sounds_sound.id
-        AND tickets_ticket.content_id = tickets_linkedcontent.id
-        AND tickets_ticket.assignee_id is NULL
-        AND tickets_ticket.status = %s
-        AND sounds_sound.user_id = %s""",
-            [request.user.id, TICKET_STATUS_ACCEPTED, TICKET_STATUS_NEW, sender.id])
-    transaction.commit_unless_managed()
+    with transaction.atomic():
+        cursor = connection.cursor()
+        cursor.execute("""
+            UPDATE
+                tickets_ticket
+            SET
+                assignee_id = %s,
+                status = %s,
+                modified = now()
+            FROM
+                sounds_sound,
+                tickets_linkedcontent
+            WHERE
+                tickets_ticket.source = 'new sound'
+            AND sounds_sound.processing_state = 'OK'
+            AND sounds_sound.moderation_state = 'PE'
+            AND tickets_linkedcontent.object_id = sounds_sound.id
+            AND tickets_ticket.content_id = tickets_linkedcontent.id
+            AND tickets_ticket.assignee_id is NULL
+            AND tickets_ticket.status = %s
+            AND sounds_sound.user_id = %s""",
+                [request.user.id, TICKET_STATUS_ACCEPTED, TICKET_STATUS_NEW, sender.id])
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
     invalidate_all_moderators_header_cache()

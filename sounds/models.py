@@ -438,9 +438,9 @@ class Sound(SocialModel):
         query += ", ".join([('%s = %s' %
                              (field[0], (field[1] if not field[2] else ("'%s'" % field[1])))) for field in fields])
         query += " WHERE id = %s" % self.id
-        cursor = connection.cursor()
-        cursor.execute(query)
-        transaction.commit_unless_managed()
+        with transaction.atomic():
+            cursor = connection.cursor()
+            cursor.execute(query)
 
     def set_processing_state(self, state):
         self.set_single_field('processing_state', state)

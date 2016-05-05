@@ -115,7 +115,7 @@ class Command(BaseCommand):
             while intent > 0:
                 try:
                     # Try to get the sound, and if we succeed continue as normal
-                    sound = Sound.objects.select_related().get(id=sound_id)
+                    sound = Sound.objects.get(id=sound_id)
                     break
                 except (InterfaceError, DatabaseError):
                     # Try to close the current connection (it probably already is closed)

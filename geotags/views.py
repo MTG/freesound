@@ -53,7 +53,7 @@ def generate_json(sound_queryset):
 
     sounds_data = [[s.id, s.lat, s.lon] for s in sound_queryset if not math.isnan(s.lat) and not math.isnan(s.lon)]
 
-    return HttpResponse(json.dumps(sounds_data), mimetype="application/json")
+    return HttpResponse(json.dumps(sounds_data), content_type="application/json")
 
 @cache_page(60 * 15)
 def geotags_json(request, tag=None):
@@ -87,7 +87,7 @@ def geotags_box_json(request):
             sounds = qs.exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))        
 
         sounds_data = [[s.id, s.geotag.lat, s.geotag.lon] for s in sounds]
-        return HttpResponse(json.dumps(sounds_data), mimetype="application/json")
+        return HttpResponse(json.dumps(sounds_data), content_type="application/json")
     except ValueError:
         raise Http404
     

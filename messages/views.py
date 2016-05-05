@@ -185,5 +185,5 @@ def username_lookup(request):
                     index = index + 1
 
     json_resp = json.dumps(results)
-    return HttpResponse(json_resp, mimetype='application/json')
+    return HttpResponse(json_resp, content_type='application/json')
 

@@ -496,11 +496,10 @@ class SoundCommentsSerializer(serializers.HyperlinkedModelSerializer):
 class CreateCommentSerializer(serializers.Serializer):
     comment = serializers.CharField(required=True, help_text='Required. String comment.')
 
-    def validate_comment(self, attrs, source):
-        value = attrs[source]
+    def validate_comment(self, value):
         if value.isspace():
             raise serializers.ValidationError('This field is required.')
-        return attrs
+        return value
 
 
 ####################

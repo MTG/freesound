@@ -177,33 +177,6 @@ class ReactivationForm(forms.Form):
         raise forms.ValidationError(_("No non-active user with such email or username exists."))
 
 
-class FsPasswordResetForm(PasswordResetForm):
-
-    def __init__(self, *args, **kwargs):
-        super(FsPasswordResetForm, self).__init__(*args, **kwargs)
-        self.error_messages.update({
-            'nonactivated': mark_safe(_("You are trying to change your password, but your account was not activated "
-                                        "yet, please <a href=\"%s\">activate your account</a> first."
-                                        % reverse("accounts-resend-activation")))
-        })
-
-    def clean_email(self):
-        """
-        Validates that an active user exists with the given email address.
-        We overwrite djangos clean_email method to particularly check the user non-activated case
-        """
-        email = self.cleaned_data["email"]
-        self.users_cache = User.objects.filter(email__iexact=email)
-
-        if not len(self.users_cache):
-            raise forms.ValidationError(self.error_messages['unknown'])
-        if not len(self.users_cache.filter(is_active=True)):
-            raise forms.ValidationError(self.error_messages['nonactivated'])
-        if any((user.has_usable_password()) for user in self.users_cache):
-            raise forms.ValidationError(self.error_messages['unusable'])
-        return email
-
-
 class FsAuthenticationForm(AuthenticationForm):
 
     def __init__(self, *args, **kwargs):

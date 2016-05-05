@@ -69,7 +69,7 @@
                         <a href="{% url 'accounts-pending' %}">Uploads</a> <div class="new_tickets_count" id="pending_indicator_{{ num_pending_sounds }}"><div>{{ num_pending_sounds }}</div></div>
                     {% endif %}
                     <a href="{% url 'accounts-edit' %}">Settings</a>
-                    <a href="{% url 'accounts-logout' %}?next=/">Log Out</a>
+                    <a href="{% url 'logout' %}?next=/">Log Out</a>
                     {% endcache %}
                 {% else %}
                     <a href="{% url 'accounts-register' %}">Register</a>

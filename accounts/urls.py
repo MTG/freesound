@@ -20,40 +20,23 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import patterns, url
+from django.conf.urls import patterns, url, include
 import django.contrib.auth.views as authviews
 import messages.views as messages
 import accounts.views as accounts
-from accounts.forms import FsPasswordResetForm, FsAuthenticationForm
+from accounts.forms import FsAuthenticationForm
 import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
 
 urlpatterns = [
-    url(r'^login/$', authviews.login, {'template_name': 'accounts/login.html',
+    url(r'^login/$', authviews.login, {'template_name': 'registration/login.html',
                                        'authentication_form': FsAuthenticationForm}, name="accounts-login"),
-    url(r'^logout/$', authviews.logout, {'template_name': 'accounts/logout.html'}, name="accounts-logout"),
+    url('^', include('django.contrib.auth.urls')),  # Include logout and reset email urls
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),
     url(r'^username/$', accounts.username_reminder, name="accounts-username-reminder"),
     url(r'^activate/(?P<username>[^\/]+)/(?P<uid_hash>[^\/]+)/.*$', accounts.activate_user, name="accounts-activate"),
-    url(r'^resetpassword/$',
-        authviews.password_reset, {
-            'template_name': 'accounts/password_reset_form.html',
-            'email_template_name': 'accounts/password_reset_email.html',
-            'password_reset_form': FsPasswordResetForm,
-        }, name="accounts-password-reset"),
-    url(r'^resetpassword/sent/$', authviews.password_reset_done, {
-        'template_name': 'accounts/password_reset_done.html'
-    }),
-    url(r'^resetpassword/confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$',
-        authviews.password_reset_confirm, {
-            'template_name': 'accounts/password_reset_confirm.html'
-        }),
-    url(r'^resetpassword/complete/$',
-        authviews.password_reset_complete, {
-            'template_name': 'accounts/password_reset_complete.html'
-        }),
     url(r'^resetemail/$', accounts.email_reset, name="accounts-email-reset"),
     url(r'^resetemail/sent/$', accounts.email_reset_done),
     url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', accounts.email_reset_complete),

@@ -412,7 +412,6 @@ def describe_pack(request):
 
 
 @login_required
-@transaction.atomic()
 def describe_sounds(request):
     forms = []
     sounds_to_process = []

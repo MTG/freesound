@@ -2,22 +2,35 @@
 
 {% block title %}Browseable Freesound APIv2{% endblock %}
 
-{% block style %}
-    <link rel="stylesheet" type="text/css" href="/media/css/rest_framework/bootstrap.min.css"/>
-    <link rel="stylesheet" type="text/css" href="/media/css/rest_framework/bootstrap-tweaks.css"/>
-    <link rel="stylesheet" type="text/css" href="/media/css/rest_framework/prettify.css"/>
-    <link rel="stylesheet" type="text/css" href="/media/css/rest_framework/default.css"/>
+
+{% block branding %}
+    <a style="color: #999;" href="/apiv2/">
+        <img src="/media/images/logo_white_small_api.png" height="40px"/>
+    </a>
+    <span class="pull-right" style="line-height: 50px;">
+        <a style="color: #999;" href="/docs/api" target="_blank">Documentation</a>
+    </span>
 {% endblock %}
 
-{% block script %}
-    <script src="/media/js/rest_framework/jquery-1.8.1-min.js"></script>
-    <script src="/media/js/rest_framework/bootstrap.min.js"></script>
-    <script src="/media/js/rest_framework/prettify-min.js"></script>
-    <script src="/media/js/rest_framework/default.js"></script>
+{% block userlinks %}
+    {% if user.is_authenticated %}
+        <ul class="nav navbar-nav pull-right">
+             <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    frederic.font
+                    <b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="{% url 'logout' %}?next=/apiv2/">Log out</a></li>
+                </ul>
+            </li>
+        </ul>
+    {% else %}
+        <ul class="nav navbar-nav pull-right">
+            <li><a href="{% url 'accounts-login' %}?next=/apiv2/">Log in</a></li>
+        </ul>
+    {% endif %}
 {% endblock %}
-
-{% block branding %}<a class="brand" href="/apiv2/">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspAPIv2</a><span class="pull-right" style="line-height: 40px;"><a href="/docs/api" target="_blank">Docs</a></span>{% endblock %}
-
 
 {% block footer %}{% endblock %}
 

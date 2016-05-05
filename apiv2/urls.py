@@ -95,9 +95,6 @@ urlpatterns = [
     url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
     url(r'^logout/$', logout, {'next_page': '/apiv2/'}, name="api-logout"),
 
-    # Browseable api login and logout
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-
     # Minimal registration page
     url(r'^registration/$', views.minimal_registration, name="apiv2-registration"),
 

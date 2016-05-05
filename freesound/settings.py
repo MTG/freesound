@@ -253,6 +253,7 @@ OAUTH2_PROVIDER = {
     'AUTHORIZATION_CODE_EXPIRE_SECONDS': 10*60,
     'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
     'REQUEST_APPROVAL_PROMPT': 'auto',
+    'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator'
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 USE_MINIMAL_TEMPLATES_FOR_OAUTH = True

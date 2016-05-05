@@ -24,6 +24,9 @@ from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIVie
 from rest_framework.exceptions import AuthenticationFailed
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import combined_search_strategies
+from oauth2_provider.generators import BaseHashGenerator
+from oauthlib.common import generate_client_id as oauthlib_generate_client_id
+from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from sounds.models import Sound, Pack, License
 from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
@@ -48,6 +51,20 @@ from django.db import transaction
 import logging
 
 logger_error = logging.getLogger("api_errors")
+
+
+##########################################
+# oauth 2 provider generator for client id
+##########################################
+
+class FsClientIdGenerator(BaseHashGenerator):
+    def hash(self):
+        """
+        Override ClientIdGenerator from oauth_provider2 as it does not allow to change length of id with
+        a setting.
+        """
+        return oauthlib_generate_client_id(length=20, chars=UNICODE_ASCII_CHARACTER_SET)
+
 
 #############################
 # Rest Framework custom views

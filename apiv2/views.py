@@ -80,7 +80,6 @@ class TextSearch(GenericAPIView):
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#text-search' % resources_doc_filename,
                  get_formatted_examples_for_view('TextSearch', 'apiv2-sound-search', max=5))
-    queryset = 'Hola'
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('search'))
@@ -153,9 +152,6 @@ class ContentSearch(GenericAPIView):
     serializer_class = SimilarityFileSerializer
     analysis_file = None
 
-    def get_queryset(self):
-        return self.get(self.request)
-
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('content_search'))
 
@@ -223,7 +219,7 @@ class ContentSearch(GenericAPIView):
 
     def post(self, request,  *args, **kwargs):
         # This view has a post version to handle analysis file uploads
-        serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
+        serializer = SimilarityFileSerializer(data=request.data, files=request.FILES)
         if serializer.is_valid():
             analysis_file = request.FILES['analysis_file']
             self.analysis_file = analysis_file
@@ -242,9 +238,6 @@ class CombinedSearch(GenericAPIView):
     serializer_class = SimilarityFileSerializer
     analysis_file = None
     merging_strategy = 'merge_optimized'  # 'filter_both', 'merge_all'
-
-    def get_queryset(self):
-        return self.get(self.request)
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('combined_search'))
@@ -345,7 +338,7 @@ class CombinedSearch(GenericAPIView):
 
     def post(self, request,  *args, **kwargs):
         # This view has a post version to handle analysis file uploads
-        serializer = SimilarityFileSerializer(data=request.DATA, files=request.FILES)
+        serializer = SimilarityFileSerializer(data=request.data, files=request.FILES)
         if serializer.is_valid():
             analysis_file = request.FILES['analysis_file']
             self.analysis_file = analysis_file
@@ -378,9 +371,6 @@ class SoundAnalysis(GenericAPIView):
               % (docs_base_url, '%s#sound-analysis' % resources_doc_filename,
                  get_formatted_examples_for_view('SoundAnalysis', 'apiv2-sound-analysis', max=5))
 
-    def get_queryset(self):
-        return self.get(self.request)
-
     def get(self, request,  *args, **kwargs):
         sound_id = kwargs['pk']
         descriptors = []
@@ -402,9 +392,6 @@ class SimilarSounds(GenericAPIView):
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#similar-sounds' % resources_doc_filename,
                  get_formatted_examples_for_view('SimilarSounds', 'apiv2-similarity-sound', max=5))
-
-    def get_queryset(self):
-        return self.get(self.request)
 
     def get(self, request,  *args, **kwargs):
 
@@ -494,32 +481,6 @@ class DownloadSound(DownloadAPIView):
             raise NotFoundException(resource=self)
 
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
-
-
-class PreviewSound(GenericAPIView):
-    __doc__ = 'Preview a sound in either ogg or mp3 formats, and with high or low quality.'
-
-    def get_queryset(self):
-        return self.get(self.request)
-
-    def get(self, request,  *args, **kwargs):
-        sound_id = kwargs['pk']
-        id_folder = str(int(sound_id)/1000)
-        filename = self.kwargs['filename']
-        path = os.path.join(settings.PREVIEWS_PATH, id_folder, filename)
-        preview_url = os.path.join(settings.PREVIEWS_URL, id_folder, filename)
-        format_label = 'mp3'
-        if 'ogg' in filename:
-            format_label = 'ogg'
-        quality_label = 'lq'
-        if 'hq' in filename:
-            quality_label = 'hq'
-        logger.info(self.log_message('sound:%i preview-%s-%s' % (int(sound_id), quality_label, format_label)))
-
-        if not os.path.exists(path):
-            raise NotFoundException(resource=self)
-
-        return sendfile(path, filename, preview_url)
 
 
 ############
@@ -749,7 +710,7 @@ class UploadSound(WriteRequiredGenericAPIView):
 
     def post(self, request,  *args, **kwargs):
         logger.info(self.log_message('upload_sound'))
-        serializer = UploadAndDescribeAudioFileSerializer(data=request.DATA, files=request.FILES)
+        serializer = UploadAndDescribeAudioFileSerializer(data=request.data, files=request.FILES)
         if serializer.is_valid():
             audiofile = request.FILES['audiofile']
             try:
@@ -847,7 +808,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
         logger.info(self.log_message('describe_sound'))
         file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
         filenames = [file_instance.name for file_id, file_instance in files.items()]
-        serializer = SoundDescriptionSerializer(data=request.DATA, context={'not_yet_described_audio_files': filenames})
+        serializer = SoundDescriptionSerializer(data=request.data, context={'not_yet_described_audio_files': filenames})
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Sound successfully described (now pending processing and moderation).',
@@ -884,7 +845,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
             raise UnauthorizedException(msg='Not authorized. The sound you\'re trying to edit is not owned by the OAuth2 logged in user.', resource=self)
 
         logger.info(self.log_message('sound:%s edit_description' % sound_id))
-        serializer = EditSoundDescriptionSerializer(data=request.DATA)
+        serializer = EditSoundDescriptionSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Description of sound %s successfully edited.' % sound_id,
@@ -951,7 +912,7 @@ class BookmarkSound(WriteRequiredGenericAPIView):
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
         logger.info(self.log_message('sound:%s create_bookmark' % sound_id))
-        serializer = CreateBookmarkSerializer(data=request.DATA)
+        serializer = CreateBookmarkSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Successfully bookmarked sound %s.' % sound_id,
@@ -988,7 +949,7 @@ class RateSound(WriteRequiredGenericAPIView):
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
         logger.info(self.log_message('sound:%s create_rating' % sound_id))
-        serializer = CreateRatingSerializer(data=request.DATA)
+        serializer = CreateRatingSerializer(data=request.data)
         if serializer.is_valid():
             try:
                 if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
@@ -996,7 +957,7 @@ class RateSound(WriteRequiredGenericAPIView):
                                           'note': 'This rating has not been saved in the database as browseable API is only for testing purposes.'},
                                     status=status.HTTP_201_CREATED)
                 else:
-                    Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.DATA['rating'])*2)
+                    Rating.objects.create(user=self.user, object_id=sound_id, content_type=ContentType.objects.get(id=20), rating=int(request.data['rating'])*2)
                     return Response(data={'detail': 'Successfully rated sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
             except IntegrityError:
                 raise ConflictException(msg='User has already rated sound %s' % sound_id, resource=self)
@@ -1021,7 +982,7 @@ class CommentSound(WriteRequiredGenericAPIView):
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
         logger.info(self.log_message('sound:%s create_comment' % sound_id))
-        serializer = CreateCommentSerializer(data=request.DATA)
+        serializer = CreateCommentSerializer(data=request.data)
         if serializer.is_valid():
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
                 return Response(data={'detail': 'Successfully commented sound %s.' % sound_id,
@@ -1030,7 +991,7 @@ class CommentSound(WriteRequiredGenericAPIView):
             else:
                 sound.add_comment(Comment(content_object=sound,
                                           user=self.user,
-                                          comment=request.DATA['comment']))
+                                          comment=request.data['comment']))
                 return Response(data={'detail': 'Successfully commented sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -1067,11 +1028,6 @@ class AvailableAudioDescriptors(GenericAPIView):
               'Full documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
               % (docs_base_url, '%s#available-audio-descriptors' % resources_doc_filename)
 
-    #authentication_classes = (OAuth2Authentication, SessionAuthentication)
-
-    def get_queryset(self):
-        return self.get(self.request)
-
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('available_audio_descriptors'))
         try:
@@ -1092,11 +1048,6 @@ class FreesoundApiV2Resources(GenericAPIView):
               '<br>Full APIv2 documentation can be found <a href="%s/%s" target="_blank">here</a>.' \
               '<br>Note that urls containing elements in brackets (<>) should be replaced with the corresponding variables.' \
               % (docs_base_url, 'index.html')
-
-    #authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-
-    def get_queryset(self):
-        return self.get(self.request)
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('api_root'))

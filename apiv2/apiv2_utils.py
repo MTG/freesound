@@ -74,6 +74,7 @@ class FsClientIdGenerator(BaseHashGenerator):
 class GenericAPIView(RestFrameworkGenericAPIView):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
+    queryset = False
 
     def initial(self, request, *args, **kwargs):
         super(GenericAPIView, self).initial(request, *args, **kwargs)

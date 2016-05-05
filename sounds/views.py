@@ -719,10 +719,19 @@ def old_pack_link_redirect(request):
     return __redirect_old_link(request, Pack, "pack")
 
 def display_sound_wrapper(request, username, sound_id):
-    sound = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
-    if sound.user.username.lower() != username.lower():
+    sound_obj = get_object_or_404(Sound, id=sound_id) #TODO: test the 404 case
+    if sound_obj.user.username.lower() != username.lower():
         raise Http404
-    return render_to_response('sounds/display_sound.html', display_sound.display_sound(RequestContext(request), sound), context_instance=RequestContext(request))
+    sound_tags = []
+    if sound_obj is not None:
+        sound_tags = sound_obj.tags.select_related("tag").all()[0:12]
+    tvars = {
+        'sound_id': sound_id,
+        'sound': sound_obj,
+        'sound_tags': sound_tags,
+        'do_log': settings.LOG_CLICKTHROUGH_DATA,
+    }
+    return render(request, 'sounds/display_sound.html', tvars)
 
 
 def embed_iframe(request, sound_id, player_size):

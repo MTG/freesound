@@ -219,7 +219,7 @@ class ContentSearch(GenericAPIView):
 
     def post(self, request,  *args, **kwargs):
         # This view has a post version to handle analysis file uploads
-        serializer = SimilarityFileSerializer(data=request.data, files=request.FILES)
+        serializer = SimilarityFileSerializer(data=request.data)
         if serializer.is_valid():
             analysis_file = request.FILES['analysis_file']
             self.analysis_file = analysis_file
@@ -338,7 +338,7 @@ class CombinedSearch(GenericAPIView):
 
     def post(self, request,  *args, **kwargs):
         # This view has a post version to handle analysis file uploads
-        serializer = SimilarityFileSerializer(data=request.data, files=request.FILES)
+        serializer = SimilarityFileSerializer(data=request.data)
         if serializer.is_valid():
             analysis_file = request.FILES['analysis_file']
             self.analysis_file = analysis_file
@@ -710,17 +710,17 @@ class UploadSound(WriteRequiredGenericAPIView):
 
     def post(self, request,  *args, **kwargs):
         logger.info(self.log_message('upload_sound'))
-        serializer = UploadAndDescribeAudioFileSerializer(data=request.data, files=request.FILES)
+        serializer = UploadAndDescribeAudioFileSerializer(data=request.data)
+        is_providing_description = serializer.is_providing_description(serializer.initial_data)
         if serializer.is_valid():
             audiofile = request.FILES['audiofile']
             try:
                 handle_uploaded_file(self.user.id, audiofile)
             except:
                 raise ServerErrorException(resource=self)
-            serializer.data['upload_filename'] = request.FILES['audiofile'].name
 
             if not settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION and self.auth_method_name == 'Session':
-                if serializer.is_providing_description(serializer.data):
+                if is_providing_description:
                     msg = 'Audio file successfully uploaded and described (now pending processing and moderation).'
                 else:
                     msg = 'Audio file successfully uploaded (%i Bytes, now pending description).' % audiofile.size
@@ -729,12 +729,12 @@ class UploadSound(WriteRequiredGenericAPIView):
                                       'note': 'Sound has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                if serializer.is_providing_description(serializer.data):
+                if is_providing_description:
                     try:
                         apiv2_client = None
                         if self.auth_method_name == 'OAuth2': # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
                             apiv2_client = request.auth.client.apiv2_client
-                        sound = create_sound_object(self.user, serializer.data, resource=self, apiv2_client=apiv2_client)
+                        sound = create_sound_object(self.user, serializer.data, resource=self, apiv2_client=apiv2_client, upload_filename=audiofile.name)
                     except APIException, e:
                         raise e # TODO pass correct resource variable
                     except Exception, e:

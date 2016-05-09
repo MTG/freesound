@@ -31,6 +31,7 @@ from sounds.models import Sound, Pack, License
 from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from utils.filesystem import md5file
+from utils.tags import clean_and_split_tags
 from utils.text import slugify
 from exceptions import *
 from examples import examples
@@ -48,6 +49,7 @@ from django.core.urlresolvers import resolve
 from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from django.db import transaction
+from gearman.errors import ServerUnavailable
 import logging
 
 logger_error = logging.getLogger("api_errors")
@@ -406,7 +408,7 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
 # Upload handler utils
 ######################
 
-def create_sound_object(user, original_sound_fields, resource=None, apiv2_client=None):
+def create_sound_object(user, original_sound_fields, resource=None, apiv2_client=None, upload_filename=None):
     '''
     This function is used by the upload handler to create a sound object with the information provided through post
     parameters.
@@ -417,7 +419,7 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
     for key, item in original_sound_fields.items():
         sound_fields[key] = item
 
-    filename = sound_fields['upload_filename']
+    filename = sound_fields.get('upload_filename', upload_filename)
     if not 'name' in sound_fields:
         sound_fields['name'] = filename
     else:
@@ -489,7 +491,7 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
 
     # 8 set description, tags
     sound.description = sound_fields['description']
-    sound.set_tags(sound_fields['tags'])
+    sound.set_tags(clean_and_split_tags(sound_fields['tags']))
     #sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
 
     # 8.5 set uploaded apiv2 client
@@ -516,9 +518,12 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
         pass
 
     transaction.commit()  # Need to commit transaction manually so that worker can find the sound in db
-    sound.process()
+    try:
+        sound.process()
 
-    if sound.pack:
-        sound.pack.process()
+        if sound.pack:
+            sound.pack.process()
+    except ServerUnavailable:
+        pass
 
     return sound

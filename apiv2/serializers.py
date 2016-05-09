@@ -416,21 +416,15 @@ class CreateBookmarkSerializer(serializers.Serializer):
     category = serializers.CharField(max_length=128, required=False, help_text='Not required. Name you want to give to the category under which the bookmark will be classified (leave empty for no category).')
     name = serializers.CharField(max_length=128, required=False, help_text='Not required. Name you want to give to the bookmark (if empty, sound name will be used).')
 
-    def validate_category(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
+    def validate_category(self, value):
         if value.isspace():
-            attrs[source] = None
-        return attrs
+            value = None
+        return value
 
-    def validate_name(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
+    def validate_name(self, value):
         if value.isspace():
-            attrs[source] = None
-        return attrs
+            value = None
+        return value
 
 
 ####################
@@ -465,11 +459,10 @@ class SoundRatingsSerializer(serializers.HyperlinkedModelSerializer):
 class CreateRatingSerializer(serializers.Serializer):
     rating = serializers.IntegerField(required=True, help_text='Required. Chose an integer rating between 0 and 5 (both included).')
 
-    def validate_rating(self, attrs, source):
-        value = attrs[source]
+    def validate_rating(self, value):
         if (value not in [0, 1, 2, 3, 4, 5]):
             raise serializers.ValidationError('You have to introduce an integer value between 0 and 5 (both included).')
-        return attrs
+        return value
 
 ####################
 # COMMENTS SERIALIZERS
@@ -506,10 +499,72 @@ class CreateCommentSerializer(serializers.Serializer):
 # UPLOAD SERIALIZERS
 ####################
 
+def validate_license(value):
+    if value not in [key for key, name in LICENSE_CHOICES]:
+        raise serializers.ValidationError('Invalid License, must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
+    return value
+
+
+def validate_name(value):
+    if value.isspace():
+        value = None
+    return value
+
+
+def validate_tags(value):
+    tags = clean_and_split_tags(value)
+    if len(tags) < 3:
+        raise serializers.ValidationError('You should at least have 3 tags...')
+    elif len(tags) > 30:
+        raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
+    return value
+
+
+def validate_description(value):
+    if not value or value.isspace():
+        raise serializers.ValidationError('This field is required.')
+    return value
+
+
+def validate_pack(value):
+    if value.isspace():
+        value = None
+    return value
+
+
+def validate_geotag(value):
+    if value:
+        fails = False
+        try:
+            data = value.split(',')
+        except:
+            fails = True
+        if len(data) != 3:
+            fails = True
+        try:
+            float(data[0])
+            float(data[1])
+            int(data[2])
+        except:
+            fails = True
+        if fails:
+            raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, longitude and zoom respectively).')
+        else:
+            # Check that ranges are corrent
+            if float(data[0]) > 90 or float(data[0]) < -90:
+                raise serializers.ValidationError('Latitude must be in the range [-90,90].')
+            if float(data[1]) > 180 or float(data[0]) < -180:
+                raise serializers.ValidationError('Longitude must be in the range [-180,180].')
+            if int(data[2]) < 11:
+                raise serializers.ValidationError('Zoom must be at least 11.')
+    return value
+
+
 LICENSE_CHOICES = (
         ('Attribution', 'Attribution'),
         ('Attribution Noncommercial', 'Attribution Noncommercial'),
         ('Creative Commons 0', 'Creative Commons 0'),)
+
 
 class SoundDescriptionSerializer(serializers.Serializer):
     upload_filename = serializers.CharField(max_length=512, help_text='Must match a filename from \'Pending Uploads\' resource.')
@@ -520,147 +575,50 @@ class SoundDescriptionSerializer(serializers.Serializer):
     pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new one will be created).', required=False)
     geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
 
-    def validate_upload_filename(self, attrs, source):
-        value = attrs.get(source, None)
+    def validate_upload_filename(self, value):
         if 'not_yet_described_audio_files' in self.context:
             if value not in self.context['not_yet_described_audio_files']:
                 raise serializers.ValidationError('Upload filename (%s) must match with a filename from \'Pending Uploads\' resource.' % value)
-        return attrs
+        return value
 
-    def validate_geotag(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
-        fails = False
-        try:
-            data = value.split(',')
-        except:
-            fails = True
-        if len(data) != 3:
-            fails = True
-        try:
-            float(data[0])
-            float(data[1])
-            int(data[2])
-        except:
-            fails = True
-        if fails:
-            raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, longitude and zoom respectively).')
-        else:
-            # Check that ranges are corrent
-            if float(data[0]) > 90 or float(data[0]) < -90:
-                raise serializers.ValidationError('Latitude must be in the range [-90,90].')
-            if float(data[1]) > 180 or float(data[0]) < -180:
-                raise serializers.ValidationError('Longitude must be in the range [-180,180].')
-            if int(data[2]) < 11:
-                raise serializers.ValidationError('Zoom must be at least 11.')
-        return attrs
+    def validate_geotag(self, value):
+        return validate_geotag(value)
 
-    def validate_tags(self, attrs, source):
-        value = attrs[source]
-        tags = clean_and_split_tags(value)
-        if len(tags) < 3:
-            raise serializers.ValidationError('You should at least have 3 tags...')
-        elif len(tags) > 30:
-            raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
-        attrs[source] = tags
-        return attrs
+    def validate_tags(self, value):
+        return validate_tags(value)
 
-    def validate_name(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
-        if value.isspace():
-            attrs[source] = None
-        return attrs
+    def validate_name(self, value):
+        return validate_name(value)
 
-    def validate_pack(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
-        if value.isspace():
-            attrs[source] = None
-        return attrs
+    def validate_description(self, value):
+        return validate_description(value)
 
-    def validate_description(self, attrs, source):
-        if attrs[source].isspace():
-            raise serializers.ValidationError('This field is required.')
-        return attrs
+    def validate_pack(self, value):
+        return validate_pack(value)
 
 
 class EditSoundDescriptionSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=512, required=False, help_text='Not required. New name you want to give to the sound.')
     tags = serializers.CharField(max_length=512, required=False, help_text='Not required. Tags that should be assigned to the sound (note that existing ones will be deleted). Separate tags with spaces. Join multi-word tags with dashes.')
     description = serializers.CharField(required=False, help_text='Not required. New textual description for the sound.')
-    license = serializers.ChoiceField(required=False, choices=LICENSE_CHOICES, help_text='Not required. New license for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
+    license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES, help_text='Not required. New license for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
     pack = serializers.CharField(required=False, help_text='Not required. New pack name for the sound (if there is no such pack with that name, a new one will be created).')
     geotag = serializers.CharField(required=False, max_length=100, help_text='Not required. New geotag for the sound. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').')
 
-    def validate_geotag(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
-        fails = False
-        try:
-            data = value.split(',')
-        except:
-            fails = True
-        if len(data) != 3:
-            fails = True
-        try:
-            float(data[0])
-            float(data[1])
-            int(data[2])
-        except:
-            fails = True
-        if fails:
-            raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, longitude and zoom respectively).')
-        else:
-            # Check that ranges are corrent
-            if float(data[0]) > 90 or float(data[0]) < -90:
-                raise serializers.ValidationError('Latitude must be in the range [-90,90].')
-            if float(data[1]) > 180 or float(data[0]) < -180:
-                raise serializers.ValidationError('Longitude must be in the range [-180,180].')
-            if int(data[2]) < 11:
-                raise serializers.ValidationError('Zoom must be at least 11.')
-        return attrs
+    def validate_geotag(self, value):
+        return validate_geotag(value)
 
-    def validate_tags(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
-        else:
-            tags = clean_and_split_tags(value)
-            if 1 <= len(tags) < 3:
-                raise serializers.ValidationError('You should at least have 3 tags...')
-            elif len(tags) > 30:
-                raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
-            attrs[source] = tags
-        return attrs
+    def validate_tags(self, value):
+        return validate_tags(value)
 
-    def validate_name(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
-        if value.isspace():
-            attrs[source] = None
-        return attrs
+    def validate_name(self, value):
+        return validate_name(value)
 
-    def validate_description(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
-        if value.isspace():
-            attrs[source] = None
-        return attrs
+    def validate_description(self, value):
+        return validate_description(value)
 
-    def validate_pack(self, attrs, source):
-        value = attrs.get(source, None)
-        if not value:
-            return attrs
-        if value.isspace():
-            attrs[source] = None
-        return attrs
+    def validate_pack(self, value):
+        return validate_pack(value)
 
 
 class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
@@ -668,108 +626,56 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=512, required=False, help_text='Not required. Name you want to give to the sound (by default it will be the original filename).')
     tags = serializers.CharField(max_length=512, required=False, help_text='Only required if providing file description. Separate tags with spaces. Join multi-word tags with dashes.')
     description = serializers.CharField(required=False, help_text='Only required if providing file description. Textual description of the sound.')
-    license = serializers.ChoiceField(required=False, choices=LICENSE_CHOICES, help_text='Only required if providing file description. License for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
+    license = serializers.ChoiceField(required=False, allow_blank=True, choices=LICENSE_CHOICES, help_text='Only required if providing file description. License for the sound. Must be either \'Attribution\', \'Attribution Noncommercial\' or \'Creative Commons 0\'.')
     pack = serializers.CharField(help_text='Not required. Pack name (if there is no such pack with that name, a new one will be created).', required=False)
     geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
 
     def is_providing_description(self, attrs):
-        for key, value in attrs.items():
-            if key != 'audiofile' and key != 'upload_filename':
-                if value:
-                    return True
+        if attrs['name'] or attrs['license'] or attrs['tags'] \
+          or attrs['geotag'] or attrs['pack'] or attrs['description']:
+            return True
         return False
 
-    def validate_audiofile(self, attrs, source):
-        value = attrs[source]
+    def validate_audiofile(self, value):
         if not filename_has_valid_extension(str(value)):
-            serializers.ValidationError('Uploaded file format not supported or not an audio file.')
-        return attrs
+            raise serializers.ValidationError('Uploaded file format not supported or not an audio file.')
+        return value
 
-    def validate_name(self, attrs, source):
-        if not self.is_providing_description(attrs):
-            attrs[source] = None
-        else:
-            if source in attrs:
-                if attrs[source].isspace():
-                    attrs[source] = None
-        return attrs
+    def validate(self, data):
+        is_providing_description = self.is_providing_description(self.initial_data)
+        if not is_providing_description:
+            #  No need to validate individual fields because no description is provided
+            return data
 
-    def validate_tags(self, attrs, source):
-        if not self.is_providing_description(attrs):
-            attrs[source] = None
-        else:
-            if source not in attrs:
-                raise serializers.ValidationError('This field is required.')
-            value = attrs[source]
-            tags = clean_and_split_tags(value)
-            if len(tags) < 3:
-                raise serializers.ValidationError('You should at least have 3 tags...')
-            elif len(tags) > 30:
-                raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
-            attrs[source] = tags
-        return attrs
-
-    def validate_description(self, attrs, source):
-        if not self.is_providing_description(attrs):
-            attrs[source] = None
-        else:
-            if source not in attrs:
-                raise serializers.ValidationError('This field is required.')
-            if attrs[source].isspace():
-                raise serializers.ValidationError('This field is required.')
-        return attrs
-
-    def validate_license(self, attrs, source):
-        if not self.is_providing_description(attrs):
-            attrs[source] = None
-        else:
-            if source not in attrs:
-                raise serializers.ValidationError('This field is required.')
-            if not attrs[source]:
-                raise serializers.ValidationError('This field is required.')
-        return attrs
-
-    def validate_pack(self, attrs, source):
-        if not self.is_providing_description(attrs):
-            attrs[source] = None
-        else:
-            if source in attrs:
-                if attrs[source].isspace():
-                    attrs[source] = None
-        return attrs
-
-    def validate_geotag(self, attrs, source):
-        if not self.is_providing_description(attrs):
-            attrs[source] = None
-        else:
-            value = attrs.get(source, None)
-            if not value:
-                return attrs
-            fails = False
-            try:
-                data = value.split(',')
-            except:
-                fails = True
-            if len(data) != 3:
-                fails = True
-            try:
-                float(data[0])
-                float(data[1])
-                int(data[2])
-            except:
-                fails = True
-            if fails:
-                raise serializers.ValidationError('Geotag should have the format \'float,float,integer\' (for latitude, longitude and zoom respectively).')
-            else:
-                # Check that ranges are corrent
-                if float(data[0]) > 90 or float(data[0]) < -90:
-                    raise serializers.ValidationError('Latitude must be in the range [-90,90].')
-                if float(data[1]) > 180 or float(data[0]) < -180:
-                    raise serializers.ValidationError('Longitude must be in the range [-180,180].')
-                if int(data[2]) < 11:
-                    raise serializers.ValidationError('Zoom must be at least 11.')
-        return attrs
-
+        # Validate description fileds
+        errors = dict()
+        try:
+            data['description'] = validate_description(self.initial_data['description'])
+        except serializers.ValidationError as e:
+            errors['description'] = e.detail
+        try:
+            data['name'] = validate_name(self.initial_data['name'])
+        except serializers.ValidationError as e:
+            errors['name'] = e.detail
+        try:
+            data['tags'] = validate_tags(self.initial_data['tags'])
+        except serializers.ValidationError as e:
+            errors['tags'] = e.detail
+        try:
+            data['geotag'] = validate_geotag(self.initial_data['geotag'])
+        except serializers.ValidationError as e:
+            errors['geotag'] = e.detail
+        try:
+            data['pack'] = validate_pack(self.initial_data['pack'])
+        except serializers.ValidationError as e:
+            errors['pack'] = e.detail
+        try:
+            data['license'] = validate_license(self.initial_data['license'])
+        except serializers.ValidationError as e:
+            errors['license'] = e.detail
+        if len(errors):
+            raise serializers.ValidationError(errors)
+        return data
 
 ########################
 # SIMILARITY SERIALIZERS
@@ -780,8 +686,7 @@ ALLOWED_ANALYSIS_EXTENSIONS = ['json']
 class SimilarityFileSerializer(serializers.Serializer):
     analysis_file = serializers.FileField(max_length=100, allow_empty_file=False, help_text='Analysis file created with the latest freesound extractor. Must be in .json format.')
 
-    def validate_analysis_file(self, attrs, source):
-        value = attrs[source]
+    def validate_analysis_file(self, value):
         try:
             extension = value.name.split('.')[-1]
         except:
@@ -790,4 +695,4 @@ class SimilarityFileSerializer(serializers.Serializer):
         if extension not in ALLOWED_ANALYSIS_EXTENSIONS or not extension:
             raise serializers.ValidationError('Uploaded analysis file format not supported, must be .json.')
 
-        return attrs
+        return value

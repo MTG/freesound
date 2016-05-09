@@ -256,7 +256,6 @@ OAUTH2_PROVIDER = {
     'CLIENT_ID_GENERATOR_CLASS': 'apiv2.apiv2_utils.FsClientIdGenerator'
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
-USE_MINIMAL_TEMPLATES_FOR_OAUTH = True
 
 #OAUTH_ENFORCE_SECURE = True  # We can not use this parameter because it does not work well with our current django version
 

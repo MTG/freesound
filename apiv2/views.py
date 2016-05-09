@@ -1327,11 +1327,7 @@ def permission_granted(request):
     except Grant.DoesNotExist:
         grant = None
 
-    if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
-        template = 'api/minimal_app_authorized.html'
-    else:
-        template = 'api/app_authorized.html'
-
+    template = 'api/app_authorized.html'
     logout_next = request.GET.get('original_path', None)
     if logout_next:
         logout_next = quote(logout_next)

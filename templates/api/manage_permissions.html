@@ -12,12 +12,11 @@
         <br>Granting permission to access your data means that you allow the application to act on your behealf inside Freesound.</p>
 
         <table>
-            <tr><th>Application name</th><th>Developer</th><th>Client id</th><th>Permission</th>{% if show_expiration_date %}<th>Expiration date</th>{% endif %}<th></th></tr>
+            <tr><th>Application name</th><th>Developer</th><th>Client id</th>{% if show_expiration_date %}<th>Expiration date</th>{% endif %}<th></th></tr>
             {% for token in tokens %}
                 <tr><td>{{ token.client_name }}</td>
                     <td><a href="{% url "account" token.developer %}">{{ token.developer }}</a></td>
                     <td>{{ token.client_id }}</td>
-                    <td>{{ token.scope }}</td>
                     {% if show_expiration_date %}
                         <td {% if token.expired %}style="background-color:#ff8a8a;{% endif %}">
                             {{ token.expiration_date }}
@@ -34,7 +33,6 @@
                     <tr class="api-client-permissions-grant-row"><td>{{ grant.client_name }}</td>
                         <td><a href="{% url "account" grant.developer %}">{{ grant.developer }}</a></td>
                         <td>{{ grant.client_id }}</td>
-                        <td>{{ grant.scope }}</td>
                        {% if show_expiration_date %}
                             <td {% if grant.expired %}style="background-color:#ff8a8a;{% endif %}">
                                 {{ grant.expiration_date }}

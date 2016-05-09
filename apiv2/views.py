@@ -1271,7 +1271,6 @@ def granted_permissions(request):
                 'client_name': token.application.apiv2_client.name,
                 'expiration_date': token.expires,
                 'expired': seconds_to_expiration_date < 0,
-                'scope': token.application.apiv2_client.get_scope_display,
                 'client_id': token.application.apiv2_client.client_id,
                 'developer': token.application.apiv2_client.user.username,
             })
@@ -1289,7 +1288,6 @@ def granted_permissions(request):
                     'client_name': grant.application.apiv2_client.name,
                     'expiration_date': grant.expires,
                     'expired': seconds_to_expiration_date < 0,
-                    'scope': grant.application.apiv2_client.get_scope_display,
                     'client_id': grant.application.apiv2_client.client_id,
                     'developer': grant.application.apiv2_client.user.username,
                 })

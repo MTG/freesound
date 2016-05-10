@@ -1141,10 +1141,7 @@ def create_apiv2_key(request):
     else:
         form = ApiV2ClientForm()
 
-    if settings.APIV2KEYS_ALLOWED_FOR_APIV1:
-        user_credentials = list(request.user.apiv2_client.all()) + list(request.user.api_keys.all())
-    else:
-        user_credentials = request.user.apiv2_client.all()
+    user_credentials = request.user.apiv2_client.all()
 
     use_https_in_callback = True
     if settings.DEBUG:

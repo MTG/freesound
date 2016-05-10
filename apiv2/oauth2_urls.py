@@ -38,10 +38,8 @@ otherwise. Apparently if namespace is defined manually (ex: name='oauth2:capture
 '''
 '''
 
-if settings.USE_MINIMAL_TEMPLATES_FOR_OAUTH:
-    login_url = prepend_base('/apiv2/login/', use_https=not settings.DEBUG, dynamic_resolve=False)
-else:
-    login_url = prepend_base(settings.LOGIN_URL, use_https=not settings.DEBUG, dynamic_resolve=False)
+
+login_url = prepend_base('/apiv2/login/', use_https=not settings.DEBUG, dynamic_resolve=False)
 
 
 def https_and_login_required(view_func):
@@ -99,19 +97,4 @@ urlpatterns = (
     url(r'^authorize/$', AuthorizationView.as_view(), name="authorize"),
     url(r'^access_token/$', views.TokenView.as_view(), name="access_token"),
     url(r'^revoke_token/$', views.RevokeTokenView.as_view(), name="revoke-token"),
-)
-
-# Application management views
-urlpatterns += (
-    url(r'^applications/$', views.ApplicationList.as_view(), name="list"),
-    url(r'^applications/register/$', views.ApplicationRegistration.as_view(), name="register"),
-    url(r'^applications/(?P<pk>\d+)/$', views.ApplicationDetail.as_view(), name="detail"),
-    url(r'^applications/(?P<pk>\d+)/delete/$', views.ApplicationDelete.as_view(), name="delete"),
-    url(r'^applications/(?P<pk>\d+)/update/$', views.ApplicationUpdate.as_view(), name="update"),
-)
-
-urlpatterns += (
-    url(r'^authorized_tokens/$', views.AuthorizedTokensListView.as_view(), name="authorized-token-list"),
-    url(r'^authorized_tokens/(?P<pk>\d+)/delete/$', views.AuthorizedTokenDeleteView.as_view(),
-        name="authorized-token-delete"),
 )

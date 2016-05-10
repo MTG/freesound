@@ -2,6 +2,16 @@
 
 {% block title %}Browseable Freesound APIv2{% endblock %}
 
+{% block style %}
+    {% block bootstrap_theme %}
+    <link rel="stylesheet" type="text/css" href="/media/rest_framework/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/media/rest_framework/css/bootstrap-tweaks.css"/>
+    {% endblock %}
+
+    <link rel="stylesheet" type="text/css" href="/media/rest_framework/css/prettify.css"/>
+    <link rel="stylesheet" type="text/css" href="/media/rest_framework/css/default.css"/>
+{% endblock %}
+
 
 {% block branding %}
     <a style="color: #999;" href="/apiv2/">

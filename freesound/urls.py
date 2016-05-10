@@ -35,6 +35,7 @@ import bookmarks.views
 import follow.views
 import general.views
 from utils.tagrecommendation_utilities import *
+from apiv2.apiv2_utils import apiv1_end_of_life_message
 
 admin.autodiscover()
 
@@ -119,7 +120,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
     # api views
-    url(r'^api/', include('api.urls')),
+    url(r'^api/', apiv1_end_of_life_message),
 
     # apiv2 views
     url(r'^apiv2/', include('apiv2.urls')),

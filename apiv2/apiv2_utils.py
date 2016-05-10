@@ -22,6 +22,7 @@
 
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
 from rest_framework.exceptions import AuthenticationFailed
+from django.http import JsonResponse
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import combined_search_strategies
 from oauth2_provider.generators import BaseHashGenerator
@@ -527,3 +528,18 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
         pass
 
     return sound
+
+
+# APIv1 end of life
+###################
+
+apiv1_logger = logging.getLogger("api")
+
+
+def apiv1_end_of_life_message(request):
+    apiv1_logger.error('410 API error: End of life')
+    content = {
+        "explanation": "Freesound APIv1 has reached its end of life and is no longer available."
+        "Please, upgrade to Freesound APIv2. More information: http://www.freesound.org/docs/api/"
+    }
+    return JsonResponse(content, status=410)

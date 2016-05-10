@@ -32,11 +32,9 @@ from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequi
 from exceptions import *
 from forms import *
 from models import ApiV2Client
-from api.models import ApiKey
 from sounds.models import Sound, Pack, License
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
-from api.forms import ApiKeyForm
 from accounts.views import handle_uploaded_file, send_activation
 from accounts.forms import RegistrationForm
 from utils.filesystem import generate_tree
@@ -1171,47 +1169,24 @@ def edit_api_credential(request, key):
     except ApiV2Client.DoesNotExist:
         pass
 
-    try:
-        client = ApiKey.objects.get(key=key)
-    except ApiKey.DoesNotExist:
-        pass
-
     if not client:
         raise Http404
 
     if request.method == 'POST':
-        if client.version == 'V2':
-            form = ApiV2ClientForm(request.POST)
-            if form.is_valid():
-                client.name = form.cleaned_data['name']
-                client.url = form.cleaned_data['url']
-                client.redirect_uri = form.cleaned_data['redirect_uri']
-                client.description = form.cleaned_data['description']
-                client.accepted_tos = form.cleaned_data['accepted_tos']
-                client.save()
-                messages.add_message(request, messages.INFO, "Credentials with name %s have been updated." % client.name)
-                return HttpResponseRedirect(reverse("apiv2-apply"))
-        elif client.version == 'V1':
-            form = ApiKeyForm(request.POST)
-            if form.is_valid():
-                client.name = form.cleaned_data['name']
-                client.url = form.cleaned_data['url']
-                client.description = form.cleaned_data['description']
-                client.accepted_tos = form.cleaned_data['accepted_tos']
-                client.save()
-                messages.add_message(request, messages.INFO, "Credentials with name %s have been updated." % client.name)
-                return HttpResponseRedirect(reverse("apiv2-apply"))
+        form = ApiV2ClientForm(request.POST)
+        if form.is_valid():
+            client.name = form.cleaned_data['name']
+            client.url = form.cleaned_data['url']
+            client.redirect_uri = form.cleaned_data['redirect_uri']
+            client.description = form.cleaned_data['description']
+            client.accepted_tos = form.cleaned_data['accepted_tos']
+            client.save()
+            messages.add_message(request, messages.INFO, "Credentials with name %s have been updated." % client.name)
+            return HttpResponseRedirect(reverse("apiv2-apply"))
     else:
-        if client.version == 'V2':
-            form = ApiV2ClientForm(initial={'name': client.name,
-                                            'url': client.url,
-                                            'redirect_uri': client.redirect_uri,
-                                            'description': client.description,
-                                            'accepted_tos': client.accepted_tos
-                                            })
-        elif client.version == 'V1':
-            form = ApiKeyForm(initial={'name': client.name,
+        form = ApiV2ClientForm(initial={'name': client.name,
                                         'url': client.url,
+                                        'redirect_uri': client.redirect_uri,
                                         'description': client.description,
                                         'accepted_tos': client.accepted_tos
                                         })
@@ -1237,13 +1212,6 @@ def delete_api_credential(request, key):
         name = client.name
         client.delete()
     except ApiV2Client.DoesNotExist:
-        pass
-
-    try:
-        client = ApiKey.objects.get(key=key)
-        name = client.name
-        client.delete()
-    except ApiKey.DoesNotExist:
         pass
 
     messages.add_message(request, messages.INFO, "Credentials with name %s have been deleted." % name)

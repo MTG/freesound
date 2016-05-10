@@ -25,6 +25,8 @@ from tickets import TICKET_STATUS_CLOSED
 
 class Command(BaseCommand):
     help = "Whitelist a user and close all pending tickets. Take as argument a ticket_id"
+    args = True  # For backwards compatimility mdoe
+    # See: http://stackoverflow.com/questions/30244288/django-management-command-cannot-see-arguments
 
     def handle(self,  *args, **options):
 

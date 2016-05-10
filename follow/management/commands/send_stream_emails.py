@@ -30,11 +30,13 @@ logger = logging.getLogger("web")
 
 
 class Command(BaseCommand):
-    '''
+    """
     This command should be run periodically several times a day, and it will only send emails to users that "require it"
-    '''
-    args = ''
-    help = 'Send stream notifications to users who have not been notified for the last settings.NOTIFICATION_TIMEDELTA_PERIOD period and whose stream has new sounds for that period'
+    """
+    help = 'Send stream notifications to users who have not been notified for the last ' \
+           'settings.NOTIFICATION_TIMEDELTA_PERIOD period and whose stream has new sounds for that period'
+    args = True  # For backwards compatimility mdoe
+    # See: http://stackoverflow.com/questions/30244288/django-management-command-cannot-see-arguments
 
     def handle(self, *args, **options):
 
@@ -43,7 +45,9 @@ class Command(BaseCommand):
         # Get all the users that have notifications active
         # and exclude the ones that have the last email sent for less than settings.NOTIFICATION_TIMEDELTA_PERIOD
         # (because they have been sent an email already)
-        users_enabled_notifications = Profile.objects.filter(enabled_stream_emails=True).exclude(last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by("-last_attempt_of_sending_stream_email")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
+        users_enabled_notifications = Profile.objects.filter(enabled_stream_emails=True).exclude(
+            last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by(
+            "-last_attempt_of_sending_stream_email")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
 
         logger.info("Sending stream updates notification for %i potential users" % len(users_enabled_notifications))
 
@@ -89,9 +93,10 @@ class Command(BaseCommand):
 
             # Send email
             try:
-                send_mail(subject_str, text_content, email_from=settings.DEFAULT_FROM_EMAIL, email_to=[email_to], reply_to=None)
+                send_mail(subject_str, text_content, email_from=settings.DEFAULT_FROM_EMAIL, email_to=[email_to],
+                          reply_to=None)
             except Exception, e:
-                logger.info("An error occurred sending notification stream email to %s (%s)" % (str(email_to),str(e)) )
+                logger.info("An error occurred sending notification stream email to %s (%s)" % (str(email_to), str(e)))
                 # Do not send the email and do not update the last email sent field in the profile
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue

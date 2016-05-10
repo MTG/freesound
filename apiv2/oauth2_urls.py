@@ -20,81 +20,36 @@
 #     See AUTHORS file.
 #
 
-#from __future__ import absolute_import
-'''
-from django.conf.urls import patterns, url
-from django.contrib.auth import logout
-from django.contrib.auth import REDIRECT_FIELD_NAME
+from apiv2.views import AuthorizationView
+from oauth2_provider import views
+from django.conf.urls import url
+from django.conf import settings
+from django.contrib.auth import logout, REDIRECT_FIELD_NAME
 from django.contrib.auth.views import redirect_to_login
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from apiv2.apiv2_utils import AccessTokenView, Authorize, Capture, Redirect, prepend_base
-from django.conf import settings
-'''
-
-'''
-We create oauth2_urls.py files and then include to the main apiv2/urls.py because we were having namespace problems
-otherwise. Apparently if namespace is defined manually (ex: name='oauth2:capture'), Django complains.
-'''
-'''
+from django.core.urlresolvers import reverse
 
 
-login_url = prepend_base('/apiv2/login/', use_https=not settings.DEBUG, dynamic_resolve=False)
-
-
-def https_and_login_required(view_func):
+def https_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
         if not request.is_secure() and not settings.DEBUG:
             return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
-        if not request.user.is_authenticated():
-            # Quick fix, should be implemented better
-            path = request.build_absolute_uri().split('/apiv2/')[1]
-            path = prepend_base('/apiv2/' + path, use_https=not settings.DEBUG, dynamic_resolve=False)
-            return redirect_to_login(path, login_url, REDIRECT_FIELD_NAME)
-
         return view_func(request, *args, **kwargs)
     return _wrapped_view_func
-    #return login_required(_wrapped_view_func, login_url=login_url)
 
-def https_and_force_login(view_func):
+
+def force_login(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
-        if not request.is_secure() and not settings.DEBUG:
-            return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
-        # Logout the user so we make sure he needs to login again
         logout(request)
-        # Quick fix, should be implemented better
-        path = request.build_absolute_uri().split('/apiv2/')[1]
-        path = prepend_base('/apiv2/' + path, use_https=not settings.DEBUG, dynamic_resolve=False)
-        path = path.replace('logout_and_', '')
-        return redirect_to_login(path, login_url, REDIRECT_FIELD_NAME)
-
+        path = request.build_absolute_uri()
+        path = path.replace('logout_and_', '')  # To avoid loop in this view
+        return redirect_to_login(path, reverse('api-login'), REDIRECT_FIELD_NAME)
     return _wrapped_view_func
-    #return login_required(_wrapped_view_func, login_url=login_url)
 
-
-def https_required_and_crsf_exempt(view_func):
-    def _wrapped_view_func(request, *args, **kwargs):
-        if not request.is_secure() and not settings.DEBUG:
-            return HttpResponse('{"detail": "This resource requires a secure connection (https)"}', status=403)
-        return view_func(request, *args, **kwargs)
-    return csrf_exempt(_wrapped_view_func)
-
-
-urlpatterns = patterns('',
-    url('^authorize/?$', https_and_login_required(Capture.as_view()), name='capture'),
-    url('^logout_and_authorize/?$', https_and_force_login(Capture.as_view()), name='capture'),
-    url('^authorize/confirm/?$', https_and_login_required(Authorize.as_view()), name='authorize'),
-    url('^redirect/?$', https_and_login_required(Redirect.as_view()), name='redirect'),
-    url('^access_token/?$', https_required_and_crsf_exempt(AccessTokenView.as_view()), name='access_token'),
-)
-'''
-
-from django.conf.urls import url
-from apiv2.views import AuthorizationView
-from oauth2_provider import views
 
 urlpatterns = (
-    url(r'^authorize/$', AuthorizationView.as_view(), name="authorize"),
-    url(r'^access_token/$', views.TokenView.as_view(), name="access_token"),
-    url(r'^revoke_token/$', views.RevokeTokenView.as_view(), name="revoke-token"),
+    url(r'^authorize/$', https_required(AuthorizationView.as_view()), name="authorize"),
+    url(r'^logout_and_authorize/$', https_required(force_login(AuthorizationView.as_view())), name="logout_and_authorize"),
+    url(r'^access_token/$', csrf_exempt(https_required(views.TokenView.as_view())), name="access_token"),
 )

@@ -117,6 +117,8 @@ def search(request):
     filter_query = request.GET.get("f", "")
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
+    logger.info(u'Query:%s' % search_query)
+
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:

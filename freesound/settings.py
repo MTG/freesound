@@ -244,10 +244,6 @@ REST_FRAMEWORK = {
 # APIv2 throttling limits are defined in local_settings
 
 # Oauth2 provider settings
-#OAUTH_EXPIRE_DELTA = datetime.timedelta(seconds=60*60*24)
-#OAUTH_EXPIRE_DELTA_PUBLIC = OAUTH_EXPIRE_DELTA
-#OAUTH_EXPIRE_CODE_DELTA = datetime.timedelta(seconds=10*60)
-#OAUTH_SINGLE_ACCESS_TOKEN = True
 OAUTH2_PROVIDER = {
     'CLIENT_SECRET_GENERATOR_LENGTH': 40,
     'AUTHORIZATION_CODE_EXPIRE_SECONDS': 10*60,
@@ -257,15 +253,13 @@ OAUTH2_PROVIDER = {
 }
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
-#OAUTH_ENFORCE_SECURE = True  # We can not use this parameter because it does not work well with our current django version
-
-# Set DATA_URL. You can overwrite this to point to production data ("http://freesound.org/data/") in local settings if needed ;)
+# Set DATA_URL. You can overwrite this to point to production data ("http://freesound.org/data/") in
+# local settings if needed ;)
 DATA_URL = "/data/"
 
 # leave at bottom starting here!
 from local_settings import *
 
-#TEMPLATE_DEBUG = DEBUG
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

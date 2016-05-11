@@ -129,9 +129,6 @@ class RegistrationForm(RecaptchaForm):
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass
-        if email2.lower().endswith("@aol.com"):
-            raise forms.ValidationError(_("We are sorry, but aol.com deletes all our emails before they reach you, "
-                                          "please use a different provider."))
         return email2
 
     def save(self):

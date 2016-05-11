@@ -19,12 +19,13 @@
 #
 
 from solr import Solr, SolrException, SolrResponseInterpreter
-import sounds
 from django.conf import settings
 from search.views import search_prepare_sort, search_prepare_query
 from search.forms import SEARCH_SORT_OPTIONS_WEB
+from utils.text import remove_control_chars
 import logging
 import math
+import sounds
 logger = logging.getLogger("search")
 
 
@@ -34,7 +35,7 @@ def convert_to_solr_document(sound):
     document["id"] = sound.id
     document["username"] = sound.user.username
     document["created"] = sound.created
-    document["original_filename"] = sound.original_filename
+    document["original_filename"] = remove_control_chars(sound.original_filename)
     document["description"] = sound.description
     document["tag"] = list(sound.tags.select_related("tag").values_list('tag__name', flat=True))
     document["license"] = sound.license.name

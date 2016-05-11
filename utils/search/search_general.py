@@ -36,14 +36,14 @@ def convert_to_solr_document(sound):
     document["username"] = sound.user.username
     document["created"] = sound.created
     document["original_filename"] = remove_control_chars(sound.original_filename)
-    document["description"] = sound.description
+    document["description"] = remove_control_chars(sound.description)
     document["tag"] = list(sound.tags.select_related("tag").values_list('tag__name', flat=True))
     document["license"] = sound.license.name
     document["is_remix"] = bool(sound.sources.count())
     document["was_remixed"] = bool(sound.remixes.count())
     if sound.pack:
-        document["pack"] = sound.pack.name
-        document["grouping_pack"] = str(sound.pack.id) + "_" + sound.pack.name
+        document["pack"] = remove_control_chars(sound.pack.name)
+        document["grouping_pack"] = str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
     else:
         document["grouping_pack"] = str(sound.id)
     document["is_geotagged"] = sound.geotag_id is not None
@@ -61,7 +61,8 @@ def convert_to_solr_document(sound):
     document["num_downloads"] = sound.num_downloads
     document["avg_rating"] = sound.avg_rating
     document["num_ratings"] = sound.num_ratings
-    document["comment"] = list(sound.comments.values_list('comment', flat=True))
+    document["comment"] = [remove_control_chars(comment_text) for comment_text in
+                           sound.comments.values_list('comment', flat=True)]
     document["comments"] = sound.num_comments
     document["waveform_path_m"] = sound.locations()["display"]["wave"]["M"]["path"]
     document["waveform_path_l"] = sound.locations()["display"]["wave"]["L"]["path"]

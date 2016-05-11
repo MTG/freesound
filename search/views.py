@@ -23,12 +23,11 @@ from django.shortcuts import render_to_response, render
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-
+from apiv2.apiv2_utils import get_client_ip
 import sounds
-
-from datetime import datetime
 import forms
 import logging
+import json
 
 logger = logging.getLogger("search")
 logger_click = logging.getLogger('clickusage')
@@ -112,12 +111,18 @@ def search_prepare_query(search_query,
 
     return query
 
+
 def search(request):
     search_query = request.GET.get("q", "")
     filter_query = request.GET.get("f", "")
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
-    logger.info(u'Query:%s' % search_query)
+    logger.info(u'Search (%s)' % json.dumps({
+        'ip': get_client_ip(request),
+        'query': search_query,
+        'filter': filter_query,
+        'username': request.user.username
+    }))
 
     try:
         current_page = int(request.GET.get("page", 1))

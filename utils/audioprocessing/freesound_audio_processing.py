@@ -134,7 +134,12 @@ def process(sound):
     success("got sound info and stereofied: " + tmp_wavefile2)
     if sound.type in ["mp3","ogg"]:
         info['bitdepth']=0 # mp3 and ogg don't have bitdepth
-    sound.set_audio_info_fields(info)
+
+    try:
+        sound.set_audio_info_fields(info)
+    except Exception, e:  # Could not catch a more specific exception
+        failure("failed writting audio info fields to db", e)
+
 
     for mp3_path, quality in [(sound.locations("preview.LQ.mp3.path"),70), (sound.locations("preview.HQ.mp3.path"), 192)]:
         # create preview

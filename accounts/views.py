@@ -1004,12 +1004,12 @@ def flag_user(request, username=None):
                     try:
                         obj = f_object.content_type.get_object_for_this_type(id=f_object.object_id)
                         url = reverse('admin:%s_%s_change' %
-                                      (obj._meta.app_label,  obj._meta.module_name), args=[obj.id])
+                                      (obj._meta.app_label,  obj._meta.model_name), args=[obj.id])
                         urls.append([str(f_object.content_type), request.build_absolute_uri(url)])
                     except Exception:
                         urls.append([str(f_object.content_type), "url not available"])
             user_url = reverse('admin:%s_%s_delete' %
-                               (flagged_user._meta.app_label, flagged_user._meta.module_name), args=[flagged_user.id])
+                               (flagged_user._meta.app_label, flagged_user._meta.model_name), args=[flagged_user.id])
             user_url = request.build_absolute_uri(user_url)
             clear_url = reverse("clear-flags-user", args=[flagged_user.username])
             clear_url = request.build_absolute_uri(clear_url)

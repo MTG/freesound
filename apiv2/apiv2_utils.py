@@ -21,7 +21,6 @@
 #
 
 from rest_framework.generics import GenericAPIView as RestFrameworkGenericAPIView, ListAPIView as RestFrameworkListAPIView, RetrieveAPIView as RestFrameworkRetrieveAPIView
-from rest_framework.exceptions import AuthenticationFailed
 from django.http import JsonResponse
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
 import combined_search_strategies
@@ -51,6 +50,7 @@ from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from django.db import transaction
 from gearman.errors import ServerUnavailable
+from utils.logging_filters import get_client_ip
 import logging
 
 logger_error = logging.getLogger("api_errors")
@@ -256,19 +256,13 @@ def build_request_info_string_for_error_logging(request):
     request_info = basic_request_info_for_log_message(auth_method_name, developer, user, client_id, end_user_ip)
     return request_info
 
+
 def throw_exception_if_not_https(request):
     if not settings.DEBUG:
         if not request.is_secure():
             request_info = build_request_info_string_for_error_logging(request)
             raise RequiresHttpsException(request_info=request_info)
 
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = '-' #request.META.get('REMOTE_ADDR')
-    return ip
 
 def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):
 

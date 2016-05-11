@@ -23,6 +23,7 @@
 from rest_framework.throttling import SimpleRateThrottle
 from exceptions import Throttled
 from django.conf import settings
+from utils.logging_filters import get_client_ip
 
 
 # TODO: the following functions could not be directly improted from apiv2_utils due to circular import problems. This should be fixed
@@ -32,13 +33,6 @@ def build_request_info_string_for_error_logging(request):
     request_info = basic_request_info_for_log_message(auth_method_name, developer, user, client_id, end_user_ip)
     return request_info
 
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = '-' #request.META.get('REMOTE_ADDR')
-    return ip
 
 def get_authentication_details_form_request(request):
     auth_method_name = None

@@ -23,7 +23,7 @@ from django.shortcuts import render_to_response, render
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
-from apiv2.apiv2_utils import get_client_ip
+from utils.logging_filters import get_client_ip
 import sounds
 import forms
 import logging

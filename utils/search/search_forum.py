@@ -26,7 +26,7 @@ from forum.models import Post
 logger = logging.getLogger("search")
 
 def convert_to_solr_document(post):
-    logger.info("creating solr XML from forum post %d" % post.id)
+    #logger.info("creating solr XML from forum post %d" % post.id)
     document = {}
 
     document["id"] = post.id

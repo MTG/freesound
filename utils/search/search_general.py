@@ -29,7 +29,7 @@ logger = logging.getLogger("search")
 
 
 def convert_to_solr_document(sound):
-    logger.info("creating solr XML from sound %d" % sound.id)
+    #logger.info("creating solr XML from sound %d" % sound.id)
     document = dict()
     document["id"] = sound.id
     document["username"] = sound.user.username

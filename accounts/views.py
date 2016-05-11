@@ -469,7 +469,7 @@ def describe_sounds(request):
             except OSError:
                 # If for some reason audio file does not exist, skip creating this sound
                 messages.add_message(request, messages.ERROR,
-                                     'Something went wrong with accessing the file %s.' % sound.original_path)
+                                     'Something went wrong with accessing the file %s.' % sound.original_filename)
                 continue
             sound.md5 = md5file(forms[i]['sound'].full_path)
             sound.type = get_sound_type(sound.original_path)
@@ -536,12 +536,12 @@ def describe_sounds(request):
                 sound.change_moderation_state('OK', do_not_update_related_stuff=True)
                 messages.add_message(request, messages.INFO,
                                      'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
-                                     (sound.get_absolute_url(), forms[i]['sound'].name))
+                                     (sound.get_absolute_url(), sound.original_filename))
             else:
                 sound.create_moderation_ticket()
                 messages.add_message(request, messages.INFO,
                                      'File <a href="%s">%s</a> has been described and is now awaiting processing '
-                                     'and moderation.' % (sound.get_absolute_url(), forms[i]['sound'].name))
+                                     'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
 
                 # Invalidate affected caches in user header
                 invalidate_template_cache("user_header", request.user.id)

@@ -14,11 +14,14 @@ def get_client_ip(request):
 class SearchLogsFilter(logging.Filter):
 
     def filter(self, record):
-        message = record.getMessage()
-        json_part = message.split('Search (')[1][:-1]
-        fields = json.loads(json_part)
-        for key, value in fields.items():
-            setattr(record, key, value)
+        try:
+            message = record.getMessage()
+            json_part = message.split('Search (')[1][:-1]
+            fields = json.loads(json_part)
+            for key, value in fields.items():
+                setattr(record, key, value)
+        except IndexError:
+            pass  # Message is not formatted for json parsing
         return True
 
 

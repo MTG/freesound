@@ -12,7 +12,7 @@ psycopg2==2.5.4
 networkx==1.5
 gearman==2.0.2
 recaptcha-client==1.0.6
-graypy==0.2.9
+graypy==0.2.12
 django-extensions==1.6.1
 django-debug-toolbar==1.4
 gunicorn==19.1.1

@@ -23,43 +23,7 @@
 from rest_framework.throttling import SimpleRateThrottle
 from exceptions import Throttled
 from django.conf import settings
-from utils.logging_filters import get_client_ip
-
-
-# TODO: the following functions could not be directly improted from apiv2_utils due to circular import problems. This should be fixed
-def build_request_info_string_for_error_logging(request):
-    auth_method_name, developer, user, client_id = get_authentication_details_form_request(request)
-    end_user_ip = get_client_ip(request)
-    request_info = basic_request_info_for_log_message(auth_method_name, developer, user, client_id, end_user_ip)
-    return request_info
-
-
-def get_authentication_details_form_request(request):
-    auth_method_name = None
-    user = None
-    developer = None
-    client_id = None
-
-    if request.successful_authenticator:
-        auth_method_name = request.successful_authenticator.authentication_method_name
-        if auth_method_name == "OAuth2":
-            user = request.user
-            developer = request.auth.application.user
-            client_id = request.auth.application.apiv2_client.client_id
-        elif auth_method_name == "Token":
-            user = None
-            developer = request.auth.user
-            client_id = request.auth.client_id
-        elif auth_method_name == "Session":
-            user = request.user
-            developer = None
-            client_id = None
-
-    return auth_method_name, developer, user, client_id
-
-
-def basic_request_info_for_log_message(auth_method_name, developer, user, client_id, ip):
-    return 'ApiV2 Auth:%s Dev:%s User:%s Client:%s Ip:%s' % (auth_method_name, developer, user, str(client_id), ip)
+import apiv2_utils
 
 
 class ClientBasedThrottlingBurst(SimpleRateThrottle):
@@ -95,7 +59,8 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
             # Fallback to basic throttling levels if the view has not defined the throttling rates per level
             limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
 
-        # Apply the burst limit rate (the first of the list if there are limit rates. No limit rates means unlimited api usage)
+        #  Apply the burst limit rate (the first of the list if there are limit rates.
+        #  No limit rates means unlimited api usage)
         if limit_rates:
             rate = limit_rates[0]  # Get burst limit
             self.rate = rate
@@ -106,7 +71,8 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
-                raise Throttled(msg=msg, request_info=build_request_info_string_for_error_logging(request))
+                raise Throttled(msg=msg,
+                                request_info=apiv2_utils.build_request_info_string_for_error_logging(request))
         return True
 
     def get_cache_key(self, request, view):
@@ -119,6 +85,7 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
             return self.cache_format % {
                 'identity': request.user.id
             }
+
 
 class ClientBasedThrottlingSustained(SimpleRateThrottle):
     """
@@ -153,7 +120,8 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
             # Fallback to basic throttling levels if the view has not defined the throttling rates per level
             limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[client_throttle_level]
 
-        # Apply the sustained limit rate (the second of the list if there are limit rates. No limit rates means unlimited api usage)
+        #  Apply the sustained limit rate (the second of the list if there are limit rates.
+        #  No limit rates means unlimited api usage)
         if limit_rates:
             rate = limit_rates[1]  # Get sustained limit
             self.rate = rate
@@ -164,7 +132,8 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
-                raise Throttled(msg=msg, request_info=build_request_info_string_for_error_logging(request))
+                raise Throttled(msg=msg,
+                                request_info=apiv2_utils.build_request_info_string_for_error_logging(request))
         return True
 
     def get_cache_key(self, request, view):
@@ -213,7 +182,7 @@ class IpBasedThrottling(SimpleRateThrottle):
         if x_forwarded_for:
             self.ip = x_forwarded_for.split(',')[0].strip()
         else:
-            self.ip = '-' #request.META.get('REMOTE_ADDR')
+            self.ip = '-'  # request.META.get('REMOTE_ADDR')
 
         try:
             limit_rates = view.throttling_rates_per_level[client_throttle_level]
@@ -256,7 +225,8 @@ class IpBasedThrottling(SimpleRateThrottle):
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
-                raise Throttled(msg=msg, request_info=build_request_info_string_for_error_logging(request))
+                raise Throttled(msg=msg,
+                                request_info=apiv2_utils.build_request_info_string_for_error_logging(request))
         return True
 
     def throttle_success(self):

@@ -1,7 +1,5 @@
 {% extends "email_base.txt" %}
 
-{% load absurl %}
-
 {% block salutation %}{% if user_to %}{{user_to.username}}{% else %}X{% endif %}{% endblock %}
 
 {% block body %}

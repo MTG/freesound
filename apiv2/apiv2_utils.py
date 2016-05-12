@@ -52,6 +52,7 @@ from django.db import transaction
 from gearman.errors import ServerUnavailable
 from utils.logging_filters import get_client_ip
 import logging
+import json
 
 logger_error = logging.getLogger("api_errors")
 
@@ -84,10 +85,12 @@ class GenericAPIView(RestFrameworkGenericAPIView):
 
         # Get request information and store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name \
+            = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        print self.developer
+        return log_message_helper(message, resource=self)
 
 
 class OauthRequiredAPIView(RestFrameworkGenericAPIView):
@@ -99,13 +102,14 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView):
 
         # Get request information and store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name \
+            = get_authentication_details_form_request(request)
 
         # Check if using https
         throw_exception_if_not_https(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return log_message_helper(message, resource=self)
 
 
 class DownloadAPIView(OauthRequiredAPIView):
@@ -121,7 +125,8 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
 
         # Get request informationa dn store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name \
+            = get_authentication_details_form_request(request)
 
         # Check if using https
         throw_exception_if_not_https(request)
@@ -132,7 +137,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
                 raise UnauthorizedException(resource=self)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return log_message_helper(message, resource=self)
 
 
 class ListAPIView(RestFrameworkListAPIView):
@@ -144,10 +149,11 @@ class ListAPIView(RestFrameworkListAPIView):
 
         # Get request information and store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name \
+            = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return log_message_helper(message, resource=self)
 
 
 class RetrieveAPIView(RestFrameworkRetrieveAPIView):
@@ -159,10 +165,11 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView):
 
         # Get request information and store it as class variable
         self.end_user_ip = get_client_ip(request)
-        self.auth_method_name, self.developer, self.user, self.client_id = get_authentication_details_form_request(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name \
+            = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        return '%s <%s> (%s)' % (message, request_parameters_info_for_log_message(self.request.query_params), basic_request_info_for_log_message(self.auth_method_name, self.developer, self.user, self.client_id, self.end_user_ip))
+        return log_message_helper(message, resource=self)
 
 
 ##################
@@ -250,18 +257,49 @@ def api_search(search_form, target_file=None, extra_parameters=False, merging_st
 # General utils
 ###############
 
-def build_request_info_string_for_error_logging(request):
-    auth_method_name, developer, user, client_id = get_authentication_details_form_request(request)
-    end_user_ip = get_client_ip(request)
-    request_info = basic_request_info_for_log_message(auth_method_name, developer, user, client_id, end_user_ip)
-    return request_info
+
+def log_message_helper(message, data_dict=None, info_dict=None, resource=None, request=None):
+    if data_dict is None:
+        if resource is not None:
+            data_dict = resource.request.query_params.copy()
+            data_dict.pop('token', None)  # Remove token from req params if it exists (we don't need it)
+    if info_dict is None:
+        if resource is not None:
+            info_dict = build_info_dict(resource=resource)
+        if request is not None and info_dict is None:
+            info_dict = build_info_dict(request=request)
+
+    return '%s #!# %s #!# %s' % (message, json.dumps(data_dict), json.dumps(info_dict))
+
+
+def build_info_dict(resource=None, request=None):
+    if resource is not None:
+        return {
+            'api_version': 'v2',
+            'api_auth_type': resource.auth_method_name,
+            'api_client_username': str(resource.developer),
+            'api_enduser_username': str(resource.user),
+            'api_client_id': resource.client_id,
+            'api_client_name': resource.client_name,
+            'ip': resource.end_user_ip
+        }
+    if request is not None:
+        auth_method_name, developer, user, client_id, client_name = get_authentication_details_form_request(request)
+        return {
+            'api_version': 'v2',
+            'api_auth_type': auth_method_name,
+            'api_client_username': str(developer),
+            'api_enduser_username': str(user),
+            'api_client_id': client_id,
+            'api_client_name': client_name,
+            'ip': get_client_ip(request)
+        }
 
 
 def throw_exception_if_not_https(request):
     if not settings.DEBUG:
         if not request.is_secure():
-            request_info = build_request_info_string_for_error_logging(request)
-            raise RequiresHttpsException(request_info=request_info)
+            raise RequiresHttpsException(request=request)
 
 
 def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=False):
@@ -283,11 +321,13 @@ def prepend_base(rel, dynamic_resolve=True, use_https=False, request_is_secure=F
     else:
         return "http://%s%s" % (Site.objects.get_current().domain, rel)
 
+
 def get_authentication_details_form_request(request):
     auth_method_name = None
     user = None
     developer = None
     client_id = None
+    client_name = None
 
     if request.successful_authenticator:
         auth_method_name = request.successful_authenticator.authentication_method_name
@@ -295,20 +335,19 @@ def get_authentication_details_form_request(request):
             user = request.user
             developer = request.auth.application.user
             client_id = request.auth.application.apiv2_client.client_id
+            client_name = request.auth.application.apiv2_client.name
         elif auth_method_name == "Token":
             user = None
             developer = request.auth.user
             client_id = request.auth.client_id
+            client_name = request.auth.name
         elif auth_method_name == "Session":
             user = request.user
             developer = None
             client_id = None
+            client_name = None
 
-    return auth_method_name, developer, user, client_id
-
-
-def basic_request_info_for_log_message(auth_method_name, developer, user, client_id, ip):
-    return 'ApiV2 Auth:%s Dev:%s User:%s Client:%s Ip:%s' % (auth_method_name, developer, user, str(client_id), ip)
+    return auth_method_name, developer, user, client_id, client_name
 
 
 def request_parameters_info_for_log_message(get_parameters):

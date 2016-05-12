@@ -28,7 +28,7 @@ from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from oauth2_provider.models import Grant, AccessToken
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view, build_request_info_string_for_error_logging
+from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -1117,8 +1117,7 @@ class FreesoundApiV2Resources(GenericAPIView):
 @api_view(['GET'])
 @authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
 def invalid_url(request):
-    request_info = build_request_info_string_for_error_logging(request)
-    raise InvalidUrlException(request_info=request_info)
+    raise InvalidUrlException(request=request)
 
 
 ### View for applying for an apikey

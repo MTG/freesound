@@ -71,8 +71,7 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
-                raise Throttled(msg=msg,
-                                request_info=apiv2_utils.build_request_info_string_for_error_logging(request))
+                raise Throttled(msg=msg, request=request)
         return True
 
     def get_cache_key(self, request, view):
@@ -132,8 +131,7 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
-                raise Throttled(msg=msg,
-                                request_info=apiv2_utils.build_request_info_string_for_error_logging(request))
+                raise Throttled(msg=msg, request=request)
         return True
 
     def get_cache_key(self, request, view):
@@ -225,8 +223,7 @@ class IpBasedThrottling(SimpleRateThrottle):
                 if client_throttle_level == 0:
                     # Prevent returning a absurd message like "exceeding a request limit rate (0/minute)"
                     msg = "Request was throttled because the ApiV2 credential has been suspended"
-                raise Throttled(msg=msg,
-                                request_info=apiv2_utils.build_request_info_string_for_error_logging(request))
+                raise Throttled(msg=msg, request=request)
         return True
 
     def throttle_success(self):

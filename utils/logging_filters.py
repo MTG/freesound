@@ -29,45 +29,15 @@ class APILogsFilter(logging.Filter):
 
     def filter(self, record):
         message = record.getMessage().encode('utf8')
-        record.api_version = 'v2'
         try:
-            raw_message = message.split(' <')[0]
-            new_message = []
-            for part in raw_message.split(' '):
-                if ':' in part:
-                    new_message.append(part.split(':')[0])
-                else:
-                    new_message.append(part)
-
-            record.api_resource = ' '.join(new_message)
+            (message, data, info) = message.split(' #!# ')
+            record.api_resource = message
+            for key, value in json.loads(info).items():
+                setattr(record, key, value)
+            for key, value in json.loads(data).items():
+                setattr(record, key, value)
         except:
-            record.api_resource = 'unknown'
-
-        try:
-            record.ip = message.split('> (')[1].split('Ip:')[1].split(')')[0]
-        except:
-            record.ip = 'unknown'
-
-        try:
-            record.api_client_id = message.split('> (')[1].split('Client:')[1].split(' Ip:')[0]
-        except:
-            record.api_client_id = 'unknown'
-
-        try:
-            record.api_client_username = message.split('> (')[1].split('Dev:')[1].split(' User:')[0]
-        except:
-            record.api_client_username = 'unknown'
-
-        try:
-            record.api_enduser_username = message.split('> (')[1].split('User:')[1].split(' Client:')[0]
-        except:
-            record.api_enduser_username = 'unknown'
-
-        try:
-            record.api_auth_type = message.split('> (')[1].split('Auth:')[1].split(' Dev:')[0]
-        except:
-            record.api_auth_type = 'unknown'
-
+            pass
         return True
 
 

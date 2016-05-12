@@ -22,14 +22,10 @@
 
 from rest_framework.exceptions import APIException
 from rest_framework import status
+import apiv2_utils
 import logging
 
 logger = logging.getLogger("api_errors")
-
-
-## TODO: This function is defined in apiv2_utils, but it can not be imported here because of circular imports
-def basic_request_info_for_log_message(auth_method_name, developer, user, client_id, ip):
-    return 'ApiV2 Auth:%s Dev:%s User:%s Client:%s Ip:%s' % (auth_method_name, developer, user, str(client_id), ip)
 
 
 class NotFoundException(APIException):
@@ -37,10 +33,9 @@ class NotFoundException(APIException):
     status_code = status.HTTP_404_NOT_FOUND
 
     def __init__(self, msg="Not found", resource=None):
-        request_info = '-'
-        if resource:
-            request_info = basic_request_info_for_log_message(resource.auth_method_name, resource.developer, resource.user, resource.client_id, resource.end_user_ip)
-        logger.error('<%i Not found> %s (%s)' % (self.status_code, msg, request_info))
+        summary_message = '%i Not found' % self.status_code
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
 
@@ -48,8 +43,10 @@ class InvalidUrlException(APIException):
     detail = None
     status_code = status.HTTP_400_BAD_REQUEST
 
-    def __init__(self, msg="Invalid url", request_info='-'):
-        logger.error('<%i Invalid url> %s (%s)' % (self.status_code, msg, request_info))
+    def __init__(self, msg="Invalid url", request=None):
+        summary_message = '%i Invalid url' % self.status_code
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, request=request))
         self.detail = msg
 
 
@@ -58,10 +55,9 @@ class BadRequestException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
     def __init__(self, msg="Bad request", resource=None):
-        request_info = '-'
-        if resource:
-            request_info = basic_request_info_for_log_message(resource.auth_method_name, resource.developer, resource.user, resource.client_id, resource.end_user_ip)
-        logger.error('<%i Bad request> %s (%s)' % (self.status_code, msg, request_info))
+        summary_message = '%i Bad request' % self.status_code
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
 
@@ -70,10 +66,9 @@ class ConflictException(APIException):
     status_code = status.HTTP_409_CONFLICT
 
     def __init__(self, msg="Conflict", resource=None):
-        request_info = '-'
-        if resource:
-            request_info = basic_request_info_for_log_message(resource.auth_method_name, resource.developer, resource.user, resource.client_id, resource.end_user_ip)
-        logger.error('<%i Conflict> %s (%s)' % (self.status_code, msg, request_info))
+        summary_message = '%i Conflict' % self.status_code
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
 
@@ -82,10 +77,9 @@ class UnauthorizedException(APIException):
     status_code = status.HTTP_401_UNAUTHORIZED
 
     def __init__(self, msg="Not authorized", resource=None):
-        request_info = '-'
-        if resource:
-            request_info = basic_request_info_for_log_message(resource.auth_method_name, resource.developer, resource.user, resource.client_id, resource.end_user_ip)
-        logger.error('<%i Not authorized> %s (%s)' % (self.status_code, msg, request_info))
+        summary_message = '%i Not authorized' % self.status_code
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
 
@@ -93,8 +87,10 @@ class RequiresHttpsException(APIException):
     detail = None
     status_code = status.HTTP_403_FORBIDDEN
 
-    def __init__(self, msg="This resource requires a secure connection (https)", request_info='-'):
-        logger.error('<%i Requires Https> %s (%s)' % (self.status_code, msg, request_info))
+    def __init__(self, msg="This resource requires a secure connection (https)", request=None):
+        summary_message = '%i Requires Https' % self.status_code
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, request=request))
         self.detail = msg
 
 
@@ -103,10 +99,9 @@ class ServerErrorException(APIException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
     def __init__(self, msg="Server error", resource=None):
-        request_info = '-'
-        if resource:
-            request_info = basic_request_info_for_log_message(resource.auth_method_name, resource.developer, resource.user, resource.client_id, resource.end_user_ip)
-        logger.error('<%i Server error> %s (%s)' % (self.status_code, msg, request_info))
+        summary_message = '%i Server error' % self.status_code
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, resource=resource))
         self.detail = msg
 
 
@@ -115,10 +110,9 @@ class OtherException(APIException):
     status_code = None
 
     def __init__(self, msg="Bad request", status=status.HTTP_400_BAD_REQUEST, resource=None):
-        request_info = '-'
-        if resource:
-            request_info = basic_request_info_for_log_message(resource.auth_method_name, resource.developer, resource.user, resource.client_id, resource.end_user_ip)
-        logger.error('<%i Other exception> %s (%s)' % (status, msg, request_info))
+        summary_message = '%i Other exception' % status
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': status}, resource=resource))
         self.detail = msg
         self.status_code = status
 
@@ -127,6 +121,8 @@ class Throttled(APIException):
     detail = None
     status_code = status.HTTP_429_TOO_MANY_REQUESTS
 
-    def __init__(self, msg="Request was throttled", request_info='-'):
-        logger.error('<%i Throttled> %s (%s)' % (self.status_code, msg, request_info))
+    def __init__(self, msg="Request was throttled", request=None):
+        summary_message = '%i Throttled' % self.status_code
+        logger.error(apiv2_utils.log_message_helper(summary_message, data_dict={
+            'summary_message': summary_message, 'long_message': msg, 'status': self.status_code}, request=request))
         self.detail = msg

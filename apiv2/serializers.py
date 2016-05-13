@@ -514,7 +514,7 @@ def validate_name(value):
 def validate_tags(value):
     tags = clean_and_split_tags(value)
     if len(tags) < 3:
-        raise serializers.ValidationError('You should at least have 3 tags...')
+        raise serializers.ValidationError('You should add at least 3 tags...')
     elif len(tags) > 30:
         raise serializers.ValidationError('There can be maximum 30 tags, please select the most relevant ones!')
     return value

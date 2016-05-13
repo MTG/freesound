@@ -1440,15 +1440,15 @@ ul#comments {
 }
 
 .messages_pagination {
-    overflow: auto;    
+    overflow: auto;
     bottom: 2px;
     right: 25px;
-    
+
 }
 
 .messages_actions_box{
 	float:right;
-	
+
 }
 
 .messages_pagination_box{
@@ -2548,11 +2548,11 @@ div.about {
 }
 
 #users_currently_online_box{
-	width:308px; 
+	width:308px;
 }
 
 #users_currently_online .online_user {
-    
+
     position:relative;
     float: left;
     width:40px;
@@ -2836,6 +2836,7 @@ use classes from pack edition
     margin-bottom: 5px;
     color:#2C74C9;
     margin-top: 0;
+    cursor: pointer;
 }
 
 #describe_form .sound-accordion-sound-alternate-header-errors {
@@ -2848,6 +2849,7 @@ use classes from pack edition
     border-radius: 5px; /* rounded corners */
     margin-bottom: 5px;
     color:#ffffff;
+    cursor: pointer;
 }
 
 .errortag_message {
@@ -3273,7 +3275,7 @@ ul.messages {
                 border: 1px solid #E0DEE1;
                }
 
-.ui-state-active, .ui-widget-content .ui-state-active 
+.ui-state-active, .ui-widget-content .ui-state-active
 {
     background-color:#E0E0E0;
 }
@@ -3364,7 +3366,7 @@ ul.messages {
 	float:left;
 	padding: 5px;
 }
-       
+
 #search-results .add{
 	display: inline;
 	font-size:10px;
@@ -3374,7 +3376,7 @@ ul.messages {
 	display: none;
 	font-size:10px;
 }
-    
+
 #submit_button_for_edit_sources{
 	/*display:inline;*/
 	/*float:right;*/
@@ -3493,7 +3495,7 @@ ul.messages {
 .bookmark_link_sound_display{
     width:15px;
     height:15px;
-    float: right;    
+    float: right;
 }
 
 /* Tag recommendation

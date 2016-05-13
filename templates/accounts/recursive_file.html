@@ -11,7 +11,8 @@
     {% else %}
     <li class="filenode">
         <span class="filename">
-            <input class="filecheckbox" type="checkbox" name="{{file.id}}" onchange="checkboxChange(this);"><strong>{{file.name}}</strong>
+            <input class="filecheckbox" type="checkbox" id="{{file.id}}" name="{{file.id}}" onchange="checkboxChange(this);">
+            <label for="{{file.id}}"><strong>{{file.name}}</strong></label>
         </span>
     </li>
     {% endif %}
@@ -21,7 +22,8 @@
         {% for child in file.children %}
             <li class="filenode">
                 <span class="filename">
-                    <input class="filecheckbox" type="checkbox" name="{{child.id}}" onchange="checkboxChange(this);"><strong>{{child.name}}</strong>
+                    <input class="filecheckbox" type="checkbox" id="{{child.id}}" name="{{child.id}}" onchange="checkboxChange(this);">
+                    <label for="{{child.id}}"><strong>{{child.name}}</strong></label>
                 </span>
             </li>
         {% endfor %}

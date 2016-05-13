@@ -449,7 +449,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
     ticket.modified = datetime.datetime.now()
     ticket.save()
     invalidate_all_moderators_header_cache()
-    
+
     msg = 'You have been assigned ticket "%s".' % ticket.title
     messages.add_message(request, messages.INFO, msg)
 
@@ -469,7 +469,7 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
 
 @permission_required('tickets.can_moderate')
 def moderation_assigned(request, user_id):
-    
+
     can_view_moderator_only_messages = _can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
@@ -652,11 +652,13 @@ def pending_tickets_per_user(request, username):
                              processed.""" % (n_unprocessed_sounds, user.username))
 
     moderators_version = True
+    own_page = user == request.user
 
     paginated = paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE)
     tvars = {"show_pagination": show_pagination,
              "moderators_version": moderators_version,
-             "user": user}
+             "user": user,
+             "own_page": own_page}
     tvars.update(paginated)
 
     return render(request, 'accounts/pending.html', tvars)

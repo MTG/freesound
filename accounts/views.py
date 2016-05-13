@@ -1063,6 +1063,7 @@ def pending(request):
         'user': user,
         'show_pagination': show_pagination,
         'moderators_version': moderators_version,
+        'own_page': True,
     }
     tvars.update(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE))
     return render(request, 'accounts/pending.html', tvars)

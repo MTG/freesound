@@ -56,7 +56,7 @@ class SoundDescriptionForm(forms.Form):
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class':'inputText'}))
     tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
-                    help_text="<br>Separate tags with spaces. Join multi-word tags with dashes. "
+                    help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
                               "For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 
@@ -92,7 +92,7 @@ class RemixForm(forms.Form):
             try:
                 source = Sound.objects.get(id=sid)
                 self.sound.sources.remove(source)
-                
+
                 # modify remix_group
                 send_mail_template(
                     u'Sound removed as remix source', 'sounds/email_remix_update.txt',
@@ -135,7 +135,7 @@ class PackForm(forms.Form):
 
 
 class PackDescriptionForm(ModelForm):
-    
+
     class Meta:
         model = Pack
         fields = ('description',)

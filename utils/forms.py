@@ -85,7 +85,7 @@ class DummyWidget(forms.Widget):
 
     def value_from_datadict(self, data, files, name):
         return data.get(self.recaptcha_response_field, None)
-    
+
 
 class CaptchaWidget(forms.Widget):
     """

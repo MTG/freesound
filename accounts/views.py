@@ -42,7 +42,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
-from accounts.forms import UploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
+from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag
 from accounts.forms import EmailResetForm
@@ -813,7 +813,7 @@ def upload_file(request):
         return HttpResponseBadRequest("user with this ID does not exist.")
 
     if request.method == 'POST':
-        form = UploadFileForm(request.POST, request.FILES)
+        form = FlashUploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             logger.info("\tform data is valid")
             if handle_uploaded_file(user_id, request.FILES["file"]):

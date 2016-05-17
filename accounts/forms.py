@@ -32,14 +32,23 @@ from utils.spam import is_spam
 
 
 def validate_file_extension(audiofiles):
-    for file_ in audiofiles:
-        content_type = file_.content_type
-        if not (content_type.startswith("audio") and filename_has_valid_extension(str(file_))):
+    try:
+        for file_ in audiofiles:
+            content_type = file_.content_type
+            if not (content_type.startswith("audio") and filename_has_valid_extension(str(file_))):
+                raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+    except AttributeError:
+        # Will happen when uploading with the flash uploader
+        if not filename_has_valid_extension(str(audiofiles)):
             raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
 
 
 class UploadFileForm(forms.Form):
     files = MultiFileField(min_num=1, validators=[validate_file_extension], label="")
+
+
+class FlashUploadFileForm(forms.Form):
+    file = forms.FileField(validators=[validate_file_extension])
 
 
 class TermsOfServiceForm(forms.Form):
@@ -55,7 +64,7 @@ class TermsOfServiceForm(forms.Form):
 class AvatarForm(forms.Form):
     file = forms.FileField(required=False, label="")
     remove = forms.BooleanField(help_text="Remove avatar", label="", required=False)
-    
+
     def clean(self):
         cleaned_data = self.cleaned_data
         file_cleaned = cleaned_data.get("file", None)
@@ -67,11 +76,11 @@ class AvatarForm(forms.Form):
             raise forms.ValidationError("You forgot to select a file.")
 
         return cleaned_data
-    
+
 
 class FileChoiceForm(forms.Form):
     files = forms.MultipleChoiceField()
-    
+
     def __init__(self, files, *args, **kwargs):
         super(FileChoiceForm, self).__init__(*args, **kwargs)
         choices = files.items()
@@ -172,7 +181,7 @@ class RegistrationForm(forms.Form):
 
 class ReactivationForm(forms.Form):
     user = forms.CharField(label="The username or email you signed up with")
-    
+
     def clean_user(self):
         username_or_email = self.cleaned_data["user"]
         try:
@@ -198,7 +207,7 @@ class FsAuthenticationForm(AuthenticationForm):
 
 class UsernameReminderForm(forms.Form):
     user = forms.EmailField(label="The email address you signed up with")
-    
+
     def clean_user(self):
         email = self.cleaned_data["user"]
         try:
@@ -226,7 +235,7 @@ class ProfileForm(forms.ModelForm):
         label = "",
         required=False
     )
-    
+
     def __init__(self, request, *args, **kwargs):
         self.request = request
         super(ProfileForm, self).__init__(*args, **kwargs)
@@ -249,9 +258,9 @@ class ProfileForm(forms.ModelForm):
         model = Profile
         fields = ('home_page', 'wants_newsletter', 'enabled_stream_emails', 'about', 'signature',
                   'not_shown_in_online_users_list')
-        
 
-class EmailResetForm(forms.Form):   
+
+class EmailResetForm(forms.Form):
     email = forms.EmailField(label=_("New e-mail address"), max_length=75)
     password = forms.CharField(label=_("Your password"), widget=forms.PasswordInput)
 
@@ -259,7 +268,7 @@ class EmailResetForm(forms.Form):
         # Using init function to pass user variable so later we can perform check_password in clean_password function
         self.user = kwargs.pop('user', None)
         super(EmailResetForm, self).__init__(*args, **kwargs)
- 
+
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):
             raise forms.ValidationError(_("Incorrect password."))    

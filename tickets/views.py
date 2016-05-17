@@ -526,8 +526,7 @@ def moderation_assigned(request, user_id):
                 ticket.status = TICKET_STATUS_CLOSED
                 ticket.save()
             elif action == "Whitelist":
-
-                th = Thread(target=call_command, args=('whitelist_user', ticket.id,))
+                th = Thread(target=call_command, args=('whitelist_user', "%i" % ticket.id,))
                 th.start()
                 ticket.send_notification_emails(Ticket.NOTIFICATION_WHITELISTED,
                                                 Ticket.USER_ONLY)

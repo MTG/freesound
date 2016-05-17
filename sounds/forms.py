@@ -56,7 +56,7 @@ class SoundDescriptionForm(forms.Form):
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class':'inputText'}))
     tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
-                    help_text="<br>Add at least 3 tags, and them with spaces. Join multi-word tags with dashes. "
+                    help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
                               "For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 

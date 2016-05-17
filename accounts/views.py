@@ -385,8 +385,9 @@ def describe_license(request):
             request.session['describe_license'] = form.cleaned_data['license']
             return HttpResponseRedirect(reverse('accounts-describe-pack'))
     else:
-        form = NewLicenseForm({'license': License.objects.get(name='Attribution')})
+        form = NewLicenseForm()
     tvars = {'form': form}
+    print form.errors
     return render(request, 'accounts/describe_license.html', tvars)
 
 

@@ -72,7 +72,13 @@
         {% endcomment %}
 
     {% empty %}
-        <p>Currently, you don't have any uploaded sounds awaiting moderation.</p>
+        <p>Currently,
+        {% if own_page %}
+        you don't
+        {% else %}
+        {{user.username}} doesn't
+        {% endif %}
+        have any uploaded sounds awaiting moderation.</p>
     {% endfor %}
 
     {% if show_pagination %}

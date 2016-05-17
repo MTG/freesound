@@ -21,10 +21,12 @@
 from django import forms
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
+from django.conf import settings
+from django.utils.translation import ugettext as _
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
-from utils.forms import RecaptchaForm
+from utils.forms import CaptchaWidget
 import re
 
 
@@ -208,12 +210,20 @@ class NewLicenseForm(forms.Form):
                                                                      Q(name__startswith='Creative')), required=True)
 
 
-class FlagForm(RecaptchaForm):
+class FlagForm(forms.Form):
     email = forms.EmailField(label="Your email", required=True, help_text="Required.",
                              error_messages={'required': 'Required, please enter your email address.', 'invalid': 'Your'
                                              ' email address appears to be invalid, please check if it\'s correct.'})
     reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES,required=True , label='Reason type')
     reason = forms.CharField(widget=forms.Textarea)
+    captcha_key = settings.RECAPTCHA_PUBLIC_KEY
+    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+
+    def clean_recaptcha_response(self):
+        captcha_response = self.cleaned_data.get("recaptcha_response")
+        if not captcha_response:
+            raise forms.ValidationError(_("Captcha is not correct"))
+        return captcha_response
 
     def save(self):
         f = Flag()

@@ -19,16 +19,20 @@
 #
 
 from django import forms
-from models import UserAnnotation
-from utils.forms import RecaptchaForm
+from django.conf import settings
+from django.utils.translation import ugettext as _
+from utils.forms import CaptchaWidget
 from tickets import *
+
 
 class ModeratorMessageForm(forms.Form):
     message     = forms.CharField(widget=forms.Textarea,)
     moderator_only = forms.BooleanField(required=False)
 
+
 class UserMessageForm(forms.Form):
     message     = forms.CharField(widget=forms.Textarea)
+
 
 class UserContactForm(UserMessageForm):
     title       = forms.CharField()
@@ -37,8 +41,18 @@ class UserContactForm(UserMessageForm):
         super(UserContactForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder = ['title', 'message']
 
-class AnonymousMessageForm(RecaptchaForm):
+
+class AnonymousMessageForm(forms.Form):
     message     = forms.CharField(widget=forms.Textarea)
+    captcha_key = settings.RECAPTCHA_PUBLIC_KEY
+    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+
+    def clean_recaptcha_response(self):
+        captcha_response = self.cleaned_data.get("recaptcha_response")
+        if not captcha_response:
+            raise forms.ValidationError(_("Captcha is not correct"))
+        return captcha_response
+
 
 class AnonymousContactForm(AnonymousMessageForm):
     title       = forms.CharField()

@@ -24,8 +24,9 @@ from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from accounts.models import Profile
-from utils.forms import RecaptchaForm, HtmlCleaningCharField, filename_has_valid_extension
+from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 
 
@@ -74,7 +75,9 @@ class FileChoiceForm(forms.Form):
         self.fields['files'].choices = choices
 
 
-class RegistrationForm(RecaptchaForm):
+class RegistrationForm(forms.Form):
+    captcha_key = settings.RECAPTCHA_PUBLIC_KEY
+    recaptcha_response = forms.CharField(widget=CaptchaWidget)
     username = forms.RegexField(
         label=_("Username"),
         min_length=3,
@@ -130,6 +133,12 @@ class RegistrationForm(RecaptchaForm):
         except User.DoesNotExist:
             pass
         return email2
+
+    def clean_recaptcha_response(self):
+        captcha_response = self.cleaned_data.get("recaptcha_response")
+        if not captcha_response:
+            raise forms.ValidationError(_("Captcha is not correct"))
+        return captcha_response
 
     def save(self):
         username = self.cleaned_data["username"]

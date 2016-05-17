@@ -22,10 +22,9 @@ from django import forms
 from utils.text import clean_html, is_shouting
 from django.conf import settings
 from recaptcha.client import captcha
+from urllib2 import URLError
 from utils.tags import clean_and_split_tags
 from HTMLParser import HTMLParseError
-from urllib2 import URLError
-from socket import timeout
 
 
 def filename_has_valid_extension(filename):
@@ -73,14 +72,36 @@ class RecaptchaWidgetSSL(forms.Widget):
 
 class DummyWidget(forms.Widget):
     """
-    A dummy Widget class for a placeholder input field which will
-    be created by captcha.displayhtml
+    A Widget class for captcha. Converts the recaptcha response field into a readable field for the form
     """
 
     # make sure that labels are not displayed either
-    is_hidden=True
+    is_hidden = True
+
+    recaptcha_response_field = 'g-recaptcha-response'
+
     def render(self, *args, **kwargs):
         return ''
+
+    def value_from_datadict(self, data, files, name):
+        return data.get(self.recaptcha_response_field, None)
+    
+
+class CaptchaWidget(forms.Widget):
+    """
+    A Widget class for captcha. Converts the recaptcha response field into a readable field for the form
+    """
+
+    # make sure that labels are not displayed either
+    is_hidden = True
+
+    recaptcha_response_field = 'g-recaptcha-response'
+
+    def render(self, *args, **kwargs):
+        return ''
+
+    def value_from_datadict(self, data, files, name):
+        return data.get(self.recaptcha_response_field, None)
 
 
 class RecaptchaForm(forms.Form):

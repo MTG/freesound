@@ -33,7 +33,7 @@ def contact(request):
         user = request.user 
 
     if request.POST:
-        form = ContactForm(request, request.POST)
+        form = ContactForm(request.POST)
         if form.is_valid():
             subject = u"[support] " + form.cleaned_data['subject']
             email_from = settings.DEFAULT_FROM_EMAIL
@@ -49,8 +49,8 @@ def contact(request):
             email_sent = True
     else:
         if user:
-            form = ContactForm(request, initial={"your_email": user.email})
+            form = ContactForm(initial={"your_email": user.email})
         else:
-            form = ContactForm(request)
+            form = ContactForm()
     tvars = {'form': form, 'email_sent': email_sent}
     return render(request, 'support/contact.html', tvars)

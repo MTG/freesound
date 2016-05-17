@@ -22,7 +22,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
-from models import Ticket, Queue, TicketComment
+from models import Ticket, Queue, TicketComment, UserAnnotation
 from forms import *
 from tickets import *
 from django.db import connection, transaction

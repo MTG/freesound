@@ -114,13 +114,13 @@ def registration(request):
         return HttpResponseRedirect(reverse('accounts-home'))
 
     if request.method == 'POST':
-        form = RegistrationForm(request, request.POST)
+        form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             send_activation(user)
             return render(request, 'accounts/registration_done.html')
     else:
-        form = RegistrationForm(request)
+        form = RegistrationForm()
 
     return render(request, 'accounts/registration.html', {'form': form})
 

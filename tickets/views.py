@@ -53,9 +53,9 @@ def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
         if request.user.is_authenticated():
             return user_form(request.POST)
         else:
-            return anonymous_form(request, request.POST)
+            return anonymous_form(request.POST)
     else:
-        return user_form() if request.user.is_authenticated() else anonymous_form(request)
+        return user_form() if request.user.is_authenticated() else anonymous_form()
 
 
 def _can_view_mod_msg(request):

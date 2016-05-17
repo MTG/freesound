@@ -672,7 +672,7 @@ def flag(request, username, sound_id):
         user = request.user
 
     if request.method == "POST":
-        flag_form = FlagForm(request, request.POST)
+        flag_form = FlagForm(request.POST)
         if flag_form.is_valid():
             flag = flag_form.save()
             flag.reporting_user = user
@@ -693,7 +693,7 @@ def flag(request, username, sound_id):
         initial = {}
         if user:
             initial["email"] = user.email
-        flag_form = FlagForm(request, initial=initial)
+        flag_form = FlagForm(initial=initial)
 
     tvars = {"sound": sound,
              "flag_form": flag_form}

@@ -50,9 +50,11 @@ urlpatterns = [
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),
     url(r'^stream/$', follow.stream, name='stream'),
 
-    url(r'^upload/$', accounts.upload, name="accounts-upload"),
+    url(r'^upload/$', accounts.upload, name="accounts-upload", kwargs=dict(no_flash=True)),
+    url(r'^upload/html/$', accounts.upload, name="accounts-upload-html", kwargs=dict(no_flash=True)),
+    url(r'^upload/flash/$', accounts.upload, name="accounts-upload-flash"),
     url(r'^upload/file/$', accounts.upload_file, name="accounts-upload-file"),
-    url(r'^upload/html/$', accounts.upload, name="accounts-upload-html", kwargs=dict(no_flash=True)),    
+
 
     url(r'^describe/$', accounts.describe, name="accounts-describe"),
     url(r'^describe/license/$', accounts.describe_license, name="accounts-describe-license"),

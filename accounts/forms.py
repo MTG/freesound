@@ -20,7 +20,7 @@
 
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, UNUSABLE_PASSWORD, AuthenticationForm
+from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
@@ -39,7 +39,7 @@ def validate_file_extension(audiofiles):
 
 
 class UploadFileForm(forms.Form):
-    files = MultiFileField(min_num=1, validators=[validate_file_extension])
+    files = MultiFileField(min_num=1, validators=[validate_file_extension], label="")
 
 
 class TermsOfServiceForm(forms.Form):

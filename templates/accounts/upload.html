@@ -113,10 +113,10 @@
     .centered{
     	text-align:center;
     }
-    .file-list {
+    /*.file-list {
       max-height: 110px;
       overflow: auto;
-    }
+    }*/
     .drop-area {
       position: fixed;
       top: 0;
@@ -128,6 +128,11 @@
     }
     .abort-button {
       display: none;
+    }
+
+    #drag-tip {
+        color:gray;
+        font-size:12px;
     }
 
     </style>
@@ -170,31 +175,34 @@
 <div id="upload_button_block">
 
 {% if no_flash %}
-  <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form">{% csrf_token %}
+    <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form">{% csrf_token %}
     {{ form.as_p }}
-    {% if not successes and not errors %}<div id="drag-tip">Drag files here or click on 'Add files'</div>{% endif %}
+    <div id="drag-tip">
+        <h1>Drag files here...</h1>
+        ...or click on 'Add files' (valid file extensions: flac, wav, aif, aiff, ogg and mp3).
+        <br>If you prefer, you can also upload files <a href="{% url "accounts-upload-flash" %}"> using flash</a>.
+    </div>
     <ul id="file-list" class="file-list"></ul>
     <input type="button" id="add-files-btn" value="+ Add files" />
     <input type="submit" value="Upload" id="html_upload_button" />
-  </form>
-  <div class="progress-container" id="progress-container"></div>
-  <input type="button" id="abort" class="abort-button" value="Abort" />
-  <div class="drop-area" id="drop-area"></div>
-{% if successes %}
-  <p>
-  <br/>
-  <b>{{ successes }} file{{ successes|pluralize }} uploaded successfully</b>
-  </p>
-{% endif %}
+    </form>
+    <div class="progress-container" id="progress-container"></div>
+    <input type="button" id="abort" class="abort-button" value="Abort" />
+    <div class="drop-area" id="drop-area"></div>
+    <div style="text-align: left;">
+    {% if successes %}
+      <p>
+      <b>{{ successes }} file{{ successes|pluralize }} uploaded successfully!</b>
+      </p>
+    {% endif %}
 
-{% if errors %}
-  {% with count=errors.count %}
-  <p>
-  <b>There was an error uploading the file{{ count|pluralize }}:</b>
-    <ul> {% for file in errors %}<li>{{ file }}</li>{% endfor %}</ul>
-  </p>
-  {% endwith %}
-{% endif %}
+    {% if errors %}
+      <p>
+      <b>There were errors uploading the files:</b>
+        <ul>{% for file in errors %}<li>{{ file }}</li>{% endfor %}</ul>
+      </p>
+    {% endif %}
+    </div>
 {% else %}
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
     <param name="movie" value="{{media_url}}swf/upload.swf" />
@@ -219,15 +227,17 @@
 </object>
 <p>
 <img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
-Hint: you can upload multiple files at once</p>
+Hint 1: you can upload multiple files at once
+<br>Hint 2: we recommend you to upload your files using the <a href="{% url "accounts-upload" %}"> html uploader</a> ;)
+</p>
 {% endif %}
 
 </div>
 
 <div id="describe_button_block">
-
+<p>Once sounds are uploaded, you'll have to describe them before they can show up in the web site.</p>
 <p><a id="describe_a" href="{% url "accounts-describe" %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
-<p>Before your sounds show up on the web site you'll have to describe them</p>
+
 </div>
 </div>
 <div id="upload-progress-container" style="display:none">
@@ -236,13 +246,7 @@ Hint: you can upload multiple files at once</p>
 <br/>
 
 
-<p class="centered">
-{% if no_flash %}
-<a href="{% url "accounts-upload" %}"> switch to flash version </a>
-{% else %}
-<a href="{% url "accounts-upload-html" %}"> switch to non-flash version </a>
-{% endif %}
-</p>
+
 </div><!-- #upload_page -->
 
 <script type="text/javascript">
@@ -253,7 +257,7 @@ Hint: you can upload multiple files at once</p>
         if(queue.length==0){
             $("#describe_img").attr("src", "{{media_url}}images/describe_sounds.png");
             $("#describe_a").mouseover(function () {$(this).css('cursor', 'pointer')});
-            $("#describe_a").attr("href", "{% url accounts-describe %}");
+            $("#describe_a").attr("href", "{% url 'accounts-describe' %}");
         }
     }
     function uploadError(fileId, message)
@@ -436,7 +440,7 @@ Hint: you can upload multiple files at once</p>
         formData.append('files', sound);
       });
       formData.append('csrfmiddlewaretoken', csrftoken);
-      var submitURL = '/home/upload/html/';
+      var submitURL = "{% url 'accounts-upload' %}";
       var request = new XMLHttpRequest();
       request.open("POST", submitURL);
       request.onload = function() {

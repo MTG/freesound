@@ -29,7 +29,7 @@
         width: 250px;
         margin-top:8px;
         margin-right: 5px;
-        margin-bottom: 30px;
+        /*margin-bottom: 30px;*/
     }
     div.progress
     {
@@ -174,81 +174,6 @@
 <div id="buttons_container">
 <div id="upload_button_block">
 
-{% if no_flash %}
-    <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form">{% csrf_token %}
-    {{ form.as_p }}
-    <div id="drag-tip">
-        <h1>Drag files here...</h1>
-        ...or click on 'Add files' (valid file extensions: flac, wav, aif, aiff, ogg and mp3).
-        <br>If you prefer, you can also upload files <a href="{% url "accounts-upload-flash" %}"> using flash</a>.
-    </div>
-    <ul id="file-list" class="file-list"></ul>
-    <input type="button" id="add-files-btn" value="+ Add files" />
-    <input type="submit" value="Upload" id="html_upload_button" />
-    </form>
-    <div class="progress-container" id="progress-container"></div>
-    <input type="button" id="abort" class="abort-button" value="Abort" />
-    <div class="drop-area" id="drop-area"></div>
-    <div style="text-align: left;">
-    {% if successes %}
-      <p>
-      <b>{{ successes }} file{{ successes|pluralize }} uploaded successfully!</b>
-      </p>
-    {% endif %}
-
-    {% if errors %}
-      <p>
-      <b>There were errors uploading the files:</b>
-        <ul>{% for file in errors %}<li>{{ file }}</li>{% endfor %}</ul>
-      </p>
-    {% endif %}
-    </div>
-{% else %}
-<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
-    <param name="movie" value="{{media_url}}swf/upload.swf" />
-    <param name="flashvars" value="sessionid={{request.session.session_key}}" />
-    <param name="AllowScriptAccess" value="always" />
-    <!--[if !IE]>-->
-    <object type="application/x-shockwave-flash" data="{{media_url}}swf/upload.swf" width="160" height="31">
-        <param name="flashvars" value="sessionid={{request.session.session_key}}" />
-        <param name="AllowScriptAccess" value="always" />
-        <!--<![endif]-->
-        <p>
-            If you install <a href="http://www.adobe.com/go/getflashplayer">flash player 10</a> you will be able to upload multiple files in one go!<br/>
-        </p>
-        <form method="POST" enctype="multipart/form-data" action="/home/upload/file/">
-            <input type="hidden" name="sessionid" value="{{ request.session.session_key }}" />
-            <input type="file" name="file" /><br/>
-            <input type="submit" value="upload" />
-        </form>
-        <!--[if !IE]>-->
-    </object>
-    <!--<![endif]-->
-</object>
-<p>
-<img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
-Hint 1: you can upload multiple files at once
-<br>Hint 2: we recommend you to upload your files using the <a href="{% url "accounts-upload" %}"> html uploader</a> ;)
-</p>
-{% endif %}
-
-</div>
-
-<div id="describe_button_block">
-<p>Once sounds are uploaded, you'll have to describe them before they can show up in the web site.</p>
-<p><a id="describe_a" href="{% url "accounts-describe" %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
-
-</div>
-</div>
-<div id="upload-progress-container" style="display:none">
-<span style="clear:both"/>
-</div>
-<br/>
-
-
-
-</div><!-- #upload_page -->
-
 <script type="text/javascript">
     var queue = Array();
     swfobject.registerObject("uploader", "10.1");
@@ -303,6 +228,79 @@ Hint 1: you can upload multiple files at once
         removeFromQueue(fileId);
     }
 </script>
+
+{% if no_flash %}
+    <form method="POST" enctype="multipart/form-data" class="html_upload_form" id="upload-form">{% csrf_token %}
+    {{ form.as_p }}
+    <div id="drag-tip">
+        <h1>Drag files here...</h1>
+        ...or click on 'Add files' (valid file extensions: flac, wav, aif, aiff, ogg and mp3).
+        <br>If you prefer, you can also upload files <a href="{% url "accounts-upload-flash" %}"> using flash</a>.
+    </div>
+    <ul id="file-list" class="file-list"></ul>
+    <input type="button" id="add-files-btn" value="+ Add files" />
+    <input type="submit" value="Upload" id="html_upload_button" />
+    </form>
+    <div class="progress-container" id="progress-container" style="margin-bottom: 30px;"></div>
+    <input type="button" id="abort" class="abort-button" value="Abort" />
+    <div class="drop-area" id="drop-area"></div>
+    <div style="text-align: left;">
+    {% if successes %}
+      <p>
+      <b>{{ successes }} file{{ successes|pluralize }} uploaded successfully!</b>
+      </p>
+    {% endif %}
+
+    {% if errors %}
+      <p>
+      <b>There were errors uploading the files:</b>
+        <ul>{% for file in errors %}<li>{{ file }}</li>{% endfor %}</ul>
+      </p>
+    {% endif %}
+    </div>
+{% else %}
+    <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="160" height="31" id="uploader">
+        <param name="movie" value="{{media_url}}swf/upload.swf" />
+        <param name="flashvars" value="sessionid={{request.session.session_key}}" />
+        <param name="AllowScriptAccess" value="always" />
+        <!--[if !IE]>-->
+        <object type="application/x-shockwave-flash" data="{{media_url}}swf/upload.swf" width="160" height="31">
+            <param name="flashvars" value="sessionid={{request.session.session_key}}" />
+            <param name="AllowScriptAccess" value="always" />
+            <!--<![endif]-->
+            <p>
+                If you install <a href="http://www.adobe.com/go/getflashplayer">flash player 10</a> you will be able to upload multiple files in one go!<br/>
+            </p>
+            <form method="POST" enctype="multipart/form-data" action="/home/upload/file/">
+                <input type="hidden" name="sessionid" value="{{ request.session.session_key }}" />
+                <input type="file" name="file" /><br/>
+                <input type="submit" value="upload" />
+            </form>
+            <!--[if !IE]>-->
+        </object>
+        <!--<![endif]-->
+</object>
+<p>
+<img src="{{media_url}}/images/fugue-icons/icons/exclamation.png"> <span style="color:black">Don't leave before upload finishes!</span><br/>
+Hint 1: you can upload multiple files at once
+<br>Hint 2: we recommend you to upload your files using the <a href="{% url "accounts-upload" %}"> html uploader</a> ;)
+</p>
+{% endif %}
+
+</div>
+
+<div id="describe_button_block">
+<p>Once sounds are uploaded, you'll have to describe them before they can show up in the web site.</p>
+<p><a id="describe_a" href="{% url "accounts-describe" %}"><img id="describe_img" src="{{media_url}}images/describe_sounds.png" width="160" height="31" alt="Describe Your Sounds Link" /></a></p>
+
+</div>
+</div>
+<div id="upload-progress-container" style="display:none">
+<span style="clear:both"/>
+</div>
+<br/>
+</div><!-- #upload_page -->
+
 {% if no_flash %}
 <script>
   (function() {

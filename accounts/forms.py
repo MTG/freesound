@@ -20,23 +20,26 @@
 
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth.forms import PasswordResetForm, UNUSABLE_PASSWORD, AuthenticationForm
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
+from multiupload.fields import MultiFileField
 from django.conf import settings
 from accounts.models import Profile
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 
 
-def validate_file_extension(value):
-    if not filename_has_valid_extension(str(value)):
-        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+def validate_file_extension(audiofiles):
+    for file_ in audiofiles:
+        content_type = file_.content_type
+        if not (content_type.startswith("audio") and filename_has_valid_extension(str(file_))):
+            raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
 
 
 class UploadFileForm(forms.Form):
-    file = forms.FileField(validators=[validate_file_extension])
+    files = MultiFileField(min_num=1, validators=[validate_file_extension])
 
 
 class TermsOfServiceForm(forms.Form):

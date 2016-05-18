@@ -276,6 +276,9 @@ class Sound(SocialModel):
     objects = SoundManager()
     public = PublicSoundManager()
 
+    def __unicode__(self):
+        return self.base_filename_slug
+
     @staticmethod
     def is_sound():
         # N.B. This is used in the ticket template (ugly, but a quick fix)

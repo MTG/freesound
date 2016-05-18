@@ -39,12 +39,6 @@ class ApiV2Client(models.Model):
 
     DEFAULT_STATUS = 'OK'
 
-    SCOPE_CHOICES = (('r', 'read'),
-                     ('w', 'write'),
-                     ('rw', 'read+write'))
-
-    DEFAULT_SCOPE = 'rw'
-
     oauth_client                = models.OneToOneField(Application, related_name='apiv2_client', default=None, null=True, blank=True)
     key                         = models.CharField(max_length=40, blank=True)
     user                        = models.ForeignKey(User, related_name='apiv2_client')

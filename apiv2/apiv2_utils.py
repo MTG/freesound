@@ -133,7 +133,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView):
 
         # Check if client has write permissions
         if self.auth_method_name == "OAuth2":
-            if "write" not in request.auth.application.scope:
+            if "write" not in request.auth.scopes:
                 raise UnauthorizedException(resource=self)
 
     def log_message(self, message):

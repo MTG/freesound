@@ -16,15 +16,11 @@
     </h3>
 
     <form method="post" action=".">{% csrf_token %}
-        <div class="form-group">
-            {{ form.as_p }}
-        </div>
-        <div class="form-group">
-            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-            <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
-            <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
-            <input type="submit" value="Register" />
-        </div>
+        {{ form.as_p }}
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+        <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
+        <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
+        <input type="submit" value="Register" />
     </form>
 
 {% include "accounts/reminders.html" %}

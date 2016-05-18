@@ -19,7 +19,7 @@
 #
 
 from django.test import TestCase
-from django.test.utils import override_settings
+from django.test.utils import override_settings, skipIf
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
@@ -356,6 +356,7 @@ class UserUploadAndDescribeSounds(TestCase):
 
     fixtures = ['initial_data']
 
+    @skipIf(True, "Test not ready for new uploader")
     @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
     def test_handle_uploaded_file_html(self):
         # TODO: test html5 file uploads when we change uploader

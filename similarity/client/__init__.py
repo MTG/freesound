@@ -45,11 +45,13 @@ class SimilarityException(Exception):
         self.status_code = kwargs['status_code']
 
 
-def _get_url_as_json(url, data=None):
-    if not data:
-        f = urllib2.urlopen(url.replace(" ", "%20"))
-    else:
-        f = urllib2.urlopen(url.replace(" ", "%20"), data)
+def _get_url_as_json(url, data=None, timeout=None):
+    kwargs = dict()
+    if data is not None:
+        kwargs['data'] = data
+    if timeout is not None:
+        kwargs['timeout'] = timeout
+    f = urllib2.urlopen(url.replace(" ", "%20"), **kwargs)
     resp = f.read()
     return json.loads(resp)
 
@@ -137,7 +139,7 @@ class Similarity():
         url = _BASE_URL + _URL_SAVE
         if filename:
             url += '?' + 'filename=' + str(filename)
-        return _result_or_exception(_get_url_as_json(url))
+        return _result_or_exception(_get_url_as_json(url, timeout=120))
 
     @classmethod
     def save_indexing_server(cls, filename = None):

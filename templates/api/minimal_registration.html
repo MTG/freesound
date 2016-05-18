@@ -68,6 +68,10 @@
             backgounrd-color:red;
         }
 
+        .captcha_element {
+            margin-left:50px;
+        }
+
     </style>
 </head>
 <body>
@@ -102,15 +106,12 @@
         <p> {% if form.accepted_tos.errors %}<span class="error2">You must accept the terms of use to register to Freesound</span><br>{% endif %}
             {{ form.accepted_tos }} Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the Freesound website</p>
 
-        <p>
-        {% if form.recaptcha_response_field.errors %}<span class="error2">Wrong captcha</span><br>{% endif %}
-        <label for="id_recaptcha_response_field">Please prove you are not a robot:</label>
-        {% autoescape off %}
-            <div style="margin-left:38px;">
-            {{ form.recaptcha_response_field }}
-            </div>
-        {% endautoescape %}
-        </p>
+        <div class="captcha_element">
+            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+            <div class="g-recaptcha" data-sitekey={{ form.captcha_key}}></div>
+            <p class="help-block"> {{ form.recaptcha_response.errors }} </p>
+        </div>
+
         </div>
         <input type="submit" value="Register" />
     </form>

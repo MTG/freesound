@@ -1305,12 +1305,12 @@ def permission_granted(request):
 def minimal_registration(request):
 
     if request.method == "POST":
-        form = RegistrationForm(request, request.POST)
+        form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             send_activation(user)
             return render_to_response('api/minimal_registration_done.html', locals(), context_instance=RequestContext(request))
     else:
-        form = RegistrationForm(request)
+        form = RegistrationForm()
 
     return render_to_response('api/minimal_registration.html', locals(), context_instance=RequestContext(request))

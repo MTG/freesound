@@ -360,6 +360,9 @@ def describe(request):
                     os.remove(files[f].full_path)
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
+                # Clear existing describe-related session data
+                for key in ['describe_sounds', 'describe_license', 'describe_pack']:
+                    request.session.pop(key, None)  # Clear pre-existing describe-sound related data in session
                 request.session['describe_sounds'] = [files[x] for x in form.cleaned_data["files"]]
                 # If only one file is choosen, go straight to the last step of the describe process,
                 # otherwise go to license selection step

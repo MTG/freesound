@@ -917,12 +917,10 @@ class BookmarkSound(WriteRequiredGenericAPIView):
                                       'note': 'This bookmark has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                if serializer.data['name']:
-                    name = serializer.data['name']
-                else:
-                    name = sound.original_filename
-                if serializer.data['category']:
-                    category = BookmarkCategory.objects.get_or_create(user=self.user, name=serializer.data['category'])
+                name = serializer.data.get('name', sound.original_filename)
+                category_name = serializer.data.get('category', None)
+                if category_name is not None:
+                    category = BookmarkCategory.objects.get_or_create(user=self.user, name=category_name)
                     bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id, category=category[0])
                 else:
                     bookmark = Bookmark(user=self.user, name=name, sound_id=sound_id)

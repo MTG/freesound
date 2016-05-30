@@ -418,7 +418,7 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
         # Get ids of the particular sounds we need
         if queryset:
             paginated_queryset = view.paginate_queryset(queryset)
-            ids = [int(sound.id) for sound in paginated_queryset.object_list]
+            ids = [int(sound.id) for sound in paginated_queryset]
         else:
             ids = [int(sid) for sid in sound_ids]
 

@@ -388,7 +388,8 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BookmarkCategory
-        fields = ('url',
+        fields = ('id',
+                  'url',
                   'name',
                   'num_sounds',
                   'sounds')

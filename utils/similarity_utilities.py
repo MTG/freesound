@@ -23,6 +23,8 @@ from django.conf import settings
 from django.core.cache import cache
 from similarity.client import Similarity
 from similarity.similarity_settings import PRESETS, DEFAULT_PRESET, SIMILAR_SOUNDS_TO_CACHE, SIMILARITY_CACHE_TIME
+from utils.encryption import create_hash
+
 
 logger = logging.getLogger('web')
 
@@ -68,6 +70,7 @@ def get_similar_sounds(sound, preset = DEFAULT_PRESET, num_results = settings.SO
 def api_search(target=None, filter=None, preset=None, metric_descriptor_names=None, num_results=None, offset=None, target_file=None, in_ids=None):
 
     cache_key = 'api-search-t-%s-f-%s-nr-%s-o-%s' % (str(target).replace(" ", ""), str(filter).replace(" ", ""), num_results, offset)
+    cache_key = hash_cache_key(cache_key)
     note = False
     if in_ids:
         in_ids = ','.join([str(sid) for sid in in_ids if sid])
@@ -127,7 +130,7 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
     # Check if at least some sound analysis data is already on cache
     not_cached_sound_ids = sound_ids[:]
     for id in sound_ids:
-        analysis_data = cache.get(cache_key % (str(id), ",".join(sorted(descriptor_names)), str(normalization)))
+        analysis_data = cache.get(hash_cache_key(cache_key % (str(id), ",".join(sorted(descriptor_names)), str(normalization))))
         if analysis_data:
             cached_data[unicode(id)] = analysis_data
             # remove id form list so it is not included in similarity request
@@ -141,7 +144,7 @@ def get_sounds_descriptors(sound_ids, descriptor_names, normalization=True, only
 
     # save sound analysis information in cache
     for key, item in returned_data.items():
-        cache.set(cache_key % (key, ",".join(sorted(descriptor_names)), str(normalization)),
+        cache.set(hash_cache_key(cache_key % (key, ",".join(sorted(descriptor_names)), str(normalization))),
                   item, SIMILARITY_CACHE_TIME)
 
     returned_data.update(cached_data)
@@ -155,3 +158,7 @@ def delete_sound_from_gaia(sound):
         Similarity.delete(sound.id)
     except Exception, e:
         logger.warn("Could not delete sound from gaia with id %d (%s)" % (sound.id, str(e)))
+
+
+def hash_cache_key(key):
+    return create_hash(key, add_secret=False, limit=32)

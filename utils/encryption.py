@@ -52,8 +52,11 @@ def decrypt(quoted_string):
     
     return decrypted_string 
 
-def create_hash(data):
+def create_hash(data, add_secret=True, limit=8):
     import hashlib
     m = hashlib.md5()
-    m.update(str(data) + settings.SECRET_KEY)
-    return m.hexdigest()[0:8]
+    if add_secret:
+        m.update(str(data) + settings.SECRET_KEY)
+    else:
+        m.update(str(data))
+    return m.hexdigest()[0:limit]

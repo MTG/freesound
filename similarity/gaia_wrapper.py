@@ -296,6 +296,10 @@ class GaiaWrapper:
             descriptor_names = descriptor_names_aux[:]
         data = dict()
         required_descriptor_names = self.__calculate_complete_required_descriptor_names(descriptor_names, only_leaf_descriptors=only_leaf_descriptors)
+
+        if type(required_descriptor_names) == dict:
+            return required_descriptor_names  # There has been an error
+
         for point_name in point_names:
             sound_descriptors = self.__get_point_descriptors(point_name, required_descriptor_names, normalization)
             if 'error' not in sound_descriptors:
@@ -366,7 +370,7 @@ class GaiaWrapper:
                 try:
                     value = p.label(str(descriptor_name))
                 except:
-                    value = 'unknown'
+                    value = None
 
             if descriptor_name[0] == '.':
                 descriptor_name = descriptor_name[1:]

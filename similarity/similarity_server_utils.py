@@ -281,10 +281,13 @@ def generate_structured_dict_from_layout(layout_descriptor_names):
     return structure
 
 def get_nested_dictionary_value(keys, dict):
-    if len(keys) == 1:
-        return dict[keys[0]]
+    if keys[0] in dict:
+        if len(keys) == 1:
+            return dict[keys[0]]
+        else:
+            return get_nested_dictionary_value(keys[1:], dict[keys[0]])
     else:
-        return get_nested_dictionary_value(keys[1:], dict[keys[0]])
+        return None
 
 def set_nested_dictionary_value(keys, dict, value):
     if len(keys) == 1:

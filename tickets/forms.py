@@ -23,19 +23,20 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 from utils.forms import CaptchaWidget
 from tickets import *
+from utils.forms import HtmlCleaningCharField
 
 
 class ModeratorMessageForm(forms.Form):
-    message     = forms.CharField(widget=forms.Textarea,)
+    message = HtmlCleaningCharField(widget=forms.Textarea)
     moderator_only = forms.BooleanField(required=False)
 
 
 class UserMessageForm(forms.Form):
-    message     = forms.CharField(widget=forms.Textarea)
+    message = HtmlCleaningCharField(widget=forms.Textarea)
 
 
 class UserContactForm(UserMessageForm):
-    title       = forms.CharField()
+    title = HtmlCleaningCharField()
 
     def __init__(self, *args, **kwargs):
         super(UserContactForm, self).__init__(*args, **kwargs)
@@ -43,7 +44,7 @@ class UserContactForm(UserMessageForm):
 
 
 class AnonymousMessageForm(forms.Form):
-    message     = forms.CharField(widget=forms.Textarea)
+    message = HtmlCleaningCharField(widget=forms.Textarea)
     captcha_key = settings.RECAPTCHA_PUBLIC_KEY
     recaptcha_response = forms.CharField(widget=CaptchaWidget)
 
@@ -55,8 +56,8 @@ class AnonymousMessageForm(forms.Form):
 
 
 class AnonymousContactForm(AnonymousMessageForm):
-    title       = forms.CharField()
-    email       = forms.EmailField()
+    title = HtmlCleaningCharField()
+    email = forms.EmailField()
 
     def __init__(self, *args, **kwargs):
         super(AnonymousContactForm, self).__init__(*args, **kwargs)
@@ -70,23 +71,26 @@ MODERATION_CHOICES = [(x,x) for x in \
                        'Return',
                        'Whitelist']]
 
+
 class SoundModerationForm(forms.Form):
-    action      = forms.ChoiceField(choices=MODERATION_CHOICES,
-                                    required=True,
-                                    widget=forms.RadioSelect(),
-                                    label='')
-    ticket      = forms.IntegerField(widget=forms.widgets.HiddenInput)
+    action = forms.ChoiceField(choices=MODERATION_CHOICES,
+                               required=True,
+                               widget=forms.RadioSelect(),
+                               label='')
+    ticket = forms.IntegerField(widget=forms.widgets.HiddenInput)
+
 
 class ModerationMessageForm(forms.Form):
-    message     = forms.CharField(widget=forms.Textarea,
-                                  required=False,
-                                  label='')
+    message = HtmlCleaningCharField(widget=forms.Textarea,
+                                    required=True,
+                                    label='')
     moderator_only = forms.BooleanField(required=False)
 
+
 class UserAnnotationForm(forms.Form):
-    text = forms.CharField(widget=forms.Textarea,
-                           required=True,
-                           label='')
+    text = HtmlCleaningCharField(widget=forms.Textarea,
+                                 required=True,
+                                 label='')
 
 
 TICKET_STATUS_CHOICES = [(x,x.capitalize()) for x in \

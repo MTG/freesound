@@ -33,7 +33,7 @@ from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.cache import invalidate_template_cache
-from utils.text import slugify
+from utils.text import slugify, clean_html
 from utils.locations import locations_decorator
 from utils.search.search_general import delete_sound_from_solr
 from utils.filesystem import delete_object_files
@@ -575,7 +575,7 @@ class Sound(SocialModel):
         )
         TicketComment.objects.create(
             sender=self.user,
-            text="I've uploaded %s. Please moderate!" % self.original_filename,
+            text="I've uploaded %s. Please moderate!" % clean_html(self.original_filename),
             ticket=ticket,
         )
 

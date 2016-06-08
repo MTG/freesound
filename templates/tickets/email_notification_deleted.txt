@@ -5,7 +5,7 @@
 {% block salutation %}{% if user_to %}{{user_to.username}}{% else %}X{% endif %}{% endblock %}
 
 {% block body %}
-The sound {{ ticket.content.content_object.original_filename }} has been 
+The sound {{ ticket.sound.original_filename }} has been
 deleted by a Freesound moderator.
 
 You can see the moderator's explanation here:

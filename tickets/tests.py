@@ -31,9 +31,8 @@ import tickets
 
 
 class TicketsTest(TestCase):
-    
     fixtures = ['initial_data.json', 'moderation_test_users.json']
-    
+
     def test_new_ticket(self):
         ticket = Ticket()
         ticket.source = 'contact_form'
@@ -42,8 +41,8 @@ class TicketsTest(TestCase):
         ticket.queue = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
         ticket.save()
         self.assertEqual(ticket.assignee, None)
-        
-    def test_new_ticket_linked_content(self):
+
+    def test_new_ticket_linked_sound(self):
         ticket = Ticket()
         ticket.source = 'new_sound'
         ticket.status = 'new'
@@ -53,12 +52,11 @@ class TicketsTest(TestCase):
         ticket.save()
         lc = LinkedContent()
         # just to test, this would be a sound object for example
-        lc.content_object = User.objects.get(username='test_admin')
-        lc.save() 
-        ticket.content = lc
-        ticket.content.save()
-        self.assertEqual(User.objects.get(username='test_admin').id, 
-                         ticket.content.object_id)
+        s = Sound(name='test_admin')
+        s.save()
+        ticket.sound = s
+        ticket.save()
+        self.assertEqual(s.id, ticket.sound.id)
 
     def _create_test_sound(self, moderation_state, processing_state, user, filename):
         sound = sounds.models.Sound.objects.create(
@@ -77,7 +75,7 @@ class TicketsTest(TestCase):
                 status=TICKET_STATUS_NEW,
                 queue=Queue.objects.get(name='sound moderation'),
                 sender=user,
-                content=LinkedContent.objects.create(content_object=sound),
+                sound=sound,
         )
         return ticket
 

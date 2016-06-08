@@ -40,7 +40,7 @@
     $(document).ready(function() {
         {% if moderator_tickets_count %}
             soundManager.onready(function() {
-                moderate('{% url "sound-display" page.object_list.0.content.content_object.user.username page.object_list.0.content.object_id %}');
+                moderate('{% url "sound-display" page.object_list.0.sound.user.username page.object_list.0.sound.id %}');
                 load_messages('{% url "tickets-ticket" page.object_list.0.key %}');
                 highlight_row('row_{{ page.object_list.0.id }}');
                 $('#id_ticket').get(0).value={{page.object_list.0.id}};
@@ -99,15 +99,15 @@
 
                 <table id="assigned-tickets-table">
                 {% for ticket in page.object_list %}
-                    {% if ticket.content and ticket.content.content_object.is_sound %}
+                    {% if ticket.sound %}
                         <tr id="row_{{ ticket.id }}" class="alternate-row-{% cycle 'odd' 'even' %}">
                             <td><a onclick="
-                                    moderate('{% url "sound-display" ticket.content.content_object.user.username ticket.content.object_id %}');
+                                    moderate('{% url "sound-display" ticket.sound.user.username ticket.sound.id %}');
                                     load_messages('{% url "tickets-ticket" ticket.key %}');
                                     highlight_row('row_{{ ticket.id }}');
                                     $('#id_ticket').get(0).value={{ticket.id}};
                                     set_uploader_id({{ticket.sender.id}});">
-                                {{ticket.content.content_object.original_filename|truncate_string:20}}</a></td>
+                                {{ticket.sound.original_filename|truncate_string:20}}</a></td>
                             <td>{{ticket.sender.username}}</td>
                             <td>{{ticket.created|date:"d/m/Y" }}</td>
                             <td>{{ticket.status|capfirst}}</td>

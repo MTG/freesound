@@ -22,7 +22,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
-from models import Ticket, Queue, TicketComment, UserAnnotation
+from models import Ticket, Queue, TicketComment
 from forms import *
 from tickets import *
 from django.db import connection, transaction
@@ -83,18 +83,6 @@ def ticket(request, ticket_key):
     clean_status_forms = True
     clean_comment_form = True
     ticket = get_object_or_404(Ticket, key=ticket_key)
-    if ticket.content:
-        # Becuase it can happen that some tickets have linked content which has dissapeared or on deletion time the ticket
-        # has not been propertly updated, we need to check whether the sound that is linked does in fact exist. If it does
-        # not, we set the linked content to None and the status of the ticket to closed as should have been set at sound
-        # deletion time.
-        sound_id = ticket.content.object_id
-        try:
-            Sound.objects.get(id=sound_id)
-        except Sound.DoesNotExist:
-            ticket.content = None
-            ticket.status = TICKET_STATUS_CLOSED
-            ticket.save()
 
     if request.method == 'POST':
 
@@ -133,10 +121,9 @@ def ticket(request, ticket_key):
                 sound_state = sound_form.cleaned_data.get('state')
                 # Sound should be deleted
                 if sound_state == 'DE':
-                    if ticket.content:
-                        ticket.content.content_object.delete()
-                        ticket.content.delete()
-                        ticket.content = None
+                    if ticket.sound:
+                        ticket.sound.delete()
+                        ticket.sound = None
                     ticket.status = TICKET_STATUS_CLOSED
                     tc = TicketComment(sender=request.user,
                                        text="Moderator %s deleted the sound and closed the ticket" % request.user,
@@ -147,12 +134,12 @@ def ticket(request, ticket_key):
                                                     ticket.USER_ONLY)
                 # Set another sound state that's not delete
                 else:
-                    if ticket.content:
-                        ticket.content.content_object.moderation_state = sound_state
+                    if ticket.sound:
+                        ticket.sound.moderation_state = sound_state
                         # Mark the index as dirty so it'll be indexed in Solr
                         if sound_state == "OK":
-                            ticket.content.content_object.mark_index_dirty()
-                        ticket.content.content_object.save()
+                            ticket.sound.mark_index_dirty()
+                        ticket.sound.save()
                     ticket.status = ticket_form.cleaned_data.get('status')
                     tc = TicketComment(sender=request.user,
                                        text="Moderator %s set the sound to %s and the ticket to %s." %
@@ -168,7 +155,7 @@ def ticket(request, ticket_key):
 
     if clean_status_forms:
         ticket_form = TicketModerationForm(initial={'status': ticket.status}, prefix="tm")
-        state = ticket.content.content_object.moderation_state if ticket.content else 'DE'
+        state = ticket.sound.moderation_state if ticket.sound else 'DE'
         sound_form = SoundStateForm(initial={'state': state}, prefix="ss")
     if clean_comment_form:
         tc_form = _get_tc_form(request, False)
@@ -200,12 +187,10 @@ def new_sound_tickets_count():
         ticket.id
         FROM
         tickets_ticket AS ticket,
-        sounds_sound AS sound,
-        tickets_linkedcontent AS content
+        sounds_sound AS sound
         WHERE
-            ticket.content_id = content.id
+            ticket.sound_id = sound.id
         AND ticket.assignee_id is NULL
-        AND content.object_id = sound.id
         AND sound.moderation_state = 'PE'
         AND sound.processing_state = 'OK'
         AND ticket.status = %s
@@ -255,13 +240,12 @@ def _get_new_uploaders_by_ticket():
 SELECT
     tickets_ticket.sender_id, count(*)
 FROM
-    tickets_ticket, tickets_linkedcontent, sounds_sound
+    tickets_ticket, sounds_sound
 WHERE
     tickets_ticket.source = 'new sound'
     AND sounds_sound.processing_state = 'OK'
     AND sounds_sound.moderation_state = 'PE'
-    AND tickets_linkedcontent.object_id = sounds_sound.id
-    AND tickets_ticket.content_id = tickets_linkedcontent.id
+    AND tickets_ticket.sound_id = sounds_sound.id
     AND tickets_ticket.assignee_id is NULL
     AND tickets_ticket.status = %s
 GROUP BY sender_id""", [TICKET_STATUS_NEW])
@@ -273,16 +257,16 @@ GROUP BY sender_id""", [TICKET_STATUS_NEW])
         # Pick the oldest non moderated ticket of each user and compute how many seconds it has been in the queue
         user_new_tickets = Ticket.objects.filter(sender__id=user.id,
                                                  status=TICKET_STATUS_NEW,
-                                                 content__isnull=False).order_by("created")
+                                                 sound__isnull=False).order_by("created")
         if user_new_tickets:
             oldest_new_ticket_created = user_new_tickets[0].created
         else:
             oldest_new_ticket_created = datetime.datetime.now()
 
         for ticket in user_new_tickets:
-            if ticket.content.content_object:
-                content_object = ticket.content.content_object
-                if content_object.processing_state == 'OK' and content_object.moderation_state == 'PE':
+            if ticket.sound:
+                sound = ticket.sound
+                if sound.processing_state == 'OK' and sound.moderation_state == 'PE':
                     oldest_new_ticket_created = ticket.created
 
         days_in_queue = (datetime.datetime.now() - oldest_new_ticket_created).days
@@ -354,7 +338,7 @@ def _get_sounds_in_moderators_queue_count(user):
     return Ticket.objects.select_related() \
         .filter(assignee=user.id) \
         .exclude(status='closed') \
-        .exclude(content=None) \
+        .exclude(sound=None) \
         .order_by('status', '-created').count()
 
 
@@ -419,14 +403,12 @@ def moderation_assign_user(request, user_id):
                 status = %s,
                 modified = now()
             FROM
-                sounds_sound,
-                tickets_linkedcontent
+                sounds_sound
             WHERE
                 tickets_ticket.source = 'new sound'
             AND sounds_sound.processing_state = 'OK'
             AND sounds_sound.moderation_state = 'PE'
-            AND tickets_linkedcontent.object_id = sounds_sound.id
-            AND tickets_ticket.content_id = tickets_linkedcontent.id
+            AND tickets_ticket.sound_id = sounds_sound.id
             AND tickets_ticket.assignee_id is NULL
             AND tickets_ticket.status = %s
             AND sounds_sound.user_id = %s""",
@@ -494,9 +476,9 @@ def moderation_assigned(request, user_id):
 
             if action == "Approve":
                 ticket.status = TICKET_STATUS_CLOSED
-                ticket.content.content_object.change_moderation_state("OK")  # change_moderation_state does the saving
+                ticket.sound.change_moderation_state("OK")  # change_moderation_state does the saving
                 ticket.save()
-                ticket.content.content_object.mark_index_dirty()
+                ticket.sound.mark_index_dirty()
                 if msg:
                     ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED_BUT,
                                                     Ticket.USER_ONLY)
@@ -519,10 +501,9 @@ def moderation_assigned(request, user_id):
                 ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED,
                                                 Ticket.USER_ONLY)
                 # to prevent a crash if the form is resubmitted
-                if ticket.content:
-                    ticket.content.content_object.delete()
-                    ticket.content.delete()
-                    ticket.content = None
+                if ticket.sound:
+                    ticket.sound.delete()
+                    ticket.sound = None
                 ticket.status = TICKET_STATUS_CLOSED
                 ticket.save()
             elif action == "Whitelist":
@@ -545,21 +526,17 @@ def moderation_assigned(request, user_id):
     qs = Ticket.objects.select_related() \
                        .filter(assignee=user_id) \
                        .exclude(status=TICKET_STATUS_CLOSED) \
-                       .exclude(content=None) \
+                       .exclude(sound=None) \
                        .order_by('status', '-created')
     pagination_response = paginate(request, qs, settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE)
     pagination_response['page'].object_list = list(pagination_response['page'].object_list)
-    # Because some tickets can have linked content which has disappeared or on deletion time the ticket
-    # has not been properly updated, we need to check whether the sound that is linked does in fact exist. If it does
-    # not, we set the linked content to None and the status of the ticket to closed as should have been set at sound
-    # deletion time.
+    # Because some tickets can have related sound which has disappeared or on deletion time the ticket
+    # has not been properly updated, we need to check whether the sound that is related does in fact
+    # exist. If it does not, we set the related sound to None and the status of the ticket to closed
+    # as should have been set at sound deletion time.
     for ticket in pagination_response['page'].object_list:
-        sound_id = ticket.content.object_id
-        try:
-            Sound.objects.get(id=sound_id)
-        except Sound.DoesNotExist:
+        if not ticket.sound:
             pagination_response['page'].object_list.remove(ticket)
-            ticket.content = None
             ticket.status = TICKET_STATUS_CLOSED
             ticket.save()
 
@@ -605,9 +582,9 @@ def get_pending_sounds(user):
 
     for user_ticket in user_tickets:
         try:
-            sound_id = user_ticket.content.object_id
-            sound_obj = Sound.objects.get(id=sound_id, processing_state='OK', moderation_state='PE')
-            ret.append( (user_ticket, sound_obj) )
+            sound = user_ticket.sound
+            if sound.processing_state == 'OK' and sound.moderation_state == 'PE':
+                ret.append( (user_ticket, sound) )
         except:
             pass
 
@@ -615,12 +592,11 @@ def get_pending_sounds(user):
 
 
 def get_num_pending_sounds(user):
-    # Get non closed tickets with linked content objects referring to sounds that have not been deleted
+    # Get non closed tickets with related sound objects referring to sounds that have not been deleted
     tickets = Ticket.objects.raw("""
                 SELECT ticket.id
                   FROM tickets_ticket AS ticket
-             LEFT JOIN tickets_linkedcontent AS content ON content.id = ticket.content_id
-             LEFT JOIN sounds_sound AS sound ON sound.id=content.object_id
+             LEFT JOIN sounds_sound AS sound ON ticket.sound_id = sound.id
                  WHERE (ticket.sender_id = %s
                    AND NOT (ticket.status = 'closed' ))
                    AND sound.id IS NOT NULL

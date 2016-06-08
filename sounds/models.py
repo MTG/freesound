@@ -33,15 +33,14 @@ from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.cache import invalidate_template_cache
-from utils.text import slugify, clean_html
+from utils.text import slugify
 from utils.locations import locations_decorator
 from utils.search.search_general import delete_sound_from_solr
 from utils.filesystem import delete_object_files
 from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
-from tickets.models import Ticket, Queue, TicketComment, LinkedContent
-from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW, TICKET_STATUS_CLOSED
+from tickets import TICKET_STATUS_CLOSED, TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
 import os
 import logging
 import random
@@ -571,24 +570,20 @@ class Sound(SocialModel):
             status=TICKET_STATUS_NEW,
             queue=Queue.objects.get(name='sound moderation'),
             sender=self.user,
-            content=LinkedContent.objects.create(content_object=self),
+            sound=self,
         )
         TicketComment.objects.create(
             sender=self.user,
-            text="I've uploaded %s. Please moderate!" % clean_html(self.original_filename),
+            text="I've uploaded %s. Please moderate!" % self.original_filename,
             ticket=ticket,
         )
 
     def unlink_moderation_ticket(self):
         # If sound has an assigned ticket, set its content to None and status to closed
-        try:
-            ticket = Ticket.objects.get(content__object_id=self.id,
-                                        content__content_type=ContentType.objects.get_for_model(self))
-            ticket.content = None
-            ticket.status = TICKET_STATUS_CLOSED
-            ticket.save()
-        except Ticket.DoesNotExist:
-            pass
+        if self.ticket:
+            self.ticket.sound = None
+            self.ticket.status = TICKET_STATUS_CLOSED
+            slef.ticket.save()
 
     def process(self, force=False):
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)

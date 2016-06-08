@@ -6,7 +6,7 @@
 
 {% block body %}
 One of the sound moderators at Freesound has a question about one 
-of your uploads ({{ ticket.content.content_object.original_filename }}).
+of your uploads ({{ ticket.sound.original_filename }}).
 
 Please go to:
 

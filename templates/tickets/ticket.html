@@ -31,8 +31,8 @@
         <ul id="ticket-details-right">
             <li><em>created on</em> {{ ticket.created }}</li>
             <li><em>last modified on</em> {{ ticket.modified }}</li>
-            {% if ticket.content %}
-                <li><em>related to</em> {{ ticket.content.content_type }} {{ ticket.content.object_id }}  </li>
+            {% if ticket.sound %}
+                <li><em>related to</em> Sound {{ ticket.sound.id }}  </li>
             {% endif %}
         </ul>
         <br style="clear: both;">
@@ -62,27 +62,21 @@
         <div id="ticket-right">
 
             <h3>Ticket linked content</h3>
-            {% if ticket.content %}
-                {% if ticket.content.content_object.is_sound %}
-                    <div class="sound_list_moderation">
-                        {% display_sound ticket.content.content_object %}
-                        {% if perms.sound.can_edit or ticket.content.content_object.user == request.user %}
-                            {% if ticket.content.content_object.processing_state == 'OK' %}
-                                <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><a href="{% url "sound-edit" ticket.sender.username ticket.content.object_id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a></li></ul>
-                            {% else %}
-                                <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><em>Sound is processing, cannot edit.</em></li></ul>
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <p>Sound's moderation state is set to <b>{% if ticket.content.content_object.moderation_state == 'PE' %}
-                                                                Pending {% else %} OK {% endif %}</b>
-                    <br>Sound's processing state is set to <b>{% if ticket.content.content_object.processing_state == 'PE' %}
-                                                                Pending {% else %} OK {% endif %}</b>
-                {% else %}
-                    <p>Don't know how to display this content type.
-                    (type: {{ ticket.content.content_type }},
-                     id: {{ ticket.content.object_id }})
-                {% endif %}
+            {% if ticket.sound %}
+                  <div class="sound_list_moderation">
+                      {% display_sound ticket.sound %}
+                      {% if perms.sound.can_edit or ticket.sound.user == request.user %}
+                          {% if ticket.sound.processing_state == 'OK' %}
+                              <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><a href="{% url "sound-edit" ticket.sender.username ticket.sound.id %}" class="icon" id="edit_link" title="edit sound">Edit sound information</a></li></ul>
+                          {% else %}
+                              <ul id="sound_links" style="background: none; padding: 0 0 20px;"><li><em>Sound is processing, cannot edit.</em></li></ul>
+                          {% endif %}
+                      {% endif %}
+                  </div>
+                  <p>Sound's moderation state is set to <b>{% if ticket.sound.moderation_state == 'PE' %}
+                                                              Pending {% else %} OK {% endif %}</b>
+                  <br>Sound's processing state is set to <b>{% if ticket.sound.processing_state == 'PE' %}
+                                                              Pending {% else %} OK {% endif %}</b>
             {% else %}
                 <p>No linked content
             {% endif %}
@@ -91,9 +85,7 @@
             <h3>Ticket controls</h3>
             <form action="." method="post">{% csrf_token %}
                 {{ ticket_form.as_p }}
-                {% if ticket.content and ticket.content.content_object.is_sound %}
-                    {{ sound_form.as_p }}
-                {% endif %}
+                {{ sound_form.as_p }}
                 <input type="submit" value="send" />
             </form>
             {% endif %}

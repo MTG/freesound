@@ -28,7 +28,6 @@ from django.utils.encoding import smart_unicode
 import uuid
 from utils.mail import send_mail_template
 
-
 class Queue(models.Model):
     name            = models.CharField(max_length=128)
     groups          = models.ManyToManyField(Group)
@@ -37,14 +36,6 @@ class Queue(models.Model):
     def __unicode__(self):
         return self.name
 
-
-class LinkedContent(models.Model):
-    content_type    = models.ForeignKey(ContentType)
-    object_id       = models.PositiveIntegerField(db_index=True)
-    content_object  = fields.GenericForeignKey('content_type', 'object_id')
-
-    def __unicode__(self):
-        return u"<# LinkedContent - pk: %s, type: %s>" % (self.object_id, self.content_type)
 
 def defaultkey():
     return str(uuid.uuid4()).replace('-','')
@@ -59,7 +50,7 @@ class Ticket(models.Model):
     sender_email    = models.EmailField(null=True)
     assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True)
     queue           = models.ForeignKey(Queue, related_name='tickets')
-    content         = models.ForeignKey(LinkedContent, null=True, on_delete=models.SET_NULL)
+    sound           = models.OneToOneField('sounds.Sound', null=True, on_delete=models.SET_NULL)
 
     NOTIFICATION_QUESTION     = 'tickets/email_notification_question.txt'
     NOTIFICATION_APPROVED     = 'tickets/email_notification_approved.txt'

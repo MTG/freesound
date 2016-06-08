@@ -40,6 +40,7 @@ from utils.filesystem import delete_object_files
 from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
+from tickets.models import Ticket, Queue, TicketComment
 from tickets import TICKET_STATUS_CLOSED, TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
 import os
 import logging
@@ -580,10 +581,12 @@ class Sound(SocialModel):
 
     def unlink_moderation_ticket(self):
         # If sound has an assigned ticket, set its content to None and status to closed
-        if self.ticket:
+        try:
             self.ticket.sound = None
             self.ticket.status = TICKET_STATUS_CLOSED
             slef.ticket.save()
+        except Ticket.DoesNotExist:
+            pass
 
     def process(self, force=False):
         gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)

@@ -314,7 +314,7 @@ def sound_edit(request, username, sound_id):
         return False
 
     def update_sound_tickets(sound, text):
-        tickets = Ticket.objects.filter(content__object_id=sound.id,
+        tickets = Ticket.objects.filter(sound_id=sound.id,
                                         source=TICKET_SOURCE_NEW_SOUND) \
                                .exclude(status=TICKET_STATUS_CLOSED)
         for ticket in tickets:

@@ -22,10 +22,10 @@ import hashlib
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from models import Ticket, Queue, LinkedContent
+from models import Ticket, Queue
 from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
-
+from sounds.models import Sound
 import sounds
 import tickets
 
@@ -43,6 +43,7 @@ class TicketsTest(TestCase):
         self.assertEqual(ticket.assignee, None)
 
     def test_new_ticket_linked_sound(self):
+        test_user = User.objects.get(username='test_user')
         ticket = Ticket()
         ticket.source = 'new_sound'
         ticket.status = 'new'
@@ -50,9 +51,8 @@ class TicketsTest(TestCase):
         ticket.assignee = User.objects.get(username='test_moderator')
         ticket.queue = Queue.objects.get(name=QUEUE_SOUND_MODERATION)
         ticket.save()
-        lc = LinkedContent()
         # just to test, this would be a sound object for example
-        s = Sound(name='test_admin')
+        s = Sound(description='test sound', license_id=1, user=test_user)
         s.save()
         ticket.sound = s
         ticket.save()

@@ -18,25 +18,25 @@
 #     See AUTHORS file.
 #
 
+import datetime
+import gearman
+from threading import Thread
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
+from django.core.management import call_command
+from django.db import connection, transaction
 from django.db.models import Count, Min, Max, Q, F
+from django.contrib import messages
+from django.conf import settings
 from models import Ticket, Queue, TicketComment, UserAnnotation
 from forms import *
 from tickets import *
-from django.db import connection, transaction
-from django.contrib import messages
 from sounds.models import Sound
-import datetime
 from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
 from utils.functional import combine_dicts
-from django.core.management import call_command
-from threading import Thread
-from django.conf import settings
-import gearman
 
 
 def _get_tc_form(request, use_post=True):
@@ -179,20 +179,9 @@ def sound_ticket_messages(request, ticket_key):
 # In the next 2 functions we return a queryset os the evaluation is lazy.
 # N.B. these functions are used in the home page as well.
 def new_sound_tickets_count():
-    return len(list(Ticket.objects.raw("""
-        SELECT
-        ticket.id
-        FROM
-        tickets_ticket AS ticket,
-        sounds_sound AS sound
-        WHERE
-            ticket.sound_id = sound.id
-        AND ticket.assignee_id is NULL
-        AND sound.moderation_state = 'PE'
-        AND sound.processing_state = 'OK'
-        AND ticket.status = %s
-        """, [TICKET_STATUS_NEW])))
 
+    return len(Ticket.objects.filter(assignee=None, sound__moderation_state='PE',
+            sound__processing_state='OK', status=TICKET_STATUS_NEW))
 
 def new_support_tickets_count():
     return Ticket.objects.filter(assignee=None,
@@ -347,26 +336,14 @@ def moderation_tardy_moderators_sounds(request):
 @permission_required('tickets.can_moderate')
 def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
-    with transaction.atomic():
-        cursor = connection.cursor()
-        cursor.execute("""
-            UPDATE
-                tickets_ticket
-            SET
-                assignee_id = %s,
-                status = %s,
-                modified = now()
-            FROM
-                sounds_sound
-            WHERE
-                tickets_ticket.source = 'new sound'
-            AND sounds_sound.processing_state = 'OK'
-            AND sounds_sound.moderation_state = 'PE'
-            AND tickets_ticket.sound_id = sounds_sound.id
-            AND tickets_ticket.assignee_id is NULL
-            AND tickets_ticket.status = %s
-            AND sounds_sound.user_id = %s""",
-                [request.user.id, TICKET_STATUS_ACCEPTED, TICKET_STATUS_NEW, sender.id])
+
+    Ticket.objects.filter(source='new sound', sound__processing_state='OK',\
+            sound__moderation_state='PE', assignee=None,\
+            status=TICKET_STATUS_NEW, sound__user=sender).update(\
+                assignee=request.user,\
+                status=TICKET_STATUS_ACCEPTED,\
+                modified=datetime.datetime.now())
+
     msg = 'You have been assigned all new sounds from %s.' % sender.username
     messages.add_message(request, messages.INFO, msg)
     invalidate_all_moderators_header_cache()
@@ -543,21 +520,6 @@ def get_pending_sounds(user):
             pass
 
     return ret
-
-
-def get_num_pending_sounds(user):
-    # Get non closed tickets with related sound objects referring to sounds that have not been deleted
-    tickets = Ticket.objects.raw("""
-                SELECT ticket.id
-                  FROM tickets_ticket AS ticket
-             LEFT JOIN sounds_sound AS sound ON ticket.sound_id = sound.id
-                 WHERE (ticket.sender_id = %s
-                   AND NOT (ticket.status = 'closed' ))
-                   AND sound.id IS NOT NULL
-                   AND sound.moderation_state != 'OK'
-                   AND sound.processing_state = 'OK'
-    """, [user.id])
-    return len(list(tickets))
 
 
 @permission_required('tickets.can_moderate')

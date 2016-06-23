@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import fields
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_save
 from django.utils.encoding import smart_unicode
 from django.conf import settings
@@ -32,10 +33,10 @@ from geotags.models import GeoTag
 from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
 from utils.sql import DelayedQueryExecuter
 from utils.locations import locations_decorator
-from tickets.views import get_num_pending_sounds
 from forum.models import Post, Thread
 from comments.models import Comment
 from sounds.models import DeletedSound, Sound, Pack
+import tickets.models
 import datetime
 import random
 import os
@@ -44,8 +45,8 @@ import os
 class ResetEmailRequest(models.Model):
     email = models.EmailField()
     user = models.OneToOneField(User, db_index=True)
-    
-    
+
+
 class ProfileManager(models.Manager):
 
     @staticmethod
@@ -180,7 +181,15 @@ class Profile(SocialModel):
             return True
 
     def num_sounds_pending_moderation(self):
-        return get_num_pending_sounds(self.user)
+        # Get non closed tickets with related sound objects referring to sounds
+        # that have not been deleted
+
+        return len(tickets.models.Ticket.objects.filter(\
+                Q(sender=self.user) &\
+                Q(sound__isnull=False) &\
+                Q(sound__processing_state='OK') &\
+                ~Q(sound__moderation_state='OK') &\
+                ~Q(status='closed')))
 
     def change_ownership_of_user_content(self, target_user=None, include_sounds=False):
         """

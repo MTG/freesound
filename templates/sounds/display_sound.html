@@ -33,7 +33,7 @@
             </div><!-- .sound_stars -->
 
             <div class="sound_description">
-                <p class="description">{{sound.description|striptags|safe|truncatewords:20}}</p>
+              <p class="description">{% if limit_description == False %}{{sound.description|striptags|safe}}{% else %}{{sound.description|striptags|safe|truncatewords:20}}{% endif %}</p>
             </div><!-- .sound_description -->
 
             <div class="sound_tags">

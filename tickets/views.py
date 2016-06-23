@@ -22,6 +22,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
+from django.db.models import Count, Min, Max, Q, F
 from models import Ticket, Queue, TicketComment, UserAnnotation
 from forms import *
 from tickets import *
@@ -36,10 +37,6 @@ from django.core.management import call_command
 from threading import Thread
 from django.conf import settings
 import gearman
-
-
-def _get_contact_form(request, use_post=True):
-    return _get_anon_or_user_form(request, AnonymousContactForm, UserContactForm, use_post)
 
 
 def _get_tc_form(request, use_post=True):
@@ -207,8 +204,8 @@ def tickets_home(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
 
     new_upload_count = new_sound_tickets_count()
-    tardy_moderator_sounds_count = len(list(_get_tardy_moderator_tickets()))
-    tardy_user_sounds_count = len(list(_get_tardy_user_tickets()))
+    tardy_moderator_sounds_count = len(_get_tardy_moderator_tickets())
+    tardy_user_sounds_count = len(_get_tardy_user_tickets())
     sounds_queued_count = Sound.objects.filter(processing_ongoing_state='QU').count()
     sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
     sounds_processing_count = Sound.objects.filter(processing_ongoing_state='PR').count()
@@ -233,53 +230,27 @@ def tickets_home(request):
 
     return render(request, 'tickets/tickets_home.html', tvars)
 
-
 def _get_new_uploaders_by_ticket():
-    cursor = connection.cursor()
-    cursor.execute("""
-SELECT
-    tickets_ticket.sender_id, count(*)
-FROM
-    tickets_ticket, sounds_sound
-WHERE
-    tickets_ticket.source = 'new sound'
-    AND sounds_sound.processing_state = 'OK'
-    AND sounds_sound.moderation_state = 'PE'
-    AND tickets_ticket.sound_id = sounds_sound.id
-    AND tickets_ticket.assignee_id is NULL
-    AND tickets_ticket.status = %s
-GROUP BY sender_id""", [TICKET_STATUS_NEW])
-    user_ids_plus_new_count = dict(cursor.fetchall())
-    user_objects = User.objects.filter(id__in=user_ids_plus_new_count.keys())
 
-    users_aux = []
-    for user in user_objects:
-        # Pick the oldest non moderated ticket of each user and compute how many seconds it has been in the queue
-        user_new_tickets = Ticket.objects.filter(sender__id=user.id,
-                                                 status=TICKET_STATUS_NEW,
-                                                 sound__isnull=False).order_by("created")
-        if user_new_tickets:
-            oldest_new_ticket_created = user_new_tickets[0].created
-        else:
-            oldest_new_ticket_created = datetime.datetime.now()
+    tickets = Ticket.objects.filter(
+            source='new sound', sound__processing_state='OK',
+            sound__moderation_state='PE', assignee=None,
+            status=TICKET_STATUS_NEW).values('sender')\
+                    .annotate(total=Count('sender'), older=Min('created'))\
+                    .order_by('older')
 
-        for ticket in user_new_tickets:
-            if ticket.sound:
-                sound = ticket.sound
-                if sound.processing_state == 'OK' and sound.moderation_state == 'PE':
-                    oldest_new_ticket_created = ticket.created
+    users = User.objects.filter(id__in=[t['sender'] for t in tickets])\
+                .select_related('profile')
 
-        days_in_queue = (datetime.datetime.now() - oldest_new_ticket_created).days
-        users_aux.append({'user': user, 'days_in_queue': days_in_queue, 'new_sounds': user_ids_plus_new_count[user.id]})
-
-    # Sort users according to their oldest ticket (older = first)
-    users_aux.sort(key=lambda item: item['days_in_queue'], reverse=True)
+    users_dict = {u.id:u for u in users}
     new_sounds_users = []
-    for user in users_aux:
-        new_sounds_users.append((user['user'],user['new_sounds'], user['days_in_queue']))
+
+    for t in tickets:
+        new_sounds_users.append((users_dict[t['sender']],\
+                (datetime.datetime.now() - t['older']).days,\
+                t['total']))
 
     return new_sounds_users
-
 
 def _get_unsure_sound_tickets():
     """Query to get tickets that were returned to the queue by moderators that
@@ -289,49 +260,31 @@ def _get_unsure_sound_tickets():
                                  status=TICKET_STATUS_ACCEPTED)
 
 
-def _get_tardy_moderator_tickets(limit=None):
+def _get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last day"""
-    query = """
-        SELECT
-        distinct(ticket.id),
-        ticket.modified as modified
-        FROM
-        tickets_ticketcomment AS comment,
-        tickets_ticket AS ticket
-        WHERE comment.id in (   SELECT MAX(id)
-                                FROM tickets_ticketcomment
-                                GROUP BY ticket_id    )
-        AND ticket.assignee_id is Not Null
-        AND comment.ticket_id = ticket.id
-        AND (comment.sender_id = ticket.sender_id OR comment.sender_id IS NULL)
-        AND now() - modified > INTERVAL '24 hours'
-        AND ticket.status != %s
-        """
-    if limit:
-        query += " LIMIT %s" % (limit, )
-    return Ticket.objects.raw(query, [TICKET_STATUS_CLOSED])
+
+    c = TicketComment.objects.values('ticket').annotate(Max('id')).values('id')
+
+    t = Ticket.objects.filter(assignee__isnull=False, messages__in=c,\
+            modified__lt=datetime.date.today() - datetime.timedelta(days=1))\
+                    .filter(~Q(status=TICKET_STATUS_CLOSED)\
+                    & (Q(messages__sender=F('sender')) | Q(messages__sender=None)))
+    return t
 
 
-def _get_tardy_user_tickets(limit=None):
+def _get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
-    query = """
-        SELECT
-        distinct(ticket.id)
-        FROM
-        tickets_ticketcomment AS comment,
-        tickets_ticket AS ticket
-        WHERE comment.id in (   SELECT MAX(id)
-                                FROM tickets_ticketcomment
-                                GROUP BY ticket_id    )
-        AND ticket.assignee_id is Not Null
-        AND ticket.status != %s
-        AND comment.ticket_id = ticket.id
-        AND comment.sender_id != ticket.sender_id
-        AND now() - comment.created > INTERVAL '2 days'
-    """
-    if limit:
-        query += " LIMIT %s" % (limit, )
-    return Ticket.objects.raw(query, [TICKET_STATUS_CLOSED])
+
+    time_span = datetime.date.today() - datetime.timedelta(days=2)
+    c = TicketComment.objects.values('ticket').annotate(Max('id')).values('id')
+    t = Ticket.objects.filter( \
+            Q(assignee__isnull=False)\
+            & Q(messages__in=c)\
+            & ~Q(status=TICKET_STATUS_CLOSED)\
+            & Q(messages__created__lt=time_span)\
+            & (Q(messages__sender=F('sender')) | Q(messages__sender=None)))
+
+    return t
 
 
 def _get_sounds_in_moderators_queue_count(user):
@@ -347,16 +300,17 @@ def moderation_home(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
 
     new_sounds_users = _get_new_uploaders_by_ticket()
-    unsure_tickets = list(_get_unsure_sound_tickets())  # TODO: shouldn't appear
-    tardy_moderator_tickets = list(_get_tardy_moderator_tickets(5))
-    tardy_user_tickets = list(_get_tardy_user_tickets(5))
-    tardy_moderator_tickets_count = len(list(_get_tardy_moderator_tickets()))
-    tardy_user_tickets_count = len(list(_get_tardy_user_tickets()))
+    unsure_tickets = _get_unsure_sound_tickets()  # TODO: shouldn't appear
+
+    tardy_moderator_tickets = _get_tardy_moderator_tickets()
+    tardy_user_tickets = _get_tardy_user_tickets()
+    tardy_moderator_tickets_count = len(tardy_moderator_tickets)
+    tardy_user_tickets_count = len(tardy_user_tickets)
 
     tvars = {"new_sounds_users": new_sounds_users,
              "unsure_tickets": unsure_tickets,
-             "tardy_moderator_tickets": tardy_moderator_tickets,
-             "tardy_user_tickets": tardy_user_tickets,
+             "tardy_moderator_tickets": tardy_moderator_tickets[:5],
+             "tardy_user_tickets": tardy_user_tickets[:5],
              "tardy_moderator_tickets_count": tardy_moderator_tickets_count,
              "tardy_user_tickets_count": tardy_user_tickets_count,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
@@ -367,7 +321,7 @@ def moderation_home(request):
 @permission_required('tickets.can_moderate')
 def moderation_tardy_users_sounds(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
-    tardy_user_tickets = list(_get_tardy_user_tickets())
+    tardy_user_tickets = _get_tardy_user_tickets()
     paginated = paginate(request, tardy_user_tickets, 10)
 
     tvars = {"sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
@@ -380,7 +334,7 @@ def moderation_tardy_users_sounds(request):
 @permission_required('tickets.can_moderate')
 def moderation_tardy_moderators_sounds(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
-    tardy_moderators_tickets = list(_get_tardy_moderator_tickets())
+    tardy_moderators_tickets = _get_tardy_moderator_tickets()
     paginated = paginate(request, tardy_moderators_tickets, 10)
 
     tvars = {"sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,

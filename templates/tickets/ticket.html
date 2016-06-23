@@ -60,7 +60,15 @@
         </div> <!-- /#ticket-left -->
 
         <div id="ticket-right">
-
+            {% if perms.tickets.can_moderate %}
+            <h3>Ticket controls</h3>
+            <form action="." method="post">{% csrf_token %}
+                {{ ticket_form.as_p }}
+                {{ sound_form.as_p }}
+                <input type="submit" value="send" />
+            </form>
+            {% endif %}
+            
             <h3>Ticket linked content</h3>
             {% if ticket.sound %}
                   <div class="sound_list_moderation">
@@ -81,14 +89,7 @@
                 <p>No linked content
             {% endif %}
 
-            {% if perms.tickets.can_moderate %}
-            <h3>Ticket controls</h3>
-            <form action="." method="post">{% csrf_token %}
-                {{ ticket_form.as_p }}
-                {{ sound_form.as_p }}
-                <input type="submit" value="send" />
-            </form>
-            {% endif %}
+            
 
 
         </div> <!-- /#ticket-right -->

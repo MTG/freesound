@@ -41,7 +41,7 @@ def defaultkey():
     return str(uuid.uuid4()).replace('-','')
 class Ticket(models.Model):
     title           = models.CharField(max_length=256)
-    source          = models.CharField(max_length=128)
+    source          = models.CharField(max_length=128) #TODO: Check if this is used
     status          = models.CharField(max_length=128)
     key             = models.CharField(max_length=32, db_index=True, default=defaultkey)
     created         = models.DateTimeField(db_index=True, auto_now_add=True)

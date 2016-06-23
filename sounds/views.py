@@ -729,6 +729,7 @@ def display_sound_wrapper(request, username, sound_id):
         'sound_id': sound_id,
         'sound': sound_obj,
         'sound_tags': sound_tags,
+        'limit_description': False,
         'do_log': settings.LOG_CLICKTHROUGH_DATA,
     }
     return render(request, 'sounds/display_sound.html', tvars)

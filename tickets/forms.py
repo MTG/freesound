@@ -77,8 +77,8 @@ class SoundModerationForm(forms.Form):
                                required=True,
                                widget=forms.RadioSelect(),
                                label='')
-    ticket = forms.IntegerField(widget=forms.widgets.HiddenInput)
 
+    ticket = forms.CharField(widget=forms.widgets.HiddenInput)
 
 class ModerationMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea,

@@ -1,4 +1,4 @@
-{% extends "tickets/_section.html" %}
+{% extends "base.html" %}
 
 {% load util %}
 {% load paginator %}
@@ -17,38 +17,76 @@
         $("#moderation-ticket-link").get(0).innerHTML = '<p><a href="'+url+'">see full ticket</a>';
     }
 
-    function highlight_row(row_id) {
-
-        var table = document.getElementById('assigned-tickets-table');
-        var rowLength = table.rows.length;
-
-        for(var i=0; i<rowLength; i+=1){
-            var row = table.rows[i];
-
-            $('#' + row.id).removeClass('mod-selected-row');
-
-        }
+    function highlight_row_only(row_id) {
+        $('.mod-selected-row').removeClass('mod-selected-row');
         $('#' + row_id).addClass('mod-selected-row');
-
     }
 
     var set_uploader_id = function(uploader_id) {
         loadUrl = '{% url "tickets-user-annotations" 0 %}'.replace('0', ''+uploader_id);
         $('#user-annotations-section').load(loadUrl);
     }
+ 
 
     $(document).ready(function() {
         {% if moderator_tickets_count %}
-            soundManager.onready(function() {
-                moderate('{% url "sound-display" page.object_list.0.sound.user.username page.object_list.0.sound.id %}');
-                load_messages('{% url "tickets-ticket" page.object_list.0.key %}');
-                highlight_row('row_{{ page.object_list.0.id }}');
-                $('#id_ticket').get(0).value={{page.object_list.0.id}};
-                set_uploader_id({{page.object_list.0.sender.id}});
-            });
-        {% endif %}
+        var selectedTickets = [];
+
+        // Checkbox select or unselect event
+        $(".ticket-check").change(function(){
+          var ticketId = $(this).data('id');
+          var selectedTickets = [];
+          $('.ticket-check:checked').each(function() {
+            selectedTickets.push($(this).data('id'));
+            $('#row_'+$(this).data('id')).addClass('mod-selected-row');
+          });
+          updateSelectedTickets(selectedTickets);
+        });
+
+        // Ckick on ticket at list
+        $(".ticket-select").click(function(){
+          $('.ticket-check:checked').attr( "checked", false );
+          var ticketId = $(this).data('id')
+          selectedTickets = [ticketId];
+          updateSelectedTickets(selectedTickets);
+          return false;
+        }); 
+       
+        //Load initial selected values when page is loading
+        soundManager.onready(function() {
+            var selected = $('#id_ticket').get(0).value;
+            if (selected == '') {
+              selectedTickets = ["{{page.object_list.0.id}}"];
+            }else{
+              selectedTickets = $('#id_ticket').get(0).value.split('|');
+            }
+            for (t in selectedTickets){
+              $('#row_'+ selectedTickets[t]).addClass('mod-selected-row');
+              $('#row_'+ selectedTickets[t]).find('.ticket-check').attr("checked", true);
+            }
+            updateSelectedTickets(selectedTickets);
+            
+        });
+        
+      {% endif %}
     });
 
+    function updateSelectedTickets(selectedTickets) {
+      if (selectedTickets.length == 1) {
+        var ticketElem = $("#row_"+selectedTickets[0]);
+        moderate(ticketElem.data('sound-url'));
+        load_messages(ticketElem.data('messages-url'));
+        highlight_row_only('row_'+selectedTickets[0]);
+        set_uploader_id(ticketElem.data('sender-id'));
+      }else{
+        $('#current_sound').html('<p>'+selectedTickets.length+' Sounds Selected</p>')
+        $('#moderation-ticket-messages').html('<p>'+selectedTickets.length+' Sounds Selected</p>')
+        $('#user-annotations-section').html('')
+        $('#moderation-ticket-link').html('')
+      }
+      $('#id_ticket').get(0).value=selectedTickets.join('|');
+    }
+    
     // Implementation of CSRF for ajax post requests
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
@@ -82,7 +120,7 @@
     Moderation
 {% endblock title %}
 
-{% block section_content %}
+{% block content %}
 
     <!-- include permission checks here -->
 
@@ -100,14 +138,11 @@
                 <table id="assigned-tickets-table">
                 {% for ticket in page.object_list %}
                     {% if ticket.sound %}
-                        <tr id="row_{{ ticket.id }}" class="alternate-row-{% cycle 'odd' 'even' %}">
-                            <td><a onclick="
-                                    moderate('{% url "sound-display" ticket.sound.user.username ticket.sound.id %}');
-                                    load_messages('{% url "tickets-ticket" ticket.key %}');
-                                    highlight_row('row_{{ ticket.id }}');
-                                    $('#id_ticket').get(0).value={{ticket.id}};
-                                    set_uploader_id({{ticket.sender.id}});">
-                                {{ticket.sound.original_filename|truncate_string:20}}</a></td>
+                        <tr id="row_{{ ticket.id }}" class="alternate-row-{% cycle 'odd' 'even' %}"
+                            data-sound-url="{% url "sound-display" ticket.sound.user.username ticket.sound.id %}"
+                            data-messages-url="{% url "tickets-ticket" ticket.key %}" data-sender-id="{{ticket.sender.id}}">
+                          <td><input type="checkbox" class="ticket-check" data-id="{{ticket.id}}"/> </td>
+                          <td><a href="#" class="ticket-select" data-id="{{ticket.id}}">{{ticket.sound.original_filename|truncate_string:20}}</a></td>
                             <td>{{ticket.sender.username}}</td>
                             <td>{{ticket.created|date:"d/m/Y" }}</td>
                             <td>{{ticket.status|capfirst}}</td>
@@ -165,4 +200,4 @@
     <br style="clear: both;">
 
 
-{% endblock section_content %}
+{% endblock content %}

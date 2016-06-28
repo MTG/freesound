@@ -390,63 +390,64 @@ def moderation_assigned(request, user_id):
         msg_form = ModerationMessageForm(request.POST)
 
         if mod_sound_form.is_valid() and msg_form.is_valid():
+            ticket_ids = mod_sound_form.cleaned_data.get("ticket", '').split('|')
+            tickets = Ticket.objects.filter(id__in=ticket_ids)
+            for ticket in tickets:
+                invalidate_template_cache("user_header", ticket.sender.id)
+                invalidate_all_moderators_header_cache()
+                action = mod_sound_form.cleaned_data.get("action")
+                msg = msg_form.cleaned_data.get("message", False)
+                moderator_only = msg_form.cleaned_data.get("moderator_only", False)
 
-            ticket = Ticket.objects.get(id=mod_sound_form.cleaned_data.get("ticket", False))
-            invalidate_template_cache("user_header", ticket.sender.id)
-            invalidate_all_moderators_header_cache()
-            action = mod_sound_form.cleaned_data.get("action")
-            msg = msg_form.cleaned_data.get("message", False)
-            moderator_only = msg_form.cleaned_data.get("moderator_only", False)
-
-            if msg:
-                tc = TicketComment(sender=ticket.assignee,
-                                   text=msg,
-                                   ticket=ticket,
-                                   moderator_only=moderator_only)
-                tc.save()
-
-            if action == "Approve":
-                ticket.status = TICKET_STATUS_CLOSED
-                ticket.sound.change_moderation_state("OK")  # change_moderation_state does the saving
-                ticket.save()
-                ticket.sound.mark_index_dirty()
                 if msg:
-                    ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED_BUT,
-                                                    Ticket.USER_ONLY)
-                else:
-                    ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED,
-                                                    Ticket.USER_ONLY)
-            elif action == "Defer":
-                ticket.status = TICKET_STATUS_DEFERRED
-                ticket.save()
-                # only send a notification if a message was added
-                if msg:
-                    ticket.send_notification_emails(Ticket.NOTIFICATION_QUESTION,
-                                                    Ticket.USER_ONLY)
-            elif action == "Return":
-                ticket.assignee = None
-                ticket.status = TICKET_STATUS_NEW
-                # no notification here
-                ticket.save()
-            elif action == "Delete":
-                ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED,
-                                                Ticket.USER_ONLY)
-                # to prevent a crash if the form is resubmitted
-                if ticket.sound:
-                    ticket.sound.delete()
-                    ticket.sound = None
-                ticket.status = TICKET_STATUS_CLOSED
-                ticket.save()
-            elif action == "Whitelist":
-                th = Thread(target=call_command, args=('whitelist_user', "%i" % ticket.id,))
-                th.start()
-                ticket.send_notification_emails(Ticket.NOTIFICATION_WHITELISTED,
-                                                Ticket.USER_ONLY)
+                    tc = TicketComment(sender=ticket.assignee,
+                                       text=msg,
+                                       ticket=ticket,
+                                       moderator_only=moderator_only)
+                    tc.save()
 
-                messages.add_message(request, messages.INFO,
-                                     """User %s has been whitelisted but some of their tickets might
-                                     still appear on this list for some time. Please reload the page in a few
-                                     seconds to see the updated list of pending tickets""" % ticket.sender.username)
+                if action == "Approve":
+                    ticket.status = TICKET_STATUS_CLOSED
+                    ticket.sound.change_moderation_state("OK")  # change_moderation_state does the saving
+                    ticket.save()
+                    ticket.sound.mark_index_dirty()
+                    if msg:
+                        ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED_BUT,
+                                                        Ticket.USER_ONLY)
+                    else:
+                        ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED,
+                                                        Ticket.USER_ONLY)
+                elif action == "Defer":
+                    ticket.status = TICKET_STATUS_DEFERRED
+                    ticket.save()
+                    # only send a notification if a message was added
+                    if msg:
+                        ticket.send_notification_emails(Ticket.NOTIFICATION_QUESTION,
+                                                        Ticket.USER_ONLY)
+                elif action == "Return":
+                    ticket.assignee = None
+                    ticket.status = TICKET_STATUS_NEW
+                    # no notification here
+                    ticket.save()
+                elif action == "Delete":
+                    ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED,
+                                                    Ticket.USER_ONLY)
+                    # to prevent a crash if the form is resubmitted
+                    if ticket.sound:
+                        ticket.sound.delete()
+                        ticket.sound = None
+                    ticket.status = TICKET_STATUS_CLOSED
+                    ticket.save()
+                elif action == "Whitelist":
+                    th = Thread(target=call_command, args=('whitelist_user', "%i" % ticket.id,))
+                    th.start()
+                    ticket.send_notification_emails(Ticket.NOTIFICATION_WHITELISTED,
+                                                    Ticket.USER_ONLY)
+
+                    messages.add_message(request, messages.INFO,
+                                         """User %s has been whitelisted but some of their tickets might
+                                         still appear on this list for some time. Please reload the page in a few
+                                         seconds to see the updated list of pending tickets""" % ticket.sender.username)
 
         else:
             clear_forms = False

@@ -392,11 +392,55 @@ def moderation_assigned(request, user_id):
         if mod_sound_form.is_valid() and msg_form.is_valid():
             ticket_ids = mod_sound_form.cleaned_data.get("ticket", '').split('|')
             tickets = Ticket.objects.filter(id__in=ticket_ids)
+            msg = msg_form.cleaned_data.get("message", False)
+            action = mod_sound_form.cleaned_data.get("action")
+
+            notification = None
+            if action == "Approve":
+                tickets.update(status=TICKET_STATUS_CLOSED)
+                Sound.objects.filter(ticket__in=tickets).update(is_index_dirty=True,
+                        moderation_state='OK',
+                        moderation_date=datetime.datetime.now())
+                if msg:
+                    notification = Ticket.NOTIFICATION_APPROVED_BUT
+                else:
+                    notification = Ticket.NOTIFICATION_APPROVED
+
+            elif action == "Defer":
+                tickets.update(status=TICKET_STATUS_DEFERRED)
+
+                # only send a notification if a message was added
+                if msg:
+                    notification = Ticket.NOTIFICATION_QUESTION
+
+            elif action == "Return":
+                tickets.update(status=TICKET_STATUS_NEW, assignee=None)
+                # no notification here
+
+            elif action == "Delete":
+                # to prevent a crash if the form is resubmitted
+                tickets.update(status=TICKET_STATUS_CLOSED)
+                Sound.objects.filter(ticket__in=tickets).delete()
+                notification = Ticket.NOTIFICATION_DELETED
+
+            elif action == "Whitelist":
+                import json
+                gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+                gm_client.submit_job("whitelist_user",
+                        json.dumps(list(tickets.values_list('id',flat=True))), wait_until_complete=False, background=True)
+                notification = Ticket.NOTIFICATION_WHITELISTED
+
+                users = set(tickets.values_list('sender__username', flat=True))
+
+                messages.add_message(request, messages.INFO,
+                                     """%s has been whitelisted but some of their tickets might
+                                     still appear on this list for some time. Please reload the page in a few
+                                     seconds to see the updated list of pending
+                                     tickets""" % ",".join(users))
+
             for ticket in tickets:
                 invalidate_template_cache("user_header", ticket.sender.id)
                 invalidate_all_moderators_header_cache()
-                action = mod_sound_form.cleaned_data.get("action")
-                msg = msg_form.cleaned_data.get("message", False)
                 moderator_only = msg_form.cleaned_data.get("moderator_only", False)
 
                 if msg:
@@ -406,49 +450,9 @@ def moderation_assigned(request, user_id):
                                        moderator_only=moderator_only)
                     tc.save()
 
-                if action == "Approve":
-                    ticket.status = TICKET_STATUS_CLOSED
-                    ticket.sound.change_moderation_state("OK")  # change_moderation_state does the saving
-                    ticket.save()
-                    ticket.sound.mark_index_dirty()
-                    if msg:
-                        ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED_BUT,
-                                                        Ticket.USER_ONLY)
-                    else:
-                        ticket.send_notification_emails(Ticket.NOTIFICATION_APPROVED,
-                                                        Ticket.USER_ONLY)
-                elif action == "Defer":
-                    ticket.status = TICKET_STATUS_DEFERRED
-                    ticket.save()
-                    # only send a notification if a message was added
-                    if msg:
-                        ticket.send_notification_emails(Ticket.NOTIFICATION_QUESTION,
-                                                        Ticket.USER_ONLY)
-                elif action == "Return":
-                    ticket.assignee = None
-                    ticket.status = TICKET_STATUS_NEW
-                    # no notification here
-                    ticket.save()
-                elif action == "Delete":
-                    ticket.send_notification_emails(Ticket.NOTIFICATION_DELETED,
-                                                    Ticket.USER_ONLY)
-                    # to prevent a crash if the form is resubmitted
-                    if ticket.sound:
-                        ticket.sound.delete()
-                        ticket.sound = None
-                    ticket.status = TICKET_STATUS_CLOSED
-                    ticket.save()
-                elif action == "Whitelist":
-                    th = Thread(target=call_command, args=('whitelist_user', "%i" % ticket.id,))
-                    th.start()
-                    ticket.send_notification_emails(Ticket.NOTIFICATION_WHITELISTED,
-                                                    Ticket.USER_ONLY)
-
-                    messages.add_message(request, messages.INFO,
-                                         """User %s has been whitelisted but some of their tickets might
-                                         still appear on this list for some time. Please reload the page in a few
-                                         seconds to see the updated list of pending tickets""" % ticket.sender.username)
-
+                # Send emails
+                if notification:
+                    ticket.send_notification_emails(notification, Ticket.USER_ONLY)
         else:
             clear_forms = False
     if clear_forms:
@@ -476,8 +480,14 @@ def moderation_assigned(request, user_id):
     moderation_texts = MODERATION_TEXTS
     show_pagination = moderator_tickets_count > settings.MAX_TICKETS_IN_MODERATION_ASSIGNED_PAGE
 
-    tvars = locals()
-    tvars.update(pagination_response)
+    tvars = {
+            "moderator_tickets_count": moderator_tickets_count,
+            "moderation_texts": moderation_texts,
+            "page": pagination_response['page'],
+            "show_pagination": show_pagination,
+            "mod_sound_form": mod_sound_form,
+            "msg_form": msg_form
+            }
 
     return render(request, 'tickets/moderation_assigned.html', tvars)
 

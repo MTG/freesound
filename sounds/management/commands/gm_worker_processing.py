@@ -146,3 +146,26 @@ class Command(BaseCommand):
             self.write_stdout("\t%s\n" % traceback.format_exc())
             success = False
             return 'false'
+
+    def task_whitelist_user(self, gearman_worker, gearman_job, func):
+        tickets  = gearman_job.data
+
+        for ticket_id in tickets:
+            ticket = Ticket.objects.get(id=ticket_id)
+            whitelist_user = ticket.sender
+            whitelist_user.profile.is_whitelisted = True
+            whitelist_user.profile.save()
+            pending_tickets = Ticket.objects.filter(sender=whitelist_user,
+                                                    source='new sound') \
+                                            .exclude(status=TICKET_STATUS_CLOSED)
+            # Set all sounds to OK and the tickets to closed
+            for pending_ticket in pending_tickets:
+                if pending_ticket.content:
+                    if pending_ticket.content.content_object is not None:
+                        pending_ticket.content.content_object.change_moderation_state("OK")
+
+                # This could be done with a single update, but there's a chance
+                # we lose a sound that way (a newly created ticket who's sound
+                # is not set to OK, but the ticket is closed).
+                pending_ticket.status = TICKET_STATUS_CLOSED
+                pending_ticket.save()

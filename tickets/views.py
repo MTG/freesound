@@ -20,6 +20,7 @@
 
 import datetime
 import gearman
+import json
 from threading import Thread
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
@@ -398,7 +399,8 @@ def moderation_assigned(request, user_id):
             notification = None
             if action == "Approve":
                 tickets.update(status=TICKET_STATUS_CLOSED)
-                Sound.objects.filter(ticket__in=tickets).update(is_index_dirty=True,
+                Sound.objects.filter(ticket__in=tickets).update(
+                        is_index_dirty=True,
                         moderation_state='OK',
                         moderation_date=datetime.datetime.now())
                 if msg:
@@ -424,24 +426,24 @@ def moderation_assigned(request, user_id):
                 notification = Ticket.NOTIFICATION_DELETED
 
             elif action == "Whitelist":
-                import json
+                ticket_ids = list(tickets.values_list('id',flat=True))
                 gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-                gm_client.submit_job("whitelist_user",
-                        json.dumps(list(tickets.values_list('id',flat=True))), wait_until_complete=False, background=True)
+                gm_client.submit_job("whitelist_user", json.dumps(ticket_ids),
+                        wait_until_complete=False, background=True)
                 notification = Ticket.NOTIFICATION_WHITELISTED
 
                 users = set(tickets.values_list('sender__username', flat=True))
-
                 messages.add_message(request, messages.INFO,
-                                     """%s has been whitelisted but some of their tickets might
-                                     still appear on this list for some time. Please reload the page in a few
-                                     seconds to see the updated list of pending
-                                     tickets""" % ",".join(users))
+                    """%s has been whitelisted but some of their tickets might
+                    still appear on this list for some time. Please reload the
+                    page in a few seconds to see the updated list of pending
+                    tickets""" % ",".join(users))
 
             for ticket in tickets:
                 invalidate_template_cache("user_header", ticket.sender.id)
                 invalidate_all_moderators_header_cache()
-                moderator_only = msg_form.cleaned_data.get("moderator_only", False)
+                moderator_only = msg_form.cleaned_data.get("moderator_only", \
+                        False)
 
                 if msg:
                     tc = TicketComment(sender=ticket.assignee,
@@ -452,7 +454,8 @@ def moderation_assigned(request, user_id):
 
                 # Send emails
                 if notification:
-                    ticket.send_notification_emails(notification, Ticket.USER_ONLY)
+                    ticket.send_notification_emails(notification, \
+                            Ticket.USER_ONLY)
         else:
             clear_forms = False
     if clear_forms:

@@ -24,10 +24,12 @@ from utils.audioprocessing.freesound_audio_processing import process
 from utils.audioprocessing.essentia_analysis import analyze
 from django.conf import settings
 from sounds.models import Sound, Pack
+from tickets.models import Ticket
 from optparse import make_option
 from psycopg2 import InterfaceError
 from django.db.utils import DatabaseError
 from django.db import connection
+from tickets import TICKET_STATUS_CLOSED
 import logging
 
 logger = logging.getLogger("gearman_worker_processing")
@@ -147,25 +149,32 @@ class Command(BaseCommand):
             success = False
             return 'false'
 
-    def task_whitelist_user(self, gearman_worker, gearman_job, func):
-        tickets  = gearman_job.data
+    def task_whitelist_user(self, gearman_worker, gearman_job):
+        tickets  = json.loads(gearman_job.data)
+        self.write_stdout("Starting to process %s tickets" % len(tickets))
 
+        count_done = 0
         for ticket_id in tickets:
             ticket = Ticket.objects.get(id=ticket_id)
             whitelist_user = ticket.sender
             whitelist_user.profile.is_whitelisted = True
             whitelist_user.profile.save()
+            self.write_stdout("User %s whitelisted" % whitelist_user.username)
+
             pending_tickets = Ticket.objects.filter(sender=whitelist_user,
                                                     source='new sound') \
                                             .exclude(status=TICKET_STATUS_CLOSED)
             # Set all sounds to OK and the tickets to closed
             for pending_ticket in pending_tickets:
-                if pending_ticket.content:
-                    if pending_ticket.content.content_object is not None:
-                        pending_ticket.content.content_object.change_moderation_state("OK")
+                if pending_ticket.sound:
+                    pending_ticket.sound.change_moderation_state("OK")
 
                 # This could be done with a single update, but there's a chance
                 # we lose a sound that way (a newly created ticket who's sound
                 # is not set to OK, but the ticket is closed).
                 pending_ticket.status = TICKET_STATUS_CLOSED
                 pending_ticket.save()
+
+            count_done = count_done + 1
+            self.write_stdout("Finished processing one ticket, %d remaining" % (len(tickets)-count_done))
+        return 'true' if len(tickets) == count_done  else 'false'

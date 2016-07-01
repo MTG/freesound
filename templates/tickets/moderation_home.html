@@ -11,7 +11,6 @@
     {% if sounds_in_moderators_queue_count > -1 %}
       <p> You have pending sound to moderate, go to <a href="{% url "tickets-moderation-assigned" request.user.id %}">your sound queue</a> to start moderating.</p>
     {% endif %}
-
     {% if new_sounds_users %}
         <h3>Users with new sounds</h3>
         <p><div class="moderation-user-list">

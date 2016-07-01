@@ -1,11 +1,11 @@
-{% extends "tickets/_section.html" %}
+{% extends "base.html" %}
 
 
 {% block title %}
     Moderation
 {% endblock title %}
 
-{% block section_content %}
+{% block content %}
 
     <h2>Moderation home</h2>
     <!-- include permission checks here -->
@@ -36,4 +36,4 @@
         {% endfor %}
         </ul>
     {% endif %}
-{% endblock section_content %}
+{% endblock content %}

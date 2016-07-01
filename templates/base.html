@@ -140,6 +140,7 @@
                 <a href="/help/about/">About</a>
                 {% comment %}<a href="/contact/">Contact</a>{% endcomment %}
                 <a href="/help/tos_web/">Terms of use</a>
+                {% if new_tickets_count > -1 %}<a href="{% url "tickets-moderation-guide" %}">Moderation guide</a>{%endif%}
             </div>
             <div id="footer_credits">
                 Design by <a href="http://www.pixelshell.com">Pixelshell</a>. Code by <a href="http://www.mtg.upf.edu/">MTG (UPF)</a>. Some Rights Reserved.

@@ -26,6 +26,7 @@ from models import Ticket, Queue
 from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
 from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
 from sounds.models import Sound
+import mock
 import sounds
 import tickets
 
@@ -107,3 +108,34 @@ class TicketsTest(TestCase):
 
         count = tickets.views.new_sound_tickets_count()
         self.assertEqual(1, count)
+
+    @mock.patch('tickets.models.send_mail_template')
+    def test_send_notification_user(self, send_mail_mock):
+        test_user = User.objects.get(username='test_user')
+        assigned_sound = self._create_test_sound(moderation_state='PE', processing_state='OK',
+                                                 user=test_user, filename='test_sound4.wav')
+        assigned_ticket = self._create_ticket(assigned_sound, test_user)
+        test_moderator = User.objects.get(username='test_moderator')
+        assigned_ticket.assignee = test_moderator
+        assigned_ticket.save()
+
+
+        assigned_ticket.send_notification_emails(
+                tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
+                tickets.models.Ticket.USER_ONLY)
+
+        local_vars = {
+                'send_to': [],
+                'ticket': assigned_ticket,
+                'self': assigned_ticket,
+                'user_to': assigned_ticket.sender,
+                'email_to': assigned_ticket.sender.email,
+                'notification_type': tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
+                'sender_moderator': tickets.models.Ticket.USER_ONLY
+                }
+        send_mail_mock.assert_called_once_with(
+                u'A freesound moderator handled your upload.',
+                tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
+                local_vars,
+                'noreply@freesound.org',
+                 assigned_ticket.sender.email)

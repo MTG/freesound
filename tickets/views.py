@@ -21,7 +21,6 @@
 import datetime
 import gearman
 import json
-from threading import Thread
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.models import User, Group
@@ -37,7 +36,6 @@ from tickets import *
 from sounds.models import Sound
 from utils.cache import invalidate_template_cache
 from utils.pagination import paginate
-from utils.functional import combine_dicts
 
 
 def _get_tc_form(request, use_post=True):
@@ -290,7 +288,7 @@ def moderation_home(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
 
     new_sounds_users = _get_new_uploaders_by_ticket()
-    unsure_tickets = _get_unsure_sound_tickets()  # TODO: shouldn't appear
+    unsure_tickets = _get_unsure_sound_tickets()
 
     tardy_moderator_tickets = _get_tardy_moderator_tickets()
     tardy_user_tickets = _get_tardy_user_tickets()
@@ -352,7 +350,6 @@ def moderation_assign_user(request, user_id):
     return redirect("tickets-moderation-home")
 
 
-# TODO: ongoing work
 @permission_required('tickets.can_moderate')
 def moderation_assign_single_ticket(request, user_id, ticket_id):
     # REASSIGN SINGLE TICKET
@@ -521,17 +518,15 @@ def user_annotations(request, user_id):
 
 
 def get_pending_sounds(user):
+    # gets all tickets from a user that have not been closed
+
     ret = []
-    # getting all user tickets that last that have not been closed
     user_tickets = Ticket.objects.filter(sender=user).exclude(status=TICKET_STATUS_CLOSED)
 
     for user_ticket in user_tickets:
-        try:
-            sound = user_ticket.sound
-            if sound.processing_state == 'OK' and sound.moderation_state == 'PE':
-                ret.append( (user_ticket, sound) )
-        except:
-            pass
+        sound = user_ticket.sound
+        if sound.processing_state == 'OK' and sound.moderation_state == 'PE':
+            ret.append( (user_ticket, sound) )
 
     return ret
 

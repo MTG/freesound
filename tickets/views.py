@@ -436,7 +436,12 @@ def moderation_assigned(request, user_id):
                     page in a few seconds to see the updated list of pending
                     tickets""" % ",".join(users))
 
+            users_to_update = set()
+            packs_to_update = set()
             for ticket in tickets:
+                users_to_update.add(ticket.sound.user.profile)
+                if ticket.sound.pack:
+                    packs_to_update.add(ticket.sound.pack)
                 invalidate_template_cache("user_header", ticket.sender.id)
                 invalidate_all_moderators_header_cache()
                 moderator_only = msg_form.cleaned_data.get("moderator_only", \
@@ -453,6 +458,14 @@ def moderation_assigned(request, user_id):
                 if notification:
                     ticket.send_notification_emails(notification, \
                             Ticket.USER_ONLY)
+
+            # Update number of sounds for each user
+            for profile in users_to_update:
+                profile.update_num_sounds()
+
+            # Process packs
+            for pack in packs_to_update:
+                pack.process()
         else:
             clear_forms = False
     if clear_forms:

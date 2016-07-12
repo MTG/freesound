@@ -24,6 +24,7 @@ import django.contrib.auth.views as authviews
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.auth import logout
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Count
@@ -862,6 +863,7 @@ def upload(request, no_flash=False):
 @login_required
 def delete(request):
     encrypted_string = request.GET.get("user", None)
+    delete_sounds = request.GET.get("delete_sounds", False)
     waited_too_long = False
     num_sounds = request.user.sounds.all().count()
     if encrypted_string is not None:
@@ -871,10 +873,9 @@ def delete(request):
             raise PermissionDenied
         link_generated_time = float(now)
         if abs(time.time() - link_generated_time) < 10:
-            if num_sounds == 0:
-                request.user.profile.change_ownership_of_user_content()
-                request.user.delete()
-                return HttpResponseRedirect(reverse("front-page"))
+            request.user.profile.delete_user(remove_sounds=delete_sounds)
+            logout(request)
+            return HttpResponseRedirect(reverse("front-page"))
         else:
             waited_too_long = True
 

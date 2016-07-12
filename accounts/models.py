@@ -191,23 +191,29 @@ class Profile(SocialModel):
                 ~Q(sound__moderation_state='OK') &\
                 ~Q(status='closed')))
 
-    def change_ownership_of_user_content(self, target_user=None, include_sounds=False):
+    def delete_user(self, remove_sounds=False):
         """
-        This method iterates over all Posts, Threads, Comments and DeletedSound objects of a user and assigns them to
-        another user (the 'target_user').
-        :param target_user: defaults to DELETED_USER_ID
-        :param include_sounds: whether or not to change the ownership of sounds too (including packs)
-        :return:
+        This method anonymise the user and flags it as deleted. If
+        remove_sounds is True then the Sound (and Pack) object is removed from
+        the database.
         """
-        if not target_user:
-            target_user = User.objects.get(id=settings.DELETED_USER_ID)
-        Post.objects.filter(author=self.user).update(author=target_user)
-        Thread.objects.filter(author=self.user).update(author=target_user)
-        Comment.objects.filter(user=self.user).update(user=target_user)
-        DeletedSound.objects.filter(user=self.user).update(user=target_user)
-        if include_sounds:
-            Pack.objects.filter(user=self.user).update(user=target_user)
-            Sound.objects.filter(user=self.user).update(user=target_user)
+
+        self.user.username = 'deleted_user_%s' % self.user.id
+        self.user.first_name = ''
+        self.user.last_name = ''
+        self.user.email = ''
+        self.user.is_active = False
+
+        self.about = ''
+        self.home_page = ''
+        self.signature = ''
+        self.geotag = None
+
+        self.save()
+        self.user.save()
+        if remove_sounds:
+            Pack.objects.filter(user=self.user).delete()
+            Sound.objects.filter(user=self.user).delete()
 
     def update_num_sounds(self, commit=True):
         """

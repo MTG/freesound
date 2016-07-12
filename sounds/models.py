@@ -36,7 +36,6 @@ from utils.cache import invalidate_template_cache
 from utils.text import slugify
 from utils.locations import locations_decorator
 from utils.search.search_general import delete_sound_from_solr
-from utils.filesystem import delete_object_files
 from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
@@ -618,29 +617,25 @@ class Sound(SocialModel):
 class DeletedSound(models.Model):
     user = models.ForeignKey(User)
     sound_id = models.IntegerField(default=0, db_index=True)
+    original_filename = models.CharField(max_length=512, null=True, blank=True, default=None)
+    original_path = models.CharField(max_length=512, null=True, blank=True, default=None)
+    base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None)
+    description = models.TextField(null=True, blank=True, default=None)
+    date_recorded = models.DateField(null=True, blank=True, default=None)
 
 
 def on_delete_sound(sender, instance, **kwargs):
     if instance.moderation_state == "OK" and instance.processing_state == "OK":
-        try:
-            DeletedSound.objects.get_or_create(sound_id=instance.id, user=instance.user)
-        except User.DoesNotExist:
-            deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
-            DeletedSound.objects.get_or_create(sound_id=instance.id, user=deleted_user)
+        ds, create = DeletedSound.objects.get_or_create(sound_id=instance.id, user=instance.user)
 
-    try:
-        '''
-        When deleting the sound is possible that the profile has already been deleted (because of django on cascade
-        delete order). See comment below after 'except Pack.DoesNotExist'
-        '''
-        if hasattr(instance.user, 'profile'):
-            instance.user.profile.update_num_sounds()
-    except User.DoesNotExist:
-        '''
-        It might happen that on deleting sound the user does not exist because of the way django deletes objects
-        in 'cascade'. See comment below after 'except Pack.DoesNotExist'.
-        '''
-        pass
+        # Copy relevant data for future research
+        ds.original_filename = instance.original_filename
+        ds.original_path = instance.original_path
+        ds.base_filename_slug = instance.base_filename_slug
+        ds.description = instance.description
+        ds.date_recorded = instance.description
+
+    instance.user.profile.update_num_sounds()
 
     try:
         if instance.geotag:
@@ -648,24 +643,11 @@ def on_delete_sound(sender, instance, **kwargs):
     except:
         pass
 
-    try:
-        if instance.pack:
-            instance.pack.process()
-    except Pack.DoesNotExist:
-        '''
-        It might happen when we do user.delete() to a user that has several sounds in packs that when post_delete
-        signals for sounds are called, the packs have already been deleted. This is because the way in which django
-        deletes all the related objects with foreign keys. When a user is deleted, its packs and sounds must be deleted
-        too. Django first runs pre_delete on all objects to be deleted, then delete and then post_delete. Therefore
-        it can happen that when the post_delete signal for a sound is called, the pack has already been deleted but the
-        instance passed to the post_delete function still points to that pack. We can therefore safely use try/except
-        here and we'll still be doing the job correctly.
-        '''
-        pass
+    if instance.pack:
+        instance.pack.process()
 
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
-    delete_object_files(instance, web_logger)
     web_logger.debug("Deleted sound with id %i" % instance.id)
 
 post_delete.connect(on_delete_sound, sender=Sound)
@@ -763,8 +745,17 @@ class Pack(SocialModel):
         """ This deletes all sounds in the pack as well. """
         for sound in self.sound_set.all():
             sound.delete()
-        delete_object_files(self, web_logger)
         super(SocialModel, self).delete(using=using)  # super class delete
+
+class DeletedPack(models.Model):
+    user = models.ForeignKey(User)
+    pack_id = models.IntegerField(default=0, db_index=True)
+
+
+def on_delete_pack(sender, instance, **kwargs):
+    ds, create = DeletedPack.objects.get_or_create(pack_id=instance.id, user=instance.user)
+
+post_delete.connect(on_delete_pack, sender=Pack)
 
 
 class Flag(models.Model):

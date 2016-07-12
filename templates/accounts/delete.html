@@ -8,22 +8,15 @@
 {% block section_content %}
 <h1>Delete yourself?</h1>
 
-{% if num_sounds > 0 %}
-<p>
-    Because you have sounds on freesound, deleting your user is not a trivial task.
-    As such, we ask you to please contact the administrators via the <a href="{% url "contact" %}">Contact Form</a>.
-    They will help you with the deletion of your account.
-</p>
-{% else %}
 <p>
     {% if waited_too_long %}
     Sorry, you waited too long, ... try again?<br/>
     {% endif %}
     WARNING: this is PERMANENT!<br/>
     You can not be "undeleted", not even by administrators...<br/>
-    If you are entirely sure you want to delete yourself, click <a href="?user={{encrypted_link}}">here</a>
+    
+    If you are entirely sure you want to delete only your account click <a href="?user={{encrypted_link}}">here.</a> And if you want to delete your sounds aswell <a href="?user={{encrypted_link}}&delete_sounds=true">here</a>
     (link valid for 10 seconds only)
 </p>
-{% endif %}
 
 {% endblock %}

@@ -221,7 +221,7 @@ CREATE OR REPLACE FUNCTION download_delete() RETURNS TRIGGER AS $BODY$
         IF OLD.sound_id is null THEN
             UPDATE sounds_pack SET num_downloads=num_downloads-1 WHERE sounds_pack.id=OLD.pack_id;
         ELSE
-            UPDATE sounds_sound SET num_downloads=num_downloads-1 WHERE sounds_sound.id=OLD.sound_id;
+            UPDATE sounds_sound SET num_downloads=num_downloads-1 WHERE sounds_sound.id=OLD.sound_id AND num_downloads > 0;
         END IF;
         RETURN OLD;
     END;

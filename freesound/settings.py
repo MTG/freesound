@@ -55,6 +55,7 @@ INSTALLED_APPS = (
     'follow',
     'fixture_magic',
     'utils',  # So that we also run utils tests
+    'monitor',
     'raven.contrib.django.raven_compat',
     #'test_utils', # Don't use this in production!
 )

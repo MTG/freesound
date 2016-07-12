@@ -166,6 +166,19 @@ def ticket(request, ticket_key):
     return render(request, 'tickets/ticket.html', tvars)
 
 
+# In the next 2 functions we return a queryset os the evaluation is lazy.
+# N.B. these functions are used in the home page as well.
+def new_sound_tickets_count():
+
+    return len(Ticket.objects.filter(assignee=None, sound__moderation_state='PE',
+            sound__processing_state='OK', status=TICKET_STATUS_NEW))
+
+
+def new_support_tickets_count():
+    return Ticket.objects.filter(assignee=None,
+            source=TICKET_SOURCE_CONTACT_FORM).count()
+
+
 @login_required
 def sound_ticket_messages(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
@@ -175,48 +188,6 @@ def sound_ticket_messages(request, ticket_key):
     return render(request, 'tickets/message_list.html', tvars)
 
 
-# In the next 2 functions we return a queryset os the evaluation is lazy.
-# N.B. these functions are used in the home page as well.
-def new_sound_tickets_count():
-
-    return len(Ticket.objects.filter(assignee=None, sound__moderation_state='PE',
-            sound__processing_state='OK', status=TICKET_STATUS_NEW))
-
-def new_support_tickets_count():
-    return Ticket.objects.filter(assignee=None,
-                                 source=TICKET_SOURCE_CONTACT_FORM).count()
-
-
-@permission_required('tickets.can_moderate')
-def tickets_home(request):
-    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
-
-    new_upload_count = new_sound_tickets_count()
-    tardy_moderator_sounds_count = len(_get_tardy_moderator_tickets())
-    tardy_user_sounds_count = len(_get_tardy_user_tickets())
-    sounds_queued_count = Sound.objects.filter(processing_ongoing_state='QU').count()
-    sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
-    sounds_processing_count = Sound.objects.filter(processing_ongoing_state='PR').count()
-    sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
-
-    # Get gearman status
-    try:
-        gm_admin_client = gearman.GearmanAdminClient(settings.GEARMAN_JOB_SERVERS)
-        gearman_status = gm_admin_client.get_status()
-    except gearman.errors.ServerUnavailable:
-        gearman_status = list()
-
-    tvars = {"new_upload_count": new_upload_count,
-             "tardy_moderator_sounds_count": tardy_moderator_sounds_count,
-             "tardy_user_sounds_count": tardy_user_sounds_count,
-             "sounds_queued_count": sounds_queued_count,
-             "sounds_pending_count": sounds_pending_count,
-             "sounds_processing_count": sounds_processing_count,
-             "sounds_failed_count": sounds_failed_count,
-             "gearman_status": gearman_status,
-             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
-
-    return render(request, 'tickets/tickets_home.html', tvars)
 
 def _get_new_uploaders_by_ticket():
 

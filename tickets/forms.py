@@ -104,6 +104,12 @@ class TicketModerationForm(forms.Form):
                                     required=False,
                                     label='Ticket status')
 
+    def __init__(self, *args, **kwargs):
+        super(TicketModerationForm, self).__init__(*args, **kwargs)
+        state = kwargs['initial']['status']
+        if state == TICKET_STATUS_ACCEPTED:
+            self.fields['status'].widget.attrs['disabled'] = 'disabled'
+
 class SoundStateForm(forms.Form):
     state       = forms.ChoiceField(choices=[("OK", "OK"),
                                              ("PE", "Pending"),

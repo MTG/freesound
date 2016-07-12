@@ -30,48 +30,43 @@
 
     $(document).ready(function() {
         {% if moderator_tickets_count %}
-        var selectedTickets = [];
 
         // Checkbox select or unselect event
         $(".ticket-check").change(function(){
-          var ticketId = $(this).data('id');
-          var selectedTickets = [];
-          $('.ticket-check:checked').each(function() {
-            selectedTickets.push($(this).data('id'));
-            $('#row_'+$(this).data('id')).addClass('mod-selected-row');
-          });
-          updateSelectedTickets(selectedTickets);
+          updateSelectedTickets();
         });
 
-        // Ckick on ticket at list
+        // Click on ticket at list
         $(".ticket-select").click(function(){
-          $('.ticket-check:checked').attr( "checked", false );
-          var ticketId = $(this).data('id')
-          selectedTickets = [ticketId];
-          updateSelectedTickets(selectedTickets);
+          var checked = $('#row_'+$(this).data('id')).find('.ticket-check');
+          checked.attr('checked', !checked.attr('checked'))
+          updateSelectedTickets();
           return false;
         }); 
        
         //Load initial selected values when page is loading
-        soundManager.onready(function() {
-            var selected = $('#id_ticket').get(0).value;
-            if (selected == '') {
-              selectedTickets = ["{{page.object_list.0.id}}"];
-            }else{
-              selectedTickets = $('#id_ticket').get(0).value.split('|');
-            }
-            for (t in selectedTickets){
-              $('#row_'+ selectedTickets[t]).addClass('mod-selected-row');
-              $('#row_'+ selectedTickets[t]).find('.ticket-check').attr("checked", true);
-            }
-            updateSelectedTickets(selectedTickets);
-            
-        });
+        var selected = $('#id_ticket').get(0).value;
+        var selectedTickets = [];
+        if (selected == '') {
+          selectedTickets = ["{{page.object_list.0.id}}"];
+        }else{
+          selectedTickets = $('#id_ticket').get(0).value.split('|');
+        }
+        for (t in selectedTickets){
+          $('#row_'+ selectedTickets[t]).find('.ticket-check').attr("checked", true);
+        }
+        updateSelectedTickets();
         
       {% endif %}
     });
 
-    function updateSelectedTickets(selectedTickets) {
+    function updateSelectedTickets() {
+      var selectedTickets = [];
+      $('.mod-selected-row').removeClass('mod-selected-row');
+      $('.ticket-check:checked').each(function() {
+            selectedTickets.push($(this).data('id'));
+            $('#row_'+$(this).data('id')).addClass('mod-selected-row');
+          });
       if (selectedTickets.length == 1) {
         var ticketElem = $("#row_"+selectedTickets[0]);
         moderate(ticketElem.data('sound-url'));

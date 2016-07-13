@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from models import Ticket, Queue
 from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
-from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
+from tickets import TICKET_STATUS_NEW
 from sounds.models import Sound
 import mock
 import sounds
@@ -36,7 +36,6 @@ class TicketsTest(TestCase):
 
     def test_new_ticket(self):
         ticket = Ticket()
-        ticket.source = 'contact_form'
         ticket.status = 'new'
         ticket.sender = User.objects.get(username='test_user')
         ticket.queue = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
@@ -46,7 +45,6 @@ class TicketsTest(TestCase):
     def test_new_ticket_linked_sound(self):
         test_user = User.objects.get(username='test_user')
         ticket = Ticket()
-        ticket.source = 'new_sound'
         ticket.status = 'new'
         ticket.sender = User.objects.get(username='test_user')
         ticket.assignee = User.objects.get(username='test_moderator')
@@ -72,9 +70,8 @@ class TicketsTest(TestCase):
     def _create_ticket(self, sound, user):
         ticket = tickets.models.Ticket.objects.create(
                 title='Moderate sound test_sound.wav',
-                source=TICKET_SOURCE_NEW_SOUND,
-                status=TICKET_STATUS_NEW,
                 queue=Queue.objects.get(name='sound moderation'),
+                status=TICKET_STATUS_NEW,
                 sender=user,
                 sound=sound,
         )

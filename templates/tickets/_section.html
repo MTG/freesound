@@ -8,10 +8,10 @@
 
 {% if perms.tickets.can_moderate %}
 <div id="ticket_menu">
-    <ul>
-        <li><a href="{% url "tickets-moderation-home" %}">Sounds</a></li>
-        <li><a href="{% url "tickets-moderation-assigned" request.user.id %}">Your sound queue {% if sounds_in_moderators_queue_count > -1 %} ({{sounds_in_moderators_queue_count}}){% endif %}</a></li>
-        <li><a href="{% url "tickets-moderation-guide" %}">Moderation guide</a></li>
+  <ul>
+    <li><a class="button {%if selected = "assigned"%}selected{%endif%}" href="{% url "tickets-moderation-home" %}">Assign Sounds</a></li>
+        <li><a class="button {%if selected = "queue"%}selected{%endif%}" href="{% url "tickets-moderation-assigned" request.user.id %}">Your sound queue {% if moderator_tickets_count > -1 %} ({{moderator_tickets_count}}){% endif %}</a></li>
+        <li><a class="button {%if selected = "guide"%}selected{%endif%}" href="{% url "tickets-moderation-guide" %}">Moderation guide</a></li>
     </ul>
 </div>
 {% endif %}

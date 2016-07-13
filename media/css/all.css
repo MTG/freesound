@@ -3103,10 +3103,26 @@ ul.messages {
     margin-bottom: 5px;
 }
 
-#ticket_menu {
+#ticket_menu .button{
+    border: none;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-top: 2px solid #CB3D44;
+}
+#ticket_menu .button.selected{
     background-color: #ededed;
-    margin-bottom: 30px;
-    padding: 10px;
+    color: black;
+    font-weight: bold;
+}
+#ticket_menu {
+    display: table;
+    margin: 0 auto;
+    padding-bottom: 10px;
 }
 
 #ticket_menu li {
@@ -3120,6 +3136,9 @@ ul.messages {
     color: #333;
 }
 
+#moderation-queue #select-all{
+    margin: 10px 5px 0 17px;
+}
 /* #ticket_menu li {
     display: inline;
 }

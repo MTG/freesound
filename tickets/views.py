@@ -173,12 +173,6 @@ def new_sound_tickets_count():
     return len(Ticket.objects.filter(assignee=None, sound__moderation_state='PE',
             sound__processing_state='OK', status=TICKET_STATUS_NEW))
 
-
-def new_support_tickets_count():
-    return Ticket.objects.filter(assignee=None,
-            source=TICKET_SOURCE_CONTACT_FORM).count()
-
-
 @login_required
 def sound_ticket_messages(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
@@ -191,8 +185,7 @@ def sound_ticket_messages(request, ticket_key):
 
 def _get_new_uploaders_by_ticket():
 
-    tickets = Ticket.objects.filter(
-            source='new sound', sound__processing_state='OK',
+    tickets = Ticket.objects.filter(sound__processing_state='OK',
             sound__moderation_state='PE', assignee=None,
             status=TICKET_STATUS_NEW).values('sender')\
                     .annotate(total=Count('sender'), older=Min('created'))\
@@ -214,7 +207,7 @@ def _get_new_uploaders_by_ticket():
 def _get_unsure_sound_tickets():
     """Query to get tickets that were returned to the queue by moderators that
     didn't know what to do with the sound."""
-    return Ticket.objects.filter(source=TICKET_SOURCE_NEW_SOUND,
+    return Ticket.objects.filter(
                                  assignee=None,
                                  status=TICKET_STATUS_ACCEPTED)
 
@@ -272,7 +265,9 @@ def moderation_home(request):
              "tardy_user_tickets": tardy_user_tickets[:5],
              "tardy_moderator_tickets_count": tardy_moderator_tickets_count,
              "tardy_user_tickets_count": tardy_user_tickets_count,
-             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
+             "moderator_tickets_count": sounds_in_moderators_queue_count,
+             "selected": "assigned"
+            }
 
     return render(request, 'tickets/moderation_home.html', tvars)
 
@@ -288,6 +283,15 @@ def moderation_tardy_users_sounds(request):
     tvars.update(paginated)
 
     return render(request, 'tickets/moderation_tardy_users.html', tvars)
+
+
+@permission_required('tickets.can_moderate')
+def moderation_guide(request):
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
+    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
+            "selected": "guide"}
+
+    return render(request, 'tickets/guide.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -307,7 +311,7 @@ def moderation_tardy_moderators_sounds(request):
 def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
 
-    Ticket.objects.filter(source='new sound', sound__processing_state='OK',\
+    Ticket.objects.filter(sound__processing_state='OK',\
             sound__moderation_state='PE', assignee=None,\
             status=TICKET_STATUS_NEW, sound__user=sender).update(\
                 assignee=request.user,\
@@ -470,7 +474,8 @@ def moderation_assigned(request, user_id):
             "page": pagination_response['page'],
             "show_pagination": show_pagination,
             "mod_sound_form": mod_sound_form,
-            "msg_form": msg_form
+            "msg_form": msg_form,
+            "selected": "queue"
             }
 
     return render(request, 'tickets/moderation_assigned.html', tvars)

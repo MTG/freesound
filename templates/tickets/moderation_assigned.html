@@ -31,6 +31,14 @@
     $(document).ready(function() {
         {% if moderator_tickets_count %}
 
+        $("#select-all").change(function(){
+          var checked = $(this).attr('checked');
+          $('.ticket-check').each(function() {
+            $(this).attr('checked', checked);
+          });   
+          updateSelectedTickets();
+        });
+        
         // Checkbox select or unselect event
         $(".ticket-check").change(function(){
           updateSelectedTickets();
@@ -64,9 +72,9 @@
       var selectedTickets = [];
       $('.mod-selected-row').removeClass('mod-selected-row');
       $('.ticket-check:checked').each(function() {
-            selectedTickets.push($(this).data('id'));
-            $('#row_'+$(this).data('id')).addClass('mod-selected-row');
-          });
+          selectedTickets.push($(this).data('id'));
+          $('#row_'+$(this).data('id')).addClass('mod-selected-row');
+      });
       if (selectedTickets.length == 1) {
         var ticketElem = $("#row_"+selectedTickets[0]);
         moderate(ticketElem.data('sound-url'));
@@ -122,8 +130,8 @@
     <div id="moderation-queue">
 
         <div id="moderation-queue-left">
-            <h4>Assigned tickets {% if moderator_tickets_count > 0 %} ({{moderator_tickets_count}}) {% endif %}</h4>
-            <br>
+          {% comment %} <h4>Assigned tickets {% if moderator_tickets_count > 0 %} ({{moderator_tickets_count}}) {% endif %}</h4>
+            <br>{% endcomment %}
             {% if not moderator_tickets_count %}
                 <p>You've finished all the sounds in your queue.
                 <p>Back to <a href="{% url "tickets-moderation-home" %}">moderation home</a>
@@ -151,7 +159,7 @@
                 {% endif %}
 
             </div>
-
+            <p><label><input id="select-all" type="checkbox"/>Select all</label></p>
             <div id="user-annotations-section"></div>
 
         </div><!-- /#moderation-queue-left -->

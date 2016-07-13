@@ -41,7 +41,7 @@ from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
-from tickets import TICKET_STATUS_CLOSED, TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
+from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 import os
 import logging
 import random
@@ -567,7 +567,6 @@ class Sound(SocialModel):
     def create_moderation_ticket(self):
         ticket = Ticket.objects.create(
             title='Moderate sound %s' % self.original_filename,
-            source=TICKET_SOURCE_NEW_SOUND,
             status=TICKET_STATUS_NEW,
             queue=Queue.objects.get(name='sound moderation'),
             sender=self.user,

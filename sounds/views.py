@@ -41,7 +41,7 @@ from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
-from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_CLOSED
+from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
@@ -314,8 +314,7 @@ def sound_edit(request, username, sound_id):
         return False
 
     def update_sound_tickets(sound, text):
-        tickets = Ticket.objects.filter(sound_id=sound.id,
-                                        source=TICKET_SOURCE_NEW_SOUND) \
+        tickets = Ticket.objects.filter(sound_id=sound.id)\
                                .exclude(status=TICKET_STATUS_CLOSED)
         for ticket in tickets:
             tc = TicketComment(sender=request.user,

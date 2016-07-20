@@ -216,29 +216,42 @@ def _get_unsure_sound_tickets():
 
 def _get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last day"""
+    time_span = datetime.date.today() - datetime.timedelta(days=1)
+    cc = TicketComment.objects\
+        .exclude(ticket__status=TICKET_STATUS_CLOSED)\
+        .values('ticket_id')\
+        .annotate(Max('id'))\
+        .order_by('ticket_id')\
+        .values_list('id__max')  # All 'last' messages from non closed tickets
 
-    c = TicketComment.objects.values('ticket').annotate(Max('id')).values('id')
-
-    t = Ticket.objects.filter(assignee__isnull=False, messages__in=c,\
-            modified__lt=datetime.date.today() - datetime.timedelta(days=1))\
-                    .filter(~Q(status=TICKET_STATUS_CLOSED)\
-                    & (Q(messages__sender=F('sender')) | Q(messages__sender=None)))
-    return t
+    tt = Ticket.objects.filter(
+        Q(assignee__isnull=False) &
+        ~Q(status=TICKET_STATUS_CLOSED) &
+        Q(messages__in=cc) &
+        Q(messages__created__lt=time_span) &
+        (Q(messages__sender=F('sender')) | Q(messages__sender=None))
+    )
+    return tt
 
 
 def _get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
-
     time_span = datetime.date.today() - datetime.timedelta(days=2)
-    c = TicketComment.objects.values('ticket').annotate(Max('id')).values('id')
-    t = Ticket.objects.filter( \
-            Q(assignee__isnull=False)\
-            & Q(messages__in=c)\
-            & ~Q(status=TICKET_STATUS_CLOSED)\
-            & Q(messages__created__lt=time_span)\
-            & (Q(messages__sender=F('sender')) | Q(messages__sender=None)))
+    cc = TicketComment.objects \
+        .exclude(ticket__status=TICKET_STATUS_CLOSED) \
+        .values('ticket_id') \
+        .annotate(Max('id')) \
+        .order_by('ticket_id') \
+        .values_list('id__max')  # All 'last' messages from non closed tickets
 
-    return t
+    tt = Ticket.objects.filter(
+        Q(assignee__isnull=False) &
+        ~Q(status=TICKET_STATUS_CLOSED) &
+        Q(messages__in=cc) &
+        Q(messages__created__lt=time_span) &
+        ~Q(messages__sender=F('sender'))
+    )
+    return tt
 
 
 def _get_sounds_in_moderators_queue_count(user):

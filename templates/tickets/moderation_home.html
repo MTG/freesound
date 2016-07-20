@@ -79,9 +79,5 @@
         {% endfor %}
     </div>
     {% endif %}
-
-    <h3>Moderate your assigned sounds</h3>
-    <p>After assigning new sounds to yourself, go to
-    <a href="{% url "tickets-moderation-assigned" request.user.id %}">your sound queue</a>
-    to start moderating.</p>
+    
 {% endblock section_content %}

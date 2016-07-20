@@ -78,7 +78,8 @@ class SoundModerationForm(forms.Form):
                                widget=forms.RadioSelect(),
                                label='')
 
-    ticket = forms.CharField(widget=forms.widgets.HiddenInput)
+    ticket = forms.CharField(widget=forms.widgets.HiddenInput,
+                             error_messages={'required': 'No sound selected...'})
 
 class ModerationMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea,

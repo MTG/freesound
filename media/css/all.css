@@ -2993,6 +2993,11 @@ ul.messages {
     float: left;
 }
 
+#moderation-queue-right #sounds_info {
+    max-height: 550px;
+    overflow: scroll;
+}
+
 #moderation-queue-left {
     margin-right: 20px;
 }
@@ -3152,10 +3157,20 @@ ul.messages {
     color: #333;
 }
 
-#moderation-queue #select-all{
+#moderation-queue #select-all, #moderation-queue #select-all-same-user{
     font-size:12px;
     cursor:pointer;
 }
+
+.ticket_link {
+    text-align:right;
+    border-bottom: 1px solid #ccc;
+}
+
+#sounds_info .sample_player_small {
+    margin-bottom: 0px;
+}
+
 /* #ticket_menu li {
     display: inline;
 }

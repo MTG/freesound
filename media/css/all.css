@@ -2989,7 +2989,7 @@ ul.messages {
 }
 
 #moderation-queue-left,#moderation-queue-right {
-    width: 450px;
+    width: 460px;
     float: left;
 }
 
@@ -3037,6 +3037,16 @@ ul.messages {
     height: 400px;
     overflow-x: hidden;
     overflow-y: auto;
+    padding-top: 5px;
+    margin-bottom: 5px;
+}
+
+#assigned-tickets-table {
+    border: none;
+}
+
+#assigned-tickets-table td {
+     padding: 6px 6px 6px 10px;
 }
 
 #moderation-decision-form li {
@@ -3143,7 +3153,8 @@ ul.messages {
 }
 
 #moderation-queue #select-all{
-    margin: 10px 5px 0 17px;
+    font-size:12px;
+    cursor:pointer;
 }
 /* #ticket_menu li {
     display: inline;

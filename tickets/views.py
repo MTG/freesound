@@ -193,7 +193,7 @@ def _get_new_uploaders_by_ticket():
                                  .order_by('older')
 
     users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
-    users_dict = {u.id:u for u in users}
+    users_dict = {u.id: u for u in users}
     new_sounds_users = []
 
     for t in tickets:
@@ -373,7 +373,6 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
 @permission_required('tickets.can_moderate')
 def moderation_assigned(request, user_id):
 
-    can_view_moderator_only_messages = _can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
         mod_sound_form = SoundModerationForm(request.POST)
@@ -489,6 +488,8 @@ def moderation_assigned(request, user_id):
             "moderator_tickets_count": moderator_tickets_count,
             "moderation_texts": moderation_texts,
             "page": pagination_response['page'],
+            "paginator": pagination_response['paginator'],
+            "current_page": pagination_response['current_page'],
             "show_pagination": show_pagination,
             "mod_sound_form": mod_sound_form,
             "msg_form": msg_form,

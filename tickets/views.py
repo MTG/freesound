@@ -288,25 +288,26 @@ def moderation_home(request):
 
 
 @permission_required('tickets.can_moderate')
+def moderation_guide(request):
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
+    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
+             "selected": "guide"}
+
+    return render(request, 'tickets/guide.html', tvars)
+
+
+@permission_required('tickets.can_moderate')
 def moderation_tardy_users_sounds(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
     tardy_user_tickets = _get_tardy_user_tickets()
     paginated = paginate(request, tardy_user_tickets, 10)
 
-    tvars = {"sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "tardy_user_tickets": tardy_user_tickets}
+    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
+             "tardy_user_tickets": tardy_user_tickets,
+             "selected": "assigned"}
     tvars.update(paginated)
 
     return render(request, 'tickets/moderation_tardy_users.html', tvars)
-
-
-@permission_required('tickets.can_moderate')
-def moderation_guide(request):
-    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
-    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
-            "selected": "guide"}
-
-    return render(request, 'tickets/guide.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -315,8 +316,9 @@ def moderation_tardy_moderators_sounds(request):
     tardy_moderators_tickets = _get_tardy_moderator_tickets()
     paginated = paginate(request, tardy_moderators_tickets, 10)
 
-    tvars = {"sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "tardy_moderators_tickets": tardy_moderators_tickets}
+    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
+             "tardy_moderators_tickets": tardy_moderators_tickets,
+             "selected": "assigned"}
     tvars.update(paginated)
 
     return render(request, 'tickets/moderation_tardy_moderators.html', tvars)

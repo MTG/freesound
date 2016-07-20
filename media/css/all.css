@@ -3048,6 +3048,7 @@ ul.messages {
 
 #assigned-tickets-table {
     border: none;
+    width: 465px;
 }
 
 #assigned-tickets-table td {

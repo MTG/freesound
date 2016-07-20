@@ -126,6 +126,7 @@
         $('#moderation-form-wrapper').show();
         if (selectedTickets.length == 0) {
             $('#moderation-form-wrapper').hide();
+            $('#select-all-same-user-wrapper').hide();
         } else if (selectedTickets.length == 1) {
             var ticketElem = $("#row_"+selectedTickets[0]);
             moderate(selectedTickets);
@@ -211,7 +212,7 @@
                             data-sender-id="{{ticket.sender.id}}">
                           <td><input type="checkbox" class="ticket-check" data-id="{{ticket.id}}"/> </td>
                           <td><a href="#" class="ticket-select" data-id="{{ticket.id}}">{{ticket.sound.original_filename|truncate_string:20}}</a></td>
-                            <td>{{ticket.sender.username | truncate_string:15}}</td>
+                            <td>{{ticket.sender.username | truncatechars:12}}</td>
                             <td>{{ticket.created|date:"d/m/Y" }}</td>
                             <td>{{ticket.status|capfirst}}</td>
                         </tr>

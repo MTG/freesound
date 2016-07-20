@@ -182,27 +182,29 @@ def sound_ticket_messages(request, ticket_key):
     return render(request, 'tickets/message_list.html', tvars)
 
 
-
 def _get_new_uploaders_by_ticket():
 
-    tickets = Ticket.objects.filter(sound__processing_state='OK',
-            sound__moderation_state='PE', assignee=None,
-            status=TICKET_STATUS_NEW).values('sender')\
-                    .annotate(total=Count('sender'), older=Min('created'))\
-                    .order_by('older')
+    tickets = Ticket.objects.filter(
+        sound__processing_state='OK',
+        sound__moderation_state='PE',
+        assignee=None,
+        status=TICKET_STATUS_NEW).values('sender')\
+                                 .annotate(total=Count('sender'), older=Min('created'))\
+                                 .order_by('older')
 
-    users = User.objects.filter(id__in=[t['sender'] for t in tickets])\
-                .select_related('profile')
-
+    users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
     users_dict = {u.id:u for u in users}
     new_sounds_users = []
 
     for t in tickets:
-        new_sounds_users.append((users_dict[t['sender']],\
-                (datetime.datetime.now() - t['older']).days,\
-                t['total']))
+        new_sounds_users.append((
+            users_dict[t['sender']],
+            t['total'],
+            (datetime.datetime.now() - t['older']).days
+        ))
 
     return new_sounds_users
+
 
 def _get_unsure_sound_tickets():
     """Query to get tickets that were returned to the queue by moderators that

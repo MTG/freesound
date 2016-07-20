@@ -82,7 +82,7 @@ class SoundModerationForm(forms.Form):
 
 class ModerationMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea,
-                                    required=True,
+                                    required=False,
                                     label='')
     moderator_only = forms.BooleanField(required=False)
 

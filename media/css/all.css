@@ -2933,6 +2933,7 @@ ul.messages {
 
 .moderation-unsure-ticket-player,.moderation-unsure-ticket-info {
     float: left;
+    margin-left: 0px;
 }
 
 .moderation-unsure-ticket-info {
@@ -2941,7 +2942,8 @@ ul.messages {
 }
 
 .moderation-unsure-ticket-last {
-    margin: 5px 20px 0 20px;
+    margin-top: 5px;
+    margin-left: 5px;
     padding: 3px;
     background-color: #fafafa;
     width: 100%;
@@ -2950,6 +2952,10 @@ ul.messages {
 .moderation-unsure-ticket {
     font-size: 0.8em;
     height: 80px;
+}
+
+.moderation-unsure-ticket .small_player {
+    margin-bottom: -15px;
 }
 
 .user-annotations-info img,.user-annotations-info p {

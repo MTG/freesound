@@ -1836,6 +1836,15 @@ ul.pagination {
     line-height: 16px;
 }
 
+#posts .post .post-admin-links {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    font-size: 11px;
+    width: 145px;
+    color: #808080;
+}
+
 #posts .post .post_details .post_date {
     color: #BABABA;
 }

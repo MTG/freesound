@@ -8,15 +8,24 @@
 {% block section_content %}
 <h1>Delete yourself?</h1>
 
-<p>
-    {% if waited_too_long %}
-    Sorry, you waited too long, ... try again?<br/>
-    {% endif %}
-    WARNING: this is PERMANENT!<br/>
-    You can not be "undeleted", not even by administrators...<br/>
+<div class="delete-account">
+  <p><strong>WARNING:</strong> this is PERMANENT!</p>
+    <p>You can not be "undeleted", not even by administrators...</p>
     
-    If you are entirely sure you want to delete only your account click <a href="?user={{encrypted_link}}">here.</a> And if you want to delete your sounds aswell <a href="?user={{encrypted_link}}&delete_sounds=true">here</a>
-    (link valid for 10 seconds only)
-</p>
+    <p>If you are entirely sure you want to delete only your account:</p>
+    <form method="post">
+        {% if error_message %}
+        <ul class="errorlist nonfield">
+            <li>{{ error_message }}</li>
+        </ul>
+        {% endif %}
+      {% csrf_token %}
+      {{delete_form.encrypted_link}}
+      {{delete_form.delete_sounds}}
+
+    <button>Send</button>
+    </form>
+    (form valid for 10 seconds only)
+</div>
 
 {% endblock %}

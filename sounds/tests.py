@@ -21,44 +21,45 @@
 from django.test import TestCase, Client
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
-from sounds.models import Sound, Pack, License
+from sounds.models import Sound, Pack, License, DeletedSound
 from sounds.views import get_random_sound, get_random_uploader
 from comments.models import Comment
 import mock
+import json
 import gearman
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
-    
+
     fixtures = ['sounds']
-    
+
     def setUp(self):
         self.sound = Sound.objects.all()[0]
-        
+
     def test_old_sound_link_redirect_ok(self):
         # 301 permanent redirect, result exists
         response = self.client.get(reverse('old-sound-page'), data={'id': self.sound.id})
         self.assertEqual(response.status_code, 301)
-        
+
     def test_old_sound_link_redirect_not_exists_id(self):
         # 404 id does not exist
         response = self.client.get(reverse('old-sound-page'), data={'id': 0}, follow=True)
         self.assertEqual(response.status_code, 404)
-        
+
     def test_old_sound_link_redirect_invalid_id(self):
         # 404 invalid id
         response = self.client.get(reverse('old-sound-page'), data={'id': 'invalid_id'}, follow=True)
-        self.assertEqual(response.status_code, 404)    
+        self.assertEqual(response.status_code, 404)
 
 
 class OldPackLinksRedirectTestCase(TestCase):
-    
+
     fixtures = ['packs']
-            
+
     def setUp(self):
         self.client = Client()
         self.pack = Pack.objects.all()[0]
-                    
+
     def test_old_pack_link_redirect_ok(self):
         response = self.client.get(reverse('old-pack-page'), data={'id': self.pack.id})
         self.assertEqual(response.status_code, 301)
@@ -182,6 +183,28 @@ class ProfileNumSoundsTestCase(TestCase):
         self.assertEqual(user.profile.num_sounds, 1)
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
+
+    def test_deletedsound_creation(self):
+        user, packs, sounds = create_user_and_sounds()
+        sound = sounds[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+        sound_id = sound.id
+        sound.delete()
+
+        self.assertEqual(DeletedSound.objects.filter(sound_id=sound_id).exists(), True)
+        ds = DeletedSound.objects.get(sound_id=sound_id)
+
+        # Check this elements are in the json saved on DeletedSound
+        keys = ['num_ratings', 'duration', 'id', 'geotag_id', 'comments',
+                'base_filename_slug', 'num_downloads', 'md5', 'description',
+                'original_path', 'pack_id', 'license', 'created',
+                'original_filename', 'geotag']
+
+        json_data = json.loads(ds.data).keys()
+        for k in keys:
+            self.assertTrue(k in json_data)
+
 
     def test_pack_delete(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)

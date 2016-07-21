@@ -18,14 +18,13 @@
 #     See AUTHORS file.
 #
 
-import datetime, logging, os, tempfile, shutil, hashlib, base64, json, time
+import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
 import django.contrib.auth.views as authviews
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
-from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
@@ -44,7 +43,7 @@ from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag
 from accounts.forms import EmailResetForm
 from comments.models import Comment
@@ -54,7 +53,7 @@ from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, Geotagg
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
-from utils.encryption import decrypt, encrypt, create_hash
+from utils.encryption import create_hash
 from utils.filesystem import generate_tree, md5file
 from utils.images import extract_square
 from utils.pagination import paginate
@@ -862,28 +861,26 @@ def upload(request, no_flash=False):
 
 @login_required
 def delete(request):
-    encrypted_string = request.GET.get("user", None)
-    delete_sounds = request.GET.get("delete_sounds", False)
-    waited_too_long = False
     num_sounds = request.user.sounds.all().count()
-    if encrypted_string is not None:
-        user_id, now = decrypt(encrypted_string).split("\t")
-        user_id = int(user_id)
-        if user_id != request.user.id:
-            raise PermissionDenied
-        link_generated_time = float(now)
-        if abs(time.time() - link_generated_time) < 10:
+    error_message = None
+    if request.method == 'POST':
+        form = DeleteUserForm(request.POST, user_id=request.user.id)
+        if not form.is_valid():
+            error_message = "Sorry, you waited too long, ... try again?"
+            form = DeleteUserForm(user_id=request.user.id)
+        else:
+            delete_sounds =\
+                form.cleaned_data['delete_sounds'] == 'delete_sounds'
             request.user.profile.delete_user(remove_sounds=delete_sounds)
             logout(request)
             return HttpResponseRedirect(reverse("front-page"))
-        else:
-            waited_too_long = True
+    else:
+        form = DeleteUserForm(user_id=request.user.id)
 
-    encrypted_link = encrypt(u"%d\t%f" % (request.user.id, time.time()))
     tvars = {
-        'waited_too_long': waited_too_long,
-        'encrypted_link': encrypted_link,
-        'num_sounds': num_sounds,
+            'error_message': error_message,
+            'delete_form': form,
+            'num_sounds': num_sounds,
     }
     return render(request, 'accounts/delete.html', tvars)
 

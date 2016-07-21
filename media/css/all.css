@@ -3842,3 +3842,6 @@ ul.messages {
     height: 50px;
     margin-right: 15px;
 }
+.delete-account p, .delete-account label{
+    font-size: 16px;
+}

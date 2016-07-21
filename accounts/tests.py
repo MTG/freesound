@@ -26,7 +26,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedF
 from django.conf import settings
 from accounts.models import Profile
 from accounts.views import handle_uploaded_image
-from sounds.models import License, Sound, Pack, DeletedSound, DeletedPack
+from sounds.models import License, Sound, Pack, DeletedSound
 from tags.models import TaggedItem
 from utils.filesystem import File
 from tags.models import Tag
@@ -49,7 +49,6 @@ class SimpleUserTest(TestCase):
 
     def test_account_response_ok(self):
         # 200 response on account access
-        print self.user.username
         resp = self.client.get(reverse('account', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
      
@@ -501,9 +500,6 @@ class UserDelete(TestCase):
         thread = Thread.objects.create(author=user, title="Test thread", forum=Forum.objects.create(name="Test forum"))
         for i in range(0, 3):
             Post.objects.create(author=user, thread=thread, body="Post %i body" % i)
-        # Create deleted sounds
-        for i in range(0, 3):
-            DeletedSound.objects.create(user=user, sound_id=i)  # Using fake sound id here
         # Create sounds and packs
         pack = Pack.objects.create(user=user, name="Test pack")
         for i in range(0, 3):
@@ -511,15 +507,16 @@ class UserDelete(TestCase):
                                  original_filename="Test sound %i" % i,
                                  pack=pack,
                                  license=License.objects.all()[0],
-                                 md5="fakemd5%i" % i)
-
+                                 md5="fakemd5%i" % i,
+                                 moderation_state="OK",
+                                 processing_state="OK")
         return user
 
     def test_user_delete_keep_sounds(self):
         # This should set user's attribute active to false and anonymize it
         user = self.create_user_and_content()
         user.profile.delete_user()
-        self.assertEqual(User.objects.get(id=user.id).is_active, False)
+        self.assertEqual(User.objects.get(id=user.id).profile.deleted_user, True)
 
         self.assertEqual(user.username, "deleted_user_%s" %  user.id)
         self.assertEqual(user.profile.about, '')
@@ -530,19 +527,18 @@ class UserDelete(TestCase):
         self.assertEqual(Comment.objects.filter(user__id=user.id).exists(), True)
         self.assertEqual(Thread.objects.filter(author__id=user.id).exists(), True)
         self.assertEqual(Post.objects.filter(author__id=user.id).exists(), True)
-        self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
+        self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), False)
         self.assertEqual(Pack.objects.filter(user__id=user.id).exists(), True)
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), True)
 
 
     def test_user_delete_remove_sounds(self):
-        # This should set user's attribute active to false and anonymize it,
+        # This should set user's attribute deleted_user to True and anonymize it,
         # also should remove users Sounds and Packs, and create DeletedSound
-        # objects and DeletedPack
+        # objects
         user = self.create_user_and_content()
         user.profile.delete_user(remove_sounds=True)
-        self.assertEqual(User.objects.get(id=user.id).is_active, False)
-
+        self.assertEqual(User.objects.get(id=user.id).profile.deleted_user, True)
         self.assertEqual(user.username, "deleted_user_%s" %  user.id)
         self.assertEqual(user.profile.about, '')
         self.assertEqual(user.profile.home_page, '')
@@ -552,8 +548,8 @@ class UserDelete(TestCase):
         self.assertEqual(Comment.objects.filter(user__id=user.id).exists(), True)
         self.assertEqual(Thread.objects.filter(author__id=user.id).exists(), True)
         self.assertEqual(Post.objects.filter(author__id=user.id).exists(), True)
-        self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
-        self.assertEqual(DeletedPack.objects.filter(user__id=user.id).exists(), True)
-        self.assertEqual(Pack.objects.filter(user__id=user.id).exists(), False)
+        self.assertEqual(Pack.objects.filter(user__id=user.id).exists(), True)
+        self.assertEqual(Pack.objects.filter(user__id=user.id).all()[0].pack_deleted, True)
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), False)
+        self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
 

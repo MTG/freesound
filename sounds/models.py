@@ -23,11 +23,14 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.contrib.postgres.fields import JSONField
+from django.core import serializers
+from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db import models
 from django.db import connection, transaction
+from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -42,6 +45,7 @@ from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
 from tickets import TICKET_STATUS_CLOSED, TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
 import os
+import json
 import logging
 import random
 import gearman
@@ -191,7 +195,7 @@ class PublicSoundManager(models.Manager):
 
 
 class Sound(SocialModel):
-    user = models.ForeignKey(User, related_name='sounds')
+    user = models.ForeignKey(User, related_name="%(class)ss")
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     # filenames
@@ -613,29 +617,37 @@ class Sound(SocialModel):
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 
-
 class DeletedSound(models.Model):
     user = models.ForeignKey(User)
     sound_id = models.IntegerField(default=0, db_index=True)
-    original_filename = models.CharField(max_length=512, null=True, blank=True, default=None)
-    original_path = models.CharField(max_length=512, null=True, blank=True, default=None)
-    base_filename_slug = models.CharField(max_length=512, null=True, blank=True, default=None)
-    description = models.TextField(null=True, blank=True, default=None)
-    date_recorded = models.DateField(null=True, blank=True, default=None)
-
+    data = JSONField()
 
 def on_delete_sound(sender, instance, **kwargs):
     if instance.moderation_state == "OK" and instance.processing_state == "OK":
-        ds, create = DeletedSound.objects.get_or_create(sound_id=instance.id, user=instance.user)
+        ds, create = DeletedSound.objects.get_or_create(sound_id=instance.id,
+                user=instance.user, defaults={'data': '{}'})
 
-        # Copy relevant data for future research
-        ds.original_filename = instance.original_filename
-        ds.original_path = instance.original_path
-        ds.base_filename_slug = instance.base_filename_slug
-        ds.description = instance.description
-        ds.date_recorded = instance.description
+        # Copy relevant data to DeletedSound for future research
+        data = Sound.objects.filter(pk=instance.pk).values()[0]
+        pack = None
+        if instance.pack:
+            pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
+        data['pack'] = pack
 
-    instance.user.profile.update_num_sounds()
+        geotag = None
+        if instance.geotag:
+            geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
+        data['geotag'] = geotag
+
+        license = None
+        if instance.license:
+            license = License.objects.filter(pk=instance.license.pk).values()[0]
+        data['license'] = license
+
+        data['comments'] = list(instance.comments.values())
+
+        ds.data = json.dumps(data, cls=DjangoJSONEncoder)
+        ds.save()
 
     try:
         if instance.geotag:
@@ -643,14 +655,26 @@ def on_delete_sound(sender, instance, **kwargs):
     except:
         pass
 
-    if instance.pack:
-        instance.pack.process()
+    try:
+        # Delete related tickets
+        instance.ticket.delete()
+    except Ticket.DoesNotExist:
+        pass
 
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
     web_logger.debug("Deleted sound with id %i" % instance.id)
 
-post_delete.connect(on_delete_sound, sender=Sound)
+def post_delete_sound(sender, instance, **kwargs):
+    # after deleted sound update num_sound on profile and pack
+    instance.user.profile.update_num_sounds()
+
+    if instance.pack:
+        instance.pack.process()
+
+
+pre_delete.connect(on_delete_sound, sender=Sound)
+post_delete.connect(post_delete_sound, sender=Sound)
 
 
 class PackManager(models.Manager):
@@ -671,6 +695,7 @@ class Pack(SocialModel):
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
+    pack_deleted = models.BooleanField(default=False)
 
     objects = PackManager()
 
@@ -746,16 +771,6 @@ class Pack(SocialModel):
         for sound in self.sound_set.all():
             sound.delete()
         super(SocialModel, self).delete(using=using)  # super class delete
-
-class DeletedPack(models.Model):
-    user = models.ForeignKey(User)
-    pack_id = models.IntegerField(default=0, db_index=True)
-
-
-def on_delete_pack(sender, instance, **kwargs):
-    ds, create = DeletedPack.objects.get_or_create(pack_id=instance.id, user=instance.user)
-
-post_delete.connect(on_delete_pack, sender=Pack)
 
 
 class Flag(models.Model):

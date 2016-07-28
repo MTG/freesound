@@ -733,7 +733,7 @@ def account(request, username):
     except User.DoesNotExist:
         raise Http404
     tags = user.profile.get_user_tags() if user.profile else []
-    latest_sounds = Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE)
+    latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
     latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
                                 .order_by("-last_updated")[0:10]
     following, followers, following_tags, following_count, followers_count, following_tags_count = \

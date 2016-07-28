@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,17 +18,16 @@
 #     See AUTHORS file.
 #
 
-from django.contrib import admin
-from models import Queue, Ticket
+from django.core.management.base import NoArgsCommand
+from django.core.cache import cache
+import logging
 
-class QueueAdmin(admin.ModelAdmin): 
-    list_display = ('name',)
-
-admin.site.register(Queue, QueueAdmin)
+logger = logging.getLogger("web")
 
 
-class TicketAdmin(admin.ModelAdmin):
-    raw_id_fields = ('sender', 'assignee') 
-    list_display = ('id', 'status', 'assignee', 'sender')
+class Command(NoArgsCommand):
+    help = "Delete random sound of the day cache so it gets renewed in next front page load."
 
-admin.site.register(Ticket, TicketAdmin)
+    def handle(self, **options):
+        logger.info("Renewing random sound of the day")
+        cache.delete("random_sound")

@@ -166,6 +166,13 @@ def ticket(request, ticket_key):
     return render(request, 'tickets/ticket.html', tvars)
 
 
+# In the next 2 functions we return a queryset os the evaluation is lazy.
+# N.B. these functions are used in the home page as well.
+def new_sound_tickets_count():
+
+    return len(Ticket.objects.filter(assignee=None, sound__moderation_state='PE',
+            sound__processing_state='OK', status=TICKET_STATUS_NEW))
+
 @login_required
 def sound_ticket_messages(request, ticket_key):
     can_view_moderator_only_messages = _can_view_mod_msg(request)
@@ -175,104 +182,76 @@ def sound_ticket_messages(request, ticket_key):
     return render(request, 'tickets/message_list.html', tvars)
 
 
-# In the next 2 functions we return a queryset os the evaluation is lazy.
-# N.B. these functions are used in the home page as well.
-def new_sound_tickets_count():
-
-    return len(Ticket.objects.filter(assignee=None, sound__moderation_state='PE',
-            sound__processing_state='OK', status=TICKET_STATUS_NEW))
-
-def new_support_tickets_count():
-    return Ticket.objects.filter(assignee=None,
-                                 source=TICKET_SOURCE_CONTACT_FORM).count()
-
-
-@permission_required('tickets.can_moderate')
-def tickets_home(request):
-    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
-
-    new_upload_count = new_sound_tickets_count()
-    tardy_moderator_sounds_count = len(_get_tardy_moderator_tickets())
-    tardy_user_sounds_count = len(_get_tardy_user_tickets())
-    sounds_queued_count = Sound.objects.filter(processing_ongoing_state='QU').count()
-    sounds_pending_count = Sound.objects.filter(processing_state='PE').count()
-    sounds_processing_count = Sound.objects.filter(processing_ongoing_state='PR').count()
-    sounds_failed_count = Sound.objects.filter(processing_state='FA').count()
-
-    # Get gearman status
-    try:
-        gm_admin_client = gearman.GearmanAdminClient(settings.GEARMAN_JOB_SERVERS)
-        gearman_status = gm_admin_client.get_status()
-    except gearman.errors.ServerUnavailable:
-        gearman_status = list()
-
-    tvars = {"new_upload_count": new_upload_count,
-             "tardy_moderator_sounds_count": tardy_moderator_sounds_count,
-             "tardy_user_sounds_count": tardy_user_sounds_count,
-             "sounds_queued_count": sounds_queued_count,
-             "sounds_pending_count": sounds_pending_count,
-             "sounds_processing_count": sounds_processing_count,
-             "sounds_failed_count": sounds_failed_count,
-             "gearman_status": gearman_status,
-             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
-
-    return render(request, 'tickets/tickets_home.html', tvars)
-
 def _get_new_uploaders_by_ticket():
 
     tickets = Ticket.objects.filter(
-            source='new sound', sound__processing_state='OK',
-            sound__moderation_state='PE', assignee=None,
-            status=TICKET_STATUS_NEW).values('sender')\
-                    .annotate(total=Count('sender'), older=Min('created'))\
-                    .order_by('older')
+        sound__processing_state='OK',
+        sound__moderation_state='PE',
+        assignee=None,
+        status=TICKET_STATUS_NEW).values('sender')\
+                                 .annotate(total=Count('sender'), older=Min('created'))\
+                                 .order_by('older')
 
-    users = User.objects.filter(id__in=[t['sender'] for t in tickets])\
-                .select_related('profile')
-
-    users_dict = {u.id:u for u in users}
+    users = User.objects.filter(id__in=[t['sender'] for t in tickets]).select_related('profile')
+    users_dict = {u.id: u for u in users}
     new_sounds_users = []
 
     for t in tickets:
-        new_sounds_users.append((users_dict[t['sender']],\
-                (datetime.datetime.now() - t['older']).days,\
-                t['total']))
+        new_sounds_users.append((
+            users_dict[t['sender']],
+            t['total'],
+            (datetime.datetime.now() - t['older']).days
+        ))
 
     return new_sounds_users
+
 
 def _get_unsure_sound_tickets():
     """Query to get tickets that were returned to the queue by moderators that
     didn't know what to do with the sound."""
-    return Ticket.objects.filter(source=TICKET_SOURCE_NEW_SOUND,
+    return Ticket.objects.filter(
                                  assignee=None,
                                  status=TICKET_STATUS_ACCEPTED)
 
 
 def _get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last day"""
+    time_span = datetime.date.today() - datetime.timedelta(days=1)
+    cc = TicketComment.objects\
+        .exclude(ticket__status=TICKET_STATUS_CLOSED)\
+        .values('ticket_id')\
+        .annotate(Max('id'))\
+        .order_by('ticket_id')\
+        .values_list('id__max')  # All 'last' messages from non closed tickets
 
-    c = TicketComment.objects.values('ticket').annotate(Max('id')).values('id')
-
-    t = Ticket.objects.filter(assignee__isnull=False, messages__in=c,\
-            modified__lt=datetime.date.today() - datetime.timedelta(days=1))\
-                    .filter(~Q(status=TICKET_STATUS_CLOSED)\
-                    & (Q(messages__sender=F('sender')) | Q(messages__sender=None)))
-    return t
+    tt = Ticket.objects.filter(
+        Q(assignee__isnull=False) &
+        ~Q(status=TICKET_STATUS_CLOSED) &
+        Q(messages__in=cc) &
+        Q(messages__created__lt=time_span) &
+        (Q(messages__sender=F('sender')) | Q(messages__sender=None))
+    )
+    return tt
 
 
 def _get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
-
     time_span = datetime.date.today() - datetime.timedelta(days=2)
-    c = TicketComment.objects.values('ticket').annotate(Max('id')).values('id')
-    t = Ticket.objects.filter( \
-            Q(assignee__isnull=False)\
-            & Q(messages__in=c)\
-            & ~Q(status=TICKET_STATUS_CLOSED)\
-            & Q(messages__created__lt=time_span)\
-            & (Q(messages__sender=F('sender')) | Q(messages__sender=None)))
+    cc = TicketComment.objects \
+        .exclude(ticket__status=TICKET_STATUS_CLOSED) \
+        .values('ticket_id') \
+        .annotate(Max('id')) \
+        .order_by('ticket_id') \
+        .values_list('id__max')  # All 'last' messages from non closed tickets
 
-    return t
+    tt = Ticket.objects.filter(
+        Q(assignee__isnull=False) &
+        ~Q(status=TICKET_STATUS_CLOSED) &
+        Q(messages__in=cc) &
+        Q(messages__created__lt=time_span) &
+        ~Q(messages__sender=F('sender'))
+    )
+    return tt
 
 
 def _get_sounds_in_moderators_queue_count(user):
@@ -301,9 +280,20 @@ def moderation_home(request):
              "tardy_user_tickets": tardy_user_tickets[:5],
              "tardy_moderator_tickets_count": tardy_moderator_tickets_count,
              "tardy_user_tickets_count": tardy_user_tickets_count,
-             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
+             "moderator_tickets_count": sounds_in_moderators_queue_count,
+             "selected": "assigned"
+            }
 
     return render(request, 'tickets/moderation_home.html', tvars)
+
+
+@permission_required('tickets.can_moderate')
+def moderation_guide(request):
+    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
+    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
+             "selected": "guide"}
+
+    return render(request, 'tickets/guide.html', tvars)
 
 
 @permission_required('tickets.can_moderate')
@@ -312,8 +302,9 @@ def moderation_tardy_users_sounds(request):
     tardy_user_tickets = _get_tardy_user_tickets()
     paginated = paginate(request, tardy_user_tickets, 10)
 
-    tvars = {"sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "tardy_user_tickets": tardy_user_tickets}
+    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
+             "tardy_user_tickets": tardy_user_tickets,
+             "selected": "assigned"}
     tvars.update(paginated)
 
     return render(request, 'tickets/moderation_tardy_users.html', tvars)
@@ -325,8 +316,9 @@ def moderation_tardy_moderators_sounds(request):
     tardy_moderators_tickets = _get_tardy_moderator_tickets()
     paginated = paginate(request, tardy_moderators_tickets, 10)
 
-    tvars = {"sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
-             "tardy_moderators_tickets": tardy_moderators_tickets}
+    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
+             "tardy_moderators_tickets": tardy_moderators_tickets,
+             "selected": "assigned"}
     tvars.update(paginated)
 
     return render(request, 'tickets/moderation_tardy_moderators.html', tvars)
@@ -336,7 +328,7 @@ def moderation_tardy_moderators_sounds(request):
 def moderation_assign_user(request, user_id):
     sender = User.objects.get(id=user_id)
 
-    Ticket.objects.filter(source='new sound', sound__processing_state='OK',\
+    Ticket.objects.filter(sound__processing_state='OK',\
             sound__moderation_state='PE', assignee=None,\
             status=TICKET_STATUS_NEW, sound__user=sender).update(\
                 assignee=request.user,\
@@ -381,7 +373,6 @@ def moderation_assign_single_ticket(request, user_id, ticket_id):
 @permission_required('tickets.can_moderate')
 def moderation_assigned(request, user_id):
 
-    can_view_moderator_only_messages = _can_view_mod_msg(request)
     clear_forms = True
     if request.method == 'POST':
         mod_sound_form = SoundModerationForm(request.POST)
@@ -436,7 +427,12 @@ def moderation_assigned(request, user_id):
                     page in a few seconds to see the updated list of pending
                     tickets""" % ",".join(users))
 
+            users_to_update = set()
+            packs_to_update = set()
             for ticket in tickets:
+                users_to_update.add(ticket.sound.user.profile)
+                if ticket.sound.pack:
+                    packs_to_update.add(ticket.sound.pack)
                 invalidate_template_cache("user_header", ticket.sender.id)
                 invalidate_all_moderators_header_cache()
                 moderator_only = msg_form.cleaned_data.get("moderator_only", \
@@ -453,6 +449,14 @@ def moderation_assigned(request, user_id):
                 if notification:
                     ticket.send_notification_emails(notification, \
                             Ticket.USER_ONLY)
+
+            # Update number of sounds for each user
+            for profile in users_to_update:
+                profile.update_num_sounds()
+
+            # Process packs
+            for pack in packs_to_update:
+                pack.process()
         else:
             clear_forms = False
     if clear_forms:
@@ -484,9 +488,12 @@ def moderation_assigned(request, user_id):
             "moderator_tickets_count": moderator_tickets_count,
             "moderation_texts": moderation_texts,
             "page": pagination_response['page'],
+            "paginator": pagination_response['paginator'],
+            "current_page": pagination_response['current_page'],
             "show_pagination": show_pagination,
             "mod_sound_form": mod_sound_form,
-            "msg_form": msg_form
+            "msg_form": msg_form,
+            "selected": "queue"
             }
 
     return render(request, 'tickets/moderation_assigned.html', tvars)

@@ -38,8 +38,20 @@ def validate_file_extension(audiofiles):
     try:
         for file_ in audiofiles:
             content_type = file_.content_type
-            if not (content_type.startswith("audio") and filename_has_valid_extension(str(file_))):
+            if filename_has_valid_extension(str(file_)):
+                ext = str(file_).rsplit('.', 1)[-1].lower()
+                if ext == 'flac':
+                    # At least Safari and Firefox do not set the proper mime type for .flac files
+                    # (use 'application/octet-stream' instead of 'audio/flac'). For this reason we also allow
+                    # this mime type for flac files.
+                    if not content_type.startswith("audio") and not content_type == 'application/octet-stream':
+                        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+                else:
+                    if not content_type.startswith("audio"):
+                        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+            else:
                 raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+
     except AttributeError:
         # Will happen when uploading with the flash uploader
         if not filename_has_valid_extension(str(audiofiles)):

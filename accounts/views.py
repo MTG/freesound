@@ -61,7 +61,6 @@ from utils.text import slugify, remove_control_chars
 from utils.audioprocessing import get_sound_type
 from utils.mail import send_mail, send_mail_template
 from geotags.models import GeoTag
-from tickets.views import new_support_tickets_count
 from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
@@ -211,9 +210,7 @@ def home(request):
     # 'packs_without_sounds' also includes packs that only contain unmoderated or unprocessed sounds
 
     # Moderation stats
-    new_support = new_posts = 0
-    if request.user.has_perm('tickets.can_moderate'):
-        new_support = new_support_tickets_count()
+    new_posts = 0
     if request.user.has_perm('forum.can_moderate_forum'):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
@@ -230,7 +227,6 @@ def home(request):
         'num_more_unmoderated_sounds': num_more_unmoderated_sounds,
         'latest_packs': latest_packs,
         'packs_without_sounds': packs_without_sounds,
-        'new_support': new_support,
         'new_posts': new_posts,
         'following': following,
         'followers': followers,

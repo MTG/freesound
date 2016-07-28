@@ -7,7 +7,7 @@
         <a href="{% url 'tickets-ticket' ticket.key %}">{{ ticket.title }}</a> <em>by</em> {{ ticket.sound.user.username }}
         <br>assigned to {% if ticket.assignee %}{{ticket.assignee}}{% else %}no one{% endif %} | {{ num_messages }} message{{ num_messages|pluralize }} | last by {% if last_message.sender %}{{last_message.sender.username}}{% else %}anonymous{% endif %}
         <div class="moderation-unsure-ticket-last">
-            <em>"{{ last_message.text }}"</em>
+            <em>"{{ last_message.text | truncatechars:200 }}"</em>
         </div>
     </div>
 </div>

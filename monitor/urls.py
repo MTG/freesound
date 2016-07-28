@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -20,17 +18,13 @@
 #     See AUTHORS file.
 #
 
-from django.contrib import admin
-from models import Queue, Ticket
+from django.conf.urls import patterns, url
+from views import *
 
-class QueueAdmin(admin.ModelAdmin): 
-    list_display = ('name',)
+urlpatterns = [
 
-admin.site.register(Queue, QueueAdmin)
+    url(r'^$',
+        monitor_home,
+        name='monitor-home'),
 
-
-class TicketAdmin(admin.ModelAdmin):
-    raw_id_fields = ('sender', 'assignee') 
-    list_display = ('id', 'status', 'assignee', 'sender')
-
-admin.site.register(Ticket, TicketAdmin)
+]

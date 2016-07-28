@@ -26,12 +26,8 @@ from views import *
 
 urlpatterns = [
 
-    url(r'^$',
-        tickets_home,
-        name='tickets-home'),
-
     url(r'^guide/$',
-        TemplateView.as_view(template_name='tickets/guide.html'),
+        moderation_guide,
         name='tickets-moderation-guide'),
 
     url(r'^moderation/$',

@@ -109,6 +109,7 @@ urlpatterns = [
     url(r'^geotags/', include('geotags.urls')),
     url(r'^home/', include('accounts.urls')),
     url(r'^tickets/', include('tickets.urls')),
+    url(r'^monitor/', include('monitor.urls')),
     url(r'^follow/', include('follow.urls')),
 
     url(r'^blog/$', RedirectView.as_view(url='http://blog.freesound.org/'), name="blog"),

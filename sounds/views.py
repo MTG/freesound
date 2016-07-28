@@ -92,11 +92,11 @@ def sounds(request):
     latest_sounds = Sound.objects.latest_additions(5, '2 days')
     latest_sound_objects = Sound.objects.ordered_ids([latest_sound['sound_id'] for latest_sound in latest_sounds])
     latest_sounds = [(latest_sound, latest_sound_objects[index],) for index, latest_sound in enumerate(latest_sounds)]
-    latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).order_by("-last_updated")[0:20]
+    latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
     popular_sound_ids = [snd.id for snd in Sound.objects.filter(created__gte=last_week).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
-    popular_packs = Pack.objects.filter(created__gte=last_week).order_by("-num_downloads")[0:5]
+    popular_packs = Pack.objects.filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
     random_sound = Sound.objects.bulk_query_id([get_random_sound()])[0]
     tvars = {
         'latest_sounds': latest_sounds,
@@ -129,6 +129,7 @@ def packs(request):
         order = "name"
     qs = Pack.objects.select_related() \
                      .filter(num_sounds__gt=0) \
+                     .exclude(is_deleted=True) \
                      .order_by(order)
     tvars = {'order': order}
     tvars.update(paginate(request, qs, settings.PACKS_PER_PAGE, cache_count=True))
@@ -343,7 +344,7 @@ def sound_edit(request, username, sound_id):
                                                              description=sound.description,
                                                              name=sound.original_filename))
 
-    packs = Pack.objects.filter(user=request.user)
+    packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     if is_selected("pack"):
         pack_form = PackForm(packs, request.POST, prefix="pack")
         if pack_form.is_valid():
@@ -475,7 +476,7 @@ def pack_delete(request, username, pack_id):
             raise PermissionDenied
         if abs(time.time() - link_generated_time) < 10:
             logger.debug("User %s requested to delete pack %s" % (request.user.username, pack_id))
-            pack.delete()
+            pack.delete_pack(remove_sounds=False)
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
             waited_too_long = True
@@ -571,6 +572,9 @@ def pack(request, username, pack_id):
     except Pack.DoesNotExist:
         raise Http404
 
+    if pack.is_deleted:
+        render_to_response('sounds/deleted_pack.html', context_instance=RequestContext(request))
+
     qs = Sound.objects.only('id').filter(pack=pack, moderation_state="OK", processing_state="OK")
     paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
     paginator = paginate_data['paginator']
@@ -611,7 +615,7 @@ def packs_for_user(request, username):
     order = request.GET.get("order", "name")
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
-    qs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by(order)
+    qs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True).order_by(order)
     return render_to_response('sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
 
 

@@ -195,7 +195,7 @@ class PublicSoundManager(models.Manager):
 
 
 class Sound(SocialModel):
-    user = models.ForeignKey(User, related_name="%(class)ss")
+    user = models.ForeignKey(User, related_name="sounds")
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     # filenames
@@ -586,7 +586,7 @@ class Sound(SocialModel):
         try:
             self.ticket.sound = None
             self.ticket.status = TICKET_STATUS_CLOSED
-            slef.ticket.save()
+            self.ticket.save()
         except Ticket.DoesNotExist:
             pass
 
@@ -627,6 +627,9 @@ def on_delete_sound(sender, instance, **kwargs):
                 user=instance.user, defaults={'data': '{}'})
 
         # Copy relevant data to DeletedSound for future research
+        # Note: we do not store information about individual downloads and ratings, we only
+        # store count and average (for ratings). We do not store at all information about bookmarks.
+
         data = Sound.objects.filter(pk=instance.pk).values()[0]
         pack = None
         if instance.pack:
@@ -644,6 +647,8 @@ def on_delete_sound(sender, instance, **kwargs):
         data['license'] = license
 
         data['comments'] = list(instance.comments.values())
+        data['tags'] = list(instance.tags.values())
+        data['sources'] = list(instance.sources.values('id'))
 
         ds.data = json.dumps(data, cls=DjangoJSONEncoder)
         ds.save()
@@ -654,22 +659,16 @@ def on_delete_sound(sender, instance, **kwargs):
     except:
         pass
 
-    try:
-        # Delete related tickets
-        instance.ticket.delete()
-    except Ticket.DoesNotExist:
-        pass
-
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
-    web_logger.debug("Deleted sound with id %i" % instance.id)
+
 
 def post_delete_sound(sender, instance, **kwargs):
     # after deleted sound update num_sound on profile and pack
     instance.user.profile.update_num_sounds()
-
     if instance.pack:
         instance.pack.process()
+    web_logger.debug("Deleted sound with id %i" % instance.id)
 
 
 pre_delete.connect(on_delete_sound, sender=Sound)
@@ -680,7 +679,8 @@ class PackManager(models.Manager):
 
     def ordered_ids(self, pack_ids, select_related=''):
         # Simplified version of ordered_ids in SoundManager (no need for custom SQL here)
-        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.select_related(select_related).filter(id__in=pack_ids)}
+        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.select_related(select_related)
+                                                           .filter(id__in=pack_ids).exclude(is_deleted=True)}
         return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
 
 
@@ -694,7 +694,7 @@ class Pack(SocialModel):
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
-    pack_deleted = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
 
     objects = PackManager()
 
@@ -765,11 +765,16 @@ class Pack(SocialModel):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
         self.process()
 
-    def delete(self, using=None):
-        """ This deletes all sounds in the pack as well. """
-        for sound in self.sound_set.all():
-            sound.delete()
-        super(SocialModel, self).delete(using=using)  # super class delete
+    def delete_pack(self, remove_sounds=True):
+        # Pack.delete() should never be called as it will completely erase the object from the db
+        # Instead, Pack.delete_pack() should be used
+        if remove_sounds:
+            for sound in self.sound_set.all():
+                sound.delete()  # Create DeletedSound objects and delete original objects
+        else:
+            self.sound_set.update(pack=None)
+        self.is_deleted = True
+        self.save()
 
 
 class Flag(models.Model):

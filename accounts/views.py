@@ -205,8 +205,9 @@ def home(request):
         unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
 
     # Packs
-    latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
-    packs_without_sounds = Pack.objects.select_related().filter(user=user).filter(num_sounds=0)
+    latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0) \
+                       .exclude(is_deleted=True).order_by("-last_updated")[0:5]
+    packs_without_sounds = Pack.objects.select_related().filter(user=user, num_sounds=0).exclude(is_deleted=True)
     # 'packs_without_sounds' also includes packs that only contain unmoderated or unprocessed sounds
 
     # Moderation stats
@@ -392,7 +393,7 @@ def describe_license(request):
 
 @login_required
 def describe_pack(request):
-    packs = Pack.objects.filter(user=request.user)
+    packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     if request.method == 'POST':
         form = PackForm(packs, request.POST, prefix="pack")
         if form.is_valid():
@@ -445,7 +446,7 @@ def describe_sounds(request):
             forms[i]['sound'] = sounds_to_describe[i]
             forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix)
             forms[i]['geotag'] = GeotaggingForm(request.POST, prefix=prefix)
-            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
+            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                         request.POST,
                                         prefix=prefix)
             forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
@@ -590,11 +591,11 @@ def describe_sounds(request):
             forms[i]['description'] = SoundDescriptionForm(initial={'name': forms[i]['sound'].name}, prefix=prefix)
             forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
             if selected_pack:
-                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
+                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                             prefix=prefix,
                                             initial={'pack': selected_pack.id})
             else:
-                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
+                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                             prefix=prefix)
             if selected_license:
                 forms[i]['license'] = NewLicenseForm(initial={'license': selected_license},
@@ -733,7 +734,8 @@ def account(request, username):
         raise Http404
     tags = user.profile.get_user_tags() if user.profile else []
     latest_sounds = Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE)
-    latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:10]
+    latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
+                                .order_by("-last_updated")[0:10]
     following, followers, following_tags, following_count, followers_count, following_tags_count = \
         follow_utils.get_vars_for_account_view(user)
     follow_user_url = reverse('follow-user', args=[username])

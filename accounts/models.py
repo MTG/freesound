@@ -36,6 +36,7 @@ from utils.locations import locations_decorator
 from forum.models import Post, Thread
 from comments.models import Comment
 from sounds.models import DeletedSound, Sound, Pack
+import uuid
 import tickets.models
 import datetime
 import random
@@ -76,7 +77,7 @@ class Profile(SocialModel):
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None)
     num_sounds = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     num_posts = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
-    deleted_user = models.BooleanField(default=False)
+    is_deleted_user = models.BooleanField(default=False)
 
     objects = ProfileManager()
 
@@ -194,6 +195,9 @@ class Profile(SocialModel):
 
     def delete_user(self, remove_sounds=False):
         """
+        User.delete() should never be called as it will completely erase the object from the db.
+        Instead, Profile.delete_user() should be used (or user.profile.delete_user()).
+
         This method anonymise the user and flags it as deleted. If
         remove_sounds is True then the Sound (and Pack) object is removed from
         the database.
@@ -203,7 +207,8 @@ class Profile(SocialModel):
         self.user.first_name = ''
         self.user.last_name = ''
         self.user.email = ''
-        self.deleted_user = True
+        self.is_deleted_user = True
+        self.user.set_password(str(uuid.uuid4()))
 
         self.about = ''
         self.home_page = ''
@@ -213,8 +218,8 @@ class Profile(SocialModel):
         self.save()
         self.user.save()
         if remove_sounds:
-            Pack.objects.filter(user=self.user).update(pack_deleted=True)
             Sound.objects.filter(user=self.user).delete()
+            Pack.objects.filter(user=self.user).update(is_deleted=True)
 
     def update_num_sounds(self, commit=True):
         """

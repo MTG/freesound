@@ -30,14 +30,14 @@ def disable_active_user(modeladmin, request, queryset):
     for user in queryset:
         user.profile.delete_user()
 
-disable_active_user.short_description = "Delete selected users, preserve posts, threads and comments"
+disable_active_user.short_description = "Disable selected users, preserve posts, threads and comments"
 
 
 def disable_active_user_preserve_sounds(modeladmin, request, queryset):
     for user in queryset:
         user.profile.delete_user(remove_sounds=True)
 
-disable_active_user_preserve_sounds.short_description = "Delete selected users, preserve all their content"
+disable_active_user_preserve_sounds.short_description = "Disable selected users, preserve all their content"
 
 
 class ProfileAdmin(admin.ModelAdmin):

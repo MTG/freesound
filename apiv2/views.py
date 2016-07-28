@@ -526,14 +526,14 @@ class UserSounds(ListAPIView):
         return queryset
 
 
-class UserPacks (ListAPIView):
+class UserPacks(ListAPIView):
     __doc__ = 'Packs created by a user.' \
               '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s' \
               % (docs_base_url, '%s#user-packs' % resources_doc_filename,
                  get_formatted_examples_for_view('UserPacks', 'apiv2-user-packs', max=5))
 
     serializer_class = PackSerializer
-    queryset = Pack.objects.all()
+    queryset = Pack.objects.exclude(is_deleted=True)
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('user:%s packs' % (self.kwargs['username'])))
@@ -545,7 +545,8 @@ class UserPacks (ListAPIView):
         except User.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        queryset = Pack.objects.select_related('user').filter(user__username=self.kwargs['username'])
+        queryset = Pack.objects.select_related('user')\
+            .filter(user__username=self.kwargs['username']).exclude(is_deleted=True)
         return queryset
 
 
@@ -622,7 +623,7 @@ class PackInstance(RetrieveAPIView):
                  get_formatted_examples_for_view('PackInstance', 'apiv2-pack-instance', max=5))
 
     serializer_class = PackSerializer
-    queryset = Pack.objects.all()
+    queryset = Pack.objects.exclude(is_deleted=True)
 
     def get(self, request,  *args, **kwargs):
         logger.info(self.log_message('pack:%i instance' % (int(kwargs['pk']))))
@@ -643,7 +644,7 @@ class PackSounds(ListAPIView):
 
     def get_queryset(self):
         try:
-            Pack.objects.get(id=self.kwargs['pk'])
+            Pack.objects.get(id=self.kwargs['pk']).exclude(is_deleted=True)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
@@ -665,7 +666,7 @@ class DownloadPack(DownloadAPIView):
         pack_id = kwargs['pk']
         logger.info(self.log_message('pack:%i download' % (int(pack_id))))
         try:
-            pack = Pack.objects.get(id=pack_id)
+            pack = Pack.objects.get(id=pack_id).exclude(is_deleted=True)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
@@ -874,7 +875,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         sound.geotag = geotag
                 if 'pack' in serializer.data:
                     if serializer.data['pack']:
-                        if Pack.objects.filter(name=serializer.data['pack'], user=self.user).exists():
+                        if Pack.objects.filter(name=serializer.data['pack'], user=self.user).exclude(is_deleted=True).exists():
                             p = Pack.objects.get(name=serializer.data['pack'], user=self.user)
                         else:
                             p, created = Pack.objects.get_or_create(user=self.user, name=serializer.data['pack'])

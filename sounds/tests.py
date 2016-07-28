@@ -205,7 +205,6 @@ class ProfileNumSoundsTestCase(TestCase):
         for k in keys:
             self.assertTrue(k in json_data)
 
-
     def test_pack_delete(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
         for sound in sounds:
@@ -213,8 +212,9 @@ class ProfileNumSoundsTestCase(TestCase):
             sound.change_moderation_state("OK")
         self.assertEqual(user.profile.num_sounds, 5)
         pack = packs[0]
-        pack.delete()
-        self.assertEqual(User.objects.get(id=user.id).profile.num_sounds, 0)
+        pack.delete_pack(remove_sounds=False)
+        self.assertEqual(User.objects.get(id=user.id).profile.num_sounds, 5)  # Should be 5 as sounds are not deleted
+        self.assertEqual(pack.is_deleted, True)
 
 
 class PackNumSoundsTestCase(TestCase):

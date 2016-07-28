@@ -489,7 +489,7 @@ class UserDelete(TestCase):
 
     fixtures = ['sounds']
 
-    def create_user_and_content(self):
+    def create_user_and_content(self, is_index_dirty=True):
         user = User.objects.create_user("testuser", password="testpass")
         # Create comments
         target_sound = Sound.objects.all()[0]
@@ -506,6 +506,7 @@ class UserDelete(TestCase):
             Sound.objects.create(user=user,
                                  original_filename="Test sound %i" % i,
                                  pack=pack,
+                                 is_index_dirty=is_index_dirty,
                                  license=License.objects.all()[0],
                                  md5="fakemd5%i" % i,
                                  moderation_state="OK",
@@ -514,7 +515,7 @@ class UserDelete(TestCase):
 
     def test_user_delete_keep_sounds(self):
         # This should set user's attribute active to false and anonymize it
-        user = self.create_user_and_content()
+        user = self.create_user_and_content(is_index_dirty=False)
         user.profile.delete_user()
         self.assertEqual(User.objects.get(id=user.id).profile.is_deleted_user, True)
 
@@ -530,6 +531,7 @@ class UserDelete(TestCase):
         self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), False)
         self.assertEqual(Pack.objects.filter(user__id=user.id).exists(), True)
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), True)
+        self.assertEqual(Sound.objects.filter(user__id=user.id)[0].is_index_dirty, True)
 
     def test_user_delete_remove_sounds(self):
         # This should set user's attribute deleted_user to True and anonymize it,

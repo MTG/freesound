@@ -93,7 +93,7 @@
 
         <h1>{{user.username}}</h1>
 
-		{% if user.profile %}
+		{% if user.profile and not user.profile.is_deleted_user %}
 
             <div id="account_info_left">
 
@@ -155,14 +155,12 @@
                 </div>
             {% endif %}
             <br>
-            {% else %}
-                This user has been deleted
         {% endif %}
     {% endif %}
 
 <div id="content">
 
-    {% if latest_sounds %}
+    {% if latest_sounds|length %}
         <div id="latest_sounds" class="content_box">
             <h3>{% if home %}Your{% else %}{{ user.username }}'s{% endif %} latest sounds</h3>
             {% for sound in latest_sounds %}

@@ -288,8 +288,8 @@ class EmailResetForm(forms.Form):
         if not self.user.check_password(self.cleaned_data["password"]):
             raise forms.ValidationError(_("Incorrect password."))
 
-DELETE_CHOICES = [('only_user',u'Delete only user account information'),
-                 ('delete_sounds',u'Delete also my sounds')]
+DELETE_CHOICES = [('only_user', u'Delete only my user account information :)'),
+                  ('delete_sounds', u'Delete also my sounds and packs :(')]
 
 class DeleteUserForm(forms.Form):
     encrypted_link = forms.CharField(widget=forms.HiddenInput())

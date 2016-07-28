@@ -8,11 +8,12 @@
 {% block section_content %}
 <h1>Delete yourself?</h1>
 
-<div class="delete-account">
+<div>
   <p><strong>WARNING:</strong> this is PERMANENT!</p>
     <p>You can not be "undeleted", not even by administrators...</p>
     
-    <p>If you are entirely sure you want to delete only your account:</p>
+    <p>If you are entirely sure you want to delete your account, please choose one of the following options
+    (form valid for 10 seconds only):</p>
     <form method="post">
         {% if error_message %}
         <ul class="errorlist nonfield">
@@ -25,7 +26,6 @@
 
     <button>Send</button>
     </form>
-    (form valid for 10 seconds only)
 </div>
 
 {% endblock %}

@@ -207,6 +207,7 @@ class Profile(SocialModel):
         self.user.first_name = ''
         self.user.last_name = ''
         self.user.email = ''
+        self.has_avatar = False
         self.is_deleted_user = True
         self.user.set_password(str(uuid.uuid4()))
 
@@ -220,6 +221,8 @@ class Profile(SocialModel):
         if remove_sounds:
             Sound.objects.filter(user=self.user).delete()
             Pack.objects.filter(user=self.user).update(is_deleted=True)
+        else:
+            Sound.objects.filter(user=self.user).update(is_index_dirty=True)
 
     def update_num_sounds(self, commit=True):
         """

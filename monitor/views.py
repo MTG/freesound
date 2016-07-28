@@ -25,6 +25,7 @@ import gearman
 import tickets.views
 import sounds.views
 
+
 @staff_member_required
 def monitor_home(request):
     sounds_in_moderators_queue_count =\
@@ -62,6 +63,6 @@ def monitor_home(request):
              "gearman_status": gearman_status,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
 
-    return render(request, 'monitor/tickets_home.html', tvars)
+    return render(request, 'monitor/monitor.html', tvars)
 
 

@@ -173,7 +173,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
 
         if user_can_post_in_forum[0] and not user_is_blocked_for_spam_reports:
             if form.is_valid():
-                mayBeSpam = text_may_be_spam(form.cleaned_data["body"])
+                mayBeSpam = text_may_be_spam(form.cleaned_data["body"]) or text_may_be_spam(form.cleaned_data["title"])
                 if not request.user.post_set.filter(moderation_state="OK").count() and mayBeSpam: # first post has urls
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")
                     # DO NOT add the post to solr, only do it when it is moderated
@@ -234,7 +234,7 @@ def new_thread(request, forum_name_slug):
         if user_can_post_in_forum[0] and not user_is_blocked_for_spam_reports:
             if form.is_valid():
                 thread = Thread.objects.create(forum=forum, author=request.user, title=form.cleaned_data["title"])
-                mayBeSpam = text_may_be_spam(form.cleaned_data["body"])
+                mayBeSpam = text_may_be_spam(form.cleaned_data["body"]) or text_may_be_spam(form.cleaned_data["title"])
 
                 if not request.user.post_set.filter(moderation_state="OK").count() and mayBeSpam:
                     post = Post.objects.create(author=request.user, body=form.cleaned_data["body"], thread=thread, moderation_state="NM")

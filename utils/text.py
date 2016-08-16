@@ -18,40 +18,42 @@
 #     See AUTHORS file.
 #
 
-import re, unicodedata
+import re
+import unicodedata
 from BeautifulSoup import BeautifulSoup, Comment
 from htmlentitydefs import name2codepoint
 from django.utils.encoding import smart_unicode
+
 
 def slugify(s, entities=True, decimal=True, hexadecimal=True, instance=None, slug_field='slug', filter_dict=None):
     """ slugify with character translation which translates foreign characters to regular ascii equivalents """
     s = smart_unicode(s)
     
-    #character entity reference
+    #  character entity reference
     if entities:
         s = re.sub('&(%s);' % '|'.join(name2codepoint), lambda m: unichr(name2codepoint[m.group(1)]), s)
 
-    #decimal character reference
+    #  decimal character reference
     if decimal:
         try:
             s = re.sub('&#(\d+);', lambda m: unichr(int(m.group(1))), s)
         except:
             pass
 
-    #hexadecimal character reference
+    #  hexadecimal character reference
     if hexadecimal:
         try:
             s = re.sub('&#x([\da-fA-F]+);', lambda m: unichr(int(m.group(1), 16)), s)
         except:
             pass
 
-    #translate
+    #  translate
     s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore')
 
-    #replace unwanted characters
+    #  replace unwanted characters
     s = re.sub(r'[^-a-z0-9]+', '-', s.lower())
 
-    #remove redundant -
+    #  remove redundant -
     s = re.sub('-{2,}', '-', s).strip('-')
 
     slug = s
@@ -78,6 +80,7 @@ def shout_percentage(string):
     else:
         return 0
 
+
 def is_shouting(string):
     """
     >>> is_shouting('')
@@ -98,12 +101,14 @@ def is_shouting(string):
 def endswithone(string, endings):
     reduce(lambda a,b: a or string.endswith(b), endings, False)
 
+
 # returns if the string starts with any of the starts
 def startswithone(string, starts):
     reduce(lambda a,b: a or string.startswith(b), starts, False)
 
 
 url_regex = re.compile("(https?://\S+)", re.IGNORECASE)
+
 
 def replace_element_by_children(soup, element):
     """
@@ -163,7 +168,7 @@ def clean_html(input):
     >>> clean_html(u'http://www.google.com <a href="">http://www.google.com</a>')
     u'<a href="http://www.google.com" rel="nofollow">http://www.google.com</a> <a href="http://www.google.com" rel="nofollow">http://www.google.com</a>'
     >>> clean_html(u'<ul><p id=5><a href="123">123</a>hello<tr></tr><strong class=156>there http://www</strong></p></ul>')
-    u'<ul><p>123hello<strong>there http://www</strong></p></ul>'
+    u'<p>123hello<strong>there <a href="http://www" rel="nofollow">http://www</a></strong></p>'
     >>> clean_html(u'abc http://www.google.com abc')
     u'abc <a href="http://www.google.com" rel="nofollow">http://www.google.com</a> abc'
     >>> clean_html(u'GALORE: http://freesound.iua.upf.edu/samplesViewSingle.php?id=22092\\nFreesound Moderator')
@@ -192,7 +197,7 @@ def clean_html(input):
         try:
             if element.name in ok_attributes.keys():
                 # delete all attributes we don't want
-                for (attr_name, attr_value) in element.attrs: #@UnusedVariable
+                for (attr_name, attr_value) in element.attrs:
                     if attr_name not in ok_attributes[element.name]:
                         del element[attr_name]
 
@@ -217,8 +222,60 @@ def clean_html(input):
     
     return unicode(soup)
 
+
 def remove_control_chars(text):
     return ''.join(c for c in text if (ord(c) >= 32 or ord(c) in [9,10,13]))
+
+
+def text_may_be_spam(text):
+    """
+    >>> text_may_be_spam(u'this is the content of a blog post')
+    False
+    >>> text_may_be_spam(u'this post contains an http:// link')
+    True
+    >>> text_may_be_spam(u'this post contains an https:// link')
+    True
+    >>> text_may_be_spam(u'this post contains non-basic ascii characters :')
+    True
+    >>> text_may_be_spam(u'this post contains non-basic ascii characters \xc3')
+    True
+    >>> text_may_be_spam(u'this post contains few numbers 1245')
+    False
+    >>> text_may_be_spam(u'this post contains more numbers 1234567')
+    True
+    >>> text_may_be_spam(u'this post contains even more numbers 123456789')
+    True
+    >>> text_may_be_spam(u'this post contains an@email.com')
+    True
+    >>> text_may_be_spam(u'this post contains short.url')
+    True
+    >>> text_may_be_spam(u'BLaCk MaGiC SpEcIaLiSt babaji')
+    True
+    >>> text_may_be_spam(u'love marriage problem solution')
+    True
+    """
+
+    # If link in text
+    if "http://" in text or "https://" in text:
+        return True
+
+    # If emails or short urls
+    if re.search("[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)",  text):
+        return True
+
+    # If consecutive numbers
+    if re.search("\(|\)|\d{7}",  text):
+        return True
+
+    # If non ascii characters
+    if len(re.sub("[^A-Za-z0-9 ]", "", text, flags=re.UNICODE)) < len(text):
+        return True
+
+    # Love, marriage and other everyday topics ;)
+    if any([element in text.lower() for element in ['love', 'marriage', 'black magic']]):
+        return True
+
+    return False
 
 
 def _test():

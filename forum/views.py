@@ -35,6 +35,7 @@ from utils.search.search_forum import add_post_to_solr
 import re
 import datetime
 from django.contrib import messages
+from utils.text import text_may_be_spam
 
 
 def deactivate_spammer(user_id):
@@ -133,13 +134,6 @@ def post(request, forum_name_slug, thread_id, post_id):
 
     return HttpResponseRedirect(url)
 
-
-def text_may_be_spam(text):
-    if "http://" in text or "https://" in text: return True
-    if re.search("[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\s|$|\/|\]|\.)",  text): return True
-    if re.search("\(|\)|\d{7}",  text): return True # Find consecutive 7 numbers
-    if len(re.sub("[^A-Za-z0-9 ]", "", text, flags=re.UNICODE)) < len(text): return True # If there are non ascii characters in pots, might be spam
-    return False
 
 @login_required
 def reply(request, forum_name_slug, thread_id, post_id=None):

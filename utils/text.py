@@ -253,6 +253,10 @@ def text_may_be_spam(text):
     True
     >>> text_may_be_spam(u'love marriage problem solution')
     True
+    >>> text_may_be_spam(u'fbdad8fbdad8fbdad8')
+    True
+    >>> text_may_be_spam(u'fbdad8')
+    True
     """
 
     # If link in text
@@ -273,6 +277,12 @@ def text_may_be_spam(text):
 
     # Love, marriage and other everyday topics ;)
     if any([element in text.lower() for element in ['love', 'marriage', 'black magic']]):
+        return True
+
+    # Suspicious text
+    if len(text.split()) == 1:
+        return True
+    if len(set(list(text))) < 10:
         return True
 
     return False

@@ -85,7 +85,8 @@ urlpatterns = [
     #########################
 
     # Client management
-    url(r'^apply/$', views.create_apiv2_key, name="apiv2-apply"),
+    # use apply[/]* for backwards compatibility with links to /apiv2/apply
+    url(r'^apply[/]*$', views.create_apiv2_key, name="apiv2-apply"),
     url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
     url(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
 

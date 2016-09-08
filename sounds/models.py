@@ -24,8 +24,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
-from django.core import serializers
-from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
 from django.db import models
@@ -45,7 +43,6 @@ from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 import os
-import json
 import logging
 import random
 import gearman

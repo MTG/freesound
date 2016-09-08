@@ -538,6 +538,15 @@ class Sound(SocialModel):
                 if commit:
                     self.save()
 
+    def change_owner(self, new_owner):
+        # Change the user who owns the sound
+        # Implications are:
+        #   - Change user field
+        #   - change filename on disk
+        #   - Set index dirty to true
+        pass
+
+
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True
         if commit:

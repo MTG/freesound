@@ -26,7 +26,7 @@ from comments.models import Comment
 from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.conf import settings
+from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import serializers
 from utils.tags import clean_and_split_tags
 from utils.forms import filename_has_valid_extension
@@ -632,8 +632,7 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
     geotag = serializers.CharField(max_length=100, help_text='Not required. Latitude, longitude and zoom values in the form lat,lon,zoom (ex: \'2.145677,3.22345,14\').', required=False)
 
     def is_providing_description(self, attrs):
-        if attrs['name'] or attrs['license'] or attrs['tags'] \
-          or attrs['geotag'] or attrs['pack'] or attrs['description']:
+        if 'name' in attrs or 'license' in attrs or 'tags' in attrs or 'geotag' in attrs or 'pack' in attrs or  'description' in attrs:
             return True
         return False
 
@@ -651,29 +650,33 @@ class UploadAndDescribeAudioFileSerializer(serializers.Serializer):
         # Validate description fileds
         errors = dict()
         try:
-            data['description'] = validate_description(self.initial_data['description'])
+            data['description'] = validate_description(self.initial_data.get('description', ''))
         except serializers.ValidationError as e:
             errors['description'] = e.detail
         try:
-            data['name'] = validate_name(self.initial_data['name'])
+            data['name'] = validate_name(self.initial_data.get('name', ''))
         except serializers.ValidationError as e:
             errors['name'] = e.detail
+
         try:
-            data['tags'] = validate_tags(self.initial_data['tags'])
+            data['tags'] = validate_tags(self.initial_data.get('tags', ''))
         except serializers.ValidationError as e:
             errors['tags'] = e.detail
         try:
-            data['geotag'] = validate_geotag(self.initial_data['geotag'])
+            data['geotag'] = validate_geotag(self.initial_data.get('geotag', ''))
         except serializers.ValidationError as e:
             errors['geotag'] = e.detail
+
         try:
-            data['pack'] = validate_pack(self.initial_data['pack'])
+            data['pack'] = validate_pack(self.initial_data.get('pack', ''))
         except serializers.ValidationError as e:
             errors['pack'] = e.detail
+
         try:
-            data['license'] = validate_license(self.initial_data['license'])
+            data['license'] = validate_license(self.initial_data.get('license', ''))
         except serializers.ValidationError as e:
             errors['license'] = e.detail
+
         if len(errors):
             raise serializers.ValidationError(errors)
         return data

@@ -732,7 +732,7 @@ class UploadSound(WriteRequiredGenericAPIView):
                     try:
                         apiv2_client = None
                         if self.auth_method_name == 'OAuth2': # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
-                            apiv2_client = request.auth.client.apiv2_client
+                            apiv2_client = request.auth.application.apiv2_client
                         sound = create_sound_object(self.user, serializer.data, resource=self, apiv2_client=apiv2_client, upload_filename=audiofile.name)
                     except APIException, e:
                         raise e # TODO pass correct resource variable

@@ -624,13 +624,15 @@ class DeletedSound(models.Model):
 def on_delete_sound(sender, instance, **kwargs):
     if instance.moderation_state == "OK" and instance.processing_state == "OK":
         ds, create = DeletedSound.objects.get_or_create(sound_id=instance.id,
-                user=instance.user, defaults={'data': '{}'})
+                user=instance.user, defaults={'data': {}})
 
         # Copy relevant data to DeletedSound for future research
         # Note: we do not store information about individual downloads and ratings, we only
         # store count and average (for ratings). We do not store at all information about bookmarks.
 
+
         data = Sound.objects.filter(pk=instance.pk).values()[0]
+
         pack = None
         if instance.pack:
             pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
@@ -650,7 +652,16 @@ def on_delete_sound(sender, instance, **kwargs):
         data['tags'] = list(instance.tags.values())
         data['sources'] = list(instance.sources.values('id'))
 
-        ds.data = json.dumps(data, cls=DjangoJSONEncoder)
+        # Alter datetime objects in data to avoid serialization problems
+        data['created'] = str(data['created'])
+        data['moderation_date'] = str(data['moderation_date'])
+        data['processing_date'] = str(data['processing_date'])
+        if instance.pack:
+            data['pack']['created'] = str(data['pack']['created'])
+            data['pack']['last_upload'] = str(data['pack']['last_upload'])
+        for tag in data['tags']:
+            tag['created'] = str(tag['created'])
+        ds.data = data
         ds.save()
 
     try:

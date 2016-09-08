@@ -201,7 +201,7 @@ class ProfileNumSoundsTestCase(TestCase):
                 'original_path', 'pack_id', 'license', 'created',
                 'original_filename', 'geotag']
 
-        json_data = json.loads(ds.data).keys()
+        json_data = ds.data.keys()
         for k in keys:
             self.assertTrue(k in json_data)
 

@@ -655,7 +655,7 @@ def on_delete_sound(sender, instance, **kwargs):
         data['processing_date'] = str(data['processing_date'])
         if instance.pack:
             data['pack']['created'] = str(data['pack']['created'])
-            data['pack']['last_upload'] = str(data['pack']['last_upload'])
+            data['pack']['last_updated'] = str(data['pack']['last_updated'])
         for tag in data['tags']:
             tag['created'] = str(tag['created'])
         ds.data = data

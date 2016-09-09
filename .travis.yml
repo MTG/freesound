@@ -1,5 +1,7 @@
 language: python
-python:
+services:
+  - postgresql
+ python:
   - "2.7"
 # command to install dependencies
 before_install:

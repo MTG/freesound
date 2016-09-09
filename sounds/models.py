@@ -568,15 +568,27 @@ class Sound(SocialModel):
         # Deal with pack
         # If sound is in pack, replicate pack in new user.
         # If pack already exists in new user, add sound to that existing pack.
+        old_pack = None
         if self.pack:
+            old_pack = self.pack
             (new_pack, created) = Pack.objects.get_or_create(user=new_owner, name=self.pack.name)
             self.pack = new_pack
 
         # Change user field
+        old_owner = self.user
         self.user = new_owner
 
         # Set index dirty
         self.mark_index_dirty(commit=True)  # commit=True does save
+
+        # Update old owner and new owner profiles
+        old_owner.profile.update_num_sounds()
+        new_owner.profile.update_num_sounds()
+
+        # Process old and new packs
+        if old_pack:
+            old_pack.process()
+            new_pack.process()
 
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True

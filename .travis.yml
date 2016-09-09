@@ -4,6 +4,7 @@ services:
 python:
 - '2.7'
 before_install:
+- sudo apt-get install libarchive-zip-perl
 - psql -c 'create database freesound;' -U postgres
 - cp freesound/local_settings.example.py freesound/local_settings.py
 - cp freesound/logger.example.py freesound/logger.py

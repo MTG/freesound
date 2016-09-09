@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 from sounds.models import Sound, Pack, License, DeletedSound
 from sounds.views import get_random_sound, get_random_uploader
 from comments.models import Comment
+from utils.tags import clean_and_split_tags
 import mock
 import json
 import gearman
@@ -130,7 +131,7 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(sound.is_index_dirty, True)
 
 
-def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0):
+def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None):
     if user is None:
         user = User.objects.create_user("testuser", password="testpass")
     packs = list()
@@ -148,6 +149,8 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0)
                                      license=License.objects.all()[0],
                                      pack=pack,
                                      md5="fakemd5_%i" % (i + count_offset))
+        if tags is not None:
+            sound.set_tags(clean_and_split_tags(tags))
         sounds.append(sound)
     return user, packs, sounds
 
@@ -158,7 +161,7 @@ class ChanegSoundOwnerTestCase(TestCase):
 
     def test_change_sound_owner(self):
         # Prepare some content
-        userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1)
+        userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1, tags="tag1 tag2 tag3 tag4 tag5")
         userB, _, _ = create_user_and_sounds(num_sounds=0, num_packs=0,
                                              user=User.objects.create_user("testuser2", password="testpass2"))
         for sound in soundsA:
@@ -175,6 +178,7 @@ class ChanegSoundOwnerTestCase(TestCase):
         target_sound.save()
         target_sound_id = target_sound.id
         target_sound_pack = target_sound.pack
+        target_sound_tags = [ti.id for ti in target_sound.tags.all()]
 
         # Change owenership of sound
         target_sound.change_owner(userB)
@@ -189,6 +193,11 @@ class ChanegSoundOwnerTestCase(TestCase):
         self.assertEqual(sound.pack.num_sounds, 1)
         self.assertEqual(target_sound_pack.num_sounds, 3)
         self.assertEqual(sound.pack.user, userB)
+
+        # Delete original user and perform further checks
+        userA.delete()  # Completely delete form db (instead of user.profile.delete_user())
+        sound = Sound.objects.get(id=target_sound_id)
+        self.assertItemsEqual([ti.id for ti in sound.tags.all()], target_sound_tags)
 
 
 class ProfileNumSoundsTestCase(TestCase):

@@ -29,6 +29,7 @@ from django.utils.translation import ugettext as _
 from django.db import models
 from django.db import connection, transaction
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
+from django.core.exceptions import ObjectDoesNotExist
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -574,6 +575,9 @@ class Sound(SocialModel):
             (new_pack, created) = Pack.objects.get_or_create(user=new_owner, name=self.pack.name)
             self.pack = new_pack
 
+        # Change tags ownership too (otherwise they might get deleted if original user is deleted)
+        self.tags.all().update(user=new_owner)
+
         # Change user field
         old_owner = self.user
         self.user = new_owner
@@ -589,6 +593,8 @@ class Sound(SocialModel):
         if old_pack:
             old_pack.process()
             new_pack.process()
+
+        # NOTE: see comments in https://github.com/MTG/freesound/issues/750
 
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True
@@ -725,7 +731,12 @@ def on_delete_sound(sender, instance, **kwargs):
 
 def post_delete_sound(sender, instance, **kwargs):
     # after deleted sound update num_sound on profile and pack
-    instance.user.profile.update_num_sounds()
+    try:
+        instance.user.profile.update_num_sounds()
+    except ObjectDoesNotExist:
+        # If this is triggered after user.delete() (instead of sound.delete() or user.profile.delete_user()),
+        # user object will have no profile
+        pass
     if instance.pack:
         instance.pack.process()
     web_logger.debug("Deleted sound with id %i" % instance.id)

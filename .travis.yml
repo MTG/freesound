@@ -1,0 +1,19 @@
+language: python
+python:
+  - "2.7"
+# command to install dependencies
+before_install:
+  - "cp freesound/local_settings.example.py freesound/local_settings.py"
+  - "cp freesound/logger.example.py freesound/logger.py"
+  - "cp similarity/similarity_settings.example.py similarity/similarity_settings.py"
+  - "cp tagrecommendation/tagrecommendation_settings.example.py tagrecommendation/tagrecommendation_settings.py"
+  - "sed -i 's$/path/to/django/debug.log$debug.log$' freesound/logger.py"
+  - "sed -i 's$^DISPLAY_DEBUG_TOOLBAR.*$DISPLAY_DEBUG_TOOLBAR = False$' freesound/local_settings.py"
+  - "mkdir -p ../freesound-data/packs"
+  - "mkdir -p ../freesound-data/uploads"
+  - "mkdir -p ../freesound-data/avatars"
+install:
+  - "pip install django-nose"
+  - "pip install -r requirements.txt"
+# command to run tests
+script: nosetests

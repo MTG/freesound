@@ -16,4 +16,4 @@ install:
   - "pip install django-nose"
   - "pip install -r requirements.txt"
 # command to run tests
-script: nosetests
+script: python manage.py test --noinput --settings=freesound.test_settings follow accounts utils sounds

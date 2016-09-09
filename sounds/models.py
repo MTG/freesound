@@ -539,13 +539,44 @@ class Sound(SocialModel):
                     self.save()
 
     def change_owner(self, new_owner):
-        # Change the user who owns the sound
-        # Implications are:
-        #   - Change user field
-        #   - change filename on disk
-        #   - Set index dirty to true
-        pass
+        def replace_user_id_in_path(path, old_owner_id, new_owner_id):
+            old_path_beginning = '%i_%i' % (self.id, old_owner_id)
+            new_path_beginning = '%i_%i' % (self.id, new_owner_id)
+            return path.replace(old_path_beginning, new_path_beginning)
 
+        # Rename related files in disk
+        paths_to_rename = [
+            self.locations()['path'],  # original file path
+            self.locations()['analysis']['frames']['path'],  # analysis frames file
+            self.locations()['analysis']['statistics']['path'],  # analysis statistics file
+            self.locations()['display']['spectral']['L']['path'],  # spectrogram L
+            self.locations()['display']['spectral']['M']['path'],  # spectrogram M
+            self.locations()['display']['wave']['L']['path'],  # waveform L
+            self.locations()['display']['wave']['M']['path'],  # waveform M
+            self.locations()['preview']['HQ']['mp3']['path'],  # preview HQ mp3
+            self.locations()['preview']['HQ']['ogg']['path'],  # preview HQ ogg
+            self.locations()['preview']['LQ']['mp3']['path'],  # preview LQ mp3
+            self.locations()['preview']['LQ']['ogg']['path'],  # preview LQ ogg
+        ]
+        for path in paths_to_rename:
+            try:
+                os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
+            except OSError:
+                web_logger.debug('WARNING changing owner of sound %i: Could not rename file %s because '
+                                 'it does not exist.\n' % (self.id, path))
+
+        # Deal with pack
+        # If sound is in pack, replicate pack in new user.
+        # If pack already exists in new user, add sound to that existing pack.
+        if self.pack:
+            (new_pack, created) = Pack.objects.get_or_create(user=new_owner, name=self.pack.name)
+            self.pack = new_pack
+
+        # Change user field
+        self.user = new_owner
+
+        # Set index dirty
+        self.mark_index_dirty(commit=True)  # commit=True does save
 
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True

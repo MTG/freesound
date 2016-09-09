@@ -152,6 +152,45 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0)
     return user, packs, sounds
 
 
+class ChanegSoundOwnerTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    def test_change_sound_owner(self):
+        # Prepare some content
+        userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1)
+        userB, _, _ = create_user_and_sounds(num_sounds=0, num_packs=0,
+                                             user=User.objects.create_user("testuser2", password="testpass2"))
+        for sound in soundsA:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+
+        # Check initial number of sounds is ok
+        self.assertEqual(userA.profile.num_sounds, 4)
+        self.assertEqual(userB.profile.num_sounds, 0)
+
+        # Select change to change ownership and change index dirty for later checks
+        target_sound = soundsA[0]
+        target_sound.is_index_dirty = False
+        target_sound.save()
+        target_sound_id = target_sound.id
+        target_sound_pack = target_sound.pack
+
+        # Change owenership of sound
+        target_sound.change_owner(userB)
+
+        # Perform checks
+        sound = Sound.objects.get(id=target_sound_id)
+        self.assertEqual(userA.profile.num_sounds, 3)
+        self.assertEqual(userB.profile.num_sounds, 1)
+        self.assertEqual(sound.user, userB)
+        self.assertEqual(sound.is_index_dirty, True)
+        self.assertEqual(sound.pack.name, target_sound_pack.name)
+        self.assertEqual(sound.pack.num_sounds, 1)
+        self.assertEqual(target_sound_pack.num_sounds, 3)
+        self.assertEqual(sound.pack.user, userB)
+
+
 class ProfileNumSoundsTestCase(TestCase):
 
     fixtures = ['initial_data']

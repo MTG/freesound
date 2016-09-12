@@ -23,25 +23,26 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.contrib.postgres.fields import JSONField
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db import models
 from django.db import connection, transaction
+from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
+from django.core.exceptions import ObjectDoesNotExist
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
 from utils.sql import DelayedQueryExecuter
 from utils.cache import invalidate_template_cache
-from utils.text import slugify, clean_html
+from utils.text import slugify
 from utils.locations import locations_decorator
 from utils.search.search_general import delete_sound_from_solr
-from utils.filesystem import delete_object_files
 from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
-from tickets.models import Ticket, Queue, TicketComment, LinkedContent
-from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW, TICKET_STATUS_CLOSED
+from tickets.models import Ticket, Queue, TicketComment
+from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 import os
 import logging
 import random
@@ -192,7 +193,7 @@ class PublicSoundManager(models.Manager):
 
 
 class Sound(SocialModel):
-    user = models.ForeignKey(User, related_name='sounds')
+    user = models.ForeignKey(User, related_name="sounds")
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     # filenames
@@ -538,6 +539,63 @@ class Sound(SocialModel):
                 if commit:
                     self.save()
 
+    def change_owner(self, new_owner):
+        def replace_user_id_in_path(path, old_owner_id, new_owner_id):
+            old_path_beginning = '%i_%i' % (self.id, old_owner_id)
+            new_path_beginning = '%i_%i' % (self.id, new_owner_id)
+            return path.replace(old_path_beginning, new_path_beginning)
+
+        # Rename related files in disk
+        paths_to_rename = [
+            self.locations()['path'],  # original file path
+            self.locations()['analysis']['frames']['path'],  # analysis frames file
+            self.locations()['analysis']['statistics']['path'],  # analysis statistics file
+            self.locations()['display']['spectral']['L']['path'],  # spectrogram L
+            self.locations()['display']['spectral']['M']['path'],  # spectrogram M
+            self.locations()['display']['wave']['L']['path'],  # waveform L
+            self.locations()['display']['wave']['M']['path'],  # waveform M
+            self.locations()['preview']['HQ']['mp3']['path'],  # preview HQ mp3
+            self.locations()['preview']['HQ']['ogg']['path'],  # preview HQ ogg
+            self.locations()['preview']['LQ']['mp3']['path'],  # preview LQ mp3
+            self.locations()['preview']['LQ']['ogg']['path'],  # preview LQ ogg
+        ]
+        for path in paths_to_rename:
+            try:
+                os.rename(path, replace_user_id_in_path(path, self.user.id, new_owner.id))
+            except OSError:
+                web_logger.debug('WARNING changing owner of sound %i: Could not rename file %s because '
+                                 'it does not exist.\n' % (self.id, path))
+
+        # Deal with pack
+        # If sound is in pack, replicate pack in new user.
+        # If pack already exists in new user, add sound to that existing pack.
+        old_pack = None
+        if self.pack:
+            old_pack = self.pack
+            (new_pack, created) = Pack.objects.get_or_create(user=new_owner, name=self.pack.name)
+            self.pack = new_pack
+
+        # Change tags ownership too (otherwise they might get deleted if original user is deleted)
+        self.tags.all().update(user=new_owner)
+
+        # Change user field
+        old_owner = self.user
+        self.user = new_owner
+
+        # Set index dirty
+        self.mark_index_dirty(commit=True)  # commit=True does save
+
+        # Update old owner and new owner profiles
+        old_owner.profile.update_num_sounds()
+        new_owner.profile.update_num_sounds()
+
+        # Process old and new packs
+        if old_pack:
+            old_pack.process()
+            new_pack.process()
+
+        # NOTE: see comments in https://github.com/MTG/freesound/issues/750
+
     def mark_index_dirty(self, commit=True):
         self.is_index_dirty = True
         if commit:
@@ -567,26 +625,23 @@ class Sound(SocialModel):
     def create_moderation_ticket(self):
         ticket = Ticket.objects.create(
             title='Moderate sound %s' % self.original_filename,
-            source=TICKET_SOURCE_NEW_SOUND,
             status=TICKET_STATUS_NEW,
             queue=Queue.objects.get(name='sound moderation'),
             sender=self.user,
-            content=LinkedContent.objects.create(content_object=self),
+            sound=self,
         )
         TicketComment.objects.create(
             sender=self.user,
-            text="I've uploaded %s. Please moderate!" % clean_html(self.original_filename),
+            text="I've uploaded %s. Please moderate!" % self.original_filename,
             ticket=ticket,
         )
 
     def unlink_moderation_ticket(self):
         # If sound has an assigned ticket, set its content to None and status to closed
         try:
-            ticket = Ticket.objects.get(content__object_id=self.id,
-                                        content__content_type=ContentType.objects.get_for_model(self))
-            ticket.content = None
-            ticket.status = TICKET_STATUS_CLOSED
-            ticket.save()
+            self.ticket.sound = None
+            self.ticket.status = TICKET_STATUS_CLOSED
+            self.ticket.save()
         except Ticket.DoesNotExist:
             pass
 
@@ -616,33 +671,53 @@ class Sound(SocialModel):
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 
-
 class DeletedSound(models.Model):
     user = models.ForeignKey(User)
     sound_id = models.IntegerField(default=0, db_index=True)
-
+    data = JSONField()
 
 def on_delete_sound(sender, instance, **kwargs):
     if instance.moderation_state == "OK" and instance.processing_state == "OK":
-        try:
-            DeletedSound.objects.get_or_create(sound_id=instance.id, user=instance.user)
-        except User.DoesNotExist:
-            deleted_user = User.objects.get(id=settings.DELETED_USER_ID)
-            DeletedSound.objects.get_or_create(sound_id=instance.id, user=deleted_user)
+        ds, create = DeletedSound.objects.get_or_create(sound_id=instance.id,
+                user=instance.user, defaults={'data': {}})
 
-    try:
-        '''
-        When deleting the sound is possible that the profile has already been deleted (because of django on cascade
-        delete order). See comment below after 'except Pack.DoesNotExist'
-        '''
-        if hasattr(instance.user, 'profile'):
-            instance.user.profile.update_num_sounds()
-    except User.DoesNotExist:
-        '''
-        It might happen that on deleting sound the user does not exist because of the way django deletes objects
-        in 'cascade'. See comment below after 'except Pack.DoesNotExist'.
-        '''
-        pass
+        # Copy relevant data to DeletedSound for future research
+        # Note: we do not store information about individual downloads and ratings, we only
+        # store count and average (for ratings). We do not store at all information about bookmarks.
+
+
+        data = Sound.objects.filter(pk=instance.pk).values()[0]
+
+        pack = None
+        if instance.pack:
+            pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]
+        data['pack'] = pack
+
+        geotag = None
+        if instance.geotag:
+            geotag = GeoTag.objects.filter(pk=instance.geotag.pk).values()[0]
+        data['geotag'] = geotag
+
+        license = None
+        if instance.license:
+            license = License.objects.filter(pk=instance.license.pk).values()[0]
+        data['license'] = license
+
+        data['comments'] = list(instance.comments.values())
+        data['tags'] = list(instance.tags.values())
+        data['sources'] = list(instance.sources.values('id'))
+
+        # Alter datetime objects in data to avoid serialization problems
+        data['created'] = str(data['created'])
+        data['moderation_date'] = str(data['moderation_date'])
+        data['processing_date'] = str(data['processing_date'])
+        if instance.pack:
+            data['pack']['created'] = str(data['pack']['created'])
+            data['pack']['last_updated'] = str(data['pack']['last_updated'])
+        for tag in data['tags']:
+            tag['created'] = str(tag['created'])
+        ds.data = data
+        ds.save()
 
     try:
         if instance.geotag:
@@ -650,34 +725,33 @@ def on_delete_sound(sender, instance, **kwargs):
     except:
         pass
 
-    try:
-        if instance.pack:
-            instance.pack.process()
-    except Pack.DoesNotExist:
-        '''
-        It might happen when we do user.delete() to a user that has several sounds in packs that when post_delete
-        signals for sounds are called, the packs have already been deleted. This is because the way in which django
-        deletes all the related objects with foreign keys. When a user is deleted, its packs and sounds must be deleted
-        too. Django first runs pre_delete on all objects to be deleted, then delete and then post_delete. Therefore
-        it can happen that when the post_delete signal for a sound is called, the pack has already been deleted but the
-        instance passed to the post_delete function still points to that pack. We can therefore safely use try/except
-        here and we'll still be doing the job correctly.
-        '''
-        pass
-
     instance.delete_from_indexes()
     instance.unlink_moderation_ticket()
-    delete_object_files(instance, web_logger)
+
+
+def post_delete_sound(sender, instance, **kwargs):
+    # after deleted sound update num_sound on profile and pack
+    try:
+        instance.user.profile.update_num_sounds()
+    except ObjectDoesNotExist:
+        # If this is triggered after user.delete() (instead of sound.delete() or user.profile.delete_user()),
+        # user object will have no profile
+        pass
+    if instance.pack:
+        instance.pack.process()
     web_logger.debug("Deleted sound with id %i" % instance.id)
 
-post_delete.connect(on_delete_sound, sender=Sound)
+
+pre_delete.connect(on_delete_sound, sender=Sound)
+post_delete.connect(post_delete_sound, sender=Sound)
 
 
 class PackManager(models.Manager):
 
     def ordered_ids(self, pack_ids, select_related=''):
         # Simplified version of ordered_ids in SoundManager (no need for custom SQL here)
-        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.select_related(select_related).filter(id__in=pack_ids)}
+        packs = {pack_obj.id: pack_obj for pack_obj in Pack.objects.select_related(select_related)
+                                                           .filter(id__in=pack_ids).exclude(is_deleted=True)}
         return [packs[pack_id] for pack_id in pack_ids if pack_id in packs]
 
 
@@ -691,6 +765,7 @@ class Pack(SocialModel):
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
+    is_deleted = models.BooleanField(default=False)
 
     objects = PackManager()
 
@@ -761,12 +836,16 @@ class Pack(SocialModel):
         Sound.objects.filter(pack_id=self.id).update(pack=None)
         self.process()
 
-    def delete(self, using=None):
-        """ This deletes all sounds in the pack as well. """
-        for sound in self.sound_set.all():
-            sound.delete()
-        delete_object_files(self, web_logger)
-        super(SocialModel, self).delete(using=using)  # super class delete
+    def delete_pack(self, remove_sounds=True):
+        # Pack.delete() should never be called as it will completely erase the object from the db
+        # Instead, Pack.delete_pack() should be used
+        if remove_sounds:
+            for sound in self.sound_set.all():
+                sound.delete()  # Create DeletedSound objects and delete original objects
+        else:
+            self.sound_set.update(pack=None)
+        self.is_deleted = True
+        self.save()
 
 
 class Flag(models.Model):

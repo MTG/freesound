@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Freesound is (c) MUSIC TECHNOLOGY GROUP, UNIVERSITAT POMPEU FABRA
 #
@@ -18,18 +19,20 @@
 #     See AUTHORS file.
 #
 
+import time
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
+from django.core.exceptions import PermissionDenied
 from multiupload.fields import MultiFileField
 from django.conf import settings
 from accounts.models import Profile
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
-
+from utils.encryption import decrypt, encrypt
 
 def validate_file_extension(audiofiles):
     try:
@@ -283,4 +286,35 @@ class EmailResetForm(forms.Form):
 
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):
-            raise forms.ValidationError(_("Incorrect password."))    
+            raise forms.ValidationError(_("Incorrect password."))
+
+DELETE_CHOICES = [('only_user', u'Delete only my user account information :)'),
+                  ('delete_sounds', u'Delete also my sounds and packs :(')]
+
+class DeleteUserForm(forms.Form):
+    encrypted_link = forms.CharField(widget=forms.HiddenInput())
+    delete_sounds = forms.ChoiceField(choices = DELETE_CHOICES,
+            widget=forms.RadioSelect())
+
+    def clean_encrypted_link(self):
+        data = self.cleaned_data['encrypted_link']
+        if not data:
+            raise PermissionDenied
+        user_id, now = decrypt(data).split("\t")
+        user_id = int(user_id)
+        if user_id != self.user_id:
+            raise PermissionDenied
+        link_generated_time = float(now)
+        if abs(time.time() - link_generated_time) > 10:
+            raise forms.ValidationError("Time expired")
+        return data
+
+    def __init__(self, *args, **kwargs):
+        self.user_id = kwargs.pop('user_id')
+        encrypted_link = encrypt(u"%d\t%f" % (self.user_id, time.time()))
+        kwargs['initial'] = {
+                'delete_sounds': 'only_user',
+                'encrypted_link': encrypted_link
+                }
+        super(DeleteUserForm, self).__init__(*args, **kwargs)
+

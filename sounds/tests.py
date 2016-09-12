@@ -21,44 +21,46 @@
 from django.test import TestCase, Client
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
-from sounds.models import Sound, Pack, License
+from sounds.models import Sound, Pack, License, DeletedSound
 from sounds.views import get_random_sound, get_random_uploader
 from comments.models import Comment
+from utils.tags import clean_and_split_tags
 import mock
+import json
 import gearman
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
-    
+
     fixtures = ['sounds']
-    
+
     def setUp(self):
         self.sound = Sound.objects.all()[0]
-        
+
     def test_old_sound_link_redirect_ok(self):
         # 301 permanent redirect, result exists
         response = self.client.get(reverse('old-sound-page'), data={'id': self.sound.id})
         self.assertEqual(response.status_code, 301)
-        
+
     def test_old_sound_link_redirect_not_exists_id(self):
         # 404 id does not exist
         response = self.client.get(reverse('old-sound-page'), data={'id': 0}, follow=True)
         self.assertEqual(response.status_code, 404)
-        
+
     def test_old_sound_link_redirect_invalid_id(self):
         # 404 invalid id
         response = self.client.get(reverse('old-sound-page'), data={'id': 'invalid_id'}, follow=True)
-        self.assertEqual(response.status_code, 404)    
+        self.assertEqual(response.status_code, 404)
 
 
 class OldPackLinksRedirectTestCase(TestCase):
-    
+
     fixtures = ['packs']
-            
+
     def setUp(self):
         self.client = Client()
         self.pack = Pack.objects.all()[0]
-                    
+
     def test_old_pack_link_redirect_ok(self):
         response = self.client.get(reverse('old-pack-page'), data={'id': self.pack.id})
         self.assertEqual(response.status_code, 301)
@@ -129,7 +131,7 @@ class CommentSoundsTestCase(TestCase):
         self.assertEqual(sound.is_index_dirty, True)
 
 
-def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0):
+def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None):
     if user is None:
         user = User.objects.create_user("testuser", password="testpass")
     packs = list()
@@ -147,8 +149,55 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0)
                                      license=License.objects.all()[0],
                                      pack=pack,
                                      md5="fakemd5_%i" % (i + count_offset))
+        if tags is not None:
+            sound.set_tags(clean_and_split_tags(tags))
         sounds.append(sound)
     return user, packs, sounds
+
+
+class ChanegSoundOwnerTestCase(TestCase):
+
+    fixtures = ['initial_data']
+
+    def test_change_sound_owner(self):
+        # Prepare some content
+        userA, packsA, soundsA = create_user_and_sounds(num_sounds=4, num_packs=1, tags="tag1 tag2 tag3 tag4 tag5")
+        userB, _, _ = create_user_and_sounds(num_sounds=0, num_packs=0,
+                                             user=User.objects.create_user("testuser2", password="testpass2"))
+        for sound in soundsA:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+
+        # Check initial number of sounds is ok
+        self.assertEqual(userA.profile.num_sounds, 4)
+        self.assertEqual(userB.profile.num_sounds, 0)
+
+        # Select change to change ownership and change index dirty for later checks
+        target_sound = soundsA[0]
+        target_sound.is_index_dirty = False
+        target_sound.save()
+        target_sound_id = target_sound.id
+        target_sound_pack = target_sound.pack
+        target_sound_tags = [ti.id for ti in target_sound.tags.all()]
+
+        # Change owenership of sound
+        target_sound.change_owner(userB)
+
+        # Perform checks
+        sound = Sound.objects.get(id=target_sound_id)
+        self.assertEqual(userA.profile.num_sounds, 3)
+        self.assertEqual(userB.profile.num_sounds, 1)
+        self.assertEqual(sound.user, userB)
+        self.assertEqual(sound.is_index_dirty, True)
+        self.assertEqual(sound.pack.name, target_sound_pack.name)
+        self.assertEqual(sound.pack.num_sounds, 1)
+        self.assertEqual(target_sound_pack.num_sounds, 3)
+        self.assertEqual(sound.pack.user, userB)
+
+        # Delete original user and perform further checks
+        userA.delete()  # Completely delete form db (instead of user.profile.delete_user())
+        sound = Sound.objects.get(id=target_sound_id)
+        self.assertItemsEqual([ti.id for ti in sound.tags.all()], target_sound_tags)
 
 
 class ProfileNumSoundsTestCase(TestCase):
@@ -183,6 +232,27 @@ class ProfileNumSoundsTestCase(TestCase):
         sound.delete()
         self.assertEqual(user.profile.num_sounds, 0)
 
+    def test_deletedsound_creation(self):
+        user, packs, sounds = create_user_and_sounds()
+        sound = sounds[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+        sound_id = sound.id
+        sound.delete()
+
+        self.assertEqual(DeletedSound.objects.filter(sound_id=sound_id).exists(), True)
+        ds = DeletedSound.objects.get(sound_id=sound_id)
+
+        # Check this elements are in the json saved on DeletedSound
+        keys = ['num_ratings', 'duration', 'id', 'geotag_id', 'comments',
+                'base_filename_slug', 'num_downloads', 'md5', 'description',
+                'original_path', 'pack_id', 'license', 'created',
+                'original_filename', 'geotag']
+
+        json_data = ds.data.keys()
+        for k in keys:
+            self.assertTrue(k in json_data)
+
     def test_pack_delete(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
         for sound in sounds:
@@ -190,8 +260,9 @@ class ProfileNumSoundsTestCase(TestCase):
             sound.change_moderation_state("OK")
         self.assertEqual(user.profile.num_sounds, 5)
         pack = packs[0]
-        pack.delete()
-        self.assertEqual(User.objects.get(id=user.id).profile.num_sounds, 0)
+        pack.delete_pack(remove_sounds=False)
+        self.assertEqual(User.objects.get(id=user.id).profile.num_sounds, 5)  # Should be 5 as sounds are not deleted
+        self.assertEqual(pack.is_deleted, True)
 
 
 class PackNumSoundsTestCase(TestCase):

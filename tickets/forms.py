@@ -77,8 +77,9 @@ class SoundModerationForm(forms.Form):
                                required=True,
                                widget=forms.RadioSelect(),
                                label='')
-    ticket = forms.IntegerField(widget=forms.widgets.HiddenInput)
 
+    ticket = forms.CharField(widget=forms.widgets.HiddenInput,
+                             error_messages={'required': 'No sound selected...'})
 
 class ModerationMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea,
@@ -103,6 +104,13 @@ class TicketModerationForm(forms.Form):
     status      = forms.ChoiceField(choices=TICKET_STATUS_CHOICES,
                                     required=False,
                                     label='Ticket status')
+
+    def __init__(self, *args, **kwargs):
+        super(TicketModerationForm, self).__init__(*args, **kwargs)
+        if 'initial' in kwargs:
+            state = kwargs['initial']['status']
+            if state == TICKET_STATUS_CLOSED:
+                self.fields['status'].widget.attrs['disabled'] = 'disabled'
 
 class SoundStateForm(forms.Form):
     state       = forms.ChoiceField(choices=[("OK", "OK"),

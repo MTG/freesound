@@ -84,22 +84,3 @@ def crc32file(filename):
     fh.close()
     return hex(crc32)[2:]
 
-def delete_object_files(obj, logger=False):
-    """Given a Django ORM object and a dictionary, delete its associated files on disk."""
-    __delete_object_files(obj, obj.locations(), logger)
-
-def __delete_object_files(obj, d, logger=False):
-    """Given a Django ORM object and a dictionary, delete its associated files on disk."""
-    if isinstance(d, dict):
-        for key, val in d.items():
-            if key == 'path':
-                try:
-                    logger.info('Remove %s for object with id %s of type %s.' % \
-                                (val, obj.id, obj.__class__))
-                    os.remove(val)
-                except Exception, e:
-                    if logger:
-                        logger.error('Could not remove file %s for object with id %s of type %s. (%s)' % \
-                                     (val, obj.id, obj.__class__, e))
-            else:
-                __delete_object_files(obj, val, logger)

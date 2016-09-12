@@ -26,20 +26,18 @@ from django.contrib.auth.admin import UserAdmin
 from accounts.models import Profile, UserFlag
 
 
-def delete_active_user(modeladmin, request, queryset):
+def disable_active_user(modeladmin, request, queryset):
     for user in queryset:
-        user.profile.change_ownership_of_user_content()
-        user.delete()
+        user.profile.delete_user()
 
-delete_active_user.short_description = "Delete selected users, preserve posts, threads and comments"
+disable_active_user.short_description = "Disable selected users, preserve posts, threads and comments"
 
 
-def delete_active_user_preserve_sounds(modeladmin, request, queryset):
+def disable_active_user_preserve_sounds(modeladmin, request, queryset):
     for user in queryset:
-        user.profile.change_ownership_of_user_content(include_sounds=True)
-        user.delete()
+        user.profile.delete_user(remove_sounds=True)
 
-delete_active_user_preserve_sounds.short_description = "Delete selected users, preserve all their content"
+disable_active_user_preserve_sounds.short_description = "Disable selected users, preserve all their content"
 
 
 class ProfileAdmin(admin.ModelAdmin):
@@ -61,7 +59,7 @@ admin.site.register(UserFlag, UserFlagAdmin)
 
 class FreesoundUserAdmin(UserAdmin):
     search_fields = ('username', 'email')
-    actions = (delete_active_user, delete_active_user_preserve_sounds, )
+    actions = (disable_active_user, disable_active_user_preserve_sounds, )
     list_display = ('username', 'email')
     list_filter = ()
     ordering = ('id', )

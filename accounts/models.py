@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import fields
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_save
 from django.utils.encoding import smart_unicode
 from django.conf import settings
@@ -32,10 +33,11 @@ from geotags.models import GeoTag
 from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
 from utils.sql import DelayedQueryExecuter
 from utils.locations import locations_decorator
-from tickets.views import get_num_pending_sounds
 from forum.models import Post, Thread
 from comments.models import Comment
 from sounds.models import DeletedSound, Sound, Pack
+import uuid
+import tickets.models
 import datetime
 import random
 import os
@@ -44,8 +46,8 @@ import os
 class ResetEmailRequest(models.Model):
     email = models.EmailField()
     user = models.OneToOneField(User, db_index=True)
-    
-    
+
+
 class ProfileManager(models.Manager):
 
     @staticmethod
@@ -75,6 +77,7 @@ class Profile(SocialModel):
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None)
     num_sounds = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     num_posts = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
+    is_deleted_user = models.BooleanField(default=False)
 
     objects = ProfileManager()
 
@@ -180,25 +183,46 @@ class Profile(SocialModel):
             return True
 
     def num_sounds_pending_moderation(self):
-        return get_num_pending_sounds(self.user)
+        # Get non closed tickets with related sound objects referring to sounds
+        # that have not been deleted
 
-    def change_ownership_of_user_content(self, target_user=None, include_sounds=False):
+        return len(tickets.models.Ticket.objects.filter(\
+                Q(sender=self.user) &\
+                Q(sound__isnull=False) &\
+                Q(sound__processing_state='OK') &\
+                ~Q(sound__moderation_state='OK') &\
+                ~Q(status='closed')))
+
+    def delete_user(self, remove_sounds=False):
         """
-        This method iterates over all Posts, Threads, Comments and DeletedSound objects of a user and assigns them to
-        another user (the 'target_user').
-        :param target_user: defaults to DELETED_USER_ID
-        :param include_sounds: whether or not to change the ownership of sounds too (including packs)
-        :return:
+        User.delete() should never be called as it will completely erase the object from the db.
+        Instead, Profile.delete_user() should be used (or user.profile.delete_user()).
+
+        This method anonymise the user and flags it as deleted. If
+        remove_sounds is True then the Sound (and Pack) object is removed from
+        the database.
         """
-        if not target_user:
-            target_user = User.objects.get(id=settings.DELETED_USER_ID)
-        Post.objects.filter(author=self.user).update(author=target_user)
-        Thread.objects.filter(author=self.user).update(author=target_user)
-        Comment.objects.filter(user=self.user).update(user=target_user)
-        DeletedSound.objects.filter(user=self.user).update(user=target_user)
-        if include_sounds:
-            Pack.objects.filter(user=self.user).update(user=target_user)
-            Sound.objects.filter(user=self.user).update(user=target_user)
+
+        self.user.username = 'deleted_user_%s' % self.user.id
+        self.user.first_name = ''
+        self.user.last_name = ''
+        self.user.email = ''
+        self.has_avatar = False
+        self.is_deleted_user = True
+        self.user.set_password(str(uuid.uuid4()))
+
+        self.about = ''
+        self.home_page = ''
+        self.signature = ''
+        self.geotag = None
+
+        self.save()
+        self.user.save()
+        if remove_sounds:
+            Sound.objects.filter(user=self.user).delete()
+            Pack.objects.filter(user=self.user).update(is_deleted=True)
+        else:
+            Sound.objects.filter(user=self.user).update(is_index_dirty=True)
 
     def update_num_sounds(self, commit=True):
         """

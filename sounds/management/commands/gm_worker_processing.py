@@ -24,10 +24,12 @@ from utils.audioprocessing.freesound_audio_processing import process
 from utils.audioprocessing.essentia_analysis import analyze
 from django.conf import settings
 from sounds.models import Sound, Pack
+from tickets.models import Ticket
 from optparse import make_option
 from psycopg2 import InterfaceError
 from django.db.utils import DatabaseError
 from django.db import connection
+from tickets import TICKET_STATUS_CLOSED
 import logging
 
 logger = logging.getLogger("gearman_worker_processing")
@@ -146,3 +148,4 @@ class Command(BaseCommand):
             self.write_stdout("\t%s\n" % traceback.format_exc())
             success = False
             return 'false'
+

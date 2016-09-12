@@ -18,13 +18,13 @@
 #     See AUTHORS file.
 #
 
-import datetime, logging, os, tempfile, shutil, hashlib, base64, json, time
+import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
 import django.contrib.auth.views as authviews
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth import logout
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
@@ -43,7 +43,7 @@ from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm
 from accounts.models import Profile, ResetEmailRequest, UserFlag
 from accounts.forms import EmailResetForm
 from comments.models import Comment
@@ -53,7 +53,7 @@ from sounds.forms import NewLicenseForm, PackForm, SoundDescriptionForm, Geotagg
 from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
-from utils.encryption import decrypt, encrypt, create_hash
+from utils.encryption import create_hash
 from utils.filesystem import generate_tree, md5file
 from utils.images import extract_square
 from utils.pagination import paginate
@@ -61,7 +61,6 @@ from utils.text import slugify, remove_control_chars
 from utils.audioprocessing import get_sound_type
 from utils.mail import send_mail, send_mail_template
 from geotags.models import GeoTag
-from tickets.views import new_support_tickets_count
 from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
@@ -206,14 +205,13 @@ def home(request):
         unmoderated_sounds = unmoderated_sounds[:settings.MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE]
 
     # Packs
-    latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:5]
-    packs_without_sounds = Pack.objects.select_related().filter(user=user).filter(num_sounds=0)
+    latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0) \
+                       .exclude(is_deleted=True).order_by("-last_updated")[0:5]
+    packs_without_sounds = Pack.objects.select_related().filter(user=user, num_sounds=0).exclude(is_deleted=True)
     # 'packs_without_sounds' also includes packs that only contain unmoderated or unprocessed sounds
 
     # Moderation stats
-    new_support = new_posts = 0
-    if request.user.has_perm('tickets.can_moderate'):
-        new_support = new_support_tickets_count()
+    new_posts = 0
     if request.user.has_perm('forum.can_moderate_forum'):
         new_posts = Post.objects.filter(moderation_state='NM').count()
 
@@ -230,7 +228,6 @@ def home(request):
         'num_more_unmoderated_sounds': num_more_unmoderated_sounds,
         'latest_packs': latest_packs,
         'packs_without_sounds': packs_without_sounds,
-        'new_support': new_support,
         'new_posts': new_posts,
         'following': following,
         'followers': followers,
@@ -396,7 +393,7 @@ def describe_license(request):
 
 @login_required
 def describe_pack(request):
-    packs = Pack.objects.filter(user=request.user)
+    packs = Pack.objects.filter(user=request.user).exclude(is_deleted=True)
     if request.method == 'POST':
         form = PackForm(packs, request.POST, prefix="pack")
         if form.is_valid():
@@ -449,7 +446,7 @@ def describe_sounds(request):
             forms[i]['sound'] = sounds_to_describe[i]
             forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix)
             forms[i]['geotag'] = GeotaggingForm(request.POST, prefix=prefix)
-            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
+            forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                         request.POST,
                                         prefix=prefix)
             forms[i]['license'] = NewLicenseForm(request.POST, prefix=prefix)
@@ -594,11 +591,11 @@ def describe_sounds(request):
             forms[i]['description'] = SoundDescriptionForm(initial={'name': forms[i]['sound'].name}, prefix=prefix)
             forms[i]['geotag'] = GeotaggingForm(prefix=prefix)
             if selected_pack:
-                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
+                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                             prefix=prefix,
                                             initial={'pack': selected_pack.id})
             else:
-                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user),
+                forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                             prefix=prefix)
             if selected_license:
                 forms[i]['license'] = NewLicenseForm(initial={'license': selected_license},
@@ -736,8 +733,9 @@ def account(request, username):
     except User.DoesNotExist:
         raise Http404
     tags = user.profile.get_user_tags() if user.profile else []
-    latest_sounds = Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE)
-    latest_packs = Pack.objects.select_related().filter(user=user).filter(num_sounds__gt=0).order_by("-last_updated")[0:10]
+    latest_sounds = list(Sound.objects.bulk_sounds_for_user(user.id, settings.SOUNDS_PER_PAGE))
+    latest_packs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True) \
+                                .order_by("-last_updated")[0:10]
     following, followers, following_tags, following_count, followers_count, following_tags_count = \
         follow_utils.get_vars_for_account_view(user)
     follow_user_url = reverse('follow-user', args=[username])
@@ -861,28 +859,26 @@ def upload(request, no_flash=False):
 
 @login_required
 def delete(request):
-    encrypted_string = request.GET.get("user", None)
-    waited_too_long = False
     num_sounds = request.user.sounds.all().count()
-    if encrypted_string is not None:
-        user_id, now = decrypt(encrypted_string).split("\t")
-        user_id = int(user_id)
-        if user_id != request.user.id:
-            raise PermissionDenied
-        link_generated_time = float(now)
-        if abs(time.time() - link_generated_time) < 10:
-            if num_sounds == 0:
-                request.user.profile.change_ownership_of_user_content()
-                request.user.delete()
-                return HttpResponseRedirect(reverse("front-page"))
+    error_message = None
+    if request.method == 'POST':
+        form = DeleteUserForm(request.POST, user_id=request.user.id)
+        if not form.is_valid():
+            error_message = "Sorry, you waited too long, ... try again?"
+            form = DeleteUserForm(user_id=request.user.id)
         else:
-            waited_too_long = True
+            delete_sounds =\
+                form.cleaned_data['delete_sounds'] == 'delete_sounds'
+            request.user.profile.delete_user(remove_sounds=delete_sounds)
+            logout(request)
+            return HttpResponseRedirect(reverse("front-page"))
+    else:
+        form = DeleteUserForm(user_id=request.user.id)
 
-    encrypted_link = encrypt(u"%d\t%f" % (request.user.id, time.time()))
     tvars = {
-        'waited_too_long': waited_too_long,
-        'encrypted_link': encrypted_link,
-        'num_sounds': num_sounds,
+            'error_message': error_message,
+            'delete_form': form,
+            'num_sounds': num_sounds,
     }
     return render(request, 'accounts/delete.html', tvars)
 

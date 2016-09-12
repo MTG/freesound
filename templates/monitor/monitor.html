@@ -1,21 +1,19 @@
-{% extends "tickets/_section.html" %}
+{% extends "base.html" %}
 
 
 {% block title %}
-    Moderation
+    Monitor
 {% endblock title %}
 
-{% block section_content %}
+{% block content %}
 
-    <h2>Moderation home</h2>
+    <h2>Monitor</h2>
     <!-- include permission checks here -->
     <h3>Sound moderation status</h3>
     <ul>
         <li>{{new_upload_count}} new sound{{ new_upload_count|pluralize }}</li>
         <li>{{tardy_moderator_sounds_count}} tardy moderator{{ tardy_moderator_sounds_count|pluralize }} sound{{ tardy_moderator_sounds_count|pluralize }}</li>
         <li>{{tardy_user_sounds_count}} tardy user{{ tardy_moderator_sounds_count|pluralize }} sound{{ tardy_user_sounds_count|pluralize }}</li>
-        <a href="{% url "tickets-moderation-home" %}">Moderate sounds!</a>
-
     </ul>
 
     <h3>Processing system status</h3>
@@ -36,4 +34,4 @@
         {% endfor %}
         </ul>
     {% endif %}
-{% endblock section_content %}
+{% endblock content %}

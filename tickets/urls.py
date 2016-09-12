@@ -26,12 +26,8 @@ from views import *
 
 urlpatterns = [
 
-    url(r'^$',
-        tickets_home,
-        name='tickets-home'),
-
     url(r'^guide/$',
-        TemplateView.as_view(template_name='tickets/guide.html'),
+        moderation_guide,
         name='tickets-moderation-guide'),
 
     url(r'^moderation/$',
@@ -50,13 +46,13 @@ urlpatterns = [
         moderation_assign_user,
         name='tickets-moderation-assign-user'),
 
-    url(r'^moderation/assign/ticket/(?P<user_id>\d+)/(?P<ticket_id>\d+)/$',
-        moderation_assign_single_ticket,
-        name='tickets-moderation-assign-signle-ticket'),
-
     url(r'^moderation/assigned/(?P<user_id>\d+)/$',
         moderation_assigned,
         name='tickets-moderation-assigned'),
+
+    url(r'^moderation/assign/ticket/(?P<user_id>\d+)/(?P<ticket_id>\d+)/$',
+        moderation_assign_single_ticket,
+        name='tickets-moderation-assign-signle-ticket'),
 
     url(r'^moderation/annotations/(?P<user_id>\d+)/$',
         user_annotations,

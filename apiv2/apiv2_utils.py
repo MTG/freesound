@@ -505,7 +505,7 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
     # 6 create pack if it does not exist
     if 'pack' in sound_fields:
         if sound_fields['pack']:
-            if Pack.objects.filter(name=sound_fields['pack'], user=user).exists():
+            if Pack.objects.filter(name=sound_fields['pack'], user=user).exclude(is_deleted=True).exists():
                 p = Pack.objects.get(name=sound_fields['pack'], user=user)
             else:
                 p, created = Pack.objects.get_or_create(user=user, name=sound_fields['pack'])

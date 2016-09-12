@@ -22,43 +22,40 @@ import hashlib
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from models import Ticket, Queue, LinkedContent
+from models import Ticket, Queue
 from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
-from tickets import TICKET_SOURCE_NEW_SOUND, TICKET_STATUS_NEW
-
+from tickets import TICKET_STATUS_NEW
+from sounds.models import Sound
+import mock
 import sounds
 import tickets
 
 
 class TicketsTest(TestCase):
-    
     fixtures = ['initial_data.json', 'moderation_test_users.json']
-    
+
     def test_new_ticket(self):
         ticket = Ticket()
-        ticket.source = 'contact_form'
         ticket.status = 'new'
         ticket.sender = User.objects.get(username='test_user')
         ticket.queue = Queue.objects.get(name=QUEUE_SUPPORT_REQUESTS)
         ticket.save()
         self.assertEqual(ticket.assignee, None)
-        
-    def test_new_ticket_linked_content(self):
+
+    def test_new_ticket_linked_sound(self):
+        test_user = User.objects.get(username='test_user')
         ticket = Ticket()
-        ticket.source = 'new_sound'
         ticket.status = 'new'
         ticket.sender = User.objects.get(username='test_user')
         ticket.assignee = User.objects.get(username='test_moderator')
         ticket.queue = Queue.objects.get(name=QUEUE_SOUND_MODERATION)
         ticket.save()
-        lc = LinkedContent()
         # just to test, this would be a sound object for example
-        lc.content_object = User.objects.get(username='test_admin')
-        lc.save() 
-        ticket.content = lc
-        ticket.content.save()
-        self.assertEqual(User.objects.get(username='test_admin').id, 
-                         ticket.content.object_id)
+        s = Sound(description='test sound', license_id=1, user=test_user)
+        s.save()
+        ticket.sound = s
+        ticket.save()
+        self.assertEqual(s.id, ticket.sound.id)
 
     def _create_test_sound(self, moderation_state, processing_state, user, filename):
         sound = sounds.models.Sound.objects.create(
@@ -73,11 +70,10 @@ class TicketsTest(TestCase):
     def _create_ticket(self, sound, user):
         ticket = tickets.models.Ticket.objects.create(
                 title='Moderate sound test_sound.wav',
-                source=TICKET_SOURCE_NEW_SOUND,
-                status=TICKET_STATUS_NEW,
                 queue=Queue.objects.get(name='sound moderation'),
+                status=TICKET_STATUS_NEW,
                 sender=user,
-                content=LinkedContent.objects.create(content_object=sound),
+                sound=sound,
         )
         return ticket
 
@@ -109,3 +105,34 @@ class TicketsTest(TestCase):
 
         count = tickets.views.new_sound_tickets_count()
         self.assertEqual(1, count)
+
+    @mock.patch('tickets.models.send_mail_template')
+    def test_send_notification_user(self, send_mail_mock):
+        test_user = User.objects.get(username='test_user')
+        assigned_sound = self._create_test_sound(moderation_state='PE', processing_state='OK',
+                                                 user=test_user, filename='test_sound4.wav')
+        assigned_ticket = self._create_ticket(assigned_sound, test_user)
+        test_moderator = User.objects.get(username='test_moderator')
+        assigned_ticket.assignee = test_moderator
+        assigned_ticket.save()
+
+
+        assigned_ticket.send_notification_emails(
+                tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
+                tickets.models.Ticket.USER_ONLY)
+
+        local_vars = {
+                'send_to': [],
+                'ticket': assigned_ticket,
+                'self': assigned_ticket,
+                'user_to': assigned_ticket.sender,
+                'email_to': assigned_ticket.sender.email,
+                'notification_type': tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
+                'sender_moderator': tickets.models.Ticket.USER_ONLY
+                }
+        send_mail_mock.assert_called_once_with(
+                u'A freesound moderator handled your upload.',
+                tickets.models.Ticket.NOTIFICATION_APPROVED_BUT,
+                local_vars,
+                'noreply@freesound.org',
+                 assigned_ticket.sender.email)

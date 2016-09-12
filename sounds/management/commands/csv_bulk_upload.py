@@ -116,7 +116,7 @@ class Command(BaseCommand):
 
             # 6 create pack if it does not exist
             if packnamef:
-                if Pack.objects.filter(name=packnamef, user=u).exists():
+                if Pack.objects.filter(name=packnamef, user=u).exclude(is_deleted=True).exists():
                     p = Pack.objects.get(name=packnamef, user=u)
                 else:
                     p, created = Pack.objects.get_or_create(user=u, name=packnamef)

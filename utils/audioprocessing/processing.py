@@ -20,6 +20,7 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
 from PIL import Image, ImageDraw, ImageColor #@UnresolvedImport
 from functools import partial
 import math
@@ -28,7 +29,6 @@ import os
 import re
 import signal
 from . import get_sound_type
-from __future__ import print_function
 
 try:
     import scikits.audiolab as audiolab

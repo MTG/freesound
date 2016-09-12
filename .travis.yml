@@ -19,8 +19,9 @@ install:
 - pip install django-nose
 - pip install -r requirements.txt
 script:
-- python manage.py test --noinput --settings=freesound.test_settings follow accounts utils sounds
+- python manage.py test --noinput --settings=freesound.test_settings follow accounts
+  utils sounds
 notifications:
   hipchat:
     rooms:
-      secure: YqzhsLwXYT9Q28Lx6IOOkBooSN5dcaRQtnsVrvSYzsyo5UcN/OeLeO9F2lNow4MmNn0d6zfYkG4OIgJsqGZ2MT5m1Wf0Sxm01b9dhx2sIVwHAGU2PvhwtNT9eznuDnnILzG1rZhDbAm6LiceagzJms+B9vuAXAED7n9Rlw8D13vjNfgEm88x7oyFZCaLK7P+GwSTDh9qkwZxxzhQN3zjHGsFih4+dqDbUPljln6s6cXp8PoF53afQnAmktZjFPkJbsC3UMRjeMocPobxvPIptCcOA3ZCk04QnXYIa+5N+HEQ5BFJ45WIdgbp2m2vkpW0Xdk2ephfQlExWdzzVFYNwGSonRclP8w2vDRQo9zNDktAVoM06g2hVT00D6gKlTWbmeuyR+oUaKVY/sM7m9hE6xNqqBllpmg56IAR+qYfu9I0I260RjLFYYEZHsklsy5ZyWTA5SUJOhCB2rWC1LgLL0qaCLZgEaUZYi2O7hZh8Fyf1oMB4mfmRgV5g2vgZjKjkgB5Ukn1zwECnkd74e3U/ldBZb3KdoLWU8tedFp7ouUAhDCYWZMeHV6U2WaW96QAG4x0vauUtD7CNkK62oz/C0HRbnkDhABOVCMAxMV0XlKL5tcE22cWnXuYXUKD/5n9trww7c26YFxZ1zQPNxqcGU/rQ4bml0Cb/7LzisOL0nE=
+      secure: Ve8Xt4Y+lhhnuyJQbp7u7RyzjMs/7U97fAM+lh/FtEEhQrR8DmxA75dXoy4yS1wvijY8Ob/AQEAtbU1LRdaqPUNetu+KL2ip6mTlb+BIGK3EzZh8iCXVZRZFjkEs9uLsUFYS38GdmALvUtYRKCXsATvvznvp22z3x0FRkGkL+b4=

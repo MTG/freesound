@@ -31,6 +31,8 @@ class APILogsFilter(logging.Filter):
         message = record.getMessage().encode('utf8')
         try:
             (message, data, info) = message.split(' #!# ')
+            if ':' in message:
+                message = ' '.join([item.split(':')[0] for item in message.split(' ')])
             record.api_resource = message
             for key, value in json.loads(info).items():
                 setattr(record, key, value)

@@ -1,0 +1,26 @@
+language: python
+services:
+- postgresql
+python:
+- '2.7'
+before_install:
+- sudo apt-get install libarchive-zip-perl
+- psql -c 'create database freesound;' -U postgres
+- cp freesound/local_settings.example.py freesound/local_settings.py
+- cp freesound/logger.example.py freesound/logger.py
+- cp similarity/similarity_settings.example.py similarity/similarity_settings.py
+- cp tagrecommendation/tagrecommendation_settings.example.py tagrecommendation/tagrecommendation_settings.py
+- sed -i 's$/path/to/django/debug.log$debug.log$' freesound/logger.py
+- sed -i 's$^DISPLAY_DEBUG_TOOLBAR.*$DISPLAY_DEBUG_TOOLBAR = False$' freesound/local_settings.py
+- mkdir -p ../freesound-data/packs
+- mkdir -p ../freesound-data/uploads
+- mkdir -p ../freesound-data/avatars
+install:
+- pip install django-nose
+- pip install -r requirements.txt
+script:
+- python manage.py test --noinput --settings=freesound.test_settings follow accounts utils sounds
+notifications:
+  hipchat:
+    rooms:
+      secure: YqzhsLwXYT9Q28Lx6IOOkBooSN5dcaRQtnsVrvSYzsyo5UcN/OeLeO9F2lNow4MmNn0d6zfYkG4OIgJsqGZ2MT5m1Wf0Sxm01b9dhx2sIVwHAGU2PvhwtNT9eznuDnnILzG1rZhDbAm6LiceagzJms+B9vuAXAED7n9Rlw8D13vjNfgEm88x7oyFZCaLK7P+GwSTDh9qkwZxxzhQN3zjHGsFih4+dqDbUPljln6s6cXp8PoF53afQnAmktZjFPkJbsC3UMRjeMocPobxvPIptCcOA3ZCk04QnXYIa+5N+HEQ5BFJ45WIdgbp2m2vkpW0Xdk2ephfQlExWdzzVFYNwGSonRclP8w2vDRQo9zNDktAVoM06g2hVT00D6gKlTWbmeuyR+oUaKVY/sM7m9hE6xNqqBllpmg56IAR+qYfu9I0I260RjLFYYEZHsklsy5ZyWTA5SUJOhCB2rWC1LgLL0qaCLZgEaUZYi2O7hZh8Fyf1oMB4mfmRgV5g2vgZjKjkgB5Ukn1zwECnkd74e3U/ldBZb3KdoLWU8tedFp7ouUAhDCYWZMeHV6U2WaW96QAG4x0vauUtD7CNkK62oz/C0HRbnkDhABOVCMAxMV0XlKL5tcE22cWnXuYXUKD/5n9trww7c26YFxZ1zQPNxqcGU/rQ4bml0Cb/7LzisOL0nE=

@@ -288,7 +288,7 @@ class EmailResetForm(forms.Form):
         if not self.user.check_password(self.cleaned_data["password"]):
             raise forms.ValidationError(_("Incorrect password."))
 
-DELETE_CHOICES = [('only_user', u'Delete only my user account information :)'),
+DELETE_CHOICES = [('only_user', mark_safe(u'Delete only my user account information :)  (see <a href="/help/faq/#how-do-i-delete-myself-from-your-site" target="_blank">here</a> for more information)')),
                   ('delete_sounds', u'Delete also my sounds and packs :(')]
 
 class DeleteUserForm(forms.Form):

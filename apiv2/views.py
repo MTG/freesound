@@ -644,7 +644,7 @@ class PackSounds(ListAPIView):
 
     def get_queryset(self):
         try:
-            Pack.objects.get(id=self.kwargs['pk']).exclude(is_deleted=True)
+            Pack.objects.get(id=self.kwargs['pk'], is_deleted=False)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 

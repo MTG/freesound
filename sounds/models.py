@@ -722,8 +722,7 @@ def on_delete_sound(sender, instance, **kwargs):
         for comment in data['comments']:
             comment['created'] = str(comment['created'])
         if instance.geotag:
-            for geotag in data['geotag']:
-                geotag['created'] = str(geotag['created'])
+            geotag['created'] = str(geotag['created'])
         ds.data = data
         ds.save()
 

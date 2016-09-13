@@ -37,6 +37,10 @@ AKISMET_KEY = ''
 GOOGLE_API_KEY = ''
 GOOGLE_ANALYTICS_KEY = ''
 
+USE_ZENDESK_FOR_SUPPORT_REQUESTS = False
+ZENDESK_EMAIL = ''
+ZENDESK_TOKEN = ''
+
 SOLR_URL = "http://localhost:8983/solr/fs2/"
 SOLR_FORUM_URL = "http://localhost:8983/solr/forum/"
 

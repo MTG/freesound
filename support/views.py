@@ -19,16 +19,74 @@
 #
 
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.conf import settings
 from support.forms import ContactForm
 from utils.mail import send_mail_template
+from zenpy import Zenpy
+from zenpy.lib import api_objects as zendesk_api
+from comments.models import Comment
+
+
+def send_to_zendesk(email, subject, description, user=None):
+    zenpy = Zenpy(
+        email=settings.ZENDESK_EMAIL,
+        token=settings.ZENDESK_TOKEN,
+        subdomain='freesound'
+    )
+
+    if not user:
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            pass
+
+    requester = zendesk_api.User(email=email)
+    custom_fields = []
+
+    if user:
+        is_active = user.is_active
+        date_joined = user.date_joined
+        last_login = user.last_login
+        profile = user.profile
+        num_sounds = profile.num_sounds
+        num_posts = profile.num_posts
+        num_comments = Comment.objects.filter(user=user).count()
+
+        custom_fields = [
+            zendesk_api.CustomField(id=30294425, value=is_active),
+            zendesk_api.CustomField(id=30294725, value=date_joined),
+            zendesk_api.CustomField(id=30153569, value=last_login),
+            zendesk_api.CustomField(id=30295025, value=num_sounds),
+            zendesk_api.CustomField(id=30295045, value=num_posts),
+            zendesk_api.CustomField(id=30153729, value=num_comments),
+        ]
+
+        user_url = "https://%s%s" % (
+            Site.objects.get_current().domain,
+            reverse('account', args=[user.username])
+        )
+
+        description += "\n\n-- \n%s" % user_url
+
+        requester.name = user.username
+
+    ticket = zendesk_api.Ticket(
+        requester=requester,
+        subject=subject,
+        description=description,
+        custom_fields=custom_fields
+    )
+
+    zenpy.tickets.create(ticket)
 
 
 def contact(request):
-    email_sent = False
+    request_sent = False
     user = None
-    
+
     if request.user.is_authenticated():
         user = request.user 
 
@@ -36,21 +94,24 @@ def contact(request):
         form = ContactForm(request.POST)
         if form.is_valid():
             subject = u"[support] " + form.cleaned_data['subject']
-            email_from = settings.DEFAULT_FROM_EMAIL
             message = form.cleaned_data['message']
-            # append some useful admin information to the email:
+            # Try to get user information
             if not user:
                 try:
                     user = User.objects.get(email__iexact=form.cleaned_data['your_email'])
                 except User.DoesNotExist:
                     pass
-            send_mail_template(subject, "support/email_support.txt", locals(), email_from,
-                               reply_to=form.cleaned_data['your_email'])
-            email_sent = True
+
+            if getattr(settings, 'USE_ZENDESK_FOR_SUPPORT_REQUESTS', False):
+                send_to_zendesk(form.cleaned_data['your_email'], subject, message, user=user)
+            else:
+                send_mail_template(subject, "support/email_support.txt", locals(), settings.DEFAULT_FROM_EMAIL,
+                                   reply_to=form.cleaned_data['your_email'])
+            request_sent = True
     else:
         if user:
             form = ContactForm(initial={"your_email": user.email})
         else:
             form = ContactForm()
-    tvars = {'form': form, 'email_sent': email_sent}
+    tvars = {'form': form, 'request_sent': request_sent}
     return render(request, 'support/contact.html', tvars)

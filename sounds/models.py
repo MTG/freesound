@@ -671,10 +671,12 @@ class Sound(SocialModel):
     class Meta(SocialModel.Meta):
         ordering = ("-created", )
 
+
 class DeletedSound(models.Model):
     user = models.ForeignKey(User)
     sound_id = models.IntegerField(default=0, db_index=True)
     data = JSONField()
+
 
 def on_delete_sound(sender, instance, **kwargs):
     if instance.moderation_state == "OK" and instance.processing_state == "OK":
@@ -711,11 +713,16 @@ def on_delete_sound(sender, instance, **kwargs):
         data['created'] = str(data['created'])
         data['moderation_date'] = str(data['moderation_date'])
         data['processing_date'] = str(data['processing_date'])
+        data['date_recorded'] = str(data['date_recorded'])  # This field is not used
         if instance.pack:
             data['pack']['created'] = str(data['pack']['created'])
             data['pack']['last_updated'] = str(data['pack']['last_updated'])
         for tag in data['tags']:
             tag['created'] = str(tag['created'])
+        for comment in data['comments']:
+            comment['created'] = str(comment['created'])
+        for geotag in data['geotag']:
+            geotag['created'] = str(geotag['created'])
         ds.data = data
         ds.save()
 

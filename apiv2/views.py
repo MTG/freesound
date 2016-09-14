@@ -666,7 +666,7 @@ class DownloadPack(DownloadAPIView):
         pack_id = kwargs['pk']
         logger.info(self.log_message('pack:%i download' % (int(pack_id))))
         try:
-            pack = Pack.objects.get(id=pack_id).exclude(is_deleted=True)
+            pack = Pack.objects.get(id=pack_id, is_deleted=False)
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 

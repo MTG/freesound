@@ -30,20 +30,20 @@ from zenpy.lib import api_objects as zendesk_api
 from comments.models import Comment
 
 
-def send_to_zendesk(email, subject, description, user=None):
+def send_to_zendesk(request_email, subject, message, user=None):
     zenpy = Zenpy(
         email=settings.ZENDESK_EMAIL,
         token=settings.ZENDESK_TOKEN,
         subdomain='freesound'
     )
 
-    if not user:
+    if user is None:
         try:
-            user = User.objects.get(email__iexact=email)
+            user = User.objects.get(email__iexact=request_email)
         except User.DoesNotExist:
             pass
 
-    requester = zendesk_api.User(email=email)
+    requester = zendesk_api.User(email=request_email)
     custom_fields = []
 
     if user:
@@ -69,18 +69,29 @@ def send_to_zendesk(email, subject, description, user=None):
             reverse('account', args=[user.username])
         )
 
-        description += "\n\n-- \n%s" % user_url
+        message += "\n\n-- \n%s" % user_url
 
         requester.name = user.username
 
     ticket = zendesk_api.Ticket(
         requester=requester,
         subject=subject,
-        description=description,
+        description=message,
         custom_fields=custom_fields
     )
 
     zenpy.tickets.create(ticket)
+
+
+def send_email_to_support(request_email, subject, message, user=None):
+    if user is None:
+        try:
+            user = User.objects.get(email__iexact=request_email)
+        except User.DoesNotExist:
+            pass
+
+    send_mail_template(u"[support] " + subject, "support/email_support.txt", {'message': message, 'user': user},
+                       settings.DEFAULT_FROM_EMAIL, reply_to=request_email)
 
 
 def contact(request):
@@ -93,20 +104,12 @@ def contact(request):
     if request.POST:
         form = ContactForm(request.POST)
         if form.is_valid():
-            subject = u"[support] " + form.cleaned_data['subject']
+            subject = form.cleaned_data['subject']
             message = form.cleaned_data['message']
-            # Try to get user information
-            if not user:
-                try:
-                    user = User.objects.get(email__iexact=form.cleaned_data['your_email'])
-                except User.DoesNotExist:
-                    pass
-
             if getattr(settings, 'USE_ZENDESK_FOR_SUPPORT_REQUESTS', False):
-                send_to_zendesk(form.cleaned_data['your_email'], subject, message, user=user)
+                send_to_zendesk(form.cleaned_data['your_email'], subject, message)
             else:
-                send_mail_template(subject, "support/email_support.txt", locals(), settings.DEFAULT_FROM_EMAIL,
-                                   reply_to=form.cleaned_data['your_email'])
+                send_email_to_support(form.cleaned_data['your_email'], subject, message)
             request_sent = True
     else:
         if user:

@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     'utils',  # So that we also run utils tests
     'monitor',
     'raven.contrib.django.raven_compat',
+    'django_object_actions',
     #'test_utils', # Don't use this in production!
 )
 

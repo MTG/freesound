@@ -24,20 +24,24 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from accounts.models import Profile, UserFlag
+from django_object_actions import DjangoObjectActions
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
+from django.contrib import messages
 
 
 def disable_active_user(modeladmin, request, queryset):
     for user in queryset:
         user.profile.delete_user()
 
-disable_active_user.short_description = "Disable selected users, preserve posts, threads and comments"
+disable_active_user.short_description = "'Soft' delete selected users, preserve posts, threads and comments (delete sounds)"
 
 
 def disable_active_user_preserve_sounds(modeladmin, request, queryset):
     for user in queryset:
         user.profile.delete_user(remove_sounds=True)
 
-disable_active_user_preserve_sounds.short_description = "Disable selected users, preserve all their content"
+disable_active_user_preserve_sounds.short_description = "'Soft' delete selected users, preserve sounds and everything else"
 
 
 class ProfileAdmin(admin.ModelAdmin):
@@ -57,13 +61,40 @@ class UserFlagAdmin(admin.ModelAdmin):
 admin.site.register(UserFlag, UserFlagAdmin)
 
 
-class FreesoundUserAdmin(UserAdmin):
+class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     search_fields = ('username', 'email')
     actions = (disable_active_user, disable_active_user_preserve_sounds, )
     list_display = ('username', 'email')
     list_filter = ()
     ordering = ('id', )
 
+    def full_delete(self, request, obj):
+        # For now just redirect to default admin delete action
+        return HttpResponseRedirect(reverse('admin:auth_user_delete', args=[obj.id]))
+    full_delete.label = "Full delete user"
+    full_delete.short_description = 'Completely delete user from db'
+
+    def delete_include_sounds(self, request, obj):
+        username = obj.username
+        obj.profile.delete_user(remove_sounds=True)
+        messages.add_message(request, messages.INFO,
+                             'Soft deleted user \'%s\' including her sounds. Comments and other content '
+                             'will appear under \'%s\' account' % (username, obj.username))
+        return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+    delete_include_sounds.label = "Soft delete user (delete sounds)"
+    delete_include_sounds.short_description = disable_active_user.short_description
+
+    def delete_preserve_sounds(self, request, obj):
+        username = obj.username
+        obj.profile.delete_user(remove_sounds=False)
+        messages.add_message(request, messages.INFO,
+                             'Soft deleted user \'%s\' but preserved her sounds under \'%s\' account'
+                             % (username, obj.username))
+        return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+    delete_preserve_sounds.label = "Soft delete user (preserve sounds)"
+    delete_preserve_sounds.short_description = disable_active_user_preserve_sounds.short_description
+
+    change_actions = ('full_delete', 'delete_include_sounds', 'delete_preserve_sounds', )
+
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
-

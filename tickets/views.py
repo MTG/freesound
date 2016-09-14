@@ -422,10 +422,10 @@ def moderation_assigned(request, user_id):
 
                 users = set(tickets.values_list('sender__username', flat=True))
                 messages.add_message(request, messages.INFO,
-                    """%s has been whitelisted but some of their tickets might
+                    """User(s) %s has/have been whitelisted. Some of tickets might
                     still appear on this list for some time. Please reload the
                     page in a few seconds to see the updated list of pending
-                    tickets""" % ",".join(users))
+                    tickets""" % ", ".join(users))
 
             users_to_update = set()
             packs_to_update = set()

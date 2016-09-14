@@ -74,8 +74,7 @@ class Command(BaseCommand):
                 whitelist_user.profile.save()
                 self.write_stdout("User %s whitelisted" % whitelist_user.username)
 
-                pending_tickets = Ticket.objects.filter(sender=whitelist_user,
-                                                        source='new sound') \
+                pending_tickets = Ticket.objects.filter(sender=whitelist_user)\
                                                 .exclude(status=TICKET_STATUS_CLOSED)
                 # Set all sounds to OK and the tickets to closed
                 for pending_ticket in pending_tickets:

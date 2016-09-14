@@ -772,7 +772,7 @@ class Pack(SocialModel):
     last_updated = models.DateTimeField(db_index=True, auto_now_add=True)
     num_downloads = models.PositiveIntegerField(default=0)  # Updated via db trigger
     num_sounds = models.PositiveIntegerField(default=0)  # Updated via django Pack.process() method
-    is_deleted = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(db_index=True, default=False)
 
     objects = PackManager()
 

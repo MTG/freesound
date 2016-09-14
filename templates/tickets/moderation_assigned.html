@@ -198,9 +198,10 @@
             {% if not moderator_tickets_count %}
                 <p>You've finished all the sounds in your queue.
                 <p>Back to <a href="{% url "tickets-moderation-home" %}">moderation home</a>
+            {% else %}
+                <a id="select-all">select all</a>
+                <span id="select-all-same-user-wrapper">| <a id="select-all-same-user">select other sounds from same user</a></span>
             {% endif %}
-            <a id="select-all">select all</a>
-            <span id="select-all-same-user-wrapper">| <a id="select-all-same-user">select other sounds from same user</a></span>
             <div id="assigned-tickets-table-wrapper">
                 <table id="assigned-tickets-table">
                 {% for ticket in page.object_list %}

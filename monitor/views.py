@@ -21,6 +21,9 @@
 from django.shortcuts import render
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import redirect
+from sounds.models import Sound
 import gearman
 import tickets.views
 import sounds.views
@@ -66,3 +69,21 @@ def monitor_home(request):
     return render(request, 'monitor/monitor.html', tvars)
 
 
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def process_sounds(request, processing_status):
+
+    sounds_to_process = None
+    if processing_status == "FA":
+        sounds_to_process = Sound.objects.filter(processing_state='FA')
+    elif processing_status == "PE":
+        sounds_to_process = Sound.objects.filter(processing_state='PE')
+
+    # Remove sounds from the list that are already in the queue or are being processed right now
+    if sounds_to_process:
+        sounds_to_process = sounds_to_process.exclude(processing_ongoing_state='PR')\
+            .exclude(processing_ongoing_state='QU')
+        for sound in sounds_to_process:
+            sound.process()
+
+    return redirect("monitor-home")

@@ -27,4 +27,8 @@ urlpatterns = [
         monitor_home,
         name='monitor-home'),
 
+    url(r'^processing/process_sounds/(?P<processing_status>[\w\d]+)/$',
+        process_sounds,
+        name='monitor-processing-process'),
+
 ]

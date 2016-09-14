@@ -569,23 +569,3 @@ def pending_tickets_per_user(request, username):
     tvars.update(paginated)
 
     return render(request, 'accounts/pending.html', tvars)
-
-
-@login_required
-@user_passes_test(lambda u: u.is_staff, login_url='/')
-def process_sounds(request, processing_status):
-
-    sounds_to_process = None
-    if processing_status == "FA":
-        sounds_to_process = Sound.objects.filter(processing_state='FA')
-    elif processing_status == "PE":
-        sounds_to_process = Sound.objects.filter(processing_state='PE')
-
-    # Remove sounds from the list that are already in the queue or are being processed right now
-    if sounds_to_process:
-        sounds_to_process = sounds_to_process.exclude(processing_ongoing_state='PR')\
-            .exclude(processing_ongoing_state='QU')
-        for sound in sounds_to_process:
-            sound.process()
-
-    return redirect("tickets-home")

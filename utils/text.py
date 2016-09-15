@@ -229,6 +229,10 @@ def remove_control_chars(text):
 
 def text_may_be_spam(text):
     """
+    >>> text_may_be_spam(u'')
+    False
+    >>> text_may_be_spam(u'  ')
+    False
     >>> text_may_be_spam(u'this is the content of a blog post')
     False
     >>> text_may_be_spam(u'this post contains an http:// link')
@@ -258,6 +262,10 @@ def text_may_be_spam(text):
     >>> text_may_be_spam(u'fbdad8')
     True
     """
+
+    # If empty text
+    if text.strip() == '':
+        return False
 
     # If link in text
     if "http://" in text or "https://" in text:

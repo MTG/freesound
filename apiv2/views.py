@@ -47,6 +47,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.core.urlresolvers import reverse
 try:
@@ -58,6 +59,8 @@ from django.conf import settings
 import logging
 import datetime
 import os
+import zipfile
+import StringIO
 
 logger = logging.getLogger("api")
 #logger_error = logging.getLogger("api_errors")
@@ -670,26 +673,26 @@ class DownloadPack(DownloadAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        sounds = pack.sound_set.filter(processing_state="OK", moderation_state="OK")
-        if not sounds:
+        pack_sounds = pack.sound_set.filter(processing_state="OK", moderation_state="OK")
+        if not pack_sounds:
             raise NotFoundException(msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
 
-        try:
-            filelist = "%s %i %s %s\r\n" % (pack.license_crc,
-                                            os.stat(pack.locations('license_path')).st_size,
-                                            pack.locations('license_url'),
-                                            "_readme_and_license.txt")
-        except:
-            raise ServerErrorException(resource=self)
+        # Generate text file with license info
+        licenses = License.objects.all()
+        attribution = render_to_string("sounds/pack_attribution.txt",
+            dict(pack=pack, licenses=licenses, sound_list=pack_sounds))
 
-        for sound in sounds:
-            url = sound.locations("sendfile_url")
+        # Create zip file and put all the files inside on the fly
+        s = StringIO.StringIO()
+        zf = zipfile.ZipFile(s, "w")
+        zf.writestr("_readme_and_license.txt", attribution.encode("UTF-8"))
+        for sound in pack_sounds:
+            path = sound.locations("path")
             name = sound.friendly_filename()
-            if sound.crc == '':
-                continue
-            filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
-        response = HttpResponse(filelist, content_type="text/plain")
-        response['X-Archive-Files'] = 'zip'
+            zf.write(path, name)
+        zf.close()
+        response = HttpResponse(s.getvalue(), content_type="application/x-zip-compressed")
+        response['Content-Disposition'] = 'attachment; filename=%s' % pack.friendly_filename()
         return response
 
 

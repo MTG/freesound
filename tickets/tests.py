@@ -22,6 +22,7 @@ import hashlib
 
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.core.urlresolvers import reverse
 from models import Ticket, Queue
 from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
 from tickets import TICKET_STATUS_NEW
@@ -136,3 +137,19 @@ class TicketsTest(TestCase):
                 local_vars,
                 'noreply@freesound.org',
                  assigned_ticket.sender.email)
+
+    def test_delete_ticket(self):
+        test_user = User.objects.get(username='test_user')
+        test_moderator = User.objects.get(username='test_moderator')
+        sound = self._create_test_sound(moderation_state='PE', processing_state='OK',
+                                        user=test_user, filename='test_sound1.wav')
+        ticket = self._create_ticket(sound, test_user)
+
+        self.client.login(username=test_moderator.username, password='123456')
+        resp = self.client.post(reverse('tickets-moderation-assigned', args=[test_moderator.id]),
+                                {
+                                    'action': u'Delete',
+                                    'message': u'',
+                                    'ticket': ticket.id
+                                })
+        self.assertEqual(resp.status_code, 200)

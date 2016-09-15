@@ -24,10 +24,10 @@ from support.views import send_email_to_support, create_zendesk_ticket
 from zenpy.lib.api import serialize
 
 
-
 class SupportRequestsTest(TestCase):
     fixtures = ['initial_data.json', 'moderation_test_users.json']
 
+    @override_settings(SUPPORT=(('Name', 'email@freesound.org'),))
     def test_send_support_request_email(self):
         subject = 'test subject'
         message = 'test message'
@@ -42,8 +42,7 @@ class SupportRequestsTest(TestCase):
         send_email_to_support(request_email, subject, message)
         self.assert_(True)  # This call is not really needed, but makes sense to me
 
-    @override_settings(ZENDESK_TOKEN='')  # We don't want test to send real requests
-    def test_send_support_request_zendesk(self):
+    def test_create_zendesk_ticket(self):
         subject = 'test subject'
         message = 'test message'
 

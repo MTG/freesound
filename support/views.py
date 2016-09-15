@@ -30,13 +30,7 @@ from zenpy.lib import api_objects as zendesk_api
 from comments.models import Comment
 
 
-def send_to_zendesk(request_email, subject, message, user=None):
-    zenpy = Zenpy(
-        email=settings.ZENDESK_EMAIL,
-        token=settings.ZENDESK_TOKEN,
-        subdomain='freesound'
-    )
-
+def create_zendesk_ticket(request_email, subject, message, user=None):
     if user is None:
         try:
             user = User.objects.get(email__iexact=request_email)
@@ -44,6 +38,7 @@ def send_to_zendesk(request_email, subject, message, user=None):
             pass
 
     requester = zendesk_api.User(email=request_email)
+    requester.name = 'Unknown username'
     custom_fields = []
 
     if user:
@@ -73,13 +68,21 @@ def send_to_zendesk(request_email, subject, message, user=None):
 
         requester.name = user.username
 
-    ticket = zendesk_api.Ticket(
+    return zendesk_api.Ticket(
         requester=requester,
         subject=subject,
         description=message,
         custom_fields=custom_fields
     )
 
+
+def send_to_zendesk(request_email, subject, message, user=None):
+    ticket = create_zendesk_ticket(request_email, subject, message, user)
+    zenpy = Zenpy(
+        email=settings.ZENDESK_EMAIL,
+        token=settings.ZENDESK_TOKEN,
+        subdomain='freesound'
+    )
     zenpy.tickets.create(ticket)
 
 

@@ -19,8 +19,7 @@ install:
 - pip install django-nose
 - pip install -r requirements.txt
 script:
-- python manage.py test --noinput --settings=freesound.test_settings follow accounts
-  utils sounds
+- python manage.py test --noinput --settings=freesound.test_settings follow accounts apiv2 tickets support utils sounds
 notifications:
   hipchat:
     rooms:

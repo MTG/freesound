@@ -385,6 +385,9 @@ def moderation_assigned(request, user_id):
             action = mod_sound_form.cleaned_data.get("action")
 
             notification = None
+            users_to_update = set()
+            packs_to_update = set()
+
             if action == "Approve":
                 tickets.update(status=TICKET_STATUS_CLOSED)
                 Sound.objects.filter(ticket__in=tickets).update(
@@ -410,6 +413,13 @@ def moderation_assigned(request, user_id):
             elif action == "Delete":
                 # to prevent a crash if the form is resubmitted
                 tickets.update(status=TICKET_STATUS_CLOSED)
+                # if tickets are being deleted we have to fill users_to_update
+                # and sounds_to_update before we delete the sounds and they dissapear
+                # from the ticket (thus losing reference)
+                for ticket in tickets:
+                    users_to_update.add(ticket.sound.user.profile)
+                    if ticket.sound.pack:
+                        packs_to_update.add(ticket.sound.pack)
                 Sound.objects.filter(ticket__in=tickets).delete()
                 notification = Ticket.NOTIFICATION_DELETED
 
@@ -427,16 +437,16 @@ def moderation_assigned(request, user_id):
                     page in a few seconds to see the updated list of pending
                     tickets""" % ", ".join(users))
 
-            users_to_update = set()
-            packs_to_update = set()
             for ticket in tickets:
-                users_to_update.add(ticket.sound.user.profile)
-                if ticket.sound.pack:
-                    packs_to_update.add(ticket.sound.pack)
+                if action != "Delete":
+                    # We only fill here users_to_update and packs_to_update if action is not
+                    # "Delete". See comment in "Delete" action case some lines above
+                    users_to_update.add(ticket.sound.user.profile)
+                    if ticket.sound.pack:
+                        packs_to_update.add(ticket.sound.pack)
                 invalidate_template_cache("user_header", ticket.sender.id)
                 invalidate_all_moderators_header_cache()
-                moderator_only = msg_form.cleaned_data.get("moderator_only", \
-                        False)
+                moderator_only = msg_form.cleaned_data.get("moderator_only", False)
 
                 if msg:
                     tc = TicketComment(sender=ticket.assignee,
@@ -447,8 +457,7 @@ def moderation_assigned(request, user_id):
 
                 # Send emails
                 if notification:
-                    ticket.send_notification_emails(notification, \
-                            Ticket.USER_ONLY)
+                    ticket.send_notification_emails(notification, Ticket.USER_ONLY)
 
             # Update number of sounds for each user
             for profile in users_to_update:

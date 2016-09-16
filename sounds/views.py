@@ -43,6 +43,7 @@ from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
+from utils.downloads import download_sounds
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
@@ -283,19 +284,10 @@ def pack_download(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
+
     Download.objects.get_or_create(user=request.user, pack=pack)
-    filelist = "%s %i %s %s\r\n" % (pack.license_crc,
-                                    os.stat(pack.locations('license_path')).st_size,
-                                    pack.locations('license_url'), "_readme_and_license.txt")
-    for sound in pack.sound_set.filter(processing_state="OK", moderation_state="OK"):
-        url = sound.locations("sendfile_url")
-        name = sound.friendly_filename()
-        if sound.crc == '':
-            continue
-        filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
-    response = HttpResponse(filelist, content_type="text/plain")
-    response['X-Archive-Files'] = 'zip'
-    return response
+    pack_sounds = pack.sound_set.filter(processing_state="OK", moderation_state="OK")
+    return download_sounds(pack_sounds, reverse('pack', args=[username, pack.id]))
 
 
 @login_required
@@ -604,8 +596,6 @@ def pack(request, username, pack_id):
             pack.save()
         else:
             pass
-
-    file_exists = os.path.exists(pack.locations("license_path"))
 
     return render_to_response('sounds/pack.html', locals(), context_instance=RequestContext(request))
 

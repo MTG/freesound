@@ -80,12 +80,14 @@
         
         // Checkbox select or unselect event
         $(".ticket-check").change(function(evt){
+            stopAll(); // stop all sounds, defined in player.js
             updateSelectedTickets();
             return false;
         });
 
         // Click on ticket at list
         $(".ticket-select").click(function(){
+            stopAll(); // stop all sounds, defined in player.js
             $('.ticket-check').attr('checked', false);
             var checked = $('#row_'+$(this).data('id')).find('.ticket-check');
             checked.attr('checked', true);

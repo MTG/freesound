@@ -674,22 +674,23 @@ class Sound(SocialModel):
 
 class DeletedSound(models.Model):
     user = models.ForeignKey(User)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     sound_id = models.IntegerField(default=0, db_index=True)
     data = JSONField()
 
 
 def on_delete_sound(sender, instance, **kwargs):
     if instance.moderation_state == "OK" and instance.processing_state == "OK":
-        ds, create = DeletedSound.objects.get_or_create(sound_id=instance.id,
-                user=instance.user, defaults={'data': {}})
+        ds, create = DeletedSound.objects.get_or_create(
+            sound_id=instance.id,
+            user=instance.user,
+            defaults={'data': {}})
 
         # Copy relevant data to DeletedSound for future research
         # Note: we do not store information about individual downloads and ratings, we only
         # store count and average (for ratings). We do not store at all information about bookmarks.
 
-
         data = Sound.objects.filter(pk=instance.pk).values()[0]
-
         pack = None
         if instance.pack:
             pack = Pack.objects.filter(pk=instance.pack.pk).values()[0]

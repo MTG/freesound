@@ -639,9 +639,10 @@ class Sound(SocialModel):
     def unlink_moderation_ticket(self):
         # If sound has an assigned ticket, set its content to None and status to closed
         try:
-            self.ticket.sound = None
-            self.ticket.status = TICKET_STATUS_CLOSED
-            self.ticket.save()
+            ticket = self.ticket
+            ticket.status = TICKET_STATUS_CLOSED
+            ticket.sound = None
+            ticket.save()
         except Ticket.DoesNotExist:
             pass
 

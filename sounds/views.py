@@ -641,10 +641,8 @@ def delete(request, username, sound_id):
         raise PermissionDenied
 
     encrypted_string = request.GET.get("sound", None)
-
     waited_too_long = False
-
-    if encrypted_string != None:
+    if encrypted_string is not None:
         sound_id, now = decrypt(encrypted_string).split("\t")
         sound_id = int(sound_id)
         link_generated_time = float(now)
@@ -654,14 +652,18 @@ def delete(request, username, sound_id):
 
         if abs(time.time() - link_generated_time) < 10:
             logger.debug("User %s requested to delete sound %s" % (request.user.username,sound_id))
+            ticket = sound.ticket
             sound.delete()
+            tc = TicketComment(sender=request.user,
+                               text="User %s deleted the sound" % request.user,
+                               ticket=ticket,
+                               moderator_only=False)
+            tc.save()
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
             waited_too_long = True
 
-
     encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time()))
-
     return render_to_response('sounds/delete.html', locals(), context_instance=RequestContext(request))
 
 
@@ -745,6 +747,7 @@ def embed_iframe(request, sound_id, player_size):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
     username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
     return render_to_response('sounds/sound_iframe.html', locals(), context_instance=RequestContext(request))
+
 
 def downloaders(request, username, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)

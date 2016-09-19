@@ -19,6 +19,7 @@
 #
 
 import os
+import zlib
 import tempfile
 import subprocess
 
@@ -30,6 +31,11 @@ from sounds.models import License
 
 
 def download_sounds(sounds_list, sounds_url=None):
+    """
+    From a list of sounds generates the HttpResponse with the information of
+    the wav files of the sonds and a text file with the license. This response
+    is handled by mod_zipfile of nginx to generate a zip file with the content.
+    """
     users = User.objects.filter(sounds__in=sounds_list).distinct()
     # Generate text file with license info
     licenses = License.objects.all()
@@ -43,9 +49,9 @@ def download_sounds(sounds_list, sounds_url=None):
     tmpf.write(attribution.encode("UTF-8"))
     tmpf.close()
 
-    p = subprocess.Popen(["crc32", tmpf.name], stdout=subprocess.PIPE)
-    license_crc = p.communicate()[0].split(" ")[0][:-1]
-    filelist = "%s %i %s %s\r\n" % (license_crc,
+    license_crc = zlib.crc32(attribution.encode('UTF-8')) & 0xffffffff
+
+    filelist = "%02x %i %s %s\r\n" % (license_crc,
                                     os.stat(tmpf.name).st_size,
                                     tmpf.name, "_readme_and_license.txt")
 

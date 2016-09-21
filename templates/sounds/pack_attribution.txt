@@ -1,7 +1,7 @@
 {% load absurl %}Sound pack downloaded from Freesound.org
 ----------------------------------------
 
-This pack of sounds contains sounds by the following user{% if users|length > 1 %}s{% endif %}:
+This pack of sounds contains sounds by the following user{{ users|pluralize }}:
 {% for user in users %} - {{user.username}} ( {% absurl 'account' user.username %} ){% endfor %}
 
 {% if sounds_url %}You can find this pack online at: {{ sounds_url}}{% endif %}

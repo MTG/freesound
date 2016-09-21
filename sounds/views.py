@@ -286,7 +286,8 @@ def pack_download(request, username, pack_id):
         raise Http404
 
     Download.objects.get_or_create(user=request.user, pack=pack)
-    pack_sounds = pack.sound_set.filter(processing_state="OK", moderation_state="OK")
+    pack_sounds = pack.sound_set.filter(processing_state="OK",
+            moderation_state="OK").select_related('user', 'license')
     return download_sounds(pack_sounds, reverse('pack', args=[username, pack.id]))
 
 

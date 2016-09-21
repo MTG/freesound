@@ -49,7 +49,7 @@ def force_login(view_func):
 
 
 urlpatterns = (
-    url(r'^authorize/$', https_required(AuthorizationView.as_view()), name="authorize"),
-    url(r'^logout_and_authorize/$', https_required(force_login(AuthorizationView.as_view())), name="logout_and_authorize"),
-    url(r'^access_token/$', csrf_exempt(https_required(views.TokenView.as_view())), name="access_token"),
+    url(r'^authorize[/]*$', https_required(AuthorizationView.as_view()), name="authorize"),
+    url(r'^logout_and_authorize[/]*$', https_required(force_login(AuthorizationView.as_view())), name="logout_and_authorize"),
+    url(r'^access_token[/]*$', csrf_exempt(https_required(views.TokenView.as_view())), name="access_token"),
 )

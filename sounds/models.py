@@ -257,6 +257,9 @@ class Sound(SocialModel):
         ("PR", _('Processing')),
         ("FI", _('Finished')),
     )
+    ANALYSIS_STATE_CHOICES = PROCESSING_STATE_CHOICES + (("SK", _('Skipped')), )
+    SIMILARITY_STATE_CHOICES = PROCESSING_STATE_CHOICES
+
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
     processing_ongoing_state = models.CharField(db_index=True, max_length=2,
                                                 choices=PROCESSING_ONGOING_STATE_CHOICES, default="NO")
@@ -265,8 +268,8 @@ class Sound(SocialModel):
 
     # state
     is_index_dirty = models.BooleanField(null=False, default=True)
-    similarity_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
-    analysis_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")
+    similarity_state = models.CharField(db_index=True, max_length=2, choices=SIMILARITY_STATE_CHOICES, default="PE")
+    analysis_state = models.CharField(db_index=True, max_length=2, choices=ANALYSIS_STATE_CHOICES, default="PE")
 
     # counts
     num_comments = models.PositiveIntegerField(default=0)  # Updated via django (sound view and delete comment view)

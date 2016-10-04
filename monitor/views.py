@@ -40,6 +40,7 @@ def monitor_home(request):
 
     tardy_user_sounds_count = len(tickets.views._get_tardy_user_tickets())
 
+    # Processing
     sounds_queued_count = sounds.views.Sound.objects.filter(
             processing_ongoing_state='QU').count()
     sounds_pending_count = sounds.views.Sound.objects.filter(
@@ -48,6 +49,18 @@ def monitor_home(request):
             processing_ongoing_state='PR').count()
     sounds_failed_count = sounds.views.Sound.objects.filter(
             processing_state='FA').count()
+    sounds_ok_count = sounds.views.Sound.objects.filter(
+            processing_state='OK').count()
+
+    # Analysis
+    sounds_analysis_pending_count = sounds.views.Sound.objects.filter(
+        analysis_state='PE').count()
+    sounds_analysis_ok_count = sounds.views.Sound.objects.filter(
+        analysis_state='OK').count()
+    sounds_analysis_failed_count = sounds.views.Sound.objects.filter(
+        analysis_state='FA').count()
+    sounds_analysis_skipped_count = sounds.views.Sound.objects.filter(
+        analysis_state='SK').count()
 
     # Get gearman status
     try:
@@ -63,6 +76,11 @@ def monitor_home(request):
              "sounds_pending_count": sounds_pending_count,
              "sounds_processing_count": sounds_processing_count,
              "sounds_failed_count": sounds_failed_count,
+             "sounds_ok_count": sounds_ok_count,
+             "sounds_analysis_pending_count": sounds_analysis_pending_count,
+             "sounds_analysis_ok_count": sounds_analysis_ok_count,
+             "sounds_analysis_failed_count": sounds_analysis_failed_count,
+             "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
              "gearman_status": gearman_status,
              "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
 

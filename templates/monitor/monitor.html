@@ -22,7 +22,22 @@
         <li>{{ sounds_queued_count }} sound{{ sounds_queued_count|pluralize }} are queued for processing</li>
         <li>{{ sounds_processing_count }} sound{{ sounds_processing_count|pluralize }} currently processing</li>
         <li>{{ sounds_failed_count }} sound{{ sounds_failed_count|pluralize }} failed processing{% if request.user.is_staff %} - <a href="{% url "monitor-processing-process" "FA" %}">send failed to process</a>{% endif %}</li>
+        <li>{{ sounds_ok_count }} sound{{ sounds_ok_count|pluralize }} processed ok</li>
     </ul>
+
+    <h3>Analysis system status</h3>
+    <ul>
+        <li>{{ sounds_analysis_pending_count }} sound{{ sounds_analysis_pending_count|pluralize }} pending to analyze</li>
+        <li>{{ sounds_analysis_failed_count }} sound{{ sounds_analysis_failed_count|pluralize }} failed analysis</li>
+        <li>{{ sounds_analysis_ok_count }} sound{{ sounds_analysis_ok_count|pluralize }} are analyzed ok</li>
+        <li>{{ sounds_analysis_skipped_count }} sound{{ sounds_analysis_skipped_count|pluralize }} skipped analysis</li>
+    </ul>
+
+
+    "sounds_analysis_pending_count": sounds_analysis_pending_count,
+             "sounds_analysis_ok_count": sounds_analysis_ok_count,
+             "sounds_analysis_failed_count": sounds_analysis_failed_count,
+             "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
 
     {% if request.user.is_staff %}
     <h3>Gearman server status</h3>

@@ -187,6 +187,8 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
 
     similar_sounds = serializers.SerializerMethodField()
     def get_similar_sounds(self, obj):
+        if obj.similarity_state != 'OK':
+            return None
         return prepend_base(reverse('apiv2-similarity-sound', args=[obj.id]), request_is_secure=self.context['request'].is_secure())
 
     download = serializers.SerializerMethodField()

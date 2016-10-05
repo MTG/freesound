@@ -59,6 +59,8 @@ def monitor_home(request):
     # Analysis
     sounds_analysis_pending_count = sounds.views.Sound.objects.filter(
         analysis_state='PE').count()
+    sounds_analysis_queued_count = sounds.views.Sound.objects.filter(
+        analysis_state='QU').count()
     sounds_analysis_ok_count = sounds.views.Sound.objects.filter(
         analysis_state='OK').count()
     sounds_analysis_failed_count = sounds.views.Sound.objects.filter(
@@ -82,6 +84,7 @@ def monitor_home(request):
              "sounds_failed_count": sounds_failed_count,
              "sounds_ok_count": sounds_ok_count,
              "sounds_analysis_pending_count": sounds_analysis_pending_count,
+             "sounds_analysis_queued_count": sounds_analysis_queued_count,
              "sounds_analysis_ok_count": sounds_analysis_ok_count,
              "sounds_analysis_failed_count": sounds_analysis_failed_count,
              "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
@@ -124,7 +127,7 @@ def process_sounds(request):
     analysis_state = request.GET.get('ans', None)
     if analysis_state:
         sounds_to_analyze = None
-        if analysis_state in ['PE', 'FA', 'SK']:
+        if analysis_state in ['QU', 'PE', 'FA', 'SK']:
             sounds_to_analyze = Sound.objects.filter(analysis_state=analysis_state)
 
         if sounds_to_analyze:

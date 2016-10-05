@@ -257,7 +257,7 @@ class Sound(SocialModel):
         ("PR", _('Processing')),
         ("FI", _('Finished')),
     )
-    ANALYSIS_STATE_CHOICES = PROCESSING_STATE_CHOICES + (("SK", _('Skipped')), )
+    ANALYSIS_STATE_CHOICES = PROCESSING_STATE_CHOICES + (("SK", _('Skipped')), ("QU", _('Queued')),)
     SIMILARITY_STATE_CHOICES = PROCESSING_STATE_CHOICES
 
     processing_state = models.CharField(db_index=True, max_length=2, choices=PROCESSING_STATE_CHOICES, default="PE")

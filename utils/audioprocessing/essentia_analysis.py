@@ -91,6 +91,7 @@ def analyze(sound):
         shutil.move('%s_frames.json' % tmp_ana_path, frames_path)
         #os.remove('%s.json' % tmp_ana_path)  # Current extractor does not produce the json file
         sound.set_analysis_state('OK')
+        sound.set_similarity_state('PE')  # So sound gets reindexed in gaia
     except Exception, e:
         failure("Unexpected error in analysis ",e)
         return False

@@ -44,8 +44,11 @@ def monitor_home(request):
     # Processing
     sounds_queued_count = sounds.views.Sound.objects.filter(
             processing_ongoing_state='QU').count()
-    sounds_pending_count = sounds.views.Sound.objects.filter(
-            processing_state='PE').count()
+    sounds_pending_count = sounds.views.Sound.objects.\
+        filter(processing_state='PE')\
+        .exclude(processing_ongoing_state='PR')\
+        .exclude(processing_ongoing_state='QU')\
+        .count()
     sounds_processing_count = sounds.views.Sound.objects.filter(
             processing_ongoing_state='PR').count()
     sounds_failed_count = sounds.views.Sound.objects.filter(

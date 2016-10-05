@@ -29,7 +29,8 @@ import tickets.views
 import sounds.views
 
 
-@staff_member_required
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def monitor_home(request):
     sounds_in_moderators_queue_count =\
         tickets.views._get_sounds_in_moderators_queue_count(request.user)
@@ -89,19 +90,42 @@ def monitor_home(request):
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
-def process_sounds(request, processing_status):
+def process_sounds(request):
 
-    sounds_to_process = None
-    if processing_status == "FA":
-        sounds_to_process = Sound.objects.filter(processing_state='FA')
-    elif processing_status == "PE":
-        sounds_to_process = Sound.objects.filter(processing_state='PE')
+    # Send sounds to processing according to their processing_state
+    processing_status = request.GET.get('prs', None)
+    if processing_status:
+        sounds_to_process = None
+        if processing_status in ['FA', 'PE']:
+            sounds_to_process = Sound.objects.filter(processing_state=processing_status)
 
-    # Remove sounds from the list that are already in the queue or are being processed right now
-    if sounds_to_process:
-        sounds_to_process = sounds_to_process.exclude(processing_ongoing_state='PR')\
-            .exclude(processing_ongoing_state='QU')
-        for sound in sounds_to_process:
-            sound.process()
+        # Remove sounds from the list that are already in the queue or are being processed right now
+        if sounds_to_process:
+            sounds_to_process = sounds_to_process.exclude(processing_ongoing_state='PR')\
+                .exclude(processing_ongoing_state='QU')
+            for sound in sounds_to_process:
+                sound.process()
+
+    # Send sounds to processing according to their processing_ongoing_state
+    processing_ongoing_state = request.GET.get('pros', None)
+    if processing_ongoing_state:
+        sounds_to_process = None
+        if processing_ongoing_state in ['QU', 'PR']:
+            sounds_to_process = Sound.objects.filter(processing_ongoing_state=processing_ongoing_state)
+
+        if sounds_to_process:
+            for sound in sounds_to_process:
+                sound.process()
+
+    # Send sounds to analysis according to their analysis_state
+    analysis_state = request.GET.get('ans', None)
+    if analysis_state:
+        sounds_to_analyze = None
+        if analysis_state in ['PE', 'FA', 'SK']:
+            sounds_to_analyze = Sound.objects.filter(analysis_state=analysis_state)
+
+        if sounds_to_analyze:
+            for sound in sounds_to_analyze:
+                sound.process()
 
     return redirect("monitor-home")

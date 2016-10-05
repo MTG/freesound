@@ -87,7 +87,11 @@ def process(sound):
 
     # convert to pcm
     to_cleanup = []
-    tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+    try:
+        tmp_wavefile = tempfile.mktemp(suffix=".wav", prefix=str(sound.id))
+    except IOError as e:
+        # Could not create tmp file
+        failure("could not create tmp file", e)
 
     try:
         if not audioprocessing.convert_to_pcm(sound.original_path, tmp_wavefile):

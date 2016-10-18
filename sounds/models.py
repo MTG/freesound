@@ -244,6 +244,7 @@ class Sound(SocialModel):
     moderation_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last moderation state change
     moderation_note = models.TextField(null=True, blank=True, default=None)
     has_bad_description = models.BooleanField(default=False)
+    is_explicit = models.BooleanField(default=False)
 
     # processing
     PROCESSING_STATE_CHOICES = (

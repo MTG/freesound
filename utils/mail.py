@@ -19,11 +19,10 @@
 #
 
 from django.conf import settings
-from django.core.mail import send_mail as core_send_mail
 from django.core.mail.message import EmailMessage
-from django.core.mail import send_mass_mail, get_connection
 from django.template.loader import render_to_string
 from django.core.mail import get_connection, EmailMultiAlternatives
+
 
 def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=None):
     """
@@ -35,6 +34,10 @@ def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=No
         email_from = settings.DEFAULT_FROM_EMAIL
     
     if not email_to:
+        # If email is emprty email, don't send email, otherwise (email 'False' but not '',
+        # send to default support emails)
+        if email_to == '':
+            return True
         email_to = [admin[1] for admin in settings.SUPPORT]
     elif not isinstance(email_to, tuple) and not isinstance(email_to, list):
         email_to = [email_to]
@@ -43,8 +46,9 @@ def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=No
         email_to = [email for email in email_to if email in settings.ALLOWED_EMAILS]
 
     try:
-        #core_send_mail(settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, email_to, fail_silently=False)
-        emails = tuple(( (settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email]) for email in email_to ))
+        emails = tuple(
+            ((settings.EMAIL_SUBJECT_PREFIX + subject, email_body, email_from, [email]) for email in email_to)
+        )
 
         # Replicating send_mass_mail functionality and adding reply-to header if requires
         connection = get_connection(username=None,

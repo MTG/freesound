@@ -652,13 +652,18 @@ def delete(request, username, sound_id):
 
         if abs(time.time() - link_generated_time) < 10:
             logger.debug("User %s requested to delete sound %s" % (request.user.username,sound_id))
-            ticket = sound.ticket
+            try:
+                ticket = sound.ticket
+                tc = TicketComment(sender=request.user,
+                                   text="User %s deleted the sound" % request.user,
+                                   ticket=ticket,
+                                   moderator_only=False)
+                tc.save()
+            except Ticket.DoesNotExist:
+                # No ticket assigned, not adding any message (should not happen)
+                pass
             sound.delete()
-            tc = TicketComment(sender=request.user,
-                               text="User %s deleted the sound" % request.user,
-                               ticket=ticket,
-                               moderator_only=False)
-            tc.save()
+
             return HttpResponseRedirect(reverse("accounts-home"))
         else:
             waited_too_long = True

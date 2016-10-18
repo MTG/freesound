@@ -33,8 +33,8 @@ def analyze(sound):
         sys.stdout.write(str(message)+'\n')
         sys.stdout.flush()
 
-    def failure(message, error=None):
-        sound.set_analysis_state("FA")
+    def failure(message, error=None, failure_state="FA"):
+        sound.set_analysis_state(failure_state)
         logging_message = "Failed to process sound with id %s\n" % sound.id
         logging_message += "\tmessage: %s\n" % message
         if error:
@@ -51,7 +51,7 @@ def analyze(sound):
             return False
 
         if os.path.getsize(input_path) >100 * 1024 * 1024: #same as filesize_warning in sound model
-            failure('File is larger than 50MB. Passing on it.')
+            failure('File is larger than 100MB. Passing on it.', failure_state='SK')
             return False
 
         ext = os.path.splitext(input_path)[1]
@@ -91,6 +91,7 @@ def analyze(sound):
         shutil.move('%s_frames.json' % tmp_ana_path, frames_path)
         #os.remove('%s.json' % tmp_ana_path)  # Current extractor does not produce the json file
         sound.set_analysis_state('OK')
+        sound.set_similarity_state('PE')  # So sound gets reindexed in gaia
     except Exception, e:
         failure("Unexpected error in analysis ",e)
         return False

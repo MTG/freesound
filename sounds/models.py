@@ -244,6 +244,7 @@ class Sound(SocialModel):
     moderation_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last moderation state change
     moderation_note = models.TextField(null=True, blank=True, default=None)
     has_bad_description = models.BooleanField(default=False)
+    is_explicit = models.BooleanField(default=False)
 
     # processing
     PROCESSING_STATE_CHOICES = (
@@ -789,7 +790,7 @@ class Pack(SocialModel):
         return 'pack', (self.user.username, smart_unicode(self.id),)
 
     class Meta(SocialModel.Meta):
-        unique_together = ('user', 'name')
+        unique_together = ('user', 'name', 'is_deleted')
         ordering = ("-created",)
 
     def friendly_filename(self):

@@ -931,6 +931,41 @@ h3.header,
     margin: 3px 4px 0px 0;
 }
 
+.sample_player_small.blur{
+    -webkit-filter: blur(3px);
+    filter: blur(3px);
+}
+
+.blur .sample_information, 
+.blur .sample_player{
+    margin-top: 3px;
+}
+
+.blur .controls{
+    display: none;
+}
+
+.explicit_content_text{
+    position: absolute;
+    margin-left: 220px;
+    margin-top: 20px;
+    z-index: 1;
+}
+.explicit-sound-blocker{
+    background-color: #fff;
+    position: absolute;
+    padding: 100px
+}
+
+.explicit-sound-blocker .message-img{
+    display:inline-block;
+}
+.explicit-sound-blocker .message{
+    display:inline-block;
+    vertical-align: top;
+    margin-left: 70px;
+}
+
 
 /* Pack display (pack lists)
 ------------------------------------------------------*/

@@ -290,6 +290,24 @@
 
 </div> <!-- single_sample_sidebar -->
 
+{% if sound.is_explicit and not request.user.profile.is_adult %}
+<div class="explicit-sound-blocker">
+  <div class="message-img">
+    <img src='{{media_url}}images/warning.png' width="100" />
+  </div>
+  <div class="message">
+    <span>Explicit Content</span>
+    <p>This sound has been marked as explicit, which is restricted for this account. </p>
+  </div>
+</div>
+<script type="text/javascript">
+  document.getElementById("single_sample_header").style["display"] = "none";
+  document.getElementById("single_sample_player").style["display"] = "none";
+  document.getElementById("single_sample_content").style["display"] = "none";
+  document.getElementById("single_sample_sidebar").style["display"] = "none";
+  document.getElementById("content_full").style["min-height"] = "270px";
+</script>
+{% endif %}
 
 <script type="text/javascript">
     var tumblr_button = document.createElement("a");

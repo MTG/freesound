@@ -787,7 +787,7 @@ class Pack(SocialModel):
         return 'pack', (self.user.username, smart_unicode(self.id),)
 
     class Meta(SocialModel.Meta):
-        unique_together = ('user', 'name')
+        unique_together = ('user', 'name', 'is_deleted')
         ordering = ("-created",)
 
     def friendly_filename(self):

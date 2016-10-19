@@ -14,5 +14,5 @@ class Migration(migrations.Migration):
     # This api_apikey table is from apiv1, and was not removed when
     # the api was disabled.
     operations = [
-            migrations.RunSQL("drop table api_apikey")
+            migrations.RunSQL("drop table if exists api_apikey")
     ]

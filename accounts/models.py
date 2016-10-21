@@ -84,6 +84,11 @@ class Profile(SocialModel):
     def __unicode__(self):
         return self.user.username
 
+    def has_many_emails(self):
+        """Check if the user account associated with this profile
+           has other accounts with the same email address"""
+        return SameUser.objects.filter(Q(main_user=self.user)|Q(secondary_user=self.user)).exists()
+
     @models.permalink
     def get_absolute_url(self):
         return 'account', (smart_unicode(self.user.username),)
@@ -249,6 +254,26 @@ class UserFlag(models.Model):
 
     class Meta:
         ordering = ("-user__username",)
+
+
+class SameUser(models.Model):
+    # Used for merging more than one user account which have the same email address
+
+    # The main user is defined as the one who has logged in most recently
+    # when we performed the migration. This is an arbitrary decision
+    main_user = models.ForeignKey(User, related_name="+")
+    main_orig_email = models.CharField(max_length=200)
+    secondary_user = models.ForeignKey(User, related_name="+")
+    secondary_orig_email = models.CharField(max_length=200)
+
+    # TODO:
+    # - When we send an email, check here for the user's email (if it's here as a secondary)
+    # - user/pass recovery if the email used is here
+    # - If the user is here as main or secondary, get show warning
+    # - Can change email of secondary by signing in (if not already) and change email
+    # - How can the user change the email address of their main account?
+    #   - Single form for changing email of both?
+    #   - If they change email of main account, do we change secondary account back to the normal email?
 
 
 def create_user_profile(sender, instance, created, **kwargs):

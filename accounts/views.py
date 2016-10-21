@@ -76,6 +76,28 @@ logger = logging.getLogger("upload")
 def crash_me(request):
     raise Exception
 
+def login(request, template_name, authentication_form):
+    # Freesound-specific login view to check if a user has multiple accounts
+    # with the same email address. We can switch back to the regular django
+    # once all accounts are adapted
+    from django.contrib.auth import views as auth_views
+
+    response = auth_views.login(request, template_name=template_name, authentication_form=authentication_form)
+    if isinstance(response, HttpResponseRedirect):
+        # If there is a redirect it's because the login was successful
+        if request.user.profile.has_many_emails():
+            return HttpResponseRedirect(reverse("accounts-multi-email-cleanup"))
+        else:
+            return response
+
+    return response
+
+@login_required
+def multi_email_cleanup(request):
+    if not request.user.profile.has_many_emails():
+        return HttpResponseRedirect(reverse("accounts-home"))
+
+    return render(request, 'accounts/multi_email_cleanup.html')
 
 @login_required
 def bulk_license_change(request):

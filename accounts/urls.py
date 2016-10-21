@@ -30,8 +30,9 @@ import follow.views as follow
 import apiv2.views as api
 
 urlpatterns = [
-    url(r'^login/$', authviews.login, {'template_name': 'registration/login.html',
+    url(r'^login/$', accounts.login, {'template_name': 'registration/login.html',
                                        'authentication_form': FsAuthenticationForm}, name="accounts-login"),
+    url(r'^cleanup/$', accounts.multi_email_cleanup, name="accounts-multi-email-cleanup"),
     url('^', include('django.contrib.auth.urls')),  # Include logout and reset email urls
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),

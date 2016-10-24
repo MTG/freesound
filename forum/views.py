@@ -192,7 +192,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                 # figure out if there are active subscriptions in this thread
                 if not set_to_moderation:
                     emails_to_notify = []
-                    for subscription in Subscription.objects.filter(thread=thread, is_active=True):#.exclude(subscriber=request.user):
+                    for subscription in Subscription.objects.filter(thread=thread, is_active=True).exclude(subscriber=request.user):
                         emails_to_notify.append(subscription.subscriber.email)
                         subscription.is_active = False
                         subscription.save()

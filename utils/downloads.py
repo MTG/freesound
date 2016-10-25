@@ -19,6 +19,7 @@
 #
 
 import os
+import stat
 import zlib
 import tempfile
 import subprocess
@@ -48,12 +49,14 @@ def download_sounds(sounds_list, sounds_url=None):
     tmpf = tempfile.NamedTemporaryFile(dir=settings.PACKS_PATH, delete=False)
     tmpf.write(attribution.encode("UTF-8"))
     tmpf.close()
+    secret_name = tmpf.name.replace(settings.PACKS_PATH, settings.PACKS_SENDFILE_URL)
 
+    os.chmod(tmpf.name, stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     license_crc = zlib.crc32(attribution.encode('UTF-8')) & 0xffffffff
 
     filelist = "%02x %i %s %s\r\n" % (license_crc,
                                     os.stat(tmpf.name).st_size,
-                                    tmpf.name, "_readme_and_license.txt")
+                                    secret_name, "_readme_and_license.txt")
 
     for sound in sounds_list:
         url = sound.locations("sendfile_url")

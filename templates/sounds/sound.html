@@ -28,8 +28,8 @@
 
 {% block section_content %}
 
-{% cache 3600 sound_header sound.id request.user.is_authenticated %}
-<div id="single_sample_header">
+{% cache 3600 sound_header sound.id request.user.is_authenticated request.user.profile.is_adult %}
+<div id="single_sample_header" class="{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}blur{% endif %}">
     {% if sound.pack %}<a href="{% url 'pack' username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
     {% comment %}
     <div class="stars">
@@ -46,7 +46,7 @@
     {% endcomment %}
 </div>
 
-<div id="single_sample_player">
+<div id="single_sample_player" class="{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}blur{% endif %}">
     <div class="player large">
         <div class="metadata">
             {% with 'L' as size %}
@@ -56,7 +56,7 @@
     </div>
 </div>
 
-<div id="single_sample_content">
+<div id="single_sample_content" class="{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}blur{% endif %}">
     <img src="{{sound.user.profile.locations.avatar.M.url}}" alt="avatar" id="sound_author_avatar" />
 
     <div id="sound_author_box">
@@ -121,7 +121,7 @@
     {% endif %}
 </div> <!-- single_sample_content -->
 
-<div id="single_sample_sidebar">
+<div id="single_sample_sidebar" class="{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}blur{% endif %}">
      <div id="single_sample_ratings">
          <div class="stars">
             <ul class="star-rating">
@@ -290,22 +290,23 @@
 
 </div> <!-- single_sample_sidebar -->
 
-{% if sound.is_explicit and not request.user.profile.is_adult %}
+{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}
 <div class="explicit-sound-blocker">
   <div class="message-img">
     <img src='{{media_url}}images/warning.png' width="100" />
   </div>
   <div class="message">
     <span>Explicit Content</span>
-    <p>This sound has been marked as explicit, which is restricted for this account. </p>
+    <p>This sound has been marked as explicit, are you sure you want to display it?</p>
+    <a href="#">Show me the sound</a>
   </div>
 </div>
 <script type="text/javascript">
-  document.getElementById("single_sample_header").style["display"] = "none";
-  document.getElementById("single_sample_player").style["display"] = "none";
-  document.getElementById("single_sample_content").style["display"] = "none";
-  document.getElementById("single_sample_sidebar").style["display"] = "none";
-  document.getElementById("content_full").style["min-height"] = "270px";
+$('.explicit-sound-blocker a').click(function(e){
+  $('.blur').removeClass('blur');
+  $('.explicit-sound-blocker').remove();
+  e.preventDefault()
+});
 </script>
 {% endif %}
 <script type="text/javascript">

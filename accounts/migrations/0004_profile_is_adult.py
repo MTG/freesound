@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='profile',
             name='is_adult',
-            field=models.BooleanField(default=True),
+            field=models.BooleanField(default=False),
         ),
     ]

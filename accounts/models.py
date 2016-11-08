@@ -78,7 +78,7 @@ class Profile(SocialModel):
     num_sounds = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     num_posts = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     is_deleted_user = models.BooleanField(db_index=True, default=False)
-    is_adult = models.BooleanField(default=True)
+    is_adult = models.BooleanField(default=False)
 
     objects = ProfileManager()
 

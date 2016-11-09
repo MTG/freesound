@@ -59,7 +59,7 @@
         </form>
         <p>(logged in as <strong>{{ user }}</strong>, <a href="{% url "api-logout" %}?next={% next_url_for_login form.client_id.value form.response_type.value form.state.value %}">login as another user</a>)</p>
     {% else %}
-        <p>Ops! there were some errors...</p>
+        <p>Oops! there were some errors...</p>
 
         <!--error: {{ error.error }}, {{ error.description }} -->
 

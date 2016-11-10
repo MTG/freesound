@@ -29,7 +29,7 @@
 {% block section_content %}
 
 {% cache 3600 sound_header sound.id request.user.is_authenticated request.user.profile.is_adult %}
-<div id="single_sample_header" class="{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}blur{% endif %}">
+<div id="single_sample_header" class="{% if is_explicit %}blur{% endif %}">
     {% if sound.pack %}<a href="{% url 'pack' username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
     {% comment %}
     <div class="stars">
@@ -46,7 +46,7 @@
     {% endcomment %}
 </div>
 
-<div id="single_sample_player" class="{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}blur{% endif %}">
+<div id="single_sample_player" class="{% if is_explicit %}blur{% endif %}">
     <div class="player large">
         <div class="metadata">
             {% with 'L' as size %}
@@ -56,7 +56,7 @@
     </div>
 </div>
 
-<div id="single_sample_content" class="{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}blur{% endif %}">
+<div id="single_sample_content" class="{% if is_explicit %}blur{% endif %}">
     <img src="{{sound.user.profile.locations.avatar.M.url}}" alt="avatar" id="sound_author_avatar" />
 
     <div id="sound_author_box">
@@ -121,7 +121,7 @@
     {% endif %}
 </div> <!-- single_sample_content -->
 
-<div id="single_sample_sidebar" class="{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}blur{% endif %}">
+<div id="single_sample_sidebar" class="{% if is_explicit %}blur{% endif %}">
      <div id="single_sample_ratings">
          <div class="stars">
             <ul class="star-rating">
@@ -290,7 +290,7 @@
 
 </div> <!-- single_sample_sidebar -->
 
-{% if request.user.is_authenticated and sound.is_explicit and not request.user.profile.is_adult %}
+{% if is_explicit %}
 <div class="explicit-sound-blocker">
   <div class="message-img">
     <img src='{{media_url}}images/warning.png' width="100" />

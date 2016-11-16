@@ -296,13 +296,13 @@
     <img src='{{media_url}}images/warning.png' width="100" />
   </div>
   <div class="message">
-    <span>Explicit Content</span>
-    <p>This sound has been marked as explicit, are you sure you want to display it?</p>
-    <a href="#">Show me the sound</a>
+      <span>Sound may contain explicit content</span>
+      <p>Click <a id="remove_warning_link" href="#">here</a> to remove this warning</p>
+      <p>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page</p>
   </div>
 </div>
 <script type="text/javascript">
-$('.explicit-sound-blocker a').click(function(e){
+$('#remove_warning_link').click(function(e){
   $('.blur').removeClass('blur');
   $('.explicit-sound-blocker').remove();
   e.preventDefault()

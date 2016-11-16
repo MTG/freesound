@@ -969,11 +969,14 @@ h3.header,
     right: 18px;
 }
 .explicit-sound-blocker{
+    margin-left: 170px;
+    margin-top: 30px;
     background-color: #fff;
     position: absolute;
-    padding: 100px;
+    padding: 30px;
     -webkit-border-radius: 6px;
     -moz-border-radius: 6px;
+    opacity: 0.9;
 }
 
 .explicit-sound-blocker .message-img{

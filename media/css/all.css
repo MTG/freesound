@@ -931,7 +931,58 @@ h3.header,
     margin: 3px 4px 0px 0;
 }
 
+.blur{
+    -webkit-filter: blur(3px);
+    filter: blur(3px);
+    pointer-events: none;
+}
 
+.blur .sample_information, 
+.blur .sample_player{
+    margin-top: 3px;
+}
+
+.blur .controls{
+    display: none;
+}
+
+.explicit_content_text{
+    position: absolute;
+    margin-left: 220px;
+    margin-top: 20px;
+    z-index: 1;
+}
+.explicit_content_text span{
+    border: 1px solid #888;
+    padding: 10px 27px;
+    background-color: #fff;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    color: #666;
+}
+.explicit_content_text a img{
+    width: 25px;
+    position: relative;
+    top: -13px;
+    right: 18px;
+}
+.explicit-sound-blocker{
+    background-color: #fff;
+    position: absolute;
+    padding: 100px;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+}
+
+.explicit-sound-blocker .message-img{
+    display:inline-block;
+}
+.explicit-sound-blocker .message{
+    display:inline-block;
+    vertical-align: top;
+    margin-left: 70px;
+}
 /* Pack display (pack lists)
 ------------------------------------------------------*/
 

@@ -244,6 +244,8 @@ class ProfileForm(forms.ModelForm):
         required=False
     )
     wants_newsletter = forms.BooleanField(help_text="Subscribed to newsletter", label="", required=False)
+    is_adult = forms.BooleanField(help_text="I'm an adult, I can deal with explicit content",
+            label="", required=False)
     enabled_stream_emails = forms.BooleanField(
         help_text="Receive weekly stream update email notifications (only when new sounds are uploaded by "
                   "users you follow or that have tags you follow)",
@@ -276,7 +278,8 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ('home_page', 'wants_newsletter', 'enabled_stream_emails', 'about', 'signature',
+        fields = ('home_page', 'is_adult', 'wants_newsletter',
+                  'enabled_stream_emails', 'about', 'signature',
                   'not_shown_in_online_users_list')
 
 

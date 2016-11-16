@@ -39,6 +39,13 @@ $(function() {
             $(this).find("a").css("background-image", "url(/media/images/tag_edge_group.png)");
         }
     );
+    
+    $(".explicit_content_text a").click(function(e) {
+        var p = $(this).parent('.explicit_content_text');
+        p.next().removeClass('blur');
+        p.remove();
+        e.preventDefault()
+    })
 
 });
 

@@ -234,6 +234,8 @@ def sound(request, username, sound_id):
         users_following = follow_utils.get_users_following(request.user)
         if sound.user in users_following:
             is_following = True
+    is_explicit = sound.is_explicit and (not request.user.is_authenticated() \
+                        or not request.user.profile.is_adult)
 
     tvars = {
         'sound': sound,
@@ -243,6 +245,7 @@ def sound(request, username, sound_id):
         'display_random_link': display_random_link,
         'do_log': do_log,
         'is_following': is_following,
+        'is_explicit': is_explicit
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)

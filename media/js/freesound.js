@@ -40,8 +40,8 @@ $(function() {
         }
     );
     
-    $(".explicit_content_text a").click(function(e) {
-        var p = $(this).parent('.explicit_content_text');
+    $(".explicit_content_text span a").click(function(e) {
+        var p = $(this).parent().parent('.explicit_content_text');
         p.next().removeClass('blur');
         p.remove();
         e.preventDefault()

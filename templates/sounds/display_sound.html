@@ -11,8 +11,7 @@
 
 {% if is_explicit %}
 <div class="explicit_content_text">
-  <span>explicit content</span>
-  <a href="#"><img src="{{media_url}}images/close_icn.png"/></a>
+    <span>This sound has been flagged as explicit, click <a href="#">here</a> to remove this warning</span>
 </div>
 {% endif %}
 <div class="sample_player_small {% if is_explicit %}blur{% endif %}" id="{{ sound_id }}">

@@ -932,8 +932,8 @@ h3.header,
 }
 
 .blur{
-    -webkit-filter: blur(3px);
-    filter: blur(3px);
+    -webkit-filter: blur(2px);
+    filter: blur(2px);
     pointer-events: none;
 }
 
@@ -948,14 +948,15 @@ h3.header,
 
 .explicit_content_text{
     position: absolute;
-    margin-left: 220px;
-    margin-top: 20px;
+    margin-left: 10px;
+    margin-top: 40px;
     z-index: 1;
 }
 .explicit_content_text span{
-    border: 1px solid #888;
+    font-size:80%;
     padding: 10px 27px;
     background-color: #fff;
+    opacity: 0.9;
     -webkit-border-radius: 6px;
     -moz-border-radius: 6px;
     border-radius: 6px;

@@ -46,6 +46,11 @@ def validate_file_extension(audiofiles):
                     # this mime type for flac files.
                     if not content_type.startswith("audio") and not content_type == 'application/octet-stream':
                         raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+                elif ext == 'ogg':
+                    # Firefox seems to set wrong mime type for ogg files to video/ogg instead of audio/ogg
+                    # For this reason we also allow this mime type for ogg files.
+                    if not content_type.startswith("audio") and not content_type == 'video/ogg':
+                        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
                 else:
                     if not content_type.startswith("audio"):
                         raise forms.ValidationError('Uploaded file format not supported or not an audio file.')

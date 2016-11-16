@@ -219,6 +219,11 @@ def search(request):
         allsounds = {}
         for s in resultsounds:
             allsounds[s.id] = s
+        # allsounds will contain info from all the sounds returned by bulk_query_id. This should
+        # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
+        # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
+        # in docs that have not been loaded in allsounds.
+        docs = [doc for doc in docs if doc["id"] in allsounds]
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 

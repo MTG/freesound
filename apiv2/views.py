@@ -37,6 +37,7 @@ from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
 from accounts.views import handle_uploaded_file, send_activation
 from accounts.forms import RegistrationForm
+from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.cache import invalidate_template_cache
 from utils.nginxsendfile import sendfile
@@ -674,23 +675,7 @@ class DownloadPack(DownloadAPIView):
         if not sounds:
             raise NotFoundException(msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
 
-        try:
-            filelist = "%s %i %s %s\r\n" % (pack.license_crc,
-                                            os.stat(pack.locations('license_path')).st_size,
-                                            pack.locations('license_url'),
-                                            "_readme_and_license.txt")
-        except:
-            raise ServerErrorException(resource=self)
-
-        for sound in sounds:
-            url = sound.locations("sendfile_url")
-            name = sound.friendly_filename()
-            if sound.crc == '':
-                continue
-            filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
-        response = HttpResponse(filelist, content_type="text/plain")
-        response['X-Archive-Files'] = 'zip'
-        return response
+        return download_sounds(sounds, reverse('pack', args=[pack.user.username, pack.id]))
 
 
 ##################

@@ -799,36 +799,12 @@ class Pack(SocialModel):
         username_slug =  slugify(self.user.username)
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
-    @locations_decorator()
-    def locations(self):
-        return dict(sendfile_url=settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,
-                    license_url=settings.PACKS_SENDFILE_URL + "%d_license.txt" % self.id,
-                    license_path=os.path.join(settings.PACKS_PATH, "%d_license.txt" % self.id),
-                    path=os.path.join(settings.PACKS_PATH, "%d.txt" % self.id))
-
     def process(self):
         sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").order_by("-created")
         self.num_sounds = sounds.count()
         if self.num_sounds:
             self.last_updated = sounds[0].created
-        self.create_license_file(pack_sounds=sounds)
         self.save()
-
-    def create_license_file(self, pack_sounds):
-        """ Create a license file containing the licenses of all sounds in the
-            pack, and update the pack license_crc field, but DO NOT save the pack
-        """
-        from django.template.loader import render_to_string
-        if len(pack_sounds)>0:
-            licenses = License.objects.all()
-            license_path = self.locations("license_path")
-            attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,
-                                                                               sound_list=pack_sounds))
-            f = open(license_path, 'w')
-            f.write(attribution.encode("UTF-8"))
-            f.close()
-            p = subprocess.Popen(["crc32", license_path], stdout=subprocess.PIPE)
-            self.license_crc = p.communicate()[0].split(" ")[0][:-1]
 
     def get_random_sound_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id, processing_state="OK", moderation_state="OK").order_by('?')[0:1]

@@ -41,9 +41,11 @@ $(function() {
     );
     
     $(".explicit_content_text span a").click(function(e) {
-        var p = $(this).parent().parent('.explicit_content_text');
-        p.next().removeClass('blur');
-        p.remove();
+        var warning = $(this).parent().parent('.explicit_content_text');
+        var sample_player_small = $(this).parent().parent().parent();
+        sample_player_small.find('.sample_player').removeClass('blur');
+        sample_player_small.find('.sample_information').removeClass('blur');
+        warning.remove();
         e.preventDefault()
     })
 

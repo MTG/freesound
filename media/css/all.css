@@ -949,7 +949,7 @@ h3.header,
 .explicit_content_text{
     position: absolute;
     margin-left: 25px;
-    margin-top: 38px;
+    margin-top: 25px;
     z-index: 1;
     white-space:nowrap;
 }

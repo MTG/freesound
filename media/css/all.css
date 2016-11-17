@@ -948,35 +948,39 @@ h3.header,
 
 .explicit_content_text{
     position: absolute;
-    margin-left: 10px;
-    margin-top: 40px;
+    margin-left: 25px;
+    margin-top: 38px;
     z-index: 1;
+    white-space:nowrap;
 }
 .explicit_content_text span{
     font-size:80%;
-    padding: 10px 27px;
+    padding: 10px;
     background-color: #fff;
     opacity: 0.9;
-    -webkit-border-radius: 6px;
-    -moz-border-radius: 6px;
     border-radius: 6px;
     color: #666;
 }
-.explicit_content_text a img{
-    width: 25px;
-    position: relative;
-    top: -13px;
-    right: 18px;
+.explicit_content_text a {
+    background-color: #2C74C9;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+    margin-left: 5px;
 }
 .explicit-sound-blocker{
-    margin-left: 170px;
-    margin-top: 30px;
+    margin-left: 210px;
+    margin-top: 25px;
     background-color: #fff;
     position: absolute;
-    padding: 30px;
-    -webkit-border-radius: 6px;
-    -moz-border-radius: 6px;
+    padding: 20px;
+    border-radius: 6px;
     opacity: 0.9;
+}
+
+.explicit-sound-blocker span{
+    display: block;
+    margin-bottom: 10px;
 }
 
 .explicit-sound-blocker .message-img{
@@ -985,8 +989,16 @@ h3.header,
 .explicit-sound-blocker .message{
     display:inline-block;
     vertical-align: top;
-    margin-left: 70px;
+    margin-left: 30px;
 }
+
+#remove_warning_link {
+    background-color: #2C74C9;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+}
+
 /* Pack display (pack lists)
 ------------------------------------------------------*/
 

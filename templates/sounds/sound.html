@@ -46,8 +46,30 @@
     {% endcomment %}
 </div>
 
-<div id="single_sample_player" class="{% if is_explicit %}blur{% endif %}">
-    <div class="player large">
+<div id="single_sample_player">
+
+    {% if is_explicit %}
+        <div class="explicit-sound-blocker">
+          <div class="message-img">
+            <img src='{{media_url}}images/warning.png' width="100" />
+          </div>
+          <div class="message">
+              <span>Content warning</span>
+              <p>This sound may be inappropriate for some users
+              <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page</p>
+              <p><a id="remove_warning_link" href="#">Dismiss</a></p>
+          </div>
+        </div>
+        <script type="text/javascript">
+        $('#remove_warning_link').click(function(e){
+          $('.blur').removeClass('blur');
+          $('.explicit-sound-blocker').remove();
+          e.preventDefault()
+        });
+        </script>
+    {% endif %}
+
+    <div class="player large{% if is_explicit %} blur{% endif %}">
         <div class="metadata">
             {% with 'L' as size %}
                 {% include 'sounds/metadata.html' %}
@@ -290,26 +312,6 @@
 
 </div> <!-- single_sample_sidebar -->
 
-{% if is_explicit %}
-<div class="explicit-sound-blocker">
-  <div class="message-img">
-    <img src='{{media_url}}images/warning.png' width="100" />
-  </div>
-  <div class="message">
-      <span>Content warning</span>
-      <p>This sound may be inappropriate for some users
-      <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page</p>
-      <p><a id="remove_warning_link" href="#">Dismiss</a></p>
-  </div>
-</div>
-<script type="text/javascript">
-$('#remove_warning_link').click(function(e){
-  $('.blur').removeClass('blur');
-  $('.explicit-sound-blocker').remove();
-  e.preventDefault()
-});
-</script>
-{% endif %}
 <script type="text/javascript">
     var tumblr_button = document.createElement("a");
     tumblr_button.setAttribute("href", "https://www.tumblr.com/share/link?url=" + encodeURIComponent(tumblr_link_url) + "&name=" + encodeURIComponent(tumblr_link_name) + "&description=" + encodeURIComponent(tumblr_link_description));

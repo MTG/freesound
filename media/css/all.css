@@ -948,13 +948,13 @@ h3.header,
 
 .explicit_content_text{
     position: absolute;
-    margin-left: 25px;
+    margin-left: 35px;
     margin-top: 25px;
     z-index: 1;
     white-space:nowrap;
 }
 .explicit_content_text span{
-    font-size:80%;
+    font-size: 12px;
     padding: 10px;
     background-color: #fff;
     opacity: 0.9;
@@ -969,13 +969,16 @@ h3.header,
     margin-left: 5px;
 }
 .explicit-sound-blocker{
-    margin-left: 210px;
+    font-size: 12px;
+    margin-left: 170px;
     margin-top: 25px;
     background-color: #fff;
     position: absolute;
     padding: 20px;
     border-radius: 6px;
     opacity: 0.9;
+    white-space:nowrap;
+    z-index: 10;
 }
 
 .explicit-sound-blocker span{

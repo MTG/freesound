@@ -104,6 +104,7 @@ class SoundManager(models.Manager):
                                FROM sounds_sound
                               WHERE moderation_state='OK'
                                 AND processing_state='OK'
+                                AND is_explicit=FALSE
                              OFFSET %d
                               LIMIT 1""" % offset)
             return cursor.fetchone()[0]

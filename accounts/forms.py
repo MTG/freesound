@@ -244,7 +244,7 @@ class ProfileForm(forms.ModelForm):
         required=False
     )
     wants_newsletter = forms.BooleanField(help_text="Subscribed to newsletter", label="", required=False)
-    is_adult = forms.BooleanField(help_text="I'm an adult, don't show explicit content warnings",
+    is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",
             label="", required=False)
     enabled_stream_emails = forms.BooleanField(
         help_text="Receive weekly stream update email notifications (only when new sounds are uploaded by "

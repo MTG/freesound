@@ -22,6 +22,7 @@
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
 from django.utils.encoding import smart_unicode
@@ -30,6 +31,7 @@ from django.db import models
 from django.db import connection, transaction
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.urlresolvers import reverse
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -294,6 +296,11 @@ class Sound(SocialModel):
         filename_slug = slugify(os.path.splitext(self.original_filename)[0])
         username_slug = slugify(self.user.username)
         return "%d__%s__%s.%s" % (self.id, username_slug, filename_slug, self.type)
+
+    def get_short_link(self):
+        site = Site.objects.get_current()
+        return "https://%s%s" % (site.domain,
+                reverse('short-sound-link', kwargs={'sound_id': self.id}))
 
     @locations_decorator()
     def locations(self):

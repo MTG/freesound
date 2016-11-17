@@ -237,6 +237,7 @@
             <li><a id="admin_link" class="icon" href="{% url 'admin:sounds_sound_change' sound.id %}">Edit sound in the admin</a></li>
         {% endif %}
         
+        <li><span style="color:#999">Share: </span><input style="padding: 3px;width: 192px;" type="text" readonly value="{{ sound.get_short_link }}" /></li>
 
     {% cache 3600 sound_footer_bottom sound.id %}
 

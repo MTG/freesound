@@ -705,6 +705,11 @@ def flag(request, username, sound_id):
     return render(request, 'sounds/sound_flag.html', tvars)
 
 
+def sound_short_link(request, sound_id):
+    sound = get_object_or_404(Sound, id=sound_id)
+    return redirect('sound', username=sound.user.username,
+            sound_id=sound.id)
+
 def __redirect_old_link(request, cls, url_name):
     obj_id = request.GET.get('id', False)
     if obj_id:

@@ -142,6 +142,7 @@ urlpatterns = [
 
     # donation campaign
     url(r'^donate/', accounts.views.donate_redirect, name="donate-redirect"),
+    url(r'^s/(?P<sound_id>\d+)$', sounds.views.sound_short_link, name="short-sound-link"),
 
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
@@ -149,7 +150,7 @@ urlpatterns = [
     url(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
     url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
     url(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
-    
+
 
     # dead season redirect (THIS IS TEMPORAL)
     url(r'^deadseason/$', RedirectView.as_view(url='http://www.freesound.org/people/Slave2theLight/bookmarks/category/4730/')),

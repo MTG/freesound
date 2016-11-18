@@ -236,8 +236,7 @@
         {% if request.user.is_staff %}
             <li><a id="admin_link" class="icon" href="{% url 'admin:sounds_sound_change' sound.id %}">Edit sound in the admin</a></li>
         {% endif %}
-        
-        <li><span style="color:#999">Share: </span><input style="padding: 3px;width: 192px;" type="text" readonly value="{{ sound.get_short_link }}" /></li>
+
 
     {% cache 3600 sound_footer_bottom sound.id %}
 
@@ -248,15 +247,23 @@
     </div>
 	
     <div id="share_links">
+        <p>
+            <span style="color:#999">Share url: </span><input style="padding: 3px;width: 192px;" type="text" readonly value="{{ sound.get_short_link }}" />
+        </p>
         <div id="social_links">
-            <div class="social_link" style="width: 50px; overflow: hidden;"><div id="fb-root" style="float: left;"></div><script src="https://connect.facebook.net/en_US/all.js#xfbml=1"></script><fb:like href="{% absurl 'sound' sound.user.username sound.id %}" send="false" layout="button_count" width="55" show_faces="false" font="arial"></fb:like></div>
+            <div class="social_link">
+                <div id="fb-root" style="float: left;"></div>
+                <script src="https://connect.facebook.net/en_US/all.js#xfbml=1"></script>
+                <fb:like href="{% absurl 'short-sound-link' sound.id %}" send="false" layout="button_count" width="55" show_faces="false" font="arial"></fb:like>
+            </div>
             <a href="https://twitter.com/share" class="twitter-share-button" data-count="none">Tweet</a><script type="text/javascript" src="https://platform.twitter.com/widgets.js"></script>
             <span id="tumblr_button_abc123" class="social_link"></span>
             <div class="social_link">
-                <g:plusone size="medium" count="false" href="{% absurl 'sound' sound.user.username sound.id %}"></g:plusone>
+                <g:plusone size="medium" count="false" href="{% absurl 'short-sound-link' sound.id %}"></g:plusone>
             </div>
-
-            <p id="show_button" onclick="$('#embed_links').toggle(500);">embed</p>
+            <div class="social_link">
+                <span id="show_embed_button" onclick="$('#embed_links').toggle(500);">Embed</span>
+            </div>
             <br style="clear: both;" />
         </div>
         <div id="embed_links">

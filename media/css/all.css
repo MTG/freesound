@@ -1264,18 +1264,20 @@ ul.tags {
 #share_links .social_link,
 .twitter-share-button {
     float: left;
-    margin-right: 7px;
+    margin-right: 2px;
 }
 
-#share_links #show_button {
-    color: #2C74C9;
-    float: left;
-    display: block;
-    margin-left: 0;
+#share_links #show_embed_button {
+    font-size: 11px;
+    background-color: #CB3D44;
+    color: white;
+    padding: 2px;
+    padding-top: 4px;
+    border-radius: 2px;
 }
 
-#share_links #show_button:hover {
-    text-decoration: underline;
+#share_links #show_embed_button:hover {
+    background-color: #8c2a30;
 }
 
 #share_links #embed_links {

@@ -142,7 +142,7 @@ urlpatterns = [
 
     # donation campaign
     url(r'^donate/', accounts.views.donate_redirect, name="donate-redirect"),
-    url(r'^s/(?P<sound_id>\d+)$', sounds.views.sound_short_link, name="short-sound-link"),
+    url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
 
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),

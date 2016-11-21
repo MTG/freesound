@@ -248,7 +248,7 @@
 	
     <div id="share_links">
         <p>
-            <span style="color:#999">Share url: </span><input style="padding: 3px;width: 192px;" type="text" readonly value="{{ sound.get_short_link }}" />
+            <span style="color:#999">Share url: </span><input style="padding: 3px;width: 192px;" type="text" readonly value="{% absurl 'short-sound-link' sound.id %}" />
         </p>
         <div id="social_links">
             <div class="social_link">

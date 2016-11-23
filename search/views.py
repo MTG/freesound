@@ -117,13 +117,6 @@ def search(request):
     filter_query = request.GET.get("f", "")
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
-    logger.info(u'Search (%s)' % json.dumps({
-        'ip': get_client_ip(request),
-        'query': search_query,
-        'filter': filter_query,
-        'username': request.user.username
-    }))
-
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:
@@ -189,6 +182,24 @@ def search(request):
 
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
 
+    logger.info(u'Search (%s)' % json.dumps({
+        'ip': get_client_ip(request),
+        'query': search_query,
+        'filter': filter_query,
+        'username': request.user.username,
+        'page': current_page,
+        'sort': sort[0],
+        'group_by_pack' : actual_groupnig,
+        'advanced': json.dumps({
+            'search_in_tag': a_tag,
+            'search_in_filename': a_filename,
+            'search_in_description': a_description,
+            'search_in_packname': a_packname,
+            'search_in_soundid': a_soundid,
+            'search_in_username': a_username
+        }) if advanced == "1" else ""
+    }))
+
     query = search_prepare_query(search_query,
                                  filter_query,
                                  sort,
@@ -219,11 +230,6 @@ def search(request):
         allsounds = {}
         for s in resultsounds:
             allsounds[s.id] = s
-        # allsounds will contain info from all the sounds returned by bulk_query_id. This should
-        # be all sounds in docs, but if solr and db are not synchronised, it might happen that there
-        # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-        # in docs that have not been loaded in allsounds.
-        docs = [doc for doc in docs if doc["id"] in allsounds]
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 

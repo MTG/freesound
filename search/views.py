@@ -117,13 +117,6 @@ def search(request):
     filter_query = request.GET.get("f", "")
     filter_query_link_more_when_grouping_packs = filter_query.replace(' ','+')
 
-    logger.info(u'Search (%s)' % json.dumps({
-        'ip': get_client_ip(request),
-        'query': search_query,
-        'filter': filter_query,
-        'username': request.user.username
-    }))
-
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:
@@ -188,6 +181,24 @@ def search(request):
     #if search_query.strip() == ""
 
     sort = search_prepare_sort(sort, forms.SEARCH_SORT_OPTIONS_WEB)
+
+    logger.info(u'Search (%s)' % json.dumps({
+        'ip': get_client_ip(request),
+        'query': search_query,
+        'filter': filter_query,
+        'username': request.user.username,
+        'page': current_page,
+        'sort': sort[0],
+        'group_by_pack' : actual_groupnig,
+        'advanced': json.dumps({
+            'search_in_tag': a_tag,
+            'search_in_filename': a_filename,
+            'search_in_description': a_description,
+            'search_in_packname': a_packname,
+            'search_in_soundid': a_soundid,
+            'search_in_username': a_username
+        }) if advanced == "1" else ""
+    }))
 
     query = search_prepare_query(search_query,
                                  filter_query,

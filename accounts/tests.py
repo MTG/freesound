@@ -96,7 +96,7 @@ class SimpleUserTest(TestCase):
         # 200 response on user bookmarks sounds and packs access
         resp = self.client.get(reverse('bookmarks-for-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
- 
+
     def test_user_follow_response_ok(self):
         # 200 response on user user bookmarks sounds and packs access
         resp = self.client.get(reverse('user-following-users', kwargs={'username': self.user.username}))
@@ -105,8 +105,9 @@ class SimpleUserTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         resp = self.client.get(reverse('user-following-tags', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
-  
-    def test_sounds_response_ok(self):
+
+    @mock.patch('gearman.GearmanClient.submit_job')
+    def test_sounds_response_ok(self, submit_job):
         # 200 response on sounds page access
         resp = self.client.get(reverse('sounds'))
         self.assertEqual(resp.status_code, 200)

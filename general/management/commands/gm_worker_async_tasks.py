@@ -98,11 +98,12 @@ class Command(BaseCommand):
         random_sound_id = gearman_job.data
         random_sound = Sound.objects.get(id=random_sound_id)
 
-        send_mail_template(u'Random sound of the day.',
+        send_mail_template(\
+                u'One of your sounds has been chosen as random sound of the day!',
                 'sounds/email_random_sound.txt',
                 {'sound': random_sound, 'user': random_sound.user},
                 None, random_sound.user.email)
 
-        self.write_stdout("Finished sending user %s of random sound of the day %s" %
+        self.write_stdout("Finished sending mail to user %s of random sound of the day %s" %
                 (random_sound.user, random_sound.id))
         return 'true'

@@ -8,6 +8,6 @@
 Good news! your sound {{sound.original_filename}} has been selected as the random sound of the day!
 
 To see the random sound of the day, please visit:
-<https://freesound.com>
+<https://freesound.org>
 
 {% endblock %}

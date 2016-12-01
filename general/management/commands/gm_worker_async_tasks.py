@@ -19,6 +19,7 @@
 #
 
 import gearman, sys, traceback, json, time, os
+from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from tickets.models import Ticket
@@ -90,3 +91,36 @@ class Command(BaseCommand):
                 count_done = count_done + 1
             self.write_stdout("Finished processing one ticket, %d remaining" % (len(tickets)-count_done))
         return 'true' if len(tickets) == count_done else 'false'
+
+
+    def task_delete_user(self, gearman_worker, gearman_job):
+        self.write_stdout("Started delete_user task ")
+        self.write_stdout("Data received: %s" % gearman_job.data)
+        data = json.loads(gearman_job.data)
+        user = User.objects.get(id=data['user_id'])
+
+        if data['action'] == 'full_db_delete':
+            # This will fully delete the user and the sounds from the database.
+            # WARNING: Once the sounds are deleted NO DeletedSound object will
+            # be created.
+
+            user.delete()
+            self.write_stdout("Fully deleted user %d" % data['user_id'])
+            return 'true'
+        elif data['action'] == 'delete_user_keep_sounds':
+            # This will anonymize the user and will keep the sounds publicly
+            # availabe
+
+            user.profile.delete_user()
+            self.write_stdout("Fully deleted user %d" % data['user_id'])
+            return 'true'
+        elif data['action'] == 'delete_user_delete_sounds':
+            # This will anonymize the user and remove the sounds, a
+            # DeletedSound object will be created for each sound but kill not
+            # be publicly available
+
+            user.profile.delete_user(True)
+            self.write_stdout("Fully deleted user %d" % data['user_id'])
+            return 'true'
+
+        return 'false'

@@ -23,6 +23,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from sounds.models import Sound
+from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter
 from django.views.decorators.cache import cache_page
 from django.contrib.auth.models import User
 import json
@@ -67,9 +68,20 @@ def geotags_json(request, tag=None):
         q = geoquery % {"join": join, "where": where, "end": ""}
         sounds = Sound.objects.raw(q, [tag])
     else:
-        #sounds = Sound.public.select_related('geotag').all().exclude(geotag=None)
-        q = geoquery % {"join": "", "where": "", "end": ""}
-        sounds = Sound.objects.raw(q)
+        query = SolrQuery()
+        query.set_dismax_query('')
+        filter_query = "is_geotagged:True"
+        query.set_query_options(field_list=["id"], filter_query=filter_query)
+        # Get number of results
+        solr = Solr(settings.SOLR_URL)
+        results = SolrResponseInterpreter(solr.select(unicode(query)))
+
+        # Get all the results
+        query.set_query_options(field_list=["id", "geotag"],
+                rows=results.num_found, filter_query=filter_query)
+        results = SolrResponseInterpreter(solr.select(unicode(query)))
+        sounds_data = [[s['id']]+ s['geotag'][0].split(' ') for s in results.docs]
+        return HttpResponse(json.dumps(sounds_data), content_type="application/json")
     return generate_json(sounds)
 
 def geotags_box_json(request):    

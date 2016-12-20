@@ -19,6 +19,7 @@
 #
 
 import datetime, logging, os, tempfile, shutil, hashlib, base64, json
+import requests
 import tickets.views as TicketViews
 import django.contrib.auth.views as authviews
 from django.conf import settings
@@ -44,7 +45,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag
+from accounts.models import Profile, ResetEmailRequest, UserFlag, Donation
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -1069,3 +1070,28 @@ def pending(request):
     }
     tvars.update(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE))
     return render(request, 'accounts/pending.html', tvars)
+
+
+@csrf_exempt
+def donation_complete(request):
+    params = {'cmd': '_notify-validate'}
+    for key, value in request.POST.items():
+        params[key] =  value
+    if settings.debug:
+        paypal_validation_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+    else:
+        paypal_validation_url = "https://www.paypal.com/cgi-bin/webscr"
+    r = requests.post(paypal_validation_url, data=params)
+    if r.text == 'VERIFIED':
+        Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults={
+        'email': params['payer_email'],
+        'display_name': params['custom'],
+        'amount': params['mc_gross'],
+        'currency': params['mc_currency']})
+    return HttpResponse("OK")
+
+
+def donate(request):
+    tvars = {
+    }
+    return render(request, 'accounts/donate.html', tvars)

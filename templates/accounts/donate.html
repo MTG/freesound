@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div id="content_full"> <!-- START of Content area -->
+
+  <h1>Donations</h1>
+  <p>
+  Thank you for supporting Freesound, you can complete the following form with the name that will appear with the donation:
+  </p>
+  <!-- donations -->
+    <div id="donation_form">
+      {% if debug %}
+        <form name="_xclick" action="https://www.sandbox.paypal.com/yt/cgi-bin/webscr" method="post">
+      {% else %}
+        <form name="_xclick" action="https://www.paypal.com/yt/cgi-bin/webscr" method="post">
+      {% endif %}
+          <input type="hidden" name="cmd" value="_donations">
+          <input type="hidden" name="business" value="fs@freesound.org">
+          <input type="hidden" name="item_name" value="Freesound">
+          <label>Name</label><input type="text" name="custom" value="Anonymous">
+          <input type="hidden" name="notify_url" value="{{ request.scheme }}://{{ request.get_host }}{% url 'donation-complete' %}">
+          <input type="submit" value="Donate Now" class="donation_button" />
+        </form>
+    </div>
+
+{% block section_content %}
+
+{% endblock %}
+</div> <!-- END of Content area -->
+
+<br class="clear" />
+
+{% endblock %}
+
+

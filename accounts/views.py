@@ -1077,7 +1077,7 @@ def donation_complete(request):
     params = {'cmd': '_notify-validate'}
     for key, value in request.POST.items():
         params[key] =  value
-    if settings.debug:
+    if settings.DEBUG:
         paypal_validation_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
     else:
         paypal_validation_url = "https://www.paypal.com/cgi-bin/webscr"

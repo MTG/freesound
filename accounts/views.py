@@ -1092,6 +1092,6 @@ def donation_complete(request):
 
 
 def donate(request):
-    tvars = {
-    }
+    donations = Donation.objects.all()[:10]
+    tvars = {'donations': donations}
     return render(request, 'accounts/donate.html', tvars)

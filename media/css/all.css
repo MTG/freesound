@@ -2177,6 +2177,24 @@ a.donation_button:hover {
     text-indent: -9999px;
 }
 
+.donation-item {
+    height: 75px;
+    width: 300px;
+    float: left;
+    overflow: hidden;
+}
+
+.donation-item-left {
+    float: left;
+    height: 75px;
+    width: 75px;
+}
+
+.donation-item-left img{
+    position: relative;
+    top: 5px;
+}
+
 #latest_forum_posts {
     width: 324px;
     padding: 0 12px;

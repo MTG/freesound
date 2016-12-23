@@ -1093,5 +1093,5 @@ def donation_complete(request):
 
 def donate(request):
     donations = Donation.objects.all()[:10]
-    tvars = {'donations': donations}
+    tvars = {'paypal_email': settings.PAYPAL_EMAIL, 'donations': donations}
     return render(request, 'accounts/donate.html', tvars)

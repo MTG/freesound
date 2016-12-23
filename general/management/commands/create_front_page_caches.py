@@ -22,6 +22,8 @@ from django.core.management.base import NoArgsCommand
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.cache import cache
+from django.db.models import Sum
+import accounts.models
 import logging
 logger = logging.getLogger("web")
 
@@ -33,10 +35,13 @@ class Command(NoArgsCommand):
         logger.info("Updating front page caches")
 
         rss_url = settings.FREESOUND_RSS
-        pledgie_campaign = settings.PLEDGIE_CAMPAIGN
-        
+        donations_goal = settings.DONATIONS_GOAL
+
         rss_cache = render_to_string('rss_cache.html', locals())
         cache.set("rss_cache", rss_cache, 2592000) # 30 days cache
 
-        pledgie_cache = render_to_string('pledgie_cache.html', locals())
-        cache.set("pledgie_cache", pledgie_cache, 2592000) # 30 days cache
+        donations = accounts.models.Donation.objects.all().aggregate(Sum('amount'))
+        params = {'remains': int(donations_goal - donations['amount__sum']),
+                'percent_towards_goal': int(donations['amount__sum'] / donations_goal * 100)}
+        donations_cache = render_to_string('donations_cache.html', params)
+        cache.set("donations_cache", donations_cache, 2592000) # 30 days cache

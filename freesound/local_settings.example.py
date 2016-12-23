@@ -46,7 +46,8 @@ SOLR_FORUM_URL = "http://localhost:8983/solr/forum/"
 
 GEARMAN_JOB_SERVERS = ["localhost:4730"]
 
-PLEDGIE_CAMPAIGN=14560
+PAYPAL_EMAIL = "fs@freesound.org"
+DONATIONS_GOAL = 2000
 
 LOG_CLICKTHROUGH_DATA = False
 

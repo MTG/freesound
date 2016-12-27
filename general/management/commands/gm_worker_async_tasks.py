@@ -124,7 +124,7 @@ class Command(BaseCommand):
             # availabe
 
             user.profile.delete_user()
-            self.write_stdout("Deleted user %d" % data['user_id'])
+            self.write_stdout("Deleted user %d (sounds kept)" % data['user_id'])
             return 'true'
         elif data['action'] == 'delete_user_delete_sounds':
             # This will anonymize the user and remove the sounds, a

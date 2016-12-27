@@ -176,6 +176,8 @@ def stream(request):
     except Exception, e:
         # Could not connect to solr
         errors_getting_data = True
+        users_sounds = list()
+        tags_sounds = list()
 
     tvars = {
         'SELECT_OPTIONS': SELECT_OPTIONS,

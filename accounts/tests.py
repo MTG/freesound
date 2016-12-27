@@ -79,12 +79,12 @@ class SimpleUserTest(TestCase):
         # 200 response on user geotags access
         resp = self.client.get(reverse('geotags-for-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
- 
+
     def test_user_packs_response_ok(self):
         # 200 response on user packs access
         resp = self.client.get(reverse('packs-for-user', kwargs={'username': self.user.username}))
         self.assertEqual(resp.status_code, 200)
- 
+
     def test_user_downloaded_response_ok(self):
         # 200 response on user downloaded sounds and packs access
         resp = self.client.get(reverse('user-downloaded-sounds', kwargs={'username': self.user.username}))

@@ -10,6 +10,9 @@ Python
 Javascript
   https://github.com/g-roma/freesound.js
 
+Perl
+  https://github.com/CaesuraMedia/PerlFreesound (by Andy Cragg)
+
 Supercollider
   https://github.com/g-roma/Freesound.sc
 

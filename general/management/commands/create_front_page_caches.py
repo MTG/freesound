@@ -41,7 +41,7 @@ class Command(NoArgsCommand):
         cache.set("rss_cache", rss_cache, 2592000) # 30 days cache
 
         donations = accounts.models.Donation.objects.all().aggregate(Sum('amount'))
-        params = {'remains': int(donations_goal - donations['amount__sum']),
-                'percent_towards_goal': int(donations['amount__sum'] / donations_goal * 100)}
+        params = {'remains': int(donations_goal - (donations['amount__sum'] or 0)),
+                  'percent_towards_goal': int((donations['amount__sum'] or 0) / donations_goal * 100)}
         donations_cache = render_to_string('donations_cache.html', params)
-        cache.set("donations_cache", donations_cache, 2592000) # 30 days cache
+        cache.set("donations_cache", donations_cache, 2592000)  # 30 days cache

@@ -56,7 +56,7 @@ def generate_json(sound_queryset):
 
     return HttpResponse(json.dumps(sounds_data), content_type="application/json")
 
-@cache_page(60 * 15)
+#@cache_page(60 * 15)
 def geotags_json(request, tag=None):
     if tag:
         #sounds = Sound.objects.select_related('geotag').filter(tags__tag__name=tag).exclude(geotag=None)
@@ -80,7 +80,9 @@ def geotags_json(request, tag=None):
         query.set_query_options(field_list=["id", "geotag"],
                 rows=results.num_found, filter_query=filter_query)
         results = SolrResponseInterpreter(solr.select(unicode(query)))
-        sounds_data = [[s['id']]+ s['geotag'][0].split(' ') for s in results.docs]
+        sounds_data = map(lambda x: [x['id'],
+            x['geotag'][0].split(' ')[1],
+            x['geotag'][0].split(' ')[0]], results.docs)
         return HttpResponse(json.dumps(sounds_data), content_type="application/json")
     return generate_json(sounds)
 

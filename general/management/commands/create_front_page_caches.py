@@ -36,11 +36,13 @@ class Command(NoArgsCommand):
 
         rss_url = settings.FREESOUND_RSS
         donations_goal = settings.DONATIONS_GOAL
+        donations_date = settings.DONATIONS_DATE
 
         rss_cache = render_to_string('rss_cache.html', locals())
         cache.set("rss_cache", rss_cache, 2592000) # 30 days cache
 
-        donations = accounts.models.Donation.objects.all().aggregate(Sum('amount'))
+        donations = accounts.models.Donation.objects\
+                .filter(created__gt=donations_date).all().aggregate(Sum('amount'))
         params = {'remains': int(donations_goal - (donations['amount__sum'] or 0)),
                   'percent_towards_goal': int((donations['amount__sum'] or 0) / donations_goal * 100)}
         donations_cache = render_to_string('donations_cache.html', params)

@@ -46,8 +46,11 @@ SOLR_FORUM_URL = "http://localhost:8983/solr/forum/"
 
 GEARMAN_JOB_SERVERS = ["localhost:4730"]
 
+
 PAYPAL_EMAIL = "fs@freesound.org"
 DONATIONS_GOAL = 2000
+# Date format: YYYY-MM-DD
+DONATIONS_DATE = "2016-01-01"
 
 LOG_CLICKTHROUGH_DATA = False
 

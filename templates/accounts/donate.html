@@ -24,15 +24,6 @@
           <input type="submit" value="Donate Now" class="donation_button" />
         </form>
     </div>
-    <h2>Last Donations</h2>
-    <div class="donations-list">
-    {% for donation in donations %}
-      <div class="donation-item">
-        <div class="donation-item-left"><img src="/media/images/70x70_avatar.png"></div>
-        <div class="donation-item-right"><p>{{donation.display_name}} <br /> {{donation.amount}} {{donation.currency}}</p></div>
-      </div>
-    {% endfor %}
-    </div>
 {% block section_content %}
 
 {% endblock %}

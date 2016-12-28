@@ -1043,11 +1043,6 @@ def clear_flags_user(request, username):
         return HttpResponseRedirect(reverse('accounts-login'))
 
 
-def donate_redirect(request):
-    pledgie_campaign_url = "http://pledgie.com/campaigns/%d/" % settings.PLEDGIE_CAMPAIGN
-    return HttpResponseRedirect(pledgie_campaign_url)
-
-
 @login_required
 def pending(request):
     user = request.user
@@ -1092,6 +1087,11 @@ def donation_complete(request):
 
 
 def donate(request):
-    donations = Donation.objects.all()[:10]
-    tvars = {'paypal_email': settings.PAYPAL_EMAIL, 'donations': donations}
+    tvars = {'paypal_email': settings.PAYPAL_EMAIL}
     return render(request, 'accounts/donate.html', tvars)
+
+
+def donors(request):
+    donations = Donation.objects.all()[:10]
+    tvars = {'donations': donations}
+    return render(request, 'accounts/donors.html', tvars)

@@ -23,7 +23,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from accounts.models import Profile, UserFlag
+from accounts.models import Profile, UserFlag, DonationCampaign
 from django_object_actions import DjangoObjectActions
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -98,3 +98,4 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
+admin.site.register(DonationCampaign)

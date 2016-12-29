@@ -37,15 +37,16 @@ import mock
 import os
 import tempfile
 import shutil
+import datetime
 
 
 class SimpleUserTest(TestCase):
-    
+
     fixtures = ['users', 'sounds_with_tags']
-    
+
     def setUp(self):
         self.user = User.objects.all()[0]
-        self.sound = Sound.objects.all()[0] 
+        self.sound = Sound.objects.all()[0]
 
     def test_account_response_ok(self):
         # 200 response on account access
@@ -559,6 +560,8 @@ class UserDelete(TestCase):
 class DonationTest(TestCase):
 
     def test_donation_complete(self):
+        accounts.models.DonationCampaign.objects.create(\
+                goal=200, date_start=datetime.datetime.now())
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
                 'custom': 'Anonymous',

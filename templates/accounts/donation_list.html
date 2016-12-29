@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div id="content_full"> <!-- START of Content area -->
+
+  <h1>Donations</h1>
+   <h2>Last Donations</h2>
+    <div class="donations-list">
+    {% for donation in object_list %}
+      <div class="donation-item">
+        <div class="donation-item-left"><img src="/media/images/70x70_avatar.png"></div>
+        <div class="donation-item-right"><p>{{donation.display_name}} <br /> {{donation.amount}} {{donation.currency}}</p></div>
+      </div>
+    {% endfor %}
+    </div>
+    {% if is_paginated %}
+      <div style="clear:both;padding-top: 15px;" class="pagination">
+          <span class="page-links">
+              {% if page_obj.has_previous %}
+                  <a href="{% url 'donors' %}?page={{ page_obj.previous_page_number }}">previous</a>
+              {% endif %}
+              <span class="page-current">
+                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+              </span>
+              {% if page_obj.has_next %}
+                  <a href="{% url 'donors' %}?page={{ page_obj.next_page_number }}">next</a>
+              {% endif %}
+          </span>
+      </div>
+    {% endif %}
+{% block section_content %}
+
+{% endblock %}
+</div> <!-- END of Content area -->
+
+<br class="clear" />
+
+{% endblock %}
+
+

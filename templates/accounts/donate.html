@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load absurl %}
 
 {% block content %}
 <div id="content_full"> <!-- START of Content area -->
@@ -20,7 +20,7 @@
           <input type="hidden" name="business" value="{{ paypal_email }}">
           <input type="hidden" name="item_name" value="Freesound">
           <label>Name</label><input type="text" name="custom" value="Anonymous">
-          <input type="hidden" name="notify_url" value="{{ request.scheme }}://{{ request.get_host }}{% url 'donation-complete' %}">
+          <input type="hidden" name="notify_url" value="{% absurl 'donation-complete' %}">
           <input type="submit" value="Donate Now" class="donation_button" />
         </form>
     </div>

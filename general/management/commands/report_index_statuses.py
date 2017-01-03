@@ -118,7 +118,7 @@ class Command(BaseCommand):
 
             # Delete sounds from gaia that are not in the db
             if in_gaia_not_in_fs:
-                print "\nDeleting sounds that should not be in solr"
+                print "\nDeleting sounds that should not be in gaia"
                 N = len(in_gaia_not_in_fs)
                 for count, sid in enumerate(in_gaia_not_in_fs):
                     sys.stdout.write('\r\tDeleting sound %i of %i         ' % (count+1, N))

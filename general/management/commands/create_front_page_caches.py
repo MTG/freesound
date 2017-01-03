@@ -35,8 +35,6 @@ class Command(NoArgsCommand):
         logger.info("Updating front page caches")
 
         rss_url = settings.FREESOUND_RSS
-        donations_goal = settings.DONATIONS_GOAL
-        donations_date = settings.DONATIONS_DATE
 
         rss_cache = render_to_string('rss_cache.html', locals())
         cache.set("rss_cache", rss_cache, 2592000) # 30 days cache
@@ -44,6 +42,7 @@ class Command(NoArgsCommand):
         campaign = accounts.models.DonationCampaign.objects.order_by('date_start').last()
         donations = accounts.models.Donation.objects\
                 .filter(campaign=campaign).all().aggregate(Sum('amount'))
+        donations_goal = campaign.goal
         params = {'remains': int(donations_goal - (donations['amount__sum'] or 0)),
                   'percent_towards_goal': int((donations['amount__sum'] or 0) / donations_goal * 100)}
         donations_cache = render_to_string('donations_cache.html', params)

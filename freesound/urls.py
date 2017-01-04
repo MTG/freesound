@@ -108,6 +108,7 @@ urlpatterns = [
     url(r'^forum/', include('forum.urls')),
     url(r'^geotags/', include('geotags.urls')),
     url(r'^home/', include('accounts.urls')),
+    url(r'^donations/', include('donations.urls')),
     url(r'^tickets/', include('tickets.urls')),
     url(r'^monitor/', include('monitor.urls')),
     url(r'^follow/', include('follow.urls')),
@@ -140,8 +141,6 @@ urlpatterns = [
         accounts.views.crash_me,
         name="crash-me"),
 
-    # donation campaign
-    url(r'^donate/', accounts.views.donate, name="donate-redirect"),
     url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
 
     # old url format redirects

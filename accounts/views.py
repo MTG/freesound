@@ -36,7 +36,6 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.contrib.auth.tokens import default_token_generator
 from django.views.decorators.cache import never_cache
-from django.views.generic import ListView
 from django.utils.http import base36_to_int
 from django.template import loader
 from django.utils.http import int_to_base36
@@ -46,7 +45,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, Donation, DonationCampaign
+from accounts.models import Profile, ResetEmailRequest, UserFlag
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -1066,35 +1065,3 @@ def pending(request):
     }
     tvars.update(paginate(request, pendings, settings.SOUNDS_PENDING_MODERATION_PER_PAGE))
     return render(request, 'accounts/pending.html', tvars)
-
-
-@csrf_exempt
-def donation_complete(request):
-    params = {'cmd': '_notify-validate'}
-    for key, value in request.POST.items():
-        params[key] =  value
-    if settings.DEBUG:
-        paypal_validation_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
-    else:
-        paypal_validation_url = "https://www.paypal.com/cgi-bin/webscr"
-    req = requests.post(paypal_validation_url, data=params)
-    if req.text == 'VERIFIED':
-        campaign = DonationCampaign.objects.order_by('date_start').last()
-        Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults={
-        'email': params['payer_email'],
-        'display_name': params['custom'],
-        'amount': params['mc_gross'],
-        'currency': params['mc_currency'],
-        'campaign': campaign})
-    return HttpResponse("OK")
-
-
-def donate(request):
-    tvars = {'paypal_email': settings.PAYPAL_EMAIL}
-    return render(request, 'accounts/donate.html', tvars)
-
-
-class DonationsList(ListView):
-    model = Donation
-    paginate_by = 15
-    ordering = ["-created"]

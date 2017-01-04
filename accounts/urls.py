@@ -33,9 +33,6 @@ urlpatterns = [
     url(r'^login/$', authviews.login, {'template_name': 'registration/login.html',
                                        'authentication_form': FsAuthenticationForm}, name="accounts-login"),
     url('^', include('django.contrib.auth.urls')),  # Include logout and reset email urls
-    url(r'^donate/$', accounts.donate, name="donate"),
-    url(r'^donors/$', accounts.DonationsList.as_view(), name="donors"),
-    url(r'^donation-complete/$', accounts.donation_complete, name="donation-complete"),
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),
     url(r'^username/$', accounts.username_reminder, name="accounts-username-reminder"),

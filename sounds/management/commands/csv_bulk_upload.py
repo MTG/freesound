@@ -26,14 +26,19 @@ from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from utils.filesystem import md5file
 from utils.text import slugify
-import shutil,os,csv
+import shutil, os, csv
+
 
 class Command(BaseCommand):
-    args = ''
+
     help = 'Upload many sounds at once'
 
+    def add_arguments(self, parser):
+        parser.add_argument('filepath', nargs=1, type=str)
+
     def handle(self, *args, **options):
-        sound_list = args[0]
+        sound_list = options['filepath'][0]
+        print sound_list
         base_dir = os.path.dirname(sound_list)
         delete_already_existing = False
         if len(args) > 1:

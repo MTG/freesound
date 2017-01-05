@@ -13,8 +13,10 @@
       <form method="post" action="{% url 'donate' %}">
         {% csrf_token %}
         {% if user.is_authenticated %}
-          <input type="radio" name="annon" value="0" checked="checked"> Donate as a user<br>
-          <input type="radio" name="annon" value="1"> Donate anonymously<br>
+        <ul>
+          <li><input type="radio" name="annon" value="0" checked="checked"> Donate as a user</li>
+          <li><input type="radio" name="annon" value="1"> Donate anonymously</li>
+        </ul>
         {% else %}
           <label>Name</label><input type="text" name="name" value="Anonymous">
         {% endif %}

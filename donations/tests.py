@@ -31,10 +31,10 @@ class DonationTest(TestCase):
     def test_annon_donation(self):
         donations.models.DonationCampaign.objects.create(\
                 goal=200, date_start=datetime.datetime.now(), id=1)
-        # {u'campaign_id': 1, u'name': u'Anonymous', u'user_id': None}
+        # {u'campaign_id': 1, u'name': u'Anonymous'}
         params = {'txn_id': '8B703020T00352816',
                 'payer_email': 'fs@freesound.org',
-                'custom': 'eyJ1c2VyX2lkIjogbnVsbCwgIm5hbWUiOiAiQW5vbnltb3VzIiwgImNhbXBhaWduX2lkIjogMX0=',
+                'custom': 'eyJuYW1lIjogIkFub255bW91cyIsICJjYW1wYWlnbl9pZCI6IDF9',
                 'mc_currency': 'EUR',
                 'mc_gross': '1.00'}
 

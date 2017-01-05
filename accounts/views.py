@@ -19,7 +19,6 @@
 #
 
 import datetime, logging, os, tempfile, shutil, hashlib, base64, json
-import requests
 import tickets.views as TicketViews
 import django.contrib.auth.views as authviews
 from django.conf import settings

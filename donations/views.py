@@ -21,16 +21,12 @@ def donation_complete(request):
     params = {'cmd': '_notify-validate'}
     for key, value in request.POST.items():
         params[key] =  value
-    if settings.DEBUG:
-        paypal_validation_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
-    else:
-        paypal_validation_url = "https://www.paypal.com/cgi-bin/webscr"
-    req = requests.post(paypal_validation_url, data=params)
+    req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
     if req.text == 'VERIFIED':
         extra_data = json.loads(base64.b64decode(params['custom']))
         campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
         user = None
-        if extra_data['user_id']:
+        if 'user_id' in extra_data:
             user = User.objects.get(id=extra_data['user_id'])
 
         Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults={
@@ -50,31 +46,23 @@ def donate(request):
     If request is post we generate the data to send to paypal.
     '''
     if request.method == 'POST':
-        url = "https://www.paypal.com/yt/cgi-bin/webscr"
-        if settings.DEBUG:
-            url = "https://www.sandbox.paypal.com/yt/cgi-bin/webscr"
-
         name = request.POST.get('name', None)
-        user = None
+        campaign = DonationCampaign.objects.order_by('date_start').last()
+        returned_data = {'name': name, "campaign_id": campaign.id}
         annon = request.POST.get('annon', None)
 
         # If the donation is annonymous we don't store the user
         if annon == '1':
-            name = "Anonymous"
+            returned_data['name'] = "Anonymous"
         elif request.user :
-            user = request.user.id
-        campaign = DonationCampaign.objects.order_by('date_start').last()
+            returned_data['user_id'] = request.user.id
 
-        # Paypal gives only one filed to add extra data so we send it as b64
-        returned_data = json.dumps({
-            "user_id": user,
-            "name": name,
-            "campaign_id": campaign.id})
-        returned_data_str = base64.b64encode(returned_data)
+        # Paypal gives only one field to add extra data so we send it as b64
+        returned_data_str = base64.b64encode(json.dumps(returned_data))
         domain = "https://%s" % Site.objects.get_current().domain
         return_url = urlparse.urljoin(domain, reverse('donation-complete'))
 
-        data = {"url": url,
+        data = {"url": settings.PAYPAL_VALIDATION_URL,
                 "params": {
                     "cmd": "_donations",
                     "currency_code": "EUR",

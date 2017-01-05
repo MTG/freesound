@@ -80,7 +80,7 @@ def donate(request):
                     "currency_code": "EUR",
                     "business": settings.PAYPAL_EMAIL,
                     "item_name": "Freesound",
-                    "custom": returned_data,
+                    "custom": returned_data_str,
                     "notify_url": return_url}}
         return JsonResponse(data)
     else:

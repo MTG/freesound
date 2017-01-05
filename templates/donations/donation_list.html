@@ -9,25 +9,40 @@
     <div class="donations-list">
     {% for donation in object_list %}
       <div class="donation-item">
-        <div class="donation-item-left"><img src="/media/images/70x70_avatar.png"></div>
-        <div class="donation-item-right"><p>{{donation.display_name}} <br /> {{donation.amount}} {{donation.currency}}</p></div>
+        <div class="donation-item-left"><img src="{% if donation.user %}{{ donation.user.profile.locations.avatar.L.url}}{% else %}/media/images/70x70_avatar.png{% endif %}"></div>
+        <div class="donation-item-right"><p>{% if donation.user %}{{ donation.user.username }}{% else %}{{donation.display_name}}{% endif %} <br /> {{donation.amount}} {{donation.currency}}</p></div>
       </div>
     {% endfor %}
     </div>
     {% if is_paginated %}
-      <div style="clear:both;padding-top: 15px;" class="pagination">
-          <span class="page-links">
-              {% if page_obj.has_previous %}
-                  <a href="{% url 'donors' %}?page={{ page_obj.previous_page_number }}">previous</a>
-              {% endif %}
-              <span class="page-current">
-                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-              </span>
-              {% if page_obj.has_next %}
-                  <a href="{% url 'donors' %}?page={{ page_obj.next_page_number }}">next</a>
-              {% endif %}
-          </span>
-      </div>
+      <ul style="clear:both;padding-top: 15px;" class="pagination">
+  
+      {% if page_obj.has_previous %}
+        <li class="previous-page"><a href="{% url 'donors' %}?page={{ page_obj.previous_page_number }}" title="Previous Page">previous</a></li>
+      {% else %}
+        <li class="disabled-previous-next">previous</li>
+      {% endif %}
+      
+      {% if page_obj.has_next %}
+        <li class="next-page"><a href="{% url 'donors' %}?page={{ page_obj.next_page_number }}" title="Next Page">next</a></li>
+      {% else %}
+        <li class="disabled-previous-next"><span style="color:#888">next</span></li>
+      {% endif %}
+      
+      {% for num in page_numbers %}
+        {% ifequal num current_page %}
+          <li class="current-page">{{ num }}</li> 
+        {% else %}
+          <li class="other-page"><a href="{{ url }}{{ num }}{% if anchor %}#{{anchor}}{% endif %}" title="Page {{ num }}">{{ num }}</a></li>
+        {% endifequal %}
+      {% endfor %}
+
+      <li>
+      <span style="color: #888;">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+      </span>
+      </li>
+      </ul>
     {% endif %}
 {% block section_content %}
 

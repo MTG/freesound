@@ -1,0 +1,13 @@
+{% extends "email_base.txt" %}
+
+{% load absurl %}
+
+{% block salutation %}{% if user %}{{ user.username }}{%else%}{{display_name}}{% endif %}{% endblock %}
+
+{% block body %}
+Thanks {% if user %}{{ user.username }}{%else%}{{display_name}}{% endif %}, we received your donation.
+
+To see the list of donations, please visit:
+<{% absurl 'donors' %}>
+
+{% endblock %}

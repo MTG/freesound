@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from models import Donation, DonationCampaign
+from utils.mail import send_mail_template
 
 
 @csrf_exempt
@@ -36,6 +37,12 @@ def donation_complete(request):
             'currency': params['mc_currency'],
             'user': user,
             'campaign': campaign})
+
+        send_mail_template(\
+                u'Donation',
+                'donations/email_donation.txt',
+                {'user': user, 'amount': params['mc_gross'], 'display_name': extra_data['name']},
+                None, params['payer_email'])
     return HttpResponse("OK")
 
 

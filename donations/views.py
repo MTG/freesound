@@ -54,7 +54,7 @@ def donate(request):
     '''
     if request.method == 'POST':
         campaign = DonationCampaign.objects.order_by('date_start').last()
-        returned_data = {"campaign_id": campaign.id}
+        returned_data = {"name": None, "campaign_id": campaign.id}
         annon = request.POST.get('annon', None)
 
         # If the donation is annonymous we don't store the user

@@ -2178,21 +2178,27 @@ a.donation_button:hover {
 }
 
 .donation-item {
-    height: 75px;
-    width: 300px;
+    height: 50px;
+    width: 150px;
     float: left;
     overflow: hidden;
 }
 
 .donation-item-left {
     float: left;
-    height: 75px;
-    width: 75px;
+    margin-right: 8px;
+    margin-top: 0px;
 }
 
 .donation-item-left img{
     position: relative;
     top: 5px;
+}
+
+.donation-item-right p{
+    font-size: 10px;
+    color: #444;
+    line-height: 14px;
 }
 
 #latest_forum_posts {

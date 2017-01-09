@@ -14,8 +14,9 @@
         {% csrf_token %}
         {% if user.is_authenticated %}
         <ul>
-          <li><input type="radio" name="annon" value="0" checked="checked"> Donate as a user</li>
+          <li style="line-height: 24px;"><input type="radio" name="annon" value="0" checked="checked"> Donate as a user</li>
           <li><input type="radio" name="annon" value="1"> Donate anonymously</li>
+          <li><input type="radio" name="annon" value="2"> Other: <input type="text" name="name_option"></li>
         </ul>
         {% else %}
           <label>Name</label><input type="text" name="name" value="Anonymous">

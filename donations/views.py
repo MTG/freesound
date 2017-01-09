@@ -61,6 +61,8 @@ def donate(request):
         # If the donation is annonymous we don't store the user
         if annon == '1':
             returned_data['name'] = "Anonymous"
+        elif annon == '2':
+            returned_data['name'] = request.POST.get('name_option', '')
         elif request.user :
             returned_data['user_id'] = request.user.id
 

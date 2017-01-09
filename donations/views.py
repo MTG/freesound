@@ -53,9 +53,8 @@ def donate(request):
     If request is post we generate the data to send to paypal.
     '''
     if request.method == 'POST':
-        name = request.POST.get('name', None)
         campaign = DonationCampaign.objects.order_by('date_start').last()
-        returned_data = {'name': name, "campaign_id": campaign.id}
+        returned_data = {"campaign_id": campaign.id}
         annon = request.POST.get('annon', None)
 
         # If the donation is annonymous we don't store the user

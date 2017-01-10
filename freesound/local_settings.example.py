@@ -49,6 +49,7 @@ GEARMAN_JOB_SERVERS = ["localhost:4730"]
 
 PAYPAL_EMAIL = "paypal@freesound.org"
 PAYPAL_VALIDATION_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+DONATIONS_PER_PAGE = 40
 
 LOG_CLICKTHROUGH_DATA = False
 

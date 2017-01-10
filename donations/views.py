@@ -86,5 +86,5 @@ def donate(request):
 
 class DonationsList(ListView):
     model = Donation
-    paginate_by = 15
+    paginate_by = settings.DONATIONS_PER_PAGE
     ordering = ["-created"]

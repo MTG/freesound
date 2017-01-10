@@ -13,13 +13,19 @@
       <form method="post" action="{% url 'donate' %}">
         <ul style="list-style-type: none;">
         {% csrf_token %}
-        {% if user.is_authenticated %}
-          <li style="line-height: 24px;"><input type="radio" name="annon" value="0" checked="checked"> {{user.username}}</li>
-          <li><input type="radio" name="annon" value="1"> Anonymous</li>
-        {% else %}
-          <li><input type="radio" name="annon" value="1" checked="checked"> Anonymous</li>
-        {% endif %}
-          <li><input type="radio" name="annon" value="2"> Other: <input type="text" name="name_option"></li>
+        {% for choice in form.donation_type %}
+        <li>
+            <input type="radio"
+                   name="{{ form.donation_type.name }}"
+                   value="{{ choice.choice_value }}"
+                   id="id_{{ form.donation_type.name }}_{{ forloop.counter0 }}"
+                   {% if form.donation_type.value == choice.choice_value %}
+                       checked='checked'
+                   {% endif %}/>
+            {{ choice.choice_label }}
+            {% if choice.choice_value == "2" %} {{form.name_option}} {% endif %}
+        </li> 
+        {% endfor %}
         </ul>
         <input type="submit" value="Donate Now" class="donation_button" />
       </form>

@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from models import Donation, DonationCampaign
+from forms import DonateForm
 from utils.mail import send_mail_template
 
 
@@ -53,34 +54,26 @@ def donate(request):
     If request is post we generate the data to send to paypal.
     '''
     if request.method == 'POST':
-        campaign = DonationCampaign.objects.order_by('date_start').last()
-        returned_data = {"name": None, "campaign_id": campaign.id}
-        annon = request.POST.get('annon', None)
-
-        # If the donation is annonymous we don't store the user
-        if annon == '1':
-            returned_data['name'] = "Anonymous"
-        elif annon == '2':
-            returned_data['name'] = request.POST.get('name_option', '')
-        elif request.user :
-            returned_data['user_id'] = request.user.id
-
-        # Paypal gives only one field to add extra data so we send it as b64
-        returned_data_str = base64.b64encode(json.dumps(returned_data))
-        domain = "https://%s" % Site.objects.get_current().domain
-        return_url = urlparse.urljoin(domain, reverse('donation-complete'))
-
-        data = {"url": settings.PAYPAL_VALIDATION_URL,
-                "params": {
-                    "cmd": "_donations",
-                    "currency_code": "EUR",
-                    "business": settings.PAYPAL_EMAIL,
-                    "item_name": "Freesound",
-                    "custom": returned_data_str,
-                    "notify_url": return_url}}
+        form = DonateForm(request.POST, user=request.user)
+        if form.is_valid():
+            returned_data_str = form.encoded_data
+            domain = "https://%s" % Site.objects.get_current().domain
+            return_url = urlparse.urljoin(domain, reverse('donation-complete'))
+            print returned_data_str
+            data = {"url": settings.PAYPAL_VALIDATION_URL,
+                    "params": {
+                        "cmd": "_donations",
+                        "currency_code": "EUR",
+                        "business": settings.PAYPAL_EMAIL,
+                        "item_name": "Freesound",
+                        "custom": returned_data_str,
+                        "notify_url": return_url
+                        }
+                    }
         return JsonResponse(data)
     else:
-        tvars = {}
+        form = DonateForm(user=request.user)
+        tvars = {'form': form}
         return render(request, 'donations/donate.html', tvars)
 
 

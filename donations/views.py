@@ -20,9 +20,8 @@ def donation_complete(request):
     '''This view listens to a notification made from paypal when someone makes
     a donation, it validates the data and then stores the donation.
     '''
-    params = {'cmd': '_notify-validate'}
-    for key, value in request.POST.items():
-        params[key] =  value
+    params = request.POST.copy()
+    params.update({'cmd': '_notify-validate'})
     req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
     if req.text == 'VERIFIED':
         extra_data = json.loads(base64.b64decode(params['custom']))

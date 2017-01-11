@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import cStringIO
+import struct
 from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import render_to_response
@@ -47,16 +49,18 @@ geoquery = """SELECT sounds_sound.id,
             ORDER BY sounds_sound.created DESC
                      %(end)s"""
 
-def generate_json(sound_queryset):
-    # When using Django Sound queries:
-    #sounds_data = [[s.id, s.geotag.lat, s.geotag.lon] for s in sound_queryset]
+def generate_bytearray(sound_queryset):
+    # sounds as bytearray
+    packed_sounds = cStringIO.StringIO()
+    for sound in sound_queryset:
+        packed_sounds.write(struct.pack("i", sound.id))
+        packed_sounds.write(struct.pack("i", int(sound.lat*1000)))
+        packed_sounds.write(struct.pack("i", int(sound.lon*1000)))
 
-    sounds_data = [[s.id, s.lat, s.lon] for s in sound_queryset if not math.isnan(s.lat) and not math.isnan(s.lon)]
-
-    return HttpResponse(json.dumps(sounds_data), content_type="application/json")
+    return HttpResponse(packed_sounds.getvalue(), content_type='application/octet-stream')
 
 @cache_page(60 * 15)
-def geotags_json(request, tag=None):
+def geotags_barray(request, tag=None):
     if tag:
         #sounds = Sound.objects.select_related('geotag').filter(tags__tag__name=tag).exclude(geotag=None)
         join = """INNER JOIN "tags_taggeditem"
@@ -70,13 +74,14 @@ def geotags_json(request, tag=None):
         #sounds = Sound.public.select_related('geotag').all().exclude(geotag=None)
         q = geoquery % {"join": "", "where": "", "end": ""}
         sounds = Sound.objects.raw(q)
-    return generate_json(sounds)
 
-def geotags_box_json(request):    
+    return generate_bytearray(sounds)
+
+def geotags_box_barray(request):
     box = request.GET.get("box","-180,-90,180,90")
     try:
-        min_lat, min_lon, max_lat, max_lon = box.split(",")  
-        qs = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK")        
+        min_lat, min_lon, max_lat, max_lon = box.split(",")
+        qs = Sound.objects.select_related("geotag").exclude(geotag=None).filter(moderation_state="OK", processing_state="OK")
         if min_lat <= max_lat and min_lon <= max_lon:
             sounds = qs.filter(geotag__lat__range=(min_lat,max_lat)).filter(geotag__lon__range=(min_lon,max_lon))
         elif min_lat > max_lat and min_lon <= max_lon:
@@ -84,25 +89,25 @@ def geotags_box_json(request):
         elif min_lat <= max_lat and min_lon > max_lon:
             sounds =qs.filter(geotag__lat__range=(min_lat,max_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
         elif min_lat > max_lat and min_lon > max_lon:
-            sounds = qs.exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))        
+            sounds = qs.exclude(geotag__lat__range=(max_lat,min_lat)).exclude(geotag__lon__range=(max_lon,min_lon))
 
         sounds_data = [[s.id, s.geotag.lat, s.geotag.lon] for s in sounds]
-        return HttpResponse(json.dumps(sounds_data), content_type="application/json")
+        return generate_bytearray(sounds_data)
     except ValueError:
         raise Http404
-    
+
 @cache_page(60 * 15)
-def geotags_for_user_json(request, username):
+def geotags_for_user_barray(request, username):
     #sounds = Sound.public.select_related('geotag').filter(user__username__iexact=username).exclude(geotag=None)
     join = """INNER JOIN "auth_user"
                       ON ("sounds_sound"."user_id" = "auth_user"."id")"""
     where = """AND UPPER("auth_user"."username"::text) = UPPER(%s)"""
     q = geoquery % {"join": join, "where": where, "end": ""}
     sounds = Sound.objects.raw(q, [username])
-    return generate_json(sounds)
+    return generate_bytearray(sounds)
 
 #@cache_page(60 * 15)
-def geotags_for_user_latest_json(request, username):
+def geotags_for_user_latest_barray(request, username):
     #sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
     join = """INNER JOIN "auth_user"
                       ON ("sounds_sound"."user_id" = "auth_user"."id")"""
@@ -110,15 +115,15 @@ def geotags_for_user_latest_json(request, username):
     end = "LIMIT 10"
     q = geoquery % {"join": join, "where": where, "end": end}
     sounds = Sound.objects.raw(q, [username])
-    return generate_json(sounds)
+    return generate_bytearray(sounds)
 
 #@cache_page(60 * 15)
-def geotags_for_pack_json(request, pack_id):
+def geotags_for_pack_barray(request, pack_id):
     #sounds = Sound.public.select_related('geotag').filter(pack__id=pack_id).exclude(geotag=None)
     where = "AND pack_id = %s"
     q = geoquery % {"join": "", "where": where, "end": ""}
     sounds = Sound.objects.raw(q, [pack_id])
-    return generate_json(sounds)
+    return generate_bytearray(sounds)
 
 def geotags(request, tag=None):
     google_api_key = settings.GOOGLE_API_KEY
@@ -133,7 +138,7 @@ def geotags_box(request):
     center_lon = request.GET.get("c_lon",None)
     zoom = request.GET.get("z",None)
     username = request.GET.get("username",None)
-    
+
     google_api_key = settings.GOOGLE_API_KEY
     return render_to_response('geotags/geotags_box.html', locals(), context_instance=RequestContext(request))
 

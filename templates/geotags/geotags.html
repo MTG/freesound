@@ -90,43 +90,54 @@
     });
 
     {% if for_user %}
-        ajaxLoad('{% url "geotags-for-user-json" for_user.username %}', function(data, responseCode)
+        var url = '{% url "geotags-for-user-barray" for_user.username %}';
     {% else %}
         {% if tag %}
-            ajaxLoad('{% url "geotags-json" tag %}', function(data, responseCode)
+            var url = '{% url "geotags-barray" tag %}';
         {% else %}
-            ajaxLoad('{% url "geotags-json" %}', function(data, responseCode)
+            var url = '{% url "geotags-barray" %}';
         {% endif %}
     {% endif %}
-    {
-        var bounds = new google.maps.LatLngBounds();
-        var markers = [];
-        $.each($.parseJSON(data.response), function(index, item)
-        {
-            var id = item[0];
-            var lat = item[1];
-            var lon = item[2];
+    var bounds = new google.maps.LatLngBounds();
+    var markers = [];
+    
+    var oReq = new XMLHttpRequest();
+    oReq.open("GET", url, true);
+    oReq.responseType = "arraybuffer";
+    oReq.onload = function(oEvent) {
+        var raw_data = new Int32Array(oReq.response);
 
-            var point = new google.maps.LatLng(lat, lon);
-            var marker = new google.maps.Marker({'position': point});
+        var id = null;
+        var lat = null;
+        var lon = null;
 
-            {% if tag or for_user %}
-                bounds.extend(point);
-            {% endif %}
+        $.each(raw_data, function(index, item) {
+            if (index % 3 == 2) {
+                id = raw_data[index - 2];
+                lat = raw_data[index - 1] / 1000;
+                lon = item / 1000;
+ 
+                var point = new google.maps.LatLng(lat, lon);
+                var marker = new google.maps.Marker({'position': point});
 
-            google.maps.event.addListener(marker, 'click', function()
-            {
-                stopAll();
-                ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
+                {% if tag or for_user %}
+                    bounds.extend(point);
+                {% endif %}
+
+                google.maps.event.addListener(marker, 'click', function()
                 {
-                    infowindow.setContent(data.response);
-                    infowindow.open(map, marker);
-                    setTimeout(function() {
-                        makePlayer('.infowindow_player .player');
-                    }, 500);
+                    stopAll();
+                    ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
+                    {
+                        infowindow.setContent(data.response);
+                        infowindow.open(map, marker);
+                        setTimeout(function() {
+                            makePlayer('.infowindow_player .player');
+                        }, 500);
+                    });
                 });
-            });
-            markers.push(marker);
+                markers.push(marker);
+            }
         });
 
         //if (!bounds.isEmpty()) zoomToBounds(map, bounds);
@@ -137,7 +148,8 @@
         // Hide loading indicator
         toggleIndicator();
 
-    });
+    };
+    oReq.send();
 
     //google.maps.event.addListener( map, 'zoomend',   function() {updateEmbedCode(map)} );
     //google.maps.event.addListener( map, 'moveend', function() {updateEmbedCode(map)});

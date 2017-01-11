@@ -117,38 +117,47 @@
                 stopAll();
             });
 
-            ajaxLoad('{% url 'geotags-for-pack-json' pack.id %}', function(data, responseCode)
-            {
+            var oReq = new XMLHttpRequest();
+            oReq.open("GET", '{% url 'geotags-for-pack-barray' pack.id %}', true);
+            oReq.responseType = "arraybuffer";
+            oReq.onload = function(oEvent) {
                 var bounds = new google.maps.LatLngBounds();
                 // We'll need to know the number of sounds to correctly display the map
                 // in case there is only one sound with geotag
                 var nSounds = 0;
                 var lastPoint;
 
-                $.each($.parseJSON(data.response), function(index, item)
-                {
-                    nSounds = nSounds + 1;
-                    var id = item[0];
-                    var lat = item[1];
-                    var lon = item[2];
+                var raw_data = new Int32Array(oReq.response);
 
-                    var point = new google.maps.LatLng(lat, lon);
-                    lastPoint = point;
-                    bounds.extend(point);
-                    var marker = new google.maps.Marker({'position': point, 'map': map});
+                var id = null;
+                var lat = null;
+                var lon = null;
 
-                    google.maps.event.addListener(marker, 'click', function()
-                    {
-                        stopAll();
-                        ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
+                $.each(raw_data, function(index, item) {
+                    if (index % 3 == 2) {
+                        id = raw_data[index - 2];
+                        lat = raw_data[index - 1] / 1000;
+                        lon = item / 1000;
+                        nSounds = nSounds + 1;
+
+                        var point = new google.maps.LatLng(lat, lon);
+                        lastPoint = point;
+                        bounds.extend(point);
+                        var marker = new google.maps.Marker({'position': point, 'map': map});
+
+                        google.maps.event.addListener(marker, 'click', function()
                         {
-                            infowindow.setContent(data.response);
-                            infowindow.open(map, marker);
-                            setTimeout(function() {
-                                makePlayer('.infowindow_player .player');
-                            }, 500);
+                            stopAll();
+                            ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
+                            {
+                                infowindow.setContent(data.response);
+                                infowindow.open(map, marker);
+                                setTimeout(function() {
+                                    makePlayer('.infowindow_player .player');
+                                }, 500);
+                            });
                         });
-                    });
+                    }
                 });
 
                 // Show map div if sounds in it
@@ -164,7 +173,8 @@
                     map.setCenter(lastPoint);
                     map.setZoom(4);
                 }
-            });
+            };
+            oReq.send();
 
         </script>
     </div><!-- #pack_geotags -->

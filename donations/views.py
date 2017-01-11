@@ -25,10 +25,12 @@ def donation_complete(request):
     req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
     if req.text == 'VERIFIED':
         extra_data = json.loads(base64.b64decode(params['custom']))
+        email = params['payer_email']
         campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
         user = None
         if 'user_id' in extra_data:
             user = User.objects.get(id=extra_data['user_id'])
+            email = user.email
 
         Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults={
             'email': params['payer_email'],
@@ -42,7 +44,7 @@ def donation_complete(request):
                 u'Donation',
                 'donations/email_donation.txt',
                 {'user': user, 'amount': params['mc_gross'], 'display_name': extra_data['name']},
-                None, params['payer_email'])
+                None, email)
     return HttpResponse("OK")
 
 

@@ -9,6 +9,7 @@
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
 <script src="{{media_url}}js/markerclustererV3.js" type="text/javascript"></script>
 <script src="{{media_url}}js/maps.js?v={{ last_restart_date }}" type="text/javascript"></script>
+<script src="{{media_url}}js/sounds_location.js?v={{ last_restart_date }}" type="text/javascript"></script>
 
 <script type="text/javascript">
     function toggleShareControls(){
@@ -101,43 +102,32 @@
     var bounds = new google.maps.LatLngBounds();
     var markers = [];
     
-    var oReq = new XMLHttpRequest();
-    oReq.open("GET", url, true);
-    oReq.responseType = "arraybuffer";
-    oReq.onload = function(oEvent) {
-        var raw_data = new Int32Array(oReq.response);
+    getSoundsLocations(url, function(data){
+        $.each(data, function(index, item) {
+            id = item[0];
+            lat = item[1];
+            lon = item[2];
 
-        var id = null;
-        var lat = null;
-        var lon = null;
+            var point = new google.maps.LatLng(lat, lon);
+            var marker = new google.maps.Marker({'position': point});
 
-        $.each(raw_data, function(index, item) {
-            if (index % 3 == 2) {
-                id = raw_data[index - 2];
-                lat = raw_data[index - 1] / 1000;
-                lon = item / 1000;
- 
-                var point = new google.maps.LatLng(lat, lon);
-                var marker = new google.maps.Marker({'position': point});
+            {% if tag or for_user %}
+                bounds.extend(point);
+            {% endif %}
 
-                {% if tag or for_user %}
-                    bounds.extend(point);
-                {% endif %}
-
-                google.maps.event.addListener(marker, 'click', function()
+            google.maps.event.addListener(marker, 'click', function()
+            {
+                stopAll();
+                ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
                 {
-                    stopAll();
-                    ajaxLoad( '/geotags/infowindow/' + id, function(data, responseCode)
-                    {
-                        infowindow.setContent(data.response);
-                        infowindow.open(map, marker);
-                        setTimeout(function() {
-                            makePlayer('.infowindow_player .player');
-                        }, 500);
-                    });
+                    infowindow.setContent(data.response);
+                    infowindow.open(map, marker);
+                    setTimeout(function() {
+                        makePlayer('.infowindow_player .player');
+                    }, 500);
                 });
-                markers.push(marker);
-            }
+            });
+            markers.push(marker);
         });
 
         //if (!bounds.isEmpty()) zoomToBounds(map, bounds);
@@ -148,8 +138,7 @@
         // Hide loading indicator
         toggleIndicator();
 
-    };
-    oReq.send();
+    });
 
     //google.maps.event.addListener( map, 'zoomend',   function() {updateEmbedCode(map)} );
     //google.maps.event.addListener( map, 'moveend', function() {updateEmbedCode(map)});

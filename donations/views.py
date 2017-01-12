@@ -40,7 +40,7 @@ def donation_complete(request):
             'user': user,
             'campaign': campaign})
 
-        send_mail_template(\
+        send_mail_template(
                 u'Donation',
                 'donations/email_donation.txt',
                 {'user': user, 'amount': params['mc_gross'], 'display_name': extra_data['name']},

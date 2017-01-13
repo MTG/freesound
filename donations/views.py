@@ -46,9 +46,11 @@ def donation_complete(request):
 
         send_mail_template(
                 u'Donation',
-                'donations/email_donation.txt',
-                {'user': user, 'amount': params['mc_gross']},
-                None, email)
+                'donations/email_donation.txt', {
+                    'user': user,
+                    'amount': params['mc_gross'],
+                    'display_name': display_name
+                    }, None, email)
     return HttpResponse("OK")
 
 

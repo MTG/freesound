@@ -14,7 +14,7 @@
       <div class="donations-title">{{donation_m.grouper}}</div>
       {% for donation in donation_m.list%}
       <div class="donation-item">
-        <div class="donation-item-left"><img src="{% if donation.user %}{{ donation.user.profile.locations.avatar.M.url}}{% else %}/media/images/40x40_avatar.png{% endif %}"></div>
+        <div class="donation-item-left"><img src="{% if donation.display_name or not donation.user %}/media/images/40x40_avatar.png{% else %}{{ donation.user.profile.locations.avatar.M.url}}{% endif %}"></div>
         <div class="donation-item-right">
           <p>
           {% if donation.display_name %}

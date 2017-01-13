@@ -28,13 +28,17 @@ def donation_complete(request):
         email = params['payer_email']
         campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
         user = None
+        display_name= None
         if 'user_id' in extra_data:
             user = User.objects.get(id=extra_data['user_id'])
             email = user.email
 
+        if 'name' in extra_data:
+            display_name = extra_data['name']
+
         Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults={
             'email': params['payer_email'],
-            'display_name': extra_data['name'],
+            'display_name': display_name,
             'amount': params['mc_gross'],
             'currency': params['mc_currency'],
             'user': user,
@@ -43,7 +47,7 @@ def donation_complete(request):
         send_mail_template(
                 u'Donation',
                 'donations/email_donation.txt',
-                {'user': user, 'amount': params['mc_gross'], 'display_name': extra_data['name']},
+                {'user': user, 'amount': params['mc_gross']},
                 None, email)
     return HttpResponse("OK")
 
@@ -60,7 +64,6 @@ def donate(request):
             returned_data_str = form.encoded_data
             domain = "https://%s" % Site.objects.get_current().domain
             return_url = urlparse.urljoin(domain, reverse('donation-complete'))
-            print returned_data_str
             data = {"url": settings.PAYPAL_VALIDATION_URL,
                     "params": {
                         "cmd": "_donations",

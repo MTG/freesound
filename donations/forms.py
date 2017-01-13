@@ -29,17 +29,18 @@ class DonateForm(forms.Form):
 
     def clean(self):
         campaign = DonationCampaign.objects.order_by('date_start').last()
-        returned_data = {"name": None, "campaign_id": campaign.id}
+        returned_data = {"campaign_id": campaign.id}
 
         annon = self.cleaned_data['donation_type']
 
-        # If the donation is annonymous we don't store the user
+        # We store the user even if the donation is annonymous
+        if self.user_id :
+            returned_data['user_id'] = self.user_id
+
         if annon == '1':
             returned_data['name'] = "Anonymous"
         elif annon == '2':
             returned_data['name'] = self.cleaned_data.get('name_option', '')
-        elif self.user_id :
-            returned_data['user_id'] = self.user_id
 
         # Paypal gives only one field to add extra data so we send it as b64
         self.encoded_data = base64.b64encode(json.dumps(returned_data))

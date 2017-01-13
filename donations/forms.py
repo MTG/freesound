@@ -17,6 +17,7 @@ class DonateForm(forms.Form):
             ('1', "Anonymous"),
             ('2', "Other: "),
         ]
+        self.user_id = None
         if user.username:
             self.user_id = user.id
             choices.insert(0, ('0', user.username))

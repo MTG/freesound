@@ -2209,6 +2209,10 @@ a.donation_button:hover {
     line-height: 14px;
 }
 
+#donation_form label{
+    float: left;
+}
+
 #latest_forum_posts {
     width: 324px;
     padding: 0 12px;

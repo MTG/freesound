@@ -8,6 +8,10 @@ class DonateForm(forms.Form):
 
     donation_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=RADIO_CHOICES)
     name_option = forms.CharField(required=False)
+    show_amount = forms.BooleanField(
+            label='Display donated amount',
+            required=False,
+            initial=True)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -30,7 +34,10 @@ class DonateForm(forms.Form):
 
     def clean(self):
         campaign = DonationCampaign.objects.order_by('date_start').last()
-        returned_data = {"campaign_id": campaign.id}
+        returned_data = {
+                "campaign_id": campaign.id,
+                "display_amount": self.cleaned_data['show_amount']
+                }
 
         annon = self.cleaned_data['donation_type']
 

@@ -27,6 +27,7 @@ def donation_complete(request):
         extra_data = json.loads(base64.b64decode(params['custom']))
         email = params['payer_email']
         campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
+        is_anonymous = False
         user = None
         display_name= None
         if 'user_id' in extra_data:
@@ -34,6 +35,7 @@ def donation_complete(request):
             email = user.email
 
         if 'name' in extra_data:
+            is_anonymous = True
             display_name = extra_data['name']
 
         Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults={
@@ -41,6 +43,8 @@ def donation_complete(request):
             'display_name': display_name,
             'amount': params['mc_gross'],
             'currency': params['mc_currency'],
+            'display_amount': extra_data['display_amount'],
+            'is_anonymous': is_anonymous,
             'user': user,
             'campaign': campaign})
 

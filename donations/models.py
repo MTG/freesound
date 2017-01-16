@@ -16,3 +16,5 @@ class Donation(models.Model):
     currency = models.CharField(max_length=100) # Should always be EUR
     created = models.DateTimeField(auto_now_add=True)
     campaign = models.ForeignKey(DonationCampaign, null=True)
+    is_anonymous= models.BooleanField(default=True)
+    display_amount = models.BooleanField(default=True)

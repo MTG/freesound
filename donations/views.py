@@ -80,6 +80,8 @@ def donate(request):
                         "notify_url": return_url
                         }
                     }
+        else:
+            data = {'errors': form.errors}
         return JsonResponse(data)
     else:
         form = DonateForm(user=request.user)

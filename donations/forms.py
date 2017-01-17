@@ -49,6 +49,8 @@ class DonateForm(forms.Form):
             returned_data['name'] = "Anonymous"
         elif annon == '2':
             returned_data['name'] = self.cleaned_data.get('name_option', '')
+            if returned_data['name'] == '':
+                raise forms.ValidationError('You have to enter a name to display')
 
         # Paypal gives only one field to add extra data so we send it as b64
         self.encoded_data = base64.b64encode(json.dumps(returned_data))

@@ -11,6 +11,7 @@
   <!-- donations -->
     <div id="donation_form">
       <form method="post" action="{% url 'donate' %}">
+        <ul class="errorlist nonfield"></ul>
         <ul style="list-style-type: none;">
         {% csrf_token %}
         {% for choice in form.donation_type %}
@@ -44,19 +45,25 @@
             data: $(this).serialize(), // serializes the form's elements.
             success: function(data)
             {
-              form = $('<form />', {
-                action: data.url,
-                method: "POST",
-                style: 'display: none;'
-              });
-              $.each(data.params,function (name, value) {
-                $('<input />', {
-                  type: 'hidden',
-                  name: name,
-                  value: value
-                }).appendTo(form);
-              });
-              form.appendTo('body').submit();
+              if (data.errors != null) {
+                $.each(data.errors['__all__'], function (index, error) {
+                  $('.errorlist').append("<li>"+error+"</li>");
+                });
+              } else {
+                form = $('<form />', {
+                  action: data.url,
+                  method: "POST",
+                  style: 'display: none;'
+                });
+                $.each(data.params,function (name, value) {
+                  $('<input />', {
+                    type: 'hidden',
+                    name: name,
+                    value: value
+                  }).appendTo(form);
+                });
+                form.appendTo('body').submit();
+              }
             }
           });
           e.preventDefault(); // avoid to execute the actual submit of the form.          

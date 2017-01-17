@@ -9,7 +9,7 @@ class DonateForm(forms.Form):
     donation_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=RADIO_CHOICES)
     name_option = forms.CharField(required=False)
     show_amount = forms.BooleanField(
-            label='Make donated ammount public',
+            label='Make donated amount public',
             required=False,
             initial=True)
 

@@ -35,7 +35,7 @@ def generate_bytearray(sound_queryset):
     # sounds as bytearray
     packed_sounds = cStringIO.StringIO()
     for s in sound_queryset:
-        if not math.isnan(s.geotag.lat) and not math.isnan(s.geotag.lat):
+        if not math.isnan(s.geotag.lat) and not math.isnan(s.geotag.lon):
             packed_sounds.write(struct.pack("i", s.id))
             packed_sounds.write(struct.pack("i", int(s.geotag.lat*1000000)))
             packed_sounds.write(struct.pack("i", int(s.geotag.lon*1000000)))

@@ -34,9 +34,9 @@
 
     getSoundsLocations(url, function(data){
         $.each(data, function(index, item) {
-            id = item[0];
-            lat = item[1];
-            lon = item[2];
+            var id = item[0];
+            var lat = item[1];
+            var lon = item[2];
 
             var point = new google.maps.LatLng(lat, lon);
             var marker = new google.maps.Marker({'position': point {% if clusters != "on" %}, 'map': map {% endif %} });

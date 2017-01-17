@@ -26,6 +26,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import connection
+from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404, render, redirect
 from django.template import RequestContext
@@ -99,7 +100,8 @@ def sounds(request):
     latest_sounds = [(latest_sound, latest_sound_objects[index],) for index, latest_sound in enumerate(latest_sounds)]
     latest_packs = Pack.objects.select_related().filter(num_sounds__gt=0).exclude(is_deleted=True).order_by("-last_updated")[0:20]
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=n_weeks_back)
-    popular_sound_ids = [snd.id for snd in Sound.objects.filter(created__gte=last_week).order_by("-num_downloads")[0:5]]
+    popular_sound_ids = [snd.id for snd in Sound.objects.filter(\
+            Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
     popular_packs = Pack.objects.filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
     random_sound = Sound.objects.bulk_query_id([get_random_sound()])[0]

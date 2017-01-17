@@ -54,6 +54,7 @@ from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from follow import follow_utils
 from operator import itemgetter
+import gearman
 import datetime
 import time
 import logging
@@ -74,6 +75,9 @@ def get_random_sound():
     if not random_sound:
         random_sound = Sound.objects.random()
         cache.set(cache_key, random_sound, 60*60*24)
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        gm_client.submit_job("email_random_sound", str(random_sound),
+                wait_until_complete=False, background=True)
     return random_sound
 
 

@@ -31,7 +31,7 @@ from forum.models import Forum, Thread, Post, Subscription
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
 from utils.pagination import paginate
-from utils.search.search_forum import add_post_to_solr
+from utils.search.search_forum import add_post_to_solr, delete_post_from_solr
 import re
 import datetime
 from django.contrib import messages
@@ -316,6 +316,7 @@ def post_delete_confirm(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author == request.user or request.user.has_perm('forum.delete_post'):
         thread = post.thread
+        delete_post_from_solr(post)
         post.delete()
         try:
             return HttpResponseRedirect(reverse('forums-post', args=[thread.forum.name_slug, thread.id, thread.last_post.id]))
@@ -331,8 +332,11 @@ def post_edit(request, post_id):
         if request.method == 'POST':
             form = PostReplyForm(request, '', request.POST)
             if form.is_valid():
+                delete_post_from_solr(post)
                 post.body = form.cleaned_data['body']
                 post.save()
+                # Update post in solr
+                add_post_to_solr(post)
                 return HttpResponseRedirect(reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:
             form = PostReplyForm(request, '', {'body': post.body})

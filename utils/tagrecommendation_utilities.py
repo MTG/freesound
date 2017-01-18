@@ -75,8 +75,11 @@ def get_recommended_tags_view(request):
         if input_tags:
             input_tags = list(clean_and_split_tags(input_tags))
             if len(input_tags) > 0:
-                tags, community = get_recommended_tags(input_tags)
-                return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
+                try:
+                    tags, community = get_recommended_tags(input_tags)
+                    return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
+                except Exception:
+                    return HttpResponseUnavailabileError()
 
     return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')
 
@@ -158,3 +161,7 @@ def get_all_categories_view(request):
         return HttpResponse(json.dumps(categories), content_type='application/javascript')
 
     return HttpResponse(json.dumps([]), content_type='application/javascript')
+
+
+class HttpResponseUnavailabileError(HttpResponse):
+        status_code = 503

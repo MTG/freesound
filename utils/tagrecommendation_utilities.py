@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import urllib2
 import logging, traceback
 from django.conf import settings
 from tagrecommendation.client import TagRecommendation
@@ -50,21 +51,15 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
             recommended_tags = False
 
     if not recommended_tags:
+        recommended_tags = TagRecommendation.recommend_tags(input_tags)
+
+        if not recommended_tags['tags']:
+            recommended_tags['community'] = "-"
+
         try:
-            recommended_tags = TagRecommendation.recommend_tags(input_tags)
-
-            if not recommended_tags['tags']:
-                recommended_tags['community'] = "-"
-
-            try:
-                cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
-            except:
-                pass
-
-        except Exception, e:
-            logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
-                         (e, traceback.format_exc()))
-            recommended_tags = False
+            cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
+        except:
+            pass
 
     return recommended_tags['tags'][:max_number_of_tags], recommended_tags['community']
 
@@ -78,10 +73,12 @@ def get_recommended_tags_view(request):
                 try:
                     tags, community = get_recommended_tags(input_tags)
                     return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
-                except Exception:
+                except urllib2.URLError, e:
+                    logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
+                         (e, traceback.format_exc()))
                     return HttpResponseUnavailabileError()
 
-    return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')
+    return HttpResponseUnavailabileError()
 
 
 def log_recommendation_info_view(request):
@@ -90,7 +87,7 @@ def log_recommendation_info_view(request):
         if log:
             research_logger.info(log)
 
-    return HttpResponse(json.dumps(""), content_type='application/javascript')
+    return HttpResponseUnavailabileError()
 
 
 def get_id_of_last_indexed_sound():
@@ -133,6 +130,7 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
 def new_tagrecommendation_interface_instructions(request):
     return render_to_response('tagrecommendation/new_interface_instructions.html', locals(), context_instance=RequestContext(request))
 
+
 def get_recommended_tags_view_new(request):
     if request.is_ajax() and request.method == 'POST':
         input_tags = request.POST.get('input_tags', False)
@@ -143,7 +141,8 @@ def get_recommended_tags_view_new(request):
             result = NewTagRecommendation.recommend_tags(input_tags)
         return HttpResponse(json.dumps(result), content_type='application/javascript')
 
-    return HttpResponse(json.dumps({'tags':[], 'audio_category':None}), content_type='application/javascript')
+    return HttpResponseUnavailabileError()
+
 
 def get_recommended_categories_view(request):
     if request.is_ajax() and request.method == 'POST':
@@ -152,7 +151,8 @@ def get_recommended_categories_view(request):
         categories = [str(category) for category in result['categories']]
         return HttpResponse(json.dumps(categories), content_type='application/javascript')
 
-    return HttpResponse(json.dumps([]), content_type='application/javascript')
+    return HttpResponseUnavailabileError()
+
 
 def get_all_categories_view(request):
     if request.is_ajax() and request.method == 'POST':
@@ -160,8 +160,8 @@ def get_all_categories_view(request):
         categories = [str(category) for category in result['categories']]
         return HttpResponse(json.dumps(categories), content_type='application/javascript')
 
-    return HttpResponse(json.dumps([]), content_type='application/javascript')
+    return HttpResponseUnavailabileError()
 
 
 class HttpResponseUnavailabileError(HttpResponse):
-        status_code = 503
+    status_code = 503

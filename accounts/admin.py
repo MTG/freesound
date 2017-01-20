@@ -21,6 +21,7 @@
 #
 
 from django.contrib import admin
+from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from accounts.models import Profile, UserFlag
@@ -32,14 +33,14 @@ from django.contrib import messages
 
 def disable_active_user(modeladmin, request, queryset):
     for user in queryset:
-        user.profile.delete_user()
+        user.profile.delete_user(remove_sounds=True)
 
 disable_active_user.short_description = "'Soft' delete selected users, preserve posts, threads and comments (delete sounds)"
 
 
 def disable_active_user_preserve_sounds(modeladmin, request, queryset):
     for user in queryset:
-        user.profile.delete_user(remove_sounds=True)
+        user.profile.delete_user()
 
 disable_active_user_preserve_sounds.short_description = "'Soft' delete selected users, preserve sounds and everything else"
 
@@ -76,21 +77,37 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
     def delete_include_sounds(self, request, obj):
         username = obj.username
-        obj.profile.delete_user(remove_sounds=True)
-        messages.add_message(request, messages.INFO,
-                             'Soft deleted user \'%s\' including her sounds. Comments and other content '
-                             'will appear under \'%s\' account' % (username, obj.username))
-        return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+        if request.method == "POST":
+            obj.profile.delete_user(remove_sounds=True)
+            messages.add_message(request, messages.INFO,
+                                 'Soft deleted user \'%s\' including her sounds. Comments and other content '
+                                 'will appear under \'%s\' account' % (username, obj.username))
+            return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+        info = obj.profile.get_info_before_delete_user(remove_sounds=True)
+        model_count = {model._meta.verbose_name_plural: len(objs) for model,
+                objs in info['deleted'].model_objs.items()}
+        tvars = {}
+        tvars['model_count'] = dict(model_count).items()
+        tvars['logic_deleted'] = info['logic_deleted']
+        tvars['anonymised'] = info['anonymised']
+        return render(request, 'accounts/delete_confirmation.html', tvars)
+
     delete_include_sounds.label = "Soft delete user (delete sounds)"
     delete_include_sounds.short_description = disable_active_user.short_description
 
     def delete_preserve_sounds(self, request, obj):
         username = obj.username
-        obj.profile.delete_user(remove_sounds=False)
-        messages.add_message(request, messages.INFO,
-                             'Soft deleted user \'%s\' but preserved her sounds under \'%s\' account'
-                             % (username, obj.username))
-        return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+        if request.method == "POST":
+            obj.profile.delete_user(remove_sounds=False)
+            messages.add_message(request, messages.INFO,
+                                 'Soft deleted user \'%s\' including her sounds. Comments and other content '
+                                 'will appear under \'%s\' account' % (username, obj.username))
+            return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+
+        info = obj.profile.get_info_before_delete_user(remove_sounds=False)
+        tvars = {}
+        tvars['anonymised'] = info['anonymised']
+        return render(request, 'accounts/delete_confirmation.html', tvars)
     delete_preserve_sounds.label = "Soft delete user (preserve sounds)"
     delete_preserve_sounds.short_description = disable_active_user_preserve_sounds.short_description
 

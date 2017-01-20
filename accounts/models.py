@@ -23,6 +23,7 @@
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import fields
+from django.contrib.admin.utils import NestedObjects
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_save
@@ -193,6 +194,23 @@ class Profile(SocialModel):
                 Q(sound__processing_state='OK') &\
                 ~Q(sound__moderation_state='OK') &\
                 ~Q(status='closed')))
+
+    def get_info_before_delete_user(self, remove_sounds=False):
+        """
+        This method can be called before delete_user to display to the user the
+        elements that will be modified
+        """
+
+        ret = {}
+        if remove_sounds:
+            sounds = Sound.objects.filter(user=self.user)
+            packs = Pack.objects.filter(user=self.user)
+            collector = NestedObjects(using='default')
+            collector.collect(sounds)
+            ret['deleted'] = collector
+            ret['logic_deleted'] = packs
+        ret['anonymised'] = self
+        return ret
 
     def delete_user(self, remove_sounds=False):
         """

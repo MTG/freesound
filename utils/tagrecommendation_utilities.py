@@ -41,14 +41,10 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
 
     cache_key = "recommended-tags-for-%s" % (",".join(sorted(input_tags)))
 
+    recommended_tags = False
     # Don't use the cache when we're debugging
-    if settings.DEBUG:
-        recommended_tags = False
-    else:
-        try:
-            recommended_tags = cache.get(cache_key)
-        except:
-            recommended_tags = False
+    if not settings.DEBUG:
+        recommended_tags = cache.get(cache_key)
 
     if not recommended_tags:
         recommended_tags = TagRecommendation.recommend_tags(input_tags)
@@ -56,10 +52,7 @@ def get_recommended_tags(input_tags, max_number_of_tags=30):
         if not recommended_tags['tags']:
             recommended_tags['community'] = "-"
 
-        try:
-            cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
-        except:
-            pass
+        cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
 
     return recommended_tags['tags'][:max_number_of_tags], recommended_tags['community']
 
@@ -73,12 +66,12 @@ def get_recommended_tags_view(request):
                 try:
                     tags, community = get_recommended_tags(input_tags)
                     return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
-                except urllib2.URLError, e:
+                except urllib2.URLError as e:
                     logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
                          (e, traceback.format_exc()))
                     return HttpResponseUnavailabileError()
 
-    return HttpResponseUnavailabileError()
+    return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')
 
 
 def log_recommendation_info_view(request):
@@ -87,7 +80,7 @@ def log_recommendation_info_view(request):
         if log:
             research_logger.info(log)
 
-    return HttpResponseUnavailabileError()
+    return HttpResponse(json.dumps(""), content_type='application/javascript')
 
 
 def get_id_of_last_indexed_sound():
@@ -95,7 +88,7 @@ def get_id_of_last_indexed_sound():
         result = TagRecommendation.get_last_indexed_id()
         return result
 
-    except Exception, e:
+    except Exception as e:
         return -1
 
 
@@ -141,7 +134,7 @@ def get_recommended_tags_view_new(request):
             result = NewTagRecommendation.recommend_tags(input_tags)
         return HttpResponse(json.dumps(result), content_type='application/javascript')
 
-    return HttpResponseUnavailabileError()
+    return HttpResponse(json.dumps({'tags':[], 'audio_category':None}), content_type='application/javascript')
 
 
 def get_recommended_categories_view(request):
@@ -151,7 +144,7 @@ def get_recommended_categories_view(request):
         categories = [str(category) for category in result['categories']]
         return HttpResponse(json.dumps(categories), content_type='application/javascript')
 
-    return HttpResponseUnavailabileError()
+    return HttpResponse(json.dumps([]), content_type='application/javascript')
 
 
 def get_all_categories_view(request):
@@ -160,7 +153,7 @@ def get_all_categories_view(request):
         categories = [str(category) for category in result['categories']]
         return HttpResponse(json.dumps(categories), content_type='application/javascript')
 
-    return HttpResponseUnavailabileError()
+    return HttpResponse(json.dumps([]), content_type='application/javascript')
 
 
 class HttpResponseUnavailabileError(HttpResponse):

@@ -5,7 +5,7 @@ import urlparse
 from django.shortcuts import render
 from django.core.urlresolvers import reverse
 from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
 from django.views.generic import ListView
@@ -93,3 +93,7 @@ class DonationsList(ListView):
     model = Donation
     paginate_by = settings.DONATIONS_PER_PAGE
     ordering = ["-created"]
+
+
+def donate_redirect(request):
+    return HttpResponseRedirect(reverse('donate'))

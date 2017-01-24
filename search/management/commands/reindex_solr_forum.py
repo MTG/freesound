@@ -27,5 +27,5 @@ class Command(BaseCommand):
     help = 'Take all posts and send them to Solr'
 
     def handle(self, *args, **options):
-        post_qs = Post.objects.select_related("forum", "thread", "user")
+        post_qs = Post.objects.select_related("thread", "author")
         add_all_posts_to_solr(post_qs)

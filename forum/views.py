@@ -316,7 +316,6 @@ def post_delete_confirm(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author == request.user or request.user.has_perm('forum.delete_post'):
         thread = post.thread
-        delete_post_from_solr(post)
         post.delete()
         try:
             return HttpResponseRedirect(reverse('forums-post', args=[thread.forum.name_slug, thread.id, thread.last_post.id]))

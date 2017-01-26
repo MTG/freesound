@@ -3,24 +3,19 @@
 {% block title %}registration{% endblock %}
 
 {% block section_content %}
+<style> #username_check { display:none; color: #bd2d33; font-style: italic; }</style>
 <script type="text/javascript">
     $(function () {
-    	$("#id_username").focus()
-    });
-    $(document).ready(function(){
-      if (!($('#username_check')).length) {
-        $('#id_username').parent().append('<div id="username_check" style="color: #bd2d33;font-style: italic;"></div>');
-      }
-
+      $("#id_username").focus()
+      
+      $('#id_username').parent().append('<div id="username_check">The username is not available</div>');
+      
+      // When the user enters a username we check if it's available
       $("#id_username").focusout(function(){
         $.get('{% url "check_username" %}', 
             {'username': $("#id_username").val()}, 
             function(data){
-              if (!data.result) {
-                $('#username_check').html('The username is not available');
-              } else {
-                $('#username_check').html('');
-              }
+              $('#username_check').toggle(!data.result);
             }, "json" );
       });
     });    

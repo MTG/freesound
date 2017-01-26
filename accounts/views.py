@@ -79,13 +79,14 @@ def crash_me(request):
 
 def check_username(request):
     username = request.GET.get('username', None)
-    res = {"result": False}
+    username_valid = False
     if username:
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            res['result'] = True
-    return HttpResponse(json.dumps(res), content_type='application/javascript')
+            username_valid = True
+    return HttpResponse(json.dumps({'result': username_valid}),
+            content_type='application/javascript')
 
 
 @login_required

@@ -7,6 +7,23 @@
     $(function () {
     	$("#id_username").focus()
     });
+    $(document).ready(function(){
+      if (!($('#username_check')).length) {
+        $('#id_username').parent().append('<div id="username_check" style="color: #bd2d33;font-style: italic;"></div>');
+      }
+
+      $("#id_username").focusout(function(){
+        $.get('{% url "check_username" %}', 
+            {'username': $("#id_username").val()}, 
+            function(data){
+              if (!data.result) {
+                $('#username_check').html('The username is not available');
+              } else {
+                $('#username_check').html('');
+              }
+            }, "json" );
+      });
+    });    
 </script>
 
 <h1>Registration</h1>

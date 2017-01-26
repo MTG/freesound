@@ -77,6 +77,17 @@ def crash_me(request):
     raise Exception
 
 
+def check_username(request):
+    username = request.GET.get('username', None)
+    res = {"result": False}
+    if username:
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            res['result'] = True
+    return HttpResponse(json.dumps(res), content_type='application/javascript')
+
+
 @login_required
 def bulk_license_change(request):
     if request.method == 'POST':

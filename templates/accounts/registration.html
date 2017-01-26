@@ -8,7 +8,7 @@
     $(function () {
       $("#id_username").focus()
       
-      $('#id_username').parent().append('<div id="username_check">The username is not available</div>');
+      $('#id_username').parent().append('<div id="username_check">Sorry, this username is already being used by someone else.</div>');
       
       // When the user enters a username we check if it's available
       $("#id_username").focusout(function(){

@@ -28,7 +28,7 @@ from django.contrib.auth import logout
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
-    HttpResponsePermanentRedirect, HttpResponseServerError
+    HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
@@ -85,8 +85,7 @@ def check_username(request):
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
             username_valid = True
-    return HttpResponse(json.dumps({'result': username_valid}),
-            content_type='application/javascript')
+    return JsonResponse({'result': username_valid})
 
 
 @login_required

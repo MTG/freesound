@@ -259,6 +259,13 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # local settings if needed ;)
 DATA_URL = "/data/"
 
+# Locations where sounds and previews will be mirrored (if specified)
+# If locations do not exist, they will be created
+MIRROR_DISK_LOCATIONS = {
+    'SOUNDS': None,  # mirrors contents of SOUNDS_PATH
+    'PREVIEWS': None,  # mirrors contents of PREVIEWS_PATH
+}
+
 # leave at bottom starting here!
 from local_settings import *
 

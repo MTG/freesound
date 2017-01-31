@@ -54,6 +54,17 @@ def process(sound):
             except:
                 pass
 
+    def copy_preview_file_to_mirror_location(source_path):
+        base_destination_path = settings.MIRROR_DISK_LOCATIONS['PREVIEWS']
+        if base_destination_path is not None:
+            destination_path = source_path.replace(settings.PREVIEWS_PATH, base_destination_path)
+            try:
+                os.makedirs(os.path.dirname(destination_path))
+            except OSError:
+                pass
+            shutil.copy2(source_path, destination_path)
+            success('copied file to mirror location: %s' % destination_path)
+
     # not saving the date of the processing attempt anymore
     sound.set_processing_ongoing_state("PR")
 
@@ -163,6 +174,7 @@ def process(sound):
             cleanup(to_cleanup)
             return False
         success("created mp3: " + mp3_path)
+        copy_preview_file_to_mirror_location(mp3_path)
 
     for ogg_path, quality in [(sound.locations("preview.LQ.ogg.path"),1), (sound.locations("preview.HQ.ogg.path"), 6)]:
         # create preview
@@ -182,6 +194,7 @@ def process(sound):
             cleanup(to_cleanup)
             return False
         success("created ogg: " + ogg_path)
+        copy_preview_file_to_mirror_location(ogg_path)
 
     # create waveform images M
     waveform_path_m = sound.locations("display.wave.M.path")

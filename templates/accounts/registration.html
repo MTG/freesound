@@ -3,10 +3,22 @@
 {% block title %}registration{% endblock %}
 
 {% block section_content %}
+<style> #username_check { display:none; color: #bd2d33; font-style: italic; }</style>
 <script type="text/javascript">
     $(function () {
-    	$("#id_username").focus()
-    });
+      $("#id_username").focus()
+      
+      $('#id_username').parent().append('<div id="username_check">Sorry, this username is already being used by someone else.</div>');
+      
+      // When the user enters a username we check if it's available
+      $("#id_username").focusout(function(){
+        $.get('{% url "check_username" %}', 
+            {'username': $("#id_username").val()}, 
+            function(data){
+              $('#username_check').toggle(!data.result);
+            }, "json" );
+      });
+    });    
 </script>
 
 <h1>Registration</h1>

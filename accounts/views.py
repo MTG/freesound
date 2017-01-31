@@ -28,7 +28,7 @@ from django.contrib.auth import logout
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
-    HttpResponsePermanentRedirect, HttpResponseServerError
+    HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
@@ -75,6 +75,17 @@ logger = logging.getLogger("upload")
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def crash_me(request):
     raise Exception
+
+
+def check_username(request):
+    username = request.GET.get('username', None)
+    username_valid = False
+    if username:
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            username_valid = True
+    return JsonResponse({'result': username_valid})
 
 
 @login_required

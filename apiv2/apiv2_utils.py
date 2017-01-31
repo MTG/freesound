@@ -74,6 +74,21 @@ class FsClientIdGenerator(BaseHashGenerator):
 # Rest Framework custom views
 #############################
 
+class PublicAPIView(RestFrameworkGenericAPIView):
+    throttle_classes = ()
+    authentication_classes = ()
+
+    def initial(self, request, *args, **kwargs):
+        super(PublicAPIView, self).initial(request, *args, **kwargs)
+
+        # Get request information and store it as class variable
+        self.end_user_ip = get_client_ip(request)
+        self.auth_method_name, self.developer, self.user, self.client_id, self.client_name \
+            = get_authentication_details_form_request(request)
+
+    def log_message(self, message):
+        return log_message_helper(message, resource=self)
+
 
 class GenericAPIView(RestFrameworkGenericAPIView):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
@@ -89,7 +104,6 @@ class GenericAPIView(RestFrameworkGenericAPIView):
             = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        print self.developer
         return log_message_helper(message, resource=self)
 
 

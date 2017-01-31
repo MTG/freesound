@@ -23,12 +23,12 @@
 
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
-from rest_framework.decorators import api_view, authentication_classes
+from rest_framework.decorators import api_view, authentication_classes, throttle_classes, permission_classes
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from oauth2_provider.models import Grant, AccessToken
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
+from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view, PublicAPIView
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -54,14 +54,15 @@ try:
     from collections import OrderedDict
 except:
     from freesound.utils.ordered_dict import OrderedDict
-from urllib import unquote, quote
+from urllib import quote
 from django.conf import settings
 import logging
 import datetime
 import os
+from apiv2.models import DownloadToken
+import uuid
 
 logger = logging.getLogger("api")
-#logger_error = logging.getLogger("api_errors")
 docs_base_url = prepend_base('/docs/api')
 resources_doc_filename = 'resources_apiv2.html'
 
@@ -480,6 +481,27 @@ class DownloadSound(DownloadAPIView):
             raise NotFoundException(resource=self)
 
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
+
+class DownloadLink(DownloadAPIView):
+    __doc__ = 'Get a url to download a sound without authentication.'
+
+    def get(self, request, *args, **kwargs):
+        sound_id = kwargs['pk']
+        logger.info(self.log_message('sound:%i get_download_link' % (int(sound_id))))
+        try:
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+        except Sound.DoesNotExist:
+            raise NotFoundException(resource=self)
+        download_token = DownloadToken.objects.create(
+            user=self.user,
+            client_id=self.client_id,
+            token=uuid.uuid4(),
+            expires=datetime.datetime.today() + datetime.timedelta(seconds=settings.DOWNLOAD_TOKEN_LIFETIME),
+            sound=sound,
+        )
+        download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token.token]), request_is_secure=request.is_secure())
+        return Response({'download_link': download_link}, status=status.HTTP_200_OK)
 
 
 ############
@@ -982,6 +1004,24 @@ class CommentSound(WriteRequiredGenericAPIView):
 #############
 # OTHER VIEWS
 #############
+
+
+@api_view(['GET'])
+@throttle_classes([])
+@authentication_classes([])
+@permission_classes([])
+def download_from_token(request, token):
+    try:
+        token = DownloadToken.objects.get(token=token)
+    except DownloadToken.DoesNotExist:
+        raise NotFoundException
+    if token.is_expired():
+        raise UnauthorizedException(msg="This download token has expried.")
+    sound = token.sound
+    if not os.path.exists(sound.locations('path')):
+        raise NotFoundException
+    return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+
 
 ### Me View
 class Me(OauthRequiredAPIView):

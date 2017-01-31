@@ -24,7 +24,6 @@ from oauth2_provider.models import Application
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
-from sounds.models import Sound
 
 
 class ApiV2Client(models.Model):
@@ -110,7 +109,7 @@ class DownloadToken(models.Model):
     token = models.CharField(max_length=255, db_index=True)
     expires = models.DateTimeField()
     created = models.DateTimeField(auto_now_add=True)
-    sound = models.ForeignKey(Sound)
+    sound = models.ForeignKey('sounds.Sound')
 
     def __unicode__(self):
         return "credentials for user %s and sound %i" % (self.user.username, self.sound.id)

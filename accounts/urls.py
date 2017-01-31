@@ -42,6 +42,7 @@ urlpatterns = [
     url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', accounts.email_reset_complete),
     url(r'^bulklicensechange/$', accounts.bulk_license_change, name="bulk-license-change"),
     url(r'^tosacceptance/$', accounts.tos_acceptance, name="tos-acceptance"),
+    url(r'^check_username/$', accounts.check_username, name="check_username"),
 
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),

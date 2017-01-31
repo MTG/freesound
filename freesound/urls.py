@@ -34,6 +34,7 @@ import comments.views
 import bookmarks.views
 import follow.views
 import general.views
+import donations.views
 from utils.tagrecommendation_utilities import *
 from apiv2.apiv2_utils import apiv1_end_of_life_message
 
@@ -141,6 +142,7 @@ urlpatterns = [
         accounts.views.crash_me,
         name="crash-me"),
 
+    url(r'^donate/', donations.views.donate_redirect, name="donate-redirect"),
     url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
 
     # old url format redirects

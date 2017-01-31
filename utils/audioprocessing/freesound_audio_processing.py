@@ -60,7 +60,7 @@ def process(sound):
             destination_path = source_path.replace(settings.PREVIEWS_PATH, base_destination_path)
             try:
                 os.makedirs(os.path.dirname(destination_path))
-            except OSError:
+            except OSError:  # I.e. path already exists
                 pass
             shutil.copy2(source_path, destination_path)
             success('copied file to mirror location: %s' % destination_path)

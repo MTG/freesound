@@ -22,6 +22,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.conf import settings
 from sounds.models import Sound, Pack, License
+from accounts.views import copy_sound_file_to_mirror_location
 from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from utils.filesystem import md5file
@@ -118,6 +119,8 @@ class Command(BaseCommand):
                 #logger.info("moved original file from %s to %s" % (sound.original_path, new_original_path))
                 sound.original_path = new_original_path
                 sound.save()
+            # Copy to mirror location
+            copy_sound_file_to_mirror_location(new_original_path)
 
             # 6 create pack if it does not exist
             if packnamef:

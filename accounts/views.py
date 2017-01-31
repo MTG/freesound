@@ -516,6 +516,8 @@ def describe_sounds(request):
                 logger.info("Moved original file from %s to %s" % (sound.original_path, new_original_path))
                 sound.original_path = new_original_path
                 sound.save()
+            # Copy to mirror location
+            copy_sound_file_to_mirror_location(new_original_path)
 
             # Set pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)
@@ -801,6 +803,18 @@ def handle_uploaded_file(user_id, f):
         logger.warning("failed writing file error: %s", str(e))
         return False
     return True
+
+
+def copy_sound_file_to_mirror_location(source_path):
+    base_destination_path = settings.MIRROR_DISK_LOCATIONS['SOUNDS']
+    if base_destination_path is not None:
+        destination_path = source_path.replace(settings.SOUNDS_PATH, base_destination_path)
+        try:
+            os.makedirs(os.path.dirname(destination_path))
+        except OSError:  # I.e. path already exists
+            pass
+        shutil.copy2(source_path, destination_path)
+        logger.info('Copied sound file to mirror location %s' % destination_path)
 
 
 @csrf_exempt

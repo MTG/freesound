@@ -102,20 +102,3 @@ class ApiV2Client(models.Model):
     @property
     def version(self):
         return "V2"
-
-
-class DownloadToken(models.Model):
-    user = models.ForeignKey(User)
-    client_id = models.ForeignKey(ApiV2Client, null=True)
-    token = models.CharField(max_length=255, db_index=True)
-    expires = models.DateTimeField()
-    created = models.DateTimeField(auto_now_add=True)
-    sound = models.ForeignKey('sounds.Sound')
-
-    def is_expired(self):
-        if not self.expires:
-            return True
-        return timezone.now() >= self.expires
-
-    def __unicode__(self):
-        return "credentials for user %s and sound %i" % (self.user.username, self.sound.id)

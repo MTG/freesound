@@ -59,8 +59,7 @@ from django.conf import settings
 import logging
 import datetime
 import os
-from apiv2.models import DownloadToken
-import uuid
+import jwt
 
 logger = logging.getLogger("api")
 docs_base_url = prepend_base('/docs/api')
@@ -493,14 +492,13 @@ class DownloadLink(DownloadAPIView):
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
-        download_token = DownloadToken.objects.create(
-            user=self.user,
-            client_id=self.client_id,
-            token=uuid.uuid4(),
-            expires=datetime.datetime.today() + datetime.timedelta(seconds=settings.DOWNLOAD_TOKEN_LIFETIME),
-            sound=sound,
-        )
-        download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token.token]), request_is_secure=request.is_secure())
+        download_token = jwt.encode({
+            'user_id': self.user.id,
+            'sound_id': sound.id,
+            'client_id': self.client_id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.DOWNLOAD_TOKEN_LIFETIME),
+        }, settings.SECRET_KEY, algorithm='HS256')
+        download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token]), request_is_secure=request.is_secure())
         return Response({'download_link': download_link}, status=status.HTTP_200_OK)
 
 
@@ -1012,12 +1010,15 @@ class CommentSound(WriteRequiredGenericAPIView):
 @permission_classes([])
 def download_from_token(request, token):
     try:
-        token = DownloadToken.objects.get(token=token)
-    except DownloadToken.DoesNotExist:
+        token_contents = jwt.decode(token, settings.SECRET_KEY, leeway=10)
+    except jwt.ExpiredSignatureError:
+        raise UnauthorizedException(msg="This token has expried.")
+    except jwt.InvalidTokenError:
+        raise UnauthorizedException(msg="Invalid token.")
+    try:
+        sound = Sound.objects.get(id=token_contents.get('sound_id', None))
+    except Sound.DoesNotExist:
         raise NotFoundException
-    if token.is_expired():
-        raise UnauthorizedException(msg="This download token has expried.")
-    sound = token.sound
     if not os.path.exists(sound.locations('path')):
         raise NotFoundException
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))

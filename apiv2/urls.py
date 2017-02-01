@@ -81,7 +81,7 @@ urlpatterns = [
     url(r'^packs/(?P<pk>[0-9]+)/download/$', views.DownloadPack.as_view(), name='apiv2-pack-download'),
 
     # Download item from link
-    url(r'^download/(?P<token>[0-9a-z-]+)/$', views.download_from_token, name="apiv2-download_from_token"),
+    url(r'^download/(?P<token>.+?)/$', views.download_from_token, name="apiv2-download_from_token"),
 
 
     #########################

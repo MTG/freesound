@@ -1014,16 +1014,16 @@ def download_from_token(request, token):
     try:
         token_contents = jwt.decode(token, settings.SECRET_KEY, leeway=10)
     except jwt.ExpiredSignatureError:
-        raise UnauthorizedException(msg="This token has expried.")
+        raise UnauthorizedException(msg='This token has expried.')
     except jwt.InvalidTokenError:
-        raise UnauthorizedException(msg="Invalid token.")
+        raise UnauthorizedException(msg='Invalid token.')
     try:
         sound = Sound.objects.get(id=token_contents.get('sound_id', None))
     except Sound.DoesNotExist:
         raise NotFoundException
     if not os.path.exists(sound.locations('path')):
         raise NotFoundException
-    return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
+    return sendfile(sound.locations('path'), sound.friendly_filename(), sound.locations('sendfile_url'))
 
 
 ### Me View

@@ -24,7 +24,6 @@ from oauth2_provider.models import Application
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
-from django.utils import timezone
 
 
 class ApiV2Client(models.Model):

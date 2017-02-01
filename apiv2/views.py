@@ -488,10 +488,12 @@ class DownloadLink(DownloadAPIView):
     def get(self, request, *args, **kwargs):
         sound_id = kwargs['pk']
         logger.info(self.log_message('sound:%i get_download_link' % (int(sound_id))))
+
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
         except Sound.DoesNotExist:
             raise NotFoundException(resource=self)
+
         download_token = jwt.encode({
             'user_id': self.user.id,
             'sound_id': sound.id,

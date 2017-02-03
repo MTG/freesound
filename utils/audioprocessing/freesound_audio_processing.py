@@ -18,14 +18,14 @@
 #     See AUTHORS file.
 #
 
-from datetime import datetime
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
 import utils.audioprocessing.processing as audioprocessing
-import os, tempfile, gearman, shutil, sys
+import os, tempfile, shutil, sys
 import logging
 
 logger = logging.getLogger("processing")
+
 
 def process(sound):
 
@@ -154,7 +154,6 @@ def process(sound):
         sound.set_audio_info_fields(info)
     except Exception, e:  # Could not catch a more specific exception
         failure("failed writting audio info fields to db", e)
-
 
     for mp3_path, quality in [(sound.locations("preview.LQ.mp3.path"),70), (sound.locations("preview.HQ.mp3.path"), 192)]:
         # create preview

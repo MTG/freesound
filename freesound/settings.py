@@ -262,8 +262,10 @@ DATA_URL = "/data/"
 # Locations where sounds and previews will be mirrored (if specified)
 # If locations do not exist, they will be created
 MIRROR_DISK_LOCATIONS = {
-    'SOUNDS': None,  # mirrors contents of SOUNDS_PATH, set to None to turn of mirroring for sounds
-    'PREVIEWS': None,  # mirrors contents of PREVIEWS_PATH, set to None to turn of mirroring for previews
+    'SOUNDS': None,  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+    'PREVIEWS': None,  # list of locations to mirror contents of PREVIEWS_PATH, set to None to turn off
+    'DISPLAYS': None,  # list of locations to mirror contents of DISPLAYS_PATH, set to None to turn off
+    'ANALYSIS': None,  # list of locations to mirror contents of DISPLAYS_PATH, set to None to turn off
 }
 
 # leave at bottom starting here!

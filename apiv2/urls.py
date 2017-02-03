@@ -56,6 +56,7 @@ urlpatterns = [
     url(r'^sounds/(?P<pk>[0-9]+)/analysis/$', views.SoundAnalysis.as_view(), name="apiv2-sound-analysis"),
     url(r'^sounds/(?P<pk>[0-9]+)/similar/$', views.SimilarSounds.as_view(), name="apiv2-similarity-sound"),
     url(r'^sounds/(?P<pk>[0-9]+)/download/$', views.DownloadSound.as_view(), name="apiv2-sound-download"),
+    url(r'^sounds/(?P<pk>[0-9]+)/download/link/$', views.DownloadLink.as_view(), name="apiv2-sound-get-download-link"),
 
     # Create or edit
     url(r'^sounds/(?P<pk>[0-9]+)/edit/$', views.EditSoundDescription.as_view(), name='apiv2-sound-edit'),
@@ -78,6 +79,9 @@ urlpatterns = [
     url(r'^packs/(?P<pk>[0-9]+)/$', views.PackInstance.as_view(), name='apiv2-pack-instance'),
     url(r'^packs/(?P<pk>[0-9]+)/sounds/$', views.PackSounds.as_view(), name='apiv2-pack-sound-list'),
     url(r'^packs/(?P<pk>[0-9]+)/download/$', views.DownloadPack.as_view(), name='apiv2-pack-download'),
+
+    # Download item from link
+    url(r'^download/(?P<token>.+?)/$', views.download_from_token, name="apiv2-download_from_token"),
 
 
     #########################

@@ -20,6 +20,8 @@
 
 from django.conf import settings
 import os, shutil, subprocess, signal, sys
+from utils.mirror_files import copy_analysis_to_mirror_locations
+
 
 def analyze(sound):
     FFMPEG_TIMEOUT = 3 * 60
@@ -98,7 +100,11 @@ def analyze(sound):
     finally:
         if tmp_conv:
             os.remove(tmp_wav_path)
+
+    # Copy analysis and display files to mirror locations
+    copy_analysis_to_mirror_locations(sound)
     return True
+
 
 def __create_dir(path):
     dir_path = os.path.dirname(os.path.abspath(path))

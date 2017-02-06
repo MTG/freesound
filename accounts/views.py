@@ -65,6 +65,7 @@ from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
+from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -348,6 +349,7 @@ def handle_uploaded_image(profile, f):
     except Exception as e:
         logger.error("\tfailed creating large thumbnails: " + str(e))
 
+    copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
 
 
@@ -516,6 +518,9 @@ def describe_sounds(request):
                 logger.info("Moved original file from %s to %s" % (sound.original_path, new_original_path))
                 sound.original_path = new_original_path
                 sound.save()
+
+            # Copy to mirror location
+            copy_sound_to_mirror_locations(sound)
 
             # Set pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)

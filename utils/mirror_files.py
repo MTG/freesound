@@ -2,6 +2,7 @@ from django.conf import settings
 import os
 import shutil
 import logging
+import errno
 
 logger = logging.getLogger('web')
 
@@ -24,9 +25,13 @@ def copy_files_to_mirror_locations(sound, source_location_keys, source_base_path
     # Do the actual copying of the files
     for source_path, destination_path in source_destination_tuples:
         try:
-            os.makedirs(os.path.dirname(destination_path))
-        except OSError:  # I.e. path already exists
-            pass
+            path = os.path.dirname(destination_path)
+            os.makedirs(path)
+        except OSError as e:  # I.e. path already exists
+            if e.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                raise
 
         try:
             shutil.copy2(source_path, destination_path)

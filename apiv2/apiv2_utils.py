@@ -90,7 +90,6 @@ class GenericAPIView(RestFrameworkGenericAPIView):
             = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        print self.developer
         return log_message_helper(message, resource=self)
 
 

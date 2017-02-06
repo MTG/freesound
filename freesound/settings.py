@@ -242,6 +242,8 @@ REST_FRAMEWORK = {
     ),
 }
 
+DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour
+
 # APIv2 throttling limits are defined in local_settings
 
 # Oauth2 provider settings

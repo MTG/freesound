@@ -195,7 +195,7 @@ class Profile(SocialModel):
                 ~Q(sound__moderation_state='OK') &\
                 ~Q(status='closed')))
 
-    def get_info_before_delete_user(self, remove_sounds=False):
+    def get_info_before_delete_user(self, remove_sounds=False, remove_user=False):
         """
         This method can be called before delete_user to display to the user the
         elements that will be modified
@@ -209,6 +209,10 @@ class Profile(SocialModel):
             collector.collect(sounds)
             ret['deleted'] = collector
             ret['logic_deleted'] = packs
+        if remove_user:
+            collector = NestedObjects(using='default')
+            collector.collect([self.user])
+            ret['deleted'] = collector
         ret['anonymised'] = self
         return ret
 

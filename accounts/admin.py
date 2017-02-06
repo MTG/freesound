@@ -42,7 +42,8 @@ def disable_active_user(modeladmin, request, queryset):
                     json.dumps({'user_id':user.id, 'action': "delete_user_delete_sounds"}),
                 wait_until_complete=False, background=True)
         messages.add_message(request, messages.INFO,
-             '%d Soft deleted users including her sounds' % (queryset.count()))
+             '%d users will be soft deleted asynchronously, related sound are '
+             'going to be deleted as well' % (queryset.count()))
         return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
 
     params = [(k,v) for k in request.POST.keys() for v in request.POST.getlist(k)]
@@ -71,7 +72,7 @@ def disable_active_user_preserve_sounds(modeladmin, request, queryset):
                     json.dumps({'user_id':user.id, 'action': "delete_user_keep_sounds"}),
                 wait_until_complete=False, background=True)
         messages.add_message(request, messages.INFO,
-             '%d Soft deleted users.' % (queryset.count()))
+             '%d users will be soft deleted asynchronously' % (queryset.count()))
         return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
 
     params = [(k,v) for k in request.POST.keys() for v in request.POST.getlist(k)]
@@ -109,8 +110,28 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     ordering = ('id', )
 
     def full_delete(self, request, obj):
-        # For now just redirect to default admin delete action
-        return HttpResponseRedirect(reverse('admin:auth_user_delete', args=[obj.id]))
+        username = obj.username
+        if request.method == "POST":
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("delete_user",
+                    json.dumps({'user_id': obj.id, 'action': "full_delete_user"}),
+                wait_until_complete=False, background=True)
+            messages.add_message(request, messages.INFO,
+                                 'User \'%s\' will be fully deleted '
+                                 'asynchronously from the database' % (username))
+            return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+
+        info = obj.profile.get_info_before_delete_user(remove_sounds=False,
+                remove_user=True)
+        model_count = {model._meta.verbose_name_plural: len(objs) for model,
+                objs in info['deleted'].model_objs.items()}
+        tvars = {'anonymised': []}
+        anon = {}
+        anon['model_count'] = dict(model_count).items()
+        anon['name'] = info['anonymised']
+        anon['deleted'] = True
+        tvars['anonymised'].append(anon)
+        return render(request, 'accounts/delete_confirmation.html', tvars)
     full_delete.label = "Full delete user"
     full_delete.short_description = 'Completely delete user from db'
 
@@ -122,8 +143,9 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                     json.dumps({'user_id': obj.id, 'action': "delete_user_delete_sounds"}),
                 wait_until_complete=False, background=True)
             messages.add_message(request, messages.INFO,
-                                 'Soft deleted user \'%s\' including her sounds. Comments and other content '
-                                 'will appear under \'%s\' account' % (username, obj.username))
+                                 'User \'%s\' will be soft deleted'
+                                 ' asynchronously. Sounds and other related'
+                                 ' content will be deleted.' % (username))
             return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
         info = obj.profile.get_info_before_delete_user(remove_sounds=True)
         model_count = {model._meta.verbose_name_plural: len(objs) for model,
@@ -147,8 +169,8 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
                     json.dumps({'user_id': obj.id, 'action': "delete_user_keep_sounds"}),
                 wait_until_complete=False, background=True)
             messages.add_message(request, messages.INFO,
-                                 'Soft deleted user \'%s\'. Comments and other content '
-                                 'will appear under \'%s\' account' % (username, obj.username))
+                                 'User \'%s\' will be soft deleted asynchronously. Comments and other content '
+                                 'will appear under anonymised account' % (username))
             return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
 
         info = obj.profile.get_info_before_delete_user(remove_sounds=False)

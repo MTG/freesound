@@ -16,7 +16,7 @@
 
 {% block content %}
 {% for anon in anonymised %}
-  <p>The User "{{anon.name}}" will be anonymised</p>
+<p>The User "{{anon.name}}" will be {% if anon.deleted %}deleted{% else %}anonymised{% endif %}</p>
   {% if anon.logic_deleted %} {{ anon.logic_deleted.count}} Packs will be logically deleted {% endif %}
 
   {% if anon.model_count %}

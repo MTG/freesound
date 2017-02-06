@@ -65,7 +65,7 @@ from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
-from utils.mirror_files import copy_sound_to_mirror_locations
+from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -349,6 +349,7 @@ def handle_uploaded_image(profile, f):
     except Exception as e:
         logger.error("\tfailed creating large thumbnails: " + str(e))
 
+    copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
 
 

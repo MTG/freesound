@@ -259,12 +259,13 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # local settings if needed ;)
 DATA_URL = "/data/"
 
-# Locations where sounds and previews will be mirrored (if specified)
+# Locations where sounds, previews and other "static" content will be mirrored (if specified)
 # If locations do not exist, they will be created
 MIRROR_SOUNDS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
 MIRROR_PREVIEWS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
 MIRROR_DISPLAYS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
 MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
 
 
 # leave at bottom starting here!

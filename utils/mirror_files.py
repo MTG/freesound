@@ -7,7 +7,7 @@ import errno
 logger = logging.getLogger('web')
 
 
-def copy_files_to_mirror_locations(sound, source_location_keys, source_base_path, destination_base_paths):
+def copy_files_to_mirror_locations(object, source_location_keys, source_base_path, destination_base_paths):
 
     if destination_base_paths is None:
         return
@@ -16,7 +16,7 @@ def copy_files_to_mirror_locations(sound, source_location_keys, source_base_path
     source_destination_tuples = []
     for destination_base_path in destination_base_paths:
         for location_path in source_location_keys:
-            source_path = sound.locations(location_path)
+            source_path = object.locations(location_path)
             source_destination_tuples.append((
                 source_path,
                 source_path.replace(source_base_path, destination_base_path)
@@ -59,3 +59,8 @@ def copy_displays_to_mirror_locations(sound):
 def copy_analysis_to_mirror_locations(sound):
     copy_files_to_mirror_locations(
         sound, ['analysis.frames.path', 'analysis.statistics.path'], settings.ANALYSIS_PATH, settings.MIRROR_ANALYSIS)
+
+
+def copy_avatar_to_mirror_locations(profile):
+    copy_files_to_mirror_locations(
+        profile, ['avatar.L.path', 'avatar.M.path', 'avatar.S.path'], settings.AVATARS_PATH, settings.MIRROR_AVATARS)

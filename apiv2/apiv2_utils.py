@@ -35,7 +35,7 @@ from utils.tags import clean_and_split_tags
 from utils.text import slugify
 from exceptions import *
 from examples import examples
-from utils.mirror_files import copy_files_to_mirror_locations
+from utils.mirror_files import copy_sound_to_mirror_locations
 import shutil
 from django.conf import settings
 import os
@@ -504,7 +504,7 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
         sound.save()
 
     # Copy to mirror location
-    copy_files_to_mirror_locations(sound, ['SOUNDS'])
+    copy_sound_to_mirror_locations(sound)
 
     # 6 create pack if it does not exist
     if 'pack' in sound_fields:

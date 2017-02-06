@@ -20,7 +20,7 @@
 
 from django.conf import settings
 import os, shutil, subprocess, signal, sys
-from utils.mirror_files import copy_files_to_mirror_locations
+from utils.mirror_files import copy_analysis_to_mirror_locations
 
 
 def analyze(sound):
@@ -102,7 +102,7 @@ def analyze(sound):
             os.remove(tmp_wav_path)
 
     # Copy analysis and display files to mirror locations
-    copy_files_to_mirror_locations(sound, ['ANALYSIS'])
+    copy_analysis_to_mirror_locations(sound)
     return True
 
 

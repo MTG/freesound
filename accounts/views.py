@@ -65,7 +65,7 @@ from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
-from utils.mirror_files import copy_files_to_mirror_locations
+from utils.mirror_files import copy_sound_to_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -519,7 +519,7 @@ def describe_sounds(request):
                 sound.save()
 
             # Copy to mirror location
-            copy_files_to_mirror_locations(sound, ['SOUNDS'])
+            copy_sound_to_mirror_locations(sound)
 
             # Set pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)

@@ -21,7 +21,7 @@
 from django.conf import settings
 from utils.audioprocessing.processing import AudioProcessingException
 import utils.audioprocessing.processing as audioprocessing
-from utils.mirror_files import copy_files_to_mirror_locations
+from utils.mirror_files import copy_previews_to_mirror_locations, copy_displays_to_mirror_locations
 import os, tempfile, shutil, sys
 import logging
 
@@ -224,6 +224,7 @@ def process(sound):
     sound.change_processing_state("OK", use_set_instead_of_save=True)
 
     # Copy previews and display files to mirror locations
-    copy_files_to_mirror_locations(sound, ['PREVIEWS', 'DISPLAYS'])
+    copy_previews_to_mirror_locations(sound)
+    copy_displays_to_mirror_locations(sound)
 
     return True

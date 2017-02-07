@@ -22,6 +22,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
+from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
@@ -40,7 +41,7 @@ from geotags.models import GeoTag
 from networkx import nx
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
+from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
@@ -297,7 +298,26 @@ def pack_download(request, username, pack_id):
     Download.objects.get_or_create(user=request.user, pack=pack)
     pack_sounds = pack.sound_set.filter(processing_state="OK",
             moderation_state="OK").select_related('user', 'license')
-    return download_sounds(pack_sounds, reverse('pack', args=[username, pack.id]))
+    licenses_url = "https://%s%s" % (Site.objects.get_current().domain,
+            reverse('pack-licenses', args=[username, pack.id]))
+    return download_sounds(pack_sounds, licenses_url)
+
+
+def pack_licenses(request, username, pack_id):
+    pack = get_object_or_404(Pack, id=pack_id)
+    sounds_list = pack.sound_set.filter(processing_state="OK",
+            moderation_state="OK").select_related('user', 'license')
+    users = User.objects.filter(sounds__in=sounds_list).distinct()
+    sounds_url = reverse('pack', args=[username, pack_id])
+    licenses = License.objects.all()
+    tvars = {
+        'users': users,
+        'sounds_url': sounds_url,
+        'licenses': licenses,
+        'sound_list': sounds_list
+    }
+    return render(request, 'sounds/pack_attribution.txt', tvars,
+            content_type="text/plain")
 
 
 @login_required

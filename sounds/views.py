@@ -298,9 +298,9 @@ def pack_download(request, username, pack_id):
     Download.objects.get_or_create(user=request.user, pack=pack)
     pack_sounds = pack.sound_set.filter(processing_state="OK",
             moderation_state="OK").select_related('user', 'license')
-    licenses_url = "https://%s%s" % (Site.objects.get_current().domain,
-            reverse('pack-licenses', args=[username, pack.id]))
-    return download_sounds(pack_sounds, licenses_url)
+    licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
+    sounds_url = reverse('pack', args=[username, pack_id])
+    return download_sounds(pack_sounds, sounds_url, licenses_url)
 
 
 def pack_licenses(request, username, pack_id):

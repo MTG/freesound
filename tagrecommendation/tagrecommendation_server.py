@@ -23,7 +23,7 @@
 #   - numpy
 #   - sklearn (joblib)
 
-
+from __future__ import print_function
 from twisted.web import server, resource
 from twisted.internet import reactor
 from tagrecommendation_settings import *
@@ -68,7 +68,7 @@ class TagRecommendationServer(resource.Resource):
             self.index_stats = loadFromJson(RECOMMENDATION_DATA_DIR + 'Current_index_stats.json')
             logger.info("Matrices computed out of information from %i sounds" % self.index_stats['n_sounds_in_matrix'])
         except Exception, e:
-            print e
+            print(e)
             self.index_stats = {
                 'n_sounds_in_matrix': 0,
             }
@@ -145,17 +145,20 @@ class TagRecommendationServer(resource.Resource):
 
 if __name__ == '__main__':
     # Set up logging
+    if not LOG_TO_STDOUT:
+        print("LOG_TO_STDOUT is False, will not log")
     logger = logging.getLogger('tagrecommendation')
     logger.setLevel(logging.DEBUG)
     handler = RotatingFileHandler(LOGFILE, maxBytes=2*1024*1024, backupCount=5)
     handler.setLevel(logging.DEBUG)
-    std_handler = logging.StreamHandler()
-    std_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    std_handler.setFormatter(formatter)
-    logger.addHandler(std_handler)
+    if LOG_TO_STDOUT:
+        std_handler = logging.StreamHandler()
+        std_handler.setLevel(logging.DEBUG)
+        std_handler.setFormatter(formatter)
+        logger.addHandler(std_handler)
     handler_graypy = graypy.GELFHandler(LOGSERVER_IP_ADDRESS, LOGSERVER_PORT)
     logger.addHandler(handler_graypy)
 

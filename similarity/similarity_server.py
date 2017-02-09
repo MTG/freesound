@@ -18,10 +18,11 @@
 #     See AUTHORS file.
 #
 
+from __future__ import print_function
 from twisted.web import server, resource
 from twisted.internet import reactor
-from gaia_wrapper import GaiaWrapper
-from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT
+#from gaia_wrapper import GaiaWrapper
+from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT, LOG_TO_STDOUT
 import logging
 import graypy
 from logging.handlers import RotatingFileHandler
@@ -225,17 +226,20 @@ class SimilarityServer(resource.Resource):
 
 if __name__ == '__main__':
     # Set up logging
+    if not LOG_TO_STDOUT:
+        print("LOG_TO_STDOUT is False, will not log")
     logger = logging.getLogger('similarity')
     logger.setLevel(logging.DEBUG)
     handler = RotatingFileHandler(LOGFILE, maxBytes=2*1024*1024, backupCount=5)
     handler.setLevel(logging.DEBUG)
-    std_handler = logging.StreamHandler()
-    std_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    std_handler.setFormatter(formatter)
-    logger.addHandler(std_handler)
+    if LOG_TO_STDOUT:
+        std_handler = logging.StreamHandler()
+        std_handler.setLevel(logging.DEBUG)
+        std_handler.setFormatter(formatter)
+        logger.addHandler(std_handler)
     handler_graypy = graypy.GELFHandler(LOGSERVER_IP_ADDRESS, LOGSERVER_PORT)
     logger.addHandler(handler_graypy)
 

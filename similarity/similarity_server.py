@@ -21,7 +21,7 @@
 from __future__ import print_function
 from twisted.web import server, resource
 from twisted.internet import reactor
-#from gaia_wrapper import GaiaWrapper
+from gaia_wrapper import GaiaWrapper
 from similarity_settings import LISTEN_PORT, LOGFILE, DEFAULT_PRESET, DEFAULT_NUMBER_OF_RESULTS, INDEX_NAME, PRESETS, BAD_REQUEST_CODE, NOT_FOUND_CODE, SERVER_ERROR_CODE, LOGSERVER_IP_ADDRESS, LOGSERVER_PORT, LOG_TO_STDOUT
 import logging
 import graypy

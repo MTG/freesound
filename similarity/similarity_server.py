@@ -29,6 +29,7 @@ from logging.handlers import RotatingFileHandler
 from similarity_server_utils import parse_filter, parse_target, parse_metric_descriptors
 import json
 import yaml
+import cloghandler
 
 
 def server_interface(resource):
@@ -230,7 +231,7 @@ if __name__ == '__main__':
         print("LOG_TO_STDOUT is False, will not log")
     logger = logging.getLogger('similarity')
     logger.setLevel(logging.DEBUG)
-    handler = RotatingFileHandler(LOGFILE, maxBytes=2*1024*1024, backupCount=5)
+    handler = cloghandler.ConcurrentRotatingFileHandler(LOGFILE, "a", maxBytes=2*1024*1024, backupCount=5)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)

@@ -33,6 +33,7 @@ from logging.handlers import RotatingFileHandler
 import json
 from communityBasedTagRecommendation import CommunityBasedTagRecommender
 from utils import loadFromJson, saveToJson
+import cloghandler
 
 
 def server_interface(resource):
@@ -149,7 +150,7 @@ if __name__ == '__main__':
         print("LOG_TO_STDOUT is False, will not log")
     logger = logging.getLogger('tagrecommendation')
     logger.setLevel(logging.DEBUG)
-    handler = RotatingFileHandler(LOGFILE, maxBytes=2*1024*1024, backupCount=5)
+    handler = cloghandler.ConcurrentRotatingFileHandler(LOGFILE, mode="a", maxBytes=2*1024*1024, backupCount=5)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)

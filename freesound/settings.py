@@ -129,6 +129,12 @@ IGNORABLE_404_URLS = (
     re.compile(r'similar$'),
 )
 
+# Silence Django system check urls.W002 "Your URL pattern '/$' has a regex beginning with a '/'.
+# Remove this slash as it is unnecessary." triggered in API urls. Although the check claims the last
+# slash is not necessary, it is in our case as otherwise it breaks some API urls when these don't end
+# with slash.
+SILENCED_SYSTEM_CHECKS = ['urls.W002']
+
 # A tuple of IP addresses, as strings, that:
 # See debug comments, when DEBUG is True
 INTERNAL_IPS = ['localhost', '127.0.0.1']
@@ -242,10 +248,13 @@ REST_FRAMEWORK = {
     ),
 }
 
+DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour
+
 # APIv2 throttling limits are defined in local_settings
 
 # Oauth2 provider settings
 OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 60*60*24,
     'CLIENT_SECRET_GENERATOR_LENGTH': 40,
     'AUTHORIZATION_CODE_EXPIRE_SECONDS': 10*60,
     'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
@@ -257,6 +266,15 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # Set DATA_URL. You can overwrite this to point to production data ("http://freesound.org/data/") in
 # local settings if needed ;)
 DATA_URL = "/data/"
+
+# Locations where sounds, previews and other "static" content will be mirrored (if specified)
+# If locations do not exist, they will be created
+MIRROR_SOUNDS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_PREVIEWS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_DISPLAYS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
+
 
 # leave at bottom starting here!
 from local_settings import *

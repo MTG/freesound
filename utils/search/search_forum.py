@@ -21,7 +21,6 @@
 from solr import Solr, SolrException
 from django.conf import settings
 import logging
-from forum.models import Post
 
 logger = logging.getLogger("search")
 
@@ -77,7 +76,8 @@ def add_all_posts_to_solr(post_queryset, slice_size=4000, mark_index_clean=False
     num_posts = post_queryset.count()
     for i in range(0, num_posts, slice_size):
         try:
-            add_posts_to_solr(post_queryset[i:i+slice_size])
+            posts = post_queryset[i:i+slice_size]
+            add_posts_to_solr(posts)
         except SolrException, e:
             logger.error("failed to add post batch to solr index, reason: %s" % str(e))
 

@@ -129,6 +129,12 @@ IGNORABLE_404_URLS = (
     re.compile(r'similar$'),
 )
 
+# Silence Django system check urls.W002 "Your URL pattern '/$' has a regex beginning with a '/'.
+# Remove this slash as it is unnecessary." triggered in API urls. Although the check claims the last
+# slash is not necessary, it is in our case as otherwise it breaks some API urls when these don't end
+# with slash.
+SILENCED_SYSTEM_CHECKS = ['urls.W002']
+
 # A tuple of IP addresses, as strings, that:
 # See debug comments, when DEBUG is True
 INTERNAL_IPS = ['localhost', '127.0.0.1']

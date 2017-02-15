@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block extra-head %}
+<style type="text/css">
+  .tags{font-family: Arial, sans-serif;font-size:10px;}
+  .axis path,.axis line {fill: none;stroke:#b6b6b6;shape-rendering: crispEdges;}
+  .tick text{fill:#999;}
+  g.journal.active{cursor:pointer;}
+  text.label{font-size:12px;font-weight:bold;cursor:pointer;}
+  text.value{font-size:12px;font-weight:bold;}
+</style>
+{% endblock extra-head %}
+
+{% block title %}
+    Monitor
+{% endblock title %}
+
+{% block content %}
+
+    <h2>Users</h2>
+    <h3>Registered users of last week</h3>
+    <div class='users'>
+    </div>
+    
+    <h2>Sounds</h2>
+    <h3>Sounds created last week</h3>
+    <div class='uploads'>
+    </div>
+    
+    <h2>Downloads</h2>
+    <h3>Downloads of last week</h3>
+    <div class='downloads'>
+    </div>
+
+    <h2>Tags</h2>
+    <h3>Most used tags of last week</h3>
+    <div class='tags'>
+    </div>
+
+
+    <script>
+      var dataUrl = '{% url 'monitor-stats-ajax' %}';
+    </script>
+    <script src="https://d3js.org/d3.v4.min.js" type="text/javascript"></script>
+    <script src="https://d3js.org/d3-axis.v1.min.js"></script>
+    <script src="https://d3js.org/d3-array.v1.min.js"></script>
+    <script src="https://d3js.org/d3-collection.v1.min.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-format.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-time.v1.min.js"></script>
+    <script src="https://d3js.org/d3-time-format.v2.min.js"></script>
+    <script src="https://d3js.org/d3-scale.v1.min.js"></script>
+    <script src="https://d3js.org/d3-path.v1.min.js"></script>
+    <script src="https://d3js.org/d3-shape.v1.min.js"></script>
+    <script src="{{media_url}}js/stats.js" type="text/javascript"></script>
+{% endblock content %}

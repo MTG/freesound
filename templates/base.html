@@ -42,6 +42,7 @@
         <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
         {% google_analytics %}
         {% endblock %}
+        {% block extra-head %}{% endblock %}
     </head>
 
     <body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">

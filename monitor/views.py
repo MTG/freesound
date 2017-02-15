@@ -17,13 +17,22 @@
 # Authors:
 #     See AUTHORS file.
 #
+import json
+import datetime
 
 from django.shortcuts import render
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.cache import cache_page
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db import connection
+from django.db.models import Count
 from django.shortcuts import redirect
+from django.http import JsonResponse
 from sounds.models import Sound
+from tags.models import TaggedItem
 import gearman
 import tickets.views
 import sounds.views
@@ -89,10 +98,40 @@ def monitor_home(request):
              "sounds_analysis_failed_count": sounds_analysis_failed_count,
              "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
              "gearman_status": gearman_status,
-             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count}
+             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
+    }
 
     return render(request, 'monitor/monitor.html', tvars)
 
+
+@cache_page(60 * 60 * 24)
+def stats_ajax(request):
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+
+    new_sounds = sounds.models.Sound.objects.filter(created__gt=last_week)\
+            .extra(select={'day': 'date(created)'}).values('day').order_by()\
+            .annotate(Count('id'))
+
+    new_users = User.objects.filter(date_joined__gt=last_week)\
+            .extra(select={'day': 'date(date_joined)'}).values('day')\
+            .order_by().annotate(Count('id'))
+
+    new_downloads = sounds.models.Download.objects.filter(created__gt=last_week)\
+            .extra({'day':"date(created)"}).values('day').order_by().annotate(Count('id'))
+
+    top_tags = TaggedItem.objects.filter(created__gt=last_week)\
+            .values('tag_id').distinct().annotate(num=Count('tag_id'))\
+            .order_by('num')[:30]
+    top_tags = [t['tag_id'] for t in  top_tags]
+    tags_stats = TaggedItem.objects.filter(tag_id__in=top_tags, created__gt=last_week)\
+            .extra(select={'day': 'date(created)'}).values('day', 'tag__name').order_by().annotate(Count('tag_id'))
+
+    return JsonResponse({
+        'new_downloads': list(new_downloads),
+        "tags_stats": list(tags_stats),
+        "new_users": list(new_users),
+        "new_sounds": list(new_sounds)
+        })
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')

@@ -18,17 +18,16 @@
 #     See AUTHORS file.
 #
 
+from django.views.generic import TemplateView
 from django.conf.urls import patterns, url
 from views import *
 
 urlpatterns = [
 
-    url(r'^$',
-        monitor_home,
-        name='monitor-home'),
+    url(r'^$', monitor_home, name='monitor-home'),
 
-    url(r'^processing/process_sounds/$',
-        process_sounds,
-        name='monitor-processing-process'),
+    url(r'^processing/process_sounds/$', process_sounds, name='monitor-processing-process'),
+    url(r'^stats/$', TemplateView.as_view(template_name='monitor/stats.html'), name='monitor-stats'),
+    url(r'^ajax_stats/$', stats_ajax, name='monitor-stats-ajax'),
 
 ]

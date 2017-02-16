@@ -98,38 +98,55 @@ def monitor_home(request):
              "sounds_analysis_failed_count": sounds_analysis_failed_count,
              "sounds_analysis_skipped_count": sounds_analysis_skipped_count,
              "gearman_status": gearman_status,
-             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count,
+             "sounds_in_moderators_queue_count": sounds_in_moderators_queue_count
     }
 
     return render(request, 'monitor/monitor.html', tvars)
 
 
-@cache_page(60 * 60 * 24)
+#@cache_page(60 * 60 * 24)
 def stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=169)
 
-    new_sounds = sounds.models.Sound.objects.filter(created__gt=last_week)\
-            .extra(select={'day': 'date(created)'}).values('day').order_by()\
-            .annotate(Count('id'))
-
-    new_users = User.objects.filter(date_joined__gt=last_week)\
-            .extra(select={'day': 'date(date_joined)'}).values('day')\
+    new_sounds_mod = sounds.models.Sound.objects\
+            .filter(created__gt=last_week, moderation_date__isnull=False)\
+            .extra(select={'day': 'date(moderation_date)'}).values('day')\
             .order_by().annotate(Count('id'))
 
-    new_downloads = sounds.models.Download.objects.filter(created__gt=last_week)\
-            .extra({'day':"date(created)"}).values('day').order_by().annotate(Count('id'))
+    new_sounds = sounds.models.Sound.objects\
+            .filter(created__gt=last_week, processing_date__isnull=False)\
+            .extra(select={'day': 'date(processing_date)'}).values('day')\
+            .order_by().annotate(Count('id'))
+
+    new_users = User.objects.filter(date_joined__gt=last_week)\
+            .extra(select={'day': 'date(date_joined)'})\
+            .values('day', 'is_active').order_by().annotate(Count('id'))
+
+    new_downloads_sound = sounds.models.Download.objects\
+            .filter(created__gt=last_week, pack=None)\
+            .extra({'day': 'date(created)'}).values('day').order_by()\
+            .annotate(Count('id'))
+
+    new_downloads_pack = sounds.models.Download.objects\
+            .filter(created__gt=last_week, sound=None)\
+            .extra({'day': 'date(created)'}).values('day').order_by()\
+            .annotate(Count('id'))
 
     top_tags = TaggedItem.objects.filter(created__gt=last_week)\
             .values('tag_id').distinct().annotate(num=Count('tag_id'))\
-            .order_by('num')[:30]
+            .order_by('num')[30:]
     top_tags = [t['tag_id'] for t in  top_tags]
-    tags_stats = TaggedItem.objects.filter(tag_id__in=top_tags, created__gt=last_week)\
-            .extra(select={'day': 'date(created)'}).values('day', 'tag__name').order_by().annotate(Count('tag_id'))
+    tags_stats = TaggedItem.objects\
+            .filter(tag_id__in=top_tags, created__gt=last_week)\
+            .extra(select={'day': 'date(created)'})\
+            .values('day', 'tag__name').order_by().annotate(Count('tag_id'))
 
     return JsonResponse({
-        'new_downloads': list(new_downloads),
+        'new_downloads_sound': list(new_downloads_sound),
+        'new_downloads_pack': list(new_downloads_pack),
         "tags_stats": list(tags_stats),
         "new_users": list(new_users),
+        "new_sounds_mod": list(new_sounds_mod),
         "new_sounds": list(new_sounds)
         })
 

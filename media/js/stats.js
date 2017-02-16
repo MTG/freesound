@@ -2,11 +2,23 @@ $( document ).ready(function() {
 
   $.get(dataUrl, function(d){
       loadTagGraph(d);
-      
+      console.log(d)
+      var active_users = [],
+      non_active_users = [];
+      for (var j = 0; j < d.new_users.length; j++) {
+        if (d.new_users[j]['is_active']) {
+          active_users.push(d.new_users[j]);
+        } else {
+          non_active_users.push(d.new_users[j]); 
+        }
+      }
       // Display charts with Downloads, Uploads and Registers
-      displayCharts('.users', d.new_users, 'Users');
-      displayCharts('.uploads', d.new_sounds, 'Sounds');
-      displayCharts('.downloads', d.new_downloads, 'Downloads');
+      displayCharts('.users', active_users, non_active_users, 'Users',
+          [{color: 'crimson', name: 'active'}, {color: 'grey', name: 'non active'}]);
+      displayCharts('.uploads', d.new_sounds, d.new_sounds_mod, 'Sounds',
+          [{color: 'crimson', name: 'processed'}, {color: 'grey', name: 'moderated'}]);
+      displayCharts('.downloads', d.new_downloads_pack, d.new_downloads_sound, 'Downloads',
+          [{color: 'crimson', name: 'packs'}, {color: 'grey', name: 'sounds'}]);
   });
 });
 
@@ -95,10 +107,7 @@ function loadTagGraph(data){
 }
 
 // Display line chart with downloads, sounds and users
-function displayCharts(selectClass, data, yText){
-  data.sort(function(a, b) { 
-      return d3.ascending(new Date(a.day), new Date(b.day)); 
-  });
+function displayCharts(selectClass, data, data2, yText, legendData){
   var margin = {top: 20, right: 200, bottom: 30, left: 50},
     width = 600,
     height = 500;
@@ -115,13 +124,19 @@ function displayCharts(selectClass, data, yText){
   var y = d3.scaleLinear()
     .rangeRound([height, 0]);
 
-  x.domain(d3.extent(data, function(d) { return new Date(d['day']); }));
-  y.domain(d3.extent(data, function(d) { return d['id__count']; }));
-  
+  x.domain(d3.extent(data.concat(data2), function(d) { return new Date(d['day']); }));
+  y.domain([0, d3.max(data.concat(data2), function(d) { return d['id__count']; })]);
+
   var line = d3.line()
       .curve(d3.curveMonotoneX)
       .x(function(d) { return x(new Date(d['day'])); })
       .y(function(d) { return y(d['id__count']); });
+
+  var line2 = d3.line()
+      .curve(d3.curveMonotoneX)
+      .x(function(d) { return x(new Date(d['day'])); })
+      .y(function(d) { console.log(d['id__count']);return y(d['id__count']); });
+
 
   g.append("g")
       .attr("transform", "translate(0," + height + ")")
@@ -130,7 +145,7 @@ function displayCharts(selectClass, data, yText){
 
   g.append("g")
       .call(d3.axisLeft(y))
-    .append("text")
+      .append("text")
       .attr("fill", "#000")
       .attr("transform", "rotate(-90)")
       .attr("y", 6)
@@ -138,12 +153,54 @@ function displayCharts(selectClass, data, yText){
       .attr("text-anchor", "end")
       .text(yText);
 
-  g.append("path")
+    data.sort(function(a, b) { 
+      return d3.ascending(new Date(a.day), new Date(b.day)); 
+    });
+
+    data2.sort(function(a, b) { 
+      return d3.ascending(new Date(a.day), new Date(b.day)); 
+    });
+
+    g.append("path")
       .datum(data)
       .attr("fill", "none")
-      .attr("stroke", "crimson")
+      .attr("stroke", legendData[0]['color'])
       .attr("stroke-linejoin", "round")
       .attr("stroke-linecap", "round")
       .attr("stroke-width", 3)
       .attr("d", line);
+
+    g.append("path")
+      .datum(data2)
+      .attr("fill", "none")
+      .attr("stroke", legendData[1]['color'])
+      .attr("stroke-linejoin", "round")
+      .attr("stroke-linecap", "round")
+      .attr("stroke-width", 3)
+      .attr("d", line2);
+  
+    // add legend   
+    var legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("x", width - 35)
+      .attr("y", 20)
+      .attr("height", 100)
+      .attr("width", 100);
+
+    legend.selectAll('g')
+      .data(legendData)
+        .enter()
+        .each(function(d, i) {
+          legend.append("rect")
+            .attr("x", width - 20)
+            .attr("y", i*20 + 20)
+            .attr("width", 10)
+            .attr("height", 10)
+            .style("fill", d.color); 
+
+          legend.append("text")
+            .attr("x", width - 8)
+            .attr("y", i * 20 + 30)
+            .text(d.name);
+      });
 }

@@ -104,7 +104,7 @@ def monitor_home(request):
     return render(request, 'monitor/monitor.html', tvars)
 
 
-#@cache_page(60 * 60 * 24)
+@cache_page(60 * 60 * 24)
 def stats_ajax(request):
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=169)
 

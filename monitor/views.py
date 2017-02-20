@@ -105,7 +105,7 @@ def monitor_home(request):
 
 
 @cache_page(60 * 60 * 24)
-def stats_ajax(request):
+def sounds_stats_ajax(request):
     last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
 
     new_sounds_mod = sounds.models.Sound.objects\
@@ -118,9 +118,28 @@ def stats_ajax(request):
             .extra(select={'day': 'date(processing_date)'}).values('day')\
             .order_by().annotate(Count('id'))
 
+    return JsonResponse({
+        "new_sounds_mod": list(new_sounds_mod),
+        "new_sounds": list(new_sounds)
+        })
+
+
+#@cache_page(60 * 60 * 24)
+def users_stats_ajax(request):
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=169)
+
     new_users = User.objects.filter(date_joined__gt=last_week)\
             .extra(select={'day': 'date(date_joined)'})\
             .values('day', 'is_active').order_by().annotate(Count('id'))
+
+    return JsonResponse({
+        "new_users": list(new_users),
+        })
+
+
+@cache_page(60 * 60 * 24)
+def downloads_stats_ajax(request):
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
 
     new_downloads_sound = sounds.models.Download.objects\
             .filter(created__gt=last_week, pack=None)\
@@ -132,6 +151,16 @@ def stats_ajax(request):
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Count('id'))
 
+    return JsonResponse({
+        'new_downloads_sound': list(new_downloads_sound),
+        'new_downloads_pack': list(new_downloads_pack),
+        })
+
+
+@cache_page(60 * 60 * 24)
+def tags_stats_ajax(request):
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+
     top_tags = TaggedItem.objects.filter(created__gt=last_week)\
             .values('tag_id').distinct().annotate(num=Count('tag_id'))\
             .order_by('num')[30:]
@@ -142,13 +171,9 @@ def stats_ajax(request):
             .values('day', 'tag__name').order_by().annotate(Count('tag_id'))
 
     return JsonResponse({
-        'new_downloads_sound': list(new_downloads_sound),
-        'new_downloads_pack': list(new_downloads_pack),
         "tags_stats": list(tags_stats),
-        "new_users": list(new_users),
-        "new_sounds_mod": list(new_sounds_mod),
-        "new_sounds": list(new_sounds)
         })
+
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')

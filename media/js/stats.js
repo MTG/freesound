@@ -1,21 +1,29 @@
 $( document ).ready(function() {
 
-  $.get(dataUrl, function(d){
+  $.get(tagsDataUrl, function(d){
       loadTagGraph(d);
-      var active_users = [],
+  });
+  $.get(usersDataUrl, function(d){
+    var active_users = d.new_users.filter(e => {return e.is_active})
+    var non_active_users = d.new_users.filter(e => {return !e.is_active})
+    /*var active_users = [],
       non_active_users = [];
-      d.new_users.forEach( function (element) { 
-        if (element['is_active']) {
-          active_users.push(element);
+      for (var j = 0; j < d.new_users.length; j++) {
+        if (d.new_users[j]['is_active']) {
+          active_users.push(d.new_users[j]);
         } else {
-          non_active_users.push(element);
+          non_active_users.push(d.new_users[j]);
         }
-      });
+      }*/
       // Display charts with Downloads, Uploads and Registers
       displayCharts('.users', active_users, non_active_users, 'Users',
           [{color: 'crimson', name: 'active'}, {color: 'grey', name: 'non active'}]);
+  });
+  $.get(soundsDataUrl, function(d){
       displayCharts('.uploads', d.new_sounds, d.new_sounds_mod, 'Sounds',
           [{color: 'crimson', name: 'processed'}, {color: 'grey', name: 'moderated'}]);
+  });
+  $.get(downloadsDataUrl, function(d){
       displayCharts('.downloads', d.new_downloads_pack, d.new_downloads_sound, 'Downloads',
           [{color: 'crimson', name: 'packs'}, {color: 'grey', name: 'sounds'}]);
   });

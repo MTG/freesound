@@ -2,16 +2,15 @@ $( document ).ready(function() {
 
   $.get(dataUrl, function(d){
       loadTagGraph(d);
-      console.log(d)
       var active_users = [],
       non_active_users = [];
-      for (var j = 0; j < d.new_users.length; j++) {
-        if (d.new_users[j]['is_active']) {
-          active_users.push(d.new_users[j]);
+      d.new_users.forEach( function (element) { 
+        if (element['is_active']) {
+          active_users.push(element);
         } else {
-          non_active_users.push(d.new_users[j]); 
+          non_active_users.push(element);
         }
-      }
+      });
       // Display charts with Downloads, Uploads and Registers
       displayCharts('.users', active_users, non_active_users, 'Users',
           [{color: 'crimson', name: 'active'}, {color: 'grey', name: 'non active'}]);
@@ -65,21 +64,22 @@ function loadTagGraph(data){
       .range([2, 9]);
 
 
-  for (var j = 0; j < data.tags_stats.length; j++) {
+  var j = 0;
+  data.tags_stats.forEach( function (element) {
     var g = svg.append("g").attr("class","journal");
 
     var circles = g.append("circle")
-      .attr("cx", xScale(new Date(data.tags_stats[j]['day'])))
+      .attr("cx", xScale(new Date(element['day'])))
       .attr("cy", j*20+20)
-      .attr("r", rScale(data.tags_stats[j]['tag_id__count']))
+      .attr("r", rScale(element['tag_id__count']))
       .style("fill", function(d) { return c(j); });
 
 
     var text = g.append("text")
       .attr("y", j*20+25)
-      .attr("x", xScale(new Date(data.tags_stats[j]['day'])))
+      .attr("x", xScale(new Date(element['day'])))
       .attr("class","value")
-      .text(data.tags_stats[j]['tag_id__count'])
+      .text(element['tag_id__count'])
       .style("fill", function(d) { return c(j); })
       .style("display","none");
 
@@ -87,11 +87,12 @@ function loadTagGraph(data){
       .attr("y", j*20+25)
       .attr("x",width+20)
       .attr("class","label")
-      .text(truncate(data.tags_stats[j]['tag__name'],30,"..."))
+      .text(truncate(element['tag__name'],30,"..."))
       .style("fill", function(d) { return c(j); })
       .on("mouseover", mouseover)
       .on("mouseout", mouseout);
-  };
+    j += 1;
+  });
 
   function mouseover(p) {
     var g = d3.select(this).node().parentNode;

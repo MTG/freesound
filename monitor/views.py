@@ -106,7 +106,7 @@ def monitor_home(request):
 
 @cache_page(60 * 60 * 24)
 def stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=169)
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
 
     new_sounds_mod = sounds.models.Sound.objects\
             .filter(created__gt=last_week, moderation_date__isnull=False)\

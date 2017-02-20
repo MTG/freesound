@@ -124,9 +124,9 @@ def sounds_stats_ajax(request):
         })
 
 
-#@cache_page(60 * 60 * 24)
+@cache_page(60 * 60 * 24)
 def users_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=169)
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
 
     new_users = User.objects.filter(date_joined__gt=last_week)\
             .extra(select={'day': 'date(date_joined)'})\

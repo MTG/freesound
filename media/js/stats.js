@@ -4,17 +4,8 @@ $( document ).ready(function() {
       loadTagGraph(d);
   });
   $.get(usersDataUrl, function(d){
-    var active_users = d.new_users.filter(e => {return e.is_active})
-    var non_active_users = d.new_users.filter(e => {return !e.is_active})
-    /*var active_users = [],
-      non_active_users = [];
-      for (var j = 0; j < d.new_users.length; j++) {
-        if (d.new_users[j]['is_active']) {
-          active_users.push(d.new_users[j]);
-        } else {
-          non_active_users.push(d.new_users[j]);
-        }
-      }*/
+      var active_users = d.new_users.filter(e => {return e.is_active})
+      var non_active_users = d.new_users.filter(e => {return !e.is_active})
       // Display charts with Downloads, Uploads and Registers
       displayCharts('.users', active_users, non_active_users, 'Users',
           [{color: 'crimson', name: 'active'}, {color: 'grey', name: 'non active'}]);
@@ -48,11 +39,10 @@ function loadTagGraph(data){
 
   var xScale = d3.scaleTime()
     .range([0, width]);
-  xScale.domain(d3.extent(data.tags_stats, function(d) { return new Date(d['day']); }));
-
   var xAxis = d3.axisTop(xScale);
 
   var formatDate = d3.timeFormat("%d-%m");
+  xAxis.ticks(7);
   xAxis.tickFormat(formatDate);
 
   var svg = d3.select('.tags').append("svg")
@@ -67,27 +57,37 @@ function loadTagGraph(data){
     .attr("transform", "translate(0," + 0 + ")")
     .call(xAxis);
 
-  var rScale = d3.scaleLinear()
-      .domain([0, d3.max(data.tags_stats, function(d) { return d['tag_id__count'] })])
-      .range([2, 9]);
-
-
   var j = 0;
-  data.tags_stats.forEach( function (element) {
+  for (var key in data.tags_stats) {
+    if (data.tags_stats.hasOwnProperty(key)) {
+    xScale.domain(d3.extent(data.tags_stats[key], function(d) { return new Date(d['day']); }));
     var g = svg.append("g").attr("class","journal");
 
-    var circles = g.append("circle")
-      .attr("cx", xScale(new Date(element['day'])))
+    var circles = g.selectAll("circle")
+      .data(data.tags_stats[key])
+      .enter()
+      .append("circle");
+
+    var text = g.selectAll("text")
+      .data(data.tags_stats[key])
+      .enter()
+      .append("text");
+
+    var rScale = d3.scaleLinear()
+      .domain([0, d3.max(data.tags_stats[key], function(d) { return d['count']; })])
+      .range([2, 9]);
+
+    circles
+      .attr("cx", function(d) { return xScale(new Date(d['day']))})
       .attr("cy", j*20+20)
-      .attr("r", rScale(element['tag_id__count']))
+      .attr("r", function(d) { return rScale(d['count']);})
       .style("fill", function(d) { return c(j); });
 
-
-    var text = g.append("text")
+    text
       .attr("y", j*20+25)
-      .attr("x", xScale(new Date(element['day'])))
+      .attr("x", function(d, i) { return xScale(new Date(d['day']))})
       .attr("class","value")
-      .text(element['tag_id__count'])
+      .text(function(d){ return d['count']; })
       .style("fill", function(d) { return c(j); })
       .style("display","none");
 
@@ -95,12 +95,13 @@ function loadTagGraph(data){
       .attr("y", j*20+25)
       .attr("x",width+20)
       .attr("class","label")
-      .text(truncate(element['tag__name'],30,"..."))
+      .text(truncate(key,30,"..."))
       .style("fill", function(d) { return c(j); })
       .on("mouseover", mouseover)
       .on("mouseout", mouseout);
     j += 1;
-  });
+    }
+  }
 
   function mouseover(p) {
     var g = d3.select(this).node().parentNode;
@@ -144,7 +145,7 @@ function displayCharts(selectClass, data, data2, yText, legendData){
   var line2 = d3.line()
       .curve(d3.curveMonotoneX)
       .x(function(d) { return x(new Date(d['day'])); })
-      .y(function(d) { console.log(d['id__count']);return y(d['id__count']); });
+      .y(function(d) { return y(d['id__count']); });
 
 
   g.append("g")

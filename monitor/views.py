@@ -170,9 +170,13 @@ def tags_stats_ajax(request):
             .extra(select={'day': 'date(created)'})\
             .values('day', 'tag__name').order_by().annotate(Count('tag_id'))
 
-    return JsonResponse({
-        "tags_stats": list(tags_stats),
+    tags = {i['tag__name']: [] for i in tags_stats}
+    for i in tags_stats:
+        tags[i['tag__name']].append({
+            'count': i['tag_id__count'],
+            'day': i['day']
         })
+    return JsonResponse({"tags_stats":tags})
 
 
 @login_required

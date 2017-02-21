@@ -163,7 +163,7 @@ def tags_stats_ajax(request):
 
     top_tags = TaggedItem.objects.filter(created__gt=last_week)\
             .values('tag_id').distinct().annotate(num=Count('tag_id'))\
-            .order_by('num')[30:]
+            .order_by('-num')[:30]
     top_tags = [t['tag_id'] for t in  top_tags]
     tags_stats = TaggedItem.objects\
             .filter(tag_id__in=top_tags, created__gt=last_week)\

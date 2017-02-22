@@ -37,7 +37,7 @@ function loadTagGraph(data){
 
   var c = d3.scaleOrdinal(d3.schemeCategory20c);
 
-  var formatDate = d3.timeFormat("%d-%m");
+  var formatDate = d3.timeFormat("%a %d");
   var xScale = d3.scaleTime()
     .range([0, width]);
   var xAxis = d3.axisTop(xScale).ticks(d3.timeDay.every(1)).tickFormat(formatDate);
@@ -131,7 +131,7 @@ function displayCharts(selectClass, data, data2, yText, legendData){
 
   var x = d3.scaleTime()
     .rangeRound([0, width]);
-  var formatDate = d3.timeFormat("%d-%m");
+  var formatDate = d3.timeFormat("%a %d");
 
   var y = d3.scaleLinear()
     .rangeRound([height, 0]);
@@ -153,6 +153,7 @@ function displayCharts(selectClass, data, data2, yText, legendData){
   g.append("g")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x)
+          .ticks(d3.timeDay.every(1))
           .tickFormat(formatDate));
 
   g.append("g")

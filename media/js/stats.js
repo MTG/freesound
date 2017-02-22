@@ -31,19 +31,22 @@ function truncate(str, maxLength, suffix) {
 
 function loadTagGraph(data){
   // Display most used tags with bubbles
-  var margin = {top: 20, right: 200, bottom: 0, left: 20},
-    width = 500,
+  var margin = {top: 20, right: 100, bottom: 0, left: 20},
+    width = 480,
     height = 650;
 
   var c = d3.scaleOrdinal(d3.schemeCategory20c);
 
+  var formatDate = d3.timeFormat("%d-%m");
   var xScale = d3.scaleTime()
     .range([0, width]);
-  var xAxis = d3.axisTop(xScale);
+  var xAxis = d3.axisTop(xScale).ticks(d3.timeDay.every(1)).tickFormat(formatDate);
 
-  var formatDate = d3.timeFormat("%d-%m");
-  xAxis.ticks(7);
-  xAxis.tickFormat(formatDate);
+  for (var key in data.tags_stats) {
+    if (data.tags_stats.hasOwnProperty(key)) {
+      xScale.domain(d3.extent(data.tags_stats[key], function(d) { return new Date(d['day']); }));
+    }
+  }
 
   var svg = d3.select('.tags').append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -54,13 +57,12 @@ function loadTagGraph(data){
 
   svg.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + 0 + ")")
+    .attr("transform", "translate(-" + 15 + ",0)")
     .call(xAxis);
 
   var j = 0;
   for (var key in data.tags_stats) {
     if (data.tags_stats.hasOwnProperty(key)) {
-    xScale.domain(d3.extent(data.tags_stats[key], function(d) { return new Date(d['day']); }));
     var g = svg.append("g").attr("class","journal");
 
     var circles = g.selectAll("circle")
@@ -120,7 +122,7 @@ function loadTagGraph(data){
 function displayCharts(selectClass, data, data2, yText, legendData){
   var margin = {top: 20, right: 200, bottom: 30, left: 50},
     width = 600,
-    height = 500;
+    height = 400;
   var svg = d3.select(selectClass).append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);

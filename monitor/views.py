@@ -106,7 +106,7 @@ def monitor_home(request):
 
 @cache_page(60 * 60 * 24)
 def sounds_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
     new_sounds_mod = sounds.models.Sound.objects\
             .filter(created__gt=last_week, moderation_date__isnull=False)\
@@ -126,7 +126,7 @@ def sounds_stats_ajax(request):
 
 @cache_page(60 * 60 * 24)
 def users_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
     new_users = User.objects.filter(date_joined__gt=last_week)\
             .extra(select={'day': 'date(date_joined)'})\
@@ -139,7 +139,7 @@ def users_stats_ajax(request):
 
 @cache_page(60 * 60 * 24)
 def downloads_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
     new_downloads_sound = sounds.models.Download.objects\
             .filter(created__gt=last_week, pack=None)\
@@ -159,7 +159,7 @@ def downloads_stats_ajax(request):
 
 @cache_page(60 * 60 * 24)
 def tags_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    last_week = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
     top_tags = TaggedItem.objects.filter(created__gt=last_week)\
             .values('tag_id').distinct().annotate(num=Count('tag_id'))\

@@ -79,12 +79,12 @@ class Command(BaseCommand):
                 users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
             except Exception, e:
                 # If error occur do not send the email
-                print "could not get new sounds data for", username
+                print "could not get new sounds data for", username.encode('utf-8')
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 
             if not users_sounds and not tags_sounds:
-                print "no news sounds for", username
+                print "no news sounds for", username.encode('utf-8')
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 

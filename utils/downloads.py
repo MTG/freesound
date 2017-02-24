@@ -40,7 +40,8 @@ def download_sounds(sounds_list, licenses_url, pack):
     """
     users = User.objects.filter(sounds__in=sounds_list).distinct()
     # Generate text file with license info
-    licenses = License.objects.all()
+    license_ids = sounds_list.values('license_id').distinct()
+    licenses = License.objects.filter(id__in=license_ids).all()
     attribution = render_to_string("sounds/pack_attribution.txt",
         dict(users=users,
             pack=pack,

@@ -55,6 +55,7 @@ from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from follow import follow_utils
 from operator import itemgetter
+import urlparse
 import gearman
 import datetime
 import time
@@ -308,8 +309,11 @@ def pack_licenses(request, username, pack_id):
     sounds_list = pack.sound_set.filter(processing_state="OK",
             moderation_state="OK").select_related('user', 'license')
     users = User.objects.filter(sounds__in=sounds_list).distinct()
-    sounds_url = reverse('pack', args=[username, pack_id])
-    licenses = License.objects.all()
+    domain = "https://%s" % Site.objects.get_current().domain
+    sounds_url = urlparse.urljoin(domain,
+            reverse('pack', args=[username, pack_id]))
+    license_ids = sounds_list.values('license_id').distinct()
+    licenses = License.objects.filter(id__in=license_ids).all()
     tvars = {
         'users': users,
         'sounds_url': sounds_url,

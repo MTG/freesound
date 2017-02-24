@@ -22,7 +22,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
-from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
@@ -55,7 +54,6 @@ from utils.similarity_utilities import get_similar_sounds
 from utils.text import remove_control_chars
 from follow import follow_utils
 from operator import itemgetter
-import urlparse
 import gearman
 import datetime
 import time
@@ -300,8 +298,7 @@ def pack_download(request, username, pack_id):
     pack_sounds = pack.sound_set.filter(processing_state="OK",
             moderation_state="OK").select_related('user', 'license')
     licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
-    sounds_url = reverse('pack', args=[username, pack_id])
-    return download_sounds(pack_sounds, sounds_url, licenses_url)
+    return download_sounds(pack_sounds, licenses_url, pack)
 
 
 def pack_licenses(request, username, pack_id):
@@ -309,14 +306,11 @@ def pack_licenses(request, username, pack_id):
     sounds_list = pack.sound_set.filter(processing_state="OK",
             moderation_state="OK").select_related('user', 'license')
     users = User.objects.filter(sounds__in=sounds_list).distinct()
-    domain = "https://%s" % Site.objects.get_current().domain
-    sounds_url = urlparse.urljoin(domain,
-            reverse('pack', args=[username, pack_id]))
     license_ids = sounds_list.values('license_id').distinct()
     licenses = License.objects.filter(id__in=license_ids).all()
     tvars = {
         'users': users,
-        'sounds_url': sounds_url,
+        'pack': pack,
         'licenses': licenses,
         'sound_list': sounds_list
     }

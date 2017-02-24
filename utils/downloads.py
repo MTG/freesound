@@ -32,7 +32,7 @@ from django.contrib.auth.models import User
 from sounds.models import License
 
 
-def download_sounds(sounds_list, sounds_url, licenses_url):
+def download_sounds(sounds_list, licenses_url, pack):
     """
     From a list of sounds generates the HttpResponse with the information of
     the wav files of the sonds and a text file with the license. This response
@@ -43,7 +43,7 @@ def download_sounds(sounds_list, sounds_url, licenses_url):
     licenses = License.objects.all()
     attribution = render_to_string("sounds/pack_attribution.txt",
         dict(users=users,
-            sounds_url=sounds_url,
+            pack=pack,
             licenses=licenses,
             sound_list=sounds_list))
 

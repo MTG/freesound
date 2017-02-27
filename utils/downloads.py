@@ -27,7 +27,7 @@ from django.contrib.auth.models import User
 from sounds.models import License
 
 
-def download_sounds(sounds_list, licenses_url, pack):
+def download_sounds(licenses_url, pack):
     """
     From a list of sounds generates the HttpResponse with the information of
     the wav files of the sonds and a text file with the license. This response
@@ -38,6 +38,9 @@ def download_sounds(sounds_list, licenses_url, pack):
     filelist = "%02x %i %s %s\r\n" % (license_crc,
                                     len(attribution.encode('UTF-8')),
                                     licenses_url, "_readme_and_license.txt")
+
+    sounds_list = pack.sound_set.filter(processing_state="OK",
+            moderation_state="OK").select_related('user', 'license')
 
     for sound in sounds_list:
         url = sound.locations("sendfile_url")

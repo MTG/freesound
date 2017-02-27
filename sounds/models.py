@@ -846,8 +846,7 @@ class Pack(SocialModel):
 
         users = User.objects.filter(sounds__in=sounds_list).distinct()
         # Generate text file with license info
-        license_ids = sounds_list.values('license_id').distinct()
-        licenses = License.objects.filter(id__in=license_ids).all()
+        licenses = License.objects.filter(sound__pack=self).distinct()
         attribution = render_to_string("sounds/pack_attribution.txt",
             dict(users=users,
                 pack=self,

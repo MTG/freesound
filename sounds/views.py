@@ -303,19 +303,8 @@ def pack_download(request, username, pack_id):
 
 def pack_licenses(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
-    sounds_list = pack.sound_set.filter(processing_state="OK",
-            moderation_state="OK").select_related('user', 'license')
-    users = User.objects.filter(sounds__in=sounds_list).distinct()
-    license_ids = sounds_list.values('license_id').distinct()
-    licenses = License.objects.filter(id__in=license_ids).all()
-    tvars = {
-        'users': users,
-        'pack': pack,
-        'licenses': licenses,
-        'sound_list': sounds_list
-    }
-    return render(request, 'sounds/pack_attribution.txt', tvars,
-            content_type="text/plain")
+    attribution = pack.get_attribution()
+    return HttpResponse(attribution, content_type="text/plain")
 
 
 @login_required

@@ -25,6 +25,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
+from django.template.loader import render_to_string
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
 from django.db import models
@@ -839,6 +840,20 @@ class Pack(SocialModel):
         self.is_deleted = True
         self.save()
 
+    def get_attribution(self):
+        sounds_list = self.sound_set.filter(processing_state="OK",
+                moderation_state="OK").select_related('user', 'license')
+
+        users = User.objects.filter(sounds__in=sounds_list).distinct()
+        # Generate text file with license info
+        license_ids = sounds_list.values('license_id').distinct()
+        licenses = License.objects.filter(id__in=license_ids).all()
+        attribution = render_to_string("sounds/pack_attribution.txt",
+            dict(users=users,
+                pack=self,
+                licenses=licenses,
+                sound_list=sounds_list))
+        return attribution
 
 class Flag(models.Model):
     sound = models.ForeignKey(Sound)

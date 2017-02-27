@@ -19,15 +19,10 @@
 #     See AUTHORS file.
 #
 
-import os
-import stat
 import zlib
-import tempfile
-import subprocess
 
 from django.conf import settings
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from sounds.models import License
 
@@ -38,26 +33,10 @@ def download_sounds(sounds_list, licenses_url, pack):
     the wav files of the sonds and a text file with the license. This response
     is handled by mod_zipfile of nginx to generate a zip file with the content.
     """
-    users = User.objects.filter(sounds__in=sounds_list).distinct()
-    # Generate text file with license info
-    license_ids = sounds_list.values('license_id').distinct()
-    licenses = License.objects.filter(id__in=license_ids).all()
-    attribution = render_to_string("sounds/pack_attribution.txt",
-        dict(users=users,
-            pack=pack,
-            licenses=licenses,
-            sound_list=sounds_list))
-
-    tmpf = tempfile.NamedTemporaryFile(dir=settings.PACKS_PATH, delete=False)
-    tmpf.write(attribution.encode("UTF-8"))
-    tmpf.close()
-    secret_name = tmpf.name.replace(settings.PACKS_PATH, settings.PACKS_SENDFILE_URL)
-
-    os.chmod(tmpf.name, stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    attribution = pack.get_attribution()
     license_crc = zlib.crc32(attribution.encode('UTF-8')) & 0xffffffff
-
     filelist = "%02x %i %s %s\r\n" % (license_crc,
-                                    os.stat(tmpf.name).st_size,
+                                    len(attribution.encode('UTF-8')),
                                     licenses_url, "_readme_and_license.txt")
 
     for sound in sounds_list:

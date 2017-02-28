@@ -40,7 +40,7 @@ from geotags.models import GeoTag
 from networkx import nx
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from sounds.models import Sound, Pack, Download, RemixGroup, DeletedSound
+from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
@@ -295,9 +295,14 @@ def pack_download(request, username, pack_id):
         raise Http404
 
     Download.objects.get_or_create(user=request.user, pack=pack)
-    pack_sounds = pack.sound_set.filter(processing_state="OK",
-            moderation_state="OK").select_related('user', 'license')
-    return download_sounds(pack_sounds, reverse('pack', args=[username, pack.id]))
+    licenses_url = (reverse('pack-licenses', args=[username, pack_id]))
+    return download_sounds(licenses_url, pack)
+
+
+def pack_licenses(request, username, pack_id):
+    pack = get_object_or_404(Pack, id=pack_id)
+    attribution = pack.get_attribution()
+    return HttpResponse(attribution, content_type="text/plain")
 
 
 @login_required

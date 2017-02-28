@@ -697,7 +697,8 @@ class DownloadPack(DownloadAPIView):
         if not sounds:
             raise NotFoundException(msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
 
-        return download_sounds(sounds, reverse('pack', args=[pack.user.username, pack.id]))
+        licenses_url = (reverse('pack-licenses', args=[pack.user.username, pack.id]))
+        return download_sounds(licenses_url, pack)
 
 
 ##################

@@ -26,10 +26,6 @@ from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
 
 
-# Monkeypatch __unicode__ in provider.oauth2.models.Client class as it is not very informative (and it shows better in the admin)
-#Client.__unicode__ = lambda self: u'%s, %s, %s' % (self.name, self.user, self.client_id) #new_unicode
-
-
 class ApiV2Client(models.Model):
 
     STATUS_CHOICES = (('OK',  'Approved'),
@@ -39,18 +35,18 @@ class ApiV2Client(models.Model):
 
     DEFAULT_STATUS = 'OK'
 
-    oauth_client                = models.OneToOneField(Application, related_name='apiv2_client', default=None, null=True, blank=True)
-    key                         = models.CharField(max_length=40, blank=True)
-    user                        = models.ForeignKey(User, related_name='apiv2_client')
-    status                      = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)
-    name                        = models.CharField(max_length=64)
-    url                         = models.URLField()
-    redirect_uri                = models.URLField()
-    description                 = models.TextField(blank=True)
-    accepted_tos                = models.BooleanField(default=False)
+    oauth_client = models.OneToOneField(Application, related_name='apiv2_client', default=None, null=True, blank=True)
+    key = models.CharField(max_length=40, blank=True)
+    user = models.ForeignKey(User, related_name='apiv2_client')
+    status = models.CharField(max_length=3, default=DEFAULT_STATUS, choices=STATUS_CHOICES)
+    name = models.CharField(max_length=64)
+    url = models.URLField()
+    redirect_uri = models.URLField()
+    description = models.TextField(blank=True)
+    accepted_tos = models.BooleanField(default=False)
     allow_oauth_passoword_grant = models.BooleanField(default=False)
-    created                     = models.DateTimeField(auto_now_add=True)
-    throttling_level            = models.IntegerField(default=1)
+    created = models.DateTimeField(auto_now_add=True)
+    throttling_level = models.IntegerField(default=1)
 
     def __unicode__(self):
         return "credentials for developer %s" % self.user.username

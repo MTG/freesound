@@ -357,21 +357,21 @@ class SoundViewsTestCase(TestCase):
 
         # Try delete with incorrect encrypted sound id link (should not delete sound)
         encrypted_link = encrypt(u"%d\t%f" % (1234, time.time()))
-        resp = self.client.get('%s?sound=%s' %
-                               (reverse('sound-delete', args=[sound.user.username, sound.id]), encrypted_link))
-        self.assertEqual(resp.status_code, 200)
+        resp = self.client.post(reverse('sound-delete',
+            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
+        self.assertEqual(resp.status_code, 403)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
 
         # Try delete with expried encrypted link (should not delete sound)
         encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time() - 15))
-        resp = self.client.get('%s?sound=%s' %
-                               (reverse('sound-delete', args=[sound.user.username, sound.id]), encrypted_link))
+        resp = self.client.post(reverse('sound-delete',
+            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 1)
 
         # Try delete with valid link (should delete sound)
         encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time()))
-        resp = self.client.get('%s?sound=%s' %
-                               (reverse('sound-delete', args=[sound.user.username, sound.id]), encrypted_link))
+        resp = self.client.post(reverse('sound-delete',
+            args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
         self.assertRedirects(resp, reverse('accounts-home'))

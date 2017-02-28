@@ -28,6 +28,7 @@ from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
 from utils.cache import invalidate_template_cache
 from django.utils.translation import ugettext as _
+from utils.search.search_forum import delete_post_from_solr
 import logging
 
 logger = logging.getLogger('web')
@@ -152,6 +153,7 @@ class Post(models.Model):
 @receiver(post_delete, sender=Post)
 def update_last_post_on_post_delete(**kwargs):
     post = kwargs['instance']
+    delete_post_from_solr(post)
     try:
         post.thread.set_last_post()
     except Thread.DoesNotExist:

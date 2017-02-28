@@ -57,5 +57,9 @@ BAD_REQUEST_CODE = 400
 SERVER_ERROR_CODE = 500
 NOT_FOUND_CODE = 404
 
-LOGSERVER_IP_ADDRESS = 'ID_ADDRESS'
+# Graylog GELF endpoint
+LOGSERVER_IP_ADDRESS = 'IP_ADDRESS'
 LOGSERVER_PORT = 0000
+
+# Set to true to log to stdout in addition to files and graylog
+LOG_TO_STDOUT = False

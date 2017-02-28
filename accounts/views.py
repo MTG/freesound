@@ -28,7 +28,7 @@ from django.contrib.auth import logout
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
-    HttpResponsePermanentRedirect, HttpResponseServerError
+    HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
@@ -65,6 +65,7 @@ from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
+from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -75,6 +76,17 @@ logger = logging.getLogger("upload")
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def crash_me(request):
     raise Exception
+
+
+def check_username(request):
+    username = request.GET.get('username', None)
+    username_valid = False
+    if username:
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            username_valid = True
+    return JsonResponse({'result': username_valid})
 
 
 @login_required
@@ -337,6 +349,7 @@ def handle_uploaded_image(profile, f):
     except Exception as e:
         logger.error("\tfailed creating large thumbnails: " + str(e))
 
+    copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
 
 
@@ -505,6 +518,9 @@ def describe_sounds(request):
                 logger.info("Moved original file from %s to %s" % (sound.original_path, new_original_path))
                 sound.original_path = new_original_path
                 sound.save()
+
+            # Copy to mirror location
+            copy_sound_to_mirror_locations(sound)
 
             # Set pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)

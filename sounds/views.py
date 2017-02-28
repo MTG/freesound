@@ -645,17 +645,14 @@ def delete(request, username, sound_id):
     if not (request.user.has_perm('sound.delete_sound') or sound.user == request.user):
         raise PermissionDenied
 
-    encrypted_string = request.GET.get("sound", None)
-    waited_too_long = False
-    if encrypted_string is not None:
-        sound_id, now = decrypt(encrypted_string).split("\t")
-        sound_id = int(sound_id)
-        link_generated_time = float(now)
+    error_message = None
+    if request.method == "POST" :
+        form = DeleteSoundForm(request.POST, sound_id=sound_id)
+        if not form.is_valid():
+            error_message = "Sorry, you waited too long, ... try again?"
+            form = DeleteSoundForm(sound_id=sound_id)
+        else:
 
-        if sound_id != sound.id:
-            raise PermissionDenied
-
-        if abs(time.time() - link_generated_time) < 10:
             logger.debug("User %s requested to delete sound %s" % (request.user.username,sound_id))
             try:
                 ticket = sound.ticket
@@ -670,11 +667,15 @@ def delete(request, username, sound_id):
             sound.delete()
 
             return HttpResponseRedirect(reverse("accounts-home"))
-        else:
-            waited_too_long = True
+    else:
+        form = DeleteSoundForm(sound_id=sound_id)
 
-    encrypted_link = encrypt(u"%d\t%f" % (sound.id, time.time()))
-    return render_to_response('sounds/delete.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+            'error_message': error_message,
+            'delete_form': form,
+            'sound': sound
+            }
+    return render(request, 'sounds/delete.html', tvars)
 
 
 def flag(request, username, sound_id):

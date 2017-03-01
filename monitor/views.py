@@ -196,17 +196,22 @@ def total_sounds_stats_ajax(request):
     num_sounds = sounds.models.Sound.objects.filter(processing_state="OK",
             moderation_state="OK").count()
     packs = sounds.models.Pack.objects.all().count()
+    return JsonResponse({
+        "sounds": num_sounds,
+        "packs": packs,
+        })
+
+
+@cache_page(60 * 60 * 24)
+def total_activity_stats_ajax(request):
     downloads = sounds.models.Download.objects.all().count()
     num_comments = comments.models.Comment.objects.all().count()
     num_ratings = ratings.models.Rating.objects.all().count()
     return JsonResponse({
-        "sounds": num_sounds,
-        "packs": packs,
         "downloads": downloads,
         "comments": num_comments,
         "ratings": num_ratings,
         })
-
 
 @cache_page(60 * 60 * 24)
 def total_tags_stats_ajax(request):

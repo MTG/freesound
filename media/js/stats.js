@@ -7,16 +7,18 @@ $( document ).ready(function() {
   $.get(totalSoundsDataUrl, function(data){
     $('#total-sounds').html(data.sounds);
     $('#total-packs').html(data.packs);
-    $('#total-downloads').html(data.downloads);
-    $('#avg-downloads').html(Math.round(data.downloads/data.sounds));
-    $('#total-comments').html(data.comments);
-    $('#avg-comments').html(Math.round(data.comments/data.sounds));
-    $('#total-ratings').html(data.ratings);
-    $('#avg-ratings').html(Math.round(data.ratings/data.sounds));
+    $.get(totalActivityDataUrl, function(d){
+      $('#total-downloads').html(d.downloads);
+      $('#avg-downloads').html(Math.round(d.downloads/data.sounds));
+      $('#total-comments').html(d.comments);
+      $('#avg-comments').html(Math.round(d.comments/data.sounds));
+      $('#total-ratings').html(d.ratings);
+      $('#avg-ratings').html(Math.round(d.ratings/data.sounds));
+    });
   });
   $.get(totalTagsDataUrl, function(data){
     $('#total-tags').html(data.tags);
-    $('#total-used-tags').html(data.used_tags);
+    $('#total-used-tags').html(data.tags_used);
   });
   $.get(totalForumDataUrl, function(data){
     $('#total-posts').html(data.posts);

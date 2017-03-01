@@ -36,6 +36,29 @@
 
 {% block content %}
 
+    <h2>Global numbers</h2>
+    <h3>total number of registered elements</h3>
+    <div>
+    <ul>
+      <li><b>Active Users:</b> <span id="total-users"></span></li>
+      <li><b>Users with sounds:</b> <span id="users-with-sounds"></span></li>
+      <li><b>Sounds:</b> <span id="total-sounds"></span></li>
+      <li><b>Packs:</b> <span id="total-packs"></span></li>
+      <li><b>Downloads:</b> <span id="total-downloads"></span></li>
+      <li><b>Average downloads per sound:</b> <span id="avg-downloads"></span></li>
+      <li><b>Comments:</b> <span id="total-comments"></span></li>
+      <li><b>Average comments per sound:</b> <span id="avg-comments"></span></li>
+      <li><b>Ratings:</b> <span id="total-ratings"></span></li>
+      <li><b>Average ratings per sound:</b> <span id="avg-ratings"></span></li>
+      <li><b>Tags:</b> <span id="total-tags"></span></li>
+      <li><b>Tags instances:</b> <span id="total-used-tags"></span></li>
+      <li><b>Posts:</b> <span id="total-posts"></span></li>
+      <li><b>Threads:</b> <span id="total-threads"></span></li>
+    </ul>
+
+
+    </div>
+ 
     <h2>Users</h2>
     <h3>Registered users on lasts week</h3>
     <div class='users'>
@@ -58,6 +81,7 @@
 
 
     <script>
+      var totalsDataUrl = '{% url 'monitor-total-stats-ajax' %}';
       var tagsDataUrl = '{% url 'monitor-tags-stats-ajax' %}';
       var downloadsDataUrl = '{% url 'monitor-downloads-stats-ajax' %}';
       var soundsDataUrl = '{% url 'monitor-sounds-stats-ajax' %}';

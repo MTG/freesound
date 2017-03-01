@@ -32,11 +32,13 @@ from django.db.models import Count
 from django.shortcuts import redirect
 from django.http import JsonResponse
 from sounds.models import Sound
-from tags.models import TaggedItem
+from tags.models import Tag, TaggedItem
 import gearman
 import tickets.views
 import sounds.views
-
+import forum.models
+import ratings.models
+import comments.models
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
@@ -178,6 +180,35 @@ def tags_stats_ajax(request):
         })
     return JsonResponse({"tags_stats":tags})
 
+@cache_page(60 * 60 * 24)
+def total_stats_ajax(request):
+    users = User.objects.filter(is_active=True)
+    users_num = users.count()
+    users_with_sounds = users.filter(profile__num_sounds__gt=0).count()
+    num_sounds = sounds.models.Sound.objects.filter(processing_state="OK",
+            moderation_state="OK").count()
+    packs = sounds.models.Pack.objects.all().count()
+    downloads = sounds.models.Download.objects.all().count()
+    num_comments = comments.models.Comment.objects.all().count()
+    num_ratings = ratings.models.Rating.objects.all().count()
+    tags = Tag.objects.all().count()
+    tags_used = TaggedItem.objects.all().count()
+    posts = forum.models.Post.objects.all().count()
+    threads = forum.models.Thread.objects.all().count()
+
+    return JsonResponse({
+        "total_users": users_num,
+        "users_with_sounds": users_with_sounds,
+        "sounds": num_sounds,
+        "packs": packs,
+        "downloads": downloads,
+        "comments": num_comments,
+        "ratings": num_ratings,
+        "tags": tags,
+        "tags_used": tags_used,
+        "posts": posts,
+        "threads": threads,
+        })
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')

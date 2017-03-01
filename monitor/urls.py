@@ -32,6 +32,8 @@ urlpatterns = [
     url(r'^stats/$',
         login_required(TemplateView.as_view(template_name='monitor/stats.html')),
         name='monitor-stats'),
+    url(r'^total_stats_ajax/$', monitor.views.total_stats_ajax,
+        name='monitor-total-stats-ajax'),
     url(r'^ajax_tags_stats/$', monitor.views.tags_stats_ajax,
         name='monitor-tags-stats-ajax'),
     url(r'^ajax_downloads_stats/$', monitor.views.downloads_stats_ajax,

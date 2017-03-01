@@ -1,10 +1,29 @@
 $( document ).ready(function() {
 
-  $.get(totalsDataUrl, function(d){
-      loadTotals(d);
+  $.get(totalUsersDataUrl, function(data){
+    $('#total-users').html(data.total_users);
+    $('#users-with-sounds').html(data.users_with_sounds);
+  });
+  $.get(totalSoundsDataUrl, function(data){
+    $('#total-sounds').html(data.sounds);
+    $('#total-packs').html(data.packs);
+    $('#total-downloads').html(data.downloads);
+    $('#avg-downloads').html(Math.round(data.downloads/data.sounds));
+    $('#total-comments').html(data.comments);
+    $('#avg-comments').html(Math.round(data.comments/data.sounds));
+    $('#total-ratings').html(data.ratings);
+    $('#avg-ratings').html(Math.round(data.ratings/data.sounds));
+  });
+  $.get(totalTagsDataUrl, function(data){
+    $('#total-tags').html(data.tags);
+    $('#total-used-tags').html(data.used_tags);
+  });
+  $.get(totalForumDataUrl, function(data){
+    $('#total-posts').html(data.posts);
+    $('#total-threads').html(data.threads);
   });
   $.get(tagsDataUrl, function(d){
-      loadTagGraph(d);
+    loadTagGraph(d);
   });
   $.get(usersDataUrl, function(d){
       var active_users = d.new_users.filter(e => {return e.is_active})
@@ -33,21 +52,7 @@ function truncate(str, maxLength, suffix) {
 }
 
 function loadTotals(data){
-  $('#total-users').html(data.total_users);
-  $('#users-with-sounds').html(data.users_with_sounds);
-  $('#total-sounds').html(data.sounds);
-  $('#total-packs').html(data.packs);
-  $('#total-downloads').html(data.downloads);
-  $('#avg-downloads').html(Math.round(data.downloads/data.sounds));
-  $('#total-comments').html(data.comments);
-  $('#avg-comments').html(Math.round(data.comments/data.sounds));
-  $('#total-ratings').html(data.ratings);
-  $('#avg-ratings').html(Math.round(data.ratings/data.sounds));
-  $('#total-tags').html(data.tags);
-  $('#total-used-tags').html(data.used_tags);
-  $('#total-posts').html(data.posts);
-  $('#total-threads').html(data.threads);
-}
+  }
 function loadTagGraph(data){
   // Display most used tags with bubbles
   var margin = {top: 20, right: 100, bottom: 0, left: 20},

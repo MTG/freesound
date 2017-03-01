@@ -181,31 +181,49 @@ def tags_stats_ajax(request):
     return JsonResponse({"tags_stats":tags})
 
 @cache_page(60 * 60 * 24)
-def total_stats_ajax(request):
+def total_users_stats_ajax(request):
     users = User.objects.filter(is_active=True)
     users_num = users.count()
     users_with_sounds = users.filter(profile__num_sounds__gt=0).count()
+    return JsonResponse({
+        "total_users": users_num,
+        "users_with_sounds": users_with_sounds,
+        })
+
+
+@cache_page(60 * 60 * 24)
+def total_sounds_stats_ajax(request):
     num_sounds = sounds.models.Sound.objects.filter(processing_state="OK",
             moderation_state="OK").count()
     packs = sounds.models.Pack.objects.all().count()
     downloads = sounds.models.Download.objects.all().count()
     num_comments = comments.models.Comment.objects.all().count()
     num_ratings = ratings.models.Rating.objects.all().count()
-    tags = Tag.objects.all().count()
-    tags_used = TaggedItem.objects.all().count()
-    posts = forum.models.Post.objects.all().count()
-    threads = forum.models.Thread.objects.all().count()
-
     return JsonResponse({
-        "total_users": users_num,
-        "users_with_sounds": users_with_sounds,
         "sounds": num_sounds,
         "packs": packs,
         "downloads": downloads,
         "comments": num_comments,
         "ratings": num_ratings,
+        })
+
+
+@cache_page(60 * 60 * 24)
+def total_tags_stats_ajax(request):
+    tags = Tag.objects.all().count()
+    tags_used = TaggedItem.objects.all().count()
+    return JsonResponse({
         "tags": tags,
         "tags_used": tags_used,
+        })
+
+
+@cache_page(60 * 60 * 24)
+def total_forum_stats_ajax(request):
+    posts = forum.models.Post.objects.all().count()
+    threads = forum.models.Thread.objects.all().count()
+
+    return JsonResponse({
         "posts": posts,
         "threads": threads,
         })

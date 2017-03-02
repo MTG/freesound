@@ -149,7 +149,7 @@ function loadTagGraph(data){
 function displayCharts(selectClass, data, data2, yText, legendData){
   var margin = {top: 20, right: 200, bottom: 30, left: 50},
     width = 700,
-    height = 400;
+    height = 260;
   var svg = d3.select(selectClass).append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);

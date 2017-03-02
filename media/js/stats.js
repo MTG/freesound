@@ -58,7 +58,7 @@ function loadTotals(data){
 function loadTagGraph(data){
   // Display most used tags with bubbles
   var margin = {top: 20, right: 100, bottom: 0, left: 20},
-    width = 480,
+    width = 680,
     height = 650;
 
   var c = d3.scaleOrdinal(d3.schemeCategory20c);
@@ -147,7 +147,7 @@ function loadTagGraph(data){
 // Display line chart with downloads, sounds and users
 function displayCharts(selectClass, data, data2, yText, legendData){
   var margin = {top: 20, right: 200, bottom: 30, left: 50},
-    width = 600,
+    width = 700,
     height = 400;
   var svg = d3.select(selectClass).append("svg")
     .attr("width", width + margin.left + margin.right)

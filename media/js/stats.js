@@ -9,16 +9,17 @@ $( document ).ready(function() {
     $('#total-packs').html(data.packs);
     $.get(totalActivityDataUrl, function(d){
       $('#total-downloads').html(d.downloads);
-      $('#avg-downloads').html(Math.round(d.downloads/data.sounds));
+      $('#avg-downloads').html((d.downloads/data.sounds).toFixed(2));
       $('#total-comments').html(d.comments);
-      $('#avg-comments').html(Math.round(d.comments/data.sounds));
+      $('#avg-comments').html((d.comments/data.sounds).toFixed(2));
       $('#total-ratings').html(d.ratings);
-      $('#avg-ratings').html(Math.round(d.ratings/data.sounds));
+      $('#avg-ratings').html((d.ratings/data.sounds).toFixed(2));
     });
   });
   $.get(totalTagsDataUrl, function(data){
     $('#total-tags').html(data.tags);
     $('#total-used-tags').html(data.tags_used);
+    $('#avg-tags').html((data.tags_used/data.sounds).toFixed(2));
   });
   $.get(totalForumDataUrl, function(data){
     $('#total-posts').html(data.posts);

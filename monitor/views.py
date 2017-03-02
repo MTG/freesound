@@ -215,11 +215,13 @@ def total_activity_stats_ajax(request):
 
 @cache_page(60 * 60 * 24)
 def total_tags_stats_ajax(request):
+    num_sounds = sounds.models.Sound.objects.filter(processing_state="OK", moderation_state="OK").count()
     tags = Tag.objects.all().count()
     tags_used = TaggedItem.objects.all().count()
     return JsonResponse({
         "tags": tags,
         "tags_used": tags_used,
+        "sounds": num_sounds,
         })
 
 

@@ -32,11 +32,13 @@ from django.db.models import Count
 from django.shortcuts import redirect
 from django.http import JsonResponse
 from sounds.models import Sound
-from tags.models import TaggedItem
+from tags.models import Tag, TaggedItem
 import gearman
 import tickets.views
 import sounds.views
-
+import forum.models
+import ratings.models
+import comments.models
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
@@ -106,15 +108,15 @@ def monitor_home(request):
 
 @cache_page(60 * 60 * 24)
 def sounds_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
     new_sounds_mod = sounds.models.Sound.objects\
-            .filter(created__gt=last_week, moderation_date__isnull=False)\
+            .filter(created__gt=time_span, moderation_date__isnull=False)\
             .extra(select={'day': 'date(moderation_date)'}).values('day')\
             .order_by().annotate(Count('id'))
 
     new_sounds = sounds.models.Sound.objects\
-            .filter(created__gt=last_week, processing_date__isnull=False)\
+            .filter(created__gt=time_span, processing_date__isnull=False)\
             .extra(select={'day': 'date(processing_date)'}).values('day')\
             .order_by().annotate(Count('id'))
 
@@ -126,9 +128,9 @@ def sounds_stats_ajax(request):
 
 @cache_page(60 * 60 * 24)
 def users_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
-    new_users = User.objects.filter(date_joined__gt=last_week)\
+    new_users = User.objects.filter(date_joined__gt=time_span)\
             .extra(select={'day': 'date(date_joined)'})\
             .values('day', 'is_active').order_by().annotate(Count('id'))
 
@@ -139,15 +141,15 @@ def users_stats_ajax(request):
 
 @cache_page(60 * 60 * 24)
 def downloads_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
     new_downloads_sound = sounds.models.Download.objects\
-            .filter(created__gt=last_week, pack=None)\
+            .filter(created__gt=time_span, pack=None)\
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Count('id'))
 
     new_downloads_pack = sounds.models.Download.objects\
-            .filter(created__gt=last_week, sound=None)\
+            .filter(created__gt=time_span, sound=None)\
             .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Count('id'))
 
@@ -159,14 +161,14 @@ def downloads_stats_ajax(request):
 
 @cache_page(60 * 60 * 24)
 def tags_stats_ajax(request):
-    last_week = datetime.datetime.now()-datetime.timedelta(weeks=1)
+    time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
-    top_tags = TaggedItem.objects.filter(created__gt=last_week)\
+    top_tags = TaggedItem.objects.filter(created__gt=time_span)\
             .values('tag_id').distinct().annotate(num=Count('tag_id'))\
             .order_by('-num')[:30]
     top_tags = [t['tag_id'] for t in  top_tags]
     tags_stats = TaggedItem.objects\
-            .filter(tag_id__in=top_tags, created__gt=last_week)\
+            .filter(tag_id__in=top_tags, created__gt=time_span)\
             .extra(select={'day': 'date(created)'})\
             .values('day', 'tag__name').order_by().annotate(Count('tag_id'))
 
@@ -178,6 +180,58 @@ def tags_stats_ajax(request):
         })
     return JsonResponse({"tags_stats":tags})
 
+@cache_page(60 * 60 * 24)
+def total_users_stats_ajax(request):
+    users = User.objects.filter(is_active=True)
+    users_num = users.count()
+    users_with_sounds = users.filter(profile__num_sounds__gt=0).count()
+    return JsonResponse({
+        "total_users": users_num,
+        "users_with_sounds": users_with_sounds,
+        })
+
+
+@cache_page(60 * 60 * 24)
+def total_sounds_stats_ajax(request):
+    num_sounds = sounds.models.Sound.objects.filter(processing_state="OK",
+            moderation_state="OK").count()
+    packs = sounds.models.Pack.objects.all().count()
+    return JsonResponse({
+        "sounds": num_sounds,
+        "packs": packs,
+        })
+
+
+@cache_page(60 * 60 * 24)
+def total_activity_stats_ajax(request):
+    downloads = sounds.models.Download.objects.all().count()
+    num_comments = comments.models.Comment.objects.all().count()
+    num_ratings = ratings.models.Rating.objects.all().count()
+    return JsonResponse({
+        "downloads": downloads,
+        "comments": num_comments,
+        "ratings": num_ratings,
+        })
+
+@cache_page(60 * 60 * 24)
+def total_tags_stats_ajax(request):
+    tags = Tag.objects.all().count()
+    tags_used = TaggedItem.objects.all().count()
+    return JsonResponse({
+        "tags": tags,
+        "tags_used": tags_used,
+        })
+
+
+@cache_page(60 * 60 * 24)
+def total_forum_stats_ajax(request):
+    posts = forum.models.Post.objects.all().count()
+    threads = forum.models.Thread.objects.all().count()
+
+    return JsonResponse({
+        "posts": posts,
+        "threads": threads,
+        })
 
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')

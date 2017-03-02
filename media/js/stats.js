@@ -1,7 +1,31 @@
 $( document ).ready(function() {
 
+  $.get(totalUsersDataUrl, function(data){
+    $('#total-users').html(data.total_users);
+    $('#users-with-sounds').html(data.users_with_sounds);
+  });
+  $.get(totalSoundsDataUrl, function(data){
+    $('#total-sounds').html(data.sounds);
+    $('#total-packs').html(data.packs);
+    $.get(totalActivityDataUrl, function(d){
+      $('#total-downloads').html(d.downloads);
+      $('#avg-downloads').html(Math.round(d.downloads/data.sounds));
+      $('#total-comments').html(d.comments);
+      $('#avg-comments').html(Math.round(d.comments/data.sounds));
+      $('#total-ratings').html(d.ratings);
+      $('#avg-ratings').html(Math.round(d.ratings/data.sounds));
+    });
+  });
+  $.get(totalTagsDataUrl, function(data){
+    $('#total-tags').html(data.tags);
+    $('#total-used-tags').html(data.tags_used);
+  });
+  $.get(totalForumDataUrl, function(data){
+    $('#total-posts').html(data.posts);
+    $('#total-threads').html(data.threads);
+  });
   $.get(tagsDataUrl, function(d){
-      loadTagGraph(d);
+    loadTagGraph(d);
   });
   $.get(usersDataUrl, function(d){
       var active_users = d.new_users.filter(e => {return e.is_active})
@@ -29,21 +53,26 @@ function truncate(str, maxLength, suffix) {
   return str;
 }
 
+function loadTotals(data){
+  }
 function loadTagGraph(data){
   // Display most used tags with bubbles
-  var margin = {top: 20, right: 200, bottom: 0, left: 20},
-    width = 500,
+  var margin = {top: 20, right: 100, bottom: 0, left: 20},
+    width = 680,
     height = 650;
 
   var c = d3.scaleOrdinal(d3.schemeCategory20c);
 
+  var formatDate = d3.timeFormat("%a %d");
   var xScale = d3.scaleTime()
     .range([0, width]);
-  var xAxis = d3.axisTop(xScale);
+  var xAxis = d3.axisTop(xScale).ticks(d3.timeDay.every(1)).tickFormat(formatDate);
 
-  var formatDate = d3.timeFormat("%d-%m");
-  xAxis.ticks(7);
-  xAxis.tickFormat(formatDate);
+  for (var key in data.tags_stats) {
+    if (data.tags_stats.hasOwnProperty(key)) {
+      xScale.domain(d3.extent(data.tags_stats[key], function(d) { return new Date(d['day']); }));
+    }
+  }
 
   var svg = d3.select('.tags').append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -54,13 +83,12 @@ function loadTagGraph(data){
 
   svg.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + 0 + ")")
+    .attr("transform", "translate(-" + 15 + ",0)")
     .call(xAxis);
 
   var j = 0;
   for (var key in data.tags_stats) {
     if (data.tags_stats.hasOwnProperty(key)) {
-    xScale.domain(d3.extent(data.tags_stats[key], function(d) { return new Date(d['day']); }));
     var g = svg.append("g").attr("class","journal");
 
     var circles = g.selectAll("circle")
@@ -119,8 +147,8 @@ function loadTagGraph(data){
 // Display line chart with downloads, sounds and users
 function displayCharts(selectClass, data, data2, yText, legendData){
   var margin = {top: 20, right: 200, bottom: 30, left: 50},
-    width = 600,
-    height = 500;
+    width = 700,
+    height = 400;
   var svg = d3.select(selectClass).append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
@@ -129,7 +157,7 @@ function displayCharts(selectClass, data, data2, yText, legendData){
 
   var x = d3.scaleTime()
     .rangeRound([0, width]);
-  var formatDate = d3.timeFormat("%d-%m");
+  var formatDate = d3.timeFormat("%a %d");
 
   var y = d3.scaleLinear()
     .rangeRound([height, 0]);
@@ -151,6 +179,7 @@ function displayCharts(selectClass, data, data2, yText, legendData){
   g.append("g")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x)
+          .ticks(d3.timeDay.every(1))
           .tickFormat(formatDate));
 
   g.append("g")

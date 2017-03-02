@@ -19,6 +19,7 @@
 #
 
 from django.views.generic import TemplateView
+from django.contrib.auth.decorators import login_required
 from django.conf.urls import patterns, url
 import monitor.views
 
@@ -28,8 +29,19 @@ urlpatterns = [
 
     url(r'^processing/process_sounds/$', monitor.views.process_sounds,
         name='monitor-processing-process'),
-    url(r'^stats/$', TemplateView.as_view(template_name='monitor/stats.html'),
+    url(r'^stats/$',
+        login_required(TemplateView.as_view(template_name='monitor/stats.html')),
         name='monitor-stats'),
+    url(r'^total_users_stats_ajax/$', monitor.views.total_users_stats_ajax,
+        name='monitor-total-users-stats-ajax'),
+    url(r'^total_sounds_stats_ajax/$', monitor.views.total_sounds_stats_ajax,
+        name='monitor-total-sounds-stats-ajax'),
+    url(r'^total_activity_stats_ajax/$', monitor.views.total_activity_stats_ajax,
+        name='monitor-total-activity-stats-ajax'),
+    url(r'^total_tags_stats_ajax/$', monitor.views.total_tags_stats_ajax,
+        name='monitor-total-tags-stats-ajax'),
+    url(r'^total_forum_stats_ajax/$', monitor.views.total_forum_stats_ajax,
+        name='monitor-total-forum-stats-ajax'),
     url(r'^ajax_tags_stats/$', monitor.views.tags_stats_ajax,
         name='monitor-tags-stats-ajax'),
     url(r'^ajax_downloads_stats/$', monitor.views.downloads_stats_ajax,

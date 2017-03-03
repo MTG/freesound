@@ -3,6 +3,7 @@ $( document ).ready(function() {
   $.get(totalUsersDataUrl, function(data){
     $('#total-users').html(data.total_users);
     $('#users-with-sounds').html(data.users_with_sounds);
+    $('#total-donations').html(data.total_donations);
   });
   $.get(totalSoundsDataUrl, function(data){
     $('#total-sounds').html(data.sounds);

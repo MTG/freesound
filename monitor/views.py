@@ -39,7 +39,7 @@ import sounds.views
 import forum.models
 import ratings.models
 import comments.models
-
+import donations.models
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def monitor_home(request):
@@ -185,9 +185,12 @@ def total_users_stats_ajax(request):
     users = User.objects.filter(is_active=True)
     users_num = users.count()
     users_with_sounds = users.filter(profile__num_sounds__gt=0).count()
+    num_donations = donations.models.Donation.objects\
+            .aggregate(Sum('amount'))['amount__sum']
     return JsonResponse({
         "total_users": users_num,
         "users_with_sounds": users_with_sounds,
+        "total_donations": num_donations,
         })
 
 

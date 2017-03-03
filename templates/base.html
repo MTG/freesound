@@ -46,6 +46,15 @@
 
     <body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">
 
+    {% if footer_banner_contents %}
+        <script type="text/javascript">
+            function hideFooterBanner(){$('#fotterBanner').hide(200);}
+        </script>
+        <div id="fotterBanner" class="floating_banner"><div class="floating_close_button"><a href="javascript:void(0);" onclick="hideFooterBanner();">&#10006;</a></div>
+            {{ footer_banner_contents|safe }}
+        </div>
+    {% endif %}
+
     {% comment %}
     <!-- start commenting here -->
     <div id="banner_wrapper">

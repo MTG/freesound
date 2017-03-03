@@ -91,6 +91,32 @@ body {
     /*margin-bottom: -7px; */ /* uncomment this one when adding banners */
 }
 
+.floating_banner {
+    background-color: black;
+    width: 100%;
+    height: 90px;
+    position: fixed;
+    bottom: 0;
+    z-index: 1000;
+    box-sizing: border-box;
+    color: white;
+    opacity: 0.9;
+}
+
+.floating_banner img {
+    display: block;
+    margin: 0 auto;
+}
+
+.floating_banner a {
+    color: white;
+}
+
+.floating_close_button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
 
 /* General Mark-up Styling
 ------------------------------------------------------*/

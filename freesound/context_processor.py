@@ -37,6 +37,9 @@ def context_extra(request):
         num_pending_sounds = request.user.profile.num_sounds_pending_moderation()
         num_messages = Message.objects.filter(user_to=request.user, is_archived=False, is_sent=False, is_read=False).count()
 
+    # TODO: check if banner should be shown
+    footer_banner_contents = settings.FOOTER_BANNER_CONTENTS
+
     return {'media_url': settings.MEDIA_URL,
             'request': request,
             'GOOGLE_API_KEY': settings.GOOGLE_API_KEY,
@@ -44,4 +47,5 @@ def context_extra(request):
             'new_tickets_count': new_tickets_count,
             'num_pending_sounds': num_pending_sounds,
             'num_messages': num_messages,
+            'footer_banner_contents': footer_banner_contents,
             }

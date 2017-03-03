@@ -139,7 +139,7 @@ def users_stats_ajax(request):
         })
 
 
-#@cache_page(60 * 60 * 24)
+@cache_page(60 * 60 * 24)
 def downloads_stats_ajax(request):
     time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
@@ -151,7 +151,7 @@ def downloads_stats_ajax(request):
     new_downloads_pack = sounds.models.Download.objects\
             .filter(created__gt=time_span, sound=None)\
             .extra({'day': 'date("sounds_download".created)'}).values('day').order_by()\
-            .annotate(count_id=Sum('pack__num_sounds'))
+            .annotate(id__count=Sum('pack__num_sounds'))
 
     return JsonResponse({
         'new_downloads_sound': list(new_downloads_sound),

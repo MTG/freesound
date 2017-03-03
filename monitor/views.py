@@ -28,7 +28,7 @@ from django.views.decorators.cache import cache_page
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.shortcuts import redirect
 from django.http import JsonResponse
 from sounds.models import Sound
@@ -139,7 +139,7 @@ def users_stats_ajax(request):
         })
 
 
-@cache_page(60 * 60 * 24)
+#@cache_page(60 * 60 * 24)
 def downloads_stats_ajax(request):
     time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
@@ -150,8 +150,8 @@ def downloads_stats_ajax(request):
 
     new_downloads_pack = sounds.models.Download.objects\
             .filter(created__gt=time_span, sound=None)\
-            .extra({'day': 'date(created)'}).values('day').order_by()\
-            .annotate(Count('id'))
+            .extra({'day': 'date("sounds_download".created)'}).values('day').order_by()\
+            .annotate(count_id=Sum('pack__num_sounds'))
 
     return JsonResponse({
         'new_downloads_sound': list(new_downloads_sound),

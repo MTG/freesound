@@ -8,13 +8,6 @@ function openModal(){
     $("#fsmodal").show();
 }
 
-window.onclick = function(event) {
-    var modal = $("#fsmodal");
-    if (event.target == modal) {
-        hideModal();
-    }
-};
-
 function generateModalHTML(title, contents){
     return '<div id="fsmodal" class="modal"><div class="modal-content"><div class="modal-header"><span onclick="hideModal();" class="close">&times;</span>'
         + title + '</div><div class="modal-body">' + contents + '</div></div></div>';

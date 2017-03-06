@@ -3,6 +3,7 @@ $( document ).ready(function() {
   $.get(totalUsersDataUrl, function(data){
     $('#total-users').html(data.total_users);
     $('#users-with-sounds').html(data.users_with_sounds);
+    $('#total-donations').html(data.total_donations);
   });
   $.get(totalSoundsDataUrl, function(data){
     $('#total-sounds').html(data.sounds);
@@ -67,13 +68,23 @@ function loadTagGraph(data){
   var formatDate = d3.timeFormat("%a %d");
   var xScale = d3.scaleTime()
     .range([0, width]);
-  var xAxis = d3.axisTop(xScale).ticks(d3.timeDay.every(1)).tickFormat(formatDate);
 
+  var dates = [];
+  var counts = [];
   for (var key in data.tags_stats) {
     if (data.tags_stats.hasOwnProperty(key)) {
-      xScale.domain(d3.extent(data.tags_stats[key], function(d) { return new Date(d['day']); }));
+      Array.from(data.tags_stats[key]).forEach(d => {
+        dates.push(new Date(d['day']));
+        counts.push(d['count']);
+      });
     }
   }
+  xScale.domain(d3.extent(dates));
+  var xAxis = d3.axisTop(xScale).ticks(d3.timeDay.every(1)).tickFormat(formatDate);
+
+  var rScale = d3.scalePow()
+      .domain([0, d3.max(counts)])
+      .range([2, 10]);
 
   var svg = d3.select('.tags').append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -84,7 +95,7 @@ function loadTagGraph(data){
 
   svg.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(-" + 15 + ",0)")
+    .attr("transform", "translate(-" + 5 + ",0)")
     .call(xAxis);
 
   var j = 0;
@@ -101,10 +112,6 @@ function loadTagGraph(data){
       .data(data.tags_stats[key])
       .enter()
       .append("text");
-
-    var rScale = d3.scaleLinear()
-      .domain([0, d3.max(data.tags_stats[key], function(d) { return d['count']; })])
-      .range([2, 9]);
 
     circles
       .attr("cx", function(d) { return xScale(new Date(d['day']))})

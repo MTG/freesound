@@ -28,7 +28,7 @@ from django.views.decorators.cache import cache_page
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.shortcuts import redirect
 from django.http import JsonResponse
 from sounds.models import Sound
@@ -39,7 +39,7 @@ import sounds.views
 import forum.models
 import ratings.models
 import comments.models
-
+import donations.models
 @login_required
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def monitor_home(request):
@@ -150,8 +150,8 @@ def downloads_stats_ajax(request):
 
     new_downloads_pack = sounds.models.Download.objects\
             .filter(created__gt=time_span, sound=None)\
-            .extra({'day': 'date(created)'}).values('day').order_by()\
-            .annotate(Count('id'))
+            .extra({'day': 'date("sounds_download".created)'}).values('day').order_by()\
+            .annotate(id__count=Sum('pack__num_sounds'))
 
     return JsonResponse({
         'new_downloads_sound': list(new_downloads_sound),
@@ -185,9 +185,12 @@ def total_users_stats_ajax(request):
     users = User.objects.filter(is_active=True)
     users_num = users.count()
     users_with_sounds = users.filter(profile__num_sounds__gt=0).count()
+    num_donations = donations.models.Donation.objects\
+            .aggregate(Sum('amount'))['amount__sum']
     return JsonResponse({
         "total_users": users_num,
         "users_with_sounds": users_with_sounds,
+        "total_donations": num_donations,
         })
 
 

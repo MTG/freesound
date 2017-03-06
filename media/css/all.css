@@ -101,6 +101,7 @@ body {
     box-sizing: border-box;
     color: white;
     opacity: 0.9;
+    display: none;
 }
 
 .floating_banner img {
@@ -112,7 +113,7 @@ body {
     color: white;
 }
 
-.floating_close_button {
+.floating_banner_close_button {
     position: absolute;
     right: 10px;
     top: 10px;

@@ -244,6 +244,18 @@ def sound(request, username, sound_id):
     is_explicit = sound.is_explicit and (not request.user.is_authenticated() \
                         or not request.user.profile.is_adult)
 
+    # Show modal asking users to participate in the survey after clicking in download
+    if request.COOKIES.get('surveyVisited', 'no') != 'yes':
+        after_download_modal = (
+            'Participate in the Freesound survey!',
+            'Thanks for downloading <b>%s</b>!<br>'
+            'Please, consider participating in the <a href="javascript:void(0);" onclick="openSurveyPage();hideModal();'
+            'hideFooterBanner();setSurveyVisited();">Freesound Survey 2017</a> if you have not participated yet :)'
+            % sound.original_filename
+        )
+    else:
+        after_download_modal = None
+
     tvars = {
         'sound': sound,
         'username': username,
@@ -252,7 +264,8 @@ def sound(request, username, sound_id):
         'display_random_link': display_random_link,
         'do_log': do_log,
         'is_following': is_following,
-        'is_explicit': is_explicit
+        'is_explicit': is_explicit,
+        'after_download_modal': after_download_modal,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)

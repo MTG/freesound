@@ -277,8 +277,7 @@ MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, s
 
 # Footer banner
 FOOTER_BANNER_CONTENTS = \
-    '<a href="javascript:void(0);" onclick="window.open(\'https://docs.google.com/forms/d/e/' \
-    '1FAIpQLSfO7NFjVwwNaIfl4J95tlz10Oz-_Vc1IEbPpFqAkPV33TeqEw/viewform\',\'_blank\');">' \
+    '<a href="javascript:void(0);" onclick="openSurveyPage();hideFooterBanner();setSurveyVisited();">' \
     '<img src="/media/images/content/freesound-survey-2017.png"/></a>'  # Set to None for no banner
 
 # leave at bottom starting here!

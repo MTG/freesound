@@ -40,7 +40,6 @@
         <link rel="stylesheet" type="text/css" href="{{ media_url }}html_player/player.css" />
         <script src="{{ media_url }}html_player/soundmanager2.js"></script>
         <script type="text/javascript" src="{{ media_url }}html_player/player.js"></script>
-        <script type="text/javascript" src="{{ media_url }}js/modals.js"></script>
         {% google_analytics %}
         {% endblock %}
     </head>
@@ -48,26 +47,6 @@
     <body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">
 
     {% if footer_banner_contents %}
-        <script type="text/javascript">
-            function hideFooterBanner(){
-                $('#fotterBanner').hide(200);
-            }
-            function showFooterBanner(){
-                $('#fotterBanner').show(200);
-            }
-            function onBannerClick(){
-                // Clicking on the banner sets a cookie that will prevent the banner from showing
-                // again during the next 30 days. Any specific other js action to be executen when
-                // clicking the banner must be implemented in 'footer_banner_contents'
-                $.cookie("footerBannerClicked", "yes", {expires: 30, path: '/'});
-                hideFooterBanner();
-            }
-            $(document).ready(function() {
-                if ($.cookie("footerBannerClicked") != "yes") {
-                    showFooterBanner();
-                }
-            });
-        </script>
         <div id="fotterBanner" class="floating_banner">
             <div class="floating_banner_close_button"><a href="javascript:void(0);" onclick="hideFooterBanner();">&#10006;</a></div>
             <div class="floating_banner_contents" onclick="onBannerClick();">{{ footer_banner_contents|safe }}</div>

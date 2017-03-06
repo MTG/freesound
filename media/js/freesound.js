@@ -126,3 +126,53 @@ function show_hide_bookmark_form(id)
     }
     $("#bookmark_form_"  + id.toString()).toggle();
 }
+
+// FOOTER BANNER
+function hideFooterBanner(){
+    $('#fotterBanner').hide(200);
+}
+
+function showFooterBanner() {
+    $('#fotterBanner').show(200);
+}
+
+// Modals
+function hideModal(){
+    $("#fsmodal").hide();
+}
+
+function openModal(){
+    $("#fsmodal").show();
+}
+
+function generateModalHTML(title, contents){
+    return '<div id="fsmodal" class="modal"><div class="modal-content"><div class="modal-header"><span onclick="hideModal();" class="close">&times;</span>'
+        + title + '</div><div class="modal-body">' + contents + '</div></div></div>';
+}
+
+function createAndOpenModal(title, contents){
+    $("#fsmodal").remove(); // Delete existing modal
+    var modal_html = generateModalHTML(title, contents);
+    $("body").prepend(modal_html);
+    openModal();
+}
+
+
+// Freesound Survey 2017 cookies and related
+function setSurveyVisited(){
+    $.cookie("surveyVisited", "yes", {expires: 30, path: '/'});
+}
+
+function openSurveyPage(){
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLSfO7NFjVwwNaIfl4J95tlz10Oz-_Vc1IEbPpFqAkPV33TeqEw/viewform', '_blank');
+}
+
+function isSurveyVisited(){
+    return $.cookie("surveyVisited") == "yes"
+}
+
+$(document).ready(function() {
+    if (!isSurveyVisited()) {
+        showFooterBanner();
+    }
+});

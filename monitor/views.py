@@ -159,18 +159,22 @@ def downloads_stats_ajax(request):
         })
 
 
-#@cache_page(60 * 60 * 24)
+@cache_page(60 * 60 * 24)
 def donations_stats_ajax(request):
     time_span = datetime.datetime.now()-datetime.timedelta(days=365)
 
-    new_donations = donations.models.Donation.objects\
+    query_donations = donations.models.Donation.objects\
             .filter(created__gt=time_span)\
-            .extra({'month': "to_char(created, 'YYYY-MM-01')"})\
-            .values('month').order_by()\
+            .extra({'week': "to_char(created, 'WW-IYYY')"})\
+            .values('week').order_by()\
             .annotate(Sum('amount'))
+    new_donations = [{
+        'week': str(datetime.datetime.strptime(d['week']+ '-0', "%W-%Y-%w").date()),
+        'amount__sum': d['amount__sum']
+        } for d in query_donations]
 
     return JsonResponse({
-        'new_donations': list(new_donations),
+        'new_donations': new_donations,
         })
 
 

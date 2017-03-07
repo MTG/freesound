@@ -64,9 +64,9 @@ $( document ).ready(function() {
   $.get(donationsDataUrl, function(d){
       displayCharts('.donations', [d.new_donations ], {
         yText: 'Amount (€)',
-        attrX: 'month',
+        attrX: 'week',
         attrY: 'amount__sum',
-        timeFormat: "%b %y",
+        timeFormat: "%d %b",
         tickEvery: d3.timeMonth.every(1),
         legendData: [{color: 'crimson', name: 'donations'},]
       });

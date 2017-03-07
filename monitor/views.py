@@ -159,6 +159,21 @@ def downloads_stats_ajax(request):
         })
 
 
+#@cache_page(60 * 60 * 24)
+def donations_stats_ajax(request):
+    time_span = datetime.datetime.now()-datetime.timedelta(days=365)
+
+    new_donations = donations.models.Donation.objects\
+            .filter(created__gt=time_span)\
+            .extra({'month': "to_char(created, 'YYYY-MM-01')"})\
+            .values('month').order_by()\
+            .annotate(Sum('amount'))
+
+    return JsonResponse({
+        'new_donations': list(new_donations),
+        })
+
+
 @cache_page(60 * 60 * 24)
 def tags_stats_ajax(request):
     time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)

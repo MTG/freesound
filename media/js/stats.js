@@ -32,16 +32,44 @@ $( document ).ready(function() {
       var active_users = d.new_users.filter(e => {return e.is_active})
       var non_active_users = d.new_users.filter(e => {return !e.is_active})
       // Display charts with Downloads, Uploads and Registers
-      displayCharts('.users', active_users, non_active_users, 'Users',
-          [{color: 'crimson', name: 'active'}, {color: 'grey', name: 'non active'}]);
+      displayCharts('.users', [active_users, non_active_users], {
+        yText: 'Users',
+        attrX: 'day',
+        attrY: 'id__count',
+        timeFormat: "%a %d",
+        tickEvery: d3.timeDay.every(1),
+        legendData: [{color: 'crimson', name: 'active'}, {color: 'grey', name: 'non active'}]
+      });
   });
   $.get(soundsDataUrl, function(d){
-      displayCharts('.uploads', d.new_sounds, d.new_sounds_mod, 'Sounds',
-          [{color: 'crimson', name: 'processed'}, {color: 'grey', name: 'moderated'}]);
+      displayCharts('.uploads', [d.new_sounds, d.new_sounds_mod], {
+        yText: 'Sounds',
+        attrX: 'day',
+        attrY: 'id__count',
+        timeFormat: "%a %d",
+        tickEvery: d3.timeDay.every(1),
+        legendData: [{color: 'crimson', name: 'processed'}, {color: 'grey', name: 'moderated'}]
+      });
   });
   $.get(downloadsDataUrl, function(d){
-      displayCharts('.downloads', d.new_downloads_pack, d.new_downloads_sound, 'Downloads',
-          [{color: 'crimson', name: 'packs'}, {color: 'grey', name: 'sounds'}]);
+      displayCharts('.downloads', [d.new_downloads_pack, d.new_downloads_sound], {
+        yText: 'Downloads',
+        attrX: 'day',
+        attrY: 'id__count',
+        timeFormat: "%a %d",
+        tickEvery: d3.timeDay.every(1),
+        legendData: [{color: 'crimson', name: 'packs'}, {color: 'grey', name: 'sounds'}]
+      });
+  });
+  $.get(donationsDataUrl, function(d){
+      displayCharts('.donations', [d.new_donations ], {
+        yText: 'Amount (€)',
+        attrX: 'month',
+        attrY: 'amount__sum',
+        timeFormat: "%b %y",
+        tickEvery: d3.timeMonth.every(1),
+        legendData: [{color: 'crimson', name: 'donations'},]
+      });
   });
 });
 
@@ -152,7 +180,7 @@ function loadTagGraph(data){
 }
 
 // Display line chart with downloads, sounds and users
-function displayCharts(selectClass, data, data2, yText, legendData){
+function displayCharts(selectClass, data, options){
   var margin = {top: 20, right: 200, bottom: 30, left: 50},
     width = 700,
     height = 400;
@@ -164,29 +192,19 @@ function displayCharts(selectClass, data, data2, yText, legendData){
 
   var x = d3.scaleTime()
     .rangeRound([0, width]);
-  var formatDate = d3.timeFormat("%a %d");
+  var formatDate = d3.timeFormat(options.timeFormat);
 
   var y = d3.scaleLinear()
     .rangeRound([height, 0]);
 
-  x.domain(d3.extent(data.concat(data2), function(d) { return new Date(d['day']); }));
-  y.domain([0, d3.max(data.concat(data2), function(d) { return d['id__count']; })]);
-
-  var line = d3.line()
-      .curve(d3.curveMonotoneX)
-      .x(function(d) { return x(new Date(d['day'])); })
-      .y(function(d) { return y(d['id__count']); });
-
-  var line2 = d3.line()
-      .curve(d3.curveMonotoneX)
-      .x(function(d) { return x(new Date(d['day'])); })
-      .y(function(d) { return y(d['id__count']); });
-
-
+  var concat = [].concat.apply([], data);
+  x.domain(d3.extent(concat, function(d) { return new Date(d[options.attrX]); }));
+  y.domain([0, d3.max(concat, function(d) { return parseInt(d[options.attrY])})]);
+  
   g.append("g")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x)
-          .ticks(d3.timeDay.every(1))
+          .ticks(options.tickEvery)
           .tickFormat(formatDate));
 
   g.append("g")
@@ -197,56 +215,54 @@ function displayCharts(selectClass, data, data2, yText, legendData){
       .attr("y", 6)
       .attr("dy", "0.71em")
       .attr("text-anchor", "end")
-      .text(yText);
+      .text(options.yText);
 
-    data.sort(function(a, b) { 
-      return d3.ascending(new Date(a.day), new Date(b.day)); 
-    });
+  var i = 0;
+  data.forEach(function(data2) {
 
-    data2.sort(function(a, b) { 
-      return d3.ascending(new Date(a.day), new Date(b.day)); 
-    });
+      var line = d3.line()
+          .curve(d3.curveMonotoneX)
+          .x(function(d) { return x(new Date(d[options.attrX])); })
+          .y(function(d) { return y(parseInt(d[options.attrY])); });
 
-    g.append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", legendData[0]['color'])
-      .attr("stroke-linejoin", "round")
-      .attr("stroke-linecap", "round")
-      .attr("stroke-width", 3)
-      .attr("d", line);
 
-    g.append("path")
-      .datum(data2)
-      .attr("fill", "none")
-      .attr("stroke", legendData[1]['color'])
-      .attr("stroke-linejoin", "round")
-      .attr("stroke-linecap", "round")
-      .attr("stroke-width", 3)
-      .attr("d", line2);
-  
-    // add legend   
-    var legend = svg.append("g")
-      .attr("class", "legend")
-      .attr("x", width - 35)
-      .attr("y", 20)
-      .attr("height", 100)
-      .attr("width", 100);
-
-    legend.selectAll('g')
-      .data(legendData)
-        .enter()
-        .each(function(d, i) {
-          legend.append("rect")
-            .attr("x", width - 20)
-            .attr("y", i*20 + 20)
-            .attr("width", 10)
-            .attr("height", 10)
-            .style("fill", d.color); 
-
-          legend.append("text")
-            .attr("x", width - 8)
-            .attr("y", i * 20 + 30)
-            .text(d.name);
+      data2.sort(function(a, b) { 
+        return d3.ascending(new Date(a[options.attrX]), new Date(b[options.attrX])); 
       });
+
+      g.append("path")
+        .datum(data2)
+        .attr("fill", "none")
+        .attr("stroke", options.legendData[i]['color'])
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 3)
+        .attr("d", line);
+      i+=1;
+  }); 
+
+  // add legend   
+  var legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("x", width - 35)
+    .attr("y", 20)
+    .attr("height", 100)
+    .attr("width", 100);
+
+  legend.selectAll('g')
+    .data(options.legendData)
+      .enter()
+      .each(function(d, i) {
+        legend.append("rect")
+          .attr("x", width - 20)
+          .attr("y", i*20 + 20)
+          .attr("width", 10)
+          .attr("height", 10)
+          .style("fill", d.color); 
+
+        legend.append("text")
+          .attr("x", width - 8)
+          .attr("y", i * 20 + 30)
+          .text(d.name);
+    });
 }

@@ -75,6 +75,11 @@
     <div class='downloads'>
     </div>
 
+    <h2>Donations</h2>
+    <h3>Donations on last year</h3>
+    <div class='donations'>
+    </div>
+
     <h2>Tags</h2>
     <h3>Most used tags on last two week</h3>
     <div class='tags'>
@@ -89,6 +94,7 @@
       var totalForumDataUrl = '{% url 'monitor-total-forum-stats-ajax' %}';
       var tagsDataUrl = '{% url 'monitor-tags-stats-ajax' %}';
       var downloadsDataUrl = '{% url 'monitor-downloads-stats-ajax' %}';
+      var donationsDataUrl = '{% url 'monitor-donations-stats-ajax' %}';
       var soundsDataUrl = '{% url 'monitor-sounds-stats-ajax' %}';
       var usersDataUrl = '{% url 'monitor-users-stats-ajax' %}';
     </script>

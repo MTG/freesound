@@ -46,6 +46,8 @@ urlpatterns = [
         name='monitor-tags-stats-ajax'),
     url(r'^ajax_downloads_stats/$', monitor.views.downloads_stats_ajax,
         name='monitor-downloads-stats-ajax'),
+    url(r'^ajax_donations_stats/$', monitor.views.donations_stats_ajax,
+        name='monitor-donations-stats-ajax'),
     url(r'^ajax_sounds_stats/$', monitor.views.sounds_stats_ajax,
         name='monitor-sounds-stats-ajax'),
     url(r'^ajax_users_stats/$', monitor.views.users_stats_ajax,

@@ -1,27 +1,20 @@
 $( document ).ready(function() {
 
-  $.get(totalUsersDataUrl, function(data){
+  $.get(totalsDataUrl, function(data){
     $('#total-users').html(data.total_users);
     $('#users-with-sounds').html(data.users_with_sounds);
     $('#total-donations').html(data.total_donations);
-  });
-  $.get(totalSoundsDataUrl, function(data){
     $('#total-sounds').html(data.sounds);
     $('#total-packs').html(data.packs);
-    $.get(totalActivityDataUrl, function(d){
-      $('#total-downloads').html(d.downloads);
-      $('#avg-downloads').html(Math.round(d.downloads/data.sounds));
-      $('#total-comments').html(d.comments);
-      $('#avg-comments').html(Math.round(d.comments/data.sounds));
-      $('#total-ratings').html(d.ratings);
-      $('#avg-ratings').html(Math.round(d.ratings/data.sounds));
-    });
-  });
-  $.get(totalTagsDataUrl, function(data){
+    $('#total-downloads').html(data.downloads);
+    $('#avg-downloads').html((data.downloads/data.sounds).toFixed(2));
+    $('#total-comments').html(data.comments);
+    $('#avg-comments').html((data.comments/data.sounds).toFixed(2));
+    $('#total-ratings').html(data.ratings);
+    $('#avg-ratings').html((data.ratings/data.sounds).toFixed(2));
     $('#total-tags').html(data.tags);
     $('#total-used-tags').html(data.tags_used);
-  });
-  $.get(totalForumDataUrl, function(data){
+    $('#avg-tags').html((data.tags_used/data.sounds).toFixed(2));
     $('#total-posts').html(data.posts);
     $('#total-threads').html(data.threads);
   });
@@ -69,6 +62,22 @@ $( document ).ready(function() {
         timeFormat: "%d %b",
         tickEvery: d3.timeMonth.every(1),
         legendData: [{color: 'crimson', name: 'donations'},]
+      });
+  });
+  $.get(activeUsersDataUrl, function(d){
+      displayCharts('.active-users', [d.downloads, d.sounds, d.posts, d.rate, d.comments], {
+        yText: 'Users',
+        attrX: 'week',
+        attrY: 'amount__sum',
+        timeFormat: "%d %b",
+        tickEvery: d3.timeMonth.every(1),
+        legendData: [
+          {color: 'crimson', name: 'downloads'},
+          {color: 'gray', name: 'sounds'},
+          {color: 'black', name: 'posts'},
+          {color: 'yellow', name: 'ratings'},
+          {color: 'blue', name: 'comments'},
+        ]
       });
   });
 });
@@ -183,7 +192,7 @@ function loadTagGraph(data){
 function displayCharts(selectClass, data, options){
   var margin = {top: 20, right: 200, bottom: 30, left: 50},
     width = 700,
-    height = 400;
+    height = 260;
   var svg = d3.select(selectClass).append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);

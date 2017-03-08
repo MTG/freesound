@@ -41,17 +41,18 @@
     <div>
     <table>
       <tr><td><b>Active Users:</b></td><td id="total-users"></td></tr>
-      <tr><td><b>Users with sounds:</b></td><td id="users-with-sounds"></td></tr>
+      <tr><td><b>Uploaders:</b></td><td id="users-with-sounds"></td></tr>
       <tr><td><b>Sounds:</b> </td><td id="total-sounds"></td></tr>
       <tr><td><b>Packs:</b> </td><td id="total-packs"></td></tr>
       <tr><td><b>Downloads:</b> </td><td id="total-downloads"></td></tr>
-      <tr><td><b>Average downloads per sound:</b> </td><td id="avg-downloads"></td></tr>
+      <tr><td><b>Avg downloads per sound:</b> </td><td id="avg-downloads"></td></tr>
       <tr><td><b>Comments:</b> </td><td id="total-comments"></td></tr>
-      <tr><td><b>Average comments per sound:</b> </td><td id="avg-comments"></td></tr>
+      <tr><td><b>Avg comments per sound:</b> </td><td id="avg-comments"></td></tr>
       <tr><td><b>Ratings:</b> </td><td id="total-ratings"></td></tr>
-      <tr><td><b>Average ratings per sound:</b> </td><td id="avg-ratings"></td></tr>
-      <tr><td><b>Tags:</b> </td><td id="total-tags"></td></tr>
-      <tr><td><b>Tags instances:</b> </td><td id="total-used-tags"></td></tr>
+      <tr><td><b>Avg ratings per sound:</b> </td><td id="avg-ratings"></td></tr>
+      <tr><td><b>Unique tags:</b> </td><td id="total-tags"></td></tr>
+      <tr><td><b>Tags applications:</b> </td><td id="total-used-tags"></td></tr>
+      <tr><td><b>Avg tags per sound:</b> </td><td id="avg-tags"></td></tr>
       <tr><td><b>Posts:</b> </td><td id="total-posts"></td></tr>
       <tr><td><b>Threads:</b> </td><td id="total-threads"></td></tr>
       <tr><td><b>Donations:</b> </td><td id="total-donations"></td></tr>
@@ -65,6 +66,10 @@
     <div class='users'>
     </div>
     
+    <h3>Active users by activity per week</h3>
+    <div class='active-users'>
+    </div>
+
     <h2>Sounds</h2>
     <h3>Sounds created on last two week</h3>
     <div class='uploads'>
@@ -87,16 +92,13 @@
 
 
     <script>
-      var totalUsersDataUrl = '{% url 'monitor-total-users-stats-ajax' %}';
-      var totalSoundsDataUrl = '{% url 'monitor-total-sounds-stats-ajax' %}';
-      var totalActivityDataUrl = '{% url 'monitor-total-activity-stats-ajax' %}';
-      var totalTagsDataUrl = '{% url 'monitor-total-tags-stats-ajax' %}';
-      var totalForumDataUrl = '{% url 'monitor-total-forum-stats-ajax' %}';
+      var totalsDataUrl = '{% url 'monitor-totals-stats-ajax' %}';
       var tagsDataUrl = '{% url 'monitor-tags-stats-ajax' %}';
       var downloadsDataUrl = '{% url 'monitor-downloads-stats-ajax' %}';
       var donationsDataUrl = '{% url 'monitor-donations-stats-ajax' %}';
       var soundsDataUrl = '{% url 'monitor-sounds-stats-ajax' %}';
       var usersDataUrl = '{% url 'monitor-users-stats-ajax' %}';
+      var activeUsersDataUrl = '{% url 'monitor-active-users-stats-ajax' %}';
     </script>
     <script src="https://d3js.org/d3.v4.min.js" type="text/javascript"></script>
     <script src="https://d3js.org/d3-axis.v1.min.js"></script>

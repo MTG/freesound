@@ -114,10 +114,11 @@ class RegistrationForm(forms.Form):
         label=_("Username"),
         min_length=3,
         max_length=30,
-        regex=r'^\w+$',
+        regex=r'^[\w.@+-]+$',
         help_text=_("Required. 30 characters or fewer. Alphanumeric characters only (letters, digits and underscores)."),
         error_messages={'only_letters': _("This value must contain only letters, numbers and underscores.")}
     )
+
     first_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     last_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     email1 = forms.EmailField(label=_("Email"), help_text=_("We will send you a confirmation/activation email, so make "

@@ -20,6 +20,23 @@ $( document ).ready(function() {
   });
   $.get(tagsDataUrl, function(d){
     loadTagGraph(d);
+
+    var tags = [];
+    var max = 0;
+    d.all_tags.forEach(function(t) {
+      max = Math.max(t['num'], max);
+      tags.push([t['tag__name'], t['num']]);
+    });
+
+    WordCloud($('#tags-cloud')[0], { list: tags, weightFactor: 100/max});
+
+    var tags = [];
+    var max = 0;
+    d.downloads_tags.forEach(function(t) {
+      max = Math.max(t[2], max);
+      tags.push([t[1], t[2]]);
+    });
+    WordCloud($('#down-tags-cloud')[0], { list: tags, weightFactor: 100/max});
   });
   $.get(usersDataUrl, function(d){
       var active_users = d.new_users.filter(e => {return e.is_active})
@@ -91,8 +108,6 @@ function truncate(str, maxLength, suffix) {
   return str;
 }
 
-function loadTotals(data){
-  }
 function loadTagGraph(data){
   // Display most used tags with bubbles
   var margin = {top: 20, right: 100, bottom: 0, left: 20},
@@ -275,3 +290,4 @@ function displayCharts(selectClass, data, options){
           .text(d.name);
     });
 }
+

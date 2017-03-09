@@ -89,7 +89,12 @@
     <h3>Most used tags on last two weeks</h3>
     <div class='tags'>
     </div>
-
+    <h3>Tag cloud with most used tags</h3>
+    <canvas id='tags-cloud' width=600 height=600>
+    </canvas>
+    <h3>Tag cloud with most downlaoded tags on last two weeks</h3>
+    <canvas id='down-tags-cloud' width=600 height=600>
+    </canvas>
 
     <script>
       var totalsDataUrl = '{% url 'monitor-totals-stats-ajax' %}';
@@ -112,5 +117,6 @@
     <script src="https://d3js.org/d3-scale.v1.min.js"></script>
     <script src="https://d3js.org/d3-path.v1.min.js"></script>
     <script src="https://d3js.org/d3-shape.v1.min.js"></script>
+    <script src="{{media_url}}js/wordcloud2.js"></script>
     <script src="{{media_url}}js/stats.js" type="text/javascript"></script>
 {% endblock content %}

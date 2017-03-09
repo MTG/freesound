@@ -21,6 +21,7 @@
 from django.core.management.base import NoArgsCommand
 from django.core.cache import cache
 from django.contrib.auth.models import User
+from django.db import connection
 from django.db.models import Count, Sum
 from tags.models import Tag, TaggedItem
 import datetime
@@ -141,7 +142,28 @@ class Command(NoArgsCommand):
                 'day': i['day']
             })
 
-        cache.set('tags_stats', {"tags_stats":tags}, 60*60*24)
+        # Most used tags for tags cloud
+        all_tags = TaggedItem.objects.values('tag_id')\
+                .annotate(num=Count('tag_id'))\
+                .values('num', 'tag__name').order_by('-num')[:300]
+
+        with connection.cursor() as cursor:
+            cursor.execute(\
+                    """SELECT count(*) as num_c, t.name, ti.tag_id as id FROM
+                    tags_taggeditem ti, tags_tag t, sounds_download d
+                    WHERE d.sound_id = ti.object_id AND t.id = ti.tag_id
+                    AND d.created > current_date - interval '14 days'
+                    GROUP BY ti.tag_id, t.name ORDER BY num_c limit 300""")
+
+            downloads_tags = cursor.fetchall()
+
+        tags_stats = {
+            "tags_stats": tags,
+            "all_tags": list(all_tags),
+            "downloads_tags": list(downloads_tags)
+        }
+
+        cache.set('tags_stats', tags_stats, 60*60*24)
 
         # Compute stats for Totals table:
 

@@ -51,6 +51,9 @@ PAYPAL_EMAIL = "paypal@freesound.org"
 PAYPAL_VALIDATION_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr"
 DONATIONS_PER_PAGE = 40
 
+GRAYLOG_USERNAME = "apiuser"
+GRAYLOG_PASSWORD = "apiuserpassword"
+
 LOG_CLICKTHROUGH_DATA = False
 
 # To customize DATA_URL

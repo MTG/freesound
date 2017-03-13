@@ -96,8 +96,14 @@
     <canvas id='down-tags-cloud' width=600 height=600>
     </canvas>
 
+    <h2>User Queries</h2>
+    <h3>Most common queries on last two weeks</h3>
+    <canvas id='queries-wordcloud' width=600 height=600>
+    </canvas>
+
     <script>
       var totalsDataUrl = '{% url 'monitor-totals-stats-ajax' %}';
+      var queriesDataUrl = '{% url 'monitor-queries-stats-ajax' %}';
       var tagsDataUrl = '{% url 'monitor-tags-stats-ajax' %}';
       var downloadsDataUrl = '{% url 'monitor-downloads-stats-ajax' %}';
       var donationsDataUrl = '{% url 'monitor-donations-stats-ajax' %}';

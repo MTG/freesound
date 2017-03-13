@@ -97,6 +97,18 @@ $( document ).ready(function() {
         ]
       });
   });
+  $.get(queriesDataUrl, function(d){
+    var tags = [];
+    var max = 0;
+    for (var key in d.terms) {
+      if (d.terms.hasOwnProperty(key)) {
+        max = Math.max(d.terms[key], max);
+        tags.push([key, d.terms[key]]);
+      }
+    }
+    WordCloud($('#queries-wordcloud')[0], { list: tags, weightFactor: 100/max});
+  
+  });
 });
 
 function truncate(str, maxLength, suffix) {

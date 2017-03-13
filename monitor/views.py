@@ -17,6 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
+import base64
+import urllib2
 import json
 import datetime
 
@@ -99,6 +101,14 @@ def monitor_home(request):
     }
 
     return render(request, 'monitor/monitor.html', tvars)
+
+
+def queries_stats_ajax(request):
+    req = urllib2.Request("http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/terms?query=%2A&range=1209600&filter=streams%3A531051bee4b0f1248696785a&field=query")
+    base64string = base64.b64encode('%s:%s' % (settings.GRAYLOG_USERNAME,
+        settings.GRAYLOG_PASSWORD))
+    req.add_header("Authorization", "Basic %s" % base64string)
+    return JsonResponse(json.load(urllib2.urlopen(req)))
 
 
 def tags_stats_ajax(request):

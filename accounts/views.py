@@ -65,7 +65,8 @@ from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
-from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations
+from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations, \
+    copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -368,6 +369,7 @@ def describe(request):
             elif "delete_confirm" in request.POST:
                 for f in form.cleaned_data["files"]:
                     os.remove(files[f].full_path)
+                    remove_uploaded_file_from_mirror_locations(files[f].full_path)
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
                 # Clear existing describe-related session data
@@ -802,6 +804,7 @@ def handle_uploaded_file(user_id, f):
         for chunk in f.chunks():
             destination.write(chunk)
         logger.info("file upload done")
+        copy_uploaded_file_to_mirror_locations(path)
     except Exception as e:
         logger.warning("failed writing file error: %s", str(e))
         return False

@@ -22,7 +22,8 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from utils.forms import filename_has_valid_extension
-from sounds.models import Sound, Pack, License, DeletedSound
+from sounds.models import Sound, Pack, License, Download, DeletedSound
+from donations.models import Donation
 
 import utils.downloads
 
@@ -57,3 +58,16 @@ class UtilsTest(TestCase):
         licenses_url = (reverse('pack-licenses', args=["testuser", pack.id]))
         ret = utils.downloads.download_sounds(licenses_url, pack)
         self.assertEqual(ret.status_code, 200)
+
+    def test_download_popup(self):
+        user = User.objects.create_user("testuser", password="testpass")
+        sound = Sound.objects.create(user=user, original_filename="Test sound",
+             base_filename_slug="test_sound_10",
+             license=License.objects.all()[0],
+             md5="fakemd5_10")
+        for i in range(0, 5):
+            Download.objects.create(user=user, sound=sound)
+        self.assertEqual(utils.downloads.should_suggest_donation(user, None), True)
+
+        Donation.objects.create(user=user, amount=1)
+        self.assertEqual(utils.downloads.should_suggest_donation(user, None), False)

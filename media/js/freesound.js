@@ -150,11 +150,22 @@ function generateModalHTML(title, contents){
         + title + '</div><div class="modal-body">' + contents + '</div></div></div>';
 }
 
-function createAndOpenModal(title, contents){
-    $("#fsmodal").remove(); // Delete existing modal
-    var modal_html = generateModalHTML(title, contents);
-    $("body").prepend(modal_html);
-    openModal();
+function createAndOpenModal(show_modal_url, title, content){
+    hideModal();
+    var numberDownloads = $.cookie("numberDownloads");
+    if (numberDownloads == null) {
+      numberDownloads = 0;
+    } 
+    numberDownloads = parseInt(numberDownloads) + 1;
+    $.cookie("numberDownloads", numberDownloads, { expires : 1 });
+
+    $.get(show_modal_url, {num_downloads: numberDownloads}, function(resp) {
+        if (resp.show) {
+            var modal_html = generateModalHTML(title, content);
+            $("body").prepend(modal_html);
+            openModal();
+        }
+    })
 }
 
 

@@ -171,6 +171,12 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# DONATION POPUP
+POPUP_DOWNLOADS_IN_PERIOD = 1
+POPUP_DOWNLOAD_DAYS = 10
+POPUP_DAYS_AFTER_DONATION = 1
+POPUP_DISPLAY_TIMES_DAY = 10
+
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
 

@@ -27,7 +27,8 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import connection
 from django.db.models import Q
-from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
+from django.http import HttpResponseRedirect, Http404,\
+    HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import render_to_response, get_object_or_404, render, redirect
 from django.template import RequestContext
 from django.http import HttpResponse
@@ -44,7 +45,7 @@ from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSou
 from sounds.templatetags import display_sound
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
-from utils.downloads import download_sounds
+from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
@@ -244,17 +245,15 @@ def sound(request, username, sound_id):
     is_explicit = sound.is_explicit and (not request.user.is_authenticated() \
                         or not request.user.profile.is_adult)
 
-    # Show modal asking users to participate in the survey after clicking in download
-    if request.COOKIES.get('surveyVisited', 'no') != 'yes':
-        after_download_modal = (
-            'Participate in the Freesound survey!',
-            'Thanks for downloading <b>%s</b>!<br>'
-            'Please, consider participating in the <a href="javascript:void(0);" onclick="openSurveyPage();hideModal();'
-            'hideFooterBanner();setSurveyVisited();">Freesound Survey 2017</a> if you have not participated yet :)'
-            % sound.original_filename
-        )
-    else:
-        after_download_modal = None
+    # Show modal asking users for donations after clicking in download
+    after_download_modal = (
+        'Support Freesound!',
+        'Thanks for downloading <b>%s</b>!<br>'
+        'Help us to keep Freesound open and free. '
+        'Support us by <a href="%s">making a donation</a> '
+        'if you have not contributed yet :)<br>'
+        % (sound.original_filename, reverse('donate'))
+    )
 
     tvars = {
         'sound': sound,
@@ -269,6 +268,13 @@ def sound(request, username, sound_id):
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)
+
+
+@login_required
+def after_sound_download(request):
+    num_downloads_today = request.GET.get('num_downloads', None)
+    show = should_suggest_donation(request.user, int(num_downloads_today))
+    return JsonResponse({"show": show})
 
 
 def sound_download(request, username, sound_id):

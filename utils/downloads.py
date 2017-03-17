@@ -19,13 +19,14 @@
 #     See AUTHORS file.
 #
 
+import datetime
 import zlib
 
 from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.auth.models import User
-from sounds.models import License
-
+from sounds.models import License, Download
+from donations.models import Donation
 
 def download_sounds(licenses_url, pack):
     """
@@ -53,3 +54,30 @@ def download_sounds(licenses_url, pack):
     response = HttpResponse(filelist, content_type="text/plain")
     response['X-Archive-Files'] = 'zip'
     return response
+
+
+def should_suggest_donation(user, times_displayed):
+    """
+    This method indicates when we should display the donation popup to the
+    user. This will be based on 3 settings indicating how many days
+    after a donation we show the popup again, after how many downloads we
+    display the popup and for how long. The popup will be shown a number of
+    times per day.
+    """
+
+    if times_displayed and times_displayed > settings.POPUP_DISPLAY_TIMES_DAY:
+        return False
+
+    last_donation = user.donation_set.order_by('created').last()
+    period = datetime.datetime.now()\
+            - datetime.timedelta(days=settings.POPUP_DOWNLOAD_DAYS)
+    num_downloads_in_period = Download.objects.filter(user=user,
+            created__gt=period)
+
+    donation_period = datetime.datetime.now()\
+            - datetime.timedelta(days=settings.POPUP_DAYS_AFTER_DONATION)
+    if not last_donation or last_donation.created < donation_period:
+        if num_downloads_in_period > settings.POPUP_DOWNLOADS_IN_PERIOD:
+            return True
+    return False
+

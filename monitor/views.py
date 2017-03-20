@@ -20,17 +20,10 @@
 import base64
 import urllib2
 import json
-import datetime
-
 from django.shortcuts import render
 from django.conf import settings
-from django.contrib.admin.views.decorators import staff_member_required
-from django.views.decorators.cache import cache_page
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.serializers.json import DjangoJSONEncoder
-from django.db import connection
-from django.db.models import Count, Sum
 from django.shortcuts import redirect
 from django.http import JsonResponse
 from sounds.models import Sound
@@ -50,30 +43,30 @@ def monitor_home(request):
     tardy_user_sounds_count = len(tickets.views._get_tardy_user_tickets())
 
     # Processing
-    sounds_queued_count = sounds.views.Sound.objects.filter(
+    sounds_queued_count = Sound.objects.filter(
             processing_ongoing_state='QU').count()
-    sounds_pending_count = sounds.views.Sound.objects.\
+    sounds_pending_count = Sound.objects.\
         filter(processing_state='PE')\
         .exclude(processing_ongoing_state='PR')\
         .exclude(processing_ongoing_state='QU')\
         .count()
-    sounds_processing_count = sounds.views.Sound.objects.filter(
+    sounds_processing_count = Sound.objects.filter(
             processing_ongoing_state='PR').count()
-    sounds_failed_count = sounds.views.Sound.objects.filter(
+    sounds_failed_count = Sound.objects.filter(
             processing_state='FA').count()
-    sounds_ok_count = sounds.views.Sound.objects.filter(
+    sounds_ok_count = Sound.objects.filter(
             processing_state='OK').count()
 
     # Analysis
-    sounds_analysis_pending_count = sounds.views.Sound.objects.filter(
+    sounds_analysis_pending_count = Sound.objects.filter(
         analysis_state='PE').count()
-    sounds_analysis_queued_count = sounds.views.Sound.objects.filter(
+    sounds_analysis_queued_count = Sound.objects.filter(
         analysis_state='QU').count()
-    sounds_analysis_ok_count = sounds.views.Sound.objects.filter(
+    sounds_analysis_ok_count = Sound.objects.filter(
         analysis_state='OK').count()
-    sounds_analysis_failed_count = sounds.views.Sound.objects.filter(
+    sounds_analysis_failed_count = Sound.objects.filter(
         analysis_state='FA').count()
-    sounds_analysis_skipped_count = sounds.views.Sound.objects.filter(
+    sounds_analysis_skipped_count = Sound.objects.filter(
         analysis_state='SK').count()
 
     # Get gearman status
@@ -113,37 +106,37 @@ def queries_stats_ajax(request):
 
 def tags_stats_ajax(request):
     tags_stats = cache.get("tags_stats")
-    return JsonResponse(tags_stats)
+    return JsonResponse(tags_stats or {})
 
 
 def sounds_stats_ajax(request):
     sounds_stats = cache.get("sounds_stats")
-    return JsonResponse(sounds_stats)
+    return JsonResponse(sounds_stats or {})
 
 
 def active_users_stats_ajax(request):
     active_users_stats = cache.get("active_users_stats")
-    return JsonResponse(active_users_stats)
+    return JsonResponse(active_users_stats or {})
 
 
 def users_stats_ajax(request):
     users_stats = cache.get("users_stats")
-    return JsonResponse(users_stats)
+    return JsonResponse(users_stats or {})
 
 
 def downloads_stats_ajax(request):
     downloads_stats = cache.get("downloads_stats")
-    return JsonResponse(downloads_stats)
+    return JsonResponse(downloads_stats or {})
 
 
 def donations_stats_ajax(request):
     donations_stats = cache.get("donations_stats")
-    return JsonResponse(donations_stats)
+    return JsonResponse(donations_stats or {})
 
 
 def totals_stats_ajax(request):
     totals_stats = cache.get("totals_stats")
-    return JsonResponse(totals_stats)
+    return JsonResponse(totals_stats or {})
 
 
 @login_required

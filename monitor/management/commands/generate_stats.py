@@ -39,7 +39,7 @@ class Command(NoArgsCommand):
     help = "Compute stats to display on monitor section."
 
     def handle(self, **options):
-        logger.info("Command started")
+        logger.info("Started computing stats")
 
         time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
@@ -129,7 +129,7 @@ class Command(NoArgsCommand):
         top_tags = TaggedItem.objects.filter(created__gt=time_span)\
             .values('tag_id').distinct().annotate(num=Count('tag_id'))\
             .order_by('-num')[:30]
-        top_tags = [t['tag_id'] for t in  top_tags]
+        top_tags = [t['tag_id'] for t in top_tags]
         tags_stats = TaggedItem.objects\
             .filter(tag_id__in=top_tags, created__gt=time_span)\
             .extra(select={'day': 'date(created)'})\
@@ -201,5 +201,6 @@ class Command(NoArgsCommand):
             "posts": posts,
             "threads": threads,
         }
+        logger.info("Finished computing stats")
 
         cache.set('totals_stats', totals_stats, 60*60*24)

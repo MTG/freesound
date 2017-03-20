@@ -33,8 +33,8 @@ $( document ).ready(function() {
     var tags = [];
     var max = 0;
     d.downloads_tags.forEach(function(t) {
-      max = Math.max(t[2], max);
-      tags.push([t[1], t[2]]);
+      max = Math.max(t[0], max);
+      tags.push([t[1], t[0]]);
     });
     WordCloud($('#down-tags-cloud')[0], { list: tags, weightFactor: 100/max});
   });

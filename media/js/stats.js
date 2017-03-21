@@ -26,7 +26,7 @@ $( document ).ready(function() {
       tags.push([t['tag__name'], t['num']]);
     });
 
-    WordCloud($('#tags-cloud-week')[0], { list: tags, weightFactor: 100/max});
+    WordCloud($('#tags-cloud-week')[0], { list: tags, weightFactor: 80/max});
 
     var tags = [];
     var max = 0;
@@ -43,7 +43,7 @@ $( document ).ready(function() {
       max = Math.max(t[0], max);
       tags.push([t[1], t[0]]);
     });
-    WordCloud($('#down-tags-cloud')[0], { list: tags, weightFactor: 100/max});
+    WordCloud($('#down-tags-cloud')[0], { list: tags, weightFactor: 80/max});
   });
   $.get(usersDataUrl, function(d){
       var active_users = d.new_users.filter(e => {return e.is_active})

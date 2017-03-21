@@ -153,7 +153,7 @@ class Command(NoArgsCommand):
                     tags_taggeditem ti, tags_tag t, sounds_download d
                     WHERE d.sound_id = ti.object_id AND t.id = ti.tag_id
                     AND d.created > current_date - interval '14 days'
-                    GROUP BY ti.tag_id, t.name ORDER BY num_c limit 300""")
+                    GROUP BY ti.tag_id, t.name ORDER BY num_c DESC limit 300""")
 
             downloads_tags = cursor.fetchall()
 

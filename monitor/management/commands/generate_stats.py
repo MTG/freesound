@@ -126,21 +126,9 @@ class Command(NoArgsCommand):
         # Compute stats related with Tags:
         time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
-        top_tags = TaggedItem.objects.filter(created__gt=time_span)\
-            .values('tag_id').distinct().annotate(num=Count('tag_id'))\
-            .order_by('-num')[:30]
-        top_tags = [t['tag_id'] for t in top_tags]
-        tags_stats = TaggedItem.objects\
-            .filter(tag_id__in=top_tags, created__gt=time_span)\
-            .extra(select={'day': 'date(created)'})\
-            .values('day', 'tag__name').order_by().annotate(Count('tag_id'))
-
-        tags = {i['tag__name']: [] for i in tags_stats}
-        for i in tags_stats:
-            tags[i['tag__name']].append({
-                'count': i['tag_id__count'],
-                'day': i['day']
-            })
+        tags_stats = TaggedItem.objects.filter(created__gt=time_span)\
+            .annotate(num=Count('tag_id'))\
+            .values('num', 'tag__name').order_by('-num')[:300]
 
         # Most used tags for tags cloud
         all_tags = TaggedItem.objects.values('tag_id')\
@@ -158,7 +146,7 @@ class Command(NoArgsCommand):
             downloads_tags = cursor.fetchall()
 
         tags_stats = {
-            "tags_stats": tags,
+            "tags_stats": list(tags_stats),
             "all_tags": list(all_tags),
             "downloads_tags": list(downloads_tags)
         }

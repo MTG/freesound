@@ -19,7 +19,14 @@ $( document ).ready(function() {
     $('#total-threads').html(data.threads);
   });
   $.get(tagsDataUrl, function(d){
-    loadTagGraph(d);
+    var tags = [];
+    var max = 0;
+    d.tags_stats.forEach(function(t) {
+      max = Math.max(t['num'], max);
+      tags.push([t['tag__name'], t['num']]);
+    });
+
+    WordCloud($('#tags-cloud-week')[0], { list: tags, weightFactor: 100/max});
 
     var tags = [];
     var max = 0;
@@ -118,101 +125,6 @@ function truncate(str, maxLength, suffix) {
     str = str + suffix;
   }
   return str;
-}
-
-function loadTagGraph(data){
-  // Display most used tags with bubbles
-  var margin = {top: 20, right: 100, bottom: 0, left: 20},
-    width = 680,
-    height = 650;
-
-  var c = d3.scaleOrdinal(d3.schemeCategory20c);
-
-  var formatDate = d3.timeFormat("%a %d");
-  var xScale = d3.scaleTime()
-    .range([0, width]);
-
-  var dates = [];
-  var counts = [];
-  for (var key in data.tags_stats) {
-    if (data.tags_stats.hasOwnProperty(key)) {
-      Array.from(data.tags_stats[key]).forEach(d => {
-        dates.push(new Date(d['day']));
-        counts.push(d['count']);
-      });
-    }
-  }
-  xScale.domain(d3.extent(dates));
-  var xAxis = d3.axisTop(xScale).ticks(d3.timeDay.every(1)).tickFormat(formatDate);
-
-  var rScale = d3.scalePow()
-      .domain([0, d3.max(counts)])
-      .range([2, 10]);
-
-  var svg = d3.select('.tags').append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .style("margin-left", margin.left + "px")
-    .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-  svg.append("g")
-    .attr("class", "x axis")
-    .attr("transform", "translate(-" + 5 + ",0)")
-    .call(xAxis);
-
-  var j = 0;
-  for (var key in data.tags_stats) {
-    if (data.tags_stats.hasOwnProperty(key)) {
-    var g = svg.append("g").attr("class","journal");
-
-    var circles = g.selectAll("circle")
-      .data(data.tags_stats[key])
-      .enter()
-      .append("circle");
-
-    var text = g.selectAll("text")
-      .data(data.tags_stats[key])
-      .enter()
-      .append("text");
-
-    circles
-      .attr("cx", function(d) { return xScale(new Date(d['day']))})
-      .attr("cy", j*20+20)
-      .attr("r", function(d) { return rScale(d['count']);})
-      .style("fill", function(d) { return c(j); });
-
-    text
-      .attr("y", j*20+25)
-      .attr("x", function(d, i) { return xScale(new Date(d['day']))})
-      .attr("class","value")
-      .text(function(d){ return d['count']; })
-      .style("fill", function(d) { return c(j); })
-      .style("display","none");
-
-    g.append("text")
-      .attr("y", j*20+25)
-      .attr("x",width+20)
-      .attr("class","label")
-      .text(truncate(key,30,"..."))
-      .style("fill", function(d) { return c(j); })
-      .on("mouseover", mouseover)
-      .on("mouseout", mouseout);
-    j += 1;
-    }
-  }
-
-  function mouseover(p) {
-    var g = d3.select(this).node().parentNode;
-    d3.select(g).selectAll("circle").style("display","none");
-    d3.select(g).selectAll("text.value").style("display","block");
-  }
-
-  function mouseout(p) {
-    var g = d3.select(this).node().parentNode;
-    d3.select(g).selectAll("circle").style("display","block");
-    d3.select(g).selectAll("text.value").style("display","none");
-  }
 }
 
 // Display line chart with downloads, sounds and users

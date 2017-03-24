@@ -2209,6 +2209,25 @@ a.donation_button:hover {
     line-height: 14px;
 }
 
+.donation_form_left {
+    font-size: 34px;
+    line-height: 40px;
+    font-weight: bolder;
+    margin-right: auto;
+}
+
+.donation_form_right form{
+    width: 300px;
+    margin-left: 0;
+    background: #ffd359;
+}
+
+#donation_form {
+    display: flex;
+    padding: 34px;
+    background: #fafafa;
+}
+
 #donation_form label{
     float: left;
 }
@@ -2216,7 +2235,7 @@ a.donation_button:hover {
 #donation_form #id_amount{
     font-size: 19px;
     padding: 10px;
-    width: 156px;
+    width: 159px;
 }
 
 #donation_form label[for=id_amount]{
@@ -2229,26 +2248,29 @@ a.donation_button:hover {
 
 #donation_form .currency{
     font-size: 15px;
-    margin-left: 24px;
+    margin-left: 16px;
 }
 
 #donation_form button{
-    background-color: #FDC633;
-    border-color: #C45151;
-    color: #000;
-    height: 38px;
+    background-color: #0079C1;
+    color: #fff;
+    height: 49px;
+    width: 216px;
     font-weight: bold;
     border: 0;
-    border-radius: 0;
-    transition: all 0.2s;
-    margin: 0 0 0 95px;
+    border-radius: 2px;
+    margin: 0 0 0 47px;
     padding: 5px 20px;
     font-size: 13px;
-    line-height: 1.5;
-    border-radius: 2px;
+    background-repeat: no-repeat;
+    background-image: url(/media/images/paypal.svg);
+    background-size: 93px;
+    background-position: left 109px center;
+    text-align: left;
+    cursor: pointer;
 }
 #donation_form #id_name_option{
-    width: 210px;
+    width: 206px;
 }
 
 #latest_forum_posts {

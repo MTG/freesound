@@ -129,11 +129,11 @@ function show_hide_bookmark_form(id)
 
 // FOOTER BANNER
 function hideFooterBanner(){
-    $('#fotterBanner').hide(200);
+    $('#footerBanner').hide(200);
 }
 
 function showFooterBanner() {
-    $('#fotterBanner').show(200);
+    $('#footerBanner').show(200);
 }
 
 // Modals

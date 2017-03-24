@@ -47,7 +47,7 @@
     <body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">
 
     {% if footer_banner_contents %}
-        <div id="fotterBanner" class="floating_banner">
+        <div id="footerBanner" class="floating_banner">
             <div class="floating_banner_close_button"><a href="javascript:void(0);" onclick="hideFooterBanner();">&#10006;</a></div>
             <div class="floating_banner_contents" onclick="onBannerClick();">{{ footer_banner_contents|safe }}</div>
         </div>

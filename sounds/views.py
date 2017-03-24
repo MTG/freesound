@@ -245,16 +245,6 @@ def sound(request, username, sound_id):
     is_explicit = sound.is_explicit and (not request.user.is_authenticated() \
                         or not request.user.profile.is_adult)
 
-    # Show modal asking users for donations after clicking in download
-    after_download_modal = (
-        'Support Freesound!',
-        'Thanks for downloading <b>%s</b>!<br>'
-        'Help us to keep Freesound open and free. '
-        'Support us by <a href="%s">making a donation</a> '
-        'if you have not contributed yet :)<br>'
-        % (sound.original_filename, reverse('donate'))
-    )
-
     tvars = {
         'sound': sound,
         'username': username,
@@ -264,7 +254,6 @@ def sound(request, username, sound_id):
         'do_log': do_log,
         'is_following': is_following,
         'is_explicit': is_explicit,
-        'after_download_modal': after_download_modal,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)

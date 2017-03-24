@@ -49,6 +49,7 @@ $(function() {
         e.preventDefault()
     })
 
+    $("#fsmodal").find('.close-modal').click(hideModal);
 });
 
 function d()
@@ -145,12 +146,12 @@ function openModal(){
     $("#fsmodal").show();
 }
 
-function generateModalHTML(title, contents){
-    return '<div id="fsmodal" class="modal"><div class="modal-content"><div class="modal-header"><span onclick="hideModal();" class="close">&times;</span>'
-        + title + '</div><div class="modal-body">' + contents + '</div></div></div>';
+function setContentModalHTML(title, contents){
+  $('#fsmodal').find('.modal-header').html('<span class="close-modal">&times;</span>' + title);
+  $('#fsmodal').find('.modal-body').html(contents);
 }
 
-function createAndOpenModal(show_modal_url, title, content){
+function displayModal(show_modal_url, title, content){
     hideModal();
     var numberDownloads = $.cookie("numberDownloads");
     if (numberDownloads == null) {
@@ -161,8 +162,9 @@ function createAndOpenModal(show_modal_url, title, content){
 
     $.get(show_modal_url, {num_downloads: numberDownloads}, function(resp) {
         if (resp.show) {
-            var modal_html = generateModalHTML(title, content);
-            $("body").prepend(modal_html);
+            if (title != null && content != null) {
+                setContentModalHTML(title, content);
+            }
             openModal();
         }
     })

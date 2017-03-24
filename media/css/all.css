@@ -2213,6 +2213,44 @@ a.donation_button:hover {
     float: left;
 }
 
+#donation_form #id_amount{
+    font-size: 19px;
+    padding: 10px;
+    width: 156px;
+}
+
+#donation_form label[for=id_amount]{
+    font-size: 13px;
+    font-weight: bold;
+    margin-left: 18px;
+    float: none;
+    display: inline;
+}
+
+#donation_form .currency{
+    font-size: 15px;
+    margin-left: 24px;
+}
+
+#donation_form button{
+    background-color: #FDC633;
+    border-color: #C45151;
+    color: #000;
+    height: 38px;
+    font-weight: bold;
+    border: 0;
+    border-radius: 0;
+    transition: all 0.2s;
+    margin: 0 0 0 95px;
+    padding: 5px 20px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 2px;
+}
+#donation_form #id_name_option{
+    width: 210px;
+}
+
 #latest_forum_posts {
     width: 324px;
     padding: 0 12px;

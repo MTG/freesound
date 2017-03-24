@@ -6,7 +6,7 @@
 
   <h1>Donations</h1>
   <p>
-  Thanks for supporting Freesound! Please choose the name that will appear with the donation:
+  Thanks for supporting Freesound! Please choose the <b>name</b> that will appear with the donation:
   </p>
   <!-- donations -->
     <div id="donation_form">
@@ -28,17 +28,25 @@
         </li> 
         {% endfor %}
         </ul>
+        <p>{{form.amount.label_tag }}
+          <span class="currency">&euro;</span>
+          {{ form.amount}}
+        </p>
+        <p>
+          {{ form.recurring.label_tag }}
+          {{ form.recurring}}
+        </p>
         <p>  
           {{ form.show_amount.label_tag }}
           {{ form.show_amount}}
         </p>
-        <input type="submit" value="Donate Now" class="donation_button" />
-
-
-        <p><br>Note: Donations are managed through the Phonos Foundation, an institution linked to the Music
-           Technology Group for the promotion of social and cultural initiatives.</p>
+        <button class="donation_button">Donate Now</button>
 
       </form>
+      <p><a href="{% url 'donors' %}">See full list of donations</a></p>
+      <p><br><b>Note:</b> Donations are managed through the Phonos Foundation, an institution linked to the Music
+           Technology Group for the promotion of social and cultural initiatives.</p>
+
     </div>
     <script type="text/javascript">
       $(document).ready(function (){
@@ -51,6 +59,7 @@
             success: function(data)
             {
               if (data.errors != null) {
+                  $('.errorlist').html("");
                 $.each(data.errors['__all__'], function (index, error) {
                   $('.errorlist').append("<li>"+error+"</li>");
                 });
@@ -75,9 +84,7 @@
         });
       });
     </script>
-    <div>
-      <ul style="list-style-type: none;"><li><a href="{% url 'donors' %}">See full list of donations</a></li></ul>
-    </div>
+
 {% block section_content %}
 
 {% endblock %}

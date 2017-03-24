@@ -172,9 +172,13 @@ MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
 # DONATION POPUP
+# After a donation we don't display the popup for this long:
+POPUP_DAYS_AFTER_DONATION = 1
+# After this number of downloads (in a period of days: POPUP_DOWNLOAD_DAYS)
+# we display the popup:
 POPUP_DOWNLOADS_IN_PERIOD = 1
 POPUP_DOWNLOAD_DAYS = 10
-POPUP_DAYS_AFTER_DONATION = 1
+# max number of times we display the popup per day:
 POPUP_DISPLAY_TIMES_DAY = 10
 
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)

@@ -282,3 +282,13 @@ def create_user_profile(sender, instance, created, **kwargs):
         profile.save()
 
 post_save.connect(create_user_profile, sender=User)
+
+
+class EmailType(models.Model):
+    description = models.TextField(max_length=1024, null=True, blank=True)
+    name = models.CharField(max_length=255)
+
+
+class UserEmailSetting(models.Model):
+    user = models.ForeignKey(User, related_name="email_settings")
+    email_type = models.ForeignKey(EmailType)

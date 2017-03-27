@@ -31,7 +31,7 @@ from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedi
 from django.shortcuts import render_to_response, get_object_or_404, render, redirect
 from django.template import RequestContext
 from django.http import HttpResponse
-from accounts.models import Profile
+from accounts.models import Profile, UserEmailSetting
 from comments.forms import CommentForm
 from comments.models import Comment
 from forum.models import Thread
@@ -218,12 +218,16 @@ def sound(request, username, sound_id):
                                               user=request.user,
                                               comment=comment_text))
                     try:
-                        # Send the user an email to notify him of the new comment!
-                        logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username,
-                                                                                   request.user.username))
-                        send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
-                                           {'sound': sound, 'user': request.user, 'comment': comment_text},
-                                           None, sound.user.email)
+                        disabled = UserEmailSetting.objects.filter(user=request.user,
+                                email_type__name="new_comment").count()
+
+                        if not disabled:
+                            # Send the user an email to notify him of the new comment!
+                            logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username,
+                                                                                       request.user.username))
+                            send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
+                                               {'sound': sound, 'user': request.user, 'comment': comment_text},
+                                               None, sound.user.email)
                     except Exception, e:
                         # If the email sending fails, ignore...
                         logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.email, e))

@@ -29,7 +29,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from multiupload.fields import MultiFileField
 from django.conf import settings
-from accounts.models import Profile
+from accounts.models import Profile, EmailType
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 from utils.encryption import decrypt, encrypt
@@ -244,15 +244,8 @@ class ProfileForm(forms.ModelForm):
         widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
         required=False
     )
-    wants_newsletter = forms.BooleanField(help_text="Subscribed to newsletter", label="", required=False)
     is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",
-            label="", required=False)
-    enabled_stream_emails = forms.BooleanField(
-        help_text="Receive weekly stream update email notifications (only when new sounds are uploaded by "
-                  "users you follow or that have tags you follow)",
-        label = "",
-        required=False
-    )
+            label="", required=False) 
     not_shown_in_online_users_list = forms.BooleanField(
         help_text="Hide from \"users currently online\" list in the People page",
         label = "",
@@ -279,8 +272,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ('home_page', 'is_adult', 'wants_newsletter',
-                  'enabled_stream_emails', 'about', 'signature',
+        fields = ('home_page', 'is_adult', 'about', 'signature',
                   'not_shown_in_online_users_list')
 
 
@@ -326,4 +318,19 @@ class DeleteUserForm(forms.Form):
                 'encrypted_link': encrypted_link
                 }
         super(DeleteUserForm, self).__init__(*args, **kwargs)
+
+
+class EmailSettingsForm(forms.Form):
+    enabled_stream_emails = forms.BooleanField(
+        help_text="Receive weekly stream update email notifications (only when new sounds are uploaded by "
+                  "users you follow or that have tags you follow)",
+        label = "",
+        required=False
+    )
+    wants_newsletter = forms.BooleanField(help_text="Subscribed to newsletter", label="", required=False)
+    email_types = forms.ModelMultipleChoiceField(
+        queryset = EmailType.objects.all(),
+        widget  = forms.CheckboxSelectMultiple,
+    )
+
 

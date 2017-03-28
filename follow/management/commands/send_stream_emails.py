@@ -45,7 +45,7 @@ class Command(BaseCommand):
         # Get all the users that have notifications active
         # and exclude the ones that have the last email sent for less than settings.NOTIFICATION_TIMEDELTA_PERIOD
         # (because they have been sent an email already)
-        email_type = EmailPreferenceType.objects.get(name="stream_email")
+        email_type = EmailPreferenceType.objects.get(name="stream_emails")
         user_ids = email_type.users_set.values('id')
 
         users_enabled_notifications = Profile.objects.filter(user_id__in=user_ids).exclude(

@@ -68,12 +68,10 @@ class Profile(SocialModel):
     signature = models.TextField(max_length=256, null=True, blank=True)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
     has_avatar = models.BooleanField(default=False)
-    wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
     has_old_license = models.BooleanField(null=False, default=False)
     not_shown_in_online_users_list = models.BooleanField(null=False, default=False)
     accepted_tos = models.BooleanField(default=False)
-    enabled_stream_emails = models.BooleanField(db_index=True, default=False)
     last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None)
     num_sounds = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger

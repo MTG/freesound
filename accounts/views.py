@@ -44,7 +44,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailType
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -255,35 +255,17 @@ def home(request):
 
 @login_required
 def edit_email_settings(request):
-    all_emails = EmailType.objects
     profile = request.user.profile
     if request.method == "POST":
         form = EmailSettingsForm(request.POST)
-        had_enabled_stream_emails = profile.enabled_stream_emails
         if form.is_valid():
-            data = form.cleaned_data
-            all_emails = all_emails.exclude(id__in=data['email_types'])
-            request.user.email_settings.all().delete()
-            for i in all_emails:
-                UserEmailSetting.objects.create(user=request.user,
-                        email_type=i)
-
-            enabled_stream_emails = form.cleaned_data.get("enabled_stream_emails")
-            # If is enabling stream emails, set last_stream_email_sent to now
-            if not had_enabled_stream_emails and enabled_stream_emails:
-                profile.last_stream_email_sent = datetime.datetime.now()
-            profile.enabled_stream_emails = enabled_stream_emails
-            profile.wants_newsletter = form.cleaned_data.get("wants_newsletter")
-            profile.save()
+            email_type_ids = form.cleaned_data['email_types']
+            request.user.profile.update_enabled_email_types(email_type_ids)
     else:
-        request.user.email_settings
-        disabled_emails = UserEmailSetting.objects.filter(user=request.user)\
-                .values('email_type')
-        all_emails = all_emails.exclude(id__in=disabled_emails)
+        # Get list of enabled email_types
+        all_emails = request.user.profile.get_enabled_email_types()
         form = profile_form = EmailSettingsForm(initial={
-            'email_types': all_emails.all(),
-            'enabled_stream_emails': profile.enabled_stream_emails,
-            'wants_newsletter': profile.wants_newsletter
+            'email_types': all_emails,
             })
     tvars = {'form': form}
     return render(request, 'accounts/edit_email_settings.html', tvars)
@@ -433,7 +415,6 @@ def describe_license(request):
     else:
         form = NewLicenseForm()
     tvars = {'form': form}
-    print form.errors
     return render(request, 'accounts/describe_license.html', tvars)
 
 

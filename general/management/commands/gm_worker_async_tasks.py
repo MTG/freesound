@@ -27,7 +27,6 @@ from sounds.models import Sound
 from optparse import make_option
 from utils.mail import send_mail_template
 from tickets import TICKET_STATUS_CLOSED
-from accounts.models import UserEmailSetting
 import logging
 
 logger = logging.getLogger("gearman_worker_async_tasks")
@@ -96,10 +95,7 @@ class Command(BaseCommand):
         random_sound_id = gearman_job.data
         random_sound = Sound.objects.get(id=random_sound_id)
 
-        disabled = UserEmailSetting.objects.filter(user=random_sound.user,
-                                email_type__name="random_sound").count()
-
-        if not disabled:
+        if random_sound.user.profile.email_not_disabled("random_sound"):
             send_mail_template(\
                 u'One of your sounds has been chosen as random sound of the day!',
                 'sounds/email_random_sound.txt',

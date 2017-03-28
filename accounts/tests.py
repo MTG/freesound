@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.conf import settings
-from accounts.models import Profile, EmailType
+from accounts.models import Profile, EmailPreferenceType
 from accounts.views import handle_uploaded_image
 from sounds.models import License, Sound, Pack, DeletedSound
 from tags.models import TaggedItem
@@ -323,17 +323,16 @@ class UserEditProfile(TestCase):
         self.assertEqual(user.profile.not_shown_in_online_users_list, True)
 
     def test_edit_user_email_settings(self):
-        EmailType.objects.create(name="email", display_name="email")
+        EmailPreferenceType.objects.create(name="email", display_name="email")
         User.objects.create_user("testuser", password="testpass")
         self.client.login(username='testuser', password='testpass')
         response = self.client.post("/home/email-settings/", {
-            'wants_newsletter': True,
-            'enabled_stream_emails': True,
             'email_types': 1,
         })
         user = User.objects.select_related('profile').get(username="testuser")
-        self.assertEqual(user.profile.wants_newsletter, True)
-        self.assertEqual(user.profile.enabled_stream_emails, True)
+        email_types = user.profile.get_enabled_email_types()
+        self.assertEqual(len(email_types), 1)
+        self.assertEqual(email_types[0].name, 'email')
 
     @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_edit_user_avatar(self):

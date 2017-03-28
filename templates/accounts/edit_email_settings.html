@@ -18,12 +18,7 @@ form ul {
     <div id="edit_account" class="content_box">
         <h3>Edit your account information</h3>
         <form method="post" action=".">{% csrf_token %}
-          {{form.as_p}}
-          {{form.email_types}}
-            <ul>
-              <li>{{ form.wants_newsletter }} {{ form.wants_newsletter.help_text}}</li>
-              <li>{{ form.enabled_stream_emails }} {{ form.enabled_stream_emails.help_text}}</li>
-            </ul>
+            {{form.as_p}}
             <input type="submit" value="Save account settings" />
         </form>
     </div><!-- #edit_account -->

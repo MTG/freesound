@@ -118,6 +118,64 @@ class Profile(SocialModel):
             )
         )
 
+    def email_not_disabled(self, email_type_name):
+        # Raise exception if the email_type doesn't exists
+        email_type = EmailPreferenceType.objects.get(name=email_type_name)
+
+        # when send_by_default == invert_default means email is disabled
+        invert_default = email_type.users_set.filter(user=self.user).count()
+        return email_type.send_by_default != invert_default
+
+
+    def get_enabled_email_types(self):
+        # Get list of all enabled email types for this user
+        all_emails = EmailPreferenceType.objects
+        email_preferences = self.user.email_settings.values('email_type__id')
+        # if email_type not in email_preferences then default value must be True
+        not_disabled = all_emails.exclude(id__in=email_preferences)\
+                .filter(send_by_default=True)
+
+        # if email_type in email_preferences then default value must be False
+        enabled = all_emails.filter(id__in=email_preferences,
+                send_by_default=False)
+
+        return list(enabled) + list(not_disabled)
+
+    def update_enabled_email_types(self, email_type_ids):
+        # Update user's email_settings from the list of enabled email_types
+
+        # First get current value of stream_email to know if
+        # profile.last_stream_email_sent must be initialized
+        had_enabled_stream_emails = self.user.email_settings\
+                .filter(email_type__name='stream_email').count()
+
+        all_emails = EmailPreferenceType.objects
+
+        # If an email_type is not enabled and default value is True then must
+        # be on UserEmailSetting
+        disabled = all_emails.filter(send_by_default=True)\
+            .exclude(id__in=email_type_ids)
+
+        # If an email_type is enabled and default value is False then must
+        # be on UserEmailSetting
+        enabled = all_emails.filter(send_by_default=False,
+                id__in=email_type_ids)
+
+        all_emails = list(enabled) + list(disabled)
+
+        # Recreate email settings
+        self.user.email_settings.all().delete()
+        for i in all_emails:
+            UserEmailSetting.objects.create(user=self.user,
+                    email_type=i)
+
+        enabled_stream_emails = enabled.filter(name='stream_email').count()
+        # If is enabling stream emails, set last_stream_email_sent to now
+        if not had_enabled_stream_emails and enabled_stream_emails:
+            self.last_stream_email_sent = datetime.datetime.now()
+            self.save()
+
+
     def get_user_tags(self, use_solr=True):
         if use_solr:
             query = SolrQuery()
@@ -278,20 +336,21 @@ def create_user_profile(sender, instance, created, **kwargs):
     try:
         instance.profile
     except Profile.DoesNotExist:
-        profile = Profile(user=instance, wants_newsletter=False, accepted_tos=True)
+        profile = Profile(user=instance, accepted_tos=True)
         profile.save()
 
 post_save.connect(create_user_profile, sender=User)
 
 
-class EmailType(models.Model):
+class EmailPreferenceType(models.Model):
     description = models.TextField(max_length=1024, null=True, blank=True)
     name = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)
+    send_by_default = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.display_name
 
 class UserEmailSetting(models.Model):
     user = models.ForeignKey(User, related_name="email_settings")
-    email_type = models.ForeignKey(EmailType)
+    email_type = models.ForeignKey(EmailPreferenceType)

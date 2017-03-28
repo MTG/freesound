@@ -32,7 +32,7 @@ def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=No
     """
     if not email_from:
         email_from = settings.DEFAULT_FROM_EMAIL
-    
+
     if not email_to:
         # If email is emprty email, don't send email, otherwise (email 'False' but not '',
         # send to default support emails)

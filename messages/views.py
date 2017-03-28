@@ -33,7 +33,7 @@ from utils.pagination import paginate
 from BeautifulSoup import BeautifulSoup
 import json
 from textwrap import wrap
-from accounts.models import User, UserEmailSetting
+from accounts.models import User
 from django.http import HttpResponse
 from django.contrib import messages
 
@@ -124,10 +124,7 @@ def new_message(request, username=None, message_id=None):
 
                 try:
                     # send the user an email to notify him of the sent message!
-                    disabled = UserEmailSetting.objects.filter(user=user_to,
-                                email_type__name="private_message").count()
-
-                    if not disabled:
+                    if user_to.profile.email_not_disabled("private_message"):
                         send_mail_template(u'you have a private message.', 'messages/email_new_message.txt', locals(), None, user_to.email)
                 except:
                     # if the email sending fails, ignore...

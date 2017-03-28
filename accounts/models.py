@@ -121,7 +121,8 @@ class Profile(SocialModel):
         email_type = EmailPreferenceType.objects.get(name=email_type_name)
 
         # when send_by_default == invert_default means email is disabled
-        invert_default = email_type.users_set.filter(user=self.user).count()
+        invert_default = UserEmailSetting.objects.filter(user=self.user,
+                email_type=email_type).count()
         return email_type.send_by_default != invert_default
 
 

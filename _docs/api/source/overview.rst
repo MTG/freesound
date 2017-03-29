@@ -56,7 +56,7 @@ As a quick example, you can retrieve sounds that feature a particular pitch mean
 
 ::
 
-  curl "http://www.freesound.org/apiv2/search/content/?descriptors_filter=lowlevel.pitch.mean:[219.9 TO 220.1]"
+  curl "http://www.freesound.org/apiv2/search/content/?descriptors_filter=lowlevel.pitch.mean:\[219.9%20TO%20220.1\]"
 
 
 Furthermore, you can combine both textual and content based search strategies using the :ref:`sound-combined-search` resource.
@@ -65,7 +65,7 @@ For example, you could search for loops with a particular bpm using the followin
 
 ::
 
- curl "http://www.freesound.org/apiv2/search/combined/?filter=tag:loop&descriptors_filter=rhythm.bpm:[119 TO 121]"
+ curl "http://www.freesound.org/apiv2/search/combined/?filter=tag:loop&descriptors_filter=rhythm.bpm:\[119%20TO%20121\]"
 
 
 Downloading sounds

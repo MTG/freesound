@@ -324,6 +324,7 @@ class UserEditProfile(TestCase):
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")
+        EmailPreferenceType.objects.create(name="stream_emails", display_name="email")
         User.objects.create_user("testuser", password="testpass")
         self.client.login(username='testuser', password='testpass')
         response = self.client.post("/home/email-settings/", {
@@ -332,7 +333,7 @@ class UserEditProfile(TestCase):
         user = User.objects.select_related('profile').get(username="testuser")
         email_types = user.profile.get_enabled_email_types()
         self.assertEqual(len(email_types), 1)
-        self.assertEqual(email_types[0].name, 'email')
+        self.assertTrue(email_types.pop().name, 'email')
 
     @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_edit_user_avatar(self):

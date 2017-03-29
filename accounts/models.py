@@ -122,7 +122,7 @@ class Profile(SocialModel):
 
         # when send_by_default == invert_default means email is disabled
         invert_default = UserEmailSetting.objects.filter(user=self.user,
-                email_type=email_type).count()
+                email_type=email_type).exists()
         return email_type.send_by_default != invert_default
 
 
@@ -138,15 +138,16 @@ class Profile(SocialModel):
         enabled = all_emails.filter(id__in=email_preferences,
                 send_by_default=False)
 
-        return list(enabled) + list(not_disabled)
+        return set(enabled) | set(not_disabled)
 
     def update_enabled_email_types(self, email_type_ids):
         # Update user's email_settings from the list of enabled email_types
 
+        stream_emails = EmailPreferenceType.objects.get(name='stream_emails')
         # First get current value of stream_email to know if
         # profile.last_stream_email_sent must be initialized
         had_enabled_stream_emails = self.user.email_settings\
-                .filter(email_type__name='stream_email').count()
+                .filter(email_type=stream_emails).exists()
 
         all_emails = EmailPreferenceType.objects
 
@@ -168,7 +169,7 @@ class Profile(SocialModel):
             UserEmailSetting.objects.create(user=self.user,
                     email_type=i)
 
-        enabled_stream_emails = enabled.filter(name='stream_email').count()
+        enabled_stream_emails = enabled.filter(id=stream_emails.id).exists()
         # If is enabling stream emails, set last_stream_email_sent to now
         if not had_enabled_stream_emails and enabled_stream_emails:
             self.last_stream_email_sent = datetime.datetime.now()
@@ -345,7 +346,9 @@ class EmailPreferenceType(models.Model):
     description = models.TextField(max_length=1024, null=True, blank=True)
     name = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)
-    send_by_default = models.BooleanField(default=True)
+    send_by_default = models.BooleanField(default=True,
+        help_text="Indicates if the user should receive an email, if " +
+        "UserEmailSetting exists for the user then the behavior is the opposite")
 
     def __unicode__(self):
         return self.display_name

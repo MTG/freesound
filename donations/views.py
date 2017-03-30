@@ -67,6 +67,7 @@ def donate(request):
     if request.method == 'POST':
         form = DonateForm(request.POST, user=request.user)
         if form.is_valid():
+            amount = form.cleaned_data['amount']
             returned_data_str = form.encoded_data
             domain = "https://%s" % Site.objects.get_current().domain
             return_url = urlparse.urljoin(domain, reverse('donation-complete'))
@@ -75,11 +76,27 @@ def donate(request):
                         "cmd": "_donations",
                         "currency_code": "EUR",
                         "business": settings.PAYPAL_EMAIL,
-                        "item_name": "Freesound",
+                        "item_name": "Freesound donation",
                         "custom": returned_data_str,
                         "notify_url": return_url
                         }
                     }
+
+            if form.cleaned_data['recurring']:
+                data['params']['cmd'] = '_xclick-subscriptions'
+                data['params']['a3'] = amount
+                # src - indicates recurring subscription
+                data['params']['src'] = 1
+                # p3 - number of time periods between each recurrence
+                data['params']['p3'] = 1
+                # t3 - time period (D=days, W=weeks, M=months, Y=years)
+                data['params']['t3'] = 'M'
+                # sra - Number of times to reattempt on failure
+                data['params']['sra'] = 1
+                data['params']['no_shipping'] = 1
+                data['params']['item_name'] = 'Freesound monthly donation'
+            else:
+                data['params']['amount'] = amount
         else:
             data = {'errors': form.errors}
         return JsonResponse(data)

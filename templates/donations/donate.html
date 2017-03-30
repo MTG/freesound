@@ -6,40 +6,54 @@
 
   <h1>Donations</h1>
   <p>
-  Thanks for supporting Freesound! Please choose the name that will appear with the donation:
+      Thanks for supporting Freesound!
+      <br>Please use the form below to make a donation. Note that donations are managed through the Phonos Foundation, an institution linked to the Music
+         Technology Group for the promotion of social and cultural initiatives. Click here to see the <a href="{% url 'donors' %}">full list of Freesound donors and and donations</a>.
   </p>
   <!-- donations -->
-    <div id="donation_form">
-      <form method="post" action="{% url 'donate' %}">
-        <ul class="errorlist nonfield"></ul>
-        <ul style="list-style-type: none;">
-        {% csrf_token %}
-        {% for choice in form.donation_type %}
-        <li>
-            <input type="radio"
-                   name="{{ form.donation_type.name }}"
-                   value="{{ choice.choice_value }}"
-                   id="id_{{ form.donation_type.name }}_{{ forloop.counter0 }}"
-                   {% if form.donation_type.value == choice.choice_value %}
-                       checked='checked'
-                   {% endif %}/>
-            {{ choice.choice_label }}
-            {% if choice.choice_value == "2" %} {{form.name_option}} {% endif %}
-        </li> 
-        {% endfor %}
-        </ul>
-        <p>  
-          {{ form.show_amount.label_tag }}
-          {{ form.show_amount}}
-        </p>
-        <input type="submit" value="Donate Now" class="donation_button" />
+    <div id="donation_form_wrapper">
 
+      <div id="donation_form">
+        <form method="post" action="{% url 'donate' %}">
+          <ul class="errorlist nonfield"></ul>
+          <ul style="list-style-type: none;padding-left:0px;line-height: 18px;">
+          {% csrf_token %}
+          
+          <p>
+            Please choose the <b>name</b> that will appear with the donation:
+          </p>
+          {% for choice in form.donation_type %}
+          <li>
+              <input type="radio"
+                     name="{{ form.donation_type.name }}"
+                     value="{{ choice.choice_value }}"
+                     id="id_{{ form.donation_type.name }}_{{ forloop.counter0 }}"
+                     {% if form.donation_type.value == choice.choice_value %}
+                         checked='checked'
+                     {% endif %}/>
+              {{ choice.choice_label }}
+              {% if choice.choice_value == "2" %} {{form.name_option}} {% endif %}
+          </li> 
+          {% endfor %}
+          </ul>
+          <p>{{form.amount.label_tag }}
+            <span class="currency">&euro;</span>
+            {{ form.amount}}
+          </p>
+          <p>
+            {{ form.recurring.label_tag }}
+            {{ form.recurring}}
+          </p>
+          <p>  
+            {{ form.show_amount.label_tag }}
+            {{ form.show_amount}}
+          </p>
+          <button class="donation_button">Donate with</button>
 
-        <p><br>Note: Donations are managed through the Phonos Foundation, an institution linked to the Music
-           Technology Group for the promotion of social and cultural initiatives.</p>
-
-      </form>
+        </form>
+      </div>
     </div>
+
     <script type="text/javascript">
       $(document).ready(function (){
       
@@ -51,6 +65,7 @@
             success: function(data)
             {
               if (data.errors != null) {
+                  $('.errorlist').html("");
                 $.each(data.errors['__all__'], function (index, error) {
                   $('.errorlist').append("<li>"+error+"</li>");
                 });
@@ -75,9 +90,7 @@
         });
       });
     </script>
-    <div>
-      <ul style="list-style-type: none;"><li><a href="{% url 'donors' %}">See full list of donations</a></li></ul>
-    </div>
+
 {% block section_content %}
 
 {% endblock %}

@@ -59,11 +59,11 @@ class Command(BaseCommand):
             directory = os.path.join(settings.UPLOADS_PATH, str(u.id))
             if not os.path.exists(directory):
                 os.mkdir(directory)
-            src_path = base_dir + "/"+ pathf
+            src_path = os.path.join(base_dir, pathf)
             dest_path = os.path.join(directory, os.path.basename(pathf))
             #print src_path,dest_path
 
-            shutil.copy(src_path,dest_path)
+            shutil.copy(src_path, dest_path)
 
             # 2 make sound object
             # user id (search), original_fname(name),path (new), filesize,type,slicense
@@ -92,10 +92,10 @@ class Command(BaseCommand):
                 if delete_already_existing:
                     existing_sound = Sound.objects.get(md5=sound.md5)
                     existing_sound.delete()
-                    print 'The file %s is already part of freesound, we re-add it again' % (sound.original_filename)
+                    print 'The file %s is already part of freesound, adding it again' % (sound.original_filename,)
                 else:
                     os.remove(sound.original_path)
-                    print 'The file %s is already part of freesound, not uploading it' % (sound.original_filename)
+                    print 'The file %s is already part of freesound, not uploading it' % (sound.original_filename,)
                     continue
 
             # 4 save
@@ -103,8 +103,8 @@ class Command(BaseCommand):
 
             # 5 move to new path
             orig = os.path.splitext(os.path.basename(sound.original_filename))[0] # WATCH OUT!
-            sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
-            new_original_path = sound.locations("path")
+            sound.base_filename_slug = '%d__%s__%s' % (sound.id, slugify(sound.user.username), slugify(orig))
+            new_original_path = sound.locations('path')
             if sound.original_path != new_original_path:
                 try:
                     os.makedirs(os.path.dirname(new_original_path))
@@ -113,10 +113,10 @@ class Command(BaseCommand):
                 try:
                     shutil.move(sound.original_path, new_original_path)
                     #shutil.copy(sound.original_path, new_original_path)
-                except IOError, e:
-                    print "failed to move file from %s to %s" % (sound.original_path, new_original_path)
-                    #logger.info("failed to move file from %s to %s" % (sound.original_path, new_original_path), e)
-                #logger.info("moved original file from %s to %s" % (sound.original_path, new_original_path))
+                except IOError as e:
+                    print 'failed to move file from %s to %s' % (sound.original_path, new_original_path)
+                    #logger.info('failed to move file from %s to %s' % (sound.original_path, new_original_path), e)
+                #logger.info('moved original file from %s to %s' % (sound.original_path, new_original_path))
                 sound.original_path = new_original_path
                 sound.save()
 
@@ -135,7 +135,7 @@ class Command(BaseCommand):
             # 7 create geotag objects
             # format: lat#lon#zoom
             if geotagf:
-                lat,lon,zoom = [g for g in geotagf.split(" ") if g]
+                lat, lon, zoom = geotagf.split()
                 geotag = GeoTag(user=u,
                     lat=float(lat),
                     lon=float(lon),
@@ -145,7 +145,7 @@ class Command(BaseCommand):
 
             # 8 set description, tags
             sound.description = descriptionf
-            sound.set_tags([t for t in tagsf.split(" ") if t])
+            sound.set_tags(tagsf.split())
 
             # 9 save!
             sound.save()
@@ -167,4 +167,4 @@ class Command(BaseCommand):
             if sound.pack:
                 sound.pack.process()
 
-            print "Successfully uploaded sound " + sound.original_filename
+            print 'Successfully uploaded sound ' + sound.original_filename

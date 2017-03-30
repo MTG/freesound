@@ -4,22 +4,19 @@
 {% block content %}
 <div id="content_full"> <!-- START of Content area -->
 
-  
+  <h1>Donations</h1>
+  <p>
+      Thanks for supporting Freesound!
+      <br>Please use the form below to make a donation. Note that donations are managed through the Phonos Foundation, an institution linked to the Music
+         Technology Group for the promotion of social and cultural initiatives. Click here to see the <a href="{% url 'donors' %}">full list of Freesound donors and and donations</a>.
+  </p>
   <!-- donations -->
-    <div id="donation_form">
-      <div class="donation_form_left">
-          <div>
-            <span style="color:#BA4444;">Support Freesound</span><br />
-            <span style="margin-left: 208px; color:#BA4444;">make a donation</span><br /><br />
-            <span style="margin-left: 50px">Help us to keep</span><br />
-            <span>Freesound open and free</span><br />
+    <div id="donation_form_wrapper">
 
-          </div>
-      </div>
-      <div class="donation_form_right">
+      <div id="donation_form">
         <form method="post" action="{% url 'donate' %}">
           <ul class="errorlist nonfield"></ul>
-          <ul style="list-style-type: none;">
+          <ul style="list-style-type: none;padding-left:0px;line-height: 18px;">
           {% csrf_token %}
           
           <p>
@@ -56,9 +53,6 @@
         </form>
       </div>
     </div>
-    <p><a href="{% url 'donors' %}">See full list of donations</a></p>
-    <p><br><b>Note:</b> Donations are managed through the Phonos Foundation, an institution linked to the Music
-         Technology Group for the promotion of social and cultural initiatives.</p>
 
     <script type="text/javascript">
       $(document).ready(function (){

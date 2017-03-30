@@ -2209,27 +2209,29 @@ a.donation_button:hover {
     line-height: 14px;
 }
 
-.donation_form_left {
-    font-size: 34px;
-    line-height: 40px;
-    font-weight: bolder;
-    margin-right: auto;
-}
 
-.donation_form_right form{
-    width: 300px;
-    margin-left: 0;
-    background: #ffd359;
-}
-
-#donation_form {
+#donation_form_wrapper {
     display: flex;
     padding: 34px;
     background: #fafafa;
 }
 
+#donation_form{
+    width: 420px;
+    margin-left: calc(50% - 210px);
+}
+
+#donation_form form{
+    background: #ffd359;
+}
+
 #donation_form label{
     float: left;
+    margin-right: 4px;
+}
+
+#donation_form ul li {
+    line-height: 22px;
 }
 
 #donation_form #id_amount{
@@ -2259,7 +2261,7 @@ a.donation_button:hover {
     font-weight: bold;
     border: 0;
     border-radius: 2px;
-    margin: 0 0 0 47px;
+    margin: 0 0 0 82px;
     padding: 5px 20px;
     font-size: 13px;
     background-repeat: no-repeat;

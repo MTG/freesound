@@ -35,22 +35,81 @@ class Command(BaseCommand):
     help = 'Upload many sounds at once'
 
     def add_arguments(self, parser):
-        parser.add_argument('filepath', nargs=1, type=str)
+        parser.add_argument('filepath', type=str, help='Path to sound list')
+        parser.add_argument('-d', action='store_true', help='Delete any sounds which already exist and add them again')
+        parser.add_argument('-f', action='store_true', help='Force the import if any rows are bad, skipping bad rows')
 
-    def handle(self, *args, **options):
-        sound_list = options['filepath'][0]
-        print sound_list
-        base_dir = os.path.dirname(sound_list)
-        delete_already_existing = False
-        if len(args) > 1:
-            delete_already_existing = bool(args[1])
-
-        isHeader = True
-        for line in csv.reader(open(sound_list,'rU')):
-            if isHeader:
-                isHeader = False
+    def check_input_file(self, base_dir, lines):
+        errors = []
+        return_lines = []
+        for n, line in enumerate(lines, 2): # Count from the header
+            anyerror = False
+            if len(line) != 8:
+                errors.append((n, 'Line does not have 8 fields'))
+                anyerror = True
                 continue
 
+            pathf,namef,tagsf,geotagf,descriptionf,licensef,packnamef,usernamef = line
+            try:
+                u = User.objects.get(username=usernamef)
+            except User.DoesNotExist:
+                anyerror = True
+                errors.append((n, "User '%s' does not exist" % usernamef))
+
+            src_path = os.path.join(base_dir, pathf)
+            if not os.path.exists(src_path):
+                anyerror = True
+                errors.append((n, "Source file '%s' does not exist" % pathf))
+
+            try:
+                l = License.objects.get(name=licensef)
+            except License.DoesNotExist:
+                anyerror = True
+                errors.append((n, "Licence with name '%s' does not exist" % licensef))
+
+            geoparts = geotagf.split()
+            if len(geoparts) == 3:
+                lat, lon, zoom = geoparts
+                try:
+                    float(lat)
+                    float(lon)
+                    int(zoom)
+                except ValueError:
+                    errors.append((n, "Geotag ('%s') must be in format 'float float int'" % geotagf))
+                    anyerror = True
+            elif len(geoparts) != 0:
+                errors.append((n, "Geotag ('%s') must be in format 'float float int'" % geotagf))
+                anyerror = True
+
+            if not anyerror:
+                return_lines.append(line)
+
+        # Check format of geotags
+        return return_lines, errors
+
+    def handle(self, *args, **options):
+        sound_list = options['filepath']
+        print 'Importing from', sound_list
+        base_dir = os.path.dirname(sound_list)
+        delete_already_existing = options['d']
+        force_import = options['d']
+
+        reader = csv.reader(open(sound_list, 'rU'))
+        reader.next() # Skip header
+        lines = list(reader)
+
+        lines_to_import, bad_lines = self.check_input_file(base_dir, lines)
+        if bad_lines and not force_import:
+            print 'Some lines contain invalid data. Fix them or re-run with -f to import skipping these lines:'
+            for lineno, error in bad_lines:
+                print 'l%s: %s' % (lineno, error)
+            return
+        elif bad_lines:
+            print 'Skipping the following lines due to invalid data'
+            for lineno, error in bad_lines:
+                print 'l%s: %s' % (lineno, error)
+
+        for line in lines_to_import:
             # 0 get data from csv
             pathf,namef,tagsf,geotagf,descriptionf,licensef,packnamef,usernamef = line
             u = User.objects.get(username=usernamef)

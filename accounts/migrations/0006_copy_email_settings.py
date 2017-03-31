@@ -16,7 +16,7 @@ def forwards_func(apps, schema_editor):
     EmailPreferenceType.objects.using(db_alias).bulk_create([
         EmailPreferenceType(
             name="random_sound", send_by_default=True,
-            display_name="Selected sound as random sound of the day",
+            display_name="One of my sounds is selected as random sound of the day",
             description="Email notification sent when user's sound is selected as random sound of the day",
         ),
         EmailPreferenceType(
@@ -26,12 +26,12 @@ def forwards_func(apps, schema_editor):
         ),
         EmailPreferenceType(
             name="new_comment", send_by_default=True,
-            display_name="New comment on sound",
+            display_name="New comment on one of my sounds",
             description="Email notification sent when user's receives a comment on a sound",
         ),
         EmailPreferenceType(
             name="stream_emails", send_by_default=False,
-            display_name="Receive weekly stream update email notifications",
+            display_name="Weekly stream update email notifications",
             description="Receive weekly stream update email notifications, only when new sounds are uploaded by users "
                         "you follow or that have tags you follow",
         ),

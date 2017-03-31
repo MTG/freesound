@@ -27,6 +27,9 @@
   g.legend { 
     font: 10px sans-serif;
   }
+  .legend-item{  
+    cursor: pointer;
+  }
 </style>
 {% endblock head %}
 
@@ -40,21 +43,36 @@
     <h3>total number of registered elements</h3>
     <div>
     <table>
-      <tr><td><b>Active Users:</b></td><td id="total-users"></td></tr>
-      <tr><td><b>Uploaders:</b></td><td id="users-with-sounds"></td></tr>
-      <tr><td><b>Sounds:</b> </td><td id="total-sounds"></td></tr>
-      <tr><td><b>Packs:</b> </td><td id="total-packs"></td></tr>
-      <tr><td><b>Downloads:</b> </td><td id="total-downloads"></td></tr>
-      <tr><td><b>Avg downloads per sound:</b> </td><td id="avg-downloads"></td></tr>
-      <tr><td><b>Comments:</b> </td><td id="total-comments"></td></tr>
-      <tr><td><b>Avg comments per sound:</b> </td><td id="avg-comments"></td></tr>
-      <tr><td><b>Ratings:</b> </td><td id="total-ratings"></td></tr>
-      <tr><td><b>Avg ratings per sound:</b> </td><td id="avg-ratings"></td></tr>
-      <tr><td><b>Unique tags:</b> </td><td id="total-tags"></td></tr>
-      <tr><td><b>Tags applications:</b> </td><td id="total-used-tags"></td></tr>
-      <tr><td><b>Avg tags per sound:</b> </td><td id="avg-tags"></td></tr>
-      <tr><td><b>Posts:</b> </td><td id="total-posts"></td></tr>
-      <tr><td><b>Threads:</b> </td><td id="total-threads"></td></tr>
+      <tr>
+        <td><b>Active Users:</b></td><td id="total-users"></td>
+        <td><b>Comments:</b> </td><td id="total-comments"></td>
+        <td><b>Avg tags per sound:</b> </td><td id="avg-tags"></td>
+      </tr>
+      <tr>
+        <td><b>Uploaders:</b></td><td id="users-with-sounds"></td>
+        <td><b>Avg comments per sound:</b> </td><td id="avg-comments"></td>
+        <td><b>Posts:</b> </td><td id="total-posts"></td>
+      </tr>
+      <tr>
+        <td><b>Sounds:</b> </td><td id="total-sounds"></td>
+        <td><b>Ratings:</b> </td><td id="total-ratings"></td>
+        <td><b>Threads:</b> </td><td id="total-threads"></td>
+      </tr>
+      <tr>
+        <td><b>Packs:</b> </td><td id="total-packs"></td>
+        <td><b>Avg ratings per sound:</b> </td><td id="avg-ratings"></td>
+        <td><b>Donations:</b> </td><td id="total-donations"></td>
+      </tr>
+      <tr>
+        <td><b>Downloads:</b> </td><td id="total-downloads"></td>
+        <td><b>Unique tags:</b> </td><td id="total-tags"></td>
+        <td></td><td></td>
+      </tr>
+      <tr>
+        <td><b>Avg downloads per sound:</b> </td><td id="avg-downloads"></td>
+        <td><b>Tags applications:</b> </td><td id="total-used-tags"></td>
+        <td></td><td></td>
+      </tr>
     </table>
 
 
@@ -65,6 +83,10 @@
     <div class='users'>
     </div>
     
+    <h3>Active users by activity per week</h3>
+    <div class='active-users'>
+    </div>
+
     <h2>Sounds</h2>
     <h3>Sounds created on last two weeks</h3>
     <div class='uploads'>
@@ -75,22 +97,43 @@
     <div class='downloads'>
     </div>
 
-    <h2>Tags</h2>
-    <h3>Most used tags on last two weeks</h3>
-    <div class='tags'>
+    <h2>Donations</h2>
+    <h3>Donations on last year</h3>
+    <div class='donations'>
     </div>
 
+    <div style="display:inline-block">
+    <h2>Tags</h2>
+    <h3>Most used tags on last two weeks</h3>
+    <canvas id='tags-cloud-week' width=450 height=450>
+    </canvas>
+    </div>
+    
+    <div style="display:inline-block">
+    <h3>Tag cloud with most downlaoded tags on last two weeks</h3>
+    <canvas id='down-tags-cloud' width=450 height=450>
+    </canvas>
+    </div>
+    
+    <h3>Tag cloud with most used tags</h3>
+    <canvas id='tags-cloud' width=600 height=600>
+    </canvas>
+    
+
+    <h2>User Queries</h2>
+    <h3>Most common queries on last two weeks</h3>
+    <canvas id='queries-wordcloud' width=600 height=600>
+    </canvas>
 
     <script>
-      var totalUsersDataUrl = '{% url 'monitor-total-users-stats-ajax' %}';
-      var totalSoundsDataUrl = '{% url 'monitor-total-sounds-stats-ajax' %}';
-      var totalActivityDataUrl = '{% url 'monitor-total-activity-stats-ajax' %}';
-      var totalTagsDataUrl = '{% url 'monitor-total-tags-stats-ajax' %}';
-      var totalForumDataUrl = '{% url 'monitor-total-forum-stats-ajax' %}';
+      var totalsDataUrl = '{% url 'monitor-totals-stats-ajax' %}';
+      var queriesDataUrl = '{% url 'monitor-queries-stats-ajax' %}';
       var tagsDataUrl = '{% url 'monitor-tags-stats-ajax' %}';
       var downloadsDataUrl = '{% url 'monitor-downloads-stats-ajax' %}';
+      var donationsDataUrl = '{% url 'monitor-donations-stats-ajax' %}';
       var soundsDataUrl = '{% url 'monitor-sounds-stats-ajax' %}';
       var usersDataUrl = '{% url 'monitor-users-stats-ajax' %}';
+      var activeUsersDataUrl = '{% url 'monitor-active-users-stats-ajax' %}';
     </script>
     <script src="https://d3js.org/d3.v4.min.js" type="text/javascript"></script>
     <script src="https://d3js.org/d3-axis.v1.min.js"></script>
@@ -104,5 +147,6 @@
     <script src="https://d3js.org/d3-scale.v1.min.js"></script>
     <script src="https://d3js.org/d3-path.v1.min.js"></script>
     <script src="https://d3js.org/d3-shape.v1.min.js"></script>
+    <script src="{{media_url}}js/wordcloud2.js"></script>
     <script src="{{media_url}}js/stats.js" type="text/javascript"></script>
 {% endblock content %}

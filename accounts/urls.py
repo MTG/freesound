@@ -46,6 +46,7 @@ urlpatterns = [
 
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
+    url(r'^email-settings/$', accounts.edit_email_settings, name="accounts-email-settings"),
     url(r'^delete/$', accounts.delete, name="accounts-delete"),
     url(r'^pending/$', accounts.pending, name="accounts-pending"),
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),

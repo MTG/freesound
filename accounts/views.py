@@ -43,8 +43,8 @@ from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -65,7 +65,8 @@ from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
-from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations
+from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations, \
+    copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -253,6 +254,24 @@ def home(request):
 
 
 @login_required
+def edit_email_settings(request):
+    profile = request.user.profile
+    if request.method == "POST":
+        form = EmailSettingsForm(request.POST)
+        if form.is_valid():
+            email_type_ids = form.cleaned_data['email_types']
+            request.user.profile.update_enabled_email_types(email_type_ids)
+    else:
+        # Get list of enabled email_types
+        all_emails = request.user.profile.get_enabled_email_types()
+        form = profile_form = EmailSettingsForm(initial={
+            'email_types': all_emails,
+            })
+    tvars = {'form': form}
+    return render(request, 'accounts/edit_email_settings.html', tvars)
+
+
+@login_required
 def edit(request):
     profile = request.user.profile
 
@@ -268,13 +287,8 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        had_enabled_stream_emails = profile.enabled_stream_emails
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         if profile_form.is_valid():
-            enabled_stream_emails = profile_form.cleaned_data.get("enabled_stream_emails")
-            # If is enabling stream emails, set last_stream_email_sent to now
-            if not had_enabled_stream_emails and enabled_stream_emails:
-                profile.last_stream_email_sent = datetime.datetime.now()
             profile.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
@@ -368,6 +382,7 @@ def describe(request):
             elif "delete_confirm" in request.POST:
                 for f in form.cleaned_data["files"]:
                     os.remove(files[f].full_path)
+                    remove_uploaded_file_from_mirror_locations(files[f].full_path)
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
                 # Clear existing describe-related session data
@@ -400,7 +415,6 @@ def describe_license(request):
     else:
         form = NewLicenseForm()
     tvars = {'form': form}
-    print form.errors
     return render(request, 'accounts/describe_license.html', tvars)
 
 
@@ -802,6 +816,7 @@ def handle_uploaded_file(user_id, f):
         for chunk in f.chunks():
             destination.write(chunk)
         logger.info("file upload done")
+        copy_uploaded_file_to_mirror_locations(path)
     except Exception as e:
         logger.warning("failed writing file error: %s", str(e))
         return False

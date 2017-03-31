@@ -2236,8 +2236,70 @@ a.donation_button:hover {
     line-height: 14px;
 }
 
+
+#donation_form_wrapper {
+    display: flex;
+    padding: 34px;
+    background: #fafafa;
+}
+
+#donation_form{
+    width: 420px;
+    margin-left: calc(50% - 210px);
+}
+
+#donation_form form{
+    background: #ffd359;
+}
+
 #donation_form label{
     float: left;
+    margin-right: 4px;
+}
+
+#donation_form ul li {
+    line-height: 22px;
+}
+
+#donation_form #id_amount{
+    font-size: 19px;
+    padding: 10px;
+    width: 159px;
+}
+
+#donation_form label[for=id_amount]{
+    font-size: 13px;
+    font-weight: bold;
+    margin-left: 18px;
+    float: none;
+    display: inline;
+}
+
+#donation_form .currency{
+    font-size: 15px;
+    margin-left: 16px;
+}
+
+#donation_form button{
+    background-color: #0079C1;
+    color: #fff;
+    height: 49px;
+    width: 216px;
+    font-weight: bold;
+    border: 0;
+    border-radius: 2px;
+    margin: 0 0 0 82px;
+    padding: 5px 20px;
+    font-size: 13px;
+    background-repeat: no-repeat;
+    background-image: url(/media/images/paypal.svg);
+    background-size: 93px;
+    background-position: left 109px center;
+    text-align: left;
+    cursor: pointer;
+}
+#donation_form #id_name_option{
+    width: 206px;
 }
 
 #latest_forum_posts {
@@ -3035,6 +3097,9 @@ ul.messages {
     padding-bottom: 10px;
 }
 
+#edit_account form ul {
+    list-style-type: none;
+}
 
 /* Moderation interface
 ------------------------------------------------------*/

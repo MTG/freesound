@@ -284,6 +284,7 @@ MIRROR_PREVIEWS = None  # list of locations to mirror contents of SOUNDS_PATH, s
 MIRROR_DISPLAYS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
 MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
 MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
+MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 
 # Footer banner
 FOOTER_BANNER_CONTENTS = \

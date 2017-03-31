@@ -26,7 +26,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from accounts.models import Profile, UserFlag
+from accounts.models import Profile, UserFlag, EmailPreferenceType
 from django_object_actions import DjangoObjectActions
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -89,7 +89,7 @@ class ProfileAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'geotag')
     list_display = ('user', 'home_page', 'signature', 'is_whitelisted')
     ordering = ('id', )
-    list_filter = ('is_whitelisted', 'wants_newsletter', )
+    list_filter = ('is_whitelisted', )
     search_fields = ('=user__username', )
 
 admin.site.register(Profile, ProfileAdmin)
@@ -184,3 +184,5 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
+
+admin.site.register(EmailPreferenceType)

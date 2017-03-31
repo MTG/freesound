@@ -95,7 +95,8 @@ class Command(BaseCommand):
         random_sound_id = gearman_job.data
         random_sound = Sound.objects.get(id=random_sound_id)
 
-        send_mail_template(\
+        if random_sound.user.profile.email_not_disabled("random_sound"):
+            send_mail_template(\
                 u'One of your sounds has been chosen as random sound of the day!',
                 'sounds/email_random_sound.txt',
                 {'sound': random_sound, 'user': random_sound.user},

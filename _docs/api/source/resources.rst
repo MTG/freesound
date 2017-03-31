@@ -225,7 +225,7 @@ Name                       Type                       Description
 =========================  =========================  ======================
 ``target``                 string or number           This parameter defines a target based on content-based descriptors to sort the search results. It can be set as a number of descriptor name and value pairs, or as a sound id. See below.
 ``analysis_file``          file                       Alternatively, targets can be specified by uploading a file with the output of the Essentia Freesound Extractor analysis of any sound that you analized locally (see below). This parameter overrides ``target``, and requires the use of POST method.
-``descriptors_filer``      string                     This parameter allows filtering query results by values of the content-based descriptors. See below for more information.
+``descriptors_filter``      string                     This parameter allows filtering query results by values of the content-based descriptors. See below for more information.
 =========================  =========================  ======================
 
 **The 'target' and 'analysis_file' parameters**
@@ -268,7 +268,7 @@ Note that if ``target`` (or ``analysis_file``) is not used in combination with `
 include all sounds from Freesound indexed in the similarity server, sorted by similarity to the target.
 
 
-**The 'descriptors_filer' parameter**
+**The 'descriptors_filter' parameter**
 
 The ``descriptors_filter`` parameter is used to restrict the query results to those sounds whose content descriptor values match with the defined filter.
 To define ``descriptors_filter`` parameter you can use the same syntax as for the normal ``filter`` parameter, including numeric ranges and simple logic operators.
@@ -333,7 +333,7 @@ Request parameters
 ------------------
 
 Combined Search request parameters can include any of the parameters from text-based search queries (``query``, ``filter`` and ``sort``, :ref:`sound-text-search-parameters`)
-and content-based search queries (``target``, ``analysis_file`` and ``descriptors_filer`` and, :ref:`sound-content-search-parameters`).
+and content-based search queries (``target``, ``analysis_file`` and ``descriptors_filter`` and, :ref:`sound-content-search-parameters`).
 Note that ``group_by_pack`` **is not** available in combined search queries.
 
 In Combined Search, queries can be defined both like a standard textual query or as a target of content-descriptors, and

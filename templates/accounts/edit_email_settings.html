@@ -12,14 +12,14 @@ form ul {
 
 {% block section_content %}
 
-<h1>Settings</h1>
+<h1>Email notification settings</h1>
 
 <div id="content">
     <div id="edit_account" class="content_box">
         <h3>Edit your account information</h3>
         <form method="post" action=".">{% csrf_token %}
             {{form.as_p}}
-            <input type="submit" value="Save account settings" />
+            <input type="submit" value="Save email settings" />
         </form>
     </div><!-- #edit_account -->
 </div><!-- #content -->

@@ -3008,6 +3008,9 @@ ul.messages {
     padding-bottom: 10px;
 }
 
+#edit_account form ul {
+    list-style-type: none;
+}
 
 /* Moderation interface
 ------------------------------------------------------*/

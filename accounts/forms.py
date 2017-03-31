@@ -314,9 +314,10 @@ class DeleteUserForm(forms.Form):
 
 class EmailSettingsForm(forms.Form):
     email_types = forms.ModelMultipleChoiceField(
-        queryset = EmailPreferenceType.objects.all(),
-        widget = forms.CheckboxSelectMultiple,
-        required = False
+        queryset=EmailPreferenceType.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label='Select the events for which you want to be notified by email:'
     )
 
 

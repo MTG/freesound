@@ -261,10 +261,36 @@ def sound(request, username, sound_id):
 
 
 @login_required
-def after_sound_download(request):
-    num_downloads_today = request.GET.get('num_downloads', None)
-    show = should_suggest_donation(request.user, int(num_downloads_today))
-    return JsonResponse({"show": show})
+def after_download_modal(request):
+    """
+    This view checks if a modal should be shown after the user has downloaded a sound, and returns the contents
+    of the modal if needed.
+    """
+    show = None
+    title = None
+    contents = None
+    sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
+
+    if settings.AFTER_DOWNLOAD_MODAL == 'donation':
+        num_downloads_today = request.COOKIES.get('numberDownloads', 0)  # Get num_downloads_today from cookies
+        donation_url = reverse('donate')
+        title = "Support Freesound!"
+        contents = """
+        Thanks for downloading <b>%s</b>!<br />
+        Help us to keep Freesound open and free. Support us by <a href="%s">making a donation</a> 
+        if you have not contributed yet :)<br />
+        """ % (sound_name, donation_url)
+        show = should_suggest_donation(request.user, int(num_downloads_today))
+    elif settings.AFTER_DOWNLOAD_MODAL == 'survey':
+        title = "Participate in the Freesound survey!"
+        contents = """
+        Thanks for downloading <b>%s</b>!<br />
+        Please, consider participating in the <a href="javascript:void(0);" onclick="openSurveyPage();hideModal();
+        hideFooterBanner();setSurveyVisited();">Freesound Survey 2017</a> if you have not participated yet :)
+        """ % sound_name
+        if request.COOKIES.get('surveyVisited', 'no') != 'yes':
+            show = True
+    return JsonResponse({"show": show, "title": title, "contents": contents})
 
 
 def sound_download(request, username, sound_id):

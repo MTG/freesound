@@ -48,8 +48,6 @@ $(function() {
         warning.remove();
         e.preventDefault()
     })
-
-    $("#fsmodal").find('.close-modal').click(hideModal);
 });
 
 function d()
@@ -149,22 +147,28 @@ function openModal(){
 function setContentModalHTML(title, contents){
   $('#fsmodal').find('.modal-header').html('<span class="close-modal">&times;</span>' + title);
   $('#fsmodal').find('.modal-body').html(contents);
+  $("#fsmodal").find('.close-modal').click(hideModal);
 }
 
-function displayModal(show_modal_url, title, content){
-    hideModal();
-    var numberDownloads = $.cookie("numberDownloads");
-    if (numberDownloads == null) {
-      numberDownloads = 0;
-    } 
-    numberDownloads = parseInt(numberDownloads) + 1;
-    $.cookie("numberDownloads", numberDownloads, { expires : 1 });
 
-    $.get(show_modal_url, {num_downloads: numberDownloads}, function(resp) {
+// After download banner
+
+function afterDownloadModal(show_modal_url, sound_name){
+    hideModal(); // Hide the modal just in case it was shown
+
+    // Keep track of number of downloads this day
+    var numberDownloads = $.cookie("numberDownloads");
+    if (numberDownloads === undefined) {numberDownloads = 0;}
+    numberDownloads = parseInt(numberDownloads, 10) + 1;
+    $.cookie("numberDownloads", numberDownloads, {expires: 1, path: '/'});
+    // TODO: check if we're doing this cookie thing in the correct way. If I understand correcntly, if a user never
+    // TODO: spends more than 24h without downloading, the numberDownloads cookie will never exprie and number will
+    // TODO: continue to accumulate
+
+    // Send request to server which will decide whether to show or not the modal and return the contents
+    $.get(show_modal_url, {sound_name:sound_name}, function(resp) {
         if (resp.show) {
-            if (title != null && content != null) {
-                setContentModalHTML(title, content);
-            }
+            setContentModalHTML(resp.title, resp.contents);
             openModal();
         }
     })

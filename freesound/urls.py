@@ -82,7 +82,7 @@ urlpatterns = [
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
     url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
 
-    url(r'^show-donation-popup/$', sounds.views.after_sound_download, name="show-donation-popup"),
+    url(r'^after-download-modal/$', sounds.views.after_download_modal, name="after-download-modal"),
 
     url(r'^browse/$', sounds.views.sounds, name="sounds"),
     url(r'^browse/tags/$', tags.views.tags, name="tags"),

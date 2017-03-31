@@ -171,15 +171,16 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
-# DONATION POPUP
-# After a donation we don't display the popup for this long:
-POPUP_DAYS_AFTER_DONATION = 1
-# After this number of downloads (in a period of days: POPUP_DOWNLOAD_DAYS)
-# we display the popup:
-POPUP_DOWNLOADS_IN_PERIOD = 1
-POPUP_DOWNLOAD_DAYS = 10
-# max number of times we display the popup per day:
-POPUP_DISPLAY_TIMES_DAY = 10
+# After download modal
+AFTER_DOWNLOAD_MODAL = 'survey'  # Set it to none for no modal after download
+# AFTER_DOWNLOAD_MODAL = 'donation'  # To show donations popup
+# AFTER_DOWNLOAD_MODAL = 'survey'  # To show survey info
+
+# Donation modal settings
+DONATION_MODAL_DAYS_AFTER_DONATION = 1  # After a donation we don't display the popup for this long
+DONATION_MODAL_DOWNLOADS_IN_PERIOD = 1  # After this number of downloads...
+DONATION_MODAL_DOWNLOAD_DAYS = 10  # ...in this period of days, we display the popup
+DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the popup per day:
 
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });

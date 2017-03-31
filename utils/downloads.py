@@ -65,19 +65,19 @@ def should_suggest_donation(user, times_displayed):
     times per day.
     """
 
-    if times_displayed and times_displayed > settings.POPUP_DISPLAY_TIMES_DAY:
+    if times_displayed and times_displayed > settings.DONATION_MODAL_DISPLAY_TIMES_DAY:
         return False
 
     last_donation = user.donation_set.order_by('created').last()
     period = datetime.datetime.now()\
-            - datetime.timedelta(days=settings.POPUP_DOWNLOAD_DAYS)
+            - datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS)
     num_downloads_in_period = Download.objects.filter(user=user,
             created__gt=period)
 
     donation_period = datetime.datetime.now()\
-            - datetime.timedelta(days=settings.POPUP_DAYS_AFTER_DONATION)
+            - datetime.timedelta(days=settings.DONATION_MODAL_DAYS_AFTER_DONATION)
     if not last_donation or last_donation.created < donation_period:
-        if num_downloads_in_period > settings.POPUP_DOWNLOADS_IN_PERIOD:
+        if num_downloads_in_period > settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD:
             return True
     return False
 

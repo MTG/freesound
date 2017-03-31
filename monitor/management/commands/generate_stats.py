@@ -126,8 +126,8 @@ class Command(NoArgsCommand):
         # Compute stats related with Tags:
         time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)
 
-        tags_stats = TaggedItem.objects.filter(created__gt=time_span)\
-            .annotate(num=Count('tag_id'))\
+        tags_stats = TaggedItem.objects.values('tag_id')\
+            .filter(created__gt=time_span).annotate(num=Count('tag_id'))\
             .values('num', 'tag__name').order_by('-num')[:300]
 
         # Most used tags for tags cloud

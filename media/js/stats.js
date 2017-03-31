@@ -216,7 +216,7 @@ function displayCharts(selectClass, data, options, exclude){
           .attr("y", i * 20 + 30)
           .text(d.name);
     });
-  $(".legend-item").click(mouseclick);
+  $(selectClass).find(".legend-item").click(mouseclick);
   
   function mouseclick(p) {
     $(selectClass).html("");

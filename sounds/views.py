@@ -218,12 +218,13 @@ def sound(request, username, sound_id):
                                               user=request.user,
                                               comment=comment_text))
                     try:
-                        # Send the user an email to notify him of the new comment!
-                        logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username,
-                                                                                   request.user.username))
-                        send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
-                                           {'sound': sound, 'user': request.user, 'comment': comment_text},
-                                           None, sound.user.email)
+                        if request.user.profile.email_not_disabled("new_comment"):
+                            # Send the user an email to notify him of the new comment!
+                            logger.debug("Notifying user %s of a new comment by %s" % (sound.user.username,
+                                                                                       request.user.username))
+                            send_mail_template(u'You have a new comment.', 'sounds/email_new_comment.txt',
+                                               {'sound': sound, 'user': request.user, 'comment': comment_text},
+                                               None, sound.user.email)
                     except Exception, e:
                         # If the email sending fails, ignore...
                         logger.error("Problem sending email to '%s' about new comment: %s" % (request.user.email, e))

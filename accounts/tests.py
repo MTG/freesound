@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.conf import settings
-from accounts.models import Profile
+from accounts.models import Profile, EmailPreferenceType
 from accounts.views import handle_uploaded_image
 from sounds.models import License, Sound, Pack, DeletedSound
 from tags.models import TaggedItem
@@ -311,8 +311,6 @@ class UserEditProfile(TestCase):
         self.client.login(username='testuser', password='testpass')
         self.client.post("/home/edit/", {
             'profile-home_page': 'http://www.example.com/',
-            'profile-wants_newsletter': True,
-            'profile-enabled_stream_emails': True,
             'profile-about': 'About test text',
             'profile-signature': 'Signature test text',
             'profile-not_shown_in_online_users_list': True,
@@ -320,11 +318,22 @@ class UserEditProfile(TestCase):
 
         user = User.objects.select_related('profile').get(username="testuser")
         self.assertEqual(user.profile.home_page, 'http://www.example.com/')
-        self.assertEqual(user.profile.wants_newsletter, True)
-        self.assertEqual(user.profile.enabled_stream_emails, True)
         self.assertEqual(user.profile.about, 'About test text')
         self.assertEqual(user.profile.signature, 'Signature test text')
         self.assertEqual(user.profile.not_shown_in_online_users_list, True)
+
+    def test_edit_user_email_settings(self):
+        EmailPreferenceType.objects.create(name="email", display_name="email")
+        EmailPreferenceType.objects.create(name="stream_emails", display_name="email")
+        User.objects.create_user("testuser", password="testpass")
+        self.client.login(username='testuser', password='testpass')
+        response = self.client.post("/home/email-settings/", {
+            'email_types': 1,
+        })
+        user = User.objects.select_related('profile').get(username="testuser")
+        email_types = user.profile.get_enabled_email_types()
+        self.assertEqual(len(email_types), 1)
+        self.assertTrue(email_types.pop().name, 'email')
 
     @override_settings(AVATARS_PATH=tempfile.mkdtemp())
     def test_edit_user_avatar(self):

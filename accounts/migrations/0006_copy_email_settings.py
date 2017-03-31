@@ -11,11 +11,36 @@ def forwards_func(apps, schema_editor):
     EmailPreferenceType= apps.get_model("accounts", "EmailPreferenceType")
     UserEmailSetting = apps.get_model("accounts", "UserEmailSetting")
     db_alias = schema_editor.connection.alias
-    for p in Profile.objects.using(db_alias).all():
-        if p.enabled_stream_emails:
-            email = EmailPreferenceType.objects.get(name="stream_emails")
-            UserEmailSetting.objects.create(email_type=email,
-                    user=p.user)
+
+    # Create EmailPreferenceType objects
+    EmailPreferenceType.objects.using(db_alias).bulk_create([
+        EmailPreferenceType(
+            name="random_sound", send_by_default=True,
+            display_name="Selected sound as random sound of the day",
+            description="Email notification sent when user's sound is selected as random sound of the day",
+        ),
+        EmailPreferenceType(
+            name="private_message", send_by_default=True,
+            display_name="New private message received",
+            description="Email notification sent when user's receives a private message",
+        ),
+        EmailPreferenceType(
+            name="new_comment", send_by_default=True,
+            display_name="New comment on sound",
+            description="Email notification sent when user's receives a comment on a sound",
+        ),
+        EmailPreferenceType(
+            name="stream_emails", send_by_default=False,
+            display_name="Receive weekly stream update email notifications",
+            description="Receive weekly stream update email notifications, only when new sounds are uploaded by users "
+                        "you follow or that have tags you follow",
+        ),
+    ])
+
+    for p in Profile.objects.using(db_alias).filter(enabled_stream_emails=True):
+        email = EmailPreferenceType.objects.get(name="stream_emails")
+        UserEmailSetting.objects.create(email_type=email, user=p.user)
+
 
 def backwards_func(apps, schema_editor):
     "Migration from new model to the old one."

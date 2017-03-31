@@ -161,7 +161,7 @@
     <div id="download">
     {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
         {% if request.user.is_authenticated %}
-            <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);" id="download_button" title="download sound"></a>
+            <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);{% if after_download_modal %}createAndOpenModal('{{ after_download_modal.0 }}', '{{ after_download_modal.1 }}');{% endif %}" id="download_button" title="download sound"></a>
         {% else %}
             <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" id="download_login_button" title="login to download"></a>
         {% endif %}

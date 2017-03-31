@@ -276,6 +276,10 @@ MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, s
 MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
 
+# Footer banner
+FOOTER_BANNER_CONTENTS = \
+    '<a href="javascript:void(0);" onclick="openSurveyPage();hideFooterBanner();setSurveyVisited();">' \
+    '<img src="/media/images/content/freesound-survey-2017.png"/></a>'  # Set to None for no banner
 
 # leave at bottom starting here!
 from local_settings import *

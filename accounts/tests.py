@@ -324,7 +324,6 @@ class UserEditProfile(TestCase):
 
     def test_edit_user_email_settings(self):
         EmailPreferenceType.objects.create(name="email", display_name="email")
-        EmailPreferenceType.objects.create(name="stream_emails", display_name="email")
         User.objects.create_user("testuser", password="testpass")
         self.client.login(username='testuser', password='testpass')
         response = self.client.post("/home/email-settings/", {

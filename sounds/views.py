@@ -266,12 +266,12 @@ def after_download_modal(request):
     This view checks if a modal should be shown after the user has downloaded a sound, and returns either the contents
     of the modal if needed.
     """
-    response = HttpResponse(status=204)  # Default empty response with no content (TODO: maybe we should simply use http 404?)
+    response = HttpResponse()  # Default empty response with no content
     sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
 
     if settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_DONATION:
-        num_downloads_today = request.COOKIES.get('numberDownloads', 0)  # Get num_downloads_today from cookies
-        if should_suggest_donation(request.user, int(num_downloads_today)):
+        times_shown_in_last_day = int(request.GET.get('num_times_shown', 0))
+        if should_suggest_donation(request.user, times_shown_in_last_day):
             response = render(request, 'sounds/after_download_modal_donation.html', {'sound_name': sound_name})
 
     elif settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_SURVEY:

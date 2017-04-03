@@ -56,27 +56,26 @@ def download_sounds(licenses_url, pack):
     return response
 
 
-def should_suggest_donation(user, times_displayed):
+def should_suggest_donation(user, times_shown_in_last_day):
     """
-    This method indicates when we should display the donation popup to the
-    user. This will be based on 3 settings indicating how many days
-    after a donation we show the popup again, after how many downloads we
-    display the popup and for how long. The popup will be shown a number of
-    times per day.
+    This method indicates when we should display the donation modal to the user. This will be based on 3 settings 
+    indicating how many days after a donation we show the modal again, after how many downloads we display the modal 
+    and for how long. The modal will be shown a maximum number of times per day.
     """
 
-    if times_displayed and times_displayed > settings.DONATION_MODAL_DISPLAY_TIMES_DAY:
+    if times_shown_in_last_day >= settings.DONATION_MODAL_DISPLAY_TIMES_DAY:
+        # If modal has been shown more than settings.DONATION_MODAL_DISPLAY_TIMES_DAY times, don't show it again today
         return False
 
+    donation_period = datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DAYS_AFTER_DONATION)
     last_donation = user.donation_set.order_by('created').last()
-    period = datetime.datetime.now()\
-            - datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS)
-    num_downloads_in_period = Download.objects.filter(user=user,
-            created__gt=period)
-
-    donation_period = datetime.datetime.now()\
-            - datetime.timedelta(days=settings.DONATION_MODAL_DAYS_AFTER_DONATION)
     if not last_donation or last_donation.created < donation_period:
+        # If there has never been a donation or last donation is older than settings.DONATION_MODAL_DAYS_AFTER_DONATION,
+        # check if the number of downloads in the last settings.DONATION_MODAL_DOWNLOAD_DAYS days if bigger than
+        # settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD. If that is the case, show the modal.
+        num_downloads_in_period = Download.objects.filter(
+            user=user,
+            created__gt=datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS))
         if num_downloads_in_period > settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD:
             return True
     return False

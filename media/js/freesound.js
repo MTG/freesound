@@ -157,8 +157,7 @@ function afterDownloadModal(show_modal_url, sound_name){
     hideModal(); // Hide the modal just in case it was shown
 
     // Keep track of number of downloads this day
-    var numberDownloads = $.cookie("numberDownloads");
-    if (numberDownloads === undefined) {numberDownloads = 0;}
+    var numberDownloads = $.cookie("numberDownloads") || 0;
     numberDownloads = parseInt(numberDownloads, 10) + 1;
     $.cookie("numberDownloads", numberDownloads, {expires: 1, path: '/'});
     // TODO: check if we're doing this cookie thing in the correct way. If I understand correcntly, if a user never

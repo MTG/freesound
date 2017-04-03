@@ -142,14 +142,8 @@ function hideModal(){
 
 function openModal(){
     $("#fsmodal").show();
+    $("#fsmodal").find('.close-modal').click(hideModal);
 }
-
-function setContentModalHTML(title, contents){
-  $('#fsmodal').find('.modal-header').html('<span class="close-modal">&times;</span>' + title);
-  $('#fsmodal').find('.modal-body').html(contents);
-  $("#fsmodal").find('.close-modal').click(hideModal);
-}
-
 
 // After download banner
 
@@ -166,9 +160,7 @@ function afterDownloadModal(show_modal_url, sound_name){
 
     // Send request to server which will decide whether to show or not the modal and return the contents
     $.get(show_modal_url, {sound_name:sound_name}, function(resp) {
-        if (resp.show) {
-            setContentModalHTML(resp.title, resp.contents);
-            openModal();
-        }
+        $('#fsmodal').html(resp);  // If response is not 200 OK, no modal will be shown
+        openModal();
     })
 }

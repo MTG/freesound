@@ -36,8 +36,11 @@ class DonateForm(forms.Form):
                     widget=forms.RadioSelect(), choices=choices)
 
     def clean(self):
-        if int(self.cleaned_data['amount']) < 1:
-            raise forms.ValidationError('The amount must be more than 1')
+        try:
+            if float(self.cleaned_data['amount']) < 1:
+                raise forms.ValidationError('The amount must be more than 1')
+        except ValueError:
+            raise forms.ValidationError('The amount must be a valid number, use \'.\' for decimals')
 
         campaign = DonationCampaign.objects.order_by('date_start').last()
         returned_data = {

@@ -271,7 +271,7 @@ def after_download_modal(request):
     contents = None
     sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
 
-    if settings.AFTER_DOWNLOAD_MODAL == 'donation':
+    if settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_DONATION:
         num_downloads_today = request.COOKIES.get('numberDownloads', 0)  # Get num_downloads_today from cookies
         donation_url = reverse('donate')
         title = "Support Freesound!"
@@ -281,7 +281,7 @@ def after_download_modal(request):
         if you have not contributed yet :)<br />
         """ % (sound_name, donation_url)
         show = should_suggest_donation(request.user, int(num_downloads_today))
-    elif settings.AFTER_DOWNLOAD_MODAL == 'survey':
+    elif settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_SURVEY:
         title = "Participate in the Freesound survey!"
         contents = """
         Thanks for downloading <b>%s</b>!<br />

@@ -172,9 +172,9 @@ MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
 # After download modal
-AFTER_DOWNLOAD_MODAL = 'survey'  # Set it to none for no modal after download
-# AFTER_DOWNLOAD_MODAL = 'donation'  # To show donations popup
-# AFTER_DOWNLOAD_MODAL = 'survey'  # To show survey info
+AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
+AFTER_DOWNLOAD_MODAL_DONATION = 'donation'
+AFTER_DOWNLOAD_MODAL = AFTER_DOWNLOAD_MODAL_SURVEY  # Set it to none for no modal after download
 
 # Donation modal settings
 DONATION_MODAL_DAYS_AFTER_DONATION = 1  # After a donation we don't display the popup for this long

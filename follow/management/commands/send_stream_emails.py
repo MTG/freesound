@@ -46,7 +46,7 @@ class Command(BaseCommand):
         # and exclude the ones that have the last email sent for less than settings.NOTIFICATION_TIMEDELTA_PERIOD
         # (because they have been sent an email already)
         email_type = EmailPreferenceType.objects.get(name="stream_emails")
-        user_ids = email_type.users_set.values('id')
+        user_ids = email_type.useremailsetting_set.values_list('user_id')
 
         users_enabled_notifications = Profile.objects.filter(user_id__in=user_ids).exclude(
             last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by(

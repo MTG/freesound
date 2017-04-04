@@ -75,7 +75,7 @@ def should_suggest_donation(user, times_shown_in_last_day):
         # settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD. If that is the case, show the modal.
         num_downloads_in_period = Download.objects.filter(
             user=user,
-            created__gt=datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS))
+            created__gt=datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS)).count()
         if num_downloads_in_period > settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD:
             return True
     return False

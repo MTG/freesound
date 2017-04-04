@@ -335,6 +335,11 @@
         $("#follow_link_sound").click(function() {
             follow_unfollow_user(is_following);
         });
+
+        if (navigator.userAgent.indexOf('Safari') !== -1 && navigator.userAgent.indexOf('Chrome') === -1) {
+            // Only run this line when safari is the browser (code from http://stackoverflow.com/questions/5899783/detect-safari-using-jquery)
+            $('#download_button').attr('target', '_blank');
+        }
     });
 
     function follow_unfollow_user(is_following) {

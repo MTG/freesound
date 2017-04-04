@@ -150,10 +150,7 @@ function afterDownloadModal(show_modal_url, sound_name){
     // Send request to server which will decide whether to show or not the modal and return the contents
     $.get(show_modal_url, {sound_name:sound_name},
         function(resp) {
-            if (resp){
-                // If response is not empty, open the modal
-                $('#fsmodal').html(resp);  // If response is not 200 OK, no modal will be shown
-                openModal();
-            }
+            $('#fsmodal').html(resp);  // If response is not 200 OK, no modal will be shown
+            openModal();
         });
 }

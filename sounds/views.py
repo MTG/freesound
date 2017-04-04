@@ -266,7 +266,7 @@ def after_download_modal(request):
     This view checks if a modal should be shown after the user has downloaded a sound, and returns either the contents
     of the modal if needed.
     """
-    response = HttpResponse()  # Default empty response with no content
+    response = HttpResponse(status=404)  # Default empty response with http status 404
     sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
 
     def modal_shown_timestamps_cache_key(user):

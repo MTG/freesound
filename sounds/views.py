@@ -270,7 +270,10 @@ def after_download_modal(request):
     sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
 
     if settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_DONATION:
-        times_shown_in_last_day = int(request.GET.get('num_times_shown', 0))
+        try:
+            times_shown_in_last_day = int(request.GET.get('num_times_shown', 0))
+        except ValueError:
+            times_shown_in_last_day = 0
         if should_suggest_donation(request.user, times_shown_in_last_day):
             response = render(request, 'sounds/after_download_modal_donation.html', {'sound_name': sound_name})
 

@@ -269,12 +269,19 @@ def after_download_modal(request):
     response = HttpResponse()  # Default empty response with no content
     sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
 
+    def modal_shown_timestamps_cache_key(user):
+        return 'modal_shown_timestamps_%s_shown_%i' % (settings.AFTER_DOWNLOAD_MODAL, user.id)
+
     if settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_DONATION:
-        try:
-            times_shown_in_last_day = int(request.GET.get('num_times_shown', 0))
-        except ValueError:
-            times_shown_in_last_day = 0
-        if should_suggest_donation(request.user, times_shown_in_last_day):
+        # Get timestamps of last times modal was shown from cache
+        modal_shown_timestamps = cache.get(modal_shown_timestamps_cache_key(request.user), [])
+
+        # Iterate over timestamps, keep only the ones in last 24 hours and do the counting
+        modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
+
+        if should_suggest_donation(request.user, len(modal_shown_timestamps)):
+            modal_shown_timestamps.append(time.time())
+            cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps)
             response = render(request, 'sounds/after_download_modal_donation.html', {'sound_name': sound_name})
 
     elif settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_SURVEY:

@@ -27,7 +27,8 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import connection
 from django.db.models import Q
-from django.http import HttpResponseRedirect, Http404, HttpResponsePermanentRedirect
+from django.http import HttpResponseRedirect, Http404,\
+    HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import render_to_response, get_object_or_404, render, redirect
 from django.template import RequestContext
 from django.http import HttpResponse
@@ -44,7 +45,7 @@ from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSou
 from sounds.templatetags import display_sound
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
-from utils.downloads import download_sounds
+from utils.downloads import download_sounds, should_suggest_donation
 from utils.encryption import encrypt, decrypt
 from utils.functional import combine_dicts
 from utils.mail import send_mail_template
@@ -253,10 +254,41 @@ def sound(request, username, sound_id):
         'display_random_link': display_random_link,
         'do_log': do_log,
         'is_following': is_following,
-        'is_explicit': is_explicit
+        'is_explicit': is_explicit,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)
+
+
+@login_required
+def after_download_modal(request):
+    """
+    This view checks if a modal should be shown after the user has downloaded a sound, and returns either the contents
+    of the modal if needed.
+    """
+    response = HttpResponse(status=404)  # Default empty response with http status 404
+    sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
+
+    def modal_shown_timestamps_cache_key(user):
+        return 'modal_shown_timestamps_%s_shown_%i' % (settings.AFTER_DOWNLOAD_MODAL, user.id)
+
+    if settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_DONATION:
+        # Get timestamps of last times modal was shown from cache
+        modal_shown_timestamps = cache.get(modal_shown_timestamps_cache_key(request.user), [])
+
+        # Iterate over timestamps, keep only the ones in last 24 hours and do the counting
+        modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
+
+        if should_suggest_donation(request.user, len(modal_shown_timestamps)):
+            modal_shown_timestamps.append(time.time())
+            cache.set(modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps)
+            response = render(request, 'sounds/after_download_modal_donation.html', {'sound_name': sound_name})
+
+    elif settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_SURVEY:
+        if request.COOKIES.get('surveyVisited', 'no') != 'yes':
+            response = render(request, 'sounds/after_download_modal_survey.html', {'sound_name': sound_name})
+
+    return response
 
 
 def sound_download(request, username, sound_id):

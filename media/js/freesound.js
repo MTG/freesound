@@ -48,7 +48,6 @@ $(function() {
         warning.remove();
         e.preventDefault()
     })
-
 });
 
 function d()
@@ -125,4 +124,33 @@ function show_hide_bookmark_form(id)
         $("#bookmark_form_"  + id.toString()).html('&nbsp;').load(url)
     }
     $("#bookmark_form_"  + id.toString()).toggle();
+}
+
+// FOOTER BANNER
+function hideFooterBanner(){
+    $('#footerBanner').hide(200);
+}
+
+function showFooterBanner() {
+    $('#footerBanner').show(200);
+}
+
+// Modals
+function hideModal(){
+    $("#fsmodal").hide();
+}
+
+function openModal(){
+    $("#fsmodal").show();
+    $("#fsmodal").find('.close-modal').click(hideModal);
+}
+
+function afterDownloadModal(show_modal_url, sound_name){
+    hideModal(); // Hide the modal just in case it was shown
+    // Send request to server which will decide whether to show or not the modal and return the contents
+    $.get(show_modal_url, {sound_name:sound_name},
+        function(resp) {
+            $('#fsmodal').html(resp);  // If response is not 200 OK, no modal will be shown
+            openModal();
+        });
 }

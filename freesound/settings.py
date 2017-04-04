@@ -171,6 +171,17 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# After download modal
+AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
+AFTER_DOWNLOAD_MODAL_DONATION = 'donation'
+AFTER_DOWNLOAD_MODAL = AFTER_DOWNLOAD_MODAL_SURVEY  # Set it to none for no modal after download
+
+# Donation modal settings
+DONATION_MODAL_DAYS_AFTER_DONATION = 1  # After a donation we don't display the popup for this long
+DONATION_MODAL_DOWNLOADS_IN_PERIOD = 1  # After this number of downloads...
+DONATION_MODAL_DOWNLOAD_DAYS = 10  # ...in this period of days, we display the popup
+DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the popup per day:
+
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
 
@@ -275,7 +286,6 @@ MIRROR_DISPLAYS = None  # list of locations to mirror contents of SOUNDS_PATH, s
 MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
 MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
 MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
-
 
 # leave at bottom starting here!
 from local_settings import *

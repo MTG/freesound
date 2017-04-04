@@ -338,16 +338,14 @@
 
         if (navigator.userAgent.indexOf('Safari') !== -1 && navigator.userAgent.indexOf('Chrome') === -1) {
             // Only run this line when safari is the browser (code from http://stackoverflow.com/questions/5899783/detect-safari-using-jquery)
-            // We get the download link and add a custom onlick event which triggers the download after waiting 100ms
-            // In this way we can make the google analytics and the after download modal request before Safari raises
-            // the 'Frame load interrupted' error (see https://github.com/MTG/freesound/issues/836)
+            // See https://github.com/MTG/freesound/issues/836 about this code
             var download_button = $('#download_button');
-            var download_link = download_button.attr('href');
-            download_button.attr('href', 'javascript:void(0);');
+            download_button.attr('onclick', '');
             download_button.click(function(){
-                    setTimeout(function(){
-                        window.location = download_link;
-                    }, 100);
+                setTimeout(function(){
+                        _gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);
+                        afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');
+                    }, 100)
                 }
             );
 

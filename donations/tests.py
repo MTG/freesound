@@ -79,3 +79,26 @@ class DonationTest(TestCase):
             self.assertEqual(donations_query.exists(), True)
             self.assertEqual(donations_query[0].is_anonymous, True)
 
+    def test_donation_form(self):
+        donations.models.DonationCampaign.objects.create(\
+                goal=200, date_start=datetime.datetime.now(), id=1)
+        data = {
+            'amount': '0,1',
+            'show_amount': True,
+            'donation_type': '1',
+        }
+        ret = self.client.post("/donations/donate/", data)
+        response =  ret.json()
+        # Decimals must have '.' and not ','
+        self.assertTrue('errors' in response)
+
+        data['amount'] = '0.1'
+        ret = self.client.post("/donations/donate/", data)
+        response =  ret.json()
+        # amount must be greater than 1
+        self.assertTrue('errors' in response)
+
+        data['amount'] = '5.1'
+        ret = self.client.post("/donations/donate/", data)
+        response =  ret.json()
+        self.assertFalse('errors' in response)

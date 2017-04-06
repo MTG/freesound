@@ -1,6 +1,6 @@
 // Freesound Survey 2017 cookies and related
-function setSurveyVisited(){
-    $.cookie("surveyVisited", "yes", {expires: 30, path: '/'});
+function setSurveyVisited(num_days){
+    $.cookie("surveyVisited", "yes", {expires: num_days, path: '/'});
 }
 
 function openSurveyPage(){

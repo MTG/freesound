@@ -52,9 +52,9 @@
         {% endcomment %}
         <div id="footerBanner" class="floating_banner">
             <script type="text/javascript" src="{{ media_url }}js/survey_banner.js"></script>
-            <div class="floating_banner_close_button"><a href="javascript:void(0);" onclick="hideFooterBanner();">&#10006;</a></div>
+            <div class="floating_banner_close_button"><a href="javascript:void(0);" onclick="hideFooterBanner();setSurveyVisited(1);">&#10006;</a></div>
             <div class="floating_banner_contents">
-                <a href="javascript:void(0);" onclick="openSurveyPage();hideFooterBanner();setSurveyVisited();">
+                <a href="javascript:void(0);" onclick="openSurveyPage();hideFooterBanner();setSurveyVisited(30);">
                 <img src="/media/images/content/freesound-survey-2017.png"/></a>
             </div>
         </div>

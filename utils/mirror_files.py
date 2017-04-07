@@ -9,6 +9,8 @@ logger = logging.getLogger('web')
 
 def copy_files(source_destination_tuples):
     for source_path, destination_path in source_destination_tuples:
+        if settings.LOG_START_AND_END_COPYING_FILES:
+            logger.error('Started copying file %s to %s' % (source_path, destination_path))
         try:
             path = os.path.dirname(destination_path)
             os.makedirs(path)
@@ -19,6 +21,8 @@ def copy_files(source_destination_tuples):
                 raise
         try:
             shutil.copy2(source_path, destination_path)
+            if settings.LOG_START_AND_END_COPYING_FILES:
+                logger.error('Finished copying file %s to %s' % (source_path, destination_path))
         except IOError as e:
             # File does not exist, no permissions, etc.
             logger.error('Failed copying %s (%s)' % (source_path, str(e)))

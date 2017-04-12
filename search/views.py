@@ -216,6 +216,9 @@ def search(request):
 
     solr = Solr(settings.SOLR_URL)
 
+    results = None
+    docs = None
+    error_text = None
     paginator = None
     num_results = None
     non_grouped_number_of_results = None
@@ -228,7 +231,6 @@ def search(request):
         non_grouped_number_of_results = results.non_grouped_number_of_matches
         page = paginator.page(current_page)
         error = False
-        error_text = None
 
         docs = results.docs
         resultids = [d.get("id") for d in docs]
@@ -268,6 +270,9 @@ def search(request):
         error_text = 'The search server could not be reached, please try again later.'
 
     tvars = {
+        'results': results,
+        'docs': docs,
+        'current_page': current_page,
         'error': error,
         'error_text': error_text,
         'paginator': paginator,

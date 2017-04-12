@@ -70,6 +70,8 @@ def tags(request, multiple_tags=None):
         group_truncate=True)  # Sets how many results from the same grup are taken into account for computing the facets
 
     paginator = None
+    docs = None
+    results = None
     num_results = None
     non_grouped_number_of_results = None
     page = None
@@ -111,6 +113,8 @@ def tags(request, multiple_tags=None):
             show_unfollow_button = follow_utils.is_user_following_tag(request.user, slash_tag)
 
     tvars = {
+        "results": results,
+        "docs": docs,
         "multiple_tags": multiple_tags,
         "current_page": current_page,
         "paginator": paginator,

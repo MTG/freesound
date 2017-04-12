@@ -22,7 +22,7 @@ from tags.models import Tag, FS1Tag
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponsePermanentRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
@@ -37,9 +37,9 @@ def tags(request, multiple_tags=None):
         multiple_tags = multiple_tags.split('/')
     else:
         multiple_tags = []
-    
+
     multiple_tags = sorted(filter(lambda x: x, multiple_tags))
-    
+
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:
@@ -69,6 +69,12 @@ def tags(request, multiple_tags=None):
         group_cache_percent=0,
         group_truncate=True)  # Sets how many results from the same grup are taken into account for computing the facets
 
+    paginator = None
+    num_results = None
+    non_grouped_number_of_results = None
+    page = None
+    tags = None
+    allsounds = None
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
@@ -96,6 +102,7 @@ def tags(request, multiple_tags=None):
     slash_tag = "/".join(multiple_tags)
     space_tag = " ".join(multiple_tags)
 
+    show_unfollow_button = None
     if slash_tag:
         follow_tags_url = reverse('follow-tags', args=[slash_tag])
         unfollow_tags_url = reverse('unfollow-tags', args=[slash_tag])
@@ -103,22 +110,34 @@ def tags(request, multiple_tags=None):
         if request.user.is_authenticated():
             show_unfollow_button = follow_utils.is_user_following_tag(request.user, slash_tag)
 
-    return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        "multiple_tags": multiple_tags,
+        "current_page": current_page,
+        "paginator": paginator,
+        "num_results": num_results,
+        "non_grouped_number_of_results": non_grouped_number_of_results,
+        "page": page,
+        "tags": tags,
+        "show_unfollow_button": show_unfollow_button,
+        "allsounds": allsounds,
+        "error": error
+    }
+    return render(request, 'sounds/tags.html', tvars)
 
 
-def old_tag_link_redirect(request):    
+def old_tag_link_redirect(request):
     fs1tag_id = request.GET.get('id', False)
     if fs1tag_id:
         tags = fs1tag_id.split('_')
         try:
-            fs1tags = FS1Tag.objects.filter(fs1_id__in=tags).values_list('tag', flat=True)            
+            fs1tags = FS1Tag.objects.filter(fs1_id__in=tags).values_list('tag', flat=True)
         except ValueError, e:
             raise Http404
-            
+
         tags = Tag.objects.filter(id__in=fs1tags).values_list('name', flat=True)
         if not tags:
             raise Http404
-         
+
         return HttpResponsePermanentRedirect(reverse("tags", args=['/'.join(tags)]))
     else:
-        raise Http404    
+        raise Http404

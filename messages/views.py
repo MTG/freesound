@@ -22,8 +22,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 from messages.forms import MessageReplyForm, MessageReplyFormNoCaptcha
 from messages.models import Message, MessageBody
 from utils.cache import invalidate_template_cache
@@ -41,7 +40,7 @@ from django.contrib import messages
 def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
-        
+
         # get all ids, prefixed by "cb_" and after than an integer
         # only get the checkboxes that are "on"
         message_ids = filter(lambda x: x != None, [exceptional(int)(key.replace("cb_", "")) for key in request.POST.keys() if key.startswith("cb_") and request.POST.get(key) == "on"])
@@ -55,9 +54,9 @@ def messages_change_state(request):
                 messages.delete()
             elif choice == "r":
                 messages.update(is_read=True)
-            
+
             invalidate_template_cache("user_header", request.user.id)
-            
+
     return HttpResponseRedirect(request.POST.get("next", reverse("messages")))
 
 # base query object
@@ -66,19 +65,22 @@ base_qs = Message.objects.select_related('body', 'user_from', 'user_to')
 @login_required
 def inbox(request):
     qs = base_qs.filter(user_to=request.user, is_archived=False, is_sent=False)
-    return render_to_response('messages/inbox.html', paginate(request, qs), context_instance=RequestContext(request))
+    tvars = paginate(request, qs)
+    return render(request, 'messages/inbox.html', tvars)
 
 
 @login_required
 def sent_messages(request):
     qs = base_qs.filter(user_from=request.user, is_archived=False, is_sent=True)
-    return render_to_response('messages/sent.html', paginate(request, qs), context_instance=RequestContext(request))
+    tvars = paginate(request, qs)
+    return render(request, 'messages/sent.html', tvars)
 
 
 @login_required
 def archived_messages(request):
     qs = base_qs.filter(user_to=request.user, is_archived=True, is_sent=False)
-    return render_to_response('messages/archived.html', paginate(request, qs), context_instance=RequestContext(request))
+    tvars = paginate(request, qs)
+    return render(request, 'messages/archived.html', tvars)
 
 
 @login_required
@@ -87,20 +89,22 @@ def message(request, message_id):
         message = base_qs.get(id=message_id)
     except Message.DoesNotExist: #@UndefinedVariable
         raise Http404
-    
+
     if message.user_from != request.user and message.user_to != request.user:
         raise Http404
-    
+
     if not message.is_read:
         message.is_read = True
         invalidate_template_cache("user_header", request.user.id)
         message.save()
-        
-    return render_to_response('messages/message.html', locals(), context_instance=RequestContext(request))
+
+    tvars = {'message': message}
+    return render(request, 'messages/message.html', tvars)
+
 
 @login_required
 def new_message(request, username=None, message_id=None):
-    
+
     if request.method == 'POST':
 
         if request.user.profile.num_sounds:
@@ -143,12 +147,12 @@ def new_message(request, username=None, message_id=None):
 
                 if message.user_from != request.user and message.user_to != request.user:
                     raise Http404
-                
+
                 body = message.body.body.replace("\r\n", "\n").replace("\r", "\n")
                 body = ''.join(BeautifulSoup(body).findAll(text=True))
                 body = "\n".join([(">" if line.startswith(">") else "> ") + "\n> ".join(wrap(line.strip(),60)) for line in body.split("\n")])
                 body = "> --- " + message.user_from.username + " wrote:\n>\n" + body
-                
+
                 subject = "re: " + message.subject
                 to = message.user_from.username
 
@@ -163,19 +167,20 @@ def new_message(request, username=None, message_id=None):
                 form = MessageReplyFormNoCaptcha(initial=dict(to=username))
             else:
                 form = MessageReplyForm(initial=dict(to=username))
-    
-    return render_to_response('messages/new.html', locals(), context_instance=RequestContext(request))
+
+    tvars = {'form': form}
+    return render(request, 'messages/new.html', tvars)
 
 def username_lookup(request):
     results = []
     value = ""
     if request.method == "GET":
-        if request.GET.has_key(u'q'):            
+        if request.GET.has_key(u'q'):
             value = request.GET[u'q']
 
             # When there is at least one character, start searching usernames (only among users previously contacted)
             if len(value) > 0:
-                # Only autocompleting for previously contacted users 
+                # Only autocompleting for previously contacted users
                 previously_contacted_user_ids1 = list(Message.objects.filter(user_from = request.user.id, ).values_list('user_to', flat='True').distinct())
                 previously_contacted_user_ids2 = list(Message.objects.filter(user_to = request.user.id, ).values_list('user_from', flat='True').distinct())
                 previously_contacted_user_ids = set(previously_contacted_user_ids1+previously_contacted_user_ids2)

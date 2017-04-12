@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 import ratings.views as ratings
 
 urlpatterns = [

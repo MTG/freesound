@@ -243,7 +243,6 @@ def sound(request, username, sound_id):
     tvars = {
         'sound': sound,
         'username': username,
-        'tags': tags,
         'form': form,
         'display_random_link': display_random_link,
         'do_log': do_log,

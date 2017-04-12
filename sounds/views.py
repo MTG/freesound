@@ -29,7 +29,7 @@ from django.db import connection
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
-from django.shortcuts import render_to_response, get_object_or_404, render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.template import RequestContext
 from django.http import HttpResponse
 from accounts.models import Profile
@@ -167,8 +167,7 @@ def front_page(request):
                                                           'last_post',
                                                           'last_post__author',
                                                           'last_post__thread',
-                                                          'last_post__thread__forum',
-                                                          'forum', 'forum__name_slug')
+                                                          'last_post__thread__forum')
     latest_additions = Sound.objects.latest_additions(5, '2 days')
     random_sound = get_random_sound()
     tvars = {
@@ -203,8 +202,6 @@ def sound(request, username, sound_id):
             return render(request, 'sounds/deleted_sound.html')
         else:
             raise Http404
-
-    tags = sound.tags.select_related("tag__name")
 
     if request.method == "POST":
         form = CommentForm(request, request.POST)
@@ -249,7 +246,6 @@ def sound(request, username, sound_id):
     tvars = {
         'sound': sound,
         'username': username,
-        'tags': tags,
         'form': form,
         'display_random_link': display_random_link,
         'do_log': do_log,
@@ -585,7 +581,11 @@ def geotag(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
     google_api_key = settings.GOOGLE_API_KEY
-    return render_to_response('sounds/geotag.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'sound': sound,
+        'google_api_key': google_api_key,
+    }
+    return render(request, 'sounds/geotag.html', tvars)
 
 
 def similar(request, username, sound_id):
@@ -601,7 +601,12 @@ def similar(request, username, sound_id):
     similarity_results, count = get_similar_sounds(sound, request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
     logger.debug('Got similar_sounds for %s: %s' % (sound_id, similarity_results))
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
-    return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'sound': sound,
+        'similarity_results': similarity_results,
+        'similar_sounds': similar_sounds,
+    }
+    return render(request, 'sounds/similar.html', tvars)
 
 
 def pack(request, username, pack_id):
@@ -613,7 +618,7 @@ def pack(request, username, pack_id):
         raise Http404
 
     if pack.is_deleted:
-        render_to_response('sounds/deleted_pack.html', context_instance=RequestContext(request))
+        return render(request, 'sounds/deleted_pack.html', {})
 
     qs = Sound.objects.only('id').filter(pack=pack, moderation_state="OK", processing_state="OK")
     paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
@@ -630,6 +635,7 @@ def pack(request, username, pack_id):
         if num_sounds_ok < pack.num_sounds :
             messages.add_message(request, messages.INFO, 'This pack contains more sounds that have <b>not been moderated</b> yet.')
 
+    form = None
     # If user is owner of pack, display form to add description
     enable_description_form = False
     if request.user.username == username:
@@ -645,7 +651,16 @@ def pack(request, username, pack_id):
         else:
             pass
 
-    return render_to_response('sounds/pack.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'paginator': paginator,
+        'current_page': current_page,
+        'page': page,
+        'pack_sounds': pack_sounds,
+        'enable_description_form': enable_description_form,
+        'form': form,
+        'pack': pack,
+    }
+    return render(request, 'sounds/pack.html', tvars)
 
 
 def packs_for_user(request, username):
@@ -654,7 +669,14 @@ def packs_for_user(request, username):
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True).order_by(order)
-    return render_to_response('sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
+    tvars = {
+        'user': user,
+        'qs': qs,
+        'order': order,
+    }
+    tvars = combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), tvars)
+    return render(request, 'sounds/packs.html', tvars)
+
 
 
 def for_user(request, username):
@@ -666,7 +688,16 @@ def for_user(request, username):
     page = paginate_data['page']
     sound_ids = [sound_obj.id for sound_obj in page]
     user_sounds = Sound.objects.ordered_ids(sound_ids)
-    return render_to_response('sounds/for_user.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+            'qs': qs,
+            'paginator': paginator,
+            'current_page': current_page,
+            'page': page,
+            'user_sounds': user_sounds,
+            'user': user
+            }
+    return render(request, 'sounds/for_user.html', tvars)
+
 
 
 @login_required
@@ -795,7 +826,12 @@ def embed_iframe(request, sound_id, player_size):
     size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
     username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
-    return render_to_response('sounds/sound_iframe.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+            'size': size,
+            'username_and_filename': username_and_filename,
+            'sound': sound
+            }
+    return render(request, 'sounds/sound_iframe.html', tvars)
 
 
 def downloaders(request, username, sound_id):
@@ -827,12 +863,19 @@ def downloaders(request, username, sound_id):
 
     return render(request, 'sounds/downloaders.html', tvars)
 
+
 def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id = pack_id)
 
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
-    return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()), context_instance=RequestContext(request))
+    tvars = {
+            'qs': qs,
+            'pack': pack
+            }
+    tvars = combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), tvars)
+    return render(request, 'sounds/pack_downloaders.html', tvars)
+
 
 def click_log(request,click_type=None, sound_id="", pack_id="" ):
 

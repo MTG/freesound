@@ -90,7 +90,7 @@
     </div>
 
     <ul class="tags">
-        {% for tag_link in tags %}
+        {% for tag_link in sound.tags.all %}
             <li><a href="{% url 'tags' tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
         {% endfor %}
     </ul>

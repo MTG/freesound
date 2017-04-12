@@ -19,7 +19,7 @@
 #
 
 from django.conf import settings
-from django.shortcuts import render_to_response, render
+from django.shortcuts import render, render
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
@@ -264,7 +264,7 @@ def search(request):
     if request.GET.get("ajax", "") != "1":
         return render(request, 'search/search.html', locals())
     else:
-        return render_to_response('search/search_ajax.html', locals(), context_instance=RequestContext(request))
+        return render(request, 'search/search_ajax.html', locals())
 
 def search_forum(request):
     search_query = request.GET.get("q", "")
@@ -346,7 +346,7 @@ def search_forum(request):
     else:
         results = []
 
-    return render_to_response('search/search_forum.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'search/search_forum.html', locals())
 
 
 def get_pack_tags(pack_obj):

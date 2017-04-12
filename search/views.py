@@ -228,6 +228,7 @@ def search(request):
         non_grouped_number_of_results = results.non_grouped_number_of_matches
         page = paginator.page(current_page)
         error = False
+        error_text = None
 
         docs = results.docs
         resultids = [d.get("id") for d in docs]
@@ -343,6 +344,7 @@ def search_forum(request):
 
         solr = Solr(settings.SOLR_FORUM_URL)
 
+        error_text = None
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
@@ -365,7 +367,8 @@ def search_forum(request):
         'paginator': paginator,
         'num_results': num_results,
         'page': page,
-        'error' : error
+        'error' : error,
+        'error_text': error_text
     }
     return render(request, 'search/search_forum.html', tvars)
 

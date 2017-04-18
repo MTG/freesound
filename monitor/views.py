@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 import base64
+import urllib
 import urllib2
 import json
 from django.shortcuts import render
@@ -98,6 +99,21 @@ def monitor_home(request):
 
 def queries_stats_ajax(request):
     req = urllib2.Request("http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/terms?query=%2A&range=1209600&filter=streams%3A531051bee4b0f1248696785a&field=query")
+    base64string = base64.b64encode('%s:%s' % (settings.GRAYLOG_USERNAME,
+        settings.GRAYLOG_PASSWORD))
+    req.add_header("Authorization", "Basic %s" % base64string)
+    return JsonResponse(json.load(urllib2.urlopen(req)))
+
+
+@login_required
+def api_usage_stats_ajax(request):
+    query = urllib.urlencode({
+        'query': 'api_client_username:%s' % (request.user.username),
+        'range': '604800',
+        'filter': 'streams:530f2ec5e4b0f124869546d0',
+        'interval': 'day'
+    })
+    req = urllib2.Request("http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/histogram?%s" % (query))
     base64string = base64.b64encode('%s:%s' % (settings.GRAYLOG_USERNAME,
         settings.GRAYLOG_PASSWORD))
     req.add_header("Authorization", "Basic %s" % base64string)

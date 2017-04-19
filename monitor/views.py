@@ -18,9 +18,7 @@
 #     See AUTHORS file.
 #
 import base64
-import urllib
-import urllib2
-import json
+import requests
 from django.shortcuts import render
 from django.conf import settings
 from django.core.cache import cache
@@ -98,26 +96,31 @@ def monitor_home(request):
 
 
 def queries_stats_ajax(request):
-    req = urllib2.Request("http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/terms?query=%2A&range=1209600&filter=streams%3A531051bee4b0f1248696785a&field=query")
-    base64string = base64.b64encode('%s:%s' % (settings.GRAYLOG_USERNAME,
-        settings.GRAYLOG_PASSWORD))
-    req.add_header("Authorization", "Basic %s" % base64string)
-    return JsonResponse(json.load(urllib2.urlopen(req)))
+    params = {
+        'query': ':',
+        'range': 14 * 60 * 60 * 24,
+        'filter': 'streams:531051bee4b0f1248696785a',
+        'field': 'query'
+    }
+    req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/terms',
+            auth=(settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD), params=params)
+    return JsonResponse(req.json())
 
 
 @login_required
-def api_usage_stats_ajax(request):
-    query = urllib.urlencode({
-        'query': 'api_client_username:%s' % (request.user.username),
-        'range': '604800',
+def api_usage_stats_ajax(request, client_id):
+    params = {
+        'query': 'api_client_id:%s' % (client_id),
+        'range': 14 * 60 * 60 * 24,
         'filter': 'streams:530f2ec5e4b0f124869546d0',
         'interval': 'day'
-    })
-    req = urllib2.Request("http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/histogram?%s" % (query))
-    base64string = base64.b64encode('%s:%s' % (settings.GRAYLOG_USERNAME,
-        settings.GRAYLOG_PASSWORD))
-    req.add_header("Authorization", "Basic %s" % base64string)
-    return JsonResponse(json.load(urllib2.urlopen(req)))
+    }
+    req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/histogram',
+            auth=(settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD), params=params)
+    try:
+        return JsonResponse(req.json())
+    except requests.HTTPError:
+        return JsonResponse({'error': 'Error at collecting usage stats'})
 
 
 def tags_stats_ajax(request):

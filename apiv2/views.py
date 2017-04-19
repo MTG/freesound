@@ -46,7 +46,7 @@ from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, render
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.core.urlresolvers import reverse
@@ -1224,6 +1224,22 @@ def edit_api_credential(request, key):
                                'form': form,
                                'fs_callback_url': fs_callback_url,
                                }, context_instance=RequestContext(request))
+
+
+@login_required
+def monitor_api_credential(request, key):
+    try:
+        client = ApiV2Client.objects.get(key=key)
+        level = int(client.throttling_level)
+        limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
+        day_limit = limit_rates[1].split('/')[0]
+        tvars = {
+                'client': client,
+                'limit': day_limit
+                }
+        return render(request, 'api/monitor_api_credential.html', tvars)
+    except ApiV2Client.DoesNotExist:
+        raise Http404
 
 
 ### View for deleting api clients (works both for apiv2 and apiv1)

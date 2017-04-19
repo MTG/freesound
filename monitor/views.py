@@ -24,7 +24,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from sounds.models import Sound
 import gearman
 import tickets.views
@@ -120,7 +120,7 @@ def api_usage_stats_ajax(request, client_id):
     try:
         return JsonResponse(req.json())
     except requests.HTTPError:
-        return JsonResponse({'error': 'Error at collecting usage stats'})
+        return HttpResponse(status=500)
 
 
 def tags_stats_ajax(request):

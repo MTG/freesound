@@ -109,15 +109,26 @@ def queries_stats_ajax(request):
 
 @login_required
 def api_usage_stats_ajax(request, client_id):
-    params = {
-        'query': 'api_client_id:%s' % (client_id),
-        'range': 14 * 60 * 60 * 24,
-        'filter': 'streams:530f2ec5e4b0f124869546d0',
-        'interval': 'day'
-    }
-    req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/histogram',
-            auth=(settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD), params=params)
     try:
+        auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
+        req = requests.get('https://logserver.mtg.upf.edu/graylog/api/streams',
+                auth=auth)
+        stream_id = None
+        for stream in req.json()['streams']:
+            if stream['title'] == 'Freesound - APIv2':
+                stream_id = stream['id']
+
+        if not stream_id:
+            return HttpResponse(status=500)
+
+        params = {
+            'query': 'api_client_id:%s' % (client_id),
+            'range': 14 * 60 * 60 * 24,
+            'filter': 'streams:%s' % stream_id,
+            'interval': 'day'
+        }
+        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/histogram',
+                auth=auth, params=params)
         return JsonResponse(req.json())
     except requests.HTTPError:
         return HttpResponse(status=500)

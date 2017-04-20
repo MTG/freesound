@@ -187,8 +187,6 @@ DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the popu
 
 DELETED_USER_ID = 1
 
-LOG_CLICKTHROUGH_DATA = False
-
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
 #-------------------------------------------------------------------------------

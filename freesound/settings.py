@@ -171,6 +171,10 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# Graylog stream names
+GRAYLOG_API_STREAM = 'Freesound - APIv2'
+GRAYLOG_SEARCH_STREAM = 'Freesound - Search'
+
 # After download modal
 AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
 AFTER_DOWNLOAD_MODAL_DONATION = 'donation'

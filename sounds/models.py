@@ -417,7 +417,9 @@ class Sound(SocialModel):
         return self.duration * 1000
 
     def rating_percent(self):
-        return int(self.avg_rating*10)
+        if self.num_ratings > settings.MIN_NUMBER_RATINGS:
+            return int(self.avg_rating*10)
+        return 0
 
     @models.permalink
     def get_absolute_url(self):

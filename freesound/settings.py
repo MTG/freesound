@@ -171,6 +171,9 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# Number of ratings of a sound to start showing average
+MIN_NUMBER_RATINGS = 3
+
 # After download modal
 AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
 AFTER_DOWNLOAD_MODAL_DONATION = 'donation'

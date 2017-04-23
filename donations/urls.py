@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 import views
 
 urlpatterns = [

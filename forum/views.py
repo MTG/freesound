@@ -24,7 +24,7 @@ from django.core.paginator import Paginator, InvalidPage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext, loader
 from forum.forms import PostReplyForm, NewThreadForm, PostModerationForm
 from forum.models import Forum, Thread, Post, Subscription
@@ -64,30 +64,33 @@ class last_action(object):
         date_format = "%Y-%m-%d %H:%M:%S:%f"
         date2string = lambda date: date.strftime(date_format)
         string2date = lambda date_string: datetime.strptime(date_string, date_format)
-        
+
         key = "forum-last-visited"
-        
+
         now = datetime.now()
         now_as_string = date2string(now)
-        
+
         if key not in request.COOKIES or not request.session.get(key, False):
             request.session[key] = now_as_string
         elif now - string2date(request.COOKIES[key]) > timedelta(minutes=30):
             request.session[key] = request.COOKIES[key]
-        
+
         request.last_action_time = string2date(request.session.get(key, now_as_string))
-        
+
         reply_object = self.view_func(request, *args, **kwargs)
-        
+
         reply_object.set_cookie(key, now_as_string, 60*60*24*30) # 30 days
-        
+
         return reply_object
-            
+
 
 @last_action
 def forums(request):
     forums = Forum.objects.select_related('last_post', 'last_post__author', 'last_post__thread').all()
-    return render_to_response('forum/index.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'forums': forums
+    }
+    return render(request, 'forum/index.html', tvars)
 
 
 @last_action
@@ -99,7 +102,11 @@ def forum(request, forum_name_slug):
 
     paginator = paginate(request, Thread.objects.filter(forum=forum, first_post__moderation_state="OK").select_related('last_post', 'last_post__author'), settings.FORUM_THREADS_PER_PAGE)
 
-    return render_to_response('forum/threads.html', combine_dicts(locals(), paginator), context_instance=RequestContext(request))
+    tvars = {
+        'forum': forum,
+    }
+    tvars = combine_dicts(tvars, paginator)
+    return render(request, 'forum/threads.html', tvars)
 
 
 @last_action
@@ -115,13 +122,24 @@ def thread(request, forum_name_slug, thread_id):
     if request.user.is_authenticated():
         Subscription.objects.filter(thread=thread, subscriber=request.user, is_active=False).update(is_active=True)
 
-    return render_to_response('forum/thread.html', combine_dicts(locals(), paginator), context_instance=RequestContext(request))
+    tvars = {
+        'forum': forum,
+        'thread': thread
+    }
+    tvars = combine_dicts(tvars, paginator)
+    return render(request, 'forum/thread.html', tvars)
+
 
 @last_action
 def latest_posts(request):
     paginator = paginate(request, Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').filter(moderation_state="OK").order_by('-created').all(), settings.FORUM_POSTS_PER_PAGE)
     hide_search = True
-    return render_to_response('forum/latest_posts.html', combine_dicts(locals(), paginator), context_instance=RequestContext(request))
+    tvars = {
+        'hide_search': hide_search
+    }
+    tvars = combine_dicts(tvars, paginator)
+    return render(request, 'forum/latest_posts.html', tvars)
+
 
 
 @last_action
@@ -163,7 +181,7 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     else:
         post = None
         quote = ""
-    
+
     latest_posts = Post.objects.select_related('author', 'author__profile', 'thread', 'thread__forum').order_by('-created').filter(thread=thread, moderation_state="OK")[0:15]
     user_can_post_in_forum = request.user.profile.can_post_in_forum()
     user_is_blocked_for_spam_reports = request.user.profile.is_blocked_for_spam_reports()
@@ -220,7 +238,17 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     if user_is_blocked_for_spam_reports:
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account has been temporaly blocked after multiple spam reports")
 
-    return render_to_response('forum/reply.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'forum': forum,
+        'thread': thread,
+        'form': form,
+        'post': post,
+        'quote': quote,
+        'user_can_post_in_forum': user_can_post_in_forum,
+        'latest_posts': latest_posts,
+        'user_is_blocked_for_spam_reports': user_is_blocked_for_spam_reports
+    }
+    return render(request, 'forum/reply.html', tvars)
 
 
 @login_required
@@ -268,7 +296,13 @@ def new_thread(request, forum_name_slug):
     if user_is_blocked_for_spam_reports:
         messages.add_message(request, messages.INFO, "You're not allowed to post in the forums because your account has been temporaly blocked after multiple spam reports")
 
-    return render_to_response('forum/new_thread.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'form': form,
+        'forum': forum,
+        'user_can_post_in_forum': user_can_post_in_forum,
+        'user_is_blocked_for_spam_reports': user_is_blocked_for_spam_reports
+    }
+    return render(request, 'forum/new_thread.html', tvars)
 
 
 @login_required
@@ -276,7 +310,11 @@ def unsubscribe_from_thread(request, forum_name_slug, thread_id):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, forum=forum, id=thread_id, first_post__moderation_state="OK")
     Subscription.objects.filter(thread=thread, subscriber=request.user).delete()
-    return render_to_response('forum/unsubscribe_from_thread.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'forum': forum,
+        'thread': thread,
+    }
+    return render(request, 'forum/unsubscribe_from_thread.html', tvars)
 
 
 def old_topic_link_redirect(request):
@@ -304,9 +342,10 @@ def old_topic_link_redirect(request):
 def post_delete(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author == request.user or request.user.has_perm('forum.delete_post'):
-        return render_to_response('forum/confirm_deletion.html',
-                                  locals(),
-                                  context_instance=RequestContext(request))
+        tvars = {
+            'post': post
+        }
+        return render(request, 'forum/confirm_deletion.html', tvars)
     else:
         raise Http404
 
@@ -339,9 +378,11 @@ def post_edit(request, post_id):
                 return HttpResponseRedirect(reverse('forums-post', args=[post.thread.forum.name_slug, post.thread.id, post.id]))
         else:
             form = PostReplyForm(request, '', {'body': post.body})
-        return render_to_response('forum/post_edit.html',
-                                  locals(),
-                                  context_instance=RequestContext(request))
+        tvars = {
+            'post': post,
+            'form': form,
+        }
+        return render(request, 'forum/post_edit.html', tvars)
     else:
         raise Http404
 
@@ -368,4 +409,9 @@ def moderate_posts(request):
         f = PostModerationForm(initial={'action':'Approve','post':p.id})
         post_list.append({'post':p,'form':f})
     forums = True # prevent base template showing forum search
-    return render_to_response('forum/moderate.html',locals(),context_instance=RequestContext(request))
+    tvars = {
+        'forums': forums,
+        'post_list': post_list,
+        'pending_posts': pending_posts,
+    }
+    return render(request, 'forum/moderate.html', tvars)

@@ -19,7 +19,7 @@
 #
 
 from django.conf import settings
-from django.shortcuts import render_to_response, render
+from django.shortcuts import render
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
@@ -216,6 +216,14 @@ def search(request):
 
     solr = Solr(settings.SOLR_URL)
 
+    results = None
+    docs = None
+    error_text = None
+    paginator = None
+    num_results = None
+    non_grouped_number_of_results = None
+    page = None
+    allsounds = {}
     try:
         results = SolrResponseInterpreter(solr.select(unicode(query)))
         paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
@@ -261,10 +269,22 @@ def search(request):
         error = True
         error_text = 'The search server could not be reached, please try again later.'
 
+    tvars = {
+        'results': results,
+        'docs': docs,
+        'current_page': current_page,
+        'error': error,
+        'error_text': error_text,
+        'paginator': paginator,
+        'num_results': num_results,
+        'non_grouped_number_of_results': non_grouped_number_of_results,
+        'page': page,
+        'allsounds': allsounds,
+    }
     if request.GET.get("ajax", "") != "1":
-        return render(request, 'search/search.html', locals())
+        return render(request, 'search/search.html', tvars)
     else:
-        return render_to_response('search/search_ajax.html', locals(), context_instance=RequestContext(request))
+        return render(request, 'search/search_ajax.html', tvars)
 
 def search_forum(request):
     search_query = request.GET.get("q", "")
@@ -329,6 +349,7 @@ def search_forum(request):
 
         solr = Solr(settings.SOLR_FORUM_URL)
 
+        error_text = None
         try:
             results = SolrResponseInterpreter(solr.select(unicode(query)))
             paginator = SolrResponseInterpreterPaginator(results, settings.SOUNDS_PER_PAGE)
@@ -346,7 +367,15 @@ def search_forum(request):
     else:
         results = []
 
-    return render_to_response('search/search_forum.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'results': results,
+        'paginator': paginator,
+        'num_results': num_results,
+        'page': page,
+        'error' : error,
+        'error_text': error_text
+    }
+    return render(request, 'search/search_forum.html', tvars)
 
 
 def get_pack_tags(pack_obj):

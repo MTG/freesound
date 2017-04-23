@@ -22,7 +22,7 @@ import cStringIO
 import struct
 from django.conf import settings
 from django.http import Http404, HttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from sounds.models import Sound
 from django.views.decorators.cache import cache_page
@@ -91,7 +91,11 @@ def geotags_for_pack_barray(request, pack_id):
 def geotags(request, tag=None):
     google_api_key = settings.GOOGLE_API_KEY
     for_user = None
-    return render_to_response('geotags/geotags.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'google_api_key': google_api_key,
+        'for_user': for_user
+    }
+    return render(request, 'geotags/geotags.html', tvars)
 
 
 def geotags_box(request):
@@ -104,26 +108,45 @@ def geotags_box(request):
     username = request.GET.get("username",None)
 
     google_api_key = settings.GOOGLE_API_KEY
-    return render_to_response('geotags/geotags_box.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'google_api_key': google_api_key,
+        'm_width': m_width,
+        'm_height': m_height,
+        'clusters': clusters,
+        'center_lat': center_lat,
+        'center_lon': center_lon,
+        'zoom': zoom,
+        'username': username
+    }
+    return render(request, 'geotags/geotags_box.html', tvars)
+
 
 
 def for_user(request, username):
+    for_user = None
     try:
         for_user = User.objects.get(username__iexact=username)
     except User.DoesNotExist: #@UndefinedVariable
         raise Http404
-    google_api_key = settings.GOOGLE_API_KEY
-    tag = None
-    return render_to_response('geotags/geotags.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'google_api_key': settings.GOOGLE_API_KEY,
+        'tag': None,
+        'for_user': for_user
+    }
+    return render(request, 'geotags/geotags.html', tvars)
 
 
 def infowindow(request, sound_id):
+    sound = None
     try:
         sound = Sound.objects.select_related('user', 'geotag').get(id=sound_id)
     except Sound.DoesNotExist: #@UndefinedVariable
         raise Http404
 
-    return render_to_response('geotags/infowindow.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'sound': sound
+    }
+    return render(request, 'geotags/infowindow.html', tvars)
 
 
 def embed_iframe(request):
@@ -135,5 +158,14 @@ def embed_iframe(request):
     zoom = request.GET.get("z",None)
     username = request.GET.get("username",None)
 
-    google_api_key = settings.GOOGLE_API_KEY
-    return render_to_response('geotags/geotags_box_iframe.html', locals(), context_instance=RequestContext(request))
+    tvars = {
+        'm_width': m_width,
+        'm_height': m_height,
+        'clusters': clusters,
+        'center_lat': center_lat,
+        'center_lon': center_lon,
+        'zoom': zoom,
+        'username': username,
+        'google_api_key': settings.GOOGLE_API_KEY
+    }
+    return render(request, 'geotags/geotags_box_iframe.html', tvars)

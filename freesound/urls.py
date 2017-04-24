@@ -81,6 +81,7 @@ urlpatterns = [
 
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
     url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
+    url(r'^oembed/$', sounds.views.oembed, name="oembed-sound"),
 
     url(r'^after-download-modal/$', sounds.views.after_download_modal, name="after-download-modal"),
 

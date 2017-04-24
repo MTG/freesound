@@ -375,3 +375,21 @@ class SoundViewsTestCase(TestCase):
             args=[sound.user.username, sound.id]), {"encrypted_link": encrypted_link})
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
         self.assertRedirects(resp, reverse('accounts-home'))
+
+    def test_oembed_sound(self):
+        # Get iframe of a sound using oembed
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
+        sound = sounds[0]
+        sound_id = sound.id
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+        self.client.login(username=user.username, password='testpass')
+
+        # Get url of the sound
+        url = reverse('sound', args=[sound.user.username, sound_id])
+
+        resp = self.client.get(reverse('oembed-sound')+'?url='+url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.content != '')
+
+

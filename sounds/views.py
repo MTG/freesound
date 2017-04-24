@@ -24,12 +24,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve
 from django.db import connection
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import render_to_response, get_object_or_404, render, redirect
+from django.utils.six.moves.urllib.parse import urlparse
 from django.template import RequestContext
 from django.http import HttpResponse
 from accounts.models import Profile
@@ -59,7 +60,6 @@ import gearman
 import datetime
 import time
 import logging
-import json
 import os
 
 
@@ -796,6 +796,28 @@ def embed_iframe(request, sound_id, player_size):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
     username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
     return render_to_response('sounds/sound_iframe.html', locals(), context_instance=RequestContext(request))
+
+
+def oembed(request):
+    url = request.GET.get('url', None)
+    view, args, kwargs = resolve(urlparse(url)[2])
+    if not 'sound_id' in kwargs:
+        raise Http404
+    sound_id = kwargs['sound_id']
+    sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
+    player_size = request.GET.get('size', 'medium')
+    if player_size == 'large':
+        sizes = [920, 245]
+    if player_size == 'medium':
+        sizes = [481, 86]
+    if player_size == 'small':
+        sizes = [375, 30]
+    tvars = {
+        'sound': sound,
+        'sizes': sizes,
+        'player_size': player_size
+    }
+    return render(request, 'sounds/sound_oembed.xml', tvars, content_type='text/xml')
 
 
 def downloaders(request, username, sound_id):

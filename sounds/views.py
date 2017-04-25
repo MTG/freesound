@@ -255,6 +255,7 @@ def sound(request, username, sound_id):
         'do_log': do_log,
         'is_following': is_following,
         'is_explicit': is_explicit,
+        'sizes': settings.IFRAME_PLAYER_SIZE,
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)
@@ -799,7 +800,7 @@ def embed_iframe(request, sound_id, player_size):
 
 
 def oembed(request):
-    url = request.GET.get('url', None)
+    url = request.GET.get('url', '')
     view, args, kwargs = resolve(urlparse(url)[2])
     if not 'sound_id' in kwargs:
         raise Http404
@@ -807,11 +808,11 @@ def oembed(request):
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
     player_size = request.GET.get('size', 'medium')
     if player_size == 'large':
-        sizes = [920, 245]
+        sizes = settings.IFRAME_PLAYER_SIZE['large']
     if player_size == 'medium':
-        sizes = [481, 86]
+        sizes = settings.IFRAME_PLAYER_SIZE['medium']
     if player_size == 'small':
-        sizes = [375, 30]
+        sizes = settings.IFRAME_PLAYER_SIZE['small']
     tvars = {
         'sound': sound,
         'sizes': sizes,

@@ -292,9 +292,9 @@
                     $('.embed_example').removeClass('embed_active');
                     $('.embed_example.embed_'+size).addClass('embed_active');
                     var sizes;
-                    if(size == 'large') sizes = [920, 245];
-                    if(size == 'medium') sizes = [481, 86];
-                    if(size == 'small') sizes = [375, 30];
+                    if(size == 'large') sizes = [{{sizes.large.0}}, {{sizes.large.1}}];
+                    if(size == 'medium') sizes = [{{sizes.medium.0}}, {{sizes.medium.1}}];
+                    if(size == 'small') sizes = [{{sizes.small.0}}, {{sizes.small.1}}];
                     var embed_text = '<iframe frameborder="0" scrolling="no" src="{% absurl 'embed-simple-sound-iframe' sound.id 'SIZE' %}" width="WIDTH" height="HEIGHT"></iframe>';
                     embed_text = embed_text.replace('SIZE', size);
                     embed_text = embed_text.replace('WIDTH', sizes[0]);

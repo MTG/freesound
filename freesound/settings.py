@@ -153,6 +153,12 @@ FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 # urls for which the "lasta ction time" needs updating
 LAST_ACTION_TIME_URLS = ('/forum/', )
 
+IFRAME_PLAYER_SIZE = {
+        'large': [920, 245],
+        'medium': [481, 86],
+        'small': [375, 30]
+    }
+
 FREESOUND_RSS = "http://10.55.0.51/?feed=rss2" #"http://blog.freesound.org/?feed=rss2"
 
 FORUM_POSTS_PER_PAGE = 20

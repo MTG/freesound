@@ -98,7 +98,7 @@ def monitor_home(request):
 def queries_stats_ajax(request):
     try:
         auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
-        req = requests.get('https://logserver.mtg.upf.edu/graylog/api/streams',
+        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/streams',
                 auth=auth)
         stream_id = None
         for stream in req.json()['streams']:
@@ -125,7 +125,7 @@ def queries_stats_ajax(request):
 def api_usage_stats_ajax(request, client_id):
     try:
         auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
-        req = requests.get('https://logserver.mtg.upf.edu/graylog/api/streams',
+        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/streams',
                 auth=auth)
         stream_id = None
         for stream in req.json()['streams']:

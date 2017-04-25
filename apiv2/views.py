@@ -1232,7 +1232,10 @@ def monitor_api_credential(request, key):
         client = ApiV2Client.objects.get(key=key)
         level = int(client.throttling_level)
         limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
-        day_limit = limit_rates[1].split('/')[0]
+        try:
+            day_limit = limit_rates[1].split('/')[0]
+        except IndexError:
+            day_limit = 0
         tvars = {
                 'client': client,
                 'limit': day_limit

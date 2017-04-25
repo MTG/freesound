@@ -171,9 +171,10 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
-# Graylog stream names
-GRAYLOG_API_STREAM = 'Freesound - APIv2'
-GRAYLOG_SEARCH_STREAM = 'Freesound - Search'
+# Graylog stream ids and domain
+GRAYLOG_API_STREAM_ID = '58a338412ab79c0001296827'
+GRAYLOG_SEARCH_STREAM_ID = '58a338412ab79c0001296827'
+GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
 
 # After download modal
 AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'

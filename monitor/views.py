@@ -98,23 +98,13 @@ def monitor_home(request):
 def queries_stats_ajax(request):
     try:
         auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
-        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/streams',
-                auth=auth)
-        stream_id = None
-        for stream in req.json()['streams']:
-            if stream['title'] == settings.GRAYLOG_SEARCH_STREAM:
-                stream_id = stream['id']
-
-        if not stream_id:
-            return HttpResponse(status=500)
-
         params = {
             'query': '*',
             'range': 14 * 60 * 60 * 24,
-            'filter': 'streams:%s' % stream_id,
+            'filter': 'streams:%s' % settings.GRAYLOG_SEARCH_STREAM_ID,
             'field': 'query'
         }
-        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/terms',
+        req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/terms',
                 auth=auth, params=params)
         return JsonResponse(req.json())
     except requests.HTTPError:
@@ -125,23 +115,13 @@ def queries_stats_ajax(request):
 def api_usage_stats_ajax(request, client_id):
     try:
         auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
-        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/streams',
-                auth=auth)
-        stream_id = None
-        for stream in req.json()['streams']:
-            if stream['title'] == settings.GRAYLOG_API_STREAM:
-                stream_id = stream['id']
-
-        if not stream_id:
-            return HttpResponse(status=500)
-
         params = {
             'query': 'api_client_id:%s' % (client_id),
             'range': 14 * 60 * 60 * 24,
-            'filter': 'streams:%s' % stream_id,
+            'filter': 'streams:%s' % settings.GRAYLOG_API_STREAM_ID,
             'interval': 'day'
         }
-        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/histogram',
+        req = requests.get(settings.GRAYLOG_DOMAIN + '/graylog/api/search/universal/relative/histogram',
                 auth=auth, params=params)
         return JsonResponse(req.json())
     except requests.HTTPError:

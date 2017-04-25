@@ -18,6 +18,7 @@
         <th>Redirect url</th>
         <th></th>
         <th></th>
+        <th></th>
         {% comment %}<th>Status</th>{% endcomment %}
     </tr>
     {% for credential in user_credentials %}
@@ -29,6 +30,7 @@
             {% comment %}<td>{{ credential.get_scope_display }}</td>{% endcomment %}
             <td>{{ credential.redirect_uri|truncate_string:20 }}</td>
             <td><a href="{% url "apiv2-edit-credential" credential.client_secret %}">edit</a></td>
+            <td><a href="{% url "apiv2-monitor-credential" credential.client_secret %}">monitor</a></td>
             <td><a href="{% url "apiv2-delete-credential" credential.client_secret %}">delete</a></td>
 
             {% comment %}<td>{{ credential.status }}</td>{% endcomment %}

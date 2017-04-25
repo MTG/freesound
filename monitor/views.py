@@ -18,14 +18,13 @@
 #     See AUTHORS file.
 #
 import base64
-import urllib2
-import json
+import requests
 from django.shortcuts import render
 from django.conf import settings
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from sounds.models import Sound
 import gearman
 import tickets.views
@@ -97,11 +96,56 @@ def monitor_home(request):
 
 
 def queries_stats_ajax(request):
-    req = urllib2.Request("http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/terms?query=%2A&range=1209600&filter=streams%3A531051bee4b0f1248696785a&field=query")
-    base64string = base64.b64encode('%s:%s' % (settings.GRAYLOG_USERNAME,
-        settings.GRAYLOG_PASSWORD))
-    req.add_header("Authorization", "Basic %s" % base64string)
-    return JsonResponse(json.load(urllib2.urlopen(req)))
+    try:
+        auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
+        req = requests.get('https://logserver.mtg.upf.edu/graylog/api/streams',
+                auth=auth)
+        stream_id = None
+        for stream in req.json()['streams']:
+            if stream['title'] == settings.GRAYLOG_SEARCH_STREAM:
+                stream_id = stream['id']
+
+        if not stream_id:
+            return HttpResponse(status=500)
+
+        params = {
+            'query': '*',
+            'range': 14 * 60 * 60 * 24,
+            'filter': 'streams:%s' % stream_id,
+            'field': 'query'
+        }
+        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/terms',
+                auth=auth, params=params)
+        return JsonResponse(req.json())
+    except requests.HTTPError:
+        return HttpResponse(status=500)
+
+
+@login_required
+def api_usage_stats_ajax(request, client_id):
+    try:
+        auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
+        req = requests.get('https://logserver.mtg.upf.edu/graylog/api/streams',
+                auth=auth)
+        stream_id = None
+        for stream in req.json()['streams']:
+            if stream['title'] == settings.GRAYLOG_API_STREAM:
+                stream_id = stream['id']
+
+        if not stream_id:
+            return HttpResponse(status=500)
+
+        params = {
+            'query': 'api_client_id:%s' % (client_id),
+            'range': 14 * 60 * 60 * 24,
+            'filter': 'streams:%s' % stream_id,
+            'interval': 'day'
+        }
+        req = requests.get('http://mtg-logserver.s.upf.edu/graylog/api/search/universal/relative/histogram',
+                auth=auth, params=params)
+        return JsonResponse(req.json())
+    except requests.HTTPError:
+        return HttpResponse(status=500)
 
 
 def tags_stats_ajax(request):

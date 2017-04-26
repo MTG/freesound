@@ -21,7 +21,7 @@
 from django import forms
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from wiki.models import Content, Page
 
@@ -30,7 +30,7 @@ def page(request, name):
         version = int(request.GET.get("version", -1))
     except:
         version = -1
-    
+
     try:
         if version == -1:
             content = Content.objects.filter(page__name__iexact=name).select_related().latest()
@@ -38,8 +38,8 @@ def page(request, name):
             content = Content.objects.select_related().get(page__name__iexact=name, id=version)
     except Content.DoesNotExist: #@UndefinedVariable
         content = Content.objects.filter(page__name__iexact="blank").select_related().latest()
-    
-    return render_to_response('wiki/page.html', locals(), context_instance=RequestContext(request)) 
+
+    return render(request, 'wiki/page.html', locals())
 
 def editpage(request, name):
     if not (request.user.is_authenticated() and request.user.has_perm('wiki.add_page')):
@@ -52,10 +52,10 @@ def editpage(request, name):
         class Meta:
             model = Content
             exclude = ('author', 'page', "created")
-    
+
     if request.method == "POST":
         form = ContentForm(request.POST)
-        
+
         if form.is_valid():
             content = form.save(commit=False)
             content.page = Page.objects.get_or_create(name=name)[0]
@@ -70,12 +70,12 @@ def editpage(request, name):
         except Content.DoesNotExist: #@UndefinedVariable
             form = ContentForm()
 
-    return render_to_response('wiki/edit.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'wiki/edit.html', locals())
 
 def history(request, name):
     if not (request.user.is_authenticated() and request.user.has_perm('wiki.add_page')):
         raise Http404
-    
+
     try:
         page = Page.objects.get(name__iexact=name)
     except Page.DoesNotExist:
@@ -85,14 +85,14 @@ def history(request, name):
         versions = Content.objects.filter(page=page).select_related()
     except Content.DoesNotExist: #@UndefinedVariable
         raise Http404
-    
+
     if request.GET and "version1" in request.GET and "version2" in request.GET:
         import difflib
         version1 = Content.objects.select_related().get(id=request.GET.get("version1"))
         version2 = Content.objects.select_related().get(id=request.GET.get("version2"))
-        
+
         diff = difflib.HtmlDiff(4, 55).make_table(version1.body.split("\n"), version2.body.split("\n"), "version %d" % version1.id, "version %d" % version2.id, True, 5)
-        
-    
-    return render_to_response('wiki/history.html', locals(), context_instance=RequestContext(request)) 
- 
+
+
+    return render(request, 'wiki/history.html', locals())
+

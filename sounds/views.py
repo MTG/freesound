@@ -29,7 +29,7 @@ from django.db import connection
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404,\
     HttpResponsePermanentRedirect, JsonResponse
-from django.shortcuts import render_to_response, get_object_or_404, render, redirect
+from django.shortcuts import render, get_object_or_404, render, redirect
 from django.template import RequestContext
 from django.http import HttpResponse
 from accounts.models import Profile
@@ -163,11 +163,7 @@ def front_page(request):
                                           .order_by('-last_post__created') \
                                           .select_related('author',
                                                           'forum',
-                                                          'last_post',
-                                                          'last_post__author',
-                                                          'last_post__thread',
-                                                          'last_post__thread__forum',
-                                                          'forum', 'forum__name_slug')
+                                                          'last_post')
     latest_additions = Sound.objects.latest_additions(5, '2 days')
     random_sound = get_random_sound()
     tvars = {
@@ -202,8 +198,6 @@ def sound(request, username, sound_id):
             return render(request, 'sounds/deleted_sound.html')
         else:
             raise Http404
-
-    tags = sound.tags.select_related("tag__name")
 
     if request.method == "POST":
         form = CommentForm(request, request.POST)
@@ -247,7 +241,6 @@ def sound(request, username, sound_id):
     tvars = {
         'sound': sound,
         'username': username,
-        'tags': tags,
         'form': form,
         'display_random_link': display_random_link,
         'is_following': is_following,
@@ -565,7 +558,7 @@ def geotag(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
     google_api_key = settings.GOOGLE_API_KEY
-    return render_to_response('sounds/geotag.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'sounds/geotag.html', locals())
 
 
 def similar(request, username, sound_id):
@@ -581,7 +574,7 @@ def similar(request, username, sound_id):
     similarity_results, count = get_similar_sounds(sound, request.GET.get('preset', None), int(settings.SOUNDS_PER_PAGE))
     logger.debug('Got similar_sounds for %s: %s' % (sound_id, similarity_results))
     similar_sounds = Sound.objects.ordered_ids([sound_id for sound_id, distance in similarity_results])
-    return render_to_response('sounds/similar.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'sounds/similar.html', locals())
 
 
 def pack(request, username, pack_id):
@@ -593,7 +586,7 @@ def pack(request, username, pack_id):
         raise Http404
 
     if pack.is_deleted:
-        render_to_response('sounds/deleted_pack.html', context_instance=RequestContext(request))
+        return render(request, 'sounds/deleted_pack.html')
 
     qs = Sound.objects.only('id').filter(pack=pack, moderation_state="OK", processing_state="OK")
     paginate_data = paginate(request, qs, settings.SOUNDS_PER_PAGE)
@@ -625,7 +618,7 @@ def pack(request, username, pack_id):
         else:
             pass
 
-    return render_to_response('sounds/pack.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'sounds/pack.html', locals())
 
 
 def packs_for_user(request, username):
@@ -634,7 +627,7 @@ def packs_for_user(request, username):
     if order not in ["name", "-last_updated", "-created", "-num_sounds", "-num_downloads"]:
         order = "name"
     qs = Pack.objects.select_related().filter(user=user, num_sounds__gt=0).exclude(is_deleted=True).order_by(order)
-    return render_to_response('sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()), context_instance=RequestContext(request))
+    return render(request, 'sounds/packs.html', combine_dicts(paginate(request, qs, settings.PACKS_PER_PAGE), locals()))
 
 
 def for_user(request, username):
@@ -646,7 +639,7 @@ def for_user(request, username):
     page = paginate_data['page']
     sound_ids = [sound_obj.id for sound_obj in page]
     user_sounds = Sound.objects.ordered_ids(sound_ids)
-    return render_to_response('sounds/for_user.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'sounds/for_user.html', locals())
 
 
 @login_required
@@ -774,7 +767,7 @@ def embed_iframe(request, sound_id, player_size):
     size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
     username_and_filename = '%s - %s' % (sound.user.username, sound.original_filename)
-    return render_to_response('sounds/sound_iframe.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'sounds/sound_iframe.html', locals())
 
 
 def downloaders(request, username, sound_id):
@@ -806,9 +799,10 @@ def downloaders(request, username, sound_id):
 
     return render(request, 'sounds/downloaders.html', tvars)
 
+
 def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id = pack_id)
 
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
-    return render_to_response('sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()), context_instance=RequestContext(request))
+    return render(request, 'sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()))

@@ -665,7 +665,7 @@ def downloaded_packs(request, username):
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]
-    packs = Pack.objects.ordered_ids(pack_ids, select_related="user__username")
+    packs = Pack.objects.ordered_ids(pack_ids, select_related="user")
     tvars = {"username": username,
              "packs": packs}
     tvars.update(paginator)

@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from freesound_exceptions import PermissionDenied
 from utils.onlineusers import cache_online_users
 from django.contrib.auth.models import User
@@ -34,7 +34,7 @@ from sounds.models import Sound
 class PermissionDeniedHandler:
     def process_exception(self, request, exception):
         if isinstance(exception, PermissionDenied):
-            return render_to_response('permissiondenied.html')
+            return render(request, 'permissiondenied.html')
         return None
 
 class OnlineUsersHandler:

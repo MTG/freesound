@@ -22,7 +22,7 @@ import cStringIO
 import struct
 from django.conf import settings
 from django.http import Http404, HttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from sounds.models import Sound
 from django.views.decorators.cache import cache_page
@@ -91,7 +91,7 @@ def geotags_for_pack_barray(request, pack_id):
 def geotags(request, tag=None):
     google_api_key = settings.GOOGLE_API_KEY
     for_user = None
-    return render_to_response('geotags/geotags.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'geotags/geotags.html', locals())
 
 
 def geotags_box(request):
@@ -104,7 +104,7 @@ def geotags_box(request):
     username = request.GET.get("username",None)
 
     google_api_key = settings.GOOGLE_API_KEY
-    return render_to_response('geotags/geotags_box.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'geotags/geotags_box.html', locals())
 
 
 def for_user(request, username):
@@ -114,7 +114,7 @@ def for_user(request, username):
         raise Http404
     google_api_key = settings.GOOGLE_API_KEY
     tag = None
-    return render_to_response('geotags/geotags.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'geotags/geotags.html', locals())
 
 
 def infowindow(request, sound_id):
@@ -123,7 +123,7 @@ def infowindow(request, sound_id):
     except Sound.DoesNotExist: #@UndefinedVariable
         raise Http404
 
-    return render_to_response('geotags/infowindow.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'geotags/infowindow.html', locals())
 
 
 def embed_iframe(request):
@@ -136,4 +136,4 @@ def embed_iframe(request):
     username = request.GET.get("username",None)
 
     google_api_key = settings.GOOGLE_API_KEY
-    return render_to_response('geotags/geotags_box_iframe.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'geotags/geotags_box_iframe.html', locals())

@@ -25,7 +25,7 @@ from tagrecommendation.client import TagRecommendation
 from tagrecommendation.client.client_fslabs import NewTagRecommendation
 from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME
 from django.core.cache import cache
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponse
 from hashlib import md5
@@ -123,7 +123,7 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
 
 ### Views for new tag recommendation interface experiment
 def new_tagrecommendation_interface_instructions(request):
-    return render_to_response('tagrecommendation/new_interface_instructions.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'tagrecommendation/new_interface_instructions.html', locals())
 
 
 def get_recommended_tags_view_new(request):

@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.models import User
 from sounds.models import Sound
@@ -36,41 +36,41 @@ from django.http import HttpResponse
 import json
 
 def bookmarks(request, username, category_id = None):
-    
+
     user = get_object_or_404(User, username__iexact=username)
     is_owner = request.user.is_authenticated and user == request.user
-    
+
     '''
     if is_owner and request.POST and "create_cat" in request.POST:
         form_bookmark_category = BookmarkCategoryForm(request.POST, instance=BookmarkCategory(user=user))
         if form_bookmark_category.is_valid():
             form_bookmark_category.save()
-        
+
         form_bookmark_category = BookmarkCategoryForm()
-        
+
     form_bookmark_category = BookmarkCategoryForm()
-    '''    
-    
+    '''
+
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user,category=None).count()
-    
+
     if not category_id:
         bookmarked_sounds = Bookmark.objects.select_related("sound").filter(user=user,category=None)
     else:
         category = get_object_or_404(BookmarkCategory,id=category_id,user=user)
         bookmarked_sounds = category.bookmarks.select_related("sound").all()
-    
+
     bookmark_categories = BookmarkCategory.objects.filter(user=user)
-    
-    return render_to_response('bookmarks/bookmarks.html', combine_dicts(locals(),paginate(request, bookmarked_sounds, 30)), context_instance=RequestContext(request))
+
+    return render(request, 'bookmarks/bookmarks.html', combine_dicts(locals(),paginate(request, bookmarked_sounds, 30)))
 
 @login_required
 def delete_bookmark_category(request, category_id):
-    
+
     category = get_object_or_404(BookmarkCategory,id=category_id, user=request.user)
     msg = "Deleted bookmark category \"" + category.name + "\"."
     category.delete()
     messages.add_message(request, messages.WARNING, msg)
-    
+
     next = request.GET.get("next","")
     if next:
         return HttpResponseRedirect(next)
@@ -93,7 +93,7 @@ def add_bookmark(request, sound_id):
     else:
         msg = "Added new bookmark for sound \"" + sound.original_filename + "\"."
         messages.add_message(request, messages.WARNING, msg)
-        
+
         next = request.GET.get("next","")
         if next:
             return HttpResponseRedirect(next)
@@ -103,12 +103,12 @@ def add_bookmark(request, sound_id):
 
 @login_required
 def delete_bookmark(request, bookmark_id):
-    
+
     bookmark = get_object_or_404(Bookmark,id=bookmark_id, user=request.user)
     msg = "Deleted bookmark for sound \"" + bookmark.sound.original_filename + "\"."
     bookmark.delete()
     messages.add_message(request, messages.WARNING, msg)
-    
+
     next = request.GET.get("next","")
     page = request.GET.get("page", "1")
     if next:
@@ -116,7 +116,7 @@ def delete_bookmark(request, bookmark_id):
     else:
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]) + "?page=" + str(page))
 
-@login_required       
+@login_required
 def get_form_for_sound(request, sound_id):
     sound = Sound.objects.get(id=sound_id)
     form = BookmarkForm(instance = Bookmark(name=sound.original_filename), prefix = sound.id)
@@ -133,4 +133,4 @@ def get_form_for_sound(request, sound_id):
         'add_bookmark_url': add_bookmark_url
     }
     template = 'bookmarks/bookmark_form.html'
-    return render_to_response(template, data_dict, context_instance = RequestContext(request))
+    return render(request, template, data_dict)

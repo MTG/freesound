@@ -26,7 +26,7 @@
 #   - markdown (for browseable api)
 
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.contrib.auth.views import login, logout
 from apiv2 import views
 
@@ -91,6 +91,7 @@ urlpatterns = [
     # Client management
     # use apply[/]* for backwards compatibility with links to /apiv2/apply
     url(r'^apply[/]*$', views.create_apiv2_key, name="apiv2-apply"),
+    url(r'^apply/credentials/(?P<key>[^//]+)/monitor/$', views.monitor_api_credential, name="apiv2-monitor-credential"),
     url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
     url(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
 

@@ -1,4 +1,4 @@
-Django==1.9.5
+Django==1.11
 BeautifulSoup==3.2.0
 #apt-get install libyaml-dev (to allow the cloader)
 PyYAML==3.11
@@ -28,7 +28,7 @@ pillow==2.6.0
 #apt-get install libjpeg-dev
 #apt-get install zlib1g-dev
 #apt-get install libpng12-dev
-ipython
+ipython==4.2.0
 Sphinx
 django-fixture-magic
 mock

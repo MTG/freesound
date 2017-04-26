@@ -37,7 +37,8 @@ class DonateForm(forms.Form):
 
     def clean(self):
         try:
-            if float(self.cleaned_data['amount']) < 1:
+            if (not 'amount' in self.cleaned_data)\
+                    or float(self.cleaned_data['amount']) < 1:
                 raise forms.ValidationError('The amount must be more than 1')
         except ValueError:
             raise forms.ValidationError('The amount must be a valid number, use \'.\' for decimals')

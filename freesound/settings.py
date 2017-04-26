@@ -171,6 +171,11 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# Graylog stream ids and domain
+GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
+GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
+GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
+
 # After download modal
 AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
 AFTER_DOWNLOAD_MODAL_DONATION = 'donation'
@@ -186,8 +191,6 @@ DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the popu
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
 
 DELETED_USER_ID = 1
-
-LOG_CLICKTHROUGH_DATA = False
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 

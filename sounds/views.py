@@ -64,7 +64,6 @@ import os
 
 
 logger = logging.getLogger('web')
-logger_click = logging.getLogger('clickusage')
 
 
 def get_random_sound():
@@ -231,7 +230,6 @@ def sound(request, username, sound_id):
     qs = Comment.objects.select_related("user", "user__profile")\
         .filter(content_type=ContentType.objects.get_for_model(Sound), object_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
-    do_log = settings.LOG_CLICKTHROUGH_DATA
     is_following = False
     if request.user.is_authenticated():
         users_following = follow_utils.get_users_following(request.user)
@@ -245,7 +243,6 @@ def sound(request, username, sound_id):
         'username': username,
         'form': form,
         'display_random_link': display_random_link,
-        'do_log': do_log,
         'is_following': is_following,
         'is_explicit': is_explicit,
     }
@@ -288,9 +285,6 @@ def sound_download(request, username, sound_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("sound", args=[username, sound_id])))
-    if settings.LOG_CLICKTHROUGH_DATA:
-        click_log(request, click_type='sounddownload', sound_id=sound_id)
-
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
     if sound.user.username.lower() != username.lower():
         raise Http404
@@ -298,24 +292,10 @@ def sound_download(request, username, sound_id):
     return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
-def sound_preview(request, folder_id, sound_id, user_id):
-    """
-    This function is only used when LOG_CLICKTHROUGH_DATA is enabled. It intercepts preview requests and logs
-    the data before redirecting to the actual preview file.
-    """
-    if settings.LOG_CLICKTHROUGH_DATA:
-        click_log(request, click_type='soundpreview', sound_id=sound_id)
-    url = request.get_full_path().replace("data/previews_alt/", "data/previews/")
-    return HttpResponseRedirect(url)
-
-
 def pack_download(request, username, pack_id):
     if not request.user.is_authenticated():
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
-    if settings.LOG_CLICKTHROUGH_DATA:
-        click_log(request, click_type='packdownload', pack_id=pack_id)
-
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
@@ -777,7 +757,6 @@ def display_sound_wrapper(request, username, sound_id):
         'sound': sound_obj,
         'sound_tags': sound_tags,
         'limit_description': False,
-        'do_log': settings.LOG_CLICKTHROUGH_DATA,
     }
     return render(request, 'sounds/display_sound.html', tvars)
 
@@ -820,23 +799,10 @@ def downloaders(request, username, sound_id):
 
     return render(request, 'sounds/downloaders.html', tvars)
 
+
 def pack_downloaders(request, username, pack_id):
     pack = get_object_or_404(Pack, id = pack_id)
 
     # Retrieve all users that downloaded a sound
     qs = Download.objects.filter(pack=pack_id)
     return render(request, 'sounds/pack_downloaders.html', combine_dicts(paginate(request, qs, 32, object_count=pack.num_downloads), locals()))
-
-def click_log(request,click_type=None, sound_id="", pack_id="" ):
-
-    searchtime_session_key = request.session.get("searchtime_session_key", "")
-    authenticated_session_key = ""
-    if request.user.is_authenticated():
-        authenticated_session_key = request.session.session_key
-    if click_type in ['soundpreview', 'sounddownload']:
-        entity_id = sound_id
-    else:
-        entity_id = pack_id
-
-    logger_click.info("%s : %s : %s : %s"
-                          % (click_type, authenticated_session_key, searchtime_session_key, unicode(entity_id).encode('utf-8')))

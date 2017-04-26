@@ -38,6 +38,8 @@ urlpatterns = [
         name='monitor-tags-stats-ajax'),
     url(r'^ajax_queries_stats/$', monitor.views.queries_stats_ajax,
         name='monitor-queries-stats-ajax'),
+    url(r'^ajax_api_usage_stats/(?P<client_id>[0-9A-Za-z]+)/$', monitor.views.api_usage_stats_ajax,
+        name='monitor-api-stats-ajax'),
     url(r'^ajax_downloads_stats/$', monitor.views.downloads_stats_ajax,
         name='monitor-downloads-stats-ajax'),
     url(r'^ajax_donations_stats/$', monitor.views.donations_stats_ajax,

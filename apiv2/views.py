@@ -1226,6 +1226,27 @@ def edit_api_credential(request, key):
                                })
 
 
+@login_required
+def monitor_api_credential(request, key):
+    try:
+        client = ApiV2Client.objects.get(key=key)
+        level = int(client.throttling_level)
+        limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
+        try:
+            day_limit = limit_rates[1].split('/')[0]
+        except IndexError:
+            day_limit = 0
+        tvars = {
+                'client': client,
+                'limit': day_limit
+                }
+        messages.add_message(request, messages.INFO, "This functionality is still in beta state. The number of requests"
+                                                     "shown here might not be 100% accurate.")
+        return render(request, 'api/monitor_api_credential.html', tvars)
+    except ApiV2Client.DoesNotExist:
+        raise Http404
+
+
 ### View for deleting api clients (works both for apiv2 and apiv1)
 @login_required
 def delete_api_credential(request, key):

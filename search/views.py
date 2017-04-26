@@ -30,7 +30,6 @@ import logging
 import json
 
 logger = logging.getLogger("search")
-logger_click = logging.getLogger('clickusage')
 
 def search_prepare_sort(sort, options):
     """ for ordering by rating order by rating, then by number of ratings """
@@ -237,19 +236,6 @@ def search(request):
         docs = [doc for doc in docs if doc["id"] in allsounds]
         for d in docs:
             d["sound"] = allsounds[d["id"]]
-
-        # clickusage tracking
-        if settings.LOG_CLICKTHROUGH_DATA:
-            request_full_path = request.get_full_path()
-            # The session id of an unauthenticated user is different from the session id of the same user when
-            # authenticated.
-            request.session["searchtime_session_key"] = request.session.session_key
-            if results.docs is not None:
-                ids = []
-                for item in results.docs:
-                    ids.append(item["id"])
-            logger_click.info("QUERY : %s : %s : %s : %s" %
-                                (unicode(request_full_path).encode('utf-8'), request.session.session_key, unicode(ids).encode('utf-8'), unicode(current_page).encode('utf-8')))
 
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))

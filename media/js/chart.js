@@ -56,7 +56,7 @@ function displayCharts(selectClass, data, options, exclude){
         .attr("stroke", options.legendData[i]['color'])
         .attr("stroke-linejoin", "round")
         .attr("stroke-linecap", "round")
-        .attr("stroke-width", 3)
+        .attr("stroke-width", 2)
         .attr("d", line);
       i+=1;
   }); 

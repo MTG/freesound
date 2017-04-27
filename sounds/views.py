@@ -163,7 +163,10 @@ def front_page(request):
                                           .order_by('-last_post__created') \
                                           .select_related('author',
                                                           'forum',
-                                                          'last_post')
+                                                          'last_post',
+                                                          'last_post__author',
+                                                          'last_post__thread',
+                                                          'last_post__thread__forum')
     latest_additions = Sound.objects.latest_additions(5, '2 days')
     random_sound = get_random_sound()
     tvars = {

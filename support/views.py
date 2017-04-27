@@ -101,8 +101,8 @@ def contact(request):
     request_sent = False
     user = None
 
-    if request.user.is_authenticated():
-        user = request.user 
+    if request.user.is_authenticated:
+        user = request.user
 
     if request.POST:
         form = ContactForm(request.POST)

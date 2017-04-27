@@ -181,7 +181,7 @@ def sound(request, username, sound_id):
         sound = Sound.objects.select_related("license", "user", "user__profile", "pack").get(id=sound_id)
         if sound.user.username.lower() != username.lower():
             raise Http404
-        user_is_owner = request.user.is_authenticated() and \
+        user_is_owner = request.user.is_authenticated and \
             (sound.user == request.user or request.user.is_superuser or request.user.is_staff or
              Group.objects.get(name='moderators') in request.user.groups.all())
         # If the user is authenticated and this file is his, don't worry about moderation_state and processing_state
@@ -201,7 +201,7 @@ def sound(request, username, sound_id):
 
     if request.method == "POST":
         form = CommentForm(request, request.POST)
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             if request.user.profile.is_blocked_for_spam_reports():
                 messages.add_message(request, messages.INFO, "You're not allowed to post the comment because your account "
                                                              "has been temporaly blocked after multiple spam reports")
@@ -231,11 +231,11 @@ def sound(request, username, sound_id):
         .filter(content_type=ContentType.objects.get_for_model(Sound), object_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
     is_following = False
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         users_following = follow_utils.get_users_following(request.user)
         if sound.user in users_following:
             is_following = True
-    is_explicit = sound.is_explicit and (not request.user.is_authenticated() \
+    is_explicit = sound.is_explicit and (not request.user.is_authenticated \
                         or not request.user.profile.is_adult)
 
     tvars = {
@@ -282,7 +282,7 @@ def after_download_modal(request):
 
 
 def sound_download(request, username, sound_id):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("sound", args=[username, sound_id])))
     sound = get_object_or_404(Sound, id=sound_id, moderation_state="OK", processing_state="OK")
@@ -293,7 +293,7 @@ def sound_download(request, username, sound_id):
 
 
 def pack_download(request, username, pack_id):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return HttpResponseRedirect('%s?next=%s' % (reverse("accounts-login"),
                                                     reverse("pack", args=[username, pack_id])))
     pack = get_object_or_404(Pack, id=pack_id)
@@ -690,7 +690,7 @@ def flag(request, username, sound_id):
         raise Http404
 
     user = None
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = request.user
 
     if request.method == "POST":

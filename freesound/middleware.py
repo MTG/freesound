@@ -49,7 +49,7 @@ class BulkChangeLicenseHandler:
         # allow user to logout (maybe a bit too much...)
         # don't run it for media URLs
         # N.B. probably better just to check for login in the URL
-        if request.user.is_authenticated() \
+        if request.user.is_authenticated \
             and not 'bulklicensechange' in request.get_full_path() \
             and not 'logout' in request.get_full_path() \
             and not 'tosacceptance' in request.get_full_path() \
@@ -77,7 +77,7 @@ class BulkChangeLicenseHandler:
 class TosAcceptanceHandler:
     def process_request(self, request):
 
-        if request.user.is_authenticated() \
+        if request.user.is_authenticated \
             and not 'tosacceptance' in request.get_full_path() \
             and not 'logout' in request.get_full_path() \
             and not 'tos_api' in request.get_full_path() \

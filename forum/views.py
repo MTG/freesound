@@ -57,7 +57,7 @@ class last_action(object):
     
     def __call__(self, request, *args, **kwargs):
         
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return self.view_func(request, *args, **kwargs)
 
         from datetime import datetime, timedelta
@@ -112,7 +112,7 @@ def thread(request, forum_name_slug, thread_id):
     # a logged in user watching a thread can activate his subscription to that thread!
     # we assume the user has seen the latest post if he is browsing the thread
     # this is not entirely correct, but should be close enough
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         Subscription.objects.filter(thread=thread, subscriber=request.user, is_active=False).update(is_active=True)
 
     return render(request, 'forum/thread.html', combine_dicts(locals(), paginator))

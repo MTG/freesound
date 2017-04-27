@@ -46,16 +46,16 @@ def _get_anon_or_user_form(request, anonymous_form, user_form, use_post=True):
     if _can_view_mod_msg(request) and anonymous_form != AnonymousContactForm:
         user_form = ModeratorMessageForm
     if len(request.POST.keys()) > 0 and use_post:
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             return user_form(request.POST)
         else:
             return anonymous_form(request.POST)
     else:
-        return user_form() if request.user.is_authenticated() else anonymous_form()
+        return user_form() if request.user.is_authenticated else anonymous_form()
 
 
 def _can_view_mod_msg(request):
-    return request.user.is_authenticated() \
+    return request.user.is_authenticated \
             and (request.user.is_superuser or request.user.is_staff \
                  or Group.objects.get(name='moderators') in request.user.groups.all())
 
@@ -86,18 +86,18 @@ def ticket(request, ticket_key):
         invalidate_all_moderators_header_cache()
 
         # Left ticket message
-        if is_selected(request, 'recaptcha') or (request.user.is_authenticated() and is_selected(request, 'message')):
+        if is_selected(request, 'recaptcha') or (request.user.is_authenticated and is_selected(request, 'message')):
             tc_form = _get_tc_form(request)
             if tc_form.is_valid():
                 tc = TicketComment()
                 tc.text = tc_form.cleaned_data['message']
                 tc.moderator_only = tc_form.cleaned_data.get('moderator_only', False)
                 if tc.text:
-                    if request.user.is_authenticated():
+                    if request.user.is_authenticated:
                         tc.sender = request.user
                     tc.ticket = ticket
                     tc.save()
-                    if not request.user.is_authenticated():
+                    if not request.user.is_authenticated:
                         email_to = Ticket.MODERATOR_ONLY
                     elif request.user == ticket.sender:
                         email_to = Ticket.MODERATOR_ONLY

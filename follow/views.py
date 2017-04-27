@@ -34,7 +34,7 @@ from collections import OrderedDict
 def following_users(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         is_owner = request.user == user
     following = follow_utils.get_users_following(user)
 
@@ -47,7 +47,7 @@ def following_users(request, username):
 def followers(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         is_owner = request.user == user
     followers = follow_utils.get_users_followers(user)
 
@@ -60,7 +60,7 @@ def followers(request, username):
 def following_tags(request, username):
     user = get_object_or_404(User, username=username)
     is_owner = False
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         is_owner = request.user == user
     following = follow_utils.get_tags_following(user)
     space_tags = following

@@ -23,6 +23,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import smart_unicode
+from django.urls import reverse
 
 class GeoTag(models.Model):
     user = models.ForeignKey(User)
@@ -32,10 +33,9 @@ class GeoTag(models.Model):
     zoom = models.IntegerField()
 
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    
+
     def __unicode__(self):
         return u"%s (%f,%f)" % (self.user, self.lat, self.lon)
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('geotag', (smart_unicode(self.id),))
+        return reverse('geotag', args=[smart_unicode(self.id)])

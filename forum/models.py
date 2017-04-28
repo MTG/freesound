@@ -22,6 +22,7 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
 from django.utils.encoding import smart_unicode
 from general.models import OrderedModel
 from django.db.models.signals import post_delete, pre_delete
@@ -60,9 +61,8 @@ class Forum(OrderedModel):
     def __unicode__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("forums-forum", (smart_unicode(self.name_slug),))
+        return reverse("forums-forum", args=[smart_unicode(self.name_slug)])
 
     def get_last_post(self):
         return Post.objects.filter(thread__forum=self,moderation_state ='OK').order_by("-created")[0]
@@ -102,9 +102,8 @@ class Thread(models.Model):
         else:
             self.delete()
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("forums-thread", (smart_unicode(self.forum.name_slug), self.id))
+        return reverse("forums-thread", args=[smart_unicode(self.forum.name_slug), self.id])
 
     class Meta:
         ordering = ('-status', '-last_post__created')
@@ -145,9 +144,8 @@ class Post(models.Model):
     def __unicode__(self):
         return u"Post by %s in %s" % (self.author, self.thread)
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("forums-post", (smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id))
+        return reverse("forums-post", args=[smart_unicode(self.thread.forum.name_slug), self.thread.id, self.id])
 
 
 @receiver(post_delete, sender=Post)

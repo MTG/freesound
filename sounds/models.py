@@ -409,9 +409,8 @@ class Sound(SocialModel):
     def rating_percent(self):
         return int(self.avg_rating*10)
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'sound', (self.user.username, smart_unicode(self.id),)
+        return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
 
     def set_tags(self, tags):
         # remove tags that are not in the list
@@ -779,9 +778,8 @@ class Pack(SocialModel):
     def __unicode__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'pack', (self.user.username, smart_unicode(self.id),)
+        return reverse('pack', args=[self.user.username, smart_unicode(self.id)])
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name', 'is_deleted')

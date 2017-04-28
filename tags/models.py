@@ -25,6 +25,7 @@ from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.encoding import smart_unicode
+from django.urls import reverse
 
 class Tag(models.Model):
     name = models.SlugField(unique=True, db_index=True, max_length=100)
@@ -51,9 +52,8 @@ class TaggedItem(models.Model):
     def __unicode__(self):
         return u"%s tagged %s - %s: %s" % (self.user, self.content_type, self.content_type, self.tag)
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('tag', (smart_unicode(self.tag.id),))
+        return reverse('tag', args=[smart_unicode(self.tag.id)])
 
     class Meta:
         ordering = ("-created",)

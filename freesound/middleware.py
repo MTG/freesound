@@ -25,7 +25,6 @@ from django.contrib.auth.models import User
 from accounts.models import Profile
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
-# from django.template import RequestContext
 from django.conf import settings
 from django.core.cache import cache
 from sounds.models import Sound
@@ -41,8 +40,7 @@ class PermissionDeniedHandler(object):
     def process_exception(self, request, exception):
         if isinstance(exception, PermissionDenied):
             return render(request, 'permissiondenied.html')
-        response = self.get_response(request)
-        return response
+
 
 class OnlineUsersHandler(object):
     def __init__(self, get_response):

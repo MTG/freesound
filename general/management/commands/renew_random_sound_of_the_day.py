@@ -18,14 +18,14 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import NoArgsCommand
+from django.core.management.base import BaseCommand
 from django.core.cache import cache
 import logging
 
 logger = logging.getLogger("web")
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Delete random sound of the day cache so it gets renewed in next front page load."
 
     def handle(self, **options):

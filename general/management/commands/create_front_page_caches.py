@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import NoArgsCommand
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.cache import cache
@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger("web")
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Create front page RSS and Pledgie cache."
 
     def handle(self, **options):

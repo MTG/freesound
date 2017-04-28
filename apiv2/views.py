@@ -1241,7 +1241,7 @@ def monitor_api_credential(request, key):
                 'limit': day_limit
                 }
         messages.add_message(request, messages.INFO, "This functionality is still in beta state. The number of requests"
-                                                     "shown here might not be 100% accurate.")
+                                                     " shown here might not be 100% accurate.")
         return render(request, 'api/monitor_api_credential.html', tvars)
     except ApiV2Client.DoesNotExist:
         raise Http404

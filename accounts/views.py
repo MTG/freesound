@@ -637,8 +637,8 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs = Download.objects.select_related('sound', 'sound__user__username', 'sound__license', 'pack',
-                                         'pack__user__username').filter(user=request.user)
+    qs = Download.objects.select_related('sound', 'sound__user', 'sound__license', 'pack',
+                                         'pack__user').filter(user=request.user)
     tvars = {'format': request.GET.get("format", "regular")}
     tvars.update(paginate(request, qs, 40))
     return render(request, 'accounts/attribution.html', tvars)

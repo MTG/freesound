@@ -172,6 +172,9 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# Number of ratings of a sound to start showing average
+MIN_NUMBER_RATINGS = 3
+
 # Graylog stream ids and domain
 GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
 GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'

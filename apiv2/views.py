@@ -49,7 +49,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, Http404, HttpResponse
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 try:
     from collections import OrderedDict
 except:

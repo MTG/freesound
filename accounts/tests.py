@@ -21,7 +21,7 @@
 from django.test import TestCase
 from django.test.utils import override_settings, skipIf
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType

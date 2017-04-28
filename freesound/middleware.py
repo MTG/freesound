@@ -24,7 +24,7 @@ from utils.onlineusers import cache_online_users
 from django.contrib.auth.models import User
 from accounts.models import Profile
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.conf import settings
 from django.core.cache import cache
 from sounds.models import Sound

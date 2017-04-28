@@ -27,7 +27,7 @@ from bookmarks.forms import BookmarkCategoryForm, BookmarkForm
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from datetime import datetime
 from django.contrib import messages
 from utils.pagination import paginate

@@ -20,7 +20,7 @@
 
 from tags.models import Tag, FS1Tag
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponsePermanentRedirect
 from django.shortcuts import render
 from django.template import RequestContext

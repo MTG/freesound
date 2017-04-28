@@ -28,7 +28,7 @@ from django.contrib.auth import logout, REDIRECT_FIELD_NAME
 from django.contrib.auth.views import redirect_to_login
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 def https_required(view_func):

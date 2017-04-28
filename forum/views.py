@@ -21,7 +21,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator, InvalidPage
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, \
     HttpResponsePermanentRedirect
 from django.shortcuts import render, get_object_or_404

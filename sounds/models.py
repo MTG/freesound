@@ -32,7 +32,7 @@ from django.db import models
 from django.db import connection, transaction
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag

@@ -24,7 +24,7 @@ from comments.models import Comment
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from favorites.models import Favorite
 from ratings.models import Rating

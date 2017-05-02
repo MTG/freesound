@@ -32,20 +32,21 @@ class Command(BaseCommand):
            "force reindex ALL sounds. Pas a number argument to limit the number of sounds that will be reindexed " \
            "(to avoid collapsing similarity if using crons). Pass a string argument with the freesound extractor version" \
            "to only index sounds analyzed with the specified version."
-    option_list = BaseCommand.option_list + (
-    make_option('-f','--force',
-        dest='force',
-        action='store_true',
-        default=False,
-        help='Reindex all sounds regardless of their similarity state'),
-    )
-    option_list += (
-    make_option('-i','--indexing_server',
-        dest='indexing_server',
-        action='store_true',
-        default=False,
-        help='Send files to the indexing server instead of the main similarity server'),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-f', '--force',
+            action='store_true',
+            dest='force',
+            default=False,
+            help='Reindex all sounds regardless of their similarity state')
+        parser.add_argument(
+            '-i','--indexing_server',
+            action='store_true',
+            dest='indexing_server',
+            default=False,
+            help='Send files to the indexing server instead of the main similarity server')
+
 
     def handle(self,  *args, **options):
 

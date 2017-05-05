@@ -18,9 +18,10 @@
 #     See AUTHORS file.
 #
 
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.test.utils import override_settings, skipIf
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.conf import settings
@@ -32,6 +33,7 @@ from utils.filesystem import File
 from tags.models import Tag
 from comments.models import Comment
 from forum.models import Thread, Post, Forum
+from tickets.models import Ticket
 import accounts.models
 import mock
 import os
@@ -196,7 +198,13 @@ class SimpleUserTest(TestCase):
         resp = self.client.get(reverse('accounts-username-reminder'))
         self.assertEqual(resp.status_code, 200)
 
-        User.objects.create_user("testuser", password="testpass")
+        # Login user with moderation permissions
+        user = User.objects.create_user("testuser", password="testpass")
+        ct = ContentType.objects.get_for_model(Ticket)
+        p = Permission.objects.get(content_type=ct, codename='can_moderate')
+        ct2 = ContentType.objects.get_for_model(Post)
+        p2 = Permission.objects.get(content_type=ct2, codename='can_moderate_forum')
+        user.user_permissions.add(p, p2)
         self.client.login(username='testuser', password='testpass')
 
         # 200 response on TOS acceptance page
@@ -206,7 +214,6 @@ class SimpleUserTest(TestCase):
         # 200 response on Account email reset page
         resp = self.client.get(reverse('accounts-email-reset'))
         self.assertEqual(resp.status_code, 200)
-
 
         # 200 response on Account home page
         resp = self.client.get(reverse('accounts-home'))
@@ -246,6 +253,26 @@ class SimpleUserTest(TestCase):
 
         # 200 response on Account permissions granted page
         resp = self.client.get(reverse('access-tokens'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on ticket moderation page
+        resp = self.client.get(reverse('tickets-moderation-home'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on ticket moderation guide page
+        resp = self.client.get(reverse('tickets-moderation-guide'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on wiki page
+        resp = self.client.get(reverse('wiki'))
+        self.assertEqual(resp.status_code, 302)
+
+        # 200 response on wiki developers page
+        resp = self.client.get(reverse('wiki_developers'))
+        self.assertEqual(resp.status_code, 302)
+
+        # 200 response on forums moderation page
+        resp = self.client.get(reverse('forums-moderate'))
         self.assertEqual(resp.status_code, 200)
 
     def test_username_check(self):

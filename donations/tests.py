@@ -102,3 +102,13 @@ class DonationTest(TestCase):
         ret = self.client.post("/donations/donate/", data)
         response =  ret.json()
         self.assertFalse('errors' in response)
+
+    def test_donation_response(self):
+        # 200 response on donate page
+        resp = self.client.get(reverse('donate'))
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on donors page
+        resp = self.client.get(reverse('donors'))
+        self.assertEqual(resp.status_code, 200)
+

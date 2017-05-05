@@ -21,7 +21,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from sounds.tests import create_user_and_sounds
-
+from models import ApiV2Client
 
 class TestAPiViews(TestCase):
 
@@ -45,7 +45,24 @@ class TestAPiViews(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         # 200 response on pack instance download
-        # This test does not work because it needs https connection.
-        # TODO: see how to etst that (will be needed for many other api tests)
-        # resp = self.client.get(reverse('apiv2-pack-download', kwargs={'pk': packs[0].id}))
-        # self.assertEqual(resp.status_code, 200)
+        # This test uses a https connection.
+        resp = self.client.get(reverse('apiv2-pack-download',
+            kwargs={'pk': packs[0].id}), secure=True)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_oauth2_response_ok(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
+        client = ApiV2Client.objects.create(user=user, description='',
+                name='', url='', redirect_uri='http://freesound.org')
+        # Login so api returns session login based responses
+        self.client.login(username=user.username, password='testpass')
+
+        # 200 response on Oauth2 authorize
+        resp = self.client.post(reverse('oauth2_provider:authorize'),
+                {'client_id': client.id, 'response_type': 'code'}, secure=True)
+        self.assertEqual(resp.status_code, 200)
+
+        # 302 response on Oauth2 logout and authorize
+        resp = self.client.post(reverse('oauth2_provider:logout_and_authorize'),
+                {'client_id': client.id}, secure=True)
+        self.assertEqual(resp.status_code, 302)

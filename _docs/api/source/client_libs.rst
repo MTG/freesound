@@ -21,3 +21,6 @@ Objective-c (iOS)
 
 Qt framework (c++)
   https://github.com/ttguy/Qt_freesoundAPIv2 (by Roger Morton)
+
+Scala
+  https://github.com/Sciss/ScalaFreesound (by Hanns Holger Rutz)

@@ -66,3 +66,24 @@ class TestAPiViews(TestCase):
         resp = self.client.post(reverse('oauth2_provider:logout_and_authorize'),
                 {'client_id': client.id}, secure=True)
         self.assertEqual(resp.status_code, 302)
+
+    def test_basic_user_response_ok(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
+        # 200 response on register page
+        resp = self.client.get(reverse('apiv2-registration'), secure=True)
+        self.assertEqual(resp.status_code, 200)
+
+        # 200 response on login page
+        resp = self.client.get(reverse('api-login'), secure=True)
+        self.assertEqual(resp.status_code, 200)
+
+        self.client.login(username=user.username, password='testpass')
+
+        # 200 response on keys page
+        resp = self.client.get(reverse('apiv2-apply'), secure=True)
+        self.assertEqual(resp.status_code, 200)
+
+        # 302 response on logout page
+        resp = self.client.get(reverse('api-logout'), secure=True)
+        self.assertEqual(resp.status_code, 302)
+

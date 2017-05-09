@@ -75,7 +75,7 @@ class License(OrderedModel):
 class SoundManager(models.Manager):
 
     def latest_additions(self, num_sounds, period='2 weeks', use_interval=True):
-        interval_query = ("and created > now() - interval '%s'" % period) if use_interval else ""
+        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) if use_interval else ""
         query = """
                 select
                     username,
@@ -85,7 +85,7 @@ class SoundManager(models.Manager):
                 select
                     (select username from auth_user where auth_user.id = user_id) as username,
                     max(id) as sound_id,
-                    max(created) as created,
+                    greatest(max(created), max(moderation_date)) as created,
                     count(*) - 1 as extra
                 from
                     sounds_sound

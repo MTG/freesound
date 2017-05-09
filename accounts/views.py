@@ -957,7 +957,7 @@ def email_reset(request):
             subject = ''.join(subject.splitlines())
             email_body = loader.render_to_string('accounts/email_reset_email.html', c)
             send_mail(subject=subject, email_body=email_body, email_to=[email])
-            return HttpResponseRedirect(reverse('accounts.views.email_reset_done'))
+            return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user = request.user)
     tvars = {'form': form}

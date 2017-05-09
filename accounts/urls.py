@@ -21,7 +21,7 @@
 #
 
 from django.conf.urls import url, include
-import django.contrib.auth.views as authviews
+from django.contrib.auth.views import LoginView
 import messages.views as messages
 import accounts.views as accounts
 from accounts.forms import FsAuthenticationForm
@@ -30,8 +30,8 @@ import follow.views as follow
 import apiv2.views as api
 
 urlpatterns = [
-    url(r'^login/$', authviews.login, {'template_name': 'registration/login.html',
-                                       'authentication_form': FsAuthenticationForm}, name="accounts-login"),
+    url(r'^login/$', LoginView.as_view(template_name='registration/login.html',
+                                       authentication_form=FsAuthenticationForm), name="accounts-login"),
     url('^', include('django.contrib.auth.urls')),  # Include logout and reset email urls
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),

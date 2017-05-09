@@ -19,7 +19,7 @@
 #
 
 from django import forms
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.template import RequestContext
@@ -42,7 +42,7 @@ def page(request, name):
     return render(request, 'wiki/page.html', locals())
 
 def editpage(request, name):
-    if not (request.user.is_authenticated() and request.user.has_perm('wiki.add_page')):
+    if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
         raise Http404
 
     # the class for editing...
@@ -73,7 +73,7 @@ def editpage(request, name):
     return render(request, 'wiki/edit.html', locals())
 
 def history(request, name):
-    if not (request.user.is_authenticated() and request.user.has_perm('wiki.add_page')):
+    if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
         raise Http404
 
     try:

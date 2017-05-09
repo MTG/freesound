@@ -34,13 +34,13 @@ class Command(BaseCommand):
            "of the sounds in fs dataset that are not in gaia or solr so the next time the indexes are updated " \
            "(running similarity_update and post_dirty_sounds_to_solr) they are indexed."
 
-    option_list = BaseCommand.option_list + (
-    make_option('-n','--no-changes',
-        dest='no-changes',
-        action='store_true',
-        default=False,
-        help='Using the option --no-changes the is_index_dirty and similarity_state sound fields will not be modified.'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-n','--no-changes',
+            action='store_true',
+            dest='no-changes',
+            default=False,
+            help='Using the option --no-changes the is_index_dirty and similarity_state sound fields will not be modified.')
 
     def handle(self,  *args, **options):
 

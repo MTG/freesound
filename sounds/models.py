@@ -32,7 +32,7 @@ from django.db import models
 from django.db import connection, transaction
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -411,9 +411,8 @@ class Sound(SocialModel):
             return 0
         return int(self.avg_rating*10)
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'sound', (self.user.username, smart_unicode(self.id),)
+        return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
 
     def set_tags(self, tags):
         # remove tags that are not in the list
@@ -781,9 +780,8 @@ class Pack(SocialModel):
     def __unicode__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'pack', (self.user.username, smart_unicode(self.id),)
+        return reverse('pack', args=[self.user.username, smart_unicode(self.id)])
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name', 'is_deleted')

@@ -10,19 +10,20 @@ import logging.config
 
 DEBUG = False
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
     'freesound.middleware.PermissionDeniedHandler',
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'freesound.middleware.OnlineUsersHandler',
     'utils.corsheaders.middleware.CorsMiddleware',
-)
+]
 
-
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -60,7 +61,7 @@ INSTALLED_APPS = (
     'raven.contrib.django.raven_compat',
     'django_object_actions',
     #'test_utils', # Don't use this in production!
-)
+]
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
@@ -342,9 +343,9 @@ DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
-    MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
-    INSTALLED_APPS += ('debug_toolbar',)
-    INTERNAL_IPS +=('127.0.0.1', 'localhost')
+    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    INSTALLED_APPS += ['debug_toolbar']
+    #INTERNAL_IPS +=('127.0.0.1', 'localhost')
 
     DEBUG_TOOLBAR_PANELS = [
         'debug_toolbar.panels.versions.VersionsPanel',

@@ -27,7 +27,7 @@
 
 
 from django.conf.urls import url, include
-from django.contrib.auth.views import login, logout
+from django.contrib.auth.views import LoginView, LogoutView
 from apiv2 import views
 
 #
@@ -97,8 +97,8 @@ urlpatterns = [
 
     # Oauth2
     url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2_provider')),
-    url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
-    url(r'^logout/$', logout, {'next_page': '/apiv2/'}, name="api-logout"),
+    url(r'^login/$', LoginView.as_view(template_name='api/minimal_login.html'), name="api-login"),
+    url(r'^logout/$', LogoutView.as_view(next_page='/apiv2/'), name="api-logout"),
 
     # Minimal registration page
     url(r'^registration/$', views.minimal_registration, name="apiv2-registration"),

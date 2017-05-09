@@ -26,13 +26,13 @@
           <li>
               <input type="radio"
                      name="{{ form.donation_type.name }}"
-                     value="{{ choice.choice_value }}"
+                     value="{{ choice.data.value }}"
                      id="id_{{ form.donation_type.name }}_{{ forloop.counter0 }}"
-                     {% if form.donation_type.value == choice.choice_value %}
+                     {% if form.donation_type.value == choice.data.value %}
                          checked='checked'
                      {% endif %}/>
               {{ choice.choice_label }}
-              {% if choice.choice_value == '2' %} {{form.name_option}} {% endif %}
+              {% if choice.data.value == '2' %} {{form.name_option}} {% endif %}
           </li> 
           {% endfor %}
           </ul>

@@ -43,7 +43,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -82,12 +82,22 @@ def login(request, template_name, authentication_form):
     # with the same email address. We can switch back to the regular django
     # once all accounts are adapted
     from django.contrib.auth import views as auth_views
-
     response = auth_views.login(request, template_name=template_name, authentication_form=authentication_form)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
-        if request.user.profile.has_many_emails():
-            return HttpResponseRedirect(reverse("accounts-multi-email-cleanup"))
+        # Now we check is the logged in user has shared email problems
+        same_user_qs = request.user.profile.has_many_emails(return_qs=True)
+        if same_user_qs.exists():
+            # If the logged has an email shared with other accounts we figure out if we changed his email or we changed
+            # the emails from the other accounts which shared it
+            original_email = same_user_qs.first().main_orig_email
+            if request.user.email == original_email:
+                # If this account's email was not changed, simply continue with the login redirect (user won't notice)
+                return response
+            else:
+                # If we changed this account's email, we advise the user to chose a new email address
+                return HttpResponseRedirect(reverse("accounts-multi-email-cleanup")
+                                            + '?next=%s' % request.POST.get('next'))
         else:
             return response
 
@@ -95,10 +105,42 @@ def login(request, template_name, authentication_form):
 
 @login_required
 def multi_email_cleanup(request):
-    if not request.user.profile.has_many_emails():
-        return HttpResponseRedirect(reverse("accounts-home"))
+    # We make sure that the email problem still affects the user
+    # If the problem is not there anymore, then we can remove corresponding same_user objects
+    # and show a message telling user that email problems for the account were fixed
 
-    return render(request, 'accounts/multi_email_cleanup.html')
+    same_user_qs = request.user.profile.has_many_emails(return_qs=True)
+    if not same_user_qs.exists():
+        # User should have never come here
+        return HttpResponseRedirect(reverse('accounts-home'))
+
+    original_email = same_user_qs.first().main_orig_email
+    main_user = same_user_qs.first().main_user  # i.e. user that kept the original email
+    other_users_with_same_email = set()
+
+    if request.user == main_user:
+        # Main user should not be redirected here
+        return HttpResponseRedirect(reverse('accounts-home'))
+
+    # At this point, the current logged in user must be one of the users whose email
+    # was changed. We check if the user has changed his email again, and if he did we
+    # simply show a "your email problems have been fixed" message, otherwise we show
+    # the full message asking the user to reset his email
+    if request.user.email != "%s@freesound.org" % (original_email.replace("@", "%")):
+        # This means that user already fixed his problems with duplicated emails
+        # Now delete corresponding same_user objects
+        SameUser.objects.filter(secondary_user=request.user).delete()
+        return HttpResponseRedirect(request.GET.get('next2', reverse('accounts-home')))
+    else:
+        # Fill in other_users_with_same_email information to show in warning message
+        for same_user in same_user_qs:
+            other_users_with_same_email.add(same_user.main_user)
+            other_users_with_same_email.add(same_user.secondary_user)
+
+    return render(request, 'accounts/multi_email_cleanup.html',
+                  {'original_email': original_email, 'other_users': list(other_users_with_same_email),
+                   'user_kept_original_email': main_user})
+
 
 def check_username(request):
     username = request.GET.get('username', None)
@@ -979,7 +1021,7 @@ def email_reset(request):
             subject = ''.join(subject.splitlines())
             email_body = loader.render_to_string('accounts/email_reset_email.html', c)
             send_mail(subject=subject, email_body=email_body, email_to=[email])
-            return HttpResponseRedirect(reverse('accounts.views.email_reset_done'))
+            return HttpResponseRedirect(reverse('accounts-email-reset-done'))
     else:
         form = EmailResetForm(user = request.user)
     tvars = {'form': form}

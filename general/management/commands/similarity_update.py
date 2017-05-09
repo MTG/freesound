@@ -29,35 +29,44 @@ logger = logging.getLogger("web")
 
 class Command(BaseCommand):
     help = "Take all sounds that haven't been added to the similarity service yet and add them. Use option --force to " \
-           "force reindex ALL sounds. Pas a number argument to limit the number of sounds that will be reindexed " \
-           "(to avoid collapsing similarity if using crons). Pass a string argument with the freesound extractor version" \
-           "to only index sounds analyzed with the specified version."
+           "force reindex ALL sounds. Use option -l to limit the maximum number of sounds to index " \
+           "(to avoid collapsing similarity if using crons). Use option -ev to only index sounds with a specific" \
+           "essentia extractor version. For exampel: python manage.py similarity_update -ev 0.3 -l 1000"
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            '-ev', '--extractor_version',
+            action='store',
+            dest='freesound_extractor_version',
+            default='0.3',
+            help='Only index sounds analyzed with specific Freesound Extractor version')
+
+        parser.add_argument(
+            '-l', '--limit',
+            action='store',
+            dest='limit',
+            default=1000,
+            help='Maximum number of sounds to index')
+
         parser.add_argument(
             '-f', '--force',
             action='store_true',
             dest='force',
             default=False,
             help='Reindex all sounds regardless of their similarity state')
+
         parser.add_argument(
-            '-i','--indexing_server',
+            '-i', '--indexing_server',
             action='store_true',
             dest='indexing_server',
             default=False,
             help='Send files to the indexing server instead of the main similarity server')
 
-
     def handle(self,  *args, **options):
 
-        limit = None
-        freesound_extractor_version = ''
-        for arg in args:
-            if arg.isdigit():
-                limit = int(arg)
-            else:
-                freesound_extractor_version = arg
-
+        limit = int(options['limit'])
+        freesound_extractor_version = options['freesound_extractor_version']
+        print limit, freesound_extractor_version
         if options['force']:
             to_be_added = Sound.objects.filter(analysis_state='OK', moderation_state='OK').order_by('id')[:limit]
         else:

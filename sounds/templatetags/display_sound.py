@@ -45,14 +45,13 @@ def display_sound(context, sound):
         sound_tags = sound_obj.tags.select_related("tag").all()[0:12]
         request = context['request']
         is_explicit = sound_obj.is_explicit and \
-                (not request.user.is_authenticated() or \
+                (not request.user.is_authenticated or \
                         not request.user.profile.is_adult)
 
     return {
      'sound_id':     sound_id,
      'sound':        sound_obj,
      'sound_tags':   sound_tags,
-     'do_log':       settings.LOG_CLICKTHROUGH_DATA,
      'media_url':    context['media_url'],
      'request':      context['request'],
      'is_explicit':  is_explicit
@@ -63,14 +62,13 @@ def display_sound(context, sound):
 def display_raw_sound(context, sound):
     sound_id = sound.id
     request = context['request']
-    is_explicit = sound.is_explicit and (not request.user.is_authenticated() \
+    is_explicit = sound.is_explicit and (not request.user.is_authenticated \
             or not request.user.profile.is_adult)
 
     return {
         'sound_id':     sound_id,
         'sound':        sound,
         'sound_tags':   sound.tag_array,
-        'do_log':       settings.LOG_CLICKTHROUGH_DATA,
         'media_url':    context['media_url'],
         'request':      request,
         'is_explicit':  is_explicit

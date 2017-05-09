@@ -27,13 +27,13 @@ from optparse import make_option
 class Command(BaseCommand):
     args = ''
     help = 'Get the id of the last indexed sound in tag recommendation service and send tag information of the older ones'
-    option_list = BaseCommand.option_list + (
-    make_option('-a','--all',
-        dest='all',
-        action='store_true',
-        default=False,
-        help='Repost all sounds to tag recommendation even if they were already indexed'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-a','--all',
+            action='store_true',
+            dest='all',
+            default=False,
+            help='Repost all sounds to tag recommendation even if they were already indexed')
 
     def handle(self, *args, **options):
 

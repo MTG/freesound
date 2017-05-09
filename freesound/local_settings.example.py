@@ -54,8 +54,6 @@ DONATIONS_PER_PAGE = 40
 GRAYLOG_USERNAME = "apiuser"
 GRAYLOG_PASSWORD = "apiuserpassword"
 
-LOG_CLICKTHROUGH_DATA = False
-
 # To customize DATA_URL
 # DATA_URL = "http://freesound.org/data/"
 

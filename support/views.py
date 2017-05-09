@@ -20,7 +20,7 @@
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import render
 from django.conf import settings
 from support.forms import ContactForm
@@ -101,8 +101,8 @@ def contact(request):
     request_sent = False
     user = None
 
-    if request.user.is_authenticated():
-        user = request.user 
+    if request.user.is_authenticated:
+        user = request.user
 
     if request.POST:
         form = ContactForm(request.POST)

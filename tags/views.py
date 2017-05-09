@@ -20,9 +20,9 @@
 
 from tags.models import Tag, FS1Tag
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponsePermanentRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from utils.search.solr import SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException, Solr
@@ -37,9 +37,9 @@ def tags(request, multiple_tags=None):
         multiple_tags = multiple_tags.split('/')
     else:
         multiple_tags = []
-    
+
     multiple_tags = sorted(filter(lambda x: x, multiple_tags))
-    
+
     try:
         current_page = int(request.GET.get("page", 1))
     except ValueError:
@@ -100,25 +100,25 @@ def tags(request, multiple_tags=None):
         follow_tags_url = reverse('follow-tags', args=[slash_tag])
         unfollow_tags_url = reverse('unfollow-tags', args=[slash_tag])
         show_unfollow_button = False
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             show_unfollow_button = follow_utils.is_user_following_tag(request.user, slash_tag)
 
-    return render_to_response('sounds/tags.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'sounds/tags.html', locals())
 
 
-def old_tag_link_redirect(request):    
+def old_tag_link_redirect(request):
     fs1tag_id = request.GET.get('id', False)
     if fs1tag_id:
         tags = fs1tag_id.split('_')
         try:
-            fs1tags = FS1Tag.objects.filter(fs1_id__in=tags).values_list('tag', flat=True)            
+            fs1tags = FS1Tag.objects.filter(fs1_id__in=tags).values_list('tag', flat=True)
         except ValueError, e:
             raise Http404
-            
+
         tags = Tag.objects.filter(id__in=fs1tags).values_list('name', flat=True)
         if not tags:
             raise Http404
-         
+
         return HttpResponsePermanentRedirect(reverse("tags", args=['/'.join(tags)]))
     else:
-        raise Http404    
+        raise Http404

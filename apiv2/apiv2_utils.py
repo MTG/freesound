@@ -46,7 +46,7 @@ from utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
 from urllib import unquote
 from django.contrib.sites.models import Site
-from django.core.urlresolvers import resolve
+from django.urls import resolve
 from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from django.db import transaction

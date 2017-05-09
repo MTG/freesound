@@ -29,6 +29,7 @@ from django.db.models import Q
 from django.db.models.signals import post_save
 from django.utils.encoding import smart_unicode
 from django.conf import settings
+from django.urls import reverse
 from general.models import SocialModel
 from geotags.models import GeoTag
 from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
@@ -84,9 +85,8 @@ class Profile(SocialModel):
     def __unicode__(self):
         return self.user.username
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'account', (smart_unicode(self.user.username),)
+        return reverse('account', args=[smart_unicode(self.user.username)])
 
     @locations_decorator(cache=False)
     def locations(self):

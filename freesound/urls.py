@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.contrib import admin
 from django.views.generic import TemplateView, RedirectView
 import accounts.views
@@ -104,8 +104,6 @@ urlpatterns = [
 
     url(r'^contact/', support.views.contact, name="contact"),
     url(r'^search/$', search.views.search, name='sounds-search'),
-    # Alternative previews url for logging clickthrough data
-    url(r'^data/previews_alt/(?P<folder_id>\d+)/(?P<sound_id>\d+)_(?P<user_id>\d+)', sounds.views.sound_preview,name="sound-preview"),
 
     url(r'^ratings/', include('ratings.urls')),
     url(r'^comments/', include('comments.urls')),
@@ -165,7 +163,9 @@ urlpatterns = [
 from django.conf import settings
 from django.views.static import serve
 if settings.DEBUG:
+    import debug_toolbar
     urlpatterns += [
         url(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve, {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
         url(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {'document_root': settings.DATA_PATH, 'show_indexes': True}),
+        url(r'^__debug__/', include(debug_toolbar.urls)),
     ]

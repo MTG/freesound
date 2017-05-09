@@ -20,12 +20,11 @@
 
 import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
-import django.contrib.auth.views as authviews
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
@@ -122,7 +121,7 @@ def tos_acceptance(request):
 
 
 def registration(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return HttpResponseRedirect(reverse('accounts-home'))
 
     if request.method == 'POST':
@@ -138,7 +137,7 @@ def registration(request):
 
 
 def activate_user(request, username, uid_hash):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return HttpResponseRedirect(reverse('accounts-home'))
 
     try:
@@ -167,7 +166,7 @@ def send_activation(user):
 
 
 def resend_activation(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return HttpResponseRedirect(reverse('accounts-home'))
 
     if request.method == 'POST':
@@ -183,7 +182,7 @@ def resend_activation(request):
 
 
 def username_reminder(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return HttpResponseRedirect(reverse('accounts-home'))
 
     if request.method == 'POST':
@@ -638,8 +637,8 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs = Download.objects.select_related('sound', 'sound__user__username', 'sound__license', 'pack',
-                                         'pack__user__username').filter(user=request.user)
+    qs = Download.objects.select_related('sound', 'sound__user', 'sound__license', 'pack',
+                                         'pack__user').filter(user=request.user)
     tvars = {'format': request.GET.get("format", "regular")}
     tvars.update(paginate(request, qs, 40))
     return render(request, 'accounts/attribution.html', tvars)
@@ -665,7 +664,7 @@ def downloaded_packs(request, username):
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]
-    packs = Pack.objects.ordered_ids(pack_ids, select_related="user__username")
+    packs = Pack.objects.ordered_ids(pack_ids, select_related="user")
     tvars = {"username": username,
              "packs": packs}
     tvars.update(paginator)
@@ -770,7 +769,7 @@ def account(request, username):
         follow_utils.get_vars_for_account_view(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
-    show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
+    show_unfollow_button = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, user)
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')

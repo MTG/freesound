@@ -38,7 +38,7 @@ def is_spam(request, comment):
         'user_agent': request.META.get('HTTP_USER_AGENT', ''),
         'referrer': request.META.get('HTTP_REFERER', ''),
         'comment_type': 'comment',
-        'comment_author': request.user.username.encode("utf-8") if request.user.is_authenticated() else '',
+        'comment_author': request.user.username.encode("utf-8") if request.user.is_authenticated else '',
     }
     
     if False: # set this to true to force a spam detection
@@ -46,7 +46,7 @@ def is_spam(request, comment):
     
     try:
         if api.comment_check(comment.encode('utf-8'), data=data, build_data=True):
-            if request.user.is_authenticated():
+            if request.user.is_authenticated:
                 AkismetSpam.objects.create(user=request.user, spam=comment)
             return True
         else:

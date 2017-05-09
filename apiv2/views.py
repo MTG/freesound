@@ -46,10 +46,10 @@ from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, Http404, HttpResponse
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 try:
     from collections import OrderedDict
 except:
@@ -1176,12 +1176,12 @@ def create_apiv2_key(request):
     fs_callback_url = prepend_base(reverse('permission-granted'), use_https=use_https_in_callback)  #request.build_absolute_uri(reverse('permission-granted'))
 
 
-    return render_to_response('api/apply_key_apiv2.html',
+    return render(request, 'api/apply_key_apiv2.html',
                               {'user': request.user,
                                'form': form,
                                'user_credentials': user_credentials,
                                'fs_callback_url': fs_callback_url,
-                               }, context_instance=RequestContext(request))
+                               })
 
 
 ### View for editing client (works both for apiv2 and apiv1)
@@ -1219,11 +1219,32 @@ def edit_api_credential(request, key):
     if settings.DEBUG:
         use_https_in_callback = False
     fs_callback_url = prepend_base(reverse('permission-granted'), use_https=use_https_in_callback)
-    return render_to_response('api/edit_api_credential.html',
+    return render(request, 'api/edit_api_credential.html',
                               {'client': client,
                                'form': form,
                                'fs_callback_url': fs_callback_url,
-                               }, context_instance=RequestContext(request))
+                               })
+
+
+@login_required
+def monitor_api_credential(request, key):
+    try:
+        client = ApiV2Client.objects.get(key=key)
+        level = int(client.throttling_level)
+        limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
+        try:
+            day_limit = limit_rates[1].split('/')[0]
+        except IndexError:
+            day_limit = 0
+        tvars = {
+                'client': client,
+                'limit': day_limit
+                }
+        messages.add_message(request, messages.INFO, "This functionality is still in beta state. The number of requests"
+                                                     " shown here might not be 100% accurate.")
+        return render(request, 'api/monitor_api_credential.html', tvars)
+    except ApiV2Client.DoesNotExist:
+        raise Http404
 
 
 ### View for deleting api clients (works both for apiv2 and apiv1)
@@ -1285,9 +1306,8 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render_to_response('api/manage_permissions.html',
-                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False},
-                              context_instance=RequestContext(request))
+    return render(request, 'api/manage_permissions.html',
+                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False})
 
 
 ### View to revoke permissions granted to an application
@@ -1324,9 +1344,8 @@ def permission_granted(request):
     else:
         logout_next = reverse('api-login')
 
-    return render_to_response(template,
-                              {'code': code, 'app_name': app_name, 'logout_next': logout_next},
-                              context_instance=RequestContext(request))
+    return render(request, template,
+        {'code': code, 'app_name': app_name, 'logout_next': logout_next})
 
 
 ### View for registration using minimal template
@@ -1337,8 +1356,8 @@ def minimal_registration(request):
         if form.is_valid():
             user = form.save()
             send_activation(user)
-            return render_to_response('api/minimal_registration_done.html', locals(), context_instance=RequestContext(request))
+            return render(request, 'api/minimal_registration_done.html', locals())
     else:
         form = RegistrationForm()
 
-    return render_to_response('api/minimal_registration.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'api/minimal_registration.html', locals())

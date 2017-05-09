@@ -19,7 +19,7 @@
 #
 
 from django.conf import settings
-from django.shortcuts import render_to_response, render
+from django.shortcuts import render, render
 from django.template import RequestContext
 from utils.search.solr import Solr, SolrQuery, SolrResponseInterpreter, \
     SolrResponseInterpreterPaginator, SolrException
@@ -30,7 +30,6 @@ import logging
 import json
 
 logger = logging.getLogger("search")
-logger_click = logging.getLogger('clickusage')
 
 def search_prepare_sort(sort, options):
     """ for ordering by rating order by rating, then by number of ratings """
@@ -238,19 +237,6 @@ def search(request):
         for d in docs:
             d["sound"] = allsounds[d["id"]]
 
-        # clickusage tracking
-        if settings.LOG_CLICKTHROUGH_DATA:
-            request_full_path = request.get_full_path()
-            # The session id of an unauthenticated user is different from the session id of the same user when
-            # authenticated.
-            request.session["searchtime_session_key"] = request.session.session_key
-            if results.docs is not None:
-                ids = []
-                for item in results.docs:
-                    ids.append(item["id"])
-            logger_click.info("QUERY : %s : %s : %s : %s" %
-                                (unicode(request_full_path).encode('utf-8'), request.session.session_key, unicode(ids).encode('utf-8'), unicode(current_page).encode('utf-8')))
-
     except SolrException, e:
         logger.warning("search error: query: %s error %s" % (query, e))
         error = True
@@ -264,7 +250,7 @@ def search(request):
     if request.GET.get("ajax", "") != "1":
         return render(request, 'search/search.html', locals())
     else:
-        return render_to_response('search/search_ajax.html', locals(), context_instance=RequestContext(request))
+        return render(request, 'search/search_ajax.html', locals())
 
 def search_forum(request):
     search_query = request.GET.get("q", "")
@@ -346,7 +332,7 @@ def search_forum(request):
     else:
         results = []
 
-    return render_to_response('search/search_forum.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'search/search_forum.html', locals())
 
 
 def get_pack_tags(pack_obj):

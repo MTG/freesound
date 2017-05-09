@@ -19,7 +19,7 @@
 #
 
 from django.test import TestCase, Client
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth.models import User
 from sounds.models import Sound, Pack, License, DeletedSound
 from sounds.views import get_random_sound, get_random_uploader
@@ -376,6 +376,22 @@ class SoundViewsTestCase(TestCase):
         self.assertEqual(Sound.objects.filter(id=sound_id).count(), 0)
         self.assertRedirects(resp, reverse('accounts-home'))
 
+    def test_embed_iframe(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
+        sound = sounds[0]
+        sound.moderation_state = 'OK'
+        sound.processing_state = 'OK'
+        sound.save()
+        resp = self.client.get(reverse('embed-simple-sound-iframe',
+            kwargs={"sound_id": sound.id, 'player_size': 'medium'}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_sound_short_link(self):
+        user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
+        sound = sounds[0]
+        resp = self.client.get(reverse('short-sound-link', kwargs={"sound_id": sound.id}))
+        self.assertEqual(resp.status_code, 302)
+
     def test_oembed_sound(self):
         # Get iframe of a sound using oembed
         user, packs, sounds = create_user_and_sounds(num_sounds=1, num_packs=1)
@@ -391,5 +407,3 @@ class SoundViewsTestCase(TestCase):
         resp = self.client.get(reverse('oembed-sound')+'?url='+url)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.content != '')
-
-

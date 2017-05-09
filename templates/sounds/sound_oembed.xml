@@ -7,7 +7,7 @@
   <provider-url>http://freesound.org</provider-url>
   <title>{{sound.original_filename}}</title>
   <description>{{sound.description}}</description>
-  <thumbnail-url>{{sound.user.profile.locations.avatar.M.url}}</thumbnail-url>
+  <thumbnail-url>{{thumbnail_url}}</thumbnail-url>
   <html>
     <iframe frameborder="0" scrolling="no" src="{% absurl 'embed-simple-sound-iframe' sound.id player_size %}" width="{{sizes.0}}" height="{{sizes.1}}"></iframe>
   </html>

@@ -22,7 +22,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from oauth2_provider.models import Application
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.sites.models import Site
 
 

@@ -26,8 +26,8 @@
 #   - markdown (for browseable api)
 
 
-from django.conf.urls import patterns, url, include
-from django.contrib.auth.views import login, logout
+from django.conf.urls import url, include
+from django.contrib.auth.views import LoginView, LogoutView
 from apiv2 import views
 
 #
@@ -91,13 +91,14 @@ urlpatterns = [
     # Client management
     # use apply[/]* for backwards compatibility with links to /apiv2/apply
     url(r'^apply[/]*$', views.create_apiv2_key, name="apiv2-apply"),
+    url(r'^apply/credentials/(?P<key>[^//]+)/monitor/$', views.monitor_api_credential, name="apiv2-monitor-credential"),
     url(r'^apply/credentials/(?P<key>[^//]+)/delete/$', views.delete_api_credential, name="apiv2-delete-credential"),
     url(r'^apply/credentials/(?P<key>[^//]+)/edit/$', views.edit_api_credential, name="apiv2-edit-credential"),
 
     # Oauth2
     url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2_provider')),
-    url(r'^login/$', login, {'template_name': 'api/minimal_login.html'}, name="api-login"),
-    url(r'^logout/$', logout, {'next_page': '/apiv2/'}, name="api-logout"),
+    url(r'^login/$', LoginView.as_view(template_name='api/minimal_login.html'), name="api-login"),
+    url(r'^logout/$', LogoutView.as_view(next_page='/apiv2/'), name="api-logout"),
 
     # Minimal registration page
     url(r'^registration/$', views.minimal_registration, name="apiv2-registration"),

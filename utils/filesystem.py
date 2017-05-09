@@ -18,7 +18,8 @@
 #     See AUTHORS file.
 #
 
-import os, zlib, md5
+import os, zlib
+import hashlib
 
 class File:
 
@@ -64,13 +65,10 @@ def generate_tree(path):
 def md5file(filename):
     """Return the hex digest of a file without loading it all into memory"""
     fh = open(filename, "rb")
-    digest = md5.new()
-    while 1:
-        buf = fh.read(4096)
-        if buf == "":
-            break
-        digest.update(buf)
-    fh.close()
+    digest = hashlib.md5()
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            digest.update(chunk)
     return digest.hexdigest()
 
 def crc32file(filename):

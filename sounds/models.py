@@ -32,7 +32,7 @@ from django.db import models
 from django.db import connection, transaction
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -323,21 +323,11 @@ class Sound(SocialModel):
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, sound_user_id)),
                         url=settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.mp3" % (self.id, sound_user_id),
-                        # The alternative url is sent to the requesting browser if the clickthrough logger is activated
-                        # After logging the clickthrough data, the reponse is redirected to a url stripped of the
-                        # alt part. The redirect will be handled by nginx
-                        url_alt=settings.PREVIEWS_URL.replace("previews", "previews_alt") + "%s/%d_%d-lq.mp3" %
-                                                                                            (id_folder, self.id,
-                                                                                             sound_user_id)
                     ),
                     ogg=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
                         url=settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.ogg" % (self.id, sound_user_id),
-                        # Refer to comments in mp3.url_alt
-                        url_alt=settings.PREVIEWS_URL.replace("previews", "previews_alt") + "%s/%d_%d-lq.ogg" %
-                                                                                            (id_folder, self.id,
-                                                                                             sound_user_id)
                     ),
                 )
             ),
@@ -417,11 +407,12 @@ class Sound(SocialModel):
         return self.duration * 1000
 
     def rating_percent(self):
+        if self.num_ratings <= settings.MIN_NUMBER_RATINGS:
+            return 0
         return int(self.avg_rating*10)
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'sound', (self.user.username, smart_unicode(self.id),)
+        return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
 
     def set_tags(self, tags):
         # remove tags that are not in the list
@@ -789,9 +780,8 @@ class Pack(SocialModel):
     def __unicode__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'pack', (self.user.username, smart_unicode(self.id),)
+        return reverse('pack', args=[self.user.username, smart_unicode(self.id)])
 
     class Meta(SocialModel.Meta):
         unique_together = ('user', 'name', 'is_deleted')

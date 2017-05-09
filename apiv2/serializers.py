@@ -25,7 +25,7 @@ from ratings.models import Rating
 from comments.models import Comment
 from bookmarks.models import BookmarkCategory, Bookmark
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import serializers
 from utils.tags import clean_and_split_tags

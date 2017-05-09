@@ -25,7 +25,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from multiupload.fields import MultiFileField
 from django.conf import settings

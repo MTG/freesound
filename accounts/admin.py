@@ -29,7 +29,7 @@ from django.contrib.auth.admin import UserAdmin
 from accounts.models import Profile, UserFlag, EmailPreferenceType
 from django_object_actions import DjangoObjectActions
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib import messages
 from django.conf import settings
 

@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 
-from django.core.management.base import NoArgsCommand
+from django.core.management.base import BaseCommand
 from django.core.cache import cache
 from django.contrib.auth.models import User
 from django.db import connection
@@ -35,7 +35,7 @@ import logging
 logger = logging.getLogger("web")
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Compute stats to display on monitor section."
 
     def handle(self, **options):

@@ -10,19 +10,20 @@ import logging.config
 
 DEBUG = False
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
     'freesound.middleware.PermissionDeniedHandler',
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'freesound.middleware.OnlineUsersHandler',
     'utils.corsheaders.middleware.CorsMiddleware',
-)
+]
 
-
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -55,11 +56,12 @@ INSTALLED_APPS = (
     'follow',
     'fixture_magic',
     'utils',  # So that we also run utils tests
+    'donations',
     'monitor',
     'raven.contrib.django.raven_compat',
     'django_object_actions',
     #'test_utils', # Don't use this in production!
-)
+]
 
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
@@ -71,7 +73,7 @@ DEFAULT_FROM_EMAIL = 'Freesound NoReply <noreply@freesound.org>'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 
-# This was the default serializer in django 1.6. Now we keep using it because 
+# This was the default serializer in django 1.6. Now we keep using it because
 # we saw some erros when running tests, in the future we should change to the
 # new one.
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
@@ -128,6 +130,12 @@ IGNORABLE_404_URLS = (
     re.compile(r'similar$'),
 )
 
+# Silence Django system check urls.W002 "Your URL pattern '/$' has a regex beginning with a '/'.
+# Remove this slash as it is unnecessary." triggered in API urls. Although the check claims the last
+# slash is not necessary, it is in our case as otherwise it breaks some API urls when these don't end
+# with slash.
+SILENCED_SYSTEM_CHECKS = ['urls.W002']
+
 # A tuple of IP addresses, as strings, that:
 # See debug comments, when DEBUG is True
 INTERNAL_IPS = ['localhost', '127.0.0.1']
@@ -145,6 +153,12 @@ FILES_UPLOAD_DIRECTORY = os.path.join(os.path.dirname(__file__), 'uploads')
 
 # urls for which the "lasta ction time" needs updating
 LAST_ACTION_TIME_URLS = ('/forum/', )
+
+IFRAME_PLAYER_SIZE = {
+        'large': [920, 245],
+        'medium': [481, 86],
+        'small': [375, 30]
+    }
 
 FREESOUND_RSS = "http://10.55.0.51/?feed=rss2" #"http://blog.freesound.org/?feed=rss2"
 
@@ -164,12 +178,29 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# Number of ratings of a sound to start showing average
+MIN_NUMBER_RATINGS = 3
+
+# Graylog stream ids and domain
+GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
+GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
+GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
+
+# After download modal
+AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
+AFTER_DOWNLOAD_MODAL_DONATION = 'donation'
+AFTER_DOWNLOAD_MODAL = None  # Set it to none for no modal after download
+
+# Donation modal settings
+DONATION_MODAL_DAYS_AFTER_DONATION = 1  # After a donation we don't display the popup for this long
+DONATION_MODAL_DOWNLOADS_IN_PERIOD = 1  # After this number of downloads...
+DONATION_MODAL_DOWNLOAD_DAYS = 10  # ...in this period of days, we display the popup
+DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the popup per day:
+
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
 
 DELETED_USER_ID = 1
-
-LOG_CLICKTHROUGH_DATA = False
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings
 
@@ -241,10 +272,13 @@ REST_FRAMEWORK = {
     ),
 }
 
+DOWNLOAD_TOKEN_LIFETIME = 60*60  # 1 hour
+
 # APIv2 throttling limits are defined in local_settings
 
 # Oauth2 provider settings
 OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 60*60*24,
     'CLIENT_SECRET_GENERATOR_LENGTH': 40,
     'AUTHORIZATION_CODE_EXPIRE_SECONDS': 10*60,
     'OAUTH2_VALIDATOR_CLASS': 'apiv2.oauth2_validators.OAuth2Validator',
@@ -257,8 +291,34 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 # local settings if needed ;)
 DATA_URL = "/data/"
 
+# Locations where sounds, previews and other "static" content will be mirrored (if specified)
+# If locations do not exist, they will be created
+MIRROR_SOUNDS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_PREVIEWS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_DISPLAYS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_ANALYSIS = None  # list of locations to mirror contents of SOUNDS_PATH, set to None to turn off
+MIRROR_AVATARS = None  # list of locations to mirror contents of AVATARS_PATH, set to None to turn off
+MIRROR_UPLOADS = None  # list of locations to mirror contents of MIRROR_UPLOADS, set to None to turn off
+LOG_START_AND_END_COPYING_FILES = True
+
+
 # leave at bottom starting here!
 from local_settings import *
+
+if DEBUG:
+    # We name this CONF_ because Django system check thinks that a variable
+    # called TEMPLATE_LOADERS is pre-1.8 Django configuration.
+    CONF_TEMPLATE_LOADERS = [
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+    ]
+else:
+    CONF_TEMPLATE_LOADERS = [
+        ('django.template.loaders.cached.Loader', [
+            'django.template.loaders.filesystem.Loader',
+            'django.template.loaders.app_directories.Loader',
+        ]),
+    ]
 
 TEMPLATES = [
     {
@@ -266,8 +326,8 @@ TEMPLATES = [
         'DIRS': [
             os.path.join(os.path.dirname(__file__), '../templates')
         ],
-        'APP_DIRS': True,
         'OPTIONS': {
+            'loaders': CONF_TEMPLATE_LOADERS,
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
@@ -289,9 +349,9 @@ DISPLAYS_URL = DATA_URL + "displays/"
 ANALYSIS_URL = DATA_URL + "analysis/"
 
 if DEBUG and DISPLAY_DEBUG_TOOLBAR:
-    MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
-    INSTALLED_APPS += ('debug_toolbar',)
-    INTERNAL_IPS +=('127.0.0.1', 'localhost')
+    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    INSTALLED_APPS += ['debug_toolbar']
+    #INTERNAL_IPS +=('127.0.0.1', 'localhost')
 
     DEBUG_TOOLBAR_PANELS = [
         'debug_toolbar.panels.versions.VersionsPanel',

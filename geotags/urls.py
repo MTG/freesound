@@ -20,14 +20,14 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 import geotags.views as geotags
 
 urlpatterns = [
-    url(r'^sounds_json/user/(?P<username>[^//]+)/$', geotags.geotags_for_user_json, name="geotags-for-user-json"),
-    url(r'^sounds_json/user_latest/(?P<username>[^//]+)/$', geotags.geotags_for_user_latest_json, name="geotags-for-user-latest-json"),
-    url(r'^sounds_json/pack/(?P<pack_id>\d+)/$', geotags.geotags_for_pack_json, name="geotags-for-pack-json"),
-    url(r'^sounds_json/(?P<tag>[\w-]+)?/?$', geotags.geotags_json, name="geotags-json"),
-    url(r'^geotags_box_json/$', geotags.geotags_box_json, name="geotags-box-json"),
+    url(r'^sounds_barray/user/(?P<username>[^//]+)/$', geotags.geotags_for_user_barray, name="geotags-for-user-barray"),
+    url(r'^sounds_barray/user_latest/(?P<username>[^//]+)/$', geotags.geotags_for_user_latest_barray, name="geotags-for-user-latest-barray"),
+    url(r'^sounds_barray/pack/(?P<pack_id>\d+)/$', geotags.geotags_for_pack_barray, name="geotags-for-pack-barray"),
+    url(r'^sounds_barray/(?P<tag>[\w-]+)?/?$', geotags.geotags_barray, name="geotags-barray"),
+    url(r'^geotags_box_barray/$', geotags.geotags_box_barray, name="geotags-box-barray"),
     url(r'^infowindow/(?P<sound_id>\d+)/$', geotags.infowindow, name="geotags-infowindow"),
 ]

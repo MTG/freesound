@@ -31,7 +31,7 @@ def get_online_users():
     return hasattr(user_dict, 'keys') and user_dict.keys() or []
 
 def cache_online_users(request):
-        if request.user.is_anonymous():
+        if request.user.is_anonymous:
             return
         user_dict = cache.get(CACHE_KEY)
         if not user_dict:

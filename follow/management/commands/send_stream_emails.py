@@ -21,7 +21,7 @@ from utils.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from utils.mail import render_mail_template
-from accounts.models import Profile
+from accounts.models import Profile, EmailPreferenceType
 import datetime
 from follow import follow_utils
 from django.contrib.auth.models import User
@@ -45,7 +45,10 @@ class Command(BaseCommand):
         # Get all the users that have notifications active
         # and exclude the ones that have the last email sent for less than settings.NOTIFICATION_TIMEDELTA_PERIOD
         # (because they have been sent an email already)
-        users_enabled_notifications = Profile.objects.filter(enabled_stream_emails=True).exclude(
+        email_type = EmailPreferenceType.objects.get(name="stream_emails")
+        user_ids = email_type.useremailsetting_set.values_list('user_id')
+
+        users_enabled_notifications = Profile.objects.filter(user_id__in=user_ids).exclude(
             last_stream_email_sent__gt=date_today_minus_notification_timedelta).order_by(
             "-last_attempt_of_sending_stream_email")[:settings.MAX_EMAILS_PER_COMMAND_RUN]
 
@@ -79,12 +82,12 @@ class Command(BaseCommand):
                 users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
             except Exception, e:
                 # If error occur do not send the email
-                print "could not get new sounds data for", username
+                print "could not get new sounds data for", username.encode('utf-8')
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 
             if not users_sounds and not tags_sounds:
-                print "no news sounds for", username
+                print "no news sounds for", username.encode('utf-8')
                 profile.save()  # Save last_attempt_of_sending_stream_email
                 continue
 

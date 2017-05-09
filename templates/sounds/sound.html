@@ -28,8 +28,8 @@
 
 {% block section_content %}
 
-{% cache 3600 sound_header sound.id request.user.is_authenticated %}
-<div id="single_sample_header">
+{% cache 3600 sound_header sound.id request.user.is_authenticated request.user.profile.is_adult %}
+<div id="single_sample_header" class="{% if is_explicit %}blur{% endif %}">
     {% if sound.pack %}<a href="{% url 'pack' username sound.pack.id %}">{{sound.pack.name}}</a>  &#187; {% endif %}<a href="#">{{sound.original_filename}}</a>
     {% comment %}
     <div class="stars">
@@ -47,7 +47,29 @@
 </div>
 
 <div id="single_sample_player">
-    <div class="player large">
+
+    {% if is_explicit %}
+        <div class="explicit-sound-blocker">
+          <div class="message-img">
+            <img src='{{media_url}}images/warning.png' width="100" />
+          </div>
+          <div class="message">
+              <span>Content warning</span>
+              <p>This sound may be inappropriate for some users
+              <br>You can turn these warnings off in your <a href="{% url 'accounts-edit' %}">user settings</a> page</p>
+              <p><a id="remove_warning_link" href="#">Dismiss</a></p>
+          </div>
+        </div>
+        <script type="text/javascript">
+        $('#remove_warning_link').click(function(e){
+          $('.blur').removeClass('blur');
+          $('.explicit-sound-blocker').remove();
+          e.preventDefault()
+        });
+        </script>
+    {% endif %}
+
+    <div class="player large{% if is_explicit %} blur{% endif %}">
         <div class="metadata">
             {% with 'L' as size %}
                 {% include 'sounds/metadata.html' %}
@@ -56,7 +78,7 @@
     </div>
 </div>
 
-<div id="single_sample_content">
+<div id="single_sample_content" class="{% if is_explicit %}blur{% endif %}">
     <img src="{{sound.user.profile.locations.avatar.M.url}}" alt="avatar" id="sound_author_avatar" />
 
     <div id="sound_author_box">
@@ -68,7 +90,7 @@
     </div>
 
     <ul class="tags">
-        {% for tag_link in tags %}
+        {% for tag_link in sound.tags.all%}
             <li><a href="{% url 'tags' tag_link.tag.name %}">{{tag_link.tag.name}}</a></li>
         {% endfor %}
     </ul>
@@ -121,7 +143,7 @@
     {% endif %}
 </div> <!-- single_sample_content -->
 
-<div id="single_sample_sidebar">
+<div id="single_sample_sidebar" class="{% if is_explicit %}blur{% endif %}">
      <div id="single_sample_ratings">
          <div class="stars">
             <ul class="star-rating">
@@ -139,7 +161,7 @@
     <div id="download">
     {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
         {% if request.user.is_authenticated %}
-            <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);" id="download_button" title="download sound"></a>
+        <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" onclick="_gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');" id="download_button" title="download sound"></a>
         {% else %}
             <a href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" id="download_login_button" title="login to download"></a>
         {% endif %}
@@ -214,7 +236,7 @@
         {% if request.user.is_staff %}
             <li><a id="admin_link" class="icon" href="{% url 'admin:sounds_sound_change' sound.id %}">Edit sound in the admin</a></li>
         {% endif %}
-        
+
 
     {% cache 3600 sound_footer_bottom sound.id %}
 
@@ -225,15 +247,23 @@
     </div>
 	
     <div id="share_links">
+        <p>
+            <span style="color:#999">Share url: </span><input style="padding: 3px;width: 192px;" type="text" readonly value="{% absurl 'short-sound-link' sound.id %}" />
+        </p>
         <div id="social_links">
-            <div class="social_link" style="width: 50px; overflow: hidden;"><div id="fb-root" style="float: left;"></div><script src="https://connect.facebook.net/en_US/all.js#xfbml=1"></script><fb:like href="{% absurl 'sound' sound.user.username sound.id %}" send="false" layout="button_count" width="55" show_faces="false" font="arial"></fb:like></div>
+            <div class="social_link">
+                <div id="fb-root" style="float: left;"></div>
+                <script src="https://connect.facebook.net/en_US/all.js#xfbml=1"></script>
+                <fb:like href="{% absurl 'short-sound-link' sound.id %}" send="false" layout="button_count" width="55" show_faces="false" font="arial"></fb:like>
+            </div>
             <a href="https://twitter.com/share" class="twitter-share-button" data-count="none">Tweet</a><script type="text/javascript" src="https://platform.twitter.com/widgets.js"></script>
             <span id="tumblr_button_abc123" class="social_link"></span>
             <div class="social_link">
-                <g:plusone size="medium" count="false" href="{% absurl 'sound' sound.user.username sound.id %}"></g:plusone>
+                <g:plusone size="medium" count="false" href="{% absurl 'short-sound-link' sound.id %}"></g:plusone>
             </div>
-
-            <p id="show_button" onclick="$('#embed_links').toggle(500);">embed</p>
+            <div class="social_link">
+                <span id="show_embed_button" onclick="$('#embed_links').toggle(500);">Embed</span>
+            </div>
             <br style="clear: both;" />
         </div>
         <div id="embed_links">
@@ -262,9 +292,9 @@
                     $('.embed_example').removeClass('embed_active');
                     $('.embed_example.embed_'+size).addClass('embed_active');
                     var sizes;
-                    if(size == 'large') sizes = [920, 245];
-                    if(size == 'medium') sizes = [481, 86];
-                    if(size == 'small') sizes = [375, 30];
+                    if(size == 'large') sizes = [{{sizes.large.0}}, {{sizes.large.1}}];
+                    if(size == 'medium') sizes = [{{sizes.medium.0}}, {{sizes.medium.1}}];
+                    if(size == 'small') sizes = [{{sizes.small.0}}, {{sizes.small.1}}];
                     var embed_text = '<iframe frameborder="0" scrolling="no" src="{% absurl 'embed-simple-sound-iframe' sound.id 'SIZE' %}" width="WIDTH" height="HEIGHT"></iframe>';
                     embed_text = embed_text.replace('SIZE', size);
                     embed_text = embed_text.replace('WIDTH', sizes[0]);
@@ -290,7 +320,6 @@
 
 </div> <!-- single_sample_sidebar -->
 
-
 <script type="text/javascript">
     var tumblr_button = document.createElement("a");
     tumblr_button.setAttribute("href", "https://www.tumblr.com/share/link?url=" + encodeURIComponent(tumblr_link_url) + "&name=" + encodeURIComponent(tumblr_link_name) + "&description=" + encodeURIComponent(tumblr_link_description));
@@ -306,6 +335,21 @@
         $("#follow_link_sound").click(function() {
             follow_unfollow_user(is_following);
         });
+
+        if (navigator.userAgent.indexOf('Safari') !== -1 && navigator.userAgent.indexOf('Chrome') === -1) {
+            // Only run this line when safari is the browser (code from http://stackoverflow.com/questions/5899783/detect-safari-using-jquery)
+            // See https://github.com/MTG/freesound/issues/836 about this code
+            var download_button = $('#download_button');
+            download_button.attr('onclick', '');
+            download_button.click(function(){
+                setTimeout(function(){
+                        _gaq.push(['_trackEvent', 'Sound', 'Download', 'sound_id:{{ sound.id }}']);
+                        afterDownloadModal('{% url "after-download-modal" %}','{{ sound.original_filename }}');
+                    }, 100)
+                }
+            );
+
+        }
     });
 
     function follow_unfollow_user(is_following) {

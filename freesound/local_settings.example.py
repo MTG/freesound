@@ -46,9 +46,13 @@ SOLR_FORUM_URL = "http://localhost:8983/solr/forum/"
 
 GEARMAN_JOB_SERVERS = ["localhost:4730"]
 
-PLEDGIE_CAMPAIGN=14560
 
-LOG_CLICKTHROUGH_DATA = False
+PAYPAL_EMAIL = "paypal@freesound.org"
+PAYPAL_VALIDATION_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+DONATIONS_PER_PAGE = 40
+
+GRAYLOG_USERNAME = "apiuser"
+GRAYLOG_PASSWORD = "apiuserpassword"
 
 # To customize DATA_URL
 # DATA_URL = "http://freesound.org/data/"

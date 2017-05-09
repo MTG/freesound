@@ -23,11 +23,13 @@
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import fields
+from django.contrib.admin.utils import NestedObjects
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_save
 from django.utils.encoding import smart_unicode
 from django.conf import settings
+from django.urls import reverse
 from general.models import SocialModel
 from geotags.models import GeoTag
 from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
@@ -67,17 +69,16 @@ class Profile(SocialModel):
     signature = models.TextField(max_length=256, null=True, blank=True)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None)
     has_avatar = models.BooleanField(default=False)
-    wants_newsletter = models.BooleanField(default=True, db_index=True)
     is_whitelisted = models.BooleanField(default=False, db_index=True)
     has_old_license = models.BooleanField(null=False, default=False)
     not_shown_in_online_users_list = models.BooleanField(null=False, default=False)
     accepted_tos = models.BooleanField(default=False)
-    enabled_stream_emails = models.BooleanField(db_index=True, default=False)
     last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None)
     num_sounds = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     num_posts = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     is_deleted_user = models.BooleanField(db_index=True, default=False)
+    is_adult = models.BooleanField(default=False)
 
     objects = ProfileManager()
 
@@ -89,9 +90,8 @@ class Profile(SocialModel):
            has other accounts with the same email address"""
         return SameUser.objects.filter(Q(main_user=self.user)|Q(secondary_user=self.user)).exists()
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'account', (smart_unicode(self.user.username),)
+        return reverse('account', args=[smart_unicode(self.user.username)])
 
     @locations_decorator(cache=False)
     def locations(self):
@@ -120,6 +120,65 @@ class Profile(SocialModel):
                 )
             )
         )
+
+    def email_not_disabled(self, email_type_name):
+        # Raise exception if the email_type doesn't exists
+        email_type = EmailPreferenceType.objects.get(name=email_type_name)
+
+        # when send_by_default == invert_default means email is disabled
+        invert_default = UserEmailSetting.objects.filter(user=self.user,
+                email_type=email_type).exists()
+        return email_type.send_by_default != invert_default
+
+
+    def get_enabled_email_types(self):
+        # Get list of all enabled email types for this user
+        all_emails = EmailPreferenceType.objects
+        email_preferences = self.user.email_settings.values('email_type__id')
+        # if email_type not in email_preferences then default value must be True
+        not_disabled = all_emails.exclude(id__in=email_preferences)\
+                .filter(send_by_default=True)
+
+        # if email_type in email_preferences then default value must be False
+        enabled = all_emails.filter(id__in=email_preferences,
+                send_by_default=False)
+
+        return set(enabled) | set(not_disabled)
+
+    def update_enabled_email_types(self, email_type_ids):
+        # Update user's email_settings from the list of enabled email_types
+
+        stream_emails = EmailPreferenceType.objects.get(name='stream_emails')
+        # First get current value of stream_email to know if
+        # profile.last_stream_email_sent must be initialized
+        had_enabled_stream_emails = self.user.email_settings\
+                .filter(email_type=stream_emails).exists()
+
+        all_emails = EmailPreferenceType.objects
+
+        # If an email_type is not enabled and default value is True then must
+        # be on UserEmailSetting
+        disabled = all_emails.filter(send_by_default=True)\
+            .exclude(id__in=email_type_ids)
+
+        # If an email_type is enabled and default value is False then must
+        # be on UserEmailSetting
+        enabled = all_emails.filter(send_by_default=False,
+                id__in=email_type_ids)
+
+        all_emails = list(enabled) + list(disabled)
+
+        # Recreate email settings
+        self.user.email_settings.all().delete()
+        for i in all_emails:
+            UserEmailSetting.objects.create(user=self.user,
+                    email_type=i)
+
+        enabled_stream_emails = enabled.filter(id=stream_emails.id).exists()
+        # If is enabling stream emails, set last_stream_email_sent to now
+        if not had_enabled_stream_emails and enabled_stream_emails:
+            self.last_stream_email_sent = datetime.datetime.now()
+            self.save()
 
     def get_user_tags(self, use_solr=True):
         if use_solr:
@@ -197,6 +256,27 @@ class Profile(SocialModel):
                 Q(sound__processing_state='OK') &\
                 ~Q(sound__moderation_state='OK') &\
                 ~Q(status='closed')))
+
+    def get_info_before_delete_user(self, remove_sounds=False, remove_user=False):
+        """
+        This method can be called before delete_user to display to the user the
+        elements that will be modified
+        """
+
+        ret = {}
+        if remove_sounds:
+            sounds = Sound.objects.filter(user=self.user)
+            packs = Pack.objects.filter(user=self.user)
+            collector = NestedObjects(using='default')
+            collector.collect(sounds)
+            ret['deleted'] = collector
+            ret['logic_deleted'] = packs
+        if remove_user:
+            collector = NestedObjects(using='default')
+            collector.collect([self.user])
+            ret['deleted'] = collector
+        ret['anonymised'] = self
+        return ret
 
     def delete_user(self, remove_sounds=False):
         """
@@ -280,7 +360,23 @@ def create_user_profile(sender, instance, created, **kwargs):
     try:
         instance.profile
     except Profile.DoesNotExist:
-        profile = Profile(user=instance, wants_newsletter=False, accepted_tos=True)
+        profile = Profile(user=instance, accepted_tos=True)
         profile.save()
 
 post_save.connect(create_user_profile, sender=User)
+
+
+class EmailPreferenceType(models.Model):
+    description = models.TextField(max_length=1024, null=True, blank=True)
+    name = models.CharField(max_length=255)
+    display_name = models.CharField(max_length=255)
+    send_by_default = models.BooleanField(default=True,
+        help_text="Indicates if the user should receive an email, if " +
+        "UserEmailSetting exists for the user then the behavior is the opposite")
+
+    def __unicode__(self):
+        return self.display_name
+
+class UserEmailSetting(models.Model):
+    user = models.ForeignKey(User, related_name="email_settings")
+    email_type = models.ForeignKey(EmailPreferenceType)

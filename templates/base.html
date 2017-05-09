@@ -46,14 +46,19 @@
 
     <body id="{% block page_css_id %}{% endblock %}" onload="{% block onload %}{% endblock%}" onunload="{% block onunload %}{% endblock %}">
 
-    {% comment %}
-    <!-- start commenting here -->
-    <div id="banner_wrapper">
-        <a href="http://labs.freesound.org/tagrecommendation/" target="_blank"><img id="warning_banner" src="{{media_url}}images/content/freesound-tagexperiment2.png" width="728" height="90" alt="Participate in the Freesound Tagging experiment" />
-    </a>
-    </div>
-    <!-- stop commenting here -->
-    {% endcomment %}
+        {% comment %}
+            Below is the code for the banner advertising the freesound survey 2017
+            Place it inside the comment block to hide it
+
+        <div id="footerBanner" class="floating_banner">
+            <script type="text/javascript" src="{{ media_url }}js/survey_banner.js"></script>
+            <div class="floating_banner_close_button"><a href="javascript:void(0);" onclick="hideFooterBanner();setSurveyVisited(1);">&#10006;</a></div>
+            <div class="floating_banner_contents">
+                <a href="javascript:void(0);" onclick="openSurveyPage();hideFooterBanner();setSurveyVisited(30);">
+                <img src="/media/images/content/freesound-survey-2017.png"/></a>
+            </div>
+        </div>
+        {% endcomment %}
 
 
         <div id="header">
@@ -147,6 +152,7 @@
             </div>
         </div>
 
+        <div id="fsmodal" class="modal"></div>
     </body>
 
 </html>

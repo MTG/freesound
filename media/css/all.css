@@ -91,6 +91,33 @@ body {
     /*margin-bottom: -7px; */ /* uncomment this one when adding banners */
 }
 
+.floating_banner {
+    background-color: black;
+    width: 100%;
+    height: 90px;
+    position: fixed;
+    bottom: 0;
+    z-index: 1000;
+    box-sizing: border-box;
+    color: white;
+    opacity: 0.9;
+    display: none;
+}
+
+.floating_banner img {
+    display: block;
+    margin: 0 auto;
+}
+
+.floating_banner a {
+    color: white;
+}
+
+.floating_banner_close_button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
 
 /* General Mark-up Styling
 ------------------------------------------------------*/
@@ -931,6 +958,76 @@ h3.header,
     margin: 3px 4px 0px 0;
 }
 
+.blur{
+    -webkit-filter: blur(3px);
+    filter: blur(3px);
+    pointer-events: none;
+}
+
+.blur .sample_information, 
+.blur .sample_player{
+    margin-top: 3px;
+}
+
+.blur .controls{
+    display: none;
+}
+
+.explicit_content_text{
+    position: absolute;
+    margin-left: 35px;
+    margin-top: 25px;
+    z-index: 1;
+    white-space:nowrap;
+}
+.explicit_content_text span{
+    font-size: 12px;
+    padding: 10px;
+    background-color: #fff;
+    opacity: 0.9;
+    border-radius: 6px;
+    color: #666;
+}
+.explicit_content_text a {
+    background-color: #2C74C9;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+    margin-left: 5px;
+}
+.explicit-sound-blocker{
+    font-size: 12px;
+    margin-left: 170px;
+    margin-top: 25px;
+    background-color: #fff;
+    position: absolute;
+    padding: 20px;
+    border-radius: 6px;
+    opacity: 0.9;
+    white-space:nowrap;
+    z-index: 10;
+}
+
+.explicit-sound-blocker span{
+    display: block;
+    margin-bottom: 10px;
+}
+
+.explicit-sound-blocker .message-img{
+    display:inline-block;
+}
+.explicit-sound-blocker .message{
+    display:inline-block;
+    vertical-align: top;
+    margin-left: 30px;
+}
+
+#remove_warning_link {
+    background-color: #2C74C9;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+}
 
 /* Pack display (pack lists)
 ------------------------------------------------------*/
@@ -1194,18 +1291,20 @@ ul.tags {
 #share_links .social_link,
 .twitter-share-button {
     float: left;
-    margin-right: 7px;
+    margin-right: 2px;
 }
 
-#share_links #show_button {
-    color: #2C74C9;
-    float: left;
-    display: block;
-    margin-left: 0;
+#share_links #show_embed_button {
+    font-size: 11px;
+    background-color: #CB3D44;
+    color: white;
+    padding: 2px;
+    padding-top: 4px;
+    border-radius: 2px;
 }
 
-#share_links #show_button:hover {
-    text-decoration: underline;
+#share_links #show_embed_button:hover {
+    background-color: #8c2a30;
 }
 
 #share_links #embed_links {
@@ -2105,6 +2204,104 @@ a.donation_button:hover {
     text-indent: -9999px;
 }
 
+.donations-title {
+    padding: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    clear: both;
+}
+
+.donation-item {
+    margin-left: 20px;  
+    height: 50px;
+    width: 150px;
+    float: left;
+    overflow: hidden;
+}
+
+.donation-item-left {
+    float: left;
+    margin-right: 8px;
+    margin-top: 0px;
+}
+
+.donation-item-left img{
+    position: relative;
+    top: 5px;
+}
+
+.donation-item-right p{
+    font-size: 10px;
+    color: #444;
+    line-height: 14px;
+}
+
+
+#donation_form_wrapper {
+    display: flex;
+    padding: 34px;
+    background: #fafafa;
+}
+
+#donation_form{
+    width: 420px;
+    margin-left: calc(50% - 210px);
+}
+
+#donation_form form{
+    background: #ffd359;
+}
+
+#donation_form label{
+    float: left;
+    margin-right: 4px;
+}
+
+#donation_form ul li {
+    line-height: 22px;
+}
+
+#donation_form #id_amount{
+    font-size: 19px;
+    padding: 10px;
+    width: 159px;
+}
+
+#donation_form label[for=id_amount]{
+    font-size: 13px;
+    font-weight: bold;
+    margin-left: 18px;
+    float: none;
+    display: inline;
+}
+
+#donation_form .currency{
+    font-size: 15px;
+    margin-left: 16px;
+}
+
+#donation_form button{
+    background-color: #0079C1;
+    color: #fff;
+    height: 49px;
+    width: 216px;
+    font-weight: bold;
+    border: 0;
+    border-radius: 2px;
+    margin: 0 0 0 82px;
+    padding: 5px 20px;
+    font-size: 13px;
+    background-repeat: no-repeat;
+    background-image: url(/media/images/paypal.svg);
+    background-size: 93px;
+    background-position: left 109px center;
+    text-align: left;
+    cursor: pointer;
+}
+#donation_form #id_name_option{
+    width: 206px;
+}
+
 #latest_forum_posts {
     width: 324px;
     padding: 0 12px;
@@ -2900,6 +3097,9 @@ ul.messages {
     padding-bottom: 10px;
 }
 
+#edit_account form ul {
+    list-style-type: none;
+}
 
 /* Moderation interface
 ------------------------------------------------------*/
@@ -3902,4 +4102,74 @@ ul.messages {
     width: 150px;
     height: 50px;
     margin-right: 15px;
+}
+
+
+/* Modals (adapted from https://www.w3schools.com/howto/howto_css_modals.asp)
+------------------------------------------------------*/
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 10; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0;
+    width: 50%;
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+@keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+/* The Close Button */
+.close-modal {
+    color: white;
+    float: right;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-header {
+    padding: 15px;
+    background-color: #AB4646;
+    color: white;
+    font-size: 18px;
+}
+
+.modal-body {
+    padding: 15px;
+    font-size: 12px;
 }

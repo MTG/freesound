@@ -37,11 +37,14 @@ logger = logging.getLogger("gearman_worker_processing")
 class Command(BaseCommand):
     help = 'Run the sound processing worker'
 
-    option_list = BaseCommand.option_list + (
-        make_option('--queue', action='store', dest='queue',
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--queue',
+            action='store',
+            dest='queue',
             default='process_sound',
-            help='Register this function (default: process_sound)'),
-    )
+            help='Register this function (default: process_sound)')
+
 
     def write_stdout(self, msg):
         logger.info("[%d] %s" % (os.getpid(),msg))

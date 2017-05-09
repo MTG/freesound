@@ -23,7 +23,7 @@
 
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
-from rest_framework.decorators import api_view, authentication_classes
+from rest_framework.decorators import api_view, authentication_classes, throttle_classes, permission_classes
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from oauth2_provider.models import Grant, AccessToken
 from apiv2.serializers import *
@@ -37,6 +37,7 @@ from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
 from accounts.views import handle_uploaded_file, send_activation
 from accounts.forms import RegistrationForm
+from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.cache import invalidate_template_cache
 from utils.nginxsendfile import sendfile
@@ -45,22 +46,22 @@ from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, Http404, HttpResponse
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 try:
     from collections import OrderedDict
 except:
     from freesound.utils.ordered_dict import OrderedDict
-from urllib import unquote, quote
+from urllib import quote
 from django.conf import settings
 import logging
 import datetime
 import os
+import jwt
 
 logger = logging.getLogger("api")
-#logger_error = logging.getLogger("api_errors")
 docs_base_url = prepend_base('/docs/api')
 resources_doc_filename = 'resources_apiv2.html'
 
@@ -481,6 +482,28 @@ class DownloadSound(DownloadAPIView):
         return sendfile(sound.locations("path"), sound.friendly_filename(), sound.locations("sendfile_url"))
 
 
+class DownloadLink(DownloadAPIView):
+    __doc__ = 'Get a url to download a sound without authentication.'
+
+    def get(self, request, *args, **kwargs):
+        sound_id = kwargs['pk']
+        logger.info(self.log_message('sound:%i get_download_link' % (int(sound_id))))
+
+        try:
+            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
+        except Sound.DoesNotExist:
+            raise NotFoundException(resource=self)
+
+        download_token = jwt.encode({
+            'user_id': self.user.id,
+            'sound_id': sound.id,
+            'client_id': self.client_id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.DOWNLOAD_TOKEN_LIFETIME),
+        }, settings.SECRET_KEY, algorithm='HS256')
+        download_link = prepend_base(reverse('apiv2-download_from_token', args=[download_token]), request_is_secure=request.is_secure())
+        return Response({'download_link': download_link}, status=status.HTTP_200_OK)
+
+
 ############
 # USER VIEWS
 ############
@@ -674,23 +697,8 @@ class DownloadPack(DownloadAPIView):
         if not sounds:
             raise NotFoundException(msg='Sounds in pack %i have not yet been described or moderated' % int(pack_id), resource=self)
 
-        try:
-            filelist = "%s %i %s %s\r\n" % (pack.license_crc,
-                                            os.stat(pack.locations('license_path')).st_size,
-                                            pack.locations('license_url'),
-                                            "_readme_and_license.txt")
-        except:
-            raise ServerErrorException(resource=self)
-
-        for sound in sounds:
-            url = sound.locations("sendfile_url")
-            name = sound.friendly_filename()
-            if sound.crc == '':
-                continue
-            filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
-        response = HttpResponse(filelist, content_type="text/plain")
-        response['X-Archive-Files'] = 'zip'
-        return response
+        licenses_url = (reverse('pack-licenses', args=[pack.user.username, pack.id]))
+        return download_sounds(licenses_url, pack)
 
 
 ##################
@@ -998,6 +1006,27 @@ class CommentSound(WriteRequiredGenericAPIView):
 # OTHER VIEWS
 #############
 
+
+@api_view(['GET'])
+@throttle_classes([])
+@authentication_classes([])
+@permission_classes([])
+def download_from_token(request, token):
+    try:
+        token_contents = jwt.decode(token, settings.SECRET_KEY, leeway=10)
+    except jwt.ExpiredSignatureError:
+        raise UnauthorizedException(msg='This token has expried.')
+    except jwt.InvalidTokenError:
+        raise UnauthorizedException(msg='Invalid token.')
+    try:
+        sound = Sound.objects.get(id=token_contents.get('sound_id', None))
+    except Sound.DoesNotExist:
+        raise NotFoundException
+    if not os.path.exists(sound.locations('path')):
+        raise NotFoundException
+    return sendfile(sound.locations('path'), sound.friendly_filename(), sound.locations('sendfile_url'))
+
+
 ### Me View
 class Me(OauthRequiredAPIView):
     __doc__ = 'Get some information about the end-user logged into the api.' \
@@ -1147,12 +1176,12 @@ def create_apiv2_key(request):
     fs_callback_url = prepend_base(reverse('permission-granted'), use_https=use_https_in_callback)  #request.build_absolute_uri(reverse('permission-granted'))
 
 
-    return render_to_response('api/apply_key_apiv2.html',
+    return render(request, 'api/apply_key_apiv2.html',
                               {'user': request.user,
                                'form': form,
                                'user_credentials': user_credentials,
                                'fs_callback_url': fs_callback_url,
-                               }, context_instance=RequestContext(request))
+                               })
 
 
 ### View for editing client (works both for apiv2 and apiv1)
@@ -1190,11 +1219,32 @@ def edit_api_credential(request, key):
     if settings.DEBUG:
         use_https_in_callback = False
     fs_callback_url = prepend_base(reverse('permission-granted'), use_https=use_https_in_callback)
-    return render_to_response('api/edit_api_credential.html',
+    return render(request, 'api/edit_api_credential.html',
                               {'client': client,
                                'form': form,
                                'fs_callback_url': fs_callback_url,
-                               }, context_instance=RequestContext(request))
+                               })
+
+
+@login_required
+def monitor_api_credential(request, key):
+    try:
+        client = ApiV2Client.objects.get(key=key)
+        level = int(client.throttling_level)
+        limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
+        try:
+            day_limit = limit_rates[1].split('/')[0]
+        except IndexError:
+            day_limit = 0
+        tvars = {
+                'client': client,
+                'limit': day_limit
+                }
+        messages.add_message(request, messages.INFO, "This functionality is still in beta state. The number of requests"
+                                                     " shown here might not be 100% accurate.")
+        return render(request, 'api/monitor_api_credential.html', tvars)
+    except ApiV2Client.DoesNotExist:
+        raise Http404
 
 
 ### View for deleting api clients (works both for apiv2 and apiv1)
@@ -1256,9 +1306,8 @@ def granted_permissions(request):
                 })
                 grant_and_token_names.append(grant.application.apiv2_client.name)
 
-    return render_to_response('api/manage_permissions.html',
-                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False},
-                              context_instance=RequestContext(request))
+    return render(request, 'api/manage_permissions.html',
+                              {'user': request.user, 'tokens': tokens, 'grants': grants, 'show_expiration_date': False})
 
 
 ### View to revoke permissions granted to an application
@@ -1295,9 +1344,8 @@ def permission_granted(request):
     else:
         logout_next = reverse('api-login')
 
-    return render_to_response(template,
-                              {'code': code, 'app_name': app_name, 'logout_next': logout_next},
-                              context_instance=RequestContext(request))
+    return render(request, template,
+        {'code': code, 'app_name': app_name, 'logout_next': logout_next})
 
 
 ### View for registration using minimal template
@@ -1308,8 +1356,8 @@ def minimal_registration(request):
         if form.is_valid():
             user = form.save()
             send_activation(user)
-            return render_to_response('api/minimal_registration_done.html', locals(), context_instance=RequestContext(request))
+            return render(request, 'api/minimal_registration_done.html', locals())
     else:
         form = RegistrationForm()
 
-    return render_to_response('api/minimal_registration.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'api/minimal_registration.html', locals())

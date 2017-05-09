@@ -20,15 +20,14 @@
 
 import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
-import django.contrib.auth.views as authviews
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
-    HttpResponsePermanentRedirect, HttpResponseServerError
+    HttpResponsePermanentRedirect, HttpResponseServerError, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
@@ -43,8 +42,8 @@ from django.db import transaction
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
-    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag
+    ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -65,6 +64,8 @@ from bookmarks.models import Bookmark
 from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
+from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations, \
+    copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -99,6 +100,17 @@ def multi_email_cleanup(request):
 
     return render(request, 'accounts/multi_email_cleanup.html')
 
+def check_username(request):
+    username = request.GET.get('username', None)
+    username_valid = False
+    if username:
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            username_valid = True
+    return JsonResponse({'result': username_valid})
+
+
 @login_required
 def bulk_license_change(request):
     if request.method == 'POST':
@@ -131,7 +143,7 @@ def tos_acceptance(request):
 
 
 def registration(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return HttpResponseRedirect(reverse('accounts-home'))
 
     if request.method == 'POST':
@@ -147,7 +159,7 @@ def registration(request):
 
 
 def activate_user(request, username, uid_hash):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return HttpResponseRedirect(reverse('accounts-home'))
 
     try:
@@ -176,7 +188,7 @@ def send_activation(user):
 
 
 def resend_activation(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return HttpResponseRedirect(reverse('accounts-home'))
 
     if request.method == 'POST':
@@ -192,7 +204,7 @@ def resend_activation(request):
 
 
 def username_reminder(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return HttpResponseRedirect(reverse('accounts-home'))
 
     if request.method == 'POST':
@@ -263,6 +275,24 @@ def home(request):
 
 
 @login_required
+def edit_email_settings(request):
+    profile = request.user.profile
+    if request.method == "POST":
+        form = EmailSettingsForm(request.POST)
+        if form.is_valid():
+            email_type_ids = form.cleaned_data['email_types']
+            request.user.profile.update_enabled_email_types(email_type_ids)
+    else:
+        # Get list of enabled email_types
+        all_emails = request.user.profile.get_enabled_email_types()
+        form = profile_form = EmailSettingsForm(initial={
+            'email_types': all_emails,
+            })
+    tvars = {'form': form}
+    return render(request, 'accounts/edit_email_settings.html', tvars)
+
+
+@login_required
 def edit(request):
     profile = request.user.profile
 
@@ -278,13 +308,8 @@ def edit(request):
         return False
 
     if is_selected("profile"):
-        had_enabled_stream_emails = profile.enabled_stream_emails
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
         if profile_form.is_valid():
-            enabled_stream_emails = profile_form.cleaned_data.get("enabled_stream_emails")
-            # If is enabling stream emails, set last_stream_email_sent to now
-            if not had_enabled_stream_emails and enabled_stream_emails:
-                profile.last_stream_email_sent = datetime.datetime.now()
             profile.save()
             return HttpResponseRedirect(reverse("accounts-home"))
     else:
@@ -359,6 +384,7 @@ def handle_uploaded_image(profile, f):
     except Exception as e:
         logger.error("\tfailed creating large thumbnails: " + str(e))
 
+    copy_avatar_to_mirror_locations(profile)
     os.unlink(tmp_image_path)
 
 
@@ -377,6 +403,7 @@ def describe(request):
             elif "delete_confirm" in request.POST:
                 for f in form.cleaned_data["files"]:
                     os.remove(files[f].full_path)
+                    remove_uploaded_file_from_mirror_locations(files[f].full_path)
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
                 # Clear existing describe-related session data
@@ -409,7 +436,6 @@ def describe_license(request):
     else:
         form = NewLicenseForm()
     tvars = {'form': form}
-    print form.errors
     return render(request, 'accounts/describe_license.html', tvars)
 
 
@@ -528,6 +554,9 @@ def describe_sounds(request):
                 sound.original_path = new_original_path
                 sound.save()
 
+            # Copy to mirror location
+            copy_sound_to_mirror_locations(sound)
+
             # Set pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)
             new_pack = forms[i]['pack'].cleaned_data.get('new_pack', False)
@@ -630,8 +659,8 @@ def describe_sounds(request):
 
 @login_required
 def attribution(request):
-    qs = Download.objects.select_related('sound', 'sound__user__username', 'sound__license', 'pack',
-                                         'pack__user__username').filter(user=request.user)
+    qs = Download.objects.select_related('sound', 'sound__user', 'sound__license', 'pack',
+                                         'pack__user').filter(user=request.user)
     tvars = {'format': request.GET.get("format", "regular")}
     tvars.update(paginate(request, qs, 40))
     return render(request, 'accounts/attribution.html', tvars)
@@ -657,7 +686,7 @@ def downloaded_packs(request, username):
     paginator = paginate(request, qs, settings.PACKS_PER_PAGE)
     page = paginator["page"]
     pack_ids = [d.pack_id for d in page]
-    packs = Pack.objects.ordered_ids(pack_ids, select_related="user__username")
+    packs = Pack.objects.ordered_ids(pack_ids, select_related="user")
     tvars = {"username": username,
              "packs": packs}
     tvars.update(paginator)
@@ -762,7 +791,7 @@ def account(request, username):
         follow_utils.get_vars_for_account_view(user)
     follow_user_url = reverse('follow-user', args=[username])
     unfollow_user_url = reverse('unfollow-user', args=[username])
-    show_unfollow_button = request.user.is_authenticated() and follow_utils.is_user_following_user(request.user, user)
+    show_unfollow_button = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, user)
     has_bookmarks = Bookmark.objects.filter(user=user).exists()
     if not user.is_active:
         messages.add_message(request, messages.INFO, 'This account has <b>not been activated</b> yet.')
@@ -808,6 +837,7 @@ def handle_uploaded_file(user_id, f):
         for chunk in f.chunks():
             destination.write(chunk)
         logger.info("file upload done")
+        copy_uploaded_file_to_mirror_locations(path)
     except Exception as e:
         logger.warning("failed writing file error: %s", str(e))
         return False
@@ -1062,11 +1092,6 @@ def clear_flags_user(request, username):
         return render(request, 'accounts/flags_cleared.html', tvars)
     else:
         return HttpResponseRedirect(reverse('accounts-login'))
-
-
-def donate_redirect(request):
-    pledgie_campaign_url = "http://pledgie.com/campaigns/%d/" % settings.PLEDGIE_CAMPAIGN
-    return HttpResponseRedirect(pledgie_campaign_url)
 
 
 @login_required

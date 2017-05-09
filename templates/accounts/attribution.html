@@ -70,7 +70,7 @@
 			    &nbsp;&nbsp;&nbsp;&nbsp;
 				{% if download_item.sound %}
 					{% with download_item.sound as sound %}
-		                S: {{sound.original_filename}} by {{sound.user.username}} -- {% absurl 'sound' sound.user.username sound.id %} -- License: {{ sound.license }}<br />
+		                S: {{sound.original_filename}} by {{sound.user.username}} -- {% absurl 'short-sound-link' sound.id %} -- License: {{ sound.license }}<br />
 					{% endwith %}
 				{% else %}
 					{% with download_item.pack as pack %}

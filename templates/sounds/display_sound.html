@@ -7,12 +7,17 @@
     If you change this cache index, be sure to change the invalidation in
     ratings/views.py as well
 {% endcomment %}
-{% cache 43200 display_sound sound_id request.user.is_authenticated sound.processing_state sound.moderation_state %}
+{% cache 43200 display_sound sound_id request.user.is_authenticated sound.processing_state sound.moderation_state request.user.profile.is_adult  %}
 
 <div class="sample_player_small" id="{{ sound_id }}">
 
-    <div class="sample_player">
+    {% if is_explicit %}
+    <div class="explicit_content_text">
+        <span>Warning: this sound may be inappropriate for some users <a href="#">Dismiss</a></span>
+    </div>
+    {% endif %}
 
+    <div class="sample_player {% if is_explicit %}blur{% endif %}">
         <div class="small_player">
             {% include "sounds/player_medium.html" %}
         </div><!-- .small_player -->
@@ -90,7 +95,7 @@
           </div><!-- .sound_title -->
     </div><!-- .sample_player -->
 
-    <div class="sample_information">
+    <div class="sample_information {% if is_explicit %}blur{% endif %}">
         <a class="user" href="{% url 'account' sound.user.username %}">{{sound.user.username}}</a><br />
         <span class="date">{{sound.created|date:"F jS, Y"}}</span><br />
         <span class="download_count"><a href="{% url 'sound-downloaders' sound.user.username sound.id %}">{{sound.num_downloads}} download{{sound.num_downloads|pluralize}}</a></span><br />
@@ -140,7 +145,6 @@
             <!-- /license icons -->
 
         </div><!-- .sound_attributes -->
-
     </div><!-- .sample_information -->
 </div><!-- .sample_player_small -->
 

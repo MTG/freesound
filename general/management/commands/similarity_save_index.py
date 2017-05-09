@@ -28,13 +28,13 @@ logger = logging.getLogger("web")
 class Command(BaseCommand):
     args = ''
     help = 'Save current similarity index'
-    option_list = BaseCommand.option_list + (
-    make_option('-i','--indexing_server',
-        dest='indexing_server',
-        action='store_true',
-        default=False,
-        help='Save the index of the indexing server instead of the index of the main similarity server'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-i','--indexing_server',
+            action='store_true',
+            dest='indexing_server',
+            default=False,
+            help='Save the index of the indexing server instead of the index of the main similarity server')
 
     def handle(self, *args, **options):
         logger.info('Saving current similarity index')

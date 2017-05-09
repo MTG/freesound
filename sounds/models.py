@@ -22,14 +22,17 @@
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
+from django.template.loader import render_to_string
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
 from django.db import models
 from django.db import connection, transaction
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
 from django.core.exceptions import ObjectDoesNotExist
+from django.urls import reverse
 from general.models import OrderedModel, SocialModel
 from geotags.models import GeoTag
 from tags.models import TaggedItem, Tag
@@ -72,7 +75,7 @@ class License(OrderedModel):
 class SoundManager(models.Manager):
 
     def latest_additions(self, num_sounds, period='2 weeks', use_interval=True):
-        interval_query = ("and created > now() - interval '%s'" % period) if use_interval else ""
+        interval_query = ("and greatest(created, moderation_date) > now() - interval '%s'" % period) if use_interval else ""
         query = """
                 select
                     username,
@@ -82,7 +85,7 @@ class SoundManager(models.Manager):
                 select
                     (select username from auth_user where auth_user.id = user_id) as username,
                     max(id) as sound_id,
-                    max(created) as created,
+                    greatest(max(created), max(moderation_date)) as created,
                     count(*) - 1 as extra
                 from
                     sounds_sound
@@ -104,6 +107,7 @@ class SoundManager(models.Manager):
                                FROM sounds_sound
                               WHERE moderation_state='OK'
                                 AND processing_state='OK'
+                                AND is_explicit=FALSE
                              OFFSET %d
                               LIMIT 1""" % offset)
             return cursor.fetchone()[0]
@@ -244,6 +248,7 @@ class Sound(SocialModel):
     moderation_date = models.DateTimeField(null=True, blank=True, default=None)  # Set at last moderation state change
     moderation_note = models.TextField(null=True, blank=True, default=None)
     has_bad_description = models.BooleanField(default=False)
+    is_explicit = models.BooleanField(default=False)
 
     # processing
     PROCESSING_STATE_CHOICES = (
@@ -318,21 +323,11 @@ class Sound(SocialModel):
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.mp3" % (self.id, sound_user_id)),
                         url=settings.PREVIEWS_URL + "%s/%d_%d-lq.mp3" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.mp3" % (self.id, sound_user_id),
-                        # The alternative url is sent to the requesting browser if the clickthrough logger is activated
-                        # After logging the clickthrough data, the reponse is redirected to a url stripped of the
-                        # alt part. The redirect will be handled by nginx
-                        url_alt=settings.PREVIEWS_URL.replace("previews", "previews_alt") + "%s/%d_%d-lq.mp3" %
-                                                                                            (id_folder, self.id,
-                                                                                             sound_user_id)
                     ),
                     ogg=dict(
                         path=os.path.join(settings.PREVIEWS_PATH, id_folder, "%d_%d-lq.ogg" % (self.id, sound_user_id)),
                         url=settings.PREVIEWS_URL + "%s/%d_%d-lq.ogg" % (id_folder, self.id, sound_user_id),
                         filename="%d_%d-lq.ogg" % (self.id, sound_user_id),
-                        # Refer to comments in mp3.url_alt
-                        url_alt=settings.PREVIEWS_URL.replace("previews", "previews_alt") + "%s/%d_%d-lq.ogg" %
-                                                                                            (id_folder, self.id,
-                                                                                             sound_user_id)
                     ),
                 )
             ),
@@ -412,11 +407,12 @@ class Sound(SocialModel):
         return self.duration * 1000
 
     def rating_percent(self):
+        if self.num_ratings <= settings.MIN_NUMBER_RATINGS:
+            return 0
         return int(self.avg_rating*10)
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'sound', (self.user.username, smart_unicode(self.id),)
+        return reverse('sound', args=[self.user.username, smart_unicode(self.id)])
 
     def set_tags(self, tags):
         # remove tags that are not in the list
@@ -784,12 +780,11 @@ class Pack(SocialModel):
     def __unicode__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'pack', (self.user.username, smart_unicode(self.id),)
+        return reverse('pack', args=[self.user.username, smart_unicode(self.id)])
 
     class Meta(SocialModel.Meta):
-        unique_together = ('user', 'name')
+        unique_together = ('user', 'name', 'is_deleted')
         ordering = ("-created",)
 
     def friendly_filename(self):
@@ -797,36 +792,12 @@ class Pack(SocialModel):
         username_slug =  slugify(self.user.username)
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
-    @locations_decorator()
-    def locations(self):
-        return dict(sendfile_url=settings.PACKS_SENDFILE_URL + "%d.zip" % self.id,
-                    license_url=settings.PACKS_SENDFILE_URL + "%d_license.txt" % self.id,
-                    license_path=os.path.join(settings.PACKS_PATH, "%d_license.txt" % self.id),
-                    path=os.path.join(settings.PACKS_PATH, "%d.txt" % self.id))
-
     def process(self):
         sounds = self.sound_set.filter(processing_state="OK", moderation_state="OK").order_by("-created")
         self.num_sounds = sounds.count()
         if self.num_sounds:
             self.last_updated = sounds[0].created
-        self.create_license_file(pack_sounds=sounds)
         self.save()
-
-    def create_license_file(self, pack_sounds):
-        """ Create a license file containing the licenses of all sounds in the
-            pack, and update the pack license_crc field, but DO NOT save the pack
-        """
-        from django.template.loader import render_to_string
-        if len(pack_sounds)>0:
-            licenses = License.objects.all()
-            license_path = self.locations("license_path")
-            attribution = render_to_string("sounds/pack_attribution.txt", dict(pack=self, licenses=licenses,
-                                                                               sound_list=pack_sounds))
-            f = open(license_path, 'w')
-            f.write(attribution.encode("UTF-8"))
-            f.close()
-            p = subprocess.Popen(["crc32", license_path], stdout=subprocess.PIPE)
-            self.license_crc = p.communicate()[0].split(" ")[0][:-1]
 
     def get_random_sound_from_pack(self):
         pack_sounds = Sound.objects.filter(pack=self.id, processing_state="OK", moderation_state="OK").order_by('?')[0:1]
@@ -859,6 +830,19 @@ class Pack(SocialModel):
         self.is_deleted = True
         self.save()
 
+    def get_attribution(self):
+        sounds_list = self.sound_set.filter(processing_state="OK",
+                moderation_state="OK").select_related('user', 'license')
+
+        users = User.objects.filter(sounds__in=sounds_list).distinct()
+        # Generate text file with license info
+        licenses = License.objects.filter(sound__pack=self).distinct()
+        attribution = render_to_string("sounds/pack_attribution.txt",
+            dict(users=users,
+                pack=self,
+                licenses=licenses,
+                sound_list=sounds_list))
+        return attribution
 
 class Flag(models.Model):
     sound = models.ForeignKey(Sound)

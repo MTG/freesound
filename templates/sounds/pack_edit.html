@@ -130,8 +130,9 @@
     </p>
   {{form.pack_sounds}}
     </div>
-    <input type="submit"/>
+    <input type="submit" value="Submit"/>
 </form>
+<div style="display:flex;min-height: 200px;">
     <div id="current_pack_sounds" class="sound_list_minimal">
         <h4> Current sounds</h4>
         {% for sound in current_sounds %}
@@ -141,7 +142,7 @@
 
     <div id="pack_edit_search" class="sound_list_minimal" >
         <h4> Other sounds</h4>
-        <p> Use the list and search box below to add some of your sounds to the pack. Remember that sounds can only be in one pack!
+        <p> Use the list and search box below to add some of your sounds<br /> to the pack. Remember that sounds can only be in one pack!
         <p>
             <input type="text" name="q" id="search-q" size="25" /> 
             <input type="button" name="submit" value="search" id="search-button"/>
@@ -149,5 +150,5 @@
         <div id="search-results" class="sound_list_minimal"></div>      
     </div>
     <div style="clear:both"></div>
-
+</div>
 {% endblock section_content %}

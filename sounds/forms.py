@@ -18,15 +18,18 @@
 #     See AUTHORS file.
 #
 
+import time
 from django import forms
 from django.db.models import Q
 from django.forms import ModelForm, Textarea, TextInput
 from django.conf import settings
 from django.utils.translation import ugettext as _
+from django.core.exceptions import PermissionDenied
 from sounds.models import License, Flag, Pack, Sound
 from utils.forms import TagField, HtmlCleaningCharField
 from utils.mail import send_mail_template
 from utils.forms import CaptchaWidget
+from utils.encryption import decrypt, encrypt
 import re
 
 
@@ -231,3 +234,29 @@ class FlagForm(forms.Form):
         f.reason = self.cleaned_data['reason']
         f.email = self.cleaned_data['email']
         return f
+
+
+class DeleteSoundForm(forms.Form):
+    encrypted_link = forms.CharField(widget=forms.HiddenInput())
+
+    def clean_encrypted_link(self):
+        data = self.cleaned_data['encrypted_link']
+        if not data:
+            raise PermissionDenied
+        sound_id, now = decrypt(data).split("\t")
+        sound_id = int(sound_id)
+        if sound_id != self.sound_id:
+            raise PermissionDenied
+        link_generated_time = float(now)
+        if abs(time.time() - link_generated_time) > 10:
+            raise forms.ValidationError("Time expired")
+        return data
+
+    def __init__(self, *args, **kwargs):
+        self.sound_id = int(kwargs.pop('sound_id'))
+        encrypted_link = encrypt(u"%d\t%f" % (self.sound_id, time.time()))
+        kwargs['initial'] = {
+                'encrypted_link': encrypted_link
+                }
+        super(DeleteSoundForm, self).__init__(*args, **kwargs)
+

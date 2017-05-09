@@ -21,7 +21,6 @@
 from solr import Solr, SolrException
 from django.conf import settings
 import logging
-from forum.models import Post
 
 logger = logging.getLogger("search")
 
@@ -30,23 +29,20 @@ def convert_to_solr_document(post):
     document = {}
 
     document["id"] = post.id
-    
     document["thread_id"] = post.thread.id
     document["thread_title"] = post.thread.title
     document["thread_author"] = post.thread.author
     document["thread_created"] = post.thread.created
-    
+
     document["forum_name"] = post.thread.forum.name
     document["forum_name_slug"] = post.thread.forum.name_slug
-    
+
     document["post_author"] = post.author
     document["post_created"] = post.created
     document["post_body"] = post.body
-    
+
     document["num_posts"] = post.thread.num_posts
-    document["has_posts"] = False if post.thread.num_posts == 0 else True 
-    
-    logger.info(document)
+    document["has_posts"] = False if post.thread.num_posts == 0 else True
 
     return document
 
@@ -61,7 +57,7 @@ def add_post_to_solr(post):
 
 def add_posts_to_solr(posts):
     logger.info("adding multiple forum posts to solr index")
-    solr = Solr(settings.SOLR_FORUM_URL)
+    solr = Solr(settings.SOLR_FORUM_URL, auto_commit=False)
 
 
     logger.info("creating XML")
@@ -69,20 +65,22 @@ def add_posts_to_solr(posts):
     logger.info("posting to Solr")
     solr.add(documents)
 
+    solr.commit()
     logger.info("optimizing solr index")
     #solr.optimize()
     logger.info("done")
-    
+
 def add_all_posts_to_solr(post_queryset, slice_size=4000, mark_index_clean=False):
     # Pass in a queryset to avoid needing a reference to
     # the Post class, it causes circular imports.
     num_posts = post_queryset.count()
     for i in range(0, num_posts, slice_size):
         try:
-            add_posts_to_solr(post_queryset[i:i+slice_size])
+            posts = post_queryset[i:i+slice_size]
+            add_posts_to_solr(posts)
         except SolrException, e:
-            logger.error("failed to add post batch to solr index, reason: %s" % str(e))    
-    
+            logger.error("failed to add post batch to solr index, reason: %s" % str(e))
+
 def delete_post_from_solr(post):
     logger.info("deleting post with id %d" % post.id)
     try:

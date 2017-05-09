@@ -42,8 +42,10 @@ ACCESS_CONTROL_MAX_AGE = 'Access-Control-Max-Age'
 
 
 class CorsMiddleware(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
 
-    def process_request(self, request):
+    def __call__(self, request):
         '''
             If CORS preflight header, then create an empty body response (200 OK) and return it
 
@@ -55,12 +57,10 @@ class CorsMiddleware(object):
             'HTTP_ACCESS_CONTROL_REQUEST_METHOD' in request.META):
             response = http.HttpResponse()
             return response
-        return None
+        response = self.get_response(request)
 
-    def process_response(self, request, response):
-        '''
-            Add the respective CORS headers
-        '''
+        #Add the respective CORS headers
+
         origin = request.META.get('HTTP_ORIGIN')
         if self.is_enabled(request) and origin:
             # todo: check hostname from db instead

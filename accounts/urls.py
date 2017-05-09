@@ -20,8 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import patterns, url, include
-import django.contrib.auth.views as authviews
+from django.conf.urls import url, include
 import messages.views as messages
 import accounts.views as accounts
 from accounts.forms import FsAuthenticationForm
@@ -43,9 +42,11 @@ urlpatterns = [
     url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', accounts.email_reset_complete),
     url(r'^bulklicensechange/$', accounts.bulk_license_change, name="bulk-license-change"),
     url(r'^tosacceptance/$', accounts.tos_acceptance, name="tos-acceptance"),
+    url(r'^check_username/$', accounts.check_username, name="check_username"),
 
     url(r'^$', accounts.home, name="accounts-home"),
     url(r'^edit/$', accounts.edit, name="accounts-edit"),
+    url(r'^email-settings/$', accounts.edit_email_settings, name="accounts-email-settings"),
     url(r'^delete/$', accounts.delete, name="accounts-delete"),
     url(r'^pending/$', accounts.pending, name="accounts-pending"),
     url(r'^attribution/$', accounts.attribution, name="accounts-attribution"),

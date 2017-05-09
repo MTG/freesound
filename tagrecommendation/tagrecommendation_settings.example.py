@@ -32,8 +32,12 @@ TAGRECOMMENDATION_ADDRESS          = 'localhost'
 TAGRECOMMENDATION_PORT             = 8010
 TAGRECOMMENDATION_CACHE_TIME       = 60*60*24*7 # One week?
 
-LOGSERVER_IP_ADDRESS = 'ID_ADDRESS'
+# Graylog GELF endpoint
+LOGSERVER_IP_ADDRESS = 'IP_ADDRESS'
 LOGSERVER_PORT = 0000
+
+# Set to true to log to stdout in addition to files and graylog
+LOG_TO_STDOUT = False
 
 
 # This tag recommendation server needs some data files to be in the data folder

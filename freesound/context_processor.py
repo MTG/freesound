@@ -31,7 +31,7 @@ def context_extra(request):
     num_pending_sounds = 0
     num_messages = 0
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         if request.user.has_perm('tickets.can_moderate'):
             new_tickets_count = new_sound_tickets_count()
         num_pending_sounds = request.user.profile.num_sounds_pending_moderation()

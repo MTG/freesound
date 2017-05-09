@@ -22,7 +22,7 @@ import hashlib
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from models import Ticket, Queue
 from tickets import QUEUE_SOUND_MODERATION, QUEUE_SUPPORT_REQUESTS
 from tickets import TICKET_STATUS_NEW

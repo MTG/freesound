@@ -35,6 +35,7 @@ from utils.tags import clean_and_split_tags
 from utils.text import slugify
 from exceptions import *
 from examples import examples
+from utils.mirror_files import copy_sound_to_mirror_locations
 import shutil
 from django.conf import settings
 import os
@@ -45,7 +46,7 @@ from utils.similarity_utilities import api_search as similarity_api_search
 from similarity.client import SimilarityException
 from urllib import unquote
 from django.contrib.sites.models import Site
-from django.core.urlresolvers import resolve
+from django.urls import resolve
 from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
 from django.db import transaction
@@ -89,7 +90,6 @@ class GenericAPIView(RestFrameworkGenericAPIView):
             = get_authentication_details_form_request(request)
 
     def log_message(self, message):
-        print self.developer
         return log_message_helper(message, resource=self)
 
 
@@ -501,6 +501,9 @@ def create_sound_object(user, original_sound_fields, resource=None, apiv2_client
             raise ServerErrorException(msg=msg, resource=resource)
         sound.original_path = new_original_path
         sound.save()
+
+    # Copy to mirror location
+    copy_sound_to_mirror_locations(sound)
 
     # 6 create pack if it does not exist
     if 'pack' in sound_fields:

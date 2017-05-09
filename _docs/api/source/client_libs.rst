@@ -10,6 +10,9 @@ Python
 Javascript
   https://github.com/g-roma/freesound.js
 
+Perl
+  https://github.com/CaesuraMedia/PerlFreesound (by Andy Cragg)
+
 Supercollider
   https://github.com/g-roma/Freesound.sc
 
@@ -18,3 +21,6 @@ Objective-c (iOS)
 
 Qt framework (c++)
   https://github.com/ttguy/Qt_freesoundAPIv2 (by Roger Morton)
+
+Scala
+  https://github.com/Sciss/ScalaFreesound (by Hanns Holger Rutz)

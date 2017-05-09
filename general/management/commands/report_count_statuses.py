@@ -35,19 +35,19 @@ class Command(BaseCommand):
            "number of existing objects (e.g. if pack.num_sounds equals pack.sounds.all().count(). If the number" \
            "does not match, it updates the corresponding object (unless the option -n is provided)"
 
-    option_list = BaseCommand.option_list + (
-        make_option('-n', '--no-changes',
-                    dest='no-changes',
-                    action='store_true',
-                    default=False,
-                    help='Using the option --no-changes the original objects will not be modified.'),
-        make_option('-d', '--skip-downloads',
-                    dest='skip-downloads',
-                    action='store_true',
-                    default=False,
-                    help='Using the option --skip-downloads the command will not checked for mismatched '
-                         'downloads (to save time).'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-n', '--no-changes',
+            action='store_true',
+            dest='no-changes',
+            default=False,
+            help='Using the option --no-changes the original objects will not be modified.')
+        parser.add_argument(
+            '-d', '--skip-downloads',
+            action='store_true',
+            dest='skip-downloads',
+            default=False,
+            help='Using the option --skip-downloads the command will not checked for mismatched downloads (to save time).')
 
     def handle(self,  *args, **options):
 

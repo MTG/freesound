@@ -20,26 +20,67 @@
 #     See AUTHORS file.
 #
 
+import json
+import gearman
 from django.contrib import admin
+from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from accounts.models import Profile, UserFlag
+from accounts.models import Profile, UserFlag, EmailPreferenceType
 from django_object_actions import DjangoObjectActions
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib import messages
+from django.conf import settings
 
 
 def disable_active_user(modeladmin, request, queryset):
-    for user in queryset:
-        user.profile.delete_user()
+    if request.POST.get('confirmation', False):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        for user in queryset:
+            gm_client.submit_job("delete_user",
+                    json.dumps({'user_id':user.id, 'action': "delete_user_delete_sounds"}),
+                wait_until_complete=False, background=True)
+        messages.add_message(request, messages.INFO,
+             '%d users will be soft deleted asynchronously, related sound are '
+             'going to be deleted as well' % (queryset.count()))
+        return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+
+    params = [(k,v) for k in request.POST.keys() for v in request.POST.getlist(k)]
+    tvars = {'anonymised': [], 'params': params}
+    for obj in queryset:
+
+        info = obj.profile.get_info_before_delete_user(remove_sounds=True)
+        model_count = {model._meta.verbose_name_plural: len(objs) for model,
+                objs in info['deleted'].model_objs.items()}
+        anon = {'anonymised': []}
+        anon['model_count'] = dict(model_count).items()
+        anon['logic_deleted'] = info['logic_deleted']
+        anon['name'] = info['anonymised']
+        tvars['anonymised'].append(anon)
+
+    return render(request, 'accounts/delete_confirmation.html', tvars)
 
 disable_active_user.short_description = "'Soft' delete selected users, preserve posts, threads and comments (delete sounds)"
 
 
 def disable_active_user_preserve_sounds(modeladmin, request, queryset):
-    for user in queryset:
-        user.profile.delete_user(remove_sounds=True)
+    if request.POST.get('confirmation', False):
+        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+        for user in queryset:
+            gm_client.submit_job("delete_user",
+                    json.dumps({'user_id':user.id, 'action': "delete_user_keep_sounds"}),
+                wait_until_complete=False, background=True)
+        messages.add_message(request, messages.INFO,
+             '%d users will be soft deleted asynchronously' % (queryset.count()))
+        return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+
+    params = [(k,v) for k in request.POST.keys() for v in request.POST.getlist(k)]
+    tvars = {'anonymised': [], 'params': params}
+    for obj in queryset:
+        info = obj.profile.get_info_before_delete_user(remove_sounds=False)
+        tvars['anonymised'].append({'name': info['anonymised']})
+    return render(request, 'accounts/delete_confirmation.html', tvars)
 
 disable_active_user_preserve_sounds.short_description = "'Soft' delete selected users, preserve sounds and everything else"
 
@@ -48,7 +89,7 @@ class ProfileAdmin(admin.ModelAdmin):
     raw_id_fields = ('user', 'geotag')
     list_display = ('user', 'home_page', 'signature', 'is_whitelisted')
     ordering = ('id', )
-    list_filter = ('is_whitelisted', 'wants_newsletter', )
+    list_filter = ('is_whitelisted', )
     search_fields = ('=user__username', )
 
 admin.site.register(Profile, ProfileAdmin)
@@ -69,28 +110,73 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     ordering = ('id', )
 
     def full_delete(self, request, obj):
-        # For now just redirect to default admin delete action
-        return HttpResponseRedirect(reverse('admin:auth_user_delete', args=[obj.id]))
+        username = obj.username
+        if request.method == "POST":
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("delete_user",
+                    json.dumps({'user_id': obj.id, 'action': "full_delete_user"}),
+                wait_until_complete=False, background=True)
+            messages.add_message(request, messages.INFO,
+                                 'User \'%s\' will be fully deleted '
+                                 'asynchronously from the database' % (username))
+            return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+
+        info = obj.profile.get_info_before_delete_user(remove_sounds=False,
+                remove_user=True)
+        model_count = {model._meta.verbose_name_plural: len(objs) for model,
+                objs in info['deleted'].model_objs.items()}
+        tvars = {'anonymised': []}
+        anon = {}
+        anon['model_count'] = dict(model_count).items()
+        anon['name'] = info['anonymised']
+        anon['deleted'] = True
+        tvars['anonymised'].append(anon)
+        return render(request, 'accounts/delete_confirmation.html', tvars)
     full_delete.label = "Full delete user"
     full_delete.short_description = 'Completely delete user from db'
 
     def delete_include_sounds(self, request, obj):
         username = obj.username
-        obj.profile.delete_user(remove_sounds=True)
-        messages.add_message(request, messages.INFO,
-                             'Soft deleted user \'%s\' including her sounds. Comments and other content '
-                             'will appear under \'%s\' account' % (username, obj.username))
-        return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+        if request.method == "POST":
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("delete_user",
+                    json.dumps({'user_id': obj.id, 'action': "delete_user_delete_sounds"}),
+                wait_until_complete=False, background=True)
+            messages.add_message(request, messages.INFO,
+                                 'User \'%s\' will be soft deleted'
+                                 ' asynchronously. Sounds and other related'
+                                 ' content will be deleted.' % (username))
+            return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+        info = obj.profile.get_info_before_delete_user(remove_sounds=True)
+        model_count = {model._meta.verbose_name_plural: len(objs) for model,
+                objs in info['deleted'].model_objs.items()}
+        tvars = {'anonymised': []}
+        anon = {}
+        anon['model_count'] = dict(model_count).items()
+        anon['logic_deleted'] = info['logic_deleted']
+        anon['name'] = info['anonymised']
+        tvars['anonymised'].append(anon)
+        return render(request, 'accounts/delete_confirmation.html', tvars)
+
     delete_include_sounds.label = "Soft delete user (delete sounds)"
     delete_include_sounds.short_description = disable_active_user.short_description
 
     def delete_preserve_sounds(self, request, obj):
         username = obj.username
-        obj.profile.delete_user(remove_sounds=False)
-        messages.add_message(request, messages.INFO,
-                             'Soft deleted user \'%s\' but preserved her sounds under \'%s\' account'
-                             % (username, obj.username))
-        return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+        if request.method == "POST":
+            gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
+            gm_client.submit_job("delete_user",
+                    json.dumps({'user_id': obj.id, 'action': "delete_user_keep_sounds"}),
+                wait_until_complete=False, background=True)
+            messages.add_message(request, messages.INFO,
+                                 'User \'%s\' will be soft deleted asynchronously. Comments and other content '
+                                 'will appear under anonymised account' % (username))
+            return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
+
+        info = obj.profile.get_info_before_delete_user(remove_sounds=False)
+        tvars = {'anonymised': []}
+        tvars['anonymised'].append({'name': info['anonymised']})
+        return render(request, 'accounts/delete_confirmation.html', tvars)
     delete_preserve_sounds.label = "Soft delete user (preserve sounds)"
     delete_preserve_sounds.short_description = disable_active_user_preserve_sounds.short_description
 
@@ -98,3 +184,5 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, FreesoundUserAdmin)
+
+admin.site.register(EmailPreferenceType)

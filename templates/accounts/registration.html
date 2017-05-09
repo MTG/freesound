@@ -3,10 +3,27 @@
 {% block title %}registration{% endblock %}
 
 {% block section_content %}
+<style> #username_check, #check_success, #spinner { display:none; color: #bd2d33; font-style: italic; } #check_success {color:green;}</style>
 <script type="text/javascript">
     $(function () {
-    	$("#id_username").focus()
-    });
+      $("#id_username").focus()
+      
+        $('#id_username').parent().append('<div id="spinner"> Checking...<img src="{{ media_url }}images/indicator.gif" /></div><div id="username_check">Sorry, this username is already being used by someone else.</div><div id="check_success">Username is available</div>');
+      
+      // When the user enters a username we check if it's available
+      $("#id_username").focusout(function(){
+        $('#spinner').show();
+        $('#username_check').hide();
+        $('#check_success').hide();
+        $.get('{% url "check_username" %}', 
+            {'username': $("#id_username").val()}, 
+            function(data){
+              $('#username_check').toggle(!data.result);
+              $('#spinner').hide();
+              $('#check_success').toggle(data.result);
+            }, "json" );
+      });
+    });    
 </script>
 
 <h1>Registration</h1>

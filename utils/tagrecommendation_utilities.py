@@ -18,15 +18,17 @@
 #     See AUTHORS file.
 #
 
+import urllib2
 import logging, traceback
 from django.conf import settings
 from tagrecommendation.client import TagRecommendation
 from tagrecommendation.client.client_fslabs import NewTagRecommendation
 from tagrecommendation.tagrecommendation_settings import TAGRECOMMENDATION_CACHE_TIME
 from django.core.cache import cache
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponse
+from hashlib import md5
 import json
 from django.contrib.auth.decorators import login_required
 from utils.tags import clean_and_split_tags
@@ -38,33 +40,21 @@ research_logger = logging.getLogger('tagrecommendation_research')
 
 def get_recommended_tags(input_tags, max_number_of_tags=30):
 
-    cache_key = "recommended-tags-for-%s" % (",".join(sorted(input_tags)))
+    hashed_tags = md5(",".join(sorted(input_tags)))
+    cache_key = "recommended-tags-for-%s" % (hashed_tags.hexdigest())
 
+    recommended_tags = False
     # Don't use the cache when we're debugging
-    if settings.DEBUG:
-        recommended_tags = False
-    else:
-        try:
-            recommended_tags = cache.get(cache_key)
-        except:
-            recommended_tags = False
+    if not settings.DEBUG:
+        recommended_tags = cache.get(cache_key)
 
     if not recommended_tags:
-        try:
-            recommended_tags = TagRecommendation.recommend_tags(input_tags)
+        recommended_tags = TagRecommendation.recommend_tags(input_tags)
 
-            if not recommended_tags['tags']:
-                recommended_tags['community'] = "-"
+        if not recommended_tags['tags']:
+            recommended_tags['community'] = "-"
 
-            try:
-                cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
-            except:
-                pass
-
-        except Exception, e:
-            logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
-                         (e, traceback.format_exc()))
-            recommended_tags = False
+        cache.set(cache_key, recommended_tags, TAGRECOMMENDATION_CACHE_TIME)
 
     return recommended_tags['tags'][:max_number_of_tags], recommended_tags['community']
 
@@ -75,8 +65,13 @@ def get_recommended_tags_view(request):
         if input_tags:
             input_tags = list(clean_and_split_tags(input_tags))
             if len(input_tags) > 0:
-                tags, community = get_recommended_tags(input_tags)
-                return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
+                try:
+                    tags, community = get_recommended_tags(input_tags)
+                    return HttpResponse(json.dumps([tags, community]), content_type='application/javascript')
+                except urllib2.URLError as e:
+                    logger.error('Could not get a response from the tagrecommendation service (%s)\n\t%s' % \
+                         (e, traceback.format_exc()))
+                    return HttpResponseUnavailabileError()
 
     return HttpResponse(json.dumps([[],"-"]), content_type='application/javascript')
 
@@ -95,7 +90,7 @@ def get_id_of_last_indexed_sound():
         result = TagRecommendation.get_last_indexed_id()
         return result
 
-    except Exception, e:
+    except Exception as e:
         return -1
 
 
@@ -128,7 +123,8 @@ def post_sounds_to_tagrecommendation_service(sound_qs):
 
 ### Views for new tag recommendation interface experiment
 def new_tagrecommendation_interface_instructions(request):
-    return render_to_response('tagrecommendation/new_interface_instructions.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'tagrecommendation/new_interface_instructions.html', locals())
+
 
 def get_recommended_tags_view_new(request):
     if request.is_ajax() and request.method == 'POST':
@@ -142,6 +138,7 @@ def get_recommended_tags_view_new(request):
 
     return HttpResponse(json.dumps({'tags':[], 'audio_category':None}), content_type='application/javascript')
 
+
 def get_recommended_categories_view(request):
     if request.is_ajax() and request.method == 'POST':
         input_tags = request.POST.get('input_tags', False)
@@ -151,6 +148,7 @@ def get_recommended_categories_view(request):
 
     return HttpResponse(json.dumps([]), content_type='application/javascript')
 
+
 def get_all_categories_view(request):
     if request.is_ajax() and request.method == 'POST':
         result = NewTagRecommendation.all_tag_categories()
@@ -158,3 +156,7 @@ def get_all_categories_view(request):
         return HttpResponse(json.dumps(categories), content_type='application/javascript')
 
     return HttpResponse(json.dumps([]), content_type='application/javascript')
+
+
+class HttpResponseUnavailabileError(HttpResponse):
+    status_code = 503

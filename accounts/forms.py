@@ -25,11 +25,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from multiupload.fields import MultiFileField
 from django.conf import settings
-from accounts.models import Profile
+from accounts.models import Profile, EmailPreferenceType
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 from utils.encryption import decrypt, encrypt
@@ -45,6 +45,11 @@ def validate_file_extension(audiofiles):
                     # (use 'application/octet-stream' instead of 'audio/flac'). For this reason we also allow
                     # this mime type for flac files.
                     if not content_type.startswith("audio") and not content_type == 'application/octet-stream':
+                        raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
+                elif ext == 'ogg':
+                    # Firefox seems to set wrong mime type for ogg files to video/ogg instead of audio/ogg
+                    # For this reason we also allow this mime type for ogg files.
+                    if not content_type.startswith("audio") and not content_type == 'video/ogg':
                         raise forms.ValidationError('Uploaded file format not supported or not an audio file.')
                 else:
                     if not content_type.startswith("audio"):
@@ -109,10 +114,11 @@ class RegistrationForm(forms.Form):
         label=_("Username"),
         min_length=3,
         max_length=30,
-        regex=r'^\w+$',
+        regex=r'^[\w.@+-]+$',
         help_text=_("Required. 30 characters or fewer. Alphanumeric characters only (letters, digits and underscores)."),
         error_messages={'only_letters': _("This value must contain only letters, numbers and underscores.")}
     )
+
     first_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     last_name = forms.CharField(help_text=_("Optional."), max_length=30, required=False)
     email1 = forms.EmailField(label=_("Email"), help_text=_("We will send you a confirmation/activation email, so make "
@@ -120,12 +126,6 @@ class RegistrationForm(forms.Form):
     email2 = forms.EmailField(label=_("Email confirmation"))
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
-    newsletter = forms.BooleanField(
-        label=_(""),
-        required=False,
-        initial=True,
-        help_text=_("Sign up for the newsletter (only once every 4 months or so)?")
-    )
     accepted_tos = forms.BooleanField(
         label='',
         help_text=_('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
@@ -173,7 +173,6 @@ class RegistrationForm(forms.Form):
         password = self.cleaned_data["password2"]
         first_name = self.cleaned_data.get("first_name", "")
         last_name = self.cleaned_data.get("last_name", "")
-        newsletter = self.cleaned_data.get("newsletter", False)
         accepted_tos = self.cleaned_data.get("accepted_tos", False)
 
         user = User(username=username,
@@ -187,7 +186,6 @@ class RegistrationForm(forms.Form):
         user.save()
 
         profile = user.profile  # .profile created on User.save()
-        profile.wants_newsletter = newsletter
         profile.accepted_tos = accepted_tos
         profile.save()
 
@@ -238,13 +236,8 @@ class ProfileForm(forms.ModelForm):
         widget=forms.Textarea(attrs=dict(rows=20, cols=70)),
         required=False
     )
-    wants_newsletter = forms.BooleanField(help_text="Subscribed to newsletter", label="", required=False)
-    enabled_stream_emails = forms.BooleanField(
-        help_text="Receive weekly stream update email notifications (only when new sounds are uploaded by "
-                  "users you follow or that have tags you follow)",
-        label = "",
-        required=False
-    )
+    is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",
+            label="", required=False) 
     not_shown_in_online_users_list = forms.BooleanField(
         help_text="Hide from \"users currently online\" list in the People page",
         label = "",
@@ -271,7 +264,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ('home_page', 'wants_newsletter', 'enabled_stream_emails', 'about', 'signature',
+        fields = ('home_page', 'is_adult', 'about', 'signature',
                   'not_shown_in_online_users_list')
 
 
@@ -317,4 +310,14 @@ class DeleteUserForm(forms.Form):
                 'encrypted_link': encrypted_link
                 }
         super(DeleteUserForm, self).__init__(*args, **kwargs)
+
+
+class EmailSettingsForm(forms.Form):
+    email_types = forms.ModelMultipleChoiceField(
+        queryset=EmailPreferenceType.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label='Select the events for which you want to be notified by email:'
+    )
+
 

@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.contrib import admin
 from django.views.generic import TemplateView, RedirectView
 import accounts.views
@@ -34,6 +34,7 @@ import comments.views
 import bookmarks.views
 import follow.views
 import general.views
+import donations.views
 from utils.tagrecommendation_utilities import *
 from apiv2.apiv2_utils import apiv1_end_of_life_message
 
@@ -66,6 +67,7 @@ urlpatterns = [
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/delete/$', sounds.views.pack_delete, name="pack-delete"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/download/.*$', sounds.views.pack_download, name="pack-download"),
     url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/downloaders/$', sounds.views.pack_downloaders, name="pack-downloaders"),
+    url(r'^people/(?P<username>[^//]+)/packs/(?P<pack_id>\d+)/licenses/$', sounds.views.pack_licenses, name="pack-licenses"),
     url(r'^people/(?P<username>[^//]+)/sounds/(?P<sound_id>\d+)/display/$', sounds.views.display_sound_wrapper, name="sound-display"),
     url(r'^people/(?P<username>[^//]+)/downloaded_sounds/$', accounts.views.downloaded_sounds, name="user-downloaded-sounds"),
     url(r'^people/(?P<username>[^//]+)/downloaded_packs/$', accounts.views.downloaded_packs, name="user-downloaded-packs"),
@@ -79,6 +81,9 @@ urlpatterns = [
 
     url(r'^embed/sound/iframe/(?P<sound_id>\d+)/simple/(?P<player_size>\w+)/$', sounds.views.embed_iframe, name="embed-simple-sound-iframe"),
     url(r'^embed/geotags_box/iframe/$', geotags.views.embed_iframe, name="embed-geotags-box-iframe"),
+    url(r'^oembed/$', sounds.views.oembed, name="oembed-sound"),
+
+    url(r'^after-download-modal/$', sounds.views.after_download_modal, name="after-download-modal"),
 
     url(r'^browse/$', sounds.views.sounds, name="sounds"),
     url(r'^browse/tags/$', tags.views.tags, name="tags"),
@@ -99,8 +104,6 @@ urlpatterns = [
 
     url(r'^contact/', support.views.contact, name="contact"),
     url(r'^search/$', search.views.search, name='sounds-search'),
-    # Alternative previews url for logging clickthrough data
-    url(r'^data/previews_alt/(?P<folder_id>\d+)/(?P<sound_id>\d+)_(?P<user_id>\d+)', sounds.views.sound_preview,name="sound-preview"),
 
     url(r'^ratings/', include('ratings.urls')),
     url(r'^comments/', include('comments.urls')),
@@ -108,6 +111,7 @@ urlpatterns = [
     url(r'^forum/', include('forum.urls')),
     url(r'^geotags/', include('geotags.urls')),
     url(r'^home/', include('accounts.urls')),
+    url(r'^donations/', include('donations.urls')),
     url(r'^tickets/', include('tickets.urls')),
     url(r'^monitor/', include('monitor.urls')),
     url(r'^follow/', include('follow.urls')),
@@ -140,8 +144,8 @@ urlpatterns = [
         accounts.views.crash_me,
         name="crash-me"),
 
-    # donation campaign
-    url(r'^donate/', accounts.views.donate_redirect, name="donate-redirect"),
+    url(r'^donate/', donations.views.donate_redirect, name="donate-redirect"),
+    url(r'^s/(?P<sound_id>\d+)/$', sounds.views.sound_short_link, name="short-sound-link"),
 
     # old url format redirects
     url(r'^usersViewSingle', accounts.views.old_user_link_redirect, name="old-account-page"),
@@ -149,7 +153,7 @@ urlpatterns = [
     url(r'^packsViewSingle', sounds.views.old_pack_link_redirect, name="old-pack-page"),
     url(r'^tagsViewSingle', tags.views.old_tag_link_redirect, name="old-tag-page"),
     url(r'^forum/viewtopic', forum.views.old_topic_link_redirect, name="old-topic-page"),
-    
+
 
     # dead season redirect (THIS IS TEMPORAL)
     url(r'^deadseason/$', RedirectView.as_view(url='http://www.freesound.org/people/Slave2theLight/bookmarks/category/4730/')),
@@ -159,7 +163,9 @@ urlpatterns = [
 from django.conf import settings
 from django.views.static import serve
 if settings.DEBUG:
+    import debug_toolbar
     urlpatterns += [
         url(r'^%s/(?P<path>.*)$' % settings.MEDIA_URL.strip('/'), serve, {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
         url(r'^%s/(?P<path>.*)$' % settings.DATA_URL.strip('/'), serve, {'document_root': settings.DATA_PATH, 'show_indexes': True}),
+        url(r'^__debug__/', include(debug_toolbar.urls)),
     ]

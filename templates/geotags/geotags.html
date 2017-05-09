@@ -9,6 +9,7 @@
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?v=3&key={{google_api_key}}&sensor=false"></script>
 <script src="{{media_url}}js/markerclustererV3.js" type="text/javascript"></script>
 <script src="{{media_url}}js/maps.js?v={{ last_restart_date }}" type="text/javascript"></script>
+<script src="{{media_url}}js/sounds_location.js?v={{ last_restart_date }}" type="text/javascript"></script>
 
 <script type="text/javascript">
     function toggleShareControls(){
@@ -90,19 +91,19 @@
     });
 
     {% if for_user %}
-        ajaxLoad('{% url "geotags-for-user-json" for_user.username %}', function(data, responseCode)
+        var url = '{% url "geotags-for-user-barray" for_user.username %}';
     {% else %}
         {% if tag %}
-            ajaxLoad('{% url "geotags-json" tag %}', function(data, responseCode)
+            var url = '{% url "geotags-barray" tag %}';
         {% else %}
-            ajaxLoad('{% url "geotags-json" %}', function(data, responseCode)
+            var url = '{% url "geotags-barray" %}';
         {% endif %}
     {% endif %}
-    {
-        var bounds = new google.maps.LatLngBounds();
-        var markers = [];
-        $.each($.parseJSON(data.response), function(index, item)
-        {
+    var bounds = new google.maps.LatLngBounds();
+    var markers = [];
+    
+    getSoundsLocations(url, function(data){
+        $.each(data, function(index, item) {
             var id = item[0];
             var lat = item[1];
             var lon = item[2];

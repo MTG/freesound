@@ -1,0 +1,7 @@
+
+<div id="donation_box">
+    <p><strong>Love Freesound?</strong><span id="count_down">Only <strong>{{ remains }}&euro;</strong> to go!</span></p>
+    <a class="donation_button" href="{% url 'donate' %}">Donate Now</a>
+    <div id="donation_meter_box"><span id="donation_meter" style="width:{{ percent_towards_goal }}%">{{ percent_towards_goal }}%</span></div>
+</div>
+

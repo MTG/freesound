@@ -197,7 +197,7 @@ To do that you must include the access token in API requests as an authorization
 
 ::
 
-  curl -H "Authorization: Bearer ACCESS_TOKEN" "https://www.freesound.org/apiv2/sounds/not_yet_described/"
+  curl -H "Authorization: Bearer ACCESS_TOKEN" "https://www.freesound.org/apiv2/sounds/pending_uploads/"
 
 You can also use this authentication mechanism to access non OAuth2 required API resources.
 

@@ -214,8 +214,13 @@ class FsAuthenticationForm(AuthenticationForm):
         super(FsAuthenticationForm, self).__init__(*args, **kwargs)
         self.error_messages.update({
             'inactive': mark_safe(_("You are trying to log in with an inactive account, please <a href=\"%s\">activate "
-                                    "your account</a> first." % reverse("accounts-resend-activation")))
+                                    "your account</a> first." % reverse("accounts-resend-activation"))),
+            'invalid_login': _(
+                "Please enter a correct username/email and password. Note that both "
+                "fields may be case-sensitive."
+            ),
         })
+        self.fields['username'].label = 'Username or email'
 
 
 class UsernameReminderForm(forms.Form):

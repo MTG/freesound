@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 from django.db.models import Count
+from utils.mail import generate_tmp_email
 
 
 def populate_sameuser(apps, schema_editor):
@@ -23,7 +24,7 @@ def populate_sameuser(apps, schema_editor):
         for u in uss[1:]:
             SameUser.objects.create(main_user=u1, main_orig_email=u1.email, secondary_user=u, secondary_orig_email=u.email)
             email = u.email
-            email = "%s@freesound.org" % (email.replace("@", "%"), )
+            email = generate_tmp_email(email)
             u.email = email
             u.save()
 

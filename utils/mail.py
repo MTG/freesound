@@ -21,7 +21,16 @@
 from django.conf import settings
 from django.core.mail.message import EmailMessage
 from django.template.loader import render_to_string
-from django.core.mail import get_connection, EmailMultiAlternatives
+from django.core.mail import get_connection
+
+
+def generate_tmp_email(email):
+    """
+    To avoid duplicated emails, in migration accounts.0009_sameuser we automatically chage existing
+    duplicated user emails by the contents returned in this function. This is reused for further
+    checks in utils.mail.replace_email_to and accounts.views.multi_email_cleanup. 
+    """
+    return "%s@freesound.org" % (email.replace("@", "%"), )
 
 
 def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=None):
@@ -75,4 +84,3 @@ def send_mail_template(subject, template, context, email_from=None, email_to=[],
 def render_mail_template(template, context):
     context["settings"] = settings
     return render_to_string(template, context)
-

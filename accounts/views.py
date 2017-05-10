@@ -58,7 +58,7 @@ from utils.images import extract_square
 from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
 from utils.audioprocessing import get_sound_type
-from utils.mail import send_mail, send_mail_template
+from utils.mail import send_mail, send_mail_template, generate_tmp_email
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark
 from messages.models import Message
@@ -103,6 +103,7 @@ def login(request, template_name, authentication_form):
 
     return response
 
+
 @login_required
 def multi_email_cleanup(request):
     # We make sure that the email problem still affects the user
@@ -126,11 +127,11 @@ def multi_email_cleanup(request):
     # was changed. We check if the user has changed his email again, and if he did we
     # simply show a "your email problems have been fixed" message, otherwise we show
     # the full message asking the user to reset his email
-    if request.user.email != "%s@freesound.org" % (original_email.replace("@", "%")):
+    if request.user.email != generate_tmp_email(original_email):
         # This means that user already fixed his problems with duplicated emails
         # Now delete corresponding same_user objects
         SameUser.objects.filter(secondary_user=request.user).delete()
-        return HttpResponseRedirect(request.GET.get('next2', reverse('accounts-home')))
+        return HttpResponseRedirect(request.GET.get('next', reverse('accounts-home')))
     else:
         # Fill in other_users_with_same_email information to show in warning message
         for same_user in same_user_qs:

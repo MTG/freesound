@@ -29,6 +29,8 @@
 from django.conf.urls import url, include
 from django.contrib.auth.views import LoginView, LogoutView
 from apiv2 import views
+from accounts.views import login
+from accounts.forms import FsAuthenticationForm
 
 #
 # WATCH OUT! if changing url pattern names these should be changed in vews __doc__ too (to make sure examples work properly)
@@ -97,7 +99,8 @@ urlpatterns = [
 
     # Oauth2
     url(r'^oauth2/', include('apiv2.oauth2_urls', namespace='oauth2_provider')),
-    url(r'^login/$', LoginView.as_view(template_name='api/minimal_login.html'), name="api-login"),
+    url(r'^login/$', login, {'template_name': 'api/minimal_login.html',
+                             'authentication_form': FsAuthenticationForm}, name="api-login"),
     url(r'^logout/$', LogoutView.as_view(next_page='/apiv2/'), name="api-logout"),
 
     # Minimal registration page

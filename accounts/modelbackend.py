@@ -23,11 +23,32 @@ from django.contrib.auth.backends import ModelBackend
 
 
 class CustomModelBackend(ModelBackend):
-    def authenticate(self, username=None, password=None):
+
+    def authenticate(self, request, username=None, password=None, **kwargs):
         """ authenticate against case insensitive username """
-        try:
-            user = User.objects.get(username__iexact=username)
-            if user.check_password(password):
-                return user
-        except User.DoesNotExist:
-            return None
+
+        if '@' in username:
+            # In this case, user is most probably using email+password pair to login
+            # Try to get user object from password and check password
+            try:
+                user = User.objects.get(email__iexact=username)
+                if user.check_password(password):
+                    return user
+            except User.DoesNotExist:
+                # If user was not find by email, it could be that user who's logging in has
+                # '@' characters in username and therefore is trying normal usernam+password login
+                # Try login by username
+                try:
+                    user = User.objects.get(username__iexact=username)
+                    if user.check_password(password):
+                        return user
+                except User.DoesNotExist:
+                    pass
+        else:
+            # If not '@' is in username field, then we do normal username+password login check
+            try:
+                user = User.objects.get(username__iexact=username)
+                if user.check_password(password):
+                    return user
+            except User.DoesNotExist:
+                pass

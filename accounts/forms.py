@@ -277,6 +277,15 @@ class EmailResetForm(forms.Form):
         self.user = kwargs.pop('user', None)
         super(EmailResetForm, self).__init__(*args, **kwargs)
 
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        try:
+            User.objects.get(email__iexact=email)
+            raise forms.ValidationError(_("A user using that email address already exists."))
+        except User.DoesNotExist:
+            pass
+        return email
+
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):
             raise forms.ValidationError(_("Incorrect password."))

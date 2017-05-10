@@ -33,6 +33,27 @@ def generate_tmp_email(email):
     return "%s@freesound.org" % (email.replace("@", "%"), )
 
 
+def replace_email_to(func):
+    """
+    This decorator checks the email_to list and replaces any addresses that need replacement
+    according to the SameUser table (see https://github.com/MTG/freesound/pull/763). In our process
+    of removing dublicated email addresses from our users table we set up a temporary table to
+    store the original email addresses of users whose email was automatically changed to prevent 
+    duplicates. In this function we make sure that emails are sent to the original address and not
+    the one we edited to prevent duplicates. 
+    At some point in time, SameUser table should become empty (when users update their addresses) and
+    then we'll be able to remove this decorator.
+    """
+    def wrapper(subject, email_body, email_from=None, email_to=list(), reply_to=None):
+        from accounts.models import SameUser
+        emails_mapping = {generate_tmp_email(email): email for email
+                          in SameUser.objects.all().values_list('secondary_orig_email', flat=True)}
+        email_to = list(set([emails_mapping.get(email, email) for email in email_to]))
+        return func(subject, email_body, email_from, email_to, reply_to)
+    return wrapper
+
+
+@replace_email_to
 def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=None):
     """
     Sends email with a lot of defaults

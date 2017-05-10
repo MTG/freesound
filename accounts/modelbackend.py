@@ -36,19 +36,15 @@ class CustomModelBackend(ModelBackend):
                     return user
             except User.DoesNotExist:
                 # If user was not find by email, it could be that user who's logging in has
-                # '@' characters in username and therefore is trying normal usernam+password login
-                # Try login by username
-                try:
-                    user = User.objects.get(username__iexact=username)
-                    if user.check_password(password):
-                        return user
-                except User.DoesNotExist:
-                    pass
-        else:
-            # If not '@' is in username field, then we do normal username+password login check
-            try:
-                user = User.objects.get(username__iexact=username)
-                if user.check_password(password):
-                    return user
-            except User.DoesNotExist:
+                # '@' characters in username and therefore is trying normal username+password login
                 pass
+
+        # Do normal username+password login check
+        try:
+            user = User.objects.get(username__iexact=username)
+            if user.check_password(password):
+                return user
+        except User.DoesNotExist:
+            pass
+
+        return None

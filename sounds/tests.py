@@ -132,7 +132,7 @@ class CommentSoundsTestCase(TestCase):
 
 def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0, tags=None):
     if user is None:
-        user = User.objects.create_user("testuser", password="testpass")
+        user = User.objects.create_user("testuser", password="testpass", email='email@freesound.org')
     packs = list()
     for i in range(0, num_packs):
         pack = Pack.objects.create(user=user, name="Test pack %i" % (i + count_offset))

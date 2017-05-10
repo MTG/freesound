@@ -25,7 +25,7 @@ from django.contrib.auth.models import User, Permission
 from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType
+from accounts.models import Profile, EmailPreferenceType, SameUser
 from accounts.views import handle_uploaded_image
 from sounds.models import License, Sound, Pack, DeletedSound
 from tags.models import TaggedItem
@@ -40,6 +40,7 @@ import os
 import tempfile
 import shutil
 import datetime
+from utils.mail import generate_tmp_email, replace_email_to
 
 
 class SimpleUserTest(TestCase):
@@ -668,4 +669,80 @@ class UserDelete(TestCase):
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), False)
         self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
 
+
+class UserEmailsUniqueTestCase(TestCase):
+
+    def setUp(self):
+        self.user_a = User.objects.create_user("user_a", password="12345", email='a@b.com')
+        self.user_b = User.objects.create_user("user_b", password="12345", email='c@d.com')
+        self.user_c = User.objects.create_user("user_c", password="12345", email=generate_tmp_email('c@d.com'))
+        SameUser.objects.create(
+            main_user=self.user_b,
+            main_orig_email=self.user_b.email,
+            secondary_user=self.user_c,
+            secondary_orig_email=self.user_b.email,  # Must be same email (original)
+        )
+        # User a never had problems with email
+        # User b and c had the same email, but user_c's was automaitcally changed to avoid duplicates
+
+    def test_redirects_when_shared_emails(self):
+
+        # Try to log-in with user and go to messages page (any login_required page would work)
+        # User a is not in same users table, so redirect should be plain and simple to messages
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_a, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+        # Now try with user_b. User b had a shared email with user_c, but user_b's email was not changed
+        # Redirect should again be plain and simple
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+        # Now user_c. User c had her email changed, therefore will be redirected to the email cleanup page
+        # instead of messages
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+
+        # Now user_c changes his email and tries again, redirect should go to email cleanup page and from there
+        # directly to messages (2 redirect steps)
+        self.user_c.email = 'new@email.com'  # Must be different than generate_tmp_email('c@d.com')
+        self.user_c.save()
+        resp = self.client.post(reverse('login'), follow=True,
+                                data={'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
+        self.assertEquals(resp.redirect_chain[0][0],
+                          reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+        self.assertEquals(resp.redirect_chain[1][0], reverse('messages'))
+
+        # Also check that related SameUser objects have been removed
+        self.assertEquals(SameUser.objects.all().count(), 0)
+
+        # Now next time user_c tries to go to messages again, there is only one redirect (as for user_a and user_b)
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+    def test_replace_when_sending_email(self):
+
+        @replace_email_to
+        def fake_send_email(subject, email_body, email_from=None, email_to=list(), reply_to=None):
+            return email_to
+
+        # Check that emails sent to user_a are sent to his address
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_a.email])
+        self.assertEquals(used_email_to[0], self.user_a.email)
+
+        # For user b, email_to also remains the same
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_b.email])
+        self.assertEquals(used_email_to[0], self.user_b.email)
+
+        # For user c, email_to changes according to SameUser table
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
+        self.assertEquals(used_email_to[0], self.user_b.email)  # email_to becomes user_b.email
+
+        # If we remove SameUser entries, email of user_c is not replaced anymore
+        SameUser.objects.all().delete()
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
+        self.assertEquals(used_email_to[0], self.user_c.email)
 

@@ -240,48 +240,26 @@ body.small {
 /* full_size */
 
 body.full_size {
-    height: 100%;
-    background-color: #FBFAFC;
-    border: 1px solid #F5F5F5;
-    border-top: 3px solid #c07879;
 }
 
-.widget.medium.full_size .player_wrapper {
-    float: left;
-    width: 120px;
-    position: absolute;
-    top: 25%;
-    padding: 8px;
+.widget.large.full_size .sample_info {
+    width: 100%;
+    border-top: solid 2px #AB4646;
 }
 
-.widget.medium.full_size .sample_info {
-    width: 72%;
-    float: right;
-    position: absolute;
-    right: 0;
-    top: 25%;
-    height: 100%;
-    background-color: #fff;
-    border: 1px solid #F5F5F5;
+.widget.large.full_size .player.large {
+  width:100%;
+  height: 22vw;
+  background-color: black;
+    margin-left: 0;
+    margin-top: 4px;
 }
-
-.widget.medium.full_size .sample_info_right {
-    width: 170px;
-    float: right;
+.widget.large.full_size .player {
+    margin-bottom: 0;
+    width:100%;
+    height: 22vw;
+    background-color: black;
+    margin-left: 0;
+    margin-top: 4px;
 }
-
-.widget.medium.full_size .sample_info_left {
-    width: 160px;
-    float: right;
-    margin-top: 8px;
-    overflow: hidden;
-}
-
-.widget.medium.full_size .title h3 {
-    margin-top: -23px;
-    width: 0; 
-}
-
-.widget.medium.full_size .title img {
-    margin-top: -23px;
-}
+    

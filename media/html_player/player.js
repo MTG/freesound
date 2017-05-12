@@ -300,6 +300,8 @@ function makePlayer(selector) {
                 $(".background", playerElement).css("background", "url(" + spectrum + ")");
             else
                 $(".background", playerElement).css("background", "url(" + waveform + ")");
+            $(".background", playerElement).css("backgroundSize", 'contain');
+            $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
         });
 
         $(".measure", this).bind("toggle", function (event, on)

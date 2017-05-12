@@ -384,5 +384,13 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 MAX_EMAILS_PER_COMMAND_RUN = 1000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+]
 
 from logger import LOGGING

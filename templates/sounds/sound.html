@@ -31,8 +31,8 @@
     <meta name="twitter:description" content="{{sound.description}}" />
     <meta name="twitter:image" content="{{thumbnail_url}}" />
     <meta name="twitter:player" content="{% absurl 'embed-simple-sound-iframe' sound.id "full_size" %}" />
-    <meta name="twitter:player:width" content="{{ sizes.medium.0 }}" />
-    <meta name="twitter:player:height" content="{{ sizes.medium.1 }}" />
+    <meta name="twitter:player:width" content="{{ sizes.twitter_card.0 }}" />
+    <meta name="twitter:player:height" content="{{ sizes.twitter_card.1 }}" />
 {% endblock head %}
 
 {% block section_content %}

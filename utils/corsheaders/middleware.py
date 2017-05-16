@@ -31,7 +31,7 @@ except ImportError:
     from urllib.parse import urlparse
 
 from utils.corsheaders import defaults as settings
-
+from django.utils.deprecation import MiddlewareMixin
 
 ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'
 ACCESS_CONTROL_EXPOSE_HEADERS = 'Access-Control-Expose-Headers'
@@ -41,11 +41,9 @@ ACCESS_CONTROL_ALLOW_METHODS = 'Access-Control-Allow-Methods'
 ACCESS_CONTROL_MAX_AGE = 'Access-Control-Max-Age'
 
 
-class CorsMiddleware(object):
-    def __init__(self, get_response):
-        self.get_response = get_response
+class CorsMiddleware(MiddlewareMixin):
 
-    def __call__(self, request):
+    def process_request(self, request):
         '''
             If CORS preflight header, then create an empty body response (200 OK) and return it
 
@@ -57,10 +55,12 @@ class CorsMiddleware(object):
             'HTTP_ACCESS_CONTROL_REQUEST_METHOD' in request.META):
             response = http.HttpResponse()
             return response
-        response = self.get_response(request)
+        return None
 
-        #Add the respective CORS headers
-
+    def process_response(self, request, response):
+        '''
+            Add the respective CORS headers
+        '''
         origin = request.META.get('HTTP_ORIGIN')
         if self.is_enabled(request) and origin:
             # todo: check hostname from db instead

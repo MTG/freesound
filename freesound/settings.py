@@ -19,7 +19,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'freesound.middleware.OnlineUsersHandler',
-    'utils.corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 INSTALLED_APPS = [
@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'gunicorn',
     'oauth2_provider',
     'rest_framework',
-    'utils.corsheaders',
+    'corsheaders',
     'follow',
     'fixture_magic',
     'utils',  # So that we also run utils tests
@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     #'test_utils', # Don't use this in production!
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
 # Email settings

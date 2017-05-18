@@ -19,14 +19,18 @@
 #
 
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import override_settings, skipIf
 from django.contrib.auth.models import User, Permission
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
+from django.core import mail
 from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType
 from accounts.views import handle_uploaded_image
+from accounts.forms import FsPasswordResetForm
 from sounds.models import License, Sound, Pack, DeletedSound
 from tags.models import TaggedItem
 from utils.filesystem import File
@@ -668,4 +672,30 @@ class UserDelete(TestCase):
         self.assertEqual(Sound.objects.filter(user__id=user.id).exists(), False)
         self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
 
+
+class PasswordReset(TestCase):
+    def test_reset_form_get_users(self):
+        """Check that a user with an unknown password hash can reset their password"""
+
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+
+        # Using Django's password reset form, no user will be returned
+        form = PasswordResetForm()
+        dj_users = form.get_users("testuser@freesound.org")
+        self.assertEqual(len(list(dj_users)), 0)
+
+        # But using our form, a user will be returned
+        form = FsPasswordResetForm()
+        fs_users = form.get_users("testuser@freesound.org")
+        self.assertEqual(list(fs_users)[0].get_username(), user.get_username())
+
+    @override_settings(SITE_ID=2)
+    def test_reset_view(self):
+        """Check that the reset password view calls our form"""
+        Site.objects.create(id=2, domain="freesound.org", name="Freesound")
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        self.client.post(reverse("password_reset"), {"email": "testuser@freesound.org"})
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
 

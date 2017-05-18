@@ -371,6 +371,9 @@ class Sound(SocialModel):
             )
         )
 
+    def get_thumbnail_abs_url(self):
+        return 'https://%s%s' % (Site.objects.get_current().domain, self.locations()['display']['wave']['M']['url'])
+
     def get_channels_display(self):
         if self.channels == 1:
             return u"Mono"

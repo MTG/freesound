@@ -793,8 +793,6 @@ def oembed(request):
         'sound': sound,
         'sizes': sizes,
         'player_size': player_size,
-        'thumbnail_url': 'https://%s%s' % (Site.objects.get_current().domain,
-                                           sound.locations()['display']['wave']['M']['url'])
     }
     return render(request, 'sounds/sound_oembed.xml', tvars, content_type='text/xml')
 

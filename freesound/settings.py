@@ -201,6 +201,8 @@ DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the popu
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
 
+WIKI_MODERATORS_PAGE_CODENAME = 'moderators'
+
 DELETED_USER_ID = 1
 
 DISPLAY_DEBUG_TOOLBAR = False # change this in the local_settings

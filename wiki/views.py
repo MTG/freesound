@@ -22,13 +22,39 @@ from django import forms
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
-from django.template import RequestContext
+from django.conf import settings
 from wiki.models import Content, Page
 
+
+def __can_edit_wiki_page(user, page_name):
+    if not user.is_authenticated:
+        return False
+
+    if page_name == settings.WIKI_MODERATORS_PAGE_CODENAME:
+        if not user.has_perm('tickets.can_moderate') and not user.has_perm('wiki.add_page'):
+            return False
+    else:
+        if not user.has_perm('wiki.add_page'):
+            return False
+    return True
+
+
+def __can_view_wiki_page(user, page_name):
+    if page_name == settings.WIKI_MODERATORS_PAGE_CODENAME \
+            and not (user.has_perm('tickets.can_moderate') or user.has_perm('wiki.add_page')):
+        # All pages are public except for the moderators page
+        return False
+    return True
+
+
 def page(request, name):
+
+    if not __can_view_wiki_page(request.user, name):
+        raise Http404
+
     try:
         version = int(request.GET.get("version", -1))
-    except:
+    except ValueError:
         version = -1
 
     try:
@@ -36,19 +62,22 @@ def page(request, name):
             content = Content.objects.filter(page__name__iexact=name).select_related().latest()
         else:
             content = Content.objects.select_related().get(page__name__iexact=name, id=version)
-    except Content.DoesNotExist: #@UndefinedVariable
+    except Content.DoesNotExist:
         content = Content.objects.filter(page__name__iexact="blank").select_related().latest()
 
     return render(request, 'wiki/page.html', locals())
 
+
 def editpage(request, name):
-    if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
+
+    if not __can_edit_wiki_page(request.user, name):
         raise Http404
 
     # the class for editing...
     class ContentForm(forms.ModelForm):
         title = forms.CharField(label='Page name',widget=forms.TextInput(attrs={'size': '100'}))
         body = forms.CharField(widget=forms.Textarea(attrs={'rows':'40', 'cols':'100'}))
+
         class Meta:
             model = Content
             exclude = ('author', 'page', "created")
@@ -67,13 +96,15 @@ def editpage(request, name):
             # if the page already exists, load up the previous content
             content = Content.objects.filter(page__name__iexact=name).select_related().latest()
             form = ContentForm(initial={"title": content.title, "body":content.body})
-        except Content.DoesNotExist: #@UndefinedVariable
+        except Content.DoesNotExist:
             form = ContentForm()
 
     return render(request, 'wiki/edit.html', locals())
 
+
 def history(request, name):
-    if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
+
+    if not __can_edit_wiki_page(request.user, name):
         raise Http404
 
     try:
@@ -83,7 +114,7 @@ def history(request, name):
 
     try:
         versions = Content.objects.filter(page=page).select_related()
-    except Content.DoesNotExist: #@UndefinedVariable
+    except Content.DoesNotExist:
         raise Http404
 
     if request.GET and "version1" in request.GET and "version2" in request.GET:
@@ -91,8 +122,7 @@ def history(request, name):
         version1 = Content.objects.select_related().get(id=request.GET.get("version1"))
         version2 = Content.objects.select_related().get(id=request.GET.get("version2"))
 
-        diff = difflib.HtmlDiff(4, 55).make_table(version1.body.split("\n"), version2.body.split("\n"), "version %d" % version1.id, "version %d" % version2.id, True, 5)
-
+        diff = difflib.HtmlDiff(4, 55).make_table(version1.body.split("\n"), version2.body.split("\n"),
+                                                  "version %d" % version1.id, "version %d" % version2.id, True, 5)
 
     return render(request, 'wiki/history.html', locals())
-

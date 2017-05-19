@@ -22,10 +22,36 @@ from django import forms
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
+from django.conf import settings
 from wiki.models import Content, Page
 
 
+def __can_edit_wiki_page(user, page_name):
+    if not user.is_authenticated:
+        return False
+
+    if page_name == settings.WIKI_MODERATORS_PAGE_CODENAME:
+        if not user.has_perm('tickets.can_moderate') and not user.has_perm('wiki.add_page'):
+            return False
+    else:
+        if not user.has_perm('wiki.add_page'):
+            return False
+    return True
+
+
+def __can_view_wiki_page(user, page_name):
+    if page_name == settings.WIKI_MODERATORS_PAGE_CODENAME \
+            and not (user.has_perm('tickets.can_moderate') or user.has_perm('wiki.add_page')):
+        # All pages are public except for the moderators page
+        return False
+    return True
+
+
 def page(request, name):
+
+    if not __can_view_wiki_page(request.user, name):
+        raise Http404
+
     try:
         version = int(request.GET.get("version", -1))
     except ValueError:
@@ -43,7 +69,8 @@ def page(request, name):
 
 
 def editpage(request, name):
-    if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
+
+    if not __can_edit_wiki_page(request.user, name):
         raise Http404
 
     # the class for editing...
@@ -76,7 +103,8 @@ def editpage(request, name):
 
 
 def history(request, name):
-    if not (request.user.is_authenticated and request.user.has_perm('wiki.add_page')):
+
+    if not __can_edit_wiki_page(request.user, name):
         raise Http404
 
     try:

@@ -12,10 +12,13 @@
     descriptions and tags, the sounds that are uploaded to Freesound have to be
     approved by the moderator team before they show up on the website. If you 
     are part of the moderator team or the staff you can help to moderate the 
-    sounds.
+    sounds.</p>
 
-    <p>This short guide will teach you how the moderation pages work and
-    what to take into account when you are moderating.
+    <p>This guide will teach you how the moderation pages work. Please
+    read the <a href="{% url 'wiki_moderators' %}">moderation tips wiki page</a>
+    to get lots of useful advice and tips for moderating sounds. It is a wiki
+    page, so feel free to update it and make it even more useful for other
+    moderators :)</p>
 
     <h3>Moderation pages</h3>
 
@@ -181,79 +184,7 @@
     the user that moderators are waiting for some response, and in case there is no response
     at all the sound can be deleted. This is to avoid having lots of deferred sounds lost forever
     in the moderation stage.</p>
-    
-    
-    <h3>Moderation tips</h3>
 
-    <p>Here is some advice to help you make decisions when moderating files.
-    Please feel free to add your own advice here.</p>
-
-    <p><b>Spotting illegal content</b></p>
-
-    <p>Identifying content which may infringe on someone's copyrights is
-    probably the hardest part of the job. If you can clearly recognize the
-    sample as being taken from a popular song or movie, you should of course
-    delete the sound, click 'Illegal' and be done with it. However, it is not
-    often so clear-cut, although there are certain signs you should look for.
-
-    <p>If you suspect a sample is illegal, check the format, bitrate, and sample
-    rate of the file. Low bitrates (usually 8 bit) or with varying bitrates
-    (VBR) indicate that the file was downloaded from the web. Users uploading
-    samples with widely different bitrates between individual files are also
-    suspicious. You may want to note common web formats like mp3 and wav, though
-    keep in mind that many legitimate uploaders make use of these formats.</p>
-
-    <p>It may also be helpful to do a web search for terms the uploader entered
-    in the file description or tags.</p>
-
-    <p>If you have doubts about the legality of a sound, defer the sound and
-    contact the user. Most users will tell you if they made sounds themselves or
-    if they "found it on a website".</p>
-
-    <p>Sounds that come from websites that say that the sounds are "free" most
-    of the time are NOT compatible with the creative commons licenses.</p>
-
-    <p><b>Good description standards</b></p>
-
-    <p>Deciding what constitutes a good description is largely a matter of your
-    own judgement, but here are a few guidelines.
-
-    <p>For synthesized sounds, a brief description may be sufficient, i.e.
-    "jazzy glissando, synthesized." If the uploader states the program or
-    language they used to create the sound, even better.</p>
-
-    <p>For field recordings, a more detailed description is expected. Where it
-    was recorded, what kind of mic/recorder setup was used, etc. make for a good
-    description. The bare minimum would be something like "nightingales recorded
-    in my backyard in Slough, UK." Something even less descriptive, such as
-    "birds in the yard" may constitute a description poor enough to be marked as
-    "Approved", but with an added message of "insufficient tags/description".
-
-    <p><b>No waveform in player</b></p>
-
-    <p>If the picture of a sound doesn't appear this means the sound has not been
-    processed correctly. Usually this means the file is not an audio file, that
-    it is an unsupported format, or that it is broken. You should delete the
-    sound, but inform the user that the file could not be read by Freesound and
-    ask him to upload it in a supported format.</p>
-
-    <p><b>Some final words from Bram</b></p>
-
-    <p>If it's a good sound, always scale your opinion upwards. I very
-    frequently just choose "ok, bad description" ;)</p>
-
-    <h3>Some final notes</h3>
-
-    <p>In the future the moderation task will include not just the moderation of
-    sounds, but also giving support to the community.</p>
-
-	{% comment %}
-    <p>Only sounds that have passed through the processing system will show up
-    in the moderation system. It's possible that some sounds fail to process
-    correctly. These sounds will still show up in the moderation system, but
-    the sound player will be left white and a small text will indicate the
-    processing has failed.</p>
-    {% endcomment %}
 </div>
 
 {% endblock section_content %}

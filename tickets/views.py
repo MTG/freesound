@@ -288,15 +288,6 @@ def moderation_home(request):
 
 
 @permission_required('tickets.can_moderate')
-def moderation_guide(request):
-    sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
-    tvars = {"moderator_tickets_count": sounds_in_moderators_queue_count,
-             "selected": "guide"}
-
-    return render(request, 'tickets/guide.html', tvars)
-
-
-@permission_required('tickets.can_moderate')
 def moderation_tardy_users_sounds(request):
     sounds_in_moderators_queue_count = _get_sounds_in_moderators_queue_count(request.user)
     tardy_user_tickets = _get_tardy_user_tickets()

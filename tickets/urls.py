@@ -26,10 +26,6 @@ from views import *
 
 urlpatterns = [
 
-    url(r'^guide/$',
-        moderation_guide,
-        name='tickets-moderation-guide'),
-
     url(r'^moderation/$',
         moderation_home,
         name='tickets-moderation-home'),

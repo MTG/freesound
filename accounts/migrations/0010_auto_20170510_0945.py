@@ -22,5 +22,5 @@ class Migration(migrations.Migration):
     # Add unique constraint to 'email' field in auth_user table
     operations = [
         migrations.RunPython(replace_empty_email_addresses, migrations.RunPython.noop),
-        migrations.RunSQL('ALTER TABLE "auth_user" ADD CONSTRAINT "auth_user_email_uniq" UNIQUE ("email");'),
+        migrations.RunSQL('ALTER TABLE "auth_user" ADD CONSTRAINT "auth_user_email_uniq" UNIQUE (UPPER("email"));'),
     ]

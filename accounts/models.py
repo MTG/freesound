@@ -92,14 +92,11 @@ class Profile(SocialModel):
     def __unicode__(self):
         return self.user.username
 
-    def has_many_emails(self, return_qs=False):
+    def has_many_emails(self):
         """Check if the user account associated with this profile
-           has other accounts with the same email address"""
-        qs = SameUser.objects.filter(Q(main_user=self.user)|Q(secondary_user=self.user))
-        if return_qs:
-            return qs
-        else:
-            return qs.exists()
+           has other accounts with the same email address and return the
+           queryset of SameUser objects with same email"""
+        return SameUser.objects.filter(Q(main_user=self.user)|Q(secondary_user=self.user))
 
     def get_absolute_url(self):
         return reverse('account', args=[smart_unicode(self.user.username)])

@@ -86,7 +86,7 @@ def login(request, template_name, authentication_form):
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
         # Now we check is the logged in user has shared email problems
-        same_user_qs = request.user.profile.has_many_emails(return_qs=True)
+        same_user_qs = request.user.profile.has_many_emails()
         if same_user_qs.exists():
             # If the logged has an email shared with other accounts we figure out if we changed his email or we changed
             # the emails from the other accounts which shared it
@@ -110,7 +110,7 @@ def multi_email_cleanup(request):
     # If the problem is not there anymore, then we can remove corresponding same_user objects
     # and show a message telling user that email problems for the account were fixed
 
-    same_user_qs = request.user.profile.has_many_emails(return_qs=True)
+    same_user_qs = request.user.profile.has_many_emails()
     if not same_user_qs.exists():
         # User should have never come here
         return HttpResponseRedirect(reverse('accounts-home'))

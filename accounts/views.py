@@ -128,7 +128,7 @@ def multi_email_cleanup(request):
 
     # At this point, the current logged in user must be one of the users whose email
     # was changed. We check if the user has changed his email again, and if he did we
-    # simply show a "your email problems have been fixed" message, otherwise we show
+    # delete the corresponding SameUser objects, otherwise we show
     # the full message asking the user to reset his email
     if request.user.email != generate_tmp_email(original_email):
         # This means that user already fixed his problems with duplicated emails

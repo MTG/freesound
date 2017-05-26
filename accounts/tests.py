@@ -689,6 +689,8 @@ class UserEmailsUniqueTestCase(TestCase):
 
         # Try to log-in with user and go to messages page (any login_required page would work)
         # User a is not in same users table, so redirect should be plain and simple to messages
+        # NOTE: in the following tests we don't use `self.client.login` because what we want to test
+        # is in fact in the login view logic.
         resp = self.client.post(reverse('login'),
                                 {'username': self.user_a, 'password': '12345', 'next': reverse('messages')})
         self.assertRedirects(resp, reverse('messages'))

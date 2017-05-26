@@ -33,6 +33,10 @@ from accounts.models import Profile, EmailPreferenceType
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 from utils.encryption import decrypt, encrypt
+import logging
+
+logger = logging.getLogger('web')
+
 
 def validate_file_extension(audiofiles):
     try:
@@ -156,6 +160,7 @@ class RegistrationForm(forms.Form):
             raise forms.ValidationError(_("The two email fields didn't match."))
         try:
             User.objects.get_by_email(email2)
+            logger.info('User trying to register with an already existing email')
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass
@@ -281,6 +286,7 @@ class EmailResetForm(forms.Form):
         email = self.cleaned_data["email"]
         try:
             User.objects.get_by_email(email)
+
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass

@@ -40,7 +40,7 @@ import os
 import tempfile
 import shutil
 import datetime
-from utils.mail import generate_tmp_email, replace_email_to
+from utils.mail import transform_unique_email, replace_email_to
 
 
 class SimpleUserTest(TestCase):
@@ -675,7 +675,7 @@ class UserEmailsUniqueTestCase(TestCase):
     def setUp(self):
         self.user_a = User.objects.create_user("user_a", password="12345", email='a@b.com')
         self.user_b = User.objects.create_user("user_b", password="12345", email='c@d.com')
-        self.user_c = User.objects.create_user("user_c", password="12345", email=generate_tmp_email('c@d.com'))
+        self.user_c = User.objects.create_user("user_c", password="12345", email=transform_unique_email('c@d.com'))
         SameUser.objects.create(
             main_user=self.user_b,
             main_orig_email=self.user_b.email,
@@ -709,7 +709,7 @@ class UserEmailsUniqueTestCase(TestCase):
 
         # Now user_c changes his email and tries again, redirect should go to email cleanup page and from there
         # directly to messages (2 redirect steps)
-        self.user_c.email = 'new@email.com'  # Must be different than generate_tmp_email('c@d.com')
+        self.user_c.email = 'new@email.com'  # Must be different than transform_unique_email('c@d.com')
         self.user_c.save()
         resp = self.client.post(reverse('login'), follow=True,
                                 data={'username': self.user_c, 'password': '12345', 'next': reverse('messages')})

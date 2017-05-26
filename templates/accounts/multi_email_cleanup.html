@@ -11,18 +11,19 @@
         different user accounts to share a single email address. Only a few users are affected by this change, and you
         happen to be one of them. But don't worry, the fix is easy ;)</p>
 
-    <p>All what you have to do is to either set a new email using the <a href="{% url 'accounts-email-reset' %}">reset
-        email form</a>, or submit a <a href="{% url 'contact' %}">support request</a> telling us your username
-        and the new email you want to use for your account.</p>
+    <p>We changed the email address of your user to be <b>{{ request.user.email }}</b>.<br>
+       Your original email address was <b>{{ original_email }}</b>.
+       Here is the list of the accounts which were using this address:</p>
 
-    <p>FYI, your original email address was <b>{{ original_email }}</b>, and was used by the following accounts:</p>
     <ul>
     {% for user in other_users %}
         <li><a href="{% url 'account' user.username %}">{{ user.username }}</a></li>
     {% endfor %}
     </ul>
-    <p>Currently, <b>{{ original_email }}</b> is only used by <a href="{% url 'account' user_kept_original_email.username %}">
-    {{ user_kept_original_email.username }}</a>.
-    </p>
+
+    <p>To fix this issue
+        All what you have to do is to either set a new email using the <a href="{% url 'accounts-email-reset' %}">reset
+        email form</a>, or submit a <a href="{% url 'contact' %}">support request</a> telling us your username
+        and the new email you want to use for your account.</p>
 
 {% endblock %}

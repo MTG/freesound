@@ -58,7 +58,7 @@ from utils.images import extract_square
 from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
 from utils.audioprocessing import get_sound_type
-from utils.mail import send_mail, send_mail_template, generate_tmp_email
+from utils.mail import send_mail, send_mail_template, transform_unique_email
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark
 from messages.models import Message
@@ -77,30 +77,24 @@ logger = logging.getLogger("upload")
 def crash_me(request):
     raise Exception
 
+
 def login(request, template_name, authentication_form):
     # Freesound-specific login view to check if a user has multiple accounts
-    # with the same email address. We can switch back to the regular django
+    # with the same email address. We can switch back to the regular django view
     # once all accounts are adapted
     from django.contrib.auth import views as auth_views
     response = auth_views.login(request, template_name=template_name, authentication_form=authentication_form)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
-        # Now we check is the logged in user has shared email problems
+        # Now we check if the logged in user has shared email problems
         same_user_qs = request.user.profile.has_many_emails()
         if same_user_qs.exists():
-            # If the logged has an email shared with other accounts we figure out if we changed his email or we changed
-            # the emails from the other accounts which shared it
-            original_email = same_user_qs.first().main_orig_email
-            if request.user.email == original_email:
-                # If this account's email was not changed, simply continue with the login redirect (user won't notice)
-                return response
-            else:
-                # If we changed this account's email, we advise the user to chose a new email address
-                redirect_url = reverse("accounts-multi-email-cleanup")
-                next_param = request.POST.get('next', None)
-                if next_param:
-                    redirect_url += '?next=%s' % next_param
-                return HttpResponseRedirect(redirect_url)
+            # If the logged in user has an email shared with other accounts, we redirect to the email update mage
+            redirect_url = reverse("accounts-multi-email-cleanup")
+            next_param = request.POST.get('next', None)
+            if next_param:
+                redirect_url += '?next=%s' % next_param
+            return HttpResponseRedirect(redirect_url)
         else:
             return response
 
@@ -130,7 +124,7 @@ def multi_email_cleanup(request):
     # was changed. We check if the user has changed his email again, and if he did we
     # delete the corresponding SameUser objects, otherwise we show
     # the full message asking the user to reset his email
-    if request.user.email != generate_tmp_email(original_email):
+    if request.user.email != transform_unique_email(original_email):
         # This means that user already fixed his problems with duplicated emails
         # Now delete corresponding same_user objects
         SameUser.objects.filter(secondary_user=request.user).delete()

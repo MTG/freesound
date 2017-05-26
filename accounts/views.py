@@ -96,8 +96,11 @@ def login(request, template_name, authentication_form):
                 return response
             else:
                 # If we changed this account's email, we advise the user to chose a new email address
-                return HttpResponseRedirect(reverse("accounts-multi-email-cleanup")
-                                            + '?next=%s' % request.POST.get('next'))
+                redirect_url = reverse("accounts-multi-email-cleanup")
+                next_param = request.POST.get('next', None)
+                if next_param:
+                    redirect_url += '?next=%s' % next_param
+                return HttpResponseRedirect(redirect_url)
         else:
             return response
 

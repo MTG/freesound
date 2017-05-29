@@ -35,6 +35,7 @@ from geotags.models import GeoTag
 from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
 from utils.sql import DelayedQueryExecuter
 from utils.locations import locations_decorator
+from utils.mail import transform_unique_email
 from forum.models import Post, Thread
 from comments.models import Comment
 from sounds.models import DeletedSound, Sound, Pack
@@ -92,11 +93,14 @@ class Profile(SocialModel):
     def __unicode__(self):
         return self.user.username
 
-    def has_many_emails(self):
+    def get_sameuser_object(self):
+        """Returns the SameUser object where the user is involved"""
+        return SameUser.objects.get(Q(main_user=self.user) | Q(secondary_user=self.user))
+
+    def has_shared_email(self):
         """Check if the user account associated with this profile
-           has other accounts with the same email address and return the
-           queryset of SameUser objects with same email"""
-        return SameUser.objects.filter(Q(main_user=self.user)|Q(secondary_user=self.user))
+           has other accounts with the same email address"""
+        return self.get_sameuser_object().exists()
 
     def get_absolute_url(self):
         return reverse('account', args=[smart_unicode(self.user.username)])
@@ -353,6 +357,25 @@ class SameUser(models.Model):
     main_orig_email = models.CharField(max_length=200)
     secondary_user = models.ForeignKey(User, related_name="+")
     secondary_orig_email = models.CharField(max_length=200)
+
+    @property
+    def orig_email(self):
+        assert self.main_orig_email == self.secondary_orig_email
+        return self.main_orig_email
+
+    @property
+    def main_trans_email(self):
+        return self.main_orig_email  # email of main user remained unchanged
+
+    @property
+    def secondary_trans_email(self):
+        return transform_unique_email(self.orig_email)
+
+    def main_user_changed_email(self):
+        return self.main_user.email != self.main_trans_email
+
+    def secondary_user_changed_email(self):
+        return self.secondary_user.email != self.secondary_trans_email
 
 
 def create_user_profile(sender, instance, created, **kwargs):

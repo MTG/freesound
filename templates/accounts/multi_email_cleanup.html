@@ -11,19 +11,21 @@
         different user accounts to share a single email address. Only a few users are affected by this change, and you
         happen to be one of them. But don't worry, the fix is easy ;)</p>
 
-    <p>Your email address is {{ same_user.orig_email }}, and is used in the following accounts:<p>
+    <p>Your email address is <b>{{ same_user.orig_email }}</b>, and is used in the following accounts:<p>
     <ul>
-        <li><a href="{% url 'account' same_user.main_user.username %}">{{ same_user.main_user }}</a>{% if request.user == same_user.main_user %} (this is you){% endif %}</li>
-        <li><a href="{% url 'account' same_user.secondary_user.username %}">{{ same_user.secondary_user }}{% if request.user == same_user.secondary_user %} (you){% endif %}</a></li>
+        <li><a href="{% url 'account' same_user.main_user.username %}">{{ same_user.main_user }}</a>{% if request.user == same_user.main_user %} (you're currently logged in as this user){% endif %}</li>
+        <li><a href="{% url 'account' same_user.secondary_user.username %}">{{ same_user.secondary_user }}</a>{% if request.user == same_user.secondary_user %}{% endif %} (you're currently logged in as this user)</li>
+    </ul>
+
+    <p>To fix this issue, you should either:</p>
+    <ul>
+        <li>Change the email address of <b>{{ request.user.username }}</b>. You can use the <a href="{% url 'accounts-email-reset' %}">reset email form</a>.</li>
+        <li>Change the email address of <b>{% if request.user == same_user.main_user %}{{ same_user.secondary_user.username }}{% else %}{{ same_user.main_user.username }}{% endif %}</b>. To do that, log in as that user and then use the email reset reset form.</li>
     </ul>
 
     <p>
-        To fix this issue all what you have to do is to change the email of one of the two accounts.
-        Either change the email of your current account using the <a href="{% url 'accounts-email-reset' %}">reset
-        email form</a>, or log in as <b>{% if request.user == same_user.main_user %}{{ same_user.secondary_user.username }}
-        {% else %}{{ same_user.main_user.username }}{% endif %}</b> and change your email there.
-        Alternatively you can submit a <a href="{% url 'contact' %}">support request</a> telling us which emails you want
-        to set for your accounts.
+        Alternatively, you can also send a <a href="{% url 'contact' %}">support request</a> telling us which email addresses you want
+        to set for each account. If you take no action, this message will be shown again the next time you log in.
     </p>
 
 {% endblock %}

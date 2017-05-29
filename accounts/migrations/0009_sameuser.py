@@ -6,27 +6,34 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 from django.db.models import Count
-from utils.mail import generate_tmp_email
+from utils.mail import transform_unique_email
 
 
 def populate_sameuser(apps, schema_editor):
     User = apps.get_model("auth", "User")
     SameUser = apps.get_model("accounts", "SameUser")
 
-    # All user accounts who have duplicate emails
-    dup_users = User.objects.values("email").annotate(num_email=Count('email')).filter(num_email__gt=1).exclude(email="")
+    # Get all email addresses which are used in more than one account
+    email_addresses = User.objects.values_list("email", flat=True)\
+        .annotate(num_email=Count('email'))\
+        .filter(num_email__gt=1).exclude(email="")
 
-    for us in dup_users:
-        uss = User.objects.filter(email=us["email"]).order_by('-last_login').all()
-        # The account for this email which has logged in most recently
+    for email in email_addresses:
+        # Get all users with that email address
+        uss = User.objects.filter(email=email).order_by('-last_login').all()
+
+        # Check that there are 2 users (there should be no more than 2 users with the same address)
+        assert uss.count() == 2
+
+        # Assign users to variables and modify email of second user (to prevent the duplicates)
         u1 = uss[0]
-        # All others (could be more than 2)
-        for u in uss[1:]:
-            SameUser.objects.create(main_user=u1, main_orig_email=u1.email, secondary_user=u, secondary_orig_email=u.email)
-            email = u.email
-            email = generate_tmp_email(email)
-            u.email = email
-            u.save()
+        u2 = uss[1]
+        u2.email = transform_unique_email(email)
+        u2.save()
+
+        # Create SameUser object
+        SameUser.objects.create(main_user=u1, main_orig_email=email,
+                                secondary_user=u2, secondary_orig_email=email)
 
 
 class Migration(migrations.Migration):

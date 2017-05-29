@@ -23,6 +23,7 @@ import time
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth import get_user_model
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.urls import reverse
@@ -33,6 +34,10 @@ from accounts.models import Profile, EmailPreferenceType
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 from utils.encryption import decrypt, encrypt
+import logging
+
+logger = logging.getLogger('web')
+
 
 def validate_file_extension(audiofiles):
     try:
@@ -155,7 +160,8 @@ class RegistrationForm(forms.Form):
         if email1 != email2:
             raise forms.ValidationError(_("The two email fields didn't match."))
         try:
-            User.objects.get(email__iexact=email2)
+            User.objects.get_by_email(email2)
+            logger.info('User trying to register with an already existing email')
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass
@@ -229,7 +235,7 @@ class UsernameReminderForm(forms.Form):
     def clean_user(self):
         email = self.cleaned_data["user"]
         try:
-            return User.objects.get(email__iexact=email)
+            return User.objects.get_by_email(email)
         except User.DoesNotExist:
             raise forms.ValidationError(_("No user with such an email exists."))
 
@@ -242,7 +248,7 @@ class ProfileForm(forms.ModelForm):
         required=False
     )
     is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",
-            label="", required=False) 
+            label="", required=False)
     not_shown_in_online_users_list = forms.BooleanField(
         help_text="Hide from \"users currently online\" list in the People page",
         label = "",
@@ -285,7 +291,8 @@ class EmailResetForm(forms.Form):
     def clean_email(self):
         email = self.cleaned_data["email"]
         try:
-            User.objects.get(email__iexact=email)
+            User.objects.get_by_email(email)
+
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass
@@ -335,3 +342,18 @@ class EmailSettingsForm(forms.Form):
     )
 
 
+class FsPasswordResetForm(PasswordResetForm):
+    def get_users(self, email):
+        """Given an email, return matching user(s) who should receive a reset.
+
+            This subclass will let all active users reset their password.
+            Django's PasswordReset form will only let a user reset their
+            password if the password is "valid" (i.e., it's using a
+            password hash that django understands)
+        """
+        UserModel = get_user_model()
+        active_users = UserModel._default_manager.filter(**{
+            '%s__iexact' % UserModel.get_email_field_name(): email,
+            'is_active': True,
+        })
+        return (u for u in active_users)

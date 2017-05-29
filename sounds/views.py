@@ -766,7 +766,7 @@ def display_sound_wrapper(request, username, sound_id):
 
 
 def embed_iframe(request, sound_id, player_size):
-    if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info']:
+    if player_size not in ['mini', 'small', 'medium', 'large', 'large_no_info', 'medium_no_info', 'full_size']:
         raise Http404
     size = player_size
     sound = get_object_or_404(Sound, id=sound_id, moderation_state='OK', processing_state='OK')
@@ -793,8 +793,6 @@ def oembed(request):
         'sound': sound,
         'sizes': sizes,
         'player_size': player_size,
-        'thumbnail_url': 'https://%s%s' % (Site.objects.get_current().domain,
-                                           sound.locations()['display']['wave']['M']['url'])
     }
     return render(request, 'sounds/sound_oembed.xml', tvars, content_type='text/xml')
 

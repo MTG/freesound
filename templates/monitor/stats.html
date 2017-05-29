@@ -39,7 +39,9 @@
 
 {% block content %}
 
-    <h2>Global numbers</h2>
+    <h2 id="global-stats">Global numbers
+      <a class="headerlink" href="#global-stats" title="Permalink to this headline">¶</a>
+    </h2>
     <h3>total number of registered elements</h3>
     <div>
     <table>
@@ -78,8 +80,10 @@
 
     </div>
  
-    <h2>Users</h2>
-    <h3>Registered users on last two weeks</h3>
+    <h2 id="users-stats">Users
+      <a class="headerlink" href="#users-stats" title="Permalink to this headline">¶</a>
+    </h2>
+    <h3>Registered users in last two weeks</h3>
     <div class='users'>
     </div>
     
@@ -87,30 +91,38 @@
     <div class='active-users'>
     </div>
 
-    <h2>Sounds</h2>
-    <h3>Sounds created on last two weeks</h3>
+    <h2 id="sounds-stats">Sounds
+      <a class="headerlink" href="#sounds-stats" title="Permalink to this headline">¶</a>
+    </h2>
+    <h3>Sounds created in last two weeks</h3>
     <div class='uploads'>
     </div>
     
-    <h2>Downloads</h2>
-    <h3>Downloads on last two weeks</h3>
+    <h2 id="downloads-stats">Downloads
+      <a class="headerlink" href="#downloads-stats" title="Permalink to this headline">¶</a>
+    </h2>
+    <h3>Downloads in last two weeks</h3>
     <div class='downloads'>
     </div>
 
-    <h2>Donations</h2>
-    <h3>Donations on last year</h3>
+    <h2 id="year-donations">Donations
+      <a class="headerlink" href="#year-donations" title="Permalink to this headline">¶</a>
+    </h2>
+    <h3>Donations in the last 12 months</h3>
     <div class='donations'>
     </div>
 
     <div style="display:inline-block">
-    <h2>Tags</h2>
-    <h3>Most used tags on last two weeks</h3>
+    <h2 id="tags-stats">Tags
+      <a class="headerlink" href="#tags-stats" title="Permalink to this headline">¶</a>
+    </h2>
+    <h3>Most used tags in last two weeks</h3>
     <canvas id='tags-cloud-week' width=450 height=450>
     </canvas>
     </div>
     
     <div style="display:inline-block">
-    <h3>Tag cloud with most downlaoded tags on last two weeks</h3>
+    <h3>Tag cloud with most downlaoded tags in last two weeks</h3>
     <canvas id='down-tags-cloud' width=450 height=450>
     </canvas>
     </div>
@@ -120,8 +132,10 @@
     </canvas>
     
 
-    <h2>User Queries</h2>
-    <h3>Most common queries on last two weeks</h3>
+    <h2 id="user-queries-stats">User Queries
+      <a class="headerlink" href="#user-queries-stats" title="Permalink to this headline">¶</a>
+    </h2>
+    <h3>Most common queries in last two weeks</h3>
     <canvas id='queries-wordcloud' width=600 height=600>
     </canvas>
 

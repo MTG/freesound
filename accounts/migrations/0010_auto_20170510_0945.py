@@ -9,7 +9,7 @@ def replace_empty_email_addresses(apps, schema_editor):
     User = apps.get_model("auth", "User")
     users = User.objects.filter(email="")
     for user in users:
-        user.email = '%s@freesound.org' % user.username
+        user.email = 'noemail+%s@freesound.org' % user.username
         user.save()
 
 

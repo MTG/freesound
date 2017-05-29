@@ -24,13 +24,13 @@ from django.template.loader import render_to_string
 from django.core.mail import get_connection
 
 
-def generate_tmp_email(email):
+def transform_unique_email(email):
     """
     To avoid duplicated emails, in migration accounts.0009_sameuser we automatically chage existing
     duplicated user emails by the contents returned in this function. This is reused for further
     checks in utils.mail.replace_email_to and accounts.views.multi_email_cleanup. 
     """
-    return "%s@freesound.org" % (email.replace("@", "%"), )
+    return "dupemail+%s@freesound.org" % (email.replace("@", "%"), )
 
 
 def replace_email_to(func):
@@ -46,7 +46,7 @@ def replace_email_to(func):
     """
     def wrapper(subject, email_body, email_from=None, email_to=list(), reply_to=None):
         from accounts.models import SameUser
-        emails_mapping = {generate_tmp_email(email): email for email
+        emails_mapping = {transform_unique_email(email): email for email
                           in SameUser.objects.all().values_list('secondary_orig_email', flat=True)}
         email_to = list(set([emails_mapping.get(email, email) for email in email_to]))
         return func(subject, email_body, email_from, email_to, reply_to)

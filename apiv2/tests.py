@@ -17,7 +17,7 @@
 # Authors:
 #     See AUTHORS file.
 #
-
+import base64
 from django.test import TestCase
 from django.urls import reverse
 from sounds.tests import create_user_and_sounds
@@ -87,3 +87,24 @@ class TestAPiViews(TestCase):
         resp = self.client.get(reverse('api-logout'), secure=True)
         self.assertEqual(resp.status_code, 302)
 
+    def test_cors_header(self):
+        # Create App to login using token
+        user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
+
+        c = ApiV2Client(user=user, status='OK', redirect_uri="http://www.freesound.com",
+                url="http://freesound.com", name="test")
+        c.save()
+
+        sound = sounds[0]
+        sound.change_processing_state("OK")
+        sound.change_moderation_state("OK")
+
+        headers = {
+            'HTTP_AUTHORIZATION': 'Token %s' % c.key,
+            'HTTP_ORIGIN': 'https://www.google.com'
+        }
+        resp = self.client.options(reverse('apiv2-sound-instance',
+            kwargs={'pk': sound.id}), secure=True, **headers)
+        self.assertEqual(resp.status_code, 200)
+        # Check if header is present
+        self.assertEqual(resp['ACCESS-CONTROL-ALLOW-ORIGIN'], '*')

@@ -132,7 +132,8 @@ def multi_email_cleanup(request):
         return HttpResponseRedirect(request.GET.get('next', reverse('accounts-home')))
     else:
         # If email issues are still valid, then we show the email cleanup page with the instructions
-        return render(request, 'accounts/multi_email_cleanup.html', {'same_user': same_user})
+        return render(request, 'accounts/multi_email_cleanup.html', {
+            'same_user': same_user, 'next': request.GET.get('next', reverse('accounts-home'))})
 
 
 def check_username(request):

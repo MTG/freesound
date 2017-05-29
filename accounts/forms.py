@@ -112,6 +112,10 @@ class FileChoiceForm(forms.Form):
         self.fields['files'].choices = choices
 
 
+def get_user_by_email(email):
+    return User.objects.get(email__iexact=email)
+
+
 class RegistrationForm(forms.Form):
     captcha_key = settings.RECAPTCHA_PUBLIC_KEY
     recaptcha_response = forms.CharField(widget=CaptchaWidget)
@@ -160,7 +164,7 @@ class RegistrationForm(forms.Form):
         if email1 != email2:
             raise forms.ValidationError(_("The two email fields didn't match."))
         try:
-            User.objects.get_by_email(email2)
+            get_user_by_email(email2)
             logger.info('User trying to register with an already existing email')
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
@@ -235,7 +239,7 @@ class UsernameReminderForm(forms.Form):
     def clean_user(self):
         email = self.cleaned_data["user"]
         try:
-            return User.objects.get_by_email(email)
+            return get_user_by_email(email)
         except User.DoesNotExist:
             raise forms.ValidationError(_("No user with such an email exists."))
 
@@ -291,8 +295,7 @@ class EmailResetForm(forms.Form):
     def clean_email(self):
         email = self.cleaned_data["email"]
         try:
-            User.objects.get_by_email(email)
-
+            get_user_by_email(email)
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass

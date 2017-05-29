@@ -20,7 +20,7 @@
 #     See AUTHORS file.
 #
 
-from django.contrib.auth.models import User, UserManager
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import fields
 from django.contrib.admin.utils import NestedObjects
@@ -49,13 +49,6 @@ import os
 class ResetEmailRequest(models.Model):
     email = models.EmailField()
     user = models.OneToOneField(User, db_index=True)
-
-
-class FsUserManager(UserManager):  # Extend Django's user manager with `get_by_email` method
-    @staticmethod
-    def get_by_email(email):
-        return User.objects.get(email__iexact=email)
-User.add_to_class('objects', FsUserManager())  # Use FsUserManager instead of django's UserManager
 
 
 class ProfileManager(models.Manager):

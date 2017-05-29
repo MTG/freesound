@@ -24,6 +24,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
+from django.contrib.auth.views import LoginView
 from django.urls import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
@@ -83,9 +84,7 @@ def login(request, template_name, authentication_form):
     # with the same email address. We can switch back to the regular django view
     # once all accounts are adapted
     from django.contrib.auth import views as auth_views
-    # NOTE: auth_views.login used below is deprecated in Django 1.11, should use LoginView
-
-    response = auth_views.login(request, template_name=template_name, authentication_form=authentication_form)
+    response = auth_views.LoginView.as_view()(request, template_name=template_name, authentication_form=authentication_form)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful
         # Now we check if the logged in user has shared email problems

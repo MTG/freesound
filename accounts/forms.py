@@ -23,6 +23,7 @@ import time
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm, AuthenticationForm
+from django.contrib.auth import get_user_model
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.urls import reverse
@@ -242,7 +243,7 @@ class ProfileForm(forms.ModelForm):
         required=False
     )
     is_adult = forms.BooleanField(help_text="I'm an adult, I don't want to see inapropriate content warnings",
-            label="", required=False) 
+            label="", required=False)
     not_shown_in_online_users_list = forms.BooleanField(
         help_text="Hide from \"users currently online\" list in the People page",
         label = "",
@@ -336,3 +337,18 @@ class EmailSettingsForm(forms.Form):
     )
 
 
+class FsPasswordResetForm(PasswordResetForm):
+    def get_users(self, email):
+        """Given an email, return matching user(s) who should receive a reset.
+
+            This subclass will let all active users reset their password.
+            Django's PasswordReset form will only let a user reset their
+            password if the password is "valid" (i.e., it's using a
+            password hash that django understands)
+        """
+        UserModel = get_user_model()
+        active_users = UserModel._default_manager.filter(**{
+            '%s__iexact' % UserModel.get_email_field_name(): email,
+            'is_active': True,
+        })
+        return (u for u in active_users)

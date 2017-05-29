@@ -11,7 +11,7 @@
   <ul>
     <li><a class="button {%if selected == "assigned"%}selected{%endif%}" href="{% url "tickets-moderation-home" %}">Assign Sounds</a></li>
         <li><a class="button {%if selected == "queue"%}selected{%endif%}" href="{% url "tickets-moderation-assigned" request.user.id %}">Your sound queue {% if moderator_tickets_count > -1 %} ({{moderator_tickets_count}}){% endif %}</a></li>
-        <li><a class="button {%if selected == "guide"%}selected{%endif%}" href="{% url "tickets-moderation-guide" %}">Moderation guide</a></li>
+        <li><a class="button" href="{% url "wiki" %}moderators/">Moderation guide</a></li>
     </ul>
 </div>
 {% endif %}

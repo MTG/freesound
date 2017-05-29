@@ -21,17 +21,23 @@
 #
 
 from django.conf.urls import url, include
+from django.contrib.auth.views import LoginView, PasswordResetView
 import messages.views as messages
 import accounts.views as accounts
-from accounts.forms import FsAuthenticationForm
+from accounts.forms import FsAuthenticationForm, FsPasswordResetForm
 import bookmarks.views as bookmarks
 import follow.views as follow
 import apiv2.views as api
 
+# By putting some URLs at the top that are the same as the ones listed in
+# django.contrib.auth.urls, we can override some configuration:
+# https://docs.djangoproject.com/en/1.11/topics/http/urls/#how-django-processes-a-request
+# 3. Django runs through each URL pattern, in order, and stops at the first one that matches the requested URL.
 urlpatterns = [
     url(r'^login/$', accounts.login, {'template_name': 'registration/login.html',
                                        'authentication_form': FsAuthenticationForm}, name="accounts-login"),
     url(r'^cleanup/$', accounts.multi_email_cleanup, name="accounts-multi-email-cleanup"),
+    url(r'^password_reset/$', PasswordResetView.as_view(form_class=FsPasswordResetForm), name='password_reset'),
     url('^', include('django.contrib.auth.urls')),  # Include logout and reset email urls
     url(r'^register/$', accounts.registration, name="accounts-register"),
     url(r'^reactivate/$', accounts.resend_activation, name="accounts-resend-activation"),

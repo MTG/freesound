@@ -83,6 +83,8 @@ def login(request, template_name, authentication_form):
     # with the same email address. We can switch back to the regular django view
     # once all accounts are adapted
     from django.contrib.auth import views as auth_views
+    # NOTE: auth_views.login used below is deprecated in Django 1.11, should use LoginView
+
     response = auth_views.login(request, template_name=template_name, authentication_form=authentication_form)
     if isinstance(response, HttpResponseRedirect):
         # If there is a redirect it's because the login was successful

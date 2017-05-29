@@ -85,6 +85,7 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
                   #'user',
                   'username',
                   'pack',
+                  'pack_name',
                   'download',
                   'bookmark',
                   'previews',
@@ -148,6 +149,13 @@ class AbstractSoundSerializer(serializers.HyperlinkedModelSerializer):
             else:
                 return None
         except:
+            return None
+
+    pack_name = serializers.SerializerMethodField()
+    def get_pack_name(self, obj):
+        try:
+            return obj.pack.name
+        except AttributeError:
             return None
 
     previews = serializers.SerializerMethodField()

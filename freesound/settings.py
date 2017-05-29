@@ -19,7 +19,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'freesound.middleware.OnlineUsersHandler',
-    'utils.corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 INSTALLED_APPS = [
@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'gunicorn',
     'oauth2_provider',
     'rest_framework',
-    'utils.corsheaders',
+    'corsheaders',
     'follow',
     'fixture_magic',
     'utils',  # So that we also run utils tests
@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     #'test_utils', # Don't use this in production!
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
 AUTHENTICATION_BACKENDS = ('accounts.modelbackend.CustomModelBackend',)
 
 # Email settings
@@ -156,7 +157,8 @@ LAST_ACTION_TIME_URLS = ('/forum/', )
 IFRAME_PLAYER_SIZE = {
         'large': [920, 245],
         'medium': [481, 86],
-        'small': [375, 30]
+        'small': [375, 30],
+        'twitter_card': [468, 160]
     }
 
 FREESOUND_RSS = "http://10.55.0.51/?feed=rss2" #"http://blog.freesound.org/?feed=rss2"
@@ -384,5 +386,13 @@ LAST_RESTART_DATE = datetime.datetime.now().strftime("%d%m")
 MAX_EMAILS_PER_COMMAND_RUN = 1000
 NOTIFICATION_TIMEDELTA_PERIOD = datetime.timedelta(days=7)
 
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+]
 
 from logger import LOGGING

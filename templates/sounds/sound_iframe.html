@@ -129,5 +129,28 @@
             </div>
         </div>
         {% endif %}
+        
+        {% if size == 'full_size' %}
+        <div class="widget large full_size">
+            <div class="sample_info">
+                <nobr>
+                    <img class="avatar" src="{{sound.user.profile.locations.avatar.S.url}}" alt="avatar" />
+                    <h3>{{ sound.user.username }} - {{ sound.original_filename|truncate_string:120 }}</h3>
+                        {% include "sounds/widget_license.html" %}
+                        <a href="{% absurl 'sound' sound.user.username sound.id %}" alt="see this sound on freesound" target="_parent"></a>
+                </nobr>
+                <br style="clear: both;" />
+            </div>
+            <div class="player large full_size">
+            <div class="metadata">
+                {% with 'L' as size %}
+                    {% include 'sounds/metadata.html' %}
+                {% endwith %}
+            </div>
+            </div>
+        </div>
+        {% endif %}
+
+
     </body>
 </html>

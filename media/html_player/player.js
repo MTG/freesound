@@ -212,6 +212,8 @@ function makePlayer(selector) {
 
         if (!$(this).hasClass("mini"))
             $(".background", this).css("backgroundImage", 'url("' + waveform + '")');
+            $(".background", this).css("backgroundSize", 'contain');
+            $(".background", this).css("backgroundRepeat", 'no-repeat');
 
         $(".loading-progress", playerElement).hide();
 
@@ -298,6 +300,8 @@ function makePlayer(selector) {
                 $(".background", playerElement).css("background", "url(" + spectrum + ")");
             else
                 $(".background", playerElement).css("background", "url(" + waveform + ")");
+            $(".background", playerElement).css("backgroundSize", 'contain');
+            $(".background", playerElement).css("backgroundRepeat", 'no-repeat');
         });
 
         $(".measure", this).bind("toggle", function (event, on)

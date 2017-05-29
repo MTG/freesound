@@ -100,7 +100,11 @@ class Profile(SocialModel):
     def has_shared_email(self):
         """Check if the user account associated with this profile
            has other accounts with the same email address"""
-        return self.get_sameuser_object().exists()
+        try:
+            self.get_sameuser_object()
+            return True
+        except SameUser.DoesNotExist:
+            return False
 
     def get_absolute_url(self):
         return reverse('account', args=[smart_unicode(self.user.username)])

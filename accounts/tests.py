@@ -28,7 +28,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.core import mail
 from django.conf import settings
-from accounts.models import Profile, EmailPreferenceType
+from accounts.models import Profile, EmailPreferenceType, SameUser
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm
 from sounds.models import License, Sound, Pack, DeletedSound
@@ -44,6 +44,7 @@ import os
 import tempfile
 import shutil
 import datetime
+from utils.mail import transform_unique_email, replace_email_to
 
 
 class SimpleUserTest(TestCase):
@@ -669,6 +670,149 @@ class UserDelete(TestCase):
         self.assertEqual(DeletedSound.objects.filter(user__id=user.id).exists(), True)
 
 
+class UserEmailsUniqueTestCase(TestCase):
+
+    def setUp(self):
+        self.user_a = User.objects.create_user("user_a", password="12345", email='a@b.com')
+        self.original_shared_email = 'c@d.com'
+        self.user_b = User.objects.create_user("user_b", password="12345", email=self.original_shared_email)
+        self.user_c = User.objects.create_user("user_c", password="12345",
+                                               email=transform_unique_email(self.original_shared_email))
+        SameUser.objects.create(
+            main_user=self.user_b,
+            main_orig_email=self.user_b.email,
+            secondary_user=self.user_c,
+            secondary_orig_email=self.user_b.email,  # Must be same email (original)
+        )
+        # User a never had problems with email
+        # User b and c had the same email, but user_c's was automaitcally changed to avoid duplicates
+
+    def test_redirects_when_shared_emails(self):
+
+        # Try to log-in with user and go to messages page (any login_required page would work)
+        # User a is not in same users table, so redirect should be plain and simple to messages
+        # NOTE: in the following tests we don't use `self.client.login` because what we want to test
+        # is in fact in the login view logic.
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_a, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+        # Now try with user_b and user_c. User b had a shared email with user_c. Even if user_b's email was
+        # not changed, he is still redirected to the duplicate email cleanup page
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+
+    def test_fix_email_issues_with_secondary_user_email_change(self):
+        # user_c changes his email and tries to login, redirect should go to email cleanup page and from there
+        # directly to messages (2 redirect steps)
+        self.user_c.email = 'new@email.com'  # Must be different than transform_unique_email('c@d.com')
+        self.user_c.save()
+        resp = self.client.post(reverse('login'), follow=True,
+                                data={'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
+        self.assertEquals(resp.redirect_chain[0][0],
+                          reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+        self.assertEquals(resp.redirect_chain[1][0], reverse('messages'))
+
+        # Also check that related SameUser objects have been removed
+        self.assertEquals(SameUser.objects.all().count(), 0)
+
+        # Now next time user_c tries to go to messages again, there is only one redirect (like for user_a)
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+        # Also if user_b logs in, redirect goes straight to messages
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+    def test_fix_email_issues_with_main_user_email_change(self):
+        # user_b changes his email and tries to login, redirect should go to email cleanup page and from there
+        # directly to messages (2 redirect steps). Also user_c email should be changed to the original email of
+        # both users
+        self.user_b.email = 'new@email.com'  # Must be different than transform_unique_email('c@d.com')
+        self.user_b.save()
+        resp = self.client.post(reverse('login'), follow=True,
+                                data={'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
+        self.assertEquals(resp.redirect_chain[0][0],
+                          reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+        self.assertEquals(resp.redirect_chain[1][0], reverse('messages'))
+
+        # Check that user_c email was changed
+        self.user_c = User.objects.get(id=self.user_c.id)  # Reload user from db
+        self.assertEquals(self.user_c.email, self.original_shared_email)
+
+        # Also check that related SameUser objects have been removed
+        self.assertEquals(SameUser.objects.all().count(), 0)
+
+        # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+        # Also if user_c logs in, redirect goes straight to messages
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+    def test_fix_email_issues_with_both_users_email_change(self):
+        # If both users have changed email, we should make sure that user_c email is not overwritten before
+        # SameUser object is deleted
+        self.user_b.email = 'new@email.com'
+        self.user_b.save()
+        self.user_c.email = 'new2w@email.com'
+        self.user_c.save()
+        resp = self.client.post(reverse('login'), follow=True,
+                                data={'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
+        self.assertEquals(resp.redirect_chain[0][0],
+                          reverse('accounts-multi-email-cleanup') + '?next=%s' % reverse('messages'))
+        self.assertEquals(resp.redirect_chain[1][0], reverse('messages'))
+
+        # Check that user_c email was not changed
+        self.user_c = User.objects.get(id=self.user_c.id)  # Reload user from db
+        self.assertEquals(self.user_c.email, 'new2w@email.com')
+
+        # Also check that related SameUser objects have been removed
+        self.assertEquals(SameUser.objects.all().count(), 0)
+
+        # Now next time user_b tries to go to messages again, there is only one redirect (like for user_a)
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_b, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+        # Also if user_c logs in, redirect goes straight to messages
+        resp = self.client.post(reverse('login'),
+                                {'username': self.user_c, 'password': '12345', 'next': reverse('messages')})
+        self.assertRedirects(resp, reverse('messages'))
+
+    def test_replace_when_sending_email(self):
+
+        @replace_email_to
+        def fake_send_email(subject, email_body, email_from=None, email_to=list(), reply_to=None):
+            return email_to
+
+        # Check that emails sent to user_a are sent to his address
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_a.email])
+        self.assertEquals(used_email_to[0], self.user_a.email)
+
+        # For user b, email_to also remains the same
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_b.email])
+        self.assertEquals(used_email_to[0], self.user_b.email)
+
+        # For user c, email_to changes according to SameUser table
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
+        self.assertEquals(used_email_to[0], self.user_b.email)  # email_to becomes user_b.email
+
+        # If we remove SameUser entries, email of user_c is not replaced anymore
+        SameUser.objects.all().delete()
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
+        self.assertEquals(used_email_to[0], self.user_c.email)
+
+
 class PasswordReset(TestCase):
     def test_reset_form_get_users(self):
         """Check that a user with an unknown password hash can reset their password"""
@@ -694,4 +838,3 @@ class PasswordReset(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Password reset on Freesound")
-

@@ -34,6 +34,10 @@ from accounts.models import Profile, EmailPreferenceType
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 from utils.encryption import decrypt, encrypt
+import logging
+
+logger = logging.getLogger('web')
+
 
 def validate_file_extension(audiofiles):
     try:
@@ -156,7 +160,8 @@ class RegistrationForm(forms.Form):
         if email1 != email2:
             raise forms.ValidationError(_("The two email fields didn't match."))
         try:
-            User.objects.get(email__iexact=email2)
+            User.objects.get_by_email(email2)
+            logger.info('User trying to register with an already existing email')
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass
@@ -225,7 +230,7 @@ class UsernameReminderForm(forms.Form):
     def clean_user(self):
         email = self.cleaned_data["user"]
         try:
-            return User.objects.get(email__iexact=email)
+            return User.objects.get_by_email(email)
         except User.DoesNotExist:
             raise forms.ValidationError(_("No user with such an email exists."))
 
@@ -277,6 +282,16 @@ class EmailResetForm(forms.Form):
         # Using init function to pass user variable so later we can perform check_password in clean_password function
         self.user = kwargs.pop('user', None)
         super(EmailResetForm, self).__init__(*args, **kwargs)
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        try:
+            User.objects.get_by_email(email)
+
+            raise forms.ValidationError(_("A user using that email address already exists."))
+        except User.DoesNotExist:
+            pass
+        return email
 
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):

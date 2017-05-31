@@ -1,4 +1,5 @@
 {% extends "email_base.txt" %}
+{% load absurl %}
 
 {% block salutation %}{{user.username}}{% endblock %}
 
@@ -8,7 +9,7 @@ You're receiving this e-mail because you requested an e-mail reset for your user
 
 Please go to the following page to confirm your new e-mail address:
 
-<{{ protocol }}://{{ domain }}{% url "accounts-email-reset-complete" uidb36=uid token=token %}>
+<{% absurl 'accounts-email-reset-complete' uid token %}>
 
 Your username, in case you've forgotten: {{ user.username }}
 {% endautoescape %}

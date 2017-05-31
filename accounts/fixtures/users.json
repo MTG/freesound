@@ -13,7 +13,7 @@
             "groups": [],
             "user_permissions": [],
             "password": "0187a748eed8aa2bd82576dc2cce0a6d",
-            "email": "anon@xmpl.org",
+            "email": "anon1@xmpl.org",
             "date_joined": "2005-03-09 09:50:34"
         }
     },
@@ -31,7 +31,7 @@
             "groups": [],
             "user_permissions": [],
             "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
-            "email": "anon@xmpl.org",
+            "email": "anon2@xmpl.org",
             "date_joined": "2005-02-07 16:42:00"
         }
     },
@@ -49,7 +49,7 @@
             "groups": [], 
             "user_permissions": [], 
             "password": "bf9db5ff0cc8ed8bf40413521ff465f4", 
-            "email": "anon@xmpl.org", 
+            "email": "anon3@xmpl.org",
             "date_joined": "2005-02-07 16:42:00"
         }
     },
@@ -67,7 +67,7 @@
               "groups": [],
               "user_permissions": [],
               "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
-              "email": "anon@xmpl.org",
+              "email": "anon4@xmpl.org",
               "date_joined": "2005-02-07 16:42:00"
           }
     },
@@ -85,7 +85,7 @@
               "groups": [],
               "user_permissions": [],
               "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
-              "email": "anon@xmpl.org",
+              "email": "anon5@xmpl.org",
               "date_joined": "2005-02-07 16:42:00"
           }
     },
@@ -103,7 +103,7 @@
               "groups": [],
               "user_permissions": [],
               "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
-              "email": "anon@xmpl.org",
+              "email": "anon6@xmpl.org",
               "date_joined": "2005-02-07 16:42:00"
           }
     },
@@ -121,7 +121,7 @@
               "groups": [],
               "user_permissions": [],
               "password": "bf9db5ff0cc8ed8bf40413521ff465f4",
-              "email": "anon@xmpl.org",
+              "email": "anon7@xmpl.org",
               "date_joined": "2005-02-07 16:42:00"
           }
     }

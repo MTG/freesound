@@ -249,6 +249,7 @@ def sound(request, username, sound_id):
         'is_following': is_following,
         'is_explicit': is_explicit,
         'sizes': settings.IFRAME_PLAYER_SIZE,
+        'stream_uri': request.build_absolute_uri(sound.locations()['preview']['LQ']['mp3']['url']),
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, 'sounds/sound.html', tvars)

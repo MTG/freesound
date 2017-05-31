@@ -33,6 +33,8 @@
     <meta name="twitter:player" content="{% absurl 'embed-simple-sound-iframe' sound.id "full_size" %}" />
     <meta name="twitter:player:width" content="{{ sizes.twitter_card.0 }}" />
     <meta name="twitter:player:height" content="{{ sizes.twitter_card.1 }}" />
+    <meta name="twitter:player:stream" content="{{ stream_uri }}" />
+    <meta name="twitter:player:stream:content_type" content="audio/mp4" />
 {% endblock head %}
 
 {% block section_content %}

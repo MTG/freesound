@@ -32,8 +32,8 @@ class RatingsTestCase(TestCase):
     def setUp(self):
         self.sound = sounds.models.Sound.objects.all()[0]
         self.ct = ContentType.objects.get_for_model(sounds.models.Sound)
-        self.user1 = User.objects.create_user("testuser1", password="testpass")
-        self.user2 = User.objects.create_user("testuser2", password="testpass")
+        self.user1 = User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
+        self.user2 = User.objects.create_user("testuser2", email="testuser2@freesound.org", password="testpass")
 
     def test_rating_normal(self):
         """ Add a rating """

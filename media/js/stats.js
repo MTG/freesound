@@ -79,12 +79,12 @@ $( document ).ready(function() {
       }, {});
   });
   $.get(donationsDataUrl, function(d){
-      displayCharts('.donations', [d.new_donations ], {
+      displayHistogram('.donations', d.new_donations, {
         yText: 'Amount (€)',
-        attrX: 'week',
+        attrX: 'day',
         attrY: 'amount__sum',
         timeFormat: "%d %b",
-        tickEvery: d3.timeMonth.every(1),
+        tickEvery: d3.timeWeek.every(1),
         legendData: [{color: 'crimson', name: 'donations'},]
       }, {});
   });

@@ -241,6 +241,7 @@ def sound(request, username, sound_id):
     is_explicit = sound.is_explicit and (not request.user.is_authenticated \
                         or not request.user.profile.is_adult)
 
+
     tvars = {
         'sound': sound,
         'username': username,
@@ -788,7 +789,6 @@ def oembed(request):
         sizes = settings.IFRAME_PLAYER_SIZE['medium']
     if player_size == 'small':
         sizes = settings.IFRAME_PLAYER_SIZE['small']
-    from django.contrib.sites.models import Site
     tvars = {
         'sound': sound,
         'sizes': sizes,

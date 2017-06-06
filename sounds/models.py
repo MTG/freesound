@@ -371,6 +371,9 @@ class Sound(SocialModel):
             )
         )
 
+    def get_preview_abs_url(self):
+        return 'https://%s%s' % (Site.objects.get_current().domain, self.locations()['preview']['LQ']['mp3']['url'])
+
     def get_thumbnail_abs_url(self, size='M'):
         return 'https://%s%s' % (Site.objects.get_current().domain, self.locations()['display']['wave'][size]['url'])
 

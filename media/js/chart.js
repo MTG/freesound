@@ -110,3 +110,68 @@ function displayCharts(selectClass, data, options, exclude){
 
 }
 
+// Display histogram
+function displayHistogram(selectClass, data, options, exclude){
+  var margin = {top: 20, right: 200, bottom: 30, left: 50},
+    width = 700,
+    height = 260;
+  var svg = d3.select(selectClass).append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+  var g = svg.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  var tooltip = d3.select("body").append("div").attr("class", "toolTip");
+  var formatCount = d3.format(",.0f");
+
+  var x = d3.scaleTime()
+    .rangeRound([0, width]);
+  x.domain(d3.extent(data, function(d) { return new Date(d[options.attrX]); }));
+  var formatDate = d3.timeFormat(options.timeFormat);
+
+  var y = d3.scaleLinear()
+    .rangeRound([height, 0]);
+
+  function getY(d){
+    var total = 0;
+    for (var i=0;i<d.length;i++){
+        total += parseInt(d[i][options.attrY]);
+    }
+    return total;
+  }
+
+  var histogram = d3.histogram()
+    .value(function(d) { return new Date(d[options.attrX]); })
+    .domain(x.domain())
+    .thresholds(x.ticks(options.tickEvery));
+
+  var bins = histogram(data);
+
+  y.domain([0, d3.max(bins, function(d) { return getY(d); })]);
+
+  var bar = g.selectAll(".bar")
+    .data(bins)
+    .enter().append("g")
+      .attr("class", "bar")
+      .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(getY(d))+")";});
+
+  bar.append("rect")
+      .attr("x", 1)
+      .attr("width", x(bins[0].x1) - x(bins[0].x0) - 1)
+      .attr("height", function(d) { return Math.max(0, height - y(getY(d)))})
+      .on("mouseover", function(d) {
+        tooltip
+          .style("left", d3.event.pageX - 50 + "px")
+          .style("top", d3.event.pageY - 70 + "px")
+          .style("display", "inline-block")
+          .html("Week: "+formatDate(d.x0) + "<br><b>€" + getY(d)+"</b>");
+      }).on("mouseout", function() {
+        tooltip.style("display", "none");
+      })
+
+  g.append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x).tickFormat(formatDate));
+  }
+

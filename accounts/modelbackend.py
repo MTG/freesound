@@ -23,11 +23,37 @@ from django.contrib.auth.backends import ModelBackend
 
 
 class CustomModelBackend(ModelBackend):
-    def authenticate(self, username=None, password=None):
-        """ authenticate against case insensitive username """
+
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        """ authenticate against case insensitive username or email
+        
+        In case there is an @ sign in the provided username field, it is likely that
+        the user is trying to authenticate by providing an email+password pair (rather than
+        username+password). In that case, we first try to authenticate using the email and
+        if it does not succeed we try to eithenticate using username. We do email first
+        because it could happen that a_user.username == another_user.email (if a_user.username
+        contains an @ and has email form). If that was the case, then another_user would not
+        be able to login using email.
+        """
+
+        if '@' in username:
+            # In this case, user is most probably using email+password pair to login
+            # Try to get user object from email and check password
+            try:
+                user = User.objects.get(email__iexact=username)
+                if user.check_password(password):
+                    return user
+            except User.DoesNotExist:
+                # If user was not found by email, it could be that user who's logging in has
+                # '@' characters in username and therefore is trying normal username+password login
+                pass
+
+        # Do normal username+password login check
         try:
             user = User.objects.get(username__iexact=username)
             if user.check_password(password):
                 return user
         except User.DoesNotExist:
-            return None
+            pass
+
+        return None

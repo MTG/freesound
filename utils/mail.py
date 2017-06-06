@@ -21,9 +21,39 @@
 from django.conf import settings
 from django.core.mail.message import EmailMessage
 from django.template.loader import render_to_string
-from django.core.mail import get_connection, EmailMultiAlternatives
+from django.core.mail import get_connection
 
 
+def transform_unique_email(email):
+    """
+    To avoid duplicated emails, in migration accounts.0009_sameuser we automatically chage existing
+    duplicated user emails by the contents returned in this function. This is reused for further
+    checks in utils.mail.replace_email_to and accounts.views.multi_email_cleanup. 
+    """
+    return "dupemail+%s@freesound.org" % (email.replace("@", "%"), )
+
+
+def replace_email_to(func):
+    """
+    This decorator checks the email_to list and replaces any addresses that need replacement
+    according to the SameUser table (see https://github.com/MTG/freesound/pull/763). In our process
+    of removing dublicated email addresses from our users table we set up a temporary table to
+    store the original email addresses of users whose email was automatically changed to prevent 
+    duplicates. In this function we make sure that emails are sent to the original address and not
+    the one we edited to prevent duplicates. 
+    At some point in time, SameUser table should become empty (when users update their addresses) and
+    then we'll be able to remove this decorator.
+    """
+    def wrapper(subject, email_body, email_from=None, email_to=list(), reply_to=None):
+        from accounts.models import SameUser
+        emails_mapping = {transform_unique_email(email): email for email
+                          in SameUser.objects.all().values_list('secondary_orig_email', flat=True)}
+        email_to = list(set([emails_mapping.get(email, email) for email in email_to]))
+        return func(subject, email_body, email_from, email_to, reply_to)
+    return wrapper
+
+
+@replace_email_to
 def send_mail(subject, email_body, email_from=None, email_to=list(), reply_to=None):
     """
     Sends email with a lot of defaults
@@ -75,28 +105,3 @@ def send_mail_template(subject, template, context, email_from=None, email_to=[],
 def render_mail_template(template, context):
     context["settings"] = settings
     return render_to_string(template, context)
-
-
-def send_mass_html_mail(datatuple, fail_silently=False, user=None, password=None, connection=None):
-    """
-    Given a datatuple of (subject, text_content, html_content, from_email,
-    recipient_list), sends each message to each recipient list. Returns the
-    number of emails sent.
-
-    If from_email is None, the DEFAULT_FROM_EMAIL setting is used.
-    If auth_user and auth_password are set, they're used to log in.
-    If auth_user is None, the EMAIL_HOST_USER setting is used.
-    If auth_password is None, the EMAIL_HOST_PASSWORD setting is used.
-
-    """
-    connection = connection or get_connection(
-        username=user, password=password, fail_silently=fail_silently
-    )
-
-    messages = []
-    for subject, text, html, from_email, recipient in datatuple:
-        message = EmailMultiAlternatives(subject, text, from_email, recipient)
-        message.attach_alternative(html, 'text/html')
-        messages.append(message)
-
-    return connection.send_messages(messages)

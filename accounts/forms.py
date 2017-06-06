@@ -34,6 +34,10 @@ from accounts.models import Profile, EmailPreferenceType
 from utils.forms import HtmlCleaningCharField, filename_has_valid_extension, CaptchaWidget
 from utils.spam import is_spam
 from utils.encryption import decrypt, encrypt
+import logging
+
+logger = logging.getLogger('web')
+
 
 def validate_file_extension(audiofiles):
     try:
@@ -108,6 +112,10 @@ class FileChoiceForm(forms.Form):
         self.fields['files'].choices = choices
 
 
+def get_user_by_email(email):
+    return User.objects.get(email__iexact=email)
+
+
 class RegistrationForm(forms.Form):
     captcha_key = settings.RECAPTCHA_PUBLIC_KEY
     recaptcha_response = forms.CharField(widget=CaptchaWidget)
@@ -156,7 +164,8 @@ class RegistrationForm(forms.Form):
         if email1 != email2:
             raise forms.ValidationError(_("The two email fields didn't match."))
         try:
-            User.objects.get(email__iexact=email2)
+            get_user_by_email(email2)
+            logger.info('User trying to register with an already existing email')
             raise forms.ValidationError(_("A user using that email address already exists."))
         except User.DoesNotExist:
             pass
@@ -215,8 +224,13 @@ class FsAuthenticationForm(AuthenticationForm):
         super(FsAuthenticationForm, self).__init__(*args, **kwargs)
         self.error_messages.update({
             'inactive': mark_safe(_("You are trying to log in with an inactive account, please <a href=\"%s\">activate "
-                                    "your account</a> first." % reverse("accounts-resend-activation")))
+                                    "your account</a> first." % reverse("accounts-resend-activation"))),
+            'invalid_login': _(
+                "Please enter a correct username/email and password. Note that "
+                "passwords are case-sensitive."
+            ),
         })
+        self.fields['username'].label = 'Username or email'
 
 
 class UsernameReminderForm(forms.Form):
@@ -225,7 +239,7 @@ class UsernameReminderForm(forms.Form):
     def clean_user(self):
         email = self.cleaned_data["user"]
         try:
-            return User.objects.get(email__iexact=email)
+            return get_user_by_email(email)
         except User.DoesNotExist:
             raise forms.ValidationError(_("No user with such an email exists."))
 
@@ -277,6 +291,15 @@ class EmailResetForm(forms.Form):
         # Using init function to pass user variable so later we can perform check_password in clean_password function
         self.user = kwargs.pop('user', None)
         super(EmailResetForm, self).__init__(*args, **kwargs)
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        try:
+            get_user_by_email(email)
+            raise forms.ValidationError(_("A user using that email address already exists."))
+        except User.DoesNotExist:
+            pass
+        return email
 
     def clean_password(self):
         if not self.user.check_password(self.cleaned_data["password"]):

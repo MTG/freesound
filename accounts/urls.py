@@ -34,8 +34,9 @@ import apiv2.views as api
 # https://docs.djangoproject.com/en/1.11/topics/http/urls/#how-django-processes-a-request
 # 3. Django runs through each URL pattern, in order, and stops at the first one that matches the requested URL.
 urlpatterns = [
-    url(r'^login/$', LoginView.as_view(template_name='registration/login.html',
-                                       authentication_form=FsAuthenticationForm), name="accounts-login"),
+    url(r'^login/$', accounts.login, {'template_name': 'registration/login.html',
+                                       'authentication_form': FsAuthenticationForm}, name="accounts-login"),
+    url(r'^cleanup/$', accounts.multi_email_cleanup, name="accounts-multi-email-cleanup"),
     url(r'^password_reset/$', PasswordResetView.as_view(form_class=FsPasswordResetForm), name='password_reset'),
     url('^', include('django.contrib.auth.urls')),  # Include logout and reset email urls
     url(r'^register/$', accounts.registration, name="accounts-register"),
@@ -43,9 +44,8 @@ urlpatterns = [
     url(r'^username/$', accounts.username_reminder, name="accounts-username-reminder"),
     url(r'^activate/(?P<username>[^\/]+)/(?P<uid_hash>[^\/]+)/.*$', accounts.activate_user, name="accounts-activate"),
     url(r'^resetemail/$', accounts.email_reset, name="accounts-email-reset"),
-    url(r'^resetemail/sent/$', accounts.email_reset_done, name='accounts-email-reset-done'),
-    url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$',
-        accounts.email_reset_complete, name='accounts-email-reset-complete'),
+    url(r'^resetemail/sent/$', accounts.email_reset_done, name="accounts-email-reset-done"),
+    url(r'^resetemail/complete/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', accounts.email_reset_complete, name="accounts-email-reset-complete"),
     url(r'^bulklicensechange/$', accounts.bulk_license_change, name="bulk-license-change"),
     url(r'^tosacceptance/$', accounts.tos_acceptance, name="tos-acceptance"),
     url(r'^check_username/$', accounts.check_username, name="check_username"),

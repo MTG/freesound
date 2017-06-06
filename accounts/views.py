@@ -24,6 +24,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
+from django.contrib.auth.views import LoginView
 from django.urls import reverse
 from django.db.models import Count
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
@@ -43,7 +44,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import user_passes_test
 from accounts.forms import UploadFileForm, FlashUploadFileForm, FileChoiceForm, RegistrationForm, ReactivationForm, UsernameReminderForm, \
     ProfileForm, AvatarForm, TermsOfServiceForm, DeleteUserForm, EmailSettingsForm
-from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType
+from accounts.models import Profile, ResetEmailRequest, UserFlag, UserEmailSetting, EmailPreferenceType, SameUser
 from accounts.forms import EmailResetForm
 from comments.models import Comment
 from forum.models import Post
@@ -58,7 +59,7 @@ from utils.images import extract_square
 from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
 from utils.audioprocessing import get_sound_type
-from utils.mail import send_mail, send_mail_template
+from utils.mail import send_mail, send_mail_template, transform_unique_email
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark
 from messages.models import Message
@@ -76,6 +77,63 @@ logger = logging.getLogger("upload")
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def crash_me(request):
     raise Exception
+
+
+def login(request, template_name, authentication_form):
+    # Freesound-specific login view to check if a user has multiple accounts
+    # with the same email address. We can switch back to the regular django view
+    # once all accounts are adapted
+    from django.contrib.auth import views as auth_views
+    response = auth_views.LoginView.as_view()(request, template_name=template_name, authentication_form=authentication_form)
+    if isinstance(response, HttpResponseRedirect):
+        # If there is a redirect it's because the login was successful
+        # Now we check if the logged in user has shared email problems
+        if request.user.profile.has_shared_email():
+            # If the logged in user has an email shared with other accounts, we redirect to the email update page
+            redirect_url = reverse("accounts-multi-email-cleanup")
+            next_param = request.POST.get('next', None)
+            if next_param:
+                redirect_url += '?next=%s' % next_param
+            return HttpResponseRedirect(redirect_url)
+        else:
+            return response
+
+    return response
+
+
+@login_required
+def multi_email_cleanup(request):
+
+    # If user does not have shared email problems, then it should have not visited this page
+    if not request.user.profile.has_shared_email():
+        return HttpResponseRedirect(reverse('accounts-home'))
+
+    # Check if shared email problems have been fixed (if user changed one of the two emails)
+    same_user = request.user.profile.get_sameuser_object()
+    email_issues_still_valid = True
+
+    if same_user.main_user_changed_email():
+        # Then assign original email to secondary user (if user didn't change it)
+        if not same_user.secondary_user_changed_email():
+            same_user.secondary_user.email = same_user.orig_email
+            same_user.secondary_user.save()
+        email_issues_still_valid = False
+
+    if same_user.secondary_user_changed_email():
+        # Then the email problems have been fixeed when email of secondary user was changed
+        # No need to re-assign emails here
+        email_issues_still_valid = False
+
+    if not email_issues_still_valid:
+        # If problems have been fixed, remove same_user object to users are not redirected here again
+        same_user.delete()
+
+        # Redirect to where the user was going (in this way this whole process will have been transparent)
+        return HttpResponseRedirect(request.GET.get('next', reverse('accounts-home')))
+    else:
+        # If email issues are still valid, then we show the email cleanup page with the instructions
+        return render(request, 'accounts/multi_email_cleanup.html', {
+            'same_user': same_user, 'next': request.GET.get('next', reverse('accounts-home'))})
 
 
 def check_username(request):

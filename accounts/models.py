@@ -35,6 +35,7 @@ from geotags.models import GeoTag
 from utils.search.solr import SolrQuery, Solr, SolrResponseInterpreter, SolrException
 from utils.sql import DelayedQueryExecuter
 from utils.locations import locations_decorator
+from utils.mail import transform_unique_email
 from forum.models import Post, Thread
 from comments.models import Comment
 from sounds.models import DeletedSound, Sound, Pack
@@ -84,6 +85,19 @@ class Profile(SocialModel):
 
     def __unicode__(self):
         return self.user.username
+
+    def get_sameuser_object(self):
+        """Returns the SameUser object where the user is involved"""
+        return SameUser.objects.get(Q(main_user=self.user) | Q(secondary_user=self.user))
+
+    def has_shared_email(self):
+        """Check if the user account associated with this profile
+           has other accounts with the same email address"""
+        try:
+            self.get_sameuser_object()
+            return True
+        except SameUser.DoesNotExist:
+            return False
 
     def get_absolute_url(self):
         return reverse('account', args=[smart_unicode(self.user.username)])
@@ -174,7 +188,6 @@ class Profile(SocialModel):
         if not had_enabled_stream_emails and enabled_stream_emails:
             self.last_stream_email_sent = datetime.datetime.now()
             self.save()
-
 
     def get_user_tags(self, use_solr=True):
         if use_solr:
@@ -287,7 +300,7 @@ class Profile(SocialModel):
         self.user.username = 'deleted_user_%s' % self.user.id
         self.user.first_name = ''
         self.user.last_name = ''
-        self.user.email = ''
+        self.user.email = 'deleted_user_%s@freesound.org' % self.user.id
         self.has_avatar = False
         self.is_deleted_user = True
         self.user.set_password(str(uuid.uuid4()))
@@ -330,6 +343,36 @@ class UserFlag(models.Model):
 
     class Meta:
         ordering = ("-user__username",)
+
+
+class SameUser(models.Model):
+    # Used for merging more than one user account which have the same email address
+
+    # The main user is defined as the one who has logged in most recently
+    # when we performed the migration. This is an arbitrary decision
+    main_user = models.ForeignKey(User, related_name="+")
+    main_orig_email = models.CharField(max_length=200)
+    secondary_user = models.ForeignKey(User, related_name="+")
+    secondary_orig_email = models.CharField(max_length=200)
+
+    @property
+    def orig_email(self):
+        assert self.main_orig_email == self.secondary_orig_email
+        return self.main_orig_email
+
+    @property
+    def main_trans_email(self):
+        return self.main_orig_email  # email of main user remained unchanged
+
+    @property
+    def secondary_trans_email(self):
+        return transform_unique_email(self.orig_email)
+
+    def main_user_changed_email(self):
+        return self.main_user.email != self.main_trans_email
+
+    def secondary_user_changed_email(self):
+        return self.secondary_user.email != self.secondary_trans_email
 
 
 def create_user_profile(sender, instance, created, **kwargs):

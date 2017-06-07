@@ -247,6 +247,60 @@ body.full_size {
     border-top: solid 2px #AB4646;
 }
 
+.widget.large.full_size .sample_info .user_avatar {
+    width: 30px;
+    margin-left: 10px;
+    display: inline-block;
+}
+
+.widget.large.full_size .sample_info .user_avatar .avatar {
+    margin-top: 0px;
+    margin-left: 3px;
+    float: none;
+}
+
+.widget.large.full_size .sample_info .sound_name {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    width: calc(100% - 40px - 95px - 50px)
+}
+
+.widget.large.full_size .sample_info .sound_name h3 {
+    line-height: 11px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #AB4646;
+    margin-left: 0px;
+    margin-bottom: 3px;
+}
+
+.widget.large.full_size .sample_info .freesound_link {
+    width:95px;
+    display: inline-block;
+}
+
+.widget.large.full_size .sample_info .freesound_link a {
+    height: 18px;
+    float: none;
+    margin-right: 0px;
+    background-image: url(../images/widgets/see_on.png);
+}
+
+.widget.large.full_size .sample_info .freesound_link a:hover {
+    background-image: url(../images/widgets/see_on_hover.png);
+}
+
+.widget.large.full_size .sample_info .license {
+    width: 35px;
+    display: inline-block;
+}
+
+.widget.large.full_size .sample_info .license .cc_license {
+    float: right;
+    margin-top: 0px;
+}
+
 .widget.large.full_size .player.large {
   width:100%;
   height: 22vw;

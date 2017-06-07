@@ -246,7 +246,7 @@ body.full_size {
 .widget.large.full_size .sample_info {
     width: 100%;
     border-top: solid 2px #AB4646;
-    padding-top: 5px;
+    padding-top: 0px;
 }
 
 .widget.large.full_size .sample_info .user_avatar {
@@ -309,7 +309,7 @@ body.full_size {
     background-color: black;
     margin-left: 0;
     margin-top: 10px;
-    padding-top: 6px;
+    padding-top: 1px;
     margin-bottom: 0px;
 }
 .widget.large.full_size .player {

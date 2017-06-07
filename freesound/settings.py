@@ -158,7 +158,7 @@ IFRAME_PLAYER_SIZE = {
         'large': [920, 245],
         'medium': [481, 86],
         'small': [375, 30],
-        'twitter_card': [468, 160]
+        'twitter_card': [440, 132]
     }
 
 FREESOUND_RSS = "http://10.55.0.51/?feed=rss2" #"http://blog.freesound.org/?feed=rss2"

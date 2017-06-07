@@ -240,11 +240,13 @@ body.small {
 /* full_size */
 
 body.full_size {
+    border-bottom: solid 2px #AB4646;
 }
 
 .widget.large.full_size .sample_info {
     width: 100%;
     border-top: solid 2px #AB4646;
+    padding-top: 5px;
 }
 
 .widget.large.full_size .sample_info .user_avatar {
@@ -302,11 +304,13 @@ body.full_size {
 }
 
 .widget.large.full_size .player.large {
-  width:100%;
-  height: 26vw;
-  background-color: black;
+    width:100%;
+    height: 22vw;
+    background-color: black;
     margin-left: 0;
-    margin-top: 4px;
+    margin-top: 10px;
+    padding-top: 6px;
+    margin-bottom: 0px;
 }
 .widget.large.full_size .player {
     margin-bottom: 0;

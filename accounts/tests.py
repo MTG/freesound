@@ -792,7 +792,7 @@ class UserEmailsUniqueTestCase(TestCase):
     def test_replace_when_sending_email(self):
 
         @replace_email_to
-        def fake_send_email(subject, email_body, email_from=None, email_to=list(), reply_to=None):
+        def fake_send_email(subject, email_body, email_from, email_to, reply_to=None):
             return email_to
 
         # Check that emails sent to user_a are sent to his address
@@ -811,6 +811,19 @@ class UserEmailsUniqueTestCase(TestCase):
         SameUser.objects.all().delete()
         used_email_to = fake_send_email('Test subject', 'Test body', email_to=[self.user_c.email])
         self.assertEquals(used_email_to[0], self.user_c.email)
+
+        # Test with email_to not being a list or tuple
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=self.user_a.email)
+        self.assertEquals(used_email_to[0], self.user_a.email)
+
+        # Test with email_to being empty ''
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to='')
+        self.assertEquals(used_email_to, True)
+
+        # Test with email_to being None, should return admin emails
+        used_email_to = fake_send_email('Test subject', 'Test body', email_to=None)
+        admin_emails = [admin[1] for admin in settings.SUPPORT]
+        self.assertEquals(used_email_to[0], admin_emails[0])
 
 
 class PasswordReset(TestCase):

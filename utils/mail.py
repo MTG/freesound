@@ -45,9 +45,17 @@ def replace_email_to(func):
     then we'll be able to remove this decorator.
     """
     def wrapper(subject, email_body, email_from=None, email_to=list(), reply_to=None):
+
+        # Process email_to like we do in normal 'send_mail'
+        if not email_to:
+            if email_to == '':
+                return True
+            email_to = [admin[1] for admin in settings.SUPPORT]
+        elif not isinstance(email_to, tuple) and not isinstance(email_to, list):
+            email_to = [email_to]
+
         from accounts.models import SameUser
-        emails_mapping = {transform_unique_email(email): email for email
-                          in SameUser.objects.all().values_list('secondary_orig_email', flat=True)}
+        emails_mapping = {su.secondary_trans_email: su.orig_email for su in SameUser.objects.all()}
         email_to = list(set([emails_mapping.get(email, email) for email in email_to]))
         return func(subject, email_body, email_from, email_to, reply_to)
     return wrapper

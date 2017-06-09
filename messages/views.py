@@ -168,23 +168,14 @@ def new_message(request, username=None, message_id=None):
 
 def username_lookup(request):
     results = []
-    value = ""
     if request.method == "GET":
-        if request.GET.has_key(u'q'):
-            value = request.GET[u'q']
-
-            # When there is at least one character, start searching usernames (only among users previously contacted)
-            if len(value) > 0:
                 # Only autocompleting for previously contacted users
-                previously_contacted_user_ids1 = list(Message.objects.filter(user_from = request.user.id, ).values_list('user_to', flat='True').distinct())
-                previously_contacted_user_ids2 = list(Message.objects.filter(user_to = request.user.id, ).values_list('user_from', flat='True').distinct())
-                previously_contacted_user_ids = set(previously_contacted_user_ids1+previously_contacted_user_ids2)
-                model_results = User.objects.filter(username__istartswith = value, id__in = previously_contacted_user_ids).order_by('username')#[0:30]
-                index = 0
-                for r in model_results:
-                    results.append( (r.username,index) )
-                    index = index + 1
+                previously_contacted_user = list(Message.objects.filter(user_from = request.user.id)\
+                        .values_list('user_to__username', flat='True').distinct())
+                previously_contacted_user2 = list(Message.objects.filter(user_to = request.user.id)\
+                        .values_list('user_from__username', flat='True').distinct())
 
+                results = list(set(previously_contacted_user + previously_contacted_user2))
     json_resp = json.dumps(results)
     return HttpResponse(json_resp, content_type='application/json')
 

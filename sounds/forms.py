@@ -66,7 +66,12 @@ class SoundDescriptionForm(forms.Form):
                               "For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
 
-    def __init__(self, explicit_disable=False, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        explicit_disable = False
+        if 'explicit_disable' in kwargs:
+            explicit_disable = kwargs.get('explicit_disable')
+            del kwargs['explicit_disable']
+
         super(SoundDescriptionForm, self).__init__(*args, **kwargs)
         # Disable is_explcit field if is already marked
         self.initial['is_explicit'] = explicit_disable

@@ -345,7 +345,11 @@ def sound_edit(request, username, sound_id):
                                             ticket.MODERATOR_ONLY)
 
     if is_selected("description"):
-        description_form = SoundDescriptionForm(sound.is_explicit, request.POST, prefix="description")
+        description_form = SoundDescriptionForm(
+                request.POST,
+                prefix="description",
+                explicit_disable=sound.is_explicit)
+
         if description_form.is_valid():
             data = description_form.cleaned_data
             sound.is_explicit = data["is_explicit"]

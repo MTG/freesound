@@ -317,6 +317,7 @@ def edit_email_settings(request):
         if form.is_valid():
             email_type_ids = form.cleaned_data['email_types']
             request.user.profile.update_enabled_email_types(email_type_ids)
+            return HttpResponseRedirect(reverse("accounts-home"))
     else:
         # Get list of enabled email_types
         all_emails = request.user.profile.get_enabled_email_types()

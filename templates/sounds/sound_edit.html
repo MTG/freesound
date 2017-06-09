@@ -204,6 +204,10 @@
         Description:<br>
         {{description_form.description }}
     </p>
+    <p>
+        Explicit content:
+        {{description_form.is_explicit }}{% if sound.is_explicit %}(If the sound is not explicit contact the administrators){% endif %}
+    </p>
 
     <input type="submit" name="submit" value="submit" />
 </form>

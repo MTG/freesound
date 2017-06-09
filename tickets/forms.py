@@ -80,6 +80,7 @@ class SoundModerationForm(forms.Form):
 
     ticket = forms.CharField(widget=forms.widgets.HiddenInput,
                              error_messages={'required': 'No sound selected...'})
+    is_explicit = forms.BooleanField(required=False, label='Mark as explcit content')
 
 class ModerationMessageForm(forms.Form):
     message = HtmlCleaningCharField(widget=forms.Textarea,

@@ -136,8 +136,7 @@ class RegistrationForm(forms.Form):
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
     accepted_tos = forms.BooleanField(
-        label='',
-        help_text=_('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
+        label=mark_safe('Check this box to accept the <a href="/help/tos_web/" target="_blank">terms of use</a> of the '
                     'Freesound website'),
         required=True,
         error_messages={'required': _('You must accept the terms of use in order to register to Freesound.')}

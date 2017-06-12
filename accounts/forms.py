@@ -118,7 +118,7 @@ def get_user_by_email(email):
 
 class RegistrationForm(forms.Form):
     captcha_key = settings.RECAPTCHA_PUBLIC_KEY
-    recaptcha_response = forms.CharField(widget=CaptchaWidget)
+    recaptcha_response = forms.CharField(widget=CaptchaWidget, required=False)
     username = forms.RegexField(
         label=_("Username"),
         min_length=3,
@@ -170,11 +170,12 @@ class RegistrationForm(forms.Form):
             pass
         return email2
 
-    def clean_recaptcha_response(self):
-        captcha_response = self.cleaned_data.get("recaptcha_response")
+    def clean(self):
+        cleaned_data = super(RegistrationForm, self).clean()
+        captcha_response = cleaned_data.get("recaptcha_response")
         if not captcha_response:
             raise forms.ValidationError(_("Captcha is not correct"))
-        return captcha_response
+        return cleaned_data
 
     def save(self):
         username = self.cleaned_data["username"]

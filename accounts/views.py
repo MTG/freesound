@@ -518,6 +518,7 @@ def describe_sounds(request):
     tvars = {
         'sounds_per_round': settings.SOUNDS_PER_DESCRIBE_ROUND,
         'forms': forms,
+        'last_latlong': request.user.profile.get_last_latlong(),
     }
 
     if request.method == 'POST':

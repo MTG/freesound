@@ -109,8 +109,15 @@
                   scrollwheel: false,
                   streetViewControl: false,
             });
+
+            {% if last_latlong %}
+            var initial_center = new google.maps.LatLng({{last_latlong.0}},{{last_latlong.1}});
+            var initial_zoom =  {{last_latlong.2}};
+            {% else %}
             var initial_center = new google.maps.LatLng(23.885837699862005,21.796875);
             var initial_zoom =  2;
+            {% endif %}
+
             if ( ($("#id_" + parseInt(n-1,10) + "-zoom").val() != "") &
                  ($("#id_" + parseInt(n-1,10) + "-lon").val() != "") &
                  ($("#id_" + parseInt(n-1,10) + "-lat").val() != ""))

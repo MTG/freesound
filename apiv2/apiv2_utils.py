@@ -27,18 +27,9 @@ import combined_search_strategies
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
-from sounds.models import Sound, Pack, License
-from utils.audioprocessing import get_sound_type
-from geotags.models import GeoTag
-from utils.filesystem import md5file
-from utils.tags import clean_and_split_tags
-from utils.text import slugify
 from exceptions import *
 from examples import examples
-from utils.mirror_files import copy_sound_to_mirror_locations
-import shutil
 from django.conf import settings
-import os
 from utils.similarity_utilities import get_sounds_descriptors
 from utils.search.solr import Solr, SolrException, SolrResponseInterpreter
 from search.views import search_prepare_query
@@ -47,10 +38,6 @@ from similarity.client import SimilarityException
 from urllib import unquote
 from django.contrib.sites.models import Site
 from django.urls import resolve
-from utils.cache import invalidate_template_cache
-from django.contrib.auth.models import Group
-from django.db import transaction
-from gearman.errors import ServerUnavailable
 from utils.logging_filters import get_client_ip
 import logging
 import json
@@ -437,133 +424,6 @@ def get_analysis_data_for_queryset_or_sound_ids(view, queryset=None, sound_ids=[
         else:
             for id in ids:
                 view.sound_analysis_data[str(id)] = 'No descriptors specified. You should indicate which descriptors you want with the \'descriptors\' request parameter.'
-
-
-# Upload handler utils
-######################
-
-def create_sound_object(user, original_sound_fields, resource=None, apiv2_client=None, upload_filename=None):
-    '''
-    This function is used by the upload handler to create a sound object with the information provided through post
-    parameters.
-    '''
-
-    # 1 prepare some variable names
-    sound_fields = dict()
-    for key, item in original_sound_fields.items():
-        sound_fields[key] = item
-
-    filename = sound_fields.get('upload_filename', upload_filename)
-    if not 'name' in sound_fields:
-        sound_fields['name'] = filename
-    else:
-        if not sound_fields['name']:
-            sound_fields['name'] = filename
-
-    directory = os.path.join(settings.UPLOADS_PATH, str(user.id))
-    dest_path = os.path.join(directory, filename)
-
-    # 2 make sound object
-    sound = Sound()
-    sound.user = user
-    sound.original_filename = sound_fields['name']
-    sound.original_path = dest_path
-    sound.filesize = os.path.getsize(sound.original_path)
-    sound.type = get_sound_type(sound.original_path)
-    license = License.objects.get(name=sound_fields['license'])
-    sound.license = license
-    sound.md5 = md5file(sound.original_path)
-
-    sound_already_exists = Sound.objects.filter(md5=sound.md5).exists()
-    if sound_already_exists:
-        os.remove(sound.original_path)
-        raise OtherException("Sound could not be created because the uploaded file is already part of freesound.", resource=resource)
-
-    # 4 save
-    sound.save()
-
-    # 5 move to new path
-    orig = os.path.splitext(os.path.basename(sound.original_filename))[0]  # WATCH OUT!
-    sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
-    new_original_path = sound.locations("path")
-    if sound.original_path != new_original_path:
-        try:
-            os.makedirs(os.path.dirname(new_original_path))
-        except OSError:
-            pass
-        try:
-            shutil.move(sound.original_path, new_original_path)
-        except IOError, e:
-            if settings.DEBUG:
-                msg = "File could not be copied to the correct destination."
-            else:
-                msg = "Server error."
-            raise ServerErrorException(msg=msg, resource=resource)
-        sound.original_path = new_original_path
-        sound.save()
-
-    # Copy to mirror location
-    copy_sound_to_mirror_locations(sound)
-
-    # 6 create pack if it does not exist
-    if 'pack' in sound_fields:
-        if sound_fields['pack']:
-            if Pack.objects.filter(name=sound_fields['pack'], user=user).exclude(is_deleted=True).exists():
-                p = Pack.objects.get(name=sound_fields['pack'], user=user)
-            else:
-                p, created = Pack.objects.get_or_create(user=user, name=sound_fields['pack'])
-            sound.pack = p
-
-    # 7 create geotag objects
-    # format: lat#lon#zoom
-    if 'geotag' in sound_fields:
-        if sound_fields['geotag']:
-            lat, lon, zoom = sound_fields['geotag'].split(',')
-            geotag = GeoTag(user=user,
-                lat=float(lat),
-                lon=float(lon),
-                zoom=int(zoom))
-            geotag.save()
-            sound.geotag = geotag
-
-    # 8 set description, tags
-    sound.description = sound_fields['description']
-    sound.set_tags(clean_and_split_tags(sound_fields['tags']))
-    #sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
-
-    # 8.5 set uploaded apiv2 client
-    sound.uploaded_with_apiv2_client = apiv2_client
-
-    # 9 save!
-    sound.save()
-
-    # 10 create moderation tickets if needed
-    if user.profile.is_whitelisted:
-        sound.change_moderation_state('OK', do_not_update_related_stuff=True)
-    else:
-        # create moderation ticket!
-        sound.create_moderation_ticket()
-        invalidate_template_cache("user_header", user.id)
-        moderators = Group.objects.get(name='moderators').user_set.all()
-        for moderator in moderators:
-            invalidate_template_cache("user_header", moderator.id)
-
-    # 11 proces sound and packs
-    try:
-        sound.compute_crc()
-    except:
-        pass
-
-    transaction.commit()  # Need to commit transaction manually so that worker can find the sound in db
-    try:
-        sound.process()
-
-        if sound.pack:
-            sound.pack.process()
-    except ServerUnavailable:
-        pass
-
-    return sound
 
 
 # APIv1 end of life

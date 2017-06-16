@@ -755,10 +755,10 @@ class UploadSound(WriteRequiredGenericAPIView):
                             if not sound_fields['name']:
                                 sound_fields['name'] = filename
 
-                        directory = os.path.join(settings.UPLOADS_PATH, str(user.id))
+                        directory = os.path.join(settings.UPLOADS_PATH, str(self.user.id))
                         sound_fields['dest_path'] = os.path.join(directory, filename)
 
-                        if tags in sond_fields:
+                        if 'tags' in sound_fields:
                             sound_fields['tags'] = clean_and_split_tags(sound_fields['tags'])
 
                         try:

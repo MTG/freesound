@@ -166,7 +166,6 @@ class PackEditForm(ModelForm):
         return pack_sounds
 
     def save(self, force_insert=False, force_update=False, commit=True):
-        print "---------------------------" 
         pack = super(PackEditForm, self).save(commit=False)
         affected_packs = list()
         affected_packs.append(pack)
@@ -175,7 +174,6 @@ class PackEditForm(ModelForm):
         for snd in current_sounds:
             if snd.id not in new_sounds:
                 snd.pack = None
-                print snd
                 snd.mark_index_dirty(commit=True)
         for snd in new_sounds:
             current_sounds_ids = [s.id for s in current_sounds]
@@ -185,7 +183,6 @@ class PackEditForm(ModelForm):
                     affected_packs.append(sound.pack)
                 sound.pack = pack
                 sound.mark_index_dirty(commit=True)
-                print sound
         if commit:
             pack.save()
         for affected_pack in affected_packs:

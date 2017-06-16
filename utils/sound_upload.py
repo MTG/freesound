@@ -48,8 +48,8 @@ class CantMoveException(Exception):
 
 def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exists=False):
     '''
-    This function is used by the upload handler to create a sound object with the information provided through post
-    parameters.
+    This function is used by the upload handler to create a sound object with
+    the information provided through sound_fields parameter.
     '''
 
     # 1 make sound object

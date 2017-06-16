@@ -18,15 +18,19 @@
 #     See AUTHORS file.
 #
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.conf import settings
 from utils.forms import filename_has_valid_extension
+from utils.tags import clean_and_split_tags
 from sounds.models import Sound, Pack, License, Download
 from donations.models import Donation
+from shutil import copyfile
 import datetime
 import utils.downloads
+import tempfile
+import os
 
 
 class UtilsTest(TestCase):
@@ -61,6 +65,56 @@ class UtilsTest(TestCase):
         licenses_url = (reverse('pack-licenses', args=["testuser", pack.id]))
         ret = utils.downloads.download_sounds(licenses_url, pack)
         self.assertEqual(ret.status_code, 200)
+
+    @override_settings(UPLOADS_PATH=tempfile.mkdtemp())
+    def test_upload_sounds(self):
+        # create new sound files
+        filenames = ['file1.wav', 'file2.wav']
+        user = User.objects.create_user("testuser", password="testpass")
+        user_upload_path = settings.UPLOADS_PATH + '/%i/' % user.id
+        os.mkdir(user_upload_path)
+        for filename in filenames:
+            f = open(user_upload_path + filename, 'a')
+            f.write(os.urandom(1024))  # Add random content to the file to avoid equal md5
+            f.close()
+
+        copyfile(user_upload_path + filenames[0], user_upload_path + "copy.wav")
+
+        license = License.objects.all()[0]
+        sound_fields = {
+            'name': 'new sound',
+            'dest_path': user_upload_path + filenames[0],
+            'license': license.name,
+            'description': 'new sound',
+            'tags': clean_and_split_tags('tag1, tag2, tag3'),
+        }
+        sound = utils.sound_upload.create_sound(user, sound_fields, process=False)
+        self.assertEqual(user.sounds.all().count(), 1)
+
+        #Now the file has been removed so it should fail
+        try:
+            sound = utils.sound_upload.create_sound(user, sound_fields, process=False)
+        except utils.sound_upload.NoAudioException:
+            # If we try to upload the same file again it shuld also fail
+            sound_fields['dest_path'] = user_upload_path + "copy.wav"
+            try:
+                sound = utils.sound_upload.create_sound(user, sound_fields, process=False)
+            except utils.sound_upload.AlreadyExistsException:
+                pass
+
+        self.assertEqual(user.sounds.all().count(), 1)
+
+        #Upload file with geotag and pack
+        sound_fields['dest_path'] = user_upload_path + filenames[1]
+        sound_fields['geotag'] = '41.2222,31.0000,17'
+        sound_fields['pack'] = 'new pack'
+        sound_fields['name'] = filenames[1]
+        sound = utils.sound_upload.create_sound(user, sound_fields, process=False)
+        self.assertEqual(user.sounds.all().count(), 2)
+        self.assertEqual(Pack.objects.filter(name='new pack').exists(), True)
+        self.assertEqual(user.sounds.get(original_filename=filenames[1]).tags.count(), 3)
+        self.assertNotEqual(user.sounds.get(original_filename=filenames[1]).geotag, None)
+
 
     def test_should_suggest_donation(self):
         user = User.objects.create_user("testuser", password="testpass")

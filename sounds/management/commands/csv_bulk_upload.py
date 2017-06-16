@@ -131,7 +131,7 @@ class Command(BaseCommand):
                 'license': licensef,
                 'pack': packnamef,
                 'description': descriptionf,
-                'tags': tagsf,
+                'tags': tagsf.split(),
                 'geotag': geotagf
             }
 

@@ -9,7 +9,7 @@ You have received a new comment on a sound you uploaded!
 
 The user '{{user.username}}' posted the following comment about {{sound.original_filename}}:
 
-{{comment}}
+{{comment|striptags|safe}}
 
 To see this comment in context, please visit:
 

@@ -35,11 +35,14 @@ from utils.pagination import paginate
 @login_required
 def delete(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
-    if not (request.user.has_perm('comments.delete_comment') or
-            (comment.content_object.user == request.user if comment.content_object and
-                hasattr(comment.content_object, 'user') else False)
-            ):
-        raise PermissionDenied
+    # User can delete if has permission or if is the owner of the comment
+    if not (request.user.has_perm('comments.delete_comment'))\
+            and comment.user != request.user:
+        # Also user can delete if is the owner of the sound
+        if not comment.content_object\
+                or not hasattr(comment.content_object, 'user')\
+                or comment.content_object.user != request.user:
+            raise PermissionDenied
     comment.delete()
     messages.success(request, 'Comment deleted.')
     next = request.GET.get("next")

@@ -345,9 +345,14 @@ def sound_edit(request, username, sound_id):
                                             ticket.MODERATOR_ONLY)
 
     if is_selected("description"):
-        description_form = SoundDescriptionForm(request.POST, prefix="description")
+        description_form = SoundDescriptionForm(
+                request.POST,
+                prefix="description",
+                explicit_disable=sound.is_explicit)
+
         if description_form.is_valid():
             data = description_form.cleaned_data
+            sound.is_explicit = data["is_explicit"]
             sound.set_tags(data["tags"])
             sound.description = remove_control_chars(data["description"])
             sound.original_filename = data["name"]
@@ -358,6 +363,7 @@ def sound_edit(request, username, sound_id):
     else:
         tags = " ".join([tagged_item.tag.name for tagged_item in sound.tags.all().order_by('tag__name')])
         description_form = SoundDescriptionForm(prefix="description",
+                                                explicit_disable=sound.is_explicit,
                                                 initial=dict(tags=tags,
                                                              description=sound.description,
                                                              name=sound.original_filename))

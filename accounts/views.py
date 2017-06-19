@@ -515,7 +515,7 @@ def describe_sounds(request):
             prefix = str(i)
             forms.append({})
             forms[i]['sound'] = sounds_to_describe[i]
-            forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix)
+            forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix, explicit_disable=False)
             forms[i]['geotag'] = GeotaggingForm(request.POST, prefix=prefix)
             forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                         request.POST,
@@ -535,6 +535,7 @@ def describe_sounds(request):
             sound = Sound()
             sound.user = request.user
             sound.original_filename = forms[i]['description'].cleaned_data['name']
+            sound.is_explicit = forms[i]['description'].cleaned_data['is_explicit']
             sound.original_path = forms[i]['sound'].full_path
             try:
                 sound.filesize = os.path.getsize(sound.original_path)

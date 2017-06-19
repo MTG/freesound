@@ -205,8 +205,8 @@
         {{description_form.description }}
     </p>
     <p>
-        Explicit content:
-        {{description_form.is_explicit }}{% if sound.is_explicit %}(If the sound is not explicit contact the administrators){% endif %}
+        The sound contains explicit content:
+        {{description_form.is_explicit }} {% if sound.is_explicit %}(to remove this flag, please send a <a href="{% url 'contact' %}">support request</a>){% endif %}
     </p>
 
     <input type="submit" name="submit" value="submit" />

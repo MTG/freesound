@@ -12,16 +12,18 @@
       
       // When the user enters a username we check if it's available
       $("#id_username").focusout(function(){
-        $('#spinner').show();
-        $('#username_check').hide();
-        $('#check_success').hide();
-        $.get('{% url "check_username" %}', 
-            {'username': $("#id_username").val()}, 
-            function(data){
-              $('#username_check').toggle(!data.result);
-              $('#spinner').hide();
-              $('#check_success').toggle(data.result);
-            }, "json" );
+        if ($("#id_username").val()) {
+          $('#spinner').show();
+          $('#username_check').hide();
+          $('#check_success').hide();
+          $.get('{% url "check_username" %}', 
+              {'username': $("#id_username").val()}, 
+              function(data){
+                $('#username_check').toggle(!data.result);
+                $('#spinner').hide();
+                $('#check_success').toggle(data.result);
+              }, "json" );
+        }
       });
     });    
 </script>

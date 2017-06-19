@@ -23,7 +23,7 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from tickets.models import Ticket
-from sounds.models import Sound
+from sounds.models import Sound, RandomSound
 from optparse import make_option
 from utils.mail import send_mail_template
 from tickets import TICKET_STATUS_CLOSED
@@ -93,7 +93,8 @@ class Command(BaseCommand):
     def task_email_random_sound(self, gearman_worker, gearman_job):
         self.write_stdout("Notifying user of random sound of the day")
         random_sound_id = gearman_job.data
-        random_sound = Sound.objects.get(id=random_sound_id)
+        rnd = RandomSound.objects.get(id=random_sound_id)
+        random_sound = rnd.sound
 
         if random_sound.user.profile.email_not_disabled("random_sound"):
             send_mail_template(\

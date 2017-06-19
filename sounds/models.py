@@ -681,6 +681,11 @@ class Sound(SocialModel):
         ordering = ("-created", )
 
 
+class RandomSound(models.Model):
+    sound = models.ForeignKey(Sound)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+
 class DeletedSound(models.Model):
     user = models.ForeignKey(User)
     created = models.DateTimeField(db_index=True, auto_now_add=True)

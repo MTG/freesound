@@ -42,7 +42,7 @@ from geotags.models import GeoTag
 from networkx import nx
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound
+from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, RandomSound
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
@@ -75,11 +75,9 @@ def get_random_sound():
     cache_key = "random_sound"
     random_sound = cache.get(cache_key)
     if not random_sound:
-        random_sound = Sound.objects.random()
+        rnd = RandomSound.objects.order_by('created').last()
+        random_sound = rnd.sound_id
         cache.set(cache_key, random_sound, 60*60*24)
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_job("email_random_sound", str(random_sound),
-                wait_until_complete=False, background=True)
     return random_sound
 
 

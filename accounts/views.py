@@ -178,9 +178,6 @@ def tos_acceptance(request):
 
 
 def registration(request):
-    if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('accounts-home'))
-
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
@@ -194,9 +191,6 @@ def registration(request):
 
 
 def activate_user(request, username, uid_hash):
-    if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('accounts-home'))
-
     try:
         user = User.objects.get(username__iexact=username)
     except User.DoesNotExist:
@@ -223,9 +217,6 @@ def send_activation(user):
 
 
 def resend_activation(request):
-    if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('accounts-home'))
-
     if request.method == 'POST':
         form = ReactivationForm(request.POST)
         if form.is_valid():
@@ -239,9 +230,6 @@ def resend_activation(request):
 
 
 def username_reminder(request):
-    if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('accounts-home'))
-
     if request.method == 'POST':
         form = UsernameReminderForm(request.POST)
         if form.is_valid():

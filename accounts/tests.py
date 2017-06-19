@@ -31,7 +31,7 @@ from django.conf import settings
 from accounts.models import Profile, EmailPreferenceType, SameUser
 from accounts.views import handle_uploaded_image
 from accounts.forms import FsPasswordResetForm
-from sounds.models import License, Sound, Pack, DeletedSound
+from sounds.models import License, Sound, Pack, DeletedSound, RandomSound
 from tags.models import TaggedItem
 from utils.filesystem import File
 from tags.models import Tag
@@ -54,6 +54,7 @@ class SimpleUserTest(TestCase):
     def setUp(self):
         self.user = User.objects.all()[0]
         self.sound = Sound.objects.all()[0]
+        RandomSound.objects.create(sound=self.sound)
 
     def test_account_response_ok(self):
         # 200 response on account access

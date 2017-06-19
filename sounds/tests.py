@@ -21,7 +21,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from sounds.models import Sound, Pack, License, DeletedSound
+from sounds.models import Sound, Pack, License, DeletedSound, RandomSound
 from sounds.views import get_random_sound, get_random_uploader
 from general.templatetags.filter_img import replace_img
 from utils.tags import clean_and_split_tags
@@ -78,6 +78,8 @@ class RandomSoundAndUploaderTestCase(TestCase):
     fixtures = ['sounds']
 
     def test_random_sound(self):
+        sound = Sound.objects.get(id=19)
+        RandomSound.objects.create(sound=sound)
         random_sound = get_random_sound()
         self.assertEqual(isinstance(random_sound, int), True)
 

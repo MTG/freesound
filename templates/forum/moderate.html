@@ -26,7 +26,7 @@
                     <a href="{% url "forums-post" post.post.thread.forum.name_slug post.post.thread.id post.post.id %}" class="topic_subject">{{post.post.thread.title|safe}}</a><br />
                 </div>
                 <br>
-                {{post.post.body|smileys|safe|linebreaks}}
+                {{post.post.body|replace_img|smileys|safe|linebreaks}}
             </li>
             <form action="." method="post">{% csrf_token %}
                 {{ post.form.as_p }}

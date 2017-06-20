@@ -4,6 +4,7 @@
 {% load paginator %}
 {% load smileys %}
 {% load flag_user %}
+{% load filter_img %}
 
 {% block title %}forums - {{forum.name}} - {{thread.title}}{% endblock %}
 
@@ -52,7 +53,8 @@
         </div>
         {% endif %}
         <br><br>
-        {{post.body|smileys|safe|linebreaks}}
+
+        {{post.body|replace_img|smileys|safe|linebreaks}}
 
         {% if post.author.profile.signature %}
         <div class="signature">{{post.author.profile.signature|smileys|safe}}</div>

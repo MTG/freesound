@@ -19,7 +19,7 @@
 {% for post in latest_posts %}
     <p>
     <a href="{% url "account" post.author.username %}">{{post.author.username}}</a>, {{post.created|timesince}} ago:</br>
-    {{post.body|safe|linebreaks}}
+    {{post.body|replace_img|safe|linebreaks}}
     </p>
 {% endfor %}
 </div>

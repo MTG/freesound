@@ -113,16 +113,10 @@ class Command(BaseCommand):
         # Compute stats related with donations:
         query_donations = donations.models.Donation.objects\
             .filter(created__gt=time_span)\
-            .extra({'week': "to_char(created, 'WW-IYYY')"})\
-            .values('week').order_by()\
+            .extra({'day': 'date(created)'}).values('day').order_by()\
             .annotate(Sum('amount'))
 
-        new_donations = [{
-            'week': str(datetime.datetime.strptime(d['week']+ '-0', "%W-%Y-%w").date()),
-            'amount__sum': d['amount__sum']
-        } for d in query_donations]
-
-        cache.set('donations_stats', {'new_donations': new_donations}, 60*60*24)
+        cache.set('donations_stats', {'new_donations': list(query_donations)}, 60*60*24)
 
         # Compute stats related with Tags:
         time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)

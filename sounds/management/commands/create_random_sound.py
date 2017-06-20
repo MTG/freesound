@@ -18,24 +18,52 @@
 #     See AUTHORS file.
 #
 
-import gearman
+import datetime
+import logging
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from sounds.models import Sound, RandomSound
+from sounds.models import Sound, SoundOfTheDay
+
+logger = logging.getLogger("gearman_worker_processing")
 
 
 class Command(BaseCommand):
 
-    help = 'Add new RandomSound'
+    help = 'Add new SoundOfTheDay objects'
+
+    def create_random_sound(self, date_display):
+        # Generate a list of users to exclude
+        days_for_user = settings.NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS
+        date_from = date_display - datetime.timedelta(days=days_for_user)
+        users = SoundOfTheDay.objects.filter(
+                date_display__lt=date_display,
+                date_display__gte=date_from).values_list('sound__user_id', flat=True)
+
+        already_created = SoundOfTheDay.objects.filter(date_display=date_display).count()
+        while not already_created:
+            # Get random sound and check if the user is not excluded
+            random_sound_id = Sound.objects.random()
+            sound = Sound.objects.get(id=random_sound_id)
+            if not sound.user_id in list(users):
+                rnd = SoundOfTheDay.objects.create(sound=sound, date_display=date_display)
+                logger.info("Created new Random Sounds with id %d" % rnd.id)
+                already_created = True
 
     def handle(self, *args, **options):
-        print 'Create new RandomSound task'
-        random_sound_id = Sound.objects.random()
-        sound = Sound.objects.get(id=random_sound_id)
-        rnd = RandomSound.objects.create(sound=sound)
-        gm_client = gearman.GearmanClient(settings.GEARMAN_JOB_SERVERS)
-        gm_client.submit_job("email_random_sound", str(rnd.id),
-                wait_until_complete=False, background=True)
-        print "Create new RandomSound task ended"
+        logger.info('Create new RandomSound task')
+
+        # First make sure there is a sound for today
+        self.create_random_sound(datetime.date.today())
+
+        # Then create sounds in advance
+        number_sounds = settings.NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE
+        already_created = SoundOfTheDay.objects.filter(date_display__gt=datetime.date.today()).count()
+        sounds_to_create = number_sounds - already_created
+        if sounds_to_create > 0:
+            logger.info("Creating %d new Random Sounds" % sounds_to_create)
+            for i in range(number_sounds):
+                td = datetime.timedelta(days=i+1)
+                self.create_random_sound(datetime.date.today()+td)
+        logger.info('Create new RandomSound task ended')
 
 

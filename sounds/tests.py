@@ -21,12 +21,13 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from sounds.models import Sound, Pack, License, DeletedSound, RandomSound
+from sounds.models import Sound, Pack, License, DeletedSound, SoundOfTheDay
 from sounds.views import get_random_sound, get_random_uploader
 from general.templatetags.filter_img import replace_img
 from utils.tags import clean_and_split_tags
 from utils.encryption import encrypt
 import time
+import datetime
 
 
 class OldSoundLinksRedirectTestCase(TestCase):
@@ -79,7 +80,7 @@ class RandomSoundAndUploaderTestCase(TestCase):
 
     def test_random_sound(self):
         sound = Sound.objects.get(id=19)
-        RandomSound.objects.create(sound=sound)
+        SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date.today())
         random_sound = get_random_sound()
         self.assertEqual(isinstance(random_sound, int), True)
 

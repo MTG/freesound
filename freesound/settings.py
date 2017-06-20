@@ -179,6 +179,10 @@ SOUNDS_PENDING_MODERATION_PER_PAGE = 8
 MAX_UNMODERATED_SOUNDS_IN_HOME_PAGE = 5
 ALLOWED_AUDIOFILE_EXTENSIONS = ['wav', 'aiff', 'aif', 'ogg', 'flac', 'mp3']
 
+# Random Sound of the day settings
+NUMBER_OF_DAYS_FOR_USER_RANDOM_SOUNDS = 5
+NUMBER_OF_RANDOM_SOUNDS_IN_ADVANCE = 25
+
 # Number of ratings of a sound to start showing average
 MIN_NUMBER_RATINGS = 3
 

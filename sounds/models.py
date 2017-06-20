@@ -681,9 +681,10 @@ class Sound(SocialModel):
         ordering = ("-created", )
 
 
-class RandomSound(models.Model):
+class SoundOfTheDay(models.Model):
     sound = models.ForeignKey(Sound)
-    created = models.DateTimeField(db_index=True, auto_now_add=True)
+    date_display = models.DateField(db_index=True)
+    email_sent = models.BooleanField(default=False)
 
 
 class DeletedSound(models.Model):

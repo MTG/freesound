@@ -42,7 +42,7 @@ from geotags.models import GeoTag
 from networkx import nx
 from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
-from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, RandomSound
+from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound, SoundOfTheDay
 from sounds.templatetags import display_sound
 from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
@@ -75,7 +75,7 @@ def get_random_sound():
     cache_key = "random_sound"
     random_sound = cache.get(cache_key)
     if not random_sound:
-        rnd = RandomSound.objects.order_by('created').last()
+        rnd = SoundOfTheDay.objects.get(date_display=datetime.date.today())
         random_sound = rnd.sound_id
         cache.set(cache_key, random_sound, 60*60*24)
     return random_sound

@@ -23,11 +23,12 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from tickets.models import Ticket
-from sounds.models import Sound, RandomSound
+from sounds.models import Sound, SoundOfTheDay
 from optparse import make_option
 from utils.mail import send_mail_template
 from tickets import TICKET_STATUS_CLOSED
 import logging
+import datetime
 
 logger = logging.getLogger("gearman_worker_async_tasks")
 
@@ -92,8 +93,7 @@ class Command(BaseCommand):
 
     def task_email_random_sound(self, gearman_worker, gearman_job):
         self.write_stdout("Notifying user of random sound of the day")
-        random_sound_id = gearman_job.data
-        rnd = RandomSound.objects.get(id=random_sound_id)
+        rnd = SoundOfTheDay.objects.filter(date_display=datetime.date.today(), email_sent=False)
         random_sound = rnd.sound
 
         if random_sound.user.profile.email_not_disabled("random_sound"):
@@ -102,6 +102,8 @@ class Command(BaseCommand):
                 'sounds/email_random_sound.txt',
                 {'sound': random_sound, 'user': random_sound.user},
                 None, random_sound.user.email)
+            rnd.email_sent = True
+            rnd.save()
 
         self.write_stdout("Finished sending mail to user %s of random sound of the day %s" %
                 (random_sound.user, random_sound.id))

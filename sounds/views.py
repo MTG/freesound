@@ -123,11 +123,10 @@ def remixed(request):
 
 
 def random(request):
-    sound_id = Sound.objects.random()
-    if sound_id is None:
+    sound_obj = Sound.objects.random()
+    if sound is None:
         raise Http404
-    sound_obj = Sound.objects.get(pk=sound_id)
-    return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_id])+"?random_browsing=true")
+    return HttpResponseRedirect(reverse("sound", args=[sound_obj.user.username,sound_obj.id])+"?random_browsing=true")
 
 
 def packs(request):

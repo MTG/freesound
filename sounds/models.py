@@ -100,18 +100,16 @@ class SoundManager(models.Manager):
         return DelayedQueryExecuter(query)
 
     def random(self):
-        sound_count = self.filter(moderation_state="OK", processing_state="OK").count()
+        query_sounds = self.exclude(is_explicit=True)\
+                .filter(moderation_state="OK",
+                        processing_state="OK",
+                        flag=None,
+                        avg_rating__gt=6,
+                        num_ratings__gt=3)
+        sound_count = query_sounds.count()
         if sound_count:
             offset = random.randint(0, sound_count - 1)
-            cursor = connection.cursor()
-            cursor.execute("""SELECT id
-                               FROM sounds_sound
-                              WHERE moderation_state='OK'
-                                AND processing_state='OK'
-                                AND is_explicit=FALSE
-                             OFFSET %d
-                              LIMIT 1""" % offset)
-            return cursor.fetchone()[0]
+            return query_sounds.all()[offset]
         else:
             return None
 

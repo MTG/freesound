@@ -38,13 +38,13 @@ class Command(BaseCommand):
         users = SoundOfTheDay.objects.filter(
                 date_display__lt=date_display,
                 date_display__gte=date_from).values_list('sound__user_id', flat=True)
+        used_sounds = SoundOfTheDay.objects.values_list('sound_id', flat=True)
 
         already_created = SoundOfTheDay.objects.filter(date_display=date_display).count()
         while not already_created:
             # Get random sound and check if the user is not excluded
-            random_sound_id = Sound.objects.random()
-            sound = Sound.objects.get(id=random_sound_id)
-            if not sound.user_id in list(users):
+            sound = Sound.objects.random()
+            if not sound.user_id in list(users) and sound.id not in used_sounds:
                 rnd = SoundOfTheDay.objects.create(sound=sound, date_display=date_display)
                 logger.info("Created new Random Sounds with id %d" % rnd.id)
                 already_created = True

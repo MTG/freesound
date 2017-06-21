@@ -461,7 +461,6 @@ def pack_edit(request, username, pack_id):
     if request.method == "POST":
         form = PackEditForm(request.POST, instance=pack)
         if form.is_valid():
-            pack.sound_set.all().update(is_index_dirty=True)
             form.save()
             pack.sound_set.all().update(is_index_dirty=True)
             return HttpResponseRedirect(pack.get_absolute_url())

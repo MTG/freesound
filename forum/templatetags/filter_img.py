@@ -9,7 +9,7 @@ register = template.Library()
 def replace_img(string):
     soup = BeautifulSoup(string)
     for img in soup.findAll('img'):
-        if 'https://' != img['src'][:8]:
+        if not img['src'].lower().startswith("https"):
             a = Tag(soup, "a")
             a['href'] = img['src']
             a.string = "(Unsecure image)"

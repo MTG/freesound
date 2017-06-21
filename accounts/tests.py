@@ -595,7 +595,7 @@ class UserUploadAndDescribeSounds(TestCase):
 
         # Check that sounds have been created along with related tags, geotags and packs
         self.assertEqual(user.sounds.all().count(), 2)
-        self.assertEqual(user.pack_set.filter(name='Name of a new pack').exists(), True)
+        self.assertEqual(Pack.objects.filter(name='Name of a new pack').exists(), True)
         self.assertEqual(Tag.objects.filter(name__contains="testtag").count(), 5)
         self.assertNotEqual(user.sounds.get(original_filename=filenames[0]).geotag, None)
 

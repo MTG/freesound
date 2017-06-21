@@ -62,11 +62,12 @@
             var wrapper = $('#gmap-wrapper-'+n);
             if(wrapper.is(':visible')) {
                 $('#gmap-header-'+n).removeClass('.active-gmap');
-                $('#gmap-header-text-'+n).text('Show Geotag map');
+                $('#gmap-header-text-'+n).text('Add geotag');
                 wrapper.hide(500);
             } else {
                 $('#gmap-header-'+n).addClass('.active-gmap');
-                $('#gmap-header-text-'+n).text('Hide Geotag map');
+                //$('#gmap-header-text-'+n).text('Hide Geotag map');
+                $('#gmap-header-text-'+n).hide();  // To avoid confussion, we disable the option to hide the map
                 wrapper.show(500);
                 if (!maps[n]){
                     init_map(n);
@@ -268,7 +269,7 @@
 
             <h3>Geotag</h3>
             <p id="gmap-header-{{forloop.counter}}">
-                <a onclick="toggleMapVisibility({{forloop.counter}});"><span id="gmap-header-text-{{forloop.counter}}">Show Geotag map</span></a>
+                <a href="javascript:void(0);" onclick="toggleMapVisibility({{forloop.counter}});"><span id="gmap-header-text-{{forloop.counter}}">Add geotag</span></a>
             </p>
             <div class="gmap-wrapper" id="gmap-wrapper-{{forloop.counter}}">
                 <p>Drag this map to set a geotag:</p>

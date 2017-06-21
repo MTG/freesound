@@ -179,9 +179,6 @@ def tos_acceptance(request):
 
 
 def registration(request):
-    if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('accounts-home'))
-
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
@@ -195,9 +192,6 @@ def registration(request):
 
 
 def activate_user(request, username, uid_hash):
-    if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('accounts-home'))
-
     try:
         user = User.objects.get(username__iexact=username)
     except User.DoesNotExist:
@@ -224,9 +218,6 @@ def send_activation(user):
 
 
 def resend_activation(request):
-    if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('accounts-home'))
-
     if request.method == 'POST':
         form = ReactivationForm(request.POST)
         if form.is_valid():
@@ -240,9 +231,6 @@ def resend_activation(request):
 
 
 def username_reminder(request):
-    if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('accounts-home'))
-
     if request.method == 'POST':
         form = UsernameReminderForm(request.POST)
         if form.is_valid():
@@ -318,6 +306,8 @@ def edit_email_settings(request):
         if form.is_valid():
             email_type_ids = form.cleaned_data['email_types']
             request.user.profile.update_enabled_email_types(email_type_ids)
+            messages.add_message(request, messages.INFO, 'Your email notification preferences have been updated')
+            return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         # Get list of enabled email_types
         all_emails = request.user.profile.get_enabled_email_types()
@@ -528,7 +518,7 @@ def describe_sounds(request):
             prefix = str(i)
             forms.append({})
             forms[i]['sound'] = sounds_to_describe[i]
-            forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix)
+            forms[i]['description'] = SoundDescriptionForm(request.POST, prefix=prefix, explicit_disable=False)
             forms[i]['geotag'] = GeotaggingForm(request.POST, prefix=prefix)
             forms[i]['pack'] = PackForm(Pack.objects.filter(user=request.user).exclude(is_deleted=True),
                                         request.POST,
@@ -550,6 +540,7 @@ def describe_sounds(request):
                 'license': forms[i]['license'].cleaned_data['license'],
                 'description': forms[i]['description'].cleaned_data.get('description', ''),
                 'tags': forms[i]['description'].cleaned_data.get('tags', ''),
+                'is_explicit': forms[i]['description'].cleaned_data['is_explicit'],
             }
 
             pack = forms[i]['pack'].cleaned_data.get('pack', False)

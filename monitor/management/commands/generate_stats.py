@@ -90,16 +90,17 @@ class Command(BaseCommand):
         time_span = datetime.datetime.now()-datetime.timedelta(days=365)
 
         active_users = {
-            'sounds': {'obj': sounds.models.Sound.objects, 'attr': 'user'},
-            'comments': {'obj': comments.models.Comment.objects, 'attr': 'user'},
-            'posts': {'obj': forum.models.Post.objects, 'attr': 'author'},
-            'downloads': {'obj': sounds.models.Download.objects, 'attr': 'user'},
-            'rate': {'obj': ratings.models.Rating.objects, 'attr': 'user'},
+            'sounds': {'obj': sounds.models.Sound.objects, 'attr': 'user_id'},
+            'comments': {'obj': comments.models.Comment.objects, 'attr': 'user_id'},
+            'posts': {'obj': forum.models.Post.objects, 'attr': 'author_id'},
+            'downloads': {'obj': sounds.models.Download.objects, 'attr': 'user_id'},
+            'rate': {'obj': ratings.models.Rating.objects, 'attr': 'user_id'},
         }
         for i in active_users.keys():
             qq = active_users[i]['obj'].filter(created__gt=time_span)\
                 .extra({'week': "to_char(created, 'WW-IYYY')"})\
-                .values('week').order_by().annotate(Count(active_users[i]['attr']))
+                .values('week').order_by()\
+                .annotate(Count(active_users[i]['attr'], distinct=True))
 
             converted_weeks = [{
                 'week': str(datetime.datetime.strptime(d['week']+ '-0', "%W-%Y-%w").date()),
@@ -112,10 +113,16 @@ class Command(BaseCommand):
         # Compute stats related with donations:
         query_donations = donations.models.Donation.objects\
             .filter(created__gt=time_span)\
-            .extra({'day': 'date(created)'}).values('day').order_by()\
+            .extra({'week': "to_char(created, 'WW-IYYY')"})\
+            .values('week').order_by()\
             .annotate(Sum('amount'))
 
-        cache.set('donations_stats', {'new_donations': list(query_donations)}, 60*60*24)
+        new_donations = [{
+            'week': str(datetime.datetime.strptime(d['week']+ '-0', "%W-%Y-%w").date()),
+            'amount__sum': d['amount__sum']
+        } for d in query_donations]
+
+        cache.set('donations_stats', {'new_donations': new_donations}, 60*60*24)
 
         # Compute stats related with Tags:
         time_span = datetime.datetime.now()-datetime.timedelta(weeks=2)

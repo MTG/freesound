@@ -124,7 +124,9 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
     # 6 set description, tags
     sound.description = sound_fields['description']
     sound.set_tags(sound_fields['tags'])
-    #sound.set_tags([t.lower() for t in sound_fields['tags'].split(" ") if t])
+
+    if 'is_explicit' in sound_fields:
+        sound.is_explicit = sound_fields['is_explicit']
 
     # 6.5 set uploaded apiv2 client
     sound.uploaded_with_apiv2_client = apiv2_client

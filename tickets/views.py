@@ -381,10 +381,12 @@ def moderation_assigned(request, user_id):
 
             if action == "Approve":
                 tickets.update(status=TICKET_STATUS_CLOSED)
+                explicit = mod_sound_form.cleaned_data.get("is_explicit")
                 Sound.objects.filter(ticket__in=tickets).update(
                         is_index_dirty=True,
                         moderation_state='OK',
-                        moderation_date=datetime.datetime.now())
+                        moderation_date=datetime.datetime.now(),
+                        is_explicit=explicit)
                 if msg:
                     notification = Ticket.NOTIFICATION_APPROVED_BUT
                 else:

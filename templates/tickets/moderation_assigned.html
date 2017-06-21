@@ -241,7 +241,7 @@
                     <form action="." method="post">{% csrf_token %}
 
                            <div id="moderation-decision-form">
-                               {{ mod_sound_form.as_table }}
+                               {{ mod_sound_form.as_p }}
                            </div>
                             <div style="clear:both;">
                            {% include 'tickets/moderation_options.html' %}

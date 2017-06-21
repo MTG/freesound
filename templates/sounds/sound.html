@@ -119,7 +119,7 @@
                         <span class="comment_author"><a href="{% url 'account' comment.user.username %}">{{comment.user.username}}</a></span>
                         <span class="comment_date">{{comment.created|timesince}} ago</span>
 
-                        {% if perms.comments.delete_comment or sound.user == request.user %}
+                        {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
                         <span class="comment_delete"><a href="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" id="delete_button" title="delete comment">delete comment</a>
                         {% endif %}
                     </div>

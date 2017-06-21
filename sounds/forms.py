@@ -60,10 +60,22 @@ class GeotaggingForm(forms.Form):
 class SoundDescriptionForm(forms.Form):
     name = forms.CharField(max_length=512, min_length=5,
                            widget=forms.TextInput(attrs={'size': 65, 'class':'inputText'}))
+    is_explicit = forms.BooleanField(required=False)
     tags = TagField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 3}),
                     help_text="<br>Add at least 3 tags, separating them with spaces. Join multi-word tags with dashes. "
                               "For example: field-recording is a popular tag.")
     description = HtmlCleaningCharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 10}))
+
+    def __init__(self, *args, **kwargs):
+        explicit_disable = False
+        if 'explicit_disable' in kwargs:
+            explicit_disable = kwargs.get('explicit_disable')
+            del kwargs['explicit_disable']
+
+        super(SoundDescriptionForm, self).__init__(*args, **kwargs)
+        # Disable is_explcit field if is already marked
+        self.initial['is_explicit'] = explicit_disable
+        self.fields['is_explicit'].disabled = explicit_disable
 
 
 class RemixForm(forms.Form):

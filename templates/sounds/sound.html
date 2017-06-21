@@ -1,5 +1,6 @@
 {% extends "sounds/_section.html" %}
 
+{% load filter_img %}
 {% load paginator %}
 {% load util %}
 {% load ratings %}
@@ -97,7 +98,7 @@
         <div id="sound_date">{{sound.created|date:"F jS, Y"}}</div>
     </div>
     <div id="sound_description">
-        {{sound.description|safe|linebreaks}}
+        {{sound.description|replace_img|safe|linebreaks}}
     </div>
 
     <ul class="tags">
@@ -123,7 +124,7 @@
                         <span class="comment_delete"><a href="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" id="delete_button" title="delete comment">delete comment</a>
                         {% endif %}
                     </div>
-                    {{comment.comment|safe|linebreaks}}
+                    {{comment.comment|replace_img|safe|linebreaks}}
 
                     <div style="text-align: right; font-size: 10px; margin-bottom: -8px">
                         {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}

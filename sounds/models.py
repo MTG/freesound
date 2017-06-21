@@ -613,13 +613,13 @@ class Sound(SocialModel):
         # From django 1.8.4 is required to save the object before adding the relation
         comment.save()
         self.comments.add(comment)
-        self.num_comments += 1
+        self.num_comments += self.comments.count()
         self.mark_index_dirty(commit=False)
         if commit:
             self.save()
 
     def post_delete_comment(self, commit=True):
-        self.num_comments -= 1
+        self.num_comments = self.comments.count()
         self.mark_index_dirty(commit=False)
         if commit:
             self.save()

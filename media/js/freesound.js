@@ -154,3 +154,19 @@ function afterDownloadModal(show_modal_url, sound_name){
             openModal();
         });
 }
+function unsecureImageCheck(input) {
+    var unique = '#unsecure_img_check' + new Date().valueOf();
+    var div = $("<div>", {style: "color: red"});
+    div.append("Sorry, images must be from a secure uri.");
+    div.insertAfter(input);
+    div.hide();
+      
+    // When the user enters text we check if it contains unsecure uri
+    input.keypress(function(){
+      var txt = input.val();
+      if (txt) {
+          is_unsecure = /.*<img.+src=.http:\/\/.*/.test(txt);
+          div.toggle(is_unsecure);
+        }
+    });
+}

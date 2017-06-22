@@ -4165,3 +4165,10 @@ ul.messages {
     padding: 15px;
     font-size: 12px;
 }
+
+.unsecure_image_warning {
+    border: 1px solid #f8e982;
+    background-color: #F7F8E0;
+    padding: 10px;
+    margin-bottom: 20px;
+}

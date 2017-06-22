@@ -156,17 +156,30 @@ function afterDownloadModal(show_modal_url, sound_name){
 }
 function unsecureImageCheck(input) {
     var unique = '#unsecure_img_check' + new Date().valueOf();
-    var div = $("<div>", {style: "color: red"});
-    div.append("Warning: you are adding an image from a non-secure location. Only images from secure locations (i.e. the URL starts with https://...) will be shown in Freesound.");
-    div.insertAfter(input);
+    var div = $("<div>", {class: "unsecure_image_warning"});
+    div.append("<b>Warning</b>: you are adding an image from a non-secure location. Only images from secure locations (i.e. the URL starts with https://...) will be shown in Freesound.");
+    div.insertBefore(input);
     div.hide();
+
+    function show_message_if_insecure(){
+        var txt = input.val();
+        if (txt) {
+            is_unsecure = /.*<img.+src=.http:.*/.test(txt);
+            div.toggle(is_unsecure);
+        }
+    }
       
     // When the user enters text we check if it contains unsecure uri
-    input.keypress(function(){
-      var txt = input.val();
-      if (txt) {
-          is_unsecure = /.*<img.+src=.http:\/\/.*/.test(txt);
-          div.toggle(is_unsecure);
-        }
+    input.keydown(function(){
+        show_message_if_insecure();
+    });
+
+    // Also onfocus
+    input.focus(function(){
+        show_message_if_insecure();
+    });
+
+    input.focusout(function(){
+        show_message_if_insecure();
     });
 }

@@ -163,23 +163,16 @@ function unsecureImageCheck(input) {
 
     function show_message_if_insecure(){
         var txt = input.val();
-        if (txt) {
-            is_unsecure = /.*<img.+src=.http:.*/.test(txt);
-            div.toggle(is_unsecure);
-        }
+        var regular_expression = new RegExp('.*<img.+src=.http:.*', 'i');
+        var is_unsecure = regular_expression.test(txt);
+        div.toggle(is_unsecure);
     }
       
     // When the user enters text we check if it contains unsecure uri
-    input.keydown(function(){
-        show_message_if_insecure();
-    });
-
-    // Also onfocus
-    input.focus(function(){
-        show_message_if_insecure();
-    });
-
-    input.focusout(function(){
-        show_message_if_insecure();
+    input.bind('keydown focusin', function(){
+        setTimeout(function(){
+            // We need the timeout for the paste event to make sure the text has been pasted when evaluated
+            show_message_if_insecure();
+        }, 100);
     });
 }

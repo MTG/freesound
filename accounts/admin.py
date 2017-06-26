@@ -103,11 +103,12 @@ admin.site.register(UserFlag, UserFlagAdmin)
 
 
 class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
-    search_fields = ('username', 'email')
+    search_fields = ('=username', '=email')
     actions = (disable_active_user, disable_active_user_preserve_sounds, )
     list_display = ('username', 'email')
     list_filter = ()
     ordering = ('id', )
+    show_full_result_count=False
 
     def full_delete(self, request, obj):
         username = obj.username

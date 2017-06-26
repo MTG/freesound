@@ -217,19 +217,12 @@ def _get_unsure_sound_tickets():
 def _get_tardy_moderator_tickets():
     """Get tickets for moderators that haven't responded in the last day"""
     time_span = datetime.date.today() - datetime.timedelta(days=1)
-    cc = TicketComment.objects\
-        .exclude(ticket__status=TICKET_STATUS_CLOSED)\
-        .values('ticket_id')\
-        .annotate(Max('id'))\
-        .order_by('ticket_id')\
-        .values_list('id__max')  # All 'last' messages from non closed tickets
 
     tt = Ticket.objects.filter(
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
-        Q(messages__in=cc) &
-        Q(messages__created__lt=time_span) &
-        (Q(messages__sender=F('sender')) | Q(messages__sender=None))
+        (Q(last_commenter=F('sender')) | Q(messages__sender=None)) &
+        Q(comment_date__lt=time_span)
     )
     return tt
 
@@ -237,19 +230,12 @@ def _get_tardy_moderator_tickets():
 def _get_tardy_user_tickets():
     """Get tickets for users that haven't responded in the last 2 days"""
     time_span = datetime.date.today() - datetime.timedelta(days=2)
-    cc = TicketComment.objects \
-        .exclude(ticket__status=TICKET_STATUS_CLOSED) \
-        .values('ticket_id') \
-        .annotate(Max('id')) \
-        .order_by('ticket_id') \
-        .values_list('id__max')  # All 'last' messages from non closed tickets
 
     tt = Ticket.objects.filter(
         Q(assignee__isnull=False) &
         ~Q(status=TICKET_STATUS_CLOSED) &
-        Q(messages__in=cc) &
-        Q(messages__created__lt=time_span) &
-        ~Q(messages__sender=F('sender'))
+        ~Q(last_commenter=F('sender')) &
+        Q(comment_date__lt=time_span)
     )
     return tt
 

@@ -99,7 +99,7 @@ class CommentSoundsTestCase(TestCase):
         sound = Sound.objects.get(id=19)
         user = User.objects.get(id=2)
         current_num_comments = sound.num_comments
-        comment = Comment(content_object=sound,
+        comment = Comment(sound=sound,
                           user=user,
                           comment="Test comment")
         sound.add_comment(comment)
@@ -120,7 +120,7 @@ class CommentSoundsTestCase(TestCase):
         sound = Sound.objects.get(id=19)
         user = User.objects.get(id=2)
         current_num_comments = sound.num_comments
-        comment = Comment(content_object=sound,
+        comment = Comment(sound=sound,
                           user=user,
                           comment="Test comment")
         sound.add_comment(comment)

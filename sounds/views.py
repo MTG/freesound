@@ -211,7 +211,7 @@ def sound(request, username, sound_id):
             else:
                 if form.is_valid():
                     comment_text = form.cleaned_data["comment"]
-                    sound.add_comment(Comment(content_object=sound,
+                    sound.add_comment(Comment(sound=sound,
                                               user=request.user,
                                               comment=comment_text))
                     try:
@@ -231,7 +231,7 @@ def sound(request, username, sound_id):
         form = CommentForm(request)
 
     qs = Comment.objects.select_related("user", "user__profile")\
-        .filter(content_type=ContentType.objects.get_for_model(Sound), object_id=sound_id)
+        .filter(sound_id=sound_id)
     display_random_link = request.GET.get('random_browsing')
     is_following = False
     if request.user.is_authenticated:

@@ -461,7 +461,7 @@ class SoundComments(ListAPIView):
         return super(SoundComments, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Comment.objects.filter(object_id=self.kwargs['pk'])
+        return Comment.objects.filter(sound_id=self.kwargs['pk'])
 
 
 class DownloadSound(DownloadAPIView):

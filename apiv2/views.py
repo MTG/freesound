@@ -93,6 +93,8 @@ class TextSearch(GenericAPIView):
             raise BadRequestException(msg='At lesast one request parameter from Text Search should be included in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
+        if search_form.cleaned_data['page_size'] < 1:
+            raise NotFoundException(resource=self)
 
         # Get search results
         try:

@@ -45,6 +45,7 @@ from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
+from comments.models import Comment
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 import os
 import logging
@@ -609,16 +610,15 @@ class Sound(SocialModel):
         if commit:
             self.save()
 
-    def add_comment(self, comment, commit=True):
-        # From django 1.8.4 is required to save the object before adding the relation
+    def add_comment(self, user, comment):
+        comment = Comment(sound=self, user=user, comment=comment)
         comment.save()
-        self.comments.add(comment)
         self.num_comments += 1
         self.mark_index_dirty(commit=False)
-        if commit:
-            self.save()
+        self.save()
 
     def post_delete_comment(self, commit=True):
+        """ When a comment is deleted this method is called to update num_comments """
         self.num_comments -= 1
         self.mark_index_dirty(commit=False)
         if commit:

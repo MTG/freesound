@@ -100,6 +100,7 @@ class CommentSoundsTestCase(TestCase):
         current_num_comments = sound.num_comments
         self.assertEqual(current_num_comments, sound.num_comments)
         sound.add_comment(user, "Test comment")
+        sound.refresh_from_db()
         self.assertEqual(current_num_comments + 1, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
 
@@ -109,6 +110,7 @@ class CommentSoundsTestCase(TestCase):
         sound.num_comments = 3
         sound.save()
         sound.post_delete_comment()
+        sound.refresh_from_db()
         self.assertEqual(2, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
 

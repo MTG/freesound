@@ -28,8 +28,8 @@ from django.contrib.postgres.fields import JSONField
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
-from django.db import models
-from django.db import connection, transaction
+from django.db import models, connection, transaction
+from django.db.models import F
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
@@ -613,13 +613,13 @@ class Sound(SocialModel):
     def add_comment(self, user, comment):
         comment = Comment(sound=self, user=user, comment=comment)
         comment.save()
-        self.num_comments += 1
+        self.num_comments = F('num_comments') + 1
         self.mark_index_dirty(commit=False)
         self.save()
 
     def post_delete_comment(self, commit=True):
         """ When a comment is deleted this method is called to update num_comments """
-        self.num_comments -= 1
+        self.num_comments = F('num_comments') - 1
         self.mark_index_dirty(commit=False)
         if commit:
             self.save()

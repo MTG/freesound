@@ -92,6 +92,9 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
             pass
         try:
             shutil.move(sound.original_path, new_original_path)
+            old_directory = os.path.dirname(sound.original_path)
+            if not os.listdir(old_directory):
+                os.rmdir(old_directory)
         except IOError, e:
             raise CantMoveException("Failed to move file from %s to %s" % (sound.original_path, new_original_path))
         sound.original_path = new_original_path

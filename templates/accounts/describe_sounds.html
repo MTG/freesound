@@ -19,6 +19,8 @@
             display_errors();
             for (var i=1; i<={{ sounds_per_round }}; i++){
                 $('#sound-accordion-sound-'+i).hide();
+
+                unsecureImageCheck($('#id_' + parseInt(i - 1, 10) + '-description'));
             }
 
             // Init tag recommendation

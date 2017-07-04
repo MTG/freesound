@@ -5,6 +5,7 @@
 {% load paginator %}
 {% load display_sound %}
 {% load flag_user %}
+{% load filter_img %}
 
 {% block title %}
     {% if mode == "by_user" %}
@@ -38,7 +39,7 @@
             <span class="comment_author"><a href="{% url "account" comment.user.username %}">{{comment.user.username}}</a></span>
             <span class="comment_date">{{comment.created|timesince}} ago</span>
         </div>
-        {{comment.comment|safe|linebreaks}}
+        {{comment.comment|replace_img|safe|linebreaks}}
         <div style="margin-top:10px;">
             On sound:  <a class="title" href="{% url "sound" comment.sound_object.user.username comment.sound_object.id %}" title="{{comment.sound_object.original_filename}}">{{comment.sound_object.original_filename|truncate_string:27}}</a> by <a href="{% url "account" comment.sound_object.user.username %}">{{comment.sound_object.user.username}}</a>
         </div>

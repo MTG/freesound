@@ -2,6 +2,7 @@
 
 
 {% load paginator %}
+{% load filter_img %}
 {% load smileys %}
 
 {% block title %}Latest forum posts{% endblock %}
@@ -30,7 +31,7 @@
             <a href="{% url "forums-post" post.thread.forum.name_slug post.thread.id post.id %}" class="topic_subject">{{post.thread.title|safe}}</a><br />
         </div>
         <br>
-        {{post.body|smileys|safe|linebreaks}}
+        {{post.body|replace_img|smileys|safe|linebreaks}}
     </li>
 {% endfor %}
 </ul>

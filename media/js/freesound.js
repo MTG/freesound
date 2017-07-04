@@ -162,7 +162,7 @@ function unsecureImageCheck(input) {
 
     function show_message_if_insecure(){
         var txt = input.val();
-        var regular_expression = new RegExp('.*<img.+src=.http:.*', 'i');
+        var regular_expression = new RegExp('.*<img.+src=.?http:.*', 'i');
         var is_unsecure = regular_expression.test(txt);
         div.toggle(is_unsecure);
     }

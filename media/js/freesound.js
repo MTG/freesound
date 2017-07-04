@@ -155,7 +155,6 @@ function afterDownloadModal(show_modal_url, sound_name){
         });
 }
 function unsecureImageCheck(input) {
-    var unique = '#unsecure_img_check' + new Date().valueOf();
     var div = $("<div>", {class: "unsecure_image_warning"});
     div.append("<b>Warning</b>: We only support images from HTTPS locations. Images from an HTTP location will appear as a link.");
     div.insertBefore(input);

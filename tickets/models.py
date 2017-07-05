@@ -25,6 +25,7 @@ from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.db import models
+from django.db.models.signals import post_save
 from django.utils.encoding import smart_unicode
 import uuid
 from utils.mail import send_mail_template
@@ -40,12 +41,16 @@ class Queue(models.Model):
 
 def defaultkey():
     return str(uuid.uuid4()).replace('-','')
+
+
 class Ticket(models.Model):
     title           = models.CharField(max_length=256)
     status          = models.CharField(max_length=128)
     key             = models.CharField(max_length=32, db_index=True, default=defaultkey)
     created         = models.DateTimeField(db_index=True, auto_now_add=True)
     modified        = models.DateTimeField(auto_now=True)
+    comment_date    = models.DateTimeField(null=True)
+    last_commenter  = models.ForeignKey(User, related_name='commented_tickets', null=True)
     sender          = models.ForeignKey(User, related_name='sent_tickets', null=True)
     sender_email    = models.EmailField(null=True)
     assignee        = models.ForeignKey(User, related_name='assigned_tickets', null=True)
@@ -125,6 +130,15 @@ class TicketComment(models.Model):
         permissions = (
             ("can_add_moderator_only_message", "Can add read-by-moderator-only messages."),
         )
+
+def create_ticket_message(sender, instance, created, **kwargs):
+    if created:
+        instance.ticket.last_commenter = instance.sender
+        instance.ticket.comment_date = instance.created
+        instance.ticket.save()
+
+
+post_save.connect(create_ticket_message, sender=TicketComment)
 
 
 class UserAnnotation(models.Model):

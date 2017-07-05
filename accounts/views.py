@@ -20,6 +20,7 @@
 
 import datetime, logging, os, tempfile, shutil, hashlib, base64, json
 import tickets.views as TicketViews
+import utils.sound_upload
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -54,7 +55,7 @@ from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
 from utils.encryption import create_hash
-from utils.filesystem import generate_tree, md5file
+from utils.filesystem import generate_tree, md5file, remove_directory_if_empty
 from utils.images import extract_square
 from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
@@ -66,7 +67,8 @@ from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
 from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations, \
-    copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations
+    copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
+    remove_empty_user_directory_from_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -415,7 +417,7 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def describe(request):
-    file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
+    file_structure, files = generate_tree(request.user.profile.locations()['uploads_dir'])
     file_structure.name = ''
 
     if request.method == 'POST':
@@ -429,6 +431,12 @@ def describe(request):
                 for f in form.cleaned_data["files"]:
                     os.remove(files[f].full_path)
                     remove_uploaded_file_from_mirror_locations(files[f].full_path)
+
+                # Remove user uploads directory if there are no more files to describe
+                user_uploads_dir = request.user.profile.locations()['uploads_dir']
+                remove_directory_if_empty(user_uploads_dir)
+                remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
+
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
                 # Clear existing describe-related session data
@@ -508,6 +516,7 @@ def describe_sounds(request):
     tvars = {
         'sounds_per_round': settings.SOUNDS_PER_DESCRIBE_ROUND,
         'forms': forms,
+        'last_latlong': request.user.profile.get_last_latlong(),
     }
 
     if request.method == 'POST':
@@ -533,104 +542,54 @@ def describe_sounds(request):
         # All valid, then create sounds and moderation tickets
         dirty_packs = []
         for i in range(len(sounds_to_describe)):
-            # Create sound object and set basic properties
-            sound = Sound()
-            sound.user = request.user
-            sound.original_filename = forms[i]['description'].cleaned_data['name']
-            sound.is_explicit = forms[i]['description'].cleaned_data['is_explicit']
-            sound.original_path = forms[i]['sound'].full_path
-            try:
-                sound.filesize = os.path.getsize(sound.original_path)
-            except OSError:
-                # If for some reason audio file does not exist, skip creating this sound
-                messages.add_message(request, messages.ERROR,
-                                     'Something went wrong with accessing the file %s.' % sound.original_filename)
-                continue
-            sound.md5 = md5file(forms[i]['sound'].full_path)
-            sound.type = get_sound_type(sound.original_path)
-            sound.license = forms[i]['license'].cleaned_data['license']
-            try:
-                # Check if another file with same md5 already exists, if it does, delete the sound and post a message
-                existing_sound = Sound.objects.get(md5=sound.md5)
-                n_sounds_already_part_of_freesound += 1
-                msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>' % \
-                    (forms[i]['sound'].name, reverse('sound', args=[existing_sound.user.username, existing_sound.id]))
-                messages.add_message(request, messages.WARNING, msg)
-                os.remove(forms[i]['sound'].full_path)
-                continue
-            except Sound.DoesNotExist:
-                # Reaching here means that no other sound already exists with the same md5
-                pass
-            sound.save()
+            sound_fields = {
+                'name': forms[i]['description'].cleaned_data['name'],
+                'dest_path': forms[i]['sound'].full_path,
+                'license': forms[i]['license'].cleaned_data['license'],
+                'description': forms[i]['description'].cleaned_data.get('description', ''),
+                'tags': forms[i]['description'].cleaned_data.get('tags', ''),
+                'is_explicit': forms[i]['description'].cleaned_data['is_explicit'],
+            }
 
-            # Move the original audio file
-            orig = os.path.splitext(os.path.basename(sound.original_filename))[0]
-            sound.base_filename_slug = "%d__%s__%s" % (sound.id, slugify(sound.user.username), slugify(orig))
-            new_original_path = sound.locations("path")
-            if sound.original_path != new_original_path:
-                try:
-                    os.makedirs(os.path.dirname(new_original_path))
-                except OSError:
-                    pass
-                try:
-                    shutil.move(sound.original_path, new_original_path)
-                except IOError, e:
-                    logger.info("Failed to move file from %s to %s" % (sound.original_path, new_original_path), e)
-                logger.info("Moved original file from %s to %s" % (sound.original_path, new_original_path))
-                sound.original_path = new_original_path
-                sound.save()
-
-            # Copy to mirror location
-            copy_sound_to_mirror_locations(sound)
-
-            # Set pack (optional)
             pack = forms[i]['pack'].cleaned_data.get('pack', False)
             new_pack = forms[i]['pack'].cleaned_data.get('new_pack', False)
             if not pack and new_pack:
-                pack, created = Pack.objects.get_or_create(user=request.user, name=new_pack)
-            if pack:
-                sound.pack = pack
-                dirty_packs.append(sound.pack)
+                sound_fields['pack'] = new_pack
+            elif pack:
+                sound_fields['pack'] = pack
 
-            # Set geotag
             data = forms[i]['geotag'].cleaned_data
             if not data.get('remove_geotag') and data.get('lat'):  # if 'lat' is in data, we assume other fields are too
-                geotag = GeoTag(user=request.user,
-                                lat=data.get('lat'),
-                                lon=data.get('lon'),
-                                zoom=data.get('zoom'))
-                geotag.save()
-                sound.geotag = geotag
+                geotag = '%s,%s,%d' % (data.get('lat'), data.get('lon'), data.get('zoom'))
+                sound_fields['geotag'] = geotag
 
-            # Set the tags and description
-            data = forms[i]['description'].cleaned_data
-            sound.description = remove_control_chars(data.get('description', ''))
-            sound.set_tags(data.get('tags'))
-            sound.save()
-
-            # Remember to process the file and create moderation ticket if user is not whitelisted
-            sounds_to_process.append(sound)
-            if request.user.profile.is_whitelisted:
-                sound.change_moderation_state('OK', do_not_update_related_stuff=True)
-                messages.add_message(request, messages.INFO,
-                                     'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
-                                     (sound.get_absolute_url(), sound.original_filename))
-            else:
-                sound.create_moderation_ticket()
-                messages.add_message(request, messages.INFO,
-                                     'File <a href="%s">%s</a> has been described and is now awaiting processing '
-                                     'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
-
-                # Invalidate affected caches in user header
-                invalidate_template_cache("user_header", request.user.id)
-                for moderator in Group.objects.get(name='moderators').user_set.all():
-                    invalidate_template_cache("user_header", moderator.id)
-
-            # Compute sound crc
             try:
-                sound.compute_crc()
-            except:
-                pass
+                user = request.user
+                sound = utils.sound_upload.create_sound(user, sound_fields, process=False)
+                sounds_to_process.append(sound)
+                if user.profile.is_whitelisted:
+                    messages.add_message(request, messages.INFO,
+                        'File <a href="%s">%s</a> has been described and has been added to freesound.' % \
+                        (sound.get_absolute_url(), sound.original_filename))
+                else:
+                    messages.add_message(request, messages.INFO,
+                        'File <a href="%s">%s</a> has been described and is now awaiting processing '
+                        'and moderation.' % (sound.get_absolute_url(), sound.original_filename))
+
+                    # Invalidate affected caches in user header
+                    invalidate_template_cache("user_header", request.user.id)
+                    for moderator in Group.objects.get(name='moderators').user_set.all():
+                        invalidate_template_cache("user_header", moderator.id)
+
+            except utils.sound_upload.NoAudioException:
+                # If for some reason audio file does not exist, skip creating this sound
+                messages.add_message(request, messages.ERROR,
+                                     'Something went wrong with accessing the file %s.' % forms[i]['description'].cleaned_data['name'])
+            except utils.sound_upload.AlreadyExistsException as e:
+                msg = e.message
+                messages.add_message(request, messages.WARNING, msg)
+            except utils.sound_upload.CantMoveException as e:
+                logger.info(e.message, e)
 
         # Remove the files we just described from the session and redirect to this page
         request.session['describe_sounds'] = request.session['describe_sounds'][len(sounds_to_describe):]

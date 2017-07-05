@@ -18,8 +18,10 @@
 #     See AUTHORS file.
 #
 
-import os, zlib
+import os
+import zlib
 import hashlib
+
 
 class File:
 
@@ -36,8 +38,6 @@ class File:
             for child in self.children:
                 child.recursive_print(spacer + "  ")
 
-    #def __unicode__(self):
-    #    return u'<File %s>' % self.full_path
 
 def generate_tree(path):
     counter = 0
@@ -62,6 +62,7 @@ def generate_tree(path):
             
     return lookups[path], files
 
+
 def md5file(filename):
     """Return the hex digest of a file without loading it all into memory"""
     fh = open(filename, "rb")
@@ -70,6 +71,7 @@ def md5file(filename):
         for chunk in iter(lambda: f.read(4096), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
 
 def crc32file(filename):
     fh = open(filename, "rb")
@@ -82,3 +84,7 @@ def crc32file(filename):
     fh.close()
     return hex(crc32)[2:]
 
+
+def remove_directory_if_empty(path):
+    if not os.listdir(path):
+        os.rmdir(path)

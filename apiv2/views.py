@@ -28,7 +28,7 @@ from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from oauth2_provider.models import Grant, AccessToken
 from apiv2.serializers import *
 from apiv2.authentication import OAuth2Authentication, TokenAuthentication, SessionAuthentication
-from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, create_sound_object, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
+from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequiredGenericAPIView, OauthRequiredAPIView, DownloadAPIView, get_analysis_data_for_queryset_or_sound_ids, api_search, ApiSearchPaginator, get_sounds_descriptors, prepend_base,  get_formatted_examples_for_view
 from exceptions import *
 from forms import *
 from models import ApiV2Client
@@ -41,6 +41,7 @@ from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.cache import invalidate_template_cache
 from utils.nginxsendfile import sendfile
+from utils.tags import clean_and_split_tags
 from similarity.client import Similarity
 from django.db import IntegrityError
 from django.contrib import messages
@@ -56,6 +57,7 @@ except:
     from freesound.utils.ordered_dict import OrderedDict
 from urllib import quote
 from django.conf import settings
+import utils.sound_upload
 import logging
 import datetime
 import os
@@ -90,6 +92,8 @@ class TextSearch(GenericAPIView):
         if search_form.cleaned_data['query'] == None and search_form.cleaned_data['filter'] == None:
             raise BadRequestException(msg='At lesast one request parameter from Text Search should be included in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
+            raise NotFoundException(resource=self)
+        if search_form.cleaned_data['page_size'] < 1:
             raise NotFoundException(resource=self)
 
         # Get search results
@@ -741,7 +745,41 @@ class UploadSound(WriteRequiredGenericAPIView):
                         apiv2_client = None
                         if self.auth_method_name == 'OAuth2': # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
                             apiv2_client = request.auth.application.apiv2_client
-                        sound = create_sound_object(self.user, serializer.data, resource=self, apiv2_client=apiv2_client, upload_filename=audiofile.name)
+
+                        sound_fields = {}
+                        for key, item in serializer.data.items():
+                            sound_fields[key] = item
+
+                        filename = sound_fields.get('upload_filename', audiofile.name)
+                        if not 'name' in sound_fields:
+                            sound_fields['name'] = filename
+                        else:
+                            if not sound_fields['name']:
+                                sound_fields['name'] = filename
+
+                        directory = self.user.profile.locations()['uploads_dir']
+                        sound_fields['dest_path'] = os.path.join(directory, filename)
+
+                        if 'tags' in sound_fields:
+                            sound_fields['tags'] = clean_and_split_tags(sound_fields['tags'])
+
+                        try:
+                            sound = utils.sound_upload.create_sound(
+                                    self.user,
+                                    sound_fields,
+                                    apiv2_client=apiv2_client
+                            )
+                        except utils.sound_upload.NoAudioException:
+                            raise OtherException('Something went wrong with accessing the file %s.' % sound_fields['name'])
+                        except utils.sound_upload.AlreadyExistsException:
+                            raise OtherException("Sound could not be created because the uploaded file is already part of freesound.", resource=self)
+                        except utils.sound_upload.CantMoveException:
+                            if settings.DEBUG:
+                                msg = "File could not be copied to the correct destination."
+                            else:
+                                msg = "Server error."
+                            raise ServerErrorException(msg=msg, resource=self)
+
                     except APIException, e:
                         raise e # TODO pass correct resource variable
                     except Exception, e:
@@ -764,7 +802,7 @@ class PendingUploads(OauthRequiredAPIView):
         logger.info(self.log_message('pending_uploads'))
 
         # Look for sounds pending description
-        file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
+        file_structure, files = generate_tree(self.user.profile.locations()['uploads_dir'])
         pending_description = [file_instance.name for file_id, file_instance in files.items()]
 
         # Look for sounds pending processing
@@ -813,7 +851,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
 
     def post(self, request,  *args, **kwargs):
         logger.info(self.log_message('describe_sound'))
-        file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
+        file_structure, files = generate_tree(self.user.profile.locations()['uploads_dir'])
         filenames = [file_instance.name for file_id, file_instance in files.items()]
         serializer = SoundDescriptionSerializer(data=request.data, context={'not_yet_described_audio_files': filenames})
         if serializer.is_valid():

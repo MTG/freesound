@@ -127,7 +127,8 @@ class Profile(SocialModel):
                     path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % self.user_id),
                     url=l_avatar
                 )
-            )
+            ),
+            uploads_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id))
         )
 
     def email_not_disabled(self, email_type_name):
@@ -325,6 +326,13 @@ class Profile(SocialModel):
         self.num_sounds = self.user.sounds.filter(processing_state="OK", moderation_state="OK").count()
         if commit:
             self.save()
+
+    def get_last_latlong(self):
+        lasts_sound_geotagged = Sound.objects.filter(user=self.user).exclude(geotag=None).order_by('-created')
+        if lasts_sound_geotagged.count():
+            last_sound = lasts_sound_geotagged[0]
+            return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
+        return None
 
     class Meta(SocialModel.Meta):
         ordering = ('-user__date_joined', )

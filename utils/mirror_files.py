@@ -3,6 +3,8 @@ import os
 import shutil
 import logging
 import errno
+from utils.filesystem import remove_directory_if_empty
+
 
 logger = logging.getLogger('web')
 
@@ -71,6 +73,12 @@ def remove_uploaded_file_from_mirror_locations(source_file_path):
             except OSError as e:
                 # File does not exist, no permissions, etc.
                 logger.error('Failed deleting %s (%s)' % (destination_path, str(e)))
+
+
+def remove_empty_user_directory_from_mirror_locations(user_uploads_path):
+    if settings.MIRROR_UPLOADS:
+        for destination_base_path in settings.MIRROR_UPLOADS:
+            remove_directory_if_empty(user_uploads_path.replace(settings.UPLOADS_PATH, destination_base_path))
 
 
 def copy_sound_to_mirror_locations(sound):

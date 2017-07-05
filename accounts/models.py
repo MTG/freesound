@@ -127,7 +127,8 @@ class Profile(SocialModel):
                     path=os.path.join(settings.AVATARS_PATH, id_folder, "%d_L.jpg" % self.user_id),
                     url=l_avatar
                 )
-            )
+            ),
+            uploads_dir=os.path.join(settings.UPLOADS_PATH, str(self.user_id))
         )
 
     def email_not_disabled(self, email_type_name):

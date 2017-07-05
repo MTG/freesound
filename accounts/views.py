@@ -55,7 +55,7 @@ from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
 from utils.encryption import create_hash
-from utils.filesystem import generate_tree, md5file
+from utils.filesystem import generate_tree, md5file, remove_directory_if_empty
 from utils.images import extract_square
 from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
@@ -67,7 +67,8 @@ from messages.models import Message
 from oauth2_provider.models import AccessToken
 from follow import follow_utils
 from utils.mirror_files import copy_sound_to_mirror_locations, copy_avatar_to_mirror_locations, \
-    copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations
+    copy_uploaded_file_to_mirror_locations, remove_uploaded_file_from_mirror_locations, \
+    remove_empty_user_directory_from_mirror_locations
 
 
 audio_logger = logging.getLogger('audio')
@@ -416,7 +417,7 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def describe(request):
-    file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
+    file_structure, files = generate_tree(request.user.profile.locations()['uploads_dir'])
     file_structure.name = ''
 
     if request.method == 'POST':
@@ -430,6 +431,12 @@ def describe(request):
                 for f in form.cleaned_data["files"]:
                     os.remove(files[f].full_path)
                     remove_uploaded_file_from_mirror_locations(files[f].full_path)
+
+                # Remove user uploads directory if there are no more files to describe
+                user_uploads_dir = request.user.profile.locations()['uploads_dir']
+                remove_directory_if_empty(user_uploads_dir)
+                remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
+
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
                 # Clear existing describe-related session data

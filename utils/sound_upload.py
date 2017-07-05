@@ -26,7 +26,8 @@ from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
 from utils.filesystem import md5file, remove_directory_if_empty
 from utils.text import slugify
-from utils.mirror_files import copy_sound_to_mirror_locations
+from utils.mirror_files import copy_sound_to_mirror_locations, remove_empty_user_directory_from_mirror_locations, \
+    remove_uploaded_file_from_mirror_locations
 from django.conf import settings
 from utils.cache import invalidate_template_cache
 from django.contrib.auth.models import Group
@@ -44,6 +45,16 @@ class AlreadyExistsException(Exception):
 
 class CantMoveException(Exception):
     detail = None
+
+
+def _remove_user_uploads_folder_if_empty(user):
+    """
+    Check if the user uploads folder is empty and removes it.
+    Removes user uploads folder in the "local" disk and in mirrored disks too. 
+    """
+    user_uploads_dir = user.profile.locations()['uploads_dir']
+    remove_directory_if_empty(user_uploads_dir)
+    remove_empty_user_directory_from_mirror_locations(user_uploads_dir)
 
 
 def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exists=False):
@@ -75,7 +86,12 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
         else:
             msg = 'The file %s is already part of freesound and has been discarded, see <a href="%s">here</a>' % \
                     (sound_fields['name'], reverse('sound', args=[existing_sound.user.username, existing_sound.id]))
+
+            # Remove file (including mirror locations)
             os.remove(sound.original_path)
+            remove_uploaded_file_from_mirror_locations(sound.original_path)
+            _remove_user_uploads_folder_if_empty(sound.user)
+
             raise AlreadyExistsException(msg)
 
     # 2 save
@@ -92,8 +108,13 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
             pass
         try:
             shutil.move(sound.original_path, new_original_path)
-            # Remove user uploads directory if there are no more files to describe
-            remove_directory_if_empty(sound.user.profile.locations()['uploads_dir'])
+
+            # Check if user upload folder still has files and remove if empty
+            # NOTE: we first need to remove the file from the mirror locations as we do not perform
+            # a 'move' operation there.
+            remove_uploaded_file_from_mirror_locations(sound.original_path)
+            _remove_user_uploads_folder_if_empty(sound.user)
+
         except IOError, e:
             raise CantMoveException("Failed to move file from %s to %s" % (sound.original_path, new_original_path))
         sound.original_path = new_original_path

@@ -417,7 +417,7 @@ def handle_uploaded_image(profile, f):
 
 @login_required
 def describe(request):
-    file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(request.user.id)))
+    file_structure, files = generate_tree(request.user.profile.locations()['uploads_dir'])
     file_structure.name = ''
 
     if request.method == 'POST':

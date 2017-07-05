@@ -55,7 +55,7 @@ from utils.cache import invalidate_template_cache
 from utils.dbtime import DBTime
 from utils.onlineusers import get_online_users
 from utils.encryption import create_hash
-from utils.filesystem import generate_tree, md5file
+from utils.filesystem import generate_tree, md5file, remove_directory_if_empty
 from utils.images import extract_square
 from utils.pagination import paginate
 from utils.text import slugify, remove_control_chars
@@ -430,6 +430,10 @@ def describe(request):
                 for f in form.cleaned_data["files"]:
                     os.remove(files[f].full_path)
                     remove_uploaded_file_from_mirror_locations(files[f].full_path)
+
+                # Remove user uploads directory if there are no more files to describe
+                remove_directory_if_empty(request.user.profile.locations()['uploads_dir'])
+
                 return HttpResponseRedirect(reverse('accounts-describe'))
             elif "describe" in request.POST:
                 # Clear existing describe-related session data

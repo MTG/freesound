@@ -24,7 +24,7 @@ from django.urls import reverse
 from sounds.models import Sound, Pack, License
 from utils.audioprocessing import get_sound_type
 from geotags.models import GeoTag
-from utils.filesystem import md5file
+from utils.filesystem import md5file, remove_directory_if_empty
 from utils.text import slugify
 from utils.mirror_files import copy_sound_to_mirror_locations
 from django.conf import settings
@@ -92,9 +92,8 @@ def create_sound(user, sound_fields, apiv2_client=None, process=True, remove_exi
             pass
         try:
             shutil.move(sound.original_path, new_original_path)
-            old_directory = os.path.dirname(sound.original_path)
-            if not os.listdir(old_directory):
-                os.rmdir(old_directory)
+            # Remove user uploads directory if there are no more files to describe
+            remove_directory_if_empty(sound.user.profile.locations()['uploads_dir'])
         except IOError, e:
             raise CantMoveException("Failed to move file from %s to %s" % (sound.original_path, new_original_path))
         sound.original_path = new_original_path

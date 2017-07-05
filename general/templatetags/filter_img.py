@@ -1,13 +1,12 @@
 from django import template
-from bs4 import BeautifulSoup, Tag
-from os.path import basename, splitext
+from bs4 import BeautifulSoup
 
 register = template.Library()
 
 
 @register.filter(is_safe=True)
 def replace_img(string):
-    if not "<img" in string or not "http:" in string:
+    if not string or not "<img" in string or "http:" not in string:
         return string
 
     soup = BeautifulSoup(string)

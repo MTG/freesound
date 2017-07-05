@@ -1,6 +1,7 @@
 {% load cache %}
 {% load util %}
 {% load smileys %}
+{% load filter_img %}
 
 {% cache 3600 active_user_content user.id %}
 
@@ -13,13 +14,13 @@
     {% if content_type == 'post' %}
         <span class="people_user_info">post in <a href="{% url "forums-thread" content.thread.forum.name_slug content.thread.id %}"
             class="topic_subject">  {{content.thread.title|safe}}</a></span>
-            {{content.body|smileys|safe|linebreaks|truncatewords:30}}
+            {{content.body|replace_img|smileys|safe|linebreaks|truncatewords:30}}
     {% endif %}
 
     {% if content_type == 'comment' %}
         <span class="people_user_info">comment in <a class="title" href="{% url "sound" content.content_object.user.username content.content_object.id %}">{{content.content_object.original_filename|truncate_string:28}}</a></span>
         {{content.comment.sound}}
-        {{content.comment|smileys|safe|linebreaks}}
+        {{content.comment|replace_img|smileys|safe|linebreaks}}
 
         {% endif %}
 

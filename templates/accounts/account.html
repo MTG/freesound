@@ -2,6 +2,7 @@
 
 {% load display_sound %}
 {% load tags %}
+{% load filter_img %}
 
 {% block title %}{% if home %}home{% else %}{{user.username}}{% endif %}{% endblock %}
 
@@ -152,7 +153,7 @@
             <br style="clear: both;" />
             {% if user.profile.about %}
                 <div class="about">
-                    {{user.profile.about|safe|linebreaksbr }}
+                    {{user.profile.about|replace_img|safe|linebreaksbr }}
                 </div>
             {% endif %}
             <br>

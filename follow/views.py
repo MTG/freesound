@@ -29,6 +29,7 @@ from follow.models import FollowingQueryItem
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from collections import OrderedDict
+from socket import error as socket_error
 
 
 def following_users(request, username):
@@ -173,7 +174,7 @@ def stream(request):
     errors_getting_data = False
     try:
         users_sounds, tags_sounds = follow_utils.get_stream_sounds(user, time_lapse)
-    except Exception, e:
+    except socket_error:
         # Could not connect to solr
         errors_getting_data = True
         users_sounds = list()

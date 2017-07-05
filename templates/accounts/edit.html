@@ -63,5 +63,12 @@
     </div><!-- #delete_account -->
 </div><!-- #sidebar -->
 
+<script>
+  $(function() {
+    unsecureImageCheck($('#id_profile-about'));
+    unsecureImageCheck($('#id_profile-signature'));
+  })
+</script>
+
 <br class="clear" /><!-- Clearing Element -->
 {% endblock %}

@@ -67,9 +67,10 @@ def should_suggest_donation(user, times_shown_in_last_day):
         # If modal has been shown more than settings.DONATION_MODAL_DISPLAY_TIMES_DAY times, don't show it again today
         return False
 
-    if user.profile.num_sounds > 0:
-        # Never show modal to users that have uploaded sounds
-        return False
+    if donation_modal_settings.never_show_modal_to_uploaders:
+        if user.profile.num_sounds > 0:
+            # Never show modal to users that have uploaded sounds
+            return False
 
     donation_period = datetime.datetime.now() - datetime.timedelta(days=donation_modal_settings.days_after_donation)
     last_donation = user.donation_set.order_by('created').last()

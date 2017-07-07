@@ -24,6 +24,7 @@ class Donation(models.Model):
 
 class DonationsModalSettings(models.Model):
     enabled = models.BooleanField(default=False)
+    never_show_modal_to_uploaders = models.BooleanField(default=True)
     days_after_donation = models.PositiveIntegerField(
         default=365, help_text='If user made a donation in the last X days, no modal is shown')
     downloads_in_period = models.PositiveIntegerField(default=5, help_text='After user has download Z sounds...')

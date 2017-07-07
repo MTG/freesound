@@ -24,9 +24,9 @@ import zlib
 
 from django.conf import settings
 from django.http import HttpResponse
-from django.contrib.auth.models import User
-from sounds.models import License, Download
-from donations.models import Donation
+from sounds.models import Download
+import random
+
 
 def download_sounds(licenses_url, pack):
     """
@@ -77,6 +77,6 @@ def should_suggest_donation(user, times_shown_in_last_day):
             user=user,
             created__gt=datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS)).count()
         if num_downloads_in_period > settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD:
-            return True
+            if random.random() > settings.DONATION_MODAL_DISPLAY_PROBABILITY:
+                return True
     return False
-

@@ -42,15 +42,8 @@ class DonationsModalSettings(models.Model):
         Because this model will be queryied often (every time a user downloads a sound), we want to avoid hitting the
         DB every time. We store the settings in the cache and return the data from there (if exists).
         """
-        settings = cache.get(cls.DONATION_MODAL_SETTINGS_CACHE_KEY, None)
-        if settings is None:
+        instance = cache.get(cls.DONATION_MODAL_SETTINGS_CACHE_KEY, None)
+        if instance is None:
             instance, _ = cls.objects.get_or_create()  # Gets existing object or creates it
-            settings = {
-                'enabled': instance.enabled,
-                'days_after_donation': instance.days_after_donation,
-                'downloads_in_period': instance.downloads_in_period,
-                'download_days': instance.download_days,
-                'max_times_display_a_day': instance.max_times_display_a_day,
-            }
-            cache.set(cls.DONATION_MODAL_SETTINGS_CACHE_KEY, settings, timeout=3600)
-        return settings
+            cache.set(cls.DONATION_MODAL_SETTINGS_CACHE_KEY, instance, timeout=3600)
+        return instance

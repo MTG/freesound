@@ -2178,8 +2178,9 @@ a.donation_button {
     color: #000;
     font-weight: bold;
     white-space: nowrap;
-    padding: 0 0 0 15px;
-    margin: 26px 0 0 0;
+    padding: 0 0 0 20px;
+    margin-top: 28px;
+    margin-left: 58px;
 }
 
 a.donation_button:hover {

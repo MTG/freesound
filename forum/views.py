@@ -140,23 +140,6 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
     forum = get_object_or_404(Forum, name_slug=forum_name_slug)
     thread = get_object_or_404(Thread, id=thread_id, forum=forum, first_post__moderation_state="OK")
 
-    is_survey = False
-    if thread.title == "Freesound Survey":
-        is_survey = True
-    survey_text = """
-1) What do you use Freesound for? (what are your specific interests? what do you do with Freesound samples? ...)
-
-
-2) Do you perceive some shared goals in Freesounds user community? If so, which ones? (is there a sense of community? and of long-term goals to be achieved? ...)
-
-
-3) What kinds of sounds are you most interested in? (do you upload and/or download specific types of sounds? which ones? ...)
-
-
-4) What makes Freesound different from other sound sharing sites? (you can compare with sites like Soundcloud, Looperman, CCMixter or others)
-"""
-
-
     if post_id:
         post = get_object_or_404(Post, id=post_id, thread__id=thread_id, thread__forum__name_slug=forum_name_slug)
         quote = loader.render_to_string('forum/quote_style.html', {'post':post})
@@ -207,12 +190,9 @@ def reply(request, forum_name_slug, thread_id, post_id=None):
                     return HttpResponseRedirect(post.thread.get_absolute_url())
     else:
         if quote:
-            form = PostReplyForm(request, quote, {'body':quote})
+            form = PostReplyForm(request, quote, {'body': quote})
         else:
-            if is_survey:
-                form = PostReplyForm(request, quote, {'body':survey_text})
-            else:
-                form = PostReplyForm(request, quote)
+            form = PostReplyForm(request, quote)
 
     if not user_can_post_in_forum[0]:
         messages.add_message(request, messages.INFO, user_can_post_in_forum[1])

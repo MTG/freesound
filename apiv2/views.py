@@ -93,6 +93,8 @@ class TextSearch(GenericAPIView):
             raise BadRequestException(msg='At lesast one request parameter from Text Search should be included in the request.', resource=self)
         if search_form.cleaned_data['page'] < 1:
             raise NotFoundException(resource=self)
+        if search_form.cleaned_data['page_size'] < 1:
+            raise NotFoundException(resource=self)
 
         # Get search results
         try:
@@ -755,7 +757,7 @@ class UploadSound(WriteRequiredGenericAPIView):
                             if not sound_fields['name']:
                                 sound_fields['name'] = filename
 
-                        directory = os.path.join(settings.UPLOADS_PATH, str(self.user.id))
+                        directory = self.user.profile.locations()['uploads_dir']
                         sound_fields['dest_path'] = os.path.join(directory, filename)
 
                         if 'tags' in sound_fields:
@@ -800,7 +802,7 @@ class PendingUploads(OauthRequiredAPIView):
         logger.info(self.log_message('pending_uploads'))
 
         # Look for sounds pending description
-        file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
+        file_structure, files = generate_tree(self.user.profile.locations()['uploads_dir'])
         pending_description = [file_instance.name for file_id, file_instance in files.items()]
 
         # Look for sounds pending processing
@@ -849,7 +851,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
 
     def post(self, request,  *args, **kwargs):
         logger.info(self.log_message('describe_sound'))
-        file_structure, files = generate_tree(os.path.join(settings.UPLOADS_PATH, str(self.user.id)))
+        file_structure, files = generate_tree(self.user.profile.locations()['uploads_dir'])
         filenames = [file_instance.name for file_id, file_instance in files.items()]
         serializer = SoundDescriptionSerializer(data=request.data, context={'not_yet_described_audio_files': filenames})
         if serializer.is_valid():

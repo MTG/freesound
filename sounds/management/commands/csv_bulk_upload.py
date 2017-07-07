@@ -30,6 +30,7 @@ from utils.text import slugify
 import shutil, os, csv
 import utils.sound_upload
 
+
 class Command(BaseCommand):
 
     help = 'Upload many sounds at once'
@@ -51,7 +52,7 @@ class Command(BaseCommand):
 
             pathf,namef,tagsf,geotagf,descriptionf,licensef,packnamef,usernamef = line
             try:
-                u = User.objects.get(username=usernamef)
+                User.objects.get(username=usernamef)
             except User.DoesNotExist:
                 anyerror = True
                 errors.append((n, "User '%s' does not exist" % usernamef))
@@ -62,7 +63,7 @@ class Command(BaseCommand):
                 errors.append((n, "Source file '%s' does not exist" % pathf))
 
             try:
-                l = License.objects.get(name=licensef)
+                License.objects.get(name=licensef)
             except License.DoesNotExist:
                 anyerror = True
                 errors.append((n, "Licence with name '%s' does not exist" % licensef))
@@ -112,10 +113,10 @@ class Command(BaseCommand):
         for line in lines_to_import:
             # 0 get data from csv
             pathf,namef,tagsf,geotagf,descriptionf,licensef,packnamef,usernamef = line
-            u = User.objects.get(username=usernamef)
+            user = User.objects.get(username=usernamef)
 
             # 1 create dir and move sound to dir
-            directory = os.path.join(settings.UPLOADS_PATH, str(u.id))
+            directory = self.user.profile.locations()['uploads_dir']
             if not os.path.exists(directory):
                 os.mkdir(directory)
             src_path = os.path.join(base_dir, pathf)
@@ -137,7 +138,7 @@ class Command(BaseCommand):
 
             try:
                 sound = utils.sound_upload.create_sound(
-                        u,
+                        user,
                         sound_fields,
                         process=False,
                         remove_exists=delete_already_existing
@@ -161,4 +162,3 @@ class Command(BaseCommand):
                 continue
             except utils.sound_upload.CantMoveException as e:
                 print e.message
-

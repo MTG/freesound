@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from sounds.models import Sound, Pack, License, DeletedSound
 from sounds.views import get_random_sound, get_random_uploader
+from general.templatetags.filter_img import replace_img
 from utils.tags import clean_and_split_tags
 from utils.encryption import encrypt
 import time
@@ -103,6 +104,21 @@ class CommentSoundsTestCase(TestCase):
         sound.refresh_from_db()
         self.assertEqual(current_num_comments + 1, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
+
+    def test_unsecure_content(self):
+        comment = None
+        self.assertEqual(replace_img(comment), None)
+
+        comment = 'Test <img src="http://test.com/img.png" /> test'
+        replaced_comment = 'Test <a href="http://test.com/img.png">http://test.com/img.png</a> test'
+        self.assertEqual(replace_img(comment), replaced_comment)
+
+        replaced_comment = 'Test <a href="http://test.com/img.png">http://test.com/img.png</a> test'
+        comment = 'Test <img class="test" src="http://test.com/img.png" /> test'
+        self.assertEqual(replace_img(comment), replaced_comment) 
+
+        comment = 'Test <img src="https://test.com/img.png" /> test'
+        self.assertEqual(replace_img(comment), comment)
 
     def test_post_delete_comment(self):
         sound = Sound.objects.get(id=19)

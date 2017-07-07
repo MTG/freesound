@@ -1,6 +1,7 @@
 {% extends "forum/_section.html" %}
 
 {% load smileys %}
+{% load filter_img %}
 
 {% block title %}forum - delete post{% endblock %}
 
@@ -17,7 +18,7 @@
 <br style="clear: both;" />
 <br><br>
 <div id="posts">
-    <div class="post">{{post.body|smileys|safe|linebreaks}}</div>
+    <div class="post">{{post.body|replace_img|smileys|safe|linebreaks}}</div>
 </div>
 
 {% endblock %}

@@ -2,6 +2,7 @@
 
 {% load display_sound %}
 {% load paginator %}
+{% load filter_img %}
 
 {% block title %}pack: {{pack.name}} by {{pack.user.username}}{% endblock title %}
 
@@ -56,7 +57,7 @@
     <h3>Pack info</h3>
     <div class="sound_list_normal">
     <p>
-    {{pack.description|safe|linebreaksbr}}
+    {{pack.description|replace_img|safe|linebreaksbr}}
     </p>
 
     <ul>

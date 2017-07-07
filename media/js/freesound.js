@@ -154,3 +154,24 @@ function afterDownloadModal(show_modal_url, sound_name){
             openModal();
         });
 }
+function unsecureImageCheck(input) {
+    var div = $("<div>", {class: "unsecure_image_warning"});
+    div.append("<b>Warning</b>: We only support images from HTTPS locations. Images from an HTTP location will appear as a link.");
+    div.insertBefore(input);
+    div.hide();
+
+    function show_message_if_insecure(){
+        var txt = input.val();
+        var regular_expression = new RegExp('.*<img.+src=.?http:.*', 'i');
+        var is_unsecure = regular_expression.test(txt);
+        div.toggle(is_unsecure);
+    }
+      
+    // When the user enters text we check if it contains unsecure uri
+    input.bind('keydown focusin', function(){
+        setTimeout(function(){
+            // We need the timeout for the paste event to make sure the text has been pasted when evaluated
+            show_message_if_insecure();
+        }, 100);
+    });
+}

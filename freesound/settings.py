@@ -188,9 +188,8 @@ GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
 GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
 
 # After download modal
-AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
 AFTER_DOWNLOAD_MODAL_DONATION = 'donation'
-AFTER_DOWNLOAD_MODAL = None  # Set it to None to disable modals shown after download
+AFTER_DOWNLOAD_MODAL = AFTER_DOWNLOAD_MODAL_DONATION  # Set it to None to disable modals shown after download
 
 # Donation modal settings
 DONATION_MODAL_DAYS_AFTER_DONATION = 365  # If user made a donation in the last X days, no modal is shown

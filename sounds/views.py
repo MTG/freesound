@@ -281,11 +281,6 @@ def after_download_modal(request):
             template = loader.get_template('sounds/after_download_modal_donation.html')
             response_content = template.render({'sound_name': sound_name})
 
-    elif settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_SURVEY:
-        if request.COOKIES.get('surveyVisited', 'no') != 'yes':
-            template = loader.get_template('sounds/after_download_modal_survey.html')
-            response_content = template.render({'sound_name': sound_name})
-
     return JsonResponse({'content': response_content})
 
 

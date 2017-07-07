@@ -152,7 +152,7 @@ function afterDownloadModal(show_modal_url, sound_name){
         function(resp) {
             $('#fsmodal').html(resp);  // If response is not 200 OK, no modal will be shown
             openModal();
-        });
+        }).fail(function(){});  // .fail() catches the 404 which is returned if no modal is to be shown
 }
 function unsecureImageCheck(input) {
     var div = $("<div>", {class: "unsecure_image_warning"});

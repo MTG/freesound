@@ -148,11 +148,14 @@ function openModal(){
 function afterDownloadModal(show_modal_url, sound_name){
     hideModal(); // Hide the modal just in case it was shown
     // Send request to server which will decide whether to show or not the modal and return the contents
-    $.get(show_modal_url, {sound_name:sound_name},
+    $.getJSON(show_modal_url, {sound_name:sound_name},
         function(resp) {
-            $('#fsmodal').html(resp);  // If response is not 200 OK, no modal will be shown
-            openModal();
-        }).fail(function(){});  // .fail() catches the 404 which is returned if no modal is to be shown
+            if (resp.content){
+                // If JSON response has content, then the modal should be shown
+                $('#fsmodal').html(resp.content);
+                openModal();
+            }
+        });
 }
 function unsecureImageCheck(input) {
     var div = $("<div>", {class: "unsecure_image_warning"});

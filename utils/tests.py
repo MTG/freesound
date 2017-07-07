@@ -147,7 +147,7 @@ class UtilsTest(TestCase):
         for i in range(0, settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD):
             Download.objects.create(user=user, sound=sound)
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
-        Download.objects.create(user=user, sound=sound)  # n downloads > DONATION_MODAL_DOWNLOADS_IN_PERIOD
+        Download.objects.create(user=user, sound=sound)  # downloads > DONATION_MODAL_DOWNLOADS_IN_PERIOD (modal shows)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), True)
 
         # if the download objects are older than DONATION_MODAL_DOWNLOAD_DAYS, don't consider them
@@ -195,6 +195,7 @@ class UtilsTest(TestCase):
             Download.objects.create(user=user, sound=sound)
             self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
         Download.objects.create(user=user, sound=sound)  # n downloads > DONATION_MODAL_DOWNLOADS_IN_PERIOD
+        # In this case still not shown the modal as probability is 0.0
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)
 
         # if the download objects are older than DONATION_MODAL_DOWNLOAD_DAYS, don't consider them
@@ -207,5 +208,6 @@ class UtilsTest(TestCase):
         Donation.objects.filter(user=user).update(
             created=datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DAYS_AFTER_DONATION + 1))
         Download.objects.filter(user=user).update(
-            created=datetime.datetime.now())  # Change downloads date again to be recent (modal show be shown)
+            created=datetime.datetime.now())
+        # Change downloads date again to be recent (however modal won't show because probability is 0.0)
         self.assertEqual(utils.downloads.should_suggest_donation(user, times_shown_in_last_day), False)

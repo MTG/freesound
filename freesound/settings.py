@@ -187,17 +187,6 @@ GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
 GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
 GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
 
-# After download modal
-AFTER_DOWNLOAD_MODAL_DONATION = 'donation'
-AFTER_DOWNLOAD_MODAL = AFTER_DOWNLOAD_MODAL_DONATION  # Set it to None to disable modals shown after download
-
-# Donation modal settings
-DONATION_MODAL_DAYS_AFTER_DONATION = 365  # If user made a donation in the last X days, no modal is shown
-DONATION_MODAL_DOWNLOADS_IN_PERIOD = 10  # After user has download Z sounds...
-DONATION_MODAL_DOWNLOAD_DAYS = 7  # ...in Y days, we display the modal
-DONATION_MODAL_DISPLAY_PROBABILITY = 0.25  # probabily of the modal being shown once all previous requirements are met
-DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the modal during a single day
-
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
 

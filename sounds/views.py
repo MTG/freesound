@@ -44,6 +44,7 @@ from sounds.forms import *
 from sounds.management.commands.create_remix_groups import _create_nodes, _create_and_save_remixgroup
 from sounds.models import Sound, Pack, License, Download, RemixGroup, DeletedSound
 from sounds.templatetags import display_sound
+from donations.models import DonationsModalSettings
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.downloads import download_sounds, should_suggest_donation
@@ -266,9 +267,9 @@ def after_download_modal(request):
     sound_name = request.GET.get('sound_name', 'this sound')  # Gets some data sent by the client
 
     def modal_shown_timestamps_cache_key(user):
-        return 'modal_shown_timestamps_%s_shown_%i' % (settings.AFTER_DOWNLOAD_MODAL, user.id)
+        return 'modal_shown_timestamps_donations_shown_%i' % user.id
 
-    if settings.AFTER_DOWNLOAD_MODAL == settings.AFTER_DOWNLOAD_MODAL_DONATION:
+    if DonationsModalSettings.get_donation_modal_settings().enabled:
         # Get timestamps of last times modal was shown from cache
         modal_shown_timestamps = cache.get(modal_shown_timestamps_cache_key(request.user), [])
 

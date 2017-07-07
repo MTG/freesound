@@ -21,10 +21,9 @@
 
 import datetime
 import zlib
-
-from django.conf import settings
 from django.http import HttpResponse
 from sounds.models import Download
+from donations.models import DonationsModalSettings
 import random
 
 
@@ -50,7 +49,6 @@ def download_sounds(licenses_url, pack):
             continue
         filelist += "%s %i %s %s\r\n" % (sound.crc, sound.filesize, url, name)
 
-
     response = HttpResponse(filelist, content_type="text/plain")
     response['X-Archive-Files'] = 'zip'
     return response
@@ -63,11 +61,13 @@ def should_suggest_donation(user, times_shown_in_last_day):
     and for how long. The modal will be shown a maximum number of times per day.
     """
 
-    if times_shown_in_last_day >= settings.DONATION_MODAL_DISPLAY_TIMES_DAY:
+    donation_modal_settings = DonationsModalSettings.get_donation_modal_settings()
+
+    if times_shown_in_last_day >= donation_modal_settings.max_times_display_a_day:
         # If modal has been shown more than settings.DONATION_MODAL_DISPLAY_TIMES_DAY times, don't show it again today
         return False
 
-    donation_period = datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DAYS_AFTER_DONATION)
+    donation_period = datetime.datetime.now() - datetime.timedelta(days=donation_modal_settings.days_after_donation)
     last_donation = user.donation_set.order_by('created').last()
     if not last_donation or last_donation.created < donation_period:
         # If there has never been a donation or last donation is older than settings.DONATION_MODAL_DAYS_AFTER_DONATION,
@@ -75,8 +75,9 @@ def should_suggest_donation(user, times_shown_in_last_day):
         # settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD. If that is the case, show the modal.
         num_downloads_in_period = Download.objects.filter(
             user=user,
-            created__gt=datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS)).count()
-        if num_downloads_in_period > settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD:
-            if random.random() <= settings.DONATION_MODAL_DISPLAY_PROBABILITY:
+            created__gt=datetime.datetime.now() - datetime.timedelta(days=donation_modal_settings.download_days)
+        ).count()
+        if num_downloads_in_period > donation_modal_settings.downloads_in_period:
+            if random.random() <= donation_modal_settings.display_probability:
                 return True
     return False

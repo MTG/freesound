@@ -24,6 +24,8 @@ from django.contrib.auth.models import User
 from sounds.models import Sound, Pack, License, DeletedSound, SoundOfTheDay
 from sounds.views import get_random_sound, get_random_uploader
 from general.templatetags.filter_img import replace_img
+from sounds.views import get_sound_of_the_day_id, get_random_uploader
+from comments.models import Comment
 from utils.tags import clean_and_split_tags
 from utils.encryption import encrypt
 import time
@@ -78,10 +80,15 @@ class RandomSoundAndUploaderTestCase(TestCase):
 
     fixtures = ['sounds']
 
+    def test_no_random_sound(self):
+        # If we have no sound, return None
+        random_sound_id = get_sound_of_the_day_id()
+        self.assertIsNone(random_sound_id)
+
     def test_random_sound(self):
         sound = Sound.objects.get(id=19)
         SoundOfTheDay.objects.create(sound=sound, date_display=datetime.date.today())
-        random_sound = get_random_sound()
+        random_sound = get_sound_of_the_day_id()
         self.assertEqual(isinstance(random_sound, int), True)
 
     def test_random_uploader(self):
@@ -118,7 +125,7 @@ class CommentSoundsTestCase(TestCase):
 
         replaced_comment = 'Test <a href="http://test.com/img.png">http://test.com/img.png</a> test'
         comment = 'Test <img class="test" src="http://test.com/img.png" /> test'
-        self.assertEqual(replace_img(comment), replaced_comment) 
+        self.assertEqual(replace_img(comment), replaced_comment)
 
         comment = 'Test <img src="https://test.com/img.png" /> test'
         self.assertEqual(replace_img(comment), comment)

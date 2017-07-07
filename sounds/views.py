@@ -68,16 +68,19 @@ import os
 logger = logging.getLogger('web')
 
 
-def get_random_sound():
+def get_sound_of_the_day_id():
     """
     Returns random id of sound (int)
     """
     cache_key = "random_sound"
     random_sound = cache.get(cache_key)
     if not random_sound:
-        rnd = SoundOfTheDay.objects.get(date_display=datetime.date.today())
-        random_sound = rnd.sound_id
-        cache.set(cache_key, random_sound, 60*60*24)
+        try:
+            rnd = SoundOfTheDay.objects.get(date_display=datetime.date.today())
+            random_sound = rnd.sound_id
+            cache.set(cache_key, random_sound, 60*60*24)
+        except SoundOfTheDay.DoesNotExist:
+            return None
     return random_sound
 
 
@@ -104,7 +107,11 @@ def sounds(request):
             Q(moderation_date__gte=last_week) | Q(created__gte=last_week)).order_by("-num_downloads")[0:5]]
     popular_sounds = Sound.objects.ordered_ids(popular_sound_ids)
     popular_packs = Pack.objects.filter(created__gte=last_week).exclude(is_deleted=True).order_by("-num_downloads")[0:5]
-    random_sound = Sound.objects.bulk_query_id([get_random_sound()])[0]
+    random_sound_id = get_sound_of_the_day_id()
+    if random_sound_id:
+        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+    else:
+        random_sound = None
     tvars = {
         'latest_sounds': latest_sounds,
         'latest_packs': latest_packs,
@@ -167,7 +174,11 @@ def front_page(request):
                                                           'last_post__thread',
                                                           'last_post__thread__forum')
     latest_additions = Sound.objects.latest_additions(5, '2 days')
-    random_sound = get_random_sound()
+    random_sound_id = get_sound_of_the_day_id()
+    if random_sound_id:
+        random_sound = Sound.objects.bulk_query_id([random_sound_id])[0]
+    else:
+        random_sound = None
     tvars = {
         'rss_cache': rss_cache,
         'donations_cache': donations_cache,

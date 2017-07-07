@@ -51,8 +51,6 @@ def delete(request, comment_id):
 def for_user(request, username):
     """ Display all comments for the sounds of the user """
     user = get_object_or_404(User, username__iexact=username)
-    sound_type = ContentType.objects.get_for_model(Sound)
-    # TODO: after de migration this is not optimized anymore
     sounds = Sound.objects.filter(user=user)
     qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)

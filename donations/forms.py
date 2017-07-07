@@ -8,7 +8,7 @@ class DonateForm(forms.Form):
 
     donation_type = forms.ChoiceField(widget=forms.RadioSelect(), choices=RADIO_CHOICES)
     name_option = forms.CharField(required=False)
-    amount = forms.CharField(initial="5")
+    amount = forms.CharField(initial="10")
     recurring = forms.BooleanField(required=False, initial=False,
             label='I want this to be a recurring monthly donation',)
     show_amount = forms.BooleanField(

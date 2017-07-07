@@ -77,6 +77,6 @@ def should_suggest_donation(user, times_shown_in_last_day):
             user=user,
             created__gt=datetime.datetime.now() - datetime.timedelta(days=settings.DONATION_MODAL_DOWNLOAD_DAYS)).count()
         if num_downloads_in_period > settings.DONATION_MODAL_DOWNLOADS_IN_PERIOD:
-            if random.random() > settings.DONATION_MODAL_DISPLAY_PROBABILITY:
+            if random.random() <= settings.DONATION_MODAL_DISPLAY_PROBABILITY:
                 return True
     return False

@@ -133,6 +133,7 @@ class DonationTest(TestCase):
 
         self.user.profile.refresh_from_db()
         self.assertTrue(self.user.profile.last_donation_email_sent != None)
+        user_sent = self.user.profile.last_donation_email_sent
 
         self.user2 = User.objects.create_user(\
                 username='jacob2', email='j2@test.com', password='top2', id='46281')
@@ -150,4 +151,5 @@ class DonationTest(TestCase):
         call_command('donations_mails')
         self.user2.profile.refresh_from_db()
         self.assertTrue(self.user2.profile.last_donation_email_sent != None)
+        self.user.profile.refresh_from_db()
 

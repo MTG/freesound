@@ -52,7 +52,9 @@ class DonationsModalSettings(models.Model):
 
 class DonationsEmailSettings(models.Model):
     never_send_email_to_uploaders = models.BooleanField(default=True)
-    days_after_donation = models.PositiveIntegerField(
+    minimum_days_since_last_donation = models.PositiveIntegerField(
         default=365, help_text="Send emails to user only if didn't made a donation in the last X days")
+    minimum_days_since_last_donation_email = models.PositiveIntegerField(
+        default=30*3, help_text="Don't send a donation email if the last one was sent in less than X days")
     downloads_in_period = models.PositiveIntegerField(default=100, help_text='After user has download Z sounds...')
 

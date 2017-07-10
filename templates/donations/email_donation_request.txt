@@ -1,0 +1,13 @@
+{% extends "email_base.txt" %}
+{% load absurl %}
+
+{% block salutation %}{{ user.username }}{% endblock %}
+
+{% block body %}
+Thanks for using Freesound...
+Freesound needs your support, please make a donation today. 
+
+Your money will be used for further development of Freesound and for general support of community-building efforts for Freesound!
+
+<{% absurl 'donate' %}>
+{% endblock %}

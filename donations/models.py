@@ -51,6 +51,7 @@ class DonationsModalSettings(models.Model):
 
 
 class DonationsEmailSettings(models.Model):
+    enabled = models.BooleanField(default=False)
     never_send_email_to_uploaders = models.BooleanField(default=True)
     minimum_days_since_last_donation = models.PositiveIntegerField(
         default=365, help_text="Send emails to user only if didn't made a donation in the last X days")

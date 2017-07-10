@@ -39,9 +39,7 @@ def delete(request, comment_id):
     if not (request.user.has_perm('comments.delete_comment'))\
             and comment.user != request.user:
         # Also user can delete if is the owner of the sound
-        if not comment.content_object\
-                or not hasattr(comment.content_object, 'user')\
-                or comment.content_object.user != request.user:
+        if not comment.sound or comment.sound.user != request.user:
             raise PermissionDenied
     comment.delete()
     messages.success(request, 'Comment deleted.')
@@ -51,21 +49,12 @@ def delete(request, comment_id):
 
 
 def for_user(request, username):
-    """ This is all very hacky because GenericRelations don't allow you to span
-    relations with select_related... hence we get the content_objects and then
-    load all the sounds related to those in a big lookup. If we don't do this
-    the page generates about 90+ queries, with it we only generate 4 queries :-) """
+    """ Display all comments for the sounds of the user """
     user = get_object_or_404(User, username__iexact=username)
-    sound_type = ContentType.objects.get_for_model(Sound)
-    # TODO: after de migration this is not optimized anymore
     sounds = Sound.objects.filter(user=user)
-    qs = Comment.objects.filter(content_type=sound_type, object_id__in=sounds.values('id')).select_related("user", "user__profile")
+    qs = Comment.objects.filter(sound__in=sounds).select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list
-    sound_ids = set([comment.object_id for comment in comments])
-    sound_lookup = dict([(sound.id, sound) for sound in list(Sound.objects.filter(id__in=sound_ids))])
-    for comment in comments:
-        comment.sound_object = sound_lookup[comment.object_id]
     tvars = {
         "user": user,
         "comments": comments,
@@ -76,19 +65,11 @@ def for_user(request, username):
 
 
 def by_user(request, username):
-    """ This is all very hacky because GenericRelations don't allow you to span
-    relations with select_related... hence we get the content_objects and then
-    load all the sounds related to those in a big lookup. If we don't do this
-    the page generates about 90+ queries, with it we only generate 4 queries :-) """
+    """ Display all comments made by the user """
     user = get_object_or_404(User, username__iexact=username)
-    sound_type = ContentType.objects.get_for_model(Sound)
-    qs = Comment.objects.filter(content_type=sound_type, user=user).select_related("user", "user__profile")
+    qs = Comment.objects.filter(user=user).select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list
-    sound_ids = set([comment.object_id for comment in comments])
-    sound_lookup = dict([(sound.id, sound) for sound in list(Sound.objects.filter(id__in=sound_ids))])
-    for comment in comments:
-        comment.sound_object = sound_lookup[comment.object_id]
     tvars = {
         "user": user,
         "comments": comments,
@@ -99,18 +80,10 @@ def by_user(request, username):
 
 
 def all(request):
-    """ This is all very hacky because GenericRelations don't allow you to span
-    relations with select_related... hence we get the content_objects and then
-    load all the sounds related to those in a big lookup. If we don't do this
-    the page generates about 90+ queries, with it we only generate 4 queries :-) """
-    sound_type = ContentType.objects.get_for_model(Sound)
-    qs = Comment.objects.filter(content_type=sound_type).select_related("user", "user__profile")
+    """ Display all comments """
+    qs = Comment.objects.select_related("user", "user__profile")
     paginator = paginate(request, qs, 30)
     comments = paginator["page"].object_list
-    sound_ids = set([comment.object_id for comment in comments])
-    sound_lookup = dict([(sound.id, sound) for sound in list(Sound.objects.filter(id__in=sound_ids).select_related("user"))])
-    for comment in comments:
-        comment.sound_object = sound_lookup[comment.object_id]
     tvars = {
         "comments": comments,
         "mode": "latest"

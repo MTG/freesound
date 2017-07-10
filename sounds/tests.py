@@ -23,7 +23,6 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from sounds.models import Sound, Pack, License, DeletedSound
 from sounds.views import get_random_sound, get_random_uploader
-from comments.models import Comment
 from general.templatetags.filter_img import replace_img
 from utils.tags import clean_and_split_tags
 from utils.encryption import encrypt
@@ -100,11 +99,9 @@ class CommentSoundsTestCase(TestCase):
         sound = Sound.objects.get(id=19)
         user = User.objects.get(id=2)
         current_num_comments = sound.num_comments
-        comment = Comment(content_object=sound,
-                          user=user,
-                          comment="Test comment")
-        sound.add_comment(comment)
-        self.assertEqual(comment.id in [c.id for c in sound.comments.all()], True)
+        self.assertEqual(current_num_comments, sound.num_comments)
+        sound.add_comment(user, "Test comment")
+        sound.refresh_from_db()
         self.assertEqual(current_num_comments + 1, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
 
@@ -129,6 +126,7 @@ class CommentSoundsTestCase(TestCase):
         sound.num_comments = 3
         sound.save()
         sound.post_delete_comment()
+        sound.refresh_from_db()
         self.assertEqual(2, sound.num_comments)
         self.assertEqual(sound.is_index_dirty, True)
 
@@ -136,10 +134,8 @@ class CommentSoundsTestCase(TestCase):
         sound = Sound.objects.get(id=19)
         user = User.objects.get(id=2)
         current_num_comments = sound.num_comments
-        comment = Comment(content_object=sound,
-                          user=user,
-                          comment="Test comment")
-        sound.add_comment(comment)
+        sound.add_comment(user, "Test comment")
+        comment = sound.comments.all()[0]
         comment.delete()
         sound = Sound.objects.get(id=19)
         self.assertEqual(current_num_comments, sound.num_comments)

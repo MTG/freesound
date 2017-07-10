@@ -28,8 +28,8 @@ from django.contrib.postgres.fields import JSONField
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_unicode
 from django.utils.translation import ugettext as _
-from django.db import models
-from django.db import connection, transaction
+from django.db import models, connection, transaction
+from django.db.models import F
 from django.db.models.signals import pre_delete, post_delete, post_save, pre_save
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
@@ -45,6 +45,7 @@ from utils.similarity_utilities import delete_sound_from_gaia
 from search.views import get_pack_tags
 from apiv2.models import ApiV2Client
 from tickets.models import Ticket, Queue, TicketComment
+from comments.models import Comment
 from tickets import TICKET_STATUS_CLOSED, TICKET_STATUS_NEW
 import os
 import logging
@@ -609,17 +610,16 @@ class Sound(SocialModel):
         if commit:
             self.save()
 
-    def add_comment(self, comment, commit=True):
-        # From django 1.8.4 is required to save the object before adding the relation
+    def add_comment(self, user, comment):
+        comment = Comment(sound=self, user=user, comment=comment)
         comment.save()
-        self.comments.add(comment)
-        self.num_comments += 1
+        self.num_comments = F('num_comments') + 1
         self.mark_index_dirty(commit=False)
-        if commit:
-            self.save()
+        self.save()
 
     def post_delete_comment(self, commit=True):
-        self.num_comments -= 1
+        """ When a comment is deleted this method is called to update num_comments """
+        self.num_comments = F('num_comments') - 1
         self.mark_index_dirty(commit=False)
         if commit:
             self.save()

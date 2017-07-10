@@ -609,8 +609,7 @@ class UserDelete(TestCase):
         # Create comments
         target_sound = Sound.objects.all()[0]
         for i in range(0, 3):
-            comment = Comment(comment="Comment %i" % i, user=user, content_object=target_sound)
-            target_sound.add_comment(comment)
+            target_sound.add_comment(user, "Comment %i" % i)
         # Create threads and posts
         thread = Thread.objects.create(author=user, title="Test thread", forum=Forum.objects.create(name="Test forum"))
         for i in range(0, 3):

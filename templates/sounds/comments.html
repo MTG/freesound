@@ -41,7 +41,7 @@
         </div>
         {{comment.comment|replace_img|safe|linebreaks}}
         <div style="margin-top:10px;">
-            On sound:  <a class="title" href="{% url "sound" comment.sound_object.user.username comment.sound_object.id %}" title="{{comment.sound_object.original_filename}}">{{comment.sound_object.original_filename|truncate_string:27}}</a> by <a href="{% url "account" comment.sound_object.user.username %}">{{comment.sound_object.user.username}}</a>
+            On sound:  <a class="title" href="{% url "sound" comment.sound.user.username comment.sound.id %}" title="{{comment.sound.original_filename}}">{{comment.sound.original_filename|truncate_string:27}}</a> by <a href="{% url "account" comment.sound.user.username %}">{{comment.sound.user.username}}</a>
         </div>
     </li>
     {% endfor %}

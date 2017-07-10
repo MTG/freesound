@@ -5,44 +5,36 @@
 <div id="content_full"> <!-- START of Content area -->
 
   <h1>Donations</h1>
-    <p>
-        Thanks for supporting Freesound!
-    </p>
-    <p>
-        Please use the form below to make a donation. Note that donations are managed through the <b>Phonos Foundation</b>, an institution linked to the <b>Music
-        Technology Group</b> for the promotion of social and cultural initiatives. Click here to see the <a href="{% url 'donors' %}">full list of Freesound donors and and donations</a>.
-    </p>
-    <p>
-        Are you asking yourself "<b>why should I donate to Freesound?</b>"
-        <a href="javascript:void(0);" onclick="show_donate_reasons();">Here are some reasons</a>, let's see if we can
-        convince you :)
-    </p>
 
-    <div id="why_should_donate" style="display:none;">
     <h3>Why should I donate to Freesound?</h3>
-        <p>
-            Freesound is a website that was <a href="https://freesound.org/help/about/" target="_blank">started in 2005</a>
-            at the <a href="http://mtg.upf.edu/" target="_blank">Music Technology Group</a> (MTG) of <a href="http://upf.edu/" target="_blank">Universitat Pompeu Fabra</a>.
-            Freesound has always been developed and maintained by researchers at the MTG. However, the cost of maintaining
-            Freesound has been increasing as the site has grown, and it is not an easy task to find resources (both human
-            and machine) to maintain and keep improving Freesound.
-        </p>
-        <p>
-            We need your donations in order to be able dedicate more resources to Freesound and not only maintain it but also
-            make it better, add new features, improve existing ones, etc. Because of the nature of Freesound and the philosophy
-            of openness, sharing and reuse that we promote, we think that the sustainability model that best fits our case
-            is one based on user donations (like Wikipedia).
-        </p>
-        <p>
-            Considering the huge amount of users that <a href="http://blog.freesound.org/?p=666" target="_blank" rel="nofollow">
-            regularly download content from Freesound</a> and benefit from the site, we estimate that with a very small yearly
-            contribution from some of these users, we can collect enough to keep Freesound in good shape :)
-        </p>
-        <p>
-            Want to know more? Check this <a href="/forum/freesound-project/40188/">forum thread</a> in which we discussed our
-            ideas regarding Freesound sustainability with the community.
-        </p>
-    </div>
+    <ul>
+        <li style="margin-top: 8px"><b>We are growing and need more resources</b>.
+            Freesound was <a href="https://freesound.org/help/about/" target="_blank">started in 2005</a>
+            at the <a href="http://mtg.upf.edu/" target="_blank">Music Technology Group</a>
+            and it has always been developed and maintained here.
+            We need your donations in order to be able dedicate more resources to Freesound and not only
+            maintain it but also make it better: add new features, improve existing ones, etc.
+        </li>
+        <li style="margin-top: 8px"><b>We don't like ads</b>.
+            Because of the nature of Freesound and the philosophy
+            of openness, sharing and reuse that we promote, we think that
+            the sustainability model that best fits our case
+            is one based on user donations like Wikipedia.
+        </li>
+        <li style="margin-top: 8px"><b>It doesn't take a large donation to help us</b>.
+            There are many users who <a href="http://blog.freesound.org/?p=666" target="_blank">
+            regularly download content from Freesound</a>.
+            If many of us contribute, donating just a little bit will be enough to keep Freesound in good shape.
+            Ah, and if you donate you'll appear in this glorious <a href="{% url 'donors' %}">list of Freesound donors</a> :)
+        </li>
+    </ul>
+
+    <p>
+        In case you want to donate, please use the form below.
+        If you want more information about Freesound and its sustainability, check out this <a href="/forum/freesound-project/40188/">forum
+        thread</a>.
+        <br>Thanks for supporting Freesound!
+    </p>
 
     <!-- donations -->
     <div id="donation_form_wrapper">
@@ -88,6 +80,14 @@
       </div>
     </div>
 
+    <p>
+        <b>Note</b>: donations are managed through the <a href="http://phonos.upf.edu" target="_blank"> Phonos Foundation</a>,
+            an institution linked to the <a href="http://mtg.upf.edu/" target="_blank">Music
+            Technology Group</a> for the promotion of social and cultural initiatives.
+        Currently, we only accept donations via PayPal. Please <a href="{% url 'contact' %}">contact us</a>
+        if this method does not work for you.
+    </p>
+
     <script type="text/javascript">
       $(document).ready(function (){
 
@@ -123,10 +123,6 @@
           e.preventDefault(); // avoid to execute the actual submit of the form.
         });
       });
-
-      function show_donate_reasons(){
-          $('#why_should_donate').show(200);
-      }
     </script>
 
 {% block section_content %}

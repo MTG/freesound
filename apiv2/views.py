@@ -463,7 +463,7 @@ class SoundComments(ListAPIView):
         return super(SoundComments, self).get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Comment.objects.filter(object_id=self.kwargs['pk'])
+        return Comment.objects.filter(sound_id=self.kwargs['pk'])
 
 
 class DownloadSound(DownloadAPIView):
@@ -1032,9 +1032,7 @@ class CommentSound(WriteRequiredGenericAPIView):
                                       'note': 'This comment has not been saved in the database as browseable API is only for testing purposes.'},
                                 status=status.HTTP_201_CREATED)
             else:
-                sound.add_comment(Comment(content_object=sound,
-                                          user=self.user,
-                                          comment=request.data['comment']))
+                sound.add_comment(self.user, request.data['comment'])
                 return Response(data={'detail': 'Successfully commented sound %s.' % sound_id}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

@@ -18,7 +18,7 @@
     {% endif %}
 
     {% if content_type == 'comment' %}
-        <span class="people_user_info">comment in <a class="title" href="{% url "sound" content.content_object.user.username content.content_object.id %}">{{content.content_object.original_filename|truncate_string:28}}</a></span>
+        <span class="people_user_info">comment in <a class="title" href="{% url "sound" content.sound.user.username content.sound.id %}">{{content.sound.original_filename|truncate_string:28}}</a></span>
         {{content.comment.sound}}
         {{content.comment|replace_img|smileys|safe|linebreaks}}
 

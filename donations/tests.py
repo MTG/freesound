@@ -2,7 +2,9 @@ import datetime
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.core.management import call_command
 import mock
+import sounds.models
 import donations.models
 import views
 
@@ -111,4 +113,49 @@ class DonationTest(TestCase):
         # 200 response on donors page
         resp = self.client.get(reverse('donors'))
         self.assertEqual(resp.status_code, 200)
+
+    def test_donation_emails(self):
+        donation_settings, _ = donations.models.DonationsEmailSettings.objects.get_or_create()
+        donation_settings.downloads_in_period = 1
+        donation_settings.save()
+
+        previous_date = datetime.datetime.now() - datetime.timedelta(days=500)
+        self.user = User.objects.create_user(\
+                username='jacob', email='j@test.com', password='top', id='46280')
+        self.assertTrue(self.user.profile.last_donation_email_sent == None)
+
+        donation = donations.models.Donation.objects\
+                .create(user=self.user, amount=100, email=self.user.email, currency='EUR')
+        donations.models.Donation.objects.filter(pk=donation.pk).update(created=previous_date)
+
+        call_command('donations_mails')
+
+        self.user.profile.refresh_from_db()
+        self.assertTrue(self.user.profile.last_donation_email_sent != None)
+
+        self.user2 = User.objects.create_user(\
+                username='jacob2', email='j2@test.com', password='top2', id='46281')
+        self.assertTrue(self.user2.profile.last_donation_email_sent == None)
+
+        sounds.models.License.objects.create(
+            name="New",
+            abbreviation="n",
+            summary="<p>",
+            is_public=True,
+            order=1,
+            legal_code_url="http://creativecommons.org/licenses/sampling+/1.0/legalcode",
+            deed_url="http://creativecommons.org/licenses/sampling+/1.0/"
+        )
+        for i in range(0, 5):
+            sound = sounds.models.Sound.objects.create(
+                user=self.user,
+                original_filename="Test sound %i" % i,
+                base_filename_slug="test_sound_%i" % i,
+                license=sounds.models.License.objects.all()[0],
+                md5="fakemd5_%i" % i)
+            sounds.models.Download.objects.create(user=self.user2, sound=sound)
+
+        call_command('donations_mails')
+        self.user2.profile.refresh_from_db()
+        self.assertTrue(self.user2.profile.last_donation_email_sent != None)
 

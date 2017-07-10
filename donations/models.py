@@ -48,3 +48,11 @@ class DonationsModalSettings(models.Model):
             instance, _ = cls.objects.get_or_create()  # Gets existing object or creates it
             cache.set(cls.DONATION_MODAL_SETTINGS_CACHE_KEY, instance, timeout=3600)
         return instance
+
+
+class DonationsEmailSettings(models.Model):
+    never_send_email_to_uploaders = models.BooleanField(default=True)
+    days_after_donation = models.PositiveIntegerField(
+        default=365, help_text="Send emails to user only if didn't made a donation in the last X days")
+    downloads_in_period = models.PositiveIntegerField(default=100, help_text='After user has download Z sounds...')
+

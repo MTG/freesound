@@ -9,6 +9,7 @@ import donations.models
 import views
 
 class DonationTest(TestCase):
+    fixtures = ['initial_data']
 
     def test_non_annon_donation_with_name(self):
         donations.models.DonationCampaign.objects.create(\
@@ -137,15 +138,6 @@ class DonationTest(TestCase):
                 username='jacob2', email='j2@test.com', password='top2', id='46281')
         self.assertTrue(self.user2.profile.last_donation_email_sent == None)
 
-        sounds.models.License.objects.create(
-            name="New",
-            abbreviation="n",
-            summary="<p>",
-            is_public=True,
-            order=1,
-            legal_code_url="http://creativecommons.org/licenses/sampling+/1.0/legalcode",
-            deed_url="http://creativecommons.org/licenses/sampling+/1.0/"
-        )
         for i in range(0, 5):
             sound = sounds.models.Sound.objects.create(
                 user=self.user,

@@ -118,6 +118,7 @@ class DonationTest(TestCase):
     def test_donation_emails(self):
         donation_settings, _ = donations.models.DonationsEmailSettings.objects.get_or_create()
         donation_settings.downloads_in_period = 1
+        donation_settings.enabled = True
         donation_settings.save()
 
         previous_date = datetime.datetime.now() - datetime.timedelta(days=500)

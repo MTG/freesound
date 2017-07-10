@@ -51,13 +51,13 @@ class Command(BaseCommand):
             days=donation_settings.minimum_days_since_last_donation_email)
 
         user_received_donation_email_within_email_timespan = User.objects.filter(
-            profile__last_donation_email_sent__gt=email_timespan)
+            profile__last_donation_email_sent__gt=email_timespan).values_list('id')
         if donation_settings.never_send_email_to_uploaders:
-            uploaders = User.objects.filter(profile__num_sounds__gt=0)
+            uploaders = User.objects.filter(profile__num_sounds__gt=0).values_list('id')
         else:
-            uploaders = User.objects.none()
+            uploaders = []
         donors_within_donation_timespan = Donation.objects.filter(user__isnull=False, created__gt=donation_timespan)\
-            .values_list('user', flat=True)
+            .values_list('user_id', flat=True)
 
         # 1) Check users that donated in the past
         # If it's been X days since last donation, send a reminder (typically X=365 days)
@@ -67,9 +67,9 @@ class Command(BaseCommand):
         #   - Have not received any email regarding donations during 'email_timespan' (3 mo)
 
         users_to_notify = User.objects.filter(donation__created__lte=donation_timespan)\
-            .exclude(user_received_donation_email_within_email_timespan)\
-            .exclude(uploaders)\
-            .exclude(donors_within_donation_timespan)
+            .exclude(id__in=user_received_donation_email_within_email_timespan)\
+            .exclude(id__in=uploaders)\
+            .exclude(id__in=donors_within_donation_timespan)
 
         for user in users_to_notify.all():
             send_mail_template(
@@ -87,9 +87,9 @@ class Command(BaseCommand):
         #   - Have not donated during 'donation_timespan' (12 months)
         #   - Have not received any email regarding donations during 'email_timespan' (3 months)
         potential_users = Download.objects.filter(created__gte=email_timespan)\
-            .exclude(user__in=user_received_donation_email_within_email_timespan)\
+            .exclude(user_id__in=user_received_donation_email_within_email_timespan)\
             .exclude(user_id__in=donors_within_donation_timespan) \
-            .exclude(uploaders) \
+            .exclude(user_id__in=uploaders) \
             .values('user_id').annotate(num_download=Count('user_id')).order_by('num_download')
 
         for user_dict in potential_users.all():

@@ -26,7 +26,13 @@ def donation_complete(request):
     """
     params = request.POST.copy()
     params.update({'cmd': '_notify-validate'})
-    req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
+
+    try:
+        req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
+    except requests.exceptions.Timeout:
+        logger.error("Can't verify donations information with paypal")
+        return HttpResponse("FAIL")
+
     if req.text == 'VERIFIED':
         extra_data = json.loads(base64.b64decode(params['custom']))
         email = params['payer_email']

@@ -83,7 +83,7 @@ class Command(BaseCommand):
             user.profile.last_donation_email_sent = datetime.datetime.now()
             user.profile.donations_reminder_email_sent = True
             user.profile.save()
-            logger.info("Sent donation email reminder to user %i" % user.id)
+            logger.info("Sent donation email (reminder) to user %i" % user.id)
 
         # 2) Send email to users that download a lot of sounds without donating
         # potential_users -> All users that:
@@ -127,6 +127,6 @@ class Command(BaseCommand):
                             }, None, user.email)
                     user.profile.last_donation_email_sent = datetime.datetime.now()
                     user.profile.save()
-                    logger.info("Donation request sent to user %i" % user.id)
+                    logger.info("Sent donation email (request) to user %i" % user.id)
 
         logger.info("Finished sending donation emails")

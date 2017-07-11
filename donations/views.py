@@ -2,6 +2,7 @@ import json
 import base64
 import requests
 import urlparse
+import logging
 from django.shortcuts import render
 from django.urls import reverse
 from django.conf import settings
@@ -13,6 +14,8 @@ from django.views.decorators.csrf import csrf_exempt
 from models import Donation, DonationCampaign
 from forms import DonateForm
 from utils.mail import send_mail_template
+
+logger = logging.getLogger('web')
 
 
 @csrf_exempt
@@ -30,10 +33,12 @@ def donation_complete(request):
         campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
         is_anonymous = False
         user = None
+        user_id = None
         display_name = None
 
         if 'user_id' in extra_data:
             user = User.objects.get(id=extra_data['user_id'])
+            user_id = user.id
             email = user.email
             # Reset the reminder flag to False so that in a year time user is reminded to donate
             user.profile.donations_reminder_email_sent = False
@@ -43,7 +48,7 @@ def donation_complete(request):
             is_anonymous = True
             display_name = extra_data['name']
 
-        Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults={
+        donation_data = {
             'email': params['payer_email'],
             'display_name': display_name,
             'amount': params['mc_gross'],
@@ -51,7 +56,8 @@ def donation_complete(request):
             'display_amount': extra_data['display_amount'],
             'is_anonymous': is_anonymous,
             'user': user,
-            'campaign': campaign})
+            'campaign': campaign}
+        Donation.objects.get_or_create(transaction_id=params['txn_id'], defaults=donation_data)
 
         send_mail_template(
                 u'Thanks for your donation!',
@@ -60,6 +66,12 @@ def donation_complete(request):
                     'amount': params['mc_gross'],
                     'display_name': display_name
                     }, None, email)
+
+        log_data = donation_data
+        log_data.update({'user_id': user_id})
+        del log_data['user']  # Don't want to serialize user
+        del log_data['campaign']  # Don't want to serialize campaign
+        logger.info('Recevied donation (%s)' % json.dumps(log_data))
     return HttpResponse("OK")
 
 

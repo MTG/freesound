@@ -65,8 +65,11 @@ class Command(BaseCommand):
         #   - Made a donation before 'donation_timespan' (12 mo)
         #   - Have not made a donation after 'donation_timespan' (12 mo)
         #   - Have not received any email regarding donations during 'email_timespan' (3 mo)
+        #   - Users that have donations_reminder_email_sent set to False (they have not been sent any
+        #     reminder in the past)
 
-        users_to_notify = User.objects.filter(donation__created__lte=donation_timespan)\
+        users_to_notify = User.objects.filter(
+            donation__created__lte=donation_timespan, profile__donations_reminder_email_sent=False)\
             .exclude(id__in=user_received_donation_email_within_email_timespan)\
             .exclude(id__in=uploaders)\
             .exclude(id__in=donors_within_donation_timespan)
@@ -78,6 +81,7 @@ class Command(BaseCommand):
                     'user': user,
                     }, None, user.email)
             user.profile.last_donation_email_sent = datetime.datetime.now()
+            user.profile.donations_reminder_email_sent = True
             user.profile.save()
             logger.info("Sent donation email reminder to user %i" % user.id)
 

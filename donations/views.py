@@ -17,9 +17,10 @@ from utils.mail import send_mail_template
 
 @csrf_exempt
 def donation_complete(request):
-    '''This view listens to a notification made from paypal when someone makes
+    """
+    This view listens to a notification made from paypal when someone makes
     a donation, it validates the data and then stores the donation.
-    '''
+    """
     params = request.POST.copy()
     params.update({'cmd': '_notify-validate'})
     req = requests.post(settings.PAYPAL_VALIDATION_URL, data=params)
@@ -29,10 +30,14 @@ def donation_complete(request):
         campaign = DonationCampaign.objects.get(id=extra_data['campaign_id'])
         is_anonymous = False
         user = None
-        display_name= None
+        display_name = None
+
         if 'user_id' in extra_data:
             user = User.objects.get(id=extra_data['user_id'])
             email = user.email
+            # Reset the reminder flag to False so that in a year time user is reminded to donate
+            user.profile.donations_reminder_email_sent = False
+            user.profile.save()
 
         if 'name' in extra_data:
             is_anonymous = True

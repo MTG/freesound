@@ -76,6 +76,8 @@ class Profile(SocialModel):
     accepted_tos = models.BooleanField(default=False)
     last_stream_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
     last_attempt_of_sending_stream_email = models.DateTimeField(db_index=True, null=True, default=None)
+    last_donation_email_sent = models.DateTimeField(db_index=True, null=True, default=None)
+    donations_reminder_email_sent = models.BooleanField(default=False)
     num_sounds = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     num_posts = models.PositiveIntegerField(editable=False, default=0)  # Updated via db trigger
     is_deleted_user = models.BooleanField(db_index=True, default=False)

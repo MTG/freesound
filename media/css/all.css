@@ -2178,8 +2178,9 @@ a.donation_button {
     color: #000;
     font-weight: bold;
     white-space: nowrap;
-    padding: 0 0 0 15px;
-    margin: 26px 0 0 0;
+    padding: 0 0 0 20px;
+    margin-top: 28px;
+    margin-left: 58px;
 }
 
 a.donation_button:hover {
@@ -4122,10 +4123,46 @@ ul.messages {
     margin: auto;
     padding: 0;
     width: 50%;
+    min-width: 400px;
     -webkit-animation-name: animatetop;
     -webkit-animation-duration: 0.4s;
     animation-name: animatetop;
-    animation-duration: 0.4s
+    animation-duration: 0.4s;
+    font-size: 12px;
+    border-radius: 3px;
+}
+
+.modal-header {
+    padding: 15px;
+    background-color: #AB4646;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.modal-body {
+    padding: 15px;
+}
+
+.modal-body p{
+    font-size: 13px;
+}
+
+.modal-content .donate-button {
+    color: black;
+    font-weight: bold;
+    background-color: #ffd359;
+    padding: 12px;
+    border-radius: 2px;
+    border-bottom: 1px solid #ffb74b;
+    border-right: 1px solid #ffb74b;
+    margin-top: -12px;
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.modal-content .donate-button:hover {
+    background-color: #ffdd68;
 }
 
 /* Add Animation */
@@ -4152,18 +4189,6 @@ ul.messages {
     color: #000;
     text-decoration: none;
     cursor: pointer;
-}
-
-.modal-header {
-    padding: 15px;
-    background-color: #AB4646;
-    color: white;
-    font-size: 18px;
-}
-
-.modal-body {
-    padding: 15px;
-    font-size: 12px;
 }
 
 .unsecure_image_warning {

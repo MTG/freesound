@@ -187,17 +187,6 @@ GRAYLOG_API_STREAM_ID = '530f2ec5e4b0f124869546d0'
 GRAYLOG_SEARCH_STREAM_ID = '531051bee4b0f1248696785a'
 GRAYLOG_DOMAIN = 'http://mtg-logserver.s.upf.edu'
 
-# After download modal
-AFTER_DOWNLOAD_MODAL_SURVEY = 'survey'
-AFTER_DOWNLOAD_MODAL_DONATION = 'donation'
-AFTER_DOWNLOAD_MODAL = None  # Set it to none for no modal after download
-
-# Donation modal settings
-DONATION_MODAL_DAYS_AFTER_DONATION = 1  # After a donation we don't display the popup for this long
-DONATION_MODAL_DOWNLOADS_IN_PERIOD = 1  # After this number of downloads...
-DONATION_MODAL_DOWNLOAD_DAYS = 10  # ...in this period of days, we display the popup
-DONATION_MODAL_DISPLAY_TIMES_DAY = 10  # max number of times we display the popup per day:
-
 # COOKIE_LAW_EXPIRATION_TIME change in freesound.js (now is 360 days)
 # $.cookie("cookieConsent", "yes", { expires: 360, path: '/' });
 

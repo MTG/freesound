@@ -4,10 +4,13 @@
 {% block salutation %}{{ user.username }}{% endblock %}
 
 {% block body %}
-Thanks for donating to Freesound...
-This is a reminder that a year has passed since your last donation. 
+About a year ago you made a donation to Freesound.
+Thanks for that, we're really grateful for your support!
 
+We thought that you might want to donate again :)
 Your money will be used for further development of Freesound and for general support of community-building efforts for Freesound!
 
-<{% absurl 'donate' %}>
+Please, feel free to use the link below to make a new donation:
+
+{% absurl 'donate' %}
 {% endblock %}

@@ -76,7 +76,7 @@ class Command(BaseCommand):
 
         for user in users_to_notify.all():
             send_mail_template(
-                u'Donation',
+                u'Thanks for contributing to Freesound',
                 'donations/email_donation_reminder.txt', {
                     'user': user,
                     }, None, user.email)
@@ -121,7 +121,7 @@ class Command(BaseCommand):
 
                 if send_email:
                     send_mail_template(
-                        u'Donation',
+                        u'Have you considered making a donation?',
                         'donations/email_donation_request.txt', {
                             'user': user,
                             }, None, user.email)

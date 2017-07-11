@@ -54,7 +54,7 @@ def donation_complete(request):
             'campaign': campaign})
 
         send_mail_template(
-                u'Donation',
+                u'Thanks for your donation!',
                 'donations/email_donation.txt', {
                     'user': user,
                     'amount': params['mc_gross'],

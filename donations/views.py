@@ -71,7 +71,7 @@ def donation_complete(request):
         log_data.update({'user_id': user_id})
         del log_data['user']  # Don't want to serialize user
         del log_data['campaign']  # Don't want to serialize campaign
-        log_data['amount'] = float(log_data['amount'])
+        log_data['amount_float'] = float(log_data['amount'])
         logger.info('Recevied donation (%s)' % json.dumps(log_data))
     return HttpResponse("OK")
 

@@ -40,7 +40,7 @@ def download_sounds(licenses_url, pack):
                                     licenses_url, "_readme_and_license.txt")
 
     sounds_list = pack.sound_set.filter(processing_state="OK",
-            moderation_state="OK").select_related('user', 'license')
+            moderation_state="OK").select_related('user', 'last_license')
 
     for sound in sounds_list:
         url = sound.locations("sendfile_url")

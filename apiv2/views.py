@@ -32,7 +32,7 @@ from apiv2_utils import GenericAPIView, ListAPIView, RetrieveAPIView, WriteRequi
 from exceptions import *
 from forms import *
 from models import ApiV2Client
-from sounds.models import Sound, Pack, License
+from sounds.models import Sound, Pack, License, SoundLicenseHistory
 from geotags.models import GeoTag
 from bookmarks.models import Bookmark, BookmarkCategory
 from accounts.views import handle_uploaded_file, send_activation
@@ -675,7 +675,7 @@ class PackSounds(ListAPIView):
         except Pack.DoesNotExist:
             raise NotFoundException(resource=self)
 
-        queryset = Sound.objects.select_related('user', 'pack', 'license').filter(moderation_state="OK",
+        queryset = Sound.objects.select_related('user', 'pack', 'last_license').filter(moderation_state="OK",
                                                                                   processing_state="OK",
                                                                                   pack__id=self.kwargs['pk'])
         get_analysis_data_for_queryset_or_sound_ids(self, queryset=queryset)
@@ -909,7 +909,8 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                 if 'license' in serializer.data:
                     if serializer.data['license']:
                         license = License.objects.get(name=serializer.data['license'])
-                        sound.license = license
+                        sound.last_license = license
+                        SoundLicenseHistory.objects.create(sound=sound, license=license)
                 if 'geotag' in serializer.data:
                     if serializer.data['geotag']:
                         lat, lon, zoom = serializer.data['geotag'].split(',')

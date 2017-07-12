@@ -621,7 +621,7 @@ class UserDelete(TestCase):
                                  original_filename="Test sound %i" % i,
                                  pack=pack,
                                  is_index_dirty=is_index_dirty,
-                                 license=License.objects.all()[0],
+                                 last_license=License.objects.all()[0],
                                  md5="fakemd5%i" % i,
                                  moderation_state="OK",
                                  processing_state="OK")

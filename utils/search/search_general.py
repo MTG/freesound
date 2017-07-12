@@ -38,7 +38,7 @@ def convert_to_solr_document(sound):
     document["original_filename"] = remove_control_chars(sound.original_filename)
     document["description"] = remove_control_chars(sound.description)
     document["tag"] = list(sound.tags.select_related("tag").values_list('tag__name', flat=True))
-    document["license"] = sound.license.name
+    document["license"] = sound.last_license.name
     document["is_remix"] = bool(sound.sources.count())
     document["was_remixed"] = bool(sound.remixes.count())
     if sound.pack:

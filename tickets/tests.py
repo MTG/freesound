@@ -52,7 +52,7 @@ class TicketsTest(TestCase):
         ticket.queue = Queue.objects.get(name=QUEUE_SOUND_MODERATION)
         ticket.save()
         # just to test, this would be a sound object for example
-        s = Sound(description='test sound', license_id=1, user=test_user)
+        s = Sound(description='test sound', last_license_id=1, user=test_user)
         s.save()
         ticket.sound = s
         ticket.save()
@@ -62,7 +62,7 @@ class TicketsTest(TestCase):
         sound = sounds.models.Sound.objects.create(
                 moderation_state=moderation_state,
                 processing_state=processing_state,
-                license=sounds.models.License.objects.get(pk=1),
+                last_license=sounds.models.License.objects.get(pk=1),
                 user=user,
                 md5=hashlib.md5(filename).hexdigest(),
                 original_filename=filename)

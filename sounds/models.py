@@ -134,7 +134,7 @@ class SoundManager(models.Manager):
           sound.pack_id,
           sound.duration,
           sounds_pack.name as pack_name,
-          sound.license_id,
+          sound.last_license_id,
           sounds_license.name as license_name,
           sounds_license.deed_url as license_deed_url,
           sound.geotag_id,
@@ -149,7 +149,7 @@ class SoundManager(models.Manager):
           sounds_sound sound
           LEFT JOIN auth_user ON auth_user.id = sound.user_id
           LEFT JOIN sounds_pack ON sound.pack_id = sounds_pack.id
-          LEFT JOIN sounds_license ON sound.license_id = sounds_license.id
+          LEFT JOIN sounds_license ON sound.last_license_id = sounds_license.id
           LEFT OUTER JOIN sounds_remixgroup_sounds
                ON sounds_remixgroup_sounds.sound_id = sound.id
         WHERE %s """ % (where, )
@@ -212,7 +212,9 @@ class Sound(SocialModel):
     # user defined fields
     description = models.TextField()
     date_recorded = models.DateField(null=True, blank=True, default=None)
-    license = models.ForeignKey(License)
+
+    # The history is licenses for a sound is stored on SoundLicenseHisotry here is referenced the last one
+    last_license = models.ForeignKey(License)
     sources = models.ManyToManyField('self', symmetrical=False, related_name='remixes', blank=True)
     pack = models.ForeignKey('Pack', null=True, blank=True, default=None, on_delete=models.SET_NULL)
     geotag = models.ForeignKey(GeoTag, null=True, blank=True, default=None, on_delete=models.SET_NULL)
@@ -711,9 +713,9 @@ def on_delete_sound(sender, instance, **kwargs):
         data['geotag'] = geotag
 
         license = None
-        if instance.license:
-            license = License.objects.filter(pk=instance.license.pk).values()[0]
-        data['license'] = license
+        if instance.last_license:
+            license = License.objects.filter(pk=instance.last_license.pk).values()[0]
+        data['last_license'] = license
 
         data['comments'] = list(instance.comments.values())
         data['tags'] = list(instance.tags.values())
@@ -841,7 +843,7 @@ class Pack(SocialModel):
 
     def get_attribution(self):
         sounds_list = self.sound_set.filter(processing_state="OK",
-                moderation_state="OK").select_related('user', 'license')
+                moderation_state="OK").select_related('user', 'last_license')
 
         users = User.objects.filter(sounds__in=sounds_list).distinct()
         # Generate text file with license info
@@ -891,3 +893,10 @@ class RemixGroup(models.Model):
                                     related_name='remix_group',
                                     blank=True)
     group_size = models.PositiveIntegerField(null=False, default=0)
+
+
+class SoundLicenseHistory(models.Model):
+    """Store history of licenses related to a sound"""
+    license = models.ForeignKey(License)
+    sound = models.ForeignKey(Sound)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)

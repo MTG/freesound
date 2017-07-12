@@ -157,7 +157,7 @@ def create_user_and_sounds(num_sounds=1, num_packs=0, user=None, count_offset=0,
         sound = Sound.objects.create(user=user,
                                      original_filename="Test sound %i" % (i + count_offset),
                                      base_filename_slug="test_sound_%i" % (i + count_offset),
-                                     license=License.objects.all()[0],
+                                     last_license=License.objects.all()[0],
                                      pack=pack,
                                      md5="fakemd5_%i" % (i + count_offset))
         if tags is not None:
@@ -257,7 +257,7 @@ class ProfileNumSoundsTestCase(TestCase):
         # Check this elements are in the json saved on DeletedSound
         keys = ['num_ratings', 'duration', 'id', 'geotag_id', 'comments',
                 'base_filename_slug', 'num_downloads', 'md5', 'description',
-                'original_path', 'pack_id', 'license', 'created',
+                'original_path', 'pack_id', 'last_license', 'created',
                 'original_filename', 'geotag']
 
         json_data = ds.data.keys()

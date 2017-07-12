@@ -27,7 +27,7 @@ class GenericDataFilter(logging.Filter):
             fields = json.loads(json_part)
             for key, value in fields.items():
                 setattr(record, key, value)
-        except (IndexError, ValueError):
+        except (IndexError, ValueError, AttributeError):
             pass  # Message is not formatted for json parsing
         return True
 

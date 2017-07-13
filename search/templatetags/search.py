@@ -19,11 +19,11 @@ def display_facet(context, filter, facet, type):
         if filter == "grouping_pack":
             if element['name'].count("_") > 0:
                 element['display_name'] = element['name'][element['name'].find("_")+1:] # We also modify the dispay name to remove the id
-                element['params'] = '%s %s:%s' % (filter_query, filter, element['name'])
+                element['params'] = '%s %s:"%s"' % (filter_query, filter, element['name'])
                 filtered_facet.append(element)
         else:
             element['display_name'] = element['name']
-            element['params'] = '%s %s:%s' % (filter_query, filter, element['name'])
+            element['params'] = '%s %s:"%s"' % (filter_query, filter, element['name'])
             filtered_facet.append(element)
     context.update({"facet":filtered_facet, "type":type, "filter":filter})
     return context

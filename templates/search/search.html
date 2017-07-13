@@ -34,6 +34,11 @@
 
 
 <p id="filter_query_display">
+
+{% for filter in filter_query_split %}
+    <a href=".?g={{grouping}}&q={{search_query}}&f={{ filter.remove_url }}" title="remove this filter">{{ filter.name }}</a>
+{% endfor %}
+
 </p>
 
 <script type="text/javascript">
@@ -211,63 +216,7 @@
         $("#filter_query").val(cleaned);
     }
 
-    function scan(value, pattern, callback)
-    {
-        $.each(value.match(pattern) || [], callback);
-    }
 
-    function update_filter_display()
-    {
-        var i = 0;
-
-        function add_filter(filter)
-        {
-            // prevent advanced options filters to appear in this line
-            filter_name = filter.split(":")[0]
-            if ((filter_name != "duration") && (filter_name != "is_geotagged"))
-            {
-                var filter_id = "filter_" + i++;
-                var display_filter = filter;
-                if (filter_name == "grouping_pack"){
-                    var filter_value = filter.slice(filter.indexOf(":"),filter.length)
-                    display_filter = "pack:" + filter_value.slice(filter_value.indexOf("_")+1,filter_value.length-1)
-                }
-
-                var element = $("<a id=\"" + filter_id + "\" title=\"remove this filter\"></a>").html(display_filter);
-                element.click(function (event) {
-                    removeFilter(filter);
-                    element.remove();
-                    event.preventDefault();
-                    $("#search_form").submit();
-                });
-
-                $('#filter_query_display').append(element);
-            }
-        }
-
-        var value = $("#filter_query").val().replace(/\\\"/g,'---replace---');
-
-
-        scan(value, /[\w-]+:[\w-\.]+/g, function (index, filter) {
-            add_filter(filter);
-        });
-
-        scan(value, /[\w-]+:\"[^\"]+\"/g, function (index, filter) {
-            add_filter(filter.replace(/---replace---/g,'\\\"'));
-
-        });
-
-    }
-
-    update_filter_display();
-
-    function set_hidden_grouping_value(){
-        if ($("#grouping_geotagged").is(':checked')){
-            $("#grouping_geotagged_hidden").val("1")
-        }else{
-            $("#grouping_geotagged_hidden").val("")
-        }
-    }
 
 </script>
 
